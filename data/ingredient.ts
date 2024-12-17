@@ -5,17 +5,13 @@ import { toFormState } from "@/helper/toFormState";
 import MongoDBClient from "@/mongo/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import Ingredient from "@/model/ingredient";
 
 export async function getAllIngredient() {
-
-	const client = await MongoDBClient();
-	const db = client?.db(process.env.MONGODB_DB);
-	const collection = db?.collection("Ingredients");
+	await MongoDBClient();
 	
-	const ingredient = await collection?.find().toArray();
-
-	await client?.close();
-	return ingredient;
+	const ingredients = await Ingredient.find({});
+	return ingredients;
 }
 
 const createIngredientSchema = z.object({
@@ -40,21 +36,23 @@ export async function addIngredient(formState: FormState, ingredient: FormData):
 
 		const validatedData = createIngredientSchema.parse(ingredientData);
 
-		const client = await MongoDBClient();
-		const db = client?.db(process.env.MONGODB_DB);
-		const collection = db?.collection("Ingredients");
+		await MongoDBClient();
 
-		const result = await collection?.insertOne({
-			...validatedData,
-			createdAt: new Date(),
-			updatedAt: new Date(),
+		const newIngredient = await Ingredient.create({
+			name: validatedData.name,
+			macros: {
+				calories: validatedData.calories,
+				protein: validatedData.protein,
+				fat: validatedData.fat,
+				carbs: validatedData.carbs,
+				fiber: validatedData.fiber,
+			},			
 		});
 
-		if (!result || !result.acknowledged) {
+		if (!newIngredient) {
 			throw new Error("Failed to add ingredient");
 		}
 
-		await client?.close();
 	} catch (error) {
 		return fromErrorToFormState(error);
 	}
@@ -63,4 +61,3 @@ export async function addIngredient(formState: FormState, ingredient: FormData):
 
 	return toFormState("SUCCESS", "Ingredient added successfully");
 }
-

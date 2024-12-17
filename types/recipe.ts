@@ -1,3 +1,4 @@
+import Ingredient from "./ingredient";
 import Macros from "./macro";
 
 export default interface Recipe {
@@ -6,11 +7,12 @@ export default interface Recipe {
 	name: string;
 	description?: string;
 	ingredients: {
-		ingredientId: string;
+		ingredient: Ingredient;
 		amount: number;
 		unit: string;
 	}[];
 	totalMacros: Macros;
 	servings: number;
 	instructions: string[];
+    tags: string[];
 }

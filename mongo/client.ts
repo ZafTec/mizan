@@ -1,18 +1,19 @@
+import mongoose from "mongoose";
 
-import { MongoClient } from "mongodb";
+
+let client: typeof mongoose;
 
 export default async function MongoDBClient() {
-	if (!process.env.MONGODB_URI) {
+
+	if (client) {
+		return client;
+	}
+
+	if (!process.env.MONGODB_URI || !process.env.MONGODB_DB) {
 		throw new Error("Please add your Mongo URI to .env.local");
 	}
-
-	const client = new MongoClient(process.env.MONGODB_URI);
-
-	try {
-		await client.connect();
-
-		return client;
-	} catch (error) {
-		// handle the error
-	}
+	
+	client = await mongoose.connect(process.env.MONGODB_URI, { dbName: process.env.MONGODB_DB });
+	
+	return client;
 }

@@ -1,7 +1,7 @@
 import Macros from "./macro";
 
 export default interface Ingredient {
-	id: string;
+    id: string | unknown;
 	name: string;
 	servingSize: number;
 	servingUnit: string;

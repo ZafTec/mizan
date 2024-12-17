@@ -1,8 +1,9 @@
 
 export default interface User {
-	id: string;
 	email: string;
 	name: string;
+	image?: string;
+	password?: string;
 	// preferences?: UserPreferences;
 }
 

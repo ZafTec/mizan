@@ -43,20 +43,20 @@ export default async function Page() {
 							<tr><td colSpan={6}>No ingredients found</td></tr> 
 							: 
 							ingredient.map((ingredient) => (
-								<tr key={ingredient._id.toString()}>
+								<tr key={ingredient.id.toString()}>
 									<td>{ingredient.name}</td>
-									<td>{ingredient.calories}</td>
-									<td>{ingredient.protein}</td>
-									<td>{ingredient.fat}</td>
-									<td>{ingredient.carbs}</td>
-									<td>{ingredient.fiber}</td>
+									<td>{ingredient.macros.calories}</td>
+									<td>{ingredient.macros.protein}</td>
+									<td>{ingredient.macros.fat}</td>
+									<td>{ingredient.macros.carbs}</td>
+									<td>{ingredient.macros.fiber}</td>
 								</tr>
 							))
 						}
 					</tbody>
 					<tfoot>
 						<tr>
-							<td colSpan={5}>
+							<td colSpan={6}>
 								{/* Pagination */}
 							</td>
 						</tr>
