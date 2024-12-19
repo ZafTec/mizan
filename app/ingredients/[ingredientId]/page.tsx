@@ -1,6 +1,6 @@
 
-export default function Page({ params }: { params: { ingredientId: string } }) {
-	const { ingredientId } = params;
+export default async function Page({ params }: { params: Promise<{ ingredientId: string }> }) {
+	const { ingredientId } = await params;
 
 	return (
 		<div>

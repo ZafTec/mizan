@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { options } from "@/app/api/auth/[...nextauth]/options";
 import Link from "next/link";
 import Image from "next/image";
+import placeHolderImage from "@/public/placeholder-recipe.jpg";
 
 export default async function Home() {
 
@@ -17,7 +18,7 @@ export default async function Home() {
 					{/* Recipe cards */}
 					<Link href="/recipes/1" className="bg-white rounded-lg shadow p-4 hover:shadow-xl cursor-pointer transition-shadow">
 						<Image 
-							src="/placeholder-recipe.jpg" 
+							src={placeHolderImage} 
 							alt="Recipe" 
 							className="w-full h-48 object-cover rounded-lg mb-3"
 						/>
@@ -26,7 +27,7 @@ export default async function Home() {
 					</Link>
 					<Link href="/recipes/2" className="bg-white rounded-lg shadow p-4 hover:shadow-xl cursor-pointer transition-shadow">
 						<Image 
-							src="/placeholder-recipe.jpg" 
+							src={placeHolderImage} 
 							alt="Recipe" 
 							className="w-full h-48 object-cover rounded-lg mb-3"
 						/>
@@ -35,7 +36,7 @@ export default async function Home() {
 					</Link>
 					<Link href="/recipes/3" className="bg-white rounded-lg shadow p-4 hover:shadow-xl cursor-pointer transition-shadow">
 						<Image 
-							src="/placeholder-recipe.jpg" 
+							src={placeHolderImage} 
 							alt="Recipe" 
 							className="w-full h-48 object-cover rounded-lg mb-3"
 						/>
@@ -44,7 +45,7 @@ export default async function Home() {
 					</Link>
 					<Link href="/recipes/4" className="bg-white rounded-lg shadow p-4 hover:shadow-xl cursor-pointer transition-shadow">
 						<Image 
-							src="/placeholder-recipe.jpg" 
+							src={placeHolderImage} 
 							alt="Recipe" 
 							className="w-full h-48 object-cover rounded-lg mb-3"
 						/>
@@ -53,7 +54,7 @@ export default async function Home() {
 					</Link>
 					<Link href="/recipes/5" className="bg-white rounded-lg shadow p-4 hover:shadow-xl cursor-pointer transition-shadow">
 						<Image 
-							src="/placeholder-recipe.jpg" 
+							src={placeHolderImage} 
 							alt="Recipe" 
 							className="w-full h-48 object-cover rounded-lg mb-3"
 						/>
@@ -62,7 +63,7 @@ export default async function Home() {
 					</Link>
 					<Link href="/recipes/6" className="bg-white rounded-lg shadow p-4 hover:shadow-xl cursor-pointer transition-shadow">
 						<Image 
-							src="/placeholder-recipe.jpg" 
+							src={placeHolderImage} 
 							alt="Recipe" 
 							className="w-full h-48 object-cover rounded-lg mb-3"
 						/>
@@ -78,13 +79,13 @@ export default async function Home() {
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 					<div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
 						<h3 className="text-xl font-semibold mb-3">Add Your Recipe</h3>
-						<Link href="/recipes/add" className="bg-green-500 text-white px-6 py-2 rounded-full hover:bg-green-600 transition-colors">
+						<Link href="/recipes/add" className="bg-green-500 inline-block text-white px-6 py-2 rounded-full hover:bg-green-600 transition-colors">
 							Create Recipe
 						</Link>
 					</div>
 					<div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
 						<h3 className="text-xl font-semibold mb-3">Log Your Meal</h3>
-						<Link href='/meals/add' className="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors">
+						<Link href='/meals/add' className="bg-blue-500 inline-block text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors">
 							Log Meal
 						</Link>
 					</div>
