@@ -12,7 +12,10 @@ export default async function Navbar() {
 					<Link href="/about" className="text-white">About</Link>
 					<Link href="/ingredients" className="text-white ml-4">Ingredients</Link>
 					{session ? (
-						<Link href="/api/auth/signout?callbackUrl=/" className="text-white ml-4">Sign Out</Link>
+						<>
+							<Link href="/recipes" className="text-white ml-4">Recipes</Link>
+							<Link href="/api/auth/signout?callbackUrl=/" className="text-white ml-4">Sign Out</Link>
+						</>
 					) : (
 						<Link href="/api/auth/signin" className="text-white ml-4">Sign In</Link>
 					)}

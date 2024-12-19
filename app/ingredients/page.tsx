@@ -3,19 +3,25 @@ import TableHeaderCell from "@/components/IngredientTable/TableHeaderCell";
 import { getAllIngredient } from "@/data/ingredient";
 import getUser from "@/context/AuthProvider";
 import Link from "next/link";
+import SearchBar from "@/components/IngredientTable/SearchInputField";
 
-export default async function Page() {
-	const { user } = await getUser();
+export default async function Page(
+	{ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }>}
+) {
+	const { } = await getUser();
+
+	const { sortBy, searchIngredient } = await searchParams;
+	console.log(sortBy, searchIngredient);
+
 	// Fetch ingredient
-	const ingredient = await getAllIngredient();
-	console.log(ingredient);
+	const ingredient = await getAllIngredient(searchIngredient as string);
 
 	return (
 		<div className="flex flex-col py-4 px-16 gap-4">
 			<div className="flex flex-row justify-between">
 				<div>
 					{/* Search bar */}
-					<input type="text" placeholder="Search ingredient" className="border-2 border-gray-300 rounded-lg p-2" />
+					<SearchBar />
 				</div>
 				<div>
 					{/* Add Button */}

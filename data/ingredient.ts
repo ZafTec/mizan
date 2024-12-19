@@ -6,11 +6,16 @@ import MongoDBClient from "@/mongo/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import Ingredient from "@/model/ingredient";
+import IngredientType from "@/types/ingredient";
 
-export async function getAllIngredient() {
+export async function getAllIngredient(searchIngredient: string = "", sortBy?: string): Promise<IngredientType[]> {
 	await MongoDBClient();
 	
-	const ingredients = await Ingredient.find({});
+	const ingredients = await Ingredient.find({
+		name: {
+			$regex: new RegExp(searchIngredient, "i"),
+		},
+	});
 	return ingredients;
 }
 

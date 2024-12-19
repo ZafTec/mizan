@@ -1,9 +1,10 @@
+import { ObjectId } from "mongoose";
 import Ingredient from "./ingredient";
 import Macros from "./macro";
 
 export default interface Recipe {
-	id: string;
-	userId: string;
+	id: string | ObjectId;
+	userId: string | ObjectId;
 	name: string;
 	description?: string;
 	ingredients: {
