@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Page() {
 	return (
@@ -14,12 +15,12 @@ export default function Page() {
 							<span className="text-gray-500">12 recipes</span>
 						</div>
 						<div className="flex gap-2">
-							<img 
+							<Image 
 								src="/placeholder-recipe.jpg" 
 								alt="Recipe thumbnail" 
 								className="w-16 h-16 rounded-full object-cover"
 							/>
-							<img 
+							<Image 
 								src="/placeholder-recipe.jpg" 
 								alt="Recipe thumbnail" 
 								className="w-16 h-16 rounded-full object-cover"
@@ -36,12 +37,12 @@ export default function Page() {
 							<span className="text-gray-500">12 recipes</span>
 						</div>
 						<div className="flex gap-2">
-							<img 
+							<Image 
 								src="/placeholder-recipe.jpg" 
 								alt="Recipe thumbnail" 
 								className="w-16 h-16 rounded-full object-cover"
 							/>
-							<img 
+							<Image 
 								src="/placeholder-recipe.jpg" 
 								alt="Recipe thumbnail" 
 								className="w-16 h-16 rounded-full object-cover"
@@ -57,12 +58,12 @@ export default function Page() {
 							<span className="text-gray-500">12 recipes</span>
 						</div>
 						<div className="flex gap-2">
-							<img 
+							<Image 
 								src="/placeholder-recipe.jpg" 
 								alt="Recipe thumbnail" 
 								className="w-16 h-16 rounded-full object-cover"
 							/>
-							<img 
+							<Image 
 								src="/placeholder-recipe.jpg" 
 								alt="Recipe thumbnail" 
 								className="w-16 h-16 rounded-full object-cover"
@@ -125,7 +126,7 @@ export default function Page() {
 					{/* Recipe card */}
 					<div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
 						<div className="flex">
-							<img
+							<Image
 								src="/placeholder-recipe.jpg"
 								alt="Recipe"
 								className="w-48 h-48 object-cover rounded-l-lg"
@@ -166,7 +167,7 @@ export default function Page() {
 					</div>
 					<div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
 						<div className="flex">
-							<img
+							<Image
 								src="/placeholder-recipe.jpg"
 								alt="Recipe"
 								className="w-48 h-48 object-cover rounded-l-lg"
@@ -207,7 +208,7 @@ export default function Page() {
 					</div>
 					<div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
 						<div className="flex">
-							<img
+							<Image
 								src="/placeholder-recipe.jpg"
 								alt="Recipe"
 								className="w-48 h-48 object-cover rounded-l-lg"

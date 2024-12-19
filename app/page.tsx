@@ -1,8 +1,8 @@
 
 import { getServerSession } from "next-auth";
 import { options } from "@/app/api/auth/[...nextauth]/options";
-import { redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 export default async function Home() {
 
@@ -16,7 +16,7 @@ export default async function Home() {
 				<div className="grid grid-flow-col auto-cols-max overflow-x-auto gap-4 p-2">
 					{/* Recipe cards */}
 					<Link href="/recipes/1" className="bg-white rounded-lg shadow p-4 hover:shadow-xl cursor-pointer transition-shadow">
-						<img 
+						<Image 
 							src="/placeholder-recipe.jpg" 
 							alt="Recipe" 
 							className="w-full h-48 object-cover rounded-lg mb-3"
@@ -25,7 +25,7 @@ export default async function Home() {
 						<p className="text-gray-600">300 calories | 15g protein</p>
 					</Link>
 					<Link href="/recipes/2" className="bg-white rounded-lg shadow p-4 hover:shadow-xl cursor-pointer transition-shadow">
-						<img 
+						<Image 
 							src="/placeholder-recipe.jpg" 
 							alt="Recipe" 
 							className="w-full h-48 object-cover rounded-lg mb-3"
@@ -34,7 +34,7 @@ export default async function Home() {
 						<p className="text-gray-600">300 calories | 15g protein</p>
 					</Link>
 					<Link href="/recipes/3" className="bg-white rounded-lg shadow p-4 hover:shadow-xl cursor-pointer transition-shadow">
-						<img 
+						<Image 
 							src="/placeholder-recipe.jpg" 
 							alt="Recipe" 
 							className="w-full h-48 object-cover rounded-lg mb-3"
@@ -43,7 +43,7 @@ export default async function Home() {
 						<p className="text-gray-600">300 calories | 15g protein</p>
 					</Link>
 					<Link href="/recipes/4" className="bg-white rounded-lg shadow p-4 hover:shadow-xl cursor-pointer transition-shadow">
-						<img 
+						<Image 
 							src="/placeholder-recipe.jpg" 
 							alt="Recipe" 
 							className="w-full h-48 object-cover rounded-lg mb-3"
@@ -52,7 +52,7 @@ export default async function Home() {
 						<p className="text-gray-600">300 calories | 15g protein</p>
 					</Link>
 					<Link href="/recipes/5" className="bg-white rounded-lg shadow p-4 hover:shadow-xl cursor-pointer transition-shadow">
-						<img 
+						<Image 
 							src="/placeholder-recipe.jpg" 
 							alt="Recipe" 
 							className="w-full h-48 object-cover rounded-lg mb-3"
@@ -61,7 +61,7 @@ export default async function Home() {
 						<p className="text-gray-600">300 calories | 15g protein</p>
 					</Link>
 					<Link href="/recipes/6" className="bg-white rounded-lg shadow p-4 hover:shadow-xl cursor-pointer transition-shadow">
-						<img 
+						<Image 
 							src="/placeholder-recipe.jpg" 
 							alt="Recipe" 
 							className="w-full h-48 object-cover rounded-lg mb-3"

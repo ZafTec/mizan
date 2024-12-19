@@ -11,10 +11,9 @@ export default async function Page(
 	const { } = await getUser();
 
 	const { sortBy, searchIngredient } = await searchParams;
-	console.log(sortBy, searchIngredient);
 
 	// Fetch ingredient
-	const ingredient = await getAllIngredient(searchIngredient as string);
+	const ingredient = await getAllIngredient(searchIngredient as string, sortBy as string);
 
 	return (
 		<div className="flex flex-col py-4 px-16 gap-4">
