@@ -1,3 +1,4 @@
+import Link from "next/link";
 
 export default function Page() {
 	return (
@@ -14,12 +15,12 @@ export default function Page() {
 						</div>
 						<div className="flex gap-2">
 							<img 
-								src="/placeholder-1.jpg" 
+								src="/placeholder-recipe.jpg" 
 								alt="Recipe thumbnail" 
 								className="w-16 h-16 rounded-full object-cover"
 							/>
 							<img 
-								src="/placeholder-2.jpg" 
+								src="/placeholder-recipe.jpg" 
 								alt="Recipe thumbnail" 
 								className="w-16 h-16 rounded-full object-cover"
 							/>
@@ -36,12 +37,33 @@ export default function Page() {
 						</div>
 						<div className="flex gap-2">
 							<img 
-								src="/placeholder-1.jpg" 
+								src="/placeholder-recipe.jpg" 
 								alt="Recipe thumbnail" 
 								className="w-16 h-16 rounded-full object-cover"
 							/>
 							<img 
-								src="/placeholder-2.jpg" 
+								src="/placeholder-recipe.jpg" 
+								alt="Recipe thumbnail" 
+								className="w-16 h-16 rounded-full object-cover"
+							/>
+							<div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
+								<span className="text-gray-600">+10</span>
+							</div>
+						</div>
+					</div>
+					<div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-4">
+						<div className="flex items-center justify-between mb-4">
+							<h3 className="text-lg font-semibold">Recent Recipes</h3>
+							<span className="text-gray-500">12 recipes</span>
+						</div>
+						<div className="flex gap-2">
+							<img 
+								src="/placeholder-recipe.jpg" 
+								alt="Recipe thumbnail" 
+								className="w-16 h-16 rounded-full object-cover"
+							/>
+							<img 
+								src="/placeholder-recipe.jpg" 
 								alt="Recipe thumbnail" 
 								className="w-16 h-16 rounded-full object-cover"
 							/>
@@ -58,9 +80,9 @@ export default function Page() {
 				<div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
 					<h3 className="text-xl font-semibold mb-4">Create New Recipe</h3>
 					<p className="text-gray-600 mb-6">Add your own recipe to your collection</p>
-					<button className="bg-blue-500 text-white px-8 py-3 rounded-lg hover:bg-blue-600 transition-colors">
+					<Link href="/recipes/add" className="bg-blue-500 text-white inline-block px-8 py-3 my-2 rounded-lg hover:bg-blue-600 transition-colors">
 						Add Recipe
-					</button>
+					</Link>
 				</div>
 			</div>
 
@@ -104,7 +126,89 @@ export default function Page() {
 					<div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
 						<div className="flex">
 							<img
-								src="/recipe-image.jpg"
+								src="/placeholder-recipe.jpg"
+								alt="Recipe"
+								className="w-48 h-48 object-cover rounded-l-lg"
+							/>
+							<div className="flex-1 p-6">
+								<div className="flex justify-between items-start">
+									<div>
+										<h3 className="text-xl font-semibold mb-2">Healthy Chicken Salad</h3>
+										<p className="text-gray-600 mb-4">Fresh and light chicken salad with mixed greens and honey mustard dressing</p>
+									</div>
+									<button className="text-gray-400 hover:text-gray-600">
+										{/* Three dots menu icon */}
+										<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+										</svg>
+									</button>
+								</div>
+								<div className="flex gap-6">
+									<div>
+										<span className="text-gray-500 text-sm">Calories</span>
+										<p className="font-semibold">350 kcal</p>
+									</div>
+									<div>
+										<span className="text-gray-500 text-sm">Protein</span>
+										<p className="font-semibold">25g</p>
+									</div>
+									<div>
+										<span className="text-gray-500 text-sm">Carbs</span>
+										<p className="font-semibold">30g</p>
+									</div>
+									<div>
+										<span className="text-gray-500 text-sm">Fat</span>
+										<p className="font-semibold">15g</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+						<div className="flex">
+							<img
+								src="/placeholder-recipe.jpg"
+								alt="Recipe"
+								className="w-48 h-48 object-cover rounded-l-lg"
+							/>
+							<div className="flex-1 p-6">
+								<div className="flex justify-between items-start">
+									<div>
+										<h3 className="text-xl font-semibold mb-2">Healthy Chicken Salad</h3>
+										<p className="text-gray-600 mb-4">Fresh and light chicken salad with mixed greens and honey mustard dressing</p>
+									</div>
+									<button className="text-gray-400 hover:text-gray-600">
+										{/* Three dots menu icon */}
+										<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+										</svg>
+									</button>
+								</div>
+								<div className="flex gap-6">
+									<div>
+										<span className="text-gray-500 text-sm">Calories</span>
+										<p className="font-semibold">350 kcal</p>
+									</div>
+									<div>
+										<span className="text-gray-500 text-sm">Protein</span>
+										<p className="font-semibold">25g</p>
+									</div>
+									<div>
+										<span className="text-gray-500 text-sm">Carbs</span>
+										<p className="font-semibold">30g</p>
+									</div>
+									<div>
+										<span className="text-gray-500 text-sm">Fat</span>
+										<p className="font-semibold">15g</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+						<div className="flex">
+							<img
+								src="/placeholder-recipe.jpg"
 								alt="Recipe"
 								className="w-48 h-48 object-cover rounded-l-lg"
 							/>
