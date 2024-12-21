@@ -1,18 +1,8 @@
-import { getServerSession } from "next-auth";
-import { options } from "../api/auth/[...nextauth]/options";
-import { redirect } from "next/navigation";
+import getUser from "@/context/AuthProvider";
+
 
 export default async function About() {
-	const session = await getServerSession(options);
-
-	if (!session) {
-		redirect("/api/auth/signin?callbackUrl=/about");
-		return (
-			<div>
-				<h1>Not Allowed</h1>
-			</div>
-		)
-	}
+	const { user } = await getUser();
 
 	return (
 		<div>
@@ -21,8 +11,8 @@ export default async function About() {
 				This is a simple recipe manager to help you track your macros.
 			</p>
             <pre>
-                {JSON.stringify(session, null, 4)}
+                {JSON.stringify(user, null, 4)}
             </pre>
 		</div>
-	);
+	)
 }

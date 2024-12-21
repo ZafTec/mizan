@@ -14,7 +14,7 @@ const IngredientSchema = new Schema({
 		protein: { type: Number, required: true, min: 0, default: 0 },
 		carbs: { type: Number, required: true, min: 0, default: 0 },
 		fat: { type: Number, required: true, min: 0, default: 0 },
-        fiber: { type: Number, required: true, min: 0, default: 0 },
+		fiber: { type: Number, required: true, min: 0, default: 0 },
 	},
 	verified: { type: Boolean, required: true, default: false },
 }, { timestamps: true });
