@@ -1,12 +1,18 @@
 'use client';
 
-import Ingredient from "@/types/ingredient";
+// import Ingredient from "@/types/ingredient";
 import { useState } from "react";
+
+type ingredient = {
+	ingredient: string;
+	amount: number;
+	unit: string;
+}
 
 export default function Page() {
 	const [name, setName] = useState('');
 	const [description, setDescription] = useState('');
-	const [ingredients, setIngredients] = useState<any[]>([]);
+	const [ingredients, setIngredients] = useState<ingredient[]>([]);
 	const [instructions, setInstructions] = useState('');
 	const [servings, setServings] = useState(1);
 
@@ -22,11 +28,11 @@ export default function Page() {
 		setIngredients(newIngredients);
 	}
 
-	function handleIngredientChange(index: number, field: keyof Ingredient, value: string | number) {
-		const newIngredients = [...ingredients];
-		newIngredients[index] = { ...newIngredients[index], [field]: value };
-		setIngredients(newIngredients);
-	}
+	// function handleIngredientChange(index: number, field: keyof Ingredient, value: string | number) {
+	// 	const newIngredients = [...ingredients];
+	// 	newIngredients[index] = { ...newIngredients[index], [field]: value };
+	// 	setIngredients(newIngredients);
+	// }
 
 	function handleAddTag(e: React.KeyboardEvent<HTMLInputElement>) {
 		if (e.key === 'Enter' && currentTag.trim()) {

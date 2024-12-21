@@ -5,10 +5,17 @@ import SubmitButton from "@/components/AddIngredient/button";
 import { FieldError } from "@/components/FieldError";
 import { addIngredient } from "@/data/ingredient";
 import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 
 export default function Page() {
 	const [formState, action] = useActionState(addIngredient, EMPTY_FORM_STATE);
+	
+
+	useEffect(() => {
+		if (formState.status === "SUCCESS") {
+			// action.reset();
+		}
+	}, [formState.status]);
 
 	return (
 		<div className="flex flex-col py-4 px-16 gap-4">
@@ -48,6 +55,11 @@ export default function Page() {
 						<label htmlFor="fiber">Fiber [grams]</label>
 						<input type="number" id="fiber" name="fiber" min={0} defaultValue={0} className="border-2 border-gray-300 rounded-lg p-2" />
 						<FieldError formState={formState} name="fiber" />
+					</div>
+					<div className="flex flex-col gap-2">
+						<label htmlFor="servingSize">Serving Size</label>
+						<input id="servingSize" name="servingSize" min={0} defaultValue={0} className="border-2 border-gray-300 rounded-lg p-2" />
+						<FieldError formState={formState} name="servingSize" />
 					</div>
 				</div>
 
