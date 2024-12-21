@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import placeHolderImage from "@/public/placeholder-recipe.jpg";
+import RecipeMoreButton from "@/components/Recipes/RecipeMoreButton";
 
 export default function Page() {
 	return (
@@ -138,12 +139,7 @@ export default function Page() {
 										<h3 className="text-xl font-semibold mb-2">Healthy Chicken Salad</h3>
 										<p className="text-gray-600 mb-4">Fresh and light chicken salad with mixed greens and honey mustard dressing</p>
 									</div>
-									<button className="text-gray-400 hover:text-gray-600">
-										{/* Three dots menu icon */}
-										<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-										</svg>
-									</button>
+									<RecipeMoreButton recipeId="1" />
 								</div>
 								<div className="flex gap-6">
 									<div>
@@ -179,12 +175,7 @@ export default function Page() {
 										<h3 className="text-xl font-semibold mb-2">Healthy Chicken Salad</h3>
 										<p className="text-gray-600 mb-4">Fresh and light chicken salad with mixed greens and honey mustard dressing</p>
 									</div>
-									<button className="text-gray-400 hover:text-gray-600">
-										{/* Three dots menu icon */}
-										<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-										</svg>
-									</button>
+									<RecipeMoreButton recipeId="2" />
 								</div>
 								<div className="flex gap-6">
 									<div>
@@ -220,12 +211,7 @@ export default function Page() {
 										<h3 className="text-xl font-semibold mb-2">Healthy Chicken Salad</h3>
 										<p className="text-gray-600 mb-4">Fresh and light chicken salad with mixed greens and honey mustard dressing</p>
 									</div>
-									<button className="text-gray-400 hover:text-gray-600">
-										{/* Three dots menu icon */}
-										<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-										</svg>
-									</button>
+									<RecipeMoreButton recipeId="3" />
 								</div>
 								<div className="flex gap-6">
 									<div>
@@ -254,3 +240,5 @@ export default function Page() {
 		</div>
 	)
 }
+
+

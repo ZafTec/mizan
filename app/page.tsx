@@ -12,7 +12,7 @@ export default async function Home() {
 
 	return (
 		<div className="flex flex-col items-center justify-center py-2">
-			<div className="max-w-4xl p-6 mb-8 bg-white rounded-lg shadow-lg">
+			<div className=" w-full max-w-4xl p-6 mb-8 bg-white rounded-lg shadow-lg">
 				<h2 className="text-2xl font-bold mb-4 text-gray-800">Popular Recipes</h2>
 				<div className="grid grid-flow-col auto-cols-max overflow-x-auto gap-4 p-2">
 					{/* Recipe cards */}

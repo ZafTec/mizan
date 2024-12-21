@@ -15,5 +15,9 @@ export default interface Recipe {
 	totalMacros: Macros;
 	servings: number;
 	instructions: string[];
-    tags: string[];
+	tags: string[];
+
+	// timestamps
+	createdAt: Date;
+	updatedAt: Date;
 }

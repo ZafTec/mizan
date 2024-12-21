@@ -16,8 +16,8 @@ export default async function Page(
 	const ingredient = await getAllIngredient(searchIngredient as string, sortBy as string);
 
 	return (
-		<div className="flex flex-col py-4 px-16 gap-4">
-			<div className="flex flex-row justify-between">
+		<div className="flex flex-col py-4 px-4 md:px-16 gap-4">
+			<div className="flex flex-row justify-between items-center gap-2">
 				<div>
 					{/* Search bar */}
 					<SearchBar />
@@ -30,9 +30,9 @@ export default async function Page(
 					</Link>
 				</div>
 			</div>
-			<div className="">
+			<div className="overflow-x-auto">
 				<table className="w-full border-b-2">
-					<thead className="border-b-2 text-lg">
+					<thead className="border-b-2 text-lg pb-2">
 						<tr>
 							<TableHeaderCell className="w-52">Name</TableHeaderCell>
 							<TableHeaderCell>Calories</TableHeaderCell>
@@ -42,7 +42,7 @@ export default async function Page(
 							<TableHeaderCell>Fiber</TableHeaderCell>
 						</tr>
 					</thead>
-					<tbody className="divide-y-2 m-2">
+					<tbody className="divide-y-2">
 						{/* Recipe rows */}
 						{!ingredient || ingredient.length === 0 ? 
 							<tr><td colSpan={6}>No ingredients found</td></tr> 
