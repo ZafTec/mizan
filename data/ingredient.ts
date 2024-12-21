@@ -19,6 +19,13 @@ export async function getAllIngredient(searchIngredient: string = "", sortBy?: s
 	return ingredients;
 }
 
+export async function getIngredientById(id: string): Promise<IngredientType | null> {
+    await MongoDBClient();
+
+    const ingredient = await Ingredient.findById(id);
+    return ingredient;
+}
+
 const createIngredientSchema = z.object({
 	name: z.string().min(1).max(100),
 	calories: z.number().min(0),

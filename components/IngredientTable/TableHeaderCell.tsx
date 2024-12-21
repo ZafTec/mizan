@@ -1,12 +1,12 @@
 'use client';
+
 import React from "react";
+import { twMerge } from "tailwind-merge";
 
+export default function TableHeaderCell({ children, className }: Readonly<{ children: React.ReactNode, className?: string }>) {
 
-export default function TableHeaderCell({ children }: Readonly<{ children: React.ReactNode }>) {
-
-	
 	return (
-		<th className="hover:bg-gray-200 cursor-pointer">
+		<th className={twMerge("hover:bg-gray-200 cursor-pointer w-7", className)}>
 			{children}
 			<i className="ml-2 ri-arrow-up-down-line"></i>
 		</th>

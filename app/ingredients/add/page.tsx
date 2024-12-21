@@ -18,7 +18,7 @@ export default function Page() {
 				<div className="flex flex-row gap-2">
 					<div className="flex flex-1 flex-col gap-2">
 						<label htmlFor="name">Name</label>
-						<input type="text" id="name" name="name" className="border-2 border-gray-300 rounded-lg p-2" />
+						<input type="text" id="name" name="name" className="border-2 border-gray-300 rounded-lg p-2" placeholder="Ingredient name" />
 						<FieldError formState={formState} name="name" />
 					</div>
 					<div className="flex flex-col gap-2">

@@ -24,17 +24,17 @@ export default async function Page(
 				</div>
 				<div>
 					{/* Add Button */}
-					<Link href="/ingredients/add" className="bg-blue-500 text-white px-4 py-2 rounded-lg">
-						<i className="ri-add-large-line"></i>
+					<Link href="/ingredients/add" className="bg-emerald-700 text-white px-2 py-2 rounded-lg">
+						<i className="ri-add-large-line mr-2"></i>
 						Add 
 					</Link>
 				</div>
 			</div>
 			<div className="">
 				<table className="w-full border-b-2">
-					<thead className="border-b-2">
+					<thead className="border-b-2 text-lg">
 						<tr>
-							<TableHeaderCell>Name</TableHeaderCell>
+							<TableHeaderCell className="w-52">Name</TableHeaderCell>
 							<TableHeaderCell>Calories</TableHeaderCell>
 							<TableHeaderCell>Protein</TableHeaderCell>
 							<TableHeaderCell>Fat</TableHeaderCell>
@@ -42,19 +42,26 @@ export default async function Page(
 							<TableHeaderCell>Fiber</TableHeaderCell>
 						</tr>
 					</thead>
-					<tbody>
+					<tbody className="divide-y-2 m-2">
 						{/* Recipe rows */}
 						{!ingredient || ingredient.length === 0 ? 
 							<tr><td colSpan={6}>No ingredients found</td></tr> 
 							: 
-							ingredient.map((ingredient) => (
-								<tr key={ingredient.id.toString()}>
-									<td>{ingredient.name}</td>
-									<td>{ingredient.macros.calories}</td>
-									<td>{ingredient.macros.protein}</td>
-									<td>{ingredient.macros.fat}</td>
-									<td>{ingredient.macros.carbs}</td>
-									<td>{ingredient.macros.fiber}</td>
+							ingredient.map((ingredient, index) => (
+								<tr
+									key={ingredient.id.toString()}
+									className={index % 2 == 0 ? "bg-slate-200" : ""}
+								>
+									<td className="capitalize font-semibold">
+										<Link href={`/ingredients/${ingredient.id}`} className="inline-block w-full">
+											{ingredient.name}
+										</Link>
+									</td>
+									<td className="text-center">{ingredient.macros.calories}</td>
+									<td className="text-center">{ingredient.macros.protein}</td>
+									<td className="text-center">{ingredient.macros.fat}</td>
+									<td className="text-center">{ingredient.macros.carbs}</td>
+									<td className="text-center">{ingredient.macros.fiber}</td>
 								</tr>
 							))
 						}

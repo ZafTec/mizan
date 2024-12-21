@@ -8,4 +8,8 @@ export default interface Ingredient {
 	servingUnit: string;
 	macros: Macros;
 	verified: boolean;  // for system vs user-added ingredients
+
+    // timestamps
+    createdAt: string;
+    updatedAt: string;
 }

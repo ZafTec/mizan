@@ -82,7 +82,7 @@ export default function Page() {
 				<div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
 					<h3 className="text-xl font-semibold mb-4">Create New Recipe</h3>
 					<p className="text-gray-600 mb-6">Add your own recipe to your collection</p>
-					<Link href="/recipes/add" className="bg-blue-500 text-white inline-block px-8 py-3 my-2 rounded-lg hover:bg-blue-600 transition-colors">
+					<Link href="/recipes/add" className="bg-orange-600 text-white inline-block px-8 py-3 my-2 rounded-lg hover:bg-blue-600 transition-colors">
 						Add Recipe
 					</Link>
 				</div>
@@ -125,7 +125,7 @@ export default function Page() {
 				{/* Recipe list */}
 				<div className="space-y-4">
 					{/* Recipe card */}
-					<div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+					<Link href={`/recipes/${1}`} className="block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
 						<div className="flex">
 							<Image
 								src={placeHolderImage}
@@ -165,8 +165,8 @@ export default function Page() {
 								</div>
 							</div>
 						</div>
-					</div>
-					<div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+					</Link>
+					<Link href={`/recipes/${2}`} className="block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
 						<div className="flex">
 							<Image
 								src={placeHolderImage}
@@ -206,8 +206,8 @@ export default function Page() {
 								</div>
 							</div>
 						</div>
-					</div>
-					<div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+					</Link>
+					<Link href={`/recipes/${3}`} className="block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
 						<div className="flex">
 							<Image
 								src={placeHolderImage}
@@ -247,7 +247,7 @@ export default function Page() {
 								</div>
 							</div>
 						</div>
-					</div>
+					</Link>
 					{/* Add more recipe cards as needed */}
 				</div>
 			</div>

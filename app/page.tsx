@@ -79,13 +79,13 @@ export default async function Home() {
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 					<div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
 						<h3 className="text-xl font-semibold mb-3">Add Your Recipe</h3>
-						<Link href="/recipes/add" className="bg-green-500 inline-block text-white px-6 py-2 rounded-full hover:bg-green-600 transition-colors">
+						<Link href="/recipes/add" className="bg-orange-600 inline-block text-white px-6 py-2 rounded-full hover:bg-green-600 transition-colors">
 							Create Recipe
 						</Link>
 					</div>
 					<div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
 						<h3 className="text-xl font-semibold mb-3">Log Your Meal</h3>
-						<Link href='/meals/add' className="bg-blue-500 inline-block text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors">
+						<Link href='/meals/add' className="bg-emerald-500 inline-block text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors">
 							Log Meal
 						</Link>
 					</div>
