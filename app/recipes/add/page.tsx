@@ -1,44 +1,63 @@
 'use client';
 
+import Ingredient from "@/types/ingredient";
+import { Schema } from "mongoose";
 // import Ingredient from "@/types/ingredient";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-type ingredient = {
-	ingredient: string;
-	amount: number;
-	unit: string;
+type SelectedIngredient = {
+	id: string | Schema.Types.ObjectId;
+	name: string;
+	amount: number | null;
+	unit: "gram" | "ml";
 }
+
 
 export default function Page() {
 	const [name, setName] = useState('');
 	const [description, setDescription] = useState('');
-	const [ingredients, setIngredients] = useState<ingredient[]>([]);
 	const [instructions, setInstructions] = useState('');
+	const [selectedIngredients, setSelectedIngredients] = useState<SelectedIngredient[]>([]);
 	const [servings, setServings] = useState(1);
 
 	const [tags, setTags] = useState<Set<string>>(new Set<string>());
 	const [currentTag, setCurrentTag] = useState('');
 
+	const [ingredientSearch, setIngredientSearch] = useState<Ingredient[]>([]);
+
 	function handleAddIngredient() {
-		setIngredients([...ingredients, { ingredient: '', amount: 0, unit: 'g' }]);
+		setSelectedIngredients([...selectedIngredients, { id: '', name: '', amount: null, unit: 'gram' }]);
 	}
 
 	function handleRemoveIngredient(index: number) {
-		const newIngredients = ingredients.filter((_, i) => i !== index);
-		setIngredients(newIngredients);
+		const newIngredients = selectedIngredients.filter((_, i) => i !== index);
+		setSelectedIngredients(newIngredients);
 	}
 
-	// function handleIngredientChange(index: number, field: keyof Ingredient, value: string | number) {
+	// function handleIngredientChange(index: number, field: keyof SelectedIngredient, value: string | number) {
 	// 	const newIngredients = [...ingredients];
 	// 	newIngredients[index] = { ...newIngredients[index], [field]: value };
 	// 	setIngredients(newIngredients);
 	// }
 
+	function handleIngredientNameChange(index: number, value: string) {
+		const newIngredients = [...selectedIngredients];
+		newIngredients[index] = { ...newIngredients[index], name: value };
+		setSelectedIngredients(newIngredients);
+
+		fetch(`/api/ingredients/${value}`)
+		.then(res => res.json())
+		.then(data => {
+			const ingredients = data.ingredients;
+			setIngredientSearch(ingredients);
+		})
+	}
+
 	function handleAddTag(e: React.KeyboardEvent<HTMLInputElement>) {
 		if (e.key === 'Enter' && currentTag.trim()) {
 			e.preventDefault();
 			// setTags([...tags, currentTag.trim()]);
-			setTags(new Set([...tags, currentTag.trim()]));
+			setTags(new Set([...tags, currentTag.trim().toUpperCase()]));
 			setCurrentTag('');
 		}
 	}
@@ -55,7 +74,7 @@ export default function Page() {
 		const recipeData = {
 			name,
 			description,
-			ingredients,
+			selectedIngredients,
 			instructions: instructions.split('\n').filter(line => line.trim()),
 			servings,
 			tags,
@@ -91,6 +110,7 @@ export default function Page() {
 							onChange={(e) => setDescription(e.target.value)}
 							className="w-full p-2 border rounded-md"
 							rows={3}
+							required
 						/>
 					</div>
 				</div>
@@ -99,35 +119,34 @@ export default function Page() {
 				<div>
 					<label className="block text-sm font-medium mb-2">Ingredients</label>
 					<div className="space-y-2">
-						{ingredients.map((ing, index) => (
+						{selectedIngredients.map((ing, index) => (
 							<div key={index} className="flex gap-2 items-center">
 								<input
 									type="text"
-									placeholder="Ingredient"
-									value={ing.ingredient}
-									// onChange={(e) => handleIngredientChange(index, 'ingredient', e.target.value)}
+									placeholder="Ingredient name"
+									value={ing.name}
+									onChange={(e) => handleIngredientNameChange(index, e.target.value)}
 									className="flex-grow p-2 border rounded-md"
 								/>
 								<input
 									type="number"
 									placeholder="Amount"
-									value={ing.amount}
+									value={ing.amount?.toString() || ''}
 									// onChange={(e) => handleIngredientChange(index, 'amount', parseFloat(e.target.value))}
 									className="w-24 p-2 border rounded-md"
 								/>
 								<input
 									type="text"
 									placeholder="Unit"
-									value={ing.unit}
-									// onChange={(e) => handleIngredientChange(index, 'unit', e.target.value)}
-									className="w-24 p-2 border rounded-md"
+									defaultValue={ing.unit}
+									disabled
+									className="w-24 p-2 rounded-md"
 								/>
 								<button
 									type="button"
 									onClick={() => handleRemoveIngredient(index)}
 									className="p-2 text-red-500"
 								>
-									{/* <X size={20} /> */}
 									<i className="ri-close-large-line"></i>
 								</button>
 							</div>
@@ -137,7 +156,6 @@ export default function Page() {
 							onClick={handleAddIngredient}
 							className="flex items-center gap-2 text-emerald-700"
 						>
-							{/* <Plus size={20} />  */}
 							<i className="ri-add-line"></i>
 							Add Ingredient
 						</button>
@@ -180,7 +198,7 @@ export default function Page() {
 						{Array.from(tags).map((tag, index) => (
 							<span
 								key={index}
-								className="bg-orange-100 px-2 py-1 rounded-md flex items-center gap-1"
+								className="bg-orange-100 text-sm px-2 py-1 rounded-md flex items-center gap-1"
 							>
 								{tag}
 								<button

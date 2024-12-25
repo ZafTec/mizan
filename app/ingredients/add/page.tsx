@@ -57,8 +57,8 @@ export default function Page() {
 						<FieldError formState={formState} name="fiber" />
 					</div>
 					<div className="flex flex-col gap-2">
-						<label htmlFor="servingSize">Serving Size</label>
-						<input id="servingSize" name="servingSize" min={0} defaultValue={0} className="border-2 border-gray-300 rounded-lg p-2" />
+						<label htmlFor="servingSize">Serving Size [grams]</label>
+						<input defaultValue={100} id="servingSize" name="servingSize" min={0} className="border-2 border-gray-300 rounded-lg p-2" />
 						<FieldError formState={formState} name="servingSize" />
 					</div>
 				</div>
