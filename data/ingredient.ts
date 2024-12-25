@@ -20,10 +20,10 @@ export async function getAllIngredient(searchIngredient: string = "", sortBy?: s
 }
 
 export async function getIngredientById(id: string): Promise<IngredientType | null> {
-    await MongoDBClient();
+	await MongoDBClient();
 
-    const ingredient = await Ingredient.findById(id);
-    return ingredient;
+	const ingredient = await Ingredient.findById(id);
+	return ingredient;
 }
 
 const createIngredientSchema = z.object({
@@ -74,15 +74,15 @@ export async function addIngredient(formState: FormState, ingredient: FormData):
 	return toFormState("SUCCESS", "Ingredient added successfully");
 }
 
-export async function getIngredientByName(name: string): Promise<IngredientType[]> {
-    await MongoDBClient();
+export async function getIngredientByName(name: string, limit: number = 5): Promise<IngredientType[]> {
+	await MongoDBClient();
 
-    // TODO: fetch the top 5 ingredients that match the name sorted by the number of recipes they are used in
+	// TODO: sort by the number of recipes they are used in
+	const ingredients = await Ingredient.find({
+		name: {
+			$regex: new RegExp(name, "i"),
+		},
+	}).limit(limit);
 
-    const ingredients = await Ingredient.find({
-        name: {
-            $regex: new RegExp(name, "i"),
-        },
-    });
-    return ingredients;
+	return ingredients;
 }

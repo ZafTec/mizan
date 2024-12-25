@@ -8,8 +8,9 @@ export interface IRecipe extends Document, Recipe {
 
 
 const RecipeSchema = new Schema<IRecipe>({
-	userId: { type: Schema.Types.ObjectId, required: true },
+	// userId: { type: Schema.Types.ObjectId, required: true },
 	name: { type: String, required: true },
+	images: { type: [String], required: true, default: [] },
 	description: { type: String },
 	ingredients: [{
 		ingredient: { type: Schema.Types.ObjectId, ref: "Ingredient" },

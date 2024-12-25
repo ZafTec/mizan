@@ -1,11 +1,11 @@
 'use client';
 
 import Ingredient from "@/types/ingredient";
-import { Schema, set } from "mongoose";
+import { RecipeInput } from "@/types/recipe";
 import { useEffect, useRef, useState } from "react";
 
 type SelectedIngredient = {
-	id: string | Schema.Types.ObjectId;
+	ingredient: Ingredient | null;
 	name: string;
 	amount: number | null;
 	unit: "gram";
@@ -42,7 +42,7 @@ export default function Page() {
 	}, []);
 
 	function handleAddIngredient() {
-		setSelectedIngredients([...selectedIngredients, { id: '', name: '', amount: null, unit: 'gram' }]);
+		setSelectedIngredients([...selectedIngredients, { ingredient: null, name: '', amount: null, unit: 'gram' }]);
 	}
 
 	function handleRemoveIngredient(index: number) {
@@ -84,7 +84,7 @@ export default function Page() {
 	function handleIngredientSelect(ingredientIndex: number, selectedIngredient: Ingredient) {
 		const newIngredients = [...selectedIngredients];
 		newIngredients[ingredientIndex] = {
-			id: selectedIngredient._id,
+			ingredient: selectedIngredient,
 			name: selectedIngredient.name,
 			amount: null,
 			unit: 'gram',
@@ -101,16 +101,29 @@ export default function Page() {
 
 	function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		const recipeData = {
+		const recipeData: RecipeInput = {
 			name,
 			description,
-			selectedIngredients,
+			// ingredients: selectedIngredients,
+			ingredients: selectedIngredients.map(ing => ({
+				ingredient: ing.ingredient!,
+				amount: ing.amount!,
+				unit: ing.unit,
+			})),
 			instructions: instructions.split('\n').filter(line => line.trim()),
 			servings,
-			tags,
+			tags: Array.from(tags),
 		}
-		// API call here
-		console.log(recipeData);
+
+		fetch('/api/recipes/add', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(recipeData),
+		})
+		.then(res => res.json())
+		.then(data => console.log(data))
 	}
 
 	return (
@@ -155,7 +168,7 @@ export default function Page() {
 									<input
 										type="text"
 										placeholder="Ingredient name"
-										value={ing.name}
+										value={ing.ingredient ? ing.ingredient.name : ""}
 										onChange={(e) => handleIngredientNameChange(index, e.target.value)}
 										className="flex-grow p-2 border rounded-md w-full"
 									/>

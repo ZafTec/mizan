@@ -2,7 +2,8 @@
 
 import Recipe from "@/model/recipe";
 import MongoDBClient from "@/mongo/client";
-import RecipeType from "@/types/recipe";
+import Macros from "@/types/macro";
+import RecipeType, { RecipeInput } from "@/types/recipe";
 
 
 export async function getAllRecipe(searchRecipe: string = "", sortBy?: string): Promise<RecipeType[]> {
@@ -23,9 +24,27 @@ export async function getRecipeById(id: string): Promise<RecipeType | null> {
     return recipe;
 }
 
-export async function addRecipe(recipe: RecipeType): Promise<RecipeType> {
+export async function addRecipe(recipe: RecipeInput): Promise<RecipeType> {
     await MongoDBClient();
 
-    const newRecipe = await Recipe.create(recipe);
+    // TODO: Calculate totalMacros
+    let totalMacros: Macros = {
+        calories: recipe.ingredients.reduce((acc, curr) => acc + curr.ingredient.macros.calories * (curr.amount / curr.ingredient.servingSize), 0),
+        protein: recipe.ingredients.reduce((acc, curr) => acc + curr.ingredient.macros.protein * (curr.amount / curr.ingredient.servingSize), 0),
+        fat: recipe.ingredients.reduce((acc, curr) => acc + curr.ingredient.macros.fat * (curr.amount / curr.ingredient.servingSize), 0),
+        carbs: recipe.ingredients.reduce((acc, curr) => acc + curr.ingredient.macros.carbs * (curr.amount / curr.ingredient.servingSize), 0),
+        fiber: recipe.ingredients.reduce((acc, curr) => acc + curr.ingredient.macros.fiber * (curr.amount / curr.ingredient.servingSize), 0),
+    };
+
+
+    const newRecipe = await Recipe.create({
+        name: recipe.name,
+        description: recipe.description,
+        ingredients: recipe.ingredients,
+        totalMacros,
+        servings: recipe.servings,
+        instructions: recipe.instructions,
+        tags: recipe.tags,
+    });
     return newRecipe;
 }
