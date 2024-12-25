@@ -15,6 +15,9 @@ type SelectedIngredient = {
 	unit: "gram";
 }
 
+// TODO: variable according to screen size
+const MAX_RECIPE_IMAGES_TO_PREVIEW = 1;
+
 
 export default function Page() {
 	const [name, setName] = useState('');
@@ -129,7 +132,7 @@ export default function Page() {
 			body: JSON.stringify(recipeData),
 		})
 		.then(res => res.json())
-		.then(data => console.log(data))
+		// .then(data => console.log(data))
 	}
 
 	return (
@@ -168,7 +171,7 @@ export default function Page() {
 										</button>
 										{images.map((image, index) => {
 
-											if (typeof image !== 'string' || index >= 3) {
+											if (typeof image !== 'string' || index >= MAX_RECIPE_IMAGES_TO_PREVIEW) {
 												return null;
 											}
 											
@@ -178,7 +181,7 @@ export default function Page() {
 													<button
 														type="button"
 														onClick={() => setImages(images.filter((_, i) => i !== index))}
-														className="absolute items-center -top-3 -right-3 text-sm w-6 h-6 bg-red-800 opacity-50 text-white hover:opacity-75 rounded-full"
+														className="absolute items-center -top-3 -right-3 text-sm w-6 h-6 bg-red-600 opacity-70 text-white hover:opacity-85 rounded-full"
 													>
 														<i className="ri-close-line"></i>
 													</button>
@@ -186,9 +189,9 @@ export default function Page() {
 											);
 										})}
 
-										{images.length > 3 && 
+										{images.length > MAX_RECIPE_IMAGES_TO_PREVIEW && 
 											<div className="w-24 h-24 bg-gray-200 flex items-center justify-center rounded-md">
-												<p className="text-gray-500">+{images.length - 3}</p>
+												<p className="text-gray-500">+{images.length - MAX_RECIPE_IMAGES_TO_PREVIEW}</p>
 											</div>
 										}
 									</div>
@@ -228,7 +231,7 @@ export default function Page() {
 					<div className="space-y-2">
 						{selectedIngredients.map((ing, index) => (
 							<div key={index} className="flex gap-2 items-center">
-								<div ref={dropdownRef} className="relative w-full">
+								<div ref={dropdownRef} className="relative w-full min-w-32">
 									<input
 										type="text"
 										placeholder="Ingredient name"
@@ -264,14 +267,14 @@ export default function Page() {
 									placeholder="Amount"
 									value={ing.amount?.toString() || ''}
 									onChange={(e) => handleIngredientAmountChange(index, parseFloat(e.target.value))}
-									className="w-24 p-2 border rounded-md"
+									className="w-fit max-w-20 md:max-w-24 p-2 border rounded-md"
 								/>
 								<input
 									type="text"
 									placeholder="Unit"
 									defaultValue={ing.unit}
 									disabled
-									className="w-24 p-2 rounded-md"
+									className="w-fit max-w-10 md:max-w-24 p-2 rounded-md"
 								/>
 								<button
 									type="button"
