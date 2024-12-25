@@ -1,7 +1,7 @@
 'use client';
 
 import Ingredient from "@/types/ingredient";
-import { Schema } from "mongoose";
+import { Schema, set } from "mongoose";
 import { useEffect, useRef, useState } from "react";
 
 type SelectedIngredient = {
@@ -23,7 +23,7 @@ export default function Page() {
 	const [currentTag, setCurrentTag] = useState('');
 
 	const [ingredientSearch, setIngredientSearch] = useState<Ingredient[]>([]);
-	const [showIngredientDropdown, setShowIngredientDropdown] = useState(false);
+	const [activeDropdownIndex, setActiveDropdownIndex] = useState<number | null>(null);
 
 	// dropdown options ref
 	const dropdownRef = useRef<HTMLDivElement>(null);
@@ -31,7 +31,7 @@ export default function Page() {
 	useEffect(() => {
 		function handleClickOutside(event: MouseEvent) {
 			if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-				setShowIngredientDropdown(false);
+				setActiveDropdownIndex(null);
 			}
 		}
 
@@ -54,7 +54,7 @@ export default function Page() {
 		const newIngredients = [...selectedIngredients];
 		newIngredients[index] = { ...newIngredients[index], name: value };
 		setSelectedIngredients(newIngredients);
-		setShowIngredientDropdown(true);
+		setActiveDropdownIndex(index);
 
 		fetch(`/api/ingredients/${value}`)
 		.then(res => res.json())
@@ -90,7 +90,7 @@ export default function Page() {
 			unit: 'gram',
 		}
 		setSelectedIngredients(newIngredients);
-		setShowIngredientDropdown(false);
+		setActiveDropdownIndex(null);
 	}
 
 	function handleIngredientAmountChange(index: number, value: number) {
@@ -159,7 +159,7 @@ export default function Page() {
 										onChange={(e) => handleIngredientNameChange(index, e.target.value)}
 										className="flex-grow p-2 border rounded-md w-full"
 									/>
-									{showIngredientDropdown && (	
+									{activeDropdownIndex === index && (	
 										ingredientSearch.length > 0 ? (
 											<ul className="absolute z-10 w-full bg-white border rounded-md shadow-md mt-1">
 												{ingredientSearch.map((ingredient) => (
