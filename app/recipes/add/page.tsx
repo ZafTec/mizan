@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { CldUploadWidget } from 'next-cloudinary';
 import Image from 'next/image';
+import { useRouter } from "next/navigation";
 
 
 type SelectedIngredient = {
@@ -35,6 +36,8 @@ export default function Page() {
 
 	// dropdown options ref
 	const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const router = useRouter();
 
 	useEffect(() => {
 		function handleClickOutside(event: MouseEvent) {
@@ -133,6 +136,7 @@ export default function Page() {
 		})
 		.then(res => res.json())
 		// .then(data => console.log(data))
+        .then(() => router.push('/recipes'))
 	}
 
 	return (
