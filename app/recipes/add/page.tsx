@@ -4,6 +4,10 @@ import Ingredient from "@/types/ingredient";
 import { RecipeInput } from "@/types/recipe";
 import { useEffect, useRef, useState } from "react";
 
+import { CldUploadWidget } from 'next-cloudinary';
+import Image from 'next/image';
+
+
 type SelectedIngredient = {
 	ingredient: Ingredient | null;
 	name: string;
@@ -14,6 +18,7 @@ type SelectedIngredient = {
 
 export default function Page() {
 	const [name, setName] = useState('');
+	const [images, setImages] = useState<string[]>([]);
 	const [description, setDescription] = useState('');
 	const [instructions, setInstructions] = useState('');
 	const [selectedIngredients, setSelectedIngredients] = useState<SelectedIngredient[]>([]);
@@ -60,7 +65,7 @@ export default function Page() {
 		.then(res => res.json())
 		.then(data => {
 			const ingredients = data.ingredients;
-			console.log(ingredients);
+			// console.log(ingredients);
 			setIngredientSearch(ingredients);
 		})
 	}
@@ -113,6 +118,7 @@ export default function Page() {
 			instructions: instructions.split('\n').filter(line => line.trim()),
 			servings,
 			tags: Array.from(tags),
+			images: images,
 		}
 
 		fetch('/api/recipes/add', {
@@ -132,6 +138,64 @@ export default function Page() {
 			<form onSubmit={handleSubmit} className="space-y-6">
 				{/* Basic Information */}
 				<div className="space-y-4">
+					<div>
+						<label className="block text-sm font-medium mb-1" htmlFor="recipe_images">Recipe Images</label> 
+						<CldUploadWidget
+							// onQueuesEnd={(result, { widget }) => {
+							// 	// widget.close();
+							// }}
+							onSuccess={(result) => {
+								if (result?.info && result.info instanceof Object) {
+									// console.log(result.info.secure_url);
+									// setImages([...images, result.info.secure_url]);
+									setImages((prevImages) => {
+										if (result?.info && result.info instanceof Object) {
+											return [...prevImages, result.info.secure_url]
+										}
+										return prevImages;
+									});
+								}
+								// widget.close();
+							}}
+							signatureEndpoint="/api/sign-cloudinary-params"
+						>
+							{({ open }) => {
+								return (
+									<div className="flex flex-row gap-2 items-center">
+										<button onClick={() => open()} className="bg-emerald-50 border-emerald-700 border-4 text-emerald-700 w-24 h-24 items-center rounded-md hover:bg-emerald-100 hover:border-emerald-600">
+											<i className="ri-upload-cloud-2-line ri-3x"></i>
+											<span className="sr-only">Upload Image</span>
+										</button>
+										{images.map((image, index) => {
+
+											if (typeof image !== 'string' || index >= 3) {
+												return null;
+											}
+											
+											return (
+												<div key={index} className="relative w-24 h-24" draggable="false">
+													<Image draggable="false" key={index} src={image} alt="Recipe image thumbnail" fill className="w-24 h-24 object-cover rounded-md m-1" />
+													<button
+														type="button"
+														onClick={() => setImages(images.filter((_, i) => i !== index))}
+														className="absolute items-center -top-3 -right-3 text-sm w-6 h-6 bg-red-800 opacity-50 text-white hover:opacity-75 rounded-full"
+													>
+														<i className="ri-close-line"></i>
+													</button>
+												</div>
+											);
+										})}
+
+										{images.length > 3 && 
+											<div className="w-24 h-24 bg-gray-200 flex items-center justify-center rounded-md">
+												<p className="text-gray-500">+{images.length - 3}</p>
+											</div>
+										}
+									</div>
+								);
+							}}
+						</CldUploadWidget>
+					</div>
 					<div>
 						<label className="block text-sm font-medium mb-1" htmlFor="recipe_name">Recipe Name</label>
 						<input
@@ -168,7 +232,7 @@ export default function Page() {
 									<input
 										type="text"
 										placeholder="Ingredient name"
-										value={ing.ingredient ? ing.ingredient.name : ""}
+										value={ing.name}
 										onChange={(e) => handleIngredientNameChange(index, e.target.value)}
 										className="flex-grow p-2 border rounded-md w-full"
 									/>

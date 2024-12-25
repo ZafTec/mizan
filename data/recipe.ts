@@ -45,6 +45,7 @@ export async function addRecipe(recipe: RecipeInput): Promise<RecipeType> {
         servings: recipe.servings,
         instructions: recipe.instructions,
         tags: recipe.tags,
+        images: recipe.images,
     });
     return newRecipe;
 }

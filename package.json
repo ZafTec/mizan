@@ -9,9 +9,11 @@
 		"lint": "next lint"
 	},
 	"dependencies": {
+		"cloudinary": "^2.5.1",
 		"mongoose": "^8.9.1",
 		"next": "15.0.3",
 		"next-auth": "^4.24.10",
+		"next-cloudinary": "^6.16.0",
 		"next-pwa": "^5.6.0",
 		"react": "19.0.0-rc-66855b96-20241106",
 		"react-dom": "19.0.0-rc-66855b96-20241106",

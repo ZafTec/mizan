@@ -25,7 +25,7 @@ export default interface Recipe {
 
 export interface RecipeInput {
 	name: string;
-	// images: string[];
+	images: string[];
 	description?: string;
 	ingredients: {
 		ingredient: Ingredient;

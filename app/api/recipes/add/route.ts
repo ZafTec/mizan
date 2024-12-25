@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
 		// Parse the JSON body
 		const body = await request.json();
 		
-		const { name, description, instructions, ingredients, servings, tags } = body;
+		const { name, description, instructions, ingredients, servings, tags, images } = body;
 
 		
 		const recipeData: RecipeInput = {
@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
 			instructions,
 			servings,
 			tags,
+			images
 		};
 
 		// Save the recipe to the database
