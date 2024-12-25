@@ -2,7 +2,7 @@ import Ingredient from "@/types/ingredient";
 import mongoose, { Document, Schema, model } from "mongoose";
 
 export interface IIngredient extends Document, Ingredient {
-	id: Schema.Types.ObjectId;
+	_id: Schema.Types.ObjectId;
 }
 
 const IngredientSchema = new Schema({

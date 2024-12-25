@@ -2,14 +2,13 @@
 
 import Ingredient from "@/types/ingredient";
 import { Schema } from "mongoose";
-// import Ingredient from "@/types/ingredient";
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type SelectedIngredient = {
 	id: string | Schema.Types.ObjectId;
 	name: string;
 	amount: number | null;
-	unit: "gram" | "ml";
+	unit: "gram";
 }
 
 
@@ -24,6 +23,23 @@ export default function Page() {
 	const [currentTag, setCurrentTag] = useState('');
 
 	const [ingredientSearch, setIngredientSearch] = useState<Ingredient[]>([]);
+	const [showIngredientDropdown, setShowIngredientDropdown] = useState(false);
+
+	// dropdown options ref
+	const dropdownRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		function handleClickOutside(event: MouseEvent) {
+			if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+				setShowIngredientDropdown(false);
+			}
+		}
+
+		document.addEventListener('mousedown', handleClickOutside);
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside);
+		}
+	}, []);
 
 	function handleAddIngredient() {
 		setSelectedIngredients([...selectedIngredients, { id: '', name: '', amount: null, unit: 'gram' }]);
@@ -34,21 +50,17 @@ export default function Page() {
 		setSelectedIngredients(newIngredients);
 	}
 
-	// function handleIngredientChange(index: number, field: keyof SelectedIngredient, value: string | number) {
-	// 	const newIngredients = [...ingredients];
-	// 	newIngredients[index] = { ...newIngredients[index], [field]: value };
-	// 	setIngredients(newIngredients);
-	// }
-
 	function handleIngredientNameChange(index: number, value: string) {
 		const newIngredients = [...selectedIngredients];
 		newIngredients[index] = { ...newIngredients[index], name: value };
 		setSelectedIngredients(newIngredients);
+		setShowIngredientDropdown(true);
 
 		fetch(`/api/ingredients/${value}`)
 		.then(res => res.json())
 		.then(data => {
 			const ingredients = data.ingredients;
+			console.log(ingredients);
 			setIngredientSearch(ingredients);
 		})
 	}
@@ -69,6 +81,24 @@ export default function Page() {
 		setTags(newTags);
 	}
 
+	function handleIngredientSelect(ingredientIndex: number, selectedIngredient: Ingredient) {
+		const newIngredients = [...selectedIngredients];
+		newIngredients[ingredientIndex] = {
+			id: selectedIngredient._id,
+			name: selectedIngredient.name,
+			amount: null,
+			unit: 'gram',
+		}
+		setSelectedIngredients(newIngredients);
+		setShowIngredientDropdown(false);
+	}
+
+	function handleIngredientAmountChange(index: number, value: number) {
+		const newIngredients = [...selectedIngredients];
+		newIngredients[index] = { ...newIngredients[index], amount: value };
+		setSelectedIngredients(newIngredients);
+	}
+
 	function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
 		const recipeData = {
@@ -79,7 +109,7 @@ export default function Page() {
 			servings,
 			tags,
 		}
-		// Add your API call here
+		// API call here
 		console.log(recipeData);
 	}
 
@@ -121,18 +151,42 @@ export default function Page() {
 					<div className="space-y-2">
 						{selectedIngredients.map((ing, index) => (
 							<div key={index} className="flex gap-2 items-center">
-								<input
-									type="text"
-									placeholder="Ingredient name"
-									value={ing.name}
-									onChange={(e) => handleIngredientNameChange(index, e.target.value)}
-									className="flex-grow p-2 border rounded-md"
-								/>
+								<div ref={dropdownRef} className="relative w-full">
+									<input
+										type="text"
+										placeholder="Ingredient name"
+										value={ing.name}
+										onChange={(e) => handleIngredientNameChange(index, e.target.value)}
+										className="flex-grow p-2 border rounded-md w-full"
+									/>
+									{showIngredientDropdown && (	
+										ingredientSearch.length > 0 ? (
+											<ul className="absolute z-10 w-full bg-white border rounded-md shadow-md mt-1">
+												{ingredientSearch.map((ingredient) => (
+													// TODO: display ingredient details with macros
+													<li
+														key={ingredient._id.toString()}
+														className="p-2 hover:bg-gray-100 cursor-pointer"
+														onClick={() => handleIngredientSelect(index, ingredient)}
+													>
+														{ingredient.name}
+													</li>
+												))}
+											</ul>
+										) : (
+											<ul className="absolute z-10 w-full bg-white border rounded-md shadow-md mt-1">
+												{/* TODO: a add ingredient button */}
+												<li className="p-2">No ingredients found</li>
+											</ul>
+										)
+									)}
+								</div>
+
 								<input
 									type="number"
 									placeholder="Amount"
 									value={ing.amount?.toString() || ''}
-									// onChange={(e) => handleIngredientChange(index, 'amount', parseFloat(e.target.value))}
+									onChange={(e) => handleIngredientAmountChange(index, parseFloat(e.target.value))}
 									className="w-24 p-2 border rounded-md"
 								/>
 								<input

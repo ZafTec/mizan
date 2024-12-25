@@ -49,11 +49,11 @@ export default async function Page(
 							: 
 							ingredient.map((ingredient, index) => (
 								<tr
-									key={ingredient.id.toString()}
+									key={ingredient._id.toString()}
 									className={index % 2 == 0 ? "bg-slate-200" : ""}
 								>
 									<td className="capitalize font-semibold">
-										<Link href={`/ingredients/${ingredient.id}`} className="inline-block w-full">
+										<Link href={`/ingredients/${ingredient._id}`} className="inline-block w-full">
 											{ingredient.name}
 										</Link>
 									</td>

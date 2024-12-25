@@ -73,3 +73,16 @@ export async function addIngredient(formState: FormState, ingredient: FormData):
 
 	return toFormState("SUCCESS", "Ingredient added successfully");
 }
+
+export async function getIngredientByName(name: string): Promise<IngredientType[]> {
+    await MongoDBClient();
+
+    // TODO: fetch the top 5 ingredients that match the name sorted by the number of recipes they are used in
+
+    const ingredients = await Ingredient.find({
+        name: {
+            $regex: new RegExp(name, "i"),
+        },
+    });
+    return ingredients;
+}

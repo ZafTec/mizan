@@ -2,7 +2,7 @@ import { ObjectId } from "mongoose";
 import Macros from "./macro";
 
 export default interface Ingredient {
-    id: string | ObjectId;
+    _id: string | ObjectId;
 	name: string;
 	servingSize: number;
 	servingUnit: string;
