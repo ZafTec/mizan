@@ -2,9 +2,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { RecipeInput } from "@/types/recipe";
 import { addRecipe } from "@/data/recipe";
+import getUser from "@/context/AuthProvider";
 
 export async function POST(request: NextRequest) {
 	try {
+        const { user } = await getUser();
+        console.log(user);
 		// Parse the JSON body
 		const body = await request.json();
 		

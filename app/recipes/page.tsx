@@ -3,7 +3,10 @@ import Image from "next/image";
 import placeHolderImage from "@/public/placeholder-recipe.jpg";
 import RecipeMoreButton from "@/components/Recipes/RecipeMoreButton";
 
-export default function Page() {
+export default async function Page() {
+
+    // get recipes
+
 	return (
 		<div className="max-w-7xl mx-auto px-4 py-8">
 			{/* Your Recipes */}
