@@ -68,3 +68,10 @@ export async function addUser(formState: FormState, user: FormData): Promise<For
 	}
 }
 
+export async function getUserByEmail(email: string): Promise<UserType | null> {
+	await MongoDBClient();
+
+	const user = await User.findOne({ email });
+
+	return user;
+}

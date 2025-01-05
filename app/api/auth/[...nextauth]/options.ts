@@ -1,6 +1,7 @@
 import type { NextAuthOptions } from "next-auth";
 import GithubProvider from "next-auth/providers/github";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { getUserByEmail } from "@/data/user";
 
 export const options: NextAuthOptions = {
 	providers: [
@@ -23,12 +24,21 @@ export const options: NextAuthOptions = {
 				},
 			},
 			async authorize(credentials) {
-                const username = credentials?.username;
-                const password = credentials?.password;
+				const username = credentials?.username;
+				const password = credentials?.password;
 
-				if (username === "test" && password === "test") {
-					// return { id: 1, name: "Test User", email: "test@email.com", password: "test" };
-                    return null;
+				if (!username || !password) {
+					return null;
+				}
+
+				const user = await getUserByEmail(username);
+				// console.log(user);
+
+				if (user) {
+					return {
+						...user,
+						id: typeof user.id === 'string' ? user.id : user.id.toString(),
+					};
 				} else {
 					return null;
 				}
