@@ -34,6 +34,8 @@ export const options: NextAuthOptions = {
 				const user = await getUserByEmail(username);
 				// console.log(user);
 
+				// TODO: Add password hashing and verification
+
 				if (user) {
 					return {
 						...user,

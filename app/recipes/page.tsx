@@ -5,7 +5,7 @@ import RecipeMoreButton from "@/components/Recipes/RecipeMoreButton";
 
 export default async function Page() {
 
-    // get recipes
+	// get recipes
 
 	return (
 		<div className="max-w-7xl mx-auto px-4 py-8">

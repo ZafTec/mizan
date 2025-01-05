@@ -33,6 +33,7 @@ const createIngredientSchema = z.object({
 	fat: z.number().min(0),
 	carbs: z.number().min(0),
 	fiber: z.number().min(0),
+    servingSize: z.number().min(0),
 })
 
 export async function addIngredient(formState: FormState, ingredient: FormData): Promise<FormState> {
@@ -44,6 +45,7 @@ export async function addIngredient(formState: FormState, ingredient: FormData):
 			fat: Number(ingredient.get("fat")!),
 			carbs: Number(ingredient.get("carbs")!),
 			fiber: Number(ingredient.get("fiber")!),
+            servingSize: Number(ingredient.get("servingSize")!),
 		};
 
 		const validatedData = createIngredientSchema.parse(ingredientData);
@@ -58,7 +60,8 @@ export async function addIngredient(formState: FormState, ingredient: FormData):
 				fat: validatedData.fat,
 				carbs: validatedData.carbs,
 				fiber: validatedData.fiber,
-			},			
+			},
+            servingSize: validatedData.servingSize,
 		});
 
 		if (!newIngredient) {

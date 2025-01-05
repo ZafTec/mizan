@@ -6,8 +6,8 @@ import getUser from "@/context/AuthProvider";
 
 export async function POST(request: NextRequest) {
 	try {
-        const { user } = await getUser();
-        console.log(user);
+		const { user } = await getUser();
+		console.log(user);
 		// Parse the JSON body
 		const body = await request.json();
 		
