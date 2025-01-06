@@ -3,7 +3,7 @@ import type {
 	NextApiRequest,
 	NextApiResponse,
 } from "next"
-import { options } from "../app/api/auth/[...nextauth]/options";
+import { options } from "@/app/api/auth/[...nextauth]/options";
 import { getServerSession } from "next-auth"
   
   

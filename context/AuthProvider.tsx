@@ -8,9 +8,9 @@ export default async function getUser() {
 	const session = await getServerSession(options);
 		
 	if (!session) {
-		redirect("/api/auth/signin?callbackUrl=/about");
+		redirect("/api/auth/signin?callbackUrl=/");
 	}
-	
+	console.log(session);
 	const user = session.user;
     return { session, user };
 }

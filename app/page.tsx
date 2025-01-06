@@ -139,7 +139,7 @@ export default async function Home() {
 									Sign In
 								</Link>
 								<Link 
-									href="/api/auth/register" 
+									href="/register" 
 									className="bg-green-500 text-white px-6 py-2 rounded-full hover:bg-green-600 transition-colors"
 								>
 									Register
