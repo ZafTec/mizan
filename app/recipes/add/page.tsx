@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { CldUploadWidget } from 'next-cloudinary';
 import Image from 'next/image';
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react"
 
 
 type SelectedIngredient = {
@@ -34,10 +35,14 @@ export default function Page() {
 	const [ingredientSearch, setIngredientSearch] = useState<Ingredient[]>([]);
 	const [activeDropdownIndex, setActiveDropdownIndex] = useState<number | null>(null);
 
+	const { data: session, status } = useSession();
+
+	console.log(session, status);
+
 	// dropdown options ref
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const router = useRouter();
+	const router = useRouter();
 
 	useEffect(() => {
 		function handleClickOutside(event: MouseEvent) {
@@ -66,6 +71,11 @@ export default function Page() {
 		newIngredients[index] = { ...newIngredients[index], name: value };
 		setSelectedIngredients(newIngredients);
 		setActiveDropdownIndex(index);
+
+		if (!value) {
+			setIngredientSearch([]);
+			return;
+		}
 
 		fetch(`/api/ingredients/${value}`)
 		.then(res => res.json())
@@ -136,7 +146,7 @@ export default function Page() {
 		})
 		.then(res => res.json())
 		// .then(data => console.log(data))
-        .then(() => router.push('/recipes'))
+		.then(() => router.push('/recipes'))
 	}
 
 	return (
@@ -169,7 +179,15 @@ export default function Page() {
 							{({ open }) => {
 								return (
 									<div className="flex flex-row gap-2 items-center">
-										<button onClick={() => open()} className="bg-emerald-50 border-emerald-700 border-4 text-emerald-700 w-24 h-24 items-center rounded-md hover:bg-emerald-100 hover:border-emerald-600">
+										<button
+											type="button"
+											onClick={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+												e.preventDefault();
+												e.stopPropagation();
+												open();
+											}}
+											className="bg-emerald-50 border-emerald-700 border-4 text-emerald-700 w-24 h-24 items-center rounded-md hover:bg-emerald-100 hover:border-emerald-600"
+										>
 											<i className="ri-upload-cloud-2-line ri-3x"></i>
 											<span className="sr-only">Upload Image</span>
 										</button>

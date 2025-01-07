@@ -86,6 +86,7 @@ export async function getIngredientByName(name: string, limit: number = 5): Prom
 			$regex: new RegExp(name, "i"),
 		},
 	}).limit(limit);
+    console.log(ingredients.length);
 
 	return ingredients;
 }

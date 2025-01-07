@@ -15,12 +15,10 @@ export const options: NextAuthOptions = {
 				username: {
 					label: "Username: ",
 					type: "text",
-					placeholder: "test",
 				},
 				password: {
 					label: "Password: ",
 					type: "password",
-					placeholder: "test",
 				},
 			},
 			async authorize(credentials) {
