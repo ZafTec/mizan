@@ -52,7 +52,7 @@ export default function MealMacrosChart({ meals }: MealMacrosChartProps) {
 	});
 
 	// Function to format percentages
-	const toPercent = (decimal: number, fixed = 0) => `${(decimal * 100).toFixed(fixed)}%`;
+	const toPercent = (decimal: number, fixed = 0) => `${(decimal * 100).toFixed(1)}%`;
 
 	// Custom tooltip content for the percentage area chart
 	const renderTooltipContent = (o: any) => {

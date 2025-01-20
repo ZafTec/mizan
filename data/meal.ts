@@ -5,6 +5,7 @@ import { toFormState } from "@/helper/toFormState";
 import Meal from "@/model/meal";
 import MongoDBClient from "@/mongo/client";
 import MealType, { MealInput } from "@/types/meal";
+import { TimeSpan } from "@/types/timespan";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -83,4 +84,43 @@ export async function addMeal(formState: FormState, formData: FormData): Promise
 	revalidatePath("/meals");
   
 	return toFormState("SUCCESS", "Meal added successfully");
+}
+
+export async function getMeal(timeSpan: TimeSpan = TimeSpan.Week): Promise<MealType[]> {
+	await MongoDBClient();
+
+	let meals: MealType[] = [];
+
+	switch (timeSpan) {			
+		case TimeSpan.Week:
+			meals = await Meal.find({
+				createdAt: {
+					$gte: new Date(new Date().setDate(new Date().getDate() - 7)),
+				},
+			});
+			break;
+		case TimeSpan.Month:
+			meals = await Meal.find({
+				createdAt: {
+					$gte: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+				},
+			});
+			break;
+		case TimeSpan.Year:
+			meals = await Meal.find({
+				createdAt: {
+					$gte: new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
+				},
+			});
+			break;
+		default:
+			meals = await Meal.find({
+                createdAt: {
+                    $gte: new Date(new Date().setHours(0, 0, 0)),
+                },
+            });
+            break;
+	}
+
+	return meals;
 }

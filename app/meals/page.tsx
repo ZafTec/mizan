@@ -1,17 +1,19 @@
 
-import { getTodayMeal } from "@/data/meal";
+import { getMeal, getTodayMeal } from "@/data/meal";
 import MealMacrosChart from "@/components/MealMacrosChart";
 import Link from "next/link";
+import MealCard from "@/components/MealCard";
 
 export default async function Page() {
-	const meals = await getTodayMeal();
+    const todayMeals = await getTodayMeal();
+    const weeksMeals = await getMeal();
 
 	// Calculate total calories and macros
-	const totalCalories = meals.reduce((sum, meal) => sum + meal.totalMacros.calories, 0);
-	const totalProtein = meals.reduce((sum, meal) => sum + meal.totalMacros.protein, 0);
-	const totalCarbs = meals.reduce((sum, meal) => sum + meal.totalMacros.carbs, 0);
-	const totalFat = meals.reduce((sum, meal) => sum + meal.totalMacros.fat, 0);
-	const totalFiber = meals.reduce((sum, meal) => sum + meal.totalMacros.fiber, 0);
+	const totalCalories = todayMeals.reduce((sum, meal) => sum + meal.totalMacros.calories, 0);
+	const totalProtein = todayMeals.reduce((sum, meal) => sum + meal.totalMacros.protein, 0);
+	const totalCarbs = todayMeals.reduce((sum, meal) => sum + meal.totalMacros.carbs, 0);
+	const totalFat = todayMeals.reduce((sum, meal) => sum + meal.totalMacros.fat, 0);
+	const totalFiber = todayMeals.reduce((sum, meal) => sum + meal.totalMacros.fiber, 0);
 
 	return (
 		<div className="flex flex-col py-4 md:px-10 lg:px-16 gap-4">
@@ -35,26 +37,18 @@ export default async function Page() {
 
 			{/* List of meals */}
 			<div className="mt-4">
-				<h2 className="text-2xl font-bold">Meals List</h2>
-				<ul className="list-disc pl-5">
-					{meals.map((meal) => (
-						<li key={meal.id.toString()} className="mt-2">
-							<h3 className="text-xl font-semibold">{meal.name}</h3>
-							<p>Type: {meal.mealType}</p>
-							<p>Calories: {meal.totalMacros.calories} kcal</p>
-							<p>Protein: {meal.totalMacros.protein} g</p>
-							<p>Carbs: {meal.totalMacros.carbs} g</p>
-							<p>Fat: {meal.totalMacros.fat} g</p>
-							<p>Fiber: {meal.totalMacros.fiber} g</p>
-						</li>
+				<h2 className="text-2xl font-bold">Today Meals List</h2>
+				<div className="flex gap-3 pl-5">
+					{todayMeals.map((meal) => (
+						<MealCard meal={meal} key={meal.id.toString()} />
 					))}
-				</ul>
+				</div>
 			</div>
 
 			{/* Chart of macros over time */}
 			<div className="mt-4">
 				<h2 className="text-2xl font-bold">Macros Over Time</h2>
-				<MealMacrosChart meals={meals} />
+				<MealMacrosChart meals={weeksMeals} />
 			</div>
 		</div>
 	);
