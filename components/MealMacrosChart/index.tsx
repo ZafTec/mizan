@@ -1,49 +1,49 @@
+// components/MealMacrosChart.tsx
 
 "use client";
 
-import Meal from "@/types/meal";
+import { PerDayMealsAggregate } from "@/types/meal";
 import {
-	AreaChart,
-	Area,
-	XAxis,
-	YAxis,
-	CartesianGrid,
-	Tooltip,
-	ResponsiveContainer,
-	Legend,
-	LineChart,
-	Line,
-	Brush,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  LineChart,
+  Line,
+  Brush,
 } from "recharts";
 
 interface MealMacrosChartProps {
-	meals: Meal[];
+  perDayMeals: PerDayMealsAggregate[];
 }
 
-export default function MealMacrosChart({ meals }: MealMacrosChartProps) {
-	// Prepare data for the chart
-	const data = meals.map((meal) => {
-		const time = meal.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+export default function MealMacrosChart({ perDayMeals }: MealMacrosChartProps) {
+  // Prepare data for the chart
+	const data = perDayMeals.map((perDayMeal) => {
+		const dateStr = perDayMeal.date.toISOString().substring(0, 10); // 'YYYY-MM-DD'
 		const totalMacros =
-			meal.totalMacros.protein +
-			meal.totalMacros.carbs +
-			meal.totalMacros.fat +
-			meal.totalMacros.fiber;
+			perDayMeal.totalMacros.protein +
+			perDayMeal.totalMacros.carbs +
+			perDayMeal.totalMacros.fat +
+			perDayMeal.totalMacros.fiber;
 
 		// Calculate percentages for each macro
-		const proteinPercent = totalMacros > 0 ? meal.totalMacros.protein / totalMacros : 0;
-		const carbsPercent = totalMacros > 0 ? meal.totalMacros.carbs / totalMacros : 0;
-		const fatPercent = totalMacros > 0 ? meal.totalMacros.fat / totalMacros : 0;
-		const fiberPercent = totalMacros > 0 ? meal.totalMacros.fiber / totalMacros : 0;
+		const proteinPercent = totalMacros > 0 ? perDayMeal.totalMacros.protein / totalMacros : 0;
+		const carbsPercent = totalMacros > 0 ? perDayMeal.totalMacros.carbs / totalMacros : 0;
+		const fatPercent = totalMacros > 0 ? perDayMeal.totalMacros.fat / totalMacros : 0;
+		const fiberPercent = totalMacros > 0 ? perDayMeal.totalMacros.fiber / totalMacros : 0;
 
 		return {
-			name: meal.name,
-			time,
-			calories: meal.totalMacros.calories,
-			protein: meal.totalMacros.protein,
-			carbs: meal.totalMacros.carbs,
-			fat: meal.totalMacros.fat,
-			fiber: meal.totalMacros.fiber,
+			date: dateStr,
+			calories: perDayMeal.totalMacros.calories,
+			protein: perDayMeal.totalMacros.protein,
+			carbs: perDayMeal.totalMacros.carbs,
+			fat: perDayMeal.totalMacros.fat,
+			fiber: perDayMeal.totalMacros.fiber,
 			proteinPercent,
 			carbsPercent,
 			fatPercent,
@@ -52,7 +52,7 @@ export default function MealMacrosChart({ meals }: MealMacrosChartProps) {
 	});
 
 	// Function to format percentages
-	const toPercent = (decimal: number, fixed = 0) => `${(decimal * 100).toFixed(1)}%`;
+	const toPercent = (decimal: number, fixed = 1) => `${(decimal * 100).toFixed(1)}%`;
 
 	// Custom tooltip content for the percentage area chart
 	const renderTooltipContent = (o: any) => {
@@ -66,16 +66,16 @@ export default function MealMacrosChart({ meals }: MealMacrosChartProps) {
 				<p className="label">{`${label}`}</p>
 				<ul className="list">
 					<li style={{ color: '#8884d8' }}>
-						Protein: {toPercent(entry.proteinPercent, 2)} ({entry.protein}g)
+						Protein: {toPercent(entry.proteinPercent, 1)} ({entry.protein}g)
 					</li>
 					<li style={{ color: '#82ca9d' }}>
-						Carbs: {toPercent(entry.carbsPercent, 2)} ({entry.carbs}g)
+						Carbs: {toPercent(entry.carbsPercent, 1)} ({entry.carbs}g)
 					</li>
 					<li style={{ color: '#ffc658' }}>
-						Fat: {toPercent(entry.fatPercent, 2)} ({entry.fat}g)
+						Fat: {toPercent(entry.fatPercent, 1)} ({entry.fat}g)
 					</li>
 					<li style={{ color: '#a4de6c' }}>
-						Fiber: {toPercent(entry.fiberPercent, 2)} ({entry.fiber}g)
+						Fiber: {toPercent(entry.fiberPercent, 1)} ({entry.fiber}g)
 					</li>
 				</ul>
 			</div>
@@ -84,7 +84,7 @@ export default function MealMacrosChart({ meals }: MealMacrosChartProps) {
 
 	return (
 		<div style={{ width: "100%", height: 450 }}>
-			<h3>Macros Percentage Over Meals</h3>
+			<h3>Macros Percentage Over Time</h3>
 			<ResponsiveContainer width="100%" height={200}>
 				<AreaChart
 					data={data}
@@ -98,7 +98,7 @@ export default function MealMacrosChart({ meals }: MealMacrosChartProps) {
 					syncId="mealChart" // Synchronize charts
 				>
 					<CartesianGrid strokeDasharray="3 3" />
-					<XAxis dataKey="time" />
+					<XAxis dataKey="date" />
 					<YAxis tickFormatter={toPercent} />
 					<Tooltip content={renderTooltipContent} />
 					<Legend />
@@ -137,7 +137,7 @@ export default function MealMacrosChart({ meals }: MealMacrosChartProps) {
 				</AreaChart>
 			</ResponsiveContainer>
 
-			<h3>Calories Over Meals</h3>
+			<h3>Calories Over Time</h3>
 			<ResponsiveContainer width="100%" height={200}>
 				<LineChart
 					data={data}
@@ -150,7 +150,7 @@ export default function MealMacrosChart({ meals }: MealMacrosChartProps) {
 					}}
 				>
 					<CartesianGrid strokeDasharray="3 3" />
-					<XAxis dataKey="time" />
+					<XAxis dataKey="date" />
 					<YAxis />
 					<Tooltip formatter={(value: any) => `${value} kcal`} />
 					<Legend />

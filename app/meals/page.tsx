@@ -6,7 +6,7 @@ import MealCard from "@/components/MealCard";
 
 export default async function Page() {
     const todayMeals = await getTodayMeal();
-    const weeksMeals = await getMeal();
+    const mealsAggregate = await getMeal();
 
 	// Calculate total calories and macros
 	const totalCalories = todayMeals.reduce((sum, meal) => sum + meal.totalMacros.calories, 0);
@@ -48,7 +48,7 @@ export default async function Page() {
 			{/* Chart of macros over time */}
 			<div className="mt-4">
 				<h2 className="text-2xl font-bold">Macros Over Time</h2>
-				<MealMacrosChart meals={weeksMeals} />
+				<MealMacrosChart perDayMeals={mealsAggregate} />
 			</div>
 		</div>
 	);
