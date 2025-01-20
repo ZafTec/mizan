@@ -11,10 +11,10 @@ export enum MealType {
 
 
 export default interface Meal {
-	id: string | ObjectId;
+	_id: string | ObjectId;
 
 	name: string;
-    mealType: MealType;
+	mealType: MealType;
 
 	totalMacros: Macros;
 
@@ -23,8 +23,15 @@ export default interface Meal {
 	updatedAt: Date;
 }
 
+
+export interface PerDayMealsAggregate {
+	date: Date;
+	totalMacros: Macros;
+	meals: Meal[];
+}
+
 export interface MealInput {
 	name: string;
-    mealType: MealType;
+	mealType: MealType;
 	totalMacros: Macros;
 }

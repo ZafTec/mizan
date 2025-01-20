@@ -22,7 +22,7 @@ export default function Page() {
 			<h1 className="text-4xl font-bold">Add Meal</h1>
 
 			<form action={action} className="flex flex-col gap-4">
-				<div className="flex flex-row gap-2">
+				<div className="flex flex-col md:flex-row gap-2">
 					<div className="flex flex-1 flex-col gap-2">
 						<label htmlFor="name">Name</label>
 						<input
