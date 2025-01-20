@@ -25,7 +25,7 @@ export default async function Page() {
 
 			{/* Display total daily intake */}
 			<div className="mt-4">
-				<h2 className="text-2xl font-bold">Today's Total Intake</h2>
+				<h2 className="text-2xl font-bold">Today&apos;s Total Intake</h2>
 				<p>Calories: {totalCalories} kcal</p>
 				<p>Protein: {totalProtein} g</p>
 				<p>Carbs: {totalCarbs} g</p>

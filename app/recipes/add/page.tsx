@@ -7,7 +7,6 @@ import { useEffect, useRef, useState } from "react";
 import { CldUploadWidget } from 'next-cloudinary';
 import Image from 'next/image';
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react"
 
 
 type SelectedIngredient = {
@@ -34,10 +33,6 @@ export default function Page() {
 
 	const [ingredientSearch, setIngredientSearch] = useState<Ingredient[]>([]);
 	const [activeDropdownIndex, setActiveDropdownIndex] = useState<number | null>(null);
-
-	const { data: session, status } = useSession();
-
-	console.log(session, status);
 
 	// dropdown options ref
 	const dropdownRef = useRef<HTMLDivElement>(null);
