@@ -30,11 +30,15 @@ export const options: NextAuthOptions = {
 				}
 
 				const user = await getUserByEmail(username);
-				// console.log(user);
+				console.log(user);
 
 				// TODO: Add password hashing and verification
 
 				if (user) {
+                    if (user.password !== password) {
+                        return null;
+                    }
+
 					return {
 						...user,
 						id: typeof user.id === 'string' ? user.id : user.id.toString(),
