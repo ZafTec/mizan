@@ -40,7 +40,7 @@ export default async function Page() {
 				<h2 className="text-2xl font-bold">Today Meals List</h2>
 				<div className="flex gap-3 pl-5">
 					{todayMeals.map((meal) => (
-						<MealCard meal={meal} key={meal.id.toString()} />
+						<MealCard meal={meal} key={meal._id.toString()} />
 					))}
 				</div>
 			</div>

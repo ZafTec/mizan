@@ -6,6 +6,7 @@ import Meal from "@/model/meal";
 import MongoDBClient from "@/mongo/client";
 import MealType, { MealInput } from "@/types/meal";
 import { TimeSpan } from "@/types/timespan";
+import { ObjectId } from "mongoose";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -123,4 +124,10 @@ export async function getMeal(timeSpan: TimeSpan = TimeSpan.Week): Promise<MealT
 	}
 
 	return meals;
+}
+
+export async function deleteMeal(id: string | ObjectId): Promise<void> {
+	await MongoDBClient();
+
+	await Meal.findByIdAndDelete(id);
 }

@@ -11,7 +11,7 @@ export enum MealType {
 
 
 export default interface Meal {
-	id: string | ObjectId;
+	_id: string | ObjectId;
 
 	name: string;
     mealType: MealType;

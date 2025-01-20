@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 import { Document, model, Schema } from "mongoose";
 
 export interface IMeal extends Document, Meal {
-    id: Schema.Types.ObjectId;
+    _id: Schema.Types.ObjectId;
 }
 
 const MealSchema = new Schema<IMeal>({

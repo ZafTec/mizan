@@ -357,7 +357,6 @@ export default function Page() {
 									onClick={() => handleRemoveTag(tag)}
 									className="text-orange-500"
 								>
-									{/* <X size={16} /> */}
 									<i className="ri-close-large-line"></i>
 								</button>
 							</span>
