@@ -14,7 +14,7 @@ export default async function Navbar() {
 				    <span className="text-white text-2xl font-bold">MacroChef</span>
                 </Link>
 				<div>
-					<Link href="/about" className="text-white">About</Link>
+					{/* <Link href="/about" className="text-white">About</Link> */}
 					<Link href="/ingredients" className="text-white ml-4">Ingredients</Link>
 					{session ? (
 						<>
