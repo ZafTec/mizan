@@ -4,6 +4,7 @@ import { options } from "@/app/api/auth/[...nextauth]/options";
 import Link from "next/link";
 import Image from "next/image";
 import placeHolderImage from "@/public/placeholder-recipe.jpg";
+import DailyOverviewChart from "@/components/DailyOverviewChart";
 
 export default async function Home() {
 
@@ -95,34 +96,11 @@ export default async function Home() {
 			{/* Nutrition status with chart and more */}
 			<div className="relative w-full max-w-4xl">
 				<div className={`p-6 bg-white rounded-lg shadow-lg ${!user ? 'blur-sm' : ''}`}>
-					<h2 className="text-2xl font-bold mb-4 text-gray-800">Nutrition Overview</h2>
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-						<div className="p-4 bg-gray-50 rounded-lg">
-							<div className="w-full h-64 bg-gray-200 rounded-lg mb-4"></div>
-							<h4 className="text-lg font-semibold">Daily Progress</h4>
-						</div>
-						<div className="p-4">
-							<h4 className="text-lg font-semibold mb-4">Nutrition Summary</h4>
-							<div className="space-y-4">
-								<div className="flex justify-between items-center">
-									<span>Calories</span>
-									<span className="font-medium">1,200 / 2,000</span>
-								</div>
-								<div className="flex justify-between items-center">
-									<span>Protein</span>
-									<span className="font-medium">45g / 60g</span>
-								</div>
-								<div className="flex justify-between items-center">
-									<span>Carbs</span>
-									<span className="font-medium">130g / 200g</span>
-								</div>
-								<div className="flex justify-between items-center">
-									<span>Fat</span>
-									<span className="font-medium">35g / 50g</span>
-								</div>
-							</div>
-						</div>
+					<div className="flex flex-row justify-between items-center">
+						<h2 className="text-2xl font-bold mb-4 text-gray-800">Nutrition Overview</h2>
+						{/* <Link href={"/goal"} className="bg-emerald-700 text-white px-4 py-2 rounded-lg">Update Goal</Link> */}
 					</div>
+					<DailyOverviewChart />
 				</div>
 
 				{/* Authentication overlay */}

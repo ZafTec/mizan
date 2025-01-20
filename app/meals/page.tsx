@@ -38,7 +38,7 @@ export default async function Page() {
 			{/* List of meals */}
 			<div className="mt-4">
 				<h2 className="text-2xl font-bold">Today Meals List</h2>
-				<div className="flex gap-3 pl-5">
+				<div className="flex gap-3 pl-5 flex-row overflow-auto">
 					{todayMeals.map((meal) => (
 						<MealCard meal={meal} key={meal._id.toString()} />
 					))}

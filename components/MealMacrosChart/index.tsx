@@ -1,20 +1,19 @@
-// components/MealMacrosChart.tsx
 
 "use client";
 
 import { PerDayMealsAggregate } from "@/types/meal";
 import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  LineChart,
-  Line,
-  Brush,
+	AreaChart,
+	Area,
+	XAxis,
+	YAxis,
+	CartesianGrid,
+	Tooltip,
+	ResponsiveContainer,
+	Legend,
+	LineChart,
+	Line,
+	Brush,
 } from "recharts";
 
 interface MealMacrosChartProps {
@@ -79,8 +78,8 @@ export default function MealMacrosChart({ perDayMeals }: MealMacrosChartProps) {
 					</li>
 				</ul>
 			</div>
-		);
-	};
+		)
+	}
 
 	return (
 		<div style={{ width: "100%", height: 450 }}>

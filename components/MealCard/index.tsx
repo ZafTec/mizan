@@ -30,7 +30,7 @@ export default function MealCard({ meal }: MealCardProps) {
 	}
 
 	return (
-		<div className="bg-white rounded-lg shadow-md p-4">
+		<div className="bg-white rounded-lg shadow-md p-4 min-w-fit">
 			<div className="flex flex-row justify-between items-center">
 				<h2 className="text-lg font-semibold">{meal.name}</h2>
 				<i className="ri-delete-bin-6-line cursor-pointer text-red-500 hover:text-lg" onClick={() => deleteMeal(meal)}></i>

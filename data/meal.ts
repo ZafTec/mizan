@@ -31,6 +31,29 @@ export async function getTodayMeal(): Promise<MealType[]> {
 	return meals;
 }
 
+export async function getNutritionOverview(): Promise<Macros> {
+	await MongoDBClient();
+
+	const meals = await getTodayMeal();
+
+	const totalMacros: Macros = {
+		calories: 0,
+		protein: 0,
+		carbs: 0,
+		fat: 0,
+		fiber: 0,
+	};
+
+	meals.forEach((meal) => {
+		totalMacros.calories += meal.totalMacros.calories;
+		totalMacros.protein += meal.totalMacros.protein;
+		totalMacros.carbs += meal.totalMacros.carbs;
+		totalMacros.fat += meal.totalMacros.fat;
+		totalMacros.fiber += meal.totalMacros.fiber;
+	});
+
+	return totalMacros;
+}
 
 // Validation schema using Zod
 const createMealSchema = z.object({
@@ -66,11 +89,11 @@ export async function addMeal(formState: FormState, formData: FormData): Promise
 			name: validatedData.name,
 			mealType: validatedData.mealType,
 			totalMacros: {
-			calories: validatedData.calories,
-			protein: validatedData.protein,
-			fat: validatedData.fat,
-			carbs: validatedData.carbs,
-			fiber: validatedData.fiber,
+				calories: validatedData.calories,
+				protein: validatedData.protein,
+				fat: validatedData.fat,
+				carbs: validatedData.carbs,
+				fiber: validatedData.fiber,
 			},
 		});
   
