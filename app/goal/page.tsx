@@ -1,19 +1,14 @@
 
 "use client";
 
-import { FormState } from "@/helper/FormErrorHandler";
 import { FieldError } from "@/components/FieldError";
 import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
-import Goal from "@/types/goal";
 import { useActionState, useEffect } from "react";
 import SubmitButton from "@/components/AddIngredient/button";
 import { createGoal } from "@/data/goal";
 
-interface GoalFormProps {
-	// currentGoal: Goal;
-}
 
-export default function GoalForm({  }: GoalFormProps) {
+export default function GoalForm() {
 	const [formState, action] = useActionState(createGoal, EMPTY_FORM_STATE);
 
 	useEffect(() => {
