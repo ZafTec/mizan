@@ -12,7 +12,7 @@ interface EmailProps {
 	userId: ID
 }
 
-const domain = process.env.DOMAIN || process.env.VERCEL_URL
+const domain = process.env.DOMAIN
 
 // Verify email template html
 const verifyEmailTemplate = (token: string) => {
