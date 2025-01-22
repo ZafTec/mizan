@@ -1,5 +1,5 @@
 
-import { ObjectId } from "mongoose";
+import { ID } from "./id";
 import Macros from "./macro";
 
 // an enum of category, snack, meal, drink
@@ -11,7 +11,7 @@ export enum MealType {
 
 
 export default interface Meal {
-	_id: string | ObjectId;
+	_id: ID;
 
 	name: string;
 	mealType: MealType;

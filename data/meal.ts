@@ -4,10 +4,10 @@ import { FormState, fromErrorToFormState } from "@/helper/FormErrorHandler";
 import { toFormState } from "@/helper/toFormState";
 import Meal from "@/model/meal";
 import MongoDBClient from "@/mongo/client";
+import { ID } from "@/types/id";
 import Macros from "@/types/macro";
 import MealType, { MealType as MealTypeEnum, PerDayMealsAggregate } from "@/types/meal";
 import { TimeSpan } from "@/types/timespan";
-import { ObjectId } from "mongoose";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -182,7 +182,7 @@ export async function getMeal(timeSpan: TimeSpan = TimeSpan.Week): Promise<PerDa
 	return perDayMealsAggregate;
 }
 
-export async function deleteMeal(id: string | ObjectId): Promise<void> {
+export async function deleteMeal(id: ID): Promise<void> {
 	await MongoDBClient();
 
 	await Meal.findByIdAndDelete(id);
@@ -249,7 +249,7 @@ export async function populateMeals() {
 	// Insert the meals into the database
 	try {
 		await Meal.insertMany(mealsData);
-		console.log('Dummy meals data inserted successfully.');
+		console.info('Dummy meals data inserted successfully.');
 	} catch (error) {
 		console.error('Error inserting dummy meals data:', error);
 	}

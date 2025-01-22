@@ -1,9 +1,9 @@
 
-import { ObjectId } from "mongoose";
 import Macros from "./macro";
+import { ID } from "./id";
 
 export default interface Goal {
-	_id: string | ObjectId;
+	_id: ID;
 
 	name: string;
 	targetMacro: Macros;

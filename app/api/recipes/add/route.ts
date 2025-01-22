@@ -23,7 +23,6 @@ export async function POST(request: NextRequest) {
 
 		// Save the recipe to the database
 		await addRecipe(recipeData);
-		// console.log(recipeData);
 		
 		return NextResponse.json({ message: "Add Ingredients." });
 	} catch (error) {

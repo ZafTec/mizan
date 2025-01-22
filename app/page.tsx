@@ -1,15 +1,11 @@
 
-import { getServerSession } from "next-auth";
-import { options } from "@/app/api/auth/[...nextauth]/options";
 import Link from "next/link";
 import Image from "next/image";
 import placeHolderImage from "@/public/placeholder-recipe.jpg";
 import DailyOverviewChart from "@/components/DailyOverviewChart";
 
 export default async function Home() {
-
-	const session = await getServerSession(options);
-	const user = session?.user;
+    const user = true;
 
 	return (
 		<div className="flex flex-col items-center justify-center py-2">
@@ -103,7 +99,7 @@ export default async function Home() {
 					<DailyOverviewChart />
 				</div>
 
-				{/* Authentication overlay */}
+				{/* Authentication overlay
 				{!user && (
 					<div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-15 rounded-lg">
 						<div className="text-center text-white mb-6">
@@ -125,7 +121,7 @@ export default async function Home() {
 							</div>
 						</div>
 					</div>
-				)}
+				)} */}
 			</div>
 		</div>
 	)

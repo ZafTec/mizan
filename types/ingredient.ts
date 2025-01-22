@@ -1,8 +1,8 @@
-import { ObjectId } from "mongoose";
 import Macros from "./macro";
+import { ID } from "./id";
 
 export default interface Ingredient {
-    _id: string | ObjectId;
+    _id: ID;
 	name: string;
 	servingSize: number;
 	servingUnit: string;

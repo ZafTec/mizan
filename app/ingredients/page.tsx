@@ -1,14 +1,12 @@
 
 import TableHeaderCell from "@/components/IngredientTable/TableHeaderCell";
 import { getAllIngredient } from "@/data/ingredient";
-import getUser from "@/context/AuthProvider";
 import Link from "next/link";
 import SearchBar from "@/components/IngredientTable/SearchInputField";
 
 export default async function Page(
 	{ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }>}
 ) {
-	const { } = await getUser();
 
 	const { sortBy, searchIngredient } = await searchParams;
 

@@ -12,15 +12,12 @@ export default function MealCard({ meal }: MealCardProps) {
 	const router = useRouter();
 
 	function deleteMeal(meal: Meal) {
-		// delete meal
-		console.log("Deleting meal: ", meal);
-		
+		// delete meal		
 		fetch(`/api/meals/${meal._id}`, {
 			method: "DELETE",
 		})
 		.then((res) => res.json())
 		.then((data) => {
-			console.log(data);
 			router.refresh();
 		})
 		.catch((error) => {

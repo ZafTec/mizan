@@ -76,7 +76,6 @@ export default function Page() {
 		.then(res => res.json())
 		.then(data => {
 			const ingredients = data.ingredients;
-			// console.log(ingredients);
 			setIngredientSearch(ingredients);
 		})
 	}
@@ -140,7 +139,6 @@ export default function Page() {
 			body: JSON.stringify(recipeData),
 		})
 		.then(res => res.json())
-		// .then(data => console.log(data))
 		.then(() => router.push('/recipes'))
 	}
 
@@ -158,7 +156,6 @@ export default function Page() {
 							// }}
 							onSuccess={(result) => {
 								if (result?.info && result.info instanceof Object) {
-									// console.log(result.info.secure_url);
 									// setImages([...images, result.info.secure_url]);
 									setImages((prevImages) => {
 										if (result?.info && result.info instanceof Object) {
