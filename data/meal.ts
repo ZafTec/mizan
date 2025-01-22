@@ -107,6 +107,7 @@ export async function addMeal(formState: FormState, formData: FormData): Promise
   
 	// Revalidate the page to reflect new data
 	revalidatePath("/meals");
+    revalidatePath("/")
   
 	return toFormState("SUCCESS", "Meal added successfully");
 }
