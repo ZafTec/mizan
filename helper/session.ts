@@ -21,10 +21,6 @@ export async function getUserServer(): Promise<User> {
 	try {
 		const cookie = (await cookies()).get('auth_token');
 		const token = cookie?.value || '';
-		
-		if (!token) {
-			redirect('/login');
-		}
 
 		const payload: any = await decrypt(token);
 

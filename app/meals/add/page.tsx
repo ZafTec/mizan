@@ -5,7 +5,7 @@ import SubmitButton from "@/components/AddIngredient/button";
 import { FieldError } from "@/components/FieldError";
 import { addMeal } from "@/data/meal";
 import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect } from "react";
 
 export default function Page() {
 	const [formState, action] = useActionState(addMeal, EMPTY_FORM_STATE);

@@ -26,20 +26,20 @@ export function middleware(request: NextRequest) {
 		return NextResponse.redirect(new URL('/login?callbackUrl=' + path + (callbackUrl ? '&callbackUrl=' + callbackUrl : ''), request.nextUrl))
 	}
 
-    // TODO: Add logic to check if the token is valid and not expired
+	// TODO: Add logic to check if the token is valid and not expired
 		
 }
 
 // It specifies the paths for which this middleware should be executed. 
 export const config = {
-  matcher: [
-	'/',
-	// '/recipes/:path*',
-	'/profile',
-	'/login',
-	'/signup',
-	'/verifyemail',
-	// '/meals/:path*',
-	// '/ingredients/add',
-  ]
+	matcher: [
+		'/',
+		// '/recipes/:path*',
+		'/profile',
+		'/login',
+		'/signup',
+		'/verifyemail',
+		'/meals/:path*',
+		'/ingredients/add',
+	]
 }
