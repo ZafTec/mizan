@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest){
 	try {
 		// Extract user ID from the authentication token
-		const userId = await getDataFromToken(request);
+		const userId = getDataFromToken(request);
 
 		// Find the user in the database based on the user ID
 		const user = await getUserById(userId);

@@ -1,5 +1,6 @@
 "use server";
 
+import ingredient from "@/model/ingredient";
 import Recipe from "@/model/recipe";
 import MongoDBClient from "@/mongo/client";
 import { ID } from "@/types/id";
@@ -40,6 +41,8 @@ export async function getUserRecipes(userId: ID): Promise<RecipeType[]> {
 
 export async function getRecipeById(id: string): Promise<RecipeType | null> {
 	await MongoDBClient();
+    
+    await ingredient.find();  // This is a dummy line to fix the unregeistered model error
 
 	const recipe = await Recipe.findById(id)
         .populate("creator")

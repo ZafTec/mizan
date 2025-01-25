@@ -4,7 +4,7 @@ import Image from "next/image";
 import placeHolderImage from "@/public/placeholder-recipe.jpg";
 import RecipeMoreButton from "@/components/Recipes/RecipeMoreButton";
 import { getAllRecipes } from "@/data/recipe";
-import { getUserOptionalServer, getUserServer } from "@/helper/session";
+import { getUserOptionalServer } from "@/helper/session";
 
 export default async function Page() {
 

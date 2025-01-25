@@ -5,7 +5,6 @@ import { redirect } from 'next/navigation';
 import jwt from "jsonwebtoken";
 import { getFullUserById } from '@/data/user';
 import User from '@/types/user';
-import { cache } from 'react';
 
 export async function encrypt(payload: any) {
 	const token = jwt.sign(payload, process.env.TOKEN_SECRET!, { expiresIn: "1d" });
@@ -17,14 +16,15 @@ export async function decrypt(token: string) {
 	return decoded;
 }
 
-export const getUserServer = cache(async (): Promise<User> => {
+
+export async function getUserServer(): Promise<User> {
 	try {
 		const cookie = (await cookies()).get('auth_token');
 		const token = cookie?.value || '';
-        
-        if (!token) {
-            redirect('/login');
-        }
+		
+		if (!token) {
+			redirect('/login');
+		}
 
 		const payload: any = await decrypt(token);
 
@@ -36,17 +36,16 @@ export const getUserServer = cache(async (): Promise<User> => {
 	} catch (error: any) {
 		redirect('/login')
 	}
-});
+}
+export async function getUserOptionalServer(): Promise<User | null> {
+	try {
+		const cookie = (await cookies()).get('auth_token');
+		const token = cookie?.value || '';
+		const payload: any = await decrypt(token);
 
-export const getUserOptionalServer = cache(async () => {
-    try {
-        const cookie = (await cookies()).get('auth_token');
-        const token = cookie?.value || '';
-        const payload: any = await decrypt(token);
-
-        const user = await getFullUserById(payload.id);
-        return user;
-    } catch (error: any) {
-        return null;
-    }
-});
+		const user = await getFullUserById(payload.id);
+		return user;
+	} catch (error: any) {
+		return null;
+	}
+}

@@ -3,6 +3,7 @@
 
 import User from "@/types/user";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 interface NavbarContentProps {
@@ -11,6 +12,7 @@ interface NavbarContentProps {
 export default function NavbarContent({ user }: NavbarContentProps) {
 	const [menuOpen, setMenuOpen] = useState(false);
 	const menuRef = useRef<HTMLUListElement>(null);
+	const router = useRouter();
   
 	// Close menu when clicking outside
 	useEffect(() => {
@@ -34,6 +36,20 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 			document.removeEventListener("mousedown", handleClickOutside);
 		};
 	}, [menuOpen]);
+
+	function handleLogout() {
+		// href="/api/auth/logout?callbackUrl=/"
+		fetch("/api/auth/logout?callbackUrl=/")
+		.then((res) => {
+			if (res.ok) {
+				return res.json();
+			}
+		})
+		.then((data) => {
+			router.push(data.callbackUrl);
+			router.refresh();
+		})
+	}
   
 	return (
 		<div className="relative flex justify-end w-full md:w-auto">
@@ -115,12 +131,12 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 							</Link>
 						</li>
 						<li className="md:ml-4">
-							<Link
-								href="/api/auth/logout?callbackUrl=/"
+							<button
+								onClick={handleLogout}
 								className="block px-4 py-2 rounded-b-md text-white hover:bg-emerald-500 md:hover:bg-transparent md:inline-block md:px-2 md:py-0"
 							>
 								Sign Out
-							</Link>
+							</button>
 						</li>
 					</>
 				) : (

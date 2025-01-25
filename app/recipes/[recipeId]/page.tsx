@@ -1,19 +1,19 @@
 
 import RecipeOptions from "@/components/RecipeOptions";
 import { getRecipeById } from "@/data/recipe";
-import { getUserServer } from "@/helper/session";
+import { getUserOptionalServer } from "@/helper/session";
 
 export default async function Page({ params }: { params: Promise<{ recipeId: string }> }) {
 	const { recipeId } = await params;
 	
-	const user = await getUserServer();
+	const user = await getUserOptionalServer();
 	const recipe = await getRecipeById(recipeId);
 
 	if (!recipe) {
 		return <div>Recipe not found</div>;
 	}
 
-	const isCreator = recipe.creator && recipe.creator._id.toString() === user._id.toString();
+	const isCreator = user !== null && recipe.creator && recipe.creator._id.toString() === user._id.toString();
 	
 	return (
 		<div className="container mx-auto px-4 py-8">

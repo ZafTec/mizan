@@ -25,6 +25,8 @@ export function middleware(request: NextRequest) {
 	if (!isPublicPath && !token) {
 		return NextResponse.redirect(new URL('/login?callbackUrl=' + path + (callbackUrl ? '&callbackUrl=' + callbackUrl : ''), request.nextUrl))
 	}
+
+    // TODO: Add logic to check if the token is valid and not expired
 		
 }
 
@@ -32,12 +34,12 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
 	'/',
-	'/recipes/:path*',
+	// '/recipes/:path*',
 	'/profile',
 	'/login',
 	'/signup',
 	'/verifyemail',
-	'/meals/:path*',
-	'/ingredients/add',
+	// '/meals/:path*',
+	// '/ingredients/add',
   ]
 }
