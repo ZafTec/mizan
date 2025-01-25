@@ -17,7 +17,7 @@ export async function decrypt(token: string) {
 	return decoded;
 }
 
-export const getUserServer = cache(async () => {
+export const getUserServer = cache(async (): Promise<User> => {
 	try {
 		const cookie = (await cookies()).get('auth_token');
 		const token = cookie?.value || '';

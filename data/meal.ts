@@ -12,6 +12,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getFullUserById } from "./user";
 import User from "@/types/user";
+import { getUserServer } from "@/helper/session";
 
 
 export async function getAllMeal(): Promise<MealType[]> {
@@ -67,11 +68,10 @@ const createMealSchema = z.object({
 	fat: z.number().min(0),
 	carbs: z.number().min(0),
 	fiber: z.number().min(0),
-	// check if userId is a valid ObjectId
-	userId: z.string().regex(/^[0-9a-fA-F]{24}$/),
 });
 
 export async function addMeal(formState: FormState, formData: FormData): Promise<FormState> {
+    const user = await getUserServer();
 	try {
 		// Extract and parse form data
 		const mealData = {
@@ -82,18 +82,12 @@ export async function addMeal(formState: FormState, formData: FormData): Promise
 			fat: Number(formData.get("fat")!),
 			carbs: Number(formData.get("carbs")!),
 			fiber: Number(formData.get("fiber")!),
-			userId: formData.get("userId"),
 		};
   
 		// Validate data using Zod schema
 		const validatedData = createMealSchema.parse(mealData);
 	
 		await MongoDBClient();
-
-		const user = await getFullUserById(validatedData.userId);
-		if (!user) {
-			throw new Error("User not found");
-		}
 	
 		// Create new meal entry
 		const newMeal = await Meal.create({

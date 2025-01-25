@@ -18,7 +18,7 @@ export default interface Recipe {
 	instructions: string[];
 	tags: string[];
 
-    creator: User;
+	creator: User;
 
 	// timestamps
 	createdAt: Date;
