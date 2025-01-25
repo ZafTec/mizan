@@ -1,4 +1,5 @@
 
+import Goal from "./goal";
 import { ID } from "./id";
 
 export default interface User {
@@ -14,6 +15,8 @@ export default interface User {
 	forgotPasswordTokenExpiry: Date | null;
 	verifyToken: String | null;
 	verifyTokenExpiry: Date | null;
+
+    goal: Goal;
 
 	// timestamps
 	createdAt: Date;

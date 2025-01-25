@@ -14,7 +14,7 @@ const UserSchema = new Schema<IUser>({
 		type: Boolean,
 		default: false,
 	},
-	 isAdmin: {
+	isAdmin: {
 		 type: Boolean,
 		 default: false,
 	},
@@ -33,7 +33,8 @@ const UserSchema = new Schema<IUser>({
 	verifyTokenExpiry: {
 		type: Date,
 		nullable: true,
-	}
+	},
+	goal: { type: Schema.Types.ObjectId, ref: "Goal", default: null },
 }, { timestamps: true });
 
 export default mongoose.models.User || model<IUser>("User", UserSchema);

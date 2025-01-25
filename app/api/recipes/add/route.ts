@@ -2,9 +2,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { RecipeInput } from "@/types/recipe";
 import { addRecipe } from "@/data/recipe";
+import { getUserServer } from "@/helper/session";
 
 export async function POST(request: NextRequest) {
 	try {
+        const user = await getUserServer();
 		// Parse the JSON body
 		const body = await request.json();
 		
@@ -22,7 +24,7 @@ export async function POST(request: NextRequest) {
 		};
 
 		// Save the recipe to the database
-		await addRecipe(recipeData);
+		await addRecipe(recipeData, user);
 		
 		return NextResponse.json({ message: "Add Ingredients." });
 	} catch (error) {

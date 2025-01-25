@@ -1,9 +1,10 @@
 'use client';
 
+import { ID } from "@/types/id";
 import { useEffect, useRef, useState } from "react";
 
 
-export default function RecipeMoreButton({ recipeId }: { recipeId: string }) {
+export default function RecipeMoreButton({ recipeId }: { recipeId: ID }) {
 	const [showMenu, setShowMenu] = useState(false);
 	const menuRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);

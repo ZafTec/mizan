@@ -127,7 +127,7 @@ export default function Page() {
 						<input type="hidden" name="userImage" value={images[0]} />
 					</div>
 				</div>
-				<SubmitButton label="Submit" loading={<div>Loading...</div>} />
+				<SubmitButton disabled={false} label="Submit" loading={<div>Loading...</div>} />
 				<Link href="/login" className="text-blue-500">
 					Already have an account? Login
 				</Link>

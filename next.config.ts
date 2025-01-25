@@ -12,10 +12,10 @@ const nextConfig: NextConfig = {
 	/* config options here */
 	images: {
 		remotePatterns: [
-            {
-                hostname: 'res.cloudinary.com'
-            }
-        ]
+			{
+				hostname: 'res.cloudinary.com'
+			}
+		],
 	}
 };
 

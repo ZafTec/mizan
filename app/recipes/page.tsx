@@ -1,11 +1,15 @@
+
 import Link from "next/link";
 import Image from "next/image";
 import placeHolderImage from "@/public/placeholder-recipe.jpg";
 import RecipeMoreButton from "@/components/Recipes/RecipeMoreButton";
+import { getAllRecipes } from "@/data/recipe";
+import { getUserOptionalServer, getUserServer } from "@/helper/session";
 
 export default async function Page() {
 
-	// get recipes
+	const recipes = await getAllRecipes();
+	const user = await getUserOptionalServer();
 
 	return (
 		<div className="max-w-7xl mx-auto px-4 py-8">
@@ -96,148 +100,70 @@ export default async function Page() {
 			<div>
 				{/* search bar */}
 				<div className="mb-8">
-					<div className="flex gap-4 items-center">
-						<div className="flex-1">
-							<div className="relative">
-								<input
-									type="text"
-									placeholder="Search recipes..."
-									className="w-full py-3 px-4 pr-12 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-								/>
-								<svg
-									className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"
-									fill="none"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth="2"
-									viewBox="0 0 24 24"
-									stroke="currentColor"
-								>
-									<path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-								</svg>
-							</div>
-						</div>
-						<select className="py-3 px-4 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-							<option>Sort by</option>
-							<option>Name</option>
-							<option>Date</option>
-							<option>Calories</option>
-						</select>
-					</div>
+				{/* Your search bar and sorting UI */}
 				</div>
 
 				{/* Recipe list */}
 				<div className="space-y-4">
-					{/* Recipe card */}
-					<Link href={`/recipes/${1}`} className="block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
-						<div className="flex">
-							<Image
-								src={placeHolderImage}
-								alt="Recipe"
-								className="w-48 h-48 object-cover rounded-l-lg"
-							/>
-							<div className="flex-1 p-6">
-								<div className="flex justify-between items-start">
-									<div>
-										<h3 className="text-xl font-semibold mb-2">Healthy Chicken Salad</h3>
-										<p className="text-gray-600 mb-4">Fresh and light chicken salad with mixed greens and honey mustard dressing</p>
-									</div>
-									<RecipeMoreButton recipeId="1" />
+					{recipes.map((recipe) => (
+						<Link
+							key={recipe._id.toString()}
+							href={`/recipes/${recipe._id}`}
+							className="block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+						>
+							<div className="flex">
+								<div className="w-48 h-48 bg-gray-200 rounded-l-lg relative">
+									<Image
+										src={recipe.images[0] || placeHolderImage}
+										alt={recipe.name}
+										fill
+										className="object-cover rounded-l-lg"
+									/>
 								</div>
-								<div className="flex gap-6">
-									<div>
-										<span className="text-gray-500 text-sm">Calories</span>
-										<p className="font-semibold">350 kcal</p>
+								<div className="flex-1 p-6">
+									<div className="flex justify-between items-start">
+										<div>
+											<h3 className="text-xl font-semibold mb-2">
+												{recipe.name}
+											</h3>
+											<p className="text-gray-600 mb-4">
+												{recipe.description}
+											</p>
+										</div>
+										{user && recipe.creator && recipe.creator._id.toString() === user._id.toString() && (
+											<RecipeMoreButton recipeId={recipe._id} />
+										)}
 									</div>
-									<div>
-										<span className="text-gray-500 text-sm">Protein</span>
-										<p className="font-semibold">25g</p>
-									</div>
-									<div>
-										<span className="text-gray-500 text-sm">Carbs</span>
-										<p className="font-semibold">30g</p>
-									</div>
-									<div>
-										<span className="text-gray-500 text-sm">Fat</span>
-										<p className="font-semibold">15g</p>
-									</div>
-								</div>
-							</div>
-						</div>
-					</Link>
-					<Link href={`/recipes/${2}`} className="block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
-						<div className="flex">
-							<Image
-								src={placeHolderImage}
-								alt="Recipe"
-								className="w-48 h-48 object-cover rounded-l-lg"
-							/>
-							<div className="flex-1 p-6">
-								<div className="flex justify-between items-start">
-									<div>
-										<h3 className="text-xl font-semibold mb-2">Healthy Chicken Salad</h3>
-										<p className="text-gray-600 mb-4">Fresh and light chicken salad with mixed greens and honey mustard dressing</p>
-									</div>
-									<RecipeMoreButton recipeId="2" />
-								</div>
-								<div className="flex gap-6">
-									<div>
-										<span className="text-gray-500 text-sm">Calories</span>
-										<p className="font-semibold">350 kcal</p>
-									</div>
-									<div>
-										<span className="text-gray-500 text-sm">Protein</span>
-										<p className="font-semibold">25g</p>
-									</div>
-									<div>
-										<span className="text-gray-500 text-sm">Carbs</span>
-										<p className="font-semibold">30g</p>
-									</div>
-									<div>
-										<span className="text-gray-500 text-sm">Fat</span>
-										<p className="font-semibold">15g</p>
+									<div className="flex gap-6">
+										<div>
+											<span className="text-gray-500 text-sm">Calories</span>
+											<p className="font-semibold">
+												{recipe.totalMacros.calories.toFixed(0)} kcal
+											</p>
+										</div>
+										<div>
+											<span className="text-gray-500 text-sm">Protein</span>
+											<p className="font-semibold">
+												{recipe.totalMacros.protein.toFixed(1)}g
+											</p>
+										</div>
+										<div>
+											<span className="text-gray-500 text-sm">Carbs</span>
+											<p className="font-semibold">
+												{recipe.totalMacros.carbs.toFixed(1)}g
+											</p>
+										</div>
+										<div>
+											<span className="text-gray-500 text-sm">Fat</span>
+											<p className="font-semibold">
+												{recipe.totalMacros.fat.toFixed(1)}g
+											</p>
+										</div>
 									</div>
 								</div>
 							</div>
-						</div>
-					</Link>
-					<Link href={`/recipes/${3}`} className="block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
-						<div className="flex">
-							<Image
-								src={placeHolderImage}
-								alt="Recipe"
-								className="w-48 h-48 object-cover rounded-l-lg"
-							/>
-							<div className="flex-1 p-6">
-								<div className="flex justify-between items-start">
-									<div>
-										<h3 className="text-xl font-semibold mb-2">Healthy Chicken Salad</h3>
-										<p className="text-gray-600 mb-4">Fresh and light chicken salad with mixed greens and honey mustard dressing</p>
-									</div>
-									<RecipeMoreButton recipeId="3" />
-								</div>
-								<div className="flex gap-6">
-									<div>
-										<span className="text-gray-500 text-sm">Calories</span>
-										<p className="font-semibold">350 kcal</p>
-									</div>
-									<div>
-										<span className="text-gray-500 text-sm">Protein</span>
-										<p className="font-semibold">25g</p>
-									</div>
-									<div>
-										<span className="text-gray-500 text-sm">Carbs</span>
-										<p className="font-semibold">30g</p>
-									</div>
-									<div>
-										<span className="text-gray-500 text-sm">Fat</span>
-										<p className="font-semibold">15g</p>
-									</div>
-								</div>
-							</div>
-						</div>
-					</Link>
-					{/* Add more recipe cards as needed */}
+						</Link>
+					))}
 				</div>
 			</div>
 		</div>

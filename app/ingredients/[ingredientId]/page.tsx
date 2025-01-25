@@ -1,3 +1,4 @@
+
 import { getIngredientById } from "@/data/ingredient";
 
 export default async function Page({ params }: { params: Promise<{ ingredientId: string }> }) {

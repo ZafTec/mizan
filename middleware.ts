@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const publicPaths = ['/', '/login', '/signup', '/verifyemail']
+const publicPaths = ['/', '/recipes', '/login', '/signup', '/verifyemail']
 
 export function middleware(request: NextRequest) {
 	const path = request.nextUrl.pathname
@@ -29,13 +29,15 @@ export function middleware(request: NextRequest) {
 }
 
 // It specifies the paths for which this middleware should be executed. 
-// In this case, it's applied to '/', '/profile', '/login', and '/signup'.
 export const config = {
   matcher: [
 	'/',
+	'/recipes/:path*',
 	'/profile',
 	'/login',
 	'/signup',
-	'/verifyemail'
+	'/verifyemail',
+	'/meals/:path*',
+	'/ingredients/add',
   ]
 }

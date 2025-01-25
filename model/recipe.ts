@@ -3,12 +3,11 @@ import mongoose from "mongoose";
 import { Document, model, Schema } from "mongoose";
 
 export interface IRecipe extends Document, Recipe {
-	id: Schema.Types.ObjectId;
+	_id: Schema.Types.ObjectId;
 }
 
 
 const RecipeSchema = new Schema<IRecipe>({
-	// userId: { type: Schema.Types.ObjectId, required: true },
 	name: { type: String, required: true },
 	images: { type: [String], required: true, default: [] },
 	description: { type: String },
@@ -27,6 +26,7 @@ const RecipeSchema = new Schema<IRecipe>({
 	servings: { type: Number, required: true, default: 1 },
 	instructions: { type: [String], required: true },
 	tags: { type: [String], required: true },
+    creator: { type: Schema.Types.ObjectId, ref: "User" },
 }, { timestamps: true});
 
 export default mongoose.models.Recipe || model<IRecipe>("Recipe", RecipeSchema);

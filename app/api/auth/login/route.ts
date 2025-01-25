@@ -2,6 +2,7 @@ import { getUserByEmail } from "@/data/user";
 import { NextRequest, NextResponse } from "next/server";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { revalidatePath } from "next/cache";
 
 
 export async function POST(request: NextRequest) {
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
 			httpOnly: true,
 			maxAge: 60 * 60 * 24,  // 1 day
 		})
+        revalidatePath("/");
 
 		return response;
 	} catch (error: any) {

@@ -10,6 +10,8 @@ import MealType, { MealType as MealTypeEnum, PerDayMealsAggregate } from "@/type
 import { TimeSpan } from "@/types/timespan";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getFullUserById } from "./user";
+import User from "@/types/user";
 
 
 export async function getAllMeal(): Promise<MealType[]> {
@@ -19,7 +21,7 @@ export async function getAllMeal(): Promise<MealType[]> {
 	return meals;
 }
 
-export async function getTodayMeal(): Promise<MealType[]> {
+export async function getTodayMeal(userId: ID): Promise<MealType[]> {
 	await MongoDBClient();
 
 	const meals = await Meal.find({
@@ -27,14 +29,15 @@ export async function getTodayMeal(): Promise<MealType[]> {
 			$gte: new Date(new Date().setHours(0, 0, 0)),
 			$lt: new Date(new Date().setHours(23, 59, 59)),
 		},
+		user: userId,
 	});
 	return meals;
 }
 
-export async function getNutritionOverview(): Promise<Macros> {
+export async function getNutritionOverview(userId: ID): Promise<Macros> {
 	await MongoDBClient();
 
-	const meals = await getTodayMeal();
+	const meals = await getTodayMeal(userId);
 
 	const totalMacros: Macros = {
 		calories: 0,
@@ -64,6 +67,8 @@ const createMealSchema = z.object({
 	fat: z.number().min(0),
 	carbs: z.number().min(0),
 	fiber: z.number().min(0),
+	// check if userId is a valid ObjectId
+	userId: z.string().regex(/^[0-9a-fA-F]{24}$/),
 });
 
 export async function addMeal(formState: FormState, formData: FormData): Promise<FormState> {
@@ -77,12 +82,18 @@ export async function addMeal(formState: FormState, formData: FormData): Promise
 			fat: Number(formData.get("fat")!),
 			carbs: Number(formData.get("carbs")!),
 			fiber: Number(formData.get("fiber")!),
+			userId: formData.get("userId"),
 		};
   
 		// Validate data using Zod schema
 		const validatedData = createMealSchema.parse(mealData);
 	
 		await MongoDBClient();
+
+		const user = await getFullUserById(validatedData.userId);
+		if (!user) {
+			throw new Error("User not found");
+		}
 	
 		// Create new meal entry
 		const newMeal = await Meal.create({
@@ -95,6 +106,7 @@ export async function addMeal(formState: FormState, formData: FormData): Promise
 				carbs: validatedData.carbs,
 				fiber: validatedData.fiber,
 			},
+			user: user as User,
 		});
   
 		if (!newMeal) {
@@ -107,12 +119,12 @@ export async function addMeal(formState: FormState, formData: FormData): Promise
   
 	// Revalidate the page to reflect new data
 	revalidatePath("/meals");
-    revalidatePath("/")
+	revalidatePath("/")
   
 	return toFormState("SUCCESS", "Meal added successfully");
 }
 
-export async function getMeal(timeSpan: TimeSpan = TimeSpan.Week): Promise<PerDayMealsAggregate[]> {
+export async function getMeal(userId: ID, timeSpan: TimeSpan = TimeSpan.Week): Promise<PerDayMealsAggregate[]> {
 	await MongoDBClient();
 
 	const now = new Date();
@@ -138,6 +150,7 @@ export async function getMeal(timeSpan: TimeSpan = TimeSpan.Week): Promise<PerDa
 			$gte: startDate,
 			$lte: now,
 		},
+		user: userId
 	})
   
 	// Group meals by date
@@ -183,9 +196,17 @@ export async function getMeal(timeSpan: TimeSpan = TimeSpan.Week): Promise<PerDa
 	return perDayMealsAggregate;
 }
 
-export async function deleteMeal(id: ID): Promise<void> {
+export async function deleteMeal(id: ID, userId: ID): Promise<void> {
 	await MongoDBClient();
 
+	const meal = await Meal.findById(id).populate("user");
+	if (!meal) {
+		throw new Error("Meal not found");
+	}
+	if (meal.user._id.toString() !== userId.toString()) {
+		throw new Error("Unauthorized");
+	}
+	
 	await Meal.findByIdAndDelete(id);
 }
 

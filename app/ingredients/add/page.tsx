@@ -67,7 +67,7 @@ export default function Page() {
 				</div>
 
 				<div>
-					<SubmitButton label="Add Ingredient" loading={<>Loading...</>} />
+					<SubmitButton disabled={false} label="Add Ingredient" loading={<>Loading...</>} />
 				</div>
 
 				<div>

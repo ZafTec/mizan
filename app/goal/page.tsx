@@ -94,7 +94,7 @@ export default function GoalForm() {
 			</div>
 
 			<div>
-				<SubmitButton label="Update Goal" loading={<>Loading...</>} />
+				<SubmitButton disabled={false} label="Update Goal" loading={<>Loading...</>} />
 			</div>
 
 			{formState.message && (

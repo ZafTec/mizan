@@ -3,11 +3,12 @@ import TableHeaderCell from "@/components/IngredientTable/TableHeaderCell";
 import { getAllIngredient } from "@/data/ingredient";
 import Link from "next/link";
 import SearchBar from "@/components/IngredientTable/SearchInputField";
+import { getUserOptionalServer } from "@/helper/session";
 
 export default async function Page(
 	{ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }>}
 ) {
-
+    const user = await getUserOptionalServer();
 	const { sortBy, searchIngredient } = await searchParams;
 
 	// Fetch ingredient
@@ -22,10 +23,12 @@ export default async function Page(
 				</div>
 				<div>
 					{/* Add Button */}
-					<Link href="/ingredients/add" className="bg-emerald-700 text-white px-2 py-2 rounded-lg">
-						<i className="ri-add-large-line mr-2"></i>
-						Add 
-					</Link>
+                    {user && user.isAdmin && (
+                        <Link href="/ingredients/add" className="bg-emerald-700 text-white px-2 py-2 rounded-lg">
+                            <i className="ri-add-large-line mr-2"></i>
+                            Add 
+                        </Link>
+                    )}
 				</div>
 			</div>
 			<div className="overflow-x-auto">

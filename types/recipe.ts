@@ -1,10 +1,10 @@
 import Ingredient from "./ingredient";
 import Macros from "./macro";
 import { ID } from "./id";
+import User from "./user";
 
 export default interface Recipe {
-	id: ID;
-	// userId: ID;
+	_id: ID;
 	name: string;
 	images: string[];
 	description?: string;
@@ -17,6 +17,8 @@ export default interface Recipe {
 	servings: number;
 	instructions: string[];
 	tags: string[];
+
+    creator: User;
 
 	// timestamps
 	createdAt: Date;

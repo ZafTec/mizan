@@ -40,6 +40,7 @@ export default function Page() {
 		.then((data) => {
             if (data.success) {
                 router.push(data.callbackUrl);
+                router.refresh();
             }
 			setError(data.error);
 		})
@@ -54,7 +55,7 @@ export default function Page() {
 
 	return (
 		<div className="flex flex-col items-center justify-center py-2">
-			<div className="w-3/5 md:w-1/2 lg:w-1/3 max-w-4xl p-6 mb-8 bg-white rounded-lg shadow-lg">
+			<div className="w-3/5 md:w-1/2 lg:w-1/3 max-w-4xl min-w-96 p-2 md:p-6 mb-8 bg-white rounded-lg shadow-lg">
 				<h2 className="text-2xl font-bold mb-4 text-gray-800">Login</h2>
 				<form className="flex flex-col gap-4" onSubmit={handleSubmit}>
 					<div className="flex flex-row gap-2">

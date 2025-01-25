@@ -1,6 +1,7 @@
 
 import { ID } from "./id";
 import Macros from "./macro";
+import User from "./user";
 
 // an enum of category, snack, meal, drink
 export enum MealType {
@@ -17,6 +18,8 @@ export default interface Meal {
 	mealType: MealType;
 
 	totalMacros: Macros;
+
+    user: User;
 
 	// timestamps
 	createdAt: Date;

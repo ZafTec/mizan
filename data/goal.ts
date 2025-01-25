@@ -3,30 +3,23 @@
 import { FormState, fromErrorToFormState } from "@/helper/FormErrorHandler";
 import { toFormState } from "@/helper/toFormState";
 import GoalModel from "@/model/goal";
+import UserModel from "@/model/user";
 import MongoDBClient from "@/mongo/client";
 import Goal from "@/types/goal";
+import { ID } from "@/types/id";
+import User from "@/types/user";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-export async function getCurrentGoal(): Promise<Goal> {
+export async function getCurrentGoal(userId: ID): Promise<Goal> {
 	await MongoDBClient();
 
-	const goal = await GoalModel.findOne({});
-	if (!goal) {
-		// Create default goal
-		const ketoGoal = {
-			name: "High-Protein Keto",
-			targetMacro: {
-				calories: 1700,
-				protein: 150,
-				carbs: 22,
-				fat: 115,
-				fiber: 30,
-			},
-		}
-
-		return await GoalModel.create(ketoGoal);
-	}
+	const user = await UserModel.findById(userId).populate("goal") as User;
+    const goal = user.goal as Goal;
+	
+    if (!goal) {
+        throw new Error("Goal not found");
+    }
 	return goal;
 }
 

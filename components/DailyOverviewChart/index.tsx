@@ -1,26 +1,52 @@
+'use client';
 
-import { getCurrentGoal } from "@/data/goal";
 import OverviewPieChart from "./PieChart";
-import { getNutritionOverview, getTodayMeal } from "@/data/meal";
+import { useEffect, useState } from "react";
+import Goal from "@/types/goal";
+import Macros from "@/types/macro";
+import Loading from "../Loading";
 
 
-export default async function DailyOverviewChart() {
-	const goal = await getCurrentGoal();
+export default function DailyOverviewChart() {
+	const [goal, setGoal] = useState<Goal | null>(null);
+	const [macros, setMacros] = useState<Macros>({
+		calories: 0,
+		protein: 0,
+		carbs: 0,
+		fat: 0,
+		fiber: 0
+	});
+	const [loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		fetch("/api/goal")
+			.then((res) => res.json())
+			.then((data) => setGoal(data.goal))
+			.catch((error) => console.error(error))
+		
+		fetch("/api/macros")
+			.then((res) => res.json())
+			.then((data) => setMacros(data.macros))
+			.catch((error) => console.error(error))
+			.finally(() => {
+				setLoading(false);
+			})
+	}, []);
+
 	if (!goal) return null;
+
 	const {
 		calories: targetCalories,
 		protein: targetProtein,
 		carbs: targetCarbs,
 		fat: targetFat
 	} = goal.targetMacro;
-	const macros = await getNutritionOverview();
-	const { calories, protein, carbs, fat} = macros;
 	
 	return (
 		<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 			<div className="p-4 bg-gray-50 rounded-lg">
 				<div className="flex items-center w-full h-72 bg-gray-200 rounded-lg mb-4">
-					<OverviewPieChart macros={macros} />
+					{loading ? <Loading /> : <OverviewPieChart macros={macros} />}
 				</div>
 				<h4 className="text-lg font-semibold">Daily Progress</h4>
 			</div>
@@ -31,25 +57,25 @@ export default async function DailyOverviewChart() {
 					<div className="flex justify-between items-center">
 						<span>Calories</span>
 						<span className="font-medium">
-							{calories} / {targetCalories}
+							{macros.calories} / {targetCalories}
 						</span>
 					</div>
 					<div className="flex justify-between items-center">
 						<span>Protein</span>
 						<span className="font-medium">
-							{protein}g / {targetProtein}g
+							{macros.protein}g / {targetProtein}g
 						</span>
 					</div>
 					<div className="flex justify-between items-center">
 						<span>Carbs</span>
 						<span className="font-medium">
-							{carbs}g / {targetCarbs}g
+							{macros.carbs}g / {targetCarbs}g
 						</span>
 					</div>
 					<div className="flex justify-between items-center">
 						<span>Fat</span>
 						<span className="font-medium">
-							{fat}g / {targetFat}g
+							{macros.fat}g / {targetFat}g
 						</span>
 					</div>
 				</div>

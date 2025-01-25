@@ -3,10 +3,12 @@ import { getMeal, getTodayMeal } from "@/data/meal";
 import MealMacrosChart from "@/components/MealMacrosChart";
 import Link from "next/link";
 import MealCard from "@/components/MealCard";
+import { getUserServer } from "@/helper/session";
 
 export default async function Page() {
-    const todayMeals = await getTodayMeal();
-    const mealsAggregate = await getMeal();
+    const user = await getUserServer();
+    const todayMeals = await getTodayMeal(user._id);
+    const mealsAggregate = await getMeal(user._id);
 
 	// Calculate total calories and macros
 	const totalCalories = todayMeals.reduce((sum, meal) => sum + meal.totalMacros.calories, 0);

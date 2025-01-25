@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             message: "User created successfully",
             success: true,
-            user_id: user._id,
+            userId: user._id,
         });
 
     } catch (error: any) {
