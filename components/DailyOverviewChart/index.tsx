@@ -2,13 +2,13 @@
 
 import OverviewPieChart from "./PieChart";
 import { useEffect, useState } from "react";
-import Goal from "@/types/goal";
+import { GoalVersion } from "@/types/goal";
 import Macros from "@/types/macro";
 import Loading from "../Loading";
 
 
 export default function DailyOverviewChart() {
-	const [goal, setGoal] = useState<Goal | null>(null);
+	const [goal, setGoal] = useState<GoalVersion | null>(null);
 	const [macros, setMacros] = useState<Macros>({
 		calories: 0,
 		protein: 0,

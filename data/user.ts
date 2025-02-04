@@ -13,6 +13,7 @@ import User from "@/model/user";
 import UserType, { UserInput, UserOutput } from "@/types/user";
 import { sendEmail } from "@/helper/mailer";
 import { ID } from "@/types/id";
+import { createDefaultGoal } from "./goal";
 
 
 export async function getAllUser(searchUser: string = "", sortBy?: string): Promise<UserType[]> {
@@ -34,10 +35,10 @@ export async function getUserById(id: ID): Promise<UserOutput | null> {
 }
 
 export async function getFullUserById(id: ID): Promise<UserType | null> {
-    await MongoDBClient();
+	await MongoDBClient();
 
-    const user = await User.findById(id);
-    return user;
+	const user = await User.findById(id);
+	return user;
 }
 
 const createUserSchema = z.object({
@@ -90,15 +91,16 @@ export async function addUser(formState: FormState, user: FormData): Promise<For
 		}
 		const salt = await bcryptjs.genSalt(10)
 		const hashedPassword = await bcryptjs.hash(validatedData.password, salt)
-
-        const goal = await GoalModel.findOne({ name: "Default" });
+		
+		const goal = await createDefaultGoal();
 
 		const newUser = await User.create({
 			email: validatedData.email,
 			image: validatedData.image,
 			password: hashedPassword,
-            goal: goal,
+			goal: goal,
 		});
+		console.log("newUser: ", newUser)
 
 		try {
 			await sendEmail({ email: validatedData.email, emailType: "VERIFY", userId: newUser._id });
@@ -117,6 +119,7 @@ export async function addUser(formState: FormState, user: FormData): Promise<For
 
 		return toFormState("SUCCESS", newUser.id.toString());
 	} catch (error) {
+		console.log(error)
 		return fromErrorToFormState(error);
 	}
 }
@@ -132,12 +135,12 @@ export async function getUserByEmail(email: string): Promise<UserType | null> {
 export async function createUser(user: UserInput): Promise<UserType> {
 	await MongoDBClient();
 
-    const goal = await GoalModel.findOne({ name: "Default" });
+	const goal = await createDefaultGoal();
 
 	const newUser = await User.create({
-        ...user,
-        goal: goal,
-    });
+		...user,
+		goal: goal,
+	});
 
 	return newUser;
 }

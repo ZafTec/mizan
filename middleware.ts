@@ -34,7 +34,7 @@ export function middleware(request: NextRequest) {
 export const config = {
 	matcher: [
 		'/',
-		// '/recipes/:path*',
+		'/recipes/:path*',
 		'/profile',
 		'/login',
 		'/signup',
