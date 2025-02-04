@@ -9,7 +9,7 @@ export default function Page() {
 	const [token, setToken] = useState("");
 	const [verified, setVerified] = useState(false);
 	const [error, setError] = useState(false);
-    const router = useRouter();
+	const router = useRouter();
 
 	const [countdown, setCountdown] = useState(8); // Countdown from 8 seconds
 
@@ -49,7 +49,7 @@ export default function Page() {
 				setCountdown((prev) => {
 					if (prev <= 1) {
 						clearInterval(timer);
-                        router.push("/login");
+						router.push("/login");
 						return 0;
 					}
 					return prev - 1;

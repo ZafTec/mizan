@@ -6,7 +6,6 @@ import { toFormState } from "@/helper/toFormState";
 import bcryptjs from "bcryptjs";
 
 import MongoDBClient from "@/mongo/client";
-import GoalModel from "@/model/goal";
 
 import { z } from "zod";
 import User from "@/model/user";
@@ -143,4 +142,18 @@ export async function createUser(user: UserInput): Promise<UserType> {
 	});
 
 	return newUser;
+}
+
+export async function resendUserVerificationEmail(email: string): Promise<void> {
+	await MongoDBClient();
+
+	const existingUser = await User.findOne({
+		email: email,
+	});
+
+	if (!existingUser) {
+		throw new Error("User not found");
+	}
+
+	await sendEmail({ email, emailType: "VERIFY", userId: existingUser._id });
 }

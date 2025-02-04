@@ -2,6 +2,7 @@
 import RecipeOptions from "@/components/RecipeOptions";
 import { getRecipeById } from "@/data/recipe";
 import { getUserOptionalServer } from "@/helper/session";
+import Image from "next/image";
 
 export default async function Page({ params }: { params: Promise<{ recipeId: string }> }) {
 	const { recipeId } = await params;
@@ -34,20 +35,25 @@ export default async function Page({ params }: { params: Promise<{ recipeId: str
 				{recipe.images && recipe.images.length > 0 && (
 					<div className="recipe-images mb-8">
 						{recipe.images.length === 1 ? (
-							<img
-								src={recipe.images[0]}
-								alt={`${recipe.name} image`}
-								className="w-full h-64 object-cover rounded-md"
-							/>
+							<div className="w-full h-64 rounded-md overflow-hidden mb-4 relative">
+								<Image
+									src={recipe.images[0]}
+									alt={`${recipe.name} image`}
+									className="w-full object-cover rounded-md"
+									fill
+								/>
+							</div>
 						) : (
 							<div className="grid grid-cols-2 gap-4">
 								{recipe.images.map((image, index) => (
-									<img
-										key={index}
-										src={image}
-										alt={`${recipe.name} image ${index + 1}`}
-										className="w-full h-48 object-cover rounded-md"
-									/>
+									<div key={index} className="w-full h-48 rounded-md overflow-hidden relative">
+										<Image
+											src={image}
+											fill
+											alt={`${recipe.name} image ${index + 1}`}
+											className="w-full object-cover rounded-md"
+										/>
+									</div>
 								))}
 							</div>
 						)}

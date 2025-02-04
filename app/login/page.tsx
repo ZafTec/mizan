@@ -8,7 +8,7 @@ import { UserInput } from "@/types/user";
 
 export default function Page() {
 	const router = useRouter();
-    const searchParam = useSearchParams();
+	const searchParam = useSearchParams();
 	const [user, setUser] = useState<UserInput>({
 		email: "",
 		password: "",
@@ -26,7 +26,7 @@ export default function Page() {
 	function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 		setLoading(true);
-        const callbackUrl = searchParam.get("callbackUrl") || "/";
+		const callbackUrl = searchParam.get("callbackUrl") || "/";
 		fetch("/api/auth/login?callbackUrl=" + callbackUrl, {
 			method: "POST",
 			headers: {
@@ -38,10 +38,10 @@ export default function Page() {
 			return res.json();
 		})
 		.then((data) => {
-            if (data.success) {
-                router.push(data.callbackUrl);
-                router.refresh();
-            }
+			if (data.success) {
+				router.push(data.callbackUrl);
+				router.refresh();
+			}
 			setError(data.error);
 		})
 		.catch((error) => {
@@ -87,7 +87,14 @@ export default function Page() {
 							/>
 						</div>
 					</div>
-					{error && <div className="text-red-500 text-sm">{error}</div>}
+					{error && 
+						<div className="text-red-500 text-sm">
+							{error}
+							{error === "User is not verified" && user.email && (
+								<Link className="text-cyan-600 mx-3 hover:text-cyan-400" href={`/verify?email=${user.email}`}>Resend?</Link>
+							)}
+						</div>
+					}
 					<div className="flex flex-row gap-8 justify-end">
 						<Link href="/register" className="text-blue-500 text-right">
 							Don&apos;t have an account? <br />Register
