@@ -22,9 +22,9 @@ export function middleware(request: NextRequest) {
 	// }
 
 	// If trying to access a protected path without a token, redirect to the login page
-	// if (!isPublicPath && !token) {
-	// 	return NextResponse.redirect(new URL('/login?callbackUrl=' + path + (callbackUrl ? '&callbackUrl=' + callbackUrl : ''), request.nextUrl))
-	// }
+	if (!isPublicPath && !token) {
+		return NextResponse.redirect(new URL('/login?callbackUrl=' + path + (callbackUrl ? '&callbackUrl=' + callbackUrl : ''), request.nextUrl))
+	}
 
 	// TODO: Add logic to check if the token is valid and not expired
 		
