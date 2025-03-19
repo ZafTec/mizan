@@ -11,9 +11,11 @@ const unitConversions = {
 		tbsp: 14.7868
 	}
 };
-  
-class UnitConverter {
-	convert(amount: number, from: string, to: string) {
-		// Implementation
-	}
-}
+
+// export default function convert(amount: number, from: string, to: string) {
+// 	const fromUnit = unitConversions[from as keyof typeof unitConversions];
+// 	const toUnit = unitConversions[to as keyof typeof unitConversions];
+
+// 	return amount * (toUnit / fromUnit);
+// }
+
