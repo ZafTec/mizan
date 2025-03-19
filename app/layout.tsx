@@ -6,7 +6,6 @@ import 'remixicon/fonts/remixicon.css';
 export const metadata: Metadata = {
 	title: "MacroChef - Recipe Manager",
 	description: "A simple recipe manager to help you track your macros.",
-	viewport: "width=device-width, initial-scale=1.0",
 };
 
 export default function RootLayout(
