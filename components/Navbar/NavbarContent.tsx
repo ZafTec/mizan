@@ -1,4 +1,3 @@
-
 'use client';
 
 import User from "@/types/user";
@@ -120,6 +119,14 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 								className="block px-4 py-2 text-white hover:bg-emerald-500 md:hover:bg-transparent md:inline-block md:px-2 md:py-0"
 							>
 							Meals
+							</Link>
+						</li>
+						<li className="md:ml-4">
+							<Link
+								href="/meal-plan"
+								className="block px-4 py-2 text-white hover:bg-emerald-500 md:hover:bg-transparent md:inline-block md:px-2 md:py-0"
+							>
+							Meal Plan
 							</Link>
 						</li>
 						<li className="md:ml-4">

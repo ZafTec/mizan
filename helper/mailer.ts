@@ -182,7 +182,7 @@ export async function sendEmail({ email, emailType, userId }: EmailProps) {
 			)
 		}
 
-		var transport = nodemailer.createTransport({
+		const transport = nodemailer.createTransport({
 			host: process.env.NODE_MAILER_HOST!,
 			port: Number(process.env.NODE_MAILER_PORT),
 			auth: {

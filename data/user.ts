@@ -99,12 +99,12 @@ export async function addUser(formState: FormState, user: FormData): Promise<For
 			password: hashedPassword,
 			goal: goal,
 		});
-		console.log("newUser: ", newUser)
 
 		try {
 			await sendEmail({ email: validatedData.email, emailType: "VERIFY", userId: newUser._id });
 		} catch (error) {
 			await User.deleteOne({ _id: newUser._id });
+			console.debug("error: ", error)
 			return {
 				status: "ERROR",
 				message: "Unable to send verification email",

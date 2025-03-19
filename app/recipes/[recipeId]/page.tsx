@@ -6,7 +6,7 @@ import Image from "next/image";
 
 export default async function Page({ params }: { params: Promise<{ recipeId: string }> }) {
 	const { recipeId } = await params;
-	
+
 	const user = await getUserOptionalServer();
 	const recipe = await getRecipeById(recipeId);
 
@@ -15,7 +15,7 @@ export default async function Page({ params }: { params: Promise<{ recipeId: str
 	}
 
 	const isCreator = user !== null && recipe.creator && recipe.creator._id.toString() === user._id.toString();
-	
+
 	return (
 		<div className="container mx-auto px-4 py-8">
 			<div className="max-w-3xl mx-auto">

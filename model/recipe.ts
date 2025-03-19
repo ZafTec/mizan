@@ -12,9 +12,18 @@ const RecipeSchema = new Schema<IRecipe>({
 	images: { type: [String], required: true, default: [] },
 	description: { type: String },
 	ingredients: [{
-		ingredient: { type: Schema.Types.ObjectId, ref: "Ingredient" },
+		ingredient: { 
+			type: Schema.Types.ObjectId, 
+			refPath: 'ingredients.isRecipe' 
+		},
 		amount: { type: Number, required: true },
 		unit: { type: String, required: true },
+		isRecipe: { 
+			type: String, 
+			required: false, 
+			enum: ['Ingredient', 'Recipe'],
+			default: 'Ingredient'
+		}
 	}],
 	totalMacros: {
 		calories: { type: Number, required: true, default: 0 },

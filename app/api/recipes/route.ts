@@ -1,6 +1,8 @@
 
 import { NextResponse } from "next/server";
+import { getAllRecipes } from "@/data/recipe";
 
 export async function GET() {
-	return NextResponse.json({ message: "Get Recipes." });
+	const recipes = await getAllRecipes();
+	return NextResponse.json({ recipes });
 }

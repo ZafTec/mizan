@@ -5,7 +5,7 @@ export interface IIngredient extends Document, Ingredient {
 	_id: Schema.Types.ObjectId;
 }
 
-const IngredientSchema = new Schema({
+const IngredientSchema = new Schema<IIngredient>({
 	name: { type: String, required: true },
 	servingSize: { type: Number, required: true, min: 0, default: 1 },
 	servingUnit: { type: String, required: true, default: "g" },
