@@ -13,6 +13,12 @@ import { z } from "zod";
 import { getFullUserById } from "./user";
 import User from "@/types/user";
 import { getUserServer } from "@/helper/session";
+import { getAllIngredient } from "./ingredient";
+import { getCurrentGoal } from "./goal";
+import { openAIChatRecipeSuggestions } from "@/utils/openAIChat";
+import Recipe from "@/types/recipe";
+import { recipesFromIngredients } from "@/helper/recipesFromIngredients";
+import { getAllRecipes } from "./recipe";
 
 
 export async function getAllMeal(): Promise<MealType[]> {
@@ -269,4 +275,30 @@ export async function populateMeals() {
 	} catch (error) {
 		console.error('Error inserting dummy meals data:', error);
 	}
+}
+
+export async function getRecipesSuggestion(userId: ID): Promise<Recipe[]> {
+	await MongoDBClient();
+
+	// Fetch meals for the user
+	const todaysMeal = await getTodayMeal(userId);
+	const ingredients = await getAllIngredient();
+	const currentGoal = await getCurrentGoal(userId);
+	const allRecipes = await getAllRecipes();
+
+	// Get openAI meal suggestions
+	const suggestions = await openAIChatRecipeSuggestions({
+		ingredients: ingredients,
+		currentGoal: currentGoal,
+		mealsConsumedToday: todaysMeal,
+		recipesInSystem: allRecipes,
+	});
+	console.debug("Total macros from OpenAI suggestions:", suggestions.totalMacros);
+
+	const recipes = await Promise.all(suggestions.recipes.map(async (recipe) => {
+		return await recipesFromIngredients(recipe, userId);
+	}));
+
+	return recipes;
+	// return recipes.filter((recipe) => recipe !== null) as Recipe[];
 }

@@ -118,7 +118,7 @@ export async function addUser(formState: FormState, user: FormData): Promise<For
 
 		return toFormState("SUCCESS", newUser.id.toString());
 	} catch (error) {
-		console.log(error)
+		console.error(error)
 		return fromErrorToFormState(error);
 	}
 }

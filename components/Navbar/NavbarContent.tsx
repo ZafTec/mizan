@@ -115,6 +115,14 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 					<>
 						<li className="md:ml-4">
 							<Link
+								href="/suggestions"
+								className="block px-4 py-2 text-white hover:bg-emerald-500 md:hover:bg-transparent md:inline-block md:px-2 md:py-0"
+							>
+								Suggestions
+							</Link>
+						</li>
+						<li className="md:ml-4">
+							<Link
 								href="/meals"
 								className="block px-4 py-2 text-white hover:bg-emerald-500 md:hover:bg-transparent md:inline-block md:px-2 md:py-0"
 							>

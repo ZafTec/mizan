@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { CldUploadWidget } from 'next-cloudinary';
 import Image from 'next/image';
 import { useRouter } from "next/navigation";
+import Modal from "@/components/Modal";
 
 
 type SelectedIngredient = {
@@ -38,6 +39,23 @@ export default function Page() {
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
 	const router = useRouter();
+	const [isModalOpen, setIsModalOpen] = useState(false);
+
+	// Calculate total macros
+	const totalMacros = selectedIngredients.reduce(
+		(acc, ing) => {
+			if (ing.ingredient && ing.amount) {
+				const ratio = ing.amount / (ing.ingredient.servingSize || 1);
+				acc.calories += (ing.ingredient.macros.calories || 0) * ratio;
+				acc.protein += (ing.ingredient.macros.protein || 0) * ratio;
+				acc.carbs += (ing.ingredient.macros.carbs || 0) * ratio;
+				acc.fat += (ing.ingredient.macros.fat || 0) * ratio;
+				acc.fiber += (ing.ingredient.macros.fiber || 0) * ratio;
+			}
+			return acc;
+		},
+		{ calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
+	);
 
 	useEffect(() => {
 		function handleClickOutside(event: MouseEvent) {
@@ -145,6 +163,61 @@ export default function Page() {
 	return (
 		<div className="max-w-4xl mx-auto p-6">
 			<h1 className="text-3xl font-bold mb-6">Add New Recipe</h1>
+			<div className="flex justify-end mb-4">
+				<button
+					type="button"
+					onClick={() => setIsModalOpen(true)}
+					className="bg-emerald-700 text-white px-4 py-2 rounded-md hover:bg-emerald-600"
+				>
+					View Macros
+				</button>
+			</div>
+			<Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+				<h2 className="text-xl font-bold mb-4">Recipe Macros Overview</h2>
+				<table className="w-full mb-4 border">
+					<thead>
+						<tr className="bg-gray-100">
+							<th className="p-2 text-left">Ingredient</th>
+							<th className="p-2 text-right">Amount</th>
+							<th className="p-2 text-right">Unit</th>
+							<th className="p-2 text-right">Calories</th>
+							<th className="p-2 text-right">Protein</th>
+							<th className="p-2 text-right">Carbs</th>
+							<th className="p-2 text-right">Fat</th>
+							<th className="p-2 text-right">Fiber</th>
+						</tr>
+					</thead>
+					<tbody>
+						{selectedIngredients.map((ing, idx) => {
+							if (!ing.ingredient || !ing.amount) return null;
+							const ratio = ing.amount / (ing.ingredient.servingSize || 1);
+							return (
+								<tr key={idx}>
+									<td className="p-2">{ing.ingredient.name}</td>
+									<td className="p-2 text-right">{ing.amount}</td>
+									<td className="p-2 text-right">{ing.ingredient.servingUnit}</td>
+									<td className="p-2 text-right">{((ing.ingredient.macros.calories || 0) * ratio).toFixed(1)}</td>
+									<td className="p-2 text-right">{((ing.ingredient.macros.protein || 0) * ratio).toFixed(1)}</td>
+									<td className="p-2 text-right">{((ing.ingredient.macros.carbs || 0) * ratio).toFixed(1)}</td>
+									<td className="p-2 text-right">{((ing.ingredient.macros.fat || 0) * ratio).toFixed(1)}</td>
+									<td className="p-2 text-right">{((ing.ingredient.macros.fiber || 0) * ratio).toFixed(1)}</td>
+								</tr>
+							);
+						})}
+					</tbody>
+					<tfoot>
+						<tr className="font-bold bg-emerald-50">
+							<td className="p-2">Total</td>
+							<td colSpan={2}></td>
+							<td className="p-2 text-right">{totalMacros.calories.toFixed(1)}</td>
+							<td className="p-2 text-right">{totalMacros.protein.toFixed(1)}</td>
+							<td className="p-2 text-right">{totalMacros.carbs.toFixed(1)}</td>
+							<td className="p-2 text-right">{totalMacros.fat.toFixed(1)}</td>
+							<td className="p-2 text-right">{totalMacros.fiber.toFixed(1)}</td>
+						</tr>
+					</tfoot>
+				</table>
+			</Modal>
 			<form onSubmit={handleSubmit} className="space-y-6">
 				{/* Basic Information */}
 				<div className="space-y-4">
