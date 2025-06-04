@@ -1,4 +1,4 @@
-# MacroChef - Meal Planning & Nutrition Tracking Application
+# MacroChef - Meal Planning, Nutrition & Fitness Tracking Application
 
 MacroChef is a comprehensive web application for meal planning, recipe management, and nutrition tracking. It helps users plan their meals, organize shopping lists, and track their nutritional intake.
 
@@ -26,6 +26,29 @@ MacroChef is a comprehensive web application for meal planning, recipe managemen
 - View nutritional summaries by day and week
 - Track calories, protein, carbs, fat, and fiber
 
+### Workout Tracking
+- Log and track workouts, exercises, and progress over time
+- View workout history and performance analytics
+
+### Body Composition Tracking
+- Record and visualize body metrics (weight, body fat %, muscle mass, etc.)
+- Track changes and trends with charts
+
+### Gamification & Achievements
+- Earn achievements for hitting nutrition and workout goals
+- Set personal goals and milestones for both intake and exercise
+- Unlock badges and rewards for consistency and progress
+
+### Social Features
+- Share your macro goals, achievements, and progress with friends or the community
+- View and comment on others' achievements (privacy controls available)
+
+### Trainer & Coaching
+- Assign a trainer or coach to your account
+- Grant trainers permission to view your progress, nutrition, and workouts
+- In-app chat with trainers for advice and feedback
+- Trainers can set goals, review progress, and provide personalized recommendations
+
 ## Technical Features
 
 - **Modern UI**: Built with Next.js, React, and Tailwind CSS
@@ -34,6 +57,11 @@ MacroChef is a comprehensive web application for meal planning, recipe managemen
 - **Authentication**: Secure user accounts and data privacy
 - **Data Persistence**: MongoDB integration for data storage
 - **Real-time Updates**: Dynamic data loading when navigating between weeks
+- **Workout & Body Data**: Persistent storage and analytics for workouts and body composition
+- **Gamification Engine**: Achievement and badge system for nutrition and fitness
+- **Social & Sharing**: Share progress, goals, and achievements with others
+- **Trainer Permissions**: Role-based access for trainers/coaches, with secure data sharing
+- **In-app Chat**: Real-time messaging between users and trainers
 
 ## Getting Started
 
