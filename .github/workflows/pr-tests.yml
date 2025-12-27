@@ -3,7 +3,6 @@ name: PR Tests
 on:
   pull_request:
     branches:
-      - main
       - master
 
 concurrency:
@@ -55,8 +54,8 @@ jobs:
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('backend/**/*.csproj') }}
-          restore-path: |
-            ~/.nuget/packages
+          restore-keys: |
+            ${{ runner.os }}-nuget-
 
       - name: Restore dependencies
         working-directory: backend

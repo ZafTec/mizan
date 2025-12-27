@@ -1731,7 +1731,676 @@ public class ImportRecipeCommand : IRequest<RecipeDto>
 - BBC Good Food
 - (any site with JSON-LD Recipe schema)
 
-### 4.4 Social Features
+### 4.4 User Data Export
+
+**Purpose:** Enable users to export their data (meals, workouts, body measurements, recipes) in portable formats for backup, analysis, or migration.
+
+**Scope:**
+- Export user data as JSON (machine-readable)
+- Export user data as PDF report (human-readable)
+- Include all user-created and logged data
+- Privacy-preserving (only user's own data)
+- GDPR compliance (right to data portability)
+
+**Technical Requirements:**
+
+**Data Export Entity:**
+```csharp
+public class UserDataExport
+{
+    public Guid UserId { get; set; }
+    public string UserEmail { get; set; }
+    public DateTime ExportedAt { get; set; }
+    public string Format { get; set; } // "JSON" or "PDF"
+
+    // Exported data
+    public UserProfile Profile { get; set; }
+    public List<LoggedFood> FoodLogs { get; set; }
+    public List<Recipe> Recipes { get; set; }
+    public List<MealPlan> MealPlans { get; set; }
+    public List<Workout> Workouts { get; set; }
+    public List<BodyMeasurement> BodyMeasurements { get; set; }
+    public List<Achievement> Achievements { get; set; }
+    public List<Goal> Goals { get; set; }
+}
+```
+
+**Backend (JSON Export):**
+```csharp
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+public class ExportUserDataCommand : IRequest<ExportResultDto>
+{
+    public Guid UserId { get; set; }
+    public ExportFormat Format { get; set; } // JSON or PDF
+}
+
+public enum ExportFormat
+{
+    JSON,
+    PDF
+}
+
+public class ExportResultDto
+{
+    public string DownloadUrl { get; set; }
+    public string FileName { get; set; }
+    public long FileSizeBytes { get; set; }
+    public DateTime ExpiresAt { get; set; }
+}
+
+public class ExportUserDataHandler : IRequestHandler<ExportUserDataCommand, ExportResultDto>
+{
+    private readonly IMizanDbContext _context;
+    private readonly IPdfGenerationService _pdfService;
+    private readonly IBlobStorageService _storageService;
+
+    public async Task<ExportResultDto> Handle(ExportUserDataCommand request, CancellationToken cancellationToken)
+    {
+        // 1. Gather all user data
+        var export = new UserDataExport
+        {
+            UserId = request.UserId,
+            UserEmail = await GetUserEmail(request.UserId),
+            ExportedAt = DateTime.UtcNow,
+            Format = request.Format.ToString(),
+
+            Profile = await _context.Users
+                .Where(u => u.Id == request.UserId)
+                .Select(u => new UserProfile
+                {
+                    Email = u.Email,
+                    Name = u.Name,
+                    CreatedAt = u.CreatedAt,
+                    Role = u.Role
+                })
+                .FirstOrDefaultAsync(cancellationToken),
+
+            FoodLogs = await _context.LoggedFoods
+                .Where(lf => lf.UserId == request.UserId)
+                .Include(lf => lf.Food)
+                .OrderByDescending(lf => lf.LoggedAt)
+                .ToListAsync(cancellationToken),
+
+            Recipes = await _context.Recipes
+                .Where(r => r.CreatedByUserId == request.UserId)
+                .Include(r => r.Ingredients)
+                .ToListAsync(cancellationToken),
+
+            MealPlans = await _context.MealPlans
+                .Where(mp => mp.UserId == request.UserId)
+                .Include(mp => mp.Meals)
+                .ToListAsync(cancellationToken),
+
+            Workouts = await _context.Workouts
+                .Where(w => w.UserId == request.UserId)
+                .Include(w => w.Exercises)
+                .OrderByDescending(w => w.CompletedAt)
+                .ToListAsync(cancellationToken),
+
+            BodyMeasurements = await _context.BodyMeasurements
+                .Where(bm => bm.UserId == request.UserId)
+                .OrderByDescending(bm => bm.MeasuredAt)
+                .ToListAsync(cancellationToken),
+
+            Achievements = await _context.UserAchievements
+                .Where(ua => ua.UserId == request.UserId)
+                .Include(ua => ua.Achievement)
+                .ToListAsync(cancellationToken),
+
+            Goals = await _context.Goals
+                .Where(g => g.UserId == request.UserId)
+                .OrderByDescending(g => g.CreatedAt)
+                .ToListAsync(cancellationToken)
+        };
+
+        // 2. Generate file based on format
+        byte[] fileBytes;
+        string fileName;
+        string contentType;
+
+        if (request.Format == ExportFormat.JSON)
+        {
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                ReferenceHandler = ReferenceHandler.IgnoreCycles
+            };
+
+            var json = JsonSerializer.Serialize(export, options);
+            fileBytes = Encoding.UTF8.GetBytes(json);
+            fileName = $"macrochef-data-export-{DateTime.UtcNow:yyyy-MM-dd}.json";
+            contentType = "application/json";
+        }
+        else // PDF
+        {
+            fileBytes = await _pdfService.GenerateUserDataReport(export);
+            fileName = $"macrochef-data-export-{DateTime.UtcNow:yyyy-MM-dd}.pdf";
+            contentType = "application/pdf";
+        }
+
+        // 3. Upload to blob storage with expiration (24 hours)
+        var downloadUrl = await _storageService.UploadTempFile(
+            fileBytes,
+            fileName,
+            contentType,
+            expiresIn: TimeSpan.FromHours(24)
+        );
+
+        return new ExportResultDto
+        {
+            DownloadUrl = downloadUrl,
+            FileName = fileName,
+            FileSizeBytes = fileBytes.Length,
+            ExpiresAt = DateTime.UtcNow.AddHours(24)
+        };
+    }
+}
+```
+
+**Backend (PDF Export using QuestPDF):**
+```csharp
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
+
+public interface IPdfGenerationService
+{
+    Task<byte[]> GenerateUserDataReport(UserDataExport export);
+}
+
+public class PdfGenerationService : IPdfGenerationService
+{
+    public async Task<byte[]> GenerateUserDataReport(UserDataExport export)
+    {
+        return await Task.Run(() =>
+        {
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(2, Unit.Centimetre);
+                    page.DefaultTextStyle(x => x.FontSize(11));
+
+                    // Header
+                    page.Header().Element(ComposeHeader);
+
+                    // Content
+                    page.Content().Column(column =>
+                    {
+                        column.Spacing(10);
+
+                        // User Profile Section
+                        column.Item().Element(c => ComposeUserProfile(c, export.Profile));
+
+                        // Body Measurements Section
+                        if (export.BodyMeasurements.Any())
+                            column.Item().Element(c => ComposeBodyMeasurements(c, export.BodyMeasurements));
+
+                        // Food Logs Summary Section
+                        if (export.FoodLogs.Any())
+                            column.Item().Element(c => ComposeFoodLogsSummary(c, export.FoodLogs));
+
+                        // Recipes Section
+                        if (export.Recipes.Any())
+                            column.Item().Element(c => ComposeRecipes(c, export.Recipes));
+
+                        // Workouts Summary Section
+                        if (export.Workouts.Any())
+                            column.Item().Element(c => ComposeWorkoutsSummary(c, export.Workouts));
+
+                        // Achievements Section
+                        if (export.Achievements.Any())
+                            column.Item().Element(c => ComposeAchievements(c, export.Achievements));
+                    });
+
+                    // Footer
+                    page.Footer().AlignCenter().Text(x =>
+                    {
+                        x.Span("Page ");
+                        x.CurrentPageNumber();
+                        x.Span(" of ");
+                        x.TotalPages();
+                        x.Span($" • Exported on {export.ExportedAt:yyyy-MM-dd HH:mm} UTC");
+                    });
+                });
+            });
+
+            return document.GeneratePdf();
+        });
+    }
+
+    private void ComposeHeader(IContainer container)
+    {
+        container.Row(row =>
+        {
+            row.RelativeItem().Column(column =>
+            {
+                column.Item().Text("MacroChef Data Export")
+                    .FontSize(20)
+                    .SemiBold()
+                    .FontColor(Colors.Blue.Medium);
+
+                column.Item().Text("Complete User Data Report")
+                    .FontSize(12)
+                    .FontColor(Colors.Grey.Darken2);
+            });
+        });
+    }
+
+    private void ComposeUserProfile(IContainer container, UserProfile profile)
+    {
+        container.Column(column =>
+        {
+            column.Item().Text("User Profile").FontSize(16).SemiBold();
+            column.Item().PaddingVertical(5).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+
+            column.Item().Row(row =>
+            {
+                row.RelativeItem().Text($"Email: {profile.Email}");
+                row.RelativeItem().Text($"Name: {profile.Name}");
+            });
+
+            column.Item().Row(row =>
+            {
+                row.RelativeItem().Text($"Member Since: {profile.CreatedAt:yyyy-MM-dd}");
+                row.RelativeItem().Text($"Role: {profile.Role}");
+            });
+        });
+    }
+
+    private void ComposeBodyMeasurements(IContainer container, List<BodyMeasurement> measurements)
+    {
+        container.Column(column =>
+        {
+            column.Item().Text("Body Measurements").FontSize(16).SemiBold();
+            column.Item().PaddingVertical(5).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+
+            column.Item().Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.RelativeColumn(2); // Date
+                    columns.RelativeColumn(1); // Type
+                    columns.RelativeColumn(1); // Value
+                    columns.RelativeColumn(1); // Unit
+                });
+
+                table.Header(header =>
+                {
+                    header.Cell().Text("Date").SemiBold();
+                    header.Cell().Text("Type").SemiBold();
+                    header.Cell().Text("Value").SemiBold();
+                    header.Cell().Text("Unit").SemiBold();
+                });
+
+                foreach (var measurement in measurements.Take(50)) // Limit to 50 most recent
+                {
+                    table.Cell().Text(measurement.MeasuredAt.ToString("yyyy-MM-dd"));
+                    table.Cell().Text(measurement.MeasurementType.ToString());
+                    table.Cell().Text(measurement.Value.ToString("F2"));
+                    table.Cell().Text(measurement.Unit);
+                }
+            });
+
+            if (measurements.Count > 50)
+                column.Item().Text($"+ {measurements.Count - 50} more entries (see JSON export for full data)")
+                    .FontSize(9).Italic().FontColor(Colors.Grey.Medium);
+        });
+    }
+
+    private void ComposeFoodLogsSummary(IContainer container, List<LoggedFood> foodLogs)
+    {
+        var totalCalories = foodLogs.Sum(f => f.Calories);
+        var totalProtein = foodLogs.Sum(f => f.Protein);
+        var totalCarbs = foodLogs.Sum(f => f.Carbs);
+        var totalFat = foodLogs.Sum(f => f.Fat);
+
+        container.Column(column =>
+        {
+            column.Item().Text("Food Logs Summary").FontSize(16).SemiBold();
+            column.Item().PaddingVertical(5).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+
+            column.Item().Row(row =>
+            {
+                row.RelativeItem().Text($"Total Entries: {foodLogs.Count}");
+                row.RelativeItem().Text($"Total Calories: {totalCalories:N0} kcal");
+            });
+
+            column.Item().Row(row =>
+            {
+                row.RelativeItem().Text($"Total Protein: {totalProtein:F1}g");
+                row.RelativeItem().Text($"Total Carbs: {totalCarbs:F1}g");
+                row.RelativeItem().Text($"Total Fat: {totalFat:F1}g");
+            });
+
+            column.Item().PaddingTop(10).Text("Recent Entries (Last 30)").FontSize(12).SemiBold();
+
+            column.Item().Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.RelativeColumn(2); // Date
+                    columns.RelativeColumn(3); // Food Name
+                    columns.RelativeColumn(1); // Calories
+                    columns.RelativeColumn(1); // Protein
+                });
+
+                table.Header(header =>
+                {
+                    header.Cell().Text("Date").SemiBold();
+                    header.Cell().Text("Food").SemiBold();
+                    header.Cell().Text("Calories").SemiBold();
+                    header.Cell().Text("Protein (g)").SemiBold();
+                });
+
+                foreach (var log in foodLogs.Take(30))
+                {
+                    table.Cell().Text(log.LoggedAt.ToString("yyyy-MM-dd HH:mm"));
+                    table.Cell().Text(log.Food.Name);
+                    table.Cell().Text($"{log.Calories:F0}");
+                    table.Cell().Text($"{log.Protein:F1}");
+                }
+            });
+
+            if (foodLogs.Count > 30)
+                column.Item().Text($"+ {foodLogs.Count - 30} more entries (see JSON export for full data)")
+                    .FontSize(9).Italic().FontColor(Colors.Grey.Medium);
+        });
+    }
+
+    private void ComposeRecipes(IContainer container, List<Recipe> recipes)
+    {
+        container.Column(column =>
+        {
+            column.Item().Text("Recipes").FontSize(16).SemiBold();
+            column.Item().PaddingVertical(5).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+
+            foreach (var recipe in recipes.Take(20))
+            {
+                column.Item().PaddingBottom(10).Column(recipeColumn =>
+                {
+                    recipeColumn.Item().Text(recipe.Name).FontSize(12).SemiBold();
+                    recipeColumn.Item().Text($"Servings: {recipe.Servings} • Prep: {recipe.PrepTimeMinutes}min • Cook: {recipe.CookTimeMinutes}min");
+                    recipeColumn.Item().Text($"Calories: {recipe.CaloriesPerServing:F0} kcal | Protein: {recipe.ProteinPerServing:F1}g | Carbs: {recipe.CarbsPerServing:F1}g | Fat: {recipe.FatPerServing:F1}g");
+                });
+            }
+
+            if (recipes.Count > 20)
+                column.Item().Text($"+ {recipes.Count - 20} more recipes (see JSON export for full data)")
+                    .FontSize(9).Italic().FontColor(Colors.Grey.Medium);
+        });
+    }
+
+    private void ComposeWorkoutsSummary(IContainer container, List<Workout> workouts)
+    {
+        var totalWorkouts = workouts.Count;
+        var totalMinutes = workouts.Sum(w => w.DurationMinutes);
+        var totalCaloriesBurned = workouts.Sum(w => w.CaloriesBurned ?? 0);
+
+        container.Column(column =>
+        {
+            column.Item().Text("Workouts Summary").FontSize(16).SemiBold();
+            column.Item().PaddingVertical(5).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+
+            column.Item().Row(row =>
+            {
+                row.RelativeItem().Text($"Total Workouts: {totalWorkouts}");
+                row.RelativeItem().Text($"Total Duration: {totalMinutes:N0} minutes");
+                row.RelativeItem().Text($"Total Calories Burned: {totalCaloriesBurned:N0} kcal");
+            });
+
+            column.Item().PaddingTop(10).Text("Recent Workouts (Last 20)").FontSize(12).SemiBold();
+
+            column.Item().Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.RelativeColumn(2); // Date
+                    columns.RelativeColumn(2); // Name
+                    columns.RelativeColumn(1); // Duration
+                    columns.RelativeColumn(1); // Calories
+                });
+
+                table.Header(header =>
+                {
+                    header.Cell().Text("Date").SemiBold();
+                    header.Cell().Text("Workout").SemiBold();
+                    header.Cell().Text("Duration").SemiBold();
+                    header.Cell().Text("Calories").SemiBold();
+                });
+
+                foreach (var workout in workouts.Take(20))
+                {
+                    table.Cell().Text(workout.CompletedAt?.ToString("yyyy-MM-dd") ?? "N/A");
+                    table.Cell().Text(workout.Name);
+                    table.Cell().Text($"{workout.DurationMinutes} min");
+                    table.Cell().Text(workout.CaloriesBurned?.ToString("F0") ?? "N/A");
+                }
+            });
+
+            if (workouts.Count > 20)
+                column.Item().Text($"+ {workouts.Count - 20} more workouts (see JSON export for full data)")
+                    .FontSize(9).Italic().FontColor(Colors.Grey.Medium);
+        });
+    }
+
+    private void ComposeAchievements(IContainer container, List<Achievement> achievements)
+    {
+        container.Column(column =>
+        {
+            column.Item().Text("Achievements").FontSize(16).SemiBold();
+            column.Item().PaddingVertical(5).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+
+            foreach (var achievement in achievements)
+            {
+                column.Item().Row(row =>
+                {
+                    row.RelativeItem().Text($"🏆 {achievement.Achievement.Name}");
+                    row.RelativeItem().Text($"Unlocked: {achievement.UnlockedAt:yyyy-MM-dd}");
+                });
+            }
+        });
+    }
+}
+```
+
+**Controller:**
+```csharp
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class ExportController : ControllerBase
+{
+    private readonly IMediator _mediator;
+
+    public ExportController(IMediator mediator)
+    {
+        _mediator = mediator;
+    }
+
+    /// <summary>
+    /// Export user data in JSON or PDF format
+    /// </summary>
+    [HttpPost("user-data")]
+    public async Task<ActionResult<ExportResultDto>> ExportUserData(
+        [FromBody] ExportUserDataRequest request)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        var command = new ExportUserDataCommand
+        {
+            UserId = userId,
+            Format = request.Format
+        };
+
+        var result = await _mediator.Send(command);
+
+        return Ok(result);
+    }
+}
+
+public class ExportUserDataRequest
+{
+    public ExportFormat Format { get; set; } = ExportFormat.JSON;
+}
+```
+
+**Frontend:**
+```typescript
+"use client";
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Download, FileJson, FileText } from "lucide-react";
+import { apiClient } from "@/lib/auth-client";
+
+export function ExportDataSection() {
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportResult, setExportResult] = useState<{
+    downloadUrl: string;
+    fileName: string;
+    fileSizeBytes: number;
+    expiresAt: string;
+  } | null>(null);
+
+  const handleExport = async (format: "JSON" | "PDF") => {
+    try {
+      setIsExporting(true);
+      setExportResult(null);
+
+      const response = await apiClient.post<{
+        downloadUrl: string;
+        fileName: string;
+        fileSizeBytes: number;
+        expiresAt: string;
+      }>("/api/Export/user-data", {
+        format
+      });
+
+      if (response.data) {
+        setExportResult(response.data);
+
+        // Auto-download
+        const link = document.createElement("a");
+        link.href = response.data.downloadUrl;
+        link.download = response.data.fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("Failed to export data. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Export Your Data</CardTitle>
+        <CardDescription>
+          Download all your data including meals, workouts, body measurements, and recipes.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex gap-4">
+          <Button
+            onClick={() => handleExport("JSON")}
+            disabled={isExporting}
+            variant="outline"
+            className="flex-1"
+          >
+            <FileJson className="mr-2 h-4 w-4" />
+            {isExporting ? "Exporting..." : "Export as JSON"}
+          </Button>
+          <Button
+            onClick={() => handleExport("PDF")}
+            disabled={isExporting}
+            variant="outline"
+            className="flex-1"
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            {isExporting ? "Exporting..." : "Export as PDF"}
+          </Button>
+        </div>
+
+        {exportResult && (
+          <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+            <div className="flex items-start gap-3">
+              <Download className="h-5 w-5 text-green-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-medium text-green-900">Export Complete</p>
+                <p className="text-sm text-green-700 mt-1">
+                  <strong>{exportResult.fileName}</strong> ({(exportResult.fileSizeBytes / 1024).toFixed(2)} KB)
+                </p>
+                <p className="text-xs text-green-600 mt-2">
+                  Download link expires: {new Date(exportResult.expiresAt).toLocaleString()}
+                </p>
+                <a
+                  href={exportResult.downloadUrl}
+                  download={exportResult.fileName}
+                  className="text-sm text-green-700 underline hover:text-green-900 mt-2 inline-block"
+                >
+                  Download again
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="text-xs text-muted-foreground space-y-1">
+          <p><strong>JSON Format:</strong> Machine-readable, complete data export including all fields and relationships.</p>
+          <p><strong>PDF Format:</strong> Human-readable summary report with charts, tables, and key statistics.</p>
+          <p><strong>Privacy:</strong> Only your data is exported. Download links expire after 24 hours.</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+**Endpoints:**
+- `POST /api/Export/user-data` - Trigger data export (JSON or PDF)
+
+**Dependencies:**
+- **QuestPDF** (NuGet package) - PDF generation library
+- **System.Text.Json** - JSON serialization
+- **Blob Storage** (Azure Blob, AWS S3, or local filesystem) - Temporary file storage with expiration
+
+**GDPR Compliance:**
+- Users can export their complete data (Article 20: Right to Data Portability)
+- Export includes all personal data and user-generated content
+- JSON format ensures machine-readable portability
+- Data export is privacy-preserving (only user's own data)
+
+**Security Considerations:**
+- Authorization check: Users can only export their own data
+- Rate limiting: Prevent abuse (max 5 exports per hour)
+- Temporary URLs: Download links expire after 24 hours
+- No sensitive data in logs (user IDs, emails redacted)
+
+**Complexity:** Medium
+**Estimated Effort:** 3-4 weeks
+- Week 1: Backend data gathering + JSON export + API endpoints
+- Week 2: PDF generation service with QuestPDF + formatting
+- Week 3: Frontend UI + download handling + testing
+- Week 4: GDPR compliance review + security hardening + documentation
+
+**Testing Strategy:**
+- Unit tests: JSON serialization, PDF generation
+- Integration tests: Export command with real database
+- E2E tests: Full export flow from UI to download
+- Load tests: Handle large datasets (10K+ food logs)
+
+### 4.5 Social Features
 
 **Purpose:** Community engagement, recipe sharing, social accountability.
 
@@ -1751,7 +2420,7 @@ Not included in this roadmap depth - would require significant UI/backend work. 
 - Privacy controls (public, friends-only, private)
 - Notifications (friend added, recipe liked, achievement unlocked)
 
-### 4.5 Advanced Analytics & Reporting
+### 4.6 Advanced Analytics & Reporting
 
 **Purpose:** Data-driven insights for trainers and users.
 
@@ -1797,7 +2466,7 @@ public class WeightProjectionService
 
 Estimate **Large (6-8 weeks)** and **P3 priority**.
 
-### 4.6 Mobile App (React Native or Flutter)
+### 4.7 Mobile App (React Native or Flutter)
 
 **Purpose:** Expand to iOS/Android native apps.
 
