@@ -25,7 +25,7 @@ export async function connectToChat(): Promise<signalR.HubConnection> {
 	}
 
 	const token = await getApiToken();
-	const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+	const apiUrl = (typeof process !== 'undefined' && process.env["NEXT_PUBLIC_API_URL"]) || "http://localhost:5000";
 
 	connection = new signalR.HubConnectionBuilder()
 		.withUrl(`${apiUrl}/hubs/chat`, {

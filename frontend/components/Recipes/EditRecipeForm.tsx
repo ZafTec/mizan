@@ -198,6 +198,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                             }
                         }}
                         signatureEndpoint="/api/sign-cloudinary-params"
+                        options={{ cloudName: (typeof process !== 'undefined' && process.env["NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME"]) || "" }}
                     >
                         {({ open }) => (
                             <div className="flex flex-wrap gap-3">

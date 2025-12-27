@@ -94,6 +94,7 @@ export default function ProfilePage() {
 						)}
 						<CldUploadWidget
 							uploadPreset="mizan_preset"
+							options={{ cloudName: (typeof process !== 'undefined' && process.env["NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME"]) || "" }}
 							onSuccess={async (result: any) => {
 								const imageUrl = result.info.secure_url;
 								try {

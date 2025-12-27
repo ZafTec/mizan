@@ -19,13 +19,6 @@ const nextConfig: NextConfig = {
 		],
 	},
 
-	// Environment variables exposed to browser
-	env: {
-		NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-		NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-		NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-		NEXT_PUBLIC_CLOUDINARY_API_KEY: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-	},
 	// Headers for security
 	async headers() {
 		return [

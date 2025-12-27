@@ -5,7 +5,7 @@ import { jwtClient, organizationClient, adminClient } from "better-auth/client/p
 import { ac, adminRole, trainerRole, userRole } from "@/lib/permissions";
 
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+  baseURL: (typeof process !== 'undefined' && process.env["NEXT_PUBLIC_APP_URL"]) || "http://localhost:3000",
   plugins: [
     jwtClient(),
     organizationClient(),
@@ -54,7 +54,7 @@ async function handleSessionExpired(): Promise<void> {
   if (typeof window === 'undefined') return;
 
   try {
-    await authClient.signOut({ fetchOptions: { onSuccess: () => {} } });
+    await authClient.signOut({ fetchOptions: { onSuccess: () => { } } });
   } catch (error) {
     console.error("Error signing out:", error);
   }
@@ -70,7 +70,7 @@ export async function apiClient<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const baseUrl = (typeof window === 'undefined' ? process.env.API_URL : process.env.NEXT_PUBLIC_API_URL) || "http://localhost:5000";
+  const baseUrl = (typeof window === 'undefined' ? process.env.API_URL : (typeof process !== 'undefined' && process.env["NEXT_PUBLIC_API_URL"])) || "http://localhost:5000";
   const apiUrl = baseUrl;
 
   let headers: HeadersInit = {

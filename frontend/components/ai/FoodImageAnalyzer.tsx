@@ -49,7 +49,7 @@ export function FoodImageAnalyzer() {
 			formData.append("image", fileInputRef.current.files[0]);
 
 			const response = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/api/nutrition/ai/analyze-image`,
+				`${process.env["NEXT_PUBLIC_API_URL"]}/api/nutrition/ai/analyze-image`,
 				{
 					method: "POST",
 					body: formData,
@@ -119,11 +119,10 @@ export function FoodImageAnalyzer() {
 
 			{/* Upload Area */}
 			<div
-				className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-					selectedImage
+				className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${selectedImage
 						? "border-green-500 bg-green-50"
 						: "border-gray-300 hover:border-green-400"
-				}`}
+					}`}
 				onClick={() => fileInputRef.current?.click()}
 			>
 				{selectedImage ? (
