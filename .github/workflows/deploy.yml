@@ -9,9 +9,9 @@ on:
       - '!.github/workflows/deploy.yml'
 
 env:
-  DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-  FRONTEND_IMAGE: ${{ secrets.DOCKER_HUB_USERNAME }}/mizan-frontend
-  BACKEND_IMAGE: ${{ secrets.DOCKER_HUB_USERNAME }}/mizan-backend
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  FRONTEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/mizan-frontend
+  BACKEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/mizan-backend
 
 jobs:
   build-and-push-frontend:
@@ -27,8 +27,8 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract metadata
         id: meta
@@ -63,8 +63,8 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract metadata
         id: meta
