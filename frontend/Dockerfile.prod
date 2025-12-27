@@ -19,6 +19,20 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Build-time environment variables (required for Next.js build)
+# These are dummy values for the build step; actual runtime values come from container environment
+ARG BETTER_AUTH_SECRET="build-time-secret-minimum-32-characters-required-for-validation"
+ARG BFF_TRUSTED_SECRET="build-time-bff-trusted-secret"
+ARG DATABASE_URL="postgresql://build:build@localhost:5432/build_db"
+ARG API_URL="http://localhost:8080"
+ARG NEXT_PUBLIC_API_URL="http://localhost:3000"
+
+ENV BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET
+ENV BFF_TRUSTED_SECRET=$BFF_TRUSTED_SECRET
+ENV DATABASE_URL=$DATABASE_URL
+ENV API_URL=$API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 RUN bun run build
 
 # Stage 3: Runner
