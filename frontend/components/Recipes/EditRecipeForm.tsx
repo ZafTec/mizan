@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getAllIngredient } from "@/data/ingredient";
 import type { Ingredient } from "@/data/ingredient";
-import { CloudinaryUploadWidget } from '@/components/CloudinaryUploadWidget';
+import { CldUploadWidget } from 'next-cloudinary';
 import Image from 'next/image';
 import { useRouter } from "next/navigation";
 import Modal from "@/components/Modal";
@@ -191,7 +191,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                 {/* Image Upload */}
                 <div>
                     <label className="label">Recipe Images</label>
-                    <CloudinaryUploadWidget
+                    <CldUploadWidget
                         onSuccess={(result) => {
                             if (result?.info && result.info instanceof Object) {
                                 setImages([result.info.secure_url]);
@@ -216,7 +216,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                                 ))}
                             </div>
                         )}
-                    </CloudinaryUploadWidget>
+                    </CldUploadWidget>
                 </div>
 
                 {/* Recipe Name */}

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { getAllIngredient } from "@/data/ingredient";
 import type { Ingredient } from "@/data/ingredient";
 
-import { CloudinaryUploadWidget } from '@/components/CloudinaryUploadWidget';
+import { CldUploadWidget } from 'next-cloudinary';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from "next/navigation";
@@ -261,7 +261,7 @@ export default function Page() {
 					{/* Image Upload */}
 					<div>
 						<label className="label">Recipe Images</label>
-						<CloudinaryUploadWidget
+						<CldUploadWidget
 							onSuccess={(result) => {
 								if (result?.info && result.info instanceof Object) {
 									setImages((prevImages) => {
@@ -309,7 +309,7 @@ export default function Page() {
 									)}
 								</div>
 							)}
-						</CloudinaryUploadWidget>
+						</CldUploadWidget>
 					</div>
 
 					{/* Recipe Name */}

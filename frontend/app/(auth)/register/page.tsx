@@ -4,7 +4,7 @@ import { FieldError } from "@/components/FieldError";
 import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
 import { addUser } from "@/data/user";
 import { useActionState, useEffect, useState } from "react";
-import { CloudinaryUploadWidget } from "@/components/CloudinaryUploadWidget";
+import { CldUploadWidget } from "next-cloudinary";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -89,7 +89,7 @@ export default function Page() {
 							<label className="label">
 								Profile Image <span className="text-slate-400 font-normal">(optional)</span>
 							</label>
-							<CloudinaryUploadWidget
+							<CldUploadWidget
 								onSuccess={(result) => {
 									if (result?.info && result.info instanceof Object) {
 										setImage(result.info.secure_url);
@@ -135,7 +135,7 @@ export default function Page() {
 										</div>
 									</div>
 								)}
-							</CloudinaryUploadWidget>
+							</CldUploadWidget>
 							<input type="hidden" name="userImage" value={image} />
 						</div>
 

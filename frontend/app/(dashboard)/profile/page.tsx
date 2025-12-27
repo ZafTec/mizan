@@ -4,7 +4,7 @@ import { useSession, signOut, apiClient } from "@/lib/auth-client";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { CloudinaryUploadWidget } from "@/components/CloudinaryUploadWidget";
+import { CldUploadWidget } from "next-cloudinary";
 
 export default function ProfilePage() {
 	const { data: session, isPending } = useSession();
@@ -92,7 +92,7 @@ export default function ProfilePage() {
 								</span>
 							</div>
 						)}
-						<CloudinaryUploadWidget
+						<CldUploadWidget
 							uploadPreset="mizan_preset"
 							onSuccess={async (result: any) => {
 								const imageUrl = result.info.secure_url;
@@ -119,7 +119,7 @@ export default function ProfilePage() {
 									<i className="ri-camera-line text-slate-600" />
 								</button>
 							)}
-						</CloudinaryUploadWidget>
+						</CldUploadWidget>
 					</div>
 					<div className="text-center sm:text-left flex-1">
 						<h2 className="text-xl font-bold text-slate-900">
