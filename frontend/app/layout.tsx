@@ -19,21 +19,6 @@ export default function RootLayout(
 	return (
 		<html lang="en">
 			<body className="antialiased min-h-screen flex flex-col">
-				{/* Inject runtime environment variables for "dynamic lookups" */}
-				<script
-					dangerouslySetInnerHTML={{
-						__html: `
-              window.process = window.process || {};
-              window.process.env = {
-                ...window.process.env,
-                NEXT_PUBLIC_APP_URL: "${process.env.NEXT_PUBLIC_APP_URL || ''}",
-                NEXT_PUBLIC_API_URL: "${process.env.NEXT_PUBLIC_API_URL || ''}",
-                NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: "${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || ''}",
-                NEXT_PUBLIC_CLOUDINARY_API_KEY: "${process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY || ''}",
-              };
-            `,
-					}}
-				/>
 				<Navbar />
 				<main className="grow">
 					<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">

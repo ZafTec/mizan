@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { getAllIngredient } from "@/data/ingredient";
 import type { Ingredient } from "@/data/ingredient";
 
-import { CldUploadWidget } from 'next-cloudinary';
+import { CloudinaryUploadWidget } from '@/components/CloudinaryUploadWidget';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from "next/navigation";
@@ -261,7 +261,7 @@ export default function Page() {
 					{/* Image Upload */}
 					<div>
 						<label className="label">Recipe Images</label>
-						<CldUploadWidget
+						<CloudinaryUploadWidget
 							onSuccess={(result) => {
 								if (result?.info && result.info instanceof Object) {
 									setImages((prevImages) => {
@@ -273,7 +273,6 @@ export default function Page() {
 								}
 							}}
 							signatureEndpoint="/api/sign-cloudinary-params"
-							options={{ cloudName: (typeof process !== 'undefined' && process.env["NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME"]) || "" }}
 						>
 							{({ open }) => (
 								<div className="flex flex-wrap gap-3">
@@ -310,7 +309,7 @@ export default function Page() {
 									)}
 								</div>
 							)}
-						</CldUploadWidget>
+						</CloudinaryUploadWidget>
 					</div>
 
 					{/* Recipe Name */}

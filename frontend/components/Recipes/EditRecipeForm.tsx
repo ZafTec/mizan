@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getAllIngredient } from "@/data/ingredient";
 import type { Ingredient } from "@/data/ingredient";
-import { CldUploadWidget } from 'next-cloudinary';
+import { CloudinaryUploadWidget } from '@/components/CloudinaryUploadWidget';
 import Image from 'next/image';
 import { useRouter } from "next/navigation";
 import Modal from "@/components/Modal";
@@ -191,14 +191,13 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                 {/* Image Upload */}
                 <div>
                     <label className="label">Recipe Images</label>
-                    <CldUploadWidget
+                    <CloudinaryUploadWidget
                         onSuccess={(result) => {
                             if (result?.info && result.info instanceof Object) {
                                 setImages([result.info.secure_url]);
                             }
                         }}
                         signatureEndpoint="/api/sign-cloudinary-params"
-                        options={{ cloudName: (typeof process !== 'undefined' && process.env["NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME"]) || "" }}
                     >
                         {({ open }) => (
                             <div className="flex flex-wrap gap-3">
@@ -217,7 +216,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                                 ))}
                             </div>
                         )}
-                    </CldUploadWidget>
+                    </CloudinaryUploadWidget>
                 </div>
 
                 {/* Recipe Name */}
