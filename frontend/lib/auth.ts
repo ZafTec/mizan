@@ -5,8 +5,11 @@ import { jwt, organization, admin } from "better-auth/plugins";
 import { db } from "@/db/client";
 import { sendEmail, getVerificationEmailTemplate, getPasswordResetEmailTemplate } from "@/lib/email";
 import { ac, adminRole, trainerRole, userRole } from "@/lib/permissions";
+import { logger } from "@/lib/logger";
 
 import * as schema from "@/db/schema";
+
+const authLogger = logger.createModuleLogger("auth-server");
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -24,41 +27,57 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: true,
     sendResetPassword: async ({ user, url }) => {
-      // Log URL in development for easy testing
       if (process.env.NODE_ENV !== "production") {
+        authLogger.debug("Password reset requested", { email: user.email });
         console.debug(`\n🔐 Password Reset for ${user.email}`);
         console.debug(`🔗 Reset URL: ${url}`);
         console.debug(`\nDEV MODE: Click the link above to reset your password\n`);
       }
 
-      // Send email
-      const emailTemplate = getPasswordResetEmailTemplate(url, user.name);
-      await sendEmail({
-        to: user.email,
-        subject: emailTemplate.subject,
-        html: emailTemplate.html,
-        text: emailTemplate.text,
-      });
+      try {
+        const emailTemplate = getPasswordResetEmailTemplate(url, user.name);
+        await sendEmail({
+          to: user.email,
+          subject: emailTemplate.subject,
+          html: emailTemplate.html,
+          text: emailTemplate.text,
+        });
+        authLogger.info("Password reset email sent", { email: user.email });
+      } catch (error) {
+        authLogger.error("Failed to send password reset email", {
+          email: user.email,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        throw error;
+      }
     },
   },
   emailVerification: {
     sendVerificationEmail: async ({ user, url, token }) => {
-      // Log URL in development for easy testing
       if (process.env.NODE_ENV !== "production") {
+        authLogger.debug("Email verification requested", { email: user.email });
         console.log(`\n📧 Email Verification for ${user.email}`);
         console.log(`🔗 Verification URL: ${url}`);
         console.log(`🎫 Token: ${token}`);
         console.log(`\nDEV MODE: Click the link above to verify your email\n`);
       }
 
-      // Send email
-      const emailTemplate = getVerificationEmailTemplate(url, user.name);
-      await sendEmail({
-        to: user.email,
-        subject: emailTemplate.subject,
-        html: emailTemplate.html,
-        text: emailTemplate.text,
-      });
+      try {
+        const emailTemplate = getVerificationEmailTemplate(url, user.name);
+        await sendEmail({
+          to: user.email,
+          subject: emailTemplate.subject,
+          html: emailTemplate.html,
+          text: emailTemplate.text,
+        });
+        authLogger.info("Verification email sent", { email: user.email });
+      } catch (error) {
+        authLogger.error("Failed to send verification email", {
+          email: user.email,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        throw error;
+      }
     },
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
@@ -75,6 +94,12 @@ export const auth = betterAuth({
   },
   plugins: [
     jwt({
+      jwks: {
+        keyPairConfig: {
+          alg: "EdDSA",
+          crv: "Ed25519"
+        }
+      },
       jwt: {
         issuer: process.env.BETTER_AUTH_URL!,
         expirationTime: "15m",

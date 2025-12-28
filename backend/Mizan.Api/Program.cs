@@ -4,21 +4,45 @@ using Microsoft.EntityFrameworkCore;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Mizan.Api.Authentication;
 using Mizan.Api.Hubs;
+using Mizan.Api.Middleware;
 using Mizan.Application;
 using Mizan.Infrastructure;
 using Serilog;
+using Serilog.Events;
+using Serilog.Exceptions;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure Serilog
+var environment = builder.Environment.EnvironmentName;
+
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
-    .WriteTo.Console()
+    .Enrich.WithProperty("Environment", environment)
+    .Enrich.WithProperty("Application", "Mizan.Api")
+    .Enrich.WithMachineName()
+    .Enrich.WithThreadId()
+    .Enrich.WithExceptionDetails()
+    .WriteTo.Console(
+        outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File(
+        path: "logs/mizan-.log",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 30,
+        outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [{RequestId}] [{UserId}] [{SourceContext}] {Message:lj}{NewLine}{Exception}",
+        restrictedToMinimumLevel: LogEventLevel.Information)
+    .WriteTo.File(
+        path: "logs/mizan-errors-.log",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 90,
+        restrictedToMinimumLevel: LogEventLevel.Error,
+        outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [{RequestId}] [{UserId}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
     .CreateLogger();
 
 builder.Host.UseSerilog();
+
+Log.Information("Starting Mizan API - Environment: {Environment}", environment);
 
 // Add services
 builder.Services.AddControllers();
@@ -64,20 +88,31 @@ builder.Services.AddAuthentication("BffTrustedSource")
 
 builder.Services.AddAuthorization();
 
-// Redis connection for caching and SignalR
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
 
 if (!string.IsNullOrEmpty(redisConnectionString))
 {
-    // Register Redis connection multiplexer as singleton for JWKS caching
     builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     {
-        var configuration = ConfigurationOptions.Parse(redisConnectionString);
-        return ConnectionMultiplexer.Connect(configuration);
+        try
+        {
+            var configuration = ConfigurationOptions.Parse(redisConnectionString);
+            var multiplexer = ConnectionMultiplexer.Connect(configuration);
+            Log.Information("Redis connection established successfully");
+            return multiplexer;
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to connect to Redis at {ConnectionString}", redisConnectionString);
+            throw;
+        }
     });
 }
+else
+{
+    Log.Warning("Redis connection string not configured - caching and SignalR backplane will be unavailable");
+}
 
-// SignalR with Redis backplane for scaling
 var signalRBuilder = builder.Services.AddSignalR();
 
 if (!string.IsNullOrEmpty(redisConnectionString))
@@ -86,6 +121,7 @@ if (!string.IsNullOrEmpty(redisConnectionString))
     {
         options.Configuration.ChannelPrefix = RedisChannel.Literal("Mizan");
     });
+    Log.Information("SignalR configured with Redis backplane");
 }
 
 // CORS
@@ -110,14 +146,25 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
-// Configure pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseSerilogRequestLogging();
+app.UseMiddleware<RequestResponseLoggingMiddleware>();
+
+app.UseSerilogRequestLogging(options =>
+{
+    options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000}ms";
+    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+    {
+        diagnosticContext.Set("RequestHost", httpContext.Request.Host.Value);
+        diagnosticContext.Set("RequestScheme", httpContext.Request.Scheme);
+        diagnosticContext.Set("UserAgent", httpContext.Request.Headers["User-Agent"].ToString());
+        diagnosticContext.Set("ClientIp", httpContext.Connection.RemoteIpAddress?.ToString());
+    };
+});
 
 app.UseCors("AllowFrontend");
 
@@ -130,6 +177,11 @@ app.UseExceptionHandler(errorApp =>
 
         if (exception is ValidationException validationEx)
         {
+            Log.Warning(
+                "Validation failed for {Path} - {ErrorCount} errors",
+                context.Request.Path,
+                validationEx.Errors.Count());
+
             context.Response.StatusCode = 400;
             await context.Response.WriteAsJsonAsync(new
             {
@@ -138,11 +190,20 @@ app.UseExceptionHandler(errorApp =>
         }
         else if (exception is UnauthorizedAccessException)
         {
+            Log.Warning(
+                "Unauthorized access attempt to {Path}",
+                context.Request.Path);
+
             context.Response.StatusCode = 401;
             await context.Response.WriteAsJsonAsync(new { error = "Unauthorized" });
         }
         else
         {
+            Log.Error(
+                exception,
+                "Unhandled exception for {Path}",
+                context.Request.Path);
+
             context.Response.StatusCode = 500;
             await context.Response.WriteAsJsonAsync(new { error = "Internal server error" });
         }
@@ -156,7 +217,6 @@ app.MapControllers();
 app.MapHub<ChatHub>("/hubs/chat");
 app.MapHealthChecks("/health");
 
-// Apply migrations automatically in development
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
@@ -174,7 +234,18 @@ if (app.Environment.IsDevelopment())
 
 Log.Information("Mizan API starting on {Urls}", string.Join(", ", app.Urls));
 
-app.Run();
+try
+{
+    app.Run();
+    Log.Information("Mizan API stopped gracefully");
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Mizan API terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
 
-// Make Program class accessible for integration tests
 public partial class Program { }

@@ -15,7 +15,9 @@ COPY ["Mizan.Domain/Mizan.Domain.csproj", "Mizan.Domain/"]
 COPY ["Mizan.Infrastructure/Mizan.Infrastructure.csproj", "Mizan.Infrastructure/"]
 COPY ["Mizan.Tests/Mizan.Tests.csproj", "Mizan.Tests/"]
 
-RUN dotnet restore "Mizan.Api/Mizan.Api.csproj"
+# Clear NuGet cache and restore with no-cache to avoid layer caching issues
+RUN dotnet nuget locals all --clear && \
+    dotnet restore "Mizan.Api/Mizan.Api.csproj" --no-cache
 
 EXPOSE 8080
 

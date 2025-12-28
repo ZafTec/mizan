@@ -53,7 +53,16 @@ public class ChatHub : Hub
         if (userId.HasValue)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{userId}");
-            _logger.LogInformation("User {UserId} connected to chat hub", userId);
+            _logger.LogInformation(
+                "SignalR connection established - User {UserId}, ConnectionId {ConnectionId}",
+                userId,
+                Context.ConnectionId);
+        }
+        else
+        {
+            _logger.LogWarning(
+                "SignalR connection established with no user ID - ConnectionId {ConnectionId}",
+                Context.ConnectionId);
         }
 
         await base.OnConnectedAsync();
@@ -65,7 +74,22 @@ public class ChatHub : Hub
         if (userId.HasValue)
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"user_{userId}");
-            _logger.LogInformation("User {UserId} disconnected from chat hub", userId);
+
+            if (exception != null)
+            {
+                _logger.LogWarning(
+                    exception,
+                    "SignalR disconnection with error - User {UserId}, ConnectionId {ConnectionId}",
+                    userId,
+                    Context.ConnectionId);
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "SignalR disconnection - User {UserId}, ConnectionId {ConnectionId}",
+                    userId,
+                    Context.ConnectionId);
+            }
         }
 
         await base.OnDisconnectedAsync(exception);
@@ -76,32 +100,48 @@ public class ChatHub : Hub
         var userId = GetUserId();
         if (!userId.HasValue)
         {
+            _logger.LogWarning("JoinConversation called with no authenticated user");
             throw new HubException("User not authenticated");
         }
 
-        // Authorization: Validate user is participant in this conversation
         var conversation = await _context.ChatConversations
             .Include(c => c.Relationship)
             .FirstOrDefaultAsync(c => c.Id == conversationId);
 
         if (conversation == null)
         {
+            _logger.LogWarning(
+                "JoinConversation failed - conversation not found. User {UserId}, ConversationId {ConversationId}",
+                userId,
+                conversationId);
             throw new HubException("Conversation not found");
         }
 
         var relationship = conversation.Relationship;
         if (relationship.TrainerId != userId.Value && relationship.ClientId != userId.Value)
         {
+            _logger.LogWarning(
+                "JoinConversation access denied - User {UserId}, ConversationId {ConversationId}",
+                userId,
+                conversationId);
             throw new HubException("Access denied to this conversation");
         }
 
         await Groups.AddToGroupAsync(Context.ConnectionId, $"conversation_{conversationId}");
-        _logger.LogInformation("User {UserId} joined conversation {ConversationId}", userId, conversationId);
+        _logger.LogInformation(
+            "User {UserId} joined conversation {ConversationId}",
+            userId,
+            conversationId);
     }
 
     public async Task LeaveConversation(Guid conversationId)
     {
+        var userId = GetUserId();
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"conversation_{conversationId}");
+        _logger.LogInformation(
+            "User {UserId} left conversation {ConversationId}",
+            userId,
+            conversationId);
     }
 
     public async Task SendMessage(ChatMessageDto message)
@@ -109,11 +149,18 @@ public class ChatHub : Hub
         var userId = GetUserId();
         if (!userId.HasValue)
         {
+            _logger.LogWarning("SendMessage called with no authenticated user");
             throw new HubException("User not authenticated");
         }
 
         try
         {
+            _logger.LogInformation(
+                "SendMessage - User {UserId}, ConversationId {ConversationId}, MessageType {MessageType}",
+                userId,
+                message.ConversationId,
+                message.MessageType);
+
             var command = new SendChatMessageCommand(message.ConversationId, userId.Value, message.Content, message.MessageType);
 
             var result = await _mediator.Send(command);
@@ -130,11 +177,9 @@ public class ChatHub : Hub
                 SentAt = result.SentAt
             };
 
-            // Send to conversation group
             await Clients.Group($"conversation_{message.ConversationId}")
                 .SendAsync("ReceiveMessage", outgoingMessage);
 
-            // Also send notification to recipient's user group
             await Clients.Group($"user_{result.RecipientId}")
                 .SendAsync("NewMessageNotification", new
                 {
@@ -145,10 +190,20 @@ public class ChatHub : Hub
                         ? message.Content[..50] + "..."
                         : message.Content
                 });
+
+            _logger.LogInformation(
+                "Message sent successfully - MessageId {MessageId}, User {UserId}, RecipientId {RecipientId}",
+                result.Id,
+                userId,
+                result.RecipientId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending message for user {UserId}", userId);
+            _logger.LogError(
+                ex,
+                "SendMessage failed - User {UserId}, ConversationId {ConversationId}",
+                userId,
+                message.ConversationId);
             throw new HubException("Failed to send message");
         }
     }
@@ -158,10 +213,17 @@ public class ChatHub : Hub
         var userId = GetUserId();
         if (!userId.HasValue)
         {
+            _logger.LogWarning("SyncWorkoutProgress called with no authenticated user");
             throw new HubException("User not authenticated");
         }
 
-        // Broadcast to all devices of the same user
+        _logger.LogDebug(
+            "SyncWorkoutProgress - User {UserId}, WorkoutId {WorkoutId}, CompletedSets {CompletedSets}/{TotalSets}",
+            userId,
+            progress.WorkoutId,
+            progress.CompletedSets,
+            progress.TotalSets);
+
         await Clients.Group($"user_{userId}")
             .SendAsync("WorkoutProgressUpdated", progress);
     }
@@ -170,6 +232,12 @@ public class ChatHub : Hub
     {
         var userId = GetUserId();
         if (!userId.HasValue) return;
+
+        _logger.LogDebug(
+            "TypingIndicator - User {UserId}, ConversationId {ConversationId}, IsTyping {IsTyping}",
+            userId,
+            conversationId,
+            isTyping);
 
         await Clients.OthersInGroup($"conversation_{conversationId}")
             .SendAsync("UserTyping", new { UserId = userId.Value, IsTyping = isTyping });

@@ -2,6 +2,9 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { logger } from "@/lib/logger";
+
+const errorLogger = logger.createModuleLogger("error-boundary");
 
 export default function Error({
   error,
@@ -11,7 +14,11 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("Application error:", error);
+    errorLogger.error("Application error caught by boundary", {
+      message: error.message,
+      digest: error.digest,
+      stack: error.stack,
+    });
   }, [error]);
 
   return (

@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callBackendApi, BackendApiError } from "@/lib/backend-api-client";
+import { logger } from "@/lib/logger";
 
-/**
- * BFF Proxy Route - Forwards authenticated requests to backend
- *
- * Example:
- * - Frontend: GET /api/bff/recipes
- * - Proxies to: GET http://backend:8080/api/recipes
- * - With: X-BFF-Secret, X-User-Id headers
- */
+const bffLogger = logger.createModuleLogger("bff-proxy");
 
 export async function GET(
   request: NextRequest,
@@ -20,13 +14,23 @@ export async function GET(
     const searchParams = request.nextUrl.searchParams.toString();
     const fullPath = searchParams ? `${path}?${searchParams}` : path;
 
+    bffLogger.info("GET request", { path: fullPath });
+
     const data = await callBackendApi(fullPath);
     return NextResponse.json(data);
   } catch (error) {
     if (error instanceof BackendApiError) {
+      bffLogger.warn("BFF proxy error (BackendApiError)", {
+        status: error.status,
+        statusText: error.statusText,
+      });
       return NextResponse.json(error.body, { status: error.status });
     }
-    console.error("BFF proxy error:", error);
+
+    bffLogger.error("BFF proxy error (unexpected)", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -42,16 +46,17 @@ export async function POST(
     const { path: pathSegments } = await params;
     const path = `/api/${pathSegments.join("/")}`;
 
-    // Some POST requests (like toggle favorite) might not have a body
     let body = undefined;
     const contentType = request.headers.get("content-type");
     if (contentType && contentType.includes("application/json")) {
       try {
         body = await request.json();
       } catch (e) {
-        // Body is empty or not valid JSON, ignore
+        bffLogger.debug("POST request with no/invalid JSON body", { path });
       }
     }
+
+    bffLogger.info("POST request", { path, hasBody: !!body });
 
     const data = await callBackendApi(path, {
       method: "POST",
@@ -61,9 +66,17 @@ export async function POST(
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
     if (error instanceof BackendApiError) {
+      bffLogger.warn("BFF proxy error (BackendApiError)", {
+        status: error.status,
+        statusText: error.statusText,
+      });
       return NextResponse.json(error.body, { status: error.status });
     }
-    console.error("BFF proxy error:", error);
+
+    bffLogger.error("BFF proxy error (unexpected)", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -80,6 +93,8 @@ export async function PUT(
     const path = `/api/${pathSegments.join("/")}`;
     const body = await request.json();
 
+    bffLogger.info("PUT request", { path });
+
     const data = await callBackendApi(path, {
       method: "PUT",
       body,
@@ -88,9 +103,17 @@ export async function PUT(
     return NextResponse.json(data);
   } catch (error) {
     if (error instanceof BackendApiError) {
+      bffLogger.warn("BFF proxy error (BackendApiError)", {
+        status: error.status,
+        statusText: error.statusText,
+      });
       return NextResponse.json(error.body, { status: error.status });
     }
-    console.error("BFF proxy error:", error);
+
+    bffLogger.error("BFF proxy error (unexpected)", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -106,14 +129,24 @@ export async function DELETE(
     const { path: pathSegments } = await params;
     const path = `/api/${pathSegments.join("/")}`;
 
+    bffLogger.info("DELETE request", { path });
+
     await callBackendApi(path, { method: "DELETE" });
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     if (error instanceof BackendApiError) {
+      bffLogger.warn("BFF proxy error (BackendApiError)", {
+        status: error.status,
+        statusText: error.statusText,
+      });
       return NextResponse.json(error.body, { status: error.status });
     }
-    console.error("BFF proxy error:", error);
+
+    bffLogger.error("BFF proxy error (unexpected)", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -130,6 +163,8 @@ export async function PATCH(
     const path = `/api/${pathSegments.join("/")}`;
     const body = await request.json();
 
+    bffLogger.info("PATCH request", { path });
+
     const data = await callBackendApi(path, {
       method: "PATCH",
       body,
@@ -138,9 +173,17 @@ export async function PATCH(
     return NextResponse.json(data);
   } catch (error) {
     if (error instanceof BackendApiError) {
+      bffLogger.warn("BFF proxy error (BackendApiError)", {
+        status: error.status,
+        statusText: error.statusText,
+      });
       return NextResponse.json(error.body, { status: error.status });
     }
-    console.error("BFF proxy error:", error);
+
+    bffLogger.error("BFF proxy error (unexpected)", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

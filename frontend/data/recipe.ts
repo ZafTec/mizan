@@ -42,7 +42,10 @@ export interface PopularRecipe {
  */
 export async function getPopularRecipes(): Promise<PopularRecipe[]> {
     try {
-        const result = await callBackendApi<{ recipes: RecipeDto[] }>("/api/Recipes?IncludePublic=true&PageSize=6");
+        const result = await callBackendApi<{ recipes: RecipeDto[] }>(
+            "/api/Recipes?IncludePublic=true&PageSize=6",
+            { requireAuth: false }
+        );
 
         return (result.recipes || []).map((r) => ({
             _id: r.id || "",
@@ -55,7 +58,6 @@ export async function getPopularRecipes(): Promise<PopularRecipe[]> {
             },
         }));
     } catch (error) {
-        // If not authenticated, return empty array (public recipes require auth in BFF)
         console.error("Failed to get popular recipes:", error);
         return [];
     }
@@ -73,7 +75,11 @@ export async function getAllRecipes(searchTerm?: string, page: number = 1, limit
         params.append("Page", page.toString());
         params.append("PageSize", limit.toString());
 
-        const result = await callBackendApi<{ recipes: RecipeDto[], totalCount: number, page: number, pageSize: number }>(`/api/Recipes?${params.toString()}`);
+        // FavoritesOnly requires auth, but public recipes don't
+        const result = await callBackendApi<{ recipes: RecipeDto[], totalCount: number, page: number, pageSize: number }>(
+            `/api/Recipes?${params.toString()}`,
+            { requireAuth: favoritesOnly }
+        );
 
         const totalPages = Math.ceil((result.totalCount || 0) / limit);
 
@@ -98,10 +104,14 @@ export async function getFavoriteRecipesCount(): Promise<number> {
 
 /**
  * Get a recipe by ID from the backend API.
+ * Public recipes can be viewed without authentication.
  */
 export async function getRecipeById(recipeId: string): Promise<Recipe | null> {
     try {
-        const result = await callBackendApi<Recipe>(`/api/Recipes/${recipeId}`);
+        const result = await callBackendApi<Recipe>(
+            `/api/Recipes/${recipeId}`,
+            { requireAuth: false }
+        );
         return result;
     } catch (error) {
         console.error("Failed to get recipe:", error);

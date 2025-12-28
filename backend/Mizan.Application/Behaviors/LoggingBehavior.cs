@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Behaviors;
 
@@ -8,10 +9,14 @@ public class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
     where TRequest : notnull
 {
     private readonly ILogger<LoggingBehavior<TRequest, TResponse>> _logger;
+    private readonly ICurrentUserService _currentUserService;
 
-    public LoggingBehavior(ILogger<LoggingBehavior<TRequest, TResponse>> logger)
+    public LoggingBehavior(
+        ILogger<LoggingBehavior<TRequest, TResponse>> logger,
+        ICurrentUserService currentUserService)
     {
         _logger = logger;
+        _currentUserService = currentUserService;
     }
 
     public async Task<TResponse> Handle(
@@ -20,8 +25,12 @@ public class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
         CancellationToken cancellationToken)
     {
         var requestName = typeof(TRequest).Name;
+        var userId = _currentUserService.UserId?.ToString() ?? "anonymous";
 
-        _logger.LogInformation("Handling {RequestName}", requestName);
+        _logger.LogInformation(
+            "Executing {RequestName} for user {UserId}",
+            requestName,
+            userId);
 
         var stopwatch = Stopwatch.StartNew();
 
@@ -31,8 +40,9 @@ public class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
 
             stopwatch.Stop();
             _logger.LogInformation(
-                "Handled {RequestName} in {ElapsedMs}ms",
+                "Executed {RequestName} successfully for user {UserId} in {ElapsedMs}ms",
                 requestName,
+                userId,
                 stopwatch.ElapsedMilliseconds);
 
             return response;
@@ -42,9 +52,12 @@ public class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
             stopwatch.Stop();
             _logger.LogError(
                 ex,
-                "Error handling {RequestName} after {ElapsedMs}ms",
+                "Error executing {RequestName} for user {UserId} after {ElapsedMs}ms - {ErrorType}: {ErrorMessage}",
                 requestName,
-                stopwatch.ElapsedMilliseconds);
+                userId,
+                stopwatch.ElapsedMilliseconds,
+                ex.GetType().Name,
+                ex.Message);
             throw;
         }
     }
