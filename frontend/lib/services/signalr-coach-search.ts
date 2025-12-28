@@ -21,7 +21,7 @@ export class CoachSearchService {
       return;
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL!;
     const token = await getApiToken();
 
     this.connection = new signalR.HubConnectionBuilder()

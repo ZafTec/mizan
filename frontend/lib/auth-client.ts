@@ -5,7 +5,7 @@ import { jwtClient, organizationClient, adminClient } from "better-auth/client/p
 import { ac, adminRole, trainerRole, userRole } from "@/lib/permissions";
 
 export const authClient = createAuthClient({
-  baseURL: (typeof process !== 'undefined' && process.env["NEXT_PUBLIC_APP_URL"]) || "http://localhost:3000",
+  baseURL: (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_APP_URL) ? process.env.NEXT_PUBLIC_APP_URL : (() => { throw new Error("BETTER_AUTH_URL is not defined"); })(),
   plugins: [
     jwtClient(),
     organizationClient(),

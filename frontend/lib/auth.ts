@@ -26,9 +26,9 @@ export const auth = betterAuth({
     sendResetPassword: async ({ user, url }) => {
       // Log URL in development for easy testing
       if (process.env.NODE_ENV !== "production") {
-        console.log(`\n🔐 Password Reset for ${user.email}`);
-        console.log(`🔗 Reset URL: ${url}`);
-        console.log(`\nDEV MODE: Click the link above to reset your password\n`);
+        console.debug(`\n🔐 Password Reset for ${user.email}`);
+        console.debug(`🔗 Reset URL: ${url}`);
+        console.debug(`\nDEV MODE: Click the link above to reset your password\n`);
       }
 
       // Send email
@@ -76,15 +76,9 @@ export const auth = betterAuth({
   plugins: [
     jwt({
       jwt: {
-        issuer: process.env.BETTER_AUTH_URL || "http://localhost:3000",
-        audience: "mizan-api",
+        issuer: process.env.BETTER_AUTH_URL!,
         expirationTime: "15m",
-      },
-      jwks: {
-        keyPairConfig: {
-          alg: "ES256", // Using ES256 (ECDSA P-256, natively supported by .NET)
-        },
-      },
+      }
     }),
     organization({
       // Maps to household concept
@@ -118,11 +112,11 @@ export const auth = betterAuth({
   },
   advanced: {
     database: {
-      generateId: () => crypto.randomUUID(),
+      generateId: () => Bun.randomUUIDv7(),
     },
     cookies: {
       sessionToken: {
-        name: "better-auth.session_token",
+        name: "mizan.session_token",
         options: {
           httpOnly: true,
           sameSite: "lax",
@@ -133,8 +127,8 @@ export const auth = betterAuth({
     },
   },
   trustedOrigins: [
-    process.env.BETTER_AUTH_URL || "http://localhost:3000",
-    process.env.API_URL || "http://localhost:5000",
+    process.env.BETTER_AUTH_URL!,
+    process.env.API_URL!,
   ],
 });
 

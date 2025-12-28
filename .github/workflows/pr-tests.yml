@@ -106,7 +106,7 @@ jobs:
           BETTER_AUTH_SECRET: "test-secret-for-ci-must-be-at-least-32-characters-long"
           BFF_TRUSTED_SECRET: "test-bff-secret-for-ci-environment"
           API_URL: "http://localhost:8080"
-          NEXT_PUBLIC_API_URL: "http://localhost:3000"
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
 
   frontend-typecheck:
     name: Frontend Type Check
