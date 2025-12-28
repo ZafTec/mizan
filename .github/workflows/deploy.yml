@@ -39,6 +39,16 @@ jobs:
             type=sha,prefix=
             type=raw,value=latest
 
+      - name: Debug - Verify secrets are set
+        run: |
+          echo "Checking build-time environment variables..."
+          echo "NEXT_PUBLIC_APP_URL is set: ${{ secrets.NEXT_PUBLIC_APP_URL != '' }}"
+          echo "NEXT_PUBLIC_API_URL is set: ${{ secrets.NEXT_PUBLIC_API_URL != '' }}"
+          echo "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME is set: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME != '' }}"
+          echo "NEXT_PUBLIC_CLOUDINARY_API_KEY is set: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_API_KEY != '' }}"
+          echo "NEXT_PUBLIC_APP_URL length: ${{ length(secrets.NEXT_PUBLIC_APP_URL) }} chars"
+          echo "NEXT_PUBLIC_API_URL length: ${{ length(secrets.NEXT_PUBLIC_API_URL) }} chars"
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
