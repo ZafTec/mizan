@@ -64,3 +64,5 @@ next-env.d.ts
 # Docker volumes (local)
 postgres_data/
 redis_data/
+
+*.log
