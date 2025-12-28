@@ -60,7 +60,7 @@ export async function callBackendApi<T>(
     "X-BFF-Secret": trustedSecret,
     ...(session?.user?.id && { "X-User-Id": session.user.id }),
     ...(session?.user?.email && { "X-User-Email": session.user.email }),
-    ...((session?.user as any)?.role && { "X-User-Role": (session.user as any).role }),
+    ...((session?.user as any)?.role && { "X-User-Role": (session?.user as any).role }),
     ...options.headers,
   };
 
