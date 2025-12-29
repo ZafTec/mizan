@@ -2,6 +2,9 @@
 
 import { createErrorState, createSuccessState, FormState } from "@/helper/FormErrorHandler";
 import { auth } from "@/lib/auth";
+import { logger } from "@/lib/logger";
+
+const userLogger = logger.createModuleLogger("user-data");
 
 /**
  * Register a new user with email and password via BetterAuth
@@ -34,7 +37,9 @@ export async function addUser(prevState: FormState, formData: FormData): Promise
 
         return createSuccessState("Account created! Please check your email to verify your account.");
     } catch (error) {
-        console.error("Failed to add user:", error);
+        userLogger.error("Failed to create user account", {
+            error: error instanceof Error ? error.message : String(error),
+        });
         return createErrorState("Failed to create account. Please try again.");
     }
 }
@@ -54,13 +59,14 @@ export async function resendUserVerificationEmail(
             return createErrorState("Email is required");
         }
 
-        // BetterAuth handles email verification - trigger resend via API
-        // The actual implementation depends on BetterAuth's configuration
-        console.log("Verification email resend - handled by BetterAuth");
+        // TODO: implement using betterAuth 
+        userLogger.info("Verification email resend - handled by BetterAuth", { email });
 
         return createSuccessState("Verification email sent!");
     } catch (error) {
-        console.error("Failed to resend verification email:", error);
+        userLogger.error("Failed to resend verification email", {
+            error: error instanceof Error ? error.message : String(error),
+        });
         return createErrorState("Failed to send verification email");
     }
 }

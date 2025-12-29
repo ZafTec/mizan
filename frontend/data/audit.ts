@@ -1,4 +1,7 @@
 import { callBackendApi } from "@/lib/backend-api-client";
+import { logger } from "@/lib/logger";
+
+const auditLogger = logger.createModuleLogger("audit-client");
 
 export interface AuditLog {
     id: string;
@@ -43,7 +46,7 @@ export async function getAuditLogs(params: {
 
         return result;
     } catch (error) {
-        console.error("Error fetching audit logs:", error);
+        auditLogger.error("Error fetching audit logs", {error});
         return { logs: [], totalCount: 0 };
     }
 }

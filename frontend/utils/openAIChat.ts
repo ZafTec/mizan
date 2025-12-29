@@ -1,6 +1,9 @@
 import { OpenAIRecipesResponseSchema, OpenAIChatInput, RecipesSchema } from "@/types/openai";
 import OpenAI from "openai";
 import { zodResponseFormat } from "openai/helpers/zod";
+import { logger } from "@/lib/logger";
+
+const openAIChatLogger = logger.createModuleLogger("openai-chat-service");
 
 const openai = new OpenAI();
 
@@ -78,9 +81,12 @@ Return recipes that collectively fit within these remaining targets.
 	if (completion.choices.length > 0 && completion.choices[0].message?.parsed) {
 		const response = completion.choices[0].message.parsed;
 		// log the tokens usage
-		console.debug("OpenAI Tokens Usage:", completion.usage);
+		openAIChatLogger.info("OpenAI Tokens Usage:", completion.usage);
 		return RecipesSchema.parse(response);
 	}
 	
+	openAIChatLogger.error("No valid response from OpenAI:", {
+		completion: completion ? JSON.stringify(completion) : "No completion"
+	});
 	throw new Error("No valid response from OpenAI");
 }

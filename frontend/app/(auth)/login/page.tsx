@@ -73,7 +73,6 @@ export default function Page() {
 			}
 		})
 		.catch((error) => {
-			console.error(error);
 			setError(error.message || "An error occurred during sign in");
 		})
 		.finally(() => {

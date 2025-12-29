@@ -19,24 +19,19 @@ export default function RecipeActions({ recipeId, isOwner, isFavorited: initialF
     const [showCopied, setShowCopied] = useState(false);
 
     const handleToggleFavorite = async () => {
-        console.log('[Recipe Favorite] Toggling favorite for recipe:', recipeId);
         setIsToggling(true);
         try {
-            console.log('[Recipe Favorite] Sending POST to:', `/api/bff/Recipes/${recipeId}/favorite`);
             const response = await fetch(`/api/bff/Recipes/${recipeId}/favorite`, {
                 method: "POST",
             });
 
-            console.log('[Recipe Favorite] Response status:', response.status);
 
             if (!response.ok) {
                 const text = await response.text();
-                console.error('[Recipe Favorite] Error response:', text);
-                throw new Error("Failed to toggle favorite");
+                throw new Error(`Failed to toggle favorite.\n` + (text ? `: ${text}` : ""));
             }
 
             const data = await response.json();
-            console.log('[Recipe Favorite] Success:', data);
             setIsFavorited(data.isFavorited);
             router.refresh();
         } catch (error) {
@@ -48,18 +43,13 @@ export default function RecipeActions({ recipeId, isOwner, isFavorited: initialF
     };
 
     const handleDelete = async () => {
-        console.log('[Recipe Delete] Starting delete for recipe:', recipeId);
         setIsDeleting(true);
         setShowDeleteModal(false);
 
         try {
-            console.log('[Recipe Delete] Sending DELETE request to:', `/api/bff/Recipes/${recipeId}`);
             const response = await fetch(`/api/bff/Recipes/${recipeId}`, {
                 method: "DELETE",
             });
-
-            console.log('[Recipe Delete] Response status:', response.status);
-
             if (!response.ok) {
                 const text = await response.text();
                 console.error('[Recipe Delete] Error response:', text);
@@ -71,9 +61,6 @@ export default function RecipeActions({ recipeId, isOwner, isFavorited: initialF
                     throw new Error(`Failed to delete recipe: ${response.status}`);
                 }
             }
-
-            console.log('[Recipe Delete] Success - recipe deleted');
-
             router.push("/recipes");
             router.refresh();
         } catch (error: any) {

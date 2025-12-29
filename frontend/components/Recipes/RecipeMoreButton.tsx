@@ -14,8 +14,6 @@ export default function RecipeMoreButton({ recipeId }: { recipeId: ID }) {
 		event.stopPropagation();
 
 		setShowMenu((prev) => !prev);
-
-		console.log(`More button clicked for recipe ${recipeId}`);
 	}
 
 	// Handle clicking outside the menu to close it
@@ -57,7 +55,7 @@ export default function RecipeMoreButton({ recipeId }: { recipeId: ID }) {
 					<ul className="text-sm text-gray-700">
 						<li>
 							<button
-								onClick={() => console.log(`Editing recipe ${recipeId}`)}
+								onClick={() => console.debug(`Editing recipe ${recipeId}`)}
 								className="block px-4 py-2 hover:bg-gray-100 w-full text-left"
 							>
 								Edit
@@ -65,7 +63,7 @@ export default function RecipeMoreButton({ recipeId }: { recipeId: ID }) {
 						</li>
 						<li>
 							<button
-								onClick={() => console.log(`Deleting recipe ${recipeId}`)}
+								onClick={() => console.debug(`Deleting recipe ${recipeId}`)}
 								className="block px-4 py-2 hover:bg-gray-100 w-full text-left"
 							>
 								Delete

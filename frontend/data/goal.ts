@@ -2,6 +2,8 @@
 
 import { callBackendApi } from "@/lib/backend-api-client";
 import { createErrorState, createSuccessState, FormState } from "@/helper/FormErrorHandler";
+import { logger } from "@/lib/logger";
+const goalLogger = logger.createModuleLogger("goal-data");
 
 export interface UserGoal {
     id: string;
@@ -24,7 +26,7 @@ export async function getCurrentGoal(): Promise<UserGoal | null> {
         const result = await callBackendApi<UserGoal>("/api/Goals");
         return result;
     } catch (error) {
-        console.error("Failed to get current goal:", error);
+        goalLogger.error("Failed to get current goal", { error });
         return null;
     }
 }
@@ -59,7 +61,7 @@ export async function createGoal(prevState: FormState, formData: FormData): Prom
 
         return createSuccessState("Goal saved successfully!");
     } catch (error) {
-        console.error("Failed to create goal:", error);
+        goalLogger.error("Failed to save goal", { error });
         return createErrorState("Failed to save goal");
     }
 }

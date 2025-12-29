@@ -1,4 +1,7 @@
 import { generateZodClientFromOpenAPI } from "openapi-zod-client";
+import { logger } from "@/lib/logger";
+
+const zodLogger = logger.createModuleLogger("zod-schema-generator");
 
 const OPENAPI_URL = process.env.API_URL || "http://localhost:5000";
 
@@ -13,9 +16,9 @@ async function generate() {
 				baseUrl: OPENAPI_URL,
 			},
 		});
-		console.log("✅ Zod schemas generated successfully");
+		zodLogger.info("✅ Successfully generated Zod schemas from OpenAPI spec");
 	} catch (error) {
-		console.error("❌ Failed to generate Zod schemas:", error);
+		zodLogger.error("❌ Failed to generate Zod schemas from OpenAPI spec", { error });
 		process.exit(1);
 	}
 }

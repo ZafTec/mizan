@@ -1,6 +1,7 @@
 "use server";
+import { logger } from "@/lib/logger";
 
-import { callBackendApi } from "@/lib/backend-api-client";
+const mealPlanLogger = logger.createModuleLogger("meal-plan-data");
 
 export interface MealPlanEntry {
     id: string;
@@ -20,31 +21,26 @@ export interface WeeklyMealPlan {
 }
 
 /**
- * Get weekly meal plans from the backend API
- * Note: This may need a dedicated endpoint on the backend
+ * TODO: Meal plans from the backend API
  */
+
+
 export async function getWeeklyMealPlans(startDate: string, endDate: string): Promise<WeeklyMealPlan[]> {
     try {
-        // Placeholder - the backend may need a meal plan endpoint
-        // For now, return empty array until backend endpoint is available
-        console.log("Meal plans endpoint not yet implemented in backend");
+        mealPlanLogger.info("getWeeklyMealPlans called, but endpoint not yet implemented in backend", { startDate, endDate });
         return [];
     } catch (error) {
-        console.error("Failed to get weekly meal plans:", error);
+        mealPlanLogger.error("Failed to get weekly meal plans", { error, startDate, endDate });
         return [];
     }
 }
 
-/**
- * Delete a meal plan via the backend API
- */
 export async function deleteMealPlan(mealPlanId: string): Promise<boolean> {
     try {
-        // Placeholder - the backend may need a meal plan endpoint
-        console.log("Delete meal plan endpoint not yet implemented in backend");
+        mealPlanLogger.info("deleteMealPlan called, but endpoint not yet implemented in backend", { mealPlanId });
         return false;
     } catch (error) {
-        console.error("Failed to delete meal plan:", error);
+        mealPlanLogger.error("Failed to delete meal plan", { error, mealPlanId });
         return false;
     }
 }

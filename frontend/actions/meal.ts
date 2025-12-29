@@ -3,6 +3,10 @@
 import { callBackendApi } from "@/lib/backend-api-client";
 import { createErrorState, createSuccessState, FormState } from "@/helper/FormErrorHandler";
 
+import { logger } from "@/lib/logger";
+
+const mealLogger = logger.createModuleLogger("meal-server-action");
+
 /**
  * Add a meal entry via the backend API (Server Action)
  */
@@ -34,10 +38,17 @@ export async function addMeal(prevState: FormState, formData: FormData): Promise
             },
         });
 
+        mealLogger.info("Meal logged successfully", {
+            mealType,
+            servings,
+            date,
+        });
         return createSuccessState("Meal logged successfully!");
     } catch (error) {
-        console.error("Failed to add meal:", error);
-        return createErrorState("Failed to log meal");
+        mealLogger.error("Failed to log meal", {
+            error: error instanceof Error ? error.message : String(error),
+        });
+        return createErrorState("Failed to log meal.");
     }
 }
 
@@ -51,7 +62,10 @@ export async function deleteMeal(id: string): Promise<{ success: boolean; messag
         });
         return { success: true };
     } catch (error) {
-        console.error("Failed to delete meal:", error);
+        mealLogger.error("Failed to delete meal", {
+            error: error instanceof Error ? error.message : String(error),
+            mealID: id,
+        });
         return { success: false, message: "Failed to delete meal" };
     }
 }

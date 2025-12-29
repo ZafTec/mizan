@@ -1,6 +1,9 @@
 "use server";
 
 import { callBackendApi } from "@/lib/backend-api-client";
+import { logger } from "@/lib/logger";
+
+const suggestionLogger = logger.createModuleLogger("suggestion-data");
 
 export interface SuggestedRecipe {
     id: string;
@@ -46,7 +49,7 @@ export async function getTodaySuggestions(): Promise<SuggestedRecipe[]> {
 
         return [];
     } catch (error) {
-        console.error("Failed to get suggestions:", error);
+        suggestionLogger.error("Failed to get today's suggestions", { error });
         return [];
     }
 }

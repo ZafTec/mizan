@@ -2,10 +2,13 @@ import { getUserServer } from "@/helper/session";
 import Link from "next/link";
 import { getWeeklyMealPlans } from "@/data/mealPlan";
 
+import { logger } from "@/lib/logger";
+const mealLogger = logger.createModuleLogger("meal-plan-page");
+
 export const dynamic = 'force-dynamic';
 
 export default async function MealPlanPage() {
-	await getUserServer(); // Verify user is authenticated
+	const user = await getUserServer(); // Verify user is authenticated
 
 	// Get this week's date range
 	const today = new Date();
@@ -103,8 +106,11 @@ export default async function MealPlanPage() {
 			</div>
 		);
 	} catch (error) {
-		console.error("Error loading meal plans:", error);
 
+		mealLogger.error("Failed to load meal plans", {
+			error: error instanceof Error ? error.message : String(error),
+			userID: user.id,
+		});
 		return (
 			<div className="space-y-6">
 				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

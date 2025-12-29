@@ -61,9 +61,7 @@ export default function AddMealPlanPage() {
         })
         .catch(err => {
           setError('Failed to load recipes');
-          console.debug("==================")
-          console.debug(err)
-          console.debug("==================")
+          console.error('Error loading recipes:', err);
         })
         .finally(() => {
           setLoading(false);

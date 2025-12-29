@@ -28,10 +28,7 @@ export const auth = betterAuth({
     requireEmailVerification: true,
     sendResetPassword: async ({ user, url }) => {
       if (process.env.NODE_ENV !== "production") {
-        authLogger.debug("Password reset requested", { email: user.email });
-        console.debug(`\n🔐 Password Reset for ${user.email}`);
-        console.debug(`🔗 Reset URL: ${url}`);
-        console.debug(`\nDEV MODE: Click the link above to reset your password\n`);
+        authLogger.debug("Password reset requested", { email: user.email, resetUrl: url });
       }
 
       try {
@@ -56,14 +53,12 @@ export const auth = betterAuth({
     sendVerificationEmail: async ({ user, url, token }) => {
       if (process.env.NODE_ENV !== "production") {
         authLogger.debug("Email verification requested", { email: user.email });
-        console.log(`\n📧 Email Verification for ${user.email}`);
-        console.log(`🔗 Verification URL: ${url}`);
-        console.log(`🎫 Token: ${token}`);
-        console.log(`\nDEV MODE: Click the link above to verify your email\n`);
+        authLogger.debug(`Verification URL: ${url}`);
       }
 
       try {
         const emailTemplate = getVerificationEmailTemplate(url, user.name);
+        authLogger.debug("Sending verification email", { email: user.email });
         await sendEmail({
           to: user.email,
           subject: emailTemplate.subject,

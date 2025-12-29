@@ -3,6 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { callBackendApi } from "@/lib/backend-api-client";
 import { createErrorState, createSuccessState, FormState } from "@/helper/FormErrorHandler";
+import { logger } from "@/lib/logger";
+
+const ingredientLogger = logger.createModuleLogger("ingredient-data");
 
 export interface Ingredient {
     id: string;
@@ -59,7 +62,7 @@ export async function getAllIngredient(
             totalPages
         };
     } catch (error) {
-        console.error("Failed to get ingredients:", error);
+        ingredientLogger.error("Failed to get all ingredients", { error });
         return { ingredients: [], totalCount: 0, totalPages: 0 };
     }
 }
@@ -72,7 +75,7 @@ export async function getIngredientById(id: string): Promise<Ingredient | null> 
         const result = await callBackendApi<Ingredient>(`/api/Foods/${id}`);
         return result;
     } catch (error) {
-        console.error("Failed to get ingredient:", error);
+        ingredientLogger.error("Failed to get ingredient by ID", { error, ingredientId: id });
         return null;
     }
 }
@@ -146,7 +149,7 @@ export async function addIngredient(prevState: FormState, formData: FormData): P
 
         return createSuccessState("Ingredient added successfully!");
     } catch (error) {
-        console.error("Failed to add ingredient:", error);
+        ingredientLogger.error("Failed to add ingredient", { error });
         return createErrorState("Failed to add ingredient");
     }
 }
@@ -187,7 +190,7 @@ export async function updateIngredient(prevState: FormState, formData: FormData)
 
         return createSuccessState("Ingredient updated successfully!");
     } catch (error) {
-        console.error("Failed to update ingredient:", error);
+        ingredientLogger.error("Failed to update ingredient", { error });
         return createErrorState("Failed to update ingredient");
     }
 }
@@ -206,7 +209,7 @@ export async function deleteIngredient(id: string): Promise<{ success: boolean; 
 
         return { success: true };
     } catch (error) {
-        console.error("Failed to delete ingredient:", error);
+        ingredientLogger.error("Failed to delete ingredient", { error, ingredientId: id });
         return { success: false, message: "Failed to delete ingredient" };
     }
 }

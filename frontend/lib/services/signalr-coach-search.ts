@@ -1,5 +1,8 @@
 import * as signalR from "@microsoft/signalr";
 import { getApiToken } from "@/lib/auth-client";
+import { logger } from "@/lib/logger";
+
+const coachSearchLogger = logger.createModuleLogger("signalr-coach-search-service");
 
 export interface CoachSearchResult {
   id: string;
@@ -43,25 +46,25 @@ export class CoachSearchService {
       .build();
 
     this.connection.onreconnecting(() => {
-      console.log("[SignalR] Reconnecting to coach search hub...");
+      coachSearchLogger.warn("Reconnecting to coach search hub", { attempt: this.reconnectAttempts + 1 });
       this.reconnectAttempts++;
     });
 
     this.connection.onreconnected(() => {
-      console.log("[SignalR] Reconnected to coach search hub");
+      coachSearchLogger.info("Reconnected to coach search hub");
       this.reconnectAttempts = 0;
     });
 
     this.connection.onclose((error) => {
-      console.error("[SignalR] Connection closed:", error);
+      coachSearchLogger.error("Disconnected from coach search hub", { error });
       this.reconnectAttempts = 0;
     });
 
     try {
       await this.connection.start();
-      console.log("[SignalR] Connected to coach search hub");
+      coachSearchLogger.info("Connected to coach search hub");
     } catch (error) {
-      console.error("[SignalR] Failed to connect:", error);
+      coachSearchLogger.error("Failed to connect to coach search hub", { error });
       throw error;
     }
   }

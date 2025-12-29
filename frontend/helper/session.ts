@@ -1,5 +1,8 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { logger } from "@/lib/logger";
+
+const sessionLogger = logger.createModuleLogger("session-helper");
 
 /**
  * Get the current user session on the server side.
@@ -12,7 +15,7 @@ export async function getUserOptionalServer() {
         });
         return session?.user ?? null;
     } catch (error) {
-        console.error("Failed to get session:", error);
+        sessionLogger.error("Failed to get user session", { error });
         return null;
     }
 }
@@ -24,6 +27,7 @@ export async function getUserOptionalServer() {
 export async function getUserServer() {
     const user = await getUserOptionalServer();
     if (!user) {
+        sessionLogger.error("Attempted to get user server but not authenticated");
         throw new Error("Not authenticated");
     }
     return user;

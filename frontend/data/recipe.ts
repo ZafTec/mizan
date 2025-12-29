@@ -1,8 +1,11 @@
 "use server";
 
 import { callBackendApi } from "@/lib/backend-api-client";
-import { createErrorState, createSuccessState, FormState } from "@/helper/FormErrorHandler";
 import type { components } from "@/types/api.generated";
+import { logger } from "@/lib/logger";
+
+const recipeLogger = logger.createModuleLogger("recipe-data");
+
 
 // Base generated types
 export type RecipeIngredient = components["schemas"]["RecipeIngredientDto"];
@@ -58,7 +61,7 @@ export async function getPopularRecipes(): Promise<PopularRecipe[]> {
             },
         }));
     } catch (error) {
-        console.error("Failed to get popular recipes:", error);
+        recipeLogger.error("Failed to get popular recipes", { error });
         return [];
     }
 }
@@ -89,7 +92,7 @@ export async function getAllRecipes(searchTerm?: string, page: number = 1, limit
             totalPages
         };
     } catch (error) {
-        console.error("Failed to get all recipes:", error);
+        recipeLogger.error("Failed to get all recipes", { error, searchTerm, page, limit, favoritesOnly });
         return { recipes: [], totalCount: 0, totalPages: 0 };
     }
 }
@@ -114,7 +117,7 @@ export async function getRecipeById(recipeId: string): Promise<Recipe | null> {
         );
         return result;
     } catch (error) {
-        console.error("Failed to get recipe:", error);
+        recipeLogger.error("Failed to get recipe by ID", { error, recipeId });
         return null;
     }
 }

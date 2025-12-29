@@ -149,7 +149,6 @@ export default function Page() {
 			// NOTE: HouseholdId will be set to actual household ID once household selection is implemented
 		}
 
-		console.log('[Recipe Create] Submitting recipe:', JSON.stringify(recipeData, null, 2));
 
 		fetch('/api/bff/Recipes', {
 			method: 'POST',
@@ -159,17 +158,14 @@ export default function Page() {
 			body: JSON.stringify(recipeData),
 		})
 			.then(res => {
-				console.log('[Recipe Create] Response status:', res.status);
 				if (!res.ok) {
 					return res.text().then(text => {
-						console.error('[Recipe Create] Error response:', text);
-						throw new Error(`Failed to create recipe: ${res.status}`);
+						throw new Error(`Failed to create recipe: ${res.status} \n ${text ? `: ${text}` : ""}`);
 					});
 				}
 				return res.json();
 			})
 			.then((data) => {
-				console.log('[Recipe Create] Success:', data);
 				router.push('/recipes');
 			})
 			.catch(err => {

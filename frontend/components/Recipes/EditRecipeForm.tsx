@@ -149,8 +149,6 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
             isPublic: true
         }
 
-        console.log('[Recipe Update] Submitting recipe:', JSON.stringify(recipeData, null, 2));
-
         fetch(`/api/bff/Recipes/${recipe.id}`, {
             method: 'PUT',
             headers: {
@@ -168,7 +166,6 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                 return res.json();
             })
             .then((data) => {
-                console.log('[Recipe Update] Success:', data);
                 router.push(`/recipes/${recipe.id}`);
                 router.refresh();
             })

@@ -1,5 +1,8 @@
 import * as signalR from "@microsoft/signalr";
 import { getApiToken } from "./auth-client";
+import { logger } from "./logger";
+
+const chatLogger = logger.createModuleLogger("signalr-chat-service");
 
 let connection: signalR.HubConnection | null = null;
 
@@ -37,9 +40,9 @@ export async function connectToChat(): Promise<signalR.HubConnection> {
 
 	try {
 		await connection.start();
-		console.log("Connected to SignalR hub");
+		chatLogger.info("Connected to SignalR chat hub");
 	} catch (error) {
-		console.error("SignalR connection error:", error);
+		chatLogger.error("Failed to connect to SignalR chat hub", { error });
 		throw error;
 	}
 

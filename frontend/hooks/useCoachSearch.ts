@@ -20,7 +20,9 @@ export function useCoachSearch() {
         });
 
         coachSearchService.onCoachRequestReceived((coachId) => {
+          // TODO: handle incoming coach request notification
           console.log("Coach request received:", coachId);
+          alert("not implemented yet");
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to connect");

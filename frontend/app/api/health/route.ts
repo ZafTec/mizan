@@ -1,7 +1,9 @@
 import { db } from "@/db/client";
-import { sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { users } from "@/db/schema";
+import { logger } from "@/lib/logger";
+
+const healthLogger = logger.createModuleLogger("health-route");
 
 export async function GET() {
     const healthStatus = {
@@ -33,7 +35,7 @@ export async function GET() {
         healthStatus.services.database.status = "Healthy";
         healthStatus.services.database.latencyMs = Math.round(dbEnd - dbStart);
     } catch (error) {
-        console.error("Database health check failed:", error);
+        healthLogger.error("Database health check failed", {error});
         healthStatus.status = "Unhealthy";
         healthStatus.services.database.status = "Unhealthy";
     }
@@ -55,7 +57,7 @@ export async function GET() {
             healthStatus.status = "Unhealthy";
         }
     } catch (error) {
-        console.error("Backend health check failed:", error);
+        healthLogger.error("Backend API health check failed", {error});
         healthStatus.services.backend.status = "Unhealthy";
         healthStatus.status = "Unhealthy";
     }

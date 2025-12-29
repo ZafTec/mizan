@@ -35,7 +35,6 @@ export default function Page() {
 		} catch (err: any) {
 			setError(true);
 			setErrorMessage(err.message || "Failed to verify email. The link may be invalid or expired.");
-			console.error(err);
 		} finally {
 			setLoading(false);
 		}

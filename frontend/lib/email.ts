@@ -1,5 +1,8 @@
 import "server-only";
 import nodemailer from "nodemailer";
+import { logger } from "@/lib/logger";
+
+const emailLogger = logger.createModuleLogger("email-service");
 
 interface EmailOptions {
   to: string;
@@ -24,7 +27,6 @@ const createTransporter = () => {
     });
   }
 
-  // In development, use either real SMTP if configured, or log to console
   if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
     const port = parseInt(process.env.SMTP_PORT || "587");
     return nodemailer.createTransport({
@@ -37,23 +39,14 @@ const createTransporter = () => {
       },
     });
   }
-
-  // Fallback: return null to signal console logging
   return null;
 };
 
 export async function sendEmail(options: EmailOptions) {
   const transporter = createTransporter();
 
-  // If no transporter, log to console (dev mode without SMTP config)
   if (!transporter) {
-    console.log("\n📧 EMAIL (Dev Mode - Console Only)");
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log(`To: ${options.to}`);
-    console.log(`Subject: ${options.subject}`);
-    console.log(`Text: ${options.text || "See HTML version"}`);
-    console.log(`HTML: ${options.html}`);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+    emailLogger.error("Email attempted with no SMTP configured", { email: options.to });
     return;
   }
 
@@ -65,21 +58,12 @@ export async function sendEmail(options: EmailOptions) {
       text: options.text,
       html: options.html,
     });
-
-    console.log(`\n✅ Email sent successfully to ${options.to}`);
-    console.log(`Message ID: ${info.messageId}\n`);
+    emailLogger.info("Email sent successfully", { email: options.to, messageId: info.messageId });
   } catch (error) {
-    console.error("\n❌ Failed to send email:", error);
-    // In dev mode, also log the email content for debugging
-    if (process.env.NODE_ENV !== "production") {
-      console.log("\n📧 EMAIL CONTENT (Failed to send)");
-      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log(`To: ${options.to}`);
-      console.log(`Subject: ${options.subject}`);
-      console.log(`Text: ${options.text || "See HTML version"}`);
-      console.log(`HTML: ${options.html}`);
-      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    }
+    emailLogger.error("Failed to send email", {
+      email: options.to,
+      error: error instanceof Error ? error.message : String(error),
+    });
     throw error;
   }
 }

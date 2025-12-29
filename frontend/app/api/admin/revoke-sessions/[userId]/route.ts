@@ -2,6 +2,9 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db/client";
 import { sessions } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { logger } from "@/lib/logger";
+
+const revokeSessionsLogger = logger.createModuleLogger("revoke-sessions-route");
 
 export async function POST(
   request: Request,
@@ -37,7 +40,7 @@ export async function POST(
       message: "All sessions revoked",
     });
   } catch (error) {
-    console.error("Failed to revoke sessions");
+    revokeSessionsLogger.error("Failed to revoke sessions", {error});
     return Response.json(
       { error: "Failed to revoke sessions" },
       { status: 500 }

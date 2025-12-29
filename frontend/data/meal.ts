@@ -1,6 +1,9 @@
 "use server";
 
 import { callBackendApi } from "@/lib/backend-api-client";
+import { logger } from "@/lib/logger";
+
+const mealLogger = logger.createModuleLogger("meal-data");
 
 export interface MealEntry {
     id: string;
@@ -36,7 +39,7 @@ export async function getTodayMeal(): Promise<MealEntry[]> {
         const result = await callBackendApi<FoodDiaryResult>(`/api/Meals?date=${today}`);
         return result.entries || [];
     } catch (error) {
-        console.error("Failed to get today's meals:", error);
+        mealLogger.error("Failed to get today's meals", { error });
         return [];
     }
 }
@@ -49,7 +52,7 @@ export async function getMeal(date: string): Promise<MealEntry[]> {
         const result = await callBackendApi<FoodDiaryResult>(`/api/Meals?date=${date}`);
         return result.entries || [];
     } catch (error) {
-        console.error("Failed to get meals:", error);
+        mealLogger.error("Failed to get meals for date", { error, date });
         return [];
     }
 }
@@ -63,7 +66,7 @@ export async function getDailyTotals(date?: string): Promise<FoodDiaryResult["to
         const result = await callBackendApi<FoodDiaryResult>(`/api/Meals?date=${queryDate}`);
         return result.totals;
     } catch (error) {
-        console.error("Failed to get daily totals:", error);
+        mealLogger.error("Failed to get daily totals", { error, date: date || "today" });
         return null;
     }
 }
