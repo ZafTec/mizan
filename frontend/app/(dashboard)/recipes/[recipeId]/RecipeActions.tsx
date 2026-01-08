@@ -108,12 +108,12 @@ export default function RecipeActions({ recipeId, isOwner, isFavorited: initialF
                     <button
                         onClick={handleToggleFavorite}
                         disabled={isToggling}
-                        className={`btn-secondary flex-1 sm:flex-none ${isFavorited ? "!bg-red-100 !text-red-600" : ""}`}
+                        className={`btn-secondary flex-1 sm:flex-none ${isFavorited ? "bg-red-100! text-red-600!" : ""}`}
                     >
                         <i className={isFavorited ? "ri-heart-3-fill" : "ri-heart-3-line"} />
                         {isFavorited ? "Favorited" : "Save to Favorites"}
                     </button>
-                    <button onClick={handleShare} className={`btn-secondary flex-1 sm:flex-none transition-all ${showCopied ? "!bg-green-100 !text-green-700" : ""}`}>
+                    <button onClick={handleShare} className={`btn-secondary flex-1 sm:flex-none transition-all ${showCopied ? "bg-green-100! text-green-700!" : ""}`}>
                         {showCopied ? (
                             <>
                                 <i className="ri-check-line" />
@@ -141,7 +141,7 @@ export default function RecipeActions({ recipeId, isOwner, isFavorited: initialF
                         <button
                             onClick={() => setShowDeleteModal(true)}
                             disabled={isDeleting}
-                            className="btn-secondary flex-1 sm:flex-none !text-red-600 !border-red-200 hover:!bg-red-50"
+                            className="btn-secondary flex-1 sm:flex-none text-red-600! border-red-200! hover:bg-red-50!"
                         >
                             <i className="ri-delete-bin-line" />
                             {isDeleting ? "Deleting..." : "Delete Recipe"}

@@ -143,7 +143,6 @@ export const auth = betterAuth({
     database: {
       generateId: () => Bun.randomUUIDv7(),
     },
-    cookiePrefix: "mizan_",
     cookies: {
       session_token: {
         attributes: {

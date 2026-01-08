@@ -69,10 +69,10 @@ export async function apiClient<T>(
 ): Promise<T> {
   // For BFF routes (/api/bff/*), use relative URLs (no base URL)
   // BFF routes are handled by Next.js frontend, not backend
-  const isBffRoute = endpoint.startsWith('/api/bff/') || endpoint.startsWith('/api/auth/') || endpoint.startsWith('/api/');
+  const isBffRoute = endpoint.startsWith('/api/bff/')
   const baseUrl = isBffRoute
     ? ''
-    : ((typeof window === 'undefined' ? process.env.API_URL : (typeof process !== 'undefined' && process.env["NEXT_PUBLIC_API_URL"])) || "http://localhost:5000");
+    : ((typeof window === 'undefined' ? process.env.API_URL! : (typeof process !== 'undefined' && process.env["NEXT_PUBLIC_API_URL"]!)));
   const apiUrl = baseUrl;
 
   authLogger.debug("API request starting", {

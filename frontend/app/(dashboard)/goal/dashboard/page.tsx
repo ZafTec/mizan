@@ -4,25 +4,8 @@ import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/auth-client";
 import Link from "next/link";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, RadialBarChart, RadialBar, PieChart, Pie, Cell } from "recharts";
+import { GoalData } from "@/types/goal";
 
-interface GoalData {
-  goal: {
-    targetCalories: number;
-    targetProteinGrams: number;
-    targetCarbsGrams: number;
-    targetFatGrams: number;
-  } | null;
-  progressEntries: Array<{
-    id: string;
-    date: string;
-    actualCalories: number;
-    actualProteinGrams: number;
-    actualCarbsGrams: number;
-    actualFatGrams: number;
-    actualWeight?: number;
-    notes?: string;
-  }>;
-}
 
 const MACRO_COLORS = {
   calories: "#f97316", // orange
@@ -63,7 +46,7 @@ export default function GoalDashboard() {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="card p-12 text-center">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center">
             <i className="ri-target-line text-4xl text-white" />
           </div>
           <h2 className="text-2xl font-bold text-slate-900 mb-3">
