@@ -67,13 +67,19 @@ export async function apiClient<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const baseUrl = (typeof window === 'undefined' ? process.env.API_URL : (typeof process !== 'undefined' && process.env["NEXT_PUBLIC_API_URL"])) || "http://localhost:5000";
+  // For BFF routes (/api/bff/*), use relative URLs (no base URL)
+  // BFF routes are handled by Next.js frontend, not backend
+  const isBffRoute = endpoint.startsWith('/api/bff/') || endpoint.startsWith('/api/auth/') || endpoint.startsWith('/api/');
+  const baseUrl = isBffRoute
+    ? ''
+    : ((typeof window === 'undefined' ? process.env.API_URL : (typeof process !== 'undefined' && process.env["NEXT_PUBLIC_API_URL"])) || "http://localhost:5000");
   const apiUrl = baseUrl;
 
   authLogger.debug("API request starting", {
     endpoint,
     method: options.method || "GET",
-    apiUrl,
+    apiUrl: isBffRoute ? 'relative' : apiUrl,
+    isBffRoute,
     isServer: typeof window === 'undefined',
   });
 
@@ -82,15 +88,18 @@ export async function apiClient<T>(
     ...options.headers,
   };
 
-  const token = await getApiToken();
-  if (token) {
-    headers = {
-      ...headers,
-      Authorization: `Bearer ${token}`,
-    };
-    authLogger.debug("Token attached to request");
-  } else {
-    authLogger.warn("No token available for request", { endpoint });
+  // No auth token needed for BFF routes - session cookies are sent automatically
+  if (!isBffRoute) {
+    const token = await getApiToken();
+    if (token) {
+      headers = {
+        ...headers,
+        Authorization: `Bearer ${token}`,
+      };
+      authLogger.debug("Token attached to request");
+    } else {
+      authLogger.debug("No token for non-BFF request", { endpoint });
+    }
   }
 
   const startTime = Date.now();
@@ -99,6 +108,7 @@ export async function apiClient<T>(
     const response = await fetch(`${apiUrl}${endpoint}`, {
       ...options,
       headers,
+      credentials: isBffRoute ? 'include' : options.credentials, // Include cookies for BFF routes
     });
 
     const duration = Date.now() - startTime;
