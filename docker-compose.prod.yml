@@ -9,27 +9,15 @@ services:
     image: euaell/mizan-backend:latest
     container_name: mizan-backend
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
+      # Override specific environment variables that differ from .env defaults
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
-
-      # Database - adjust connection string for your PostgreSQL instance
-      - ConnectionStrings__PostgreSQL=Host=postgresql-db;Port=5432;Database=mizan;Username=admin;Password=CHANGE_ME;Pooling=true;Minimum Pool Size=0;Maximum Pool Size=1024;Timeout=15;CommandTimeout=30;Ssl Mode=Prefer;Trust Server Certificate=true;
-
-      # Redis - adjust connection string for your Redis instance
-      - ConnectionStrings__Redis=redis:6379,password=CHANGE_ME,abortConnect=false,connectTimeout=5000,syncTimeout=1000
-
-      # BFF Trusted Secret (must match frontend)
-      - Bff__TrustedSecret=${BFF_TRUSTED_SECRET}
+      # Internal Docker network origin
       - Bff__AllowedOrigins__0=http://frontend:3000
-      - Bff__AllowedOrigins__1=https://mizan.example.com
-
-      # OpenAI API (optional, for AI features)
-      - OpenAI__ApiKey=${OPENAI_API_KEY:-}
-
-      # CORS Settings
       - Cors__Origins__0=http://frontend:3000
-      - Cors__Origins__1=https://mizan.example.com
 
     networks:
       - proxy-net
@@ -54,43 +42,14 @@ services:
     image: euaell/mizan-frontend:latest
     container_name: mizan-frontend
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
+      # Override specific environment variables that differ from .env defaults
       - NODE_ENV=production
-
-      # Database URL for BetterAuth
-      - DATABASE_URL=${DATABASE_URL}
-
-      # Backend API URL (internal Docker network)
-      - API_URL=${API_URL}
       - BACKEND_API_URL=http://backend:8080
-
-      # BetterAuth Configuration
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
-      - BETTER_AUTH_AUDIENCE=${BETTER_AUTH_AUDIENCE}
-      - BETTER_AUTH_ISSUER=${BETTER_AUTH_ISSUER}
       - BETTER_AUTH_TRUST_HOST=true
-
-      # BFF Proxy Secret (must match backend)
-      - BFF_TRUSTED_SECRET=${BFF_TRUSTED_SECRET}
-
-      # Cloudinary (for image uploads)
-      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
-
-      # Disable Telemetry
       - NEXT_TELEMETRY_DISABLED=1
-
-      # Email (Nodemailer)
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASS=${SMTP_PASS}
-      - SMTP_FROM=${SMTP_FROM}
-
-      # OAuth Credentials (optional)
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
-      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
-      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
 
     depends_on:
       backend:
@@ -121,9 +80,22 @@ networks:
   postgres:
     external: true
 
-# Notes:
-# 1. Adjust network names to match your infrastructure
-# 2. Set all secrets and passwords in .env file
-# 3. Backend health check now uses wget (requires Dockerfile.prod update)
-# 4. Frontend health check uses wget (requires Dockerfile.prod update)
-# 5. Resource limits prevent containers from consuming all host resources
+# Configuration Notes:
+#
+# Environment Variables:
+# - Create a .env file in the same directory as this docker-compose.yml
+# - All secrets, connection strings, and configuration are loaded from .env
+# - Only production-specific overrides are defined inline (NODE_ENV, ASPNETCORE_ENVIRONMENT, etc.)
+# - See .env.example for required variables
+#
+# Runtime vs Build-time Variables (Next.js):
+# - NEXT_PUBLIC_* variables are BAKED into the JS bundle at build time
+# - Server-side variables (without NEXT_PUBLIC_) are evaluated at RUNTIME
+# - For Docker: server-side vars can be changed without rebuild via .env file
+# - For Docker: NEXT_PUBLIC_* vars require rebuild to change (set in Dockerfile.prod)
+#
+# Infrastructure:
+# 1. Adjust network names to match your infrastructure (proxy-net, postgres)
+# 2. Backend health check uses wget (bundled in Dockerfile.prod)
+# 3. Frontend health check uses wget (bundled in Dockerfile.prod)
+# 4. Resource limits prevent containers from consuming all host resources
