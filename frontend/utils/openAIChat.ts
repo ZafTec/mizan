@@ -81,7 +81,7 @@ Return recipes that collectively fit within these remaining targets.
 	if (completion.choices.length > 0 && completion.choices[0].message?.parsed) {
 		const response = completion.choices[0].message.parsed;
 		// log the tokens usage
-		openAIChatLogger.info("OpenAI Tokens Usage:", completion.usage);
+		openAIChatLogger.info("OpenAI Tokens Usage", { usage: completion.usage });
 		return RecipesSchema.parse(response);
 	}
 	

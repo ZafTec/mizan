@@ -53,13 +53,18 @@ class Logger {
 
   createModuleLogger(module: string) {
     const child = this.root.child({ module });
+    const call = (level: LogLevel, msg: string, meta?: Record<string, unknown>) => {
+      // Pino signature is (obj, msg?), so put metadata first to avoid TS overload ambiguity.
+      child[level](meta ?? {}, msg);
+    };
+
     return {
-      trace: child.trace.bind(child),
-      debug: child.debug.bind(child),
-      info: child.info.bind(child),
-      warn: child.warn.bind(child),
-      error: child.error.bind(child),
-      fatal: child.fatal.bind(child),
+      trace: (msg: string, meta?: Record<string, unknown>) => call("trace", msg, meta),
+      debug: (msg: string, meta?: Record<string, unknown>) => call("debug", msg, meta),
+      info: (msg: string, meta?: Record<string, unknown>) => call("info", msg, meta),
+      warn: (msg: string, meta?: Record<string, unknown>) => call("warn", msg, meta),
+      error: (msg: string, meta?: Record<string, unknown>) => call("error", msg, meta),
+      fatal: (msg: string, meta?: Record<string, unknown>) => call("fatal", msg, meta),
     };
   }
 

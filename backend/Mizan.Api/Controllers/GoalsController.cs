@@ -19,11 +19,9 @@ public class GoalsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<UserGoalDto>> GetCurrentGoal()
+    public async Task<ActionResult<UserGoalDto?>> GetCurrentGoal()
     {
         var result = await _mediator.Send(new GetUserGoalQuery());
-        if (result == null)
-            return NotFound("No active goal found");
         return Ok(result);
     }
 
