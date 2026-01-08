@@ -34,7 +34,7 @@ We accept **intentional schema separation** while automating the critical valida
 - `users` - User accounts
 - `accounts` - OAuth provider accounts
 - `sessions` - Active user sessions
-- `jwks` - JWT signing keys
+- `jwks` - (removed Jan 2026) formerly stored JWT signing keys
 - `verification` - Email verification tokens
 
 **Why separate?**

@@ -1,4 +1,4 @@
-# MacroChef Troubleshooting Guide
+﻿# MacroChef Troubleshooting Guide
 
 **Version:** 1.0
 **Last Updated:** 2025-12-27
@@ -204,25 +204,14 @@ docker logs mizan-postgres | tail -50
 **Solution:**
 
 ```bash
-# 1. Verify JWKS endpoint is accessible
-curl http://localhost:3000/api/auth/jwks
+# 1. Verify BFF trusted secret matches between frontend and backend
+grep Bff__TrustedSecret backend/.env.production
 
-# 2. Check Redis cache
-docker exec -it mizan-redis redis-cli
-> KEYS "jwks:*"
+# 2. Ensure requests include BFF headers from frontend proxy
+# Required headers: X-BFF-Secret, X-User-Id (and optional email/role)
 
-# 3. Verify JWT configuration matches frontend
-# backend/.env.production should have:
-# BetterAuth__JwksUrl=http://frontend:3000/api/auth/jwks
-# BetterAuth__Issuer=http://localhost:3000
-
-# 4. Clear JWKS cache and try again
-docker exec -it mizan-redis redis-cli FLUSHDB
-
-# 5. Test with valid JWT
-curl -H "Authorization: Bearer <valid-jwt>" http://localhost:5000/api/users/me
-```
-
+# 3. Confirm BetterAuth session cookie is present in the browser
+curl -I http://localhost:3000 | grep mizan.session_token
 ### Issue: "Validation failed" (400 Bad Request)
 
 **Symptom:** POST requests return validation errors
@@ -571,7 +560,7 @@ docker-compose up -d
 # frontend/lib/auth.ts for session configuration
 
 # 3. Verify cookies are being set
-# Browser DevTools → Application → Cookies
+# Browser DevTools â†’ Application â†’ Cookies
 # Should have 'auth' or 'session' cookie with httpOnly flag
 
 # 4. Check Redis session cache
@@ -695,7 +684,7 @@ docker logs mizan-backend | grep -i "chat\|hub"
 
 ```bash
 # 1. Check browser console for errors
-# Ctrl+Shift+I → Console tab
+# Ctrl+Shift+I â†’ Console tab
 
 # 2. Verify SignalR is connected
 # frontend/lib/services/signalr-chat.ts should show "connected" status
@@ -815,7 +804,7 @@ CREATE INDEX idx_food_diary_userid_date ON food_diary_entries(user_id, date);
 # Use Application Insights or check backend logs
 
 # 4. Profile with browser DevTools
-# Network tab → Sort by time
+# Network tab â†’ Sort by time
 
 # 5. Clear Redis cache if excessive DB hits
 docker exec -it mizan-redis redis-cli FLUSHDB
@@ -1002,3 +991,4 @@ docker exec -it mizan-postgres psql -U mizan -d mizan \
 - **Development setup:** See `DEVELOPER_ONBOARDING.md`
 
 **Still stuck?** Check the logs first, then review this guide systematically.
+

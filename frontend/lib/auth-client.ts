@@ -1,7 +1,7 @@
 "use client";
 
 import { createAuthClient } from "better-auth/react";
-import { jwtClient, organizationClient, adminClient } from "better-auth/client/plugins";
+import { organizationClient, adminClient } from "better-auth/client/plugins";
 import { ac, adminRole, trainerRole, userRole } from "@/lib/permissions";
 import { logger } from "@/lib/logger";
 
@@ -10,7 +10,6 @@ const authLogger = logger.createModuleLogger("auth-client");
 export const authClient = createAuthClient({
   baseURL: (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_APP_URL) ? process.env.NEXT_PUBLIC_APP_URL : (() => { throw new Error("BETTER_AUTH_URL is not defined"); })(),
   plugins: [
-    jwtClient(),
     organizationClient(),
     adminClient({
       ac,
@@ -35,26 +34,9 @@ export const {
 
 // Get JWT token for API calls
 export async function getApiToken(): Promise<string | null> {
-  try {
-    authLogger.debug("Requesting API token");
-
-    const { data, error } = await authClient.token();
-
-    if (error) {
-      authLogger.error("Failed to get API token", { error: error.message || error });
-      await handleSessionExpired();
-      return null;
-    }
-
-    authLogger.debug("API token retrieved successfully");
-    return data?.token || null;
-  } catch (error) {
-    authLogger.error("Exception getting API token", {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    await handleSessionExpired();
-    return null;
-  }
+  // JWT/JWKS based tokens are no longer used. Calls will proceed without an auth token.
+  authLogger.info("API token request skipped (JWKS removed)");
+  return null;
 }
 
 // Handle expired or invalid session

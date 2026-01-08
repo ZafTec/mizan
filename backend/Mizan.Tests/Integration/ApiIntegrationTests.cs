@@ -25,7 +25,6 @@ public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
 
         // Set environment variables for BFF configuration required by startup validation
         Environment.SetEnvironmentVariable("Bff__TrustedSecret", "test-secret-for-integration-tests");
-        Environment.SetEnvironmentVariable("Bff__JwksUrl", "http://localhost:3000/api/auth/jwks");
 
         _factory = factory;
 

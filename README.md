@@ -288,7 +288,6 @@ NEXT_PUBLIC_API_URL="http://localhost:3000"      # Client-side (proxied)
 ```bash
 ConnectionStrings__PostgreSQL="Host=postgres;Database=mizan;Username=mizan;Password=password"
 ConnectionStrings__Redis="redis:6379"
-BetterAuth__JwksUrl="http://mizan-frontend:3000/api/auth/jwks"
 BetterAuth__Issuer="http://localhost:3000"
 BetterAuth__Audience="mizan-api"
 BetterAuth__BffSecret="your-bff-secret"
@@ -300,10 +299,10 @@ See `.env.example` for complete list with descriptions.
 
 MacroChef uses a hybrid architecture with intentional schema separation:
 
-- **Frontend Schema (Drizzle)**: Manages authentication tables (`users`, `sessions`, `jwks`) required by BetterAuth
+- **Frontend Schema (Drizzle)**: Manages authentication tables (`users`, `sessions`) required by BetterAuth
 - **Backend Schema (EF Core)**: Manages business logic tables (`foods`, `recipes`, `meal_plans`, `workouts`, etc.)
 - **API Gateway**: Next.js proxies `/api/*` requests to backend while handling `/api/auth/*` directly
-- **Authentication**: JWT tokens (ES256) with JWKS validation, cached in Redis (1-minute TTL)
+- **Authentication**: JWT tokens handled by BetterAuth (JWKS disabled)
 - **Real-time**: SignalR with Redis backplane for horizontal scaling
 
 ### Clean Architecture Layers (Backend)
@@ -328,8 +327,6 @@ Mizan.Infrastructure (External Concerns)
 - Verify backend is running: `docker-compose logs backend`
 
 ### Authentication fails with 401
-- Verify JWKS endpoint accessible: `curl http://localhost:3000/api/auth/jwks`
-- Check Redis cache: `docker exec -it mizan-redis redis-cli KEYS "jwks:*"`
 - Ensure JWT issuer/audience match in both services
 
 ### Type mismatch errors

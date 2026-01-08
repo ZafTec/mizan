@@ -22,6 +22,15 @@ export interface WorkoutProgress {
 	caloriesBurned?: number;
 }
 
+/**
+ * Validates that timeout values are positive and within reasonable bounds
+ */
+function validateTimeout(timeout: number): number {
+	// Ensure timeout is positive and within reasonable bounds
+	const validatedTimeout = Math.max(1000, Math.min(timeout, 300000)); // Between 1 second and 5 minutes
+	return validatedTimeout;
+}
+
 export async function connectToChat(): Promise<signalR.HubConnection> {
 	if (connection?.state === signalR.HubConnectionState.Connected) {
 		return connection;
@@ -35,6 +44,8 @@ export async function connectToChat(): Promise<signalR.HubConnection> {
 			accessTokenFactory: () => token || "",
 		})
 		.withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+		.withServerTimeout(validateTimeout(60000))
+		.withKeepAliveInterval(validateTimeout(15000))
 		.configureLogging(signalR.LogLevel.Information)
 		.build();
 

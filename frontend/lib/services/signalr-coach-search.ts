@@ -37,11 +37,13 @@ export class CoachSearchService {
           if (retryContext.previousRetryCount >= this.maxReconnectAttempts) {
             return null;
           }
-          return Math.min(1000 * Math.pow(2, retryContext.previousRetryCount), 30000);
+          // Ensure the delay is always positive and within reasonable bounds
+          const delay = Math.min(1000 * Math.pow(2, retryContext.previousRetryCount), 30000);
+          return Math.max(100, delay); // Minimum 100ms to avoid negative or zero values
         },
       })
-      .withServerTimeout(60000)
-      .withKeepAliveInterval(30000)
+      .withServerTimeout(this.validateTimeout(60000))
+      .withKeepAliveInterval(this.validateTimeout(30000))
       .configureLogging(signalR.LogLevel.Information)
       .build();
 
@@ -67,6 +69,15 @@ export class CoachSearchService {
       coachSearchLogger.error("Failed to connect to coach search hub", { error });
       throw error;
     }
+  }
+
+  /**
+   * Validates that timeout values are positive and within reasonable bounds
+   */
+  private validateTimeout(timeout: number): number {
+    // Ensure timeout is positive and within reasonable bounds
+    const validatedTimeout = Math.max(1000, Math.min(timeout, 300000)); // Between 1 second and 5 minutes
+    return validatedTimeout;
   }
 
   async disconnect(): Promise<void> {

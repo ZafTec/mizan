@@ -114,7 +114,6 @@ ConnectionStrings__PostgreSQL=Host=postgres;Port=5432;Database=mizan;Username=mi
 ConnectionStrings__Redis=redis:6379,abortConnect=false
 
 # BetterAuth Integration
-BetterAuth__JwksUrl=https://yourdomain.com/api/auth/jwks
 BetterAuth__Issuer=https://yourdomain.com
 BetterAuth__Audience=https://yourdomain.com
 
@@ -563,20 +562,6 @@ docker logs mizan-postgres
 
 # Verify network
 docker network inspect mizan-network
-```
-
-**Issue: "JWKS endpoint not accessible"**
-
-```bash
-# Test JWKS endpoint
-curl https://yourdomain.com/api/auth/jwks
-
-# Check Redis cache
-docker exec -it mizan-redis redis-cli
-> KEYS "jwks:*"
-
-# Clear JWKS cache
-> DEL jwks:https://yourdomain.com/api/auth/jwks
 ```
 
 **Issue: SignalR connection failing**

@@ -43,6 +43,13 @@
       "when": 1766143364762,
       "tag": "0005_perpetual_spectrum",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1767865352730,
+      "tag": "0006_remove_jwks_table",
+      "breakpoints": true
     }
   ]
 }
