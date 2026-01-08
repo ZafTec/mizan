@@ -30,8 +30,9 @@ export function proxy(request: NextRequest) {
 
   if (requiresAuth) {
     // Optimistic check: Does session cookie exist?
-    // Note: We don't validate it here - that happens in Server Components
-    const hasSessionCookie = request.cookies.has("better-auth.session_token");
+    // Note: We don't validate it here - that happens in Server Components.
+    // Cookie name is set in auth.ts (mizan.session_token).
+    const hasSessionCookie = request.cookies.has("mizan.session_token");
 
     // Not authenticated - redirect to login
     if (!hasSessionCookie) {

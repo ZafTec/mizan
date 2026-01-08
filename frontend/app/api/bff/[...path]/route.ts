@@ -21,7 +21,8 @@ export async function GET(
     });
 
     const data = await callBackendApi(fullPath);
-    return NextResponse.json(data);
+    // Avoid Next.js serialization error when backend returns 204 (undefined)
+    return NextResponse.json(data ?? null);
   } catch (error) {
     if (error instanceof BackendApiError) {
       bffLogger.warn("BFF proxy error (BackendApiError)", {
@@ -75,7 +76,7 @@ export async function POST(
       body,
     });
 
-    return NextResponse.json(data, { status: 201 });
+    return NextResponse.json(data === undefined ? null : data, { status: 201 });
   } catch (error) {
     if (error instanceof BackendApiError) {
       bffLogger.warn("BFF proxy error (BackendApiError)", {
@@ -116,7 +117,7 @@ export async function PUT(
       body,
     });
 
-    return NextResponse.json(data);
+    return NextResponse.json(data === undefined ? null : data);
   } catch (error) {
     if (error instanceof BackendApiError) {
       bffLogger.warn("BFF proxy error (BackendApiError)", {
@@ -151,9 +152,12 @@ export async function DELETE(
       userAgent: request.headers.get("user-agent"),
     });
 
-    await callBackendApi(path, { method: "DELETE" });
-
-    return new NextResponse(null, { status: 204 });
+    const data = await callBackendApi(path, { method: "DELETE" });
+    // If backend returns content, forward it; otherwise 204
+    if (data === undefined) {
+      return new NextResponse(null, { status: 204 });
+    }
+    return NextResponse.json(data);
   } catch (error) {
     if (error instanceof BackendApiError) {
       bffLogger.warn("BFF proxy error (BackendApiError)", {
@@ -194,7 +198,7 @@ export async function PATCH(
       body,
     });
 
-    return NextResponse.json(data);
+    return NextResponse.json(data === undefined ? null : data);
   } catch (error) {
     if (error instanceof BackendApiError) {
       bffLogger.warn("BFF proxy error (BackendApiError)", {
