@@ -12,10 +12,11 @@ interface EmailOptions {
 const createTransporter = () => {
   // In production, use real SMTP
   if (process.env.NODE_ENV === "production") {
+    const port = parseInt(process.env.SMTP_PORT || "587");
     return nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || "465"),
-      secure: true, // true for 465, false for other ports
+      port: port,
+      secure: port === 465, // true for 465 (SSL), false for 587 (STARTTLS) and other ports
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
@@ -25,10 +26,11 @@ const createTransporter = () => {
 
   // In development, use either real SMTP if configured, or log to console
   if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    const port = parseInt(process.env.SMTP_PORT || "587");
     return nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || "465"),
-      secure: process.env.SMTP_PORT === "465",
+      port: port,
+      secure: port === 465, // true for 465 (SSL), false for 587 (STARTTLS) and other ports
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
