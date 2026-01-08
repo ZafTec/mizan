@@ -14,7 +14,11 @@ export async function GET(
     const searchParams = request.nextUrl.searchParams.toString();
     const fullPath = searchParams ? `${path}?${searchParams}` : path;
 
-    bffLogger.info("GET request", { path: fullPath });
+    bffLogger.info("GET request", {
+      path: fullPath,
+      from: request.headers.get("x-forwarded-for") ?? "unknown",
+      userAgent: request.headers.get("user-agent"),
+    });
 
     const data = await callBackendApi(fullPath);
     return NextResponse.json(data);
@@ -52,11 +56,19 @@ export async function POST(
       try {
         body = await request.json();
       } catch (e) {
-        bffLogger.debug("POST request with no/invalid JSON body", { path });
+        bffLogger.debug("POST request with no/invalid JSON body", {
+          path,
+          parseError: e instanceof Error ? e.message : String(e),
+        });
       }
     }
 
-    bffLogger.info("POST request", { path, hasBody: !!body });
+    bffLogger.info("POST request", {
+      path,
+      hasBody: !!body,
+      from: request.headers.get("x-forwarded-for") ?? "unknown",
+      userAgent: request.headers.get("user-agent"),
+    });
 
     const data = await callBackendApi(path, {
       method: "POST",
@@ -93,7 +105,11 @@ export async function PUT(
     const path = `/api/${pathSegments.join("/")}`;
     const body = await request.json();
 
-    bffLogger.info("PUT request", { path });
+    bffLogger.info("PUT request", {
+      path,
+      from: request.headers.get("x-forwarded-for") ?? "unknown",
+      userAgent: request.headers.get("user-agent"),
+    });
 
     const data = await callBackendApi(path, {
       method: "PUT",
@@ -129,7 +145,11 @@ export async function DELETE(
     const { path: pathSegments } = await params;
     const path = `/api/${pathSegments.join("/")}`;
 
-    bffLogger.info("DELETE request", { path });
+    bffLogger.info("DELETE request", {
+      path,
+      from: request.headers.get("x-forwarded-for") ?? "unknown",
+      userAgent: request.headers.get("user-agent"),
+    });
 
     await callBackendApi(path, { method: "DELETE" });
 
@@ -163,7 +183,11 @@ export async function PATCH(
     const path = `/api/${pathSegments.join("/")}`;
     const body = await request.json();
 
-    bffLogger.info("PATCH request", { path });
+    bffLogger.info("PATCH request", {
+      path,
+      from: request.headers.get("x-forwarded-for") ?? "unknown",
+      userAgent: request.headers.get("user-agent"),
+    });
 
     const data = await callBackendApi(path, {
       method: "PATCH",

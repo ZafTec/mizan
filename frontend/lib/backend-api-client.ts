@@ -53,6 +53,7 @@ export async function callBackendApi<T>(
     userId: session?.user?.id || "anonymous",
     backendUrl,
     requireAuth,
+    url,
   });
 
   const headers: Record<string, string> = {
@@ -76,7 +77,9 @@ export async function callBackendApi<T>(
     const duration = Date.now() - startTime;
 
     if (!response.ok) {
-      const body = await response.json().catch(() => ({}));
+      // Try to capture body as text first to avoid JSON parse errors
+      const rawBody = await response.text().catch(() => "");
+      const body = rawBody ? safeJsonParse(rawBody) ?? { raw: rawBody } : {};
 
       bffLogger.error("Backend API request failed", {
         path,
@@ -84,6 +87,8 @@ export async function callBackendApi<T>(
         statusText: response.statusText,
         duration,
         userId: session?.user?.id || "anonymous",
+        url,
+        bodyPreview: rawBody?.slice(0, 500),
       });
 
       throw new BackendApiError(response.status, response.statusText, body);
@@ -100,7 +105,9 @@ export async function callBackendApi<T>(
       return undefined as T;
     }
 
-    return response.json();
+    // Parse JSON defensively
+    const raw = await response.text();
+    return (safeJsonParse(raw) ?? (raw as unknown)) as T;
   } catch (error) {
     const duration = Date.now() - startTime;
 
@@ -113,8 +120,17 @@ export async function callBackendApi<T>(
       error: error instanceof Error ? error.message : String(error),
       duration,
       userId: session?.user?.id || "anonymous",
+      url,
     });
 
     throw error;
+  }
+}
+
+function safeJsonParse(text: string): any | undefined {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
   }
 }
