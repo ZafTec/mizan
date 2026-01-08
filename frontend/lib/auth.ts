@@ -143,10 +143,10 @@ export const auth = betterAuth({
     database: {
       generateId: () => Bun.randomUUIDv7(),
     },
+    cookiePrefix: "mizan_",
     cookies: {
-      sessionToken: {
-        name: "mizan.session_token",
-        options: {
+      session_token: {
+        attributes: {
           httpOnly: true,
           sameSite: "lax",
           secure: process.env.NODE_ENV === "production",
