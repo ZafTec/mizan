@@ -2,9 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import 'remixicon/fonts/remixicon.css';
-import { validateStartupConfig } from "@/lib/startup-validation";
-
-validateStartupConfig();
 
 export const dynamic = 'force-dynamic';
 

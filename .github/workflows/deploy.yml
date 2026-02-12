@@ -43,10 +43,6 @@ jobs:
       - name: Debug - Verify secrets are set
         run: |
           echo "Checking build-time environment variables..."
-          echo "BETTER_AUTH_URL is set: ${{ secrets.BETTER_AUTH_URL != '' }}"
-          echo "BETTER_AUTH_SECRET is set: ${{ secrets.BETTER_AUTH_SECRET != '' }}"
-          echo "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY is set: ${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY != '' }}"
-          echo "BFF_TRUSTED_SECRET is set: ${{ secrets.BFF_TRUSTED_SECRET != '' }}"
           echo "NEXT_PUBLIC_APP_URL is set: ${{ secrets.NEXT_PUBLIC_APP_URL != '' }}"
           echo "NEXT_PUBLIC_API_URL is set: ${{ secrets.NEXT_PUBLIC_API_URL != '' }}"
           echo "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME is set: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME != '' }}"
@@ -63,14 +59,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            BETTER_AUTH_URL=${{ secrets.BETTER_AUTH_URL }}
-            BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
-            NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
-            BFF_TRUSTED_SECRET=${{ secrets.BFF_TRUSTED_SECRET }}
             NEXT_PUBLIC_APP_URL=${{ secrets.NEXT_PUBLIC_APP_URL }}
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
             NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
             NEXT_PUBLIC_CLOUDINARY_API_KEY=${{ secrets.NEXT_PUBLIC_CLOUDINARY_API_KEY }}
+            NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
 
   build-and-push-backend:
     name: Build & Push Backend
