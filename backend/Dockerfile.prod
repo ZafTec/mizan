@@ -26,17 +26,14 @@ RUN dotnet build "Mizan.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 
-# Create user/group in build stage (SDK image has required tools)
-RUN groupadd --system --gid 1001 appgroup && \
-    useradd --system --uid 1001 --gid 1001 --no-log-init appuser
-
-RUN dotnet publish "Mizan.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false \
-    && chown -R appuser:appgroup /app/publish
+RUN dotnet publish "Mizan.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
 
-COPY --from=publish /app/publish .
+# Ensure we have permissions (root is default here, so chown works)
+COPY --from=publish --chown=app:app /app/publish .
 
-USER appuser
+# Use the built-in non-root user 'app' (available in .NET 8+ images)
+USER app
 ENTRYPOINT ["dotnet", "Mizan.Api.dll"]
