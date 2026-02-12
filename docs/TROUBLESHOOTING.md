@@ -204,14 +204,15 @@ docker logs mizan-postgres | tail -50
 **Solution:**
 
 ```bash
-# 1. Verify BFF trusted secret matches between frontend and backend
-grep Bff__TrustedSecret backend/.env.production
+# 1. Verify issuer/audience match between frontend and backend
+grep BETTER_AUTH_ISSUER .env
+grep BetterAuth__Issuer .env
 
-# 2. Ensure requests include BFF headers from frontend proxy
-# Required headers: X-BFF-Secret, X-User-Id (and optional email/role)
+# 2. Verify backend can reach JWKS URL
+curl http://localhost:3000/api/auth/jwks
 
-# 3. Confirm BetterAuth session cookie is present in the browser
-curl -I http://localhost:3000 | grep mizan.session_token
+# 3. Confirm frontend is sending Authorization header
+curl -H "Authorization: Bearer <jwt>" http://localhost:5000/api/Users/me
 ### Issue: "Validation failed" (400 Bad Request)
 
 **Symptom:** POST requests return validation errors

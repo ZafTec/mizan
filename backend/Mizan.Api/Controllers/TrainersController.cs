@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mizan.Application.Commands;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Application.Queries;
 
@@ -64,16 +65,15 @@ public class TrainersController : ControllerBase
     }
 
     [HttpGet("clients")]
-    public async Task<IActionResult> GetClients()
+    public async Task<ActionResult<PagedResult<TrainerClientDto>>> GetClients([FromQuery] GetTrainerClientsQuery query)
     {
         try
         {
-            var query = new GetTrainerClientsQuery();
-            var clients = await _mediator.Send(query);
+            var result = await _mediator.Send(query);
 
-            _logger.LogInformation("Trainer {TrainerId} retrieved {Count} clients", _currentUser.UserId, clients.Count);
+            _logger.LogInformation("Trainer {TrainerId} retrieved {Count} clients", _currentUser.UserId, result.Items.Count);
 
-            return Ok(clients);
+            return Ok(result);
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -83,16 +83,15 @@ public class TrainersController : ControllerBase
     }
 
     [HttpGet("requests")]
-    public async Task<IActionResult> GetPendingRequests()
+    public async Task<ActionResult<PagedResult<TrainerPendingRequestDto>>> GetPendingRequests([FromQuery] GetTrainerPendingRequestsQuery query)
     {
         try
         {
-            var query = new GetTrainerPendingRequestsQuery();
-            var requests = await _mediator.Send(query);
+            var result = await _mediator.Send(query);
 
-            _logger.LogInformation("Trainer {TrainerId} retrieved {Count} pending requests", _currentUser.UserId, requests.Count);
+            _logger.LogInformation("Trainer {TrainerId} retrieved {Count} pending requests", _currentUser.UserId, result.Items.Count);
 
-            return Ok(requests);
+            return Ok(result);
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -128,14 +127,13 @@ public class TrainersController : ControllerBase
     }
 
     [HttpGet("available")]
-    public async Task<IActionResult> GetAvailableTrainers()
+    public async Task<ActionResult<PagedResult<TrainerPublicDto>>> GetAvailableTrainers([FromQuery] GetAvailableTrainersQuery query)
     {
-        var query = new GetAvailableTrainersQuery();
-        var trainers = await _mediator.Send(query);
+        var result = await _mediator.Send(query);
 
-        _logger.LogInformation("User {UserId} retrieved {Count} available trainers", _currentUser.UserId, trainers.Count);
+        _logger.LogInformation("User {UserId} retrieved {Count} available trainers", _currentUser.UserId, result.Items.Count);
 
-        return Ok(trainers);
+        return Ok(result);
     }
 
     [HttpGet("my-trainer")]
@@ -163,16 +161,15 @@ public class TrainersController : ControllerBase
     }
 
     [HttpGet("my-requests")]
-    public async Task<IActionResult> GetMyTrainerRequests()
+    public async Task<ActionResult<PagedResult<MyTrainerRequestDto>>> GetMyTrainerRequests([FromQuery] GetMyTrainerRequestsQuery query)
     {
         try
         {
-            var query = new GetMyTrainerRequestsQuery();
-            var requests = await _mediator.Send(query);
+            var result = await _mediator.Send(query);
 
-            _logger.LogInformation("Client {ClientId} retrieved {Count} trainer requests", _currentUser.UserId, requests.Count);
+            _logger.LogInformation("Client {ClientId} retrieved {Count} trainer requests", _currentUser.UserId, result.Items.Count);
 
-            return Ok(requests);
+            return Ok(result);
         }
         catch (UnauthorizedAccessException ex)
         {

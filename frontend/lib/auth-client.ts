@@ -3,12 +3,15 @@
 import { createAuthClient } from "better-auth/react";
 import { organizationClient, adminClient } from "better-auth/client/plugins";
 import { ac, adminRole, trainerRole, userRole } from "@/lib/permissions";
-import { logger } from "@/lib/logger";
 
-const authLogger = logger.createModuleLogger("auth-client");
+const betterAuthUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BETTER_AUTH_URL;
+
+if (!betterAuthUrl) {
+  throw new Error("NEXT_PUBLIC_APP_URL or NEXT_PUBLIC_BETTER_AUTH_URL must be defined");
+}
 
 export const authClient = createAuthClient({
-  baseURL: (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_APP_URL) ? process.env.NEXT_PUBLIC_APP_URL : (() => { throw new Error("BETTER_AUTH_URL is not defined"); })(),
+  baseURL: betterAuthUrl,
   plugins: [
     organizationClient(),
     adminClient({
@@ -22,7 +25,6 @@ export const authClient = createAuthClient({
   ],
 });
 
-// Export typed hooks and utilities
 export const {
   signIn,
   signUp,
@@ -31,178 +33,3 @@ export const {
   getSession,
   organization,
 } = authClient;
-
-// Get JWT token for API calls
-export async function getApiToken(): Promise<string | null> {
-  // JWT/JWKS based tokens are no longer used. Calls will proceed without an auth token.
-  authLogger.info("API token request skipped (JWKS removed)");
-  return null;
-}
-
-// Handle expired or invalid session
-async function handleSessionExpired(): Promise<void> {
-  if (typeof window === 'undefined') return;
-
-  const currentPath = window.location.pathname;
-  authLogger.warn("Session expired", { currentPath });
-
-  try {
-    await authClient.signOut({ fetchOptions: { onSuccess: () => { } } });
-    authLogger.info("Sign out successful");
-  } catch (error) {
-    authLogger.error("Error signing out", {
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-
-  if (currentPath !== '/login' && currentPath !== '/signup') {
-    const redirectUrl = `/login?error=session_expired&redirect=${encodeURIComponent(currentPath)}`;
-    authLogger.info("Redirecting to login", { from: currentPath, to: redirectUrl });
-    window.location.href = redirectUrl;
-  }
-}
-
-// API client with automatic token injection and case conversion
-export async function apiClient<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
-  // For BFF routes (/api/bff/*), use relative URLs (no base URL)
-  // BFF routes are handled by Next.js frontend, not backend
-  const isBffRoute = endpoint.startsWith('/api/bff/')
-  const baseUrl = isBffRoute
-    ? ''
-    : ((typeof window === 'undefined' ? process.env.API_URL! : (typeof process !== 'undefined' && process.env["NEXT_PUBLIC_API_URL"]!)));
-  const apiUrl = baseUrl;
-
-  authLogger.debug("API request starting", {
-    endpoint,
-    method: options.method || "GET",
-    apiUrl: isBffRoute ? 'relative' : apiUrl,
-    isBffRoute,
-    isServer: typeof window === 'undefined',
-  });
-
-  let headers: HeadersInit = {
-    "Content-Type": "application/json",
-    ...options.headers,
-  };
-
-  // No auth token needed for BFF routes - session cookies are sent automatically
-  if (!isBffRoute) {
-    const token = await getApiToken();
-    if (token) {
-      headers = {
-        ...headers,
-        Authorization: `Bearer ${token}`,
-      };
-      authLogger.debug("Token attached to request");
-    } else {
-      authLogger.debug("No token for non-BFF request", { endpoint });
-    }
-  }
-
-  const startTime = Date.now();
-
-  try {
-    const response = await fetch(`${apiUrl}${endpoint}`, {
-      ...options,
-      headers,
-      credentials: isBffRoute ? 'include' : options.credentials, // Include cookies for BFF routes
-    });
-
-    const duration = Date.now() - startTime;
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        authLogger.error("Unauthorized request", {
-          endpoint,
-          status: response.status,
-          duration,
-        });
-        await handleSessionExpired();
-        throw new Error("Session expired. Please log in again.");
-      }
-
-      const error = await response.text();
-      authLogger.error("API request failed", {
-        endpoint,
-        status: response.status,
-        statusText: response.statusText,
-        error,
-        duration,
-      });
-      throw new Error(error || `API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    authLogger.debug("API request successful", {
-      endpoint,
-      status: response.status,
-      duration,
-    });
-
-    return convertKeysToCamelCase<T>(data);
-  } catch (error) {
-    const duration = Date.now() - startTime;
-    authLogger.error("API request exception", {
-      endpoint,
-      error: error instanceof Error ? error.message : String(error),
-      duration,
-    });
-    throw error;
-  }
-}
-
-// Validate current session and handle expiry
-export async function validateSession(): Promise<boolean> {
-  try {
-    authLogger.debug("Validating session");
-
-    const { data, error } = await authClient.getSession();
-
-    if (error || !data?.session) {
-      authLogger.warn("Session validation failed", {
-        hasError: !!error,
-        hasSession: !!data?.session,
-      });
-      await handleSessionExpired();
-      return false;
-    }
-
-    authLogger.debug("Session validated successfully", {
-      userId: data.session.userId,
-    });
-    return true;
-  } catch (error) {
-    authLogger.error("Session validation exception", {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    await handleSessionExpired();
-    return false;
-  }
-}
-
-// Helper function to convert PascalCase to camelCase recursively
-function convertKeysToCamelCase<T>(obj: any): T {
-  if (obj === null || obj === undefined) {
-    return obj;
-  }
-
-  if (Array.isArray(obj)) {
-    return obj.map(item => convertKeysToCamelCase(item)) as T;
-  }
-
-  if (typeof obj === 'object' && obj.constructor === Object) {
-    const converted: any = {};
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
-        converted[camelKey] = convertKeysToCamelCase(obj[key]);
-      }
-    }
-    return converted as T;
-  }
-
-  return obj;
-}

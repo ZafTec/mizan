@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/auth-client";
+import { clientApi } from "@/lib/api.client";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 
 interface TrainerClient {
 	relationshipId: string;
@@ -27,7 +27,7 @@ export function ClientList() {
 	useEffect(() => {
 		async function fetchClients() {
 			try {
-				const data = await apiClient<TrainerClient[]>("/api/Trainers/clients");
+				const data = await clientApi<TrainerClient[]>("/api/Trainers/clients");
 				setClients(data);
 			} catch (error) {
 				console.error("Failed to fetch clients:", error);

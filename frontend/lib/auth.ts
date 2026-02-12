@@ -1,7 +1,7 @@
 import "server-only";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { organization, admin } from "better-auth/plugins";
+import { organization, admin, jwt } from "better-auth/plugins";
 import { db } from "@/db/client";
 import { sendEmail, getVerificationEmailTemplate, getPasswordResetEmailTemplate } from "@/lib/email";
 import { ac, adminRole, trainerRole, userRole } from "@/lib/permissions";
@@ -109,6 +109,12 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    jwt({
+      jwt: {
+        issuer: process.env.BETTER_AUTH_ISSUER,
+        audience: process.env.BETTER_AUTH_AUDIENCE,
+      },
+    }),
     organization({
       // Maps to household concept
       allowUserToCreateOrganization: true,

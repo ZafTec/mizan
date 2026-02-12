@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mizan.Application.Commands;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Application.Queries;
 
@@ -33,9 +34,9 @@ public class ShoppingListsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<GetShoppingListsResult>> GetShoppingLists([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    public async Task<ActionResult<PagedResult<ShoppingListSummaryDto>>> GetShoppingLists([FromQuery] GetShoppingListsQuery query)
     {
-        var result = await _mediator.Send(new GetShoppingListsQuery { Page = page, PageSize = pageSize });
+        var result = await _mediator.Send(query);
         return Ok(result);
     }
 

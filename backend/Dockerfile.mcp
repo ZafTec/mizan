@@ -1,0 +1,29 @@
+# MCP Server Dockerfile
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+# Copy csproj for restore
+COPY ["Mizan.sln", "./"]
+COPY ["Mizan.Mcp.Server/Mizan.Mcp.Server.csproj", "Mizan.Mcp.Server/"]
+COPY ["Mizan.Api/Mizan.Api.csproj", "Mizan.Api/"]
+COPY ["Mizan.Application/Mizan.Application.csproj", "Mizan.Application/"]
+COPY ["Mizan.Domain/Mizan.Domain.csproj", "Mizan.Domain/"]
+COPY ["Mizan.Infrastructure/Mizan.Infrastructure.csproj", "Mizan.Infrastructure/"]
+
+RUN dotnet restore "Mizan.Mcp.Server/Mizan.Mcp.Server.csproj"
+
+# Copy the rest of the source
+COPY . .
+
+RUN dotnet publish "Mizan.Mcp.Server/Mizan.Mcp.Server.csproj" -c Release -o /app/publish
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+WORKDIR /app
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=build /app/publish .
+
+EXPOSE 5001
+ENV ASPNETCORE_URLS=http://+:5001
+ENTRYPOINT ["dotnet", "Mizan.Mcp.Server.dll"]

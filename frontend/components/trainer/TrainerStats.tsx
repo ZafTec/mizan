@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/auth-client";
+import { clientApi } from "@/lib/api.client";
 
 interface StatsData {
 	activeClients: number;
@@ -17,7 +17,7 @@ export function TrainerStats() {
 	useEffect(() => {
 		async function fetchStats() {
 			try {
-				const data = await apiClient<StatsData>("/api/trainer/stats");
+				const data = await clientApi<StatsData>("/api/trainer/stats");
 				setStats(data);
 			} catch (error) {
 				console.error("Failed to fetch trainer stats:", error);

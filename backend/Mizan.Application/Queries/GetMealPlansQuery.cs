@@ -1,23 +1,19 @@
+using System.Linq.Expressions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Queries;
 
-public record GetMealPlansQuery : IRequest<GetMealPlansResult>
+public record GetMealPlansQuery : IRequest<PagedResult<MealPlanDto>>, IPagedQuery, ISortableQuery
 {
     public DateOnly? StartDate { get; init; }
     public DateOnly? EndDate { get; init; }
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;
-}
-
-public record GetMealPlansResult
-{
-    public List<MealPlanDto> MealPlans { get; init; } = new();
-    public int TotalCount { get; init; }
-    public int Page { get; init; }
-    public int PageSize { get; init; }
+    public string? SortBy { get; init; }
+    public string? SortOrder { get; init; }
 }
 
 public record MealPlanDto
@@ -31,8 +27,15 @@ public record MealPlanDto
     public DateTime UpdatedAt { get; init; }
 }
 
-public class GetMealPlansQueryHandler : IRequestHandler<GetMealPlansQuery, GetMealPlansResult>
+public class GetMealPlansQueryHandler : IRequestHandler<GetMealPlansQuery, PagedResult<MealPlanDto>>
 {
+    private static readonly Dictionary<string, Expression<Func<Domain.Entities.MealPlan, object>>> SortMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["startdate"] = mp => mp.StartDate,
+        ["name"] = mp => mp.Name!,
+        ["createdat"] = mp => mp.CreatedAt
+    };
+
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
 
@@ -42,7 +45,7 @@ public class GetMealPlansQueryHandler : IRequestHandler<GetMealPlansQuery, GetMe
         _currentUser = currentUser;
     }
 
-    public async Task<GetMealPlansResult> Handle(GetMealPlansQuery request, CancellationToken cancellationToken)
+    public async Task<PagedResult<MealPlanDto>> Handle(GetMealPlansQuery request, CancellationToken cancellationToken)
     {
         if (!_currentUser.UserId.HasValue)
         {
@@ -65,10 +68,14 @@ public class GetMealPlansQueryHandler : IRequestHandler<GetMealPlansQuery, GetMe
 
         var totalCount = await query.CountAsync(cancellationToken);
 
-        var mealPlans = await query
-            .OrderByDescending(mp => mp.StartDate)
-            .Skip((request.Page - 1) * request.PageSize)
-            .Take(request.PageSize)
+        var sortedQuery = query.ApplySorting(
+            request,
+            SortMappings,
+            defaultSort: mp => mp.StartDate,
+            defaultDescending: true);
+
+        var mealPlans = await sortedQuery
+            .ApplyPaging(request)
             .Select(mp => new MealPlanDto
             {
                 Id = mp.Id,
@@ -81,9 +88,9 @@ public class GetMealPlansQueryHandler : IRequestHandler<GetMealPlansQuery, GetMe
             })
             .ToListAsync(cancellationToken);
 
-        return new GetMealPlansResult
+        return new PagedResult<MealPlanDto>
         {
-            MealPlans = mealPlans,
+            Items = mealPlans,
             TotalCount = totalCount,
             Page = request.Page,
             PageSize = request.PageSize

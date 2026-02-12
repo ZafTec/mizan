@@ -4,6 +4,7 @@ import { useSession, authClient } from "@/lib/auth-client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 
 interface Session {
   id: string;
@@ -29,17 +30,18 @@ export default function ProfileSessionsPage() {
 
   async function fetchSessions() {
     try {
-      // TODO: Implement proper session listing API
-      // For now, just show current session
-      if (currentSession?.session) {
-        setSessions([{
-          id: currentSession.session.id,
-          token: currentSession.session.token,
-          ipAddress: currentSession.session.ipAddress || undefined,
-          userAgent: currentSession.session.userAgent || undefined,
-          createdAt: currentSession.session.createdAt.toISOString(),
-          expiresAt: currentSession.session.expiresAt.toISOString(),
-        }]);
+      const result = await authClient.listSessions();
+      if (result.data) {
+        setSessions(
+          result.data.map((s: any) => ({
+            id: s.id,
+            token: s.token,
+            ipAddress: s.ipAddress || undefined,
+            userAgent: s.userAgent || undefined,
+            createdAt: typeof s.createdAt === "string" ? s.createdAt : new Date(s.createdAt).toISOString(),
+            expiresAt: typeof s.expiresAt === "string" ? s.expiresAt : new Date(s.expiresAt).toISOString(),
+          }))
+        );
       }
     } catch (error) {
       console.error("Failed to fetch sessions:", error);
@@ -48,16 +50,17 @@ export default function ProfileSessionsPage() {
     }
   }
 
-  async function handleRevokeSession(sessionId: string) {
+  async function handleRevokeSession(sessionToken: string) {
     if (!confirm("Revoke this session?")) return;
 
-    setRevoking(sessionId);
+    setRevoking(sessionToken);
     try {
-      // TODO: Implement proper session revoke API
-      alert("Session revocation not yet implemented");
+      await authClient.revokeSession({ token: sessionToken });
+      toast.success("Session revoked");
+      setSessions((prev) => prev.filter((s) => s.token !== sessionToken));
     } catch (error) {
       console.error("Failed to revoke session:", error);
-      alert("Failed to revoke session");
+      toast.error("Failed to revoke session");
     } finally {
       setRevoking(null);
     }
@@ -68,11 +71,12 @@ export default function ProfileSessionsPage() {
 
     setRevoking("all");
     try {
-      // TODO: Implement proper session revoke API
-      alert("Session revocation not yet implemented");
+      await authClient.revokeSessions();
+      toast.success("All other sessions revoked");
+      await fetchSessions();
     } catch (error) {
       console.error("Failed to revoke other sessions:", error);
-      alert("Failed to revoke other sessions");
+      toast.error("Failed to revoke other sessions");
     } finally {
       setRevoking(null);
     }
@@ -92,19 +96,15 @@ export default function ProfileSessionsPage() {
 
   function getDeviceInfo(userAgent?: string) {
     if (!userAgent) return "Unknown device";
-
-    // Simple user agent parsing
     const ua = userAgent.toLowerCase();
     let browser = "Unknown browser";
     let os = "Unknown OS";
 
-    // Browser detection
-    if (ua.includes("chrome")) browser = "Chrome";
+    if (ua.includes("chrome") && !ua.includes("edge")) browser = "Chrome";
     else if (ua.includes("firefox")) browser = "Firefox";
-    else if (ua.includes("safari")) browser = "Safari";
+    else if (ua.includes("safari") && !ua.includes("chrome")) browser = "Safari";
     else if (ua.includes("edge")) browser = "Edge";
 
-    // OS detection
     if (ua.includes("windows")) os = "Windows";
     else if (ua.includes("mac")) os = "macOS";
     else if (ua.includes("linux")) os = "Linux";
@@ -120,7 +120,7 @@ export default function ProfileSessionsPage() {
 
   if (isPending || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-[50vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
       </div>
     );
@@ -135,7 +135,6 @@ export default function ProfileSessionsPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Active Sessions</h1>
@@ -144,11 +143,11 @@ export default function ProfileSessionsPage() {
           </p>
         </div>
         <Link href="/profile/settings" className="btn-secondary">
-          ← Back to Settings
+          <i className="ri-arrow-left-line" />
+          Back to Settings
         </Link>
       </div>
 
-      {/* Session Count & Actions */}
       <div className="card p-6">
         <div className="flex items-center justify-between">
           <div>
@@ -167,11 +166,10 @@ export default function ProfileSessionsPage() {
         </div>
       </div>
 
-      {/* Sessions List */}
       <div className="space-y-4">
         {activeSessions.length === 0 ? (
           <div className="card p-12 text-center">
-            <div className="text-6xl mb-4">🔒</div>
+            <i className="ri-lock-line text-6xl text-slate-300 mb-4" />
             <h2 className="text-xl font-semibold text-slate-900 mb-2">
               No Active Sessions
             </h2>
@@ -185,9 +183,7 @@ export default function ProfileSessionsPage() {
             return (
               <div
                 key={session.id}
-                className={`card p-6 ${
-                  isCurrent ? "border-2 border-brand-500" : ""
-                }`}
+                className={`card p-6 ${isCurrent ? "border-2 border-brand-500" : ""}`}
               >
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center flex-shrink-0">
@@ -226,11 +222,11 @@ export default function ProfileSessionsPage() {
 
                   {!isCurrent && (
                     <button
-                      onClick={() => handleRevokeSession(session.id)}
-                      disabled={revoking === session.id}
+                      onClick={() => handleRevokeSession(session.token)}
+                      disabled={revoking === session.token}
                       className="px-4 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 flex-shrink-0"
                     >
-                      {revoking === session.id ? "Revoking..." : "Revoke"}
+                      {revoking === session.token ? "Revoking..." : "Revoke"}
                     </button>
                   )}
                 </div>
@@ -240,7 +236,6 @@ export default function ProfileSessionsPage() {
         )}
       </div>
 
-      {/* Security Tip */}
       <div className="card p-6 bg-blue-50 border-blue-200">
         <div className="flex gap-3">
           <i className="ri-information-line text-xl text-blue-600 flex-shrink-0" />

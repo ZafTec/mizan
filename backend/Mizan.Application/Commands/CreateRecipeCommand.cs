@@ -31,17 +31,25 @@ public record CreateRecipeResult
     public string Title { get; init; } = string.Empty;
 }
 
-public class CreateRecipeCommandValidator : AbstractValidator<CreateRecipeCommand>
-{
-    public CreateRecipeCommandValidator()
+    public class CreateRecipeCommandValidator : AbstractValidator<CreateRecipeCommand>
     {
-        RuleFor(x => x.Title).NotEmpty().MaximumLength(255);
-        RuleFor(x => x.Servings).GreaterThan(0);
-        RuleFor(x => x.Ingredients).NotEmpty().WithMessage("At least one ingredient is required");
-        RuleForEach(x => x.Ingredients).ChildRules(ingredient =>
+        public CreateRecipeCommandValidator()
         {
-            ingredient.RuleFor(i => i.IngredientText).NotEmpty();
-        });
+            RuleFor(x => x.Title).NotEmpty().MaximumLength(255);
+            RuleFor(x => x.Servings).GreaterThan(0);
+            RuleFor(x => x.PrepTimeMinutes)
+                .GreaterThanOrEqualTo(0)
+                .When(x => x.PrepTimeMinutes.HasValue)
+                .WithMessage("Prep time must be positive");
+            RuleFor(x => x.CookTimeMinutes)
+                .GreaterThanOrEqualTo(0)
+                .When(x => x.CookTimeMinutes.HasValue)
+                .WithMessage("Cook time must be positive");
+            RuleFor(x => x.Ingredients).NotEmpty().WithMessage("At least one ingredient is required");
+            RuleForEach(x => x.Ingredients).ChildRules(ingredient =>
+            {
+                ingredient.RuleFor(i => i.IngredientText).NotEmpty();
+            });
     }
 }
 
@@ -158,7 +166,7 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
             decimal totalFat = 0;
             decimal totalFiber = 0;
 
-            foreach (var ingredientDto in request.Ingredients.Where(i => i.FoodId.HasValue && i.Amount.HasValue))
+            foreach (var ingredientDto in (request.Ingredients ?? []).Where(i => i.FoodId.HasValue && i.Amount.HasValue))
             {
                 if (foods.TryGetValue(ingredientDto.FoodId!.Value, out var food))
                 {

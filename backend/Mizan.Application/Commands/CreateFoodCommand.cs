@@ -8,6 +8,8 @@ namespace Mizan.Application.Commands;
 public record CreateFoodCommand : IRequest<CreateFoodResult>
 {
     public string Name { get; init; } = string.Empty;
+    public string? Brand { get; init; }
+    public string? Barcode { get; init; }
     public decimal CaloriesPer100g { get; init; }
     public decimal ProteinPer100g { get; init; }
     public decimal CarbsPer100g { get; init; }
@@ -30,6 +32,8 @@ public class CreateFoodCommandValidator : AbstractValidator<CreateFoodCommand>
     public CreateFoodCommandValidator()
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(255);
+        RuleFor(x => x.Brand).MaximumLength(255);
+        RuleFor(x => x.Barcode).MaximumLength(64);
         RuleFor(x => x.CaloriesPer100g).GreaterThanOrEqualTo(0);
         RuleFor(x => x.ProteinPer100g).GreaterThanOrEqualTo(0);
         RuleFor(x => x.CarbsPer100g).GreaterThanOrEqualTo(0);
@@ -52,6 +56,8 @@ public class CreateFoodCommandHandler : IRequestHandler<CreateFoodCommand, Creat
         {
             Id = Guid.NewGuid(),
             Name = request.Name,
+            Brand = request.Brand,
+            Barcode = request.Barcode,
             CaloriesPer100g = request.CaloriesPer100g,
             ProteinPer100g = request.ProteinPer100g,
             CarbsPer100g = request.CarbsPer100g,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/auth-client";
+import { clientApi } from "@/lib/api.client";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 
@@ -23,7 +23,7 @@ export function RecentMessages() {
 	useEffect(() => {
 		async function fetchMessages() {
 			try {
-				const data = await apiClient<{ messages: Message[] }>(
+				const data = await clientApi<{ messages: Message[] }>(
 					"/api/trainer/messages/recent"
 				);
 				setMessages(data.messages);

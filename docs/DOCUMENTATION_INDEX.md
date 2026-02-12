@@ -93,7 +93,7 @@ Start here and read in order:
 - Schema boundaries (Drizzle vs EF Core)
 - Data flow diagrams (request, authentication, type safety)
 - API routing and proxy configuration
-- Security architecture (BFF pattern)
+- Security architecture (JWT/JWKS)
 - Authorization and three-tier roles
 - Trainer features architecture
 - Real-time communication (SignalR)

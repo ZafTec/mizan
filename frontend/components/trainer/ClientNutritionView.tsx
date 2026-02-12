@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/auth-client";
+import { clientApi } from "@/lib/api.client";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/popover";
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	BarChart,
@@ -74,7 +74,7 @@ export function ClientNutritionView({ clientId }: ClientNutritionViewProps) {
 		setLoading(true);
 		try {
 			const dateStr = format(selectedDate, "yyyy-MM-dd");
-			const data = await apiClient<ClientNutritionData>(
+			const data = await clientApi<ClientNutritionData>(
 				`/api/Trainers/clients/${clientId}/nutrition?date=${dateStr}`
 			);
 			setNutritionData(data);

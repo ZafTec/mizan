@@ -1172,7 +1172,6 @@ All admin endpoints require `admin` role.
 - `"No active relationship with this client"` - Trainer-client relationship not found or inactive
 - `"No permission to view client nutrition data"` - Permission flag not enabled
 - `"User is not a member of this household"` - Attempting to access household without membership
-- `"Invalid trusted secret"` - BFF secret mismatch (internal error)
 
 ---
 

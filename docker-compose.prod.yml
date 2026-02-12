@@ -15,18 +15,20 @@ services:
       # Override specific environment variables that differ from .env defaults
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
-      # Internal Docker network origin
-      - Bff__AllowedOrigins__0=http://frontend:3000
-      - Cors__Origins__0=http://frontend:3000
+      # JWT/JWKS validation
+      - BetterAuth__Issuer=${BetterAuth__Issuer}
+      - BetterAuth__Audience=${BetterAuth__Audience}
+      - BetterAuth__JwksUrl=${BetterAuth__JwksUrl}
+      - Cors__Origins__0=${BETTER_AUTH_URL}
 
     networks:
       - proxy-net
       - postgres
 
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      test: ["CMD-SHELL", "cat < /dev/null > /dev/tcp/127.0.0.1/8080 || exit 1"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
       start_period: 40s
 
@@ -47,7 +49,7 @@ services:
     environment:
       # Override specific environment variables that differ from .env defaults
       - NODE_ENV=production
-      - BACKEND_API_URL=http://backend:8080
+      - API_URL=http://backend:8080
       - BETTER_AUTH_TRUST_HOST=true
       - NEXT_TELEMETRY_DISABLED=1
 
@@ -60,12 +62,39 @@ services:
       - postgres
 
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      test: ["CMD-SHELL", "cat < /dev/null > /dev/tcp/127.0.0.1/3000 || exit 1"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
       start_period: 40s
 
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  mcp:
+    image: euaell/mizan-mcp:latest
+    container_name: mizan-mcp
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5001
+      - ConnectionStrings__PostgreSQL=${ConnectionStrings__PostgreSQL}
+    networks:
+      - proxy-net
+      - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "cat < /dev/null > /dev/tcp/127.0.0.1/5001 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
     deploy:
       resources:
         limits:
@@ -96,6 +125,5 @@ networks:
 #
 # Infrastructure:
 # 1. Adjust network names to match your infrastructure (proxy-net, postgres)
-# 2. Backend health check uses wget (bundled in Dockerfile.prod)
-# 3. Frontend health check uses wget (bundled in Dockerfile.prod)
-# 4. Resource limits prevent containers from consuming all host resources
+# 2. Health checks use simple TCP socket tests (no external dependencies)
+# 3. Resource limits prevent containers from consuming all host resources

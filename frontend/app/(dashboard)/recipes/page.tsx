@@ -3,6 +3,7 @@ import Image from "next/image";
 import placeHolderImage from "@/public/placeholder-recipe.jpg";
 import { getAllRecipes } from "@/data/recipe";
 import { getUserOptionalServer } from "@/helper/session";
+import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
 
 import Pagination from "@/components/Pagination";
 
@@ -11,13 +12,13 @@ export const dynamic = 'force-dynamic';
 export default async function Page({
 	searchParams,
 }: {
-	searchParams: Promise<{ page?: string }>;
+	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
 	const params = await searchParams;
-	const page = Number(params.page) || 1;
-	// Fetch recipes for the current page
-	const { recipes, totalPages, totalCount } = await getAllRecipes(undefined, page, 10);
+	const { page, sortBy, sortOrder } = parseListParams(params);
+	const { recipes, totalPages, totalCount } = await getAllRecipes(undefined, page, 10, false, sortBy ?? undefined, sortOrder);
 	const user = await getUserOptionalServer();
+	const baseUrl = buildListUrl('/recipes', {});
 
 	let favoriteCount = 0;
 	if (user) {
@@ -89,16 +90,6 @@ export default async function Page({
 			<div className="card p-6">
 				<div className="flex items-center justify-between mb-6">
 					<h2 className="section-title">All Recipes</h2>
-					<div className="flex items-center gap-2">
-						<button className="btn-secondary text-sm px-3 py-1.5">
-							<i className="ri-filter-3-line" />
-							Filter
-						</button>
-						<button className="btn-secondary text-sm px-3 py-1.5">
-							<i className="ri-sort-desc" />
-							Sort
-						</button>
-					</div>
 				</div>
 
 				{recipes.length > 0 ? (
@@ -171,7 +162,9 @@ export default async function Page({
 				<Pagination
 					currentPage={page}
 					totalPages={totalPages}
-					baseUrl="/recipes"
+					totalCount={totalCount}
+					pageSize={10}
+					baseUrl={baseUrl}
 				/>
 			</div>
 		</div>

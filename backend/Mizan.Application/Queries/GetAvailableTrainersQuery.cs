@@ -1,10 +1,19 @@
+using System.Linq.Expressions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Queries;
 
-public record GetAvailableTrainersQuery : IRequest<List<TrainerPublicDto>>;
+public record GetAvailableTrainersQuery : IRequest<PagedResult<TrainerPublicDto>>, IPagedQuery, ISortableQuery
+{
+    public string? SearchTerm { get; init; }
+    public int Page { get; init; } = 1;
+    public int PageSize { get; init; } = 20;
+    public string? SortBy { get; init; }
+    public string? SortOrder { get; init; }
+}
 
 public record TrainerPublicDto(
     Guid Id,
@@ -16,7 +25,7 @@ public record TrainerPublicDto(
     int ClientCount
 );
 
-public class GetAvailableTrainersQueryHandler : IRequestHandler<GetAvailableTrainersQuery, List<TrainerPublicDto>>
+public class GetAvailableTrainersQueryHandler : IRequestHandler<GetAvailableTrainersQuery, PagedResult<TrainerPublicDto>>
 {
     private readonly IMizanDbContext _context;
 
@@ -25,10 +34,25 @@ public class GetAvailableTrainersQueryHandler : IRequestHandler<GetAvailableTrai
         _context = context;
     }
 
-    public async Task<List<TrainerPublicDto>> Handle(GetAvailableTrainersQuery request, CancellationToken cancellationToken)
+    public async Task<PagedResult<TrainerPublicDto>> Handle(GetAvailableTrainersQuery request, CancellationToken cancellationToken)
     {
-        var trainers = await _context.Users
-            .Where(u => (u.Role == "trainer" || u.Role == "admin") && !u.Banned)
+        var query = _context.Users
+            .Where(u => (u.Role == "trainer" || u.Role == "admin") && !u.Banned);
+
+        if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+        {
+            var searchTerm = request.SearchTerm.ToLower();
+            query = query.Where(u =>
+                (u.Name != null && u.Name.ToLower().Contains(searchTerm)) ||
+                u.Email.ToLower().Contains(searchTerm));
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var trainers = await query
+            .OrderBy(u => u.Name)
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
             .Select(u => new
             {
                 User = u,
@@ -36,7 +60,7 @@ public class GetAvailableTrainersQueryHandler : IRequestHandler<GetAvailableTrai
             })
             .ToListAsync(cancellationToken);
 
-        return trainers.Select(t => new TrainerPublicDto(
+        var items = trainers.Select(t => new TrainerPublicDto(
             t.User.Id,
             t.User.Name,
             t.User.Email,
@@ -45,5 +69,13 @@ public class GetAvailableTrainersQueryHandler : IRequestHandler<GetAvailableTrai
             null,
             t.ClientCount
         )).ToList();
+
+        return new PagedResult<TrainerPublicDto>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = request.Page,
+            PageSize = request.PageSize
+        };
     }
 }

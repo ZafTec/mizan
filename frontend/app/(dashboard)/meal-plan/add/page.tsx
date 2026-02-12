@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { format, parse } from 'date-fns';
-import RecipeType from '@/types/recipe';
+import { clientApi } from '@/lib/api.client';
 
 type SimplifiedRecipe = {
   id: string;
@@ -25,10 +25,10 @@ export default function AddMealPlanPage() {
   const searchParams = useSearchParams();
   const dateParam = searchParams.get('date');
   const weekParam = searchParams.get('week');
-  
+
   const [date, setDate] = useState<Date>(
-    dateParam 
-      ? parse(dateParam, 'yyyy-MM-dd', new Date()) 
+    dateParam
+      ? parse(dateParam, 'yyyy-MM-dd', new Date())
       : new Date()
   );
   const [recipes, setRecipes] = useState<SimplifiedRecipe[]>([]);
@@ -38,66 +38,29 @@ export default function AddMealPlanPage() {
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredRecipes, setFilteredRecipes] = useState<SimplifiedRecipe[]>([]);
-  const [loadingExisting, setLoadingExisting] = useState(false);
 
-  // Load all recipes
   useEffect(() => {
     const loadRecipes = async () => {
-      await fetch('/api/recipes')
-        .then(res => res.json())
-        .then(data => {
-          return data.recipes
-        })
-        .then((recipes: RecipeType[]) => {
-          // Simplify recipe objects to avoid circular references
-          const simplifiedRecipes = recipes.map(recipe => ({
-            id: recipe.id,
-            title: recipe.title,
-            calories: recipe.calories || 0,
-            protein: recipe.protein || 0
-          }));
-          setRecipes(simplifiedRecipes);
-          setFilteredRecipes(simplifiedRecipes);
-        })
-        .catch(err => {
-          setError('Failed to load recipes');
-          console.error('Error loading recipes:', err);
-        })
-        .finally(() => {
-          setLoading(false);
-        })
+      try {
+        const data = await clientApi<{ items: SimplifiedRecipe[] }>('/api/Recipes?IncludePublic=true&PageSize=50');
+        const simplifiedRecipes = (data.items || []).map(recipe => ({
+          id: recipe.id,
+          title: recipe.title,
+          calories: recipe.calories || 0,
+          protein: recipe.protein || 0
+        }));
+        setRecipes(simplifiedRecipes);
+        setFilteredRecipes(simplifiedRecipes);
+      } catch (err) {
+        setError('Failed to load recipes');
+        console.error('Error loading recipes:', err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadRecipes();
   }, []);
-
-  // Load existing meal plan for the selected date
-  useEffect(() => {
-    const loadExistingMealPlan = async () => {
-      if (!date) return;
-      
-      setLoadingExisting(true);
-      try {
-        const dateString = format(date, 'yyyy-MM-dd');
-        const response = await fetch(`/api/meal-plan/get-by-date?date=${dateString}`);
-        const data = await response.json();
-        
-        if (data.success && data.mealPlan) {
-          setSelectedRecipes(data.mealPlan.recipes);
-        } else {
-          // If no meal plan exists for this date, clear any selected recipes
-          setSelectedRecipes([]);
-        }
-      } catch (err) {
-        console.error("Error loading existing meal plan:", err);
-        // Don't set error state here to avoid confusing the user
-      } finally {
-        setLoadingExisting(false);
-      }
-    };
-
-    loadExistingMealPlan();
-  }, [date]);
 
   useEffect(() => {
     if (searchTerm.trim() === '') {
@@ -139,121 +102,111 @@ export default function AddMealPlanPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (selectedRecipes.length === 0) {
       setError('Please select at least one recipe');
       return;
     }
 
     setSubmitting(true);
-    await fetch('/api/meal-plan/add', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        date: format(date, 'yyyy-MM-dd'),
-        recipes: selectedRecipes.map(item => ({
-          recipeId: item.recipeId,
-          servings: item.servings,
-          mealTime: item.mealTime
-        }))
-      })
-    })
-    .then(res => {
-      if (!res.ok) {
-        throw new Error('Failed to save meal plan');
-      }
-      // Redirect back to the meal plan page with week parameter if it exists
+    try {
+      const dateString = format(date, 'yyyy-MM-dd');
+      await clientApi('/api/MealPlans', {
+        method: 'POST',
+        body: {
+          name: 'Meal Plan',
+          startDate: dateString,
+          endDate: dateString,
+          recipes: selectedRecipes.map(item => ({
+            recipeId: item.recipeId,
+            date: dateString,
+            mealType: item.mealTime,
+            servings: item.servings
+          }))
+        }
+      });
+
       if (weekParam) {
         router.push(`/meal-plan?week=${weekParam}`);
       } else {
         router.push('/meal-plan');
       }
       router.refresh();
-    })
-    .catch(err => {
+    } catch (err) {
       console.error('Error adding meal plan:', err);
       setError('Failed to save meal plan');
       setSubmitting(false);
-    })
-    .finally(() => {
-      setSubmitting(false);
-    })
+    }
   };
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Add to Meal Plan</h1>
-        <Link 
+        <h1 className="text-2xl font-bold text-slate-900">Add to Meal Plan</h1>
+        <Link
           href={weekParam ? `/meal-plan?week=${weekParam}` : "/meal-plan"}
-          className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg"
+          className="btn-secondary"
         >
           Cancel
         </Link>
       </div>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
+        <div className="card p-4 bg-red-50 border border-red-200">
+          <div className="flex items-center gap-2 text-red-700">
+            <i className="ri-error-warning-line" />
+            <span>{error}</span>
+          </div>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Date Selection */}
-          <div className="bg-white p-4 rounded-lg shadow">
-            <h2 className="text-lg font-semibold mb-3">Select Date</h2>
+          <div className="card p-4">
+            <h2 className="text-lg font-semibold text-slate-900 mb-3">Select Date</h2>
             <input
               type="date"
               value={format(date, 'yyyy-MM-dd')}
               onChange={(e) => setDate(new Date(e.target.value))}
-              className="w-full p-2 border rounded"
+              className="input w-full"
             />
-            {loadingExisting && (
-              <div className="mt-2 text-sm text-gray-500">
-                Loading saved plan...
-              </div>
-            )}
           </div>
 
-          {/* Selected Recipes */}
-          <div className="bg-white p-4 rounded-lg shadow">
-            <h2 className="text-lg font-semibold mb-3">Selected Recipes</h2>
+          <div className="card p-4">
+            <h2 className="text-lg font-semibold text-slate-900 mb-3">Selected Recipes</h2>
             {selectedRecipes.length === 0 ? (
-              <p className="text-gray-500">No recipes selected yet</p>
+              <p className="text-slate-500">No recipes selected yet</p>
             ) : (
               <ul className="space-y-4">
                 {selectedRecipes.map((item, index) => (
-                  <li key={`${item.recipeId}-${index}`} className="border-b pb-3">
+                  <li key={`${item.recipeId}-${index}`} className="border-b border-slate-200 pb-3">
                     <div className="flex justify-between items-center">
-                      <span className="font-medium">{item.recipeName}</span>
+                      <span className="font-medium text-slate-900">{item.recipeName}</span>
                       <button
                         type="button"
                         onClick={() => removeRecipeFromSelection(index)}
-                        className="text-red-500"
+                        className="text-red-500 hover:text-red-700"
                       >
                         <i className="ri-delete-bin-line"></i>
                       </button>
                     </div>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <div>
-                        <label className="block text-sm text-gray-600">Servings</label>
+                        <label className="label">Servings</label>
                         <input
                           type="number"
                           min="1"
                           value={item.servings}
                           onChange={(e) => updateSelectedRecipe(index, 'servings', parseInt(e.target.value))}
-                          className="w-full p-1 border rounded text-sm"
+                          className="input w-full"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm text-gray-600">Meal Time</label>
+                        <label className="label">Meal Time</label>
                         <select
                           value={item.mealTime}
                           onChange={(e) => updateSelectedRecipe(index, 'mealTime', e.target.value)}
-                          className="w-full p-1 border rounded text-sm"
+                          className="input w-full"
                         >
                           <option value="breakfast">Breakfast</option>
                           <option value="lunch">Lunch</option>
@@ -269,37 +222,38 @@ export default function AddMealPlanPage() {
           </div>
         </div>
 
-        {/* Recipe Selection */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-3">Choose Recipes</h2>
+        <div className="card p-4">
+          <h2 className="text-lg font-semibold text-slate-900 mb-3">Choose Recipes</h2>
           <div className="mb-4">
             <input
               type="text"
               placeholder="Search recipes..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full p-2 border rounded"
+              className="input w-full"
             />
           </div>
 
           {loading ? (
-            <p className="text-gray-500">Loading recipes...</p>
+            <div className="flex justify-center py-8">
+              <i className="ri-loader-4-line animate-spin text-brand-500 text-3xl" />
+            </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {filteredRecipes.map((recipe) => (
                 <div
                   key={recipe.id}
-                  className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition"
+                  className="card p-3 hover:bg-slate-50 cursor-pointer transition"
                   onClick={() => addRecipeToSelection(recipe)}
                 >
-                  <h3 className="font-medium">{recipe.title}</h3>
-                  <p className="text-sm text-gray-600">
+                  <h3 className="font-medium text-slate-900">{recipe.title}</h3>
+                  <p className="text-sm text-slate-600">
                     {Math.round(recipe.calories)} cal | {Math.round(recipe.protein)}g protein
                   </p>
                 </div>
               ))}
               {filteredRecipes.length === 0 && (
-                <p className="text-gray-500 col-span-full">No recipes found</p>
+                <p className="text-slate-500 col-span-full text-center py-4">No recipes found</p>
               )}
             </div>
           )}
@@ -309,7 +263,7 @@ export default function AddMealPlanPage() {
           <button
             type="submit"
             disabled={submitting || selectedRecipes.length === 0}
-            className="bg-emerald-700 text-white px-6 py-2 rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? 'Saving...' : 'Save Meal Plan'}
           </button>

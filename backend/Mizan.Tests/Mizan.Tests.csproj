@@ -19,11 +19,15 @@
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="FluentAssertions" Version="6.12.2" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
+    <PackageReference Include="NSec.Cryptography" Version="22.4.0" />
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Mizan.Api\Mizan.Api.csproj" />
+    <ProjectReference Include="..\Mizan.Mcp.Server\Mizan.Mcp.Server.csproj">
+        <Aliases>McpServer</Aliases>
+    </ProjectReference>
   </ItemGroup>
 
 </Project>

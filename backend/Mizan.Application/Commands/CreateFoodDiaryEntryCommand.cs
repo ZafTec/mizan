@@ -34,6 +34,10 @@ public class CreateFoodDiaryEntryCommandValidator : AbstractValidator<CreateFood
             .Must(m => new[] { "MEAL", "SNACK", "DRINK" }.Contains(m.ToUpper()))
             .WithMessage("Meal type must be MEAL, SNACK, or DRINK");
         RuleFor(x => x.Servings).GreaterThan(0);
+        RuleFor(x => x)
+            .Must(x => x.FoodId.HasValue || x.RecipeId.HasValue)
+            .WithName("FoodId")
+            .WithMessage("Either foodId or recipeId must be provided");
         RuleFor(x => x.Calories).GreaterThanOrEqualTo(0).When(x => x.Calories.HasValue);
         RuleFor(x => x.ProteinGrams).GreaterThanOrEqualTo(0).When(x => x.ProteinGrams.HasValue);
         RuleFor(x => x.CarbsGrams).GreaterThanOrEqualTo(0).When(x => x.CarbsGrams.HasValue);

@@ -1,30 +1,68 @@
 import { getUserServer } from "@/helper/session";
 import Link from "next/link";
-import { getWeeklyMealPlans } from "@/data/mealPlan";
+import { getMealPlans } from "@/data/mealPlan";
+import Pagination from "@/components/Pagination";
+import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
 
 import { logger } from "@/lib/logger";
 const mealLogger = logger.createModuleLogger("meal-plan-page");
 
 export const dynamic = 'force-dynamic';
 
-export default async function MealPlanPage() {
-	const user = await getUserServer(); // Verify user is authenticated
+export default async function MealPlanPage({
+	searchParams,
+}: {
+	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+	const user = await getUserServer();
+	const params = await searchParams;
+	const { page, sortBy, sortOrder } = parseListParams(params);
+	const baseUrl = buildListUrl('/meal-plan', {});
 
-	// Get this week's date range
-	const today = new Date();
-	const startOfWeek = new Date(today);
-	startOfWeek.setDate(today.getDate() - today.getDay());
-	const endOfWeek = new Date(startOfWeek);
-	endOfWeek.setDate(startOfWeek.getDate() + 6);
-
-	const startDate = startOfWeek.toISOString().split('T')[0];
-	const endDate = endOfWeek.toISOString().split('T')[0];
+	let mealPlans: Awaited<ReturnType<typeof getMealPlans>>['mealPlans'] = [];
+	let totalCount = 0;
+	let totalPages = 0;
+	let loadError: string | null = null;
 
 	try {
-		const mealPlans = await getWeeklyMealPlans(startDate, endDate);
+		const result = await getMealPlans(page, 20, sortBy ?? undefined, sortOrder);
+		mealPlans = result.mealPlans;
+		totalCount = result.totalCount;
+		totalPages = result.totalPages;
+	} catch (error) {
+		mealLogger.error("Failed to load meal plans", {
+			error: error instanceof Error ? error.message : String(error),
+			userID: user.id,
+		});
+		loadError = "Failed to load meal plans";
+	}
 
+	if (loadError) {
 		return (
 			<div className="space-y-6">
+				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+					<div>
+						<h1 className="text-2xl font-bold text-slate-900">Meal Planning</h1>
+						<p className="text-slate-500 mt-1">Plan your meals for the week ahead</p>
+					</div>
+					<Link href="/recipes" className="btn-primary">
+						<i className="ri-book-open-line" />
+						Browse Recipes
+					</Link>
+				</div>
+
+				<div className="card p-6">
+					<div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 text-red-600">
+						<i className="ri-error-warning-line text-xl" />
+						<p>An error occurred loading your meal plans. Please try again later.</p>
+					</div>
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<div className="space-y-6">
 				{/* Page Header */}
 				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 					<div>
@@ -47,9 +85,9 @@ export default async function MealPlanPage() {
 				<div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
 					{[
 						{ label: "Meal Plans", value: mealPlans.length, icon: "ri-calendar-check-line", color: "from-brand-400 to-brand-600" },
-						{ label: "This Week", value: mealPlans.filter(p => p.meals?.length > 0).length, icon: "ri-calendar-line", color: "from-accent-400 to-accent-600" },
-						{ label: "Total Meals", value: mealPlans.reduce((acc, p) => acc + (p.meals?.length || 0), 0), icon: "ri-restaurant-line", color: "from-violet-400 to-violet-600" },
-						{ label: "Recipes", value: new Set(mealPlans.flatMap(p => p.meals?.map(m => m.recipeId) || [])).size, icon: "ri-book-3-line", color: "from-orange-400 to-orange-600" },
+						{ label: "This Week", value: mealPlans.filter(p => p.recipes?.length > 0).length, icon: "ri-calendar-line", color: "from-accent-400 to-accent-600" },
+						{ label: "Total Meals", value: mealPlans.reduce((acc, p) => acc + (p.recipes?.length || 0), 0), icon: "ri-restaurant-line", color: "from-violet-400 to-violet-600" },
+						{ label: "Recipes", value: new Set(mealPlans.flatMap(p => p.recipes?.map(m => m.recipeId) || [])).size, icon: "ri-book-3-line", color: "from-orange-400 to-orange-600" },
 					].map((stat) => (
 						<div key={stat.label} className="card p-4">
 							<div className="flex items-center gap-3">
@@ -83,7 +121,7 @@ export default async function MealPlanPage() {
 											</p>
 										</div>
 										<span className="text-sm text-slate-600">
-											{plan.meals?.length || 0} meals
+											{plan.recipes?.length || 0} meals
 										</span>
 									</div>
 								</div>
@@ -103,34 +141,16 @@ export default async function MealPlanPage() {
 						</div>
 					)}
 				</div>
-			</div>
-		);
-	} catch (error) {
 
-		mealLogger.error("Failed to load meal plans", {
-			error: error instanceof Error ? error.message : String(error),
-			userID: user.id,
-		});
-		return (
-			<div className="space-y-6">
-				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-					<div>
-						<h1 className="text-2xl font-bold text-slate-900">Meal Planning</h1>
-						<p className="text-slate-500 mt-1">Plan your meals for the week ahead</p>
-					</div>
-					<Link href="/recipes" className="btn-primary">
-						<i className="ri-book-open-line" />
-						Browse Recipes
-					</Link>
-				</div>
-
-				<div className="card p-6">
-					<div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 text-red-600">
-						<i className="ri-error-warning-line text-xl" />
-						<p>An error occurred loading your meal plans. Please try again later.</p>
-					</div>
-				</div>
-			</div>
-		);
-	}
+				{totalPages > 1 && (
+					<Pagination
+						currentPage={page}
+						totalPages={totalPages}
+						totalCount={totalCount}
+						pageSize={20}
+						baseUrl={baseUrl}
+					/>
+				)}
+		</div>
+	);
 }

@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mizan.Application.Commands;
+using Mizan.Application.Common;
 using Mizan.Application.Queries;
 
 namespace Mizan.Api.Controllers;
@@ -18,7 +19,7 @@ public class RecipesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<GetRecipesResult>> GetRecipes([FromQuery] GetRecipesQuery query)
+    public async Task<ActionResult<PagedResult<RecipeDto>>> GetRecipes([FromQuery] GetRecipesQuery query)
     {
         var result = await _mediator.Send(query);
         return Ok(result);

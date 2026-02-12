@@ -1,0 +1,25 @@
+FROM mcr.microsoft.com/playwright:v1.57.0-jammy
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl ca-certificates unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh \
+    && bash /tmp/dotnet-install.sh --channel 10.0 --install-dir /usr/share/dotnet \
+    && ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
+
+RUN curl -fsSL https://bun.sh/install | bash
+
+ENV BUN_INSTALL=/root/.bun
+ENV PATH=$BUN_INSTALL/bin:/usr/share/dotnet:$PATH
+ENV DOTNET_ROOT=/usr/share/dotnet
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+COPY . .
+
+RUN dotnet restore backend/Mizan.sln
+RUN bun install --frozen-lockfile --cwd frontend
+
+CMD ["bash", "-lc", "dotnet test backend/Mizan.sln --configuration Release --verbosity minimal --logger \"console;verbosity=minimal\" && bun run --cwd frontend test -- --reporter=dot && bun run --cwd frontend test:e2e -- --reporter=line"]

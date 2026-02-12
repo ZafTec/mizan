@@ -150,8 +150,18 @@ export default function Page() {
 						{/* Error Message */}
 						{formState.status === "error" && formState.message && (
 							<div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 text-red-600 text-sm">
-								<i className="ri-error-warning-line text-lg" />
-								<span>{formState.message}</span>
+								<i className="ri-error-warning-line text-lg flex-shrink-0" />
+								<span>
+									{formState.message}
+									{formState.message.includes("already exists") && (
+										<>
+											{" "}
+											<Link href="/login" className="font-medium underline hover:text-red-700">
+												Sign in instead
+											</Link>
+										</>
+									)}
+								</span>
 							</div>
 						)}
 

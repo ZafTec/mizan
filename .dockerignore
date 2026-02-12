@@ -1,0 +1,17 @@
+.git
+.gitignore
+.vscode
+.idea
+**/bin
+**/obj
+**/node_modules
+**/.next
+**/out
+**/dist
+**/coverage
+**/.turbo
+**/.cache
+**/*.log
+**/*.md
+.env
+.env.*

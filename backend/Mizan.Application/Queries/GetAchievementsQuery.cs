@@ -1,20 +1,29 @@
+using System.Linq.Expressions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Queries;
 
-public record GetAchievementsQuery : IRequest<GetAchievementsResult>
+public record GetAchievementsQuery : IRequest<GetAchievementsResult>, IPagedQuery, ISortableQuery
 {
     public string? Category { get; init; }
+    public int Page { get; init; } = 1;
+    public int PageSize { get; init; } = 50;
+    public string? SortBy { get; init; }
+    public string? SortOrder { get; init; }
 }
 
 public record GetAchievementsResult
 {
-    public List<AchievementDto> Achievements { get; init; } = new();
+    public List<AchievementDto> Items { get; init; } = new();
+    public int TotalCount { get; init; }
+    public int Page { get; init; }
+    public int PageSize { get; init; }
+    public int TotalPages => PageSize > 0 ? (int)Math.Ceiling((double)TotalCount / PageSize) : 0;
     public int TotalPoints { get; init; }
     public int EarnedCount { get; init; }
-    public int TotalCount { get; init; }
 }
 
 public record AchievementDto
@@ -60,9 +69,12 @@ public class GetAchievementsQueryHandler : IRequestHandler<GetAchievementsQuery,
 
         var userAchievementDict = userAchievements.ToDictionary(ua => ua.AchievementId, ua => ua.EarnedAt);
 
-        var achievements = await query
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var allAchievements = await query
             .OrderBy(a => a.Category)
             .ThenBy(a => a.Points)
+            .ApplyPaging(request)
             .Select(a => new AchievementDto
             {
                 Id = a.Id,
@@ -78,10 +90,12 @@ public class GetAchievementsQueryHandler : IRequestHandler<GetAchievementsQuery,
 
         return new GetAchievementsResult
         {
-            Achievements = achievements,
-            TotalPoints = achievements.Where(a => a.IsEarned).Sum(a => a.Points),
-            EarnedCount = achievements.Count(a => a.IsEarned),
-            TotalCount = achievements.Count
+            Items = allAchievements,
+            TotalCount = totalCount,
+            Page = request.Page,
+            PageSize = request.PageSize,
+            TotalPoints = allAchievements.Where(a => a.IsEarned).Sum(a => a.Points),
+            EarnedCount = allAchievements.Count(a => a.IsEarned)
         };
     }
 }

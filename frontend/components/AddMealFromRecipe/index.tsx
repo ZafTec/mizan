@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { addMeal } from "@/actions/meal";
+import { addMeal } from "@/data/meal";
 import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
 import { FieldError } from "@/components/FieldError";
 import Macros from "@/types/macro";

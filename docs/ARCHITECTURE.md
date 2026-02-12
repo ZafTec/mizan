@@ -123,50 +123,45 @@ Frontend Components  Form Validation
 **Network Topology:**
 - **Client → Frontend (browser):** `http://localhost:3000`
 - **Frontend → Backend (server-side):** `http://mizan-backend:8080` (Docker network)
-- **Frontend → Backend (client-side):** `http://localhost:3000` (proxied via rewrites)
+- **Frontend → Backend (client-side):** `http://localhost:5000` (direct API)
 
 ---
 
 ## Security Architecture
 
-### BFF (Backend-for-Frontend) Authentication Pattern
+### JWT (JWKS) Authentication Pattern
 
-MacroChef uses a **trusted BFF pattern** where Next.js validates JWTs and forwards user context to the backend via secure headers.
+MacroChef uses **direct JWT validation**: the backend validates BetterAuth JWTs using JWKS and checks user status in the database.
 
 **Flow:**
 ```
-Browser → Next.js BFF → Backend API
-   ↓          ↓             ↓
-  JWT    Validates     Trusts Headers
-         (BetterAuth)   (via BFF secret)
+Browser → Next.js → Backend API
+   ↓          ↓         ↓
+ Session   JWT Token   JWT + DB check
+ (cookie)  (/api/auth/token)
 ```
 
 **Implementation:**
-1. Browser sends JWT (httpOnly cookie)
-2. Next.js validates JWT using BetterAuth
-3. Next.js extracts user claims (ID, email, role)
-4. Next.js forwards to backend via headers:
-   - `X-BFF-Secret` - Constant-time validated shared secret
-   - `X-User-Id` - User GUID
-   - `X-User-Email` - User email
-   - `X-User-Role` - User role (user, trainer, admin)
-5. Backend validates BFF secret and trusts claims
+1. Browser signs in and receives a BetterAuth session cookie (httpOnly)
+2. Frontend fetches `/api/auth/token` and sends `Authorization: Bearer <jwt>` to the backend
+3. Backend validates JWT signature via JWKS and enforces issuer/audience
+4. Backend checks user status (exists, verified, not banned) with a short cache
 
 **Security Features:**
-- **Constant-time secret comparison** (`CryptographicOperations.FixedTimeEquals`)
-- **Single trust boundary** - Backend trusts frontend if secret matches
-- **JWKS caching** - Reduces BetterAuth endpoint calls (1-minute TTL)
+- **JWKS validation** - Backend verifies signatures against BetterAuth JWKS
+- **Issuer/Audience enforcement** - Prevents token replay across environments
+- **Cached user-status lookups** - Minimizes DB reads while enforcing bans/verification
 
 **Configuration:**
 ```
-Frontend: BETTER_AUTH_SECRET=<secret>
-Backend: Bff:TrustedSecret=<same-secret>
+Frontend: BETTER_AUTH_SECRET, BETTER_AUTH_URL, BETTER_AUTH_ISSUER, BETTER_AUTH_AUDIENCE
+Backend: BetterAuth:Issuer, BetterAuth:Audience, BetterAuth:JwksUrl
 ```
 
 ### Authentication
 
 **JWT Configuration:**
-- **Algorithm:** ES256 (ECDSA P-256)
+- **Algorithm:** ES256 (ECDSA P-256) for .NET compatibility (configurable)
 - **Token Expiry:** 15 minutes (JWT), 7 days (session)
 - **Cookie Security:**
   - `httpOnly: true` (no JavaScript access)

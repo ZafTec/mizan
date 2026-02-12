@@ -21,8 +21,10 @@ public static class DependencyInjection
         services.AddScoped<IMizanDbContext>(provider => provider.GetRequiredService<MizanDbContext>());
 
         // Services
+        services.AddMemoryCache();
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IUserStatusService, UserStatusService>();
         services.AddScoped<INutritionAiService, NutritionAiService>();
         services.AddSingleton<IRedisCacheService, RedisCacheService>();
 

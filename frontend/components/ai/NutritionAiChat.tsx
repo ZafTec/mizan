@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { apiClient } from "@/lib/auth-client";
+import { clientApi } from "@/lib/api.client";
 
 interface Message {
 	id: string;
@@ -47,11 +47,11 @@ export function NutritionAiChat() {
 		setIsLoading(true);
 
 		try {
-			const response = await apiClient<{ response: string }>(
+			const response = await clientApi<{ response: string }>(
 				"/api/nutrition/ai/chat",
 				{
 					method: "POST",
-					body: JSON.stringify({ message: userMessage.content }),
+					body: { message: userMessage.content },
 				}
 			);
 

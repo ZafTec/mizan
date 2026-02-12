@@ -1,17 +1,42 @@
 /**
  * DATABASE SCHEMA - FRONTEND (DRIZZLE/BETTER-AUTH)
  *
- * ⚠️ CRITICAL: This is the SOURCE OF TRUTH for user related database schema.
+ * ⚠️ CRITICAL: This is the SOURCE OF TRUTH for AUTHENTICATION schema only.
  *
- * When modifying tables, you MUST update the corresponding backend entities:
- * - Users table → backend/Mizan.Domain/Entities/User.cs
- * - Sessions table → backend/Mizan.Domain/Entities/Session.cs
- * - Accounts table → backend/Mizan.Domain/Entities/Account.cs
- * - All other tables → backend/Mizan.Domain/Entities/
+ * SCHEMA OWNERSHIP:
+ * =================
+ * 
+ * ✅ MANAGED BY DRIZZLE (Frontend/BetterAuth):
+ *    - users          → BetterAuth user accounts
+ *    - accounts       → OAuth provider accounts
+ *    - sessions       → User sessions
+ *    - verification   → Email verification tokens
+ *    - jwks           → JWT signing keys
+ *    
+ * ⚠️  MANAGED BY EF CORE (Backend) - DO NOT MODIFY VIA DRIZZLE:
+ *    - households, householdMembers
+ *    - foods, recipes, recipeIngredients, recipeInstructions, recipeNutrition, recipeTags
+ *    - foodDiaryEntries
+ *    - mealPlans, mealPlanRecipes
+ *    - shoppingLists, shoppingListItems
+ *    - userGoals
+ *    - exercises, workouts, workoutExercises, exerciseSets
+ *    - bodyMeasurements
+ *    - trainerClientRelationships, chatConversations, chatMessages
+ *    - achievements, userAchievements, streaks
+ *    - aiChatThreads
+ *    - mcpTokens, mcpUsageLogs
+ * 
+ * ⚠️  MIGRATION WARNING:
+ *    Business logic tables are defined here for TYPE SAFETY only.
+ *    They are actually managed by EF Core in the backend.
+ *    DO NOT run 'drizzle-kit generate' if you've removed these tables
+ *    as it will create migrations to DROP them from the database!
  *
- * After updating backend entities, create EF Core migration:
- * cd backend/Mizan.Api
- * dotnet ef migrations add <MigrationName> --project ../Mizan.Infrastructure --startup-project .
+ * When modifying AUTH tables, update corresponding backend entities:
+ * - Users table → backend/Mizan.Domain/Entities/User.cs (read-only)
+ * - Sessions table → backend/Mizan.Domain/Entities/Session.cs (read-only)
+ * - Accounts table → backend/Mizan.Domain/Entities/Account.cs (read-only)
  */
 
 import {
@@ -93,7 +118,19 @@ export const verification = pgTable("verification", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
+export const jwks = pgTable("jwks", {
+  id: text("id").primaryKey(),
+  publicKey: text("public_key").notNull(),
+  privateKey: text("private_key").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  alg: varchar("alg", { length: 16 }),
+  crv: varchar("crv", { length: 16 }),
+});
+
 // ==================== Household (Organization) Tables ====================
+// ⚠️  BACKEND MANAGED: These tables are managed by EF Core in the backend
+// Do not modify structure via Drizzle - only use for type inference
 
 export const households = pgTable("households", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -123,6 +160,8 @@ export const householdMembers = pgTable(
 );
 
 // ==================== Food & Nutrition Tables ====================
+// ⚠️  BACKEND MANAGED: These tables are managed by EF Core in the backend
+// Do not modify structure via Drizzle - only use for type inference
 
 export const foods = pgTable(
   "foods",
@@ -210,6 +249,8 @@ export const recipeTags = pgTable("recipe_tags", {
 });
 
 // ==================== Food Diary Tables ====================
+// ⚠️  BACKEND MANAGED: These tables are managed by EF Core in the backend
+// Do not modify structure via Drizzle - only use for type inference
 
 export const foodDiaryEntries = pgTable(
   "food_diary_entries",
@@ -237,6 +278,8 @@ export const foodDiaryEntries = pgTable(
 );
 
 // ==================== Meal Planning Tables ====================
+// ⚠️  BACKEND MANAGED: These tables are managed by EF Core in the backend
+// Do not modify structure via Drizzle - only use for type inference
 
 export const mealPlans = pgTable("meal_plans", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -267,6 +310,8 @@ export const mealPlanRecipes = pgTable("meal_plan_recipes", {
 });
 
 // ==================== Shopping List Tables ====================
+// ⚠️  BACKEND MANAGED: These tables are managed by EF Core in the backend
+// Do not modify structure via Drizzle - only use for type inference
 
 export const shoppingLists = pgTable("shopping_lists", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -295,6 +340,8 @@ export const shoppingListItems = pgTable("shopping_list_items", {
 });
 
 // ==================== User Goals Tables ====================
+// ⚠️  BACKEND MANAGED: These tables are managed by EF Core in the backend
+// Do not modify structure via Drizzle - only use for type inference
 
 export const userGoals = pgTable("user_goals", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -315,6 +362,8 @@ export const userGoals = pgTable("user_goals", {
 });
 
 // ==================== Fitness/Workout Tables ====================
+// ⚠️  BACKEND MANAGED: These tables are managed by EF Core in the backend
+// Do not modify structure via Drizzle - only use for type inference
 
 export const exercises = pgTable("exercises", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -370,6 +419,8 @@ export const exerciseSets = pgTable("exercise_sets", {
 });
 
 // ==================== Body Measurement Tables ====================
+// ⚠️  BACKEND MANAGED: These tables are managed by EF Core in the backend
+// Do not modify structure via Drizzle - only use for type inference
 
 export const bodyMeasurements = pgTable("body_measurements", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -390,6 +441,8 @@ export const bodyMeasurements = pgTable("body_measurements", {
 });
 
 // ==================== Trainer/Client Tables ====================
+// ⚠️  BACKEND MANAGED: These tables are managed by EF Core in the backend
+// Do not modify structure via Drizzle - only use for type inference
 
 export const trainerClientRelationships = pgTable(
   "trainer_client_relationships",
@@ -439,6 +492,8 @@ export const chatMessages = pgTable("chat_messages", {
 });
 
 // ==================== Gamification Tables ====================
+// ⚠️  BACKEND MANAGED: These tables are managed by EF Core in the backend
+// Do not modify structure via Drizzle - only use for type inference
 
 export const achievements = pgTable("achievements", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -477,6 +532,8 @@ export const streaks = pgTable("streaks", {
 });
 
 // ==================== AI Chat Thread Tables ====================
+// ⚠️  BACKEND MANAGED: These tables are managed by EF Core in the backend
+// Do not modify structure via Drizzle - only use for type inference
 
 export const aiChatThreads = pgTable("ai_chat_threads", {
   id: uuid("id").defaultRandom().primaryKey(),

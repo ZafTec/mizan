@@ -8,7 +8,9 @@ import { CldUploadWidget } from 'next-cloudinary';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from "next/navigation";
+import { clientApi } from "@/lib/api.client";
 import Modal from "@/components/Modal";
+import { toast } from "sonner";
 
 type SelectedIngredient = {
 	ingredient: Ingredient | null;
@@ -88,7 +90,7 @@ export default function Page() {
 			return;
 		}
 
-		const result = await getAllIngredient(value, undefined, 1, 4);
+		const result = await getAllIngredient(value, undefined, undefined, 1, 4);
 		setIngredientSearch(result.ingredients);
 	}
 
@@ -124,9 +126,9 @@ export default function Page() {
 		setSelectedIngredients(newIngredients);
 	}
 
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault()
-		setIsSubmitting(true)
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setIsSubmitting(true);
 
 		const recipeData = {
 			title: name,
@@ -150,29 +152,18 @@ export default function Page() {
 		}
 
 
-		fetch('/api/bff/Recipes', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify(recipeData),
-		})
-			.then(res => {
-				if (!res.ok) {
-					return res.text().then(text => {
-						throw new Error(`Failed to create recipe: ${res.status} \n ${text ? `: ${text}` : ""}`);
-					});
-				}
-				return res.json();
-			})
-			.then((data) => {
-				router.push('/recipes');
-			})
-			.catch(err => {
-				console.error('[Recipe Create] Failed:', err);
-				alert('Failed to create recipe. Please try again.');
-			})
-			.finally(() => setIsSubmitting(false))
+		try {
+			await clientApi('/api/Recipes', {
+				method: 'POST',
+				body: recipeData,
+			});
+			router.push('/recipes');
+		} catch (err) {
+			console.error('[Recipe Create] Failed:', err);
+			toast.error('Failed to create recipe. Please try again.');
+		} finally {
+			setIsSubmitting(false);
+		}
 	}
 
 	return (

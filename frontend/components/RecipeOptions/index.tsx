@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
+import { toast } from "sonner";
 
 interface RecipeOptionsProps {
 	recipeId: string;
@@ -63,7 +64,7 @@ export default function RecipeOptions({ recipeId, isCreator }: RecipeOptionsProp
 		if (res.ok) {
 			router.push('/recipes');
 		} else {
-			alert('Failed to delete the recipe');
+			toast.error('Failed to delete the recipe');
 		}
 	};
 

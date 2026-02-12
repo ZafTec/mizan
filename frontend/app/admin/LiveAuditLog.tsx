@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { fetchLiveAuditLogs } from "@/actions/audit";
+import { fetchLiveAuditLogs } from "@/data/audit";
 import { AuditLog } from "@/data/audit";
 import { formatDistanceToNow } from "date-fns";
 

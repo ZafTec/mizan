@@ -1,10 +1,12 @@
+using System.Linq.Expressions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Queries;
 
-public record GetAuditLogsQuery : IRequest<GetAuditLogsResult>
+public record GetAuditLogsQuery : IRequest<PagedResult<AuditLogDto>>, IPagedQuery, ISortableQuery
 {
     public string? Action { get; init; }
     public string? EntityType { get; init; }
@@ -12,12 +14,8 @@ public record GetAuditLogsQuery : IRequest<GetAuditLogsResult>
     public Guid? UserId { get; init; }
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;
-}
-
-public record GetAuditLogsResult
-{
-    public List<AuditLogDto> Logs { get; init; } = new();
-    public int TotalCount { get; init; }
+    public string? SortBy { get; init; }
+    public string? SortOrder { get; init; }
 }
 
 public record AuditLogDto
@@ -33,8 +31,15 @@ public record AuditLogDto
     public DateTime Timestamp { get; set; }
 }
 
-public class GetAuditLogsQueryHandler : IRequestHandler<GetAuditLogsQuery, GetAuditLogsResult>
+public class GetAuditLogsQueryHandler : IRequestHandler<GetAuditLogsQuery, PagedResult<AuditLogDto>>
 {
+    private static readonly Dictionary<string, Expression<Func<Domain.Entities.AuditLog, object>>> SortMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["timestamp"] = a => a.Timestamp,
+        ["action"] = a => a.Action,
+        ["entitytype"] = a => a.EntityType
+    };
+
     private readonly IMizanDbContext _context;
 
     public GetAuditLogsQueryHandler(IMizanDbContext context)
@@ -42,7 +47,7 @@ public class GetAuditLogsQueryHandler : IRequestHandler<GetAuditLogsQuery, GetAu
         _context = context;
     }
 
-    public async Task<GetAuditLogsResult> Handle(GetAuditLogsQuery request, CancellationToken cancellationToken)
+    public async Task<PagedResult<AuditLogDto>> Handle(GetAuditLogsQuery request, CancellationToken cancellationToken)
     {
         var query = _context.AuditLogs
             .Include(a => a.User)
@@ -70,10 +75,14 @@ public class GetAuditLogsQueryHandler : IRequestHandler<GetAuditLogsQuery, GetAu
 
         var totalCount = await query.CountAsync(cancellationToken);
 
-        var logs = await query
-            .OrderByDescending(a => a.Timestamp)
-            .Skip((request.Page - 1) * request.PageSize)
-            .Take(request.PageSize)
+        var sortedQuery = query.ApplySorting(
+            request,
+            SortMappings,
+            defaultSort: a => a.Timestamp,
+            defaultDescending: true);
+
+        var logs = await sortedQuery
+            .ApplyPaging(request)
             .Select(a => new AuditLogDto
             {
                 Id = a.Id,
@@ -88,10 +97,12 @@ public class GetAuditLogsQueryHandler : IRequestHandler<GetAuditLogsQuery, GetAu
             })
             .ToListAsync(cancellationToken);
 
-        return new GetAuditLogsResult
+        return new PagedResult<AuditLogDto>
         {
-            Logs = logs,
-            TotalCount = totalCount
+            Items = logs,
+            TotalCount = totalCount,
+            Page = request.Page,
+            PageSize = request.PageSize
         };
     }
 }

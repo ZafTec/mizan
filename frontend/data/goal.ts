@@ -1,6 +1,6 @@
 "use server";
 
-import { callBackendApi } from "@/lib/backend-api-client";
+import { serverApi } from "@/lib/api.server";
 import { createErrorState, createSuccessState, FormState } from "@/helper/FormErrorHandler";
 import { logger } from "@/lib/logger";
 const goalLogger = logger.createModuleLogger("goal-data");
@@ -23,7 +23,7 @@ export interface UserGoal {
  */
 export async function getCurrentGoal(): Promise<UserGoal | null> {
     try {
-        const result = await callBackendApi<UserGoal>("/api/Goals");
+        const result = await serverApi<UserGoal>("/api/Goals");
         return result;
     } catch (error) {
         goalLogger.error("Failed to get current goal", { error });
@@ -48,7 +48,7 @@ export async function createGoal(prevState: FormState, formData: FormData): Prom
             ]);
         }
 
-        await callBackendApi("/api/Goals", {
+        await serverApi("/api/Goals", {
             method: "POST",
             body: {
                 goalType,

@@ -42,8 +42,7 @@ const nextConfig: NextConfig = {
 		];
 	},
 
-	// BFF Architecture: All backend API calls go through /api/bff/*
-	// No direct rewrites to backend - the BFF proxy route handles forwarding
+
 };
 
 export default nextConfig;

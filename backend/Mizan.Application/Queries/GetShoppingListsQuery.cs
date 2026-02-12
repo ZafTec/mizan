@@ -1,21 +1,17 @@
+using System.Linq.Expressions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Queries;
 
-public record GetShoppingListsQuery : IRequest<GetShoppingListsResult>
+public record GetShoppingListsQuery : IRequest<PagedResult<ShoppingListSummaryDto>>, IPagedQuery, ISortableQuery
 {
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;
-}
-
-public record GetShoppingListsResult
-{
-    public List<ShoppingListSummaryDto> ShoppingLists { get; init; } = new();
-    public int TotalCount { get; init; }
-    public int Page { get; init; }
-    public int PageSize { get; init; }
+    public string? SortBy { get; init; }
+    public string? SortOrder { get; init; }
 }
 
 public record ShoppingListSummaryDto
@@ -28,8 +24,15 @@ public record ShoppingListSummaryDto
     public DateTime UpdatedAt { get; init; }
 }
 
-public class GetShoppingListsQueryHandler : IRequestHandler<GetShoppingListsQuery, GetShoppingListsResult>
+public class GetShoppingListsQueryHandler : IRequestHandler<GetShoppingListsQuery, PagedResult<ShoppingListSummaryDto>>
 {
+    private static readonly Dictionary<string, Expression<Func<Domain.Entities.ShoppingList, object>>> SortMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["name"] = sl => sl.Name!,
+        ["updatedat"] = sl => sl.UpdatedAt,
+        ["createdat"] = sl => sl.CreatedAt
+    };
+
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
 
@@ -39,7 +42,7 @@ public class GetShoppingListsQueryHandler : IRequestHandler<GetShoppingListsQuer
         _currentUser = currentUser;
     }
 
-    public async Task<GetShoppingListsResult> Handle(GetShoppingListsQuery request, CancellationToken cancellationToken)
+    public async Task<PagedResult<ShoppingListSummaryDto>> Handle(GetShoppingListsQuery request, CancellationToken cancellationToken)
     {
         if (!_currentUser.UserId.HasValue)
         {
@@ -52,10 +55,14 @@ public class GetShoppingListsQueryHandler : IRequestHandler<GetShoppingListsQuer
 
         var totalCount = await query.CountAsync(cancellationToken);
 
-        var shoppingLists = await query
-            .OrderByDescending(sl => sl.UpdatedAt)
-            .Skip((request.Page - 1) * request.PageSize)
-            .Take(request.PageSize)
+        var sortedQuery = query.ApplySorting(
+            request,
+            SortMappings,
+            defaultSort: sl => sl.UpdatedAt,
+            defaultDescending: true);
+
+        var shoppingLists = await sortedQuery
+            .ApplyPaging(request)
             .Select(sl => new ShoppingListSummaryDto
             {
                 Id = sl.Id,
@@ -67,9 +74,9 @@ public class GetShoppingListsQueryHandler : IRequestHandler<GetShoppingListsQuer
             })
             .ToListAsync(cancellationToken);
 
-        return new GetShoppingListsResult
+        return new PagedResult<ShoppingListSummaryDto>
         {
-            ShoppingLists = shoppingLists,
+            Items = shoppingLists,
             TotalCount = totalCount,
             Page = request.Page,
             PageSize = request.PageSize

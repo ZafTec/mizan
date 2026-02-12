@@ -1,0 +1,83 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    branches: [ master, mcp ]
+
+jobs:
+  backend-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: mizan
+          POSTGRES_PASSWORD: mizan_test_password
+          POSTGRES_DB: mizan_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore backend/Mizan.sln
+
+    - name: Build
+      run: dotnet build backend/Mizan.sln --no-restore
+
+    - name: Test
+      env:
+        ConnectionStrings__PostgreSQL: "Host=localhost;Port=5432;Database=mizan_test;Username=mizan;Password=mizan_test_password"
+        TEST_DB_CONNECTION: "Host=localhost;Port=5432;Database=mizan_test;Username=mizan;Password=mizan_test_password"
+        ConnectionStrings__Redis: "localhost:6379"
+        BetterAuth__Issuer: "http://localhost:3000"
+        BetterAuth__Audience: "mizan-api"
+        BetterAuth__JwksUrl: "http://localhost:3000/api/auth/jwks"
+        Mcp__ServiceApiKey: "test-api-key"
+      run: dotnet test backend/Mizan.sln --no-build --verbosity normal
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+
+    - name: Install dependencies
+      working-directory: frontend
+      run: bun install
+
+    - name: Run Lint
+      working-directory: frontend
+      run: bun run lint
+
+    - name: Build Frontend
+      working-directory: frontend
+      env:
+        NEXT_PUBLIC_API_URL: "http://localhost:5000"
+        DATABASE_URL: "postgresql://mizan:mizan_test_password@localhost:5432/mizan_test"
+        BETTER_AUTH_SECRET: "very-long-secret-key-for-better-auth-testing-at-least-32-chars"
+      run: bun run build

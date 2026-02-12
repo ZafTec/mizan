@@ -1,6 +1,6 @@
 "use server";
 
-import { callBackendApi } from "@/lib/backend-api-client";
+import { serverApi } from "@/lib/api.server";
 import type { components } from "@/types/api.generated";
 import { logger } from "@/lib/logger";
 
@@ -45,12 +45,12 @@ export interface PopularRecipe {
  */
 export async function getPopularRecipes(): Promise<PopularRecipe[]> {
     try {
-        const result = await callBackendApi<{ recipes: RecipeDto[] }>(
+        const result = await serverApi<{ items: RecipeDto[] }>(
             "/api/Recipes?IncludePublic=true&PageSize=6",
             { requireAuth: false }
         );
 
-        return (result.recipes || []).map((r) => ({
+        return (result.items || []).map((r) => ({
             _id: r.id || "",
             name: r.title || "",
             totalMacros: {
@@ -69,7 +69,7 @@ export async function getPopularRecipes(): Promise<PopularRecipe[]> {
 /**
  * Get all recipes with optional filters
  */
-export async function getAllRecipes(searchTerm?: string, page: number = 1, limit: number = 20, favoritesOnly: boolean = false): Promise<{ recipes: RecipeDto[], totalCount: number, totalPages: number }> {
+export async function getAllRecipes(searchTerm?: string, page: number = 1, limit: number = 20, favoritesOnly: boolean = false, sortBy?: string, sortOrder?: string): Promise<{ recipes: RecipeDto[], totalCount: number, totalPages: number }> {
     try {
         const params = new URLSearchParams();
         if (searchTerm) params.append("SearchTerm", searchTerm);
@@ -77,19 +77,18 @@ export async function getAllRecipes(searchTerm?: string, page: number = 1, limit
         params.append("IncludePublic", "true");
         params.append("Page", page.toString());
         params.append("PageSize", limit.toString());
+        if (sortBy) params.append("SortBy", sortBy);
+        if (sortOrder) params.append("SortOrder", sortOrder);
 
-        // FavoritesOnly requires auth, but public recipes don't
-        const result = await callBackendApi<{ recipes: RecipeDto[], totalCount: number, page: number, pageSize: number }>(
+        const result = await serverApi<{ items: RecipeDto[], totalCount: number, page: number, pageSize: number, totalPages: number }>(
             `/api/Recipes?${params.toString()}`,
             { requireAuth: favoritesOnly }
         );
 
-        const totalPages = Math.ceil((result.totalCount || 0) / limit);
-
         return {
-            recipes: result.recipes || [],
+            recipes: result.items || [],
             totalCount: result.totalCount || 0,
-            totalPages
+            totalPages: result.totalPages || 0
         };
     } catch (error) {
         recipeLogger.error("Failed to get all recipes", { error, searchTerm, page, limit, favoritesOnly });
@@ -111,7 +110,7 @@ export async function getFavoriteRecipesCount(): Promise<number> {
  */
 export async function getRecipeById(recipeId: string): Promise<Recipe | null> {
     try {
-        const result = await callBackendApi<Recipe>(
+        const result = await serverApi<Recipe>(
             `/api/Recipes/${recipeId}`,
             { requireAuth: false }
         );

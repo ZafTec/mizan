@@ -4,7 +4,7 @@ import { getMeal, getDailyTotals, MealEntry } from "@/data/meal";
 import { getCurrentGoal, UserGoal } from "@/data/goal";
 import { useSession } from "@/lib/auth-client";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
-import { deleteMeal } from "@/actions/meal";
+import { deleteMeal } from "@/data/meal";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";

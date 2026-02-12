@@ -46,9 +46,9 @@ public class GetShoppingListsQueryTests
         // Assert
         result.Should().NotBeNull();
         result.TotalCount.Should().Be(2);
-        result.ShoppingLists.Should().HaveCount(2);
-        result.ShoppingLists.Should().Contain(l => l.Name == "List 1");
-        result.ShoppingLists.Should().Contain(l => l.Name == "List 2");
-        result.ShoppingLists.Should().NotContain(l => l.Name == "Other List");
+        result.Items.Should().HaveCount(2);
+        result.Items.Should().Contain(l => l.Name == "List 1");
+        result.Items.Should().Contain(l => l.Name == "List 2");
+        result.Items.Should().NotContain(l => l.Name == "Other List");
     }
 }

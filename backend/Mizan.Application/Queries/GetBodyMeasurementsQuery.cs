@@ -1,10 +1,19 @@
+using System.Linq.Expressions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Queries;
 
-public record GetBodyMeasurementsQuery(Guid UserId) : IRequest<List<BodyMeasurementDto>>;
+public record GetBodyMeasurementsQuery : IRequest<PagedResult<BodyMeasurementDto>>, IPagedQuery, ISortableQuery
+{
+    public Guid UserId { get; init; }
+    public int Page { get; init; } = 1;
+    public int PageSize { get; init; } = 20;
+    public string? SortBy { get; init; }
+    public string? SortOrder { get; init; }
+}
 
 public record BodyMeasurementDto(
     Guid Id,
@@ -20,8 +29,14 @@ public record BodyMeasurementDto(
     string? Notes
 );
 
-public class GetBodyMeasurementsQueryHandler : IRequestHandler<GetBodyMeasurementsQuery, List<BodyMeasurementDto>>
+public class GetBodyMeasurementsQueryHandler : IRequestHandler<GetBodyMeasurementsQuery, PagedResult<BodyMeasurementDto>>
 {
+    private static readonly Dictionary<string, Expression<Func<Domain.Entities.BodyMeasurement, object>>> SortMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["date"] = m => m.MeasurementDate,
+        ["weight"] = m => m.WeightKg!
+    };
+
     private readonly IMizanDbContext _context;
 
     public GetBodyMeasurementsQueryHandler(IMizanDbContext context)
@@ -29,11 +44,21 @@ public class GetBodyMeasurementsQueryHandler : IRequestHandler<GetBodyMeasuremen
         _context = context;
     }
 
-    public async Task<List<BodyMeasurementDto>> Handle(GetBodyMeasurementsQuery request, CancellationToken cancellationToken)
+    public async Task<PagedResult<BodyMeasurementDto>> Handle(GetBodyMeasurementsQuery request, CancellationToken cancellationToken)
     {
-        var measurements = await _context.BodyMeasurements
-            .Where(m => m.UserId == request.UserId)
-            .OrderByDescending(m => m.MeasurementDate)
+        var query = _context.BodyMeasurements
+            .Where(m => m.UserId == request.UserId);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var sortedQuery = query.ApplySorting(
+            request,
+            SortMappings,
+            defaultSort: m => m.MeasurementDate,
+            defaultDescending: true);
+
+        var measurements = await sortedQuery
+            .ApplyPaging(request)
             .Select(m => new BodyMeasurementDto(
                 m.Id,
                 m.MeasurementDate.ToDateTime(TimeOnly.MinValue),
@@ -49,6 +74,12 @@ public class GetBodyMeasurementsQueryHandler : IRequestHandler<GetBodyMeasuremen
             ))
             .ToListAsync(cancellationToken);
 
-        return measurements;
+        return new PagedResult<BodyMeasurementDto>
+        {
+            Items = measurements,
+            TotalCount = totalCount,
+            Page = request.Page,
+            PageSize = request.PageSize
+        };
     }
 }

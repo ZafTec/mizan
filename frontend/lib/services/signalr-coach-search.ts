@@ -1,5 +1,5 @@
 import * as signalR from "@microsoft/signalr";
-import { getApiToken } from "@/lib/auth-client";
+import { getApiToken } from "@/lib/api.client";
 import { logger } from "@/lib/logger";
 
 const coachSearchLogger = logger.createModuleLogger("signalr-coach-search-service");

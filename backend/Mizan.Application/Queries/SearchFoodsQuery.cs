@@ -1,21 +1,19 @@
+using System.Linq.Expressions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Queries;
 
-public record SearchFoodsQuery : IRequest<SearchFoodsResult>
+public record SearchFoodsQuery : IRequest<PagedResult<FoodDto>>, IPagedQuery, ISortableQuery
 {
-    public string SearchTerm { get; init; } = string.Empty;
+    public string? SearchTerm { get; init; }
     public string? Barcode { get; init; }
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;
-}
-
-public record SearchFoodsResult
-{
-    public List<FoodDto> Foods { get; init; } = new();
-    public int TotalCount { get; init; }
+    public string? SortBy { get; init; }
+    public string? SortOrder { get; init; }
 }
 
 public record FoodDto
@@ -34,8 +32,16 @@ public record FoodDto
     public bool IsVerified { get; init; }
 }
 
-public class SearchFoodsQueryHandler : IRequestHandler<SearchFoodsQuery, SearchFoodsResult>
+public class SearchFoodsQueryHandler : IRequestHandler<SearchFoodsQuery, PagedResult<FoodDto>>
 {
+    private static readonly Dictionary<string, Expression<Func<Domain.Entities.Food, object>>> SortMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["name"] = f => f.Name,
+        ["calories"] = f => f.CaloriesPer100g,
+        ["protein"] = f => f.ProteinPer100g,
+        ["verified"] = f => f.IsVerified
+    };
+
     private readonly IMizanDbContext _context;
     private readonly IRedisCacheService _cache;
 
@@ -45,22 +51,18 @@ public class SearchFoodsQueryHandler : IRequestHandler<SearchFoodsQuery, SearchF
         _cache = cache;
     }
 
-    public async Task<SearchFoodsResult> Handle(SearchFoodsQuery request, CancellationToken cancellationToken)
+    public async Task<PagedResult<FoodDto>> Handle(SearchFoodsQuery request, CancellationToken cancellationToken)
     {
-        // Generate cache key based on query parameters
-        var cacheKey = $"foods:search:{request.SearchTerm?.ToLower() ?? ""}:{request.Barcode ?? ""}:{request.Page}:{request.PageSize}";
+        var cacheKey = $"foods:search:{request.SearchTerm?.ToLower() ?? ""}:{request.Barcode ?? ""}:{request.Page}:{request.PageSize}:{request.SortBy ?? ""}:{request.SortOrder ?? ""}";
 
-        // Try to get from cache first
-        var cachedResult = await _cache.GetAsync<SearchFoodsResult>(cacheKey, cancellationToken);
+        var cachedResult = await _cache.GetAsync<PagedResult<FoodDto>>(cacheKey, cancellationToken);
         if (cachedResult != null)
         {
             return cachedResult;
         }
 
-        // Query database
         IQueryable<Domain.Entities.Food> query = _context.Foods;
 
-        // Search by barcode if provided
         if (!string.IsNullOrWhiteSpace(request.Barcode))
         {
             query = query.Where(f => f.Barcode == request.Barcode);
@@ -75,11 +77,14 @@ public class SearchFoodsQueryHandler : IRequestHandler<SearchFoodsQuery, SearchF
 
         var totalCount = await query.CountAsync(cancellationToken);
 
-        var foods = await query
-            .OrderByDescending(f => f.IsVerified)
-            .ThenBy(f => f.Name)
-            .Skip((request.Page - 1) * request.PageSize)
-            .Take(request.PageSize)
+        var sortedQuery = query.ApplySorting(
+            request,
+            SortMappings,
+            defaultSort: f => f.Name,
+            defaultDescending: false);
+
+        var foods = await sortedQuery
+            .ApplyPaging(request)
             .Select(f => new FoodDto
             {
                 Id = f.Id,
@@ -97,9 +102,14 @@ public class SearchFoodsQueryHandler : IRequestHandler<SearchFoodsQuery, SearchF
             })
             .ToListAsync(cancellationToken);
 
-        var result = new SearchFoodsResult { Foods = foods, TotalCount = totalCount };
+        var result = new PagedResult<FoodDto>
+        {
+            Items = foods,
+            TotalCount = totalCount,
+            Page = request.Page,
+            PageSize = request.PageSize
+        };
 
-        // Cache result for 1 hour
         await _cache.SetAsync(cacheKey, result, TimeSpan.FromHours(1), cancellationToken);
 
         return result;

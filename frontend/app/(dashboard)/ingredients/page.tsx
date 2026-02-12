@@ -1,9 +1,10 @@
-import TableHeaderCell from "@/components/IngredientTable/TableHeaderCell";
+import SortableHeader from "@/components/SortableHeader";
 import { getAllIngredient } from "@/data/ingredient";
 import Link from "next/link";
 import SearchBar from "@/components/IngredientTable/SearchInputField";
 import { getUserOptionalServer } from "@/helper/session";
 import Pagination from "@/components/Pagination";
+import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
 
 export const dynamic = 'force-dynamic';
 
@@ -12,14 +13,13 @@ export default async function Page(
 ) {
 	const user = await getUserOptionalServer();
 	const params = await searchParams;
-	const sortBy = params.sortBy as string;
-	const searchIngredient = params.searchIngredient as string;
-	const page = Number(params.page) || 1;
-	const { ingredients, totalPages } = await getAllIngredient(searchIngredient, sortBy, page, 10);
+	const { page, sortBy, sortOrder } = parseListParams(params);
+	const searchIngredient = params.searchIngredient as string | undefined;
+	const { ingredients, totalPages, totalCount } = await getAllIngredient(searchIngredient, sortBy ?? undefined, sortOrder, page, 10);
+	const baseUrl = buildListUrl('/ingredients', { searchIngredient });
 
 	return (
 		<div className="space-y-6">
-			{/* Page Header */}
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
 					<h1 className="text-2xl font-bold text-slate-900">Ingredients</h1>
@@ -36,18 +36,17 @@ export default async function Page(
 				</div>
 			</div>
 
-			{/* Ingredients Table */}
 			<div className="card overflow-hidden">
 				<div className="overflow-x-auto">
 					<table className="w-full">
 						<thead>
 							<tr className="bg-slate-50 border-b border-slate-200">
-								<TableHeaderCell className="w-52 text-left px-6 py-4 text-sm font-semibold text-slate-600">Name</TableHeaderCell>
-								<TableHeaderCell className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Calories</TableHeaderCell>
-								<TableHeaderCell className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Protein</TableHeaderCell>
-								<TableHeaderCell className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Fat</TableHeaderCell>
-								<TableHeaderCell className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Carbs</TableHeaderCell>
-								<TableHeaderCell className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Fiber</TableHeaderCell>
+								<SortableHeader sortKey="name" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="w-52 text-left px-6 py-4 text-sm font-semibold text-slate-600">Name</SortableHeader>
+								<SortableHeader sortKey="calories" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Calories</SortableHeader>
+								<SortableHeader sortKey="protein" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Protein</SortableHeader>
+								<th className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Fat</th>
+								<th className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Carbs</th>
+								<th className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Fiber</th>
 							</tr>
 						</thead>
 						<tbody className="divide-y divide-slate-100">
@@ -111,7 +110,9 @@ export default async function Page(
 			<Pagination
 				currentPage={page}
 				totalPages={totalPages}
-				baseUrl="/ingredients"
+				totalCount={totalCount}
+				pageSize={10}
+				baseUrl={baseUrl}
 			/>
 		</div>
 	);

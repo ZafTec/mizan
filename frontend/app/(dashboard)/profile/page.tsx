@@ -1,10 +1,12 @@
 "use client";
 
-import { useSession, signOut, apiClient } from "@/lib/auth-client";
+import { useSession, signOut } from "@/lib/auth-client";
+import { clientApi } from "@/lib/api.client";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { CldUploadWidget } from "next-cloudinary";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
 	const { data: session, isPending } = useSession();
@@ -43,18 +45,18 @@ export default function ProfilePage() {
 	const handleUpdateProfile = async () => {
 		setIsUpdating(true);
 		try {
-			await apiClient("/api/Users/me", {
+			await clientApi("/api/Users/me", {
 				method: "PUT",
-				body: JSON.stringify({
+				body: {
 					name: name || null,
 					image: image || null,
-				}),
+				},
 			});
 			setShowEditModal(false);
 			window.location.reload();
 		} catch (error) {
 			console.error("Failed to update profile:", error);
-			alert("Failed to update profile");
+			toast.error("Failed to update profile");
 		} finally {
 			setIsUpdating(false);
 		}
@@ -97,17 +99,17 @@ export default function ProfilePage() {
 							onSuccess={async (result: any) => {
 								const imageUrl = result.info.secure_url;
 								try {
-									await apiClient("/api/Users/me", {
+									await clientApi("/api/Users/me", {
 										method: "PUT",
-										body: JSON.stringify({
+										body: {
 											name: user.name || null,
 											image: imageUrl,
-										}),
+										},
 									});
 									window.location.reload();
 								} catch (error) {
 									console.error("Failed to upload image:", error);
-									alert("Failed to upload image");
+									toast.error("Failed to upload image");
 								}
 							}}
 						>
@@ -216,6 +218,45 @@ export default function ProfilePage() {
 						<div className="flex-1">
 							<h3 className="font-semibold text-slate-900">Foods</h3>
 							<p className="text-sm text-slate-500">Browse food database</p>
+						</div>
+						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
+					</div>
+				</Link>
+
+				<Link href="/body-measurements" className="card-hover p-5 group">
+					<div className="flex items-center gap-4">
+						<div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center">
+							<i className="ri-body-scan-line text-xl text-white" />
+						</div>
+						<div className="flex-1">
+							<h3 className="font-semibold text-slate-900">Body Measurements</h3>
+							<p className="text-sm text-slate-500">Track your progress</p>
+						</div>
+						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
+					</div>
+				</Link>
+
+				<Link href="/achievements" className="card-hover p-5 group">
+					<div className="flex items-center gap-4">
+						<div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
+							<i className="ri-trophy-line text-xl text-white" />
+						</div>
+						<div className="flex-1">
+							<h3 className="font-semibold text-slate-900">Achievements</h3>
+							<p className="text-sm text-slate-500">Badges & streaks</p>
+						</div>
+						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
+					</div>
+				</Link>
+
+				<Link href="/workouts" className="card-hover p-5 group">
+					<div className="flex items-center gap-4">
+						<div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center">
+							<i className="ri-run-line text-xl text-white" />
+						</div>
+						<div className="flex-1">
+							<h3 className="font-semibold text-slate-900">Workouts</h3>
+							<p className="text-sm text-slate-500">Log your training</p>
 						</div>
 						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
 					</div>
@@ -363,6 +404,34 @@ export default function ProfilePage() {
 					</div>
 				</div>
 			)}
+
+			{/* Developer Settings */}
+			<div className="card p-6 border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50">
+				<div className="flex items-center gap-3 mb-4">
+					<div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+						<i className="ri-code-s-slash-line text-xl text-white" />
+					</div>
+					<div>
+						<h2 className="font-semibold text-slate-900">Developer Settings</h2>
+						<p className="text-sm text-slate-600">API access and integrations</p>
+					</div>
+				</div>
+
+				<div className="grid grid-cols-1 gap-3">
+					<Link href="/profile/mcp" className="card-hover p-4 bg-white group">
+						<div className="flex items-center gap-3">
+							<div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center">
+								<i className="ri-openai-line text-lg text-white" />
+							</div>
+							<div className="flex-1">
+								<h3 className="font-medium text-slate-900">MCP Integration</h3>
+								<p className="text-xs text-slate-500">Model Context Protocol tokens & analytics</p>
+							</div>
+							<i className="ri-arrow-right-s-line text-lg text-slate-400 group-hover:text-purple-500 transition-colors" />
+						</div>
+					</Link>
+				</div>
+			</div>
 
 			{/* Account Settings */}
 			<div className="card p-6 space-y-4">

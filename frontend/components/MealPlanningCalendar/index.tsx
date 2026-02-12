@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from "sonner";
 import { PerDayMealsAggregate } from '@/types/meal';
 import { format, addDays, startOfWeek, endOfWeek, addWeeks, subWeeks, isToday, isWithinInterval } from 'date-fns';
 import { twMerge } from 'tailwind-merge';
@@ -100,7 +101,7 @@ export default function MealPlanningCalendar({
 				router.refresh();
 			} catch (error) {
 				console.error('Failed to delete meal plan:', error);
-				alert('Failed to delete meal plan');
+				toast.error('Failed to delete meal plan');
 			} finally {
 				setDeleting(false);
 			}

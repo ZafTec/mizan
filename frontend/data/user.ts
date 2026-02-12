@@ -13,6 +13,7 @@ export async function addUser(prevState: FormState, formData: FormData): Promise
     try {
         const email = formData.get("email") as string;
         const password = formData.get("password") as string;
+        const confirmPassword = formData.get("confirmPassword") as string;
         const name = formData.get("name") as string;
 
         if (!email || !password) {
@@ -22,7 +23,18 @@ export async function addUser(prevState: FormState, formData: FormData): Promise
             ]);
         }
 
-        // Use BetterAuth's server-side signUpEmail API
+        if (password !== confirmPassword) {
+            return createErrorState("Passwords do not match", [
+                { field: "confirmPassword", message: "Passwords do not match" },
+            ]);
+        }
+
+        if (password.length < 8) {
+            return createErrorState("Password must be at least 8 characters", [
+                { field: "password", message: "Password must be at least 8 characters" },
+            ]);
+        }
+
         const result = await auth.api.signUpEmail({
             body: {
                 email: email.toLowerCase(),
@@ -37,16 +49,28 @@ export async function addUser(prevState: FormState, formData: FormData): Promise
 
         return createSuccessState("Account created! Please check your email to verify your account.");
     } catch (error) {
-        userLogger.error("Failed to create user account", {
-            error: error instanceof Error ? error.message : String(error),
-        });
+        const message = error instanceof Error ? error.message : String(error);
+        userLogger.error("Failed to create user account", { error: message });
+
+        if (message.includes("already exists") || message.includes("duplicate") || message.includes("unique")) {
+            return createErrorState("An account with this email already exists. Please sign in instead.", [
+                { field: "email", message: "This email is already registered" },
+            ]);
+        }
+
+        if (message.includes("password") && message.includes("short")) {
+            return createErrorState("Password is too short", [
+                { field: "password", message: "Password must be at least 8 characters" },
+            ]);
+        }
+
         return createErrorState("Failed to create account. Please try again.");
     }
 }
 
 /**
  * Resend verification email
- * Note: This is handled by BetterAuth's built-in verification flow
+ * Uses BetterAuth's verification API to send a new verification email
  */
 export async function resendUserVerificationEmail(
     prevState: FormState,
@@ -56,17 +80,39 @@ export async function resendUserVerificationEmail(
         const email = formData.get("email") as string;
 
         if (!email) {
-            return createErrorState("Email is required");
+            return createErrorState("Email is required", [
+                { field: "email", message: "Please enter your email address" }
+            ]);
         }
 
-        // TODO: implement using betterAuth 
-        userLogger.info("Verification email resend - handled by BetterAuth", { email });
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return createErrorState("Invalid email format", [
+                { field: "email", message: "Please enter a valid email address" }
+            ]);
+        }
 
-        return createSuccessState("Verification email sent!");
+        // Use BetterAuth's sendVerificationEmail API
+        await auth.api.sendVerificationEmail({
+            body: {
+                email: email.toLowerCase(),
+            },
+        });
+
+        userLogger.info("Verification email resent successfully", { email });
+
+        return createSuccessState(
+            "If an account exists with this email, a verification link has been sent. Please check your inbox and spam folder."
+        );
     } catch (error) {
         userLogger.error("Failed to resend verification email", {
             error: error instanceof Error ? error.message : String(error),
         });
-        return createErrorState("Failed to send verification email");
+        
+        // Return generic success to prevent email enumeration
+        return createSuccessState(
+            "If an account exists with this email, a verification link has been sent. Please check your inbox and spam folder."
+        );
     }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/auth-client";
+import { clientApi } from "@/lib/api.client";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ export function ClientHeader({ clientId }: ClientHeaderProps) {
 	useEffect(() => {
 		async function fetchClientRelationship() {
 			try {
-				const clients = await apiClient<ClientRelationship[]>(
+				const clients = await clientApi<ClientRelationship[]>(
 					"/api/Trainers/clients"
 				);
 				const client = clients.find((c) => c.clientId === clientId);

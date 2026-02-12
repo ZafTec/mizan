@@ -1,6 +1,7 @@
 "use client";
 
-import { useSession, apiClient } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
+import { clientApi } from "@/lib/api.client";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -28,15 +29,14 @@ export default function MyTrainerPage() {
 	useEffect(() => {
 		const fetchMyTrainer = async () => {
 			try {
-				const response = await apiClient("/api/Trainers/my-trainer") as Response;
-				if (response.ok) {
-					const data = await response.json() as MyTrainer;
-					setTrainer(data);
-				} else if (response.status === 404) {
+				const data = await clientApi<MyTrainer>("/api/Trainers/my-trainer");
+				setTrainer(data);
+			} catch (error: any) {
+				if (error?.status === 404) {
 					setTrainer(null);
+				} else {
+					console.error("Failed to fetch trainer:", error);
 				}
-			} catch (error) {
-				console.error("Failed to fetch trainer:", error);
 			} finally {
 				setIsLoading(false);
 			}

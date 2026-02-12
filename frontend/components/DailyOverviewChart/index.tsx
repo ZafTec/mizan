@@ -2,7 +2,7 @@
 
 import OverviewPieChart from "./PieChart";
 import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/auth-client";
+import { clientApi } from "@/lib/api.client";
 import Loading from "../Loading";
 
 interface Goal {
@@ -36,10 +36,10 @@ export default function DailyOverviewChart() {
 			try {
 				const today = new Date().toISOString().split('T')[0];
 
-				// Fetch goal and daily meals in parallel (via BFF proxy)
+				// Fetch goal and daily meals in parallel
 				const [goalResponse, mealsResponse] = await Promise.all([
-					apiClient<Goal>('/api/bff/Goals').catch(() => null),
-					apiClient<{ totals: Macros }>('/api/bff/Meals?date=' + today).catch(() => ({ totals: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 } }))
+					clientApi<Goal>('/api/Goals').catch(() => null),
+					clientApi<{ totals: Macros }>('/api/Meals?date=' + today).catch(() => ({ totals: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 } }))
 				]);
 
 				setGoal(goalResponse);

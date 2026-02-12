@@ -771,6 +771,116 @@ namespace Mizan.Infrastructure.Data.Migrations
                     b.ToTable("household_members", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.McpToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTime?>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_used_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("token_hash");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "IsActive");
+
+                    b.ToTable("mcp_tokens", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.McpUsageLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("error_message");
+
+                    b.Property<int>("ExecutionTimeMs")
+                        .HasColumnType("integer")
+                        .HasColumnName("execution_time_ms");
+
+                    b.Property<Guid>("McpTokenId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("mcp_token_id");
+
+                    b.Property<string>("Parameters")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("parameters");
+
+                    b.Property<bool>("Success")
+                        .HasColumnType("boolean")
+                        .HasColumnName("success");
+
+                    b.Property<DateTime>("Timestamp")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("timestamp")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("ToolName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("tool_name");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("McpTokenId");
+
+                    b.HasIndex("ToolName");
+
+                    b.HasIndex("UserId", "Timestamp");
+
+                    b.ToTable("mcp_usage_logs", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.MealPlan", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1688,6 +1798,36 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Household");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.McpToken", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.McpUsageLog", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.McpToken", "McpToken")
+                        .WithMany()
+                        .HasForeignKey("McpTokenId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("McpToken");
 
                     b.Navigation("User");
                 });

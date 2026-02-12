@@ -1,16 +1,20 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Mizan.Api.Authentication;
 using Mizan.Api.Hubs;
 using Mizan.Api.Middleware;
 using Mizan.Application;
+using Mizan.Application.Interfaces;
 using Mizan.Infrastructure;
 using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
 using StackExchange.Redis;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,49 +48,115 @@ builder.Host.UseSerilog();
 
 Log.Information("Starting Mizan API - Environment: {Environment}", environment);
 
-// Add services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new() { Title = "Mizan API (BFF Backend)", Version = "v1" });
-    c.AddSecurityDefinition("BFF", new()
+    c.SwaggerDoc("v1", new() { Title = "Mizan API", Version = "v1" });
+    c.AddSecurityDefinition("Bearer", new()
     {
-        Description = "BFF Trusted Secret (X-BFF-Secret) and User ID (X-User-Id) headers",
-        Name = "X-BFF-Secret",
+        Description = "JWT Bearer token",
+        Name = "Authorization",
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
-        Scheme = "BFF"
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT"
     });
     c.AddSecurityRequirement(new()
     {
         {
             new()
             {
-                Reference = new() { Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, Id = "BFF" }
+                Reference = new() { Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, Id = "Bearer" }
             },
             Array.Empty<string>()
         }
     });
 });
 
-// Add FluentValidation rules to Swagger/OpenAPI schema
 builder.Services.AddFluentValidationRulesToSwagger();
 
-// Application & Infrastructure
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// BFF Authentication - validates trusted secret from frontend
-var trustedSecret = builder.Configuration["Bff:TrustedSecret"] ?? throw new InvalidOperationException("BFF:TrustedSecret is required");
+var jwtIssuer = builder.Configuration["BetterAuth:Issuer"]
+    ?? builder.Configuration["Jwt:Issuer"];
+var jwtAudience = builder.Configuration["BetterAuth:Audience"]
+    ?? builder.Configuration["Jwt:Audience"];
 
-builder.Services.AddAuthentication("BffTrustedSource")
-    .AddScheme<BffAuthenticationSchemeOptions, BffAuthenticationHandler>("BffTrustedSource", options =>
+builder.Services.AddHttpClient<IJwksProvider, JwksProvider>();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        options.TrustedSecret = trustedSecret;
+        options.MapInboundClaims = true;
+        options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = !string.IsNullOrWhiteSpace(jwtIssuer),
+            ValidIssuer = jwtIssuer,
+            ValidateAudience = !string.IsNullOrWhiteSpace(jwtAudience),
+            ValidAudience = jwtAudience,
+            ValidateIssuerSigningKey = false,
+            RequireSignedTokens = true,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(2),
+            NameClaimType = ClaimTypes.NameIdentifier,
+            RoleClaimType = ClaimTypes.Role,
+            ValidAlgorithms = new[] { "EdDSA" },
+        };
+        options.TokenHandlers.Clear();
+        options.TokenHandlers.Add(new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler());
+        options.TokenValidationParameters.SignatureValidator = EdDsaJwtSignatureValidator.Validate;
+
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var userIdValue = context.Principal?.FindFirst("sub")?.Value
+                    ?? context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!Guid.TryParse(userIdValue, out var userId))
+                {
+                    context.Fail("Invalid user id");
+                    return;
+                }
+
+                var userStatus = context.HttpContext.RequestServices
+                    .GetRequiredService<IUserStatusService>();
+                var status = await userStatus.GetStatusAsync(userId, context.HttpContext.RequestAborted);
+
+                if (!status.Exists)
+                {
+                    context.Fail("User not found");
+                    return;
+                }
+
+                if (!status.EmailVerified)
+                {
+                    context.Fail("Email not verified");
+                    return;
+                }
+
+                if (status.IsBanned)
+                {
+                    context.Fail("User banned");
+                    return;
+                }
+            }
+        };
+    })
+    .AddScheme<ApiKeyAuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(ApiKeyAuthenticationSchemeOptions.DefaultScheme, options =>
+    {
+        options.ApiKey = builder.Configuration["Mcp:ServiceApiKey"] ?? throw new InvalidOperationException("Mcp:ServiceApiKey is not configured");
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .RequireAuthenticatedUser()
+        .Build();
+});
 
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
 
@@ -124,7 +194,6 @@ if (!string.IsNullOrEmpty(redisConnectionString))
     Log.Information("SignalR configured with Redis backplane");
 }
 
-// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -139,12 +208,13 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Health checks
 builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("PostgreSQL")!)
     .AddRedis(redisConnectionString ?? "localhost");
 
 var app = builder.Build();
+
+JwksProviderAccessor.Set(app.Services.GetRequiredService<IJwksProvider>());
 
 if (app.Environment.IsDevelopment())
 {
@@ -152,6 +222,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<RequestResponseLoggingMiddleware>();
 
 app.UseSerilogRequestLogging(options =>

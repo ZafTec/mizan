@@ -1,10 +1,12 @@
+using System.Linq.Expressions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Queries;
 
-public record GetExercisesQuery : IRequest<GetExercisesResult>
+public record GetExercisesQuery : IRequest<GetExercisesResult>, IPagedQuery, ISortableQuery
 {
     public string? SearchTerm { get; init; }
     public string? Category { get; init; }
@@ -13,14 +15,17 @@ public record GetExercisesQuery : IRequest<GetExercisesResult>
     public bool IncludeCustom { get; init; } = true;
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 50;
+    public string? SortBy { get; init; }
+    public string? SortOrder { get; init; }
 }
 
 public record GetExercisesResult
 {
-    public List<ExerciseDto> Exercises { get; init; } = new();
+    public List<ExerciseDto> Items { get; init; } = new();
     public int TotalCount { get; init; }
     public int Page { get; init; }
     public int PageSize { get; init; }
+    public int TotalPages => PageSize > 0 ? (int)Math.Ceiling((double)TotalCount / PageSize) : 0;
     public List<string> Categories { get; init; } = new();
     public List<string> MuscleGroups { get; init; } = new();
     public List<string> EquipmentOptions { get; init; } = new();
@@ -42,6 +47,12 @@ public record ExerciseDto
 
 public class GetExercisesQueryHandler : IRequestHandler<GetExercisesQuery, GetExercisesResult>
 {
+    private static readonly Dictionary<string, Expression<Func<Domain.Entities.Exercise, object>>> SortMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["name"] = e => e.Name,
+        ["category"] = e => e.Category
+    };
+
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
 
@@ -55,7 +66,6 @@ public class GetExercisesQueryHandler : IRequestHandler<GetExercisesQuery, GetEx
     {
         var query = _context.Exercises.AsQueryable();
 
-        // Filter to include built-in exercises and optionally user's custom exercises
         if (_currentUser.UserId.HasValue && request.IncludeCustom)
         {
             query = query.Where(e => !e.IsCustom || e.CreatedByUserId == _currentUser.UserId);
@@ -90,11 +100,13 @@ public class GetExercisesQueryHandler : IRequestHandler<GetExercisesQuery, GetEx
 
         var totalCount = await query.CountAsync(cancellationToken);
 
-        var exercises = await query
-            .OrderBy(e => e.IsCustom)
-            .ThenBy(e => e.Name)
-            .Skip((request.Page - 1) * request.PageSize)
-            .Take(request.PageSize)
+        var sortedQuery = query.ApplySorting(
+            request,
+            SortMappings,
+            defaultSort: e => e.Name);
+
+        var exercises = await sortedQuery
+            .ApplyPaging(request)
             .Select(e => new ExerciseDto
             {
                 Id = e.Id,
@@ -110,7 +122,6 @@ public class GetExercisesQueryHandler : IRequestHandler<GetExercisesQuery, GetEx
             })
             .ToListAsync(cancellationToken);
 
-        // Get filter options
         var allExercises = _context.Exercises.Where(e => !e.IsCustom);
         var categories = await allExercises.Select(e => e.Category).Distinct().OrderBy(c => c).ToListAsync(cancellationToken);
         var muscleGroups = await allExercises.Where(e => e.MuscleGroup != null).Select(e => e.MuscleGroup!).Distinct().OrderBy(m => m).ToListAsync(cancellationToken);
@@ -118,7 +129,7 @@ public class GetExercisesQueryHandler : IRequestHandler<GetExercisesQuery, GetEx
 
         return new GetExercisesResult
         {
-            Exercises = exercises,
+            Items = exercises,
             TotalCount = totalCount,
             Page = request.Page,
             PageSize = request.PageSize,

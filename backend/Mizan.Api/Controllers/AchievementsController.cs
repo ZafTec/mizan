@@ -19,9 +19,9 @@ public class AchievementsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<GetAchievementsResult>> GetAchievements([FromQuery] string? category)
+    public async Task<ActionResult<GetAchievementsResult>> GetAchievements([FromQuery] GetAchievementsQuery query)
     {
-        var result = await _mediator.Send(new GetAchievementsQuery { Category = category });
+        var result = await _mediator.Send(query);
         return Ok(result);
     }
 

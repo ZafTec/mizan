@@ -280,8 +280,10 @@ bun run test:e2e
 DATABASE_URL="postgresql://mizan:password@localhost:5432/mizan"
 BETTER_AUTH_SECRET="your-secret-key-min-32-chars"
 BETTER_AUTH_URL="http://localhost:3000"
+BETTER_AUTH_ISSUER="http://localhost:3000"
+BETTER_AUTH_AUDIENCE="mizan-api"
 API_URL="http://mizan-backend:8080"              # Server-side (Docker network)
-NEXT_PUBLIC_API_URL="http://localhost:3000"      # Client-side (proxied)
+NEXT_PUBLIC_API_URL="http://localhost:5000"      # Client-side (direct backend)
 ```
 
 ### Backend (appsettings.json or env vars)
@@ -290,7 +292,7 @@ ConnectionStrings__PostgreSQL="Host=postgres;Database=mizan;Username=mizan;Passw
 ConnectionStrings__Redis="redis:6379"
 BetterAuth__Issuer="http://localhost:3000"
 BetterAuth__Audience="mizan-api"
-BetterAuth__BffSecret="your-bff-secret"
+BetterAuth__JwksUrl="http://localhost:3000/api/auth/jwks"
 ```
 
 See `.env.example` for complete list with descriptions.
@@ -301,8 +303,8 @@ MacroChef uses a hybrid architecture with intentional schema separation:
 
 - **Frontend Schema (Drizzle)**: Manages authentication tables (`users`, `sessions`) required by BetterAuth
 - **Backend Schema (EF Core)**: Manages business logic tables (`foods`, `recipes`, `meal_plans`, `workouts`, etc.)
-- **API Gateway**: Next.js proxies `/api/*` requests to backend while handling `/api/auth/*` directly
-- **Authentication**: JWT tokens handled by BetterAuth (JWKS disabled)
+- **API Gateway**: Next.js serves auth routes and the UI; backend is called directly from the browser
+- **Authentication**: BetterAuth issues JWTs and publishes JWKS for backend validation
 - **Real-time**: SignalR with Redis backplane for horizontal scaling
 
 ### Clean Architecture Layers (Backend)

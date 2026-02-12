@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/auth-client";
+import { clientApi } from "@/lib/api.client";
 import Link from "next/link";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, RadialBarChart, RadialBar, PieChart, Pie, Cell } from "recharts";
 import { GoalData } from "@/types/goal";
@@ -25,7 +25,7 @@ export default function GoalDashboard() {
 
   async function fetchData() {
     try {
-      const result = await apiClient<GoalData>(`/api/bff/Goals/progress?days=${days}`);
+      const result = await clientApi<GoalData>(`/api/Goals/progress?days=${days}`);
       setData(result);
     } catch (error) {
       console.error("Failed to fetch goal data:", error);

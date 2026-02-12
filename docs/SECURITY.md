@@ -33,15 +33,15 @@ MacroChef implements defense-in-depth security with multiple layers:
 - `secure: true` - HTTPS only (production)
 - `maxAge: 7 days`
 
-### BFF Authentication Pattern
+### JWT + JWKS Validation
 
-**Trusted Headers:**
-- `X-BFF-Secret` - Constant-time validated shared secret
-- `X-User-Id` - Extracted from validated JWT
-- `X-User-Email` - Extracted from validated JWT
-- `X-User-Role` - Extracted from validated JWT
+**Authorization Header:**
+- `Authorization: Bearer <jwt>` - BetterAuth-issued JWT
 
-**Critical:** BFF secret must be at least 32 characters, randomly generated, and never committed to version control.
+**Backend Validation:**
+- Signature verification via JWKS (`/api/auth/jwks`)
+- Issuer + audience enforcement
+- User status check (exists, verified, not banned)
 
 ---
 
@@ -153,7 +153,6 @@ openssl rand -base64 32
 
 **Rotate every 90 days:**
 - BETTER_AUTH_SECRET
-- BFF_SECRET
 - Database passwords
 - API keys
 

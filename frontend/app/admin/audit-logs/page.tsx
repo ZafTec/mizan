@@ -2,25 +2,29 @@ import { getAuditLogs } from "@/data/audit";
 import Link from "next/link";
 import { format } from "date-fns";
 import Pagination from "@/components/Pagination";
+import SortableHeader from "@/components/SortableHeader";
+import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
 
 export default async function AuditLogsPage({
     searchParams,
 }: {
-    searchParams: Promise<{ page?: string; action?: string; entityType?: string }>;
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
     const params = await searchParams;
-    const page = parseInt(params.page || "1");
-    const action = params.action;
-    const entityType = params.entityType;
+    const { page, sortBy, sortOrder } = parseListParams(params, { sortBy: 'Timestamp', sortOrder: 'desc' });
+    const action = params.action as string | undefined;
+    const entityType = params.entityType as string | undefined;
 
-    const { logs, totalCount } = await getAuditLogs({
+    const { logs, totalCount, totalPages } = await getAuditLogs({
         page,
         pageSize: 20,
         action,
         entityType,
+        sortBy: sortBy ?? undefined,
+        sortOrder,
     });
 
-    const totalPages = Math.ceil(totalCount / 20);
+    const baseUrl = buildListUrl('/admin/audit-logs', { action, entityType });
 
     return (
         <div className="space-y-6">
@@ -72,10 +76,10 @@ export default async function AuditLogsPage({
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100">
-                                <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500">Timestamp</th>
+                                <SortableHeader sortKey="timestamp" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500">Timestamp</SortableHeader>
                                 <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500">User</th>
-                                <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500">Action</th>
-                                <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500">Entity</th>
+                                <SortableHeader sortKey="action" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500">Action</SortableHeader>
+                                <SortableHeader sortKey="entityType" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500">Entity</SortableHeader>
                                 <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500">IP Address</th>
                             </tr>
                         </thead>
@@ -129,7 +133,9 @@ export default async function AuditLogsPage({
                 <Pagination
                     currentPage={page}
                     totalPages={totalPages}
-                    baseUrl="/admin/audit-logs"
+                    totalCount={totalCount}
+                    pageSize={20}
+                    baseUrl={baseUrl}
                 />
             )}
         </div>

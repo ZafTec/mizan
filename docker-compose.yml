@@ -13,7 +13,6 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-mizan_dev_password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
       - "5432:5432"
     healthcheck:
@@ -40,7 +39,7 @@ services:
     networks:
       - mizan-network
 
-  # Next.js Frontend with Bun (BFF Layer - Development with hot reload)
+  # Next.js Frontend with Bun (Development with hot reload)
   frontend:
     build:
       context: ./frontend
@@ -60,16 +59,15 @@ services:
       # BetterAuth config
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-dev_secret_change_in_production}
       - BETTER_AUTH_URL=http://localhost:3000
-
-      # BFF Trusted Secret (shared with backend)
-      - BFF_TRUSTED_SECRET=${BFF_TRUSTED_SECRET:-dev_bff_secret_change_in_production}
+      - BETTER_AUTH_ISSUER=http://localhost:3000
+      - BETTER_AUTH_AUDIENCE=mizan-api
 
       # Backend API (internal network - server-side)
-      - BACKEND_API_URL=http://backend:8080
+      - API_URL=http://backend:8080
 
       # Public URLs
       - NEXT_PUBLIC_APP_URL=http://localhost:3000
-      - NEXT_PUBLIC_API_URL=http://localhost:3000
+      - NEXT_PUBLIC_API_URL=http://localhost:5000
 
       # External services
       - NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}
@@ -92,15 +90,15 @@ services:
     networks:
       - mizan-network
 
-  # .NET Backend API (Internal Only - BFF Protected)
+  # .NET Backend API (JWT protected)
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: mizan-backend
-    # NO PORT EXPOSURE - backend is only accessible via Docker network from frontend
-    expose:
-      - "8080"
+    # Exposed on 5000 for local development
+    ports:
+      - "5000:8080"
     volumes:
       - ./backend:/src
     environment:
@@ -113,14 +111,37 @@ services:
       # Redis
       - ConnectionStrings__Redis=redis:6379
 
-      # BFF Authentication (replaces JWT/BetterAuth)
-      - Bff__TrustedSecret=${BFF_TRUSTED_SECRET:-dev_bff_secret_change_in_production}
-      - Bff__AllowedOrigins__0=http://frontend:3000
+      # JWT/JWKS Authentication
+      - BetterAuth__Issuer=http://localhost:3000
+      - BetterAuth__Audience=mizan-api
+      - BetterAuth__JwksUrl=http://frontend:3000/api/auth/jwks
+      - Cors__Origins__0=http://frontend:3000
+      - Cors__Origins__1=http://localhost:3000
       - OpenAI__ApiKey=${OPENAI_API_KEY:-}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+    networks:
+      - mizan-network
+
+  # MCP Server (Model Context Protocol over SSE)
+  mcp:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.mcp
+    container_name: mizan-mcp
+    ports:
+      - "5001:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5001
+      - ConnectionStrings__PostgreSQL=Host=postgres;Database=mizan;Username=mizan;Password=${DB_PASSWORD:-mizan_dev_password}
+    volumes:
+      - ./backend/Mizan.Mcp.Server/logs:/app/logs
+    depends_on:
+      postgres:
         condition: service_healthy
     networks:
       - mizan-network
@@ -137,13 +158,78 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__PostgreSQL=Host=postgres;Database=mizan_test;Username=mizan;Password=${DB_PASSWORD:-mizan_dev_password}
       - ConnectionStrings__Redis=redis:6379
-      - Bff__TrustedSecret=${BFF_TRUSTED_SECRET:-dev_bff_secret_change_in_production}
+      - BetterAuth__Issuer=http://localhost:3000
+      - BetterAuth__Audience=mizan-api
+      - BetterAuth__JwksUrl=http://frontend:3000/api/auth/jwks
     command: dotnet test --logger "console;verbosity=normal"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - mizan-network
+    profiles:
+      - test
+
+  # E2E testing (not used in CI - see .github/workflows/pr-tests.yml)
+  # This is kept for local E2E testing convenience
+  e2e:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.e2e
+    container_name: mizan-e2e
+    environment:
+      - NODE_ENV=test
+      - PLAYWRIGHT_BASE_URL=http://frontend:3000
+      - PLAYWRIGHT_BACKEND_URL=http://backend:8080
+      - TEST_DATABASE_URL=postgresql://mizan:${DB_PASSWORD:-mizan_dev_password}@postgres:5432/mizan
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-dev_secret_change_in_production}
+      - BETTER_AUTH_ISSUER=http://localhost:3000
+      - BETTER_AUTH_AUDIENCE=mizan-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      backend:
+        condition: service_started
+      frontend:
+        condition: service_started
+    command: bash -lc "for i in {1..120}; do if curl -sf http://frontend:3000/api/health >/dev/null 2>&1 && curl -sf http://backend:8080/health >/dev/null 2>&1; then ready=1; break; fi; sleep 1; done; if [ -z \"$$ready\" ]; then echo 'services not ready' >&2; exit 1; fi; bun run test:e2e -- --reporter=line"
+    networks:
+      - mizan-network
+    profiles:
+      - test
+
+  test-all:
+    build:
+      context: .
+      dockerfile: Dockerfile.test-all
+    container_name: mizan-test-all
+    environment:
+      - DOTNET_NOLOGO=1
+      - DOTNET_CLI_TELEMETRY_OPTOUT=1
+      - ConnectionStrings__PostgreSQL=Host=postgres;Database=mizan;Username=mizan;Password=${DB_PASSWORD:-mizan_dev_password}
+      - ConnectionStrings__Redis=redis:6379
+      - BetterAuth__Issuer=http://localhost:3000
+      - BetterAuth__Audience=mizan-api
+      - BetterAuth__JwksUrl=http://frontend:3000/api/auth/jwks
+      - DATABASE_URL=postgresql://mizan:${DB_PASSWORD:-mizan_dev_password}@postgres:5432/mizan
+      - TEST_DATABASE_URL=postgresql://mizan:${DB_PASSWORD:-mizan_dev_password}@postgres:5432/mizan
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-dev_secret_change_in_production}
+      - BETTER_AUTH_ISSUER=http://localhost:3000
+      - BETTER_AUTH_AUDIENCE=mizan-api
+      - PLAYWRIGHT_BASE_URL=http://frontend:3000
+      - PLAYWRIGHT_BACKEND_URL=http://backend:8080
+      - API_URL=http://backend:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+      frontend:
+        condition: service_started
     networks:
       - mizan-network
     profiles:

@@ -1,10 +1,17 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Queries;
 
-public record GetMyTrainerRequestsQuery : IRequest<List<MyTrainerRequestDto>>;
+public record GetMyTrainerRequestsQuery : IRequest<PagedResult<MyTrainerRequestDto>>, IPagedQuery, ISortableQuery
+{
+    public int Page { get; init; } = 1;
+    public int PageSize { get; init; } = 20;
+    public string? SortBy { get; init; }
+    public string? SortOrder { get; init; }
+}
 
 public record MyTrainerRequestDto(
     Guid RelationshipId,
@@ -16,7 +23,7 @@ public record MyTrainerRequestDto(
     DateTime RequestedAt
 );
 
-public class GetMyTrainerRequestsQueryHandler : IRequestHandler<GetMyTrainerRequestsQuery, List<MyTrainerRequestDto>>
+public class GetMyTrainerRequestsQueryHandler : IRequestHandler<GetMyTrainerRequestsQuery, PagedResult<MyTrainerRequestDto>>
 {
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
@@ -27,7 +34,7 @@ public class GetMyTrainerRequestsQueryHandler : IRequestHandler<GetMyTrainerRequ
         _currentUser = currentUser;
     }
 
-    public async Task<List<MyTrainerRequestDto>> Handle(GetMyTrainerRequestsQuery request, CancellationToken cancellationToken)
+    public async Task<PagedResult<MyTrainerRequestDto>> Handle(GetMyTrainerRequestsQuery request, CancellationToken cancellationToken)
     {
         if (!_currentUser.UserId.HasValue)
         {
@@ -36,10 +43,15 @@ public class GetMyTrainerRequestsQueryHandler : IRequestHandler<GetMyTrainerRequ
 
         var clientId = _currentUser.UserId.Value;
 
-        var requests = await _context.TrainerClientRelationships
+        var query = _context.TrainerClientRelationships
             .Include(r => r.Trainer)
-            .Where(r => r.ClientId == clientId && r.Status == "pending")
+            .Where(r => r.ClientId == clientId && r.Status == "pending");
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var requests = await query
             .OrderByDescending(r => r.CreatedAt)
+            .ApplyPaging(request)
             .Select(r => new MyTrainerRequestDto(
                 r.Id,
                 r.TrainerId,
@@ -51,6 +63,12 @@ public class GetMyTrainerRequestsQueryHandler : IRequestHandler<GetMyTrainerRequ
             ))
             .ToListAsync(cancellationToken);
 
-        return requests;
+        return new PagedResult<MyTrainerRequestDto>
+        {
+            Items = requests,
+            TotalCount = totalCount,
+            Page = request.Page,
+            PageSize = request.PageSize
+        };
     }
 }

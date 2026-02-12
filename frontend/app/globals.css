@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-@plugin 'tailwindcss-animate';
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
@@ -36,72 +35,6 @@
 
   /* Font Family */
   --font-sans: 'Inter', system-ui, sans-serif;
-}
-
-body {
-  @apply bg-gradient-to-br from-slate-50 to-slate-100 text-slate-900;
-}
-
-* {
-  @apply border-slate-200;
-}
-
-/* Button Base Styles */
-.btn {
-  @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-.btn-primary {
-  @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
-  @apply bg-gradient-to-r from-brand-500 to-brand-600 text-white hover:from-brand-600 hover:to-brand-700 focus:ring-brand-500 shadow-lg shadow-brand-500/25 hover:shadow-xl hover:shadow-brand-500/30;
-}
-
-.btn-secondary {
-  @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
-  @apply bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 focus:ring-slate-500;
-}
-
-.btn-accent {
-  @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
-  @apply bg-gradient-to-r from-accent-500 to-accent-600 text-white hover:from-accent-600 hover:to-accent-700 focus:ring-accent-500 shadow-lg shadow-accent-500/25;
-}
-
-/* Card Styles */
-.card {
-  @apply bg-white rounded-2xl shadow-soft border border-slate-100 overflow-hidden transition-all duration-300;
-}
-
-.card-hover {
-  @apply bg-white rounded-2xl shadow-soft border border-slate-100 overflow-hidden transition-all duration-300;
-  @apply hover:shadow-lg hover:border-slate-200 hover:-translate-y-0.5;
-}
-
-/* Input Styles */
-.input {
-  @apply w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500;
-}
-
-.label {
-  @apply block text-sm font-medium text-slate-700 mb-1.5;
-}
-
-/* Glass Effect */
-.glass {
-  @apply backdrop-blur-xl bg-white/80 border border-white/20 shadow-xl;
-}
-
-/* Typography */
-.section-title {
-  @apply text-2xl font-bold text-slate-900 tracking-tight;
-}
-
-.text-gradient {
-  @apply bg-gradient-to-r from-brand-600 to-accent-500 bg-clip-text text-transparent;
-}
-
-/* Animations */
-.animate-in {
-  animation: slideUp 0.5s ease-out forwards;
 }
 
 @theme inline {
@@ -147,13 +80,14 @@ body {
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
+  --background: oklch(0.985 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  /* Primary = Brand Green */
+  --primary: oklch(0.55 0.16 155);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -164,20 +98,20 @@ body {
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
+  --ring: oklch(0.55 0.16 155);
+  --chart-1: oklch(0.55 0.16 155);
+  --chart-2: oklch(0.70 0.19 55);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary: oklch(0.55 0.16 155);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-ring: oklch(0.55 0.16 155);
 }
 
 .dark {
@@ -187,8 +121,8 @@ body {
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: oklch(0.65 0.18 150);
+  --primary-foreground: oklch(0.145 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -198,20 +132,20 @@ body {
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
+  --ring: oklch(0.65 0.18 150);
+  --chart-1: oklch(0.65 0.18 150);
+  --chart-2: oklch(0.70 0.19 55);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary: oklch(0.65 0.18 150);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: oklch(0.65 0.18 150);
 }
 
 @layer base {
@@ -224,32 +158,32 @@ body {
 }
 
 /* Button Base Styles */
-.btn {
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-accent {
   @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
 .btn-primary {
-  @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   @apply bg-gradient-to-r from-brand-500 to-brand-600 text-white hover:from-brand-600 hover:to-brand-700 focus:ring-brand-500 shadow-lg shadow-brand-500/25 hover:shadow-xl hover:shadow-brand-500/30;
 }
 
 .btn-secondary {
-  @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   @apply bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 focus:ring-slate-500;
 }
 
 .btn-accent {
-  @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   @apply bg-gradient-to-r from-accent-500 to-accent-600 text-white hover:from-accent-600 hover:to-accent-700 focus:ring-accent-500 shadow-lg shadow-accent-500/25;
 }
 
 /* Card Styles */
-.card {
+.card,
+.card-hover {
   @apply bg-white rounded-2xl shadow-soft border border-slate-100 overflow-hidden transition-all duration-300;
 }
 
 .card-hover {
-  @apply bg-white rounded-2xl shadow-soft border border-slate-100 overflow-hidden transition-all duration-300;
   @apply hover:shadow-lg hover:border-slate-200 hover:-translate-y-0.5;
 }
 
@@ -262,21 +196,23 @@ body {
   @apply block text-sm font-medium text-slate-700 mb-1.5;
 }
 
-/* Glass Effect */
-.glass {
-  @apply backdrop-blur-xl bg-white/80 border border-white/20 shadow-xl;
-}
-
 /* Typography */
 .section-title {
   @apply text-2xl font-bold text-slate-900 tracking-tight;
 }
 
-.text-gradient {
-  @apply bg-gradient-to-r from-brand-600 to-accent-500 bg-clip-text text-transparent;
-}
-
 /* Animations */
 .animate-in {
   animation: slideUp 0.5s ease-out forwards;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

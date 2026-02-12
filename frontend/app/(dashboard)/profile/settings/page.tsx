@@ -4,6 +4,7 @@ import { useSession, authClient } from "@/lib/auth-client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export default function ProfileSettingsPage() {
   const { data: session, isPending } = useSession();
@@ -40,11 +41,11 @@ export default function ProfileSettingsPage() {
       await authClient.updateUser({
         name: name || user.name || undefined,
       });
-      alert("Profile updated successfully");
+      toast.success("Profile updated successfully");
       window.location.reload();
     } catch (error) {
       console.error("Failed to update profile:", error);
-      alert("Failed to update profile");
+      toast.error("Failed to update profile");
     } finally {
       setIsUpdating(false);
     }
@@ -52,12 +53,12 @@ export default function ProfileSettingsPage() {
 
   async function handleChangePassword() {
     if (newPassword !== confirmPassword) {
-      alert("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
 
     if (newPassword.length < 8) {
-      alert("Password must be at least 8 characters");
+      toast.error("Password must be at least 8 characters");
       return;
     }
 
@@ -68,14 +69,14 @@ export default function ProfileSettingsPage() {
         newPassword,
         revokeOtherSessions: true,
       });
-      alert("Password changed successfully");
+      toast.success("Password changed successfully");
       setShowPasswordDialog(false);
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (error) {
       console.error("Failed to change password:", error);
-      alert("Failed to change password. Check your current password.");
+      toast.error("Failed to change password. Check your current password.");
     } finally {
       setIsUpdating(false);
     }
@@ -88,7 +89,7 @@ export default function ProfileSettingsPage() {
       router.push("/");
     } catch (error) {
       console.error("Failed to delete account:", error);
-      alert("Failed to delete account");
+      toast.error("Failed to delete account");
     } finally {
       setIsUpdating(false);
     }

@@ -91,52 +91,70 @@ public class UpdateRecipeCommandHandler : IRequestHandler<UpdateRecipeCommand, U
         recipe.IsPublic = request.IsPublic;
         recipe.UpdatedAt = DateTime.UtcNow;
 
-        // Update Ingredients (Replace all)
-        _context.RecipeIngredients.RemoveRange(recipe.Ingredients);
+        // Update Ingredients (Replace all) - Remove existing then add new
+        foreach (var ingredient in recipe.Ingredients.ToList())
+        {
+            _context.RecipeIngredients.Remove(ingredient);
+        }
+        recipe.Ingredients.Clear();
         if (request.Ingredients != null)
         {
             for (int i = 0; i < request.Ingredients.Count; i++)
             {
-            var ingredientDto = request.Ingredients[i];
-            recipe.Ingredients.Add(new RecipeIngredient
-            {
-                Id = Guid.NewGuid(),
-                RecipeId = recipe.Id,
-                FoodId = ingredientDto.FoodId,
-                IngredientText = ingredientDto.IngredientText,
-                Amount = ingredientDto.Amount,
-                Unit = ingredientDto.Unit,
-                SortOrder = i
-            });
+                var ingredientDto = request.Ingredients[i];
+                var newIngredient = new RecipeIngredient
+                {
+                    Id = Guid.NewGuid(),
+                    RecipeId = recipe.Id,
+                    FoodId = ingredientDto.FoodId,
+                    IngredientText = ingredientDto.IngredientText,
+                    Amount = ingredientDto.Amount,
+                    Unit = ingredientDto.Unit,
+                    SortOrder = i
+                };
+                recipe.Ingredients.Add(newIngredient);
+                _context.RecipeIngredients.Add(newIngredient);
+            }
         }
-    }
 
-        // Update Instructions (Replace all)
-        _context.RecipeInstructions.RemoveRange(recipe.Instructions);
+        // Update Instructions (Replace all) - Remove existing then add new
+        foreach (var instruction in recipe.Instructions.ToList())
+        {
+            _context.RecipeInstructions.Remove(instruction);
+        }
+        recipe.Instructions.Clear();
         if (request.Instructions != null)
         {
             for (int i = 0; i < request.Instructions.Count; i++)
             {
-            recipe.Instructions.Add(new RecipeInstruction
-            {
-                Id = Guid.NewGuid(),
-                RecipeId = recipe.Id,
-                StepNumber = i + 1,
-                Instruction = request.Instructions[i]
-            });
+                var newInstruction = new RecipeInstruction
+                {
+                    Id = Guid.NewGuid(),
+                    RecipeId = recipe.Id,
+                    StepNumber = i + 1,
+                    Instruction = request.Instructions[i]
+                };
+                recipe.Instructions.Add(newInstruction);
+                _context.RecipeInstructions.Add(newInstruction);
+            }
         }
-    }
 
-        // Update Tags (Replace all)
-        _context.RecipeTags.RemoveRange(recipe.Tags);
+        // Update Tags (Replace all) - Remove existing then add new
+        foreach (var tag in recipe.Tags.ToList())
+        {
+            _context.RecipeTags.Remove(tag);
+        }
+        recipe.Tags.Clear();
         foreach (var tag in request.Tags)
         {
-            recipe.Tags.Add(new RecipeTag
+            var newTag = new RecipeTag
             {
                 Id = Guid.NewGuid(),
                 RecipeId = recipe.Id,
                 Tag = tag
-            });
+            };
+            recipe.Tags.Add(newTag);
+            _context.RecipeTags.Add(newTag);
         }
 
         // Update Nutrition
@@ -158,7 +176,7 @@ public class UpdateRecipeCommandHandler : IRequestHandler<UpdateRecipeCommand, U
             decimal totalFat = 0;
             decimal totalFiber = 0;
 
-            foreach (var ingredientDto in request.Ingredients.Where(i => i.FoodId.HasValue && i.Amount.HasValue))
+            foreach (var ingredientDto in (request.Ingredients ?? []).Where(i => i.FoodId.HasValue && i.Amount.HasValue))
             {
                 if (foods.TryGetValue(ingredientDto.FoodId!.Value, out var food))
                 {

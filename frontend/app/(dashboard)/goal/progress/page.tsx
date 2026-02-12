@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { apiClient } from "@/lib/auth-client";
+import { clientApi } from "@/lib/api.client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export default function LogProgress() {
   const router = useRouter();
@@ -29,22 +30,22 @@ export default function LogProgress() {
     setLoading(true);
 
     try {
-      await apiClient("/api/bff/Goals/progress", {
+      await clientApi("/api/Goals/progress", {
         method: "POST",
-        body: JSON.stringify({
+        body: {
           actualCalories: parseInt(formData.actualCalories),
           actualProteinGrams: parseFloat(formData.actualProteinGrams),
           actualCarbsGrams: parseFloat(formData.actualCarbsGrams),
           actualFatGrams: parseFloat(formData.actualFatGrams),
           actualWeight: formData.actualWeight ? parseFloat(formData.actualWeight) : null,
           notes: formData.notes || null,
-        }),
+        },
       });
 
       router.push("/goal/dashboard");
     } catch (error) {
       console.error("Failed to log progress:", error);
-      alert("Failed to log progress. Please try again.");
+      toast.error("Failed to log progress. Please try again.");
     } finally {
       setLoading(false);
     }

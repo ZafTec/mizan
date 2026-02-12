@@ -76,14 +76,13 @@ DATABASE_URL=postgresql://mizan:CHANGE_THIS_PASSWORD@postgres:5432/mizan
 # BetterAuth Configuration
 BETTER_AUTH_SECRET=GENERATE_STRONG_SECRET_HERE_AT_LEAST_32_CHARS
 BETTER_AUTH_URL=https://yourdomain.com
+BETTER_AUTH_ISSUER=https://yourdomain.com
+BETTER_AUTH_AUDIENCE=mizan-api
 BETTER_AUTH_TRUST_HOST=true
 
 # API URLs
 API_URL=http://mizan-backend:8080
-NEXT_PUBLIC_API_URL=https://yourdomain.com
-
-# BFF Secret (must match backend)
-BFF_SECRET=GENERATE_ANOTHER_STRONG_SECRET_HERE
+NEXT_PUBLIC_API_URL=https://api.yourdomain.com
 
 # Node Environment
 NODE_ENV=production
@@ -115,13 +114,11 @@ ConnectionStrings__Redis=redis:6379,abortConnect=false
 
 # BetterAuth Integration
 BetterAuth__Issuer=https://yourdomain.com
-BetterAuth__Audience=https://yourdomain.com
-
-# BFF Secret (must match frontend)
-Bff__TrustedSecret=SAME_SECRET_AS_FRONTEND_BFF_SECRET
+BetterAuth__Audience=mizan-api
+BetterAuth__JwksUrl=https://yourdomain.com/api/auth/jwks
 
 # CORS (optional, for direct API access)
-CORS__AllowedOrigins__0=https://yourdomain.com
+Cors__Origins__0=https://yourdomain.com
 ```
 
 ### Docker Compose Environment

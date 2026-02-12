@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface User {
   id: string;
@@ -99,7 +100,7 @@ export function UserActions({ user }: { user: User }) {
       });
 
       setShowPasswordDialog(false);
-      alert("Password updated successfully");
+      toast.success("Password updated successfully");
       router.refresh();
     } catch (err) {
       setError(
@@ -157,7 +158,7 @@ export function UserActions({ user }: { user: User }) {
         userId: user.id,
       });
 
-      alert("All sessions revoked");
+      toast.success("All sessions revoked");
       router.refresh();
     } catch (err) {
       setError(

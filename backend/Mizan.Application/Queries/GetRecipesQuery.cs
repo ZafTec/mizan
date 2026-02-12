@@ -1,10 +1,12 @@
+using System.Linq.Expressions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Queries;
 
-public record GetRecipesQuery : IRequest<GetRecipesResult>
+public record GetRecipesQuery : IRequest<PagedResult<RecipeDto>>, IPagedQuery, ISortableQuery
 {
     public string? SearchTerm { get; init; }
     public List<string>? Tags { get; init; }
@@ -12,14 +14,8 @@ public record GetRecipesQuery : IRequest<GetRecipesResult>
     public bool FavoritesOnly { get; init; } = false;
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;
-}
-
-public record GetRecipesResult
-{
-    public List<RecipeDto> Recipes { get; init; } = new();
-    public int TotalCount { get; init; }
-    public int Page { get; init; }
-    public int PageSize { get; init; }
+    public string? SortBy { get; init; }
+    public string? SortOrder { get; init; }
 }
 
 public record RecipeDto
@@ -46,8 +42,14 @@ public record RecipeNutritionDto
     public decimal? FatGrams { get; init; }
 }
 
-public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, GetRecipesResult>
+public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResult<RecipeDto>>
 {
+    private static readonly Dictionary<string, Expression<Func<Domain.Entities.Recipe, object>>> SortMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["title"] = r => r.Title,
+        ["createdat"] = r => r.CreatedAt
+    };
+
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
 
@@ -57,14 +59,13 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, GetRecipe
         _currentUser = currentUser;
     }
 
-    public async Task<GetRecipesResult> Handle(GetRecipesQuery request, CancellationToken cancellationToken)
+    public async Task<PagedResult<RecipeDto>> Handle(GetRecipesQuery request, CancellationToken cancellationToken)
     {
         var query = _context.Recipes
             .Include(r => r.Nutrition)
             .Include(r => r.Tags)
             .AsQueryable();
 
-        // Filter by ownership or public
         if (_currentUser.UserId.HasValue)
         {
             if (request.FavoritesOnly)
@@ -85,7 +86,6 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, GetRecipe
         {
             if (request.FavoritesOnly)
             {
-                // Unauthenticated users have no favorites
                 query = query.Where(r => false);
             }
             else
@@ -94,7 +94,6 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, GetRecipe
             }
         }
 
-        // Search by title or description
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             var searchTerm = request.SearchTerm.ToLower();
@@ -103,7 +102,6 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, GetRecipe
                 (r.Description != null && r.Description.ToLower().Contains(searchTerm)));
         }
 
-        // Filter by tags
         if (request.Tags?.Any() == true)
         {
             query = query.Where(r => r.Tags.Any(t => request.Tags.Contains(t.Tag)));
@@ -111,10 +109,14 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, GetRecipe
 
         var totalCount = await query.CountAsync(cancellationToken);
 
-        var recipes = await query
-            .OrderByDescending(r => r.CreatedAt)
-            .Skip((request.Page - 1) * request.PageSize)
-            .Take(request.PageSize)
+        var sortedQuery = query.ApplySorting(
+            request,
+            SortMappings,
+            defaultSort: r => r.CreatedAt,
+            defaultDescending: true);
+
+        var recipes = await sortedQuery
+            .ApplyPaging(request)
             .Select(r => new RecipeDto
             {
                 Id = r.Id,
@@ -138,9 +140,9 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, GetRecipe
             })
             .ToListAsync(cancellationToken);
 
-        return new GetRecipesResult
+        return new PagedResult<RecipeDto>
         {
-            Recipes = recipes,
+            Items = recipes,
             TotalCount = totalCount,
             Page = request.Page,
             PageSize = request.PageSize

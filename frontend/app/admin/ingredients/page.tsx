@@ -1,23 +1,27 @@
 import { getAllIngredient } from "@/data/ingredient";
 import Pagination from "@/components/Pagination";
+import SortableHeader from "@/components/SortableHeader";
 import Link from "next/link";
 import AdminIngredientActions from "./AdminIngredientActions";
+import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
 
 export default async function AdminIngredientsPage({
     searchParams,
 }: {
-    searchParams: Promise<{ page?: string; search?: string }>;
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
     const params = await searchParams;
-    const page = parseInt(params.page || "1");
-    const searchTerm = params.search;
+    const { page, sortBy, sortOrder } = parseListParams(params);
+    const searchTerm = params.search as string | undefined;
 
     const { ingredients, totalPages, totalCount } = await getAllIngredient(
         searchTerm,
-        undefined,
+        sortBy ?? undefined,
+        sortOrder,
         page,
         20
     );
+    const baseUrl = buildListUrl('/admin/ingredients', { search: searchTerm });
 
     return (
         <div className="space-y-6">
@@ -55,10 +59,10 @@ export default async function AdminIngredientsPage({
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100">
-                                <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500">Ingredient Name</th>
+                                <SortableHeader sortKey="name" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500">Ingredient Name</SortableHeader>
                                 <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500">Portion</th>
-                                <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500 text-center">Calories</th>
-                                <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500 text-center">Proteins</th>
+                                <SortableHeader sortKey="calories" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500 text-center">Calories</SortableHeader>
+                                <SortableHeader sortKey="protein" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500 text-center">Proteins</SortableHeader>
                                 <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500 text-center">Carbs</th>
                                 <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500 text-center">Fats</th>
                                 <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500 text-center">Status</th>
@@ -136,7 +140,9 @@ export default async function AdminIngredientsPage({
                 <Pagination
                     currentPage={page}
                     totalPages={totalPages}
-                    baseUrl="/admin/ingredients"
+                    totalCount={totalCount}
+                    pageSize={20}
+                    baseUrl={baseUrl}
                 />
             )}
         </div>

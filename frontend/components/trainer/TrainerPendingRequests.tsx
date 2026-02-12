@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/auth-client";
+import { clientApi } from "@/lib/api.client";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 
 interface PendingRequest {
 	relationshipId: string;
@@ -47,7 +47,7 @@ export function TrainerPendingRequests() {
 
 	async function fetchRequests() {
 		try {
-			const data = await apiClient<PendingRequest[]>(
+			const data = await clientApi<PendingRequest[]>(
 				"/api/Trainers/requests"
 			);
 			setRequests(data);
@@ -77,13 +77,13 @@ export function TrainerPendingRequests() {
 
 		setProcessingId(selectedRequest.relationshipId);
 		try {
-			await apiClient("/api/Trainers/respond", {
+			await clientApi("/api/Trainers/respond", {
 				method: "POST",
-				body: JSON.stringify({
+				body: {
 					relationshipId: selectedRequest.relationshipId,
 					accept: true,
 					...permissions,
-				}),
+				},
 			});
 
 			toast({
@@ -111,12 +111,12 @@ export function TrainerPendingRequests() {
 	async function handleDecline(relationshipId: string) {
 		setProcessingId(relationshipId);
 		try {
-			await apiClient("/api/Trainers/respond", {
+			await clientApi("/api/Trainers/respond", {
 				method: "POST",
-				body: JSON.stringify({
+				body: {
 					relationshipId,
 					accept: false,
-				}),
+				},
 			});
 
 			toast({

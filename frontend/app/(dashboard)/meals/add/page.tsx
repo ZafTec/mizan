@@ -1,7 +1,7 @@
 "use client";
 
 import { FieldError } from "@/components/FieldError";
-import { addMeal } from "@/actions/meal";
+import { addMeal } from "@/data/meal";
 import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { callBackendApi } from "@/lib/backend-api-client";
+import { serverApi } from "@/lib/api.server";
 import { createErrorState, createSuccessState, FormState } from "@/helper/FormErrorHandler";
 import { logger } from "@/lib/logger";
 
@@ -28,6 +28,7 @@ export interface Ingredient {
 export async function getAllIngredient(
     searchTerm?: string,
     sortBy?: string,
+    sortOrder?: string,
     page: number = 1,
     limit: number = 20
 ): Promise<{ ingredients: Ingredient[], totalCount: number, totalPages: number }> {
@@ -36,30 +37,15 @@ export async function getAllIngredient(
         params.set("Page", String(page));
         params.set("PageSize", String(limit));
         if (searchTerm) params.set("SearchTerm", searchTerm);
+        if (sortBy) params.set("SortBy", sortBy);
+        if (sortOrder) params.set("SortOrder", sortOrder);
 
-        const result = await callBackendApi<{ foods: Ingredient[], totalCount: number }>(`/api/Foods/search?${params.toString()}`);
-        let foods = result.foods || [];
-
-        // Sort if requested (if backend doesn't handle it yet)
-        if (sortBy) {
-            const sortField = sortBy as keyof Ingredient;
-            foods = [...foods].sort((a, b) => {
-                const aVal = a[sortField];
-                const bVal = b[sortField];
-                if (typeof aVal === "number" && typeof bVal === "number") {
-                    return bVal - aVal;
-                }
-                return String(aVal).localeCompare(String(bVal));
-            });
-        }
-
-        const totalCount = result.totalCount || 0;
-        const totalPages = Math.ceil(totalCount / limit);
+        const result = await serverApi<{ items: Ingredient[], totalCount: number, page: number, pageSize: number, totalPages: number }>(`/api/Foods/search?${params.toString()}`);
 
         return {
-            ingredients: foods,
-            totalCount,
-            totalPages
+            ingredients: result.items || [],
+            totalCount: result.totalCount || 0,
+            totalPages: result.totalPages || 0
         };
     } catch (error) {
         ingredientLogger.error("Failed to get all ingredients", { error });
@@ -72,7 +58,7 @@ export async function getAllIngredient(
  */
 export async function getIngredientById(id: string): Promise<Ingredient | null> {
     try {
-        const result = await callBackendApi<Ingredient>(`/api/Foods/${id}`);
+        const result = await serverApi<Ingredient>(`/api/Foods/${id}`);
         return result;
     } catch (error) {
         ingredientLogger.error("Failed to get ingredient by ID", { error, ingredientId: id });
@@ -94,7 +80,7 @@ export async function addIngredientData(data: {
     fat: number;
     fiber?: number;
 }): Promise<void> {
-    await callBackendApi("/api/Foods", {
+    await serverApi("/api/Foods", {
         method: "POST",
         body: {
             name: data.name,
@@ -130,7 +116,7 @@ export async function addIngredient(prevState: FormState, formData: FormData): P
         const fiber = parseFloat(formData.get("fiber") as string);
         const isVerified = formData.get("isVerified") === "true";
 
-        await callBackendApi("/api/Foods", {
+        await serverApi("/api/Foods", {
             method: "POST",
             body: {
                 name,
@@ -170,7 +156,7 @@ export async function updateIngredient(prevState: FormState, formData: FormData)
         const fiber = parseFloat(formData.get("fiber") as string);
         const isVerified = formData.get("isVerified") === "true";
 
-        await callBackendApi(`/api/Foods/${id}`, {
+        await serverApi(`/api/Foods/${id}`, {
             method: "PUT",
             body: {
                 id,
@@ -200,7 +186,7 @@ export async function updateIngredient(prevState: FormState, formData: FormData)
  */
 export async function deleteIngredient(id: string): Promise<{ success: boolean; message?: string }> {
     try {
-        await callBackendApi(`/api/Foods/${id}`, {
+        await serverApi(`/api/Foods/${id}`, {
             method: "DELETE",
         }).then(() => {
 

@@ -1,10 +1,17 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Queries;
 
-public record GetTrainerClientsQuery : IRequest<List<TrainerClientDto>>;
+public record GetTrainerClientsQuery : IRequest<PagedResult<TrainerClientDto>>, IPagedQuery, ISortableQuery
+{
+    public int Page { get; init; } = 1;
+    public int PageSize { get; init; } = 20;
+    public string? SortBy { get; init; }
+    public string? SortOrder { get; init; }
+}
 
 public record TrainerClientDto(
     Guid RelationshipId,
@@ -19,7 +26,7 @@ public record TrainerClientDto(
     DateTime? EndedAt
 );
 
-public class GetTrainerClientsQueryHandler : IRequestHandler<GetTrainerClientsQuery, List<TrainerClientDto>>
+public class GetTrainerClientsQueryHandler : IRequestHandler<GetTrainerClientsQuery, PagedResult<TrainerClientDto>>
 {
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
@@ -30,7 +37,7 @@ public class GetTrainerClientsQueryHandler : IRequestHandler<GetTrainerClientsQu
         _currentUser = currentUser;
     }
 
-    public async Task<List<TrainerClientDto>> Handle(GetTrainerClientsQuery request, CancellationToken cancellationToken)
+    public async Task<PagedResult<TrainerClientDto>> Handle(GetTrainerClientsQuery request, CancellationToken cancellationToken)
     {
         if (!_currentUser.UserId.HasValue)
         {
@@ -39,15 +46,19 @@ public class GetTrainerClientsQueryHandler : IRequestHandler<GetTrainerClientsQu
 
         var trainerId = _currentUser.UserId.Value;
 
-        // Get all relationships where current user is the trainer
-        var relationships = await _context.TrainerClientRelationships
-            .Where(r => r.TrainerId == trainerId)
+        var query = _context.TrainerClientRelationships
+            .Where(r => r.TrainerId == trainerId);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var relationships = await query
             .OrderByDescending(r => r.CreatedAt)
+            .ApplyPaging(request)
             .Select(r => new TrainerClientDto(
                 r.Id,
                 r.ClientId,
-                null, // Will be populated from users table if available
-                null, // Will be populated from users table if available
+                null,
+                null,
                 r.Status,
                 r.CanViewNutrition,
                 r.CanViewWorkouts,
@@ -57,6 +68,12 @@ public class GetTrainerClientsQueryHandler : IRequestHandler<GetTrainerClientsQu
             ))
             .ToListAsync(cancellationToken);
 
-        return relationships;
+        return new PagedResult<TrainerClientDto>
+        {
+            Items = relationships,
+            TotalCount = totalCount,
+            Page = request.Page,
+            PageSize = request.PageSize
+        };
     }
 }
