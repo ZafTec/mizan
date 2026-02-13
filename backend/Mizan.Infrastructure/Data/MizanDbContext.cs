@@ -11,7 +11,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
     }
 
     // BetterAuth core tables (managed by frontend Drizzle)
-    // User is read-only for backend (not migrated, but mapped for queries)
+    // User is read-only for backend (excluded from migrations via SetIsTableExcludedFromMigrations)
     public DbSet<User> Users => Set<User>();
     // Account, Session, Jwk, Verification - REMOVED (managed entirely by frontend)
 
