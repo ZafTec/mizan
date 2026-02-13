@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/db/client";
-import { users, sessions, foods } from "@/db/schema";
+import { users, sessions } from "@/db/schema";
 import { eq, sql, count, gte } from "drizzle-orm";
 import LiveAuditLog from "./LiveAuditLog";
 import { getAuditLogs } from "@/data/audit";
@@ -48,10 +48,9 @@ async function getAdminStats() {
     .orderBy(sql`${users.createdAt} DESC`)
     .limit(5);
 
-  const totalFoods = await db
-    .select({ count: count() })
-    .from(foods)
-    .then((res) => res[0]?.count || 0);
+  // TODO: Replace with API call to backend for foods count
+  // const totalFoods = await fetch('/api/admin/foods/count').then(...);
+  const totalFoods = 0; // Placeholder
 
   const yesterday = new Date();
   yesterday.setHours(yesterday.getHours() - 24);
