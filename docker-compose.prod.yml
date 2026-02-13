@@ -52,6 +52,11 @@ services:
       - API_URL=http://backend:8080
       - BETTER_AUTH_TRUST_HOST=true
       - NEXT_TELEMETRY_DISABLED=1
+      # Database migrations - set to "true" to run migrations on startup
+      # NOTE: Frontend and backend share the same database. Drizzle only manages
+      # Better Auth tables (users, accounts, sessions, verification, jwks).
+      # EF Core (backend) manages all business logic tables.
+      - RUN_DB_MIGRATIONS=true
 
     depends_on:
       backend:
