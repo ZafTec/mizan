@@ -343,13 +343,39 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
 
-        try
+        // 1. Manually create Better Auth tables required by backend foreign keys
+        // These tables are managed by Frontend/Drizzle in production, so EF Core migrations exclude them.
+        // But in tests, we start with an empty DB, so we must create them manually first.
+        
+        var createUsersTable = @"
+            CREATE TABLE IF NOT EXISTS ""users"" (
+                ""id"" uuid NOT NULL,
+                ""email"" character varying(255) NOT NULL,
+                ""email_verified"" boolean NOT NULL DEFAULT FALSE,
+                ""name"" character varying(255),
+                ""image"" text,
+                ""role"" character varying(50) DEFAULT 'user',
+                ""banned"" boolean DEFAULT FALSE,
+                ""ban_reason"" text,
+                ""ban_expires"" timestamp with time zone,
+                ""created_at"" timestamp with time zone DEFAULT (NOW()),
+                ""updated_at"" timestamp with time zone DEFAULT (NOW()),
+                CONSTRAINT ""PK_users"" PRIMARY KEY (""id"")
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS ""IX_users_email"" ON ""users"" (""email"");
+        ";
+
+        await db.Database.ExecuteSqlRawAsync(createUsersTable);
+
+        // 2. Apply EF Core migrations to create business logic tables (foods, recipes, etc.)
+        try 
         {
             await db.Database.MigrateAsync();
         }
-        catch
+        catch (Exception ex)
         {
-            await db.Database.EnsureCreatedAsync();
+            Console.WriteLine($"[ApiTestFixture] MigrateAsync failed: {ex.Message}");
+            throw; // Fail fast if migrations fail
         }
     }
 
