@@ -37,7 +37,7 @@ public class FoodsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "admin")]
+    [Authorize]
     public async Task<ActionResult<CreateFoodResult>> CreateFood([FromBody] CreateFoodCommand command)
     {
         var result = await _mediator.Send(command);

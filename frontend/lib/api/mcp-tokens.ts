@@ -10,11 +10,8 @@ import { logger } from "@/lib/logger";
 
 const API_BASE = () => {
   const baseUrl = typeof window === "undefined"
-    ? process.env.API_URL
-    : process.env.NEXT_PUBLIC_API_URL;
-  if (!baseUrl) {
-    throw new Error("API base URL not configured");
-  }
+    ? process.env.API_URL || ""
+    : process.env.NEXT_PUBLIC_API_URL || "";
   return `${baseUrl.replace(/\/$/, "")}/api`;
 };
 

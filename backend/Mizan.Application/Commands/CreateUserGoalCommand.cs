@@ -67,15 +67,15 @@ public class CreateUserGoalCommandHandler : IRequestHandler<CreateUserGoalComman
             };
         }
 
-        // Deactivate existing goals
+        // Remove existing goals (unique constraint: one goal per user)
         var existingGoals = await _context.UserGoals
-            .Where(g => g.UserId == _currentUser.UserId && g.IsActive)
+            .Where(g => g.UserId == _currentUser.UserId)
             .ToListAsync(cancellationToken);
 
-        foreach (var existing in existingGoals)
+        if (existingGoals.Count > 0)
         {
-            existing.IsActive = false;
-            existing.UpdatedAt = DateTime.UtcNow;
+            _context.UserGoals.RemoveRange(existingGoals);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         // Create new goal
