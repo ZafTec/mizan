@@ -50,8 +50,9 @@ export default function AddMeasurementForm() {
             </button>
 
             {isOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="card max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+                <div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
+                  <div className="flex min-h-full items-center justify-center p-4">
+                    <div className="card max-w-2xl w-full p-6">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-semibold text-slate-900">Add Measurement</h3>
                             <button
@@ -133,6 +134,7 @@ export default function AddMeasurementForm() {
                             </div>
                         </form>
                     </div>
+                  </div>
                 </div>
             )}
         </>

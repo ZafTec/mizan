@@ -16,8 +16,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Copy, Trash2, Plus, CheckCircle2, Activity, Clock, TrendingUp } from "lucide-react";
+import { Copy, Trash2, Plus, CheckCircle2, Activity, Clock, TrendingUp, Terminal, Monitor, Code2 } from "lucide-react";
 import type { CreateMcpTokenResult } from "@/types/mcp";
+
+function getMcpUrl(): string {
+  if (process.env.NEXT_PUBLIC_MCP_URL) return process.env.NEXT_PUBLIC_MCP_URL;
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    const protocol = window.location.protocol;
+    if (host !== "localhost" && host !== "127.0.0.1") {
+      return `${protocol}//mcp.${host}/mcp`;
+    }
+  }
+  return "http://localhost:5001/mcp";
+}
 
 export default function McpPage() {
   const { tokens, loading, error, fetchTokens, createToken, revokeToken } = useMcpTokens();
@@ -26,7 +38,8 @@ export default function McpPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [tokenName, setTokenName] = useState("");
   const [createdToken, setCreatedToken] = useState<CreateMcpTokenResult | null>(null);
-  const [tokenCopied, setTokenCopied] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [guideTab, setGuideTab] = useState<"desktop" | "code" | "cursor">("desktop");
 
   useEffect(() => {
     fetchTokens();
@@ -45,14 +58,14 @@ export default function McpPage() {
   };
 
   const handleRevokeToken = async (tokenId: string) => {
-    if (!confirm("Revoke this token? Claude will no longer be able to connect.")) return;
+    if (!confirm("Revoke this token? Connected clients will lose access.")) return;
     await revokeToken(tokenId);
   };
 
-  const copyToken = (token: string) => {
-    navigator.clipboard.writeText(token);
-    setTokenCopied(true);
-    setTimeout(() => setTokenCopied(false), 2000);
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
   };
 
   const formatDate = (dateString: string) =>
@@ -64,8 +77,9 @@ export default function McpPage() {
       minute: "2-digit",
     });
 
-  const mcpUrl = process.env.NEXT_PUBLIC_MCP_URL || "http://localhost:5001/mcp";
-  const configSnippet = (token: string) => `{
+  const mcpUrl = getMcpUrl();
+
+  const desktopConfig = (token: string) => `{
   "mcpServers": {
     "mizan": {
       "command": "npx",
@@ -81,6 +95,20 @@ export default function McpPage() {
   }
 }`;
 
+  const claudeCodeCommand = (token: string) =>
+    `claude mcp add mizan --transport sse "${mcpUrl}" --header "Authorization: Bearer ${token}"`;
+
+  const cursorConfig = (token: string) => `{
+  "mcpServers": {
+    "mizan": {
+      "url": "${mcpUrl}",
+      "headers": {
+        "Authorization": "Bearer ${token}"
+      }
+    }
+  }
+}`;
+
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-10">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -88,7 +116,7 @@ export default function McpPage() {
           <p className="text-sm uppercase tracking-wide text-brand-600 font-semibold">Model Context Protocol</p>
           <h1 className="text-3xl font-bold text-slate-900">MCP Integration</h1>
           <p className="text-slate-500">
-            Generate secure tokens for Claude, manage access, and review usage analytics.
+            Connect any MCP-compatible client to your Mizan data. Works with Claude Desktop, Claude Code, Cursor, and more.
           </p>
         </div>
 
@@ -103,7 +131,7 @@ export default function McpPage() {
             <DialogHeader>
               <DialogTitle>Generate New MCP Token</DialogTitle>
               <DialogDescription>
-                Create a token for Claude for Desktop or any MCP-compatible client.
+                Create a token for any MCP-compatible client — Claude Desktop, Claude Code, Cursor, or others.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -114,6 +142,9 @@ export default function McpPage() {
                   placeholder="e.g., Home Laptop, Work Desktop"
                   value={tokenName}
                   onChange={(e) => setTokenName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleCreateToken();
+                  }}
                 />
               </div>
             </div>
@@ -137,32 +168,143 @@ export default function McpPage() {
 
       {createdToken && (
         <Dialog open={!!createdToken} onOpenChange={() => setCreatedToken(null)}>
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Token Created</DialogTitle>
-              <DialogDescription>Copy this value now— it won&apos;t be shown again.</DialogDescription>
+              <DialogDescription>Copy this value now — it won&apos;t be shown again.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="bg-slate-900 text-white rounded-xl p-4 flex items-center justify-between">
+              <div className="bg-slate-900 text-white rounded-xl p-4 flex items-center justify-between gap-3">
                 <code className="text-sm break-all">{createdToken.plaintextToken}</code>
                 <button
-                  className="btn-secondary bg-white/10 border-white/20 text-white hover:bg-white/20"
-                  onClick={() => copyToken(createdToken.plaintextToken)}
+                  className="btn-secondary shrink-0 bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  onClick={() => copyToClipboard(createdToken.plaintextToken, "token")}
                 >
-                  {tokenCopied ? <CheckCircle2 className="h-4 w-4 text-emerald-300" /> : <Copy className="h-4 w-4" />}
+                  {copiedField === "token" ? <CheckCircle2 className="h-4 w-4 text-emerald-300" /> : <Copy className="h-4 w-4" />}
                 </button>
               </div>
 
               <div className="card p-4">
-                <h4 className="font-semibold text-slate-900 mb-2">Claude for Desktop</h4>
-                <p className="text-sm text-slate-500 mb-2">Add this to your claude_desktop_config.json:</p>
-                <pre className="bg-slate-900 text-slate-50 rounded-lg p-4 text-xs overflow-x-auto">{configSnippet(createdToken.plaintextToken)}</pre>
-                <div className="text-sm text-slate-500 mt-3">
-                  <p>Config file locations:</p>
-                  <ul className="list-disc list-inside ml-4 space-y-1">
-                    <li>macOS: <code>~/Library/Application Support/Claude/claude_desktop_config.json</code></li>
-                    <li>Windows: <code>%APPDATA%\\Claude\\claude_desktop_config.json</code></li>
-                  </ul>
+                <h4 className="font-semibold text-slate-900 mb-3">Setup Guide</h4>
+                <p className="text-sm text-slate-500 mb-3">
+                  Choose your MCP client and follow the instructions below.
+                </p>
+
+                <div className="flex gap-1 bg-slate-100 p-1 rounded-xl mb-4">
+                  <button
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                      guideTab === "desktop"
+                        ? "bg-white shadow text-slate-900"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                    onClick={() => setGuideTab("desktop")}
+                  >
+                    <Monitor className="h-4 w-4" />
+                    <span className="hidden sm:inline">Claude Desktop</span>
+                    <span className="sm:hidden">Desktop</span>
+                  </button>
+                  <button
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                      guideTab === "code"
+                        ? "bg-white shadow text-slate-900"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                    onClick={() => setGuideTab("code")}
+                  >
+                    <Terminal className="h-4 w-4" />
+                    <span className="hidden sm:inline">Claude Code</span>
+                    <span className="sm:hidden">Code</span>
+                  </button>
+                  <button
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                      guideTab === "cursor"
+                        ? "bg-white shadow text-slate-900"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                    onClick={() => setGuideTab("cursor")}
+                  >
+                    <Code2 className="h-4 w-4" />
+                    Cursor
+                  </button>
+                </div>
+
+                {guideTab === "desktop" && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-slate-600">
+                      Add this to your <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs">claude_desktop_config.json</code>:
+                    </p>
+                    <div className="relative">
+                      <pre className="bg-slate-900 text-slate-50 rounded-lg p-4 text-xs overflow-x-auto">
+                        {desktopConfig(createdToken.plaintextToken)}
+                      </pre>
+                      <button
+                        className="absolute top-2 right-2 p-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white"
+                        onClick={() => copyToClipboard(desktopConfig(createdToken.plaintextToken), "desktop")}
+                      >
+                        {copiedField === "desktop" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                    <div className="text-sm text-slate-500">
+                      <p>Config file locations:</p>
+                      <ul className="list-disc list-inside ml-4 space-y-1 mt-1">
+                        <li>macOS: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs">~/Library/Application Support/Claude/claude_desktop_config.json</code></li>
+                        <li>Windows: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs">%APPDATA%\Claude\claude_desktop_config.json</code></li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                {guideTab === "code" && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-slate-600">
+                      Run this command in your terminal:
+                    </p>
+                    <div className="relative">
+                      <pre className="bg-slate-900 text-slate-50 rounded-lg p-4 text-xs overflow-x-auto whitespace-pre-wrap break-all">
+                        {claudeCodeCommand(createdToken.plaintextToken)}
+                      </pre>
+                      <button
+                        className="absolute top-2 right-2 p-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white"
+                        onClick={() => copyToClipboard(claudeCodeCommand(createdToken.plaintextToken), "code")}
+                      >
+                        {copiedField === "code" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                    <p className="text-sm text-slate-500">
+                      This registers the Mizan MCP server globally. Use <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs">--scope project</code> to scope it to the current directory.
+                    </p>
+                  </div>
+                )}
+
+                {guideTab === "cursor" && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-slate-600">
+                      Add this to your <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs">.cursor/mcp.json</code> in your project root:
+                    </p>
+                    <div className="relative">
+                      <pre className="bg-slate-900 text-slate-50 rounded-lg p-4 text-xs overflow-x-auto">
+                        {cursorConfig(createdToken.plaintextToken)}
+                      </pre>
+                      <button
+                        className="absolute top-2 right-2 p-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white"
+                        onClick={() => copyToClipboard(cursorConfig(createdToken.plaintextToken), "cursor")}
+                      >
+                        {copiedField === "cursor" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                    <p className="text-sm text-slate-500">
+                      Or add it globally via Cursor Settings &gt; MCP Servers.
+                    </p>
+                  </div>
+                )}
+
+                <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                  <p className="text-xs text-slate-500">
+                    <span className="font-semibold text-slate-700">Other clients:</span>{" "}
+                    Any MCP client that supports SSE transport can connect using the server URL{" "}
+                    <code className="bg-slate-100 px-1.5 py-0.5 rounded">{mcpUrl}</code>{" "}
+                    with the token as a Bearer authorization header.
+                  </p>
                 </div>
               </div>
             </div>
@@ -203,8 +345,8 @@ export default function McpPage() {
                     <tr>
                       <th className="px-4 py-3 font-semibold text-slate-600">Name</th>
                       <th className="px-4 py-3 font-semibold text-slate-600">Status</th>
-                      <th className="px-4 py-3 font-semibold text-slate-600">Created</th>
-                      <th className="px-4 py-3 font-semibold text-slate-600">Last Used</th>
+                      <th className="px-4 py-3 font-semibold text-slate-600 hidden sm:table-cell">Created</th>
+                      <th className="px-4 py-3 font-semibold text-slate-600 hidden md:table-cell">Last Used</th>
                       <th className="px-4 py-3 font-semibold text-right text-slate-600">Actions</th>
                     </tr>
                   </thead>
@@ -228,8 +370,8 @@ export default function McpPage() {
                             {token.isActive ? "Active" : "Revoked"}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-slate-700">{formatDate(token.createdAt)}</td>
-                        <td className="px-4 py-3 text-slate-700">
+                        <td className="px-4 py-3 text-slate-700 hidden sm:table-cell">{formatDate(token.createdAt)}</td>
+                        <td className="px-4 py-3 text-slate-700 hidden md:table-cell">
                           {token.lastUsedAt ? formatDate(token.lastUsedAt) : "Never"}
                         </td>
                         <td className="px-4 py-3 text-right">
@@ -239,7 +381,7 @@ export default function McpPage() {
                               onClick={() => handleRevokeToken(token.id)}
                             >
                               <Trash2 className="h-4 w-4" />
-                              Revoke
+                              <span className="hidden sm:inline">Revoke</span>
                             </button>
                           )}
                         </td>
