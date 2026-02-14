@@ -301,17 +301,18 @@ frontend/
 - `/api/health` - Frontend health check
 - `/api/csrf` - CSRF token management
 
-### Proxied to Backend (via next.config.ts rewrites)
-All other `/api/*` routes are proxied to the backend:
+### Direct Backend Calls (via `api.mizan.example.com` subdomain)
+Client-side API calls go directly to the backend via a separate API subdomain with CORS:
 - `/api/Users/*`, `/api/Foods/*`, `/api/Recipes/*`, `/api/MealPlans/*`
 - `/api/Workouts/*`, `/api/Exercises/*`, `/api/BodyMeasurements/*`
 - `/api/Achievements/*`, `/api/Households/*`, `/api/Trainers/*`, `/api/Chat/*`
 - `/hubs/*` - SignalR hubs
 
 **Network Topology:**
-- **Browser → Frontend:** `http://localhost:3000` (client-side)
-- **Frontend → Backend (server-side):** `http://mizan-backend:8080` (Docker network)
-- **Frontend → Backend (client-side):** `http://localhost:3000` (proxied via rewrites)
+- **Browser → Frontend:** `https://mizan.example.com` (pages, auth, SSR)
+- **Browser → Backend:** `https://api.mizan.example.com` (client-side API calls, CORS-enabled)
+- **Frontend → Backend (server-side):** `http://mizan-backend:8080` (Docker network, no CORS needed)
+- **Nginx** terminates SSL and routes `mizan.example.com` → frontend, `api.mizan.example.com` → backend
 
 ## Authentication Flow
 
