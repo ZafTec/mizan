@@ -17,7 +17,7 @@ export default async function MealPlanPage({
 	const user = await getUserServer();
 	const params = await searchParams;
 	const { page, sortBy, sortOrder } = parseListParams(params);
-	const baseUrl = buildListUrl('/meal-plan', {});
+	const baseUrl = buildListUrl('/meal-plan', { sortBy, sortOrder });
 
 	let mealPlans: Awaited<ReturnType<typeof getMealPlans>>['mealPlans'] = [];
 	let totalCount = 0;

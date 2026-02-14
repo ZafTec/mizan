@@ -1,11 +1,19 @@
 import { getBodyMeasurements } from "@/data/bodyMeasurement";
 import { getUserServer } from "@/helper/session";
 import AddMeasurementForm from "./AddMeasurementForm";
+import DeleteMeasurementButton from "./DeleteMeasurementButton";
+import MeasurementChart from "./MeasurementChart";
 import SortableHeader from "@/components/SortableHeader";
 import Pagination from "@/components/Pagination";
 import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
 
 export const dynamic = 'force-dynamic';
+
+function getDelta(latest: number | null | undefined, previous: number | null | undefined): { value: string; positive: boolean } | null {
+    if (!latest || !previous) return null;
+    const diff = latest - previous;
+    return { value: `${diff > 0 ? "+" : ""}${diff.toFixed(1)}`, positive: diff > 0 };
+}
 
 export default async function BodyMeasurementsPage({
     searchParams,
@@ -15,10 +23,20 @@ export default async function BodyMeasurementsPage({
     await getUserServer();
     const params = await searchParams;
     const { page, sortBy, sortOrder } = parseListParams(params, { sortBy: 'Date', sortOrder: 'desc' });
-    const { bodyMeasurements: measurements, totalCount, totalPages } = await getBodyMeasurements(page, 20, sortBy ?? undefined, sortOrder);
-    const baseUrl = buildListUrl('/body-measurements', {});
+    const [tableResult, chartResult] = await Promise.all([
+        getBodyMeasurements(page, 20, sortBy ?? undefined, sortOrder),
+        getBodyMeasurements(1, 200, "Date", "desc"),
+    ]);
+    const { bodyMeasurements: measurements, totalCount, totalPages } = tableResult;
+    const allMeasurements = chartResult.bodyMeasurements;
+    const baseUrl = buildListUrl('/body-measurements', { sortBy, sortOrder });
 
-    const latest = measurements.length > 0 ? measurements[0] : null;
+    const latest = allMeasurements.length > 0 ? allMeasurements[0] : null;
+    const previous = allMeasurements.length > 1 ? allMeasurements[1] : null;
+
+    const weightDelta = getDelta(latest?.weightKg, previous?.weightKg);
+    const bodyFatDelta = getDelta(latest?.bodyFatPercentage, previous?.bodyFatPercentage);
+    const muscleDelta = getDelta(latest?.muscleMassKg, previous?.muscleMassKg);
 
     return (
         <div className="space-y-8">
@@ -37,9 +55,16 @@ export default async function BodyMeasurementsPage({
                         </div>
                         <div className="flex-1">
                             <h3 className="font-semibold text-slate-900">Weight</h3>
-                            <p className="text-sm text-slate-500">
-                                {latest?.weightKg ? `${latest.weightKg} kg` : "No data"}
-                            </p>
+                            <div className="flex items-center gap-2">
+                                <p className="text-sm text-slate-500">
+                                    {latest?.weightKg ? `${latest.weightKg} kg` : "No data"}
+                                </p>
+                                {weightDelta && (
+                                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${weightDelta.positive ? "bg-orange-50 text-orange-600" : "bg-green-50 text-green-600"}`}>
+                                        {weightDelta.value}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -51,9 +76,16 @@ export default async function BodyMeasurementsPage({
                         </div>
                         <div className="flex-1">
                             <h3 className="font-semibold text-slate-900">Body Fat</h3>
-                            <p className="text-sm text-slate-500">
-                                {latest?.bodyFatPercentage ? `${latest.bodyFatPercentage}%` : "No data"}
-                            </p>
+                            <div className="flex items-center gap-2">
+                                <p className="text-sm text-slate-500">
+                                    {latest?.bodyFatPercentage ? `${latest.bodyFatPercentage}%` : "No data"}
+                                </p>
+                                {bodyFatDelta && (
+                                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${bodyFatDelta.positive ? "bg-orange-50 text-orange-600" : "bg-green-50 text-green-600"}`}>
+                                        {bodyFatDelta.value}%
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -65,15 +97,24 @@ export default async function BodyMeasurementsPage({
                         </div>
                         <div className="flex-1">
                             <h3 className="font-semibold text-slate-900">Muscle Mass</h3>
-                            <p className="text-sm text-slate-500">
-                                {latest?.muscleMassKg ? `${latest.muscleMassKg} kg` : "No data"}
-                            </p>
+                            <div className="flex items-center gap-2">
+                                <p className="text-sm text-slate-500">
+                                    {latest?.muscleMassKg ? `${latest.muscleMassKg} kg` : "No data"}
+                                </p>
+                                {muscleDelta && (
+                                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${muscleDelta.positive ? "bg-green-50 text-green-600" : "bg-orange-50 text-orange-600"}`}>
+                                        {muscleDelta.value}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <AddMeasurementForm />
+
+            <MeasurementChart measurements={allMeasurements} />
 
             <div className="card p-6">
                 <h2 className="section-title mb-6">Measurement History</h2>
@@ -88,6 +129,7 @@ export default async function BodyMeasurementsPage({
                                     <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Muscle</th>
                                     <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Waist</th>
                                     <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Notes</th>
+                                    <th className="w-10"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -110,6 +152,9 @@ export default async function BodyMeasurementsPage({
                                         </td>
                                         <td className="py-3 px-4 text-sm text-slate-600 max-w-xs truncate">
                                             {m.notes || "-"}
+                                        </td>
+                                        <td className="py-3 px-4">
+                                            <DeleteMeasurementButton id={m.id} />
                                         </td>
                                     </tr>
                                 ))}

@@ -45,6 +45,18 @@ export async function getBodyMeasurements(page: number = 1, pageSize: number = 2
     }
 }
 
+export async function deleteBodyMeasurement(id: string): Promise<boolean> {
+    try {
+        await serverApi(`/api/BodyMeasurements/${id}`, {
+            method: "DELETE",
+        });
+        return true;
+    } catch (error) {
+        bmLogger.error("Failed to delete body measurement", { error });
+        return false;
+    }
+}
+
 export async function addBodyMeasurement(data: Omit<BodyMeasurement, "id">): Promise<boolean> {
     try {
         await serverApi("/api/BodyMeasurements", {

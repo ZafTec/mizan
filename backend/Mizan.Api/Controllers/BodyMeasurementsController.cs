@@ -45,6 +45,17 @@ public class BodyMeasurementsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpDelete("{id:guid}")]
+    public async Task<ActionResult<DeleteBodyMeasurementResult>> DeleteMeasurement(Guid id)
+    {
+        var result = await _mediator.Send(new DeleteBodyMeasurementCommand(id));
+        if (!result.Success)
+        {
+            return NotFound(result);
+        }
+        return Ok(result);
+    }
+
     [HttpPost]
     public async Task<ActionResult<Guid>> LogMeasurement([FromBody] LogMeasurementRequest request)
     {

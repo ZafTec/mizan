@@ -16,7 +16,7 @@ export default async function Page(
 	const { page, sortBy, sortOrder } = parseListParams(params);
 	const searchIngredient = params.searchIngredient as string | undefined;
 	const { ingredients, totalPages, totalCount } = await getAllIngredient(searchIngredient, sortBy ?? undefined, sortOrder, page, 10);
-	const baseUrl = buildListUrl('/ingredients', { searchIngredient });
+	const baseUrl = buildListUrl('/ingredients', { searchIngredient, sortBy, sortOrder });
 
 	return (
 		<div className="space-y-6">
