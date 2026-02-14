@@ -26,10 +26,12 @@ public class DeleteFoodCommandValidator : AbstractValidator<DeleteFoodCommand>
 public class DeleteFoodCommandHandler : IRequestHandler<DeleteFoodCommand, DeleteFoodResult>
 {
     private readonly IMizanDbContext _context;
+    private readonly IRedisCacheService _cache;
 
-    public DeleteFoodCommandHandler(IMizanDbContext context)
+    public DeleteFoodCommandHandler(IMizanDbContext context, IRedisCacheService cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     public async Task<DeleteFoodResult> Handle(DeleteFoodCommand request, CancellationToken cancellationToken)
@@ -43,6 +45,8 @@ public class DeleteFoodCommandHandler : IRequestHandler<DeleteFoodCommand, Delet
 
         _context.Foods.Remove(food);
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _cache.RemoveByPrefixAsync("foods:search:", cancellationToken);
 
         return new DeleteFoodResult { Success = true, Message = "Food deleted successfully" };
     }

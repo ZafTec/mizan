@@ -44,10 +44,12 @@ public class CreateFoodCommandValidator : AbstractValidator<CreateFoodCommand>
 public class CreateFoodCommandHandler : IRequestHandler<CreateFoodCommand, CreateFoodResult>
 {
     private readonly IMizanDbContext _context;
+    private readonly IRedisCacheService _cache;
 
-    public CreateFoodCommandHandler(IMizanDbContext context)
+    public CreateFoodCommandHandler(IMizanDbContext context, IRedisCacheService cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     public async Task<CreateFoodResult> Handle(CreateFoodCommand request, CancellationToken cancellationToken)
@@ -72,6 +74,8 @@ public class CreateFoodCommandHandler : IRequestHandler<CreateFoodCommand, Creat
 
         _context.Foods.Add(food);
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _cache.RemoveByPrefixAsync("foods:search:", cancellationToken);
 
         return new CreateFoodResult { Id = food.Id, Success = true, Message = "Food created successfully" };
     }

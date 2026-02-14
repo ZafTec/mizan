@@ -40,10 +40,12 @@ public class UpdateFoodCommandValidator : AbstractValidator<UpdateFoodCommand>
 public class UpdateFoodCommandHandler : IRequestHandler<UpdateFoodCommand, UpdateFoodResult>
 {
     private readonly IMizanDbContext _context;
+    private readonly IRedisCacheService _cache;
 
-    public UpdateFoodCommandHandler(IMizanDbContext context)
+    public UpdateFoodCommandHandler(IMizanDbContext context, IRedisCacheService cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     public async Task<UpdateFoodResult> Handle(UpdateFoodCommand request, CancellationToken cancellationToken)
@@ -67,6 +69,8 @@ public class UpdateFoodCommandHandler : IRequestHandler<UpdateFoodCommand, Updat
         food.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _cache.RemoveByPrefixAsync("foods:search:", cancellationToken);
 
         return new UpdateFoodResult { Success = true, Message = "Food updated successfully" };
     }
