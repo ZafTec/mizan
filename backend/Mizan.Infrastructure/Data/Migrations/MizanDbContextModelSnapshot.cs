@@ -1554,8 +1554,7 @@ namespace Mizan.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
-                        .IsUnique();
+                    b.HasIndex("UserId");
 
                     b.ToTable("user_goals", (string)null);
                 });
@@ -2025,8 +2024,8 @@ namespace Mizan.Infrastructure.Data.Migrations
             modelBuilder.Entity("Mizan.Domain.Entities.UserGoal", b =>
                 {
                     b.HasOne("Mizan.Domain.Entities.User", "User")
-                        .WithOne("CurrentGoal")
-                        .HasForeignKey("Mizan.Domain.Entities.UserGoal", "UserId")
+                        .WithMany("Goals")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -2125,9 +2124,9 @@ namespace Mizan.Infrastructure.Data.Migrations
 
                     b.Navigation("ClientRelationships");
 
-                    b.Navigation("CurrentGoal");
-
                     b.Navigation("FoodDiaryEntries");
+
+                    b.Navigation("Goals");
 
                     b.Navigation("HouseholdMemberships");
 

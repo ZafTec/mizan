@@ -36,7 +36,7 @@ public class GetUserQueryHandler : IRequestHandler<GetUserQuery, UserDto?>
     public async Task<UserDto?> Handle(GetUserQuery request, CancellationToken cancellationToken)
     {
         var user = await _context.Users
-            .Include(u => u.CurrentGoal)
+            .Include(u => u.Goals)
             .Include(u => u.Streaks)
             .FirstOrDefaultAsync(u => u.Id == request.UserId, cancellationToken);
 
@@ -44,6 +44,8 @@ public class GetUserQueryHandler : IRequestHandler<GetUserQuery, UserDto?>
         {
             return null;
         }
+
+        var currentGoal = user.Goals.FirstOrDefault(g => g.IsActive);
 
         var currentStreak = user.Streaks
             .OrderByDescending(s => s.LastActivityDate)
@@ -55,11 +57,11 @@ public class GetUserQueryHandler : IRequestHandler<GetUserQuery, UserDto?>
             user.Name,
             user.Image,
             user.CreatedAt,
-            user.CurrentGoal != null ? new UserGoalSummaryDto(
-                user.CurrentGoal.TargetCalories,
-                user.CurrentGoal.TargetProteinGrams,
-                user.CurrentGoal.TargetCarbsGrams,
-                user.CurrentGoal.TargetFatGrams
+            currentGoal != null ? new UserGoalSummaryDto(
+                currentGoal.TargetCalories,
+                currentGoal.TargetProteinGrams,
+                currentGoal.TargetCarbsGrams,
+                currentGoal.TargetFatGrams
             ) : null,
             currentStreak?.CurrentCount ?? 0
         );

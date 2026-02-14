@@ -25,7 +25,7 @@ public class User
     public virtual ICollection<Recipe> Recipes { get; set; } = new List<Recipe>();
     public virtual ICollection<FoodDiaryEntry> FoodDiaryEntries { get; set; } = new List<FoodDiaryEntry>();
     public virtual ICollection<Workout> Workouts { get; set; } = new List<Workout>();
-    public virtual UserGoal? CurrentGoal { get; set; }
+    public virtual ICollection<UserGoal> Goals { get; set; } = new List<UserGoal>();
     public virtual ICollection<UserAchievement> Achievements { get; set; } = new List<UserAchievement>();
     public virtual ICollection<Streak> Streaks { get; set; } = new List<Streak>();
     public virtual ICollection<TrainerClientRelationship> TrainerRelationships { get; set; } = new List<TrainerClientRelationship>();

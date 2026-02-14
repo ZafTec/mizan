@@ -339,7 +339,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
-            entity.HasOne(e => e.User).WithOne(u => u.CurrentGoal).HasForeignKey<UserGoal>(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.User).WithMany(u => u.Goals).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // GoalProgress configuration
