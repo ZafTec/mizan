@@ -37,7 +37,7 @@ export default function RecipeMoreButton({ recipeId }: { recipeId: ID }) {
 		<div className="relative">
 			<button
 				ref={buttonRef}
-				className="text-gray-400 hover:text-gray-600 z-10 hover:bg-emerald-50 w-8 h-8 rounded-full"
+				className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 z-10 hover:bg-emerald-50 dark:hover:bg-emerald-950 w-8 h-8 rounded-full"
 				onClick={handleClicked}
 				type="button"
 				>
@@ -50,13 +50,13 @@ export default function RecipeMoreButton({ recipeId }: { recipeId: ID }) {
 			{showMenu && (
 				<div
 					ref={menuRef}
-					className="absolute bg-white shadow-lg rounded-lg mt-2 z-20 w-20"
+					className="absolute bg-white dark:bg-slate-900 shadow-lg rounded-lg mt-2 z-20 w-20"
 				>
-					<ul className="text-sm text-gray-700">
+					<ul className="text-sm text-gray-700 dark:text-gray-300">
 						<li>
 							<button
 								onClick={() => console.debug(`Editing recipe ${recipeId}`)}
-								className="block px-4 py-2 hover:bg-gray-100 w-full text-left"
+								className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-slate-800 w-full text-left"
 							>
 								Edit
 							</button>
@@ -64,7 +64,7 @@ export default function RecipeMoreButton({ recipeId }: { recipeId: ID }) {
 						<li>
 							<button
 								onClick={() => console.debug(`Deleting recipe ${recipeId}`)}
-								className="block px-4 py-2 hover:bg-gray-100 w-full text-left"
+								className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-slate-800 w-full text-left"
 							>
 								Delete
 							</button>

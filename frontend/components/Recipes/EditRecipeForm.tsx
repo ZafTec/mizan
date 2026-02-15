@@ -170,7 +170,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
         <form onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Information Card */}
             <div className="card p-6 space-y-5">
-                <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+                <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                     <i className="ri-image-line text-brand-500" />
                     Basic Information
                 </h2>
@@ -191,14 +191,14 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                                 <button
                                     type="button"
                                     onClick={() => open()}
-                                    className="w-24 h-24 rounded-2xl border-2 border-dashed border-slate-300 hover:border-brand-400 bg-slate-50 hover:bg-brand-50 flex flex-col items-center justify-center transition-colors group"
+                                    className="w-24 h-24 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-400 bg-slate-50 dark:bg-slate-800 hover:bg-brand-50 flex flex-col items-center justify-center transition-colors group"
                                 >
                                     <i className="ri-image-add-line text-2xl text-slate-400 group-hover:text-brand-500" />
                                     <span className="text-xs text-slate-400 group-hover:text-brand-500 mt-1">Change</span>
                                 </button>
                                 {images.map((image, index) => (
                                     <div key={index} className="relative w-24 h-24">
-                                        <Image src={image} alt="Recipe" fill className="rounded-2xl object-cover border-2 border-slate-200" />
+                                        <Image src={image} alt="Recipe" fill className="rounded-2xl object-cover border-2 border-slate-200 dark:border-slate-700" />
                                     </div>
                                 ))}
                             </div>
@@ -237,7 +237,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
 
             {/* Ingredients Card */}
             <div className="card p-6 space-y-4 relative overflow-visible!">
-                <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+                <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                     <i className="ri-list-check-2 text-brand-500" />
                     Ingredients
                 </h2>
@@ -254,16 +254,16 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                                     className="input w-full"
                                 />
                                 {activeDropdownIndex === index && (
-                                    <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+                                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
                                         {ingredientSearch.length > 0 ? (
                                             ingredientSearch.map((ingredient) => (
                                                 <button
                                                     key={ingredient.id}
                                                     type="button"
                                                     onClick={() => handleIngredientSelect(index, ingredient)}
-                                                    className="w-full p-3 text-left hover:bg-slate-50 flex items-center justify-between border-b border-slate-100 last:border-0"
+                                                    className="w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 last:border-0"
                                                 >
-                                                    <span className="font-medium text-slate-900">{ingredient.name}</span>
+                                                    <span className="font-medium text-slate-900 dark:text-slate-100">{ingredient.name}</span>
                                                     <span className="text-xs text-slate-500">{ingredient.caloriesPer100g} kcal/100g</span>
                                                 </button>
                                             ))

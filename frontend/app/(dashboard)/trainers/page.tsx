@@ -68,7 +68,7 @@ export default function TrainersPage() {
 	if (!session?.user) {
 		return (
 			<div className="flex items-center justify-center min-h-screen">
-				<p className="text-slate-500">Not authenticated</p>
+				<p className="text-slate-500 dark:text-slate-400">Not authenticated</p>
 			</div>
 		);
 	}
@@ -87,8 +87,8 @@ export default function TrainersPage() {
 			{/* Header */}
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
-					<h1 className="text-2xl font-bold text-slate-900">Find a Trainer</h1>
-					<p className="text-slate-500 mt-1">
+					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Find a Trainer</h1>
+					<p className="text-slate-500 dark:text-slate-400 mt-1">
 						Connect with certified trainers to achieve your goals
 					</p>
 				</div>
@@ -115,11 +115,11 @@ export default function TrainersPage() {
 			{/* Trainers Grid */}
 			{filteredTrainers.length === 0 ? (
 				<div className="card p-12 text-center">
-					<i className="ri-user-search-line text-6xl text-slate-300 mb-4" />
-					<h3 className="text-lg font-semibold text-slate-900 mb-2">
+					<i className="ri-user-search-line text-6xl text-slate-300 dark:text-slate-600 mb-4" />
+					<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
 						No trainers found
 					</h3>
-					<p className="text-slate-500">
+					<p className="text-slate-500 dark:text-slate-400">
 						Try adjusting your search or check back later
 					</p>
 				</div>
@@ -134,20 +134,20 @@ export default function TrainersPage() {
 										alt={trainer.name || trainer.email}
 										width={80}
 										height={80}
-										className="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-lg mb-3"
+										className="w-20 h-20 rounded-2xl object-cover border-4 border-white dark:border-slate-900 shadow-lg mb-3"
 									/>
 								) : (
-									<div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center border-4 border-white shadow-lg mb-3">
+									<div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center border-4 border-white dark:border-slate-900 shadow-lg mb-3">
 										<span className="text-2xl font-bold text-white">
 											{trainer.email.charAt(0).toUpperCase()}
 										</span>
 									</div>
 								)}
-								<h3 className="font-semibold text-slate-900 mb-1">
+								<h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">
 									{trainer.name || trainer.email.split("@")[0]}
 								</h3>
-								<p className="text-sm text-slate-500 mb-2">{trainer.email}</p>
-								<div className="flex items-center gap-2 text-xs text-slate-600">
+								<p className="text-sm text-slate-500 dark:text-slate-400 mb-2">{trainer.email}</p>
+								<div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
 									<i className="ri-group-line" />
 									<span>{trainer.clientCount} clients</span>
 								</div>
@@ -155,7 +155,7 @@ export default function TrainersPage() {
 
 							{trainer.specialties && (
 								<div className="mb-4">
-									<p className="text-sm text-slate-700">{trainer.specialties}</p>
+									<p className="text-sm text-slate-700 dark:text-slate-300">{trainer.specialties}</p>
 								</div>
 							)}
 
@@ -182,16 +182,16 @@ export default function TrainersPage() {
 			)}
 
 			{/* Info Card */}
-			<div className="card p-6 border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+			<div className="card p-6 border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
 				<div className="flex items-start gap-4">
 					<div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
 						<i className="ri-information-line text-2xl text-white" />
 					</div>
 					<div>
-						<h3 className="font-semibold text-slate-900 mb-2">
+						<h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">
 							How it works
 						</h3>
-						<ul className="text-sm text-slate-600 space-y-2">
+						<ul className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
 							<li className="flex items-start gap-2">
 								<i className="ri-arrow-right-s-line text-blue-500 mt-0.5" />
 								<span>

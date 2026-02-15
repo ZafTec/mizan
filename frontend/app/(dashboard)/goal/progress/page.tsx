@@ -56,8 +56,8 @@ export default function LogProgress() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Log Today's Progress</h1>
-          <p className="text-slate-500 mt-1">Record your daily nutrition intake</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Log Today's Progress</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Record your daily nutrition intake</p>
         </div>
         <Link href="/goal/dashboard" className="btn-secondary">
           <i className="ri-arrow-left-line" />
@@ -68,12 +68,12 @@ export default function LogProgress() {
       {/* Quick Tips */}
       <div className="card p-6 bg-gradient-to-br from-brand-50 to-accent-50">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
-            <i className="ri-lightbulb-line text-xl text-brand-600" />
+          <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center flex-shrink-0">
+            <i className="ri-lightbulb-line text-xl text-brand-600 dark:text-brand-400" />
           </div>
           <div>
-            <h3 className="font-semibold text-slate-900 mb-1">Pro Tips</h3>
-            <ul className="text-sm text-slate-600 space-y-1">
+            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">Pro Tips</h3>
+            <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
               <li>• Track your meals throughout the day for accuracy</li>
               <li>• Use the meal diary to calculate totals automatically</li>
               <li>• Add notes about how you felt or what worked well</li>
@@ -85,7 +85,7 @@ export default function LogProgress() {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Macros Card */}
         <div className="card p-6 space-y-5">
-          <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <i className="ri-pie-chart-2-line text-brand-500" />
             Daily Totals
           </h2>
@@ -178,7 +178,7 @@ export default function LogProgress() {
 
         {/* Optional Fields Card */}
         <div className="card p-6 space-y-5">
-          <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <i className="ri-more-line text-brand-500" />
             Additional Info
           </h2>
@@ -198,7 +198,7 @@ export default function LogProgress() {
               placeholder="70.5"
               className="input"
             />
-            <p className="text-xs text-slate-500 mt-1">Track your weight to see correlations with your nutrition</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Track your weight to see correlations with your nutrition</p>
           </div>
 
           <div>

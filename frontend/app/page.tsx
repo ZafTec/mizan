@@ -35,7 +35,7 @@ export default async function Home() {
 						<div className="flex flex-col sm:flex-row gap-4">
 							<Link
 								href="/register"
-								className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-brand-700 font-semibold rounded-xl hover:bg-brand-50 transition-colors shadow-lg"
+								className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-900 text-brand-700 dark:text-brand-400 font-semibold rounded-xl hover:bg-brand-50 dark:hover:bg-slate-800 transition-colors shadow-lg"
 							>
 								Get Started Free
 								<i className="ri-arrow-right-line" />
@@ -62,8 +62,8 @@ export default async function Home() {
 							<i className="ri-add-circle-line text-2xl text-white" />
 						</div>
 						<div>
-							<h3 className="font-semibold text-slate-900 mb-1">Log Meal</h3>
-							<p className="text-sm text-slate-500">Track what you eat</p>
+							<h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">Log Meal</h3>
+							<p className="text-sm text-slate-500 dark:text-slate-400">Track what you eat</p>
 						</div>
 					</div>
 				</Link>
@@ -74,8 +74,8 @@ export default async function Home() {
 							<i className="ri-restaurant-line text-2xl text-white" />
 						</div>
 						<div>
-							<h3 className="font-semibold text-slate-900 mb-1">Create Recipe</h3>
-							<p className="text-sm text-slate-500">Add your own recipes</p>
+							<h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">Create Recipe</h3>
+							<p className="text-sm text-slate-500 dark:text-slate-400">Add your own recipes</p>
 						</div>
 					</div>
 				</Link>
@@ -86,8 +86,8 @@ export default async function Home() {
 							<i className="ri-magic-line text-2xl text-white" />
 						</div>
 						<div>
-							<h3 className="font-semibold text-slate-900 mb-1">AI Coach</h3>
-							<p className="text-sm text-slate-500">Get personalized advice</p>
+							<h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">AI Coach</h3>
+							<p className="text-sm text-slate-500 dark:text-slate-400">Get personalized advice</p>
 						</div>
 					</div>
 				</Link>
@@ -98,7 +98,7 @@ export default async function Home() {
 				<div className="flex items-center justify-between mb-6">
 					<div>
 						<h2 className="section-title">Popular Recipes</h2>
-						<p className="text-sm text-slate-500 mt-1">Discover community favorites</p>
+						<p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Discover community favorites</p>
 					</div>
 					<Link href="/recipes" className="btn-secondary text-sm">
 						View All
@@ -111,7 +111,7 @@ export default async function Home() {
 						<Link
 							key={recipe._id.toString()}
 							href={`/recipes/${recipe._id}`}
-							className="group relative rounded-2xl overflow-hidden bg-slate-100"
+							className="group relative rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800"
 						>
 							<Image
 								src={placeHolderImage}
@@ -136,7 +136,7 @@ export default async function Home() {
 							</div>
 						</Link>
 					)) : (
-						<div className="col-span-full text-center py-12 text-slate-500">
+						<div className="col-span-full text-center py-12 text-slate-500 dark:text-slate-400">
 							<i className="ri-restaurant-line text-4xl mb-2 block opacity-50" />
 							<p>No recipes yet. Be the first to add one!</p>
 						</div>
@@ -150,7 +150,7 @@ export default async function Home() {
 					<div className="flex items-center justify-between mb-6">
 						<div>
 							<h2 className="section-title">Nutrition Overview</h2>
-							<p className="text-sm text-slate-500 mt-1">Your daily progress</p>
+							<p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Your daily progress</p>
 						</div>
 						<Link href="/goal" className="btn-primary text-sm">
 							<i className="ri-target-line" />

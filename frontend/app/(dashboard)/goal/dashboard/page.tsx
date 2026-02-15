@@ -49,10 +49,10 @@ export default function GoalDashboard() {
           <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center">
             <i className="ri-target-line text-4xl text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-3">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">
             No Active Goal
           </h2>
-          <p className="text-slate-600 mb-6 max-w-md mx-auto">
+          <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-md mx-auto">
             Start tracking your nutrition journey by setting up your first goal. Define your targets and watch your progress unfold.
           </p>
           <Link href="/goal" className="btn-primary inline-flex">
@@ -101,8 +101,8 @@ export default function GoalDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Goal Dashboard</h1>
-          <p className="text-slate-500 mt-1">Track your daily nutrition progress</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Goal Dashboard</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Track your daily nutrition progress</p>
         </div>
         <div className="flex gap-3">
           <Link href="/goal/progress" className="btn-primary">
@@ -125,7 +125,7 @@ export default function GoalDashboard() {
             className={`px-4 py-2 rounded-xl font-medium transition-all ${
               days === d
                 ? "bg-brand-500 text-white shadow-lg"
-                : "bg-white text-slate-600 hover:bg-slate-50"
+                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
             }`}
           >
             {d} Days
@@ -136,7 +136,7 @@ export default function GoalDashboard() {
       {/* Today's Progress Radial */}
       {todayProgress && (
         <div className="card p-6">
-          <h2 className="text-xl font-bold text-slate-900 mb-6">Today's Progress</h2>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6">Today's Progress</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Radial Chart */}
             <div>
@@ -174,15 +174,15 @@ export default function GoalDashboard() {
               ].map((macro) => (
                 <div key={macro.label}>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
                       <span className="w-3 h-3 rounded-full" style={{ backgroundColor: macro.color }} />
                       {macro.label}
                     </span>
-                    <span className="text-sm text-slate-600">
+                    <span className="text-sm text-slate-600 dark:text-slate-400">
                       {macro.actual?.toFixed(1)} / {macro.target} {macro.unit}
                     </span>
                   </div>
-                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                     <div
                       className="h-full transition-all duration-500"
                       style={{
@@ -200,7 +200,7 @@ export default function GoalDashboard() {
 
       {/* Line Chart - Calories Trend */}
       <div className="card p-6">
-        <h2 className="text-xl font-bold text-slate-900 mb-6">Calorie Trend</h2>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6">Calorie Trend</h2>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -229,7 +229,7 @@ export default function GoalDashboard() {
 
       {/* Bar Chart - Macros Breakdown */}
       <div className="card p-6">
-        <h2 className="text-xl font-bold text-slate-900 mb-6">Macro Breakdown</h2>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6">Macro Breakdown</h2>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -253,32 +253,32 @@ export default function GoalDashboard() {
 
       {/* Recent Entries */}
       <div className="card p-6">
-        <h2 className="text-xl font-bold text-slate-900 mb-6">Recent Entries</h2>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6">Recent Entries</h2>
         <div className="space-y-3">
           {progressEntries.slice(-5).reverse().map((entry) => (
-            <div key={entry.id} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors">
+            <div key={entry.id} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
               <div>
-                <div className="font-medium text-slate-900">
+                <div className="font-medium text-slate-900 dark:text-slate-100">
                   {new Date(entry.date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
                 </div>
-                {entry.notes && <div className="text-sm text-slate-500 mt-1">{entry.notes}</div>}
+                {entry.notes && <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">{entry.notes}</div>}
               </div>
               <div className="flex gap-6 text-sm">
                 <div className="text-center">
-                  <div className="text-slate-500">Calories</div>
-                  <div className="font-bold text-slate-900">{entry.actualCalories}</div>
+                  <div className="text-slate-500 dark:text-slate-400">Calories</div>
+                  <div className="font-bold text-slate-900 dark:text-slate-100">{entry.actualCalories}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-slate-500">Protein</div>
-                  <div className="font-bold text-slate-900">{entry.actualProteinGrams.toFixed(1)}g</div>
+                  <div className="text-slate-500 dark:text-slate-400">Protein</div>
+                  <div className="font-bold text-slate-900 dark:text-slate-100">{entry.actualProteinGrams.toFixed(1)}g</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-slate-500">Carbs</div>
-                  <div className="font-bold text-slate-900">{entry.actualCarbsGrams.toFixed(1)}g</div>
+                  <div className="text-slate-500 dark:text-slate-400">Carbs</div>
+                  <div className="font-bold text-slate-900 dark:text-slate-100">{entry.actualCarbsGrams.toFixed(1)}g</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-slate-500">Fat</div>
-                  <div className="font-bold text-slate-900">{entry.actualFatGrams.toFixed(1)}g</div>
+                  <div className="text-slate-500 dark:text-slate-400">Fat</div>
+                  <div className="font-bold text-slate-900 dark:text-slate-100">{entry.actualFatGrams.toFixed(1)}g</div>
                 </div>
               </div>
             </div>

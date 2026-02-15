@@ -12,19 +12,19 @@ export default function GoalForm() {
 		<div className="max-w-3xl mx-auto space-y-6">
 			{/* Header */}
 			<div>
-				<h1 className="text-2xl font-bold text-slate-900">Nutrition Goals</h1>
-				<p className="text-slate-500 mt-1">Set your daily macro targets to track your progress</p>
+				<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Nutrition Goals</h1>
+				<p className="text-slate-500 dark:text-slate-400 mt-1">Set your daily macro targets to track your progress</p>
 			</div>
 
 			{/* Info Card */}
 			<div className="card p-6 bg-gradient-to-br from-brand-50 to-accent-50">
 				<div className="flex items-start gap-4">
-					<div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
-						<i className="ri-target-line text-xl text-brand-600" />
+					<div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center flex-shrink-0">
+						<i className="ri-target-line text-xl text-brand-600 dark:text-brand-400" />
 					</div>
 					<div>
-						<h3 className="font-semibold text-slate-900">Why Set Goals?</h3>
-						<p className="text-sm text-slate-600 mt-1">
+						<h3 className="font-semibold text-slate-900 dark:text-slate-100">Why Set Goals?</h3>
+						<p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
 							Setting nutrition goals helps you stay on track. Our AI coach will use these targets
 							to provide personalized recipe suggestions and track your daily progress.
 						</p>
@@ -35,7 +35,7 @@ export default function GoalForm() {
 			<form action={action} className="space-y-6">
 				{/* Goal Name Card */}
 				<div className="card p-6 space-y-5">
-					<h2 className="font-semibold text-slate-900 flex items-center gap-2">
+					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
 						<i className="ri-bookmark-line text-brand-500" />
 						Goal Name
 					</h2>
@@ -54,7 +54,7 @@ export default function GoalForm() {
 
 				{/* Macro Targets Card */}
 				<div className="card p-6 space-y-5">
-					<h2 className="font-semibold text-slate-900 flex items-center gap-2">
+					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
 						<i className="ri-pie-chart-2-line text-brand-500" />
 						Daily Macro Targets
 					</h2>
@@ -150,14 +150,14 @@ export default function GoalForm() {
 
 				{/* Status Messages */}
 				{formState.status === "success" && (
-					<div className="flex items-center gap-2 p-4 rounded-xl bg-green-50 text-green-600">
+					<div className="flex items-center gap-2 p-4 rounded-xl bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-300">
 						<i className="ri-checkbox-circle-line text-xl" />
 						<span>Goal updated successfully!</span>
 					</div>
 				)}
 
 				{formState.status === "error" && formState.message && (
-					<div className="flex items-center gap-2 p-4 rounded-xl bg-red-50 text-red-600">
+					<div className="flex items-center gap-2 p-4 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-300">
 						<i className="ri-error-warning-line text-xl" />
 						<span>{formState.message}</span>
 					</div>

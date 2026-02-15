@@ -30,12 +30,12 @@ export default async function AuditLogsPage({
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Audit Logs</h1>
-                    <p className="text-slate-500 mt-1">Monitor system activities and user actions</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Audit Logs</h1>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">Monitor system activities and user actions</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-slate-500">Total Activities:</span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-sm font-bold">{totalCount}</span>
+                    <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Activities:</span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-bold">{totalCount}</span>
                 </div>
             </div>
 
@@ -43,7 +43,7 @@ export default async function AuditLogsPage({
             <div className="card p-4">
                 <form className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className="label text-xs uppercase tracking-wider font-bold text-slate-400">Action Name</label>
+                        <label className="label text-xs uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">Action Name</label>
                         <input
                             name="action"
                             type="text"
@@ -53,7 +53,7 @@ export default async function AuditLogsPage({
                         />
                     </div>
                     <div>
-                        <label className="label text-xs uppercase tracking-wider font-bold text-slate-400">Entity Type</label>
+                        <label className="label text-xs uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">Entity Type</label>
                         <input
                             name="entityType"
                             type="text"
@@ -75,50 +75,50 @@ export default async function AuditLogsPage({
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-slate-50/50 border-b border-slate-100">
-                                <SortableHeader sortKey="timestamp" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500">Timestamp</SortableHeader>
-                                <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500">User</th>
-                                <SortableHeader sortKey="action" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500">Action</SortableHeader>
-                                <SortableHeader sortKey="entityType" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500">Entity</SortableHeader>
-                                <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500">IP Address</th>
+                            <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                                <SortableHeader sortKey="timestamp" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">Timestamp</SortableHeader>
+                                <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">User</th>
+                                <SortableHeader sortKey="action" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">Action</SortableHeader>
+                                <SortableHeader sortKey="entityType" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">Entity</SortableHeader>
+                                <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">IP Address</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {logs.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
                                         No audit logs found.
                                     </td>
                                 </tr>
                             ) : (
                                 logs.map((log) => (
-                                    <tr key={log.id} className="hover:bg-slate-50/50 transition-colors group">
+                                    <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group">
                                         <td className="px-6 py-4">
-                                            <div className="text-sm font-medium text-slate-900">
+                                            <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
                                                 {format(new Date(log.timestamp), "MMM d, yyyy")}
                                             </div>
-                                            <div className="text-xs text-slate-500 font-mono">
+                                            <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                                                 {format(new Date(log.timestamp), "HH:mm:ss")}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="text-sm text-slate-900 font-medium">{log.userEmail || "System"}</div>
-                                            <div className="text-xs text-slate-400 font-mono">{log.userId || ""}</div>
+                                            <div className="text-sm text-slate-900 dark:text-slate-100 font-medium">{log.userEmail || "System"}</div>
+                                            <div className="text-xs text-slate-400 dark:text-slate-500 font-mono">{log.userId || ""}</div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="px-2 py-1 rounded-md bg-blue-50 text-blue-700 text-xs font-bold border border-blue-100">
+                                            <span className="px-2 py-1 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-xs font-bold border border-blue-100 dark:border-blue-800">
                                                 {log.action}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="text-sm text-slate-700 font-medium">
+                                            <div className="text-sm text-slate-700 dark:text-slate-300 font-medium">
                                                 {log.entityType}
                                             </div>
-                                            <div className="text-xs text-slate-400 font-mono">
+                                            <div className="text-xs text-slate-400 dark:text-slate-500 font-mono">
                                                 {log.entityId}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-slate-500 font-mono">
+                                        <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 font-mono">
                                             {log.ipAddress || "—"}
                                         </td>
                                     </tr>

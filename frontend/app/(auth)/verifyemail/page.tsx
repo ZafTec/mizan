@@ -80,17 +80,17 @@ export default function Page() {
 				<div className="card p-6 sm:p-8">
 					{loading ? (
 						<div className="text-center space-y-4">
-							<div className="w-16 h-16 rounded-full bg-brand-100 flex items-center justify-center mx-auto">
-								<svg className="animate-spin h-8 w-8 text-brand-600" fill="none" viewBox="0 0 24 24">
+							<div className="w-16 h-16 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center mx-auto">
+								<svg className="animate-spin h-8 w-8 text-brand-600 dark:text-brand-400" fill="none" viewBox="0 0 24 24">
 									<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
 									<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
 								</svg>
 							</div>
 							<div>
-								<h3 className="text-lg font-semibold text-slate-900 mb-2">
+								<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
 									Verifying your email
 								</h3>
-								<p className="text-slate-500 text-sm">
+								<p className="text-slate-500 dark:text-slate-400 text-sm">
 									Please wait while we verify your email address...
 								</p>
 							</div>
@@ -101,10 +101,10 @@ export default function Page() {
 								<i className="ri-checkbox-circle-line text-3xl text-green-600" />
 							</div>
 							<div>
-								<h3 className="text-lg font-semibold text-slate-900 mb-2">
+								<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
 									Email verified successfully!
 								</h3>
-								<p className="text-slate-500 text-sm">
+								<p className="text-slate-500 dark:text-slate-400 text-sm">
 									Your email has been verified. You can now sign in to your account.
 								</p>
 							</div>
@@ -123,10 +123,10 @@ export default function Page() {
 								<i className="ri-error-warning-line text-3xl text-red-600" />
 							</div>
 							<div>
-								<h3 className="text-lg font-semibold text-slate-900 mb-2">
+								<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
 									Verification failed
 								</h3>
-								<p className="text-slate-500 text-sm">
+								<p className="text-slate-500 dark:text-slate-400 text-sm">
 									{errorMessage}
 								</p>
 							</div>
