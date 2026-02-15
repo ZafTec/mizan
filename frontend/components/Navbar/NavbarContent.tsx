@@ -31,6 +31,7 @@ const NavLink = ({ href, children, onClick }: { href: string; children: React.Re
 
 export default function NavbarContent({ user }: NavbarContentProps) {
 	const [menuOpen, setMenuOpen] = useState(false);
+	const [showLogoutModal, setShowLogoutModal] = useState(false);
 	const menuRef = useRef<HTMLDivElement>(null);
 	const router = useRouter();
 
@@ -72,6 +73,34 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 	const closeMenu = () => setMenuOpen(false);
 
 	return (
+		<>
+		{showLogoutModal && (
+			<div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowLogoutModal(false)}>
+				<div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
+					<div className="flex items-center gap-3 mb-4">
+						<div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
+							<i className="ri-logout-box-r-line text-xl text-red-600" />
+						</div>
+						<h3 className="text-lg font-semibold text-slate-900">Sign Out</h3>
+					</div>
+					<p className="text-sm text-slate-500 mb-6">Are you sure you want to sign out?</p>
+					<div className="flex gap-3">
+						<button
+							onClick={() => setShowLogoutModal(false)}
+							className="flex-1 px-4 py-2.5 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+						>
+							Cancel
+						</button>
+						<button
+							onClick={() => { setShowLogoutModal(false); handleLogout(); }}
+							className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors"
+						>
+							Sign Out
+						</button>
+					</div>
+				</div>
+			</div>
+		)}
 		<div className="flex items-center gap-2">
 			{/* Desktop Navigation */}
 			<nav className="hidden md:flex items-center gap-1">
@@ -104,7 +133,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 							</div>
 						</Link>
 						<button
-							onClick={handleLogout}
+							onClick={() => setShowLogoutModal(true)}
 							className="px-3 py-2 text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
 						>
 							<i className="ri-logout-box-r-line text-lg" />
@@ -181,7 +210,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 									<span>Profile</span>
 								</Link>
 								<button
-									onClick={() => { handleLogout(); closeMenu(); }}
+									onClick={() => { closeMenu(); setShowLogoutModal(true); }}
 									className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
 								>
 									Sign Out
@@ -209,5 +238,6 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 				</div>
 			)}
 		</div>
+		</>
 	);
 }

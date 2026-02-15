@@ -1,9 +1,15 @@
 import { getIngredientById } from "@/data/ingredient";
+import { getUserOptionalServer } from "@/helper/session";
 import Link from "next/link";
+import DeleteIngredientButton from "./DeleteIngredientButton";
 
 export default async function Page({ params }: { params: Promise<{ ingredientId: string }> }) {
 	const { ingredientId } = await params;
-	const ingredient = await getIngredientById(ingredientId);
+	const [ingredient, user] = await Promise.all([
+		getIngredientById(ingredientId),
+		getUserOptionalServer(),
+	]);
+	const isAdmin = user?.role === "admin";
 
 	if (!ingredient) {
 		return (
@@ -28,7 +34,6 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 
 	return (
 		<div className="max-w-3xl mx-auto space-y-6">
-			{/* Header */}
 			<div className="flex items-center gap-4">
 				<Link href="/ingredients" className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
 					<i className="ri-arrow-left-line text-xl text-slate-600" />
@@ -47,7 +52,6 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 				</div>
 			</div>
 
-			{/* Nutrition Summary Card */}
 			<div className="card p-6 bg-gradient-to-br from-brand-50 to-accent-50">
 				<h2 className="font-semibold text-slate-900 mb-4">Nutritional Information</h2>
 				<div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
@@ -89,14 +93,11 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 				</div>
 			</div>
 
-			{/* Macro Distribution Card */}
 			<div className="card p-6">
 				<h2 className="font-semibold text-slate-900 flex items-center gap-2 mb-4">
 					<i className="ri-pie-chart-2-line text-brand-500" />
 					Macronutrient Distribution
 				</h2>
-
-				{/* Progress Bar */}
 				<div className="h-4 flex rounded-full overflow-hidden mb-4 bg-slate-100">
 					<div
 						style={{ width: `${proteinPercentage}%` }}
@@ -114,8 +115,6 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 						title={`Fat: ${fatPercentage.toFixed(1)}%`}
 					/>
 				</div>
-
-				{/* Legend */}
 				<div className="flex flex-wrap gap-6">
 					<div className="flex items-center gap-2">
 						<div className="w-4 h-4 rounded-full bg-red-500" />
@@ -135,20 +134,22 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 				</div>
 			</div>
 
-			{/* Actions Card */}
-			<div className="card p-6">
-				<div className="flex items-center justify-between">
-					<div className="text-sm text-slate-500">
-						{ingredient.brand && <span>Brand: {ingredient.brand}</span>}
-					</div>
-					<div className="flex gap-2">
-						<button className="btn-secondary text-sm px-3 py-1.5">
-							<i className="ri-edit-line" />
-							Edit
-						</button>
+			{isAdmin && (
+				<div className="card p-6">
+					<div className="flex items-center justify-between">
+						<div className="text-sm text-slate-500">
+							{ingredient.brand && <span>Brand: {ingredient.brand}</span>}
+						</div>
+						<div className="flex gap-2">
+							<Link href={`/ingredients/${ingredientId}/edit`} className="btn-secondary text-sm px-3 py-1.5">
+								<i className="ri-edit-line" />
+								Edit
+							</Link>
+							<DeleteIngredientButton id={ingredientId} />
+						</div>
 					</div>
 				</div>
-			</div>
+			)}
 		</div>
 	);
 }

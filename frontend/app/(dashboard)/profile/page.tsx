@@ -45,13 +45,22 @@ export default function ProfilePage() {
 	const handleUpdateProfile = async () => {
 		setIsUpdating(true);
 		try {
-			await clientApi("/api/Users/me", {
-				method: "PUT",
-				body: {
-					name: name || null,
-					image: image || null,
-				},
-			});
+			const updateData: Record<string, string> = {};
+			if (name) updateData.name = name;
+			if (image) updateData.image = image;
+
+			await Promise.all([
+				clientApi("/api/Users/me", {
+					method: "PUT",
+					body: {
+						name: name || null,
+						image: image || null,
+					},
+				}),
+				Object.keys(updateData).length > 0
+					? authClient.updateUser(updateData)
+					: Promise.resolve(),
+			]);
 			setShowEditModal(false);
 			window.location.reload();
 		} catch (error) {

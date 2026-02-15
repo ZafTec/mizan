@@ -45,11 +45,11 @@ export default async function Page({
 			{/* Quick Collections */}
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 				{[
-					{ name: "Favorites", icon: "ri-heart-3-line", count: favoriteCount, color: "from-rose-400 to-rose-600" },
-					{ name: "My Recipes", icon: "ri-restaurant-line", count: totalCount, color: "from-brand-400 to-brand-600" },
-					{ name: "Recent", icon: "ri-history-line", count: Math.min(recipes.length, 5), color: "from-violet-400 to-violet-600" },
+					{ name: "Favorites", icon: "ri-heart-3-line", count: favoriteCount, color: "from-rose-400 to-rose-600", href: "/recipes/favorites" },
+					{ name: "My Recipes", icon: "ri-restaurant-line", count: totalCount, color: "from-brand-400 to-brand-600", href: "/recipes" },
+					{ name: "Recent", icon: "ri-history-line", count: Math.min(recipes.length, 5), color: "from-violet-400 to-violet-600", href: "/recipes" },
 				].map((collection) => (
-					<div key={collection.name} className="card-hover p-5 group cursor-pointer">
+					<Link key={collection.name} href={collection.href} className="card-hover p-5 group">
 						<div className="flex items-center gap-4">
 							<div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${collection.color} flex items-center justify-center shadow-lg`}>
 								<i className={`${collection.icon} text-xl text-white`} />
@@ -60,7 +60,7 @@ export default async function Page({
 							</div>
 							<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
 						</div>
-					</div>
+					</Link>
 				))}
 			</div>
 

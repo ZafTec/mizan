@@ -37,7 +37,7 @@ export function ClientHeader({ clientId }: ClientHeaderProps) {
 				const clients = await clientApi<ClientRelationship[]>(
 					"/api/Trainers/clients"
 				);
-				const client = clients.find((c) => c.clientId === clientId);
+				const client = Array.isArray(clients) ? clients.find((c) => c.clientId === clientId) : undefined;
 				setRelationship(client || null);
 			} catch (error) {
 				console.error("Failed to fetch client relationship:", error);

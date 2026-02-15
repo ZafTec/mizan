@@ -45,9 +45,9 @@ export default async function MealPlanPage({
 						<h1 className="text-2xl font-bold text-slate-900">Meal Planning</h1>
 						<p className="text-slate-500 mt-1">Plan your meals for the week ahead</p>
 					</div>
-					<Link href="/recipes" className="btn-primary">
-						<i className="ri-book-open-line" />
-						Browse Recipes
+					<Link href="/meal-plan/create" className="btn-primary">
+						<i className="ri-add-line" />
+						Create Meal Plan
 					</Link>
 				</div>
 
@@ -74,9 +74,9 @@ export default async function MealPlanPage({
 							<i className="ri-shopping-cart-line" />
 							Shopping List
 						</Link>
-						<Link href="/recipes" className="btn-primary">
+						<Link href="/meal-plan/create" className="btn-primary">
 							<i className="ri-add-line" />
-							Browse Recipes
+							Create Meal Plan
 						</Link>
 					</div>
 				</div>
@@ -133,10 +133,10 @@ export default async function MealPlanPage({
 								<i className="ri-calendar-line text-3xl text-slate-400" />
 							</div>
 							<h3 className="text-lg font-semibold text-slate-900 mb-2">No meal plans yet</h3>
-							<p className="text-slate-500 mb-4">Start planning your meals by browsing recipes</p>
-							<Link href="/recipes" className="btn-primary">
-								<i className="ri-book-open-line" />
-								Browse Recipes
+							<p className="text-slate-500 mb-4">Start planning your meals for the week</p>
+							<Link href="/meal-plan/create" className="btn-primary">
+								<i className="ri-add-line" />
+								Create Meal Plan
 							</Link>
 						</div>
 					)}

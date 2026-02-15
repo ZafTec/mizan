@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { buildListUrl } from "@/lib/utils/list-params";
 
 interface SortableHeaderProps {
   children: React.ReactNode;
@@ -8,6 +7,20 @@ interface SortableHeaderProps {
   currentOrder: "asc" | "desc";
   baseUrl: string;
   className?: string;
+}
+
+function buildSortUrl(baseUrl: string, sortBy?: string, sortOrder?: string): string {
+  const [path, queryString] = baseUrl.split("?");
+  const params = new URLSearchParams(queryString || "");
+  params.delete("sortBy");
+  params.delete("sortOrder");
+  params.delete("page");
+  if (sortBy) {
+    params.set("sortBy", sortBy);
+    params.set("sortOrder", sortOrder || "asc");
+  }
+  const result = params.toString();
+  return result ? `${path}?${result}` : path;
 }
 
 export default function SortableHeader({
@@ -19,12 +32,11 @@ export default function SortableHeader({
   className = "",
 }: SortableHeaderProps) {
   const isSorted = currentSort === sortKey;
-  const nextOrder = isSorted && currentOrder === "asc" ? "desc" : "asc";
+  const shouldClear = isSorted && currentOrder === "desc";
 
-  const href = buildListUrl(baseUrl, {
-    sortBy: sortKey,
-    sortOrder: nextOrder,
-  });
+  const href = shouldClear
+    ? buildSortUrl(baseUrl)
+    : buildSortUrl(baseUrl, sortKey, isSorted && currentOrder === "asc" ? "desc" : "asc");
 
   return (
     <th className={className}>

@@ -28,7 +28,7 @@ export function ClientList() {
 		async function fetchClients() {
 			try {
 				const data = await clientApi<TrainerClient[]>("/api/Trainers/clients");
-				setClients(data);
+				setClients(Array.isArray(data) ? data : []);
 			} catch (error) {
 				console.error("Failed to fetch clients:", error);
 				toast({

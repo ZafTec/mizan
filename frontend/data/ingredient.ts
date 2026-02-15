@@ -140,6 +140,40 @@ export async function addIngredient(prevState: FormState, formData: FormData): P
     }
 }
 
+export async function updateIngredientData(id: string, data: {
+    name: string;
+    brand?: string;
+    barcode?: string;
+    servingSize: number;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber?: number;
+    isVerified: boolean;
+}): Promise<void> {
+    await serverApi(`/api/Foods/${id}`, {
+        method: "PUT",
+        body: {
+            id,
+            name: data.name,
+            brand: data.brand || undefined,
+            barcode: data.barcode || undefined,
+            servingSize: data.servingSize,
+            servingUnit: "g",
+            caloriesPer100g: data.calories,
+            proteinPer100g: data.protein,
+            carbsPer100g: data.carbs,
+            fatPer100g: data.fat,
+            fiberPer100g: data.fiber || null,
+            isVerified: data.isVerified
+        },
+    });
+
+    revalidatePath("/ingredients");
+    revalidatePath(`/ingredients/${id}`);
+}
+
 /**
  * Update an existing ingredient via the backend API (Server Action)
  */
