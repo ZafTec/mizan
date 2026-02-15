@@ -56,7 +56,7 @@ export default function MealCard({ meal }: MealCardProps) {
 	}
 
 	return (
-		<div className="bg-white rounded-lg shadow-md p-4 min-w-fit relative">
+		<div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-4 min-w-fit relative">
 			<div className="flex flex-row justify-between items-center">
 				<h2 className="text-lg font-semibold">{meal.name}</h2>
 				<button
@@ -72,19 +72,19 @@ export default function MealCard({ meal }: MealCardProps) {
 
 			<div className="grid grid-cols-2 gap-4 mt-4 text-sm">
 				<div>
-					<p className="text-gray-500">Calories</p>
+					<p className="text-gray-500 dark:text-gray-400">Calories</p>
 					<p className="font-semibold">{meal.totalMacros.calories}</p>
 				</div>
 				<div>
-					<p className="text-gray-500">Protein</p>
+					<p className="text-gray-500 dark:text-gray-400">Protein</p>
 					<p className="font-semibold">{meal.totalMacros.protein}</p>
 				</div>
 				<div>
-					<p className="text-gray-500">Carbs</p>
+					<p className="text-gray-500 dark:text-gray-400">Carbs</p>
 					<p className="font-semibold">{meal.totalMacros.carbs}</p>
 				</div>
 				<div>
-					<p className="text-gray-500">Fat</p>
+					<p className="text-gray-500 dark:text-gray-400">Fat</p>
 					<p className="font-semibold">{meal.totalMacros.fat}</p>
 				</div>
 			</div>
@@ -92,11 +92,11 @@ export default function MealCard({ meal }: MealCardProps) {
 		{/* Confirmation popup */}
 		{showConfirm && (
 			<div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
-				<div ref={popupRef} className="bg-white p-6 rounded shadow-lg max-w-sm w-full">
-					<p className="text-gray-800 text-lg font-semibold">
+				<div ref={popupRef} className="bg-white dark:bg-slate-900 p-6 rounded shadow-lg max-w-sm w-full">
+					<p className="text-gray-800 dark:text-gray-200 text-lg font-semibold">
 						Confirm Deletion
 					</p>
-					<p className="mt-2 text-gray-600">
+					<p className="mt-2 text-gray-600 dark:text-gray-400">
 						Are you sure you want to delete this meal?
 					</p>
 					<div className="mt-4 flex justify-end space-x-2 text-sm">

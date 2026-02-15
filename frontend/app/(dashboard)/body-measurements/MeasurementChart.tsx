@@ -54,7 +54,7 @@ export default function MeasurementChart({ measurements }: { measurements: BodyM
         return (
             <div className="card p-6">
                 <h2 className="section-title mb-4">Progress Chart</h2>
-                <div className="text-center py-8 text-slate-500">
+                <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                     Need at least 2 measurements to show a chart.
                 </div>
             </div>
@@ -65,15 +65,15 @@ export default function MeasurementChart({ measurements }: { measurements: BodyM
         <div className="card p-6">
             <div className="flex items-center justify-between mb-6">
                 <h2 className="section-title">Progress Chart</h2>
-                <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
+                <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
                     {TIME_RANGES.map((r) => (
                         <button
                             key={r.value}
                             onClick={() => setRange(r.value)}
                             className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                                 range === r.value
-                                    ? "bg-white text-slate-900 shadow-sm"
-                                    : "text-slate-500 hover:text-slate-700"
+                                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm"
+                                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                             }`}
                         >
                             {r.label}

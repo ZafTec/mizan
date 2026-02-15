@@ -49,7 +49,7 @@ export default function SortableHeader({
             }
           />
         ) : (
-          <i className="ri-arrow-up-down-line text-slate-400 text-xs" />
+          <i className="ri-arrow-up-down-line text-slate-400 dark:text-slate-500 text-xs" />
         )}
       </Link>
     </th>

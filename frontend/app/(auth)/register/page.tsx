@@ -25,11 +25,11 @@ export default function Page() {
 			<div className="w-full max-w-md">
 				{/* Header */}
 				<div className="text-center mb-8">
-					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/30 mb-4">
+					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/30 dark:shadow-brand-500/15 mb-4">
 						<i className="ri-user-add-line text-3xl text-white" />
 					</div>
-					<h1 className="text-2xl font-bold text-slate-900">Create your account</h1>
-					<p className="text-slate-500 mt-1">Start your nutrition journey with Mizan</p>
+					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Create your account</h1>
+					<p className="text-slate-500 dark:text-slate-400 mt-1">Start your nutrition journey with Mizan</p>
 				</div>
 
 				{/* Form Card */}
@@ -87,7 +87,7 @@ export default function Page() {
 						{/* Profile Image Upload */}
 						<div>
 							<label className="label">
-								Profile Image <span className="text-slate-400 font-normal">(optional)</span>
+								Profile Image <span className="text-slate-400 dark:text-slate-500 font-normal">(optional)</span>
 							</label>
 							<CldUploadWidget
 								onSuccess={(result) => {
@@ -106,7 +106,7 @@ export default function Page() {
 													alt="Profile"
 													width={80}
 													height={80}
-													className="w-20 h-20 rounded-2xl object-cover border-2 border-slate-200"
+													className="w-20 h-20 rounded-2xl object-cover border-2 border-slate-200 dark:border-slate-700"
 												/>
 												<button
 													type="button"
@@ -123,15 +123,15 @@ export default function Page() {
 													e.preventDefault();
 													open();
 												}}
-												className="w-20 h-20 rounded-2xl border-2 border-dashed border-slate-300 hover:border-brand-400 bg-slate-50 hover:bg-brand-50 flex flex-col items-center justify-center transition-colors group"
+												className="w-20 h-20 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-400 bg-slate-50 dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-brand-950 flex flex-col items-center justify-center transition-colors group"
 											>
-												<i className="ri-camera-line text-2xl text-slate-400 group-hover:text-brand-500" />
-												<span className="text-xs text-slate-400 group-hover:text-brand-500 mt-1">Upload</span>
+												<i className="ri-camera-line text-2xl text-slate-400 dark:text-slate-500 group-hover:text-brand-500" />
+												<span className="text-xs text-slate-400 dark:text-slate-500 group-hover:text-brand-500 mt-1">Upload</span>
 											</button>
 										)}
-										<div className="text-sm text-slate-500">
+										<div className="text-sm text-slate-500 dark:text-slate-400">
 											<p>Add a profile photo</p>
-											<p className="text-xs text-slate-400">JPG, PNG up to 5MB</p>
+											<p className="text-xs text-slate-400 dark:text-slate-500">JPG, PNG up to 5MB</p>
 										</div>
 									</div>
 								)}
@@ -141,7 +141,7 @@ export default function Page() {
 
 						{/* Success Message */}
 						{formState.status === "success" && (
-							<div className="flex items-center gap-2 p-3 rounded-xl bg-green-50 text-green-600 text-sm">
+							<div className="flex items-center gap-2 p-3 rounded-xl bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400 text-sm">
 								<i className="ri-checkbox-circle-line text-lg" />
 								<span>Account created! Redirecting to login...</span>
 							</div>
@@ -149,7 +149,7 @@ export default function Page() {
 
 						{/* Error Message */}
 						{formState.status === "error" && formState.message && (
-							<div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 text-red-600 text-sm">
+							<div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
 								<i className="ri-error-warning-line text-lg flex-shrink-0" />
 								<span>
 									{formState.message}
@@ -190,10 +190,10 @@ export default function Page() {
 						{/* Divider */}
 						<div className="relative my-6">
 							<div className="absolute inset-0 flex items-center">
-								<div className="w-full border-t border-slate-200" />
+								<div className="w-full border-t border-slate-200 dark:border-slate-700" />
 							</div>
 							<div className="relative flex justify-center text-sm">
-								<span className="px-2 bg-white text-slate-500">Or sign up with</span>
+								<span className="px-2 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400">Or sign up with</span>
 							</div>
 						</div>
 
@@ -212,9 +212,9 @@ export default function Page() {
 				</div>
 
 				{/* Footer */}
-				<p className="text-center text-sm text-slate-500 mt-6">
+				<p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
 					Already have an account?{" "}
-					<Link href="/login" className="text-brand-600 font-medium hover:text-brand-700">
+					<Link href="/login" className="text-brand-600 dark:text-brand-400 font-medium hover:text-brand-700 dark:hover:text-brand-400">
 						Sign in
 					</Link>
 				</p>

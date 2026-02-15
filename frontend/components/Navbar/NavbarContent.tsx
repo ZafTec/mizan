@@ -20,8 +20,8 @@ const NavLink = ({ href, children, onClick }: { href: string; children: React.Re
 			onClick={onClick}
 			className={`relative px-3 py-2 text-sm font-medium transition-colors rounded-lg ${
 				isActive
-					? 'text-brand-600 bg-brand-50'
-					: 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+					? 'text-brand-600 bg-brand-50 dark:text-brand-400 dark:bg-brand-950'
+					: 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800'
 			}`}
 		>
 			{children}
@@ -76,18 +76,18 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 		<>
 		{showLogoutModal && (
 			<div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowLogoutModal(false)}>
-				<div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
+				<div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
 					<div className="flex items-center gap-3 mb-4">
-						<div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
-							<i className="ri-logout-box-r-line text-xl text-red-600" />
+						<div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+							<i className="ri-logout-box-r-line text-xl text-red-600 dark:text-red-400" />
 						</div>
-						<h3 className="text-lg font-semibold text-slate-900">Sign Out</h3>
+						<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Sign Out</h3>
 					</div>
-					<p className="text-sm text-slate-500 mb-6">Are you sure you want to sign out?</p>
+					<p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Are you sure you want to sign out?</p>
 					<div className="flex gap-3">
 						<button
 							onClick={() => setShowLogoutModal(false)}
-							className="flex-1 px-4 py-2.5 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+							className="flex-1 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors"
 						>
 							Cancel
 						</button>
@@ -121,12 +121,12 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 			</nav>
 
 			{/* User Actions */}
-			<div className="hidden md:flex items-center gap-2 ml-4 pl-4 border-l border-slate-200">
+			<div className="hidden md:flex items-center gap-2 ml-4 pl-4 border-l border-slate-200 dark:border-slate-700">
 				{user ? (
 					<>
 						<Link
 							href="/profile"
-							className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+							className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
 						>
 							<div className="w-8 h-8 rounded-full bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-medium">
 								{user.email?.charAt(0).toUpperCase() || 'U'}
@@ -134,7 +134,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 						</Link>
 						<button
 							onClick={() => setShowLogoutModal(true)}
-							className="px-3 py-2 text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+							className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg transition-colors"
 						>
 							<i className="ri-logout-box-r-line text-lg" />
 						</button>
@@ -143,13 +143,13 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 					<>
 						<Link
 							href="/login"
-							className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+							className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
 						>
 							Sign In
 						</Link>
 						<Link
 							href="/register"
-							className="px-4 py-2 text-sm font-medium text-white bg-linear-to-r from-brand-500 to-brand-600 rounded-xl hover:from-brand-600 hover:to-brand-700 shadow-lg shadow-brand-500/25 transition-all"
+							className="px-4 py-2 text-sm font-medium text-white bg-linear-to-r from-brand-500 to-brand-600 rounded-xl hover:from-brand-600 hover:to-brand-700 shadow-lg shadow-brand-500/25 dark:shadow-brand-500/10 transition-all"
 						>
 							Get Started
 						</Link>
@@ -159,7 +159,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 
 			{/* Mobile Menu Button */}
 			<button
-				className="md:hidden p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+				className="md:hidden p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
 				onClick={() => setMenuOpen(!menuOpen)}
 				aria-label="Toggle navigation menu"
 				aria-expanded={menuOpen}
@@ -177,7 +177,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 			{menuOpen && (
 				<div
 					ref={menuRef}
-					className="absolute top-full left-0 right-0 mt-2 mx-4 p-4 bg-white rounded-2xl shadow-xl border border-slate-200 md:hidden animate-fade-in"
+					className="absolute top-full left-0 right-0 mt-2 mx-4 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 md:hidden animate-fade-in"
 				>
 					<nav className="flex flex-col gap-1">
 						<NavLink href="/ingredients" onClick={closeMenu}>
@@ -196,13 +196,13 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 						)}
 					</nav>
 
-					<div className="mt-4 pt-4 border-t border-slate-200">
+					<div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
 						{user ? (
 							<div className="flex items-center justify-between">
 								<Link
 									href="/profile"
 									onClick={closeMenu}
-									className="flex items-center gap-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg"
+									className="flex items-center gap-3 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
 								>
 									<div className="w-8 h-8 rounded-full bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-medium">
 										{user.email?.charAt(0).toUpperCase() || 'U'}
@@ -211,7 +211,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 								</Link>
 								<button
 									onClick={() => { closeMenu(); setShowLogoutModal(true); }}
-									className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+									className="px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg transition-colors"
 								>
 									Sign Out
 								</button>
@@ -221,7 +221,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 								<Link
 									href="/login"
 									onClick={closeMenu}
-									className="flex-1 px-4 py-2.5 text-sm font-medium text-center text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+									className="flex-1 px-4 py-2.5 text-sm font-medium text-center text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
 								>
 									Sign In
 								</Link>

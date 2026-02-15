@@ -42,8 +42,8 @@ export default async function BodyMeasurementsPage({
         <div className="space-y-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Body Measurements</h1>
-                    <p className="text-slate-500 mt-1">Track your body composition progress</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Body Measurements</h1>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">Track your body composition progress</p>
                 </div>
             </div>
 
@@ -54,13 +54,13 @@ export default async function BodyMeasurementsPage({
                             <i className="ri-scales-3-line text-xl text-white" />
                         </div>
                         <div className="flex-1">
-                            <h3 className="font-semibold text-slate-900">Weight</h3>
+                            <h3 className="font-semibold text-slate-900 dark:text-slate-100">Weight</h3>
                             <div className="flex items-center gap-2">
-                                <p className="text-sm text-slate-500">
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
                                     {latest?.weightKg ? `${latest.weightKg} kg` : "No data"}
                                 </p>
                                 {weightDelta && (
-                                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${weightDelta.positive ? "bg-orange-50 text-orange-600" : "bg-green-50 text-green-600"}`}>
+                                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${weightDelta.positive ? "bg-orange-50 dark:bg-orange-950 text-orange-600 dark:text-orange-400" : "bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400"}`}>
                                         {weightDelta.value}
                                     </span>
                                 )}
@@ -75,13 +75,13 @@ export default async function BodyMeasurementsPage({
                             <i className="ri-heart-pulse-line text-xl text-white" />
                         </div>
                         <div className="flex-1">
-                            <h3 className="font-semibold text-slate-900">Body Fat</h3>
+                            <h3 className="font-semibold text-slate-900 dark:text-slate-100">Body Fat</h3>
                             <div className="flex items-center gap-2">
-                                <p className="text-sm text-slate-500">
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
                                     {latest?.bodyFatPercentage ? `${latest.bodyFatPercentage}%` : "No data"}
                                 </p>
                                 {bodyFatDelta && (
-                                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${bodyFatDelta.positive ? "bg-orange-50 text-orange-600" : "bg-green-50 text-green-600"}`}>
+                                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${bodyFatDelta.positive ? "bg-orange-50 dark:bg-orange-950 text-orange-600 dark:text-orange-400" : "bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400"}`}>
                                         {bodyFatDelta.value}%
                                     </span>
                                 )}
@@ -96,13 +96,13 @@ export default async function BodyMeasurementsPage({
                             <i className="ri-hand-heart-line text-xl text-white" />
                         </div>
                         <div className="flex-1">
-                            <h3 className="font-semibold text-slate-900">Muscle Mass</h3>
+                            <h3 className="font-semibold text-slate-900 dark:text-slate-100">Muscle Mass</h3>
                             <div className="flex items-center gap-2">
-                                <p className="text-sm text-slate-500">
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
                                     {latest?.muscleMassKg ? `${latest.muscleMassKg} kg` : "No data"}
                                 </p>
                                 {muscleDelta && (
-                                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${muscleDelta.positive ? "bg-green-50 text-green-600" : "bg-orange-50 text-orange-600"}`}>
+                                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${muscleDelta.positive ? "bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400" : "bg-orange-50 dark:bg-orange-950 text-orange-600 dark:text-orange-400"}`}>
                                         {muscleDelta.value}
                                     </span>
                                 )}
@@ -121,36 +121,36 @@ export default async function BodyMeasurementsPage({
                 {measurements.length > 0 ? (
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead className="border-b border-slate-200">
+                            <thead className="border-b border-slate-200 dark:border-slate-700">
                                 <tr>
-                                    <SortableHeader sortKey="Date" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Date</SortableHeader>
-                                    <SortableHeader sortKey="WeightKg" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Weight</SortableHeader>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Body Fat</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Muscle</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Waist</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Notes</th>
+                                    <SortableHeader sortKey="Date" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Date</SortableHeader>
+                                    <SortableHeader sortKey="WeightKg" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Weight</SortableHeader>
+                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Body Fat</th>
+                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Muscle</th>
+                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Waist</th>
+                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Notes</th>
                                     <th className="w-10"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {measurements.map((m) => (
-                                    <tr key={m.id} className="border-b border-slate-100 hover:bg-slate-50">
-                                        <td className="py-3 px-4 text-sm text-slate-900">
+                                    <tr key={m.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800">
+                                        <td className="py-3 px-4 text-sm text-slate-900 dark:text-slate-100">
                                             {new Date(m.date).toLocaleDateString()}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-slate-600">
+                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
                                             {m.weightKg ? `${m.weightKg} kg` : "-"}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-slate-600">
+                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
                                             {m.bodyFatPercentage ? `${m.bodyFatPercentage}%` : "-"}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-slate-600">
+                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
                                             {m.muscleMassKg ? `${m.muscleMassKg} kg` : "-"}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-slate-600">
+                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
                                             {m.waistCm ? `${m.waistCm} cm` : "-"}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-slate-600 max-w-xs truncate">
+                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400 max-w-xs truncate">
                                             {m.notes || "-"}
                                         </td>
                                         <td className="py-3 px-4">
@@ -163,11 +163,11 @@ export default async function BodyMeasurementsPage({
                     </div>
                 ) : (
                     <div className="text-center py-16">
-                        <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                            <i className="ri-body-scan-line text-3xl text-slate-400" />
+                        <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
+                            <i className="ri-body-scan-line text-3xl text-slate-400 dark:text-slate-500" />
                         </div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-2">No measurements yet</h3>
-                        <p className="text-slate-500">Start tracking your progress today!</p>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No measurements yet</h3>
+                        <p className="text-slate-500 dark:text-slate-400">Start tracking your progress today!</p>
                     </div>
                 )}
             </div>

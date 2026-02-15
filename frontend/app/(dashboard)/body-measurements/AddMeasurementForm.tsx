@@ -54,10 +54,10 @@ export default function AddMeasurementForm() {
                   <div className="flex min-h-full items-center justify-center p-4">
                     <div className="card max-w-2xl w-full p-6">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-semibold text-slate-900">Add Measurement</h3>
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Add Measurement</h3>
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="text-slate-400 hover:text-slate-600"
+                                className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
                             >
                                 <i className="ri-close-line text-xl" />
                             </button>

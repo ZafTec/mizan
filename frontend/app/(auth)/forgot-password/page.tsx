@@ -39,11 +39,11 @@ export default function ForgotPasswordPage() {
 			<div className="w-full max-w-md">
 				{/* Header */}
 				<div className="text-center mb-8">
-					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/30 mb-4">
+					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/30 dark:shadow-brand-500/15 mb-4">
 						<i className="ri-lock-password-line text-3xl text-white" />
 					</div>
-					<h1 className="text-2xl font-bold text-slate-900">Forgot password?</h1>
-					<p className="text-slate-500 mt-1">
+					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Forgot password?</h1>
+					<p className="text-slate-500 dark:text-slate-400 mt-1">
 						No worries, we&apos;ll send you reset instructions
 					</p>
 				</div>
@@ -52,7 +52,7 @@ export default function ForgotPasswordPage() {
 				<div className="card p-6 sm:p-8">
 					{success ? (
 						<div className="text-center space-y-4">
-							<div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+							<div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-950 flex items-center justify-center mx-auto">
 								<i className="ri-mail-send-line text-3xl text-green-600" />
 							</div>
 							<div>

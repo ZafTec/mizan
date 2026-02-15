@@ -39,8 +39,8 @@ export default function Pagination({
     const isActive = currentPage === page;
     const className = `w-10 h-10 flex items-center justify-center rounded-xl transition-colors font-medium ${
       isActive
-        ? "bg-brand-500 text-white shadow-lg shadow-brand-500/30"
-        : "bg-white text-slate-600 hover:bg-slate-50"
+        ? "bg-brand-500 text-white shadow-lg shadow-brand-500/30 dark:shadow-brand-500/15"
+        : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
     }`;
 
     if (onPageChange) {
@@ -63,8 +63,8 @@ export default function Pagination({
   };
 
   const renderPrevButton = () => {
-    const className = `w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition-colors ${
-      isFirstPage ? "opacity-50 pointer-events-none" : "hover:bg-slate-200"
+    const className = `w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors ${
+      isFirstPage ? "opacity-50 pointer-events-none" : "hover:bg-slate-200 dark:hover:bg-slate-700"
     }`;
 
     if (onPageChange) {
@@ -91,8 +91,8 @@ export default function Pagination({
   };
 
   const renderNextButton = () => {
-    const className = `w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition-colors ${
-      isLastPage ? "opacity-50 pointer-events-none" : "hover:bg-slate-200"
+    const className = `w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors ${
+      isLastPage ? "opacity-50 pointer-events-none" : "hover:bg-slate-200 dark:hover:bg-slate-700"
     }`;
 
     if (onPageChange) {
@@ -120,7 +120,7 @@ export default function Pagination({
 
   const showingSummary =
     totalCount !== undefined && pageSize !== undefined ? (
-      <div className="text-sm text-slate-500 mb-3 text-center">
+      <div className="text-sm text-slate-500 dark:text-slate-400 mb-3 text-center">
         Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-
         {Math.min(currentPage * pageSize, totalCount)} of {totalCount}
       </div>
@@ -144,7 +144,7 @@ export default function Pagination({
 
             if (page === currentPage - 2 || page === currentPage + 2) {
               return (
-                <span key={page} className="text-slate-400 px-1">
+                <span key={page} className="text-slate-400 dark:text-slate-500 px-1">
                   ...
                 </span>
               );

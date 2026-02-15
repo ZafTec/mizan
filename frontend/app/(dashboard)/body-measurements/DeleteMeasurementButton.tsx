@@ -26,7 +26,7 @@ export default function DeleteMeasurementButton({ id }: { id: string }) {
         <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="text-slate-400 hover:text-red-500 transition-colors disabled:opacity-50"
+            className="text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors disabled:opacity-50"
             title="Delete measurement"
         >
             <i className={isDeleting ? "ri-loader-4-line animate-spin" : "ri-delete-bin-line"} />

@@ -42,8 +42,8 @@ export default async function MealPlanPage({
 			<div className="space-y-6">
 				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 					<div>
-						<h1 className="text-2xl font-bold text-slate-900">Meal Planning</h1>
-						<p className="text-slate-500 mt-1">Plan your meals for the week ahead</p>
+						<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Meal Planning</h1>
+						<p className="text-slate-500 dark:text-slate-400 mt-1">Plan your meals for the week ahead</p>
 					</div>
 					<Link href="/meal-plan/create" className="btn-primary">
 						<i className="ri-add-line" />
@@ -52,7 +52,7 @@ export default async function MealPlanPage({
 				</div>
 
 				<div className="card p-6">
-					<div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 text-red-600">
+					<div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400">
 						<i className="ri-error-warning-line text-xl" />
 						<p>An error occurred loading your meal plans. Please try again later.</p>
 					</div>
@@ -66,8 +66,8 @@ export default async function MealPlanPage({
 				{/* Page Header */}
 				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 					<div>
-						<h1 className="text-2xl font-bold text-slate-900">Meal Planning</h1>
-						<p className="text-slate-500 mt-1">Plan your meals for the week ahead</p>
+						<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Meal Planning</h1>
+						<p className="text-slate-500 dark:text-slate-400 mt-1">Plan your meals for the week ahead</p>
 					</div>
 					<div className="flex gap-3">
 						<Link href="/meal-plan/shopping-list" className="btn-secondary">
@@ -95,8 +95,8 @@ export default async function MealPlanPage({
 									<i className={`${stat.icon} text-white`} />
 								</div>
 								<div>
-									<p className="text-2xl font-bold text-slate-900">{stat.value}</p>
-									<p className="text-xs text-slate-500">{stat.label}</p>
+									<p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stat.value}</p>
+									<p className="text-xs text-slate-500 dark:text-slate-400">{stat.label}</p>
 								</div>
 							</div>
 						</div>
@@ -105,17 +105,17 @@ export default async function MealPlanPage({
 
 				{/* Meal Plans */}
 				<div className="card p-6">
-					<h2 className="font-semibold text-slate-900 flex items-center gap-2 mb-4">
-						<i className="ri-calendar-2-line text-brand-500" />
+					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-4">
+						<i className="ri-calendar-2-line text-brand-500 dark:text-brand-400" />
 						Your Meal Plans
 					</h2>
 					{mealPlans.length > 0 ? (
 						<div className="space-y-4">
 							{mealPlans.map((plan) => (
-								<div key={plan.id} className="p-4 bg-slate-50 rounded-xl">
+								<div key={plan.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
 									<div className="flex justify-between items-center">
 										<div>
-											<h3 className="font-medium text-slate-900">{plan.name || 'Weekly Plan'}</h3>
+											<h3 className="font-medium text-slate-900 dark:text-slate-100">{plan.name || 'Weekly Plan'}</h3>
 											<p className="text-sm text-slate-500">
 												{plan.startDate} to {plan.endDate}
 											</p>

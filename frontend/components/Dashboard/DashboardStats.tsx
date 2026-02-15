@@ -66,9 +66,9 @@ export default function DashboardStats() {
 			<div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
 				{[1, 2, 3, 4].map((i) => (
 					<div key={i} className="card p-4 sm:p-6 animate-pulse">
-						<div className="h-4 bg-slate-200 rounded w-20 mb-4" />
-						<div className="h-8 bg-slate-200 rounded w-16 mb-2" />
-						<div className="h-3 bg-slate-200 rounded w-24" />
+						<div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-20 mb-4" />
+						<div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-16 mb-2" />
+						<div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-24" />
 					</div>
 				))}
 			</div>
@@ -79,10 +79,10 @@ export default function DashboardStats() {
 		return (
 			<div className="card p-6 text-center">
 				<i className="ri-error-warning-line text-4xl text-red-500 mb-2" />
-				<p className="text-slate-600">{error}</p>
+				<p className="text-slate-600 dark:text-slate-400">{error}</p>
 				<button
 					onClick={() => window.location.reload()}
-					className="mt-4 px-4 py-2 text-sm text-brand-600 hover:text-brand-700"
+					className="mt-4 px-4 py-2 text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700"
 				>
 					Try Again
 				</button>
@@ -98,20 +98,20 @@ export default function DashboardStats() {
 			{/* Calories */}
 			<Link href="/meals" className="card p-4 sm:p-6 hover:shadow-lg transition-shadow cursor-pointer group">
 				<div className="flex items-center gap-3 mb-3">
-					<div className="p-2 bg-brand-50 rounded-lg group-hover:bg-brand-100 transition-colors">
-						<i className="ri-fire-line text-xl text-brand-600" />
+					<div className="p-2 bg-brand-50 dark:bg-brand-950 rounded-lg group-hover:bg-brand-100 transition-colors">
+						<i className="ri-fire-line text-xl text-brand-600 dark:text-brand-400" />
 					</div>
-					<span className="text-sm text-slate-500 font-medium">Calories</span>
+					<span className="text-sm text-slate-500 dark:text-slate-400 font-medium">Calories</span>
 				</div>
 				<div className="flex items-baseline gap-2">
-					<span className="text-2xl font-bold text-slate-900">
+					<span className="text-2xl font-bold text-slate-900 dark:text-slate-100">
 						{calories.toLocaleString()}
 					</span>
 					{goal?.targetCalories && (
-						<span className="text-sm text-slate-400">/ {goal.targetCalories.toLocaleString()}</span>
+						<span className="text-sm text-slate-400 dark:text-slate-500">/ {goal.targetCalories.toLocaleString()}</span>
 					)}
 				</div>
-				<div className="mt-2 text-xs text-slate-400">
+				<div className="mt-2 text-xs text-slate-400 dark:text-slate-500">
 					{goal?.targetCalories ? (
 						<>
 							{Math.round((calories / goal.targetCalories) * 100)}% of goal
@@ -125,20 +125,20 @@ export default function DashboardStats() {
 			{/* Protein */}
 			<Link href="/meals" className="card p-4 sm:p-6 hover:shadow-lg transition-shadow cursor-pointer group">
 				<div className="flex items-center gap-3 mb-3">
-					<div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
+					<div className="p-2 bg-blue-50 dark:bg-blue-950 rounded-lg group-hover:bg-blue-100 transition-colors">
 						<i className="ri-heart-pulse-line text-xl text-blue-600" />
 					</div>
-					<span className="text-sm text-slate-500 font-medium">Protein</span>
+					<span className="text-sm text-slate-500 dark:text-slate-400 font-medium">Protein</span>
 				</div>
 				<div className="flex items-baseline gap-2">
-					<span className="text-2xl font-bold text-slate-900">
+					<span className="text-2xl font-bold text-slate-900 dark:text-slate-100">
 						{protein}g
 					</span>
 					{goal?.targetProteinGrams && (
-						<span className="text-sm text-slate-400">/ {Math.round(goal.targetProteinGrams)}g</span>
+						<span className="text-sm text-slate-400 dark:text-slate-500">/ {Math.round(goal.targetProteinGrams)}g</span>
 					)}
 				</div>
-				<div className="mt-2 text-xs text-slate-400">
+				<div className="mt-2 text-xs text-slate-400 dark:text-slate-500">
 					{goal?.targetProteinGrams ? (
 						<>
 							{Math.round((protein / goal.targetProteinGrams) * 100)}% of goal
@@ -152,31 +152,31 @@ export default function DashboardStats() {
 			{/* Water (Placeholder) */}
 			<Link href="/profile" className="card p-4 sm:p-6 hover:shadow-lg transition-shadow cursor-pointer group">
 				<div className="flex items-center gap-3 mb-3">
-					<div className="p-2 bg-cyan-50 rounded-lg group-hover:bg-cyan-100 transition-colors">
+					<div className="p-2 bg-cyan-50 dark:bg-cyan-950 rounded-lg group-hover:bg-cyan-100 transition-colors">
 						<i className="ri-drop-line text-xl text-cyan-600" />
 					</div>
-					<span className="text-sm text-slate-500 font-medium">Water</span>
+					<span className="text-sm text-slate-500 dark:text-slate-400 font-medium">Water</span>
 				</div>
 				<div className="flex items-baseline gap-2">
-					<span className="text-2xl font-bold text-slate-900">0</span>
-					<span className="text-sm text-slate-400">/ 8 cups</span>
+					<span className="text-2xl font-bold text-slate-900 dark:text-slate-100">0</span>
+					<span className="text-sm text-slate-400 dark:text-slate-500">/ 8 cups</span>
 				</div>
-				<div className="mt-2 text-xs text-slate-400">Coming soon</div>
+				<div className="mt-2 text-xs text-slate-400 dark:text-slate-500">Coming soon</div>
 			</Link>
 
 			{/* Streak (Placeholder) */}
 			<Link href="/profile" className="card p-4 sm:p-6 hover:shadow-lg transition-shadow cursor-pointer group">
 				<div className="flex items-center gap-3 mb-3">
-					<div className="p-2 bg-amber-50 rounded-lg group-hover:bg-amber-100 transition-colors">
+					<div className="p-2 bg-amber-50 dark:bg-amber-950 rounded-lg group-hover:bg-amber-100 transition-colors">
 						<i className="ri-fire-fill text-xl text-amber-600" />
 					</div>
-					<span className="text-sm text-slate-500 font-medium">Streak</span>
+					<span className="text-sm text-slate-500 dark:text-slate-400 font-medium">Streak</span>
 				</div>
 				<div className="flex items-baseline gap-2">
-					<span className="text-2xl font-bold text-slate-900">0</span>
-					<span className="text-sm text-slate-400">days</span>
+					<span className="text-2xl font-bold text-slate-900 dark:text-slate-100">0</span>
+					<span className="text-sm text-slate-400 dark:text-slate-500">days</span>
 				</div>
-				<div className="mt-2 text-xs text-slate-400">Coming soon</div>
+				<div className="mt-2 text-xs text-slate-400 dark:text-slate-500">Coming soon</div>
 			</Link>
 		</div>
 	);

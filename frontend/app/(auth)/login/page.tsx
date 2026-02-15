@@ -85,11 +85,11 @@ export default function Page() {
 			<div className="w-full max-w-md">
 				{/* Header */}
 				<div className="text-center mb-8">
-					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/30 mb-4">
+					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/30 dark:shadow-brand-500/15 mb-4">
 						<i className="ri-user-line text-3xl text-white" />
 					</div>
-					<h1 className="text-2xl font-bold text-slate-900">Welcome back</h1>
-					<p className="text-slate-500 mt-1">Sign in to continue to Mizan</p>
+					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Welcome back</h1>
+					<p className="text-slate-500 dark:text-slate-400 mt-1">Sign in to continue to Mizan</p>
 				</div>
 
 				{/* Form Card */}
@@ -115,7 +115,7 @@ export default function Page() {
 								<label htmlFor="password" className="label mb-0">
 									Password
 								</label>
-								<Link href="/forgot-password" className="text-sm text-brand-600 hover:text-brand-700">
+								<Link href="/forgot-password" className="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-400">
 									Forgot password?
 								</Link>
 							</div>
@@ -131,11 +131,11 @@ export default function Page() {
 						</div>
 
 						{error && (
-							<div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 text-red-600 text-sm">
+							<div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
 								<i className="ri-error-warning-line text-lg" />
 								<span>{error}</span>
 								{error === "User is not verified" && user.email && (
-									<Link className="ml-auto text-brand-600 hover:underline" href={`/verify?email=${user.email}`}>
+									<Link className="ml-auto text-brand-600 dark:text-brand-400 hover:underline" href={`/verify?email=${user.email}`}>
 										Resend verification
 									</Link>
 								)}
@@ -166,10 +166,10 @@ export default function Page() {
 						{/* Divider */}
 						<div className="relative my-6">
 							<div className="absolute inset-0 flex items-center">
-								<div className="w-full border-t border-slate-200" />
+								<div className="w-full border-t border-slate-200 dark:border-slate-700" />
 							</div>
 							<div className="relative flex justify-center text-sm">
-								<span className="px-2 bg-white text-slate-500">Or continue with</span>
+								<span className="px-2 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400">Or continue with</span>
 							</div>
 						</div>
 
@@ -188,9 +188,9 @@ export default function Page() {
 				</div>
 
 				{/* Footer */}
-				<p className="text-center text-sm text-slate-500 mt-6">
+				<p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
 					Don&apos;t have an account?{" "}
-					<Link href="/register" className="text-brand-600 font-medium hover:text-brand-700">
+					<Link href="/register" className="text-brand-600 dark:text-brand-400 font-medium hover:text-brand-700 dark:hover:text-brand-400">
 						Create one
 					</Link>
 				</p>
