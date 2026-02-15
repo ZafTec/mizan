@@ -7,9 +7,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { CldUploadWidget } from "next-cloudinary";
 import { toast } from "sonner";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 export default function ProfilePage() {
 	const { data: session, isPending } = useSession();
+	const { settings: appearance, updateSettings: updateAppearance } = useTheme();
 	const [showEditModal, setShowEditModal] = useState(false);
 	const [showNotificationsModal, setShowNotificationsModal] = useState(false);
 	const [showPrivacyModal, setShowPrivacyModal] = useState(false);
@@ -730,24 +732,26 @@ export default function ProfilePage() {
 							<div>
 								<p className="font-medium text-slate-900 mb-3">Theme</p>
 								<div className="grid grid-cols-3 gap-3">
-									<button className="p-4 rounded-xl border-2 border-brand-500 bg-brand-50 flex flex-col items-center gap-2">
-										<i className="ri-sun-line text-2xl text-brand-500" />
-										<span className="text-sm font-medium text-slate-900">
-											Light
-										</span>
-									</button>
-									<button className="p-4 rounded-xl border-2 border-slate-200 hover:border-slate-300 flex flex-col items-center gap-2">
-										<i className="ri-moon-line text-2xl text-slate-400" />
-										<span className="text-sm font-medium text-slate-600">
-											Dark
-										</span>
-									</button>
-									<button className="p-4 rounded-xl border-2 border-slate-200 hover:border-slate-300 flex flex-col items-center gap-2">
-										<i className="ri-computer-line text-2xl text-slate-400" />
-										<span className="text-sm font-medium text-slate-600">
-											System
-										</span>
-									</button>
+									{([
+										{ value: "light" as const, icon: "ri-sun-line", label: "Light" },
+										{ value: "dark" as const, icon: "ri-moon-line", label: "Dark" },
+										{ value: "system" as const, icon: "ri-computer-line", label: "System" },
+									]).map((opt) => (
+										<button
+											key={opt.value}
+											onClick={() => updateAppearance({ theme: opt.value })}
+											className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-colors ${
+												appearance.theme === opt.value
+													? "border-brand-500 bg-brand-50"
+													: "border-slate-200 hover:border-slate-300"
+											}`}
+										>
+											<i className={`${opt.icon} text-2xl ${appearance.theme === opt.value ? "text-brand-500" : "text-slate-400"}`} />
+											<span className={`text-sm font-medium ${appearance.theme === opt.value ? "text-slate-900" : "text-slate-600"}`}>
+												{opt.label}
+											</span>
+										</button>
+									))}
 								</div>
 							</div>
 
@@ -755,11 +759,21 @@ export default function ProfilePage() {
 								<p className="font-medium text-slate-900 mb-3">Display</p>
 								<div className="flex items-center justify-between py-2">
 									<span className="text-slate-700">Compact Mode</span>
-									<input type="checkbox" className="toggle" />
+									<input
+										type="checkbox"
+										className="toggle"
+										checked={appearance.compactMode}
+										onChange={(e) => updateAppearance({ compactMode: e.target.checked })}
+									/>
 								</div>
 								<div className="flex items-center justify-between py-2">
 									<span className="text-slate-700">Reduce Animations</span>
-									<input type="checkbox" className="toggle" />
+									<input
+										type="checkbox"
+										className="toggle"
+										checked={appearance.reduceAnimations}
+										onChange={(e) => updateAppearance({ reduceAnimations: e.target.checked })}
+									/>
 								</div>
 							</div>
 						</div>
@@ -768,7 +782,7 @@ export default function ProfilePage() {
 							onClick={() => setShowAppearanceModal(false)}
 							className="btn-primary w-full"
 						>
-							Save Preferences
+							Done
 						</button>
 					</div>
 				</div>
