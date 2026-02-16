@@ -365,7 +365,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                     {tags.size > 0 && (
                         <div className="flex flex-wrap gap-2 mb-3">
                             {Array.from(tags).map((tag, index) => (
-                                <span key={index} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-100 text-brand-700 text-sm font-medium">
+                                <span key={index} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 text-sm font-medium">
                                     {tag}
                                     <button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-brand-900">
                                         <i className="ri-close-line" />
