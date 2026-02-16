@@ -2,6 +2,7 @@
 
 import type { User } from "@/lib/auth";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "@/lib/auth-client";
@@ -128,9 +129,21 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 							href="/profile"
 							className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
 						>
-							<div className="w-8 h-8 rounded-full bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-medium">
-								{user.email?.charAt(0).toUpperCase() || 'U'}
-							</div>
+							{user.image ? (
+								<div className="relative w-8 h-8 rounded-full overflow-hidden ring-2 ring-brand-500/20">
+									<Image
+										src={user.image}
+										alt={user.name || user.email || 'User'}
+										fill
+										className="object-cover"
+										unoptimized
+									/>
+								</div>
+							) : (
+								<div className="w-8 h-8 rounded-full bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-medium ring-2 ring-brand-500/20">
+									{user.email?.charAt(0).toUpperCase() || 'U'}
+								</div>
+							)}
 						</Link>
 						<button
 							onClick={() => setShowLogoutModal(true)}
@@ -204,9 +217,21 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 									onClick={closeMenu}
 									className="flex items-center gap-3 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
 								>
-									<div className="w-8 h-8 rounded-full bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-medium">
-										{user.email?.charAt(0).toUpperCase() || 'U'}
-									</div>
+									{user.image ? (
+										<div className="relative w-8 h-8 rounded-full overflow-hidden ring-2 ring-brand-500/20">
+											<Image
+												src={user.image}
+												alt={user.name || user.email || 'User'}
+												fill
+												className="object-cover"
+												unoptimized
+											/>
+										</div>
+									) : (
+										<div className="w-8 h-8 rounded-full bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-medium ring-2 ring-brand-500/20">
+											{user.email?.charAt(0).toUpperCase() || 'U'}
+										</div>
+									)}
 									<span>Profile</span>
 								</Link>
 								<button

@@ -1,6 +1,7 @@
 import { getExercises } from "@/data/exercise";
 import { getUserServer } from "@/helper/session";
 import SearchExercises from "./SearchExercises";
+import Image from "next/image";
 
 export const dynamic = 'force-dynamic';
 
@@ -29,12 +30,14 @@ export default async function ExercisesPage({
                     {exercises.map((exercise) => (
                         <div key={exercise.id} className="card-hover p-5">
                             <div className="flex items-start gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center shadow-lg flex-shrink-0">
+                                <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center shadow-lg shrink-0 relative overflow-hidden">
                                     {exercise.imageUrl ? (
-                                        <img
+                                        <Image
                                             src={exercise.imageUrl}
                                             alt={exercise.name}
-                                            className="w-full h-full object-cover rounded-2xl"
+                                            fill
+                                            className="object-cover rounded-2xl"
+                                            unoptimized
                                         />
                                     ) : (
                                         <i className="ri-run-line text-xl text-white" />

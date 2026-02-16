@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { clientApi } from "@/lib/api.client";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
+import Image from "next/image";
 
 interface Message {
 	id: string;
@@ -101,10 +102,13 @@ export function RecentMessages() {
 					<div className="flex items-start space-x-3">
 						<div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center shrink-0">
 							{message.senderImage ? (
-								<img
+								<Image
 									src={message.senderImage}
 									alt={message.senderName}
+									width={40}
+									height={40}
 									className="w-10 h-10 rounded-full"
+									unoptimized
 								/>
 							) : (
 								<span className="text-green-600 dark:text-green-400 font-semibold">

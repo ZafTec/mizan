@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { clientApi } from "@/lib/api.client";
 import { toast } from "sonner";
+import Image from "next/image";
 
 interface RecognizedFood {
 	name: string;
@@ -127,11 +128,16 @@ export function FoodImageAnalyzer() {
 				onClick={() => fileInputRef.current?.click()}
 			>
 				{selectedImage ? (
-					<img
-						src={selectedImage}
-						alt="Selected food"
-						className="max-h-64 mx-auto rounded-lg"
-					/>
+					<div className="relative w-full max-h-64 mx-auto">
+						<Image
+							src={selectedImage}
+							alt="Selected food"
+							width={800}
+							height={600}
+							className="max-h-64 mx-auto rounded-lg object-contain"
+							unoptimized
+						/>
+					</div>
 				) : (
 					<div className="py-8">
 						<i className="ri-image-add-line text-4xl text-gray-400 dark:text-gray-500 mb-2"></i>
