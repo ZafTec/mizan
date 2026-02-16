@@ -47,20 +47,18 @@ function applySettings(settings: AppearanceSettings) {
 }
 
 export function useTheme() {
-    const [settings, setSettings] = useState<AppearanceSettings>(defaults);
+    const [settings, setSettings] = useState<AppearanceSettings>(getStoredSettings);
 
     useEffect(() => {
-        const stored = getStoredSettings();
-        setSettings(stored);
-        applySettings(stored);
+        applySettings(settings);
 
-        if (stored.theme === "system") {
+        if (settings.theme === "system") {
             const mq = window.matchMedia("(prefers-color-scheme: dark)");
             const handler = () => applyTheme("system");
             mq.addEventListener("change", handler);
             return () => mq.removeEventListener("change", handler);
         }
-    }, []);
+    }, [settings]);
 
     const updateSettings = useCallback((updates: Partial<AppearanceSettings>) => {
         setSettings((prev) => {

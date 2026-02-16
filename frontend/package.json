@@ -50,6 +50,8 @@
 		"drizzle-kit": "^0.31.8",
 		"eslint": "^9.39.2",
 		"eslint-config-next": "16.1.0",
+		"eslint-plugin-react": "^7.37.5",
+		"jsx-ast-utils": "^3.3.5",
 		"openapi-typescript": "^7.10.1",
 		"postcss": "^8.5.6",
 		"tailwindcss": "^4.1.18",
