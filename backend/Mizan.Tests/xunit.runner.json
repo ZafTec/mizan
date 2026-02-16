@@ -1,0 +1,11 @@
+{
+  "parallelizeAssembly": false,
+  "parallelizeTestCollections": false,
+  "maxParallelThreads": 1,
+  "diagnosticMessages": false,
+  "internalDiagnosticMessages": false,
+  "methodDisplay": "classAndMethod",
+  "methodDisplayOptions": "none",
+  "longRunningTestSeconds": 30,
+  "shadowCopy": false
+}

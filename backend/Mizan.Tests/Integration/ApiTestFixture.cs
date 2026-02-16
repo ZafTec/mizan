@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Mizan.Api.Authentication;
 using Mizan.Domain.Entities;
@@ -57,13 +58,12 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
 
         if (!string.IsNullOrWhiteSpace(existingConnString))
         {
-            Console.WriteLine($"[ApiTestFixture] Using existing DB connection: {existingConnString}");
+            // Using existing DB connection
             _connectionString = existingConnString;
             _dbContainer = null;
         }
         else
         {
-            Console.WriteLine("[ApiTestFixture] No existing DB connection found. Initializing Testcontainers...");
             _dbContainer = new PostgreSqlBuilder()
                 .WithImage("postgres:15-alpine")
                 .WithDatabase("mizan_test")
@@ -129,6 +129,15 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             }
 
             services.AddSingleton<IJwksProvider>(new TestJwksProvider(_jwtIssuer.Jwk));
+            
+            // Configure minimal logging for tests
+            services.AddLogging(logging =>
+            {
+                logging.SetMinimumLevel(LogLevel.Warning);
+                logging.AddFilter("Microsoft", LogLevel.Error);
+                logging.AddFilter("System", LogLevel.Error);
+                logging.AddFilter("Mizan", LogLevel.Warning);
+            });
         });
     }
 
