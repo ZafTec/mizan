@@ -1,7 +1,10 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Security.Claims;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Mizan.Mcp.Server.Authentication;
 using Mizan.Mcp.Server.Models;
 using Mizan.Mcp.Server.Services;
 
@@ -9,6 +12,7 @@ namespace Mizan.Mcp.Server.Controllers;
 
 [ApiController]
 [Route("mcp")]
+[Authorize(AuthenticationSchemes = McpTokenAuthenticationOptions.DefaultScheme)]
 public class McpController : ControllerBase
 {
     private readonly IBackendClient _backend;
@@ -25,29 +29,32 @@ public class McpController : ControllerBase
         _logger = logger;
     }
 
+    private Guid GetUserId()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                       ?? User.FindFirst("sub")?.Value;
+        return Guid.Parse(userIdClaim!);
+    }
+
+    private Guid GetTokenId()
+    {
+        var tokenIdClaim = User.FindFirst("mcp_token_id")?.Value;
+        return Guid.Parse(tokenIdClaim!);
+    }
+
     [HttpGet("sse")]
+    [AllowAnonymous] // Auth is handled manually for SSE to support query parameter tokens
     public async Task ConnectSse()
     {
-        // 1. Auth
-        var token = Request.Query["token"].ToString(); // Or Header
-        if (string.IsNullOrEmpty(token))
-        {
-            var authHeader = Request.Headers["Authorization"].ToString();
-            if (authHeader.StartsWith("Bearer ")) token = authHeader.Substring(7);
-        }
-
-        if (string.IsNullOrEmpty(token))
+        // For SSE, we need to manually authenticate since the auth handler already ran
+        // and set the User principal if a valid token was provided
+        if (!User.Identity?.IsAuthenticated ?? true)
         {
             Response.StatusCode = 401;
             return;
         }
 
-        var validation = await _backend.ValidateTokenAsync(token);
-        if (validation == null)
-        {
-            Response.StatusCode = 401;
-            return;
-        }
+        var userId = GetUserId();
 
         // 2. Setup SSE
         Response.Headers.Append("Content-Type", "text/event-stream");
@@ -55,7 +62,7 @@ public class McpController : ControllerBase
         Response.Headers.Append("Connection", "keep-alive");
 
         var sessionId = Guid.NewGuid().ToString();
-        _logger.LogInformation("SSE Connected: {SessionId} User: {UserId}", sessionId, validation.UserId);
+        _logger.LogInformation("SSE Connected: {SessionId} User: {UserId}", sessionId, userId);
 
         // Send endpoint URL event
         var endpointEvent = new
@@ -87,18 +94,10 @@ public class McpController : ControllerBase
     [HttpPost("messages")]
     public async Task<IActionResult> HandleMessage([FromQuery] string sessionId, [FromBody] JsonRpcRequest request)
     {
-        // In a real implementation, we'd map sessionId to the user.
-        // For statelessness here, we require the token again in the header or we need a shared cache.
-        // To keep it simple: WE REQUIRE AUTH HEADER ON MESSAGES TOO.
-        
-        var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-        var validation = await _backend.ValidateTokenAsync(token);
-        if (validation == null) return Unauthorized();
+        var userId = GetUserId();
+        var tokenId = GetTokenId();
 
-        var userId = validation.UserId;
-        var tokenId = validation.TokenId;
-
-        _logger.LogInformation("Received method: {Method}", request.Method);
+        _logger.LogInformation("Received method: {Method} from User: {UserId}", request.Method, userId);
 
         try
         {
@@ -163,7 +162,7 @@ public class McpController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "RPC Error");
+            _logger.LogError(ex, "RPC Error for User: {UserId}", userId);
             return Ok(new JsonRpcResponse
             {
                 Id = request.Id,
