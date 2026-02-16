@@ -45,7 +45,7 @@ Log.Information("Mizan MCP Server starting on {Urls}", string.Join(", ", app.Url
 
 try
 {
-    app.UseAuthorization();
+    // app.UseAuthorization(); // Removed as we handle auth manually in the controller and didn't register AddAuthorization
     app.MapControllers();
     app.Run();
     Log.Information("Mizan MCP Server stopped gracefully");

@@ -21,8 +21,13 @@ public class BackendClient : IBackendClient
     public BackendClient(HttpClient httpClient, IConfiguration configuration, ILogger<BackendClient> logger)
     {
         _httpClient = httpClient;
-        _httpClient.BaseAddress = new Uri(configuration["MizanApiUrl"] ?? "http://localhost:5000");
-        _apiKey = configuration["ServiceApiKey"] ?? throw new InvalidOperationException("ServiceApiKey not configured");
+        _httpClient.BaseAddress = new Uri(configuration["MizanApiUrl"] ?? configuration["BACKEND_API_URL"] ?? "http://mizan-backend:8080");
+        
+        // Handle potentially namespaced config or env var
+        _apiKey = configuration["ServiceApiKey"] 
+               ?? configuration["Mcp:ServiceApiKey"] 
+               ?? throw new InvalidOperationException("ServiceApiKey not configured. Set 'ServiceApiKey' or 'Mcp__ServiceApiKey'.");
+        
         _logger = logger;
 
         _httpClient.DefaultRequestHeaders.Remove("X-Api-Key");
