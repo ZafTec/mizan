@@ -53,10 +53,14 @@ async function fetchApi<T>(
         status: response.status,
         statusText: response.statusText,
         duration,
+        error,
       });
+      
+      const errorMessage = error.error || error.message || error.detail || error.title || response.statusText;
+      
       throw new McpTokenApiError(
         response.status,
-        error.error || response.statusText,
+        errorMessage,
         error
       );
     }
@@ -104,11 +108,18 @@ export const mcpTokenApi = {
 
   async getMyTokens(): Promise<McpTokenDto[]> {
     mcpTokenLogger.debug("Fetching user MCP tokens");
-    const result = await fetchApi<GetMcpTokensResult>("/McpTokens", {
+    // Handle both direct array return and wrapped result
+    const result = await fetchApi<GetMcpTokensResult | McpTokenDto[]>("/McpTokens", {
       method: "GET",
     });
-    mcpTokenLogger.debug("Retrieved user MCP tokens", { count: result.tokens.length });
-    return result.tokens;
+    
+    // Check if result is an array or an object with tokens property
+    const tokens = Array.isArray(result) 
+      ? result 
+      : (result as GetMcpTokensResult).tokens || [];
+      
+    mcpTokenLogger.debug("Retrieved user MCP tokens", { count: tokens.length });
+    return tokens;
   },
 
   async revokeToken(tokenId: string): Promise<void> {

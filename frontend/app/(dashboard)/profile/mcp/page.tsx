@@ -25,10 +25,11 @@ function getMcpUrl(): string {
     const host = window.location.hostname;
     const protocol = window.location.protocol;
     if (host !== "localhost" && host !== "127.0.0.1") {
-      return `${protocol}//mcp.${host}/mcp`;
+      // The SSE endpoint is at /mcp/sse based on the backend controller
+      return `${protocol}//mcp.${host}/mcp/sse`;
     }
   }
-  return "http://localhost:5001/mcp";
+  return "http://localhost:5001/mcp/sse";
 }
 
 export default function McpPage() {
@@ -85,12 +86,12 @@ export default function McpPage() {
       "command": "npx",
       "args": [
         "-y",
-        "@modelcontextprotocol/server-sse",
-        "${mcpUrl}"
-      ],
-      "env": {
-        "AUTHORIZATION": "Bearer ${token}"
-      }
+        "supergateway",
+        "--sse",
+        "${mcpUrl}",
+        "--header",
+        "Authorization: Bearer ${token}"
+      ]
     }
   }
 }`;
