@@ -108,18 +108,12 @@ export const mcpTokenApi = {
 
   async getMyTokens(): Promise<McpTokenDto[]> {
     mcpTokenLogger.debug("Fetching user MCP tokens");
-    // Handle both direct array return and wrapped result
-    const result = await fetchApi<GetMcpTokensResult | McpTokenDto[]>("/McpTokens", {
+    const result = await fetchApi<GetMcpTokensResult>("/McpTokens", {
       method: "GET",
     });
-    
-    // Check if result is an array or an object with tokens property
-    const tokens = Array.isArray(result) 
-      ? result 
-      : (result as GetMcpTokensResult).tokens || [];
-      
-    mcpTokenLogger.debug("Retrieved user MCP tokens", { count: tokens.length });
-    return tokens;
+
+    mcpTokenLogger.debug("Retrieved user MCP tokens", { count: result.items.length });
+    return result.items;
   },
 
   async revokeToken(tokenId: string): Promise<void> {

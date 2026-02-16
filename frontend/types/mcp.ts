@@ -24,7 +24,11 @@ export interface CreateMcpTokenResult {
 }
 
 export interface GetMcpTokensResult {
-  tokens: McpTokenDto[];
+  items: McpTokenDto[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 export interface ValidateTokenCommand {

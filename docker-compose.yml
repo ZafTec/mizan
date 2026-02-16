@@ -118,6 +118,8 @@ services:
       - Cors__Origins__0=http://frontend:3000
       - Cors__Origins__1=http://localhost:3000
       - OpenAI__ApiKey=${OPENAI_API_KEY:-}
+      # MCP service-to-service API key (must match MCP server's key)
+      - Mcp__ServiceApiKey=${MCP_SERVICE_KEY:-dev_mcp_key_change_in_production}
     depends_on:
       postgres:
         condition: service_healthy
@@ -138,11 +140,17 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5001
       - ConnectionStrings__PostgreSQL=Host=postgres;Database=mizan;Username=mizan;Password=${DB_PASSWORD:-mizan_dev_password}
+      # Backend API connection (internal network)
+      - BACKEND_API_URL=http://backend:8080
+      # Service API Key for backend authentication
+      - Mcp__ServiceApiKey=${MCP_SERVICE_KEY:-dev_mcp_key_change_in_production}
     volumes:
       - ./backend/Mizan.Mcp.Server/logs:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
+      backend:
+        condition: service_started
     networks:
       - mizan-network
 

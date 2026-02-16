@@ -1,3 +1,4 @@
+using Mizan.Mcp.Server.Authentication;
 using Mizan.Mcp.Server.Services;
 using Serilog;
 using Serilog.Events;
@@ -39,13 +40,20 @@ builder.Services.AddControllers();
 builder.Services.AddHttpClient<IBackendClient, BackendClient>();
 builder.Services.AddScoped<McpToolHandler>();
 
+builder.Services.AddAuthentication(McpTokenAuthenticationOptions.DefaultScheme)
+    .AddScheme<McpTokenAuthenticationOptions, McpTokenAuthenticationHandler>(
+        McpTokenAuthenticationOptions.DefaultScheme, _ => { });
+
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 Log.Information("Mizan MCP Server starting on {Urls}", string.Join(", ", app.Urls));
 
 try
 {
-    // app.UseAuthorization(); // Removed as we handle auth manually in the controller and didn't register AddAuthorization
+    app.UseAuthentication();
+    app.UseAuthorization();
     app.MapControllers();
     app.Run();
     Log.Information("Mizan MCP Server stopped gracefully");
