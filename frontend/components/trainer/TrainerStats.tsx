@@ -42,10 +42,10 @@ export function TrainerStats() {
 				{[1, 2, 3, 4].map((i) => (
 					<div
 						key={i}
-						className="bg-white rounded-lg shadow-md p-6 animate-pulse"
+						className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6 animate-pulse"
 					>
-						<div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-						<div className="h-8 bg-gray-200 rounded w-1/4"></div>
+						<div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-1/2 mb-2"></div>
+						<div className="h-8 bg-gray-200 dark:bg-slate-700 rounded w-1/4"></div>
 					</div>
 				))}
 			</>
@@ -86,10 +86,10 @@ export function TrainerStats() {
 	return (
 		<>
 			{statCards.map((stat, index) => (
-				<div key={index} className="bg-white rounded-lg shadow-md p-6">
+				<div key={index} className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6">
 					<div className="flex items-center justify-between">
 						<div>
-							<p className="text-gray-500 text-sm">{stat.label}</p>
+							<p className="text-gray-500 dark:text-gray-400 text-sm">{stat.label}</p>
 							<p className="text-3xl font-bold mt-1">{stat.value}</p>
 						</div>
 						<div className={`${stat.bgColor} p-3 rounded-full`}>

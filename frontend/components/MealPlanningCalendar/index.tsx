@@ -115,13 +115,13 @@ export default function MealPlanningCalendar({
 	});
 
 	return (
-		<div className="bg-white rounded-lg shadow p-4 w-full">
+		<div className="bg-white dark:bg-slate-900 rounded-lg shadow p-4 w-full">
 			<div className="flex justify-between items-center mb-4">
 				<h2 className="text-xl font-bold">Meal Planning Calendar</h2>
 				<div className="flex items-center space-x-2">
 					<button 
 						onClick={() => navigateWeek('prev')}
-						className="p-2 rounded-full hover:bg-gray-100"
+						className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"
 						disabled={deleting}
 					>
 						<i className="ri-arrow-left-s-line"></i>
@@ -131,7 +131,7 @@ export default function MealPlanningCalendar({
 					</span>
 					<button 
 						onClick={() => navigateWeek('next')}
-						className="p-2 rounded-full hover:bg-gray-100"
+						className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"
 						disabled={deleting}
 					>
 						<i className="ri-arrow-right-s-line"></i>
@@ -148,7 +148,7 @@ export default function MealPlanningCalendar({
 									onWeekChange(today);
 								}
 							}}
-							className="ml-2 text-sm bg-emerald-100 text-emerald-700 px-2 py-1 rounded"
+							className="ml-2 text-sm bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-2 py-1 rounded"
 							disabled={deleting}
 						>
 							Today
@@ -183,38 +183,38 @@ export default function MealPlanningCalendar({
 					return (
 						<div 
 							key={`meals-${format(day, 'yyyy-MM-dd')}`} 
-							className="border rounded-lg p-2 min-h-[200px]"
+							className="border dark:border-slate-700 rounded-lg p-2 min-h-50"
 						>
 							<div className="flex flex-col h-full">
 								{/* Actual meals */}
 								{dayMeals && dayMeals.meals.length > 0 ? (
-									<div className="text-sm text-gray-600 mb-2">
+									<div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
 										<div className="flex justify-between">
 											<span>Logged meals: {dayMeals.meals.length}</span>
 											<span>{Math.round(dayMeals.totalMacros.calories)} cal</span>
 										</div>
 										<div className="max-h-24 overflow-y-auto mt-1">
 											{dayMeals.meals.map((meal) => (
-												<div key={meal._id.toString()} className="text-xs bg-gray-50 p-1 rounded mb-1">
+												<div key={meal._id.toString()} className="text-xs bg-gray-50 dark:bg-slate-800 p-1 rounded mb-1">
 													{meal.name}
 												</div>
 											))}
 										</div>
 									</div>
 								) : (
-									<div className="text-sm text-gray-400 mb-2">No meals logged</div>
+									<div className="text-sm text-gray-400 dark:text-gray-500 mb-2">No meals logged</div>
 								)}
 
 								{/* Planned meals */}
 								{plannedMealsForDay && plannedMealsForDay.recipes.length > 0 ? (
-								<div className="text-sm text-gray-600 mt-auto">
+								<div className="text-sm text-gray-600 dark:text-gray-400 mt-auto">
 									<div className="flex justify-between">
 										<span>Planned: {plannedMealsForDay.recipes.length}</span>
 										<span>{Math.round(plannedMealsForDay.totalCalories)} cal</span>
 									</div>
 									<div className="max-h-24 overflow-y-auto mt-1">
 										{plannedMealsForDay.recipes.map((recipe, idx) => (
-											<div key={`${recipe.recipe._id.toString()}-${idx}`} className="text-xs bg-emerald-50 p-1 rounded mb-1 flex justify-between items-center">
+											<div key={`${recipe.recipe._id.toString()}-${idx}`} className="text-xs bg-emerald-50 dark:bg-emerald-950 p-1 rounded mb-1 flex justify-between items-center">
 												<span>{recipe.recipe.name}</span>
 											</div>
 										))}
@@ -238,7 +238,7 @@ export default function MealPlanningCalendar({
 									</div>
 								</div>
 								) : (
-									<div className="text-sm text-gray-400 mt-auto">
+									<div className="text-sm text-gray-400 dark:text-gray-500 mt-auto">
 										<Link 
 											href={`/meal-plan/add?date=${format(day, 'yyyy-MM-dd')}`}
 											className="text-emerald-600 hover:underline"
@@ -254,7 +254,7 @@ export default function MealPlanningCalendar({
 			</div>
 
 			{/* Shopping list section */}
-			<div className="mt-6 border-t pt-4">
+			<div className="mt-6 border-t dark:border-slate-700 pt-4">
 				<div className="flex justify-between items-center mb-3">
 					<h3 className="font-bold">Weekly Ingredients</h3>
 					<Link 
@@ -264,14 +264,14 @@ export default function MealPlanningCalendar({
 						View Shopping List
 					</Link>
 				</div>
-				<div className="text-sm text-gray-600">
+				<div className="text-sm text-gray-600 dark:text-gray-400">
 					<p>Based on your meal plan for this week, you&apos;ll need:</p>
 					{loadingIngredients ? (
-						<div className="mt-2 text-gray-500">Loading ingredients...</div>
+						<div className="mt-2 text-gray-500 dark:text-gray-400">Loading ingredients...</div>
 					) : weeklyIngredients.length > 0 ? (
 						<div className="mt-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
 							{weeklyIngredients.map(category => (
-								<div key={category.category} className="bg-gray-50 rounded p-2">
+								<div key={category.category} className="bg-gray-50 dark:bg-slate-800 rounded p-2">
 									<div className="font-medium">{category.category}</div>
 									<ul className="list-disc list-inside text-xs">
 										{category.items.map((item, index) => (
@@ -282,7 +282,7 @@ export default function MealPlanningCalendar({
 							))}
 						</div>
 					) : (
-						<div className="mt-2 text-gray-500">No ingredients needed for this week.</div>
+						<div className="mt-2 text-gray-500 dark:text-gray-400">No ingredients needed for this week.</div>
 					)}
 				</div>
 			</div>

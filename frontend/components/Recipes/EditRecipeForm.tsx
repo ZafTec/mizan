@@ -264,11 +264,11 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                                                     className="w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 last:border-0"
                                                 >
                                                     <span className="font-medium text-slate-900 dark:text-slate-100">{ingredient.name}</span>
-                                                    <span className="text-xs text-slate-500">{ingredient.caloriesPer100g} kcal/100g</span>
+                                                    <span className="text-xs text-slate-500 dark:text-slate-400">{ingredient.caloriesPer100g} kcal/100g</span>
                                                 </button>
                                             ))
                                         ) : (
-                                            <div className="p-3 text-slate-500 text-center">No ingredients found</div>
+                                            <div className="p-3 text-slate-500 dark:text-slate-400 text-center">No ingredients found</div>
                                         )}
                                     </div>
                                 )}
@@ -283,11 +283,11 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                                     min="0"
                                     step="0.1"
                                 />
-                                <span className="px-3 py-2.5 bg-slate-100 rounded-xl text-slate-600 text-sm font-medium whitespace-nowrap">grams</span>
+                                <span className="px-3 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-600 dark:text-slate-400 text-sm font-medium whitespace-nowrap">grams</span>
                                 <button
                                     type="button"
                                     onClick={() => handleRemoveIngredient(index)}
-                                    className="w-10 h-10 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center transition-colors shrink-0"
+                                    className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 flex items-center justify-center transition-colors shrink-0"
                                     aria-label="Remove ingredient"
                                 >
                                     <i className="ri-delete-bin-line" />
@@ -300,7 +300,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                 <button
                     type="button"
                     onClick={handleAddIngredient}
-                    className="flex items-center gap-2 text-brand-600 hover:text-brand-700 font-medium transition-colors"
+                    className="flex items-center gap-2 text-brand-600 dark:text-brand-400 hover:text-brand-700 font-medium transition-colors"
                 >
                     <i className="ri-add-circle-line text-lg" />
                     Add Ingredient
@@ -309,7 +309,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
 
             {/* Instructions Card */}
             <div className="card p-6 space-y-4">
-                <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+                <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                     <i className="ri-file-list-3-line text-brand-500" />
                     Instructions
                 </h2>
@@ -325,7 +325,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
 
             {/* Additional Details Card */}
             <div className="card p-6 space-y-5">
-                <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+                <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                     <i className="ri-settings-3-line text-brand-500" />
                     Additional Details
                 </h2>
@@ -337,9 +337,9 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                         <button
                             type="button"
                             onClick={() => setServings(Math.max(1, servings - 1))}
-                            className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+                            className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
                         >
-                            <i className="ri-subtract-line text-slate-600" />
+                            <i className="ri-subtract-line text-slate-600 dark:text-slate-400" />
                         </button>
                         <input
                             id="servings"
@@ -352,9 +352,9 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                         <button
                             type="button"
                             onClick={() => setServings(servings + 1)}
-                            className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+                            className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
                         >
-                            <i className="ri-add-line text-slate-600" />
+                            <i className="ri-add-line text-slate-600 dark:text-slate-400" />
                         </button>
                     </div>
                 </div>

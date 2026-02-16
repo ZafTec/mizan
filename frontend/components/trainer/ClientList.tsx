@@ -56,10 +56,10 @@ export function ClientList() {
 			<div className="space-y-4">
 				{[1, 2, 3].map((i) => (
 					<div key={i} className="animate-pulse flex items-center space-x-4">
-						<div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+						<div className="w-12 h-12 bg-gray-200 dark:bg-slate-700 rounded-full"></div>
 						<div className="flex-1">
-							<div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-							<div className="h-3 bg-gray-200 rounded w-1/3"></div>
+							<div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-1/4 mb-2"></div>
+							<div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-1/3"></div>
 						</div>
 					</div>
 				))}
@@ -77,7 +77,7 @@ export function ClientList() {
 						className={`px-3 py-1 rounded-full text-sm capitalize ${
 							filter === f
 								? "bg-green-600 text-white"
-								: "bg-gray-100 text-gray-600 hover:bg-gray-200"
+								: "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700"
 						}`}
 					>
 						{f}
@@ -89,11 +89,11 @@ export function ClientList() {
 				{filteredClients.map((client) => (
 					<div
 						key={client.relationshipId}
-						className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+						className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
 					>
 						<div className="flex items-center space-x-3">
-							<div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-								<span className="text-green-600 font-semibold">
+							<div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+								<span className="text-green-600 dark:text-green-400 font-semibold">
 									{(client.clientName || client.clientEmail || "?").charAt(0)}
 								</span>
 							</div>
@@ -101,30 +101,30 @@ export function ClientList() {
 								<p className="font-medium">
 									{client.clientName || client.clientEmail || "Unknown Client"}
 								</p>
-								<p className="text-sm text-gray-500">
+								<p className="text-sm text-gray-500 dark:text-gray-400">
 									Started: {new Date(client.startedAt).toLocaleDateString()}
 								</p>
 							</div>
 						</div>
 
 						<div className="flex items-center space-x-4">
-							<div className="text-right text-xs text-gray-500">
+							<div className="text-right text-xs text-gray-500 dark:text-gray-400">
 								{client.canViewNutrition && <div>✓ Nutrition</div>}
 								{client.canViewWorkouts && <div>✓ Workouts</div>}
 							</div>
 
 							<Link
 								href={`/trainer/clients/${client.clientId}`}
-								className="p-2 hover:bg-gray-200 rounded-full"
+								className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full"
 							>
-								<i className="ri-arrow-right-line text-gray-600"></i>
+								<i className="ri-arrow-right-line text-gray-600 dark:text-gray-300"></i>
 							</Link>
 						</div>
 					</div>
 				))}
 
 				{filteredClients.length === 0 && (
-					<p className="text-center text-gray-500 py-8">
+					<p className="text-center text-gray-500 dark:text-gray-400 py-8">
 						No clients found matching the filter.
 					</p>
 				)}

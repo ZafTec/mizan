@@ -79,11 +79,11 @@ export default function ResetPasswordPage() {
 			<div className="w-full max-w-md">
 				{/* Header */}
 				<div className="text-center mb-8">
-					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/30 mb-4">
+					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/30 mb-4">
 						<i className="ri-lock-unlock-line text-3xl text-white" />
 					</div>
-					<h1 className="text-2xl font-bold text-slate-900">Set new password</h1>
-					<p className="text-slate-500 mt-1">
+					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Set new password</h1>
+					<p className="text-slate-500 dark:text-slate-400 mt-1">
 						Your new password must be different from previous passwords
 					</p>
 				</div>
@@ -92,14 +92,14 @@ export default function ResetPasswordPage() {
 				<div className="card p-6 sm:p-8">
 					{tokenError ? (
 						<div className="text-center space-y-4">
-							<div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto">
-								<i className="ri-error-warning-line text-3xl text-red-600" />
+							<div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto">
+								<i className="ri-error-warning-line text-3xl text-red-600 dark:text-red-400" />
 							</div>
 							<div>
-								<h3 className="text-lg font-semibold text-slate-900 mb-2">
+								<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
 									Invalid or expired link
 								</h3>
-								<p className="text-slate-500 text-sm">
+								<p className="text-slate-500 dark:text-slate-400 text-sm">
 									{tokenError}
 								</p>
 							</div>
@@ -115,14 +115,14 @@ export default function ResetPasswordPage() {
 						</div>
 					) : success ? (
 						<div className="text-center space-y-4">
-							<div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-								<i className="ri-checkbox-circle-line text-3xl text-green-600" />
+							<div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto">
+								<i className="ri-checkbox-circle-line text-3xl text-green-600 dark:text-green-400" />
 							</div>
 							<div>
-								<h3 className="text-lg font-semibold text-slate-900 mb-2">
+								<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
 									Password reset successful!
 								</h3>
-								<p className="text-slate-500 text-sm">
+								<p className="text-slate-500 dark:text-slate-400 text-sm">
 									Your password has been updated. Redirecting to login...
 								</p>
 							</div>
@@ -149,7 +149,7 @@ export default function ResetPasswordPage() {
 									onChange={(e) => setPassword(e.target.value)}
 									minLength={8}
 								/>
-								<p className="text-xs text-slate-500 mt-1.5">
+								<p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
 									Must be at least 8 characters
 								</p>
 							</div>
@@ -172,7 +172,7 @@ export default function ResetPasswordPage() {
 							</div>
 
 							{error && (
-								<div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 text-red-600 text-sm">
+								<div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
 									<i className="ri-error-warning-line text-lg" />
 									<span>{error}</span>
 								</div>
@@ -202,7 +202,7 @@ export default function ResetPasswordPage() {
 							<div className="text-center">
 								<Link
 									href="/login"
-									className="text-sm text-slate-600 hover:text-slate-900 inline-flex items-center gap-1"
+									className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 inline-flex items-center gap-1"
 								>
 									<i className="ri-arrow-left-line" />
 									Back to login

@@ -142,10 +142,10 @@ export function TrainerPendingRequests() {
 			<div className="space-y-4">
 				{[1, 2].map((i) => (
 					<div key={i} className="animate-pulse flex items-center space-x-4">
-						<div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+						<div className="w-12 h-12 bg-gray-200 dark:bg-slate-700 rounded-full"></div>
 						<div className="flex-1">
-							<div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
-							<div className="h-3 bg-gray-200 rounded w-1/4"></div>
+							<div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-1/3 mb-2"></div>
+							<div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-1/4"></div>
 						</div>
 					</div>
 				))}
@@ -155,7 +155,7 @@ export function TrainerPendingRequests() {
 
 	if (requests.length === 0) {
 		return (
-			<p className="text-center text-gray-500 py-8">
+			<p className="text-center text-gray-500 dark:text-gray-400 py-8">
 				No pending requests
 			</p>
 		);
@@ -167,11 +167,11 @@ export function TrainerPendingRequests() {
 				{requests.map((request) => (
 					<div
 						key={request.relationshipId}
-						className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+						className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg"
 					>
 						<div className="flex items-center space-x-3">
-							<div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-								<span className="text-yellow-700 font-semibold text-lg">
+							<div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
+								<span className="text-yellow-700 dark:text-yellow-300 font-semibold text-lg">
 									{request.clientName?.[0] || request.clientEmail?.[0] || "?"}
 								</span>
 							</div>
@@ -179,7 +179,7 @@ export function TrainerPendingRequests() {
 								<p className="font-medium">
 									{request.clientName || request.clientEmail || "Unknown Client"}
 								</p>
-								<p className="text-sm text-gray-500">
+								<p className="text-sm text-gray-500 dark:text-gray-400">
 									Requested {new Date(request.requestedAt).toLocaleDateString()}
 								</p>
 							</div>

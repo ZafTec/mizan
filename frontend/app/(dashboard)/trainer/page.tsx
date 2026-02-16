@@ -13,19 +13,19 @@ export default function TrainerDashboard() {
 			</div>
 
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-				<div className="bg-white rounded-lg shadow-md p-6">
+				<div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6">
 					<h2 className="text-xl font-semibold mb-4">Pending Requests</h2>
 					<TrainerPendingRequests />
 				</div>
 
-				<div className="bg-white rounded-lg shadow-md p-6">
+				<div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6">
 					<h2 className="text-xl font-semibold mb-4">Recent Messages</h2>
 					<RecentMessages />
 				</div>
 			</div>
 
 			<div className="grid grid-cols-1 gap-6">
-				<div className="bg-white rounded-lg shadow-md p-6">
+				<div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6">
 					<h2 className="text-xl font-semibold mb-4">Your Clients</h2>
 					<ClientList />
 				</div>

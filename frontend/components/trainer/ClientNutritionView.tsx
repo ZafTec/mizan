@@ -138,8 +138,8 @@ export function ClientNutritionView({ clientId }: ClientNutritionViewProps) {
 	if (loading) {
 		return (
 			<div className="animate-pulse space-y-4">
-				<div className="h-12 bg-gray-200 rounded w-1/3"></div>
-				<div className="h-64 bg-gray-200 rounded"></div>
+				<div className="h-12 bg-gray-200 dark:bg-slate-700 rounded w-1/3"></div>
+				<div className="h-64 bg-gray-200 dark:bg-slate-700 rounded"></div>
 			</div>
 		);
 	}
@@ -185,7 +185,7 @@ export function ClientNutritionView({ clientId }: ClientNutritionViewProps) {
 			{!nutritionData || nutritionData.foodLogs.length === 0 ? (
 				<Card>
 					<CardContent className="pt-6">
-						<p className="text-center text-gray-500 py-8">
+						<p className="text-center text-gray-500 dark:text-gray-400 py-8">
 							No nutrition data for this date
 						</p>
 					</CardContent>
@@ -195,7 +195,7 @@ export function ClientNutritionView({ clientId }: ClientNutritionViewProps) {
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 						<Card>
 							<CardHeader className="pb-2">
-								<CardTitle className="text-sm font-medium text-gray-600">
+								<CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
 									Calories
 								</CardTitle>
 							</CardHeader>
@@ -203,21 +203,21 @@ export function ClientNutritionView({ clientId }: ClientNutritionViewProps) {
 								<p className="text-3xl font-bold">
 									{Math.round(nutritionData.summary.totalCalories)}
 								</p>
-								<p className="text-xs text-gray-500">kcal</p>
+								<p className="text-xs text-gray-500 dark:text-gray-400">kcal</p>
 							</CardContent>
 						</Card>
 
 						<Card>
 							<CardHeader className="pb-2">
-								<CardTitle className="text-sm font-medium text-gray-600">
+								<CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
 									Protein
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<p className="text-3xl font-bold text-blue-600">
+								<p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
 									{Math.round(nutritionData.summary.totalProtein)}g
 								</p>
-								<p className="text-xs text-gray-500">
+								<p className="text-xs text-gray-500 dark:text-gray-400">
 									{Math.round((nutritionData.summary.totalProtein * 4 / nutritionData.summary.totalCalories) * 100)}% of calories
 								</p>
 							</CardContent>
@@ -225,15 +225,15 @@ export function ClientNutritionView({ clientId }: ClientNutritionViewProps) {
 
 						<Card>
 							<CardHeader className="pb-2">
-								<CardTitle className="text-sm font-medium text-gray-600">
+								<CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
 									Carbs
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<p className="text-3xl font-bold text-green-600">
+								<p className="text-3xl font-bold text-green-600 dark:text-green-400">
 									{Math.round(nutritionData.summary.totalCarbs)}g
 								</p>
-								<p className="text-xs text-gray-500">
+								<p className="text-xs text-gray-500 dark:text-gray-400">
 									{Math.round((nutritionData.summary.totalCarbs * 4 / nutritionData.summary.totalCalories) * 100)}% of calories
 								</p>
 							</CardContent>
@@ -241,15 +241,15 @@ export function ClientNutritionView({ clientId }: ClientNutritionViewProps) {
 
 						<Card>
 							<CardHeader className="pb-2">
-								<CardTitle className="text-sm font-medium text-gray-600">
+								<CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
 									Fat
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<p className="text-3xl font-bold text-orange-600">
+								<p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
 									{Math.round(nutritionData.summary.totalFat)}g
 								</p>
-								<p className="text-xs text-gray-500">
+								<p className="text-xs text-gray-500 dark:text-gray-400">
 									{Math.round((nutritionData.summary.totalFat * 9 / nutritionData.summary.totalCalories) * 100)}% of calories
 								</p>
 							</CardContent>
@@ -313,11 +313,11 @@ export function ClientNutritionView({ clientId }: ClientNutritionViewProps) {
 								{nutritionData.foodLogs.map((entry) => (
 									<div
 										key={entry.id}
-										className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+										className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg"
 									>
 										<div>
 											<p className="font-medium">{entry.foodName}</p>
-											<p className="text-sm text-gray-500">
+											<p className="text-sm text-gray-500 dark:text-gray-400">
 												{entry.servingSize} {entry.servingUnit} •{" "}
 												{new Date(entry.loggedAt).toLocaleTimeString()}
 											</p>
@@ -326,7 +326,7 @@ export function ClientNutritionView({ clientId }: ClientNutritionViewProps) {
 											<p className="font-semibold">
 												{Math.round(entry.calories)} cal
 											</p>
-											<p className="text-xs text-gray-500">
+											<p className="text-xs text-gray-500 dark:text-gray-400">
 												P: {Math.round(entry.protein)}g • C:{" "}
 												{Math.round(entry.carbs)}g • F: {Math.round(entry.fat)}g
 											</p>

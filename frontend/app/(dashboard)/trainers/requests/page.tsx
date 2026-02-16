@@ -50,7 +50,7 @@ export default function TrainerRequestsPage() {
 	if (!session?.user) {
 		return (
 			<div className="flex items-center justify-center min-h-screen">
-				<p className="text-slate-500">Not authenticated</p>
+				<p className="text-slate-500 dark:text-slate-400">Not authenticated</p>
 			</div>
 		);
 	}
@@ -60,10 +60,10 @@ export default function TrainerRequestsPage() {
 			{/* Header */}
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
-					<h1 className="text-2xl font-bold text-slate-900">
+					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
 						Trainer Requests
 					</h1>
-					<p className="text-slate-500 mt-1">
+					<p className="text-slate-500 dark:text-slate-400 mt-1">
 						View your pending trainer connection requests
 					</p>
 				</div>
@@ -76,11 +76,11 @@ export default function TrainerRequestsPage() {
 			{/* Requests List */}
 			{requests.length === 0 ? (
 				<div className="card p-12 text-center">
-					<i className="ri-mail-send-line text-6xl text-slate-300 mb-4" />
-					<h3 className="text-lg font-semibold text-slate-900 mb-2">
+					<i className="ri-mail-send-line text-6xl text-slate-300 dark:text-slate-600 mb-4" />
+					<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
 						No Pending Requests
 					</h3>
-					<p className="text-slate-500 mb-6">
+					<p className="text-slate-500 dark:text-slate-400 mb-6">
 						You don't have any pending trainer connection requests
 					</p>
 					<Link href="/trainers" className="btn-primary inline-flex items-center gap-2">
@@ -93,17 +93,17 @@ export default function TrainerRequestsPage() {
 					{requests.map((request) => (
 						<div key={request.relationshipId} className="card p-6">
 							<div className="flex flex-col sm:flex-row items-center gap-6">
-								<div className="relative flex-shrink-0">
+								<div className="relative shrink-0">
 									{request.trainerImage ? (
 										<Image
 											src={request.trainerImage}
 											alt={request.trainerName || request.trainerEmail || "Trainer"}
 											width={80}
 											height={80}
-											className="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-lg"
+											className="w-20 h-20 rounded-2xl object-cover border-4 border-white dark:border-slate-800 shadow-lg"
 										/>
 									) : (
-										<div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center border-4 border-white shadow-lg">
+										<div className="w-20 h-20 rounded-2xl bg-linear-to-br from-emerald-400 to-teal-600 flex items-center justify-center border-4 border-white dark:border-slate-800 shadow-lg">
 											<span className="text-2xl font-bold text-white">
 												{request.trainerEmail?.charAt(0).toUpperCase()}
 											</span>
@@ -112,22 +112,22 @@ export default function TrainerRequestsPage() {
 								</div>
 
 								<div className="flex-1 text-center sm:text-left">
-									<h3 className="text-lg font-semibold text-slate-900">
+									<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
 										{request.trainerName || request.trainerEmail?.split("@")[0]}
 									</h3>
-									<p className="text-slate-500">{request.trainerEmail}</p>
+									<p className="text-slate-500 dark:text-slate-400">{request.trainerEmail}</p>
 									<div className="flex items-center gap-2 mt-2 justify-center sm:justify-start">
-										<span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-sm font-medium">
+										<span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-medium">
 											<i className="ri-time-line" />
 											Pending
 										</span>
-										<span className="text-sm text-slate-500">
+										<span className="text-sm text-slate-500 dark:text-slate-400">
 											Sent {new Date(request.requestedAt).toLocaleDateString()}
 										</span>
 									</div>
 								</div>
 
-								<div className="flex gap-2 flex-shrink-0">
+								<div className="flex gap-2 shrink-0">
 									<button
 										className="btn-secondary"
 										onClick={() => {
@@ -145,16 +145,16 @@ export default function TrainerRequestsPage() {
 			)}
 
 			{/* Info Card */}
-			<div className="card p-6 border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+			<div className="card p-6 border-2 border-blue-200 dark:border-blue-800 bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
 				<div className="flex items-start gap-4">
-					<div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
+					<div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0">
 						<i className="ri-information-line text-2xl text-white" />
 					</div>
 					<div>
-						<h3 className="font-semibold text-slate-900 mb-2">
+						<h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">
 							What happens next?
 						</h3>
-						<ul className="text-sm text-slate-600 space-y-2">
+						<ul className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
 							<li className="flex items-start gap-2">
 								<i className="ri-arrow-right-s-line text-blue-500 mt-0.5" />
 								<span>

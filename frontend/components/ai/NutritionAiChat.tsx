@@ -95,9 +95,9 @@ export function NutritionAiChat() {
 	];
 
 	return (
-		<div className="flex flex-col h-[600px] bg-white rounded-lg shadow-md">
+		<div className="flex flex-col h-150 bg-white dark:bg-slate-900 rounded-lg shadow-md">
 			{/* Header */}
-			<div className="flex items-center space-x-3 p-4 border-b bg-gradient-to-r from-green-600 to-green-700 text-white rounded-t-lg">
+			<div className="flex items-center space-x-3 p-4 border-b bg-linear-to-r from-green-600 to-green-700 text-white rounded-t-lg">
 				<div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
 					<span className="text-xl">🤖</span>
 				</div>
@@ -110,12 +110,12 @@ export function NutritionAiChat() {
 			</div>
 
 			{/* Quick Actions */}
-			<div className="flex flex-wrap gap-2 p-3 border-b bg-gray-50">
+			<div className="flex flex-wrap gap-2 p-3 border-b dark:border-slate-700 bg-gray-50 dark:bg-slate-800">
 				{quickActions.map((action, index) => (
 					<button
 						key={index}
 						onClick={() => setInput(action.prompt)}
-						className="px-3 py-1 text-xs bg-white border border-gray-200 rounded-full hover:bg-gray-100 transition-colors"
+						className="px-3 py-1 text-xs bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
 					>
 						{action.label}
 					</button>
@@ -135,13 +135,13 @@ export function NutritionAiChat() {
 							className={`max-w-[80%] rounded-lg px-4 py-3 ${
 								message.role === "user"
 									? "bg-green-600 text-white rounded-br-none"
-									: "bg-gray-100 text-gray-800 rounded-bl-none"
+									: "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-gray-200 rounded-bl-none"
 							}`}
 						>
-							<p className="whitespace-pre-wrap break-words">{message.content}</p>
+							<p className="whitespace-pre-wrap wrap-break-word">{message.content}</p>
 							<p
 								className={`text-xs mt-1 ${
-									message.role === "user" ? "text-green-200" : "text-gray-500"
+									message.role === "user" ? "text-green-200" : "text-gray-500 dark:text-gray-400"
 								}`}
 							>
 								{message.timestamp.toLocaleTimeString([], {
@@ -155,15 +155,15 @@ export function NutritionAiChat() {
 
 				{isLoading && (
 					<div className="flex justify-start">
-						<div className="bg-gray-100 rounded-lg px-4 py-3 rounded-bl-none">
+						<div className="bg-gray-100 dark:bg-slate-800 rounded-lg px-4 py-3 rounded-bl-none">
 							<div className="flex space-x-1">
-								<div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+								<div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"></div>
 								<div
-									className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+									className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
 									style={{ animationDelay: "0.1s" }}
 								></div>
 								<div
-									className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+									className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
 									style={{ animationDelay: "0.2s" }}
 								></div>
 							</div>
@@ -175,14 +175,14 @@ export function NutritionAiChat() {
 			</div>
 
 			{/* Input */}
-			<div className="p-4 border-t">
+			<div className="p-4 border-t dark:border-slate-700">
 				<div className="flex items-end space-x-2">
 					<textarea
 						value={input}
 						onChange={(e) => setInput(e.target.value)}
 						onKeyPress={handleKeyPress}
 						placeholder="Ask about nutrition, log food, or get recipe ideas..."
-						className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+						className="flex-1 px-4 py-2 border dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
 						rows={1}
 						disabled={isLoading}
 					/>
@@ -194,7 +194,7 @@ export function NutritionAiChat() {
 						<i className="ri-send-plane-fill text-lg"></i>
 					</button>
 				</div>
-				<p className="text-xs text-gray-400 mt-2 text-center">
+				<p className="text-xs text-gray-400 dark:text-gray-500 mt-2 text-center">
 					Powered by GPT-4o with Semantic Kernel
 				</p>
 			</div>

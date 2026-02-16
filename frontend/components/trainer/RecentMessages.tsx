@@ -74,10 +74,10 @@ export function RecentMessages() {
 				{[1, 2, 3].map((i) => (
 					<div key={i} className="animate-pulse">
 						<div className="flex items-start space-x-3">
-							<div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+							<div className="w-10 h-10 bg-gray-200 dark:bg-slate-700 rounded-full"></div>
 							<div className="flex-1">
-								<div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-								<div className="h-3 bg-gray-200 rounded w-3/4"></div>
+								<div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-1/4 mb-2"></div>
+								<div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-3/4"></div>
 							</div>
 						</div>
 					</div>
@@ -94,12 +94,12 @@ export function RecentMessages() {
 					href={`/trainer/chat/${message.conversationId}`}
 					className={`block p-3 rounded-lg transition-colors ${
 						message.isRead
-							? "bg-gray-50 hover:bg-gray-100"
-							: "bg-blue-50 hover:bg-blue-100"
+							? "bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700"
+							: "bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900/30"
 					}`}
 				>
 					<div className="flex items-start space-x-3">
-						<div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+						<div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center shrink-0">
 							{message.senderImage ? (
 								<img
 									src={message.senderImage}
@@ -107,7 +107,7 @@ export function RecentMessages() {
 									className="w-10 h-10 rounded-full"
 								/>
 							) : (
-								<span className="text-green-600 font-semibold">
+								<span className="text-green-600 dark:text-green-400 font-semibold">
 									{message.senderName.charAt(0)}
 								</span>
 							)}
@@ -115,28 +115,28 @@ export function RecentMessages() {
 						<div className="flex-1 min-w-0">
 							<div className="flex items-center justify-between">
 								<p className="font-medium text-sm">{message.senderName}</p>
-								<span className="text-xs text-gray-500">
+								<span className="text-xs text-gray-500 dark:text-gray-400">
 									{formatDistanceToNow(new Date(message.sentAt), {
 										addSuffix: true,
 									})}
 								</span>
 							</div>
-							<p className="text-sm text-gray-600 truncate">{message.content}</p>
+							<p className="text-sm text-gray-600 dark:text-gray-400 truncate">{message.content}</p>
 						</div>
 						{!message.isRead && (
-							<div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0"></div>
+							<div className="w-2 h-2 bg-blue-600 rounded-full shrink-0"></div>
 						)}
 					</div>
 				</Link>
 			))}
 
 			{messages.length === 0 && (
-				<p className="text-center text-gray-500 py-8">No recent messages.</p>
+				<p className="text-center text-gray-500 dark:text-gray-400 py-8">No recent messages.</p>
 			)}
 
 			<Link
 				href="/trainer/chat"
-				className="block text-center text-green-600 hover:text-green-700 text-sm font-medium pt-2"
+				className="block text-center text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 text-sm font-medium pt-2"
 			>
 				View All Messages →
 			</Link>

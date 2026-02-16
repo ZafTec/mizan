@@ -97,8 +97,8 @@ export default function Page() {
 						</div>
 					) : verified ? (
 						<div className="text-center space-y-4">
-							<div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-								<i className="ri-checkbox-circle-line text-3xl text-green-600" />
+							<div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto">
+								<i className="ri-checkbox-circle-line text-3xl text-green-600 dark:text-green-400" />
 							</div>
 							<div>
 								<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
@@ -109,7 +109,7 @@ export default function Page() {
 								</p>
 							</div>
 							<div className="pt-4">
-								<div className="text-sm text-slate-500 mb-3">
+								<div className="text-sm text-slate-500 dark:text-slate-400 mb-3">
 									Redirecting to login in {countdown} seconds...
 								</div>
 								<Link href="/login" className="btn-primary w-full py-3">
@@ -119,8 +119,8 @@ export default function Page() {
 						</div>
 					) : (
 						<div className="text-center space-y-4">
-							<div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto">
-								<i className="ri-error-warning-line text-3xl text-red-600" />
+							<div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto">
+								<i className="ri-error-warning-line text-3xl text-red-600 dark:text-red-400" />
 							</div>
 							<div>
 								<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">

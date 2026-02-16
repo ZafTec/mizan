@@ -107,13 +107,13 @@ export function FoodImageAnalyzer() {
 	};
 
 	return (
-		<div className="bg-white rounded-lg shadow-md p-6">
+		<div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6">
 			<h2 className="text-xl font-semibold mb-4 flex items-center">
 				<i className="ri-camera-line mr-2 text-green-600"></i>
 				Food Image Analyzer
 			</h2>
 
-			<p className="text-gray-600 text-sm mb-4">
+			<p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
 				Take a photo of your meal and let AI identify the foods and estimate
 				their nutritional content.
 			</p>
@@ -121,8 +121,8 @@ export function FoodImageAnalyzer() {
 			{/* Upload Area */}
 			<div
 				className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${selectedImage
-						? "border-green-500 bg-green-50"
-						: "border-gray-300 hover:border-green-400"
+						? "border-green-500 bg-green-50 dark:bg-green-950"
+						: "border-gray-300 dark:border-gray-600 hover:border-green-400"
 					}`}
 				onClick={() => fileInputRef.current?.click()}
 			>
@@ -134,11 +134,11 @@ export function FoodImageAnalyzer() {
 					/>
 				) : (
 					<div className="py-8">
-						<i className="ri-image-add-line text-4xl text-gray-400 mb-2"></i>
-						<p className="text-gray-500">
+						<i className="ri-image-add-line text-4xl text-gray-400 dark:text-gray-500 mb-2"></i>
+						<p className="text-gray-500 dark:text-gray-400">
 							Click to upload or drag and drop an image
 						</p>
-						<p className="text-xs text-gray-400 mt-1">
+						<p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
 							Supports JPG, PNG up to 10MB
 						</p>
 					</div>
@@ -175,7 +175,7 @@ export function FoodImageAnalyzer() {
 
 			{/* Error */}
 			{error && (
-				<div className="mt-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+				<div className="mt-4 p-3 bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 rounded-lg text-sm">
 					{error}
 				</div>
 			)}
@@ -185,7 +185,7 @@ export function FoodImageAnalyzer() {
 				<div className="mt-6">
 					<div className="flex items-center justify-between mb-4">
 						<h3 className="font-semibold">Analysis Results</h3>
-						<span className="text-sm text-gray-500">
+						<span className="text-sm text-gray-500 dark:text-gray-400">
 							Confidence: {(result.confidence * 100).toFixed(0)}%
 						</span>
 					</div>
@@ -194,14 +194,14 @@ export function FoodImageAnalyzer() {
 						{result.foods.map((food, index) => (
 							<div
 								key={index}
-								className="p-3 bg-gray-50 rounded-lg flex items-center justify-between"
+								className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg flex items-center justify-between"
 							>
 								<div>
 									<p className="font-medium">{food.name}</p>
-									<p className="text-sm text-gray-500">
+									<p className="text-sm text-gray-500 dark:text-gray-400">
 										{food.portionGrams}g • {food.calories} kcal
 									</p>
-									<p className="text-xs text-gray-400">
+									<p className="text-xs text-gray-400 dark:text-gray-500">
 										P: {food.protein}g • C: {food.carbs}g • F: {food.fat}g
 									</p>
 								</div>
@@ -215,8 +215,8 @@ export function FoodImageAnalyzer() {
 						))}
 					</div>
 
-					<div className="mt-4 p-3 bg-green-50 rounded-lg">
-						<p className="font-semibold text-green-800">
+					<div className="mt-4 p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+						<p className="font-semibold text-green-800 dark:text-green-300">
 							Total: {result.totalCalories} calories
 						</p>
 					</div>

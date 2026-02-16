@@ -17,7 +17,7 @@ export default function SearchBar() {
 		<input
 			type="text"
 			placeholder="Search ingredient"
-			className="border-2 border-gray-300 rounded-lg p-2"
+			className="border-2 border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-white dark:bg-slate-900 dark:text-slate-100"
 			value={searchTerm}
 			onChange={(e) => setSearchTerm(e.target.value)}
 			onKeyDown={handleSearch}

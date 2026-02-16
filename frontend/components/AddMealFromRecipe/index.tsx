@@ -28,7 +28,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 			<input type="hidden" name="recipeId" value={recipeId} />
 			{/* Basic Info Card */}
 			<div className="card p-6 space-y-5">
-				<h2 className="font-semibold text-slate-900 flex items-center gap-2">
+				<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
 					<i className="ri-edit-line text-brand-500" />
 					Log Details
 				</h2>
@@ -60,15 +60,15 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 			</div>
 
 			{/* Nutrition Info Card */}
-			<div className="card p-6 space-y-5 text-slate-900">
-				<h2 className="font-semibold text-slate-900 flex items-center gap-2">
+			<div className="card p-6 space-y-5 text-slate-900 dark:text-slate-100">
+				<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
 					<i className="ri-heart-pulse-line text-brand-500" />
 					Nutritional Information
 				</h2>
 
 				<div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
 					<div>
-						<label htmlFor="calories" className="label text-slate-900">Calories (kcal)</label>
+						<label htmlFor="calories" className="label text-slate-900 dark:text-slate-100">Calories (kcal)</label>
 						<input
 							type="number"
 							id="calories"
@@ -81,7 +81,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 						<FieldError formState={formState} name="calories" />
 					</div>
 					<div>
-						<label htmlFor="protein" className="label text-slate-900">Protein (g)</label>
+						<label htmlFor="protein" className="label text-slate-900 dark:text-slate-100">Protein (g)</label>
 						<input
 							type="number"
 							id="protein"
@@ -95,7 +95,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 						<FieldError formState={formState} name="protein" />
 					</div>
 					<div>
-						<label htmlFor="carbs" className="label text-slate-900">Carbs (g)</label>
+						<label htmlFor="carbs" className="label text-slate-900 dark:text-slate-100">Carbs (g)</label>
 						<input
 							type="number"
 							id="carbs"
@@ -109,7 +109,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 						<FieldError formState={formState} name="carbs" />
 					</div>
 					<div>
-						<label htmlFor="fat" className="label text-slate-900">Fat (g)</label>
+						<label htmlFor="fat" className="label text-slate-900 dark:text-slate-100">Fat (g)</label>
 						<input
 							type="number"
 							id="fat"
@@ -123,7 +123,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 						<FieldError formState={formState} name="fat" />
 					</div>
 					<div>
-						<label htmlFor="fiber" className="label text-slate-900">Fiber (g)</label>
+						<label htmlFor="fiber" className="label text-slate-900 dark:text-slate-100">Fiber (g)</label>
 						<input
 							type="number"
 							id="fiber"
@@ -142,7 +142,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 			{/* Status & Submit */}
 			<div className="space-y-4">
 				{formState.status === "error" && formState.message && (
-					<div className="p-4 rounded-xl bg-red-50 text-red-600 flex items-center gap-2">
+					<div className="p-4 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 flex items-center gap-2">
 						<i className="ri-error-warning-line text-xl" />
 						<span>{formState.message}</span>
 					</div>
