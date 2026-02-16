@@ -175,6 +175,209 @@ public class CreateRecipeCommandTests : IDisposable
         result.IsValid.Should().BeFalse();
     }
 
+    [Fact]
+    public async Task Handle_ShouldCreateRecipe_WithSubRecipeIngredient()
+    {
+        // Arrange
+        var subRecipe = new Domain.Entities.Recipe
+        {
+            Id = Guid.NewGuid(),
+            UserId = _testUserId,
+            Title = "Tomato Sauce",
+            Servings = 4,
+            IsPublic = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            Nutrition = new Domain.Entities.RecipeNutrition
+            {
+                RecipeId = Guid.NewGuid(),
+                CaloriesPerServing = 50,
+                ProteinGrams = 2,
+                CarbsGrams = 8,
+                FatGrams = 1
+            }
+        };
+        _context.Recipes.Add(subRecipe);
+        await _context.SaveChangesAsync();
+
+        var command = new CreateRecipeCommand
+        {
+            Title = "Pasta with Sauce",
+            Servings = 2,
+            Ingredients = new List<CreateRecipeIngredientDto>
+            {
+                new() { IngredientText = "Pasta", Amount = 200, Unit = "g" },
+                new() { SubRecipeId = subRecipe.Id, IngredientText = "Tomato Sauce", Amount = 2, Unit = "servings" }
+            },
+            Instructions = new List<string> { "Cook pasta", "Add sauce" },
+            Tags = new List<string> { "italian" }
+        };
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        var recipe = await _context.Recipes
+            .Include(r => r.Ingredients)
+            .Include(r => r.Nutrition)
+            .FirstAsync(r => r.Id == result.Id);
+
+        recipe.Ingredients.Should().HaveCount(2);
+        recipe.Ingredients.Should().Contain(i => i.SubRecipeId == subRecipe.Id);
+
+        // Nutrition should include sub-recipe nutrition (2 servings * 50 cal = 100 cal total, divided by 2 servings = 50 cal per serving)
+        recipe.Nutrition.Should().NotBeNull();
+        recipe.Nutrition!.CaloriesPerServing.Should().Be(50); // 100 / 2 servings
+        recipe.Nutrition.ProteinGrams.Should().Be(2); // 4 / 2 servings
+    }
+
+    [Fact]
+    public async Task Handle_ShouldThrow_WhenCircularDependencyDetected()
+    {
+        // Arrange: Create Recipe A that uses Recipe B
+        var recipeB = new Domain.Entities.Recipe
+        {
+            Id = Guid.NewGuid(),
+            UserId = _testUserId,
+            Title = "Recipe B",
+            Servings = 2,
+            IsPublic = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        _context.Recipes.Add(recipeB);
+        await _context.SaveChangesAsync();
+
+        // Create Recipe A that uses Recipe B
+        var recipeA = new Domain.Entities.Recipe
+        {
+            Id = Guid.NewGuid(),
+            UserId = _testUserId,
+            Title = "Recipe A",
+            Servings = 2,
+            IsPublic = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        recipeA.Ingredients.Add(new Domain.Entities.RecipeIngredient
+        {
+            Id = Guid.NewGuid(),
+            RecipeId = recipeA.Id,
+            SubRecipeId = recipeB.Id,
+            IngredientText = "Recipe B",
+            Amount = 1,
+            Unit = "serving"
+        });
+        _context.Recipes.Add(recipeA);
+        await _context.SaveChangesAsync();
+
+        // Try to create a new version of Recipe B that uses Recipe A (would create cycle)
+        var command = new CreateRecipeCommand
+        {
+            Title = "Recipe B Updated",
+            Servings = 2,
+            Ingredients = new List<CreateRecipeIngredientDto>
+            {
+                new() { SubRecipeId = recipeA.Id, IngredientText = "Recipe A", Amount = 1, Unit = "serving" }
+            },
+            Instructions = new List<string> { "Use Recipe A" },
+            Tags = new List<string>()
+        };
+
+        // Act & Assert
+        var act = async () => await _handler.Handle(command, CancellationToken.None);
+        await act.Should().ThrowAsync<FluentValidation.ValidationException>()
+            .WithMessage("*circular dependency*");
+    }
+
+    [Fact]
+    public void Validator_ShouldFail_WhenBothFoodIdAndSubRecipeIdProvided()
+    {
+        // Arrange
+        var validator = new CreateRecipeCommandValidator();
+        var command = new CreateRecipeCommand
+        {
+            Title = "Test Recipe",
+            Ingredients = new List<CreateRecipeIngredientDto>
+            {
+                new()
+                {
+                    FoodId = Guid.NewGuid(),
+                    SubRecipeId = Guid.NewGuid(),
+                    IngredientText = "Test ingredient",
+                    Amount = 100,
+                    Unit = "g"
+                }
+            }
+        };
+
+        // Act
+        var result = validator.Validate(command);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.ErrorMessage.Contains("either FoodId or SubRecipeId"));
+    }
+
+    [Fact]
+    public void Validator_ShouldFail_WhenSubRecipeIdUsedWithInvalidUnit()
+    {
+        // Arrange
+        var validator = new CreateRecipeCommandValidator();
+        var command = new CreateRecipeCommand
+        {
+            Title = "Test Recipe",
+            Ingredients = new List<CreateRecipeIngredientDto>
+            {
+                new()
+                {
+                    SubRecipeId = Guid.NewGuid(),
+                    IngredientText = "Test sub-recipe",
+                    Amount = 2,
+                    Unit = "grams" // Should be "serving" or "servings"
+                }
+            }
+        };
+
+        // Act
+        var result = validator.Validate(command);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.ErrorMessage.Contains("serving"));
+    }
+
+    [Fact]
+    public void Validator_ShouldPass_WhenSubRecipeIdUsedWithServingUnit()
+    {
+        // Arrange
+        var validator = new CreateRecipeCommandValidator();
+        var command = new CreateRecipeCommand
+        {
+            Title = "Test Recipe",
+            Servings = 2,
+            Ingredients = new List<CreateRecipeIngredientDto>
+            {
+                new()
+                {
+                    SubRecipeId = Guid.NewGuid(),
+                    IngredientText = "Test sub-recipe",
+                    Amount = 2,
+                    Unit = "servings"
+                }
+            },
+            Instructions = new List<string> { "Test" },
+            Tags = new List<string>()
+        };
+
+        // Act
+        var result = validator.Validate(command);
+
+        // Assert
+        result.IsValid.Should().BeTrue();
+    }
+
     public void Dispose()
     {
         _context.Dispose();

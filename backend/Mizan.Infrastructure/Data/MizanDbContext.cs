@@ -169,7 +169,10 @@ public class MizanDbContext : DbContext, IMizanDbContext
         // RecipeIngredient configuration
         modelBuilder.Entity<RecipeIngredient>(entity =>
         {
-            entity.ToTable("recipe_ingredients");
+            entity.ToTable("recipe_ingredients", t => t.HasCheckConstraint(
+                "CK_RecipeIngredient_HasFoodOrSubRecipeOrText",
+                "(food_id IS NOT NULL) OR (sub_recipe_id IS NOT NULL) OR (ingredient_text IS NOT NULL AND ingredient_text <> '')"
+            ));
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
             entity.Property(e => e.RecipeId).HasColumnName("recipe_id");

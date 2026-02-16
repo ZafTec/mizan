@@ -86,7 +86,14 @@ public class UpdateRecipeCommandHandler : IRequestHandler<UpdateRecipeCommand, U
         {
             if (await circularDependencyValidator.WouldCreateCircularDependency(recipe.Id, ingredient.SubRecipeId!.Value))
             {
-                return new UpdateRecipeResult { Success = false, Message = "Cannot add recipe as ingredient: would create circular dependency" };
+                var subRecipe = await _context.Recipes.FindAsync(new object[] { ingredient.SubRecipeId.Value }, cancellationToken);
+                var subRecipeName = subRecipe?.Title ?? ingredient.SubRecipeId.Value.ToString();
+
+                return new UpdateRecipeResult
+                {
+                    Success = false,
+                    Message = $"Cannot add recipe '{subRecipeName}' (ID: {ingredient.SubRecipeId.Value}) as ingredient: would create circular dependency"
+                };
             }
         }
 

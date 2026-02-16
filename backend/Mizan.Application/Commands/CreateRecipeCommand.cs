@@ -113,7 +113,12 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
             {
                 _logger.LogWarning("[CreateRecipe] Circular dependency detected: RecipeId={RecipeId}, SubRecipeId={SubRecipeId}",
                     recipe.Id, ingredient.SubRecipeId.Value);
-                throw new FluentValidation.ValidationException("Cannot add recipe as ingredient: would create circular dependency");
+
+                var subRecipe = await _context.Recipes.FindAsync(new object[] { ingredient.SubRecipeId.Value }, cancellationToken);
+                var subRecipeName = subRecipe?.Title ?? ingredient.SubRecipeId.Value.ToString();
+
+                throw new FluentValidation.ValidationException(
+                    $"Cannot add recipe '{subRecipeName}' (ID: {ingredient.SubRecipeId.Value}) as ingredient: would create circular dependency");
             }
         }
 

@@ -12,14 +12,21 @@ public class RecipeCircularDependencyValidator
         _context = context;
     }
 
+    private const int MaxDependencyDepth = 20;
+
     public async Task<bool> WouldCreateCircularDependency(Guid recipeId, Guid subRecipeId)
     {
         var visited = new HashSet<Guid>();
-        return await HasCircularDependency(subRecipeId, recipeId, visited);
+        return await HasCircularDependency(subRecipeId, recipeId, visited, 0);
     }
 
-    private async Task<bool> HasCircularDependency(Guid currentRecipeId, Guid targetRecipeId, HashSet<Guid> visited)
+    private async Task<bool> HasCircularDependency(Guid currentRecipeId, Guid targetRecipeId, HashSet<Guid> visited, int depth)
     {
+        if (depth > MaxDependencyDepth)
+        {
+            throw new InvalidOperationException($"Recipe dependency chain exceeds maximum depth of {MaxDependencyDepth}. This may indicate a circular dependency or overly complex recipe structure.");
+        }
+
         if (currentRecipeId == targetRecipeId)
             return true;
 
@@ -35,7 +42,7 @@ public class RecipeCircularDependencyValidator
 
         foreach (var subRecipeId in subRecipeIds)
         {
-            if (await HasCircularDependency(subRecipeId, targetRecipeId, visited))
+            if (await HasCircularDependency(subRecipeId, targetRecipeId, visited, depth + 1))
                 return true;
         }
 
