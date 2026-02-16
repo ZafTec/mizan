@@ -6,7 +6,7 @@ export default function NotFound() {
 			<div className="w-full max-w-md">
 				{/* Header */}
 				<div className="text-center mb-8">
-					<div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-400 to-slate-600 shadow-lg shadow-slate-500/30 mb-6">
+					<div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-linear-to-br from-slate-400 to-slate-600 shadow-lg shadow-slate-500/30 mb-6">
 						<i className="ri-error-warning-line text-4xl text-white" />
 					</div>
 					<h1 className="text-6xl font-bold text-slate-900 dark:text-slate-100 mb-2">404</h1>

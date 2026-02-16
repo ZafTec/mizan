@@ -160,7 +160,7 @@ export default function MealsPage() {
 						<button onClick={handlePrevDay} className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 rounded-lg text-slate-600">
 							<i className="ri-arrow-left-s-line" />
 						</button>
-						<span className="px-4 font-medium text-slate-900 min-w-[140px] text-center">
+						<span className="px-4 font-medium text-slate-900 min-w-35 text-center">
 							{new Date(queryDate).toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric' })}
 						</span>
 						<button onClick={handleNextDay} className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 rounded-lg text-slate-600">
@@ -227,7 +227,7 @@ export default function MealsPage() {
 			)}
 
 			{/* History Chart */}
-			<div className="card p-6 h-[400px]">
+			<div className="card p-6 h-100">
 				<h2 className="font-semibold text-slate-900 mb-6 flex items-center gap-2">
 					<i className="ri-bar-chart-fill text-brand-500" />
 					Last 7 Days (Calories)

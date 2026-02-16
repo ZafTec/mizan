@@ -164,7 +164,7 @@ export default function Page() {
 				</div>
 
 				{/* Quick Add from Recipe */}
-				<div className="card p-6 bg-gradient-to-br from-accent-50 to-brand-50">
+				<div className="card p-6 bg-linear-to-br from-accent-50 to-brand-50">
 					<div className="flex items-center gap-4">
 						<div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center">
 							<i className="ri-book-open-line text-xl text-brand-600" />

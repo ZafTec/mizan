@@ -74,7 +74,7 @@ export default async function Page({ params }: { params: Promise<{ recipeId: str
 			)}
 
 			{/* Macros Per Serving */}
-			<div className="card p-6 bg-gradient-to-br from-brand-50 to-accent-50">
+			<div className="card p-6 bg-linear-to-br from-brand-50 to-accent-50">
 				<div className="flex items-center justify-between mb-4">
 					<h2 className="font-semibold text-slate-900">Nutrition per Serving</h2>
 					<span className="text-sm text-slate-500 bg-white px-3 py-1 rounded-full">{recipe.servings} servings</span>
@@ -157,7 +157,7 @@ export default async function Page({ params }: { params: Promise<{ recipeId: str
 						<ol className="space-y-4">
 							{recipe.instructions.map((instruction, index) => (
 								<li key={index} className="flex gap-3">
-									<div className="w-8 h-8 rounded-lg bg-accent-100 text-accent-600 flex items-center justify-center text-sm font-bold flex-shrink-0">
+									<div className="w-8 h-8 rounded-lg bg-accent-100 text-accent-600 flex items-center justify-center text-sm font-bold shrink-0">
 										{instruction.stepNumber || index + 1}
 									</div>
 									<p className="text-slate-700 pt-1">{instruction.instruction}</p>
@@ -181,7 +181,7 @@ export default async function Page({ params }: { params: Promise<{ recipeId: str
 						{recipe.tags.map((tag, index) => (
 							<span
 								key={index}
-								className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-brand-100 to-accent-100 text-brand-700 text-sm font-medium"
+								className="inline-flex items-center px-4 py-2 rounded-full bg-linear-to-r from-brand-100 to-accent-100 text-brand-700 text-sm font-medium"
 							>
 								{tag}
 							</span>

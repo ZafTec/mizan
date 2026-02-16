@@ -51,7 +51,7 @@ export default async function Page({
 				].map((collection) => (
 					<Link key={collection.name} href={collection.href} className="card-hover p-5 group">
 						<div className="flex items-center gap-4">
-							<div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${collection.color} flex items-center justify-center shadow-lg`}>
+							<div className={`w-12 h-12 rounded-2xl bg-linear-to-br ${collection.color} flex items-center justify-center shadow-lg`}>
 								<i className={`${collection.icon} text-xl text-white`} />
 							</div>
 							<div className="flex-1">
@@ -67,10 +67,10 @@ export default async function Page({
 			{/* Create Recipe CTA */}
 			{user && (
 				<div className="card overflow-hidden">
-					<div className="relative p-8 bg-gradient-to-br from-accent-50 to-brand-50">
+					<div className="relative p-8 bg-linear-to-br from-accent-50 to-brand-50">
 						<div className="absolute top-0 right-0 w-64 h-64 bg-brand-200/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 						<div className="relative flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
-							<div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center shadow-lg shadow-accent-500/30">
+							<div className="w-16 h-16 rounded-2xl bg-linear-to-br from-accent-400 to-accent-600 flex items-center justify-center shadow-lg shadow-accent-500/30">
 								<i className="ri-restaurant-2-line text-3xl text-white" />
 							</div>
 							<div className="flex-1">

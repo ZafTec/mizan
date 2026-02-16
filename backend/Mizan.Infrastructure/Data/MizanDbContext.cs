@@ -174,12 +174,14 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
             entity.Property(e => e.RecipeId).HasColumnName("recipe_id");
             entity.Property(e => e.FoodId).HasColumnName("food_id");
+            entity.Property(e => e.SubRecipeId).HasColumnName("sub_recipe_id");
             entity.Property(e => e.IngredientText).HasColumnName("ingredient_text").HasMaxLength(255).IsRequired();
             entity.Property(e => e.Amount).HasColumnName("amount").HasPrecision(10, 2);
             entity.Property(e => e.Unit).HasColumnName("unit").HasMaxLength(50);
             entity.Property(e => e.SortOrder).HasColumnName("sort_order").HasDefaultValue(0);
             entity.HasOne(e => e.Recipe).WithMany(r => r.Ingredients).HasForeignKey(e => e.RecipeId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Food).WithMany(f => f.RecipeIngredients).HasForeignKey(e => e.FoodId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.SubRecipe).WithMany().HasForeignKey(e => e.SubRecipeId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // RecipeInstruction configuration

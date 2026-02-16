@@ -121,7 +121,7 @@ export default function MyTrainerPage() {
 								className="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-lg"
 							/>
 						) : (
-							<div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center border-4 border-white shadow-lg">
+							<div className="w-24 h-24 rounded-2xl bg-linear-to-br from-emerald-400 to-teal-600 flex items-center justify-center border-4 border-white shadow-lg">
 								<span className="text-3xl font-bold text-white">
 									{trainer.trainerEmail?.charAt(0).toUpperCase()}
 								</span>

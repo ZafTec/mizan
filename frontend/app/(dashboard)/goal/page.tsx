@@ -17,9 +17,9 @@ export default function GoalForm() {
 			</div>
 
 			{/* Info Card */}
-			<div className="card p-6 bg-gradient-to-br from-brand-50 to-accent-50">
+			<div className="card p-6 bg-linear-to-br from-brand-50 to-accent-50">
 				<div className="flex items-start gap-4">
-					<div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center flex-shrink-0">
+					<div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center shrink-0">
 						<i className="ri-target-line text-xl text-brand-600 dark:text-brand-400" />
 					</div>
 					<div>

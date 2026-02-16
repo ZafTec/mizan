@@ -91,7 +91,7 @@ export default async function MealPlanPage({
 					].map((stat) => (
 						<div key={stat.label} className="card p-4">
 							<div className="flex items-center gap-3">
-								<div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center`}>
+								<div className={`w-10 h-10 rounded-xl bg-linear-to-br ${stat.color} flex items-center justify-center`}>
 									<i className={`${stat.icon} text-white`} />
 								</div>
 								<div>

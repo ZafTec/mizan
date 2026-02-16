@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Mizan.Application.Interfaces;
+using Mizan.Application.Validators;
 using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Commands;
@@ -49,6 +50,12 @@ public record CreateRecipeResult
             RuleForEach(x => x.Ingredients).ChildRules(ingredient =>
             {
                 ingredient.RuleFor(i => i.IngredientText).NotEmpty();
+
+                ingredient.RuleFor(i => i)
+                    .Must(ing => !(ing.FoodId.HasValue && ing.SubRecipeId.HasValue))
+                    .WithMessage("Each ingredient must have either FoodId or SubRecipeId, not both")
+                    .Must(ing => !ing.SubRecipeId.HasValue || ing.Unit == null || ing.Unit == "serving" || ing.Unit == "servings")
+                    .WithMessage("When using a recipe as an ingredient, Unit should be 'serving' or 'servings'");
             });
     }
 }
@@ -98,6 +105,18 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
 
         _logger.LogDebug("[CreateRecipe] Created recipe entity: Id={Id}, UserId={UserId}", recipe.Id, recipe.UserId);
 
+        // Validate circular dependencies
+        var circularDependencyValidator = new RecipeCircularDependencyValidator(_context);
+        foreach (var ingredient in request.Ingredients.Where(i => i.SubRecipeId.HasValue))
+        {
+            if (await circularDependencyValidator.WouldCreateCircularDependency(recipe.Id, ingredient.SubRecipeId!.Value))
+            {
+                _logger.LogWarning("[CreateRecipe] Circular dependency detected: RecipeId={RecipeId}, SubRecipeId={SubRecipeId}",
+                    recipe.Id, ingredient.SubRecipeId.Value);
+                throw new FluentValidation.ValidationException("Cannot add recipe as ingredient: would create circular dependency");
+            }
+        }
+
         // Add ingredients
         if (request.Ingredients != null)
         {
@@ -109,6 +128,7 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
                 Id = Guid.NewGuid(),
                 RecipeId = recipe.Id,
                 FoodId = ingredientDto.FoodId,
+                SubRecipeId = ingredientDto.SubRecipeId,
                 IngredientText = ingredientDto.IngredientText,
                 Amount = ingredientDto.Amount,
                 Unit = ingredientDto.Unit,
@@ -148,9 +168,22 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
             .Where(i => i.FoodId.HasValue)
             .Select(i => i.FoodId!.Value)
             .ToList();
+        
+        var subRecipeIds = (request.Ingredients ?? new List<CreateRecipeIngredientDto>())
+            .Where(i => i.SubRecipeId.HasValue)
+            .Select(i => i.SubRecipeId!.Value)
+            .ToList();
 
-        _logger.LogInformation("[CreateRecipe] Processing nutrition calculation. IngredientFoodIds count: {Count}", ingredientFoodIds.Count);
+        _logger.LogInformation("[CreateRecipe] Processing nutrition calculation. IngredientFoodIds count: {FoodCount}, SubRecipeIds count: {SubRecipeCount}", 
+            ingredientFoodIds.Count, subRecipeIds.Count);
 
+        decimal totalCalories = 0;
+        decimal totalProtein = 0;
+        decimal totalCarbs = 0;
+        decimal totalFat = 0;
+        decimal totalFiber = 0;
+
+        // Calculate from Food ingredients
         if (ingredientFoodIds.Any())
         {
             var foods = await _context.Foods
@@ -159,12 +192,6 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
 
             _logger.LogInformation("[CreateRecipe] Found {FoodCount} foods in database for {RequestCount} ingredient IDs", 
                 foods.Count, ingredientFoodIds.Count);
-
-            decimal totalCalories = 0;
-            decimal totalProtein = 0;
-            decimal totalCarbs = 0;
-            decimal totalFat = 0;
-            decimal totalFiber = 0;
 
             foreach (var ingredientDto in (request.Ingredients ?? []).Where(i => i.FoodId.HasValue && i.Amount.HasValue))
             {
@@ -187,7 +214,50 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
                     _logger.LogWarning("[CreateRecipe] Food not found for ingredient: FoodId={FoodId}", ingredientDto.FoodId);
                 }
             }
+        }
 
+        // Calculate from Sub-Recipe ingredients
+        if (subRecipeIds.Any())
+        {
+            var subRecipes = await _context.Recipes
+                .Include(r => r.Nutrition)
+                .Where(r => subRecipeIds.Contains(r.Id))
+                .ToDictionaryAsync(r => r.Id, cancellationToken);
+
+            _logger.LogInformation("[CreateRecipe] Found {SubRecipeCount} sub-recipes in database for {RequestCount} sub-recipe IDs", 
+                subRecipes.Count, subRecipeIds.Count);
+
+            foreach (var ingredientDto in (request.Ingredients ?? []).Where(i => i.SubRecipeId.HasValue && i.Amount.HasValue))
+            {
+                if (subRecipes.TryGetValue(ingredientDto.SubRecipeId!.Value, out var subRecipe))
+                {
+                    var servings = ingredientDto.Amount!.Value;
+                    
+                    _logger.LogDebug("[CreateRecipe] Processing sub-recipe ingredient: Recipe={RecipeName}, Servings={Servings}", 
+                        subRecipe.Title, servings);
+                    
+                    if (subRecipe.Nutrition != null)
+                    {
+                        totalCalories += (subRecipe.Nutrition.CaloriesPerServing ?? 0) * servings;
+                        totalProtein += (subRecipe.Nutrition.ProteinGrams ?? 0) * servings;
+                        totalCarbs += (subRecipe.Nutrition.CarbsGrams ?? 0) * servings;
+                        totalFat += (subRecipe.Nutrition.FatGrams ?? 0) * servings;
+                        totalFiber += (subRecipe.Nutrition.FiberGrams ?? 0) * servings;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("[CreateRecipe] Sub-recipe has no nutrition data: RecipeId={RecipeId}", ingredientDto.SubRecipeId);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("[CreateRecipe] Sub-recipe not found for ingredient: SubRecipeId={SubRecipeId}", ingredientDto.SubRecipeId);
+                }
+            }
+        }
+
+        if (totalCalories > 0 || totalProtein > 0 || totalCarbs > 0 || totalFat > 0)
+        {
             // Calculate per serving values
             var servings = request.Servings > 0 ? request.Servings : 1;
             

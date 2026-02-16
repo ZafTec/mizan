@@ -1081,6 +1081,10 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasDefaultValue(0)
                         .HasColumnName("sort_order");
 
+                    b.Property<Guid?>("SubRecipeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sub_recipe_id");
+
                     b.Property<string>("Unit")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
@@ -1091,6 +1095,8 @@ namespace Mizan.Infrastructure.Data.Migrations
                     b.HasIndex("FoodId");
 
                     b.HasIndex("RecipeId");
+
+                    b.HasIndex("SubRecipeId");
 
                     b.ToTable("recipe_ingredients", (string)null);
                 });
@@ -1898,9 +1904,16 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Mizan.Domain.Entities.Recipe", "SubRecipe")
+                        .WithMany()
+                        .HasForeignKey("SubRecipeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Food");
 
                     b.Navigation("Recipe");
+
+                    b.Navigation("SubRecipe");
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.RecipeInstruction", b =>

@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
+using Mizan.Application.Validators;
 using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Commands;
@@ -28,20 +29,26 @@ public record UpdateRecipeResult
     public string? Message { get; init; }
 }
 
-public class UpdateRecipeCommandValidator : AbstractValidator<UpdateRecipeCommand>
-{
-    public UpdateRecipeCommandValidator()
+    public class UpdateRecipeCommandValidator : AbstractValidator<UpdateRecipeCommand>
     {
-        RuleFor(x => x.Id).NotEmpty();
-        RuleFor(x => x.Title).NotEmpty().MaximumLength(255);
-        RuleFor(x => x.Servings).GreaterThan(0);
-        RuleFor(x => x.Ingredients).NotEmpty().WithMessage("At least one ingredient is required");
-        RuleForEach(x => x.Ingredients).ChildRules(ingredient =>
+        public UpdateRecipeCommandValidator()
         {
-            ingredient.RuleFor(i => i.IngredientText).NotEmpty();
-        });
+            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.Title).NotEmpty().MaximumLength(255);
+            RuleFor(x => x.Servings).GreaterThan(0);
+            RuleFor(x => x.Ingredients).NotEmpty().WithMessage("At least one ingredient is required");
+            RuleForEach(x => x.Ingredients).ChildRules(ingredient =>
+            {
+                ingredient.RuleFor(i => i.IngredientText).NotEmpty();
+
+                ingredient.RuleFor(i => i)
+                    .Must(ing => !(ing.FoodId.HasValue && ing.SubRecipeId.HasValue))
+                    .WithMessage("Each ingredient must have either FoodId or SubRecipeId, not both")
+                    .Must(ing => !ing.SubRecipeId.HasValue || ing.Unit == null || ing.Unit == "serving" || ing.Unit == "servings")
+                    .WithMessage("When using a recipe as an ingredient, Unit should be 'serving' or 'servings'");
+            });
+        }
     }
-}
 
 public class UpdateRecipeCommandHandler : IRequestHandler<UpdateRecipeCommand, UpdateRecipeResult>
 {
@@ -71,6 +78,16 @@ public class UpdateRecipeCommandHandler : IRequestHandler<UpdateRecipeCommand, U
         if (recipe == null)
         {
             return new UpdateRecipeResult { Success = false, Message = "Recipe not found" };
+        }
+
+        // Validate circular dependencies
+        var circularDependencyValidator = new RecipeCircularDependencyValidator(_context);
+        foreach (var ingredient in request.Ingredients.Where(i => i.SubRecipeId.HasValue))
+        {
+            if (await circularDependencyValidator.WouldCreateCircularDependency(recipe.Id, ingredient.SubRecipeId!.Value))
+            {
+                return new UpdateRecipeResult { Success = false, Message = "Cannot add recipe as ingredient: would create circular dependency" };
+            }
         }
 
         var user = await _context.Users.FindAsync(new object[] { _currentUser.UserId.Value }, cancellationToken);
@@ -107,6 +124,7 @@ public class UpdateRecipeCommandHandler : IRequestHandler<UpdateRecipeCommand, U
                     Id = Guid.NewGuid(),
                     RecipeId = recipe.Id,
                     FoodId = ingredientDto.FoodId,
+                    SubRecipeId = ingredientDto.SubRecipeId,
                     IngredientText = ingredientDto.IngredientText,
                     Amount = ingredientDto.Amount,
                     Unit = ingredientDto.Unit,
@@ -164,17 +182,23 @@ public class UpdateRecipeCommandHandler : IRequestHandler<UpdateRecipeCommand, U
             .Select(i => i.FoodId!.Value)
             .ToList();
 
+        var subRecipeIds = (request.Ingredients ?? new List<CreateRecipeIngredientDto>())
+            .Where(i => i.SubRecipeId.HasValue)
+            .Select(i => i.SubRecipeId!.Value)
+            .ToList();
+
+        decimal totalCalories = 0;
+        decimal totalProtein = 0;
+        decimal totalCarbs = 0;
+        decimal totalFat = 0;
+        decimal totalFiber = 0;
+
+        // Calculate from Food ingredients
         if (ingredientFoodIds.Any())
         {
             var foods = await _context.Foods
                 .Where(f => ingredientFoodIds.Contains(f.Id))
                 .ToDictionaryAsync(f => f.Id, cancellationToken);
-
-            decimal totalCalories = 0;
-            decimal totalProtein = 0;
-            decimal totalCarbs = 0;
-            decimal totalFat = 0;
-            decimal totalFiber = 0;
 
             foreach (var ingredientDto in (request.Ingredients ?? []).Where(i => i.FoodId.HasValue && i.Amount.HasValue))
             {
@@ -188,7 +212,35 @@ public class UpdateRecipeCommandHandler : IRequestHandler<UpdateRecipeCommand, U
                     totalFiber += (food.FiberPer100g ?? 0) * ratio;
                 }
             }
+        }
 
+        // Calculate from Sub-Recipe ingredients
+        if (subRecipeIds.Any())
+        {
+            var subRecipes = await _context.Recipes
+                .Include(r => r.Nutrition)
+                .Where(r => subRecipeIds.Contains(r.Id))
+                .ToDictionaryAsync(r => r.Id, cancellationToken);
+
+            foreach (var ingredientDto in (request.Ingredients ?? []).Where(i => i.SubRecipeId.HasValue && i.Amount.HasValue))
+            {
+                if (subRecipes.TryGetValue(ingredientDto.SubRecipeId!.Value, out var subRecipe))
+                {
+                    var servings = ingredientDto.Amount!.Value;
+                    if (subRecipe.Nutrition != null)
+                    {
+                        totalCalories += (subRecipe.Nutrition.CaloriesPerServing ?? 0) * servings;
+                        totalProtein += (subRecipe.Nutrition.ProteinGrams ?? 0) * servings;
+                        totalCarbs += (subRecipe.Nutrition.CarbsGrams ?? 0) * servings;
+                        totalFat += (subRecipe.Nutrition.FatGrams ?? 0) * servings;
+                        totalFiber += (subRecipe.Nutrition.FiberGrams ?? 0) * servings;
+                    }
+                }
+            }
+        }
+
+        if (totalCalories > 0 || totalProtein > 0 || totalCarbs > 0 || totalFat > 0)
+        {
             var servings = request.Servings > 0 ? request.Servings : 1;
 
             if (recipe.Nutrition == null)

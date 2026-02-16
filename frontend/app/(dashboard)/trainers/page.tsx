@@ -137,7 +137,7 @@ export default function TrainersPage() {
 										className="w-20 h-20 rounded-2xl object-cover border-4 border-white dark:border-slate-900 shadow-lg mb-3"
 									/>
 								) : (
-									<div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center border-4 border-white dark:border-slate-900 shadow-lg mb-3">
+									<div className="w-20 h-20 rounded-2xl bg-linear-to-br from-emerald-400 to-teal-600 flex items-center justify-center border-4 border-white dark:border-slate-900 shadow-lg mb-3">
 										<span className="text-2xl font-bold text-white">
 											{trainer.email.charAt(0).toUpperCase()}
 										</span>
@@ -182,9 +182,9 @@ export default function TrainersPage() {
 			)}
 
 			{/* Info Card */}
-			<div className="card p-6 border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
+			<div className="card p-6 border-2 border-blue-200 dark:border-blue-800 bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
 				<div className="flex items-start gap-4">
-					<div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
+					<div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0">
 						<i className="ri-information-line text-2xl text-white" />
 					</div>
 					<div>

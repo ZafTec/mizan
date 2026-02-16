@@ -25,7 +25,7 @@ export default function Page() {
 			<div className="w-full max-w-md">
 				{/* Header */}
 				<div className="text-center mb-8">
-					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/30 dark:shadow-brand-500/15 mb-4">
+					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/30 dark:shadow-brand-500/15 mb-4">
 						<i className="ri-user-add-line text-3xl text-white" />
 					</div>
 					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Create your account</h1>
@@ -150,7 +150,7 @@ export default function Page() {
 						{/* Error Message */}
 						{formState.status === "error" && formState.message && (
 							<div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
-								<i className="ri-error-warning-line text-lg flex-shrink-0" />
+								<i className="ri-error-warning-line text-lg shrink-0" />
 								<span>
 									{formState.message}
 									{formState.message.includes("already exists") && (
