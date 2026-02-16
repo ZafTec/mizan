@@ -51,13 +51,15 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
 
             builder.ConfigureTestServices(services =>
             {
-                // Replace the backend client with our mock
-                services.Remove(services.SingleOrDefault(d => d.ServiceType == typeof(IBackendClient))!);
-                services.AddSingleton(_mockBackendClient.Object);
+                // Remove existing IBackendClient registration
+                var descriptors = services.Where(d => d.ServiceType == typeof(IBackendClient)).ToList();
+                foreach (var descriptor in descriptors)
+                {
+                    services.Remove(descriptor);
+                }
                 
-                // Add HTTP client with mock handler for backend calls
-                services.AddHttpClient<IBackendClient, BackendClient>()
-                    .ConfigurePrimaryHttpMessageHandler(() => _mockBackendHandler.Object);
+                // Add the mock as a singleton so it's used everywhere including the auth handler
+                services.AddSingleton<IBackendClient>(_mockBackendClient.Object);
             });
         });
     }
@@ -224,9 +226,12 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
             .ReturnsAsync(new McpTokenValidation(userId, tokenId));
 
         var client = _factory.CreateClient();
+        
+        // Use a cancellation token to abort the SSE connection after we verify headers
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
 
         // Act
-        var response = await client.GetAsync($"/mcp/sse?token={token}");
+        var response = await client.GetAsync($"/mcp/sse?token={token}", cts.Token);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
