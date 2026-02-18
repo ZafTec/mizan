@@ -40,7 +40,7 @@ export async function getAllIngredient(
         if (sortBy) params.set("SortBy", sortBy);
         if (sortOrder) params.set("SortOrder", sortOrder);
 
-        const result = await serverApi<{ items: Ingredient[], totalCount: number, page: number, pageSize: number, totalPages: number }>(`/api/Foods/search?${params.toString()}`);
+        const result = await serverApi<{ items: Ingredient[], totalCount: number, page: number, pageSize: number, totalPages: number }>(`/api/Foods/search?${params.toString()}`, { requireAuth: false });
 
         return {
             ingredients: result.items || [],
@@ -58,7 +58,7 @@ export async function getAllIngredient(
  */
 export async function getIngredientById(id: string): Promise<Ingredient | null> {
     try {
-        const result = await serverApi<Ingredient>(`/api/Foods/${id}`);
+        const result = await serverApi<Ingredient>(`/api/Foods/${id}`, { requireAuth: false });
         return result;
     } catch (error) {
         ingredientLogger.error("Failed to get ingredient by ID", { error, ingredientId: id });

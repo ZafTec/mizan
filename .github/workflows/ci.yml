@@ -78,6 +78,7 @@ jobs:
       working-directory: frontend
       env:
         NEXT_PUBLIC_API_URL: "http://localhost:5000"
+        NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: "test"
         DATABASE_URL: "postgresql://mizan:mizan_test_password@localhost:5432/mizan_test"
         BETTER_AUTH_SECRET: "very-long-secret-key-for-better-auth-testing-at-least-32-chars"
       run: bun run build
@@ -156,6 +157,7 @@ jobs:
       env:
         NEXT_PUBLIC_API_URL: "http://localhost:5000"
         NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+        NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: "test"
         API_URL: "http://localhost:5000"
         DATABASE_URL: "postgresql://mizan:mizan_test_password@localhost:5432/mizan_test"
         BETTER_AUTH_SECRET: "very-long-secret-key-for-better-auth-testing-at-least-32-chars"
@@ -167,6 +169,7 @@ jobs:
         BASE_URL: "http://localhost:3000"
         NEXT_PUBLIC_API_URL: "http://localhost:5000"
         NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+        NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: "test"
         API_URL: "http://localhost:5000"
         DATABASE_URL: "postgresql://mizan:mizan_test_password@localhost:5432/mizan_test"
         BETTER_AUTH_SECRET: "very-long-secret-key-for-better-auth-testing-at-least-32-chars"
