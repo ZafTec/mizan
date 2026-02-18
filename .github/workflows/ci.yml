@@ -145,6 +145,12 @@ jobs:
       working-directory: frontend
       run: bunx playwright install chromium --with-deps
 
+    - name: Push BetterAuth schema (Drizzle)
+      working-directory: frontend
+      env:
+        DATABASE_URL: "postgresql://mizan:mizan_test_password@localhost:5432/mizan_test"
+      run: bun run db:push
+
     - name: Build frontend
       working-directory: frontend
       env:
@@ -161,6 +167,7 @@ jobs:
         BASE_URL: "http://localhost:3000"
         NEXT_PUBLIC_API_URL: "http://localhost:5000"
         NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+        API_URL: "http://localhost:5000"
         DATABASE_URL: "postgresql://mizan:mizan_test_password@localhost:5432/mizan_test"
         BETTER_AUTH_SECRET: "very-long-secret-key-for-better-auth-testing-at-least-32-chars"
         CI: "true"

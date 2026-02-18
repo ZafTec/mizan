@@ -6,6 +6,7 @@ export default defineConfig({
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,
 	workers: process.env.CI ? 1 : undefined,
+	maxFailures: process.env.CI ? 3 : undefined,
 	reporter: process.env.CI ? "html" : "list",
 	use: {
 		baseURL: process.env.BASE_URL || "http://localhost:3000",
@@ -23,7 +24,7 @@ export default defineConfig({
 		},
 	],
 	webServer: {
-		command: "bun run dev",
+		command: process.env.CI ? "bun run start" : "bun run dev",
 		url: "http://localhost:3000",
 		reuseExistingServer: !process.env.CI,
 		timeout: 120_000,

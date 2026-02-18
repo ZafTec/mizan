@@ -4,9 +4,10 @@ test.describe("Landing page", () => {
 	test("renders hero section for unauthenticated users", async ({ page }) => {
 		await page.goto("/");
 
-		await expect(page.getByTestId("hero-section")).toBeVisible();
+		const hero = page.getByTestId("hero-section");
+		await expect(hero).toBeVisible();
 		await expect(page.getByRole("heading", { name: /Find Your Balance/i })).toBeVisible();
-		await expect(page.getByRole("link", { name: /Get Started Free/i })).toBeVisible();
+		await expect(hero.getByRole("link", { name: /Get Started Free/i })).toBeVisible();
 	});
 
 	test("feature and CTA sections are visible", async ({ page }) => {

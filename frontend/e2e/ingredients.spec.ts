@@ -13,9 +13,8 @@ test.describe("Ingredients", () => {
 		const searchInput = page.getByTestId("search-input");
 		if (await searchInput.isVisible()) {
 			await searchInput.fill("chicken");
-			// Give debounce time + navigation
-			await page.waitForTimeout(400);
-			// Verify URL updated or list filtered
+			await searchInput.press("Enter");
+			await page.waitForURL(/searchIngredient/);
 			const url = page.url();
 			expect(url).toContain("chicken");
 		}

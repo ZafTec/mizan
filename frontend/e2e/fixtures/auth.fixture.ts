@@ -23,11 +23,13 @@ export const test = base.extend<AuthFixtures>({
 			data: { email, password },
 		});
 
-		if (loginRes.ok()) {
-			// Cookies are auto-stored by the page context
-			await page.goto("/");
+		if (!loginRes.ok()) {
+			const body = await loginRes.text();
+			throw new Error(`Auth fixture: sign-in failed (${loginRes.status()}): ${body}`);
 		}
 
+		// Cookies are auto-stored by the page context
+		await page.goto("/");
 		await use(page);
 	},
 });

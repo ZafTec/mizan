@@ -4,12 +4,14 @@ test.describe("Navigation", () => {
 	test("desktop nav links are visible", async ({ page }) => {
 		await page.goto("/");
 
-		await expect(page.getByTestId("navbar")).toBeVisible();
-		await expect(page.getByRole("link", { name: /Foods/i })).toBeVisible();
-		await expect(page.getByRole("link", { name: /Recipes/i })).toBeVisible();
+		const navbar = page.getByTestId("navbar");
+		await expect(navbar).toBeVisible();
+		await expect(navbar.getByRole("link", { name: /Foods/i })).toBeVisible();
+		await expect(navbar.getByRole("link", { name: /Recipes/i })).toBeVisible();
 	});
 
 	test("mobile hamburger opens and closes menu", async ({ page }) => {
+		await page.setViewportSize({ width: 375, height: 667 });
 		await page.goto("/");
 
 		const toggle = page.getByTestId("nav-mobile-toggle");
