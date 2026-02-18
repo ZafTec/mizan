@@ -16,36 +16,34 @@ public class RecipeCircularDependencyValidator
 
     public async Task<bool> WouldCreateCircularDependency(Guid recipeId, Guid subRecipeId)
     {
-        var visited = new HashSet<Guid>();
-        return await HasCircularDependency(subRecipeId, recipeId, visited, 0);
+        var path = new HashSet<Guid> { recipeId };
+        return await HasCircularDependency(subRecipeId, path, 0);
     }
 
-    private async Task<bool> HasCircularDependency(Guid currentRecipeId, Guid targetRecipeId, HashSet<Guid> visited, int depth)
+    private async Task<bool> HasCircularDependency(Guid currentId, HashSet<Guid> path, int depth)
     {
         if (depth > MaxDependencyDepth)
         {
             throw new InvalidOperationException($"Recipe dependency chain exceeds maximum depth of {MaxDependencyDepth}. This may indicate a circular dependency or overly complex recipe structure.");
         }
 
-        if (currentRecipeId == targetRecipeId)
+        if (path.Contains(currentId))
             return true;
 
-        if (visited.Contains(currentRecipeId))
-            return false;
-
-        visited.Add(currentRecipeId);
+        path.Add(currentId);
 
         var subRecipeIds = await _context.RecipeIngredients
-            .Where(ri => ri.RecipeId == currentRecipeId && ri.SubRecipeId.HasValue)
+            .Where(ri => ri.RecipeId == currentId && ri.SubRecipeId.HasValue)
             .Select(ri => ri.SubRecipeId!.Value)
             .ToListAsync();
 
-        foreach (var subRecipeId in subRecipeIds)
+        foreach (var subId in subRecipeIds)
         {
-            if (await HasCircularDependency(subRecipeId, targetRecipeId, visited, depth + 1))
+            if (await HasCircularDependency(subId, path, depth + 1))
                 return true;
         }
 
+        path.Remove(currentId);
         return false;
     }
 }

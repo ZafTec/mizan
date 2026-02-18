@@ -93,9 +93,7 @@ public class BackendClient : IBackendClient
     public async Task<string> CallApiAsync(Guid userId, string method, string endpoint, object? data = null)
     {
         var request = new HttpRequestMessage(new HttpMethod(method), endpoint);
-        
-        // Service Auth Headers
-        request.Headers.TryAddWithoutValidation("X-Api-Key", _apiKey);
+
         request.Headers.Add("X-Impersonate-User", userId.ToString());
 
         if (data != null)
