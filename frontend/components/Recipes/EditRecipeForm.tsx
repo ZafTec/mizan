@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from "react";
-import { Spinner } from "@/components/ui/spinner";
+import Loading from "@/components/Loading";
 import { toast } from "sonner";
 import { getAllIngredient } from "@/data/ingredient";
 import type { Ingredient } from "@/data/ingredient";
@@ -395,7 +395,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
             >
                 {isSubmitting ? (
                     <>
-                        <Spinner />
+                        <Loading size="sm" />
                         Updating Recipe...
                     </>
                 ) : (

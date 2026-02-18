@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
+import { toast } from "sonner";
+import Loading from "@/components/Loading";
 
 interface WorkoutExercise {
     exerciseId: string;
@@ -71,7 +73,7 @@ export default function WorkoutsPage() {
         e.preventDefault();
 
         if (!name || !date || !durationMinutes || exercises.length === 0) {
-            alert("Please fill in all required fields and add at least one exercise");
+            toast.error("Please fill in all required fields and add at least one exercise");
             return;
         }
 
@@ -100,22 +102,22 @@ export default function WorkoutsPage() {
             setDurationMinutes("");
             setCaloriesBurned("");
             setExercises([]);
-            alert("Workout logged successfully!");
+            toast.success("Workout logged successfully!");
             router.refresh();
         } catch (error) {
             console.error("Failed to log workout:", error);
-            alert("Failed to log workout");
+            toast.error("Failed to log workout");
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8" data-testid="workouts-page">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Log Workout</h1>
-                    <p className="text-slate-500 mt-1">Track your training sessions</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Log Workout</h1>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">Track your training sessions</p>
                 </div>
             </div>
 
@@ -183,6 +185,7 @@ export default function WorkoutsPage() {
                             onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleSearch())}
                             placeholder="Search exercises..."
                             className="input flex-1"
+                            data-testid="search-input"
                         />
                         <button
                             type="button"
@@ -190,23 +193,23 @@ export default function WorkoutsPage() {
                             disabled={isSearching}
                             className="btn-primary"
                         >
-                            <i className="ri-search-line" />
+                            {isSearching ? <Loading size="sm" /> : <i className="ri-search-line" />}
                             Search
                         </button>
                     </div>
 
                     {searchResults.length > 0 && (
-                        <div className="border border-slate-200 rounded-xl divide-y divide-slate-100">
+                        <div className="border border-slate-200 dark:border-slate-700 rounded-xl divide-y divide-slate-100 dark:divide-slate-800">
                             {searchResults.map((exercise) => (
                                 <button
                                     key={exercise.id}
                                     type="button"
                                     onClick={() => handleAddExercise(exercise)}
-                                    className="w-full p-4 text-left hover:bg-slate-50 transition-colors flex items-center justify-between"
+                                    className="w-full p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-between"
                                 >
                                     <div>
-                                        <div className="font-medium text-slate-900">{exercise.name}</div>
-                                        <div className="text-sm text-slate-500">
+                                        <div className="font-medium text-slate-900 dark:text-slate-100">{exercise.name}</div>
+                                        <div className="text-sm text-slate-500 dark:text-slate-400">
                                             {exercise.category} • {exercise.muscleGroup || "N/A"}
                                         </div>
                                     </div>
@@ -218,11 +221,11 @@ export default function WorkoutsPage() {
 
                     {exercises.length > 0 && (
                         <div className="space-y-3 mt-6">
-                            <h3 className="font-semibold text-slate-900">Added Exercises</h3>
+                            <h3 className="font-semibold text-slate-900 dark:text-slate-100">Added Exercises</h3>
                             {exercises.map((exercise, index) => (
-                                <div key={index} className="border border-slate-200 rounded-xl p-4 space-y-3">
+                                <div key={index} className="border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <h4 className="font-medium text-slate-900">{exercise.exerciseName}</h4>
+                                        <h4 className="font-medium text-slate-900 dark:text-slate-100">{exercise.exerciseName}</h4>
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveExercise(index)}
@@ -293,7 +296,14 @@ export default function WorkoutsPage() {
                     disabled={isSubmitting || exercises.length === 0}
                     className="btn-primary w-full"
                 >
-                    {isSubmitting ? "Logging Workout..." : "Log Workout"}
+                    {isSubmitting ? (
+                        <>
+                            <Loading size="sm" />
+                            Logging Workout...
+                        </>
+                    ) : (
+                        "Log Workout"
+                    )}
                 </button>
             </form>
         </div>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { UserInput } from "@/types/user";
-import { Spinner } from "@/components/ui/spinner";
+import Loading from "@/components/Loading";
 import { PasswordInput } from "@/components/PasswordInput";
 
 export default function Page() {
@@ -152,7 +152,7 @@ export default function Page() {
 						>
 							{loading ? (
 								<>
-									<Spinner />
+									<Loading size="sm" />
 									Signing in...
 								</>
 							) : (

@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
 import Modal from "@/components/Modal";
 import { toast } from "sonner";
-import { Spinner } from "@/components/ui/spinner";
+import Loading from "@/components/Loading";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 
 type SelectedIngredient = {
@@ -546,7 +546,7 @@ export default function Page() {
 				>
 					{isSubmitting ? (
 						<>
-							<Spinner />
+							<Loading size="sm" />
 							Creating Recipe...
 						</>
 					) : (

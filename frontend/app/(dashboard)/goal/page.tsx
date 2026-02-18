@@ -1,7 +1,7 @@
 "use client";
 
 import { FieldError } from "@/components/FieldError";
-import { Spinner } from "@/components/ui/spinner";
+import Loading from "@/components/Loading";
 import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
 import { useActionState } from "react";
 import { createGoal } from "@/data/goal";
@@ -172,7 +172,7 @@ export default function GoalForm() {
 				>
 					{isPending ? (
 						<>
-							<Spinner />
+							<Loading size="sm" />
 							Saving Goal...
 						</>
 					) : (

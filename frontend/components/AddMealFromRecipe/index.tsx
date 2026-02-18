@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useEffect } from "react";
-import { Spinner } from "@/components/ui/spinner";
+import Loading from "@/components/Loading";
 import { useRouter } from "next/navigation";
 import { addMeal } from "@/data/meal";
 import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
@@ -156,7 +156,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 				>
 					{isPending ? (
 						<>
-							<Spinner />
+							<Loading size="sm" />
 							Logging Meal...
 						</>
 					) : (

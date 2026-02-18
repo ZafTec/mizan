@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Spinner } from "@/components/ui/spinner";
+import Loading from "@/components/Loading";
 import { useRouter } from "next/navigation";
 import { updateIngredientData, type Ingredient } from "@/data/ingredient";
 
@@ -246,7 +246,7 @@ export default function EditIngredientForm({ ingredient }: { ingredient: Ingredi
 			>
 				{isPending ? (
 					<>
-						<Spinner />
+						<Loading size="sm" />
 						Updating...
 					</>
 				) : (

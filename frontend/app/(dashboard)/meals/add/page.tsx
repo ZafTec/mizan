@@ -1,7 +1,7 @@
 "use client";
 
 import { FieldError } from "@/components/FieldError";
-import { Spinner } from "@/components/ui/spinner";
+import Loading from "@/components/Loading";
 import { addMeal } from "@/data/meal";
 import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
 import Link from "next/link";
@@ -203,7 +203,7 @@ export default function Page() {
 				>
 					{isPending ? (
 						<>
-							<Spinner />
+							<Loading size="sm" />
 							Logging Meal...
 						</>
 					) : (

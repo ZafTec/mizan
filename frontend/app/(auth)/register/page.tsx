@@ -8,7 +8,7 @@ import { CldUploadWidget } from "next-cloudinary";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Spinner } from "@/components/ui/spinner";
+import Loading from "@/components/Loading";
 import { PasswordInput } from "@/components/PasswordInput";
 
 export default function Page() {
@@ -192,7 +192,7 @@ export default function Page() {
 						>
 							{isPending ? (
 								<>
-									<Spinner />
+									<Loading size="sm" />
 									Creating account...
 								</>
 							) : (

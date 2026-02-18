@@ -1,7 +1,7 @@
 "use client";
 
 import { addIngredientData } from "@/data/ingredient";
-import { Spinner } from "@/components/ui/spinner";
+import Loading from "@/components/Loading";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -251,7 +251,7 @@ export default function Page() {
 				>
 					{isPending ? (
 						<>
-							<Spinner />
+							<Loading size="sm" />
 							Adding Ingredient...
 						</>
 					) : (

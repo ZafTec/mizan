@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Spinner } from "@/components/ui/spinner";
+import Loading from "@/components/Loading";
 import { clientApi } from "@/lib/api.client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -226,7 +226,7 @@ export default function LogProgress() {
         >
           {loading ? (
             <>
-              <Spinner />
+              <Loading size="sm" />
               Saving Progress...
             </>
           ) : (

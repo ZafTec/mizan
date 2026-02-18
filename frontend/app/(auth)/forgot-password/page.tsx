@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import { Spinner } from "@/components/ui/spinner";
+import Loading from "@/components/Loading";
 
 export default function ForgotPasswordPage() {
 	const [email, setEmail] = useState("");
@@ -118,7 +118,7 @@ export default function ForgotPasswordPage() {
 							>
 								{loading ? (
 									<>
-										<Spinner />
+										<Loading size="sm" />
 										Sending reset link...
 									</>
 								) : (

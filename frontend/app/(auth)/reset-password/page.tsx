@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
-import { Spinner } from "@/components/ui/spinner";
+import Loading from "@/components/Loading";
 import { PasswordInput } from "@/components/PasswordInput";
 
 export default function ResetPasswordPage() {
@@ -183,7 +183,7 @@ export default function ResetPasswordPage() {
 							>
 								{loading ? (
 									<>
-										<Spinner />
+										<Loading size="sm" />
 										Resetting password...
 									</>
 								) : (

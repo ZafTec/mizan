@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Spinner } from "@/components/ui/spinner";
+import Loading from "@/components/Loading";
 
 interface DeleteConfirmModalProps {
     isOpen: boolean;
@@ -51,7 +51,7 @@ export function DeleteConfirmModal({ isOpen, onClose, onConfirm, itemName }: Del
                         disabled={isDeleting}
                         className="btn-danger"
                     >
-                        {isDeleting && <Spinner size="sm" />}
+                        {isDeleting && <Loading size="sm" />}
                         Delete
                     </button>
                 </div>
