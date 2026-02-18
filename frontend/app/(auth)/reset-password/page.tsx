@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { Spinner } from "@/components/ui/spinner";
+import { PasswordInput } from "@/components/PasswordInput";
 
 export default function ResetPasswordPage() {
 	const router = useRouter();
@@ -31,14 +33,12 @@ export default function ResetPasswordPage() {
 		setLoading(true);
 		setError("");
 
-		// Validate passwords match
 		if (password !== confirmPassword) {
 			setError("Passwords do not match");
 			setLoading(false);
 			return;
 		}
 
-		// Validate password length
 		if (password.length < 8) {
 			setError("Password must be at least 8 characters long");
 			setLoading(false);
@@ -62,7 +62,6 @@ export default function ResetPasswordPage() {
 				setError(errorMessage);
 			} else {
 				setSuccess(true);
-				// Redirect to login after 2 seconds
 				setTimeout(() => {
 					router.push("/login");
 				}, 2000);
@@ -79,7 +78,7 @@ export default function ResetPasswordPage() {
 			<div className="w-full max-w-md">
 				{/* Header */}
 				<div className="text-center mb-8">
-					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/30 mb-4">
+					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/30 dark:shadow-brand-500/15 mb-4">
 						<i className="ri-lock-unlock-line text-3xl text-white" />
 					</div>
 					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Set new password</h1>
@@ -133,21 +132,21 @@ export default function ResetPasswordPage() {
 							</div>
 						</div>
 					) : (
-						<form onSubmit={handleSubmit} className="space-y-5">
+						<form data-testid="reset-password-form" onSubmit={handleSubmit} className="space-y-5">
 							<div>
 								<label htmlFor="password" className="label">
 									New Password
 								</label>
-								<input
+								<PasswordInput
 									required
-									type="password"
 									id="password"
 									name="password"
-									className="input"
+									className="input pr-10"
 									placeholder="••••••••"
 									value={password}
 									onChange={(e) => setPassword(e.target.value)}
 									minLength={8}
+									showStrength
 								/>
 								<p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
 									Must be at least 8 characters
@@ -158,12 +157,11 @@ export default function ResetPasswordPage() {
 								<label htmlFor="confirmPassword" className="label">
 									Confirm Password
 								</label>
-								<input
+								<PasswordInput
 									required
-									type="password"
 									id="confirmPassword"
 									name="confirmPassword"
-									className="input"
+									className="input pr-10"
 									placeholder="••••••••"
 									value={confirmPassword}
 									onChange={(e) => setConfirmPassword(e.target.value)}
@@ -172,7 +170,7 @@ export default function ResetPasswordPage() {
 							</div>
 
 							{error && (
-								<div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
+								<div data-testid="error-message" className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
 									<i className="ri-error-warning-line text-lg" />
 									<span>{error}</span>
 								</div>
@@ -185,10 +183,7 @@ export default function ResetPasswordPage() {
 							>
 								{loading ? (
 									<>
-										<svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-											<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-											<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-										</svg>
+										<Spinner />
 										Resetting password...
 									</>
 								) : (

@@ -27,12 +27,12 @@ export default async function Page({
 	}
 
 	return (
-		<div className="space-y-8">
+		<div className="space-y-8" data-testid="recipe-list">
 			{/* Page Header */}
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
-					<h1 className="text-2xl font-bold text-slate-900">Recipes</h1>
-					<p className="text-slate-500 mt-1">Discover and create delicious healthy meals</p>
+					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Recipes</h1>
+					<p className="text-slate-500 dark:text-slate-400 mt-1">Discover and create delicious healthy meals</p>
 				</div>
 				{user && (
 					<Link href="/recipes/add" className="btn-primary">
@@ -55,7 +55,7 @@ export default async function Page({
 								<i className={`${collection.icon} text-xl text-white`} />
 							</div>
 							<div className="flex-1">
-								<h3 className="font-semibold text-slate-900">{collection.name}</h3>
+								<h3 className="font-semibold text-slate-900 dark:text-slate-100">{collection.name}</h3>
 								<p className="text-sm text-slate-500">{collection.count} recipes</p>
 							</div>
 							<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
@@ -74,7 +74,7 @@ export default async function Page({
 								<i className="ri-restaurant-2-line text-3xl text-white" />
 							</div>
 							<div className="flex-1">
-								<h3 className="text-xl font-bold text-slate-900 mb-1">Create Your Own Recipe</h3>
+								<h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">Create Your Own Recipe</h3>
 								<p className="text-slate-600">Share your favorite healthy meals with the community</p>
 							</div>
 							<Link href="/recipes/add" className="btn-secondary whitespace-nowrap">
@@ -111,7 +111,7 @@ export default async function Page({
 								<div className="flex-1 p-5">
 									<div className="flex justify-between items-start gap-4">
 										<div className="flex-1">
-											<h3 className="text-lg font-semibold text-slate-900 group-hover:text-brand-600 transition-colors mb-2">
+											<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 group-hover:text-brand-600 transition-colors mb-2">
 												{recipe.title}
 											</h3>
 											<p className="text-slate-600 text-sm line-clamp-2 mb-4">
@@ -148,7 +148,7 @@ export default async function Page({
 						<div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
 							<i className="ri-restaurant-line text-3xl text-slate-400" />
 						</div>
-						<h3 className="text-lg font-semibold text-slate-900 mb-2">No recipes yet</h3>
+						<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No recipes yet</h3>
 						<p className="text-slate-500 mb-6">Be the first to add a delicious recipe!</p>
 						{user && (
 							<Link href="/recipes/add" className="btn-primary">

@@ -177,6 +177,22 @@
   @apply bg-gradient-to-r from-accent-500 to-accent-600 text-white hover:from-accent-600 hover:to-accent-700 focus:ring-accent-500 shadow-lg shadow-accent-500/25 dark:shadow-accent-500/10;
 }
 
+.btn-danger {
+  @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-lg shadow-red-500/25 dark:shadow-red-500/10;
+}
+
+.btn-ghost {
+  @apply bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:ring-slate-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100;
+}
+
+.btn-sm {
+  @apply px-3 py-1.5 text-sm rounded-lg;
+}
+
+.btn-lg {
+  @apply px-6 py-3 text-base rounded-2xl;
+}
+
 /* Card Styles */
 .card,
 .card-hover {
@@ -190,6 +206,10 @@
 /* Input Styles */
 .input {
   @apply w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:border-brand-400;
+}
+
+.input-error {
+  @apply border-red-400 focus:ring-red-500/20 focus:border-red-500 dark:border-red-500;
 }
 
 .label {
@@ -214,5 +234,29 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
   }
 }

@@ -11,6 +11,8 @@ import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
 import Modal from "@/components/Modal";
 import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
+import { useDebounce } from "@/lib/hooks/useDebounce";
 
 type SelectedIngredient = {
 	ingredient: Ingredient | null;
@@ -36,6 +38,8 @@ export default function Page() {
 
 	const [ingredientSearch, setIngredientSearch] = useState<Ingredient[]>([]);
 	const [activeDropdownIndex, setActiveDropdownIndex] = useState<number | null>(null);
+	const [ingredientQuery, setIngredientQuery] = useState("");
+	const debouncedQuery = useDebounce(ingredientQuery, 300);
 
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const router = useRouter();
@@ -79,20 +83,26 @@ export default function Page() {
 		setSelectedIngredients(newIngredients);
 	}
 
-	async function handleIngredientNameChange(index: number, value: string) {
+	function handleIngredientNameChange(index: number, value: string) {
 		const newIngredients = [...selectedIngredients];
 		newIngredients[index] = { ...newIngredients[index], name: value };
 		setSelectedIngredients(newIngredients);
 		setActiveDropdownIndex(index);
+		setIngredientQuery(value);
 
 		if (!value) {
 			setIngredientSearch([]);
-			return;
 		}
-
-		const result = await getAllIngredient(value, undefined, undefined, 1, 4);
-		setIngredientSearch(result.ingredients);
 	}
+
+	useEffect(() => {
+		if (!debouncedQuery) return;
+		let cancelled = false;
+		getAllIngredient(debouncedQuery, undefined, undefined, 1, 4).then((result) => {
+			if (!cancelled) setIngredientSearch(result.ingredients);
+		});
+		return () => { cancelled = true; };
+	}, [debouncedQuery]);
 
 	function handleAddTag(e: React.KeyboardEvent<HTMLInputElement>) {
 		if (e.key === 'Enter' && currentTag.trim()) {
@@ -536,10 +546,7 @@ export default function Page() {
 				>
 					{isSubmitting ? (
 						<>
-							<svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-								<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-								<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-							</svg>
+							<Spinner />
 							Creating Recipe...
 						</>
 					) : (

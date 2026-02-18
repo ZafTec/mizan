@@ -5,6 +5,9 @@ import DailyOverviewChart from "@/components/DailyOverviewChart";
 import DashboardStats from "@/components/Dashboard/DashboardStats";
 import { getUserOptionalServer } from "@/helper/session";
 import { getPopularRecipes } from "@/data/recipe";
+import { FeatureSection } from "@/components/Landing/FeatureSection";
+import { TestimonialSection } from "@/components/Landing/TestimonialCard";
+import { CTASection } from "@/components/Landing/CTASection";
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +19,7 @@ export default async function Home() {
 		<div className="space-y-8">
 			{/* Hero Section for non-authenticated users */}
 			{!user && (
-				<div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-brand-600 via-brand-700 to-brand-800 p-8 sm:p-12">
+				<div data-testid="hero-section" className="relative overflow-hidden rounded-3xl bg-linear-to-br from-brand-600 via-brand-700 to-brand-800 p-8 sm:p-12" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 8s ease infinite' }}>
 					<div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
 					<div className="absolute top-0 right-0 w-96 h-96 bg-brand-400/30 rounded-full blur-3xl" />
 					<div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-500/20 rounded-full blur-3xl" />
@@ -51,8 +54,16 @@ export default async function Home() {
 				</div>
 			)}
 
-			{/* Quick Stats for authenticated users */}
-			{user && <DashboardStats />}
+			{/* Welcome back + Stats for authenticated users */}
+			{user && (
+				<div className="animate-in">
+					<h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">
+						Welcome back{user.name ? `, ${user.name}` : ''}
+					</h2>
+					<p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Here&apos;s your daily overview</p>
+					<DashboardStats />
+				</div>
+			)}
 
 			{/* Quick Actions */}
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -92,6 +103,9 @@ export default async function Home() {
 					</div>
 				</Link>
 			</div>
+
+			{/* Feature Section (unauthenticated) */}
+			{!user && <FeatureSection />}
 
 			{/* Popular Recipes */}
 			<div className="card p-6">
@@ -144,6 +158,9 @@ export default async function Home() {
 				</div>
 			</div>
 
+			{/* Testimonials (unauthenticated) */}
+			{!user && <TestimonialSection />}
+
 			{/* Nutrition Overview */}
 			{user && (
 				<div className="card p-6">
@@ -160,6 +177,9 @@ export default async function Home() {
 					<DailyOverviewChart />
 				</div>
 			)}
+
+			{/* CTA (unauthenticated) */}
+			{!user && <CTASection />}
 		</div>
 	);
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function ForgotPasswordPage() {
 	const [email, setEmail] = useState("");
@@ -56,11 +57,11 @@ export default function ForgotPasswordPage() {
 								<i className="ri-mail-send-line text-3xl text-green-600" />
 							</div>
 							<div>
-								<h3 className="text-lg font-semibold text-slate-900 mb-2">
+								<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
 									Check your email
 								</h3>
-								<p className="text-slate-500 text-sm">
-									We sent a password reset link to <span className="font-medium text-slate-700">{email}</span>
+								<p className="text-slate-500 dark:text-slate-400 text-sm">
+									We sent a password reset link to <span className="font-medium text-slate-700 dark:text-slate-300">{email}</span>
 								</p>
 							</div>
 							<div className="pt-4">
@@ -69,21 +70,21 @@ export default function ForgotPasswordPage() {
 									Back to login
 								</Link>
 							</div>
-							<p className="text-sm text-slate-500">
+							<p className="text-sm text-slate-500 dark:text-slate-400">
 								Didn&apos;t receive the email?{" "}
 								<button
 									onClick={() => {
 										setSuccess(false);
 										setEmail("");
 									}}
-									className="text-brand-600 hover:text-brand-700 font-medium"
+									className="text-brand-600 dark:text-brand-400 hover:text-brand-700 font-medium"
 								>
 									Try again
 								</button>
 							</p>
 						</div>
 					) : (
-						<form onSubmit={handleSubmit} className="space-y-5">
+						<form data-testid="forgot-password-form" onSubmit={handleSubmit} className="space-y-5">
 							<div>
 								<label htmlFor="email" className="label">
 									Email address
@@ -98,13 +99,13 @@ export default function ForgotPasswordPage() {
 									value={email}
 									onChange={(e) => setEmail(e.target.value)}
 								/>
-								<p className="text-xs text-slate-500 mt-1.5">
+								<p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
 									Enter the email address associated with your account
 								</p>
 							</div>
 
 							{error && (
-								<div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 text-red-600 text-sm">
+								<div data-testid="error-message" className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
 									<i className="ri-error-warning-line text-lg" />
 									<span>{error}</span>
 								</div>
@@ -117,10 +118,7 @@ export default function ForgotPasswordPage() {
 							>
 								{loading ? (
 									<>
-										<svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-											<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-											<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-										</svg>
+										<Spinner />
 										Sending reset link...
 									</>
 								) : (
@@ -134,7 +132,7 @@ export default function ForgotPasswordPage() {
 							<div className="text-center">
 								<Link
 									href="/login"
-									className="text-sm text-slate-600 hover:text-slate-900 inline-flex items-center gap-1"
+									className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 inline-flex items-center gap-1"
 								>
 									<i className="ri-arrow-left-line" />
 									Back to login
