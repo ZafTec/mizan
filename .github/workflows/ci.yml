@@ -54,7 +54,7 @@ jobs:
         BetterAuth__Audience: "mizan-api"
         BetterAuth__JwksUrl: "http://localhost:3000/api/auth/jwks"
         Mcp__ServiceApiKey: "test-api-key"
-      run: dotnet test backend/Mizan.sln --no-build --verbosity normal
+      run: dotnet test backend/Mizan.sln --no-build --verbosity minimal --logger "console;verbosity=minimal" --nologo
 
   frontend-build:
     runs-on: ubuntu-latest
