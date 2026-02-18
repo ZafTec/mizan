@@ -37,7 +37,7 @@ public class FoodsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "admin")]
+    [Authorize(Policy = "RequireAdmin")]
     public async Task<ActionResult<CreateFoodResult>> CreateFood([FromBody] CreateFoodCommand command)
     {
         var result = await _mediator.Send(command);
@@ -45,7 +45,7 @@ public class FoodsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "admin")]
+    [Authorize(Policy = "RequireAdmin")]
     public async Task<ActionResult<UpdateFoodResult>> UpdateFood(Guid id, [FromBody] UpdateFoodCommand command)
     {
         if (id != command.Id)
@@ -60,7 +60,7 @@ public class FoodsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "admin")]
+    [Authorize(Policy = "RequireAdmin")]
     public async Task<ActionResult<DeleteFoodResult>> DeleteFood(Guid id)
     {
         var result = await _mediator.Send(new DeleteFoodCommand { Id = id });

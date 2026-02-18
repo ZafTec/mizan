@@ -8,7 +8,7 @@ namespace Mizan.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "admin")]
+[Authorize(Policy = "RequireAdmin")]
 public class AuditLogsController : ControllerBase
 {
     private readonly IMediator _mediator;
