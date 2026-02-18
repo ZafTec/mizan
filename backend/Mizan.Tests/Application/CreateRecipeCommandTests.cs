@@ -235,51 +235,69 @@ public class CreateRecipeCommandTests : IDisposable
     [Fact]
     public async Task Handle_ShouldThrow_WhenCircularDependencyDetected()
     {
-        // Arrange: Create Recipe A that uses Recipe B
-        var recipeB = new Domain.Entities.Recipe
-        {
-            Id = Guid.NewGuid(),
-            UserId = _testUserId,
-            Title = "Recipe B",
-            Servings = 2,
-            IsPublic = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-        _context.Recipes.Add(recipeB);
-        await _context.SaveChangesAsync();
+        // Arrange: Create Recipe A -> Recipe B -> Recipe A circular dependency
+        var recipeAId = Guid.NewGuid();
+        var recipeBId = Guid.NewGuid();
 
-        // Create Recipe A that uses Recipe B
-        var recipeA = new Domain.Entities.Recipe
+        // Create Recipe A (without ingredients first)
+        _context.Recipes.Add(new Domain.Entities.Recipe
         {
-            Id = Guid.NewGuid(),
+            Id = recipeAId,
             UserId = _testUserId,
             Title = "Recipe A",
             Servings = 2,
             IsPublic = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
-        };
-        recipeA.Ingredients.Add(new Domain.Entities.RecipeIngredient
+        });
+
+        // Create Recipe B that uses Recipe A
+        _context.Recipes.Add(new Domain.Entities.Recipe
+        {
+            Id = recipeBId,
+            UserId = _testUserId,
+            Title = "Recipe B",
+            Servings = 2,
+            IsPublic = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            Ingredients = new List<Domain.Entities.RecipeIngredient>
+            {
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    RecipeId = recipeBId,
+                    SubRecipeId = recipeAId,
+                    IngredientText = "Recipe A",
+                    Amount = 1,
+                    Unit = "serving"
+                }
+            }
+        });
+
+        await _context.SaveChangesAsync();
+
+        // Create Recipe A ingredient that uses Recipe B (creates cycle: A -> B -> A)
+        _context.RecipeIngredients.Add(new Domain.Entities.RecipeIngredient
         {
             Id = Guid.NewGuid(),
-            RecipeId = recipeA.Id,
-            SubRecipeId = recipeB.Id,
+            RecipeId = recipeAId,
+            SubRecipeId = recipeBId,
             IngredientText = "Recipe B",
             Amount = 1,
             Unit = "serving"
         });
-        _context.Recipes.Add(recipeA);
+
         await _context.SaveChangesAsync();
 
-        // Try to create a new version of Recipe B that uses Recipe A (would create cycle)
+        // Try to create Recipe C that uses Recipe A (A -> B -> A creates cycle)
         var command = new CreateRecipeCommand
         {
-            Title = "Recipe B Updated",
+            Title = "Recipe C",
             Servings = 2,
             Ingredients = new List<CreateRecipeIngredientDto>
             {
-                new() { SubRecipeId = recipeA.Id, IngredientText = "Recipe A", Amount = 1, Unit = "serving" }
+                new() { SubRecipeId = recipeAId, IngredientText = "Recipe A", Amount = 1, Unit = "serving" }
             },
             Instructions = new List<string> { "Use Recipe A" },
             Tags = new List<string>()

@@ -51,26 +51,39 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
 
     public ApiTestFixture()
     {
-        // Try multiple environment variable formats
-        var existingConnString = Environment.GetEnvironmentVariable("TEST_DB_CONNECTION") 
-            ?? Environment.GetEnvironmentVariable("ConnectionStrings__PostgreSQL")
-            ?? Environment.GetEnvironmentVariable("ConnectionStrings:PostgreSQL");
-
-        if (!string.IsNullOrWhiteSpace(existingConnString))
+        // Check if we should use InMemory database (for local unit testing)
+        var useInMemory = Environment.GetEnvironmentVariable("USE_INMEMORY_DATABASE")?.ToLower() == "true";
+        
+        if (useInMemory)
         {
-            // Using existing DB connection
-            _connectionString = existingConnString;
+            // Use InMemory database for fast local testing
+            _connectionString = "inmemory";
             _dbContainer = null;
         }
         else
         {
-            _dbContainer = new PostgreSqlBuilder()
-                .WithImage("postgres:15-alpine")
-                .WithDatabase("mizan_test")
-                .WithUsername("mizan")
-                .WithPassword("mizan_test_password")
-                .Build();
-            _connectionString = string.Empty; // Will be set in InitializeAsync
+            // Try multiple environment variable formats for real database
+            var existingConnString = Environment.GetEnvironmentVariable("TEST_DB_CONNECTION") 
+                ?? Environment.GetEnvironmentVariable("ConnectionStrings__PostgreSQL")
+                ?? Environment.GetEnvironmentVariable("ConnectionStrings:PostgreSQL");
+
+            if (!string.IsNullOrWhiteSpace(existingConnString))
+            {
+                // Using existing DB connection (CI/CD pipeline)
+                _connectionString = existingConnString;
+                _dbContainer = null;
+            }
+            else
+            {
+                // Create Testcontainers PostgreSQL for local integration testing
+                _dbContainer = new PostgreSqlBuilder()
+                    .WithImage("postgres:18-alpine")
+                    .WithDatabase("mizan_test")
+                    .WithUsername("mizan")
+                    .WithPassword("mizan_test_password")
+                    .Build();
+                _connectionString = string.Empty; // Will be set in InitializeAsync
+            }
         }
 
         _issuer = Environment.GetEnvironmentVariable("BetterAuth__Issuer") ?? "http://localhost:3000";
@@ -114,13 +127,22 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
                 d => d.ServiceType == typeof(DbContextOptions<MizanDbContext>));
             if (dbDescriptor != null) services.Remove(dbDescriptor);
 
-            var connString = !string.IsNullOrEmpty(_connectionString) 
-                ? _connectionString 
-                : _dbContainer?.GetConnectionString() ?? throw new InvalidOperationException("No DB connection string available");
+            if (_connectionString == "inmemory")
+            {
+                // Use InMemory database for fast local unit testing
+                services.AddDbContext<MizanDbContext>(options =>
+                    options.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+            }
+            else
+            {
+                var connString = !string.IsNullOrEmpty(_connectionString)
+                    ? _connectionString
+                    : _dbContainer?.GetConnectionString() ?? throw new InvalidOperationException("No DB connection string available");
 
-            // Add DbContext using container connection
-            services.AddDbContext<MizanDbContext>(options =>
-                options.UseNpgsql(connString));
+                // Add DbContext using real PostgreSQL connection
+                services.AddDbContext<MizanDbContext>(options =>
+                    options.UseNpgsql(connString));
+            }
 
             var descriptors = services.Where(d => d.ServiceType == typeof(IJwksProvider)).ToList();
             foreach (var descriptor in descriptors)
@@ -193,9 +215,34 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
         
-        // TRUNCATE is faster than deleting and recreating
-        var tableList = string.Join(", ", TablesToTruncate.Select(t => $"\"{t}\""));
-        await db.Database.ExecuteSqlRawAsync($"TRUNCATE TABLE {tableList} RESTART IDENTITY CASCADE;");
+        if (db.Database.IsInMemory())
+        {
+            // For InMemory database, delete all entities manually
+            // Since InMemory doesn't support ExecuteSqlRaw
+            db.McpUsageLogs.RemoveRange(db.McpUsageLogs);
+            db.McpTokens.RemoveRange(db.McpTokens);
+            db.GoalProgress.RemoveRange(db.GoalProgress);
+            db.UserGoals.RemoveRange(db.UserGoals);
+            db.FoodDiaryEntries.RemoveRange(db.FoodDiaryEntries);
+            db.FavoriteRecipes.RemoveRange(db.FavoriteRecipes);
+            db.RecipeTags.RemoveRange(db.RecipeTags);
+            db.RecipeInstructions.RemoveRange(db.RecipeInstructions);
+            db.RecipeIngredients.RemoveRange(db.RecipeIngredients);
+            db.RecipeNutritions.RemoveRange(db.RecipeNutritions);
+            db.Recipes.RemoveRange(db.Recipes);
+            db.Foods.RemoveRange(db.Foods);
+            db.HouseholdMembers.RemoveRange(db.HouseholdMembers);
+            db.Households.RemoveRange(db.Households);
+            db.AuditLogs.RemoveRange(db.AuditLogs);
+            db.Users.RemoveRange(db.Users);
+            await db.SaveChangesAsync();
+        }
+        else
+        {
+            // TRUNCATE is faster than deleting and recreating for real databases
+            var tableList = string.Join(", ", TablesToTruncate.Select(t => $"\"{t}\""));
+            await db.Database.ExecuteSqlRawAsync($"TRUNCATE TABLE {tableList} RESTART IDENTITY CASCADE;");
+        }
     }
 
     public async Task<User> SeedUserAsync(Guid id, string email, bool emailVerified = true, string role = "user", bool banned = false, DateTime? banExpires = null)
@@ -351,6 +398,14 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     {
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+
+        // Skip migrations for InMemory database
+        if (db.Database.IsInMemory())
+        {
+            // InMemory database doesn't support migrations, just ensure it's created
+            await db.Database.EnsureCreatedAsync();
+            return;
+        }
 
         // 1. Manually create Better Auth tables required by backend foreign keys
         // These tables are managed by Frontend/Drizzle in production, so EF Core migrations exclude them.

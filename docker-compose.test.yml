@@ -1,0 +1,83 @@
+# Docker Compose for Integration Testing
+# Usage: docker-compose -f docker-compose.test.yml up --abort-on-container-exit
+
+services:
+  # PostgreSQL Database for Testing
+  postgres-test:
+    image: postgres:18-alpine
+    container_name: mizan-postgres-test
+    environment:
+      POSTGRES_DB: mizan_test
+      POSTGRES_USER: mizan
+      POSTGRES_PASSWORD: mizan_test_password
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts with dev
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U mizan -d mizan_test" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mizan-test-network
+
+  # Redis for Testing
+  redis-test:
+    image: redis:7-alpine
+    container_name: mizan-redis-test
+    ports:
+      - "6380:6379"  # Different port to avoid conflicts with dev
+    volumes:
+      - redis_test_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mizan-test-network
+
+  # Backend Integration Tests
+  backend-test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mizan-backend-test
+    volumes:
+      - ./backend:/src
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      # Use the test database
+      - ConnectionStrings__PostgreSQL=Host=postgres-test;Database=mizan_test;Username=mizan;Password=mizan_test_password
+      - ConnectionStrings__Redis=redis-test:6379
+      - BetterAuth__Issuer=http://localhost:3000
+      - BetterAuth__Audience=mizan-api
+      - BetterAuth__JwksUrl=http://jwks.test
+      - Mcp__ServiceApiKey=test-api-key
+      # Don't use InMemory - use real database
+      - USE_INMEMORY_DATABASE=false
+    command: >
+      sh -c "
+        echo 'Waiting for PostgreSQL...' &&
+        sleep 5 &&
+        echo 'Running backend tests...' &&
+        dotnet test Mizan.Tests/Mizan.Tests.csproj 
+        --verbosity minimal 
+        --logger 'console;verbosity=minimal'
+      "
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    networks:
+      - mizan-test-network
+
+networks:
+  mizan-test-network:
+    driver: bridge
+
+volumes:
+  postgres_test_data:
+  redis_test_data:
