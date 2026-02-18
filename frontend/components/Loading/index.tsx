@@ -17,7 +17,7 @@ export default function Loading({ size = "lg", className, color }: LoadingProps)
     return (
         <div
             data-testid="loading"
-            className={`${loaderStyle.loader}${className ? ` ${className}` : ""}`}
+            className={`${loaderStyle.loader} ${className ? ` ${className}` : ""}`}
             style={{
                 "--size": resolvedSize,
                 "--gap": gap,
