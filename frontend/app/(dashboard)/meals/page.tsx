@@ -300,7 +300,7 @@ export default function MealsPage() {
 						<div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
 							<i className="ri-restaurant-line text-3xl text-slate-400" />
 						</div>
-						<h3 className="text-lg font-semibold text-slate-900 mb-2">
+						<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
 							No meals logged
 						</h3>
 						<Link href="/meals/add" className="btn-primary mt-4">
