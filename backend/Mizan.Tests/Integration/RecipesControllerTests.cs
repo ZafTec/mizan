@@ -232,10 +232,10 @@ public class RecipesControllerTests
             Title = "Pasta with Sauce",
             Servings = 2,
             IsPublic = true,
-            Ingredients = new[]
+            Ingredients = new object[]
             {
-                new { IngredientText = "Pasta", Amount = 200m, Unit = "g" },
-                new { SubRecipeId = sauce!.Id, IngredientText = "Tomato Sauce", Amount = 2m, Unit = "servings" }
+                new { FoodId = (Guid?)null, SubRecipeId = (Guid?)null, IngredientText = "Pasta", Amount = 200m, Unit = "g" },
+                new { FoodId = (Guid?)null, SubRecipeId = (Guid?)sauce!.Id, IngredientText = "Tomato Sauce", Amount = 2m, Unit = "servings" }
             },
             Instructions = new[] { "Cook pasta", "Add sauce" },
             Tags = new[] { "italian" }
@@ -365,10 +365,10 @@ public class RecipesControllerTests
             Title = "Pasta Meal",
             Servings = 1,
             IsPublic = true,
-            Ingredients = new[]
+            Ingredients = new object[]
             {
-                new { FoodId = food.Id, IngredientText = "Pasta", Amount = 100m, Unit = "g" }, // 130 cal
-                new { SubRecipeId = sauce!.Id, IngredientText = "Simple Sauce", Amount = 2m, Unit = "servings" } // 80 cal (2 * 40)
+                new { FoodId = (Guid?)food.Id, SubRecipeId = (Guid?)null, IngredientText = "Pasta", Amount = 100m, Unit = "g" }, // 130 cal
+                new { FoodId = (Guid?)null, SubRecipeId = (Guid?)sauce!.Id, IngredientText = "Simple Sauce", Amount = 2m, Unit = "servings" } // 80 cal (2 * 40)
             },
             Instructions = new[] { "Combine" },
             Tags = new string[] { }
