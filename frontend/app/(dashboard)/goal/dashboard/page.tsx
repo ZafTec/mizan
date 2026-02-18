@@ -5,6 +5,7 @@ import { clientApi } from "@/lib/api.client";
 import Link from "next/link";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, RadialBarChart, RadialBar, PieChart, Pie, Cell } from "recharts";
 import { GoalData } from "@/types/goal";
+import Loading from "@/components/Loading";
 
 
 const MACRO_COLORS = {
@@ -37,7 +38,7 @@ export default function GoalDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
+        <Loading />
       </div>
     );
   }

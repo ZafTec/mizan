@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { clientApi } from '@/lib/api.client';
+import Loading from '@/components/Loading';
 
 interface ShoppingListItem {
   id: string;
@@ -121,7 +122,7 @@ export default function ShoppingListPage() {
 
         {loading && allItems.length === 0 ? (
           <div className="flex justify-center items-center py-10">
-            <i className="ri-loader-4-line animate-spin text-brand-500 text-3xl"></i>
+            <Loading />
           </div>
         ) : allItems.length === 0 ? (
           <div className="text-center py-10">

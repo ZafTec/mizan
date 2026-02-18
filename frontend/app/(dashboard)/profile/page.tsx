@@ -8,6 +8,7 @@ import { useState } from "react";
 import { CldUploadWidget } from "next-cloudinary";
 import { toast } from "sonner";
 import { useTheme } from "@/lib/hooks/useTheme";
+import Loading from "@/components/Loading";
 
 export default function ProfilePage() {
 	const { data: session, isPending } = useSession();
@@ -23,7 +24,7 @@ export default function ProfilePage() {
 	if (isPending) {
 		return (
 			<div className="flex items-center justify-center min-h-screen">
-				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
+				<Loading />
 			</div>
 		);
 	}
@@ -79,10 +80,10 @@ export default function ProfilePage() {
 	};
 
 	return (
-		<div className="max-w-3xl mx-auto space-y-6">
+		<div className="max-w-3xl mx-auto space-y-6" data-testid="profile-page">
 			{/* Header */}
 			<div>
-				<h1 className="text-2xl font-bold text-slate-900">Profile</h1>
+				<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Profile</h1>
 				<p className="text-slate-500 mt-1">Manage your account settings</p>
 			</div>
 
@@ -135,7 +136,7 @@ export default function ProfilePage() {
 						</CldUploadWidget>
 					</div>
 					<div className="text-center sm:text-left flex-1">
-						<h2 className="text-xl font-bold text-slate-900">
+						<h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
 							{user.name || user.email?.split("@")[0]}
 						</h2>
 						<p className="text-slate-500">{user.email}</p>
@@ -162,7 +163,7 @@ export default function ProfilePage() {
 							<i className="ri-target-line text-xl text-white" />
 						</div>
 						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900">Nutrition Goals</h3>
+							<h3 className="font-semibold text-slate-900 dark:text-slate-100">Nutrition Goals</h3>
 							<p className="text-sm text-slate-500">Set your daily targets</p>
 						</div>
 						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
@@ -175,7 +176,7 @@ export default function ProfilePage() {
 							<i className="ri-bowl-line text-xl text-white" />
 						</div>
 						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900">Food Diary</h3>
+							<h3 className="font-semibold text-slate-900 dark:text-slate-100">Food Diary</h3>
 							<p className="text-sm text-slate-500">Track your daily meals</p>
 						</div>
 						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
@@ -188,7 +189,7 @@ export default function ProfilePage() {
 							<i className="ri-calendar-line text-xl text-white" />
 						</div>
 						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900">Meal Plan</h3>
+							<h3 className="font-semibold text-slate-900 dark:text-slate-100">Meal Plan</h3>
 							<p className="text-sm text-slate-500">Plan your weekly meals</p>
 						</div>
 						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
@@ -201,7 +202,7 @@ export default function ProfilePage() {
 							<i className="ri-magic-line text-xl text-white" />
 						</div>
 						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900">AI Coach</h3>
+							<h3 className="font-semibold text-slate-900 dark:text-slate-100">AI Coach</h3>
 							<p className="text-sm text-slate-500">Get AI-powered suggestions</p>
 						</div>
 						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
@@ -214,7 +215,7 @@ export default function ProfilePage() {
 							<i className="ri-book-3-line text-xl text-white" />
 						</div>
 						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900">My Recipes</h3>
+							<h3 className="font-semibold text-slate-900 dark:text-slate-100">My Recipes</h3>
 							<p className="text-sm text-slate-500">View your collection</p>
 						</div>
 						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
@@ -227,7 +228,7 @@ export default function ProfilePage() {
 							<i className="ri-leaf-line text-xl text-white" />
 						</div>
 						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900">Foods</h3>
+							<h3 className="font-semibold text-slate-900 dark:text-slate-100">Foods</h3>
 							<p className="text-sm text-slate-500">Browse food database</p>
 						</div>
 						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
@@ -240,7 +241,7 @@ export default function ProfilePage() {
 							<i className="ri-body-scan-line text-xl text-white" />
 						</div>
 						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900">Body Measurements</h3>
+							<h3 className="font-semibold text-slate-900 dark:text-slate-100">Body Measurements</h3>
 							<p className="text-sm text-slate-500">Track your progress</p>
 						</div>
 						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
@@ -253,7 +254,7 @@ export default function ProfilePage() {
 							<i className="ri-trophy-line text-xl text-white" />
 						</div>
 						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900">Achievements</h3>
+							<h3 className="font-semibold text-slate-900 dark:text-slate-100">Achievements</h3>
 							<p className="text-sm text-slate-500">Badges & streaks</p>
 						</div>
 						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
@@ -266,7 +267,7 @@ export default function ProfilePage() {
 							<i className="ri-run-line text-xl text-white" />
 						</div>
 						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900">Workouts</h3>
+							<h3 className="font-semibold text-slate-900 dark:text-slate-100">Workouts</h3>
 							<p className="text-sm text-slate-500">Log your training</p>
 						</div>
 						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
@@ -282,7 +283,7 @@ export default function ProfilePage() {
 							<i className="ri-user-star-line text-xl text-white" />
 						</div>
 						<div>
-							<h2 className="font-semibold text-slate-900">Trainer Features</h2>
+							<h2 className="font-semibold text-slate-900 dark:text-slate-100">Trainer Features</h2>
 							<p className="text-sm text-slate-600">Manage your clients and training</p>
 						</div>
 					</div>
@@ -294,7 +295,7 @@ export default function ProfilePage() {
 									<i className="ri-dashboard-line text-lg text-white" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-medium text-slate-900">Dashboard</h3>
+									<h3 className="font-medium text-slate-900 dark:text-slate-100">Dashboard</h3>
 									<p className="text-xs text-slate-500">View clients & stats</p>
 								</div>
 								<i className="ri-arrow-right-s-line text-lg text-slate-400 group-hover:text-emerald-500 transition-colors" />
@@ -307,7 +308,7 @@ export default function ProfilePage() {
 									<i className="ri-group-line text-lg text-white" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-medium text-slate-900">My Clients</h3>
+									<h3 className="font-medium text-slate-900 dark:text-slate-100">My Clients</h3>
 									<p className="text-xs text-slate-500">Manage relationships</p>
 								</div>
 								<i className="ri-arrow-right-s-line text-lg text-slate-400 group-hover:text-emerald-500 transition-colors" />
@@ -320,7 +321,7 @@ export default function ProfilePage() {
 									<i className="ri-user-add-line text-lg text-white" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-medium text-slate-900">Requests</h3>
+									<h3 className="font-medium text-slate-900 dark:text-slate-100">Requests</h3>
 									<p className="text-xs text-slate-500">Pending client requests</p>
 								</div>
 								<i className="ri-arrow-right-s-line text-lg text-slate-400 group-hover:text-emerald-500 transition-colors" />
@@ -333,7 +334,7 @@ export default function ProfilePage() {
 									<i className="ri-message-3-line text-lg text-white" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-medium text-slate-900">Messages</h3>
+									<h3 className="font-medium text-slate-900 dark:text-slate-100">Messages</h3>
 									<p className="text-xs text-slate-500">Chat with clients</p>
 								</div>
 								<i className="ri-arrow-right-s-line text-lg text-slate-400 group-hover:text-emerald-500 transition-colors" />
@@ -351,7 +352,7 @@ export default function ProfilePage() {
 							<i className="ri-user-search-line text-xl text-white" />
 						</div>
 						<div>
-							<h2 className="font-semibold text-slate-900">Personal Training</h2>
+							<h2 className="font-semibold text-slate-900 dark:text-slate-100">Personal Training</h2>
 							<p className="text-sm text-slate-600">Connect with a certified trainer</p>
 						</div>
 					</div>
@@ -363,7 +364,7 @@ export default function ProfilePage() {
 									<i className="ri-search-line text-lg text-white" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-medium text-slate-900">Find a Trainer</h3>
+									<h3 className="font-medium text-slate-900 dark:text-slate-100">Find a Trainer</h3>
 									<p className="text-xs text-slate-500">Browse available trainers</p>
 								</div>
 								<i className="ri-arrow-right-s-line text-lg text-slate-400 group-hover:text-blue-500 transition-colors" />
@@ -376,7 +377,7 @@ export default function ProfilePage() {
 									<i className="ri-user-heart-line text-lg text-white" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-medium text-slate-900">My Trainer</h3>
+									<h3 className="font-medium text-slate-900 dark:text-slate-100">My Trainer</h3>
 									<p className="text-xs text-slate-500">View current trainer</p>
 								</div>
 								<i className="ri-arrow-right-s-line text-lg text-slate-400 group-hover:text-blue-500 transition-colors" />
@@ -389,7 +390,7 @@ export default function ProfilePage() {
 									<i className="ri-mail-send-line text-lg text-white" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-medium text-slate-900">My Requests</h3>
+									<h3 className="font-medium text-slate-900 dark:text-slate-100">My Requests</h3>
 									<p className="text-xs text-slate-500">Pending trainer requests</p>
 								</div>
 								<i className="ri-arrow-right-s-line text-lg text-slate-400 group-hover:text-blue-500 transition-colors" />
@@ -402,7 +403,7 @@ export default function ProfilePage() {
 									<i className="ri-star-line text-lg text-white" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-medium text-slate-900">Benefits</h3>
+									<h3 className="font-medium text-slate-900 dark:text-slate-100">Benefits</h3>
 									<div className="text-xs text-slate-500 mt-1 space-y-1">
 										<p>• Personalized meal plans</p>
 										<p>• Custom workout programs</p>
@@ -423,7 +424,7 @@ export default function ProfilePage() {
 						<i className="ri-code-s-slash-line text-xl text-white" />
 					</div>
 					<div>
-						<h2 className="font-semibold text-slate-900">Developer Settings</h2>
+						<h2 className="font-semibold text-slate-900 dark:text-slate-100">Developer Settings</h2>
 						<p className="text-sm text-slate-600">API access and integrations</p>
 					</div>
 				</div>
@@ -435,7 +436,7 @@ export default function ProfilePage() {
 								<i className="ri-openai-line text-lg text-white" />
 							</div>
 							<div className="flex-1">
-								<h3 className="font-medium text-slate-900">MCP Integration</h3>
+								<h3 className="font-medium text-slate-900 dark:text-slate-100">MCP Integration</h3>
 								<p className="text-xs text-slate-500">Model Context Protocol tokens & analytics</p>
 							</div>
 							<i className="ri-arrow-right-s-line text-lg text-slate-400 group-hover:text-purple-500 transition-colors" />
@@ -446,7 +447,7 @@ export default function ProfilePage() {
 
 			{/* Account Settings */}
 			<div className="card p-6 space-y-4">
-				<h2 className="font-semibold text-slate-900 flex items-center gap-2">
+				<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
 					<i className="ri-settings-3-line text-brand-500" />
 					Account Settings
 				</h2>
@@ -510,7 +511,7 @@ export default function ProfilePage() {
 				<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
 					<div className="card max-w-md w-full p-6 space-y-4">
 						<div className="flex items-center justify-between">
-							<h3 className="text-lg font-semibold text-slate-900">
+							<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
 								Edit Profile
 							</h3>
 							<button
@@ -577,7 +578,7 @@ export default function ProfilePage() {
 				<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
 					<div className="card max-w-md w-full p-6 space-y-4">
 						<div className="flex items-center justify-between">
-							<h3 className="text-lg font-semibold text-slate-900">
+							<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
 								Notification Settings
 							</h3>
 							<button
@@ -645,7 +646,7 @@ export default function ProfilePage() {
 				<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
 					<div className="card max-w-md w-full p-6 space-y-4">
 						<div className="flex items-center justify-between">
-							<h3 className="text-lg font-semibold text-slate-900">
+							<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
 								Privacy & Security
 							</h3>
 							<button
@@ -719,7 +720,7 @@ export default function ProfilePage() {
 				<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
 					<div className="card max-w-md w-full p-6 space-y-4">
 						<div className="flex items-center justify-between">
-							<h3 className="text-lg font-semibold text-slate-900">Appearance</h3>
+							<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Appearance</h3>
 							<button
 								onClick={() => setShowAppearanceModal(false)}
 								className="text-slate-400 hover:text-slate-600"

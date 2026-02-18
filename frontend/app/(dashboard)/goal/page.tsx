@@ -10,7 +10,7 @@ export default function GoalForm() {
 	const [formState, action, isPending] = useActionState(createGoal, EMPTY_FORM_STATE);
 
 	return (
-		<div className="max-w-3xl mx-auto space-y-6">
+		<div className="max-w-3xl mx-auto space-y-6" data-testid="goal-page">
 			{/* Header */}
 			<div>
 				<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Nutrition Goals</h1>

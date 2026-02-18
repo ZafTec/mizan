@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { format, parse } from 'date-fns';
 import { clientApi } from '@/lib/api.client';
+import Loading from '@/components/Loading';
 
 type SimplifiedRecipe = {
   id: string;
@@ -236,7 +237,7 @@ export default function AddMealPlanPage() {
 
           {loading ? (
             <div className="flex justify-center py-8">
-              <i className="ri-loader-4-line animate-spin text-brand-500 text-3xl" />
+              <Loading />
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">

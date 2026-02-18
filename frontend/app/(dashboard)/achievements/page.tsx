@@ -13,10 +13,10 @@ export default async function AchievementsPage() {
     const unearned = achievements.filter(a => !a.isEarned);
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8" data-testid="achievements-page">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Achievements</h1>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Achievements</h1>
                     <p className="text-slate-500 mt-1">Track your progress and earn rewards</p>
                 </div>
             </div>
@@ -27,7 +27,7 @@ export default async function AchievementsPage() {
                         <i className="ri-fire-line text-3xl text-white" />
                     </div>
                     <div className="flex-1">
-                        <h2 className="text-2xl font-bold text-slate-900">
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
                             {streak?.currentStreak || 0} Day Streak
                         </h2>
                         <p className="text-slate-600">
@@ -67,7 +67,7 @@ export default async function AchievementsPage() {
                                         )}
                                     </div>
                                     <div className="flex-1">
-                                        <h3 className="font-semibold text-slate-900">
+                                        <h3 className="font-semibold text-slate-900 dark:text-slate-100">
                                             {achievement.name || "Achievement"}
                                         </h3>
                                         <p className="text-sm text-slate-600 mt-1">
@@ -122,7 +122,7 @@ export default async function AchievementsPage() {
                                         )}
                                     </div>
                                     <div className="flex-1">
-                                        <h3 className="font-semibold text-slate-900">
+                                        <h3 className="font-semibold text-slate-900 dark:text-slate-100">
                                             {achievement.name || "Achievement"}
                                         </h3>
                                         <p className="text-sm text-slate-600 mt-1">
@@ -152,7 +152,7 @@ export default async function AchievementsPage() {
                     <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
                         <i className="ri-trophy-line text-3xl text-slate-400" />
                     </div>
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">No achievements yet</h3>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No achievements yet</h3>
                     <p className="text-slate-500">Start using MacroChef to earn achievements!</p>
                 </div>
             )}

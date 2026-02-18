@@ -9,4 +9,7 @@ module.exports = [
 			"@typescript-eslint/no-unused-vars": "off",
 		},
 	},
+	{
+		ignores: ["e2e/**"],
+	},
 ];

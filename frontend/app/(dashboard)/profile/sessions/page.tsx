@@ -2,6 +2,7 @@
 
 import { useSession, authClient } from "@/lib/auth-client";
 import { useState, useEffect } from "react";
+import Loading from "@/components/Loading";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -121,7 +122,7 @@ export default function ProfileSessionsPage() {
   if (isPending || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
+        <Loading />
       </div>
     );
   }

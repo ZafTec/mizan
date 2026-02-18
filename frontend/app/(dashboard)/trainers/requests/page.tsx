@@ -5,6 +5,7 @@ import { clientApi } from "@/lib/api.client";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import Loading from "@/components/Loading";
 import { toast } from "sonner";
 
 interface TrainerRequest {
@@ -42,7 +43,7 @@ export default function TrainerRequestsPage() {
 	if (isPending || isLoading) {
 		return (
 			<div className="flex items-center justify-center min-h-screen">
-				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
+				<Loading />
 			</div>
 		);
 	}

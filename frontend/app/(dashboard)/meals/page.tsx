@@ -9,8 +9,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-// Assuming radix-ui wrap or similar, if not I'll just use HTML progress or div. 
+// Assuming radix-ui wrap or similar, if not I'll just use HTML progress or div.
 // Actually I don't see components/ui/progress in file list. I will use custom div.
+import Loading from "@/components/Loading";
 
 interface DailyStat {
 	date: string;
@@ -134,7 +135,7 @@ export default function MealsPage() {
 	if (isPending || (loading && !todayMeals.length)) {
 		return (
 			<div className="flex items-center justify-center min-h-screen">
-				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
+				<Loading />
 			</div>
 		);
 	}
@@ -152,7 +153,7 @@ export default function MealsPage() {
 			{/* Header & Date Nav */}
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
-					<h1 className="text-2xl font-bold text-slate-900">Food Diary</h1>
+					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Food Diary</h1>
 					<p className="text-slate-500 mt-1">Track your daily nutrition intake</p>
 				</div>
 				<div className="flex items-center gap-4">
@@ -177,7 +178,7 @@ export default function MealsPage() {
 			{/* Goals & Progress */}
 			{goal && (
 				<div className="card p-6">
-					<h2 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+					<h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
 						<i className="ri-target-line text-brand-500" />
 						Daily Goals
 					</h2>
@@ -228,7 +229,7 @@ export default function MealsPage() {
 
 			{/* History Chart */}
 			<div className="card p-6 h-100">
-				<h2 className="font-semibold text-slate-900 mb-6 flex items-center gap-2">
+				<h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-2">
 					<i className="ri-bar-chart-fill text-brand-500" />
 					Last 7 Days (Calories)
 				</h2>
@@ -250,7 +251,7 @@ export default function MealsPage() {
 			{/* Meal List */}
 			<div className="card p-6">
 				<div className="flex items-center justify-between mb-4">
-					<h2 className="font-semibold text-slate-900 flex items-center gap-2">
+					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
 						<i className="ri-restaurant-2-line text-brand-500" />
 						Meals ({new Date(queryDate).toLocaleDateString()})
 					</h2>
@@ -267,7 +268,7 @@ export default function MealsPage() {
 								className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors"
 							>
 								<div>
-									<h3 className="font-medium text-slate-900">
+									<h3 className="font-medium text-slate-900 dark:text-slate-100">
 										{meal.name || meal.mealType}
 									</h3>
 									<p className="text-sm text-slate-500 capitalize">{meal.mealType} • {new Date(meal.loggedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>

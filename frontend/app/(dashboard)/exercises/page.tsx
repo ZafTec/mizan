@@ -15,10 +15,10 @@ export default async function ExercisesPage({
     const { exercises, totalCount } = await getExercises(params.search, params.category);
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8" data-testid="exercises-page">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Exercises</h1>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Exercises</h1>
                     <p className="text-slate-500 mt-1">Browse {totalCount} exercises for your workouts</p>
                 </div>
             </div>
@@ -44,7 +44,7 @@ export default async function ExercisesPage({
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="font-semibold text-slate-900 truncate">
+                                    <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
                                         {exercise.name}
                                     </h3>
                                     {exercise.description && (
@@ -88,7 +88,7 @@ export default async function ExercisesPage({
                     <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
                         <i className="ri-run-line text-3xl text-slate-400" />
                     </div>
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">No exercises found</h3>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No exercises found</h3>
                     <p className="text-slate-500">Try adjusting your search criteria</p>
                 </div>
             )}

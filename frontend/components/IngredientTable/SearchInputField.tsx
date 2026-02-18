@@ -21,6 +21,7 @@ export default function SearchBar() {
 			value={searchTerm}
 			onChange={(e) => setSearchTerm(e.target.value)}
 			onKeyDown={handleSearch}
+			data-testid="search-input"
 		/>
 	)
 }
