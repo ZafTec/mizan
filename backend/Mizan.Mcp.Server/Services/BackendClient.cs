@@ -107,7 +107,7 @@ public class BackendClient : IBackendClient
         if (!response.IsSuccessStatusCode)
         {
             _logger.LogError("Backend API call failed: {Status} {Content}", response.StatusCode, content);
-            throw new Exception($"Backend API error: {response.StatusCode} - {content}");
+            throw new Exception($"Backend API error: {(int)response.StatusCode} - {content}");
         }
 
         return content;
