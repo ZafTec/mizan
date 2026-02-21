@@ -5,6 +5,8 @@ import { getAllIngredient } from "@/data/ingredient";
 import type { Ingredient } from "@/data/ingredient";
 
 import { CldUploadWidget } from 'next-cloudinary';
+
+const hasCloudinary = !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from "next/navigation";

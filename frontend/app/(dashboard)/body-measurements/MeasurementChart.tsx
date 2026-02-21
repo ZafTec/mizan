@@ -104,7 +104,7 @@ function CompositionChart({ data }: { data: ReturnType<typeof buildData> }) {
                 />
                 <Tooltip
                     {...chartStyle}
-                    formatter={(value: number | undefined, name: string) => {
+                    formatter={(value: number | undefined, name: string | undefined) => {
                         if (value === undefined) return ["-", name];
                         if (name === "Body Fat") return [`${value}%`, name];
                         return [`${value} kg`, name];
@@ -172,7 +172,7 @@ function CircumferenceChart({ data, active, onToggle }: {
                         <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" tickFormatter={(v) => `${v}cm`} />
                         <Tooltip
                             {...chartStyle}
-                            formatter={(value: number | undefined, name: string) => [value !== undefined ? `${value} cm` : "-", name]}
+                            formatter={(value: number | undefined, name: string | undefined) => [value !== undefined ? `${value} cm` : "-", name]}
                         />
                         <Legend />
                         {visible.map((s) => (
