@@ -91,8 +91,7 @@ public class ChatControllerTests
             ClientId = clientId,
             Status = "active",
             CanMessage = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow
         };
         db.TrainerClientRelationships.Add(relationship);
 
