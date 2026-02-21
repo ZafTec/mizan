@@ -1,7 +1,7 @@
 "use client";
 
 import { createAuthClient } from "better-auth/react";
-import { organizationClient, adminClient } from "better-auth/client/plugins";
+import { organizationClient, adminClient, magicLinkClient } from "better-auth/client/plugins";
 import { ac, adminRole, trainerRole, userRole } from "@/lib/permissions";
 
 const betterAuthUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BETTER_AUTH_URL;
@@ -14,6 +14,7 @@ export const authClient = createAuthClient({
   baseURL: betterAuthUrl,
   plugins: [
     organizationClient(),
+    magicLinkClient(),
     adminClient({
       ac,
       roles: {

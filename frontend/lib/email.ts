@@ -115,6 +115,102 @@ export function getVerificationEmailTemplate(url: string, userName?: string) {
   };
 }
 
+export function getMagicLinkEmailTemplate(url: string, userName?: string) {
+  return {
+    subject: "Your sign-in link - Mizan",
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+            .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+            .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
+            .info { background: #e0e7ff; border-left: 4px solid #667eea; padding: 15px; margin: 20px 0; border-radius: 4px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Sign in to Mizan</h1>
+            </div>
+            <div class="content">
+              <p>Hi${userName ? ` ${userName}` : ""},</p>
+              <p>Click the button below to sign in instantly — no password required.</p>
+              <p style="text-align: center;">
+                <a href="${url}" class="button">Sign In to Mizan</a>
+              </p>
+              <p style="color: #6b7280; font-size: 14px;">
+                Or copy and paste this link into your browser:<br>
+                <a href="${url}" style="color: #667eea; word-break: break-all;">${url}</a>
+              </p>
+              <div class="info">
+                <strong>This link expires in 15 minutes</strong> and can only be used once.<br>
+                If you didn't request this link, you can safely ignore this email.
+              </div>
+            </div>
+            <div class="footer">
+              <p>© 2025 Mizan. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `Sign in to Mizan\n\nClick the link below to sign in (no password required):\n\n${url}\n\nThis link expires in 15 minutes and can only be used once.\n\nIf you didn't request this, you can safely ignore this email.`,
+  };
+}
+
+export function getSignInNotificationEmailTemplate(ipAddress?: string | null, userAgent?: string | null) {
+  const deviceInfo = userAgent ? `\nDevice: ${userAgent}` : "";
+  const ipInfo = ipAddress ? `\nIP Address: ${ipAddress}` : "";
+  return {
+    subject: "New sign-in to your Mizan account",
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+            .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
+            .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px; }
+            .details { background: #fff; border: 1px solid #e5e7eb; padding: 15px; border-radius: 6px; margin: 15px 0; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>New Sign-In Detected</h1>
+            </div>
+            <div class="content">
+              <p>We noticed a new sign-in to your Mizan account.</p>
+              <div class="details">
+                <strong>Sign-in Details</strong><br>
+                Time: ${new Date().toUTCString()}
+                ${ipAddress ? `<br>IP Address: ${ipAddress}` : ""}
+                ${userAgent ? `<br>Device: ${userAgent}` : ""}
+              </div>
+              <div class="warning">
+                <strong>Wasn't you?</strong><br>
+                If you didn't sign in, your account may be compromised. Change your password immediately and contact support.
+              </div>
+            </div>
+            <div class="footer">
+              <p>© 2025 Mizan. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `New Sign-In Detected\n\nWe noticed a new sign-in to your Mizan account.\n\nTime: ${new Date().toUTCString()}${ipInfo}${deviceInfo}\n\nIf you didn't sign in, change your password immediately.`,
+  };
+}
+
 export function getPasswordResetEmailTemplate(url: string, userName?: string) {
   return {
     subject: "Reset your password - Mizan",
