@@ -5,7 +5,7 @@
 namespace Mizan.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class SplitArmThighMeasurementsToLeftRight : Migration
+    public partial class SplitArmThighAndShowAllBodyMeasurements : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

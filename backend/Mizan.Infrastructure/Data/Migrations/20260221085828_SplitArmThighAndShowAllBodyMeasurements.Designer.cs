@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Mizan.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(MizanDbContext))]
-    [Migration("20260221071013_SplitArmThighMeasurementsToLeftRight")]
-    partial class SplitArmThighMeasurementsToLeftRight
+    [Migration("20260221085828_SplitArmThighAndShowAllBodyMeasurements")]
+    partial class SplitArmThighAndShowAllBodyMeasurements
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
