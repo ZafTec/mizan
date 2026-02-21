@@ -257,7 +257,7 @@ export default function Page() {
 						Basic Information
 					</h2>
 
-					{/* Image Upload */}
+					{hasCloudinary ? (
 					<div>
 						<label className="label">Recipe Images</label>
 						<CldUploadWidget
@@ -311,6 +311,7 @@ export default function Page() {
 						</CldUploadWidget>
 					</div>
 
+					) : null}
 					{/* Recipe Name */}
 					<div>
 						<label htmlFor="recipe_name" className="label">Recipe Name</label>
