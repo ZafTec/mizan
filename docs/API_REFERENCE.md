@@ -676,8 +676,8 @@ GET /api/Foods/search?searchTerm=chicken&limit=10
 **Authorization:** Required (JWT)
 
 **Query Parameters:**
-- `startDate` (optional) - Filter by date range
-- `endDate` (optional) - Filter by date range
+- `startDate` (optional) - Filter by date range (format: YYYY-MM-DD)
+- `endDate` (optional) - Filter by date range (format: YYYY-MM-DD)
 
 **Response (200 OK):**
 ```json
@@ -686,15 +686,34 @@ GET /api/Foods/search?searchTerm=chicken&limit=10
     {
       "id": "e50e8400-e29b-41d4-a716-446655440009",
       "date": "2025-12-26",
-      "weight": 80.5,
+      "weightKg": 80.5,
       "bodyFatPercentage": 15.2,
-      "muscleMass": 68.2,
+      "muscleMassKg": 68.2,
+      "waistCm": 82.0,
+      "hipsCm": 95.0,
+      "chestCm": 102.0,
+      "leftArmCm": 32.0,
+      "rightArmCm": 32.5,
+      "leftThighCm": 55.0,
+      "rightThighCm": 55.5,
       "userId": "550e8400-e29b-41d4-a716-446655440000"
     }
   ],
   "total": 1
 }
 ```
+
+**Field Descriptions:**
+- `weightKg` - Body weight in kilograms
+- `bodyFatPercentage` - Body fat percentage (0-100)
+- `muscleMassKg` - Muscle mass in kilograms
+- `waistCm` - Waist circumference in centimeters
+- `hipsCm` - Hip circumference in centimeters
+- `chestCm` - Chest circumference in centimeters
+- `leftArmCm` - Left arm circumference in centimeters
+- `rightArmCm` - Right arm circumference in centimeters
+- `leftThighCm` - Left thigh circumference in centimeters
+- `rightThighCm` - Right thigh circumference in centimeters
 
 ---
 
@@ -707,9 +726,16 @@ GET /api/Foods/search?searchTerm=chicken&limit=10
 ```json
 {
   "date": "2025-12-26",
-  "weight": 80.5,
+  "weightKg": 80.5,
   "bodyFatPercentage": 15.2,
-  "muscleMass": 68.2
+  "muscleMassKg": 68.2,
+  "waistCm": 82.0,
+  "hipsCm": 95.0,
+  "chestCm": 102.0,
+  "leftArmCm": 32.0,
+  "rightArmCm": 32.5,
+  "leftThighCm": 55.0,
+  "rightThighCm": 55.5
 }
 ```
 
@@ -718,9 +744,16 @@ GET /api/Foods/search?searchTerm=chicken&limit=10
 {
   "id": "e50e8400-e29b-41d4-a716-446655440009",
   "date": "2025-12-26",
-  "weight": 80.5,
+  "weightKg": 80.5,
   "bodyFatPercentage": 15.2,
-  "muscleMass": 68.2,
+  "muscleMassKg": 68.2,
+  "waistCm": 82.0,
+  "hipsCm": 95.0,
+  "chestCm": 102.0,
+  "leftArmCm": 32.0,
+  "rightArmCm": 32.5,
+  "leftThighCm": 55.0,
+  "rightThighCm": 55.5,
   "userId": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
@@ -1177,12 +1210,31 @@ All admin endpoints require `admin` role.
 
 ## Rate Limiting
 
-Currently, no rate limiting is implemented. This will be added in future versions.
+Rate limiting is **actively implemented** via BetterAuth's rate limit plugin.
 
-**Planned Limits:**
-- Authentication endpoints: 10 requests/minute
-- API endpoints: 100 requests/minute
-- Admin endpoints: 50 requests/minute
+**Current Limits:**
+
+| Endpoint Pattern | Window | Max Attempts |
+|------------------|--------|-------------|
+| Sign-up, Sign-in, Forgot Password Verify | 15 minutes | 5 |
+| Magic Link Send, Verification Email Send | 1 hour | 3 |
+| Email Verification | 5 minutes | 10 |
+| General API endpoints | No limit (future) | - |
+
+**Rate Limit Response Headers:**
+```
+X-RateLimit-Limit: 5
+X-RateLimit-Remaining: 2
+X-RateLimit-Reset: 1703068800
+```
+
+**HTTP 429 Response (Rate Limited):**
+```json
+{
+  "error": "Too many requests",
+  "retryAfter": 900
+}
+```
 
 ---
 

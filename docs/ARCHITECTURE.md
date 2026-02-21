@@ -562,17 +562,244 @@ services:
 
 **Frontend:**
 - `DATABASE_URL` - PostgreSQL connection (for BetterAuth)
-- `BETTER_AUTH_SECRET` - JWT signing secret
+- `BETTER_AUTH_SECRET` - JWT signing secret (ES256 private key)
 - `BETTER_AUTH_URL` - Auth base URL
-- `API_URL` - Backend URL (server-side)
-- `NEXT_PUBLIC_API_URL` - Backend URL (client-side)
+- `BETTER_AUTH_ISSUER` - JWT issuer identifier
+- `BETTER_AUTH_AUDIENCE` - JWT audience identifier
+- `API_URL` - Backend URL (server-side, e.g., `http://mizan-backend:8080`)
+- `NEXT_PUBLIC_API_URL` - Backend URL (client-side, e.g., `http://localhost:5000`)
+- `REDIS_URL` - Redis connection (optional, for session secondary storage)
 
 **Backend:**
-- `ConnectionStrings__PostgreSQL` - PostgreSQL connection
-- `ConnectionStrings__Redis` - Redis connection
-- `BetterAuth__JwksUrl` - JWKS endpoint
-- `BetterAuth__Issuer` - JWT issuer
-- `BetterAuth__Audience` - JWT audience
+- `ConnectionStrings__PostgreSQL` - PostgreSQL connection string
+- `ConnectionStrings__Redis` - Redis connection string
+- `BetterAuth__JwksUrl` - JWKS endpoint from BetterAuth
+- `BetterAuth__Issuer` - JWT issuer (must match frontend)
+- `BetterAuth__Audience` - JWT audience (must match frontend)
+- `ASPNETCORE_ENVIRONMENT` - Environment: Development, Staging, Production
+
+---
+
+## Production Deployment
+
+### Docker Compose Deployment
+
+**1. Pre-deployment Checklist**
+
+```bash
+# Verify all services are configured
+✓ PostgreSQL 18 running with backups enabled
+✓ Redis 7 configured for persistence
+✓ Frontend environment variables set
+✓ Backend environment variables set
+✓ SSL certificates provisioned (Nginx)
+✓ DNS records configured
+```
+
+**2. Database Migration**
+
+```bash
+# Run EF Core migrations on startup (automatic)
+# MizanDbContext.Database.Migrate() runs in Program.cs
+
+# Manual migration (if needed)
+docker-compose exec backend dotnet ef database update \
+  --project Mizan.Infrastructure --startup-project Mizan.Api
+```
+
+**3. Health Checks**
+
+```bash
+# Frontend health check
+curl http://localhost:3000/api/health
+
+# Backend health check
+curl http://localhost:5000/health
+```
+
+**4. Monitoring & Logs**
+
+```bash
+# View logs
+docker-compose logs -f [service-name]
+
+# Check service status
+docker-compose ps
+
+# Inspect container
+docker exec -it mizan-backend /bin/sh
+```
+
+### Scaling Considerations
+
+**Horizontal Scaling (Multiple Instances):**
+- Redis backplane required for SignalR (already configured)
+- Load balancer (nginx, HAProxy) needed
+- Session storage via Redis (not in-memory)
+
+**Database:**
+- Connection pooling configured in EF Core
+- Read replicas for scaling queries
+- Backup strategy: Daily snapshots to S3
+
+**Caching:**
+- Redis provides distributed cache
+- JWKS cached for 1 minute
+- Ingredient search cached for 1 hour
+
+---
+
+## Rate Limiting
+
+Rate limiting is implemented using BetterAuth's rate limit plugin with custom per-path rules.
+
+**Configuration (lib/auth.ts):**
+
+```typescript
+const rateLimit = {
+  enabled: true,
+  storage: hasRedis ? new RedisRateLimitStorage(client) : new DefaultRateLimitStorage(),
+  customRules: [
+    {
+      pathPattern: "/api/auth/sign-up|/api/auth/sign-in|/api/auth/forgot-password/verify",
+      window: 15 * 60 * 1000, // 15 minutes
+      max: 5 // 5 attempts
+    },
+    {
+      pathPattern: "/api/auth/send-magic-link|/api/auth/send-verification-email",
+      window: 60 * 60 * 1000, // 1 hour
+      max: 3 // 3 attempts
+    },
+    {
+      pathPattern: "/api/auth/verify-email",
+      window: 5 * 60 * 1000, // 5 minutes
+      max: 10 // 10 attempts
+    }
+  ]
+};
+```
+
+**Rate Limit Headers:**
+All responses include:
+- `X-RateLimit-Limit` - Maximum requests allowed
+- `X-RateLimit-Remaining` - Requests remaining in current window
+- `X-RateLimit-Reset` - Unix timestamp of window reset
+
+**HTTP 429 Response:**
+```json
+{
+  "error": "Too many requests",
+  "retryAfter": 60
+}
+```
+
+---
+
+## Authentication Features
+
+### BetterAuth Plugins
+
+**1. Session Plugin**
+- Session-based authentication with JWT tokens
+- 7-day session expiry with 15-minute JWT expiry
+
+**2. Magic Link Plugin**
+- Email-based passwordless authentication
+- 15-minute link expiry
+- Automatic email notification on account access
+
+**3. Email Notifications**
+- Sign-in notifications with IP address and user agent
+- Magic link emails with verification link
+- Account verification emails
+
+**4. Rate Limiting Plugin**
+- Per-path custom rules
+- Credential endpoint protection (5 attempts/15min)
+- Magic link endpoint protection (3 attempts/hour)
+
+**5. Admin Plugin**
+- User impersonation
+- Ban/unban functionality
+- Role management
+
+**6. Secondary Storage (Redis)**
+- Persistent session storage in Redis
+- Fallback to in-memory if Redis unavailable
+- Cache-aside pattern with TTL
+
+---
+
+## Recent Feature Implementations (Feb 2026)
+
+### Body Measurements Refactoring
+
+**Schema Changes:**
+- Split single `ArmsCm` and `ThighsCm` into left/right pairs
+- New columns: `LeftArmCm`, `RightArmCm`, `LeftThighCm`, `RightThighCm`
+- Migration strategy: Renamed existing columns, added left variants as NULL
+
+**Visualization:**
+- Tab-based interface: Body Composition | Circumference
+- Body Composition: Dual Y-axis (kg on left, % on right)
+- Circumference: Single Y-axis (cm) with grouped toggles (Core/Limbs)
+- Real-time data filtering by time range (1M/3M/6M/1Y/ALL)
+
+### Recipe Visibility & SEO
+
+**Public Recipe Pages:**
+- Recipe list page: `/recipes` (public, SEO-indexed)
+- Recipe detail pages: `/recipes/[recipeId]` (public with Open Graph metadata)
+- Dynamic metadata for Google indexing
+
+**Access Control:**
+- Unauthenticated users: View public recipes only
+- Authenticated users: View own recipes + public recipes
+- Admin: View all recipes
+
+---
+
+## Security Features
+
+### Vulnerability Reporting
+
+**Process:**
+1. Report security issues privately: security@yourdomain.com
+2. Do NOT create public issues for security vulnerabilities
+3. Allow 48 hours for response before disclosure
+4. Responsible disclosure appreciated
+
+**Scope:**
+- Authentication flaws
+- Authorization bypasses
+- Data exposure vulnerabilities
+- Injection attacks
+- Cross-site scripting (XSS)
+
+**Out of Scope:**
+- Email enumeration (feature design)
+- Rate limiting (by design)
+- Denial of service (infrastructure concern)
+
+### Authentication Security
+
+**Passwords:**
+- Minimum 12 characters recommended
+- No complexity requirements enforced (UX tradeoff)
+- Hashed with bcrypt (BetterAuth default)
+
+**Sessions:**
+- Session ID rotated on each login
+- Automatic cleanup of expired sessions
+- IP binding optional (disabled by default)
+
+**JWT Token Security:**
+- Algorithm: ES256 (ECDSA P-256)
+- Signed with private key
+- Verified with JWKS
+- Expiry: 15 minutes
+- Issued by: BetterAuth
+- Claims: user_id, email, role, iat, exp, iss, aud
 
 ---
 
@@ -649,7 +876,12 @@ A: Ensure CSRF token is fetched before form submission. Check cookie configurati
 
 ## Contacts & Resources
 
-- **Documentation:** This file (`ARCHITECTURE.md`)
-- **API Documentation:** `http://localhost:5000/swagger` (when running)
+- **Architecture & Design:** `docs/ARCHITECTURE.md`
+- **API Endpoints:** `docs/API_REFERENCE.md`
+- **Getting Started:** `docs/DEVELOPER_ONBOARDING.md`
+- **Development Philosophy:** `CLAUDE.md`
+- **Swagger UI (Live):** `http://localhost:5000/swagger` (when backend running)
 - **Database Schema:** `backend/Mizan.Infrastructure/Data/MizanDbContext.cs`
-- **Frontend Schema:** `frontend/db/schema.ts`
+- **Frontend Auth Schema:** `frontend/db/schema.ts`
+- **CI/CD Pipeline:** `.github/workflows/deploy.yml`
+- **Security Issues:** security@yourdomain.com (private, no public issues)

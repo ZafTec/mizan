@@ -567,17 +567,185 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, R
 
 ---
 
+## Testing Strategy
+
+### Test Types & Priority
+
+**E2E Tests (Playwright)** - Highest Value
+```bash
+# Test user flows end-to-end
+cd frontend
+bun run test:e2e
+bun run test:e2e:ui    # Interactive mode
+bun run test:e2e:headed # See browser
+```
+
+**Integration Tests** - Good Balance
+```bash
+# Test API endpoints and database queries
+cd frontend
+bun run test
+
+# Backend via Docker
+docker-compose --profile test up test
+```
+
+**Unit Tests** - Lowest Value (avoid unless complex pure logic)
+```bash
+# Test individual functions with many edge cases
+# Prefer integration/E2E for broader coverage
+```
+
+### Running Tests
+
+```bash
+# Backend (EF Core + xUnit + Testcontainers)
+docker-compose --profile test up test
+
+# Frontend (Vitest + Testing Library + Playwright)
+cd frontend
+bun run test              # Unit/integration
+bun run test:e2e         # E2E (headless)
+bun run test:e2e:headed  # E2E with browser
+```
+
+### Test Database
+
+- **Name:** `mizan_test`
+- **Reset:** Before each test run
+- **Isolation:** Separate from development database
+- **Access:**
+  ```bash
+  docker exec -it mizan-postgres psql -U mizan -d mizan_test
+  ```
+
+### Testing Philosophy
+
+**DO:**
+- Test contracts through public interfaces
+- Test user-visible behavior
+- Mock external services only
+- Write self-descriptive test names
+
+**DON'T:**
+- Test implementation details
+- Test private methods
+- Test framework code
+- Use excessive mocking
+
+---
+
+## Security & Vulnerability Reporting
+
+### Security Policy
+
+**Reporting Process:**
+1. **DO NOT** create public GitHub issues for security vulnerabilities
+2. Email security concerns privately: security@yourdomain.com
+3. Allow 48 hours for response
+4. Responsible disclosure appreciated
+
+**Scope (In):**
+- Authentication flaws
+- Authorization bypasses
+- Data exposure
+- Injection attacks (SQL, XSS, etc.)
+- CSRF vulnerabilities
+
+**Scope (Out):**
+- Email enumeration (design feature)
+- Rate limiting (by design)
+- DoS attacks (infrastructure concern)
+
+### Security Features to Know
+
+- **Password hashing:** bcrypt (BetterAuth)
+- **JWT Algorithm:** ES256 (ECDSA P-256)
+- **Token expiry:** 15 minutes (JWT), 7 days (session)
+- **CSRF protection:** Double-submit cookie pattern
+- **CORS:** Restricted to configured domains only
+- **Rate limiting:** Per-path custom rules (5 attempts/15min for auth)
+- **Session storage:** Redis (persistent) + in-memory (fallback)
+
+---
+
+## Continuous Integration & Deployment
+
+### GitHub Actions Pipeline
+
+**Trigger:** Push to `master` branch
+
+**Jobs (Sequential):**
+
+1. **build-and-push-frontend**
+   - Build Docker image with Next.js app
+   - Push to Docker Hub with SHA and `latest` tags
+   - Output: image tag for release
+
+2. **build-and-push-backend**
+   - Build Docker image with ASP.NET Core API
+   - Push to Docker Hub with SHA and `latest` tags
+
+3. **build-and-push-mcp**
+   - Build MCP server Docker image
+   - Push to Docker Hub with SHA and `latest` tags
+
+4. **create-release** (depends on all 3 build jobs)
+   - Generate GitHub release tag: `release/YYYYMMDDHHMMSS-<sha>`
+   - Build markdown release notes with:
+     - Deployment metadata (commit, branch, date)
+     - Docker pull commands for exact versions
+     - Deployment instructions
+     - Git changelog (since last release)
+   - Create GitHub release with all info
+
+### Deployment
+
+**To Production:**
+
+```bash
+# SSH into server
+ssh deployment@yourdomain.com
+
+# Pull latest images
+docker-compose pull
+
+# Start services with cleanup
+docker-compose up -d --remove-orphans
+
+# Clean up old images
+docker image prune -f
+
+# Verify health
+curl https://yourdomain.com/api/health
+```
+
+**Database Migrations:**
+- EF Core migrations run automatically on backend startup
+- Controlled by `MizanDbContext.Database.Migrate()` in `Program.cs`
+
+### Rollback
+
+```bash
+# If deployment fails, revert to previous images
+docker-compose down
+git revert HEAD
+docker-compose pull
+docker-compose up -d
+```
+
+---
+
 ## Getting Help
 
 ### Documentation Resources
 
 | Resource | Purpose | Location |
 |----------|---------|----------|
-| Architecture guide | System design and layers | `docs/ARCHITECTURE.md` |
-| API reference | All endpoint documentation | `docs/API_REFERENCE.md` |
-| Testing guide | How to write tests | `docs/TESTING_GUIDE.md` |
-| Deployment guide | Production setup | `docs/DEPLOYMENT_GUIDE.md` |
-| CLAUDE.md | Development guidelines | `CLAUDE.md` |
+| Architecture guide | System design, tech stack, layers, security | `docs/ARCHITECTURE.md` |
+| API reference | All endpoint documentation, examples | `docs/API_REFERENCE.md` |
+| CLAUDE.md | Development philosophy & best practices | `CLAUDE.md` |
+| Codebase | Real examples in source code | `backend/Mizan.Api/`, `frontend/app/` |
 
 ### Quick Links
 
@@ -614,11 +782,12 @@ docker exec -it mizan-postgres psql -U mizan -l | grep test
 
 ### Who to Ask
 
-- **Architecture questions:** Check `ARCHITECTURE.md` first
-- **API questions:** Check `API_REFERENCE.md` or Swagger UI
-- **Testing questions:** Check `TESTING_GUIDE.md`
-- **Deployment questions:** Check `DEPLOYMENT_GUIDE.md`
-- **Feature-specific:** Read the code comments and existing tests
+- **Architecture questions:** See `ARCHITECTURE.md` (system design, layers, security)
+- **API questions:** See `API_REFERENCE.md` or Swagger UI (`http://localhost:5000/swagger`)
+- **Testing questions:** See Testing Strategy section above
+- **Deployment & CI/CD questions:** See Continuous Integration & Deployment section above
+- **Security issues:** Email security@yourdomain.com (do NOT create public issues)
+- **Feature-specific implementation:** Read code examples in `backend/Mizan.Api/Controllers/` and `frontend/components/`
 
 ---
 
