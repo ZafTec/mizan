@@ -1,17 +1,19 @@
 import "server-only";
-import { RedisClient } from "bun";
 import { logger } from "@/lib/logger";
 
 const redisLogger = logger.createModuleLogger("redis");
 
-let client: RedisClient | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let client: any | null = null;
 
-function getClient(): RedisClient {
+// Dynamic import so `bun` is never evaluated during Next.js build workers
+// (which run under Node.js). The import only fires on the first real request.
+async function getClient() {
   if (!client) {
-    // RedisClient reads REDIS_URL env var by default, added this so that it throws an error if not provided
+    const { RedisClient } = await import("bun");
     client = new RedisClient(process.env.REDIS_URL!);
     client.onconnect = () => redisLogger.info("Redis connected");
-    client.onclose = (error) => {
+    client.onclose = (error: unknown) => {
       if (error) redisLogger.error("Redis disconnected", { error: String(error) });
     };
   }
@@ -21,18 +23,18 @@ function getClient(): RedisClient {
 export function getBetterAuthSecondaryStorage() {
   return {
     get: async (key: string): Promise<string | null> => {
-      return getClient().get(key);
+      return (await getClient()).get(key);
     },
     set: async (key: string, value: string, ttl?: number): Promise<void> => {
+      const c = await getClient();
       if (ttl) {
-        // Atomic SET with EX — avoids race condition between set + expire
-        await getClient().send("SET", [key, value, "EX", String(ttl)]);
+        await c.send("SET", [key, value, "EX", String(ttl)]);
       } else {
-        await getClient().set(key, value);
+        await c.set(key, value);
       }
     },
     delete: async (key: string): Promise<void> => {
-      await getClient().del(key);
+      await (await getClient()).del(key);
     },
   };
 }

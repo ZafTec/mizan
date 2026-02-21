@@ -12,6 +12,16 @@ if (!betterAuthUrl) {
 
 export const authClient = createAuthClient({
   baseURL: betterAuthUrl,
+  fetchOptions: {
+    onError: async (context) => {
+      if (context.response.status === 429) {
+        const retryAfter = context.response.headers.get("X-Retry-After");
+        console.warn(
+          `[auth] Rate limited. Retry after ${retryAfter ?? "unknown"} seconds.`,
+        );
+      }
+    },
+  },
   plugins: [
     organizationClient(),
     magicLinkClient(),

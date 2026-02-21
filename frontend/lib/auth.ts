@@ -168,9 +168,23 @@ export const auth = betterAuth({
     },
   },
   rateLimit: {
-    window: 60,
+    window: 60,        // global: 100 req / 60s per IP
     max: 100,
     storage: hasRedis ? "secondary-storage" : "database",
+    customRules: {
+      // Credential endpoints — tight window to limit brute-force
+      "/sign-in/email":              { window: 10,  max: 5  },
+      "/sign-up/email":              { window: 60,  max: 5  },
+      "/forget-password":            { window: 60,  max: 3  },
+      "/reset-password":             { window: 60,  max: 5  },
+      // Magic link — each send costs an email; keep it strict
+      "/magic-link/send-magic-link": { window: 300, max: 3  },
+      // Verification resends — prevent inbox flooding
+      "/send-verification-email":    { window: 60,  max: 3  },
+      // High-frequency legit traffic — exempt from rate limiting
+      "/get-session": false,
+      "/sign-out":    false,
+    },
   },
   databaseHooks: {
     session: {
