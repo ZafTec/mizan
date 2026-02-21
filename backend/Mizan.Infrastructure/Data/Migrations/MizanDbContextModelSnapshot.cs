@@ -581,6 +581,11 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnType("numeric(8,2)")
                         .HasColumnName("fat_grams");
 
+                    b.Property<decimal?>("FiberGrams")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)")
+                        .HasColumnName("fiber_grams");
+
                     b.Property<Guid?>("FoodId")
                         .HasColumnType("uuid")
                         .HasColumnName("food_id");

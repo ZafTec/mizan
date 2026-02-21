@@ -16,6 +16,7 @@ public record CreateFoodDiaryEntryCommand : IRequest<CreateFoodDiaryEntryResult>
     public decimal? ProteinGrams { get; init; }
     public decimal? CarbsGrams { get; init; }
     public decimal? FatGrams { get; init; }
+    public decimal? FiberGrams { get; init; }
     public string Name { get; init; } = string.Empty;
 }
 
@@ -42,6 +43,7 @@ public class CreateFoodDiaryEntryCommandValidator : AbstractValidator<CreateFood
         RuleFor(x => x.ProteinGrams).GreaterThanOrEqualTo(0).When(x => x.ProteinGrams.HasValue);
         RuleFor(x => x.CarbsGrams).GreaterThanOrEqualTo(0).When(x => x.CarbsGrams.HasValue);
         RuleFor(x => x.FatGrams).GreaterThanOrEqualTo(0).When(x => x.FatGrams.HasValue);
+        RuleFor(x => x.FiberGrams).GreaterThanOrEqualTo(0).When(x => x.FiberGrams.HasValue);
     }
 }
 
@@ -80,6 +82,7 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
             ProteinGrams = request.ProteinGrams,
             CarbsGrams = request.CarbsGrams,
             FatGrams = request.FatGrams,
+            FiberGrams = request.FiberGrams,
             Name = request.Name,
             LoggedAt = DateTime.UtcNow
         };

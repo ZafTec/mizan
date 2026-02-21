@@ -125,6 +125,7 @@ export default function MealsPage() {
 	const totalProtein = todayMeals.reduce((sum, meal) => sum + (meal.proteinGrams || 0), 0);
 	const totalCarbs = todayMeals.reduce((sum, meal) => sum + (meal.carbsGrams || 0), 0);
 	const totalFat = todayMeals.reduce((sum, meal) => sum + (meal.fatGrams || 0), 0);
+	const totalFiber = todayMeals.reduce((sum, meal) => sum + (meal.fiberGrams || 0), 0);
 
 	// Goal percentages
 	const caloriePct = goal?.targetCalories ? Math.min(100, (totalCalories / goal.targetCalories) * 100) : 0;
@@ -224,6 +225,11 @@ export default function MealsPage() {
 							</div>
 						</div>
 					</div>
+					{totalFiber > 0 && (
+						<p className="text-sm text-slate-500 mt-3">
+							Fiber intake: <span className="font-medium text-green-600">{totalFiber.toFixed(1)}g</span>
+						</p>
+					)}
 				</div>
 			)}
 
@@ -282,6 +288,7 @@ export default function MealsPage() {
 											<span>P: {meal.proteinGrams?.toFixed(1)}g</span>
 											<span>C: {meal.carbsGrams?.toFixed(1)}g</span>
 											<span>F: {meal.fatGrams?.toFixed(1)}g</span>
+											{(meal.fiberGrams ?? 0) > 0 && <span>Fiber: {meal.fiberGrams?.toFixed(1)}g</span>}
 										</div>
 									</div>
 									<button

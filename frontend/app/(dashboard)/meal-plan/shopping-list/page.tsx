@@ -45,10 +45,11 @@ export default function ShoppingListPage() {
     }
   };
 
-  const toggleItemChecked = async (itemId: string) => {
+  const toggleItemChecked = async (itemId: string, currentIsChecked: boolean) => {
     try {
       await clientApi(`/api/ShoppingLists/items/${itemId}/toggle`, {
-        method: 'PATCH'
+        method: 'PATCH',
+        body: { IsChecked: !currentIsChecked }
       });
 
       setShoppingLists(prevLists =>
@@ -154,7 +155,7 @@ export default function ShoppingListPage() {
                     <input
                       type="checkbox"
                       checked={item.isChecked}
-                      onChange={() => toggleItemChecked(item.id)}
+                      onChange={() => toggleItemChecked(item.id, item.isChecked)}
                       className="h-5 w-5 cursor-pointer"
                     />
                     <span className={item.isChecked ? "line-through text-slate-400" : "text-slate-900"}>

@@ -13,6 +13,7 @@ public class FoodDiaryEntry
     public decimal? ProteinGrams { get; set; }
     public decimal? CarbsGrams { get; set; }
     public decimal? FatGrams { get; set; }
+    public decimal? FiberGrams { get; set; }
     public string Name { get; set; } = string.Empty;
     public DateTime LoggedAt { get; set; }
 

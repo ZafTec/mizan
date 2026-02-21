@@ -26,6 +26,7 @@ public record FoodDiaryEntryDto
     public decimal? ProteinGrams { get; init; }
     public decimal? CarbsGrams { get; init; }
     public decimal? FatGrams { get; init; }
+    public decimal? FiberGrams { get; init; }
     public DateTime LoggedAt { get; init; }
 }
 
@@ -35,6 +36,7 @@ public record DailyTotalsDto
     public decimal Protein { get; init; }
     public decimal Carbs { get; init; }
     public decimal Fat { get; init; }
+    public decimal Fiber { get; init; }
 }
 
 public class GetFoodDiaryQueryHandler : IRequestHandler<GetFoodDiaryQuery, FoodDiaryResult>
@@ -70,6 +72,7 @@ public class GetFoodDiaryQueryHandler : IRequestHandler<GetFoodDiaryQuery, FoodD
                 ProteinGrams = e.ProteinGrams,
                 CarbsGrams = e.CarbsGrams,
                 FatGrams = e.FatGrams,
+                FiberGrams = e.FiberGrams,
                 LoggedAt = e.LoggedAt
             })
             .ToListAsync(cancellationToken);
@@ -79,7 +82,8 @@ public class GetFoodDiaryQueryHandler : IRequestHandler<GetFoodDiaryQuery, FoodD
             Calories = entries.Sum(e => e.Calories ?? 0),
             Protein = entries.Sum(e => e.ProteinGrams ?? 0),
             Carbs = entries.Sum(e => e.CarbsGrams ?? 0),
-            Fat = entries.Sum(e => e.FatGrams ?? 0)
+            Fat = entries.Sum(e => e.FatGrams ?? 0),
+            Fiber = entries.Sum(e => e.FiberGrams ?? 0)
         };
 
         return new FoodDiaryResult

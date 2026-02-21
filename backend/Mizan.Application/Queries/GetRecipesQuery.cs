@@ -40,6 +40,7 @@ public record RecipeNutritionDto
     public decimal? ProteinGrams { get; init; }
     public decimal? CarbsGrams { get; init; }
     public decimal? FatGrams { get; init; }
+    public decimal? FiberGrams { get; init; }
 }
 
 public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResult<RecipeDto>>
@@ -133,7 +134,8 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
                     CaloriesPerServing = r.Nutrition.CaloriesPerServing,
                     ProteinGrams = r.Nutrition.ProteinGrams,
                     CarbsGrams = r.Nutrition.CarbsGrams,
-                    FatGrams = r.Nutrition.FatGrams
+                    FatGrams = r.Nutrition.FatGrams,
+                    FiberGrams = r.Nutrition.FiberGrams
                 } : null,
                 Tags = r.Tags.Select(t => t.Tag).ToList(),
                 CreatedAt = r.CreatedAt

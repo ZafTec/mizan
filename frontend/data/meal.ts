@@ -17,6 +17,7 @@ export interface MealEntry {
     proteinGrams?: number;
     carbsGrams?: number;
     fatGrams?: number;
+    fiberGrams?: number;
     loggedAt: string;
 }
 
@@ -28,6 +29,7 @@ export interface FoodDiaryResult {
         protein: number;
         carbs: number;
         fat: number;
+        fiber: number;
     };
 }
 
@@ -83,6 +85,7 @@ export async function addMeal(prevState: FormState, formData: FormData): Promise
         const protein = parseFloat(formData.get("protein") as string);
         const carbs = parseFloat(formData.get("carbs") as string);
         const fat = parseFloat(formData.get("fat") as string);
+        const fiber = parseFloat(formData.get("fiber") as string);
 
         await serverApi("/api/Meals", {
             method: "POST",
@@ -97,6 +100,7 @@ export async function addMeal(prevState: FormState, formData: FormData): Promise
                 proteinGrams: isNaN(protein) ? null : protein,
                 carbsGrams: isNaN(carbs) ? null : carbs,
                 fatGrams: isNaN(fat) ? null : fat,
+                fiberGrams: isNaN(fiber) ? null : fiber,
             },
         });
 
