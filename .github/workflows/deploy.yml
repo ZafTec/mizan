@@ -18,6 +18,8 @@ jobs:
   build-and-push-frontend:
     name: Build & Push Frontend
     runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -47,7 +49,7 @@ jobs:
           echo "NEXT_PUBLIC_API_URL is set: ${{ secrets.NEXT_PUBLIC_API_URL != '' }}"
           echo "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME is set: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME != '' }}"
           echo "NEXT_PUBLIC_CLOUDINARY_API_KEY is set: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_API_KEY != '' }}"
-          
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
@@ -136,3 +138,110 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-and-push-frontend, build-and-push-backend, build-and-push-mcp]
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build release notes
+        id: notes
+        env:
+          FRONTEND_IMAGE: ${{ env.FRONTEND_IMAGE }}
+          BACKEND_IMAGE: ${{ env.BACKEND_IMAGE }}
+          MCP_IMAGE: ${{ env.MCP_IMAGE }}
+          ACTOR: ${{ github.actor }}
+          SHA: ${{ github.sha }}
+          REF: ${{ github.ref_name }}
+        run: |
+          SHORT_SHA="${SHA::8}"
+          DATE=$(date -u +%Y-%m-%d)
+          DATETIME=$(date -u +%Y%m%d%H%M%S)
+
+          echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "date=${DATE}"           >> $GITHUB_OUTPUT
+          echo "tag=release/${DATETIME}-${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "title=Release ${DATE} (${SHORT_SHA})" >> $GITHUB_OUTPUT
+
+          # Collect commits since the last release tag (fall back to last 10)
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          if [ -n "$LAST_TAG" ]; then
+            RANGE="${LAST_TAG}..HEAD"
+          else
+            RANGE="HEAD~10..HEAD"
+          fi
+          COMMITS=$(git log "$RANGE" --pretty=format:"- %s (%h)" --no-merges)
+
+          # Write full release body to a file
+          cat > /tmp/release-body.md << BODY
+          ## Deployment Summary
+
+          All three services built and pushed to Docker Hub successfully.
+
+          | Field       | Value |
+          |-------------|-------|
+          | Commit      | \`${SHA}\` |
+          | Branch      | \`${REF}\` |
+          | Deployed by | @${ACTOR} |
+          | Date        | ${DATE} |
+
+          ---
+
+          ## Docker Images
+
+          Update your server with the exact tagged versions from this release:
+
+          \`\`\`bash
+          docker pull ${FRONTEND_IMAGE}:${SHORT_SHA}
+          docker pull ${BACKEND_IMAGE}:${SHORT_SHA}
+          docker pull ${MCP_IMAGE}:${SHORT_SHA}
+          \`\`\`
+
+          | Service  | Image | Tags |
+          |----------|-------|------|
+          | Frontend | \`${FRONTEND_IMAGE}\` | \`${SHORT_SHA}\`, \`latest\` |
+          | Backend  | \`${BACKEND_IMAGE}\`  | \`${SHORT_SHA}\`, \`latest\` |
+          | MCP      | \`${MCP_IMAGE}\`      | \`${SHORT_SHA}\`, \`latest\` |
+
+          ---
+
+          ## Deploying to Production
+
+          SSH into your server and run:
+
+          \`\`\`bash
+          docker-compose pull
+          docker-compose up -d --remove-orphans
+          docker image prune -f
+          \`\`\`
+
+          > The backend applies any pending EF Core database migrations automatically on startup.
+
+          ---
+
+          ## Changes in this Release
+
+          BODY
+
+          if [ -n "$COMMITS" ]; then
+            echo "$COMMITS" >> /tmp/release-body.md
+          else
+            echo "_No individual commits found since the previous release._" >> /tmp/release-body.md
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.notes.outputs.tag }}
+          name: ${{ steps.notes.outputs.title }}
+          body_path: /tmp/release-body.md
+          draft: false
+          prerelease: false
+          make_latest: true
