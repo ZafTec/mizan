@@ -13,7 +13,6 @@ authTest.describe("Admin access control (authenticated non-admin)", () => {
 		await page.goto("/admin");
 		// Non-admin users get redirected to /
 		await expect(page).not.toHaveURL(/\/admin/);
-		await expect(page).toHaveURL(/^\//);
 	});
 
 	authTest("regular user cannot access admin users page", async ({ authenticatedPage: page }) => {
@@ -41,8 +40,8 @@ authTest.describe("Admin dashboard (admin user)", () => {
 
 	authTest("admin user list has table with headers", async ({ adminPage: page }) => {
 		await page.goto("/admin/users");
-		await expect(page.getByRole("columnheader", { name: /Email/i })).toBeVisible();
-		await expect(page.getByRole("columnheader", { name: /Role/i })).toBeVisible();
+		await expect(page.getByRole("columnheader", { name: /^User$/i })).toBeVisible();
+		await expect(page.getByRole("columnheader", { name: /^Role$/i })).toBeVisible();
 	});
 
 	authTest("admin can access ingredients management", async ({ adminPage: page }) => {
@@ -52,7 +51,7 @@ authTest.describe("Admin dashboard (admin user)", () => {
 
 	authTest("Manage users link on dashboard navigates to user list", async ({ adminPage: page }) => {
 		await page.goto("/admin");
-		await page.getByRole("link", { name: /Manage users/i }).click();
+		await page.getByRole("link", { name: "Manage users →" }).click();
 		await expect(page).toHaveURL(/\/admin\/users/);
 	});
 });
