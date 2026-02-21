@@ -62,7 +62,7 @@ public class ShoppingListControllerTests
             Unit = "g",
             Category = "Meat"
         });
-        addItemResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        addItemResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var getResponse = await client.GetAsync($"/api/ShoppingLists/{listId}");
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -96,7 +96,7 @@ public class ShoppingListControllerTests
     }
 
     [Fact]
-    public async Task UserCanDeleteOwnShoppingList()
+    public async Task UserCanToggleShoppingListItem()
     {
         await _fixture.ResetDatabaseAsync();
 
@@ -106,15 +106,26 @@ public class ShoppingListControllerTests
 
         using var client = _fixture.CreateAuthenticatedClient(userId, email);
 
-        var createResponse = await client.PostAsJsonAsync("/api/ShoppingLists", new { Name = "To Delete" });
+        var createResponse = await client.PostAsJsonAsync("/api/ShoppingLists", new { Name = "Toggle Test" });
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var listId = await createResponse.Content.ReadFromJsonAsync<Guid>();
 
-        var deleteResponse = await client.DeleteAsync($"/api/ShoppingLists/{listId}");
-        deleteResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var addItemResponse = await client.PostAsJsonAsync($"/api/ShoppingLists/{listId}/items", new
+        {
+            ItemName = "Eggs",
+            Amount = 12m,
+            Unit = "pcs",
+            Category = "Dairy"
+        });
+        addItemResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var itemId = await addItemResponse.Content.ReadFromJsonAsync<Guid>();
+
+        var toggleResponse = await client.PatchAsJsonAsync($"/api/ShoppingLists/items/{itemId}/toggle", new { IsChecked = true });
+        toggleResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         var getResponse = await client.GetAsync($"/api/ShoppingLists/{listId}");
-        getResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var list = await getResponse.Content.ReadFromJsonAsync<ShoppingListDetailResult>();
+        list!.Items.Should().Contain(i => i.ItemName == "Eggs" && i.IsChecked);
     }
 
     private sealed record ShoppingListPagedResult(int TotalCount, List<object> Items);

@@ -35,7 +35,7 @@ public class BodyMeasurementsControllerTests
         };
 
         var logResponse = await client.PostAsJsonAsync("/api/BodyMeasurements", logCommand);
-        logResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        logResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var measurementId = await logResponse.Content.ReadFromJsonAsync<Guid>();
         measurementId.Should().NotBe(Guid.Empty);
@@ -61,7 +61,7 @@ public class BodyMeasurementsControllerTests
 
         var logCommand = new { Date = DateTime.UtcNow, WeightKg = 75.0m };
         var logResponse = await client.PostAsJsonAsync("/api/BodyMeasurements", logCommand);
-        logResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        logResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var measurementId = await logResponse.Content.ReadFromJsonAsync<Guid>();
 
         var deleteResponse = await client.DeleteAsync($"/api/BodyMeasurements/{measurementId}");

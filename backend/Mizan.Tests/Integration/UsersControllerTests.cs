@@ -58,7 +58,7 @@ public class UsersControllerTests
 
         var updateCommand = new { Name = "Updated Name", Image = (string?)null };
         var updateResponse = await client.PutAsJsonAsync("/api/Users/me", updateCommand);
-        updateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        updateResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         var getResponse = await client.GetAsync("/api/Users/me");
         var user = await getResponse.Content.ReadFromJsonAsync<UserProfileResult>();

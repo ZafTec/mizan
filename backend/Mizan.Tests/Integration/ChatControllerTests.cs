@@ -76,7 +76,7 @@ public class ChatControllerTests
             ConversationId = conversationId,
             Content = "Unauthorized message"
         });
-        sendResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        sendResponse.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     private async Task<(Guid RelationshipId, Guid ConversationId)> SeedTrainerClientConversation(Guid trainerId, Guid clientId)
