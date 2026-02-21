@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
+import { toast } from "sonner";
 
 export default function AddMeasurementForm() {
     const router = useRouter();
@@ -22,8 +23,10 @@ export default function AddMeasurementForm() {
             waistCm: formData.get("waistCm") ? Number(formData.get("waistCm")) : null,
             hipsCm: formData.get("hipsCm") ? Number(formData.get("hipsCm")) : null,
             chestCm: formData.get("chestCm") ? Number(formData.get("chestCm")) : null,
-            armsCm: formData.get("armsCm") ? Number(formData.get("armsCm")) : null,
-            thighsCm: formData.get("thighsCm") ? Number(formData.get("thighsCm")) : null,
+            leftArmCm: formData.get("leftArmCm") ? Number(formData.get("leftArmCm")) : null,
+            rightArmCm: formData.get("rightArmCm") ? Number(formData.get("rightArmCm")) : null,
+            leftThighCm: formData.get("leftThighCm") ? Number(formData.get("leftThighCm")) : null,
+            rightThighCm: formData.get("rightThighCm") ? Number(formData.get("rightThighCm")) : null,
             notes: formData.get("notes") as string || null,
         };
 
@@ -36,7 +39,7 @@ export default function AddMeasurementForm() {
             router.refresh();
         } catch (error) {
             console.error("Failed to add measurement:", error);
-            alert("Failed to add measurement");
+            toast.error("Failed to add measurement");
         } finally {
             setIsSubmitting(false);
         }
@@ -100,13 +103,33 @@ export default function AddMeasurementForm() {
                                     <label className="label">Chest (cm)</label>
                                     <input type="number" step="0.1" name="chestCm" className="input" />
                                 </div>
-                                <div>
-                                    <label className="label">Arms (cm)</label>
-                                    <input type="number" step="0.1" name="armsCm" className="input" />
+                            </div>
+
+                            <div>
+                                <p className="label mb-2">Arms (cm)</p>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Left</label>
+                                        <input type="number" step="0.1" name="leftArmCm" className="input" />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Right</label>
+                                        <input type="number" step="0.1" name="rightArmCm" className="input" />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="label">Thighs (cm)</label>
-                                    <input type="number" step="0.1" name="thighsCm" className="input" />
+                            </div>
+
+                            <div>
+                                <p className="label mb-2">Thighs (cm)</p>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Left</label>
+                                        <input type="number" step="0.1" name="leftThighCm" className="input" />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Right</label>
+                                        <input type="number" step="0.1" name="rightThighCm" className="input" />
+                                    </div>
                                 </div>
                             </div>
 

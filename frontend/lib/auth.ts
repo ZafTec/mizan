@@ -1,7 +1,7 @@
 import "server-only";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { organization, admin, jwt, magicLink } from "better-auth/plugins";
+import { admin, jwt, magicLink } from "better-auth/plugins";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import {
@@ -115,10 +115,6 @@ export const auth = betterAuth({
         issuer: process.env.BETTER_AUTH_ISSUER,
         audience: process.env.BETTER_AUTH_AUDIENCE,
       },
-    }),
-    organization({
-      allowUserToCreateOrganization: true,
-      organizationLimit: 5,
     }),
     admin({
       defaultRole: "user",

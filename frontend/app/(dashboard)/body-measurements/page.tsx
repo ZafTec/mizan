@@ -128,6 +128,10 @@ export default async function BodyMeasurementsPage({
                                     <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Body Fat</th>
                                     <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Muscle</th>
                                     <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Waist</th>
+                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">L Arm</th>
+                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">R Arm</th>
+                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">L Thigh</th>
+                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">R Thigh</th>
                                     <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Notes</th>
                                     <th className="w-10"></th>
                                 </tr>
@@ -149,6 +153,18 @@ export default async function BodyMeasurementsPage({
                                         </td>
                                         <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
                                             {m.waistCm ? `${m.waistCm} cm` : "-"}
+                                        </td>
+                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
+                                            {m.leftArmCm ? `${m.leftArmCm} cm` : "-"}
+                                        </td>
+                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
+                                            {m.rightArmCm ? `${m.rightArmCm} cm` : "-"}
+                                        </td>
+                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
+                                            {m.leftThighCm ? `${m.leftThighCm} cm` : "-"}
+                                        </td>
+                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
+                                            {m.rightThighCm ? `${m.rightThighCm} cm` : "-"}
                                         </td>
                                         <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400 max-w-xs truncate">
                                             {m.notes || "-"}

@@ -1,24 +1,37 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import placeHolderImage from "@/public/placeholder-recipe.jpg";
 import { getAllRecipes } from "@/data/recipe";
 import { getUserOptionalServer } from "@/helper/session";
 import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
-
 import Pagination from "@/components/Pagination";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-export default async function Page({
+export const metadata: Metadata = {
+	title: "Recipes — Mizan",
+	description:
+		"Browse healthy, nutrition-tracked recipes. Find meals by macros, calories, and dietary goals.",
+};
+
+export default async function RecipesPage({
 	searchParams,
 }: {
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
 	const params = await searchParams;
 	const { page, sortBy, sortOrder } = parseListParams(params);
-	const { recipes, totalPages, totalCount } = await getAllRecipes(undefined, page, 10, false, sortBy ?? undefined, sortOrder);
+	const { recipes, totalPages, totalCount } = await getAllRecipes(
+		undefined,
+		page,
+		10,
+		false,
+		sortBy ?? undefined,
+		sortOrder,
+	);
 	const user = await getUserOptionalServer();
-	const baseUrl = buildListUrl('/recipes', {});
+	const baseUrl = buildListUrl("/recipes", {});
 
 	let favoriteCount = 0;
 	if (user) {
@@ -28,11 +41,12 @@ export default async function Page({
 
 	return (
 		<div className="space-y-8" data-testid="recipe-list">
-			{/* Page Header */}
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
 					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Recipes</h1>
-					<p className="text-slate-500 dark:text-slate-400 mt-1">Discover and create delicious healthy meals</p>
+					<p className="text-slate-500 dark:text-slate-400 mt-1">
+						Discover and create delicious healthy meals
+					</p>
 				</div>
 				{user && (
 					<Link href="/recipes/add" className="btn-primary">
@@ -45,26 +59,53 @@ export default async function Page({
 			{/* Quick Collections */}
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 				{[
-					{ name: "Favorites", icon: "ri-heart-3-line", count: favoriteCount, color: "from-rose-400 to-rose-600", href: "/recipes/favorites" },
-					{ name: "My Recipes", icon: "ri-restaurant-line", count: totalCount, color: "from-brand-400 to-brand-600", href: "/recipes" },
-					{ name: "Recent", icon: "ri-history-line", count: Math.min(recipes.length, 5), color: "from-violet-400 to-violet-600", href: "/recipes" },
-				].map((collection) => (
-					<Link key={collection.name} href={collection.href} className="card-hover p-5 group">
-						<div className="flex items-center gap-4">
-							<div className={`w-12 h-12 rounded-2xl bg-linear-to-br ${collection.color} flex items-center justify-center shadow-lg`}>
-								<i className={`${collection.icon} text-xl text-white`} />
+					{
+						name: "Favorites",
+						icon: "ri-heart-3-line",
+						count: favoriteCount,
+						color: "from-rose-400 to-rose-600",
+						href: "/recipes/favorites",
+						authRequired: true,
+					},
+					{
+						name: "My Recipes",
+						icon: "ri-restaurant-line",
+						count: totalCount,
+						color: "from-brand-400 to-brand-600",
+						href: "/recipes",
+						authRequired: false,
+					},
+					{
+						name: "Recent",
+						icon: "ri-history-line",
+						count: Math.min(recipes.length, 5),
+						color: "from-violet-400 to-violet-600",
+						href: "/recipes",
+						authRequired: false,
+					},
+				]
+					.filter((c) => !c.authRequired || user)
+					.map((collection) => (
+						<Link key={collection.name} href={collection.href} className="card-hover p-5 group">
+							<div className="flex items-center gap-4">
+								<div
+									className={`w-12 h-12 rounded-2xl bg-linear-to-br ${collection.color} flex items-center justify-center shadow-lg`}
+								>
+									<i className={`${collection.icon} text-xl text-white`} />
+								</div>
+								<div className="flex-1">
+									<h3 className="font-semibold text-slate-900 dark:text-slate-100">
+										{collection.name}
+									</h3>
+									<p className="text-sm text-slate-500">{collection.count} recipes</p>
+								</div>
+								<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
 							</div>
-							<div className="flex-1">
-								<h3 className="font-semibold text-slate-900 dark:text-slate-100">{collection.name}</h3>
-								<p className="text-sm text-slate-500">{collection.count} recipes</p>
-							</div>
-							<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
-						</div>
-					</Link>
-				))}
+						</Link>
+					))}
 			</div>
 
-			{/* Create Recipe CTA */}
+			{/* Create Recipe CTA — auth-gated */}
 			{user && (
 				<div className="card overflow-hidden">
 					<div className="relative p-8 bg-linear-to-br from-accent-50 to-brand-50">
@@ -74,8 +115,12 @@ export default async function Page({
 								<i className="ri-restaurant-2-line text-3xl text-white" />
 							</div>
 							<div className="flex-1">
-								<h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">Create Your Own Recipe</h3>
-								<p className="text-slate-600">Share your favorite healthy meals with the community</p>
+								<h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
+									Create Your Own Recipe
+								</h3>
+								<p className="text-slate-600">
+									Share your favorite healthy meals with the community
+								</p>
 							</div>
 							<Link href="/recipes/add" className="btn-secondary whitespace-nowrap">
 								<i className="ri-add-line" />
@@ -119,8 +164,6 @@ export default async function Page({
 											</p>
 										</div>
 									</div>
-
-									{/* Macro Pills */}
 									<div className="flex flex-wrap gap-2 mt-4">
 										<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-50 text-orange-700 text-sm font-medium">
 											<i className="ri-fire-line" />
@@ -148,7 +191,9 @@ export default async function Page({
 						<div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
 							<i className="ri-restaurant-line text-3xl text-slate-400" />
 						</div>
-						<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No recipes yet</h3>
+						<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+							No recipes yet
+						</h3>
 						<p className="text-slate-500 mb-6">Be the first to add a delicious recipe!</p>
 						{user && (
 							<Link href="/recipes/add" className="btn-primary">

@@ -27,9 +27,9 @@ public class LogBodyMeasurementCommandTests
         var command = new LogBodyMeasurementCommand(
             userId,
             date,
-            80.5m, 
+            80.5m,
             20.0m,
-            null, null, null, null, null, null,
+            null, null, null, null, null, null, null, null,
             "Good progress"
         );
         var handler = new LogBodyMeasurementCommandHandler(_context);

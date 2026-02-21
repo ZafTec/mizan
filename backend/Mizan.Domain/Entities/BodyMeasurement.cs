@@ -11,8 +11,10 @@ public class BodyMeasurement
     public decimal? WaistCm { get; set; }
     public decimal? HipsCm { get; set; }
     public decimal? ChestCm { get; set; }
-    public decimal? ArmsCm { get; set; }
-    public decimal? ThighsCm { get; set; }
+    public decimal? LeftArmCm { get; set; }
+    public decimal? RightArmCm { get; set; }
+    public decimal? LeftThighCm { get; set; }
+    public decimal? RightThighCm { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; }
 

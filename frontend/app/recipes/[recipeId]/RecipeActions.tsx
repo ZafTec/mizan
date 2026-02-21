@@ -82,7 +82,6 @@ export default function RecipeActions({ recipeId, isOwner, isFavorited: initialF
             />
 
             <div className="card p-6 space-y-4">
-                {/* Primary Actions */}
                 <div className="flex flex-wrap gap-3">
                     <button onClick={handleAddToMealPlan} className="btn-primary flex-1 sm:flex-none">
                         <i className="ri-add-line" />
@@ -111,7 +110,6 @@ export default function RecipeActions({ recipeId, isOwner, isFavorited: initialF
                     </button>
                 </div>
 
-                {/* Owner Actions */}
                 {isOwner && (
                     <div className="flex flex-wrap gap-3 pt-3 border-t border-slate-200">
                         <button

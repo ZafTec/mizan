@@ -13,8 +13,10 @@ public record LogBodyMeasurementCommand(
     decimal? WaistCm,
     decimal? HipsCm,
     decimal? ChestCm,
-    decimal? ArmsCm,
-    decimal? ThighsCm,
+    decimal? LeftArmCm,
+    decimal? RightArmCm,
+    decimal? LeftThighCm,
+    decimal? RightThighCm,
     string? Notes
 ) : IRequest<Guid>;
 
@@ -40,8 +42,10 @@ public class LogBodyMeasurementCommandHandler : IRequestHandler<LogBodyMeasureme
             WaistCm = request.WaistCm,
             HipsCm = request.HipsCm,
             ChestCm = request.ChestCm,
-            ArmsCm = request.ArmsCm,
-            ThighsCm = request.ThighsCm,
+            LeftArmCm = request.LeftArmCm,
+            RightArmCm = request.RightArmCm,
+            LeftThighCm = request.LeftThighCm,
+            RightThighCm = request.RightThighCm,
             Notes = request.Notes,
             CreatedAt = DateTime.UtcNow
         };

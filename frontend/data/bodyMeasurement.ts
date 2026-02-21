@@ -14,8 +14,10 @@ export interface BodyMeasurement {
     waistCm?: number | null;
     hipsCm?: number | null;
     chestCm?: number | null;
-    armsCm?: number | null;
-    thighsCm?: number | null;
+    leftArmCm?: number | null;
+    rightArmCm?: number | null;
+    leftThighCm?: number | null;
+    rightThighCm?: number | null;
     notes?: string | null;
 }
 

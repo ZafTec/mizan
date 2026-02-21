@@ -24,8 +24,10 @@ public record BodyMeasurementDto(
     decimal? WaistCm,
     decimal? HipsCm,
     decimal? ChestCm,
-    decimal? ArmsCm,
-    decimal? ThighsCm,
+    decimal? LeftArmCm,
+    decimal? RightArmCm,
+    decimal? LeftThighCm,
+    decimal? RightThighCm,
     string? Notes
 );
 
@@ -68,8 +70,10 @@ public class GetBodyMeasurementsQueryHandler : IRequestHandler<GetBodyMeasuremen
                 m.WaistCm,
                 m.HipsCm,
                 m.ChestCm,
-                m.ArmsCm,
-                m.ThighsCm,
+                m.LeftArmCm,
+                m.RightArmCm,
+                m.LeftThighCm,
+                m.RightThighCm,
                 m.Notes
             ))
             .ToListAsync(cancellationToken);

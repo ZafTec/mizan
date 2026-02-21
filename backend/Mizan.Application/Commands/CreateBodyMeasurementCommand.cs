@@ -14,8 +14,10 @@ public record CreateBodyMeasurementCommand : IRequest<CreateBodyMeasurementResul
     public decimal? WaistCm { get; init; }
     public decimal? HipsCm { get; init; }
     public decimal? ChestCm { get; init; }
-    public decimal? ArmsCm { get; init; }
-    public decimal? ThighsCm { get; init; }
+    public decimal? LeftArmCm { get; init; }
+    public decimal? RightArmCm { get; init; }
+    public decimal? LeftThighCm { get; init; }
+    public decimal? RightThighCm { get; init; }
     public string? Notes { get; init; }
 }
 
@@ -37,8 +39,10 @@ public class CreateBodyMeasurementCommandValidator : AbstractValidator<CreateBod
         RuleFor(x => x.WaistCm).GreaterThan(0).When(x => x.WaistCm.HasValue);
         RuleFor(x => x.HipsCm).GreaterThan(0).When(x => x.HipsCm.HasValue);
         RuleFor(x => x.ChestCm).GreaterThan(0).When(x => x.ChestCm.HasValue);
-        RuleFor(x => x.ArmsCm).GreaterThan(0).When(x => x.ArmsCm.HasValue);
-        RuleFor(x => x.ThighsCm).GreaterThan(0).When(x => x.ThighsCm.HasValue);
+        RuleFor(x => x.LeftArmCm).GreaterThan(0).When(x => x.LeftArmCm.HasValue);
+        RuleFor(x => x.RightArmCm).GreaterThan(0).When(x => x.RightArmCm.HasValue);
+        RuleFor(x => x.LeftThighCm).GreaterThan(0).When(x => x.LeftThighCm.HasValue);
+        RuleFor(x => x.RightThighCm).GreaterThan(0).When(x => x.RightThighCm.HasValue);
         RuleFor(x => x.Notes).MaximumLength(1000);
     }
 }
@@ -72,8 +76,10 @@ public class CreateBodyMeasurementCommandHandler : IRequestHandler<CreateBodyMea
             WaistCm = request.WaistCm,
             HipsCm = request.HipsCm,
             ChestCm = request.ChestCm,
-            ArmsCm = request.ArmsCm,
-            ThighsCm = request.ThighsCm,
+            LeftArmCm = request.LeftArmCm,
+            RightArmCm = request.RightArmCm,
+            LeftThighCm = request.LeftThighCm,
+            RightThighCm = request.RightThighCm,
             Notes = request.Notes,
             CreatedAt = DateTime.UtcNow
         };

@@ -166,11 +166,6 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
-                    b.Property<decimal?>("ArmsCm")
-                        .HasPrecision(6, 2)
-                        .HasColumnType("numeric(6,2)")
-                        .HasColumnName("arms_cm");
-
                     b.Property<decimal?>("BodyFatPercentage")
                         .HasPrecision(5, 2)
                         .HasColumnType("numeric(5,2)")
@@ -192,6 +187,16 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnType("numeric(6,2)")
                         .HasColumnName("hips_cm");
 
+                    b.Property<decimal?>("LeftArmCm")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)")
+                        .HasColumnName("left_arm_cm");
+
+                    b.Property<decimal?>("LeftThighCm")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)")
+                        .HasColumnName("left_thigh_cm");
+
                     b.Property<DateOnly>("MeasurementDate")
                         .HasColumnType("date")
                         .HasColumnName("measurement_date");
@@ -205,10 +210,15 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("notes");
 
-                    b.Property<decimal?>("ThighsCm")
+                    b.Property<decimal?>("RightArmCm")
                         .HasPrecision(6, 2)
                         .HasColumnType("numeric(6,2)")
-                        .HasColumnName("thighs_cm");
+                        .HasColumnName("right_arm_cm");
+
+                    b.Property<decimal?>("RightThighCm")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)")
+                        .HasColumnName("right_thigh_cm");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")

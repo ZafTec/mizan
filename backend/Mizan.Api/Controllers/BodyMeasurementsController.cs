@@ -73,8 +73,10 @@ public class BodyMeasurementsController : ControllerBase
             request.WaistCm,
             request.HipsCm,
             request.ChestCm,
-            request.ArmsCm,
-            request.ThighsCm,
+            request.LeftArmCm,
+            request.RightArmCm,
+            request.LeftThighCm,
+            request.RightThighCm,
             request.Notes
         );
 
@@ -91,7 +93,9 @@ public record LogMeasurementRequest(
     decimal? WaistCm,
     decimal? HipsCm,
     decimal? ChestCm,
-    decimal? ArmsCm,
-    decimal? ThighsCm,
+    decimal? LeftArmCm,
+    decimal? RightArmCm,
+    decimal? LeftThighCm,
+    decimal? RightThighCm,
     string? Notes
 );

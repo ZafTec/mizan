@@ -445,8 +445,10 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.WaistCm).HasColumnName("waist_cm").HasPrecision(6, 2);
             entity.Property(e => e.HipsCm).HasColumnName("hips_cm").HasPrecision(6, 2);
             entity.Property(e => e.ChestCm).HasColumnName("chest_cm").HasPrecision(6, 2);
-            entity.Property(e => e.ArmsCm).HasColumnName("arms_cm").HasPrecision(6, 2);
-            entity.Property(e => e.ThighsCm).HasColumnName("thighs_cm").HasPrecision(6, 2);
+            entity.Property(e => e.LeftArmCm).HasColumnName("left_arm_cm").HasPrecision(6, 2);
+            entity.Property(e => e.RightArmCm).HasColumnName("right_arm_cm").HasPrecision(6, 2);
+            entity.Property(e => e.LeftThighCm).HasColumnName("left_thigh_cm").HasPrecision(6, 2);
+            entity.Property(e => e.RightThighCm).HasColumnName("right_thigh_cm").HasPrecision(6, 2);
             entity.Property(e => e.Notes).HasColumnName("notes");
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
