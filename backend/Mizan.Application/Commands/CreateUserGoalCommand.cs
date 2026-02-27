@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
+using Mizan.Application.Services;
 using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Commands;
@@ -23,6 +24,7 @@ public record CreateUserGoalResult
     public Guid Id { get; init; }
     public bool Success { get; init; }
     public string? Message { get; init; }
+    public IReadOnlyList<string> Warnings { get; init; } = [];
 }
 
 public class CreateUserGoalCommandValidator : AbstractValidator<CreateUserGoalCommand>
@@ -99,11 +101,20 @@ public class CreateUserGoalCommandHandler : IRequestHandler<CreateUserGoalComman
         _context.UserGoals.Add(goal);
         await _context.SaveChangesAsync(cancellationToken);
 
+        var warnings = GoalHints.CheckGoalSanity(
+            request.GoalType,
+            request.TargetCalories,
+            request.TargetProteinGrams,
+            request.TargetCarbsGrams,
+            request.TargetFatGrams,
+            request.TargetDate);
+
         return new CreateUserGoalResult
         {
             Id = goal.Id,
             Success = true,
-            Message = "Goal created successfully"
+            Message = "Goal created successfully",
+            Warnings = warnings
         };
     }
 }
