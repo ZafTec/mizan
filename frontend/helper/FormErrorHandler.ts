@@ -7,6 +7,7 @@ export interface FormState {
     status: "idle" | "error" | "success";
     message?: string;
     fieldErrors?: FieldError[];
+    warnings?: string[];
 }
 
 export const EMPTY_FORM_STATE: FormState = {

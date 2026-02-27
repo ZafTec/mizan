@@ -6,17 +6,22 @@ import { addMeal } from "@/data/meal";
 import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useRef } from "react";
 
 export default function Page() {
 	const [formState, action, isPending] = useActionState(addMeal, EMPTY_FORM_STATE);
 	const router = useRouter();
 
+	const warningsRef = useRef<HTMLDivElement>(null);
+
 	useEffect(() => {
-		if (formState.status === "success") {
+		if (formState.status === "success" && !formState.warnings?.length) {
 			router.push("/meals");
 		}
-	}, [formState.status, router]);
+		if (formState.status === "success" && formState.warnings?.length) {
+			warningsRef.current?.scrollIntoView({ behavior: "smooth" });
+		}
+	}, [formState.status, formState.warnings, router]);
 
 	return (
 		<div className="max-w-3xl mx-auto space-y-6">
@@ -180,20 +185,34 @@ export default function Page() {
 					</div>
 				</div>
 
-				{/* Status Messages */}
-				{formState.status === "success" && (
-					<div className="flex items-center gap-2 p-4 rounded-xl bg-green-50 text-green-600">
-						<i className="ri-checkbox-circle-line text-xl" />
-						<span>Meal logged successfully!</span>
+				{/* Warnings from backend nutrition consistency check */}
+				{formState.status === "success" && formState.warnings?.length ? (
+					<div ref={warningsRef} className="space-y-4">
+						<div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
+							<div className="flex items-start gap-3">
+								<i className="ri-error-warning-line text-xl text-amber-600 mt-0.5 shrink-0" />
+								<div>
+									<p className="font-semibold text-amber-800">Nutrition hint{formState.warnings.length > 1 ? "s" : ""}</p>
+									<ul className="mt-2 space-y-1.5">
+										{formState.warnings.map((w, i) => (
+											<li key={i} className="text-sm text-amber-700">{w}</li>
+										))}
+									</ul>
+									<p className="text-xs text-amber-500 mt-3">Your entry was saved. You can adjust it or continue to the diary.</p>
+								</div>
+							</div>
+						</div>
+						<Link href="/meals" className="btn-primary w-full py-3 flex items-center justify-center gap-2">
+							<i className="ri-arrow-right-line text-xl" />
+							Continue to Diary
+						</Link>
 					</div>
-				)}
-
-				{formState.status === "error" && formState.message && (
+				) : formState.status === "error" && formState.message ? (
 					<div className="flex items-center gap-2 p-4 rounded-xl bg-red-50 text-red-600">
 						<i className="ri-error-warning-line text-xl" />
 						<span>{formState.message}</span>
 					</div>
-				)}
+				) : null}
 
 				{/* Submit Button */}
 				<button

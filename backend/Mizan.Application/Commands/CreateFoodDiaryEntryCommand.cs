@@ -1,6 +1,7 @@
 using FluentValidation;
 using MediatR;
 using Mizan.Application.Interfaces;
+using Mizan.Application.Services;
 using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Commands;
@@ -25,6 +26,7 @@ public record CreateFoodDiaryEntryResult
     public Guid Id { get; init; }
     public bool Success { get; init; }
     public string? Message { get; init; }
+    public IReadOnlyList<string> Warnings { get; init; } = [];
 }
 
 public class CreateFoodDiaryEntryCommandValidator : AbstractValidator<CreateFoodDiaryEntryCommand>
@@ -90,11 +92,19 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
         _context.FoodDiaryEntries.Add(entry);
         await _context.SaveChangesAsync(cancellationToken);
 
+        var warnings = NutritionHints.CheckConsistency(
+            request.Calories,
+            request.ProteinGrams,
+            request.CarbsGrams,
+            request.FatGrams,
+            request.FiberGrams);
+
         return new CreateFoodDiaryEntryResult
         {
             Id = entry.Id,
             Success = true,
-            Message = "Entry logged successfully"
+            Message = "Entry logged successfully",
+            Warnings = warnings
         };
     }
 }

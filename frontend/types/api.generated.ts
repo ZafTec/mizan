@@ -2173,6 +2173,7 @@ export interface components {
             id?: string;
             success?: boolean;
             message?: string | null;
+            warnings?: string[] | null;
         };
         CreateFoodResult: {
             /** Format: uuid */
