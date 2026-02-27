@@ -14,7 +14,11 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    category?: string;
+                    Category?: string;
+                    Page?: number;
+                    PageSize?: number;
+                    SortBy?: string;
+                    SortOrder?: string;
                 };
                 header?: never;
                 path?: never;
@@ -123,6 +127,8 @@ export interface paths {
                     UserId?: string;
                     Page?: number;
                     PageSize?: number;
+                    SortBy?: string;
+                    SortOrder?: string;
                 };
                 header?: never;
                 path?: never;
@@ -136,9 +142,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["GetAuditLogsResult"];
-                        "application/json": components["schemas"]["GetAuditLogsResult"];
-                        "text/json": components["schemas"]["GetAuditLogsResult"];
+                        "text/plain": components["schemas"]["AuditLogDtoPagedResult"];
+                        "application/json": components["schemas"]["AuditLogDtoPagedResult"];
+                        "text/json": components["schemas"]["AuditLogDtoPagedResult"];
                     };
                 };
             };
@@ -160,7 +166,12 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    page?: number;
+                    pageSize?: number;
+                    sortBy?: string;
+                    sortOrder?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -173,9 +184,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["BodyMeasurementDto"][];
-                        "application/json": components["schemas"]["BodyMeasurementDto"][];
-                        "text/json": components["schemas"]["BodyMeasurementDto"][];
+                        "text/plain": components["schemas"]["BodyMeasurementDtoPagedResult"];
+                        "application/json": components["schemas"]["BodyMeasurementDtoPagedResult"];
+                        "text/json": components["schemas"]["BodyMeasurementDtoPagedResult"];
                     };
                 };
             };
@@ -210,6 +221,45 @@ export interface paths {
             };
         };
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/BodyMeasurements/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DeleteBodyMeasurementResult"];
+                        "application/json": components["schemas"]["DeleteBodyMeasurementResult"];
+                        "text/json": components["schemas"]["DeleteBodyMeasurementResult"];
+                    };
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -310,6 +360,8 @@ export interface paths {
                     IncludeCustom?: boolean;
                     Page?: number;
                     PageSize?: number;
+                    SortBy?: string;
+                    SortOrder?: string;
                 };
                 header?: never;
                 path?: never;
@@ -470,6 +522,8 @@ export interface paths {
                     Barcode?: string;
                     Page?: number;
                     PageSize?: number;
+                    SortBy?: string;
+                    SortOrder?: string;
                 };
                 header?: never;
                 path?: never;
@@ -483,9 +537,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["SearchFoodsResult"];
-                        "application/json": components["schemas"]["SearchFoodsResult"];
-                        "text/json": components["schemas"]["SearchFoodsResult"];
+                        "text/plain": components["schemas"]["FoodDtoPagedResult"];
+                        "application/json": components["schemas"]["FoodDtoPagedResult"];
+                        "text/json": components["schemas"]["FoodDtoPagedResult"];
                     };
                 };
             };
@@ -842,6 +896,232 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/McpTokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Page?: number;
+                    PageSize?: number;
+                    SortBy?: string;
+                    SortOrder?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["McpTokenDtoPagedResult"];
+                        "application/json": components["schemas"]["McpTokenDtoPagedResult"];
+                        "text/json": components["schemas"]["McpTokenDtoPagedResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateMcpTokenCommand"];
+                    "text/json": components["schemas"]["CreateMcpTokenCommand"];
+                    "application/*+json": components["schemas"]["CreateMcpTokenCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CreateMcpTokenResult"];
+                        "application/json": components["schemas"]["CreateMcpTokenResult"];
+                        "text/json": components["schemas"]["CreateMcpTokenResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/McpTokens/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/McpTokens/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ValidateTokenCommand"];
+                    "text/json": components["schemas"]["ValidateTokenCommand"];
+                    "application/*+json": components["schemas"]["ValidateTokenCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValidateTokenResult"];
+                        "application/json": components["schemas"]["ValidateTokenResult"];
+                        "text/json": components["schemas"]["ValidateTokenResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/McpTokens/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["LogMcpUsageCommand"];
+                    "text/json": components["schemas"]["LogMcpUsageCommand"];
+                    "application/*+json": components["schemas"]["LogMcpUsageCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/McpTokens/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    startDate?: string;
+                    endDate?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["McpUsageAnalyticsResult"];
+                        "application/json": components["schemas"]["McpUsageAnalyticsResult"];
+                        "text/json": components["schemas"]["McpUsageAnalyticsResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/MealPlans": {
         parameters: {
             query?: never;
@@ -856,6 +1136,8 @@ export interface paths {
                     EndDate?: string;
                     Page?: number;
                     PageSize?: number;
+                    SortBy?: string;
+                    SortOrder?: string;
                 };
                 header?: never;
                 path?: never;
@@ -869,9 +1151,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["GetMealPlansResult"];
-                        "application/json": components["schemas"]["GetMealPlansResult"];
-                        "text/json": components["schemas"]["GetMealPlansResult"];
+                        "text/plain": components["schemas"]["MealPlanDtoPagedResult"];
+                        "application/json": components["schemas"]["MealPlanDtoPagedResult"];
+                        "text/json": components["schemas"]["MealPlanDtoPagedResult"];
                     };
                 };
             };
@@ -1304,6 +1586,8 @@ export interface paths {
                     FavoritesOnly?: boolean;
                     Page?: number;
                     PageSize?: number;
+                    SortBy?: string;
+                    SortOrder?: string;
                 };
                 header?: never;
                 path?: never;
@@ -1317,9 +1601,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["GetRecipesResult"];
-                        "application/json": components["schemas"]["GetRecipesResult"];
-                        "text/json": components["schemas"]["GetRecipesResult"];
+                        "text/plain": components["schemas"]["RecipeDtoPagedResult"];
+                        "application/json": components["schemas"]["RecipeDtoPagedResult"];
+                        "text/json": components["schemas"]["RecipeDtoPagedResult"];
                     };
                 };
             };
@@ -1538,8 +1822,10 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    page?: number;
-                    pageSize?: number;
+                    Page?: number;
+                    PageSize?: number;
+                    SortBy?: string;
+                    SortOrder?: string;
                 };
                 header?: never;
                 path?: never;
@@ -1553,9 +1839,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["GetShoppingListsResult"];
-                        "application/json": components["schemas"]["GetShoppingListsResult"];
-                        "text/json": components["schemas"]["GetShoppingListsResult"];
+                        "text/plain": components["schemas"]["ShoppingListSummaryDtoPagedResult"];
+                        "application/json": components["schemas"]["ShoppingListSummaryDtoPagedResult"];
+                        "text/json": components["schemas"]["ShoppingListSummaryDtoPagedResult"];
                     };
                 };
             };
@@ -1768,7 +2054,12 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    Page?: number;
+                    PageSize?: number;
+                    SortBy?: string;
+                    SortOrder?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -1780,7 +2071,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["TrainerClientDtoPagedResult"];
+                        "application/json": components["schemas"]["TrainerClientDtoPagedResult"];
+                        "text/json": components["schemas"]["TrainerClientDtoPagedResult"];
+                    };
                 };
             };
         };
@@ -1801,7 +2096,12 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    Page?: number;
+                    PageSize?: number;
+                    SortBy?: string;
+                    SortOrder?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -1813,7 +2113,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["TrainerPendingRequestDtoPagedResult"];
+                        "application/json": components["schemas"]["TrainerPendingRequestDtoPagedResult"];
+                        "text/json": components["schemas"]["TrainerPendingRequestDtoPagedResult"];
+                    };
                 };
             };
         };
@@ -1851,6 +2155,124 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Trainers/available": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    SearchTerm?: string;
+                    Page?: number;
+                    PageSize?: number;
+                    SortBy?: string;
+                    SortOrder?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TrainerPublicDtoPagedResult"];
+                        "application/json": components["schemas"]["TrainerPublicDtoPagedResult"];
+                        "text/json": components["schemas"]["TrainerPublicDtoPagedResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Trainers/my-trainer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Trainers/my-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Page?: number;
+                    PageSize?: number;
+                    SortBy?: string;
+                    SortOrder?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MyTrainerRequestDtoPagedResult"];
+                        "application/json": components["schemas"]["MyTrainerRequestDtoPagedResult"];
+                        "text/json": components["schemas"]["MyTrainerRequestDtoPagedResult"];
+                    };
                 };
             };
         };
@@ -2063,6 +2485,17 @@ export interface components {
             /** Format: date-time */
             timestamp?: string;
         };
+        AuditLogDtoPagedResult: {
+            items?: components["schemas"]["AuditLogDto"][] | null;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            readonly totalPages?: number;
+        };
         AuthDebugDto: {
             isAuthenticated?: boolean;
             /** Format: uuid */
@@ -2091,10 +2524,25 @@ export interface components {
             /** Format: double */
             chestCm?: number | null;
             /** Format: double */
-            armsCm?: number | null;
+            leftArmCm?: number | null;
             /** Format: double */
-            thighsCm?: number | null;
+            rightArmCm?: number | null;
+            /** Format: double */
+            leftThighCm?: number | null;
+            /** Format: double */
+            rightThighCm?: number | null;
             notes?: string | null;
+        };
+        BodyMeasurementDtoPagedResult: {
+            items?: components["schemas"]["BodyMeasurementDto"][] | null;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            readonly totalPages?: number;
         };
         ChatConversationDto: {
             /** Format: uuid */
@@ -2133,6 +2581,8 @@ export interface components {
         };
         CreateFoodCommand: {
             name: string;
+            brand?: string | null;
+            barcode?: string | null;
             /** Format: double */
             caloriesPer100g?: number;
             /** Format: double */
@@ -2166,6 +2616,8 @@ export interface components {
             carbsGrams?: number | null;
             /** Format: double */
             fatGrams?: number | null;
+            /** Format: double */
+            fiberGrams?: number | null;
             name?: string | null;
         };
         CreateFoodDiaryEntryResult: {
@@ -2183,6 +2635,21 @@ export interface components {
         };
         CreateHouseholdRequest: {
             name?: string | null;
+        };
+        CreateMcpTokenCommand: {
+            name?: string | null;
+            /** Format: date-time */
+            expiresAt?: string | null;
+        };
+        CreateMcpTokenResult: {
+            /** Format: uuid */
+            id?: string;
+            plaintextToken?: string | null;
+            name?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            expiresAt?: string | null;
         };
         CreateMealPlanCommand: {
             name?: string | null;
@@ -2222,6 +2689,8 @@ export interface components {
         CreateRecipeIngredientDto: {
             /** Format: uuid */
             foodId?: string | null;
+            /** Format: uuid */
+            subRecipeId?: string | null;
             ingredientText: string;
             /** Format: double */
             amount?: number | null;
@@ -2270,6 +2739,7 @@ export interface components {
             id?: string;
             success?: boolean;
             message?: string | null;
+            warnings?: string[] | null;
         };
         DailyNutritionResult: {
             /** Format: date */
@@ -2301,6 +2771,22 @@ export interface components {
             carbs?: number;
             /** Format: double */
             fat?: number;
+            /** Format: double */
+            fiber?: number;
+        };
+        DailyUsageDto: {
+            /** Format: date */
+            date?: string;
+            /** Format: int32 */
+            callCount?: number;
+            /** Format: int32 */
+            successCount?: number;
+            /** Format: int32 */
+            failureCount?: number;
+        };
+        DeleteBodyMeasurementResult: {
+            success?: boolean;
+            message?: string | null;
         };
         DeleteFoodResult: {
             success?: boolean;
@@ -2359,6 +2845,8 @@ export interface components {
             carbsGrams?: number | null;
             /** Format: double */
             fatGrams?: number | null;
+            /** Format: double */
+            fiberGrams?: number | null;
             /** Format: date-time */
             loggedAt?: string;
         };
@@ -2389,58 +2877,45 @@ export interface components {
             fiberPer100g?: number | null;
             isVerified?: boolean;
         };
+        FoodDtoPagedResult: {
+            items?: components["schemas"]["FoodDto"][] | null;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            readonly totalPages?: number;
+        };
         GetAchievementsResult: {
-            achievements?: components["schemas"]["AchievementDto"][] | null;
+            items?: components["schemas"]["AchievementDto"][] | null;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            readonly totalPages?: number;
             /** Format: int32 */
             totalPoints?: number;
             /** Format: int32 */
             earnedCount?: number;
-            /** Format: int32 */
-            totalCount?: number;
-        };
-        GetAuditLogsResult: {
-            logs?: components["schemas"]["AuditLogDto"][] | null;
-            /** Format: int32 */
-            totalCount?: number;
         };
         GetExercisesResult: {
-            exercises?: components["schemas"]["ExerciseDto"][] | null;
+            items?: components["schemas"]["ExerciseDto"][] | null;
             /** Format: int32 */
             totalCount?: number;
             /** Format: int32 */
             page?: number;
             /** Format: int32 */
             pageSize?: number;
+            /** Format: int32 */
+            readonly totalPages?: number;
             categories?: string[] | null;
             muscleGroups?: string[] | null;
             equipmentOptions?: string[] | null;
-        };
-        GetMealPlansResult: {
-            mealPlans?: components["schemas"]["MealPlanDto"][] | null;
-            /** Format: int32 */
-            totalCount?: number;
-            /** Format: int32 */
-            page?: number;
-            /** Format: int32 */
-            pageSize?: number;
-        };
-        GetRecipesResult: {
-            recipes?: components["schemas"]["RecipeDto"][] | null;
-            /** Format: int32 */
-            totalCount?: number;
-            /** Format: int32 */
-            page?: number;
-            /** Format: int32 */
-            pageSize?: number;
-        };
-        GetShoppingListsResult: {
-            shoppingLists?: components["schemas"]["ShoppingListSummaryDto"][] | null;
-            /** Format: int32 */
-            totalCount?: number;
-            /** Format: int32 */
-            page?: number;
-            /** Format: int32 */
-            pageSize?: number;
         };
         GetStreakResult: {
             /** Format: int32 */
@@ -2530,6 +3005,16 @@ export interface components {
             fatGrams?: number;
             message?: string | null;
         };
+        LogMcpUsageCommand: {
+            /** Format: uuid */
+            mcpTokenId?: string;
+            toolName?: string | null;
+            parameters?: string | null;
+            success?: boolean;
+            errorMessage?: string | null;
+            /** Format: int32 */
+            executionTimeMs?: number;
+        };
         LogMeasurementRequest: {
             /** Format: date-time */
             date?: string | null;
@@ -2546,9 +3031,13 @@ export interface components {
             /** Format: double */
             chestCm?: number | null;
             /** Format: double */
-            armsCm?: number | null;
+            leftArmCm?: number | null;
             /** Format: double */
-            thighsCm?: number | null;
+            rightArmCm?: number | null;
+            /** Format: double */
+            leftThighCm?: number | null;
+            /** Format: double */
+            rightThighCm?: number | null;
             notes?: string | null;
         };
         LogWorkoutCommand: {
@@ -2570,6 +3059,35 @@ export interface components {
             totalExercises?: number;
             /** Format: int32 */
             totalSets?: number;
+        };
+        McpTokenDto: {
+            /** Format: uuid */
+            id?: string;
+            name?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            expiresAt?: string | null;
+            /** Format: date-time */
+            lastUsedAt?: string | null;
+            isActive?: boolean;
+        };
+        McpTokenDtoPagedResult: {
+            items?: components["schemas"]["McpTokenDto"][] | null;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            readonly totalPages?: number;
+        };
+        McpUsageAnalyticsResult: {
+            overview?: components["schemas"]["UsageOverview"];
+            toolUsage?: components["schemas"]["ToolUsageDto"][] | null;
+            tokenUsage?: components["schemas"]["TokenUsageDto"][] | null;
+            dailyUsage?: components["schemas"]["DailyUsageDto"][] | null;
         };
         MealPlanDetailDto: {
             /** Format: uuid */
@@ -2600,6 +3118,17 @@ export interface components {
             createdAt?: string;
             /** Format: date-time */
             updatedAt?: string;
+        };
+        MealPlanDtoPagedResult: {
+            items?: components["schemas"]["MealPlanDto"][] | null;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            readonly totalPages?: number;
         };
         MealPlanNutritionSummaryDto: {
             /** Format: double */
@@ -2652,6 +3181,29 @@ export interface components {
             /** Format: int32 */
             itemCount?: number;
         };
+        MyTrainerRequestDto: {
+            /** Format: uuid */
+            relationshipId?: string;
+            /** Format: uuid */
+            trainerId?: string;
+            trainerName?: string | null;
+            trainerEmail?: string | null;
+            trainerImage?: string | null;
+            status?: string | null;
+            /** Format: date-time */
+            requestedAt?: string;
+        };
+        MyTrainerRequestDtoPagedResult: {
+            items?: components["schemas"]["MyTrainerRequestDto"][] | null;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            readonly totalPages?: number;
+        };
         RecipeDetailDto: {
             /** Format: uuid */
             id?: string;
@@ -2693,14 +3245,29 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
+        RecipeDtoPagedResult: {
+            items?: components["schemas"]["RecipeDto"][] | null;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            readonly totalPages?: number;
+        };
         RecipeIngredientDto: {
             /** Format: uuid */
             foodId?: string | null;
+            /** Format: uuid */
+            subRecipeId?: string | null;
             foodName?: string | null;
+            subRecipeName?: string | null;
             /** Format: double */
             amount?: number | null;
             unit?: string | null;
             ingredientText?: string | null;
+            subRecipeNutrition?: components["schemas"]["RecipeNutritionDto"];
         };
         RecipeInstructionDto: {
             /** Format: int32 */
@@ -2716,6 +3283,8 @@ export interface components {
             carbsGrams?: number | null;
             /** Format: double */
             fatGrams?: number | null;
+            /** Format: double */
+            fiberGrams?: number | null;
         };
         RecognizedFood: {
             name?: string | null;
@@ -2760,11 +3329,6 @@ export interface components {
             canViewMeasurements?: boolean | null;
             canMessage?: boolean | null;
         };
-        SearchFoodsResult: {
-            foods?: components["schemas"]["FoodDto"][] | null;
-            /** Format: int32 */
-            totalCount?: number;
-        };
         SendMessageRequest: {
             /** Format: uuid */
             conversationId?: string;
@@ -2807,6 +3371,17 @@ export interface components {
             /** Format: date-time */
             updatedAt?: string;
         };
+        ShoppingListSummaryDtoPagedResult: {
+            items?: components["schemas"]["ShoppingListSummaryDto"][] | null;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            readonly totalPages?: number;
+        };
         SystemInfoDto: {
             environment?: string | null;
             /** Format: int64 */
@@ -2820,6 +3395,96 @@ export interface components {
         };
         ToggleItemRequest: {
             isChecked?: boolean;
+        };
+        TokenUsageDto: {
+            /** Format: uuid */
+            tokenId?: string;
+            tokenName?: string | null;
+            /** Format: int32 */
+            callCount?: number;
+            /** Format: date-time */
+            lastUsed?: string;
+        };
+        ToolUsageDto: {
+            toolName?: string | null;
+            /** Format: int32 */
+            callCount?: number;
+            /** Format: int32 */
+            successCount?: number;
+            /** Format: int32 */
+            failureCount?: number;
+            /** Format: int32 */
+            averageExecutionTimeMs?: number;
+        };
+        TrainerClientDto: {
+            /** Format: uuid */
+            relationshipId?: string;
+            /** Format: uuid */
+            clientId?: string;
+            clientName?: string | null;
+            clientEmail?: string | null;
+            status?: string | null;
+            canViewNutrition?: boolean;
+            canViewWorkouts?: boolean;
+            canMessage?: boolean;
+            /** Format: date-time */
+            startedAt?: string;
+            /** Format: date-time */
+            endedAt?: string | null;
+        };
+        TrainerClientDtoPagedResult: {
+            items?: components["schemas"]["TrainerClientDto"][] | null;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            readonly totalPages?: number;
+        };
+        TrainerPendingRequestDto: {
+            /** Format: uuid */
+            relationshipId?: string;
+            /** Format: uuid */
+            clientId?: string;
+            clientName?: string | null;
+            clientEmail?: string | null;
+            /** Format: date-time */
+            requestedAt?: string;
+        };
+        TrainerPendingRequestDtoPagedResult: {
+            items?: components["schemas"]["TrainerPendingRequestDto"][] | null;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            readonly totalPages?: number;
+        };
+        TrainerPublicDto: {
+            /** Format: uuid */
+            id?: string;
+            name?: string | null;
+            email?: string | null;
+            image?: string | null;
+            bio?: string | null;
+            specialties?: string | null;
+            /** Format: int32 */
+            clientCount?: number;
+        };
+        TrainerPublicDtoPagedResult: {
+            items?: components["schemas"]["TrainerPublicDto"][] | null;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            readonly totalPages?: number;
         };
         UpdateFoodCommand: {
             /** Format: uuid */
@@ -2880,6 +3545,20 @@ export interface components {
             name?: string | null;
             image?: string | null;
         };
+        UsageOverview: {
+            /** Format: int32 */
+            totalCalls?: number;
+            /** Format: int32 */
+            successfulCalls?: number;
+            /** Format: int32 */
+            failedCalls?: number;
+            /** Format: double */
+            successRate?: number;
+            /** Format: int32 */
+            averageExecutionTimeMs?: number;
+            /** Format: int32 */
+            uniqueTokensUsed?: number;
+        };
         UserDto: {
             /** Format: uuid */
             id?: string;
@@ -2920,6 +3599,16 @@ export interface components {
             targetCarbsGrams?: number | null;
             /** Format: double */
             targetFatGrams?: number | null;
+        };
+        ValidateTokenCommand: {
+            token?: string | null;
+        };
+        ValidateTokenResult: {
+            /** Format: uuid */
+            userId?: string;
+            isValid?: boolean;
+            /** Format: uuid */
+            tokenId?: string | null;
         };
         WorkoutExerciseDto: {
             /** Format: uuid */

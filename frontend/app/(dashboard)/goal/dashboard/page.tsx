@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { clientApi } from "@/lib/api.client";
 import Link from "next/link";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, RadialBarChart, RadialBar, PieChart, Pie, Cell } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, RadialBarChart, RadialBar, ReferenceLine } from "recharts";
 import { GoalData } from "@/types/goal";
 import Loading from "@/components/Loading";
 
@@ -224,6 +224,15 @@ export default function GoalDashboard() {
               dot={{ fill: MACRO_COLORS.calories, strokeWidth: 2, r: 6 }}
               activeDot={{ r: 8 }}
             />
+            {goal.targetCalories && (
+              <ReferenceLine
+                y={goal.targetCalories}
+                stroke={MACRO_COLORS.calories}
+                strokeDasharray="6 3"
+                strokeWidth={2}
+                label={{ value: `Target: ${goal.targetCalories} kcal`, position: "insideTopRight", fontSize: 11, fill: MACRO_COLORS.calories }}
+              />
+            )}
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -248,6 +257,15 @@ export default function GoalDashboard() {
             <Bar dataKey="protein" fill={MACRO_COLORS.protein} radius={[8, 8, 0, 0]} />
             <Bar dataKey="carbs" fill={MACRO_COLORS.carbs} radius={[8, 8, 0, 0]} />
             <Bar dataKey="fat" fill={MACRO_COLORS.fat} radius={[8, 8, 0, 0]} />
+            {goal.targetProteinGrams && (
+              <ReferenceLine y={goal.targetProteinGrams} stroke={MACRO_COLORS.protein} strokeDasharray="6 3" strokeWidth={1.5} />
+            )}
+            {goal.targetCarbsGrams && (
+              <ReferenceLine y={goal.targetCarbsGrams} stroke={MACRO_COLORS.carbs} strokeDasharray="6 3" strokeWidth={1.5} />
+            )}
+            {goal.targetFatGrams && (
+              <ReferenceLine y={goal.targetFatGrams} stroke={MACRO_COLORS.fat} strokeDasharray="6 3" strokeWidth={1.5} />
+            )}
           </BarChart>
         </ResponsiveContainer>
       </div>

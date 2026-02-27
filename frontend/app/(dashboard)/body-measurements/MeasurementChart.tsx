@@ -11,6 +11,7 @@ import {
     Tooltip,
     ResponsiveContainer,
     Legend,
+    ReferenceLine,
 } from "recharts";
 import type { BodyMeasurement } from "@/data/bodyMeasurement";
 
@@ -75,7 +76,7 @@ function TimeRangePicker({ range, onChange }: { range: TimeRange; onChange: (r: 
     );
 }
 
-function CompositionChart({ data }: { data: ReturnType<typeof buildData> }) {
+function CompositionChart({ data, targetWeight }: { data: ReturnType<typeof buildData>; targetWeight: number | null }) {
     const hasWeight = data.some((d) => d.weight !== null);
     const hasMuscle = data.some((d) => d.muscle !== null);
     const hasBodyFat = data.some((d) => d.bodyFat !== null);
@@ -119,6 +120,16 @@ function CompositionChart({ data }: { data: ReturnType<typeof buildData> }) {
                 )}
                 {hasBodyFat && (
                     <Line yAxisId="pct" type="monotone" dataKey="bodyFat" name="Body Fat" stroke="#f43f5e" strokeWidth={2} dot={{ r: 3 }} connectNulls strokeDasharray="5 3" />
+                )}
+                {targetWeight && (
+                    <ReferenceLine
+                        yAxisId="kg"
+                        y={targetWeight}
+                        stroke="#6366f1"
+                        strokeDasharray="6 3"
+                        strokeWidth={2}
+                        label={{ value: `Target: ${targetWeight} kg`, position: "insideTopRight", fontSize: 11, fill: "#6366f1" }}
+                    />
                 )}
             </ComposedChart>
         </ResponsiveContainer>
@@ -249,7 +260,7 @@ function buildData(measurements: BodyMeasurement[]) {
     }));
 }
 
-export default function MeasurementChart({ measurements }: { measurements: BodyMeasurement[] }) {
+export default function MeasurementChart({ measurements, targetWeight = null }: { measurements: BodyMeasurement[]; targetWeight?: number | null }) {
     const [range, setRange] = useState<TimeRange>("3M");
     const [tab, setTab] = useState<Tab>("composition");
     const [activeCirc, setActiveCirc] = useState<Set<CircKey>>(
@@ -320,7 +331,7 @@ export default function MeasurementChart({ measurements }: { measurements: BodyM
             )}
 
             {tab === "composition" ? (
-                <CompositionChart data={data} />
+                <CompositionChart data={data} targetWeight={targetWeight} />
             ) : (
                 <CircumferenceChart data={data} active={activeCirc} onToggle={toggleCirc} />
             )}

@@ -48,7 +48,7 @@ export async function createGoal(prevState: FormState, formData: FormData): Prom
             ]);
         }
 
-        await serverApi("/api/Goals", {
+        const result = await serverApi<{ id: string; success: boolean; message?: string; warnings?: string[] }>("/api/Goals", {
             method: "POST",
             body: {
                 goalType,
@@ -59,7 +59,11 @@ export async function createGoal(prevState: FormState, formData: FormData): Prom
             },
         });
 
-        return createSuccessState("Goal saved successfully!");
+        return {
+            status: "success",
+            message: "Goal saved successfully!",
+            warnings: result?.warnings?.length ? result.warnings : undefined,
+        };
     } catch (error) {
         goalLogger.error("Failed to save goal", { error });
         return createErrorState("Failed to save goal");

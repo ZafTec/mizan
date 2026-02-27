@@ -222,18 +222,18 @@ public class GoalHintsTests
     }
 
     [Fact]
-    public void CheckGoalSanity_MaintenanceGoalHintOnMacroImbalance()
+    public void CheckGoalSanity_MacroImbalance_WarnsWhenMacrosDontMatchCalories()
     {
-        // Maintenance goal with misaligned macros (high variance)
+        // 200g protein (800) + 100g carbs (400) + 20g fat (180) = 1380 kcal vs target 2000 — 44.9% deviation
         var hints = GoalHints.CheckGoalSanity(
             goalType: "maintenance",
             targetCalories: 2000,
-            targetProteinGrams: 200m, // 800 kcal
-            targetCarbsGrams: 100m,   // 400 kcal
-            targetFatGrams: 20m,      // 180 kcal (total 1380 kcal vs target 2000 = 31% variance)
+            targetProteinGrams: 200m,
+            targetCarbsGrams: 100m,
+            targetFatGrams: 20m,
             targetDate: null);
 
-        hints.Should().ContainSingle(h => h.Contains("maintenance") && h.Contains("closely align"));
+        hints.Should().ContainSingle(h => h.Contains("differ significantly"));
     }
 
     [Fact]

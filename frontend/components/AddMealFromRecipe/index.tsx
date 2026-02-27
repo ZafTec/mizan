@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Loading from "@/components/Loading";
 import { useRouter } from "next/navigation";
@@ -15,10 +15,32 @@ interface AddMealFromRecipeProps {
 	macros: Macros;
 }
 
+const SERVING_PRESETS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3];
+
 export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFromRecipeProps) {
 	const [formState, action, isPending] = useActionState(addMeal, EMPTY_FORM_STATE);
 	const router = useRouter();
 	const warningsRef = useRef<HTMLDivElement>(null);
+
+	const [servings, setServings] = useState(1);
+	const [vals, setVals] = useState({
+		calories: macros.calories.toFixed(0),
+		protein: macros.protein.toFixed(1),
+		carbs: macros.carbs.toFixed(1),
+		fat: macros.fat.toFixed(1),
+		fiber: macros.fiber.toFixed(1),
+	});
+
+	function scaleToServings(s: number) {
+		setServings(s);
+		setVals({
+			calories: (macros.calories * s).toFixed(0),
+			protein: (macros.protein * s).toFixed(1),
+			carbs: (macros.carbs * s).toFixed(1),
+			fat: (macros.fat * s).toFixed(1),
+			fiber: (macros.fiber * s).toFixed(1),
+		});
+	}
 
 	useEffect(() => {
 		if (formState.status === "success" && !formState.warnings?.length) {
@@ -32,6 +54,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 	return (
 		<form action={action} className="space-y-6">
 			<input type="hidden" name="recipeId" value={recipeId} />
+
 			{/* Basic Info Card */}
 			<div className="card p-6 space-y-5">
 				<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
@@ -65,11 +88,73 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 				</div>
 			</div>
 
+			{/* Serving Size Card */}
+			<div className="card p-6 space-y-4">
+				<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+					<i className="ri-scales-line text-brand-500" />
+					Serving Size
+				</h2>
+
+				<div className="flex items-center gap-3">
+					<button
+						type="button"
+						onClick={() => scaleToServings(Math.max(0.25, Math.round((servings - 0.25) * 4) / 4))}
+						className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-bold"
+					>
+						−
+					</button>
+					<div className="flex-1">
+						<input
+							type="number"
+							min={0.25}
+							step={0.25}
+							value={servings}
+							onChange={(e) => {
+								const v = parseFloat(e.target.value);
+								if (!isNaN(v) && v > 0) scaleToServings(v);
+							}}
+							className="input text-center font-semibold"
+						/>
+					</div>
+					<button
+						type="button"
+						onClick={() => scaleToServings(Math.round((servings + 0.25) * 4) / 4)}
+						className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-bold"
+					>
+						+
+					</button>
+					<span className="text-sm text-slate-500 dark:text-slate-400 shrink-0">servings</span>
+				</div>
+
+				{/* Quick presets */}
+				<div className="flex flex-wrap gap-2">
+					{SERVING_PRESETS.map((p) => (
+						<button
+							key={p}
+							type="button"
+							onClick={() => scaleToServings(p)}
+							className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+								servings === p
+									? "bg-brand-500 text-white"
+									: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+							}`}
+						>
+							{p}×
+						</button>
+					))}
+				</div>
+			</div>
+
 			{/* Nutrition Info Card */}
 			<div className="card p-6 space-y-5 text-slate-900 dark:text-slate-100">
 				<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
 					<i className="ri-heart-pulse-line text-brand-500" />
 					Nutritional Information
+					{servings !== 1 && (
+						<span className="ml-auto text-xs font-normal text-brand-500 bg-brand-50 dark:bg-brand-950/40 px-2 py-0.5 rounded-full">
+							scaled × {servings}
+						</span>
+					)}
 				</h2>
 
 				<div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -79,7 +164,8 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 							type="number"
 							id="calories"
 							name="calories"
-							defaultValue={macros.calories.toFixed(0)}
+							value={vals.calories}
+							onChange={(e) => setVals((v) => ({ ...v, calories: e.target.value }))}
 							className="input"
 							min={0}
 							required
@@ -92,7 +178,8 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 							type="number"
 							id="protein"
 							name="protein"
-							defaultValue={macros.protein.toFixed(1)}
+							value={vals.protein}
+							onChange={(e) => setVals((v) => ({ ...v, protein: e.target.value }))}
 							className="input"
 							min={0}
 							step="0.1"
@@ -106,7 +193,8 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 							type="number"
 							id="carbs"
 							name="carbs"
-							defaultValue={macros.carbs.toFixed(1)}
+							value={vals.carbs}
+							onChange={(e) => setVals((v) => ({ ...v, carbs: e.target.value }))}
 							className="input"
 							min={0}
 							step="0.1"
@@ -120,7 +208,8 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 							type="number"
 							id="fat"
 							name="fat"
-							defaultValue={macros.fat.toFixed(1)}
+							value={vals.fat}
+							onChange={(e) => setVals((v) => ({ ...v, fat: e.target.value }))}
 							className="input"
 							min={0}
 							step="0.1"
@@ -134,7 +223,8 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 							type="number"
 							id="fiber"
 							name="fiber"
-							defaultValue={macros.fiber.toFixed(1)}
+							value={vals.fiber}
+							onChange={(e) => setVals((v) => ({ ...v, fiber: e.target.value }))}
 							className="input"
 							min={0}
 							step="0.1"
@@ -148,17 +238,17 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 			{/* Status & Submit */}
 			<div className="space-y-4">
 				{formState.status === "success" && formState.warnings?.length ? (
-					<div ref={warningsRef} className="p-4 rounded-xl bg-amber-50 border border-amber-200">
+					<div ref={warningsRef} className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
 						<div className="flex items-start gap-3">
-							<i className="ri-error-warning-line text-xl text-amber-600 mt-0.5 shrink-0" />
+							<i className="ri-error-warning-line text-xl text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
 							<div>
-								<p className="font-semibold text-amber-800">Nutrition hint{formState.warnings.length > 1 ? "s" : ""}</p>
+								<p className="font-semibold text-amber-800 dark:text-amber-300">Nutrition hint{formState.warnings.length > 1 ? "s" : ""}</p>
 								<ul className="mt-2 space-y-1.5">
 									{formState.warnings.map((w, i) => (
-										<li key={i} className="text-sm text-amber-700">{w}</li>
+										<li key={i} className="text-sm text-amber-700 dark:text-amber-300">{w}</li>
 									))}
 								</ul>
-								<p className="text-xs text-amber-500 mt-3">Your entry was saved. You can adjust it or continue to the diary.</p>
+								<p className="text-xs text-amber-500 dark:text-amber-400 mt-3">Your entry was saved. You can adjust it or continue to the diary.</p>
 							</div>
 						</div>
 					</div>
@@ -175,23 +265,23 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 						Continue to Diary
 					</Link>
 				) : (
-				<button
-					type="submit"
-					disabled={isPending}
-					className="btn-primary w-full py-3.5 text-lg"
-				>
-					{isPending ? (
-						<>
-							<Loading size="sm" />
-							Logging Meal...
-						</>
-					) : (
-						<>
-							<i className="ri-check-line text-xl" />
-							Confirm & Log Meal
-						</>
-					)}
-				</button>
+					<button
+						type="submit"
+						disabled={isPending}
+						className="btn-primary w-full py-3.5 text-lg"
+					>
+						{isPending ? (
+							<>
+								<Loading size="sm" />
+								Logging Meal...
+							</>
+						) : (
+							<>
+								<i className="ri-check-line text-xl" />
+								Confirm & Log Meal
+							</>
+						)}
+					</button>
 				)}
 			</div>
 		</form>

@@ -8,7 +8,7 @@ import { deleteMeal } from "@/data/meal";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 // Assuming radix-ui wrap or similar, if not I'll just use HTML progress or div.
 // Actually I don't see components/ui/progress in file list. I will use custom div.
 import Loading from "@/components/Loading";
@@ -249,6 +249,15 @@ export default function MealsPage() {
 							cursor={{ fill: '#f1f5f9' }}
 						/>
 						<Bar dataKey="calories" fill="#f97316" radius={[4, 4, 0, 0]} name="Calories" />
+					{goal?.targetCalories && (
+						<ReferenceLine
+							y={goal.targetCalories}
+							stroke="#f97316"
+							strokeDasharray="6 3"
+							strokeWidth={2}
+							label={{ value: `Goal: ${goal.targetCalories}`, position: "insideTopRight", fontSize: 11, fill: "#f97316" }}
+						/>
+					)}
 					</BarChart>
 				</ResponsiveContainer>
 			</div>

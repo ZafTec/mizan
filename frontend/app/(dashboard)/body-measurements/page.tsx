@@ -1,4 +1,5 @@
 import { getBodyMeasurements } from "@/data/bodyMeasurement";
+import { getCurrentGoal } from "@/data/goal";
 import { getUserServer } from "@/helper/session";
 import AddMeasurementForm from "./AddMeasurementForm";
 import DeleteMeasurementButton from "./DeleteMeasurementButton";
@@ -23,9 +24,10 @@ export default async function BodyMeasurementsPage({
     await getUserServer();
     const params = await searchParams;
     const { page, sortBy, sortOrder } = parseListParams(params, { sortBy: 'Date', sortOrder: 'desc' });
-    const [tableResult, chartResult] = await Promise.all([
+    const [tableResult, chartResult, goal] = await Promise.all([
         getBodyMeasurements(page, 20, sortBy ?? undefined, sortOrder),
         getBodyMeasurements(1, 200, "Date", "desc"),
+        getCurrentGoal(),
     ]);
     const { bodyMeasurements: measurements, totalCount, totalPages } = tableResult;
     const allMeasurements = chartResult.bodyMeasurements;
@@ -114,7 +116,7 @@ export default async function BodyMeasurementsPage({
 
             <AddMeasurementForm />
 
-            <MeasurementChart measurements={allMeasurements} />
+            <MeasurementChart measurements={allMeasurements} targetWeight={goal?.targetWeight ?? null} />
 
             <div className="card p-6">
                 <h2 className="section-title mb-6">Measurement History</h2>
