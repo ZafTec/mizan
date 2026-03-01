@@ -17,6 +17,8 @@ import { getBetterAuthSecondaryStorage } from "@/lib/redis";
 
 import * as schema from "@/db/schema";
 
+import { dash } from "@better-auth/infra";
+
 const authLogger = logger.createModuleLogger("auth-server");
 
 authLogger.debug("BetterAuth environment variables", {
@@ -25,7 +27,7 @@ authLogger.debug("BetterAuth environment variables", {
   BETTER_AUTH_AUDIENCE: process.env.BETTER_AUTH_AUDIENCE,
   API_URL: process.env.API_URL,
   NODE_ENV: process.env.NODE_ENV,
-  REDIS_URL: process.env.REDIS_URL ? "<set>" : "<not set>",
+  REDIS_URL: process.env.REDIS_URL ?? "<not set>",
 });
 
 const hasRedis = !!process.env.REDIS_URL;
@@ -132,9 +134,7 @@ export const auth = betterAuth({
       expiresIn: 60 * 15, // 15 minutes
       disableSignUp: true, // only existing users can use magic link on forgot-password
       sendMagicLink: async ({ email, url }) => {
-        if (process.env.NODE_ENV !== "production") {
-          authLogger.debug("Magic link requested", { email, url });
-        }
+        authLogger.debug("Magic link requested", { email, url });
         try {
           const emailTemplate = getMagicLinkEmailTemplate(url);
           await sendEmail({
@@ -153,6 +153,7 @@ export const auth = betterAuth({
         }
       },
     }),
+    dash(),
   ],
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
@@ -235,7 +236,7 @@ export const auth = betterAuth({
   trustedOrigins: [
     process.env.BETTER_AUTH_URL!,
     process.env.API_URL!,
-  ],
+  ]
 });
 
 export type Session = typeof auth.$Infer.Session;

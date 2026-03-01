@@ -3,6 +3,7 @@
 import { createAuthClient } from "better-auth/react";
 import { adminClient, magicLinkClient } from "better-auth/client/plugins";
 import { ac, adminRole, trainerRole, userRole } from "@/lib/permissions";
+import { sentinelClient } from "@better-auth/infra/client";
 
 const betterAuthUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BETTER_AUTH_URL;
 
@@ -32,6 +33,7 @@ export const authClient = createAuthClient({
         admin: adminRole,
       },
     }),
+    sentinelClient(),
   ],
 });
 
