@@ -64,6 +64,12 @@ export async function addUser(prevState: FormState, formData: FormData): Promise
             ]);
         }
 
+        if (message.includes("PASSWORD_COMPROMISED") || message.toLowerCase().includes("compromised")) {
+            return createErrorState("This password has been exposed in a data breach. Please choose a different password.", [
+                { field: "password", message: "Password has been compromised in a known data breach" },
+            ]);
+        }
+
         return createErrorState("Failed to create account. Please try again.");
     }
 }

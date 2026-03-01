@@ -1,7 +1,7 @@
 "use client";
 
 import { createAuthClient } from "better-auth/react";
-import { adminClient, magicLinkClient } from "better-auth/client/plugins";
+import { adminClient, lastLoginMethodClient, magicLinkClient } from "better-auth/client/plugins";
 import { ac, adminRole, trainerRole, userRole } from "@/lib/permissions";
 import { sentinelClient } from "@better-auth/infra/client";
 
@@ -24,6 +24,7 @@ export const authClient = createAuthClient({
     },
   },
   plugins: [
+    lastLoginMethodClient(),
     magicLinkClient(),
     adminClient({
       ac,

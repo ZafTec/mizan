@@ -1,7 +1,7 @@
 import "server-only";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { admin, jwt, magicLink } from "better-auth/plugins";
+import { admin, haveIBeenPwned, jwt, lastLoginMethod, magicLink } from "better-auth/plugins";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import {
@@ -154,6 +154,8 @@ export const auth = betterAuth({
       },
     }),
     dash(),
+    lastLoginMethod(),
+    haveIBeenPwned(),
   ],
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
