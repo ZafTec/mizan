@@ -70,6 +70,9 @@ export default async function Page({
 		fat: recipe.nutrition?.fatGrams || 0,
 		fiber: recipe.nutrition?.fiberGrams || 0,
 	};
+	const proteinCalRatio = macrosPerServing.calories > 0
+		? (macrosPerServing.protein * 4 / macrosPerServing.calories) * 100
+		: 0;
 
 	return (
 		<div className="max-w-4xl mx-auto space-y-6">
@@ -118,7 +121,7 @@ export default async function Page({
 						{recipe.servings} servings
 					</span>
 				</div>
-				<div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+				<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
 					<div className="text-center p-4 bg-white rounded-xl">
 						<div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-fire-line text-orange-600" />
@@ -164,6 +167,17 @@ export default async function Page({
 						</p>
 						<p className="text-xs text-slate-500">Fiber</p>
 					</div>
+					{proteinCalRatio > 0 && (
+						<div className="text-center p-4 bg-white rounded-xl">
+							<div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center mx-auto mb-2">
+								<i className="ri-percent-line text-violet-600" />
+							</div>
+							<p className="text-2xl font-bold text-slate-900">
+								{proteinCalRatio.toFixed(0)}%
+							</p>
+							<p className="text-xs text-slate-500">P/Cal Ratio</p>
+						</div>
+					)}
 				</div>
 			</div>
 

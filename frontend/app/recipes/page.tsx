@@ -30,8 +30,9 @@ export default async function RecipesPage({
 			? rawTags
 			: [rawTags]
 		: [];
+	const minPcal = typeof params.minPcal === "string" ? parseInt(params.minPcal) : 0;
 
-	const { recipes, totalPages, totalCount } = await getAllRecipes(
+	const { recipes: rawRecipes, totalPages, totalCount } = await getAllRecipes(
 		searchTerm,
 		page,
 		10,
@@ -40,12 +41,20 @@ export default async function RecipesPage({
 		sortOrder,
 		tags.length > 0 ? tags : undefined,
 	);
+	const recipes = minPcal > 0
+		? rawRecipes.filter((r) => {
+			const cal = r.nutrition?.caloriesPerServing || 0;
+			const prot = r.nutrition?.proteinGrams || 0;
+			return cal > 0 && (prot * 4 / cal) * 100 >= minPcal;
+		})
+		: rawRecipes;
 	const user = await getUserOptionalServer();
 
 	const listUrlParams: Record<string, string> = {};
 	if (searchTerm) listUrlParams.search = searchTerm;
 	if (sortBy) listUrlParams.sortBy = sortBy;
 	if (sortOrder) listUrlParams.sortOrder = sortOrder;
+	if (minPcal > 0) listUrlParams.minPcal = String(minPcal);
 	const baseUrl = buildListUrl("/recipes", listUrlParams);
 
 	let favoriteCount = 0;

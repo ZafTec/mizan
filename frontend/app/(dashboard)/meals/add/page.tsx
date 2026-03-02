@@ -5,12 +5,15 @@ import Loading from "@/components/Loading";
 import { addMeal } from "@/data/meal";
 import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useActionState, useEffect, useRef } from "react";
 
 export default function Page() {
 	const [formState, action, isPending] = useActionState(addMeal, EMPTY_FORM_STATE);
 	const router = useRouter();
+	const searchParams = useSearchParams();
+	const today = new Date().toISOString().split("T")[0];
+	const defaultDate = searchParams.get("date") || today;
 
 	const warningsRef = useRef<HTMLDivElement>(null);
 
@@ -44,7 +47,7 @@ export default function Page() {
 						Meal Details
 					</h2>
 
-					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+					<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 						<div>
 							<label htmlFor="name" className="label">Meal Name</label>
 							<input
@@ -65,6 +68,18 @@ export default function Page() {
 								<option value="DRINK">Drink</option>
 							</select>
 							<FieldError formState={formState} name="mealType" />
+						</div>
+						<div>
+							<label htmlFor="date" className="label">Date</label>
+							<input
+								type="date"
+								id="date"
+								name="date"
+								defaultValue={defaultDate}
+								max={today}
+								className="input"
+							/>
+							<FieldError formState={formState} name="date" />
 						</div>
 					</div>
 				</div>

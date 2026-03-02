@@ -26,6 +26,7 @@ interface RecipeFiltersProps {
 	currentTags?: string[];
 	currentSortBy?: string;
 	currentSortOrder?: string;
+	currentMinPcal?: number;
 }
 
 export default function RecipeFilters({
@@ -33,28 +34,34 @@ export default function RecipeFilters({
 	currentTags = [],
 	currentSortBy,
 	currentSortOrder,
+	currentMinPcal,
 }: RecipeFiltersProps) {
 	const router = useRouter();
 	const [search, setSearch] = useState(currentSearch);
+	const [minPcal, setMinPcal] = useState(currentMinPcal?.toString() ?? "");
 	const debouncedSearch = useDebounce(search, 400);
+	const debouncedMinPcal = useDebounce(minPcal, 500);
 
 	const buildUrl = useCallback(
-		(overrides: { search?: string; tags?: string[]; sortBy?: string; sortOrder?: string }) => {
+		(overrides: { search?: string; tags?: string[]; sortBy?: string; sortOrder?: string; minPcal?: string }) => {
 			const params = new URLSearchParams();
 			const s = overrides.search ?? debouncedSearch;
 			const t = overrides.tags ?? currentTags;
 			const sb = overrides.sortBy ?? currentSortBy;
 			const so = overrides.sortOrder ?? currentSortOrder;
+			const mp = overrides.minPcal ?? debouncedMinPcal;
 
 			if (s) params.set("search", s);
 			t.forEach((tag) => params.append("tags", tag));
 			if (sb) params.set("sortBy", sb);
 			if (so) params.set("sortOrder", so);
+			const mpNum = parseInt(mp);
+			if (!isNaN(mpNum) && mpNum > 0) params.set("minPcal", String(mpNum));
 
 			const qs = params.toString();
 			return qs ? `/recipes?${qs}` : "/recipes";
 		},
-		[debouncedSearch, currentTags, currentSortBy, currentSortOrder],
+		[debouncedSearch, currentTags, currentSortBy, currentSortOrder, debouncedMinPcal],
 	);
 
 	useEffect(() => {
@@ -62,6 +69,15 @@ export default function RecipeFilters({
 			router.push(buildUrl({ search: debouncedSearch }));
 		}
 	}, [debouncedSearch, currentSearch, router, buildUrl]);
+
+	useEffect(() => {
+		const parsed = parseInt(debouncedMinPcal);
+		const currentVal = currentMinPcal ?? 0;
+		const newVal = isNaN(parsed) ? 0 : parsed;
+		if (newVal !== currentVal) {
+			router.push(buildUrl({ minPcal: debouncedMinPcal }));
+		}
+	}, [debouncedMinPcal, currentMinPcal, router, buildUrl]);
 
 	const toggleTag = (tag: string) => {
 		const next = currentTags.includes(tag)
@@ -91,6 +107,23 @@ export default function RecipeFilters({
 						onChange={(e) => setSearch(e.target.value)}
 						className="input pl-10 w-full"
 					/>
+				</div>
+				<div className="flex items-center gap-2">
+					<label className="text-sm font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap">
+						Min P/Cal
+					</label>
+					<div className="relative w-20">
+						<input
+							type="number"
+							min={0}
+							max={100}
+							placeholder="0"
+							value={minPcal}
+							onChange={(e) => setMinPcal(e.target.value)}
+							className="input text-center pr-6"
+						/>
+						<span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
+					</div>
 				</div>
 				<select
 					value={currentSortIndex >= 0 ? currentSortIndex : ""}

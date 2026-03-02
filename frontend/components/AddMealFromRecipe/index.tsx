@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Loading from "@/components/Loading";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { addMeal } from "@/data/meal";
 import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
 import { FieldError } from "@/components/FieldError";
@@ -20,7 +20,10 @@ const SERVING_PRESETS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3];
 export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFromRecipeProps) {
 	const [formState, action, isPending] = useActionState(addMeal, EMPTY_FORM_STATE);
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const warningsRef = useRef<HTMLDivElement>(null);
+	const today = new Date().toISOString().split("T")[0];
+	const defaultDate = searchParams.get("date") || today;
 
 	const [servings, setServings] = useState(1);
 	const [vals, setVals] = useState({
@@ -62,7 +65,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 					Log Details
 				</h2>
 
-				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+				<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 					<div>
 						<label htmlFor="name" className="label">Meal Name</label>
 						<input
@@ -84,6 +87,18 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 							<option value="DRINK">Drink</option>
 						</select>
 						<FieldError formState={formState} name="mealType" />
+					</div>
+					<div>
+						<label htmlFor="date" className="label">Date</label>
+						<input
+							type="date"
+							id="date"
+							name="date"
+							defaultValue={defaultDate}
+							max={today}
+							className="input"
+						/>
+						<FieldError formState={formState} name="date" />
 					</div>
 				</div>
 			</div>

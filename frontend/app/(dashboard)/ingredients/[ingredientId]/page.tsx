@@ -31,6 +31,9 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 	const proteinPercentage = totalMacros > 0 ? (ingredient.proteinPer100g / totalMacros) * 100 : 0;
 	const carbsPercentage = totalMacros > 0 ? (ingredient.carbsPer100g / totalMacros) * 100 : 0;
 	const fatPercentage = totalMacros > 0 ? (ingredient.fatPer100g / totalMacros) * 100 : 0;
+	const proteinCalRatio = ingredient.caloriesPer100g > 0
+		? (ingredient.proteinPer100g * 4 / ingredient.caloriesPer100g) * 100
+		: 0;
 
 	return (
 		<div className="max-w-3xl mx-auto space-y-6">
@@ -91,6 +94,17 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 						<p className="text-xs text-slate-500">Fiber</p>
 					</div>
 				</div>
+				{proteinCalRatio > 0 && (
+					<div className="mt-4 flex items-center gap-3 p-3 bg-white rounded-xl">
+						<div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">
+							<i className="ri-percent-line text-violet-600" />
+						</div>
+						<div>
+							<p className="text-lg font-bold text-slate-900">{proteinCalRatio.toFixed(0)}%</p>
+							<p className="text-xs text-slate-500">Protein-to-Calorie Ratio</p>
+						</div>
+					</div>
+				)}
 			</div>
 
 			<div className="card p-6">

@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { signOut } from "@/lib/auth-client";
 
 interface NavbarContentProps {
@@ -95,8 +96,8 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 
 	return (
 		<>
-		{showLogoutModal && (
-			<div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowLogoutModal(false)}>
+		{showLogoutModal && createPortal(
+			<div className="fixed inset-0 bg-black/50 z-100 flex items-center justify-center p-4" onClick={() => setShowLogoutModal(false)}>
 				<div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
 					<div className="flex items-center gap-3 mb-4">
 						<div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
@@ -120,7 +121,8 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 						</button>
 					</div>
 				</div>
-			</div>
+			</div>,
+			document.body
 		)}
 		<div className="flex items-center gap-2" data-testid="navbar">
 			{/* Desktop Navigation */}
@@ -261,7 +263,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 						ref={menuRef}
 						id="mobile-nav-menu"
 						data-testid="nav-mobile-menu"
-						className="fixed top-[4.5rem] left-0 right-0 mx-4 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 md:hidden animate-fade-in z-50"
+						className="fixed top-18 left-0 right-0 mx-4 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 md:hidden animate-fade-in z-50"
 					>
 						<nav className="flex flex-col gap-1">
 							<NavLink href="/ingredients" onClick={closeMenu}>

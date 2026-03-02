@@ -105,7 +105,7 @@ export function getVerificationEmailTemplate(url: string, userName?: string) {
               </p>
             </div>
             <div class="footer">
-              <p>© 2025 Mizan. All rights reserved.</p>
+              <p>© 2026 Mizan. All rights reserved.</p>
             </div>
           </div>
         </body>
@@ -153,7 +153,7 @@ export function getMagicLinkEmailTemplate(url: string, userName?: string) {
               </div>
             </div>
             <div class="footer">
-              <p>© 2025 Mizan. All rights reserved.</p>
+              <p>© 2026 Mizan. All rights reserved.</p>
             </div>
           </div>
         </body>
@@ -201,7 +201,7 @@ export function getSignInNotificationEmailTemplate(ipAddress?: string | null, us
               </div>
             </div>
             <div class="footer">
-              <p>© 2025 Mizan. All rights reserved.</p>
+              <p>© 2026 Mizan. All rights reserved.</p>
             </div>
           </div>
         </body>
@@ -249,7 +249,7 @@ export function getPasswordResetEmailTemplate(url: string, userName?: string) {
               </div>
             </div>
             <div class="footer">
-              <p>© 2025 Mizan. All rights reserved.</p>
+              <p>© 2026 Mizan. All rights reserved.</p>
             </div>
           </div>
         </body>

@@ -5,6 +5,7 @@ import SearchBar from "@/components/IngredientTable/SearchInputField";
 import { getUserOptionalServer } from "@/helper/session";
 import Pagination from "@/components/Pagination";
 import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
+import IngredientFilters from "./IngredientFilters";
 
 export const dynamic = 'force-dynamic';
 
@@ -15,8 +16,16 @@ export default async function Page(
 	const params = await searchParams;
 	const { page, sortBy, sortOrder } = parseListParams(params);
 	const searchIngredient = params.searchIngredient as string | undefined;
-	const { ingredients, totalPages, totalCount } = await getAllIngredient(searchIngredient, sortBy ?? undefined, sortOrder, page, 10);
-	const baseUrl = buildListUrl('/ingredients', { searchIngredient, sortBy, sortOrder });
+	const minPcal = typeof params.minPcal === "string" ? parseInt(params.minPcal) : 0;
+	const { ingredients: rawIngredients, totalPages, totalCount } = await getAllIngredient(searchIngredient, sortBy ?? undefined, sortOrder, page, 10);
+	const ingredients = minPcal > 0
+		? rawIngredients.filter((ing) => {
+			const cal = ing.caloriesPer100g || 0;
+			const prot = ing.proteinPer100g || 0;
+			return cal > 0 && (prot * 4 / cal) * 100 >= minPcal;
+		})
+		: rawIngredients;
+	const baseUrl = buildListUrl('/ingredients', { searchIngredient, sortBy, sortOrder, ...(minPcal > 0 ? { minPcal: String(minPcal) } : {}) });
 
 	return (
 		<div className="space-y-6" data-testid="ingredient-list">
@@ -27,6 +36,7 @@ export default async function Page(
 				</div>
 				<div className="flex items-center gap-3">
 					<SearchBar />
+					<IngredientFilters currentMinPcal={minPcal || undefined} />
 					{user && (
 						<Link href="/ingredients/add" className="btn-primary">
 							<i className="ri-add-line" />
@@ -47,12 +57,13 @@ export default async function Page(
 								<th className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Fat</th>
 								<th className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Carbs</th>
 								<th className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Fiber</th>
+								<th className="text-center px-4 py-4 text-sm font-semibold text-violet-600">P/Cal</th>
 							</tr>
 						</thead>
 						<tbody className="divide-y divide-slate-100">
 							{!ingredients || ingredients.length === 0 ? (
 								<tr>
-									<td colSpan={6} className="px-6 py-16 text-center">
+									<td colSpan={7} className="px-6 py-16 text-center">
 										<div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
 											<i className="ri-leaf-line text-3xl text-slate-400" />
 										</div>
@@ -97,6 +108,11 @@ export default async function Page(
 										<td className="px-4 py-4 text-center">
 											<span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-green-50 text-green-700 text-sm font-medium">
 												{ingredient.fiberPer100g ?? 0}g
+											</span>
+										</td>
+										<td className="px-4 py-4 text-center">
+											<span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-violet-50 text-violet-700 text-sm font-medium">
+												{ingredient.caloriesPer100g > 0 ? ((ingredient.proteinPer100g * 4 / ingredient.caloriesPer100g) * 100).toFixed(0) : 0}%
 											</span>
 										</td>
 									</tr>

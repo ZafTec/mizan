@@ -9,7 +9,7 @@ import { deleteMeal } from "@/data/meal";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 // Assuming radix-ui wrap or similar, if not I'll just use HTML progress or div.
 // Actually I don't see components/ui/progress in file list. I will use custom div.
 import Loading from "@/components/Loading";
@@ -20,6 +20,7 @@ interface DailyStat {
 	protein: number;
 	carbs: number;
 	fat: number;
+	proteinCalRatio: number;
 }
 
 export default function MealsPage() {
@@ -99,6 +100,7 @@ export default function MealsPage() {
 					protein: d.protein,
 					carbs: d.carbs,
 					fat: d.fat,
+					proteinCalRatio: d.calories > 0 ? Math.round((d.protein * 4 / d.calories) * 100) : 0,
 				})));
 
 			} catch (err) {
@@ -117,6 +119,7 @@ export default function MealsPage() {
 	const totalCarbs = todayMeals.reduce((sum, meal) => sum + (meal.carbsGrams || 0), 0);
 	const totalFat = todayMeals.reduce((sum, meal) => sum + (meal.fatGrams || 0), 0);
 	const totalFiber = todayMeals.reduce((sum, meal) => sum + (meal.fiberGrams || 0), 0);
+	const dailyProteinCalRatio = totalCalories > 0 ? (totalProtein * 4 / totalCalories) * 100 : 0;
 
 	// Goal percentages
 	const caloriePct = goal?.targetCalories ? Math.min(100, (totalCalories / goal.targetCalories) * 100) : 0;
@@ -224,11 +227,14 @@ export default function MealsPage() {
 							</div>
 						</div>
 					</div>
-					{totalFiber > 0 && (
-						<p className="text-sm text-slate-500 mt-3">
-							Fiber intake: <span className="font-medium text-green-600">{totalFiber.toFixed(1)}g</span>
-						</p>
-					)}
+					<div className="flex flex-wrap gap-4 mt-3 text-sm text-slate-500">
+						{totalFiber > 0 && (
+							<p>Fiber: <span className="font-medium text-green-600">{totalFiber.toFixed(1)}g</span></p>
+						)}
+						{dailyProteinCalRatio > 0 && (
+							<p>P/Cal Ratio: <span className="font-medium text-violet-600">{dailyProteinCalRatio.toFixed(0)}%</span></p>
+						)}
+					</div>
 				</div>
 			)}
 
@@ -258,15 +264,16 @@ export default function MealsPage() {
 							cursor={{ fill: '#f1f5f9' }}
 						/>
 						<Bar dataKey="calories" fill="#f97316" radius={[4, 4, 0, 0]} name="Calories" />
-					{goal?.targetCalories && (
-						<ReferenceLine
-							y={goal.targetCalories}
-							stroke="#f97316"
-							strokeDasharray="6 3"
-							strokeWidth={2}
-							label={{ value: `Goal: ${goal.targetCalories}`, position: "insideTopRight", fontSize: 11, fill: "#f97316" }}
-						/>
-					)}
+						{goal && (goal.targetCalories ?? 0) > 0 && (
+							<ReferenceLine
+								y={goal.targetCalories}
+								stroke="#f97316"
+								strokeDasharray="6 3"
+								strokeWidth={2}
+								ifOverflow="extendDomain"
+								label={{ value: `Goal: ${goal.targetCalories}`, position: "insideTopRight", fontSize: 11, fill: "#f97316" }}
+							/>
+						)}
 					</BarChart>
 				</ResponsiveContainer>
 			</div>
@@ -287,6 +294,23 @@ export default function MealsPage() {
 						<Bar dataKey="carbs" stackId="macros" fill="#f59e0b" radius={[0, 0, 0, 0]} name="Carbs (g)" />
 						<Bar dataKey="fat" stackId="macros" fill="#eab308" radius={[4, 4, 0, 0]} name="Fat (g)" />
 					</BarChart>
+				</ResponsiveContainer>
+			</div>
+
+			{/* P/Cal Ratio Trend */}
+			<div className="card p-6 h-72">
+				<h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
+					<i className="ri-percent-line text-violet-500" />
+					Protein/Calorie Ratio (Last {rangeDays} Days)
+				</h2>
+				<ResponsiveContainer width="100%" height="85%">
+					<LineChart data={history}>
+						<CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+						<XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+						<YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} unit="%" domain={[0, 'auto']} />
+						<Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value) => [`${value}%`, 'P/Cal Ratio']} />
+						<Line type="monotone" dataKey="proteinCalRatio" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: '#8b5cf6', r: 3 }} name="P/Cal Ratio (%)" />
+					</LineChart>
 				</ResponsiveContainer>
 			</div>
 
@@ -325,6 +349,7 @@ export default function MealsPage() {
 											<span>C: {meal.carbsGrams?.toFixed(1)}g</span>
 											<span>F: {meal.fatGrams?.toFixed(1)}g</span>
 											{(meal.fiberGrams ?? 0) > 0 && <span>Fiber: {meal.fiberGrams?.toFixed(1)}g</span>}
+											{(meal.calories || 0) > 0 && (meal.proteinGrams || 0) > 0 && <span className="text-violet-600">P/Cal: {((meal.proteinGrams! * 4 / meal.calories!) * 100).toFixed(0)}%</span>}
 										</div>
 									</div>
 									<button
