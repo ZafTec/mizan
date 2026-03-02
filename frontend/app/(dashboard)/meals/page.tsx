@@ -2,6 +2,7 @@
 
 import { getMeal, getDailyTotals, MealEntry } from "@/data/meal";
 import { getCurrentGoal, UserGoal } from "@/data/goal";
+import { getStreak, StreakInfo } from "@/data/achievement";
 import { useSession } from "@/lib/auth-client";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import { deleteMeal } from "@/data/meal";
@@ -34,6 +35,7 @@ export default function MealsPage() {
 	const [history, setHistory] = useState<DailyStat[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [streak, setStreak] = useState<StreakInfo | null>(null);
 	const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 	const [mealToDelete, setMealToDelete] = useState<{ id: string; name: string } | null>(null);
 
@@ -59,9 +61,12 @@ export default function MealsPage() {
 		if (!mealToDelete) return;
 		const result = await deleteMeal(mealToDelete.id);
 		if (result.success) {
-			// Refresh the meal list
-			const meals = await getMeal(queryDate);
+			const [meals, streakInfo] = await Promise.all([
+				getMeal(queryDate),
+				getStreak()
+			]);
 			setTodayMeals(meals);
+			setStreak(streakInfo);
 		}
 		setMealToDelete(null);
 	};
@@ -75,13 +80,15 @@ export default function MealsPage() {
 				setError(null);
 
 				// Parallel fetch
-				const [meals, userGoal] = await Promise.all([
+				const [meals, userGoal, streakInfo] = await Promise.all([
 					getMeal(queryDate),
-					getCurrentGoal()
+					getCurrentGoal(),
+					getStreak()
 				]);
 
 				setTodayMeals(meals);
 				setGoal(userGoal);
+				setStreak(streakInfo);
 
 				// Fetch history (last 7 days from selected date)
 				// Note: ideally backend endpoint. For now client loop.
@@ -154,7 +161,15 @@ export default function MealsPage() {
 			{/* Header & Date Nav */}
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
-					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Food Diary</h1>
+					<div className="flex items-center gap-3">
+						<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Food Diary</h1>
+						{streak && streak.currentStreak > 0 && (
+							<span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-sm font-medium bg-orange-100 text-orange-700">
+								<i className="ri-fire-fill" />
+								{streak.currentStreak} day streak
+							</span>
+						)}
+					</div>
 					<p className="text-slate-500 mt-1">Track your daily nutrition intake</p>
 				</div>
 				<div className="flex items-center gap-4">

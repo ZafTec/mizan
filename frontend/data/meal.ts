@@ -3,6 +3,7 @@
 import { serverApi } from "@/lib/api.server";
 import { logger } from "@/lib/logger";
 import { createErrorState, createSuccessState, FormState } from "@/helper/FormErrorHandler";
+import { updateStreak } from "@/data/achievement";
 
 const mealLogger = logger.createModuleLogger("meal-data");
 
@@ -105,6 +106,7 @@ export async function addMeal(prevState: FormState, formData: FormData): Promise
         });
 
         mealLogger.info("Meal logged successfully", { mealType, servings, date });
+        updateStreak().catch(() => {});
         return {
             status: "success",
             message: "Meal logged successfully!",
