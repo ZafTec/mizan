@@ -1,5 +1,5 @@
 {
-  "id": "a7a48a82-e692-4f6e-83b2-6e3bc2a30a80",
+  "id": "cc7007fb-3800-44af-a3dc-0d6d01bfd1c4",
   "prevId": "dd4c20ae-7b62-4b70-b7f7-98ab60af5b81",
   "version": "7",
   "dialect": "postgresql",
@@ -208,7 +208,7 @@
         },
         "last_request": {
           "name": "last_request",
-          "type": "integer",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": true
         }

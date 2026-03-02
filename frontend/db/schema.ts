@@ -47,11 +47,7 @@ import {
   boolean,
   timestamp,
   integer,
-  decimal,
-  date,
-  jsonb,
-  primaryKey,
-  unique,
+  bigint,
   index,
 } from "drizzle-orm/pg-core";
 
@@ -132,5 +128,5 @@ export const rateLimit = pgTable("rateLimit", {
   id: varchar("id", { length: 255 }).primaryKey(),
   key: varchar("key", { length: 255 }).notNull(),
   count: integer("count").notNull(),
-  lastRequest: integer("last_request").notNull(),
+  lastRequest: bigint("last_request", { mode: "number" }).notNull(),
 });
