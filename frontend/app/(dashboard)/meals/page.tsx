@@ -1,6 +1,6 @@
 "use client";
 
-import { getMeal, getDailyTotals, MealEntry } from "@/data/meal";
+import { getMeal, getDailyTotals, getNutritionRange, MealEntry, DailyNutritionSummary } from "@/data/meal";
 import { getCurrentGoal, UserGoal } from "@/data/goal";
 import { getStreak, StreakInfo } from "@/data/achievement";
 import { useSession } from "@/lib/auth-client";
@@ -36,6 +36,7 @@ export default function MealsPage() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [streak, setStreak] = useState<StreakInfo | null>(null);
+	const [rangeDays, setRangeDays] = useState(7);
 	const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 	const [mealToDelete, setMealToDelete] = useState<{ id: string; name: string } | null>(null);
 
@@ -90,32 +91,15 @@ export default function MealsPage() {
 				setGoal(userGoal);
 				setStreak(streakInfo);
 
-				// Fetch history (last 7 days from selected date)
-				// Note: ideally backend endpoint. For now client loop.
-				const historyData: DailyStat[] = [];
-				const dates: string[] = [];
-				for (let i = 6; i >= 0; i--) {
-					const d = new Date(queryDate);
-					d.setDate(d.getDate() - i);
-					dates.push(d.toISOString().split("T")[0]);
-				}
-
-				// Fetch totals for these dates
-				const historyResults = await Promise.all(
-					dates.map(d => getDailyTotals(d))
-				);
-
-				historyResults.forEach((res, idx) => {
-					historyData.push({
-						date: dates[idx].slice(5), // mm-dd
-						calories: res?.calories || 0,
-						protein: res?.protein || 0,
-						carbs: res?.carbs || 0,
-						fat: res?.fat || 0
-					});
-				});
-
-				setHistory(historyData);
+				// Fetch history using range endpoint
+				const rangeData = await getNutritionRange(rangeDays, queryDate);
+				setHistory(rangeData.map(d => ({
+					date: d.date.slice(5),
+					calories: d.calories,
+					protein: d.protein,
+					carbs: d.carbs,
+					fat: d.fat,
+				})));
 
 			} catch (err) {
 				console.error("Failed to load data:", err);
@@ -126,7 +110,7 @@ export default function MealsPage() {
 		}
 
 		loadData();
-	}, [session, queryDate]);
+	}, [session, queryDate, rangeDays]);
 
 	const totalCalories = todayMeals.reduce((sum, meal) => sum + (meal.calories || 0), 0);
 	const totalProtein = todayMeals.reduce((sum, meal) => sum + (meal.proteinGrams || 0), 0);
@@ -250,10 +234,20 @@ export default function MealsPage() {
 
 			{/* History Chart */}
 			<div className="card p-6 h-100">
-				<h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-2">
-					<i className="ri-bar-chart-fill text-brand-500" />
-					Last 7 Days (Calories)
-				</h2>
+				<div className="flex items-center justify-between mb-6">
+					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+						<i className="ri-bar-chart-fill text-brand-500" />
+						Last {rangeDays} Days (Calories)
+					</h2>
+					<div className="flex gap-1 bg-slate-100 rounded-lg p-1">
+						{[7, 14, 30].map(d => (
+							<button key={d} onClick={() => setRangeDays(d)}
+								className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${rangeDays === d ? "bg-white shadow text-brand-600" : "text-slate-600 hover:text-slate-900"}`}>
+								{d}d
+							</button>
+						))}
+					</div>
+				</div>
 				<ResponsiveContainer width="100%" height="85%">
 					<BarChart data={history}>
 						<CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -277,6 +271,24 @@ export default function MealsPage() {
 				</ResponsiveContainer>
 			</div>
 
+			{/* Macro Breakdown Chart */}
+			<div className="card p-6 h-80">
+				<h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
+					<i className="ri-stack-fill text-brand-500" />
+					Macro Breakdown (Last {rangeDays} Days)
+				</h2>
+				<ResponsiveContainer width="100%" height="85%">
+					<BarChart data={history}>
+						<CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+						<XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+						<YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} unit="g" />
+						<Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} cursor={{ fill: '#f1f5f9' }} />
+						<Bar dataKey="protein" stackId="macros" fill="#ef4444" radius={[0, 0, 0, 0]} name="Protein (g)" />
+						<Bar dataKey="carbs" stackId="macros" fill="#f59e0b" radius={[0, 0, 0, 0]} name="Carbs (g)" />
+						<Bar dataKey="fat" stackId="macros" fill="#eab308" radius={[4, 4, 0, 0]} name="Fat (g)" />
+					</BarChart>
+				</ResponsiveContainer>
+			</div>
 
 			{/* Meal List */}
 			<div className="card p-6">

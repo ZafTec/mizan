@@ -59,6 +59,18 @@ public class MealPlansController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult<UpdateMealPlanResult>> UpdateMealPlan(
+        Guid id,
+        [FromBody] UpdateMealPlanRequest request)
+    {
+        var command = new UpdateMealPlanCommand(id, request.Name, request.StartDate, request.EndDate);
+        var result = await _mediator.Send(command);
+        if (!result.Success)
+            return BadRequest(result);
+        return Ok(result);
+    }
+
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<DeleteMealPlanResult>> DeleteMealPlan(Guid id)
     {
@@ -67,11 +79,47 @@ public class MealPlansController : ControllerBase
             return NotFound(result);
         return Ok(result);
     }
+
+    [HttpDelete("{id:guid}/recipes/{recipeId:guid}")]
+    public async Task<ActionResult<RemoveRecipeFromMealPlanResult>> RemoveRecipeFromMealPlan(Guid id, Guid recipeId)
+    {
+        var result = await _mediator.Send(new RemoveRecipeFromMealPlanCommand(id, recipeId));
+        if (!result.Success)
+            return BadRequest(result);
+        return Ok(result);
+    }
+
+    [HttpPut("{id:guid}/recipes/{recipeId:guid}")]
+    public async Task<ActionResult<UpdateMealPlanRecipeResult>> UpdateMealPlanRecipe(
+        Guid id,
+        Guid recipeId,
+        [FromBody] UpdateMealPlanRecipeRequest request)
+    {
+        var command = new UpdateMealPlanRecipeCommand(id, recipeId, request.Date, request.MealType, request.Servings);
+        var result = await _mediator.Send(command);
+        if (!result.Success)
+            return BadRequest(result);
+        return Ok(result);
+    }
+}
+
+public record UpdateMealPlanRequest
+{
+    public string Name { get; init; } = "";
+    public DateOnly StartDate { get; init; }
+    public DateOnly EndDate { get; init; }
 }
 
 public record AddRecipeToMealPlanRequest
 {
     public Guid RecipeId { get; init; }
+    public DateOnly Date { get; init; }
+    public string MealType { get; init; } = "dinner";
+    public decimal Servings { get; init; } = 1;
+}
+
+public record UpdateMealPlanRecipeRequest
+{
     public DateOnly Date { get; init; }
     public string MealType { get; init; } = "dinner";
     public decimal Servings { get; init; } = 1;

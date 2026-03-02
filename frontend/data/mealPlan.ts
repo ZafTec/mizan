@@ -9,9 +9,20 @@ export interface MealPlanRecipe {
     id: string;
     recipeId: string;
     recipeTitle?: string;
+    recipeImageUrl?: string;
     date: string;
     mealType: string;
     servings: number;
+    caloriesPerServing?: number;
+}
+
+export interface MealPlanNutritionSummary {
+    totalCalories: number;
+    totalProteinGrams: number;
+    totalCarbsGrams: number;
+    totalFatGrams: number;
+    daysCount: number;
+    avgCaloriesPerDay: number;
 }
 
 export interface MealPlan {
@@ -20,6 +31,9 @@ export interface MealPlan {
     startDate: string;
     endDate: string;
     recipes: MealPlanRecipe[];
+    nutritionSummary?: MealPlanNutritionSummary;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface MealPlanListResult {
@@ -88,6 +102,55 @@ export async function addRecipeToMealPlan(
     } catch (error) {
         mealPlanLogger.error("Failed to add recipe to meal plan", { error, mealPlanId });
         return false;
+    }
+}
+
+export async function updateMealPlan(
+    id: string,
+    data: { name: string; startDate: string; endDate: string }
+): Promise<{ success: boolean; message?: string }> {
+    try {
+        const result = await serverApi<{ success: boolean; message?: string }>(`/api/MealPlans/${id}`, {
+            method: "PUT",
+            body: data,
+        });
+        return { success: result.success };
+    } catch (error) {
+        mealPlanLogger.error("Failed to update meal plan", { error, id });
+        return { success: false, message: "Failed to update meal plan" };
+    }
+}
+
+export async function removeRecipeFromMealPlan(
+    mealPlanId: string,
+    mealPlanRecipeId: string
+): Promise<{ success: boolean; message?: string }> {
+    try {
+        const result = await serverApi<{ success: boolean; message?: string }>(
+            `/api/MealPlans/${mealPlanId}/recipes/${mealPlanRecipeId}`,
+            { method: "DELETE" }
+        );
+        return { success: result.success };
+    } catch (error) {
+        mealPlanLogger.error("Failed to remove recipe from meal plan", { error, mealPlanId, mealPlanRecipeId });
+        return { success: false, message: "Failed to remove recipe from meal plan" };
+    }
+}
+
+export async function updateMealPlanRecipe(
+    mealPlanId: string,
+    mealPlanRecipeId: string,
+    data: { date: string; mealType: string; servings: number }
+): Promise<{ success: boolean; message?: string }> {
+    try {
+        const result = await serverApi<{ success: boolean; message?: string }>(
+            `/api/MealPlans/${mealPlanId}/recipes/${mealPlanRecipeId}`,
+            { method: "PUT", body: data }
+        );
+        return { success: result.success };
+    } catch (error) {
+        mealPlanLogger.error("Failed to update meal plan recipe", { error, mealPlanId, mealPlanRecipeId });
+        return { success: false, message: "Failed to update meal plan recipe" };
     }
 }
 

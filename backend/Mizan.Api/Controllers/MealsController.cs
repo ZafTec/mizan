@@ -29,6 +29,18 @@ public class MealsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("range")]
+    public async Task<ActionResult<DailyNutritionRangeResult>> GetNutritionRange([FromQuery] int days = 7, [FromQuery] DateOnly? endDate = null)
+    {
+        var query = new GetDailyNutritionRangeQuery
+        {
+            Days = Math.Clamp(days, 1, 90),
+            EndDate = endDate
+        };
+        var result = await _mediator.Send(query);
+        return Ok(result);
+    }
+
     [HttpPost]
     public async Task<ActionResult<CreateFoodDiaryEntryResult>> LogMeal([FromBody] CreateFoodDiaryEntryCommand command)
     {

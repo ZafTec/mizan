@@ -75,6 +75,27 @@ export async function getDailyTotals(date?: string): Promise<FoodDiaryResult["to
     }
 }
 
+export interface DailyNutritionSummary {
+    date: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber: number;
+}
+
+export async function getNutritionRange(days: number = 7, endDate?: string): Promise<DailyNutritionSummary[]> {
+    try {
+        const params = new URLSearchParams({ days: days.toString() });
+        if (endDate) params.append("endDate", endDate);
+        const result = await serverApi<{ days: DailyNutritionSummary[] }>(`/api/Meals/range?${params}`);
+        return result.days || [];
+    } catch (error) {
+        mealLogger.error("Failed to get nutrition range", { error, days });
+        return [];
+    }
+}
+
 export async function addMeal(prevState: FormState, formData: FormData): Promise<FormState> {
     try {
         const recipeId = formData.get("recipeId") as string;

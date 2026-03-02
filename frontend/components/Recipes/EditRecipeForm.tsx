@@ -11,12 +11,16 @@ import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
 import Modal from "@/components/Modal";
 import type { Recipe } from "@/data/recipe";
+import RecipeIngredientSearch from "@/components/Recipes/RecipeIngredientSearch";
+import type { RecipeSearchResult } from "@/components/Recipes/RecipeIngredientSearch";
 
 type SelectedIngredient = {
+    type: "food" | "recipe";
     ingredient: Ingredient | null;
+    subRecipe: RecipeSearchResult | null;
     name: string;
     amount: number | null;
-    unit: "gram";
+    unit: string;
 }
 
 const MAX_RECIPE_IMAGES_TO_PREVIEW = 3;
@@ -31,23 +35,47 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
     const [description, setDescription] = useState(recipe.description || '');
     const [instructions, setInstructions] = useState((recipe.instructions || []).map(i => i.instruction || "").join('\n'));
     const [selectedIngredients, setSelectedIngredients] = useState<SelectedIngredient[]>(
-        (recipe.ingredients || []).map(ing => ({
-            ingredient: {
-                id: ing.foodId!,
+        (recipe.ingredients || []).map(ing => {
+            if (ing.subRecipeId) {
+                return {
+                    type: "recipe" as const,
+                    ingredient: null,
+                    subRecipe: {
+                        id: ing.subRecipeId,
+                        title: ing.subRecipeName || ing.ingredientText || "",
+                        nutrition: ing.subRecipeNutrition ? {
+                            caloriesPerServing: ing.subRecipeNutrition.caloriesPerServing,
+                            proteinGrams: ing.subRecipeNutrition.proteinGrams,
+                            carbsGrams: ing.subRecipeNutrition.carbsGrams,
+                            fatGrams: ing.subRecipeNutrition.fatGrams,
+                            fiberGrams: ing.subRecipeNutrition.fiberGrams,
+                        } : undefined,
+                    },
+                    name: ing.subRecipeName || ing.ingredientText || "",
+                    amount: ing.amount ?? null,
+                    unit: "serving",
+                };
+            }
+            return {
+                type: "food" as const,
+                ingredient: {
+                    id: ing.foodId!,
+                    name: ing.foodName || ing.ingredientText || "",
+                    caloriesPer100g: 0,
+                    proteinPer100g: 0,
+                    carbsPer100g: 0,
+                    fatPer100g: 0,
+                    fiberPer100g: 0,
+                    servingSize: 0,
+                    servingUnit: 'g',
+                    isVerified: false
+                },
+                subRecipe: null,
                 name: ing.foodName || ing.ingredientText || "",
-                caloriesPer100g: 0,
-                proteinPer100g: 0,
-                carbsPer100g: 0,
-                fatPer100g: 0,
-                fiberPer100g: 0,
-                servingSize: 0,
-                servingUnit: 'g',
-                isVerified: false
-            },
-            name: ing.foodName || ing.ingredientText || "",
-            amount: ing.amount ?? null,
-            unit: 'gram'
-        }))
+                amount: ing.amount ?? null,
+                unit: 'gram',
+            };
+        })
     );
     const [servings, setServings] = useState(recipe.servings || 1);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,7 +104,20 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
     }, []);
 
     function handleAddIngredient() {
-        setSelectedIngredients([...selectedIngredients, { ingredient: null, name: '', amount: null, unit: 'gram' }]);
+        setSelectedIngredients([...selectedIngredients, { type: "food", ingredient: null, subRecipe: null, name: '', amount: null, unit: 'gram' }]);
+    }
+
+    function handleIngredientTypeToggle(index: number, type: "food" | "recipe") {
+        const newIngredients = [...selectedIngredients];
+        newIngredients[index] = { type, ingredient: null, subRecipe: null, name: '', amount: null, unit: type === "food" ? "gram" : "serving" };
+        setSelectedIngredients(newIngredients);
+    }
+
+    function handleSubRecipeSelect(index: number, recipe: RecipeSearchResult) {
+        const newIngredients = [...selectedIngredients];
+        newIngredients[index] = { ...newIngredients[index], subRecipe: recipe, name: recipe.title, amount: 1 };
+        setSelectedIngredients(newIngredients);
+        setActiveDropdownIndex(null);
     }
 
     function handleRemoveIngredient(index: number) {
@@ -116,10 +157,10 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
     function handleIngredientSelect(ingredientIndex: number, selectedIngredient: Ingredient) {
         const newIngredients = [...selectedIngredients];
         newIngredients[ingredientIndex] = {
+            ...newIngredients[ingredientIndex],
             ingredient: selectedIngredient,
             name: selectedIngredient.name,
             amount: null,
-            unit: 'gram',
         }
         setSelectedIngredients(newIngredients);
         setActiveDropdownIndex(null);
@@ -140,10 +181,11 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
             title: name,
             description,
             ingredients: selectedIngredients.map(ing => ({
-                foodId: ing.ingredient?.id,
+                foodId: ing.type === "food" ? ing.ingredient?.id : undefined,
+                subRecipeId: ing.type === "recipe" ? ing.subRecipe?.id : undefined,
                 ingredientText: ing.name,
                 amount: ing.amount!,
-                unit: ing.unit
+                unit: ing.type === "food" ? "gram" : "serving"
             })),
             instructions: (instructions || '').split('\n').filter(line => line.trim()),
             servings,
@@ -245,54 +287,78 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
 
                 <div className="space-y-3">
                     {selectedIngredients.map((ing, index) => (
-                        <div key={index} className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-start">
-                            <div ref={dropdownRef} className="relative flex-1 min-w-0">
-                                <input
-                                    type="text"
-                                    placeholder="Search ingredient..."
-                                    value={ing.name}
-                                    onChange={(e) => handleIngredientNameChange(index, e.target.value)}
-                                    className="input w-full"
-                                />
-                                {activeDropdownIndex === index && (
-                                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
-                                        {ingredientSearch.length > 0 ? (
-                                            ingredientSearch.map((ingredient) => (
-                                                <button
-                                                    key={ingredient.id}
-                                                    type="button"
-                                                    onClick={() => handleIngredientSelect(index, ingredient)}
-                                                    className="w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 last:border-0"
-                                                >
-                                                    <span className="font-medium text-slate-900 dark:text-slate-100">{ingredient.name}</span>
-                                                    <span className="text-xs text-slate-500 dark:text-slate-400">{ingredient.caloriesPer100g} kcal/100g</span>
-                                                </button>
-                                            ))
-                                        ) : (
-                                            <div className="p-3 text-slate-500 dark:text-slate-400 text-center">No ingredients found</div>
+                        <div key={index} className="space-y-2">
+                            <div className="flex gap-1">
+                                <button type="button" onClick={() => handleIngredientTypeToggle(index, "food")}
+                                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${ing.type === "food" ? "bg-brand-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400"}`}>
+                                    Food
+                                </button>
+                                <button type="button" onClick={() => handleIngredientTypeToggle(index, "recipe")}
+                                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${ing.type === "recipe" ? "bg-brand-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400"}`}>
+                                    Recipe
+                                </button>
+                            </div>
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-start">
+                                {ing.type === "food" ? (
+                                    <div ref={dropdownRef} className="relative flex-1 min-w-0">
+                                        <input
+                                            type="text"
+                                            placeholder="Search ingredient..."
+                                            value={ing.name}
+                                            onChange={(e) => handleIngredientNameChange(index, e.target.value)}
+                                            className="input w-full"
+                                        />
+                                        {activeDropdownIndex === index && (
+                                            <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+                                                {ingredientSearch.length > 0 ? (
+                                                    ingredientSearch.map((ingredient) => (
+                                                        <button
+                                                            key={ingredient.id}
+                                                            type="button"
+                                                            onClick={() => handleIngredientSelect(index, ingredient)}
+                                                            className="w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 last:border-0"
+                                                        >
+                                                            <span className="font-medium text-slate-900 dark:text-slate-100">{ingredient.name}</span>
+                                                            <span className="text-xs text-slate-500 dark:text-slate-400">{ingredient.caloriesPer100g} kcal/100g</span>
+                                                        </button>
+                                                    ))
+                                                ) : (
+                                                    <div className="p-3 text-slate-500 dark:text-slate-400 text-center">No ingredients found</div>
+                                                )}
+                                            </div>
                                         )}
                                     </div>
+                                ) : (
+                                    <div className="flex-1 min-w-0">
+                                        <RecipeIngredientSearch
+                                            value={ing.name}
+                                            onChange={(v) => { const n = [...selectedIngredients]; n[index] = { ...n[index], name: v }; setSelectedIngredients(n); }}
+                                            onSelect={(r) => handleSubRecipeSelect(index, r)}
+                                        />
+                                    </div>
                                 )}
-                            </div>
-                            <div className="flex gap-2 sm:gap-3 items-center">
-                                <input
-                                    type="number"
-                                    placeholder="Amount"
-                                    value={ing.amount?.toString() || ''}
-                                    onChange={(e) => handleIngredientAmountChange(index, parseFloat(e.target.value))}
-                                    className="input w-24 sm:w-28"
-                                    min="0"
-                                    step="0.1"
-                                />
-                                <span className="px-3 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-600 dark:text-slate-400 text-sm font-medium whitespace-nowrap">grams</span>
-                                <button
-                                    type="button"
-                                    onClick={() => handleRemoveIngredient(index)}
-                                    className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 flex items-center justify-center transition-colors shrink-0"
-                                    aria-label="Remove ingredient"
-                                >
-                                    <i className="ri-delete-bin-line" />
-                                </button>
+                                <div className="flex gap-2 sm:gap-3 items-center">
+                                    <input
+                                        type="number"
+                                        placeholder="Amount"
+                                        value={ing.amount?.toString() || ''}
+                                        onChange={(e) => handleIngredientAmountChange(index, parseFloat(e.target.value))}
+                                        className="input w-24 sm:w-28"
+                                        min="0"
+                                        step={ing.type === "recipe" ? "0.25" : "0.1"}
+                                    />
+                                    <span className="px-3 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-600 dark:text-slate-400 text-sm font-medium whitespace-nowrap">
+                                        {ing.type === "food" ? "grams" : "servings"}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveIngredient(index)}
+                                        className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 flex items-center justify-center transition-colors shrink-0"
+                                        aria-label="Remove ingredient"
+                                    >
+                                        <i className="ri-delete-bin-line" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getMealPlans } from "@/data/mealPlan";
 import Pagination from "@/components/Pagination";
 import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
+import MealPlanListItem from "./MealPlanListItem";
 
 import { logger } from "@/lib/logger";
 const mealLogger = logger.createModuleLogger("meal-plan-page");
@@ -112,19 +113,7 @@ export default async function MealPlanPage({
 					{mealPlans.length > 0 ? (
 						<div className="space-y-4">
 							{mealPlans.map((plan) => (
-								<div key={plan.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
-									<div className="flex justify-between items-center">
-										<div>
-											<h3 className="font-medium text-slate-900 dark:text-slate-100">{plan.name || 'Weekly Plan'}</h3>
-											<p className="text-sm text-slate-500">
-												{plan.startDate} to {plan.endDate}
-											</p>
-										</div>
-										<span className="text-sm text-slate-600">
-											{plan.recipes?.length || 0} meals
-										</span>
-									</div>
-								</div>
+								<MealPlanListItem key={plan.id} plan={plan} />
 							))}
 						</div>
 					) : (

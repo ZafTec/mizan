@@ -171,10 +171,11 @@ export default function Page() {
 			title: name,
 			description,
 			ingredients: selectedIngredients.map(ing => ({
-				foodId: ing.ingredient!.id,
+				foodId: ing.type === "food" ? ing.ingredient?.id : undefined,
+				subRecipeId: ing.type === "recipe" ? ing.subRecipe?.id : undefined,
 				ingredientText: ing.name,
 				amount: ing.amount!,
-				unit: ing.unit
+				unit: ing.type === "food" ? "gram" : "serving"
 			})),
 			instructions: instructions.split('\n').filter(line => line.trim()),
 			servings,
@@ -244,7 +245,23 @@ export default function Page() {
 						</thead>
 						<tbody className="divide-y divide-slate-100">
 							{selectedIngredients.map((ing, idx) => {
-								if (!ing.ingredient || !ing.amount) return null;
+								if (!ing.amount) return null;
+								if (ing.type === "recipe" && ing.subRecipe?.nutrition) {
+									const s = ing.amount;
+									const n = ing.subRecipe.nutrition;
+									return (
+										<tr key={idx} className="hover:bg-slate-50">
+											<td className="p-3 text-slate-900">{ing.subRecipe.title} <span className="text-xs text-brand-500">(recipe)</span></td>
+											<td className="p-3 text-right text-slate-600">{ing.amount} srv</td>
+											<td className="p-3 text-right text-slate-600">{((n.caloriesPerServing || 0) * s).toFixed(0)}</td>
+											<td className="p-3 text-right text-slate-600">{((n.proteinGrams || 0) * s).toFixed(1)}g</td>
+											<td className="p-3 text-right text-slate-600">{((n.carbsGrams || 0) * s).toFixed(1)}g</td>
+											<td className="p-3 text-right text-slate-600">{((n.fatGrams || 0) * s).toFixed(1)}g</td>
+											<td className="p-3 text-right text-slate-600">{((n.fiberGrams || 0) * s).toFixed(1)}g</td>
+										</tr>
+									);
+								}
+								if (!ing.ingredient) return null;
 								const ratio = ing.amount / 100;
 								return (
 									<tr key={idx} className="hover:bg-slate-50">
@@ -375,54 +392,78 @@ export default function Page() {
 
 					<div className="space-y-3">
 						{selectedIngredients.map((ing, index) => (
-							<div key={index} className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-start">
-								<div ref={dropdownRef} className="relative flex-1 min-w-0">
-									<input
-										type="text"
-										placeholder="Search ingredient..."
-										value={ing.name}
-										onChange={(e) => handleIngredientNameChange(index, e.target.value)}
-										className="input w-full"
-									/>
-									{activeDropdownIndex === index && (
-										<div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
-											{ingredientSearch.length > 0 ? (
-												ingredientSearch.map((ingredient) => (
-													<button
-														key={ingredient.id}
-														type="button"
-														onClick={() => handleIngredientSelect(index, ingredient)}
-														className="w-full p-3 text-left hover:bg-slate-50 flex items-center justify-between border-b border-slate-100 last:border-0"
-													>
-														<span className="font-medium text-slate-900">{ingredient.name}</span>
-														<span className="text-xs text-slate-500">{ingredient.caloriesPer100g} kcal/100g</span>
-													</button>
-												))
-											) : (
-												<div className="p-3 text-slate-500 text-center">No ingredients found</div>
+							<div key={index} className="space-y-2">
+								<div className="flex gap-1">
+									<button type="button" onClick={() => handleIngredientTypeToggle(index, "food")}
+										className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${ing.type === "food" ? "bg-brand-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
+										Food
+									</button>
+									<button type="button" onClick={() => handleIngredientTypeToggle(index, "recipe")}
+										className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${ing.type === "recipe" ? "bg-brand-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
+										Recipe
+									</button>
+								</div>
+								<div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-start">
+									{ing.type === "food" ? (
+										<div ref={dropdownRef} className="relative flex-1 min-w-0">
+											<input
+												type="text"
+												placeholder="Search ingredient..."
+												value={ing.name}
+												onChange={(e) => handleIngredientNameChange(index, e.target.value)}
+												className="input w-full"
+											/>
+											{activeDropdownIndex === index && (
+												<div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+													{ingredientSearch.length > 0 ? (
+														ingredientSearch.map((ingredient) => (
+															<button
+																key={ingredient.id}
+																type="button"
+																onClick={() => handleIngredientSelect(index, ingredient)}
+																className="w-full p-3 text-left hover:bg-slate-50 flex items-center justify-between border-b border-slate-100 last:border-0"
+															>
+																<span className="font-medium text-slate-900">{ingredient.name}</span>
+																<span className="text-xs text-slate-500">{ingredient.caloriesPer100g} kcal/100g</span>
+															</button>
+														))
+													) : (
+														<div className="p-3 text-slate-500 text-center">No ingredients found</div>
+													)}
+												</div>
 											)}
 										</div>
+									) : (
+										<div className="flex-1 min-w-0">
+											<RecipeIngredientSearch
+												value={ing.name}
+												onChange={(v) => { const n = [...selectedIngredients]; n[index] = { ...n[index], name: v }; setSelectedIngredients(n); }}
+												onSelect={(r) => handleSubRecipeSelect(index, r)}
+											/>
+										</div>
 									)}
-								</div>
-								<div className="flex gap-2 sm:gap-3 items-center">
-									<input
-										type="number"
-										placeholder="Amount"
-										value={ing.amount?.toString() || ''}
-										onChange={(e) => handleIngredientAmountChange(index, parseFloat(e.target.value))}
-										className="input w-24 sm:w-28"
-										min="0"
-										step="0.1"
-									/>
-									<span className="px-3 py-2.5 bg-slate-100 rounded-xl text-slate-600 text-sm font-medium whitespace-nowrap">grams</span>
-									<button
-										type="button"
-										onClick={() => handleRemoveIngredient(index)}
-										className="w-10 h-10 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center transition-colors shrink-0"
-										aria-label="Remove ingredient"
-									>
-										<i className="ri-delete-bin-line" />
-									</button>
+									<div className="flex gap-2 sm:gap-3 items-center">
+										<input
+											type="number"
+											placeholder="Amount"
+											value={ing.amount?.toString() || ''}
+											onChange={(e) => handleIngredientAmountChange(index, parseFloat(e.target.value))}
+											className="input w-24 sm:w-28"
+											min="0"
+											step={ing.type === "recipe" ? "0.25" : "0.1"}
+										/>
+										<span className="px-3 py-2.5 bg-slate-100 rounded-xl text-slate-600 text-sm font-medium whitespace-nowrap">
+											{ing.type === "food" ? "grams" : "servings"}
+										</span>
+										<button
+											type="button"
+											onClick={() => handleRemoveIngredient(index)}
+											className="w-10 h-10 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center transition-colors shrink-0"
+											aria-label="Remove ingredient"
+										>
+											<i className="ri-delete-bin-line" />
+										</button>
+									</div>
 								</div>
 							</div>
 						))}
@@ -538,7 +579,7 @@ export default function Page() {
 				</div>
 
 				{/* Macro Summary */}
-				{selectedIngredients.some(ing => ing.ingredient && ing.amount) && (
+				{selectedIngredients.some(ing => (ing.ingredient || ing.subRecipe) && ing.amount) && (
 					<div className="card p-6 bg-linear-to-br from-brand-50 to-accent-50">
 						<h2 className="font-semibold text-slate-900 mb-4">Nutrition Summary</h2>
 						<div className="grid grid-cols-2 sm:grid-cols-5 gap-4">

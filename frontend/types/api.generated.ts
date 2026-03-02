@@ -1224,7 +1224,36 @@ export interface paths {
                 };
             };
         };
-        put?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateMealPlanRequest"];
+                    "text/json": components["schemas"]["UpdateMealPlanRequest"];
+                    "application/*+json": components["schemas"]["UpdateMealPlanRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UpdateMealPlanResult"];
+                        "application/json": components["schemas"]["UpdateMealPlanResult"];
+                        "text/json": components["schemas"]["UpdateMealPlanResult"];
+                    };
+                };
+            };
+        };
         post?: never;
         delete: {
             parameters: {
@@ -1300,6 +1329,76 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/MealPlans/{id}/recipes/{recipeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    recipeId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateMealPlanRecipeRequest"];
+                    "text/json": components["schemas"]["UpdateMealPlanRecipeRequest"];
+                    "application/*+json": components["schemas"]["UpdateMealPlanRecipeRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UpdateMealPlanRecipeResult"];
+                        "application/json": components["schemas"]["UpdateMealPlanRecipeResult"];
+                        "text/json": components["schemas"]["UpdateMealPlanRecipeResult"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    recipeId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RemoveRecipeFromMealPlanResult"];
+                        "application/json": components["schemas"]["RemoveRecipeFromMealPlanResult"];
+                        "text/json": components["schemas"]["RemoveRecipeFromMealPlanResult"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Meals": {
         parameters: {
             query?: never;
@@ -1360,6 +1459,46 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Meals/range": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    days?: number;
+                    endDate?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DailyNutritionRangeResult"];
+                        "application/json": components["schemas"]["DailyNutritionRangeResult"];
+                        "text/json": components["schemas"]["DailyNutritionRangeResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2741,6 +2880,9 @@ export interface components {
             message?: string | null;
             warnings?: string[] | null;
         };
+        DailyNutritionRangeResult: {
+            days?: components["schemas"]["DailyNutritionSummaryDto"][] | null;
+        };
         DailyNutritionResult: {
             /** Format: date */
             date?: string;
@@ -2761,6 +2903,20 @@ export interface components {
             /** Format: double */
             targetFat?: number | null;
             mealBreakdown?: components["schemas"]["MealSummary"][] | null;
+        };
+        DailyNutritionSummaryDto: {
+            /** Format: date */
+            date?: string;
+            /** Format: double */
+            calories?: number;
+            /** Format: double */
+            protein?: number;
+            /** Format: double */
+            carbs?: number;
+            /** Format: double */
+            fat?: number;
+            /** Format: double */
+            fiber?: number;
         };
         DailyTotalsDto: {
             /** Format: double */
@@ -3320,6 +3476,10 @@ export interface components {
             /** Format: uuid */
             id?: string | null;
         };
+        RemoveRecipeFromMealPlanResult: {
+            success?: boolean;
+            message?: string | null;
+        };
         RespondRequest: {
             /** Format: uuid */
             relationshipId?: string;
@@ -3506,6 +3666,28 @@ export interface components {
             isVerified?: boolean;
         };
         UpdateFoodResult: {
+            success?: boolean;
+            message?: string | null;
+        };
+        UpdateMealPlanRecipeRequest: {
+            /** Format: date */
+            date?: string;
+            mealType?: string | null;
+            /** Format: double */
+            servings?: number;
+        };
+        UpdateMealPlanRecipeResult: {
+            success?: boolean;
+            message?: string | null;
+        };
+        UpdateMealPlanRequest: {
+            name?: string | null;
+            /** Format: date */
+            startDate?: string;
+            /** Format: date */
+            endDate?: string;
+        };
+        UpdateMealPlanResult: {
             success?: boolean;
             message?: string | null;
         };
