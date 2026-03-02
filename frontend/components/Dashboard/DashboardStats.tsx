@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { clientApi } from '@/lib/api.client';
+import type { StreakInfo } from '@/data/achievement';
 import Link from 'next/link';
 
 interface DailyTotals {
@@ -18,9 +19,11 @@ interface Goal {
 	targetFatGrams: number | null;
 }
 
+
 export default function DashboardStats() {
 	const [dailyTotals, setDailyTotals] = useState<DailyTotals | null>(null);
 	const [goal, setGoal] = useState<Goal | null>(null);
+	const [streak, setStreak] = useState<StreakInfo | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
@@ -32,7 +35,7 @@ export default function DashboardStats() {
 
 				// Fetch daily meals and goal in parallel
 				const today = new Date().toISOString().split('T')[0];
-				const [mealsResponse, goalResponse] = await Promise.all([
+				const [mealsResponse, goalResponse, streakResponse] = await Promise.all([
 					clientApi<{ date: string; entries: any[]; totals: DailyTotals }>('/api/Meals?date=' + today)
 						.catch((err) => {
 							console.error('[Dashboard] Meals API error:', err);
@@ -43,13 +46,18 @@ export default function DashboardStats() {
 							console.error('[Dashboard] Goals API error:', err);
 							return null;
 						}),
+					clientApi<StreakInfo>('/api/Achievements/streak')
+						.catch((err) => {
+							console.error('[Dashboard] Streak API error:', err);
+							return null;
+						}),
 				]);
 
-				// Backend already calculates totals for us
 				const totalsResponse = mealsResponse.totals;
 
 				setDailyTotals(totalsResponse);
 				setGoal(goalResponse);
+				setStreak(streakResponse);
 			} catch (err) {
 				setError('Failed to load dashboard data');
 				console.error('Dashboard data error:', err);
@@ -164,8 +172,8 @@ export default function DashboardStats() {
 				<div className="mt-2 text-xs text-slate-400 dark:text-slate-500">Coming soon</div>
 			</Link>
 
-			{/* Streak (Placeholder) */}
-			<Link href="/profile" className="card p-4 sm:p-6 hover:shadow-lg transition-shadow cursor-pointer group">
+			{/* Streak */}
+			<Link href="/achievements" className="card p-4 sm:p-6 hover:shadow-lg transition-shadow cursor-pointer group">
 				<div className="flex items-center gap-3 mb-3">
 					<div className="p-2 bg-amber-50 dark:bg-amber-950 rounded-lg group-hover:bg-amber-100 transition-colors">
 						<i className="ri-fire-fill text-xl text-amber-600" />
@@ -173,10 +181,12 @@ export default function DashboardStats() {
 					<span className="text-sm text-slate-500 dark:text-slate-400 font-medium">Streak</span>
 				</div>
 				<div className="flex items-baseline gap-2">
-					<span className="text-2xl font-bold text-slate-900 dark:text-slate-100">0</span>
+					<span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{streak?.currentStreak ?? 0}</span>
 					<span className="text-sm text-slate-400 dark:text-slate-500">days</span>
 				</div>
-				<div className="mt-2 text-xs text-slate-400 dark:text-slate-500">Coming soon</div>
+				<div className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+					{streak?.longestStreak ? `Best: ${streak.longestStreak} days` : 'Log a meal to start'}
+				</div>
 			</Link>
 		</div>
 	);
