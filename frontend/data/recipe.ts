@@ -69,7 +69,7 @@ export async function getPopularRecipes(): Promise<PopularRecipe[]> {
 /**
  * Get all recipes with optional filters
  */
-export async function getAllRecipes(searchTerm?: string, page: number = 1, limit: number = 20, favoritesOnly: boolean = false, sortBy?: string, sortOrder?: string): Promise<{ recipes: RecipeDto[], totalCount: number, totalPages: number }> {
+export async function getAllRecipes(searchTerm?: string, page: number = 1, limit: number = 20, favoritesOnly: boolean = false, sortBy?: string, sortOrder?: string, tags?: string[]): Promise<{ recipes: RecipeDto[], totalCount: number, totalPages: number }> {
     try {
         const params = new URLSearchParams();
         if (searchTerm) params.append("SearchTerm", searchTerm);
@@ -79,6 +79,7 @@ export async function getAllRecipes(searchTerm?: string, page: number = 1, limit
         params.append("PageSize", limit.toString());
         if (sortBy) params.append("SortBy", sortBy);
         if (sortOrder) params.append("SortOrder", sortOrder);
+        if (tags) tags.forEach(t => params.append("Tags", t));
 
         const result = await serverApi<{ items: RecipeDto[], totalCount: number, page: number, pageSize: number, totalPages: number }>(
             `/api/Recipes?${params.toString()}`,

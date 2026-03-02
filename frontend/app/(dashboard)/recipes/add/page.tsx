@@ -15,12 +15,16 @@ import Modal from "@/components/Modal";
 import { toast } from "sonner";
 import Loading from "@/components/Loading";
 import { useDebounce } from "@/lib/hooks/useDebounce";
+import RecipeIngredientSearch from "@/components/Recipes/RecipeIngredientSearch";
+import type { RecipeSearchResult } from "@/components/Recipes/RecipeIngredientSearch";
 
 type SelectedIngredient = {
+	type: "food" | "recipe";
 	ingredient: Ingredient | null;
+	subRecipe: RecipeSearchResult | null;
 	name: string;
 	amount: number | null;
-	unit: "gram";
+	unit: string;
 }
 
 const MAX_RECIPE_IMAGES_TO_PREVIEW = 3;
@@ -47,10 +51,18 @@ export default function Page() {
 	const router = useRouter();
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
-	// Calculate total macros (macros are per 100g)
 	const totalMacros = selectedIngredients.reduce(
 		(acc, ing) => {
-			if (ing.ingredient && ing.amount) {
+			if (!ing.amount) return acc;
+			if (ing.type === "recipe" && ing.subRecipe?.nutrition) {
+				const s = ing.amount;
+				const n = ing.subRecipe.nutrition;
+				acc.calories += (n.caloriesPerServing || 0) * s;
+				acc.protein += (n.proteinGrams || 0) * s;
+				acc.carbs += (n.carbsGrams || 0) * s;
+				acc.fat += (n.fatGrams || 0) * s;
+				acc.fiber += (n.fiberGrams || 0) * s;
+			} else if (ing.type === "food" && ing.ingredient) {
 				const ratio = ing.amount / 100;
 				acc.calories += (ing.ingredient.caloriesPer100g || 0) * ratio;
 				acc.protein += (ing.ingredient.proteinPer100g || 0) * ratio;
@@ -77,7 +89,20 @@ export default function Page() {
 	}, []);
 
 	function handleAddIngredient() {
-		setSelectedIngredients([...selectedIngredients, { ingredient: null, name: '', amount: null, unit: 'gram' }]);
+		setSelectedIngredients([...selectedIngredients, { type: "food", ingredient: null, subRecipe: null, name: '', amount: null, unit: 'gram' }]);
+	}
+
+	function handleIngredientTypeToggle(index: number, type: "food" | "recipe") {
+		const newIngredients = [...selectedIngredients];
+		newIngredients[index] = { type, ingredient: null, subRecipe: null, name: '', amount: null, unit: type === "food" ? "gram" : "serving" };
+		setSelectedIngredients(newIngredients);
+	}
+
+	function handleSubRecipeSelect(index: number, recipe: RecipeSearchResult) {
+		const newIngredients = [...selectedIngredients];
+		newIngredients[index] = { ...newIngredients[index], subRecipe: recipe, name: recipe.title, amount: 1 };
+		setSelectedIngredients(newIngredients);
+		setActiveDropdownIndex(null);
 	}
 
 	function handleRemoveIngredient(index: number) {
@@ -123,10 +148,10 @@ export default function Page() {
 	function handleIngredientSelect(ingredientIndex: number, selectedIngredient: Ingredient) {
 		const newIngredients = [...selectedIngredients];
 		newIngredients[ingredientIndex] = {
+			...newIngredients[ingredientIndex],
 			ingredient: selectedIngredient,
 			name: selectedIngredient.name,
 			amount: null,
-			unit: 'gram',
 		}
 		setSelectedIngredients(newIngredients);
 		setActiveDropdownIndex(null);

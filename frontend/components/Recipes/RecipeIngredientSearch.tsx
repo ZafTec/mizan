@@ -1,0 +1,110 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import { clientApi } from "@/lib/api.client";
+import { useDebounce } from "@/lib/hooks/useDebounce";
+
+interface RecipeSearchResult {
+	id: string;
+	title: string;
+	nutrition?: {
+		caloriesPerServing?: number | null;
+		proteinGrams?: number | null;
+		carbsGrams?: number | null;
+		fatGrams?: number | null;
+		fiberGrams?: number | null;
+	};
+}
+
+interface RecipeIngredientSearchProps {
+	value: string;
+	onChange: (value: string) => void;
+	onSelect: (recipe: RecipeSearchResult) => void;
+}
+
+export default function RecipeIngredientSearch({
+	value,
+	onChange,
+	onSelect,
+}: RecipeIngredientSearchProps) {
+	const [results, setResults] = useState<RecipeSearchResult[]>([]);
+	const [isOpen, setIsOpen] = useState(false);
+	const debouncedQuery = useDebounce(value, 300);
+	const containerRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (!debouncedQuery || debouncedQuery.length < 2) {
+			setResults([]);
+			return;
+		}
+		let cancelled = false;
+		const params = new URLSearchParams({
+			SearchTerm: debouncedQuery,
+			IncludePublic: "true",
+			PageSize: "6",
+		});
+		clientApi<{ items: RecipeSearchResult[] }>(`/api/Recipes?${params}`)
+			.then((data) => {
+				if (!cancelled) {
+					setResults(data.items || []);
+					setIsOpen(true);
+				}
+			})
+			.catch(() => {
+				if (!cancelled) setResults([]);
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [debouncedQuery]);
+
+	useEffect(() => {
+		function handleClickOutside(event: MouseEvent) {
+			if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+				setIsOpen(false);
+			}
+		}
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => document.removeEventListener("mousedown", handleClickOutside);
+	}, []);
+
+	return (
+		<div ref={containerRef} className="relative">
+			<input
+				type="text"
+				placeholder="Search recipes..."
+				value={value}
+				onChange={(e) => {
+					onChange(e.target.value);
+					setIsOpen(true);
+				}}
+				onFocus={() => results.length > 0 && setIsOpen(true)}
+				className="input w-full"
+			/>
+			{isOpen && results.length > 0 && (
+				<div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+					{results.map((recipe) => (
+						<button
+							key={recipe.id}
+							type="button"
+							onClick={() => {
+								onSelect(recipe);
+								setIsOpen(false);
+							}}
+							className="w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 last:border-0"
+						>
+							<span className="font-medium text-slate-900 dark:text-slate-100 truncate">
+								{recipe.title}
+							</span>
+							<span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap ml-2">
+								{recipe.nutrition?.caloriesPerServing?.toFixed(0) || 0} kcal/srv
+							</span>
+						</button>
+					))}
+				</div>
+			)}
+		</div>
+	);
+}
+
+export type { RecipeSearchResult };

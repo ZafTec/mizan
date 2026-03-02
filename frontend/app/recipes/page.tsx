@@ -6,6 +6,7 @@ import { getAllRecipes } from "@/data/recipe";
 import { getUserOptionalServer } from "@/helper/session";
 import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
 import Pagination from "@/components/Pagination";
+import RecipeFilters from "./RecipeFilters";
 
 export const dynamic = "force-dynamic";
 
@@ -22,16 +23,30 @@ export default async function RecipesPage({
 }) {
 	const params = await searchParams;
 	const { page, sortBy, sortOrder } = parseListParams(params);
+	const searchTerm = typeof params.search === "string" ? params.search : undefined;
+	const rawTags = params.tags;
+	const tags: string[] = rawTags
+		? Array.isArray(rawTags)
+			? rawTags
+			: [rawTags]
+		: [];
+
 	const { recipes, totalPages, totalCount } = await getAllRecipes(
-		undefined,
+		searchTerm,
 		page,
 		10,
 		false,
 		sortBy ?? undefined,
 		sortOrder,
+		tags.length > 0 ? tags : undefined,
 	);
 	const user = await getUserOptionalServer();
-	const baseUrl = buildListUrl("/recipes", {});
+
+	const listUrlParams: Record<string, string> = {};
+	if (searchTerm) listUrlParams.search = searchTerm;
+	if (sortBy) listUrlParams.sortBy = sortBy;
+	if (sortOrder) listUrlParams.sortOrder = sortOrder;
+	const baseUrl = buildListUrl("/recipes", listUrlParams);
 
 	let favoriteCount = 0;
 	if (user) {
@@ -55,6 +70,13 @@ export default async function RecipesPage({
 					</Link>
 				)}
 			</div>
+
+			<RecipeFilters
+				currentSearch={searchTerm}
+				currentTags={tags}
+				currentSortBy={sortBy ?? undefined}
+				currentSortOrder={sortOrder}
+			/>
 
 			{/* Quick Collections */}
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
