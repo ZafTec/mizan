@@ -15,6 +15,13 @@
       "when": 1772449700961,
       "tag": "0001_calm_onslaught",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772450815231,
+      "tag": "0002_unknown_bushwacker",
+      "breakpoints": true
     }
   ]
 }

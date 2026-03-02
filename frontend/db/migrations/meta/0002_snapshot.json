@@ -1,5 +1,5 @@
 {
-  "id": "af0a24d4-fbb7-4a79-a3f6-e5c0c33514aa",
+  "id": "8f189d8b-8332-4ef8-bd2d-da623b450d97",
   "prevId": "dd4c20ae-7b62-4b70-b7f7-98ab60af5b81",
   "version": "7",
   "dialect": "postgresql",
@@ -188,17 +188,10 @@
       "name": "rateLimit",
       "schema": "",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
+        "key": {
+          "name": "key",
+          "type": "varchar(255)",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "identifier": {
-          "name": "identifier",
-          "type": "text",
-          "primaryKey": false,
           "notNull": true
         },
         "request": {
@@ -214,23 +207,7 @@
           "notNull": true
         }
       },
-      "indexes": {
-        "rateLimit_identifier_idx": {
-          "name": "rateLimit_identifier_idx",
-          "columns": [
-            {
-              "expression": "identifier",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
