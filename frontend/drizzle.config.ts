@@ -25,6 +25,7 @@ export default defineConfig({
     "sessions",
     "verification",
     "jwks",
+    "rateLimit",
     "!__*", // Exclude EF Core __EFMigrationsHistory
   ],
 });

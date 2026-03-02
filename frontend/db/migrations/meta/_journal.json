@@ -8,6 +8,13 @@
       "when": 1770980722686,
       "tag": "0000_ordinary_ghost_rider",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772449700961,
+      "tag": "0001_calm_onslaught",
+      "breakpoints": true
     }
   ]
 }

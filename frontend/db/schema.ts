@@ -127,3 +127,12 @@ export const jwks = pgTable("jwks", {
   alg: varchar("alg", { length: 16 }),
   crv: varchar("crv", { length: 16 }),
 });
+
+export const rateLimit = pgTable("rateLimit", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  identifier: text("identifier").notNull(),
+  request: integer("request").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+}, (t) => ({
+  identifierIdx: index("rateLimit_identifier_idx").on(t.identifier),
+}));

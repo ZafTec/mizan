@@ -42,6 +42,7 @@ export const auth = betterAuth({
       session: schema.sessions,
       account: schema.accounts,
       verification: schema.verification,
+      rateLimit: schema.rateLimit,
     },
   }),
   secondaryStorage: hasRedis ? getBetterAuthSecondaryStorage() : undefined,
