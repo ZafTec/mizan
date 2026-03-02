@@ -22,6 +22,13 @@
       "when": 1772450815231,
       "tag": "0002_unknown_bushwacker",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1772451240167,
+      "tag": "0003_legal_doomsday",
+      "breakpoints": true
     }
   ]
 }

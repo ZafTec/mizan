@@ -129,7 +129,8 @@ export const jwks = pgTable("jwks", {
 });
 
 export const rateLimit = pgTable("rateLimit", {
-  key: varchar("key", { length: 255 }).primaryKey(),
-  request: integer("request").notNull(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  id: varchar("id", { length: 255 }).primaryKey(),
+  key: varchar("key", { length: 255 }).notNull(),
+  count: integer("count").notNull(),
+  lastRequest: integer("last_request").notNull(),
 });
