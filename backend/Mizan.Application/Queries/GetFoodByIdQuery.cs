@@ -36,6 +36,7 @@ public class GetFoodByIdQueryHandler : IRequestHandler<GetFoodByIdQuery, FoodDto
             CarbsPer100g = food.CarbsPer100g,
             FatPer100g = food.FatPer100g,
             FiberPer100g = food.FiberPer100g,
+            ProteinCalorieRatio = food.ProteinCalorieRatio,
             IsVerified = food.IsVerified
         };
     }

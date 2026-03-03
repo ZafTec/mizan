@@ -100,6 +100,7 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
             ProteinGrams = protein,
             CarbsGrams = carbs,
             FatGrams = fat,
+            ProteinCalorieRatio = Food.ComputeProteinCalorieRatio(calories, protein),
             LoggedAt = DateTime.UtcNow
         };
 

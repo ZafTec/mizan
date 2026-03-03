@@ -138,6 +138,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.FiberPer100g).HasColumnName("fiber_per_100g").HasPrecision(8, 2);
             entity.Property(e => e.SugarPer100g).HasColumnName("sugar_per_100g").HasPrecision(8, 2);
             entity.Property(e => e.SodiumPer100g).HasColumnName("sodium_per_100g").HasPrecision(8, 2);
+            entity.Property(e => e.ProteinCalorieRatio).HasColumnName("protein_calorie_ratio").HasPrecision(8, 2);
             entity.Property(e => e.IsVerified).HasColumnName("is_verified").HasDefaultValue(false);
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
@@ -209,6 +210,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.FiberGrams).HasColumnName("fiber_grams").HasPrecision(8, 2);
             entity.Property(e => e.SugarGrams).HasColumnName("sugar_grams").HasPrecision(8, 2);
             entity.Property(e => e.SodiumMg).HasColumnName("sodium_mg").HasPrecision(8, 2);
+            entity.Property(e => e.ProteinCalorieRatio).HasColumnName("protein_calorie_ratio").HasPrecision(8, 2);
             entity.HasOne(e => e.Recipe).WithOne(r => r.Nutrition).HasForeignKey<RecipeNutrition>(e => e.RecipeId).OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -252,6 +254,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.CarbsGrams).HasColumnName("carbs_grams").HasPrecision(8, 2);
             entity.Property(e => e.FatGrams).HasColumnName("fat_grams").HasPrecision(8, 2);
             entity.Property(e => e.FiberGrams).HasColumnName("fiber_grams").HasPrecision(8, 2);
+            entity.Property(e => e.ProteinCalorieRatio).HasColumnName("protein_calorie_ratio").HasPrecision(8, 2);
             entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(255).HasDefaultValue("");
             entity.Property(e => e.LoggedAt).HasColumnName("logged_at").HasDefaultValueSql("NOW()");
             entity.HasIndex(e => new { e.UserId, e.EntryDate });
@@ -338,6 +341,9 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.TargetFatGrams).HasColumnName("target_fat_grams").HasPrecision(8, 2);
             entity.Property(e => e.TargetWeight).HasColumnName("target_weight").HasPrecision(6, 2);
             entity.Property(e => e.WeightUnit).HasColumnName("weight_unit").HasMaxLength(10).HasDefaultValue("kg");
+            entity.Property(e => e.TargetBodyFatPercentage).HasColumnName("target_body_fat_percentage").HasPrecision(5, 2);
+            entity.Property(e => e.TargetMuscleMassKg).HasColumnName("target_muscle_mass_kg").HasPrecision(8, 2);
+            entity.Property(e => e.TargetProteinCalorieRatio).HasColumnName("target_protein_calorie_ratio").HasPrecision(5, 2);
             entity.Property(e => e.TargetDate).HasColumnName("target_date");
             entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");

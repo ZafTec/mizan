@@ -16,6 +16,9 @@ public record UserGoalDto
     public decimal? TargetFatGrams { get; init; }
     public decimal? TargetWeight { get; init; }
     public string? WeightUnit { get; init; }
+    public decimal? TargetBodyFatPercentage { get; init; }
+    public decimal? TargetMuscleMassKg { get; init; }
+    public decimal? TargetProteinCalorieRatio { get; init; }
     public DateOnly? TargetDate { get; init; }
     public bool IsActive { get; init; }
 }
@@ -54,6 +57,9 @@ public class GetUserGoalQueryHandler : IRequestHandler<GetUserGoalQuery, UserGoa
             TargetFatGrams = goal.TargetFatGrams,
             TargetWeight = goal.TargetWeight,
             WeightUnit = goal.WeightUnit,
+            TargetBodyFatPercentage = goal.TargetBodyFatPercentage,
+            TargetMuscleMassKg = goal.TargetMuscleMassKg,
+            TargetProteinCalorieRatio = goal.TargetProteinCalorieRatio,
             TargetDate = goal.TargetDate,
             IsActive = goal.IsActive
         };

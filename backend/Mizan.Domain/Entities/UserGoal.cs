@@ -11,6 +11,9 @@ public class UserGoal
     public decimal? TargetFatGrams { get; set; }
     public decimal? TargetWeight { get; set; }
     public string? WeightUnit { get; set; } = "kg";
+    public decimal? TargetBodyFatPercentage { get; set; }
+    public decimal? TargetMuscleMassKg { get; set; }
+    public decimal? TargetProteinCalorieRatio { get; set; }
     public DateOnly? TargetDate { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; }

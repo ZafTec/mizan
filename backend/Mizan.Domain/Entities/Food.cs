@@ -15,9 +15,13 @@ public class Food
     public decimal? FiberPer100g { get; set; }
     public decimal? SugarPer100g { get; set; }
     public decimal? SodiumPer100g { get; set; }
+    public decimal ProteinCalorieRatio { get; set; }
     public bool IsVerified { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+
+    public static decimal ComputeProteinCalorieRatio(decimal calories, decimal proteinGrams)
+        => calories > 0 ? Math.Round(proteinGrams * 4m / calories * 100m, 2) : 0m;
 
     // Navigation properties
     public virtual ICollection<RecipeIngredient> RecipeIngredients { get; set; } = new List<RecipeIngredient>();

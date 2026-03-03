@@ -16,6 +16,9 @@ public record CreateUserGoalCommand : IRequest<CreateUserGoalResult>
     public decimal? TargetFatGrams { get; init; }
     public decimal? TargetWeight { get; init; }
     public string? WeightUnit { get; init; }
+    public decimal? TargetBodyFatPercentage { get; init; }
+    public decimal? TargetMuscleMassKg { get; init; }
+    public decimal? TargetProteinCalorieRatio { get; init; }
     public DateOnly? TargetDate { get; init; }
 }
 
@@ -44,6 +47,9 @@ public class CreateUserGoalCommandValidator : AbstractValidator<CreateUserGoalCo
             .Must(u => u == null || new[] { "kg", "lb" }.Contains(u.ToLower()))
             .When(x => x.WeightUnit != null)
             .WithMessage("Weight unit must be kg or lb");
+        RuleFor(x => x.TargetBodyFatPercentage).InclusiveBetween(1, 60).When(x => x.TargetBodyFatPercentage.HasValue);
+        RuleFor(x => x.TargetMuscleMassKg).InclusiveBetween(1, 200).When(x => x.TargetMuscleMassKg.HasValue);
+        RuleFor(x => x.TargetProteinCalorieRatio).InclusiveBetween(1, 100).When(x => x.TargetProteinCalorieRatio.HasValue);
     }
 }
 
@@ -92,6 +98,9 @@ public class CreateUserGoalCommandHandler : IRequestHandler<CreateUserGoalComman
             TargetFatGrams = request.TargetFatGrams,
             TargetWeight = request.TargetWeight,
             WeightUnit = request.WeightUnit ?? "kg",
+            TargetBodyFatPercentage = request.TargetBodyFatPercentage,
+            TargetMuscleMassKg = request.TargetMuscleMassKg,
+            TargetProteinCalorieRatio = request.TargetProteinCalorieRatio,
             TargetDate = request.TargetDate,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
@@ -107,7 +116,10 @@ public class CreateUserGoalCommandHandler : IRequestHandler<CreateUserGoalComman
             request.TargetProteinGrams,
             request.TargetCarbsGrams,
             request.TargetFatGrams,
-            request.TargetDate);
+            request.TargetDate,
+            request.TargetBodyFatPercentage,
+            request.TargetMuscleMassKg,
+            request.TargetProteinCalorieRatio);
 
         return new CreateUserGoalResult
         {

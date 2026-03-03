@@ -1,6 +1,7 @@
 using FluentValidation;
 using MediatR;
 using Mizan.Application.Interfaces;
+using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Commands;
 
@@ -66,6 +67,7 @@ public class UpdateFoodCommandHandler : IRequestHandler<UpdateFoodCommand, Updat
         food.ServingSize = request.ServingSize;
         food.ServingUnit = request.ServingUnit;
         food.IsVerified = request.IsVerified;
+        food.ProteinCalorieRatio = Food.ComputeProteinCalorieRatio(request.CaloriesPer100g, request.ProteinPer100g);
         food.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);

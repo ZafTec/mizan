@@ -269,14 +269,17 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
             _logger.LogInformation("[CreateRecipe] Totals BEFORE division: Calories={Cal}, Protein={Prot}g, Carbs={Carbs}g, Fat={Fat}g, Fiber={Fiber}g, Servings={Servings}", 
                 totalCalories, totalProtein, totalCarbs, totalFat, totalFiber, servings);
             
+            var calPerServing = totalCalories / servings;
+            var protPerServing = totalProtein / servings;
             recipe.Nutrition = new RecipeNutrition
             {
                 RecipeId = recipe.Id,
-                CaloriesPerServing = totalCalories / servings,
-                ProteinGrams = totalProtein / servings,
+                CaloriesPerServing = calPerServing,
+                ProteinGrams = protPerServing,
                 CarbsGrams = totalCarbs / servings,
                 FatGrams = totalFat / servings,
-                FiberGrams = totalFiber / servings
+                FiberGrams = totalFiber / servings,
+                ProteinCalorieRatio = Food.ComputeProteinCalorieRatio(calPerServing, protPerServing)
             };
 
             _logger.LogInformation("[CreateRecipe] Final nutrition PER SERVING: Calories={Cal}, Protein={Prot}g, Carbs={Carbs}g, Fat={Fat}g, Fiber={Fiber}g", 
@@ -294,7 +297,10 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
                 ProteinGrams = request.Nutrition.ProteinGrams,
                 CarbsGrams = request.Nutrition.CarbsGrams,
                 FatGrams = request.Nutrition.FatGrams,
-                FiberGrams = request.Nutrition.FiberGrams
+                FiberGrams = request.Nutrition.FiberGrams,
+                ProteinCalorieRatio = Food.ComputeProteinCalorieRatio(
+                    request.Nutrition.CaloriesPerServing ?? 0,
+                    request.Nutrition.ProteinGrams ?? 0)
             };
         }
         else

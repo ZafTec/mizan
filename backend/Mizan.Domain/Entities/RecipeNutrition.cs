@@ -10,6 +10,7 @@ public class RecipeNutrition
     public decimal? FiberGrams { get; set; }
     public decimal? SugarGrams { get; set; }
     public decimal? SodiumMg { get; set; }
+    public decimal? ProteinCalorieRatio { get; set; }
 
     // Navigation property
     public virtual Recipe Recipe { get; set; } = null!;

@@ -27,6 +27,7 @@ public record FoodDiaryEntryDto
     public decimal? CarbsGrams { get; init; }
     public decimal? FatGrams { get; init; }
     public decimal? FiberGrams { get; init; }
+    public decimal? ProteinCalorieRatio { get; init; }
     public DateTime LoggedAt { get; init; }
 }
 
@@ -73,6 +74,7 @@ public class GetFoodDiaryQueryHandler : IRequestHandler<GetFoodDiaryQuery, FoodD
                 CarbsGrams = e.CarbsGrams,
                 FatGrams = e.FatGrams,
                 FiberGrams = e.FiberGrams,
+                ProteinCalorieRatio = e.ProteinCalorieRatio,
                 LoggedAt = e.LoggedAt
             })
             .ToListAsync(cancellationToken);

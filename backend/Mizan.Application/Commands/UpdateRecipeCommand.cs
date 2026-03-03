@@ -260,6 +260,7 @@ public class UpdateRecipeCommandHandler : IRequestHandler<UpdateRecipeCommand, U
             recipe.Nutrition.CarbsGrams = totalCarbs / servings;
             recipe.Nutrition.FatGrams = totalFat / servings;
             recipe.Nutrition.FiberGrams = totalFiber / servings;
+            recipe.Nutrition.ProteinCalorieRatio = Food.ComputeProteinCalorieRatio(totalCalories / servings, totalProtein / servings);
         }
         else if (request.Nutrition != null)
         {
@@ -272,6 +273,9 @@ public class UpdateRecipeCommandHandler : IRequestHandler<UpdateRecipeCommand, U
             recipe.Nutrition.CarbsGrams = request.Nutrition.CarbsGrams;
             recipe.Nutrition.FatGrams = request.Nutrition.FatGrams;
             recipe.Nutrition.FiberGrams = request.Nutrition.FiberGrams;
+            recipe.Nutrition.ProteinCalorieRatio = Food.ComputeProteinCalorieRatio(
+                request.Nutrition.CaloriesPerServing ?? 0,
+                request.Nutrition.ProteinGrams ?? 0);
         }
 
         await _context.SaveChangesAsync(cancellationToken);

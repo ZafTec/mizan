@@ -92,7 +92,8 @@ public class GetRecipeByIdQueryHandler : IRequestHandler<GetRecipeByIdQuery, Rec
                 ProteinGrams = recipe.Nutrition.ProteinGrams,
                 CarbsGrams = recipe.Nutrition.CarbsGrams,
                 FatGrams = recipe.Nutrition.FatGrams,
-                FiberGrams = recipe.Nutrition.FiberGrams
+                FiberGrams = recipe.Nutrition.FiberGrams,
+                ProteinCalorieRatio = recipe.Nutrition.ProteinCalorieRatio
             } : null,
             Ingredients = recipe.Ingredients.Select(i => new RecipeIngredientDto
             {
@@ -109,7 +110,8 @@ public class GetRecipeByIdQueryHandler : IRequestHandler<GetRecipeByIdQuery, Rec
                     ProteinGrams = i.SubRecipe.Nutrition.ProteinGrams,
                     CarbsGrams = i.SubRecipe.Nutrition.CarbsGrams,
                     FatGrams = i.SubRecipe.Nutrition.FatGrams,
-                    FiberGrams = i.SubRecipe.Nutrition.FiberGrams
+                    FiberGrams = i.SubRecipe.Nutrition.FiberGrams,
+                    ProteinCalorieRatio = i.SubRecipe.Nutrition.ProteinCalorieRatio
                 } : null
             }).ToList(),
             Instructions = recipe.Instructions

@@ -24,7 +24,10 @@ public static class GoalHints
         decimal? targetProteinGrams,
         decimal? targetCarbsGrams,
         decimal? targetFatGrams,
-        DateOnly? targetDate)
+        DateOnly? targetDate,
+        decimal? targetBodyFatPercentage = null,
+        decimal? targetMuscleMassKg = null,
+        decimal? targetProteinCalorieRatio = null)
     {
         var hints = new List<string>();
 
@@ -117,6 +120,50 @@ public static class GoalHints
                 hints.Add(
                     $"Fat is {fatPercent:P0} of your calories — below the recommended 15% minimum. " +
                     "Very low fat intake may affect hormone production and fat-soluble vitamin absorption.");
+            }
+        }
+
+        if (targetBodyFatPercentage.HasValue)
+        {
+            if (targetBodyFatPercentage.Value < 5m)
+            {
+                hints.Add("Target body fat below 5% is dangerously low for most people.");
+            }
+            else if (targetBodyFatPercentage.Value > 40m)
+            {
+                hints.Add("Target body fat above 40% may indicate health risks.");
+            }
+        }
+
+        if (targetMuscleMassKg.HasValue && targetMuscleMassKg.Value > 120m)
+        {
+            hints.Add("Target muscle mass seems unusually high (above 120 kg).");
+        }
+
+        if (targetProteinCalorieRatio.HasValue)
+        {
+            if (targetProteinCalorieRatio.Value < 10m)
+            {
+                hints.Add("Very low protein-to-calorie ratio; consider at least 15-20%.");
+            }
+            else if (targetProteinCalorieRatio.Value > 60m)
+            {
+                hints.Add("Protein-to-calorie ratio above 60% is extreme.");
+            }
+        }
+
+        if (targetProteinCalorieRatio.HasValue && targetCalories.HasValue && targetCalories.Value > 0 && targetProteinGrams.HasValue)
+        {
+            var impliedRatio = targetProteinGrams.Value * ProteinKcalPerGram / targetCalories.Value * 100m;
+            var reference = Math.Max(impliedRatio, targetProteinCalorieRatio.Value);
+            if (reference > 0)
+            {
+                var deviation = Math.Abs(impliedRatio - targetProteinCalorieRatio.Value) / reference;
+                if (deviation > MacroDeviationThreshold)
+                {
+                    hints.Add(
+                        $"Your target P/Cal ratio ({targetProteinCalorieRatio.Value:F0}%) differs significantly from the ratio implied by your protein/calorie targets ({impliedRatio:F0}%).");
+                }
             }
         }
 

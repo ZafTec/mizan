@@ -67,6 +67,7 @@ public class CreateFoodCommandHandler : IRequestHandler<CreateFoodCommand, Creat
             FiberPer100g = request.FiberPer100g,
             ServingSize = request.ServingSize,
             ServingUnit = request.ServingUnit,
+            ProteinCalorieRatio = Food.ComputeProteinCalorieRatio(request.CaloriesPer100g, request.ProteinPer100g),
             IsVerified = request.IsVerified,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow

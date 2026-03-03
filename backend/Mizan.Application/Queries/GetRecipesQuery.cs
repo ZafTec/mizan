@@ -12,6 +12,7 @@ public record GetRecipesQuery : IRequest<PagedResult<RecipeDto>>, IPagedQuery, I
     public List<string>? Tags { get; init; }
     public bool IncludePublic { get; init; } = true;
     public bool FavoritesOnly { get; init; } = false;
+    public decimal? MinProteinCalorieRatio { get; init; }
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;
     public string? SortBy { get; init; }
@@ -41,6 +42,7 @@ public record RecipeNutritionDto
     public decimal? CarbsGrams { get; init; }
     public decimal? FatGrams { get; init; }
     public decimal? FiberGrams { get; init; }
+    public decimal? ProteinCalorieRatio { get; init; }
 }
 
 public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResult<RecipeDto>>
@@ -48,7 +50,8 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
     private static readonly Dictionary<string, Expression<Func<Domain.Entities.Recipe, object>>> SortMappings = new(StringComparer.OrdinalIgnoreCase)
     {
         ["title"] = r => r.Title,
-        ["createdat"] = r => r.CreatedAt
+        ["createdat"] = r => r.CreatedAt,
+        ["proteinCalorieRatio"] = r => r.Nutrition != null ? r.Nutrition.ProteinCalorieRatio ?? 0m : 0m
     };
 
     private readonly IMizanDbContext _context;
@@ -108,6 +111,11 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
             query = query.Where(r => r.Tags.Any(t => request.Tags.Contains(t.Tag)));
         }
 
+        if (request.MinProteinCalorieRatio.HasValue)
+        {
+            query = query.Where(r => r.Nutrition != null && r.Nutrition.ProteinCalorieRatio >= request.MinProteinCalorieRatio.Value);
+        }
+
         var totalCount = await query.CountAsync(cancellationToken);
 
         var sortedQuery = query.ApplySorting(
@@ -135,7 +143,8 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
                     ProteinGrams = r.Nutrition.ProteinGrams,
                     CarbsGrams = r.Nutrition.CarbsGrams,
                     FatGrams = r.Nutrition.FatGrams,
-                    FiberGrams = r.Nutrition.FiberGrams
+                    FiberGrams = r.Nutrition.FiberGrams,
+                    ProteinCalorieRatio = r.Nutrition.ProteinCalorieRatio
                 } : null,
                 Tags = r.Tags.Select(t => t.Tag).ToList(),
                 CreatedAt = r.CreatedAt

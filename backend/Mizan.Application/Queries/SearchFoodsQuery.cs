@@ -10,6 +10,7 @@ public record SearchFoodsQuery : IRequest<PagedResult<FoodDto>>, IPagedQuery, IS
 {
     public string? SearchTerm { get; init; }
     public string? Barcode { get; init; }
+    public decimal? MinProteinCalorieRatio { get; init; }
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;
     public string? SortBy { get; init; }
@@ -29,6 +30,7 @@ public record FoodDto
     public decimal CarbsPer100g { get; init; }
     public decimal FatPer100g { get; init; }
     public decimal? FiberPer100g { get; init; }
+    public decimal ProteinCalorieRatio { get; init; }
     public bool IsVerified { get; init; }
 }
 
@@ -39,7 +41,8 @@ public class SearchFoodsQueryHandler : IRequestHandler<SearchFoodsQuery, PagedRe
         ["name"] = f => f.Name,
         ["calories"] = f => f.CaloriesPer100g,
         ["protein"] = f => f.ProteinPer100g,
-        ["verified"] = f => f.IsVerified
+        ["verified"] = f => f.IsVerified,
+        ["proteinCalorieRatio"] = f => f.ProteinCalorieRatio
     };
 
     private readonly IMizanDbContext _context;
@@ -53,7 +56,7 @@ public class SearchFoodsQueryHandler : IRequestHandler<SearchFoodsQuery, PagedRe
 
     public async Task<PagedResult<FoodDto>> Handle(SearchFoodsQuery request, CancellationToken cancellationToken)
     {
-        var cacheKey = $"foods:search:{request.SearchTerm?.ToLower() ?? ""}:{request.Barcode ?? ""}:{request.Page}:{request.PageSize}:{request.SortBy ?? ""}:{request.SortOrder ?? ""}";
+        var cacheKey = $"foods:search:{request.SearchTerm?.ToLower() ?? ""}:{request.Barcode ?? ""}:{request.MinProteinCalorieRatio}:{request.Page}:{request.PageSize}:{request.SortBy ?? ""}:{request.SortOrder ?? ""}";
 
         var cachedResult = await _cache.GetAsync<PagedResult<FoodDto>>(cacheKey, cancellationToken);
         if (cachedResult != null)
@@ -73,6 +76,11 @@ public class SearchFoodsQueryHandler : IRequestHandler<SearchFoodsQuery, PagedRe
             query = query.Where(f =>
                 f.Name.ToLower().Contains(searchTerm) ||
                 (f.Brand != null && f.Brand.ToLower().Contains(searchTerm)));
+        }
+
+        if (request.MinProteinCalorieRatio.HasValue)
+        {
+            query = query.Where(f => f.ProteinCalorieRatio >= request.MinProteinCalorieRatio.Value);
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -98,6 +106,7 @@ public class SearchFoodsQueryHandler : IRequestHandler<SearchFoodsQuery, PagedRe
                 CarbsPer100g = f.CarbsPer100g,
                 FatPer100g = f.FatPer100g,
                 FiberPer100g = f.FiberPer100g,
+                ProteinCalorieRatio = f.ProteinCalorieRatio,
                 IsVerified = f.IsVerified
             })
             .ToListAsync(cancellationToken);

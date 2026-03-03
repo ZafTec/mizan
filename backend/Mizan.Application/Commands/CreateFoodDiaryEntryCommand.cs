@@ -85,6 +85,7 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
             CarbsGrams = request.CarbsGrams,
             FatGrams = request.FatGrams,
             FiberGrams = request.FiberGrams,
+            ProteinCalorieRatio = Food.ComputeProteinCalorieRatio(request.Calories ?? 0, request.ProteinGrams ?? 0),
             Name = request.Name,
             LoggedAt = DateTime.UtcNow
         };
