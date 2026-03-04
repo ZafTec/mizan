@@ -30,8 +30,6 @@ export default async function RecipesPage({
 			? rawTags
 			: [rawTags]
 		: [];
-	const minPcal = typeof params.minPcal === "string" ? parseInt(params.minPcal) : 0;
-
 	const { recipes, totalPages, totalCount } = await getAllRecipes(
 		searchTerm,
 		page,
@@ -40,7 +38,6 @@ export default async function RecipesPage({
 		sortBy ?? undefined,
 		sortOrder,
 		tags.length > 0 ? tags : undefined,
-		minPcal > 0 ? minPcal : undefined,
 	);
 	const user = await getUserOptionalServer();
 
@@ -48,7 +45,6 @@ export default async function RecipesPage({
 	if (searchTerm) listUrlParams.search = searchTerm;
 	if (sortBy) listUrlParams.sortBy = sortBy;
 	if (sortOrder) listUrlParams.sortOrder = sortOrder;
-	if (minPcal > 0) listUrlParams.minPcal = String(minPcal);
 	const baseUrl = buildListUrl("/recipes", listUrlParams);
 
 	let favoriteCount = 0;
@@ -161,7 +157,6 @@ export default async function RecipesPage({
 						currentTags={tags}
 						currentSortBy={sortBy ?? undefined}
 						currentSortOrder={sortOrder}
-						currentMinPcal={minPcal || undefined}
 					/>
 				</div>
 

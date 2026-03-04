@@ -1,9 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useDebounce } from "@/lib/hooks/useDebounce";
-import { useEffect } from "react";
 
 const TAG_SUGGESTIONS = [
 	"HIGH-PROTEIN",
@@ -14,13 +13,22 @@ const TAG_SUGGESTIONS = [
 	"GLUTEN-FREE",
 ] as const;
 
+const TAG_ICONS: Record<string, string> = {
+	"HIGH-PROTEIN": "ri-heart-pulse-line",
+	"LOW-CARB": "ri-leaf-line",
+	"QUICK": "ri-timer-flash-line",
+	"VEGAN": "ri-plant-line",
+	"VEGETARIAN": "ri-seedling-line",
+	"GLUTEN-FREE": "ri-forbid-line",
+};
+
 const SORT_OPTIONS = [
 	{ label: "Newest", sortBy: "createdAt", sortOrder: "desc" },
 	{ label: "Oldest", sortBy: "createdAt", sortOrder: "asc" },
 	{ label: "Title A-Z", sortBy: "title", sortOrder: "asc" },
 	{ label: "Title Z-A", sortBy: "title", sortOrder: "desc" },
-	{ label: "P/Cal High→Low", sortBy: "proteinCalorieRatio", sortOrder: "desc" },
-	{ label: "P/Cal Low→High", sortBy: "proteinCalorieRatio", sortOrder: "asc" },
+	{ label: "P/Cal High\u2192Low", sortBy: "proteinCalorieRatio", sortOrder: "desc" },
+	{ label: "P/Cal Low\u2192High", sortBy: "proteinCalorieRatio", sortOrder: "asc" },
 ] as const;
 
 interface RecipeFiltersProps {
@@ -28,7 +36,6 @@ interface RecipeFiltersProps {
 	currentTags?: string[];
 	currentSortBy?: string;
 	currentSortOrder?: string;
-	currentMinPcal?: number;
 }
 
 export default function RecipeFilters({
@@ -36,34 +43,28 @@ export default function RecipeFilters({
 	currentTags = [],
 	currentSortBy,
 	currentSortOrder,
-	currentMinPcal,
 }: RecipeFiltersProps) {
 	const router = useRouter();
 	const [search, setSearch] = useState(currentSearch);
-	const [minPcal, setMinPcal] = useState(currentMinPcal?.toString() ?? "");
 	const debouncedSearch = useDebounce(search, 400);
-	const debouncedMinPcal = useDebounce(minPcal, 500);
 
 	const buildUrl = useCallback(
-		(overrides: { search?: string; tags?: string[]; sortBy?: string; sortOrder?: string; minPcal?: string }) => {
+		(overrides: { search?: string; tags?: string[]; sortBy?: string; sortOrder?: string }) => {
 			const params = new URLSearchParams();
 			const s = overrides.search ?? debouncedSearch;
 			const t = overrides.tags ?? currentTags;
 			const sb = overrides.sortBy ?? currentSortBy;
 			const so = overrides.sortOrder ?? currentSortOrder;
-			const mp = overrides.minPcal ?? debouncedMinPcal;
 
 			if (s) params.set("search", s);
 			t.forEach((tag) => params.append("tags", tag));
 			if (sb) params.set("sortBy", sb);
 			if (so) params.set("sortOrder", so);
-			const mpNum = parseInt(mp);
-			if (!isNaN(mpNum) && mpNum > 0) params.set("minPcal", String(mpNum));
 
 			const qs = params.toString();
 			return qs ? `/recipes?${qs}` : "/recipes";
 		},
-		[debouncedSearch, currentTags, currentSortBy, currentSortOrder, debouncedMinPcal],
+		[debouncedSearch, currentTags, currentSortBy, currentSortOrder],
 	);
 
 	useEffect(() => {
@@ -71,15 +72,6 @@ export default function RecipeFilters({
 			router.push(buildUrl({ search: debouncedSearch }));
 		}
 	}, [debouncedSearch, currentSearch, router, buildUrl]);
-
-	useEffect(() => {
-		const parsed = parseInt(debouncedMinPcal);
-		const currentVal = currentMinPcal ?? 0;
-		const newVal = isNaN(parsed) ? 0 : parsed;
-		if (newVal !== currentVal) {
-			router.push(buildUrl({ minPcal: debouncedMinPcal }));
-		}
-	}, [debouncedMinPcal, currentMinPcal, router, buildUrl]);
 
 	const toggleTag = (tag: string) => {
 		const next = currentTags.includes(tag)
@@ -97,40 +89,35 @@ export default function RecipeFilters({
 		(o) => o.sortBy === currentSortBy && o.sortOrder === currentSortOrder,
 	);
 
+	const hasActiveFilters = currentTags.length > 0 || currentSortIndex >= 0;
+
 	return (
-		<div className="card p-4 space-y-4">
+		<div className="space-y-4">
+			{/* Search + Sort row */}
 			<div className="flex flex-col sm:flex-row gap-3">
 				<div className="relative flex-1">
-					<i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+					<i className="ri-search-line absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
 					<input
 						type="text"
-						placeholder="Search recipes..."
+						placeholder="Search by name, ingredient, or tag..."
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
-						className="input pl-10 w-full"
+						className="input pl-11 py-3 w-full text-base"
 					/>
-				</div>
-				<div className="flex items-center gap-2">
-					<label className="text-sm font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap">
-						Min P/Cal
-					</label>
-					<div className="relative w-20">
-						<input
-							type="number"
-							min={0}
-							max={100}
-							placeholder="0"
-							value={minPcal}
-							onChange={(e) => setMinPcal(e.target.value)}
-							className="input text-center pr-6"
-						/>
-						<span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
-					</div>
+					{search && (
+						<button
+							type="button"
+							onClick={() => setSearch("")}
+							className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+						>
+							<i className="ri-close-circle-fill text-lg" />
+						</button>
+					)}
 				</div>
 				<select
 					value={currentSortIndex >= 0 ? currentSortIndex : ""}
 					onChange={handleSort}
-					className="input w-full sm:w-48"
+					className="input py-3 w-full sm:w-52"
 				>
 					<option value="" disabled>
 						Sort by...
@@ -143,25 +130,47 @@ export default function RecipeFilters({
 				</select>
 			</div>
 
+			{/* Tags */}
 			<div className="flex flex-wrap gap-2">
 				{TAG_SUGGESTIONS.map((tag) => {
 					const active = currentTags.includes(tag);
+					const icon = TAG_ICONS[tag];
 					return (
 						<button
 							key={tag}
 							type="button"
 							onClick={() => toggleTag(tag)}
-							className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+							className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-all border ${
 								active
-									? "bg-brand-500 text-white"
-									: "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+									? "bg-brand-500 text-white border-brand-500 shadow-sm shadow-brand-500/25"
+									: "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-brand-300 hover:text-brand-600 dark:hover:border-brand-700 dark:hover:text-brand-400"
 							}`}
 						>
-							{tag}
+							{icon && <i className={`${icon} text-base`} />}
+							{tag.replace("-", " ").toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
+							{active && <i className="ri-close-line text-sm ml-0.5 opacity-70" />}
 						</button>
 					);
 				})}
 			</div>
+
+			{/* Active filter summary */}
+			{hasActiveFilters && (
+				<div className="flex items-center justify-between">
+					<p className="text-xs text-slate-400 dark:text-slate-500">
+						{currentTags.length > 0 && `${currentTags.length} tag${currentTags.length > 1 ? "s" : ""} selected`}
+						{currentTags.length > 0 && currentSortIndex >= 0 && " · "}
+						{currentSortIndex >= 0 && `Sorted by ${SORT_OPTIONS[currentSortIndex].label}`}
+					</p>
+					<button
+						type="button"
+						onClick={() => router.push(search ? `/recipes?search=${encodeURIComponent(search)}` : "/recipes")}
+						className="text-xs text-brand-500 hover:text-brand-600 font-medium transition-colors"
+					>
+						Clear filters
+					</button>
+				</div>
+			)}
 		</div>
 	);
 }
