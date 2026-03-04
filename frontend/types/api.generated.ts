@@ -520,6 +520,7 @@ export interface paths {
                 query?: {
                     SearchTerm?: string;
                     Barcode?: string;
+                    MinProteinCalorieRatio?: number;
                     Page?: number;
                     PageSize?: number;
                     SortBy?: string;
@@ -1723,6 +1724,7 @@ export interface paths {
                     Tags?: string[];
                     IncludePublic?: boolean;
                     FavoritesOnly?: boolean;
+                    MinProteinCalorieRatio?: number;
                     Page?: number;
                     PageSize?: number;
                     SortBy?: string;
@@ -2870,6 +2872,12 @@ export interface components {
             /** Format: double */
             targetWeight?: number | null;
             weightUnit?: string | null;
+            /** Format: double */
+            targetBodyFatPercentage?: number | null;
+            /** Format: double */
+            targetMuscleMassKg?: number | null;
+            /** Format: double */
+            targetProteinCalorieRatio?: number | null;
             /** Format: date */
             targetDate?: string | null;
         };
@@ -3003,6 +3011,8 @@ export interface components {
             fatGrams?: number | null;
             /** Format: double */
             fiberGrams?: number | null;
+            /** Format: double */
+            proteinCalorieRatio?: number | null;
             /** Format: date-time */
             loggedAt?: string;
         };
@@ -3031,6 +3041,8 @@ export interface components {
             fatPer100g?: number;
             /** Format: double */
             fiberPer100g?: number | null;
+            /** Format: double */
+            proteinCalorieRatio?: number;
             isVerified?: boolean;
         };
         FoodDtoPagedResult: {
@@ -3441,6 +3453,8 @@ export interface components {
             fatGrams?: number | null;
             /** Format: double */
             fiberGrams?: number | null;
+            /** Format: double */
+            proteinCalorieRatio?: number | null;
         };
         RecognizedFood: {
             name?: string | null;
@@ -3768,6 +3782,12 @@ export interface components {
             /** Format: double */
             targetWeight?: number | null;
             weightUnit?: string | null;
+            /** Format: double */
+            targetBodyFatPercentage?: number | null;
+            /** Format: double */
+            targetMuscleMassKg?: number | null;
+            /** Format: double */
+            targetProteinCalorieRatio?: number | null;
             /** Format: date */
             targetDate?: string | null;
             isActive?: boolean;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { clientApi } from "@/lib/api.client";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 
@@ -27,16 +27,18 @@ export default function RecipeIngredientSearch({
 	onChange,
 	onSelect,
 }: RecipeIngredientSearchProps) {
-	const [results, setResults] = useState<RecipeSearchResult[]>([]);
+	const [fetchedResults, setFetchedResults] = useState<RecipeSearchResult[]>([]);
 	const [isOpen, setIsOpen] = useState(false);
 	const debouncedQuery = useDebounce(value, 300);
 	const containerRef = useRef<HTMLDivElement>(null);
 
+	const results = useMemo(
+		() => (!debouncedQuery || debouncedQuery.length < 2) ? [] : fetchedResults,
+		[debouncedQuery, fetchedResults],
+	);
+
 	useEffect(() => {
-		if (!debouncedQuery || debouncedQuery.length < 2) {
-			setResults([]);
-			return;
-		}
+		if (!debouncedQuery || debouncedQuery.length < 2) return;
 		let cancelled = false;
 		const params = new URLSearchParams({
 			SearchTerm: debouncedQuery,
@@ -46,12 +48,12 @@ export default function RecipeIngredientSearch({
 		clientApi<{ items: RecipeSearchResult[] }>(`/api/Recipes?${params}`)
 			.then((data) => {
 				if (!cancelled) {
-					setResults(data.items || []);
+					setFetchedResults(data.items || []);
 					setIsOpen(true);
 				}
 			})
 			.catch(() => {
-				if (!cancelled) setResults([]);
+				if (!cancelled) setFetchedResults([]);
 			});
 		return () => {
 			cancelled = true;

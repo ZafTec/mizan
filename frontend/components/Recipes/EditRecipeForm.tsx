@@ -66,6 +66,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                     carbsPer100g: 0,
                     fatPer100g: 0,
                     fiberPer100g: 0,
+                    proteinCalorieRatio: 0,
                     servingSize: 0,
                     servingUnit: 'g',
                     isVerified: false
