@@ -14,6 +14,9 @@ export interface UserGoal {
     targetFatGrams?: number;
     targetWeight?: number;
     weightUnit?: string;
+    targetBodyFatPercentage?: number | null;
+    targetMuscleMassKg?: number | null;
+    targetProteinCalorieRatio?: number | null;
     targetDate?: string;
     isActive: boolean;
 }
@@ -41,6 +44,9 @@ export async function createGoal(prevState: FormState, formData: FormData): Prom
         const targetProtein = parseFloat(formData.get("protein") as string);
         const targetCarbs = parseFloat(formData.get("carbs") as string);
         const targetFat = parseFloat(formData.get("fat") as string);
+        const targetBodyFat = parseFloat(formData.get("targetBodyFatPercentage") as string);
+        const targetMuscle = parseFloat(formData.get("targetMuscleMassKg") as string);
+        const targetPcal = parseFloat(formData.get("targetProteinCalorieRatio") as string);
 
         if (isNaN(targetCalories)) {
             return createErrorState("Target calories are required", [
@@ -56,6 +62,9 @@ export async function createGoal(prevState: FormState, formData: FormData): Prom
                 targetProteinGrams: isNaN(targetProtein) ? null : targetProtein,
                 targetCarbsGrams: isNaN(targetCarbs) ? null : targetCarbs,
                 targetFatGrams: isNaN(targetFat) ? null : targetFat,
+                targetBodyFatPercentage: isNaN(targetBodyFat) ? null : targetBodyFat,
+                targetMuscleMassKg: isNaN(targetMuscle) ? null : targetMuscle,
+                targetProteinCalorieRatio: isNaN(targetPcal) ? null : targetPcal,
             },
         });
 

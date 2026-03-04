@@ -17,14 +17,7 @@ export default async function Page(
 	const { page, sortBy, sortOrder } = parseListParams(params);
 	const searchIngredient = params.searchIngredient as string | undefined;
 	const minPcal = typeof params.minPcal === "string" ? parseInt(params.minPcal) : 0;
-	const { ingredients: rawIngredients, totalPages, totalCount } = await getAllIngredient(searchIngredient, sortBy ?? undefined, sortOrder, page, 10);
-	const ingredients = minPcal > 0
-		? rawIngredients.filter((ing) => {
-			const cal = ing.caloriesPer100g || 0;
-			const prot = ing.proteinPer100g || 0;
-			return cal > 0 && (prot * 4 / cal) * 100 >= minPcal;
-		})
-		: rawIngredients;
+	const { ingredients, totalPages, totalCount } = await getAllIngredient(searchIngredient, sortBy ?? undefined, sortOrder, page, 10, minPcal > 0 ? minPcal : undefined);
 	const baseUrl = buildListUrl('/ingredients', { searchIngredient, sortBy, sortOrder, ...(minPcal > 0 ? { minPcal: String(minPcal) } : {}) });
 
 	return (
@@ -57,7 +50,7 @@ export default async function Page(
 								<th className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Fat</th>
 								<th className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Carbs</th>
 								<th className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Fiber</th>
-								<th className="text-center px-4 py-4 text-sm font-semibold text-violet-600">P/Cal</th>
+								<SortableHeader sortKey="proteinCalorieRatio" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="text-center px-4 py-4 text-sm font-semibold text-violet-600">P/Cal</SortableHeader>
 							</tr>
 						</thead>
 						<tbody className="divide-y divide-slate-100">
@@ -112,7 +105,7 @@ export default async function Page(
 										</td>
 										<td className="px-4 py-4 text-center">
 											<span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-violet-50 text-violet-700 text-sm font-medium">
-												{ingredient.caloriesPer100g > 0 ? ((ingredient.proteinPer100g * 4 / ingredient.caloriesPer100g) * 100).toFixed(0) : 0}%
+												{ingredient.proteinCalorieRatio.toFixed(0)}%
 											</span>
 										</td>
 									</tr>

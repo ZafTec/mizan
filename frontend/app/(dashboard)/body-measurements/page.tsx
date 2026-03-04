@@ -116,7 +116,7 @@ export default async function BodyMeasurementsPage({
 
             <AddMeasurementForm />
 
-            <MeasurementChart measurements={allMeasurements} targetWeight={goal?.targetWeight ?? null} />
+            <MeasurementChart measurements={allMeasurements} targetWeight={goal?.targetWeight ?? null} targetBodyFatPercentage={goal?.targetBodyFatPercentage} targetMuscleMassKg={goal?.targetMuscleMassKg} />
 
             <div className="card p-6">
                 <h2 className="section-title mb-6">Measurement History</h2>

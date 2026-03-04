@@ -76,7 +76,7 @@ function TimeRangePicker({ range, onChange }: { range: TimeRange; onChange: (r: 
     );
 }
 
-function CompositionChart({ data, targetWeight }: { data: ReturnType<typeof buildData>; targetWeight: number | null }) {
+function CompositionChart({ data, targetWeight, targetBodyFatPercentage, targetMuscleMassKg }: { data: ReturnType<typeof buildData>; targetWeight: number | null; targetBodyFatPercentage?: number | null; targetMuscleMassKg?: number | null }) {
     const hasWeight = data.some((d) => d.weight !== null);
     const hasMuscle = data.some((d) => d.muscle !== null);
     const hasBodyFat = data.some((d) => d.bodyFat !== null);
@@ -129,6 +129,26 @@ function CompositionChart({ data, targetWeight }: { data: ReturnType<typeof buil
                         strokeDasharray="6 3"
                         strokeWidth={2}
                         label={{ value: `Target: ${targetWeight} kg`, position: "insideTopRight", fontSize: 11, fill: "#6366f1" }}
+                    />
+                )}
+                {targetBodyFatPercentage && (
+                    <ReferenceLine
+                        yAxisId="pct"
+                        y={targetBodyFatPercentage}
+                        stroke="#10b981"
+                        strokeDasharray="6 3"
+                        strokeWidth={2}
+                        label={{ value: `Goal: ${targetBodyFatPercentage}%`, position: "insideBottomRight", fontSize: 11, fill: "#10b981" }}
+                    />
+                )}
+                {targetMuscleMassKg && (
+                    <ReferenceLine
+                        yAxisId="kg"
+                        y={targetMuscleMassKg}
+                        stroke="#3b82f6"
+                        strokeDasharray="6 3"
+                        strokeWidth={2}
+                        label={{ value: `Goal: ${targetMuscleMassKg} kg`, position: "insideTopLeft", fontSize: 11, fill: "#3b82f6" }}
                     />
                 )}
             </ComposedChart>
@@ -260,7 +280,7 @@ function buildData(measurements: BodyMeasurement[]) {
     }));
 }
 
-export default function MeasurementChart({ measurements, targetWeight = null }: { measurements: BodyMeasurement[]; targetWeight?: number | null }) {
+export default function MeasurementChart({ measurements, targetWeight = null, targetBodyFatPercentage, targetMuscleMassKg }: { measurements: BodyMeasurement[]; targetWeight?: number | null; targetBodyFatPercentage?: number | null; targetMuscleMassKg?: number | null }) {
     const [range, setRange] = useState<TimeRange>("3M");
     const [tab, setTab] = useState<Tab>("composition");
     const [activeCirc, setActiveCirc] = useState<Set<CircKey>>(
@@ -331,7 +351,7 @@ export default function MeasurementChart({ measurements, targetWeight = null }: 
             )}
 
             {tab === "composition" ? (
-                <CompositionChart data={data} targetWeight={targetWeight} />
+                <CompositionChart data={data} targetWeight={targetWeight} targetBodyFatPercentage={targetBodyFatPercentage} targetMuscleMassKg={targetMuscleMassKg} />
             ) : (
                 <CircumferenceChart data={data} active={activeCirc} onToggle={toggleCirc} />
             )}

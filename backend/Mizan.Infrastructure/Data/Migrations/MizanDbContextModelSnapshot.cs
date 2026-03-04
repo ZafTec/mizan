@@ -511,6 +511,11 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("name");
 
+                    b.Property<decimal>("ProteinCalorieRatio")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)")
+                        .HasColumnName("protein_calorie_ratio");
+
                     b.Property<decimal>("ProteinPer100g")
                         .HasPrecision(8, 2)
                         .HasColumnType("numeric(8,2)")
@@ -609,6 +614,11 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(255)")
                         .HasDefaultValue("")
                         .HasColumnName("name");
+
+                    b.Property<decimal?>("ProteinCalorieRatio")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)")
+                        .HasColumnName("protein_calorie_ratio");
 
                     b.Property<decimal?>("ProteinGrams")
                         .HasPrecision(8, 2)
@@ -1170,6 +1180,11 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnType("numeric(8,2)")
                         .HasColumnName("fiber_grams");
 
+                    b.Property<decimal?>("ProteinCalorieRatio")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)")
+                        .HasColumnName("protein_calorie_ratio");
+
                     b.Property<decimal?>("ProteinGrams")
                         .HasPrecision(8, 2)
                         .HasColumnType("numeric(8,2)")
@@ -1527,6 +1542,11 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("is_active");
 
+                    b.Property<decimal?>("TargetBodyFatPercentage")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)")
+                        .HasColumnName("target_body_fat_percentage");
+
                     b.Property<decimal?>("TargetCalories")
                         .HasPrecision(8, 2)
                         .HasColumnType("numeric(8,2)")
@@ -1545,6 +1565,16 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasPrecision(8, 2)
                         .HasColumnType("numeric(8,2)")
                         .HasColumnName("target_fat_grams");
+
+                    b.Property<decimal?>("TargetMuscleMassKg")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)")
+                        .HasColumnName("target_muscle_mass_kg");
+
+                    b.Property<decimal?>("TargetProteinCalorieRatio")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)")
+                        .HasColumnName("target_protein_calorie_ratio");
 
                     b.Property<decimal?>("TargetProteinGrams")
                         .HasPrecision(8, 2)

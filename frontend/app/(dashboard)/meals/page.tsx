@@ -310,6 +310,16 @@ export default function MealsPage() {
 						<YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} unit="%" domain={[0, 'auto']} />
 						<Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value) => [`${value}%`, 'P/Cal Ratio']} />
 						<Line type="monotone" dataKey="proteinCalRatio" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: '#8b5cf6', r: 3 }} name="P/Cal Ratio (%)" />
+						{goal && (goal.targetProteinCalorieRatio ?? 0) > 0 && (
+							<ReferenceLine
+								y={goal.targetProteinCalorieRatio!}
+								stroke="#8b5cf6"
+								strokeDasharray="6 3"
+								strokeWidth={2}
+								ifOverflow="extendDomain"
+								label={{ value: `Goal: ${goal.targetProteinCalorieRatio}%`, position: "insideTopRight", fontSize: 11, fill: "#8b5cf6" }}
+							/>
+						)}
 					</LineChart>
 				</ResponsiveContainer>
 			</div>

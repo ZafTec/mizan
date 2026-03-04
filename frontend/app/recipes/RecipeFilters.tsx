@@ -19,6 +19,8 @@ const SORT_OPTIONS = [
 	{ label: "Oldest", sortBy: "createdAt", sortOrder: "asc" },
 	{ label: "Title A-Z", sortBy: "title", sortOrder: "asc" },
 	{ label: "Title Z-A", sortBy: "title", sortOrder: "desc" },
+	{ label: "P/Cal High→Low", sortBy: "proteinCalorieRatio", sortOrder: "desc" },
+	{ label: "P/Cal Low→High", sortBy: "proteinCalorieRatio", sortOrder: "asc" },
 ] as const;
 
 interface RecipeFiltersProps {

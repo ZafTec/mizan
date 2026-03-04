@@ -19,6 +19,7 @@ export interface Ingredient {
     carbsPer100g: number;
     fatPer100g: number;
     fiberPer100g?: number;
+    proteinCalorieRatio: number;
     isVerified: boolean;
 }
 
@@ -30,7 +31,8 @@ export async function getAllIngredient(
     sortBy?: string,
     sortOrder?: string,
     page: number = 1,
-    limit: number = 20
+    limit: number = 20,
+    minProteinCalorieRatio?: number,
 ): Promise<{ ingredients: Ingredient[], totalCount: number, totalPages: number }> {
     try {
         const params = new URLSearchParams();
@@ -39,6 +41,7 @@ export async function getAllIngredient(
         if (searchTerm) params.set("SearchTerm", searchTerm);
         if (sortBy) params.set("SortBy", sortBy);
         if (sortOrder) params.set("SortOrder", sortOrder);
+        if (minProteinCalorieRatio && minProteinCalorieRatio > 0) params.set("MinProteinCalorieRatio", String(minProteinCalorieRatio));
 
         const result = await serverApi<{ items: Ingredient[], totalCount: number, page: number, pageSize: number, totalPages: number }>(`/api/Foods/search?${params.toString()}`, { requireAuth: false });
 

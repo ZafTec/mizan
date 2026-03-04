@@ -32,7 +32,7 @@ export default async function RecipesPage({
 		: [];
 	const minPcal = typeof params.minPcal === "string" ? parseInt(params.minPcal) : 0;
 
-	const { recipes: rawRecipes, totalPages, totalCount } = await getAllRecipes(
+	const { recipes, totalPages, totalCount } = await getAllRecipes(
 		searchTerm,
 		page,
 		10,
@@ -40,14 +40,8 @@ export default async function RecipesPage({
 		sortBy ?? undefined,
 		sortOrder,
 		tags.length > 0 ? tags : undefined,
+		minPcal > 0 ? minPcal : undefined,
 	);
-	const recipes = minPcal > 0
-		? rawRecipes.filter((r) => {
-			const cal = r.nutrition?.caloriesPerServing || 0;
-			const prot = r.nutrition?.proteinGrams || 0;
-			return cal > 0 && (prot * 4 / cal) * 100 >= minPcal;
-		})
-		: rawRecipes;
 	const user = await getUserOptionalServer();
 
 	const listUrlParams: Record<string, string> = {};
@@ -79,13 +73,6 @@ export default async function RecipesPage({
 					</Link>
 				)}
 			</div>
-
-			<RecipeFilters
-				currentSearch={searchTerm}
-				currentTags={tags}
-				currentSortBy={sortBy ?? undefined}
-				currentSortOrder={sortOrder}
-			/>
 
 			{/* Quick Collections */}
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -166,6 +153,16 @@ export default async function RecipesPage({
 			<div className="card p-6">
 				<div className="flex items-center justify-between mb-6">
 					<h2 className="section-title">All Recipes</h2>
+				</div>
+
+				<div className="mb-6">
+					<RecipeFilters
+						currentSearch={searchTerm}
+						currentTags={tags}
+						currentSortBy={sortBy ?? undefined}
+						currentSortOrder={sortOrder}
+						currentMinPcal={minPcal || undefined}
+					/>
 				</div>
 
 				{recipes.length > 0 ? (

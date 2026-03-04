@@ -400,6 +400,74 @@ export default function GoalForm() {
 					</div>
 				</div>
 
+				{/* Body Composition Goals */}
+				<div className="card p-6 space-y-5">
+					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+						<i className="ri-body-scan-line text-brand-500" />
+						Body Composition Goals
+					</h2>
+
+					<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+						<div>
+							<label htmlFor="targetBodyFatPercentage" className="label">
+								<span className="flex items-center gap-1.5">
+									<span className="w-2 h-2 rounded-full bg-rose-500" />
+									Target Body Fat (%)
+								</span>
+							</label>
+							<input
+								type="number"
+								id="targetBodyFatPercentage"
+								name="targetBodyFatPercentage"
+								min={1}
+								max={60}
+								step={0.1}
+								placeholder="e.g., 15"
+								className="input"
+							/>
+							<FieldError formState={formState} name="targetBodyFatPercentage" />
+						</div>
+						<div>
+							<label htmlFor="targetMuscleMassKg" className="label">
+								<span className="flex items-center gap-1.5">
+									<span className="w-2 h-2 rounded-full bg-violet-500" />
+									Target Muscle Mass (kg)
+								</span>
+							</label>
+							<input
+								type="number"
+								id="targetMuscleMassKg"
+								name="targetMuscleMassKg"
+								min={1}
+								max={200}
+								step={0.1}
+								placeholder="e.g., 75"
+								className="input"
+							/>
+							<FieldError formState={formState} name="targetMuscleMassKg" />
+						</div>
+						<div>
+							<label htmlFor="targetProteinCalorieRatio" className="label">
+								<span className="flex items-center gap-1.5">
+									<span className="w-2 h-2 rounded-full bg-indigo-500" />
+									Target P/Cal Ratio (%)
+								</span>
+							</label>
+							<input
+								type="number"
+								id="targetProteinCalorieRatio"
+								name="targetProteinCalorieRatio"
+								min={1}
+								max={100}
+								step={1}
+								placeholder="30"
+								className="input"
+							/>
+							<FieldError formState={formState} name="targetProteinCalorieRatio" />
+						</div>
+					</div>
+				</div>
+
 				{/* Status Messages */}
 				{formState.status === "success" && !formState.warnings?.length && (
 					<div className="flex items-center gap-2 p-4 rounded-xl bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-300">
