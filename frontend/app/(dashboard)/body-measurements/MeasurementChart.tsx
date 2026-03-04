@@ -119,7 +119,7 @@ function CompositionChart({ data, targetWeight, targetBodyFatPercentage, targetM
                     <Line yAxisId="kg" type="monotone" dataKey="muscle" name="Muscle" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 3 }} connectNulls />
                 )}
                 {hasBodyFat && (
-                    <Line yAxisId="pct" type="monotone" dataKey="bodyFat" name="Body Fat" stroke="#f43f5e" strokeWidth={2} dot={{ r: 3 }} connectNulls strokeDasharray="5 3" />
+                    <Line yAxisId="pct" type="monotone" dataKey="bodyFat" name="Body Fat" stroke="#f43f5e" strokeWidth={2} dot={{ r: 3 }} connectNulls />
                 )}
                 {targetWeight && (
                     <ReferenceLine
@@ -135,20 +135,20 @@ function CompositionChart({ data, targetWeight, targetBodyFatPercentage, targetM
                     <ReferenceLine
                         yAxisId="pct"
                         y={targetBodyFatPercentage}
-                        stroke="#10b981"
+                        stroke="#f43f5e"
                         strokeDasharray="6 3"
                         strokeWidth={2}
-                        label={{ value: `Goal: ${targetBodyFatPercentage}%`, position: "insideBottomRight", fontSize: 11, fill: "#10b981" }}
+                        label={{ value: `Goal: ${targetBodyFatPercentage}%`, position: "insideBottomRight", fontSize: 11, fill: "#f43f5e" }}
                     />
                 )}
                 {targetMuscleMassKg && (
                     <ReferenceLine
                         yAxisId="kg"
                         y={targetMuscleMassKg}
-                        stroke="#3b82f6"
+                        stroke="#8b5cf6"
                         strokeDasharray="6 3"
                         strokeWidth={2}
-                        label={{ value: `Goal: ${targetMuscleMassKg} kg`, position: "insideTopLeft", fontSize: 11, fill: "#3b82f6" }}
+                        label={{ value: `Goal: ${targetMuscleMassKg} kg`, position: "insideTopLeft", fontSize: 11, fill: "#8b5cf6" }}
                     />
                 )}
             </ComposedChart>
