@@ -80,9 +80,8 @@ export default function RecipeFilters({
 		router.push(buildUrl({ tags: next }));
 	};
 
-	const handleSort = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		const opt = SORT_OPTIONS[Number(e.target.value)];
-		if (opt) router.push(buildUrl({ sortBy: opt.sortBy, sortOrder: opt.sortOrder }));
+	const handleSort = (sortBy: string, sortOrder: string) => {
+		router.push(buildUrl({ sortBy, sortOrder }));
 	};
 
 	const currentSortIndex = SORT_OPTIONS.findIndex(
@@ -93,29 +92,29 @@ export default function RecipeFilters({
 
 	return (
 		<div className="space-y-4">
-			{/* Search */}
-			<div className="relative">
-				<i className="ri-search-line absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
+			{/* Search bar */}
+			<div className="flex items-center gap-3 w-full px-4 py-3 rounded-xl border border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-700 transition-all duration-200 focus-within:ring-2 focus-within:ring-brand-500/20 focus-within:border-brand-500 dark:focus-within:border-brand-400">
+				<i className="ri-search-line text-slate-400 text-lg shrink-0" />
 				<input
 					type="text"
 					placeholder="Search by name, description, or tag..."
 					value={search}
 					onChange={(e) => setSearch(e.target.value)}
-					className="input pl-11 py-3 w-full text-base"
+					className="flex-1 bg-transparent text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none text-base min-w-0"
 				/>
 				{search && (
 					<button
 						type="button"
 						onClick={() => setSearch("")}
-						className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+						className="text-slate-400 hover:text-slate-600 transition-colors shrink-0"
 					>
 						<i className="ri-close-circle-fill text-lg" />
 					</button>
 				)}
 			</div>
 
-			{/* Tags + Sort */}
-			<div className="flex flex-wrap items-center gap-2">
+			{/* Tags row */}
+			<div className="flex flex-wrap gap-2">
 				{TAG_SUGGESTIONS.map((tag) => {
 					const active = currentTags.includes(tag);
 					const icon = TAG_ICONS[tag];
@@ -124,10 +123,10 @@ export default function RecipeFilters({
 							key={tag}
 							type="button"
 							onClick={() => toggleTag(tag)}
-							className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium transition-all border ${
+							className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
 								active
 									? "bg-brand-500 text-white border-brand-500 shadow-sm shadow-brand-500/25"
-									: "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-brand-300 hover:text-brand-600 dark:hover:border-brand-700 dark:hover:text-brand-400"
+									: "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-brand-300 hover:text-brand-600"
 							}`}
 						>
 							{icon && <i className={`${icon} text-base`} />}
@@ -136,20 +135,25 @@ export default function RecipeFilters({
 						</button>
 					);
 				})}
-				<select
-					value={currentSortIndex >= 0 ? currentSortIndex : ""}
-					onChange={handleSort}
-					className="input py-2 px-3 text-sm w-44 ml-auto"
-				>
-					<option value="" disabled>
-						Sort by...
-					</option>
-					{SORT_OPTIONS.map((opt, i) => (
-						<option key={opt.label} value={i}>
-							{opt.label}
-						</option>
-					))}
-				</select>
+			</div>
+
+			{/* Sort row */}
+			<div className="flex flex-wrap items-center gap-1.5">
+				<span className="text-xs text-slate-400 dark:text-slate-500 font-medium mr-1">Sort:</span>
+				{SORT_OPTIONS.map((opt, i) => (
+					<button
+						key={opt.label}
+						type="button"
+						onClick={() => handleSort(opt.sortBy, opt.sortOrder)}
+						className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+							currentSortIndex === i
+								? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+								: "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+						}`}
+					>
+						{opt.label}
+					</button>
+				))}
 			</div>
 
 			{/* Active filter summary */}
