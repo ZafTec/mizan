@@ -9,7 +9,8 @@ import { deleteMeal } from "@/data/meal";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ComposedChart, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { ComposedChart, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import type { Formatter, ValueType } from "recharts/types/component/DefaultTooltipContent";
 // Assuming radix-ui wrap or similar, if not I'll just use HTML progress or div.
 // Actually I don't see components/ui/progress in file list. I will use custom div.
 import Loading from "@/components/Loading";
@@ -29,6 +30,34 @@ interface DailyStat {
 	goalFiber?: number;
 	goalPcal?: number;
 }
+
+const percentTooltipFormatter: Formatter<ValueType, string> = (value, name) => {
+	const label = name ?? "";
+
+	if (value === undefined) {
+		return ["-", label];
+	}
+
+	if (Array.isArray(value)) {
+		return [`${value.join(" / ")}%`, label];
+	}
+
+	return [`${value}%`, label];
+};
+
+const gramsTooltipFormatter: Formatter<ValueType, string> = (value, name) => {
+	const label = name ?? "";
+
+	if (value === undefined) {
+		return ["-", label];
+	}
+
+	if (Array.isArray(value)) {
+		return [`${value.join(" / ")}g`, label];
+	}
+
+	return [`${value}g`, label];
+};
 
 export default function MealsPage() {
 	const { data: session, isPending } = useSession();
@@ -330,7 +359,7 @@ export default function MealsPage() {
 						<CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
 						<XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
 						<YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} unit="%" domain={[0, 'auto']} />
-						<Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value: number, name: string) => [`${value}%`, name]} />
+						<Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={percentTooltipFormatter} />
 						<Line type="monotone" dataKey="proteinCalRatio" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: '#8b5cf6', r: 3 }} name="P/Cal Ratio (%)" />
 						{history.some(d => d.goalPcal) && (
 							<Line type="stepAfter" dataKey="goalPcal" stroke="#8b5cf6" strokeDasharray="6 3" strokeWidth={2} dot={false} name="P/Cal Goal (%)" />
@@ -351,7 +380,7 @@ export default function MealsPage() {
 							<CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
 							<XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
 							<YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} unit="g" domain={[0, 'auto']} />
-							<Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value: number, name: string) => [`${value}g`, name]} />
+							<Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={gramsTooltipFormatter} />
 							<Line type="monotone" dataKey="fiber" stroke="#22c55e" strokeWidth={2} dot={{ fill: '#22c55e', r: 3 }} name="Fiber (g)" />
 							{history.some(d => d.goalFiber) && (
 								<Line type="stepAfter" dataKey="goalFiber" stroke="#22c55e" strokeDasharray="6 3" strokeWidth={2} dot={false} name="Fiber Goal (g)" />

@@ -15,10 +15,23 @@ import {
 	Line,
 	Brush,
 } from "recharts";
+import type { Formatter, ValueType } from "recharts/types/component/DefaultTooltipContent";
 
 interface MealMacrosChartProps {
   perDayMeals: PerDayMealsAggregate[];
 }
+
+const caloriesTooltipFormatter: Formatter<ValueType, string> = (value) => {
+	if (value === undefined) {
+		return "-";
+	}
+
+	if (Array.isArray(value)) {
+		return `${value.join(" / ")} kcal`;
+	}
+
+	return `${value} kcal`;
+};
 
 export default function MealMacrosChart({ perDayMeals }: MealMacrosChartProps) {
   // Prepare data for the chart
@@ -151,7 +164,7 @@ export default function MealMacrosChart({ perDayMeals }: MealMacrosChartProps) {
 					<CartesianGrid strokeDasharray="3 3" />
 					<XAxis dataKey="date" />
 					<YAxis />
-					<Tooltip formatter={(value: any) => `${value} kcal`} />
+					<Tooltip formatter={caloriesTooltipFormatter} />
 					<Legend />
 					<Line
 						type="monotone"
