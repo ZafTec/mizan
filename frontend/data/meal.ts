@@ -102,7 +102,8 @@ export async function addMeal(prevState: FormState, formData: FormData): Promise
         const foodId = formData.get("foodId") as string;
         const mealType = ((formData.get("mealType") as string) || "SNACK").toUpperCase();
         const servings = parseFloat(formData.get("servings") as string) || 1;
-        const date = (formData.get("date") as string) || new Date().toISOString().split("T")[0];
+        const rawDate = (formData.get("date") as string) || new Date().toISOString().split("T")[0];
+        const date = rawDate.includes("T") ? rawDate.split("T")[0] : rawDate;
         const calories = parseInt(formData.get("calories") as string);
         const protein = parseFloat(formData.get("protein") as string);
         const carbs = parseFloat(formData.get("carbs") as string);

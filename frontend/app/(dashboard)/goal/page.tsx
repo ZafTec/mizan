@@ -3,8 +3,8 @@
 import { FieldError } from "@/components/FieldError";
 import Loading from "@/components/Loading";
 import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
-import { useActionState, useState } from "react";
-import { createGoal } from "@/data/goal";
+import { useActionState, useState, useEffect } from "react";
+import { createGoal, getCurrentGoal } from "@/data/goal";
 
 const ACTIVITY_FACTORS = {
 	sedentary: { label: "Sedentary (desk job, little/no exercise)", value: 1.2 },
@@ -33,6 +33,47 @@ function calcTDEE(
 export default function GoalForm() {
 	const [formState, action, isPending] = useActionState(createGoal, EMPTY_FORM_STATE);
 	const [caloriesValue, setCaloriesValue] = useState("");
+	const [proteinValue, setProteinValue] = useState("");
+	const [carbsValue, setCarbsValue] = useState("");
+	const [fatValue, setFatValue] = useState("");
+	const [fiberValue, setFiberValue] = useState("");
+	const [goalType, setGoalType] = useState("");
+	const [bodyFatValue, setBodyFatValue] = useState("");
+	const [muscleMassValue, setMuscleMassValue] = useState("");
+	const [pcalValue, setPcalValue] = useState("");
+	const [targetWeightValue, setTargetWeightValue] = useState("");
+	const [targetWeightUnit, setTargetWeightUnit] = useState<"kg" | "lb">("kg");
+	const [targetDateValue, setTargetDateValue] = useState("");
+	const [loadingGoal, setLoadingGoal] = useState(true);
+
+	useEffect(() => {
+		getCurrentGoal().then((goal) => {
+			if (goal) {
+				setCaloriesValue(goal.targetCalories?.toString() || "");
+				setProteinValue(goal.targetProteinGrams?.toString() || "");
+				setCarbsValue(goal.targetCarbsGrams?.toString() || "");
+				setFatValue(goal.targetFatGrams?.toString() || "");
+				setFiberValue(goal.targetFiberGrams?.toString() || "");
+				setGoalType(goal.goalType || "");
+				setBodyFatValue(goal.targetBodyFatPercentage?.toString() || "");
+				setMuscleMassValue(goal.targetMuscleMassKg?.toString() || "");
+				setPcalValue(goal.targetProteinCalorieRatio?.toString() || "");
+				setTargetWeightValue(goal.targetWeight?.toString() || "");
+				setTargetWeightUnit((goal.weightUnit as "kg" | "lb") || "kg");
+				setTargetDateValue(goal.targetDate || "");
+			}
+			setLoadingGoal(false);
+		});
+	}, []);
+
+	const pCalAutoProtein = (() => {
+		const ratio = parseFloat(pcalValue);
+		const cal = parseFloat(caloriesValue);
+		if (!isNaN(ratio) && ratio > 0 && !isNaN(cal) && cal > 0) {
+			return Math.round((ratio / 100) * cal / 4);
+		}
+		return null;
+	})();
 
 	// TDEE calculator state
 	const [tdeeOpen, setTdeeOpen] = useState(false);
@@ -283,22 +324,33 @@ export default function GoalForm() {
 			</div>
 
 			<form action={action} className="space-y-6">
-				{/* Goal Name Card */}
+				{/* Hidden fields for new goal data */}
+				<input type="hidden" name="targetWeight" value={targetWeightValue} />
+				<input type="hidden" name="weightUnit" value={targetWeightUnit} />
+				<input type="hidden" name="targetDate" value={targetDateValue} />
+
+				{/* Goal Type Card */}
 				<div className="card p-6 space-y-5">
 					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
 						<i className="ri-bookmark-line text-brand-500" />
-						Goal Name
+						Goal Type
 					</h2>
 					<div>
-						<label htmlFor="name" className="label">What are you working towards?</label>
-						<input
-							type="text"
-							id="name"
-							name="name"
+						<label htmlFor="goalType" className="label">What are you working towards?</label>
+						<select
+							id="goalType"
+							name="goalType"
 							className="input"
-							placeholder="e.g., Weight Loss, Muscle Gain, Maintenance"
-						/>
-						<FieldError formState={formState} name="name" />
+							value={goalType}
+							onChange={(e) => setGoalType(e.target.value)}
+						>
+							<option value="">Select a goal type</option>
+							<option value="weight_loss">Weight Loss</option>
+							<option value="muscle_gain">Muscle Gain</option>
+							<option value="maintenance">Maintenance</option>
+							<option value="general">General Health</option>
+						</select>
+						<FieldError formState={formState} name="goalType" />
 					</div>
 				</div>
 
@@ -343,7 +395,12 @@ export default function GoalForm() {
 								min={0}
 								placeholder="150"
 								className="input"
+								value={proteinValue}
+								onChange={(e) => setProteinValue(e.target.value)}
 							/>
+							{pCalAutoProtein !== null && !proteinValue && (
+								<p className="text-xs text-indigo-500 mt-1">P/Cal suggests ~{pCalAutoProtein}g protein</p>
+							)}
 							<FieldError formState={formState} name="protein" />
 						</div>
 						<div>
@@ -360,6 +417,8 @@ export default function GoalForm() {
 								min={0}
 								placeholder="200"
 								className="input"
+								value={carbsValue}
+								onChange={(e) => setCarbsValue(e.target.value)}
 							/>
 							<FieldError formState={formState} name="carbs" />
 						</div>
@@ -377,6 +436,8 @@ export default function GoalForm() {
 								min={0}
 								placeholder="65"
 								className="input"
+								value={fatValue}
+								onChange={(e) => setFatValue(e.target.value)}
 							/>
 							<FieldError formState={formState} name="fat" />
 						</div>
@@ -394,6 +455,8 @@ export default function GoalForm() {
 								min={0}
 								placeholder="30"
 								className="input"
+								value={fiberValue}
+								onChange={(e) => setFiberValue(e.target.value)}
 							/>
 							<FieldError formState={formState} name="fiber" />
 						</div>
@@ -408,6 +471,42 @@ export default function GoalForm() {
 					</h2>
 
 					<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+						<div>
+							<label htmlFor="targetWeight" className="label">
+								<span className="flex items-center gap-1.5">
+									<span className="w-2 h-2 rounded-full bg-blue-500" />
+									Target Weight
+								</span>
+							</label>
+							<div className="flex gap-2">
+								<input
+									type="number"
+									id="targetWeight"
+									min={20}
+									step={0.1}
+									placeholder={targetWeightUnit === "kg" ? "70" : "154"}
+									className="input flex-1"
+									value={targetWeightValue}
+									onChange={(e) => setTargetWeightValue(e.target.value)}
+								/>
+								<div className="flex gap-1 items-center">
+									{(["kg", "lb"] as const).map((u) => (
+										<button
+											key={u}
+											type="button"
+											onClick={() => setTargetWeightUnit(u)}
+											className={`text-xs px-2 py-1 rounded font-medium transition-colors ${
+												targetWeightUnit === u
+													? "bg-brand-500 text-white"
+													: "text-slate-400 hover:text-slate-600"
+											}`}
+										>
+											{u}
+										</button>
+									))}
+								</div>
+							</div>
+						</div>
 						<div>
 							<label htmlFor="targetBodyFatPercentage" className="label">
 								<span className="flex items-center gap-1.5">
@@ -424,6 +523,8 @@ export default function GoalForm() {
 								step={0.1}
 								placeholder="e.g., 15"
 								className="input"
+								value={bodyFatValue}
+								onChange={(e) => setBodyFatValue(e.target.value)}
 							/>
 							<FieldError formState={formState} name="targetBodyFatPercentage" />
 						</div>
@@ -443,6 +544,8 @@ export default function GoalForm() {
 								step={0.1}
 								placeholder="e.g., 75"
 								className="input"
+								value={muscleMassValue}
+								onChange={(e) => setMuscleMassValue(e.target.value)}
 							/>
 							<FieldError formState={formState} name="targetMuscleMassKg" />
 						</div>
@@ -462,8 +565,26 @@ export default function GoalForm() {
 								step={1}
 								placeholder="30"
 								className="input"
+								value={pcalValue}
+								onChange={(e) => setPcalValue(e.target.value)}
 							/>
 							<FieldError formState={formState} name="targetProteinCalorieRatio" />
+						</div>
+						<div>
+							<label htmlFor="targetDate" className="label">
+								<span className="flex items-center gap-1.5">
+									<span className="w-2 h-2 rounded-full bg-teal-500" />
+									Target Date
+								</span>
+							</label>
+							<input
+								type="date"
+								id="targetDate"
+								min={new Date().toISOString().split("T")[0]}
+								className="input"
+								value={targetDateValue}
+								onChange={(e) => setTargetDateValue(e.target.value)}
+							/>
 						</div>
 					</div>
 				</div>

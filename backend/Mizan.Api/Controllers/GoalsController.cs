@@ -25,6 +25,13 @@ public class GoalsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("history")]
+    public async Task<ActionResult<List<UserGoalDto>>> GetGoalHistory()
+    {
+        var result = await _mediator.Send(new GetUserGoalHistoryQuery());
+        return Ok(result);
+    }
+
     [HttpPost]
     public async Task<ActionResult<CreateUserGoalResult>> CreateGoal([FromBody] CreateUserGoalCommand command)
     {

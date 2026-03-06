@@ -12,8 +12,11 @@ export default function Page() {
 	const [formState, action, isPending] = useActionState(addMeal, EMPTY_FORM_STATE);
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const today = new Date().toISOString().split("T")[0];
+	const now = new Date();
+	const today = now.toISOString().split("T")[0];
+	const nowLocal = `${today}T${now.toTimeString().slice(0, 5)}`;
 	const defaultDate = searchParams.get("date") || today;
+	const defaultDateTime = defaultDate === today ? nowLocal : `${defaultDate}T12:00`;
 
 	const warningsRef = useRef<HTMLDivElement>(null);
 
@@ -70,13 +73,13 @@ export default function Page() {
 							<FieldError formState={formState} name="mealType" />
 						</div>
 						<div>
-							<label htmlFor="date" className="label">Date</label>
+							<label htmlFor="date" className="label">Date & Time</label>
 							<input
-								type="date"
+								type="datetime-local"
 								id="date"
 								name="date"
-								defaultValue={defaultDate}
-								max={today}
+								defaultValue={defaultDateTime}
+								max={nowLocal}
 								className="input"
 							/>
 							<FieldError formState={formState} name="date" />

@@ -1566,6 +1566,11 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnType("numeric(8,2)")
                         .HasColumnName("target_fat_grams");
 
+                    b.Property<decimal?>("TargetFiberGrams")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)")
+                        .HasColumnName("target_fiber_grams");
+
                     b.Property<decimal?>("TargetMuscleMassKg")
                         .HasPrecision(8, 2)
                         .HasColumnType("numeric(8,2)")

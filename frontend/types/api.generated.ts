@@ -660,6 +660,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Goals/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UserGoalDto"][];
+                        "application/json": components["schemas"]["UserGoalDto"][];
+                        "text/json": components["schemas"]["UserGoalDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Goals/progress": {
         parameters: {
             query?: never;
@@ -2877,6 +2914,8 @@ export interface components {
             /** Format: double */
             targetMuscleMassKg?: number | null;
             /** Format: double */
+            targetFiberGrams?: number | null;
+            /** Format: double */
             targetProteinCalorieRatio?: number | null;
             /** Format: date */
             targetDate?: string | null;
@@ -3780,6 +3819,8 @@ export interface components {
             /** Format: double */
             targetFatGrams?: number | null;
             /** Format: double */
+            targetFiberGrams?: number | null;
+            /** Format: double */
             targetWeight?: number | null;
             weightUnit?: string | null;
             /** Format: double */
@@ -3791,6 +3832,8 @@ export interface components {
             /** Format: date */
             targetDate?: string | null;
             isActive?: boolean;
+            /** Format: date-time */
+            createdAt?: string;
         };
         UserGoalSummaryDto: {
             /** Format: double */

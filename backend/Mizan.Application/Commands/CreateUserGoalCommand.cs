@@ -18,6 +18,7 @@ public record CreateUserGoalCommand : IRequest<CreateUserGoalResult>
     public string? WeightUnit { get; init; }
     public decimal? TargetBodyFatPercentage { get; init; }
     public decimal? TargetMuscleMassKg { get; init; }
+    public decimal? TargetFiberGrams { get; init; }
     public decimal? TargetProteinCalorieRatio { get; init; }
     public DateOnly? TargetDate { get; init; }
 }
@@ -49,6 +50,7 @@ public class CreateUserGoalCommandValidator : AbstractValidator<CreateUserGoalCo
             .WithMessage("Weight unit must be kg or lb");
         RuleFor(x => x.TargetBodyFatPercentage).InclusiveBetween(1, 60).When(x => x.TargetBodyFatPercentage.HasValue);
         RuleFor(x => x.TargetMuscleMassKg).InclusiveBetween(1, 200).When(x => x.TargetMuscleMassKg.HasValue);
+        RuleFor(x => x.TargetFiberGrams).GreaterThan(0).When(x => x.TargetFiberGrams.HasValue);
         RuleFor(x => x.TargetProteinCalorieRatio).InclusiveBetween(1, 100).When(x => x.TargetProteinCalorieRatio.HasValue);
     }
 }
@@ -75,15 +77,15 @@ public class CreateUserGoalCommandHandler : IRequestHandler<CreateUserGoalComman
             };
         }
 
-        // Remove existing goals (unique constraint: one goal per user)
+        // Deactivate existing active goals (preserve history)
         var existingGoals = await _context.UserGoals
-            .Where(g => g.UserId == _currentUser.UserId)
+            .Where(g => g.UserId == _currentUser.UserId && g.IsActive)
             .ToListAsync(cancellationToken);
 
-        if (existingGoals.Count > 0)
+        foreach (var g in existingGoals)
         {
-            _context.UserGoals.RemoveRange(existingGoals);
-            await _context.SaveChangesAsync(cancellationToken);
+            g.IsActive = false;
+            g.UpdatedAt = DateTime.UtcNow;
         }
 
         // Create new goal
@@ -100,6 +102,7 @@ public class CreateUserGoalCommandHandler : IRequestHandler<CreateUserGoalComman
             WeightUnit = request.WeightUnit ?? "kg",
             TargetBodyFatPercentage = request.TargetBodyFatPercentage,
             TargetMuscleMassKg = request.TargetMuscleMassKg,
+            TargetFiberGrams = request.TargetFiberGrams,
             TargetProteinCalorieRatio = request.TargetProteinCalorieRatio,
             TargetDate = request.TargetDate,
             IsActive = true,

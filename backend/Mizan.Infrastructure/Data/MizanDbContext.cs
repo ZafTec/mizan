@@ -343,6 +343,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.WeightUnit).HasColumnName("weight_unit").HasMaxLength(10).HasDefaultValue("kg");
             entity.Property(e => e.TargetBodyFatPercentage).HasColumnName("target_body_fat_percentage").HasPrecision(5, 2);
             entity.Property(e => e.TargetMuscleMassKg).HasColumnName("target_muscle_mass_kg").HasPrecision(8, 2);
+            entity.Property(e => e.TargetFiberGrams).HasColumnName("target_fiber_grams").HasPrecision(8, 2);
             entity.Property(e => e.TargetProteinCalorieRatio).HasColumnName("target_protein_calorie_ratio").HasPrecision(5, 2);
             entity.Property(e => e.TargetDate).HasColumnName("target_date");
             entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);

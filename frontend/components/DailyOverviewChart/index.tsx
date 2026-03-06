@@ -54,15 +54,8 @@ export default function DailyOverviewChart() {
 		fetchData();
 	}, []);
 
-	if (!goal) return null;
+	const hasGoal = goal && (goal.targetCalories || goal.targetProteinGrams || goal.targetCarbsGrams || goal.targetFatGrams);
 
-	const {
-		targetCalories,
-		targetProteinGrams: targetProtein,
-		targetCarbsGrams: targetCarbs,
-		targetFatGrams: targetFat
-	} = goal;
-	
 	return (
 		<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 			<div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
@@ -78,28 +71,44 @@ export default function DailyOverviewChart() {
 					<div className="flex justify-between items-center">
 						<span>Calories</span>
 						<span className="font-medium">
-							{Math.round(macros.calories)} / {targetCalories || 0}
+							{Math.round(macros.calories)}{hasGoal ? ` / ${goal.targetCalories || 0}` : ''} kcal
 						</span>
 					</div>
 					<div className="flex justify-between items-center">
 						<span>Protein</span>
 						<span className="font-medium">
-							{Math.round(macros.protein)}g / {Math.round(targetProtein || 0)}g
+							{Math.round(macros.protein)}g{hasGoal ? ` / ${Math.round(goal.targetProteinGrams || 0)}g` : ''}
 						</span>
 					</div>
 					<div className="flex justify-between items-center">
 						<span>Carbs</span>
 						<span className="font-medium">
-							{Math.round(macros.carbs)}g / {Math.round(targetCarbs || 0)}g
+							{Math.round(macros.carbs)}g{hasGoal ? ` / ${Math.round(goal.targetCarbsGrams || 0)}g` : ''}
 						</span>
 					</div>
 					<div className="flex justify-between items-center">
 						<span>Fat</span>
 						<span className="font-medium">
-							{Math.round(macros.fat)}g / {Math.round(targetFat || 0)}g
+							{Math.round(macros.fat)}g{hasGoal ? ` / ${Math.round(goal.targetFatGrams || 0)}g` : ''}
 						</span>
 					</div>
+					{macros.fiber > 0 && (
+						<div className="flex justify-between items-center">
+							<span>Fiber</span>
+							<span className="font-medium">{Math.round(macros.fiber)}g</span>
+						</div>
+					)}
 				</div>
+
+				{!hasGoal && (
+					<a
+						href="/goal"
+						className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-50 text-brand-600 hover:bg-brand-100 text-sm font-medium transition-colors"
+					>
+						<i className="ri-target-line" />
+						Set Goals
+					</a>
+				)}
 			</div>
 		</div>
 	)

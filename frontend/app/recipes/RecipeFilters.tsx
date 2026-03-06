@@ -99,7 +99,7 @@ export default function RecipeFilters({
 					<i className="ri-search-line absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
 					<input
 						type="text"
-						placeholder="Search by name, ingredient, or tag..."
+						placeholder="Search by name, description, or tag..."
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
 						className="input pl-11 py-3 w-full text-base"

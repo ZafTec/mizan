@@ -103,7 +103,8 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
             var searchTerm = request.SearchTerm.ToLower();
             query = query.Where(r =>
                 r.Title.ToLower().Contains(searchTerm) ||
-                (r.Description != null && r.Description.ToLower().Contains(searchTerm)));
+                (r.Description != null && r.Description.ToLower().Contains(searchTerm)) ||
+                r.Tags.Any(t => t.Tag.ToLower().Contains(searchTerm)));
         }
 
         if (request.Tags?.Any() == true)

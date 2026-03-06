@@ -36,6 +36,9 @@ export default function Page() {
 	const [instructions, setInstructions] = useState('');
 	const [selectedIngredients, setSelectedIngredients] = useState<SelectedIngredient[]>([]);
 	const [servings, setServings] = useState(1);
+	const [prepTime, setPrepTime] = useState<number | null>(null);
+	const [cookTime, setCookTime] = useState<number | null>(null);
+	const [sourceUrl, setSourceUrl] = useState('');
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [visibility, setVisibility] = useState<'public' | 'private' | 'household'>('private');
 
@@ -180,13 +183,12 @@ export default function Page() {
 			instructions: instructions.split('\n').filter(line => line.trim()),
 			servings,
 			tags: Array.from(tags),
-			// prepTimeMinutes: prepTime || undefined, // Assuming prepTime is not yet implemented
-			// cookTimeMinutes: cookTime || undefined, // Assuming cookTime is not yet implemented
+			prepTimeMinutes: prepTime || undefined,
+			cookTimeMinutes: cookTime || undefined,
+			sourceUrl: sourceUrl || undefined,
 			imageUrl: images[0] || undefined,
 			isPublic: visibility === 'public',
 			householdId: visibility === 'household' ? null : undefined
-			// NOTE: Nutrition is calculated on backend from ingredients
-			// NOTE: HouseholdId will be set to actual household ID once household selection is implemented
 		}
 
 
@@ -522,33 +524,74 @@ export default function Page() {
 						</p>
 					</div>
 
-					{/* Servings */}
-					<div>
-						<label htmlFor="servings" className="label">Servings</label>
-						<div className="flex items-center gap-3">
-							<button
-								type="button"
-								onClick={() => setServings(Math.max(1, servings - 1))}
-								className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
-							>
-								<i className="ri-subtract-line text-slate-600" />
-							</button>
-							<input
-								id="servings"
-								type="number"
-								value={servings}
-								onChange={(e) => setServings(parseInt(e.target.value) || 1)}
-								className="input w-20 text-center"
-								min="1"
-							/>
-							<button
-								type="button"
-								onClick={() => setServings(servings + 1)}
-								className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
-							>
-								<i className="ri-add-line text-slate-600" />
-							</button>
+					{/* Servings + Times */}
+					<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+						<div>
+							<label htmlFor="servings" className="label">Servings</label>
+							<div className="flex items-center gap-3">
+								<button
+									type="button"
+									onClick={() => setServings(Math.max(1, servings - 1))}
+									className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+								>
+									<i className="ri-subtract-line text-slate-600" />
+								</button>
+								<input
+									id="servings"
+									type="number"
+									value={servings}
+									onChange={(e) => setServings(parseInt(e.target.value) || 1)}
+									className="input w-20 text-center"
+									min="1"
+								/>
+								<button
+									type="button"
+									onClick={() => setServings(servings + 1)}
+									className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+								>
+									<i className="ri-add-line text-slate-600" />
+								</button>
+							</div>
 						</div>
+						<div>
+							<label htmlFor="prepTime" className="label">Prep Time (min)</label>
+							<input
+								id="prepTime"
+								type="number"
+								value={prepTime ?? ''}
+								onChange={(e) => setPrepTime(e.target.value ? parseInt(e.target.value) : null)}
+								className="input"
+								min="0"
+								step="1"
+								placeholder="15"
+							/>
+						</div>
+						<div>
+							<label htmlFor="cookTime" className="label">Cook Time (min)</label>
+							<input
+								id="cookTime"
+								type="number"
+								value={cookTime ?? ''}
+								onChange={(e) => setCookTime(e.target.value ? parseInt(e.target.value) : null)}
+								className="input"
+								min="0"
+								step="1"
+								placeholder="30"
+							/>
+						</div>
+					</div>
+
+					{/* Source URL */}
+					<div>
+						<label htmlFor="sourceUrl" className="label">Source URL (optional)</label>
+						<input
+							id="sourceUrl"
+							type="url"
+							value={sourceUrl}
+							onChange={(e) => setSourceUrl(e.target.value)}
+							className="input"
+							placeholder="https://..."
+						/>
 					</div>
 
 					{/* Tags */}

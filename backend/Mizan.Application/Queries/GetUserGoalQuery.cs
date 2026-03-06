@@ -14,6 +14,7 @@ public record UserGoalDto
     public decimal? TargetProteinGrams { get; init; }
     public decimal? TargetCarbsGrams { get; init; }
     public decimal? TargetFatGrams { get; init; }
+    public decimal? TargetFiberGrams { get; init; }
     public decimal? TargetWeight { get; init; }
     public string? WeightUnit { get; init; }
     public decimal? TargetBodyFatPercentage { get; init; }
@@ -21,6 +22,7 @@ public record UserGoalDto
     public decimal? TargetProteinCalorieRatio { get; init; }
     public DateOnly? TargetDate { get; init; }
     public bool IsActive { get; init; }
+    public DateTime CreatedAt { get; init; }
 }
 
 public class GetUserGoalQueryHandler : IRequestHandler<GetUserGoalQuery, UserGoalDto?>
@@ -55,13 +57,15 @@ public class GetUserGoalQueryHandler : IRequestHandler<GetUserGoalQuery, UserGoa
             TargetProteinGrams = goal.TargetProteinGrams,
             TargetCarbsGrams = goal.TargetCarbsGrams,
             TargetFatGrams = goal.TargetFatGrams,
+            TargetFiberGrams = goal.TargetFiberGrams,
             TargetWeight = goal.TargetWeight,
             WeightUnit = goal.WeightUnit,
             TargetBodyFatPercentage = goal.TargetBodyFatPercentage,
             TargetMuscleMassKg = goal.TargetMuscleMassKg,
             TargetProteinCalorieRatio = goal.TargetProteinCalorieRatio,
             TargetDate = goal.TargetDate,
-            IsActive = goal.IsActive
+            IsActive = goal.IsActive,
+            CreatedAt = goal.CreatedAt
         };
     }
 }

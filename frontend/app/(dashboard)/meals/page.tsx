@@ -1,7 +1,7 @@
 "use client";
 
 import { getMeal, getDailyTotals, getNutritionRange, MealEntry, DailyNutritionSummary } from "@/data/meal";
-import { getCurrentGoal, UserGoal } from "@/data/goal";
+import { getCurrentGoal, getGoalHistory, UserGoal } from "@/data/goal";
 import { getStreak, StreakInfo } from "@/data/achievement";
 import { useSession } from "@/lib/auth-client";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
@@ -9,7 +9,7 @@ import { deleteMeal } from "@/data/meal";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { ComposedChart, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 // Assuming radix-ui wrap or similar, if not I'll just use HTML progress or div.
 // Actually I don't see components/ui/progress in file list. I will use custom div.
 import Loading from "@/components/Loading";
@@ -20,7 +20,14 @@ interface DailyStat {
 	protein: number;
 	carbs: number;
 	fat: number;
+	fiber: number;
 	proteinCalRatio: number;
+	goalCalories?: number;
+	goalProtein?: number;
+	goalCarbs?: number;
+	goalFat?: number;
+	goalFiber?: number;
+	goalPcal?: number;
 }
 
 export default function MealsPage() {
@@ -38,6 +45,7 @@ export default function MealsPage() {
 	const [error, setError] = useState<string | null>(null);
 	const [streak, setStreak] = useState<StreakInfo | null>(null);
 	const [rangeDays, setRangeDays] = useState(7);
+	const [goalHistory, setGoalHistory] = useState<UserGoal[]>([]);
 	const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 	const [mealToDelete, setMealToDelete] = useState<{ id: string; name: string } | null>(null);
 
@@ -82,26 +90,47 @@ export default function MealsPage() {
 				setError(null);
 
 				// Parallel fetch
-				const [meals, userGoal, streakInfo] = await Promise.all([
+				const [meals, userGoal, streakInfo, goalHist] = await Promise.all([
 					getMeal(queryDate),
 					getCurrentGoal(),
-					getStreak()
+					getStreak(),
+					getGoalHistory()
 				]);
 
 				setTodayMeals(meals);
 				setGoal(userGoal);
 				setStreak(streakInfo);
+				setGoalHistory(goalHist);
+
+				// Helper: find which goal was active on a given date
+				const findGoalForDate = (dateStr: string): UserGoal | undefined => {
+					const d = new Date(dateStr);
+					for (const g of goalHist) {
+						if (new Date(g.createdAt) <= d) return g;
+					}
+					return undefined;
+				};
 
 				// Fetch history using range endpoint
 				const rangeData = await getNutritionRange(rangeDays, queryDate);
-				setHistory(rangeData.map(d => ({
-					date: d.date.slice(5),
-					calories: d.calories,
-					protein: d.protein,
-					carbs: d.carbs,
-					fat: d.fat,
-					proteinCalRatio: d.calories > 0 ? Math.round((d.protein * 4 / d.calories) * 100) : 0,
-				})));
+				setHistory(rangeData.map(d => {
+					const dateGoal = findGoalForDate(d.date);
+					return {
+						date: d.date.slice(5),
+						calories: d.calories,
+						protein: d.protein,
+						carbs: d.carbs,
+						fat: d.fat,
+						fiber: d.fiber,
+						proteinCalRatio: d.calories > 0 ? Math.round((d.protein * 4 / d.calories) * 100) : 0,
+						goalCalories: dateGoal?.targetCalories ?? undefined,
+						goalProtein: dateGoal?.targetProteinGrams ?? undefined,
+						goalCarbs: dateGoal?.targetCarbsGrams ?? undefined,
+						goalFat: dateGoal?.targetFatGrams ?? undefined,
+						goalFiber: dateGoal?.targetFiberGrams ?? undefined,
+						goalPcal: dateGoal?.targetProteinCalorieRatio ?? undefined,
+					};
+				}));
 
 			} catch (err) {
 				console.error("Failed to load data:", err);
@@ -255,7 +284,7 @@ export default function MealsPage() {
 					</div>
 				</div>
 				<ResponsiveContainer width="100%" height="85%">
-					<BarChart data={history}>
+					<ComposedChart data={history}>
 						<CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
 						<XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
 						<YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
@@ -264,17 +293,10 @@ export default function MealsPage() {
 							cursor={{ fill: '#f1f5f9' }}
 						/>
 						<Bar dataKey="calories" fill="#f97316" radius={[4, 4, 0, 0]} name="Calories" />
-						{goal && (goal.targetCalories ?? 0) > 0 && (
-							<ReferenceLine
-								y={goal.targetCalories}
-								stroke="#f97316"
-								strokeDasharray="6 3"
-								strokeWidth={2}
-								ifOverflow="extendDomain"
-								label={{ value: `Goal: ${goal.targetCalories}`, position: "insideTopRight", fontSize: 11, fill: "#f97316" }}
-							/>
+						{history.some(d => d.goalCalories) && (
+							<Line type="stepAfter" dataKey="goalCalories" stroke="#f97316" strokeDasharray="6 3" strokeWidth={2} dot={false} name="Calorie Goal" />
 						)}
-					</BarChart>
+					</ComposedChart>
 				</ResponsiveContainer>
 			</div>
 
@@ -293,6 +315,14 @@ export default function MealsPage() {
 						<Bar dataKey="protein" stackId="macros" fill="#ef4444" radius={[0, 0, 0, 0]} name="Protein (g)" />
 						<Bar dataKey="carbs" stackId="macros" fill="#f59e0b" radius={[0, 0, 0, 0]} name="Carbs (g)" />
 						<Bar dataKey="fat" stackId="macros" fill="#eab308" radius={[4, 4, 0, 0]} name="Fat (g)" />
+						{goal?.targetProteinGrams && (
+							<ReferenceLine y={goal.targetProteinGrams} stroke="#ef4444" strokeDasharray="4 2" strokeWidth={1.5} ifOverflow="extendDomain"
+								label={{ value: `P: ${goal.targetProteinGrams}g`, position: "right", fontSize: 10, fill: "#ef4444" }} />
+						)}
+						{goal?.targetProteinGrams && goal?.targetCarbsGrams && (
+							<ReferenceLine y={goal.targetProteinGrams + goal.targetCarbsGrams} stroke="#f59e0b" strokeDasharray="4 2" strokeWidth={1.5} ifOverflow="extendDomain"
+								label={{ value: `P+C: ${goal.targetProteinGrams + goal.targetCarbsGrams}g`, position: "right", fontSize: 10, fill: "#f59e0b" }} />
+						)}
 					</BarChart>
 				</ResponsiveContainer>
 			</div>
@@ -304,25 +334,40 @@ export default function MealsPage() {
 					Protein/Calorie Ratio (Last {rangeDays} Days)
 				</h2>
 				<ResponsiveContainer width="100%" height="85%">
-					<LineChart data={history}>
+					<ComposedChart data={history}>
 						<CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
 						<XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
 						<YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} unit="%" domain={[0, 'auto']} />
-						<Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value) => [`${value}%`, 'P/Cal Ratio']} />
+						<Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value: number, name: string) => [`${value}%`, name]} />
 						<Line type="monotone" dataKey="proteinCalRatio" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: '#8b5cf6', r: 3 }} name="P/Cal Ratio (%)" />
-						{goal && (goal.targetProteinCalorieRatio ?? 0) > 0 && (
-							<ReferenceLine
-								y={goal.targetProteinCalorieRatio!}
-								stroke="#8b5cf6"
-								strokeDasharray="6 3"
-								strokeWidth={2}
-								ifOverflow="extendDomain"
-								label={{ value: `Goal: ${goal.targetProteinCalorieRatio}%`, position: "insideTopRight", fontSize: 11, fill: "#8b5cf6" }}
-							/>
+						{history.some(d => d.goalPcal) && (
+							<Line type="stepAfter" dataKey="goalPcal" stroke="#8b5cf6" strokeDasharray="6 3" strokeWidth={2} dot={false} name="P/Cal Goal (%)" />
 						)}
-					</LineChart>
+					</ComposedChart>
 				</ResponsiveContainer>
 			</div>
+
+			{/* Fiber Trend */}
+			{history.some(d => d.fiber > 0) && (
+				<div className="card p-6 h-72">
+					<h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
+						<i className="ri-leaf-line text-green-500" />
+						Fiber Intake (Last {rangeDays} Days)
+					</h2>
+					<ResponsiveContainer width="100%" height="85%">
+						<ComposedChart data={history}>
+							<CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+							<XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+							<YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} unit="g" domain={[0, 'auto']} />
+							<Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value: number, name: string) => [`${value}g`, name]} />
+							<Line type="monotone" dataKey="fiber" stroke="#22c55e" strokeWidth={2} dot={{ fill: '#22c55e', r: 3 }} name="Fiber (g)" />
+							{history.some(d => d.goalFiber) && (
+								<Line type="stepAfter" dataKey="goalFiber" stroke="#22c55e" strokeDasharray="6 3" strokeWidth={2} dot={false} name="Fiber Goal (g)" />
+							)}
+						</ComposedChart>
+					</ResponsiveContainer>
+				</div>
+			)}
 
 			{/* Meal List */}
 			<div className="card p-6">

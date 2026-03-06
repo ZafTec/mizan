@@ -13,6 +13,7 @@ public class UserGoal
     public string? WeightUnit { get; set; } = "kg";
     public decimal? TargetBodyFatPercentage { get; set; }
     public decimal? TargetMuscleMassKg { get; set; }
+    public decimal? TargetFiberGrams { get; set; }
     public decimal? TargetProteinCalorieRatio { get; set; }
     public DateOnly? TargetDate { get; set; }
     public bool IsActive { get; set; } = true;
