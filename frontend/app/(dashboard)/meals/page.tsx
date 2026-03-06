@@ -315,14 +315,6 @@ export default function MealsPage() {
 						<Bar dataKey="protein" stackId="macros" fill="#ef4444" radius={[0, 0, 0, 0]} name="Protein (g)" />
 						<Bar dataKey="carbs" stackId="macros" fill="#f59e0b" radius={[0, 0, 0, 0]} name="Carbs (g)" />
 						<Bar dataKey="fat" stackId="macros" fill="#eab308" radius={[4, 4, 0, 0]} name="Fat (g)" />
-						{goal?.targetProteinGrams && (
-							<ReferenceLine y={goal.targetProteinGrams} stroke="#ef4444" strokeDasharray="4 2" strokeWidth={1.5} ifOverflow="extendDomain"
-								label={{ value: `P: ${goal.targetProteinGrams}g`, position: "right", fontSize: 10, fill: "#ef4444" }} />
-						)}
-						{goal?.targetProteinGrams && goal?.targetCarbsGrams && (
-							<ReferenceLine y={goal.targetProteinGrams + goal.targetCarbsGrams} stroke="#f59e0b" strokeDasharray="4 2" strokeWidth={1.5} ifOverflow="extendDomain"
-								label={{ value: `P+C: ${goal.targetProteinGrams + goal.targetCarbsGrams}g`, position: "right", fontSize: 10, fill: "#f59e0b" }} />
-						)}
 					</BarChart>
 				</ResponsiveContainer>
 			</div>

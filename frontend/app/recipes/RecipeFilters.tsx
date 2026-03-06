@@ -93,45 +93,29 @@ export default function RecipeFilters({
 
 	return (
 		<div className="space-y-4">
-			{/* Search + Sort row */}
-			<div className="flex flex-col sm:flex-row gap-3">
-				<div className="relative flex-1">
-					<i className="ri-search-line absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
-					<input
-						type="text"
-						placeholder="Search by name, description, or tag..."
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
-						className="input pl-11 py-3 w-full text-base"
-					/>
-					{search && (
-						<button
-							type="button"
-							onClick={() => setSearch("")}
-							className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-						>
-							<i className="ri-close-circle-fill text-lg" />
-						</button>
-					)}
-				</div>
-				<select
-					value={currentSortIndex >= 0 ? currentSortIndex : ""}
-					onChange={handleSort}
-					className="input py-3 w-full sm:w-52"
-				>
-					<option value="" disabled>
-						Sort by...
-					</option>
-					{SORT_OPTIONS.map((opt, i) => (
-						<option key={opt.label} value={i}>
-							{opt.label}
-						</option>
-					))}
-				</select>
+			{/* Search */}
+			<div className="relative">
+				<i className="ri-search-line absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
+				<input
+					type="text"
+					placeholder="Search by name, description, or tag..."
+					value={search}
+					onChange={(e) => setSearch(e.target.value)}
+					className="input pl-11 py-3 w-full text-base"
+				/>
+				{search && (
+					<button
+						type="button"
+						onClick={() => setSearch("")}
+						className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+					>
+						<i className="ri-close-circle-fill text-lg" />
+					</button>
+				)}
 			</div>
 
-			{/* Tags */}
-			<div className="flex flex-wrap gap-2">
+			{/* Tags + Sort */}
+			<div className="flex flex-wrap items-center gap-2">
 				{TAG_SUGGESTIONS.map((tag) => {
 					const active = currentTags.includes(tag);
 					const icon = TAG_ICONS[tag];
@@ -152,6 +136,20 @@ export default function RecipeFilters({
 						</button>
 					);
 				})}
+				<select
+					value={currentSortIndex >= 0 ? currentSortIndex : ""}
+					onChange={handleSort}
+					className="input py-2 px-3 text-sm w-44 ml-auto"
+				>
+					<option value="" disabled>
+						Sort by...
+					</option>
+					{SORT_OPTIONS.map((opt, i) => (
+						<option key={opt.label} value={i}>
+							{opt.label}
+						</option>
+					))}
+				</select>
 			</div>
 
 			{/* Active filter summary */}

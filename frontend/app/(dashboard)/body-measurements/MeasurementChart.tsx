@@ -14,6 +14,7 @@ import {
     ReferenceLine,
 } from "recharts";
 import type { BodyMeasurement } from "@/data/bodyMeasurement";
+import type { UserGoal } from "@/data/goal";
 
 type TimeRange = "1M" | "3M" | "6M" | "1Y" | "ALL";
 type Tab = "composition" | "circumference";
@@ -76,10 +77,13 @@ function TimeRangePicker({ range, onChange }: { range: TimeRange; onChange: (r: 
     );
 }
 
-function CompositionChart({ data, targetWeight, targetBodyFatPercentage, targetMuscleMassKg }: { data: ReturnType<typeof buildData>; targetWeight: number | null; targetBodyFatPercentage?: number | null; targetMuscleMassKg?: number | null }) {
+function CompositionChart({ data }: { data: ReturnType<typeof buildData> }) {
     const hasWeight = data.some((d) => d.weight !== null);
     const hasMuscle = data.some((d) => d.muscle !== null);
     const hasBodyFat = data.some((d) => d.bodyFat !== null);
+    const hasGoalWeight = data.some((d) => d.goalWeight !== null);
+    const hasGoalBodyFat = data.some((d) => d.goalBodyFat !== null);
+    const hasGoalMuscle = data.some((d) => d.goalMuscle !== null);
 
     if (!hasWeight && !hasMuscle && !hasBodyFat) {
         return <EmptyChart message="No body composition data in this period." />;
@@ -105,51 +109,30 @@ function CompositionChart({ data, targetWeight, targetBodyFatPercentage, targetM
                 />
                 <Tooltip
                     {...chartStyle}
-                    formatter={(value: number | undefined, name: string | undefined) => {
-                        if (value === undefined) return ["-", name];
-                        if (name === "Body Fat") return [`${value}%`, name];
+                    formatter={(value: number | undefined | null, name: string | undefined) => {
+                        if (value === undefined || value === null) return ["-", name];
+                        if (name?.includes("Body Fat") || name?.includes("BF")) return [`${value}%`, name];
                         return [`${value} kg`, name];
                     }}
                 />
                 <Legend />
                 {hasWeight && (
-                    <Line yAxisId="kg" type="monotone" dataKey="weight" name="Weight" stroke="#6366f1" strokeWidth={2} dot={{ r: 3 }} connectNulls />
+                    <Line yAxisId="kg" type="monotone" dataKey="weight" name="Weight" stroke="#2563eb" strokeWidth={2.5} dot={{ r: 3, fill: "#2563eb" }} connectNulls />
                 )}
                 {hasMuscle && (
-                    <Line yAxisId="kg" type="monotone" dataKey="muscle" name="Muscle" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 3 }} connectNulls />
+                    <Line yAxisId="kg" type="monotone" dataKey="muscle" name="Muscle" stroke="#16a34a" strokeWidth={2.5} dot={{ r: 3, fill: "#16a34a" }} connectNulls />
                 )}
                 {hasBodyFat && (
-                    <Line yAxisId="pct" type="monotone" dataKey="bodyFat" name="Body Fat" stroke="#f43f5e" strokeWidth={2} dot={{ r: 3 }} connectNulls />
+                    <Line yAxisId="pct" type="monotone" dataKey="bodyFat" name="Body Fat" stroke="#dc2626" strokeWidth={2.5} dot={{ r: 3, fill: "#dc2626" }} connectNulls />
                 )}
-                {targetWeight && (
-                    <ReferenceLine
-                        yAxisId="kg"
-                        y={targetWeight}
-                        stroke="#6366f1"
-                        strokeDasharray="6 3"
-                        strokeWidth={2}
-                        label={{ value: `Target: ${targetWeight} kg`, position: "insideTopRight", fontSize: 11, fill: "#6366f1" }}
-                    />
+                {hasGoalWeight && (
+                    <Line yAxisId="kg" type="stepAfter" dataKey="goalWeight" name="Weight Goal" stroke="#2563eb" strokeDasharray="6 3" strokeWidth={1.5} dot={false} connectNulls />
                 )}
-                {targetBodyFatPercentage && (
-                    <ReferenceLine
-                        yAxisId="pct"
-                        y={targetBodyFatPercentage}
-                        stroke="#f43f5e"
-                        strokeDasharray="6 3"
-                        strokeWidth={2}
-                        label={{ value: `Goal: ${targetBodyFatPercentage}%`, position: "insideBottomRight", fontSize: 11, fill: "#f43f5e" }}
-                    />
+                {hasGoalMuscle && (
+                    <Line yAxisId="kg" type="stepAfter" dataKey="goalMuscle" name="Muscle Goal" stroke="#16a34a" strokeDasharray="6 3" strokeWidth={1.5} dot={false} connectNulls />
                 )}
-                {targetMuscleMassKg && (
-                    <ReferenceLine
-                        yAxisId="kg"
-                        y={targetMuscleMassKg}
-                        stroke="#8b5cf6"
-                        strokeDasharray="6 3"
-                        strokeWidth={2}
-                        label={{ value: `Goal: ${targetMuscleMassKg} kg`, position: "insideTopLeft", fontSize: 11, fill: "#8b5cf6" }}
-                    />
+                {hasGoalBodyFat && (
+                    <Line yAxisId="pct" type="stepAfter" dataKey="goalBodyFat" name="BF Goal" stroke="#dc2626" strokeDasharray="6 3" strokeWidth={1.5} dot={false} connectNulls />
                 )}
             </ComposedChart>
         </ResponsiveContainer>
@@ -264,23 +247,37 @@ function EmptyChart({ message }: { message: string }) {
     );
 }
 
-function buildData(measurements: BodyMeasurement[]) {
-    return measurements.map((m) => ({
-        date: new Date(m.date).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
-        weight:     m.weightKg ?? null,
-        bodyFat:    m.bodyFatPercentage ?? null,
-        muscle:     m.muscleMassKg ?? null,
-        waist:      m.waistCm ?? null,
-        hips:       m.hipsCm ?? null,
-        chest:      m.chestCm ?? null,
-        leftArm:    m.leftArmCm ?? null,
-        rightArm:   m.rightArmCm ?? null,
-        leftThigh:  m.leftThighCm ?? null,
-        rightThigh: m.rightThighCm ?? null,
-    }));
+function findGoalForDate(date: string, goalHistory: UserGoal[]): UserGoal | undefined {
+    const d = new Date(date);
+    for (const g of goalHistory) {
+        if (new Date(g.createdAt) <= d) return g;
+    }
+    return undefined;
 }
 
-export default function MeasurementChart({ measurements, targetWeight = null, targetBodyFatPercentage, targetMuscleMassKg }: { measurements: BodyMeasurement[]; targetWeight?: number | null; targetBodyFatPercentage?: number | null; targetMuscleMassKg?: number | null }) {
+function buildData(measurements: BodyMeasurement[], goalHistory: UserGoal[] = []) {
+    return measurements.map((m) => {
+        const goal = findGoalForDate(m.date, goalHistory);
+        return {
+            date: new Date(m.date).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+            weight:     m.weightKg ?? null,
+            bodyFat:    m.bodyFatPercentage ?? null,
+            muscle:     m.muscleMassKg ?? null,
+            goalWeight: goal?.targetWeight ?? null,
+            goalBodyFat: goal?.targetBodyFatPercentage ?? null,
+            goalMuscle: goal?.targetMuscleMassKg ?? null,
+            waist:      m.waistCm ?? null,
+            hips:       m.hipsCm ?? null,
+            chest:      m.chestCm ?? null,
+            leftArm:    m.leftArmCm ?? null,
+            rightArm:   m.rightArmCm ?? null,
+            leftThigh:  m.leftThighCm ?? null,
+            rightThigh: m.rightThighCm ?? null,
+        };
+    });
+}
+
+export default function MeasurementChart({ measurements, goalHistory = [] }: { measurements: BodyMeasurement[]; goalHistory?: UserGoal[] }) {
     const [range, setRange] = useState<TimeRange>("3M");
     const [tab, setTab] = useState<Tab>("composition");
     const [activeCirc, setActiveCirc] = useState<Set<CircKey>>(
@@ -301,7 +298,7 @@ export default function MeasurementChart({ measurements, targetWeight = null, ta
         .filter((m) => !cutoff || new Date(m.date) >= cutoff)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    const data = buildData(filtered);
+    const data = buildData(filtered, goalHistory);
 
     if (measurements.length < 2) {
         return (
@@ -346,12 +343,12 @@ export default function MeasurementChart({ measurements, targetWeight = null, ta
             {/* Composition legend note */}
             {tab === "composition" && (
                 <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-4">
-                    Weight &amp; Muscle use the left axis (kg) · Body Fat uses the right axis (%)
+                    <span className="text-blue-600 font-medium">Weight</span> &amp; <span className="text-green-600 font-medium">Muscle</span> use the left axis (kg) · <span className="text-red-600 font-medium">Body Fat</span> uses the right axis (%) · Dashed lines = goals
                 </p>
             )}
 
             {tab === "composition" ? (
-                <CompositionChart data={data} targetWeight={targetWeight} targetBodyFatPercentage={targetBodyFatPercentage} targetMuscleMassKg={targetMuscleMassKg} />
+                <CompositionChart data={data} />
             ) : (
                 <CircumferenceChart data={data} active={activeCirc} onToggle={toggleCirc} />
             )}
