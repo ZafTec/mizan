@@ -11,8 +11,8 @@ import {
     Tooltip,
     ResponsiveContainer,
     Legend,
-    ReferenceLine,
 } from "recharts";
+import type { Formatter, ValueType } from "recharts/types/component/DefaultTooltipContent";
 import type { BodyMeasurement } from "@/data/bodyMeasurement";
 import type { UserGoal } from "@/data/goal";
 
@@ -55,6 +55,38 @@ const chartStyle = {
         fontSize: "0.8125rem",
         boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
     },
+};
+
+const formatCompositionTooltip: Formatter<ValueType, string> = (value, name) => {
+    const label = name ?? "";
+
+    if (value === undefined) {
+        return ["-", label];
+    }
+
+    if (Array.isArray(value)) {
+        return [value.join(" / "), label];
+    }
+
+    if (label.includes("Body Fat") || label.includes("BF")) {
+        return [`${value}%`, label];
+    }
+
+    return [`${value} kg`, label];
+};
+
+const formatCircumferenceTooltip: Formatter<ValueType, string> = (value, name) => {
+    const label = name ?? "";
+
+    if (value === undefined) {
+        return ["-", label];
+    }
+
+    if (Array.isArray(value)) {
+        return [`${value.join(" / ")} cm`, label];
+    }
+
+    return [`${value} cm`, label];
 };
 
 function TimeRangePicker({ range, onChange }: { range: TimeRange; onChange: (r: TimeRange) => void }) {
@@ -109,11 +141,7 @@ function CompositionChart({ data }: { data: ReturnType<typeof buildData> }) {
                 />
                 <Tooltip
                     {...chartStyle}
-                    formatter={(value: number | undefined | null, name: string | undefined) => {
-                        if (value === undefined || value === null) return ["-", name];
-                        if (name?.includes("Body Fat") || name?.includes("BF")) return [`${value}%`, name];
-                        return [`${value} kg`, name];
-                    }}
+                    formatter={formatCompositionTooltip}
                 />
                 <Legend />
                 {hasWeight && (
@@ -186,7 +214,7 @@ function CircumferenceChart({ data, active, onToggle }: {
                         <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" tickFormatter={(v) => `${v}cm`} />
                         <Tooltip
                             {...chartStyle}
-                            formatter={(value: number | undefined, name: string | undefined) => [value !== undefined ? `${value} cm` : "-", name]}
+                            formatter={formatCircumferenceTooltip}
                         />
                         <Legend />
                         {visible.map((s) => (
