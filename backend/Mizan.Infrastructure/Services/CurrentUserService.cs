@@ -27,7 +27,20 @@ public class CurrentUserService : ICurrentUserService
     public string? Email => _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Email)?.Value
         ?? _httpContextAccessor.HttpContext?.User?.FindFirst("email")?.Value;
 
+    public string? Role => _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Role)?.Value
+        ?? _httpContextAccessor.HttpContext?.User?.FindFirst("role")?.Value;
+
     public string? IpAddress => _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?.ToString();
 
     public bool IsAuthenticated => _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
+
+    public bool IsInRole(string role)
+    {
+        if (string.IsNullOrWhiteSpace(role))
+        {
+            return false;
+        }
+
+        return string.Equals(Role, role, StringComparison.OrdinalIgnoreCase);
+    }
 }

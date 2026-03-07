@@ -161,6 +161,11 @@ builder.Services.AddAuthorization(options =>
         .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser()
         .RequireRole("admin"));
+
+    options.AddPolicy("RequireTrainer", policy => policy
+        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .RequireAuthenticatedUser()
+        .RequireRole("trainer"));
 });
 
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis");

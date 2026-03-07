@@ -32,39 +32,57 @@ public class TrainersController : ControllerBase
             return Unauthorized("User not authenticated");
         }
 
-        var command = new SendTrainerRequestCommand(_currentUser.UserId.Value, request.TrainerId);
-        var id = await _mediator.Send(command);
+        try
+        {
+            var command = new SendTrainerRequestCommand(_currentUser.UserId.Value, request.TrainerId);
+            var id = await _mediator.Send(command);
 
-        _logger.LogInformation("Client {ClientId} sent trainer request to {TrainerId}", _currentUser.UserId.Value, request.TrainerId);
+            _logger.LogInformation("Client {ClientId} sent trainer request to {TrainerId}", _currentUser.UserId.Value, request.TrainerId);
 
-        return Ok(new { RelationshipId = id });
+            return Ok(new { RelationshipId = id });
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning("Invalid trainer request from {ClientId} to {TrainerId}: {Message}", _currentUser.UserId.Value, request.TrainerId, ex.Message);
+            return BadRequest(new { error = ex.Message });
+        }
     }
 
     [HttpPost("respond")]
+    [Authorize(Policy = "RequireTrainer")]
     public async Task<IActionResult> Respond([FromBody] RespondRequest request)
     {
-        var command = new RespondToTrainerRequestCommand(
-            request.RelationshipId,
-            request.Accept,
-            request.CanViewNutrition,
-            request.CanViewWorkouts,
-            request.CanViewMeasurements,
-            request.CanMessage
-        );
-        var success = await _mediator.Send(command);
-
-        if (!success)
+        try
         {
-            return NotFound("Relationship not found");
+            var command = new RespondToTrainerRequestCommand(
+                request.RelationshipId,
+                request.Accept,
+                request.CanViewNutrition,
+                request.CanViewWorkouts,
+                request.CanViewMeasurements,
+                request.CanMessage
+            );
+            var success = await _mediator.Send(command);
+
+            if (!success)
+            {
+                return NotFound("Relationship not found");
+            }
+
+            _logger.LogInformation("Trainer {TrainerId} responded to request {RelationshipId}: {Accepted}",
+                _currentUser.UserId, request.RelationshipId, request.Accept);
+
+            return NoContent();
         }
-
-        _logger.LogInformation("Trainer {TrainerId} responded to request {RelationshipId}: {Accepted}",
-            _currentUser.UserId, request.RelationshipId, request.Accept);
-
-        return NoContent();
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning("Unauthorized trainer response attempt by {TrainerId} for {RelationshipId}: {Message}", _currentUser.UserId, request.RelationshipId, ex.Message);
+            return Unauthorized(ex.Message);
+        }
     }
 
     [HttpGet("clients")]
+    [Authorize(Policy = "RequireTrainer")]
     public async Task<ActionResult<PagedResult<TrainerClientDto>>> GetClients([FromQuery] GetTrainerClientsQuery query)
     {
         try
@@ -83,6 +101,7 @@ public class TrainersController : ControllerBase
     }
 
     [HttpGet("requests")]
+    [Authorize(Policy = "RequireTrainer")]
     public async Task<ActionResult<PagedResult<TrainerPendingRequestDto>>> GetPendingRequests([FromQuery] GetTrainerPendingRequestsQuery query)
     {
         try
@@ -101,6 +120,7 @@ public class TrainersController : ControllerBase
     }
 
     [HttpGet("clients/{clientId}/nutrition")]
+    [Authorize(Policy = "RequireTrainer")]
     public async Task<IActionResult> GetClientNutrition(Guid clientId, [FromQuery] DateTime? date = null)
     {
         try
@@ -137,7 +157,7 @@ public class TrainersController : ControllerBase
     }
 
     [HttpGet("my-trainer")]
-    public async Task<IActionResult> GetMyTrainer()
+    public async Task<ActionResult<MyTrainerDto>> GetMyTrainer()
     {
         try
         {

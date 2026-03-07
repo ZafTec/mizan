@@ -6,8 +6,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import Loading from "@/components/Loading";
+import { ApiError } from "@/lib/api";
 
-interface MyTrainer {
+interface MyTrainerDto {
 	relationshipId: string;
 	trainerId: string;
 	trainerName: string | null;
@@ -24,16 +25,16 @@ interface MyTrainer {
 
 export default function MyTrainerPage() {
 	const { data: session, isPending } = useSession();
-	const [trainer, setTrainer] = useState<MyTrainer | null>(null);
+	const [trainer, setTrainer] = useState<MyTrainerDto | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
 		const fetchMyTrainer = async () => {
 			try {
-				const data = await clientApi<MyTrainer>("/api/Trainers/my-trainer");
+				const data = await clientApi<MyTrainerDto>("/api/Trainers/my-trainer");
 				setTrainer(data);
-			} catch (error: any) {
-				if (error?.status === 404) {
+			} catch (error) {
+				if (error instanceof ApiError && error.status === 404) {
 					setTrainer(null);
 				} else {
 					console.error("Failed to fetch trainer:", error);
@@ -140,7 +141,7 @@ export default function MyTrainerPage() {
 								Active
 							</span>
 							<span className="text-sm text-slate-500">
-								Since {new Date(trainer.startedAt).toLocaleDateString()}
+								Since {trainer.startedAt ? new Date(trainer.startedAt).toLocaleDateString() : "Unknown date"}
 							</span>
 						</div>
 					</div>
@@ -224,13 +225,15 @@ export default function MyTrainerPage() {
 				<h3 className="font-semibold text-slate-900 mb-4">Actions</h3>
 				<div className="space-y-3">
 					{trainer.canMessage && (
-						<Link
-							href={`/chat?recipientId=${trainer.trainerId}`}
-							className="btn-primary w-full"
-						>
-							<i className="ri-message-3-line" />
-							Send Message
-						</Link>
+						trainer.trainerId ? (
+							<Link
+								href={`/chat?recipientId=${trainer.trainerId}`}
+								className="btn-primary w-full"
+							>
+								<i className="ri-message-3-line" />
+								Send Message
+							</Link>
+						) : null
 					)}
 					<button className="btn-secondary w-full" disabled>
 						<i className="ri-close-circle-line" />

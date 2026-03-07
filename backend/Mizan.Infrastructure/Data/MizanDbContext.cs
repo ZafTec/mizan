@@ -475,6 +475,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.CanViewWorkouts).HasColumnName("can_view_workouts").HasDefaultValue(true);
             entity.Property(e => e.CanViewMeasurements).HasColumnName("can_view_measurements").HasDefaultValue(false);
             entity.Property(e => e.CanMessage).HasColumnName("can_message").HasDefaultValue(true);
+            entity.Property(e => e.CanAwardAchievements).HasColumnName("can_award_achievements").HasDefaultValue(false);
             entity.Property(e => e.StartedAt).HasColumnName("started_at");
             entity.Property(e => e.EndedAt).HasColumnName("ended_at");
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");

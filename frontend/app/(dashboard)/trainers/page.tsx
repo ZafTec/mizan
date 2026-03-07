@@ -8,20 +8,12 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Loading from "@/components/Loading";
 import { useDebounce } from "@/lib/hooks/useDebounce";
-
-interface TrainerPublic {
-	id: string;
-	name: string | null;
-	email: string;
-	image: string | null;
-	bio: string | null;
-	specialties: string | null;
-	clientCount: number;
-}
+import type { TrainerPublicDto, TrainerPublicPagedResultDto } from "@/types/api-contracts";
+import { getPagedItems } from "@/types/api-contracts";
 
 export default function TrainersPage() {
 	const { data: session, isPending } = useSession();
-	const [trainers, setTrainers] = useState<TrainerPublic[]>([]);
+	const [trainers, setTrainers] = useState<TrainerPublicDto[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [requestingTrainerId, setRequestingTrainerId] = useState<string | null>(null);
@@ -31,8 +23,8 @@ export default function TrainersPage() {
 	useEffect(() => {
 		const fetchTrainers = async () => {
 			try {
-				const data = await clientApi<TrainerPublic[]>("/api/Trainers/available");
-				setTrainers(data);
+				const data = await clientApi<TrainerPublicPagedResultDto>("/api/Trainers/available");
+				setTrainers(getPagedItems(data));
 			} catch (error) {
 				console.error("Failed to fetch trainers:", error);
 			} finally {
@@ -79,10 +71,12 @@ export default function TrainersPage() {
 
 	const filteredTrainers = trainers.filter((trainer) => {
 		const query = debouncedQuery.toLowerCase();
+		const trainerEmail = trainer.email?.toLowerCase() ?? "";
+		const specialties = trainer.specialties?.toLowerCase() ?? "";
 		return (
 			trainer.name?.toLowerCase().includes(query) ||
-			trainer.email.toLowerCase().includes(query) ||
-			trainer.specialties?.toLowerCase().includes(query)
+			trainerEmail.includes(query) ||
+			specialties.includes(query)
 		);
 	});
 
@@ -131,12 +125,12 @@ export default function TrainersPage() {
 			) : (
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 					{filteredTrainers.map((trainer) => (
-						<div key={trainer.id} className="card p-6 hover:shadow-lg transition-shadow">
+						<div key={trainer.id || trainer.email || "trainer-card"} className="card p-6 hover:shadow-lg transition-shadow">
 							<div className="flex flex-col items-center text-center mb-4">
 								{trainer.image ? (
 									<Image
 										src={trainer.image}
-										alt={trainer.name || trainer.email}
+										alt={trainer.name || trainer.email || "Trainer"}
 										width={80}
 										height={80}
 										className="w-20 h-20 rounded-2xl object-cover border-4 border-white dark:border-slate-900 shadow-lg mb-3"
@@ -144,17 +138,17 @@ export default function TrainersPage() {
 								) : (
 									<div className="w-20 h-20 rounded-2xl bg-linear-to-br from-emerald-400 to-teal-600 flex items-center justify-center border-4 border-white dark:border-slate-900 shadow-lg mb-3">
 										<span className="text-2xl font-bold text-white">
-											{trainer.email.charAt(0).toUpperCase()}
+											{(trainer.email || "?").charAt(0).toUpperCase()}
 										</span>
 									</div>
 								)}
 								<h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">
-									{trainer.name || trainer.email.split("@")[0]}
+									{trainer.name || trainer.email?.split("@")[0] || "Unknown trainer"}
 								</h3>
 								<p className="text-sm text-slate-500 dark:text-slate-400 mb-2">{trainer.email}</p>
 								<div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
 									<i className="ri-group-line" />
-									<span>{trainer.clientCount} clients</span>
+									<span>{trainer.clientCount || 0} clients</span>
 								</div>
 							</div>
 
@@ -165,8 +159,8 @@ export default function TrainersPage() {
 							)}
 
 							<button
-								onClick={() => handleSendRequest(trainer.id)}
-								disabled={requestingTrainerId === trainer.id}
+								onClick={() => trainer.id && handleSendRequest(trainer.id)}
+								disabled={requestingTrainerId === trainer.id || !trainer.id}
 								className="btn-primary w-full"
 							>
 								{requestingTrainerId === trainer.id ? (

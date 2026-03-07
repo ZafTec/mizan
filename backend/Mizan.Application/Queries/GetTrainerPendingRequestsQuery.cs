@@ -25,23 +25,23 @@ public class GetTrainerPendingRequestsQueryHandler : IRequestHandler<GetTrainerP
 {
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly ITrainerAuthorizationService _trainerAuthorization;
 
-    public GetTrainerPendingRequestsQueryHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public GetTrainerPendingRequestsQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, ITrainerAuthorizationService trainerAuthorization)
     {
         _context = context;
         _currentUser = currentUser;
+        _trainerAuthorization = trainerAuthorization;
     }
 
     public async Task<PagedResult<TrainerPendingRequestDto>> Handle(GetTrainerPendingRequestsQuery request, CancellationToken cancellationToken)
     {
-        if (!_currentUser.UserId.HasValue)
-        {
-            throw new UnauthorizedAccessException("User must be authenticated");
-        }
+        await _trainerAuthorization.EnsureTrainerAccessAsync(cancellationToken);
 
-        var trainerId = _currentUser.UserId.Value;
+        var trainerId = _currentUser.UserId!.Value;
 
         var query = _context.TrainerClientRelationships
+            .Include(r => r.Client)
             .Where(r => r.TrainerId == trainerId && r.Status == "pending");
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -52,8 +52,8 @@ public class GetTrainerPendingRequestsQueryHandler : IRequestHandler<GetTrainerP
             .Select(r => new TrainerPendingRequestDto(
                 r.Id,
                 r.ClientId,
-                null,
-                null,
+                r.Client.Name,
+                r.Client.Email,
                 r.CreatedAt
             ))
             .ToListAsync(cancellationToken);

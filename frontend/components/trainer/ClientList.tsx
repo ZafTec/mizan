@@ -4,22 +4,11 @@ import { useEffect, useState } from "react";
 import { clientApi } from "@/lib/api.client";
 import Link from "next/link";
 import { useToast } from "@/lib/hooks/use-toast";
-
-interface TrainerClient {
-	relationshipId: string;
-	clientId: string;
-	clientName?: string;
-	clientEmail?: string;
-	status: string;
-	canViewNutrition: boolean;
-	canViewWorkouts: boolean;
-	canMessage: boolean;
-	startedAt: string;
-	endedAt?: string;
-}
+import type { TrainerClientDto, TrainerClientPagedResultDto } from "@/types/api-contracts";
+import { getPagedItems } from "@/types/api-contracts";
 
 export function ClientList() {
-	const [clients, setClients] = useState<TrainerClient[]>([]);
+	const [clients, setClients] = useState<TrainerClientDto[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [filter, setFilter] = useState<"all" | "active" | "paused">("all");
 	const { toast } = useToast();
@@ -27,8 +16,8 @@ export function ClientList() {
 	useEffect(() => {
 		async function fetchClients() {
 			try {
-				const data = await clientApi<TrainerClient[]>("/api/Trainers/clients");
-				setClients(Array.isArray(data) ? data : []);
+				const data = await clientApi<TrainerClientPagedResultDto>("/api/Trainers/clients");
+				setClients(getPagedItems(data));
 			} catch (error) {
 				console.error("Failed to fetch clients:", error);
 				toast({
@@ -88,7 +77,7 @@ export function ClientList() {
 			<div className="space-y-4">
 				{filteredClients.map((client) => (
 					<div
-						key={client.relationshipId}
+						key={client.relationshipId || client.clientId || "trainer-client"}
 						className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
 					>
 						<div className="flex items-center space-x-3">
@@ -102,7 +91,7 @@ export function ClientList() {
 									{client.clientName || client.clientEmail || "Unknown Client"}
 								</p>
 								<p className="text-sm text-gray-500 dark:text-gray-400">
-									Started: {new Date(client.startedAt).toLocaleDateString()}
+									Started: {client.startedAt ? new Date(client.startedAt).toLocaleDateString() : "Unknown date"}
 								</p>
 							</div>
 						</div>
@@ -113,12 +102,14 @@ export function ClientList() {
 								{client.canViewWorkouts && <div>✓ Workouts</div>}
 							</div>
 
-							<Link
-								href={`/trainer/clients/${client.clientId}`}
-								className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full"
-							>
-								<i className="ri-arrow-right-line text-gray-600 dark:text-gray-300"></i>
-							</Link>
+							{client.clientId ? (
+								<Link
+									href={`/trainer/clients/${client.clientId}`}
+									className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full"
+								>
+									<i className="ri-arrow-right-line text-gray-600 dark:text-gray-300"></i>
+								</Link>
+							) : null}
 						</div>
 					</div>
 				))}

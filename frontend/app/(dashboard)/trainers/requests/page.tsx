@@ -7,27 +7,19 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import Loading from "@/components/Loading";
 import { toast } from "sonner";
-
-interface TrainerRequest {
-	relationshipId: string;
-	trainerId: string;
-	trainerName: string | null;
-	trainerEmail: string | null;
-	trainerImage: string | null;
-	status: string;
-	requestedAt: string;
-}
+import type { MyTrainerRequestDto, MyTrainerRequestPagedResultDto } from "@/types/api-contracts";
+import { getPagedItems } from "@/types/api-contracts";
 
 export default function TrainerRequestsPage() {
 	const { data: session, isPending } = useSession();
-	const [requests, setRequests] = useState<TrainerRequest[]>([]);
+	const [requests, setRequests] = useState<MyTrainerRequestDto[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
 		const fetchRequests = async () => {
 			try {
-				const data = await clientApi<TrainerRequest[]>("/api/Trainers/my-requests");
-				setRequests(data);
+				const data = await clientApi<MyTrainerRequestPagedResultDto>("/api/Trainers/my-requests");
+				setRequests(getPagedItems(data));
 			} catch (error) {
 				console.error("Failed to fetch requests:", error);
 			} finally {
@@ -92,7 +84,7 @@ export default function TrainerRequestsPage() {
 			) : (
 				<div className="space-y-4">
 					{requests.map((request) => (
-						<div key={request.relationshipId} className="card p-6">
+						<div key={request.relationshipId || request.trainerId || request.trainerEmail || "trainer-request"} className="card p-6">
 							<div className="flex flex-col sm:flex-row items-center gap-6">
 								<div className="relative shrink-0">
 									{request.trainerImage ? (
@@ -106,7 +98,7 @@ export default function TrainerRequestsPage() {
 									) : (
 										<div className="w-20 h-20 rounded-2xl bg-linear-to-br from-emerald-400 to-teal-600 flex items-center justify-center border-4 border-white dark:border-slate-800 shadow-lg">
 											<span className="text-2xl font-bold text-white">
-												{request.trainerEmail?.charAt(0).toUpperCase()}
+												{(request.trainerEmail || "?").charAt(0).toUpperCase()}
 											</span>
 										</div>
 									)}
@@ -123,7 +115,7 @@ export default function TrainerRequestsPage() {
 											Pending
 										</span>
 										<span className="text-sm text-slate-500 dark:text-slate-400">
-											Sent {new Date(request.requestedAt).toLocaleDateString()}
+											Sent {request.requestedAt ? new Date(request.requestedAt).toLocaleDateString() : "Unknown date"}
 										</span>
 									</div>
 								</div>

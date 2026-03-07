@@ -24,6 +24,7 @@ public static class DependencyInjection
         services.AddMemoryCache();
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<ITrainerAuthorizationService, TrainerAuthorizationService>();
         services.AddScoped<IUserStatusService, UserStatusService>();
         services.AddScoped<INutritionAiService, NutritionAiService>();
         services.AddSingleton<IRedisCacheService, RedisCacheService>();

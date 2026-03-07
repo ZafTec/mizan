@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
+using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Commands;
 
@@ -16,17 +17,26 @@ public record RespondToTrainerRequestCommand(
 public class RespondToTrainerRequestCommandHandler : IRequestHandler<RespondToTrainerRequestCommand, bool>
 {
     private readonly IMizanDbContext _context;
+    private readonly ITrainerAuthorizationService _trainerAuthorization;
 
-    public RespondToTrainerRequestCommandHandler(IMizanDbContext context)
+    public RespondToTrainerRequestCommandHandler(IMizanDbContext context, ITrainerAuthorizationService trainerAuthorization)
     {
         _context = context;
+        _trainerAuthorization = trainerAuthorization;
     }
 
     public async Task<bool> Handle(RespondToTrainerRequestCommand request, CancellationToken cancellationToken)
     {
-        var relationship = await _context.TrainerClientRelationships.FindAsync(new object[] { request.RelationshipId }, cancellationToken);
-        
-        if (relationship == null)
+        TrainerClientRelationship relationship;
+
+        try
+        {
+            relationship = await _trainerAuthorization.GetRelationshipForCurrentTrainerAsync(
+                request.RelationshipId,
+                requireActive: false,
+                cancellationToken);
+        }
+        catch (KeyNotFoundException)
         {
             return false;
         }

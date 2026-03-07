@@ -208,10 +208,10 @@ export default function MealsPage() {
 				<div>
 					<div className="flex items-center gap-3">
 						<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Food Diary</h1>
-						{streak && streak.currentStreak > 0 && (
+						{(streak?.currentStreak ?? 0) > 0 && (
 							<span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-sm font-medium bg-orange-100 text-orange-700">
 								<i className="ri-fire-fill" />
-								{streak.currentStreak} day streak
+								{streak?.currentStreak ?? 0} day streak
 							</span>
 						)}
 					</div>

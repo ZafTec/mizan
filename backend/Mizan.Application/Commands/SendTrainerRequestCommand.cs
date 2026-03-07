@@ -18,6 +18,23 @@ public class SendTrainerRequestCommandHandler : IRequestHandler<SendTrainerReque
 
     public async Task<Guid> Handle(SendTrainerRequestCommand request, CancellationToken cancellationToken)
     {
+        if (request.ClientId == request.TrainerId)
+        {
+            throw new ArgumentException("You cannot send a trainer request to yourself");
+        }
+
+        var trainerExists = await _context.Users
+            .AnyAsync(
+                u => u.Id == request.TrainerId
+                    && !u.Banned
+                    && (u.Role == "trainer" || u.Role == "admin"),
+                cancellationToken);
+
+        if (!trainerExists)
+        {
+            throw new ArgumentException("Selected user is not an available trainer");
+        }
+
         // Check if relationship already exists
         var existing = await _context.TrainerClientRelationships
             .FirstOrDefaultAsync(r => r.ClientId == request.ClientId && r.TrainerId == request.TrainerId, cancellationToken);

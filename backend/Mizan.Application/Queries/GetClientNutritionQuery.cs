@@ -35,35 +35,20 @@ public record NutritionSummaryDto(
 public class GetClientNutritionQueryHandler : IRequestHandler<GetClientNutritionQuery, ClientNutritionDto?>
 {
     private readonly IMizanDbContext _context;
-    private readonly ICurrentUserService _currentUser;
+    private readonly ITrainerAuthorizationService _trainerAuthorization;
 
-    public GetClientNutritionQueryHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public GetClientNutritionQueryHandler(IMizanDbContext context, ITrainerAuthorizationService trainerAuthorization)
     {
         _context = context;
-        _currentUser = currentUser;
+        _trainerAuthorization = trainerAuthorization;
     }
 
     public async Task<ClientNutritionDto?> Handle(GetClientNutritionQuery request, CancellationToken cancellationToken)
     {
-        if (!_currentUser.UserId.HasValue)
-        {
-            throw new UnauthorizedAccessException("User must be authenticated");
-        }
-
-        var trainerId = _currentUser.UserId.Value;
-
-        // Verify trainer-client relationship and permissions
-        var relationship = await _context.TrainerClientRelationships
-            .FirstOrDefaultAsync(r =>
-                r.TrainerId == trainerId &&
-                r.ClientId == request.ClientId &&
-                r.Status == "active",
-                cancellationToken);
-
-        if (relationship == null)
-        {
-            throw new UnauthorizedAccessException("No active relationship with this client");
-        }
+        var relationship = await _trainerAuthorization.GetRelationshipForCurrentTrainerAndClientAsync(
+            request.ClientId,
+            requireActive: true,
+            cancellationToken);
 
         if (!relationship.CanViewNutrition)
         {

@@ -10,6 +10,7 @@ public class TrainerClientRelationship
     public bool CanViewWorkouts { get; set; } = true;
     public bool CanViewMeasurements { get; set; }
     public bool CanMessage { get; set; } = true;
+    public bool CanAwardAchievements { get; set; }
     public DateTime? StartedAt { get; set; }
     public DateTime? EndedAt { get; set; }
     public DateTime CreatedAt { get; set; }

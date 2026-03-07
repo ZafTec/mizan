@@ -1,6 +1,3 @@
-// Temporary type definitions for MCP tokens
-// These will be replaced by code generation from OpenAPI spec
-
 export interface McpTokenDto {
   id: string;
   name: string;

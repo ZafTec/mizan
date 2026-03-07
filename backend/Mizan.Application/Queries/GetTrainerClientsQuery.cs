@@ -30,23 +30,23 @@ public class GetTrainerClientsQueryHandler : IRequestHandler<GetTrainerClientsQu
 {
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly ITrainerAuthorizationService _trainerAuthorization;
 
-    public GetTrainerClientsQueryHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public GetTrainerClientsQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, ITrainerAuthorizationService trainerAuthorization)
     {
         _context = context;
         _currentUser = currentUser;
+        _trainerAuthorization = trainerAuthorization;
     }
 
     public async Task<PagedResult<TrainerClientDto>> Handle(GetTrainerClientsQuery request, CancellationToken cancellationToken)
     {
-        if (!_currentUser.UserId.HasValue)
-        {
-            throw new UnauthorizedAccessException("User must be authenticated");
-        }
+        await _trainerAuthorization.EnsureTrainerAccessAsync(cancellationToken);
 
-        var trainerId = _currentUser.UserId.Value;
+        var trainerId = _currentUser.UserId!.Value;
 
         var query = _context.TrainerClientRelationships
+            .Include(r => r.Client)
             .Where(r => r.TrainerId == trainerId);
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -57,8 +57,8 @@ public class GetTrainerClientsQueryHandler : IRequestHandler<GetTrainerClientsQu
             .Select(r => new TrainerClientDto(
                 r.Id,
                 r.ClientId,
-                null,
-                null,
+                r.Client.Name,
+                r.Client.Email,
                 r.Status,
                 r.CanViewNutrition,
                 r.CanViewWorkouts,

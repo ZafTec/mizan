@@ -32,7 +32,7 @@ export default async function AchievementsPage() {
                         </h2>
                         <p className="text-slate-600">
                             Longest: {streak?.longestStreak || 0} days
-                            {streak?.lastLogDate && ` • Last logged: ${new Date(streak.lastLogDate).toLocaleDateString()}`}
+                            {streak?.lastActivityDate && ` • Last logged: ${new Date(streak.lastActivityDate).toLocaleDateString()}`}
                         </p>
                     </div>
                     <div className="text-center">

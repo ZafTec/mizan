@@ -1373,6 +1373,12 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
+                    b.Property<bool>("CanAwardAchievements")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("can_award_achievements");
+
                     b.Property<bool>("CanMessage")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")

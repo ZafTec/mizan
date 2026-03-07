@@ -13,14 +13,8 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/lib/hooks/use-toast";
-
-interface PendingRequest {
-	relationshipId: string;
-	clientId: string;
-	clientName?: string;
-	clientEmail?: string;
-	requestedAt: string;
-}
+import type { TrainerPendingRequestDto, TrainerPendingRequestPagedResultDto } from "@/types/api-contracts";
+import { getPagedItems } from "@/types/api-contracts";
 
 interface PermissionSettings {
 	canViewNutrition: boolean;
@@ -30,11 +24,11 @@ interface PermissionSettings {
 }
 
 export function TrainerPendingRequests() {
-	const [requests, setRequests] = useState<PendingRequest[]>([]);
+	const [requests, setRequests] = useState<TrainerPendingRequestDto[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [processingId, setProcessingId] = useState<string | null>(null);
 	const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
-	const [selectedRequest, setSelectedRequest] = useState<PendingRequest | null>(
+	const [selectedRequest, setSelectedRequest] = useState<TrainerPendingRequestDto | null>(
 		null
 	);
 	const [permissions, setPermissions] = useState<PermissionSettings>({
@@ -47,10 +41,10 @@ export function TrainerPendingRequests() {
 
 	async function fetchRequests() {
 		try {
-			const data = await clientApi<PendingRequest[]>(
+			const data = await clientApi<TrainerPendingRequestPagedResultDto>(
 				"/api/Trainers/requests"
 			);
-			setRequests(data);
+			setRequests(getPagedItems(data));
 		} catch (error) {
 			console.error("Failed to fetch pending requests:", error);
 			toast({
@@ -67,13 +61,13 @@ export function TrainerPendingRequests() {
 		fetchRequests();
 	}, []);
 
-	function handleAcceptClick(request: PendingRequest) {
+	function handleAcceptClick(request: TrainerPendingRequestDto) {
 		setSelectedRequest(request);
 		setShowPermissionsDialog(true);
 	}
 
 	async function handleAcceptConfirm() {
-		if (!selectedRequest) return;
+		if (!selectedRequest?.relationshipId) return;
 
 		setProcessingId(selectedRequest.relationshipId);
 		try {
@@ -91,9 +85,7 @@ export function TrainerPendingRequests() {
 				description: `${selectedRequest.clientName || selectedRequest.clientEmail} is now your client`,
 			});
 
-			setRequests((prev) =>
-				prev.filter((r) => r.relationshipId !== selectedRequest.relationshipId)
-			);
+			setRequests((prev) => prev.filter((r) => r.relationshipId !== selectedRequest.relationshipId));
 			setShowPermissionsDialog(false);
 			setSelectedRequest(null);
 		} catch (error) {
@@ -166,7 +158,7 @@ export function TrainerPendingRequests() {
 			<div className="space-y-4">
 				{requests.map((request) => (
 					<div
-						key={request.relationshipId}
+						key={request.relationshipId || request.clientId || "pending-request"}
 						className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg"
 					>
 						<div className="flex items-center space-x-3">
@@ -180,7 +172,7 @@ export function TrainerPendingRequests() {
 									{request.clientName || request.clientEmail || "Unknown Client"}
 								</p>
 								<p className="text-sm text-gray-500 dark:text-gray-400">
-									Requested {new Date(request.requestedAt).toLocaleDateString()}
+									Requested {request.requestedAt ? new Date(request.requestedAt).toLocaleDateString() : "Unknown date"}
 								</p>
 							</div>
 						</div>
@@ -189,15 +181,15 @@ export function TrainerPendingRequests() {
 							<Button
 								size="sm"
 								variant="outline"
-								onClick={() => handleDecline(request.relationshipId)}
-								disabled={processingId === request.relationshipId}
+								onClick={() => request.relationshipId && handleDecline(request.relationshipId)}
+								disabled={processingId === request.relationshipId || !request.relationshipId}
 							>
 								Decline
 							</Button>
 							<Button
 								size="sm"
 								onClick={() => handleAcceptClick(request)}
-								disabled={processingId === request.relationshipId}
+								disabled={processingId === request.relationshipId || !request.relationshipId}
 							>
 								Accept
 							</Button>
