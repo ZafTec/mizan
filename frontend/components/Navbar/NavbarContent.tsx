@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { ChevronDown } from "lucide-react";
 import { signOut } from "@/lib/auth-client";
 import { AnimatedIcon, type AnimatedIconName } from "@/components/ui/animated-icon";
 import { cn } from "@/lib/utils";
@@ -59,16 +60,18 @@ function NavLink({
 			href={item.href}
 			onClick={onClick}
 			className={cn(
-				"group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-all duration-300",
+				"group flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors duration-200",
 				isActive
-					? "bg-brand-500/12 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300"
-					: "text-slate-600 hover:bg-slate-900/5 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white",
-				mobile ? "w-full" : ""
+					? "text-slate-950 dark:text-white"
+					: "text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white",
+				mobile ? "w-full rounded-2xl hover:bg-slate-900/5 dark:hover:bg-white/5" : "rounded-full"
 			)}
 		>
 			<span
 				className={cn(
-					"icon-chip h-9 w-9 text-slate-500 transition-colors duration-300 dark:text-slate-300",
+					mobile
+						? "icon-chip h-9 w-9 text-slate-500 dark:text-slate-300"
+						: "flex h-5 w-5 items-center justify-center text-slate-400 dark:text-slate-500",
 					isActive ? "text-brand-600 dark:text-brand-300" : "group-hover:text-slate-950 dark:group-hover:text-white"
 				)}
 			>
@@ -195,7 +198,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 				)}
 
 			<div className="flex items-center gap-2" data-testid="navbar">
-				<nav className="hidden items-center gap-1 rounded-full border border-white/55 bg-white/55 p-1.5 backdrop-blur-xl dark:border-white/10 dark:bg-white/5 md:flex">
+				<nav className="hidden items-center gap-1 md:flex">
 					{primaryItems.map((item) => (
 						<NavLink key={item.href} item={item} />
 					))}
@@ -208,21 +211,19 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 								type="button"
 								data-testid="nav-user-trigger"
 								onClick={() => setUserMenuOpen((open) => !open)}
-								className="group flex items-center gap-3 rounded-2xl border border-white/55 bg-white/60 px-3 py-2 text-sm text-slate-700 shadow-sm backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/8"
+								className="group flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/90 px-2 py-1.5 text-sm text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-white dark:border-white/10 dark:bg-slate-950/70 dark:text-slate-200 dark:hover:border-white/15 dark:hover:bg-slate-950"
 							>
 								<UserAvatar user={user} />
-								<div className="text-left">
-									<p className="max-w-32 truncate font-medium text-slate-950 dark:text-white">{user.name || user.email}</p>
-									<p className="max-w-32 truncate text-xs text-slate-500 dark:text-slate-400">{user.role || 'user'}</p>
+								<div className="hidden text-left sm:block">
+									<p className="max-w-28 truncate font-medium text-slate-950 dark:text-white">{user.name || user.email}</p>
+									<p className="max-w-28 truncate text-[11px] text-slate-500 dark:text-slate-400">{user.role || 'user'}</p>
 								</div>
-								<span className="icon-chip h-8 w-8 text-slate-500 group-hover:text-slate-950 dark:text-slate-300 dark:group-hover:text-white">
-									<AnimatedIcon name={userMenuOpen ? "x" : "menu"} size={14} aria-hidden="true" />
-								</span>
+								<ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform duration-200 dark:text-slate-500", userMenuOpen && "rotate-180")} aria-hidden="true" />
 							</button>
 
 							{userMenuOpen && (
-								<div ref={userMenuRef} data-testid="nav-user-menu" className="surface-panel absolute right-0 top-[calc(100%+0.75rem)] z-[70] mt-0 w-72 p-2 animate-fade-in shadow-2xl shadow-slate-950/10">
-									<div className="mb-2 rounded-2xl border border-white/55 bg-white/50 px-4 py-3 dark:border-white/10 dark:bg-white/5">
+								<div ref={userMenuRef} data-testid="nav-user-menu" className="surface-panel absolute right-0 top-[calc(100%+0.5rem)] z-[70] mt-0 w-60 p-1.5 animate-fade-in shadow-2xl shadow-slate-950/10">
+									<div className="mb-1 rounded-2xl px-3 py-2.5">
 										<p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{user.name || user.email}</p>
 										<p className="truncate text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
 									</div>
@@ -231,15 +232,15 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 											<NavLink key={item.href} item={item} onClick={() => setUserMenuOpen(false)} mobile />
 										))}
 									</div>
-									<div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/10">
+									<div className="mt-1 border-t border-slate-200/70 pt-1.5 dark:border-white/10">
 										<button
 											onClick={() => {
 												setUserMenuOpen(false);
 												setShowLogoutModal(true);
 											}}
-											className="group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+											className="group flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
 										>
-											<span className="icon-chip h-9 w-9 text-red-500 dark:text-red-400">
+											<span className="flex h-5 w-5 items-center justify-center text-red-500 dark:text-red-400">
 												<AnimatedIcon name="logout" size={16} aria-hidden="true" />
 											</span>
 											<span>Sign out</span>

@@ -1,5 +1,6 @@
 import { logger } from "@/lib/logger";
 import { ApiError, request, type ApiRequestOptions } from "@/lib/api";
+import { resolvePublicApiOrigin } from "@/lib/api-base";
 
 const apiLogger = logger.createModuleLogger("api.client");
 
@@ -74,7 +75,7 @@ export async function clientApi<T>(
   path: string,
   options: ApiRequestOptions = {}
 ): Promise<T> {
-  const apiUrl = process.env["NEXT_PUBLIC_API_URL"]!;
+  const apiUrl = resolvePublicApiOrigin();
   const token = await getApiToken();
 
   try {

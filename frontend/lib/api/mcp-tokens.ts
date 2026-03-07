@@ -6,14 +6,10 @@ import type {
   GetMcpTokensResult,
 } from "@/types/mcp";
 import { getApiToken } from "@/lib/api.client";
+import { resolvePublicApiOrigin } from "@/lib/api-base";
 import { logger } from "@/lib/logger";
 
-const API_BASE = () => {
-  const baseUrl = typeof window === "undefined"
-    ? process.env.API_URL || ""
-    : process.env.NEXT_PUBLIC_API_URL || "";
-  return `${baseUrl.replace(/\/$/, "")}/api`;
-};
+const API_BASE = () => `${resolvePublicApiOrigin()}/api`;
 
 const mcpTokenLogger = logger.createModuleLogger("mcp-token-api");
 

@@ -15,6 +15,7 @@ export async function addUser(prevState: FormState, formData: FormData): Promise
         const password = formData.get("password") as string;
         const confirmPassword = formData.get("confirmPassword") as string;
         const name = formData.get("name") as string;
+        const userImage = (formData.get("userImage") as string | null)?.trim();
 
         if (!email || !password) {
             return createErrorState("Email and password are required", [
@@ -40,6 +41,7 @@ export async function addUser(prevState: FormState, formData: FormData): Promise
                 email: email.toLowerCase(),
                 password,
                 name: name || email.split("@")[0],
+                image: userImage || undefined,
             },
         });
 
