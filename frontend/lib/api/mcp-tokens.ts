@@ -1,9 +1,9 @@
 import type {
   CreateMcpTokenCommand,
   CreateMcpTokenResult,
-  GetMcpTokensResult,
   McpTokenDto,
   McpUsageAnalyticsResult,
+  GetMcpTokensResult,
 } from "@/types/mcp";
 import { getApiToken } from "@/lib/api.client";
 import { logger } from "@/lib/logger";
@@ -112,8 +112,9 @@ export const mcpTokenApi = {
       method: "GET",
     });
 
-    mcpTokenLogger.debug("Retrieved user MCP tokens", { count: result.items.length });
-    return result.items;
+    const items = result.items ?? [];
+    mcpTokenLogger.debug("Retrieved user MCP tokens", { count: items.length });
+    return items;
   },
 
   async revokeToken(tokenId: string): Promise<void> {

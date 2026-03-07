@@ -9,13 +9,7 @@ const achievementLogger = logger.createModuleLogger("achievement-data");
 export type Achievement = AchievementDto;
 export type StreakInfo = StreakDto;
 
-export interface AchievementListResult {
-    achievements: Achievement[];
-    totalCount: number;
-    totalPages: number;
-}
-
-export async function getAchievements(page: number = 1, pageSize: number = 20, sortBy?: string, sortOrder?: string): Promise<AchievementListResult> {
+export async function getAchievements(page: number = 1, pageSize: number = 20, sortBy?: string, sortOrder?: string) {
     try {
         const params = new URLSearchParams();
         params.append("Page", page.toString());
@@ -25,9 +19,9 @@ export async function getAchievements(page: number = 1, pageSize: number = 20, s
 
         const result = await serverApi<AchievementListResultDto>(`/api/Achievements?${params}`);
         return {
-            achievements: result.items || [],
-            totalCount: result.totalCount || 0,
-            totalPages: result.totalPages || 0
+            achievements: result.items ?? [],
+            totalCount: result.totalCount ?? 0,
+            totalPages: result.totalPages ?? 0
         };
     } catch (error) {
         achievementLogger.error("Failed to get achievements", { error });

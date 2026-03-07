@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 
@@ -20,7 +21,7 @@ public class SendTrainerRequestCommandHandler : IRequestHandler<SendTrainerReque
     {
         if (request.ClientId == request.TrainerId)
         {
-            throw new ArgumentException("You cannot send a trainer request to yourself");
+            throw new DomainValidationException("You cannot send a trainer request to yourself");
         }
 
         var trainerExists = await _context.Users
@@ -32,7 +33,7 @@ public class SendTrainerRequestCommandHandler : IRequestHandler<SendTrainerReque
 
         if (!trainerExists)
         {
-            throw new ArgumentException("Selected user is not an available trainer");
+            throw new DomainValidationException("Selected user is not an available trainer");
         }
 
         // Check if relationship already exists

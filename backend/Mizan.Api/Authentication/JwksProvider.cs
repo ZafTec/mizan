@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
+using Mizan.Application.Interfaces;
 
 namespace Mizan.Api.Authentication;
 
@@ -10,22 +11,27 @@ public interface IJwksProvider
 
 public class JwksProvider : IJwksProvider
 {
-    private const string CacheKey = "jwks:signing-keys";
+    private const string MemoryCacheKey = "jwks:signing-keys";
+    private const string RedisCacheKey = "jwks:raw-json";
     private readonly HttpClient _httpClient;
-    private readonly IMemoryCache _cache;
+    private readonly IMemoryCache _memoryCache;
+    private readonly IRedisCacheService _redisCache;
     private readonly ILogger<JwksProvider> _logger;
     private readonly string _jwksUrl;
-    private readonly TimeSpan _cacheDuration;
+    private readonly TimeSpan _memoryCacheDuration;
+    private readonly TimeSpan _redisCacheDuration;
     private readonly SemaphoreSlim _refreshLock = new(1, 1);
 
     public JwksProvider(
         HttpClient httpClient,
-        IMemoryCache cache,
+        IMemoryCache memoryCache,
+        IRedisCacheService redisCache,
         IConfiguration configuration,
         ILogger<JwksProvider> logger)
     {
         _httpClient = httpClient;
-        _cache = cache;
+        _memoryCache = memoryCache;
+        _redisCache = redisCache;
         _logger = logger;
         _jwksUrl = configuration["BetterAuth:JwksUrl"]
             ?? configuration["Jwt:JwksUrl"]
@@ -33,30 +39,43 @@ public class JwksProvider : IJwksProvider
 
         var cacheMinutes = configuration.GetValue<int?>("BetterAuth:JwksCacheMinutes")
             ?? configuration.GetValue<int?>("Jwt:JwksCacheMinutes")
-            ?? 5;
-        _cacheDuration = TimeSpan.FromMinutes(cacheMinutes);
+            ?? 10;
+        _redisCacheDuration = TimeSpan.FromMinutes(cacheMinutes);
+        _memoryCacheDuration = TimeSpan.FromSeconds(30);
     }
 
     public async Task<IReadOnlyCollection<SecurityKey>> GetSigningKeysAsync(CancellationToken cancellationToken = default)
     {
-        if (_cache.TryGetValue(CacheKey, out IReadOnlyCollection<SecurityKey>? cached) && cached is not null)
+        if (_memoryCache.TryGetValue(MemoryCacheKey, out IReadOnlyCollection<SecurityKey>? memoryCached) && memoryCached is not null)
         {
-            return cached;
+            return memoryCached;
         }
 
         await _refreshLock.WaitAsync(cancellationToken);
         try
         {
-            if (_cache.TryGetValue(CacheKey, out cached) && cached is not null)
+            if (_memoryCache.TryGetValue(MemoryCacheKey, out memoryCached) && memoryCached is not null)
             {
-                return cached;
+                return memoryCached;
             }
 
-            var json = await _httpClient.GetStringAsync(_jwksUrl, cancellationToken);
+            var json = await _redisCache.GetAsync<string>(RedisCacheKey, cancellationToken);
+
+            if (json == null)
+            {
+                _logger.LogInformation("JWKS cache miss (Redis + Memory), fetching from {JwksUrl}", _jwksUrl);
+                json = await _httpClient.GetStringAsync(_jwksUrl, cancellationToken);
+                await _redisCache.SetAsync(RedisCacheKey, json, _redisCacheDuration, cancellationToken);
+            }
+            else
+            {
+                _logger.LogDebug("JWKS loaded from Redis cache");
+            }
+
             var jwks = new JsonWebKeySet(json);
             var keys = jwks.Keys?.Cast<SecurityKey>().ToArray() ?? Array.Empty<SecurityKey>();
 
-            _cache.Set(CacheKey, keys, _cacheDuration);
+            _memoryCache.Set(MemoryCacheKey, keys, _memoryCacheDuration);
             return keys;
         }
         catch (Exception ex)

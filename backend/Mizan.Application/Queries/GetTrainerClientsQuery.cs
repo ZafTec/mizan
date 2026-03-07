@@ -29,21 +29,17 @@ public record TrainerClientDto(
 public class GetTrainerClientsQueryHandler : IRequestHandler<GetTrainerClientsQuery, PagedResult<TrainerClientDto>>
 {
     private readonly IMizanDbContext _context;
-    private readonly ICurrentUserService _currentUser;
     private readonly ITrainerAuthorizationService _trainerAuthorization;
 
-    public GetTrainerClientsQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, ITrainerAuthorizationService trainerAuthorization)
+    public GetTrainerClientsQueryHandler(IMizanDbContext context, ITrainerAuthorizationService trainerAuthorization)
     {
         _context = context;
-        _currentUser = currentUser;
         _trainerAuthorization = trainerAuthorization;
     }
 
     public async Task<PagedResult<TrainerClientDto>> Handle(GetTrainerClientsQuery request, CancellationToken cancellationToken)
     {
-        await _trainerAuthorization.EnsureTrainerAccessAsync(cancellationToken);
-
-        var trainerId = _currentUser.UserId!.Value;
+        var trainerId = _trainerAuthorization.GetCurrentUserId();
 
         var query = _context.TrainerClientRelationships
             .Include(r => r.Client)

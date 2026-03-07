@@ -55,7 +55,7 @@ public class TrainersControllerTests
     }
 
     [Fact]
-    public async Task Respond_ReturnsUnauthorized_WhenTrainerDoesNotOwnRelationship()
+    public async Task Respond_ReturnsForbidden_WhenTrainerDoesNotOwnRelationship()
     {
         await _fixture.ResetDatabaseAsync();
 
@@ -85,7 +85,7 @@ public class TrainersControllerTests
             CanMessage = true,
         });
 
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
     [Fact]

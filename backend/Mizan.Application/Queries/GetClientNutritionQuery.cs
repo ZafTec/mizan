@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Queries;
@@ -52,7 +53,7 @@ public class GetClientNutritionQueryHandler : IRequestHandler<GetClientNutrition
 
         if (!relationship.CanViewNutrition)
         {
-            throw new UnauthorizedAccessException("No permission to view client nutrition data");
+            throw new ForbiddenAccessException("No permission to view client nutrition data");
         }
 
         // Get food diary entries for the specified date (or today if not specified)

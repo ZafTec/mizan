@@ -13,6 +13,7 @@ using Mizan.Infrastructure;
 using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
+using Mizan.Application.Exceptions;
 using StackExchange.Redis;
 using System.Security.Claims;
 
@@ -53,6 +54,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "Mizan API", Version = "v1" });
+    c.SupportNonNullableReferenceTypes();
     c.AddSecurityDefinition("Bearer", new()
     {
         Description = "JWT Bearer token",
@@ -268,6 +270,30 @@ app.UseExceptionHandler(errorApp =>
             {
                 errors = validationEx.Errors.Select(e => new { e.PropertyName, e.ErrorMessage })
             });
+        }
+        else if (exception is DomainValidationException domainValidationEx)
+        {
+            Log.Warning("Domain validation failed for {Path}: {Message}",
+                context.Request.Path, domainValidationEx.Message);
+
+            context.Response.StatusCode = 400;
+            await context.Response.WriteAsJsonAsync(new { error = domainValidationEx.Message });
+        }
+        else if (exception is EntityNotFoundException notFoundEx)
+        {
+            Log.Warning("Entity not found for {Path}: {Message}",
+                context.Request.Path, notFoundEx.Message);
+
+            context.Response.StatusCode = 404;
+            await context.Response.WriteAsJsonAsync(new { error = notFoundEx.Message });
+        }
+        else if (exception is ForbiddenAccessException forbiddenEx)
+        {
+            Log.Warning("Forbidden access for {Path}: {Message}",
+                context.Request.Path, forbiddenEx.Message);
+
+            context.Response.StatusCode = 403;
+            await context.Response.WriteAsJsonAsync(new { error = forbiddenEx.Message });
         }
         else if (exception is UnauthorizedAccessException)
         {

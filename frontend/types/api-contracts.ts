@@ -15,6 +15,7 @@ export type TrainerPendingRequestPagedResultDto = Schemas["TrainerPendingRequest
 export type TrainerPublicDto = Schemas["TrainerPublicDto"];
 export type TrainerPublicPagedResultDto = Schemas["TrainerPublicDtoPagedResult"];
 
+export type CreateMcpTokenCommand = Schemas["CreateMcpTokenCommand"];
 export type CreateMcpTokenResultDto = Schemas["CreateMcpTokenResult"];
 export type McpTokenDto = Schemas["McpTokenDto"];
 export type McpTokenPagedResultDto = Schemas["McpTokenDtoPagedResult"];

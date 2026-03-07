@@ -32,118 +32,72 @@ public class TrainersController : ControllerBase
             return Unauthorized("User not authenticated");
         }
 
-        try
-        {
-            var command = new SendTrainerRequestCommand(_currentUser.UserId.Value, request.TrainerId);
-            var id = await _mediator.Send(command);
+        var command = new SendTrainerRequestCommand(_currentUser.UserId.Value, request.TrainerId);
+        var id = await _mediator.Send(command);
 
-            _logger.LogInformation("Client {ClientId} sent trainer request to {TrainerId}", _currentUser.UserId.Value, request.TrainerId);
+        _logger.LogInformation("Client {ClientId} sent trainer request to {TrainerId}", _currentUser.UserId.Value, request.TrainerId);
 
-            return Ok(new { RelationshipId = id });
-        }
-        catch (ArgumentException ex)
-        {
-            _logger.LogWarning("Invalid trainer request from {ClientId} to {TrainerId}: {Message}", _currentUser.UserId.Value, request.TrainerId, ex.Message);
-            return BadRequest(new { error = ex.Message });
-        }
+        return Ok(new { RelationshipId = id });
     }
 
     [HttpPost("respond")]
     [Authorize(Policy = "RequireTrainer")]
     public async Task<IActionResult> Respond([FromBody] RespondRequest request)
     {
-        try
-        {
-            var command = new RespondToTrainerRequestCommand(
-                request.RelationshipId,
-                request.Accept,
-                request.CanViewNutrition,
-                request.CanViewWorkouts,
-                request.CanViewMeasurements,
-                request.CanMessage
-            );
-            var success = await _mediator.Send(command);
+        var command = new RespondToTrainerRequestCommand(
+            request.RelationshipId,
+            request.Accept,
+            request.CanViewNutrition,
+            request.CanViewWorkouts,
+            request.CanViewMeasurements,
+            request.CanMessage
+        );
+        await _mediator.Send(command);
 
-            if (!success)
-            {
-                return NotFound("Relationship not found");
-            }
+        _logger.LogInformation("Trainer {TrainerId} responded to request {RelationshipId}: {Accepted}",
+            _currentUser.UserId, request.RelationshipId, request.Accept);
 
-            _logger.LogInformation("Trainer {TrainerId} responded to request {RelationshipId}: {Accepted}",
-                _currentUser.UserId, request.RelationshipId, request.Accept);
-
-            return NoContent();
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            _logger.LogWarning("Unauthorized trainer response attempt by {TrainerId} for {RelationshipId}: {Message}", _currentUser.UserId, request.RelationshipId, ex.Message);
-            return Unauthorized(ex.Message);
-        }
+        return NoContent();
     }
 
     [HttpGet("clients")]
     [Authorize(Policy = "RequireTrainer")]
     public async Task<ActionResult<PagedResult<TrainerClientDto>>> GetClients([FromQuery] GetTrainerClientsQuery query)
     {
-        try
-        {
-            var result = await _mediator.Send(query);
+        var result = await _mediator.Send(query);
 
-            _logger.LogInformation("Trainer {TrainerId} retrieved {Count} clients", _currentUser.UserId, result.Items.Count);
+        _logger.LogInformation("Trainer {TrainerId} retrieved {Count} clients", _currentUser.UserId, result.Items.Count);
 
-            return Ok(result);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            _logger.LogWarning("Unauthorized access to trainer clients: {Message}", ex.Message);
-            return Unauthorized(ex.Message);
-        }
+        return Ok(result);
     }
 
     [HttpGet("requests")]
     [Authorize(Policy = "RequireTrainer")]
     public async Task<ActionResult<PagedResult<TrainerPendingRequestDto>>> GetPendingRequests([FromQuery] GetTrainerPendingRequestsQuery query)
     {
-        try
-        {
-            var result = await _mediator.Send(query);
+        var result = await _mediator.Send(query);
 
-            _logger.LogInformation("Trainer {TrainerId} retrieved {Count} pending requests", _currentUser.UserId, result.Items.Count);
+        _logger.LogInformation("Trainer {TrainerId} retrieved {Count} pending requests", _currentUser.UserId, result.Items.Count);
 
-            return Ok(result);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            _logger.LogWarning("Unauthorized access to pending requests: {Message}", ex.Message);
-            return Unauthorized(ex.Message);
-        }
+        return Ok(result);
     }
 
     [HttpGet("clients/{clientId}/nutrition")]
     [Authorize(Policy = "RequireTrainer")]
-    public async Task<IActionResult> GetClientNutrition(Guid clientId, [FromQuery] DateTime? date = null)
+    public async Task<ActionResult<ClientNutritionDto>> GetClientNutrition(Guid clientId, [FromQuery] DateTime? date = null)
     {
-        try
+        var query = new GetClientNutritionQuery(clientId, date);
+        var nutrition = await _mediator.Send(query);
+
+        if (nutrition == null)
         {
-            var query = new GetClientNutritionQuery(clientId, date);
-            var nutrition = await _mediator.Send(query);
-
-            if (nutrition == null)
-            {
-                return NotFound("No nutrition data found");
-            }
-
-            _logger.LogInformation("Trainer {TrainerId} accessed nutrition for client {ClientId} on {Date}",
-                _currentUser.UserId, clientId, nutrition.Date);
-
-            return Ok(nutrition);
+            return NotFound("No nutrition data found");
         }
-        catch (UnauthorizedAccessException ex)
-        {
-            _logger.LogWarning("Unauthorized access to client nutrition: Trainer {TrainerId}, Client {ClientId}: {Message}",
-                _currentUser.UserId, clientId, ex.Message);
-            return Unauthorized(ex.Message);
-        }
+
+        _logger.LogInformation("Trainer {TrainerId} accessed nutrition for client {ClientId} on {Date}",
+            _currentUser.UserId, clientId, nutrition.Date);
+
+        return Ok(nutrition);
     }
 
     [HttpGet("available")]
@@ -159,43 +113,27 @@ public class TrainersController : ControllerBase
     [HttpGet("my-trainer")]
     public async Task<ActionResult<MyTrainerDto>> GetMyTrainer()
     {
-        try
+        var query = new GetMyTrainerQuery();
+        var trainer = await _mediator.Send(query);
+
+        if (trainer == null)
         {
-            var query = new GetMyTrainerQuery();
-            var trainer = await _mediator.Send(query);
-
-            if (trainer == null)
-            {
-                return NotFound("No active trainer relationship found");
-            }
-
-            _logger.LogInformation("Client {ClientId} retrieved their trainer {TrainerId}", _currentUser.UserId, trainer.TrainerId);
-
-            return Ok(trainer);
+            return NotFound("No active trainer relationship found");
         }
-        catch (UnauthorizedAccessException ex)
-        {
-            _logger.LogWarning("Unauthorized access to my trainer: {Message}", ex.Message);
-            return Unauthorized(ex.Message);
-        }
+
+        _logger.LogInformation("Client {ClientId} retrieved their trainer {TrainerId}", _currentUser.UserId, trainer.TrainerId);
+
+        return Ok(trainer);
     }
 
     [HttpGet("my-requests")]
     public async Task<ActionResult<PagedResult<MyTrainerRequestDto>>> GetMyTrainerRequests([FromQuery] GetMyTrainerRequestsQuery query)
     {
-        try
-        {
-            var result = await _mediator.Send(query);
+        var result = await _mediator.Send(query);
 
-            _logger.LogInformation("Client {ClientId} retrieved {Count} trainer requests", _currentUser.UserId, result.Items.Count);
+        _logger.LogInformation("Client {ClientId} retrieved {Count} trainer requests", _currentUser.UserId, result.Items.Count);
 
-            return Ok(result);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            _logger.LogWarning("Unauthorized access to my trainer requests: {Message}", ex.Message);
-            return Unauthorized(ex.Message);
-        }
+        return Ok(result);
     }
 }
 

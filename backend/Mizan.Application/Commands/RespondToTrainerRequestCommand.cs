@@ -27,19 +27,10 @@ public class RespondToTrainerRequestCommandHandler : IRequestHandler<RespondToTr
 
     public async Task<bool> Handle(RespondToTrainerRequestCommand request, CancellationToken cancellationToken)
     {
-        TrainerClientRelationship relationship;
-
-        try
-        {
-            relationship = await _trainerAuthorization.GetRelationshipForCurrentTrainerAsync(
-                request.RelationshipId,
-                requireActive: false,
-                cancellationToken);
-        }
-        catch (KeyNotFoundException)
-        {
-            return false;
-        }
+        var relationship = await _trainerAuthorization.GetRelationshipForCurrentTrainerAsync(
+            request.RelationshipId,
+            requireActive: false,
+            cancellationToken);
 
         if (request.Accept)
         {

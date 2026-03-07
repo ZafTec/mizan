@@ -24,6 +24,9 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
 {
     private static readonly string[] TablesToTruncate = new[]
     {
+        "chat_messages",
+        "chat_conversations",
+        "trainer_client_relationships",
         "mcp_usage_logs",
         "mcp_tokens",
         "goal_progress",
@@ -219,6 +222,9 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         {
             // For InMemory database, delete all entities manually
             // Since InMemory doesn't support ExecuteSqlRaw
+            db.ChatMessages.RemoveRange(db.ChatMessages);
+            db.ChatConversations.RemoveRange(db.ChatConversations);
+            db.TrainerClientRelationships.RemoveRange(db.TrainerClientRelationships);
             db.McpUsageLogs.RemoveRange(db.McpUsageLogs);
             db.McpTokens.RemoveRange(db.McpTokens);
             db.GoalProgress.RemoveRange(db.GoalProgress);
