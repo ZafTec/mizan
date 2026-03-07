@@ -48,14 +48,14 @@ export default async function MealPlanDetailPage({
 			{plan.nutritionSummary && (
 				<div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
 					{[
-						{ label: "Total Calories", value: Math.round(plan.nutritionSummary.totalCalories), unit: "kcal", icon: "ri-fire-line", color: "from-orange-400 to-orange-600" },
-						{ label: "Avg/Day", value: Math.round(plan.nutritionSummary.avgCaloriesPerDay), unit: "kcal", icon: "ri-bar-chart-line", color: "from-brand-400 to-brand-600" },
-						{ label: "Protein", value: Math.round(plan.nutritionSummary.totalProteinGrams), unit: "g", icon: "ri-heart-pulse-line", color: "from-violet-400 to-violet-600" },
-						{ label: "Days", value: plan.nutritionSummary.daysCount, unit: "", icon: "ri-calendar-line", color: "from-accent-400 to-accent-600" },
+						{ label: "Total Calories", value: Math.round(plan.nutritionSummary.totalCalories), unit: "kcal", icon: "ri-fire-line", color: "bg-accent-600" },
+						{ label: "Avg/Day", value: Math.round(plan.nutritionSummary.avgCaloriesPerDay), unit: "kcal", icon: "ri-bar-chart-line", color: "bg-brand-600" },
+						{ label: "Protein", value: Math.round(plan.nutritionSummary.totalProteinGrams), unit: "g", icon: "ri-heart-pulse-line", color: "bg-slate-900 dark:bg-slate-100 dark:text-slate-900" },
+						{ label: "Days", value: plan.nutritionSummary.daysCount, unit: "", icon: "ri-calendar-line", color: "bg-slate-700" },
 					].map((stat) => (
 						<div key={stat.label} className="card p-4">
 							<div className="flex items-center gap-3">
-								<div className={`w-10 h-10 rounded-xl bg-linear-to-br ${stat.color} flex items-center justify-center`}>
+								<div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center text-white`}>
 									<i className={`${stat.icon} text-white`} />
 								</div>
 								<div>

@@ -78,7 +78,7 @@ export default function ResetPasswordPage() {
 			<div className="w-full max-w-md">
 				{/* Header */}
 				<div className="text-center mb-8">
-					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/30 dark:shadow-brand-500/15 mb-4">
+					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 shadow-lg shadow-brand-500/30 dark:bg-brand-500 dark:shadow-brand-500/15 mb-4">
 						<i className="ri-lock-unlock-line text-3xl text-white" />
 					</div>
 					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Set new password</h1>

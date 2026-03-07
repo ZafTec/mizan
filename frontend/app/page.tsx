@@ -3,6 +3,7 @@ import Image from "next/image";
 import placeHolderImage from "@/public/placeholder-recipe.jpg";
 import DailyOverviewChart from "@/components/DailyOverviewChart";
 import DashboardStats from "@/components/Dashboard/DashboardStats";
+import { AnimatedIcon, type AnimatedIconName } from "@/components/ui/animated-icon";
 import { getUserOptionalServer } from "@/helper/session";
 import { getPopularRecipes } from "@/data/recipe";
 import { FeatureSection } from "@/components/Landing/FeatureSection";
@@ -11,166 +12,190 @@ import { CTASection } from "@/components/Landing/CTASection";
 
 export const dynamic = 'force-dynamic';
 
+const quickActions: Array<{
+	href: string;
+	title: string;
+	description: string;
+	icon: AnimatedIconName;
+	iconClass: string;
+}> = [
+	{
+		href: "/meals/add",
+		title: "Log Meal",
+		description: "Capture meals fast without breaking your flow.",
+		icon: "flame",
+		iconClass: "bg-brand-600",
+	},
+	{
+		href: "/recipes/add",
+		title: "Create Recipe",
+		description: "Build reusable dishes with macros already calculated.",
+		icon: "cookingPot",
+		iconClass: "bg-accent-600",
+	},
+	{
+		href: "/suggestions",
+		title: "AI Coach",
+		description: "Get suggestions that match goals, habits, and constraints.",
+		icon: "brain",
+		iconClass: "bg-slate-900 dark:bg-slate-100 dark:text-slate-900",
+	},
+];
+
 export default async function Home() {
 	const user = await getUserOptionalServer();
 	const popularRecipes = await getPopularRecipes();
 
 	return (
-		<div className="space-y-8">
-			{/* Hero Section for non-authenticated users */}
+		<div className="space-y-10">
 			{!user && (
-				<div data-testid="hero-section" className="relative overflow-hidden rounded-3xl bg-linear-to-br from-brand-600 via-brand-700 to-brand-800 p-8 sm:p-12" style={{ backgroundSize: '200% 200%', animation: 'gradient-shift 8s ease infinite' }}>
+				<div
+					data-testid="hero-section"
+					className="surface-panel relative overflow-hidden rounded-[34px] border-slate-900 bg-slate-900 p-8 sm:p-10 lg:p-12 dark:border-white/10 dark:bg-slate-950"
+				>
 					<div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-					<div className="absolute top-0 right-0 w-96 h-96 bg-brand-400/30 rounded-full blur-3xl" />
-					<div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-500/20 rounded-full blur-3xl" />
+					<div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-brand-500/10 blur-3xl" />
+					<div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
 
-					<div className="relative z-10 max-w-2xl">
-						<div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-white/90 text-sm mb-6">
-							<i className="ri-sparkling-2-fill text-amber-300" />
+					<div className="relative z-10 max-w-3xl">
+						<div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-sm text-white/90 backdrop-blur-sm">
+							<AnimatedIcon name="sparkles" size={16} className="text-amber-300" aria-hidden="true" />
 							AI-Powered Nutrition Coaching
 						</div>
-						<h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 tracking-tight">
-							Find Your <span className="text-amber-300">Balance</span>
+						<h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
+							Find Your <span className="text-brand-300">Balance</span> Across Food, Training, and Progress.
 						</h1>
-						<p className="text-lg text-white/80 mb-8 leading-relaxed">
+						<p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/80 sm:text-xl">
 							Track your nutrition, plan meals, and achieve your fitness goals with personalized AI coaching. Mizan helps you find the perfect balance.
 						</p>
-						<div className="flex flex-col sm:flex-row gap-4">
-							<Link
-								href="/register"
-								className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-900 text-brand-700 dark:text-brand-400 font-semibold rounded-xl hover:bg-brand-50 dark:hover:bg-slate-800 transition-colors shadow-lg"
-							>
+						<div className="mt-8 flex flex-col gap-4 sm:flex-row">
+							<Link href="/register" className="btn-secondary btn-lg border-white/20 bg-white/95 text-brand-700 hover:bg-white">
 								Get Started Free
-								<i className="ri-arrow-right-line" />
+								<AnimatedIcon name="arrowRight" size={18} aria-hidden="true" />
 							</Link>
 							<Link
 								href="/login"
-								className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-xl hover:bg-white/20 transition-colors border border-white/20"
+								className="btn-lg inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-6 py-3.5 font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/18"
 							>
+								<AnimatedIcon name="lock" size={18} aria-hidden="true" />
 								Sign In
 							</Link>
+						</div>
+
+						<div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
+							{["Fast logging", "Smart planning", "Trainer-ready progress"].map((item, index) => (
+								<div key={item} className="stagger-item rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white/80 backdrop-blur-sm" style={{ animationDelay: `${index * 100}ms` }}>
+									{item}
+								</div>
+							))}
 						</div>
 					</div>
 				</div>
 			)}
 
-			{/* Welcome back + Stats for authenticated users */}
 			{user && (
-				<div className="animate-in">
-					<h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">
-						Welcome back{user.name ? `, ${user.name}` : ''}
-					</h2>
-					<p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Here&apos;s your daily overview</p>
+				<div className="surface-panel animate-in p-6 sm:p-8">
+					<div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+						<div>
+							<div className="eyebrow mb-3">
+								<AnimatedIcon name="home" size={14} aria-hidden="true" />
+								Daily snapshot
+							</div>
+							<h2 className="text-2xl font-semibold text-slate-950 dark:text-slate-50 sm:text-3xl">
+								Welcome back{user.name ? `, ${user.name}` : ''}
+							</h2>
+							<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Here&apos;s how today is trending across meals and goals.</p>
+						</div>
+						<Link href="/goal/dashboard" className="btn-secondary w-full justify-center sm:w-auto">
+							View goal dashboard
+							<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" />
+						</Link>
+					</div>
 					<DashboardStats />
 				</div>
 			)}
 
-			{/* Quick Actions */}
-			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-				<Link href="/meals/add" className="group card-hover p-6">
-					<div className="flex items-start gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/25 group-hover:shadow-brand-500/40 transition-shadow">
-							<i className="ri-add-circle-line text-2xl text-white" />
+			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+				{quickActions.map((action, index) => (
+					<Link key={action.href} href={action.href} className="card-hover stagger-item group p-6 sm:p-7" style={{ animationDelay: `${index * 90}ms` }}>
+						<div className="flex items-start gap-4">
+							<div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${action.iconClass} text-white shadow-lg shadow-slate-950/10`}>
+								<AnimatedIcon name={action.icon} size={20} aria-hidden="true" />
+							</div>
+							<div>
+								<h3 className="mb-1 font-semibold text-slate-950 dark:text-slate-50">{action.title}</h3>
+								<p className="text-sm text-slate-500 dark:text-slate-400">{action.description}</p>
+							</div>
 						</div>
-						<div>
-							<h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">Log Meal</h3>
-							<p className="text-sm text-slate-500 dark:text-slate-400">Track what you eat</p>
-						</div>
-					</div>
-				</Link>
-
-				<Link href="/recipes/add" className="group card-hover p-6">
-					<div className="flex items-start gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-linear-to-br from-accent-400 to-accent-600 flex items-center justify-center shadow-lg shadow-accent-500/25 group-hover:shadow-accent-500/40 transition-shadow">
-							<i className="ri-restaurant-line text-2xl text-white" />
-						</div>
-						<div>
-							<h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">Create Recipe</h3>
-							<p className="text-sm text-slate-500 dark:text-slate-400">Add your own recipes</p>
-						</div>
-					</div>
-				</Link>
-
-				<Link href="/suggestions" className="group card-hover p-6 sm:col-span-2 lg:col-span-1">
-					<div className="flex items-start gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-linear-to-br from-violet-400 to-violet-600 flex items-center justify-center shadow-lg shadow-violet-500/25 group-hover:shadow-violet-500/40 transition-shadow">
-							<i className="ri-magic-line text-2xl text-white" />
-						</div>
-						<div>
-							<h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">AI Coach</h3>
-							<p className="text-sm text-slate-500 dark:text-slate-400">Get personalized advice</p>
-						</div>
-					</div>
-				</Link>
+					</Link>
+				))}
 			</div>
 
-			{/* Feature Section (unauthenticated) */}
 			{!user && <FeatureSection />}
 
-			{/* Popular Recipes */}
-			<div className="card p-6">
-				<div className="flex items-center justify-between mb-6">
+			<div className="surface-panel p-6 sm:p-8">
+				<div className="mb-6 flex items-center justify-between gap-4">
 					<div>
 						<h2 className="section-title">Popular Recipes</h2>
-						<p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Discover community favorites</p>
+						<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Discover community favorites</p>
 					</div>
-					<Link href="/recipes" className="btn-secondary text-sm">
+					<Link href="/recipes" className="btn-secondary btn-sm">
 						View All
-						<i className="ri-arrow-right-line" />
+						<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" />
 					</Link>
 				</div>
 
-				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-					{popularRecipes.length > 0 ? popularRecipes.map((recipe) => (
-						<Link
-							key={recipe._id.toString()}
-							href={`/recipes/${recipe._id}`}
-							className="group relative rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800"
-						>
-							<Image
-								src={placeHolderImage}
-								alt={recipe.name}
-								className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-								width={400}
-								height={300}
-							/>
-							<div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
-							<div className="absolute bottom-0 left-0 right-0 p-4">
-								<h3 className="font-semibold text-white mb-1 line-clamp-1">{recipe.name}</h3>
-								<div className="flex items-center gap-3 text-sm text-white/80">
-									<span className="flex items-center gap-1">
-										<i className="ri-fire-line" />
-										{recipe.totalMacros.calories.toFixed()} kcal
-									</span>
-									<span className="flex items-center gap-1">
-										<i className="ri-heart-pulse-line" />
-										{recipe.totalMacros.protein.toFixed()}g protein
-									</span>
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+					{popularRecipes.length > 0 ? (
+						popularRecipes.map((recipe) => (
+							<Link
+								key={recipe._id.toString()}
+								href={`/recipes/${recipe._id}`}
+								className="group relative overflow-hidden rounded-[24px] border border-white/60 bg-slate-100/80 shadow-lg shadow-slate-950/5 dark:border-white/10 dark:bg-slate-900/80"
+							>
+								<Image
+									src={placeHolderImage}
+									alt={recipe.name}
+									className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+									width={400}
+									height={300}
+								/>
+							<div className="absolute inset-0 bg-black/45" />
+								<div className="absolute bottom-0 left-0 right-0 p-4">
+									<h3 className="mb-1 line-clamp-1 font-semibold text-white">{recipe.name}</h3>
+									<div className="flex items-center gap-3 text-sm text-white/80">
+										<span className="flex items-center gap-1">
+											<i className="ri-fire-line" aria-hidden="true" />
+											{recipe.totalMacros.calories.toFixed()} kcal
+										</span>
+										<span className="flex items-center gap-1">
+											<i className="ri-heart-pulse-line" aria-hidden="true" />
+											{recipe.totalMacros.protein.toFixed()}g protein
+										</span>
+									</div>
 								</div>
-							</div>
-						</Link>
-					)) : (
-						<div className="col-span-full text-center py-12 text-slate-500 dark:text-slate-400">
-							<i className="ri-restaurant-line text-4xl mb-2 block opacity-50" />
+							</Link>
+						))
+					) : (
+						<div className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400">
+							<i className="ri-restaurant-line mb-2 block text-4xl opacity-50" aria-hidden="true" />
 							<p>No recipes yet. Be the first to add one!</p>
 						</div>
 					)}
 				</div>
 			</div>
 
-			{/* Testimonials (unauthenticated) */}
 			{!user && <TestimonialSection />}
 
-			{/* Nutrition Overview */}
 			{user && (
-				<div className="card p-6">
-					<div className="flex items-center justify-between mb-6">
+				<div className="surface-panel p-6 sm:p-8">
+					<div className="mb-6 flex items-center justify-between gap-4">
 						<div>
 							<h2 className="section-title">Nutrition Overview</h2>
-							<p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Your daily progress</p>
+							<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Your daily progress</p>
 						</div>
-						<Link href="/goal" className="btn-primary text-sm">
-							<i className="ri-target-line" />
+						<Link href="/goal" className="btn-primary btn-sm">
+							<AnimatedIcon name="rocket" size={16} aria-hidden="true" />
 							Set Goals
 						</Link>
 					</div>
@@ -178,7 +203,6 @@ export default async function Home() {
 				</div>
 			)}
 
-			{/* CTA (unauthenticated) */}
 			{!user && <CTASection />}
 		</div>
 	);

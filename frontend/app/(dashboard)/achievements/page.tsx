@@ -21,9 +21,9 @@ export default async function AchievementsPage() {
                 </div>
             </div>
 
-            <div className="card p-6 border-2 border-accent-200 bg-linear-to-br from-accent-50 to-orange-50">
-                <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-accent-400 to-accent-600 flex items-center justify-center shadow-lg">
+			<div className="card p-6 border border-accent-200 bg-slate-50/90 dark:bg-slate-900/60">
+				<div className="flex items-center gap-4">
+					<div className="w-16 h-16 rounded-2xl bg-accent-600 flex items-center justify-center shadow-lg">
                         <i className="ri-fire-line text-3xl text-white" />
                     </div>
                     <div className="flex-1">
@@ -49,10 +49,10 @@ export default async function AchievementsPage() {
                         {earned.map((achievement) => (
                             <div
                                 key={achievement.id}
-                                className="card-hover p-5 border-2 border-brand-500 bg-linear-to-br from-brand-50 to-green-50"
-                            >
-                                <div className="flex items-start gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center shadow-lg shrink-0">
+							className="card-hover p-5 border border-brand-200 bg-slate-50/90 dark:bg-slate-900/60"
+						>
+							<div className="flex items-start gap-4">
+								<div className="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center shadow-lg shrink-0 dark:bg-brand-500">
                                         {achievement.iconUrl ? (
                                             <Image
                                                 src={achievement.iconUrl}
@@ -107,7 +107,7 @@ export default async function AchievementsPage() {
                                 className="card-hover p-5 opacity-60 hover:opacity-80 transition-opacity"
                             >
                                 <div className="flex items-start gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-slate-300 to-slate-400 flex items-center justify-center shadow-lg shrink-0">
+								<div className="w-12 h-12 rounded-2xl bg-slate-400 flex items-center justify-center shadow-lg shrink-0 dark:bg-slate-700">
                                         {achievement.iconUrl ? (
                                             <Image
                                                 src={achievement.iconUrl}

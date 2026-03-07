@@ -19,6 +19,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Copy, Trash2, Plus, CheckCircle2, Activity, Clock, TrendingUp, Terminal, Monitor, Code2 } from "lucide-react";
 import type { CreateMcpTokenResult } from "@/types/mcp";
 
+const EMPTY_OVERVIEW = {
+  totalCalls: 0,
+  successRate: 0,
+  averageExecutionTimeMs: 0,
+  uniqueTokensUsed: 0,
+};
+
 function getMcpUrl(): string {
   if (process.env.NEXT_PUBLIC_MCP_URL) return process.env.NEXT_PUBLIC_MCP_URL;
   if (typeof window !== "undefined") {
@@ -79,6 +86,13 @@ export default function McpPage() {
     });
 
   const mcpUrl = getMcpUrl();
+  const tokenValue = createdToken?.plaintextToken ?? "";
+  const overview = {
+    ...EMPTY_OVERVIEW,
+    ...(analytics?.overview ?? {}),
+  };
+  const toolUsage = analytics?.toolUsage ?? [];
+  const tokenUsage = analytics?.tokenUsage ?? [];
 
   const desktopConfig = (token: string) => `{
   "mcpServers": {
@@ -176,11 +190,13 @@ export default function McpPage() {
             </DialogHeader>
             <div className="space-y-4">
               <div className="bg-slate-900 text-white rounded-xl p-4 flex items-center justify-between gap-3">
-                <code className="text-sm break-all">{createdToken.plaintextToken}</code>
-                <button
-                  className="btn-secondary shrink-0 bg-white/10 border-white/20 text-white hover:bg-white/20"
-                  onClick={() => copyToClipboard(createdToken.plaintextToken, "token")}
-                >
+                  <code className="text-sm break-all">{tokenValue}</code>
+                  <button
+                    type="button"
+                    className="btn-secondary shrink-0 bg-white/10 border-white/20 text-white hover:bg-white/20"
+                    onClick={() => copyToClipboard(tokenValue, "token")}
+                    disabled={!tokenValue}
+                  >
                   {copiedField === "token" ? <CheckCircle2 className="h-4 w-4 text-emerald-300" /> : <Copy className="h-4 w-4" />}
                 </button>
               </div>
@@ -236,11 +252,12 @@ export default function McpPage() {
                     </p>
                     <div className="relative">
                       <pre className="bg-slate-900 text-slate-50 rounded-lg p-4 text-xs overflow-x-auto">
-                        {desktopConfig(createdToken.plaintextToken)}
+                        {desktopConfig(tokenValue)}
                       </pre>
                       <button
+                        type="button"
                         className="absolute top-2 right-2 p-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white"
-                        onClick={() => copyToClipboard(desktopConfig(createdToken.plaintextToken), "desktop")}
+                        onClick={() => copyToClipboard(desktopConfig(tokenValue), "desktop")}
                       >
                         {copiedField === "desktop" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
                       </button>
@@ -262,11 +279,12 @@ export default function McpPage() {
                     </p>
                     <div className="relative">
                       <pre className="bg-slate-900 text-slate-50 rounded-lg p-4 text-xs overflow-x-auto whitespace-pre-wrap break-all">
-                        {claudeCodeCommand(createdToken.plaintextToken)}
+                        {claudeCodeCommand(tokenValue)}
                       </pre>
                       <button
+                        type="button"
                         className="absolute top-2 right-2 p-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white"
-                        onClick={() => copyToClipboard(claudeCodeCommand(createdToken.plaintextToken), "code")}
+                        onClick={() => copyToClipboard(claudeCodeCommand(tokenValue), "code")}
                       >
                         {copiedField === "code" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
                       </button>
@@ -284,11 +302,12 @@ export default function McpPage() {
                     </p>
                     <div className="relative">
                       <pre className="bg-slate-900 text-slate-50 rounded-lg p-4 text-xs overflow-x-auto">
-                        {cursorConfig(createdToken.plaintextToken)}
+                        {cursorConfig(tokenValue)}
                       </pre>
                       <button
+                        type="button"
                         className="absolute top-2 right-2 p-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white"
-                        onClick={() => copyToClipboard(cursorConfig(createdToken.plaintextToken), "cursor")}
+                        onClick={() => copyToClipboard(cursorConfig(tokenValue), "cursor")}
                       >
                         {copiedField === "cursor" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
                       </button>
@@ -371,7 +390,7 @@ export default function McpPage() {
                             {token.isActive ? "Active" : "Revoked"}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-slate-700 hidden sm:table-cell">{formatDate(token.createdAt)}</td>
+                        <td className="px-4 py-3 text-slate-700 hidden sm:table-cell">{token.createdAt ? formatDate(token.createdAt) : "Unknown"}</td>
                         <td className="px-4 py-3 text-slate-700 hidden md:table-cell">
                           {token.lastUsedAt ? formatDate(token.lastUsedAt) : "Never"}
                         </td>
@@ -379,7 +398,8 @@ export default function McpPage() {
                           {token.isActive && (
                             <button
                               className="btn-secondary inline-flex items-center gap-2 text-destructive"
-                              onClick={() => handleRevokeToken(token.id)}
+                              onClick={() => token.id && handleRevokeToken(token.id)}
+                              disabled={!token.id}
                             >
                               <Trash2 className="h-4 w-4" />
                               <span className="hidden sm:inline">Revoke</span>
@@ -406,19 +426,19 @@ export default function McpPage() {
                 <div className="grid gap-4 md:grid-cols-3">
                   <MetricCard
                     title="Total Calls"
-                    value={analytics.overview.totalCalls}
-                    subtitle={`${analytics.overview.successRate.toFixed(1)}% success rate`}
+                    value={overview.totalCalls}
+                    subtitle={`${overview.successRate.toFixed(1)}% success rate`}
                     icon={<Activity className="h-5 w-5 text-brand-600" />}
                   />
                   <MetricCard
                     title="Avg Response Time"
-                    value={`${analytics.overview.averageExecutionTimeMs} ms`}
+                    value={`${overview.averageExecutionTimeMs} ms`}
                     subtitle="Per MCP call"
                     icon={<Clock className="h-5 w-5 text-brand-600" />}
                   />
                   <MetricCard
                     title="Active Tokens"
-                    value={analytics.overview.uniqueTokensUsed}
+                    value={overview.uniqueTokensUsed}
                     subtitle="Tokens in use"
                     icon={<TrendingUp className="h-5 w-5 text-brand-600" />}
                   />
@@ -431,17 +451,17 @@ export default function McpPage() {
                       <span className="text-xs text-slate-500">Last 30 days</span>
                     </div>
                     <div className="divide-y divide-slate-100">
-                      {analytics.toolUsage.map((tool) => (
-                        <div key={tool.toolName} className="py-3 flex items-center justify-between">
+                      {toolUsage.map((tool) => (
+                        <div key={tool.toolName ?? `tool-${tool.callCount ?? 0}`} className="py-3 flex items-center justify-between">
                           <div>
-                            <p className="font-medium text-slate-900">{tool.toolName}</p>
+                            <p className="font-medium text-slate-900">{tool.toolName || "Unknown tool"}</p>
                             <p className="text-xs text-slate-500">
-                              {tool.successCount} success / {tool.failureCount} failed
+                              {tool.successCount ?? 0} success / {tool.failureCount ?? 0} failed
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-semibold text-slate-900">{tool.callCount} calls</p>
-                            <p className="text-xs text-slate-500">{tool.averageExecutionTimeMs} ms avg</p>
+                            <p className="text-sm font-semibold text-slate-900">{tool.callCount ?? 0} calls</p>
+                            <p className="text-xs text-slate-500">{tool.averageExecutionTimeMs ?? 0} ms avg</p>
                           </div>
                         </div>
                       ))}
@@ -454,13 +474,13 @@ export default function McpPage() {
                       <span className="text-xs text-slate-500">Most recent activity</span>
                     </div>
                     <div className="divide-y divide-slate-100">
-                      {analytics.tokenUsage.map((token) => (
-                        <div key={token.tokenId} className="py-3 flex items-center justify-between">
+                      {tokenUsage.map((token) => (
+                        <div key={token.tokenId ?? token.tokenName ?? "unknown-token"} className="py-3 flex items-center justify-between">
                           <div>
-                            <p className="font-medium text-slate-900">{token.tokenName}</p>
-                            <p className="text-xs text-slate-500">{token.callCount} calls</p>
+                            <p className="font-medium text-slate-900">{token.tokenName || "Unknown token"}</p>
+                            <p className="text-xs text-slate-500">{token.callCount ?? 0} calls</p>
                           </div>
-                          <p className="text-xs text-slate-500">{formatDate(token.lastUsed)}</p>
+                          <p className="text-xs text-slate-500">{token.lastUsed ? formatDate(token.lastUsed) : "Never"}</p>
                         </div>
                       ))}
                     </div>

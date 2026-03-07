@@ -47,7 +47,7 @@ export default function GoalDashboard() {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="card p-12 text-center">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center">
+			<div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-brand-600 flex items-center justify-center dark:bg-brand-500">
             <i className="ri-target-line text-4xl text-white" />
           </div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">

@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Loading from "@/components/Loading";
 import { PasswordInput } from "@/components/PasswordInput";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
 
 const hasCloudinary = !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 
@@ -28,19 +29,16 @@ export default function Page() {
 	return (
 		<div className="min-h-[70vh] flex items-center justify-center py-8">
 			<div className="w-full max-w-md">
-				{/* Header */}
 				<div className="text-center mb-8">
-					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/30 dark:shadow-brand-500/15 mb-4">
-						<i className="ri-user-add-line text-3xl text-white" />
+					<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-600 text-white shadow-lg shadow-brand-500/25 dark:bg-brand-500">
+						<AnimatedIcon name="rocket" size={26} aria-hidden="true" />
 					</div>
 					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Create your account</h1>
 					<p className="text-slate-500 dark:text-slate-400 mt-1">Start your nutrition journey with Mizan</p>
 				</div>
 
-				{/* Form Card */}
 				<div className="card p-6 sm:p-8">
 					<form data-testid="register-form" action={action} className="space-y-5">
-						{/* Email */}
 						<div>
 							<label htmlFor="email" className="label">
 								Email address
@@ -58,7 +56,6 @@ export default function Page() {
 							<FieldError formState={formState} name="email" />
 						</div>
 
-						{/* Password Fields */}
 						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 							<div>
 								<label htmlFor="password" className="label">
@@ -93,7 +90,6 @@ export default function Page() {
 							</div>
 						</div>
 
-						{/* Profile Image Upload */}
 						<div>
 							<label className="label">
 								Profile Image <span className="text-slate-400 dark:text-slate-500 font-normal">(optional)</span>
@@ -135,7 +131,7 @@ export default function Page() {
 													}}
 													className="w-20 h-20 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-400 bg-slate-50 dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-brand-950 flex flex-col items-center justify-center transition-colors group"
 												>
-													<i className="ri-camera-line text-2xl text-slate-400 dark:text-slate-500 group-hover:text-brand-500" />
+													<AnimatedIcon name="upload" size={22} className="text-slate-400 dark:text-slate-500 group-hover:text-brand-500" aria-hidden="true" />
 													<span className="text-xs text-slate-400 dark:text-slate-500 group-hover:text-brand-500 mt-1">Upload</span>
 												</button>
 											)}
@@ -150,7 +146,6 @@ export default function Page() {
 							<input type="hidden" name="userImage" value={image} />
 						</div>
 
-						{/* Terms checkbox */}
 						<label className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer">
 							<input type="checkbox" required className="mt-0.5 rounded border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-500" />
 							<span>
@@ -161,18 +156,16 @@ export default function Page() {
 							</span>
 						</label>
 
-						{/* Success Message */}
 						{formState.status === "success" && (
 							<div className="flex items-center gap-2 p-3 rounded-xl bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400 text-sm">
-								<i className="ri-checkbox-circle-line text-lg" />
+								<AnimatedIcon name="circleCheck" size={18} aria-hidden="true" />
 								<span>Account created! Redirecting to login...</span>
 							</div>
 						)}
 
-						{/* Error Message */}
 						{formState.status === "error" && formState.message && (
 							<div data-testid="error-message" className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
-								<i className="ri-error-warning-line text-lg shrink-0" />
+								<AnimatedIcon name="badgeAlert" size={18} className="shrink-0" aria-hidden="true" />
 								<span>
 									{formState.message}
 									{formState.message.includes("already exists") && (
@@ -187,7 +180,6 @@ export default function Page() {
 							</div>
 						)}
 
-						{/* Submit Button */}
 						<button
 							type="submit"
 							disabled={isPending}
@@ -202,14 +194,13 @@ export default function Page() {
 							) : (
 								<>
 									Create Account
-									<i className="ri-arrow-right-line" />
+									<AnimatedIcon name="arrowRight" size={18} aria-hidden="true" />
 								</>
 							)}
 						</button>
 					</form>
 				</div>
 
-				{/* Footer */}
 				<p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
 					Already have an account?{" "}
 					<Link href="/login" className="text-brand-600 dark:text-brand-400 font-medium hover:text-brand-700 dark:hover:text-brand-400">

@@ -1,45 +1,51 @@
+import { AnimatedIcon, type AnimatedIconName } from "@/components/ui/animated-icon";
+
 const features = [
 	{
-		icon: "ri-heart-pulse-line",
+		icon: "chartLine" as AnimatedIconName,
 		title: "Track Nutrition",
 		description: "Log meals and monitor macros with a clean, intuitive interface. AI-powered food recognition makes tracking effortless.",
-		gradient: "from-brand-400 to-brand-600",
-		shadow: "shadow-brand-500/25",
+		gradient: "bg-brand-600",
+		shadow: "shadow-brand-500/20",
 	},
 	{
-		icon: "ri-calendar-schedule-line",
+		icon: "calendarCheck" as AnimatedIconName,
 		title: "Plan Meals",
 		description: "Create weekly meal plans that hit your macro targets. Generate shopping lists automatically from your plans.",
-		gradient: "from-accent-400 to-accent-600",
-		shadow: "shadow-accent-500/25",
+		gradient: "bg-accent-600",
+		shadow: "shadow-accent-500/20",
 	},
 	{
-		icon: "ri-user-heart-line",
+		icon: "users" as AnimatedIconName,
 		title: "Get Coached",
 		description: "Connect with certified trainers for personalized guidance. Real-time chat and goal tracking keep you accountable.",
-		gradient: "from-violet-400 to-violet-600",
-		shadow: "shadow-violet-500/25",
+		gradient: "bg-slate-900 dark:bg-slate-100 dark:text-slate-900",
+		shadow: "shadow-brand-500/20",
 	},
 ];
 
 export function FeatureSection() {
 	return (
 		<section data-testid="feature-section" className="py-8">
-			<div className="text-center mb-10">
-				<h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+			<div className="mb-10 text-center">
+				<div className="eyebrow mb-4">
+					<AnimatedIcon name="sparkles" size={14} aria-hidden="true" />
+					Daily clarity
+				</div>
+				<h2 className="text-3xl font-semibold tracking-tight text-slate-950 dark:text-slate-50 sm:text-4xl">
 					Everything you need to hit your goals
 				</h2>
-				<p className="mt-3 text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
+				<p className="mx-auto mt-3 max-w-2xl text-slate-500 dark:text-slate-400">
 					From tracking to planning to coaching — one platform, zero friction.
 				</p>
 			</div>
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-				{features.map((f) => (
-					<div key={f.title} className="card-hover p-6 group">
-						<div className={`w-12 h-12 rounded-2xl bg-linear-to-br ${f.gradient} flex items-center justify-center shadow-lg ${f.shadow} group-hover:scale-110 transition-transform mb-4`}>
-							<i className={`${f.icon} text-2xl text-white`} />
+				{features.map((f, index) => (
+					<div key={f.title} className="card-hover stagger-item group p-6 sm:p-7" style={{ animationDelay: `${index * 90}ms` }}>
+						<div className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl ${f.gradient} text-white shadow-lg ${f.shadow}`}>
+							<AnimatedIcon name={f.icon} size={22} aria-hidden="true" />
 						</div>
-						<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">{f.title}</h3>
+						<h3 className="mb-2 text-lg font-semibold text-slate-950 dark:text-slate-50">{f.title}</h3>
 						<p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{f.description}</p>
 					</div>
 				))}

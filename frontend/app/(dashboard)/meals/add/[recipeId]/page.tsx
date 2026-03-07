@@ -44,7 +44,7 @@ export default async function Page({ params }: { params: Promise<{ recipeId: str
 			</div>
 
 			{/* Recipe Info Card */}
-			<div className="card p-6 bg-linear-to-br from-brand-50 to-accent-50 border-none">
+			<div className="card p-6 bg-slate-50/90 dark:bg-slate-900/60 border-none">
 				<div className="flex items-center gap-4 mb-6">
 					<div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center">
 						<i className="ri-restaurant-2-line text-2xl text-brand-600" />

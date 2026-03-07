@@ -100,7 +100,7 @@ export default function ProfilePage() {
 								className="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-lg"
 							/>
 						) : (
-							<div className="w-24 h-24 rounded-2xl bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center border-4 border-white shadow-lg">
+							<div className="w-24 h-24 rounded-2xl bg-brand-600 flex items-center justify-center border-4 border-white shadow-lg dark:bg-brand-500">
 								<span className="text-3xl font-bold text-white">
 									{user.email?.charAt(0).toUpperCase()}
 								</span>
@@ -159,7 +159,7 @@ export default function ProfilePage() {
 			<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 				<Link href="/goal" className="card-hover p-5 group">
 					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center">
+						<div className="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center dark:bg-brand-500">
 							<i className="ri-target-line text-xl text-white" />
 						</div>
 						<div className="flex-1">
@@ -172,7 +172,7 @@ export default function ProfilePage() {
 
 				<Link href="/meals" className="card-hover p-5 group">
 					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-linear-to-br from-accent-400 to-accent-600 flex items-center justify-center">
+						<div className="w-12 h-12 rounded-2xl bg-accent-600 flex items-center justify-center">
 							<i className="ri-bowl-line text-xl text-white" />
 						</div>
 						<div className="flex-1">
@@ -185,7 +185,7 @@ export default function ProfilePage() {
 
 				<Link href="/meal-plan" className="card-hover p-5 group">
 					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-linear-to-br from-sky-400 to-sky-600 flex items-center justify-center">
+						<div className="w-12 h-12 rounded-2xl bg-sky-600 flex items-center justify-center">
 							<i className="ri-calendar-line text-xl text-white" />
 						</div>
 						<div className="flex-1">
@@ -198,7 +198,7 @@ export default function ProfilePage() {
 
 				<Link href="/suggestions" className="card-hover p-5 group">
 					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-linear-to-br from-violet-400 to-violet-600 flex items-center justify-center">
+						<div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center dark:bg-slate-100 dark:text-slate-900">
 							<i className="ri-magic-line text-xl text-white" />
 						</div>
 						<div className="flex-1">
@@ -211,7 +211,7 @@ export default function ProfilePage() {
 
 				<Link href="/recipes" className="card-hover p-5 group">
 					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-linear-to-br from-rose-400 to-rose-600 flex items-center justify-center">
+						<div className="w-12 h-12 rounded-2xl bg-rose-600 flex items-center justify-center">
 							<i className="ri-book-3-line text-xl text-white" />
 						</div>
 						<div className="flex-1">
@@ -224,7 +224,7 @@ export default function ProfilePage() {
 
 				<Link href="/ingredients" className="card-hover p-5 group">
 					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-linear-to-br from-green-400 to-green-600 flex items-center justify-center">
+						<div className="w-12 h-12 rounded-2xl bg-green-600 flex items-center justify-center">
 							<i className="ri-leaf-line text-xl text-white" />
 						</div>
 						<div className="flex-1">
@@ -237,7 +237,7 @@ export default function ProfilePage() {
 
 				<Link href="/body-measurements" className="card-hover p-5 group">
 					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-linear-to-br from-cyan-400 to-cyan-600 flex items-center justify-center">
+						<div className="w-12 h-12 rounded-2xl bg-cyan-600 flex items-center justify-center">
 							<i className="ri-body-scan-line text-xl text-white" />
 						</div>
 						<div className="flex-1">
@@ -250,7 +250,7 @@ export default function ProfilePage() {
 
 				<Link href="/achievements" className="card-hover p-5 group">
 					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-linear-to-br from-amber-400 to-amber-600 flex items-center justify-center">
+						<div className="w-12 h-12 rounded-2xl bg-amber-600 flex items-center justify-center">
 							<i className="ri-trophy-line text-xl text-white" />
 						</div>
 						<div className="flex-1">
@@ -263,7 +263,7 @@ export default function ProfilePage() {
 
 				<Link href="/workouts" className="card-hover p-5 group">
 					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-linear-to-br from-indigo-400 to-indigo-600 flex items-center justify-center">
+						<div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center">
 							<i className="ri-run-line text-xl text-white" />
 						</div>
 						<div className="flex-1">
@@ -277,9 +277,9 @@ export default function ProfilePage() {
 
 			{/* Trainer Features - Only visible for users with trainer role */}
 			{isTrainer && (
-				<div className="card p-6 border-2 border-emerald-200 bg-linear-to-br from-emerald-50 to-teal-50">
+				<div className="card p-6 border border-emerald-200 bg-slate-50/90 dark:bg-slate-900/60">
 					<div className="flex items-center gap-3 mb-4">
-						<div className="w-10 h-10 rounded-xl bg-linear-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+						<div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center">
 							<i className="ri-user-star-line text-xl text-white" />
 						</div>
 						<div>
@@ -291,7 +291,7 @@ export default function ProfilePage() {
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 						<Link href="/trainer" className="card-hover p-4 bg-white group">
 							<div className="flex items-center gap-3">
-								<div className="w-10 h-10 rounded-xl bg-linear-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
+								<div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center">
 									<i className="ri-dashboard-line text-lg text-white" />
 								</div>
 								<div className="flex-1">
@@ -304,7 +304,7 @@ export default function ProfilePage() {
 
 						<Link href="/trainer#clients" className="card-hover p-4 bg-white group">
 							<div className="flex items-center gap-3">
-								<div className="w-10 h-10 rounded-xl bg-linear-to-br from-blue-400 to-blue-500 flex items-center justify-center">
+								<div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
 									<i className="ri-group-line text-lg text-white" />
 								</div>
 								<div className="flex-1">
@@ -317,7 +317,7 @@ export default function ProfilePage() {
 
 						<Link href="/trainer#requests" className="card-hover p-4 bg-white group">
 							<div className="flex items-center gap-3">
-								<div className="w-10 h-10 rounded-xl bg-linear-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+								<div className="w-10 h-10 rounded-xl bg-amber-600 flex items-center justify-center">
 									<i className="ri-user-add-line text-lg text-white" />
 								</div>
 								<div className="flex-1">
@@ -330,7 +330,7 @@ export default function ProfilePage() {
 
 						<Link href="/trainer#messages" className="card-hover p-4 bg-white group">
 							<div className="flex items-center gap-3">
-								<div className="w-10 h-10 rounded-xl bg-linear-to-br from-purple-400 to-purple-500 flex items-center justify-center">
+								<div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center dark:bg-slate-100 dark:text-slate-900">
 									<i className="ri-message-3-line text-lg text-white" />
 								</div>
 								<div className="flex-1">
@@ -346,9 +346,9 @@ export default function ProfilePage() {
 
 			{/* Find a Trainer - Only visible for regular users (non-trainers) */}
 			{!isTrainer && (
-				<div className="card p-6 border-2 border-blue-200 bg-linear-to-br from-blue-50 to-indigo-50">
+				<div className="card p-6 border border-blue-200 bg-slate-50/90 dark:bg-slate-900/60">
 					<div className="flex items-center gap-3 mb-4">
-						<div className="w-10 h-10 rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+						<div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
 							<i className="ri-user-search-line text-xl text-white" />
 						</div>
 						<div>
@@ -360,7 +360,7 @@ export default function ProfilePage() {
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 						<Link href="/trainers" className="card-hover p-4 bg-white group">
 							<div className="flex items-center gap-3">
-								<div className="w-10 h-10 rounded-xl bg-linear-to-br from-blue-400 to-indigo-500 flex items-center justify-center">
+								<div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
 									<i className="ri-search-line text-lg text-white" />
 								</div>
 								<div className="flex-1">
@@ -373,7 +373,7 @@ export default function ProfilePage() {
 
 						<Link href="/trainers/my-trainer" className="card-hover p-4 bg-white group">
 							<div className="flex items-center gap-3">
-								<div className="w-10 h-10 rounded-xl bg-linear-to-br from-emerald-400 to-emerald-500 flex items-center justify-center">
+								<div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center">
 									<i className="ri-user-heart-line text-lg text-white" />
 								</div>
 								<div className="flex-1">
@@ -386,7 +386,7 @@ export default function ProfilePage() {
 
 						<Link href="/trainers/requests" className="card-hover p-4 bg-white group">
 							<div className="flex items-center gap-3">
-								<div className="w-10 h-10 rounded-xl bg-linear-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+								<div className="w-10 h-10 rounded-xl bg-amber-600 flex items-center justify-center">
 									<i className="ri-mail-send-line text-lg text-white" />
 								</div>
 								<div className="flex-1">
@@ -399,7 +399,7 @@ export default function ProfilePage() {
 
 						<div className="card-hover p-4 bg-white">
 							<div className="flex items-center gap-3">
-								<div className="w-10 h-10 rounded-xl bg-linear-to-br from-purple-400 to-purple-500 flex items-center justify-center">
+								<div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center dark:bg-slate-100 dark:text-slate-900">
 									<i className="ri-star-line text-lg text-white" />
 								</div>
 								<div className="flex-1">
@@ -418,9 +418,9 @@ export default function ProfilePage() {
 			)}
 
 			{/* Developer Settings */}
-			<div className="card p-6 border-2 border-purple-200 bg-linear-to-br from-purple-50 to-indigo-50">
+			<div className="card p-6 border border-purple-200 bg-slate-50/90 dark:bg-slate-900/60">
 				<div className="flex items-center gap-3 mb-4">
-					<div className="w-10 h-10 rounded-xl bg-linear-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+					<div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center dark:bg-slate-100 dark:text-slate-900">
 						<i className="ri-code-s-slash-line text-xl text-white" />
 					</div>
 					<div>
@@ -432,7 +432,7 @@ export default function ProfilePage() {
 				<div className="grid grid-cols-1 gap-3">
 					<Link href="/profile/mcp" className="card-hover p-4 bg-white group">
 						<div className="flex items-center gap-3">
-							<div className="w-10 h-10 rounded-xl bg-linear-to-br from-purple-400 to-indigo-500 flex items-center justify-center">
+							<div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center dark:bg-slate-100 dark:text-slate-900">
 								<i className="ri-openai-line text-lg text-white" />
 							</div>
 							<div className="flex-1">

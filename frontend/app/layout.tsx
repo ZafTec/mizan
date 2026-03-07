@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
 import 'remixicon/fonts/remixicon.css';
 
 export const dynamic = 'force-dynamic';
@@ -15,48 +16,49 @@ export default function RootLayout(
 ) {
 	return (
 		<html lang="en">
-			<body className="antialiased min-h-screen flex flex-col">
+			<body className="min-h-screen antialiased flex flex-col selection:bg-brand-500/15 selection:text-slate-950 dark:selection:text-white">
 				<Navbar />
-				<main className="grow">
-					<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+				<main className="grow pb-8">
+					<div className="page-transition max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
 						{children}
 					</div>
 				</main>
 
-				<footer className="border-t border-slate-200 bg-white/50 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/50">
-					<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-						<div className="grid grid-cols-1 sm:grid-cols-3 gap-6 items-center text-center sm:text-left">
-							{/* Brand */}
-							<div className="flex items-center justify-center sm:justify-start gap-2">
-								<span className="text-lg font-bold bg-linear-to-r from-brand-600 to-brand-700 bg-clip-text text-transparent">
-									Mizan
+				<footer className="px-4 pb-4 sm:px-6 lg:px-8 lg:pb-6">
+					<div className="surface-panel max-w-7xl mx-auto px-5 py-6 sm:px-6 sm:py-7">
+						<div className="grid grid-cols-1 gap-6 text-center sm:grid-cols-3 sm:text-left">
+							<div className="flex items-center justify-center gap-3 sm:justify-start">
+								<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
+									<AnimatedIcon name="sparkles" size={18} aria-hidden="true" />
 								</span>
-								<span className="text-slate-400 dark:text-slate-500">•</span>
-								<span className="text-sm text-slate-500 dark:text-slate-400">ሚዛን</span>
+								<div>
+									<p className="text-lg font-semibold text-slate-950 dark:text-slate-50">
+										Mizan
+									</p>
+									<p className="text-sm text-slate-500 dark:text-slate-400">ሚዛን • Balanced nutrition, training, and coaching.</p>
+								</div>
 							</div>
 
-							{/* Links */}
-							<div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+							<div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-4">
 								<p className="text-sm text-slate-500 dark:text-slate-400">
 									&copy; {new Date().getFullYear()} Mizan
 								</p>
-								<span className="hidden sm:inline text-slate-300 dark:text-slate-600">|</span>
-								<a href="/privacy" className="text-sm text-slate-600 hover:text-brand-600 transition-colors dark:text-slate-400 dark:hover:text-brand-400">
+								<span className="hidden text-slate-300 dark:text-slate-600 sm:inline">|</span>
+								<a href="/privacy" className="footer-link">
 									Privacy
 								</a>
-								<span className="hidden sm:inline text-slate-300 dark:text-slate-600">|</span>
-								<a href="/terms" className="text-sm text-slate-600 hover:text-brand-600 transition-colors dark:text-slate-400 dark:hover:text-brand-400">
+								<span className="hidden text-slate-300 dark:text-slate-600 sm:inline">|</span>
+								<a href="/terms" className="footer-link">
 									Terms
 								</a>
 							</div>
 
-							{/* Social */}
-							<div className="flex items-center justify-center sm:justify-end gap-4">
-								<a href="#" className="text-slate-400 hover:text-slate-600 transition-colors dark:text-slate-500 dark:hover:text-slate-300" aria-label="GitHub">
-									<i className="ri-github-fill text-xl" />
+							<div className="flex items-center justify-center gap-3 sm:justify-end">
+								<a href="#" className="icon-chip h-11 w-11 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white" aria-label="GitHub">
+									<AnimatedIcon name="github" size={18} aria-hidden="true" />
 								</a>
-								<a href="#" className="text-slate-400 hover:text-slate-600 transition-colors dark:text-slate-500 dark:hover:text-slate-300" aria-label="Twitter">
-									<i className="ri-twitter-x-fill text-xl" />
+								<a href="#" className="icon-chip h-11 w-11 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white" aria-label="Twitter">
+									<AnimatedIcon name="twitter" size={18} aria-hidden="true" />
 								</a>
 							</div>
 						</div>

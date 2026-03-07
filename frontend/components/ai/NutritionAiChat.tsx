@@ -97,7 +97,7 @@ export function NutritionAiChat() {
 	return (
 		<div className="flex flex-col h-150 bg-white dark:bg-slate-900 rounded-lg shadow-md">
 			{/* Header */}
-			<div className="flex items-center space-x-3 p-4 border-b bg-linear-to-r from-green-600 to-green-700 text-white rounded-t-lg">
+			<div className="flex items-center space-x-3 p-4 border-b bg-green-700 text-white rounded-t-lg dark:bg-green-800">
 				<div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
 					<span className="text-xl">🤖</span>
 				</div>

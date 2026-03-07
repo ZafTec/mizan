@@ -7,29 +7,77 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { signOut } from "@/lib/auth-client";
+import { AnimatedIcon, type AnimatedIconName } from "@/components/ui/animated-icon";
+import { cn } from "@/lib/utils";
 
 interface NavbarContentProps {
 	user: User | null;
 }
 
-const NavLink = ({ href, children, onClick }: { href: string; children: React.ReactNode; onClick?: () => void }) => {
+interface NavItem {
+	href: string;
+	label: string;
+	icon: AnimatedIconName;
+}
+
+function UserAvatar({ user }: { user: User }) {
+	if (user.image) {
+		return (
+			<div className="relative h-9 w-9 overflow-hidden rounded-2xl ring-1 ring-brand-500/15">
+				<Image
+					src={user.image}
+					alt={user.name || user.email || 'User'}
+					fill
+					className="object-cover"
+					unoptimized
+				/>
+			</div>
+		);
+	}
+
+	return (
+		<div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-brand-600 text-sm font-semibold text-white ring-1 ring-brand-500/15 dark:bg-brand-500">
+			{user.email?.charAt(0).toUpperCase() || 'U'}
+		</div>
+	);
+}
+
+function NavLink({
+	item,
+	onClick,
+	mobile = false,
+}: {
+	item: NavItem;
+	onClick?: () => void;
+	mobile?: boolean;
+}) {
 	const pathname = usePathname();
-	const isActive = pathname === href || pathname?.startsWith(href + '/');
+	const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
 
 	return (
 		<Link
-			href={href}
+			href={item.href}
 			onClick={onClick}
-			className={`relative px-3 py-2 text-sm font-medium transition-colors rounded-lg ${
+			className={cn(
+				"group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-all duration-300",
 				isActive
-					? 'text-brand-600 bg-brand-50 dark:text-brand-400 dark:bg-brand-950'
-					: 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800'
-			}`}
+					? "bg-brand-500/12 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300"
+					: "text-slate-600 hover:bg-slate-900/5 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white",
+				mobile ? "w-full" : ""
+			)}
 		>
-			{children}
+			<span
+				className={cn(
+					"icon-chip h-9 w-9 text-slate-500 transition-colors duration-300 dark:text-slate-300",
+					isActive ? "text-brand-600 dark:text-brand-300" : "group-hover:text-slate-950 dark:group-hover:text-white"
+				)}
+			>
+				<AnimatedIcon name={item.icon} size={16} aria-hidden="true" />
+			</span>
+			<span>{item.label}</span>
 		</Link>
 	);
-};
+}
 
 export default function NavbarContent({ user }: NavbarContentProps) {
 	const [menuOpen, setMenuOpen] = useState(false);
@@ -39,12 +87,27 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 	const userMenuRef = useRef<HTMLDivElement>(null);
 	const router = useRouter();
 
+	const primaryItems: NavItem[] = [
+		{ href: "/ingredients", label: "Foods", icon: "search" },
+		{ href: "/recipes", label: "Recipes", icon: "cookingPot" },
+		...(user ? [{ href: "/meals", label: "Meals", icon: "flame" as const }] : []),
+		...(user?.role === 'admin' ? [{ href: "/admin", label: "Admin", icon: "shieldCheck" as const }] : []),
+	];
+
+	const accountItems: NavItem[] = user
+		? [
+				{ href: "/profile", label: "Profile", icon: "user" },
+				{ href: "/goal", label: "Goals", icon: "chartLine" },
+				{ href: "/workouts", label: "Workouts", icon: "activity" },
+				{ href: "/achievements", label: "Achievements", icon: "circleCheck" },
+				{ href: "/body-measurements", label: "Measurements", icon: "trendingUp" },
+				{ href: "/trainers", label: "Trainers", icon: "users" },
+		  ]
+		: [];
+
 	useEffect(() => {
-		if (menuOpen) {
-			document.body.style.overflow = 'hidden';
-		} else {
-			document.body.style.overflow = '';
-		}
+		document.body.style.overflow = menuOpen ? 'hidden' : '';
+
 		return () => {
 			document.body.style.overflow = '';
 		};
@@ -59,6 +122,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 			) {
 				setMenuOpen(false);
 			}
+
 			if (
 				userMenuRef.current &&
 				!userMenuRef.current.contains(event.target as Node) &&
@@ -92,271 +156,173 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 		}
 	}
 
-	const closeMenu = () => setMenuOpen(false);
+	function closeMenu() {
+		setMenuOpen(false);
+	}
 
 	return (
 		<>
-		{showLogoutModal && createPortal(
-			<div className="fixed inset-0 bg-black/50 z-100 flex items-center justify-center p-4" onClick={() => setShowLogoutModal(false)}>
-				<div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
-					<div className="flex items-center gap-3 mb-4">
-						<div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-							<i className="ri-logout-box-r-line text-xl text-red-600 dark:text-red-400" />
+			{showLogoutModal &&
+				createPortal(
+					<div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-sm" onClick={() => setShowLogoutModal(false)}>
+						<div className="surface-panel w-full max-w-sm p-6" onClick={(event) => event.stopPropagation()}>
+							<div className="mb-5 flex items-start gap-4">
+								<span className="icon-chip h-12 w-12 text-red-500 dark:text-red-400">
+									<AnimatedIcon name="logout" size={20} aria-hidden="true" />
+								</span>
+								<div className="space-y-1">
+									<h3 className="text-lg font-semibold text-slate-950 dark:text-slate-50">Sign out</h3>
+									<p className="text-sm text-slate-500 dark:text-slate-400">Your session will end on this device immediately.</p>
+								</div>
+							</div>
+							<div className="flex gap-3">
+								<button onClick={() => setShowLogoutModal(false)} className="btn-secondary flex-1">
+									Cancel
+								</button>
+								<button
+									onClick={() => {
+										setShowLogoutModal(false);
+										handleLogout();
+									}}
+									className="btn-danger flex-1"
+								>
+									Sign out
+								</button>
+							</div>
 						</div>
-						<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Sign Out</h3>
-					</div>
-					<p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Are you sure you want to sign out?</p>
-					<div className="flex gap-3">
-						<button
-							onClick={() => setShowLogoutModal(false)}
-							className="flex-1 btn-secondary"
-						>
-							Cancel
-						</button>
-						<button
-							onClick={() => { setShowLogoutModal(false); handleLogout(); }}
-							className="flex-1 btn-danger"
-						>
-							Sign Out
-						</button>
-					</div>
-				</div>
-			</div>,
-			document.body
-		)}
-		<div className="flex items-center gap-2" data-testid="navbar">
-			{/* Desktop Navigation */}
-			<nav className="hidden md:flex items-center gap-1">
-				<NavLink href="/ingredients">
-					<i className="ri-leaf-line mr-1.5" />
-					Foods
-				</NavLink>
-				<NavLink href="/recipes">
-					<i className="ri-restaurant-line mr-1.5" />
-					Recipes
-				</NavLink>
-				{user && (
-					<>
-						<NavLink href="/meals">
-							<i className="ri-bowl-line mr-1.5" />
-							Meals
-						</NavLink>
-					</>
+					</div>,
+					document.body
 				)}
-				{user?.role === 'admin' && (
-					<NavLink href="/admin">
-						<i className="ri-shield-user-line mr-1.5" />
-						Admin
-					</NavLink>
-				)}
-			</nav>
 
-			{/* User Actions */}
-			<div className="hidden md:flex items-center gap-2 ml-4 pl-4 border-l border-slate-200 dark:border-slate-700">
-				{user ? (
-					<>
-						<div className="relative">
+			<div className="flex items-center gap-2" data-testid="navbar">
+				<nav className="hidden items-center gap-1 rounded-full border border-white/55 bg-white/55 p-1.5 backdrop-blur-xl dark:border-white/10 dark:bg-white/5 md:flex">
+					{primaryItems.map((item) => (
+						<NavLink key={item.href} item={item} />
+					))}
+				</nav>
+
+				<div className="hidden items-center gap-2 md:flex">
+					{user ? (
+						<div className="relative z-[60]">
 							<button
+								type="button"
 								data-testid="nav-user-trigger"
-								onClick={() => setUserMenuOpen(!userMenuOpen)}
-								className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+								onClick={() => setUserMenuOpen((open) => !open)}
+								className="group flex items-center gap-3 rounded-2xl border border-white/55 bg-white/60 px-3 py-2 text-sm text-slate-700 shadow-sm backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/8"
 							>
-								{user.image ? (
-									<div className="relative w-8 h-8 rounded-full overflow-hidden ring-2 ring-brand-500/20">
-										<Image
-											src={user.image}
-											alt={user.name || user.email || 'User'}
-											fill
-											className="object-cover"
-											unoptimized
-										/>
-									</div>
-								) : (
-									<div className="w-8 h-8 rounded-full bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-medium ring-2 ring-brand-500/20">
-										{user.email?.charAt(0).toUpperCase() || 'U'}
-									</div>
-								)}
-								<i className={`ri-arrow-down-s-line transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+								<UserAvatar user={user} />
+								<div className="text-left">
+									<p className="max-w-32 truncate font-medium text-slate-950 dark:text-white">{user.name || user.email}</p>
+									<p className="max-w-32 truncate text-xs text-slate-500 dark:text-slate-400">{user.role || 'user'}</p>
+								</div>
+								<span className="icon-chip h-8 w-8 text-slate-500 group-hover:text-slate-950 dark:text-slate-300 dark:group-hover:text-white">
+									<AnimatedIcon name={userMenuOpen ? "x" : "menu"} size={14} aria-hidden="true" />
+								</span>
 							</button>
 
 							{userMenuOpen && (
-								<div
-									ref={userMenuRef}
-									data-testid="nav-user-menu"
-									className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-2 animate-fade-in z-50"
-								>
-									<div className="px-3 py-2 mb-1 border-b border-slate-100 dark:border-slate-800">
-										<p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{user.name || user.email}</p>
-										<p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+								<div ref={userMenuRef} data-testid="nav-user-menu" className="surface-panel absolute right-0 top-[calc(100%+0.75rem)] z-[70] mt-0 w-72 p-2 animate-fade-in shadow-2xl shadow-slate-950/10">
+									<div className="mb-2 rounded-2xl border border-white/55 bg-white/50 px-4 py-3 dark:border-white/10 dark:bg-white/5">
+										<p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{user.name || user.email}</p>
+										<p className="truncate text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
 									</div>
-									<Link href="/profile" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-										<i className="ri-user-line" /> Profile
-									</Link>
-									<Link href="/goal" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-										<i className="ri-target-line" /> Goals
-									</Link>
-									<Link href="/workouts" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-										<i className="ri-boxing-line" /> Workouts
-									</Link>
-									<Link href="/achievements" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-										<i className="ri-trophy-line" /> Achievements
-									</Link>
-									<Link href="/body-measurements" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-										<i className="ri-scales-3-line" /> Body Measurements
-									</Link>
-									<div className="mt-1 pt-1 border-t border-slate-100 dark:border-slate-800">
+									<div className="space-y-1">
+										{accountItems.map((item) => (
+											<NavLink key={item.href} item={item} onClick={() => setUserMenuOpen(false)} mobile />
+										))}
+									</div>
+									<div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/10">
 										<button
-											onClick={() => { setUserMenuOpen(false); setShowLogoutModal(true); }}
-											className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg"
+											onClick={() => {
+												setUserMenuOpen(false);
+												setShowLogoutModal(true);
+											}}
+											className="group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
 										>
-											<i className="ri-logout-box-r-line" /> Sign Out
+											<span className="icon-chip h-9 w-9 text-red-500 dark:text-red-400">
+												<AnimatedIcon name="logout" size={16} aria-hidden="true" />
+											</span>
+											<span>Sign out</span>
 										</button>
 									</div>
 								</div>
 							)}
 						</div>
-					</>
-				) : (
+					) : (
+						<>
+							<Link href="/login" className="px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
+								Sign In
+							</Link>
+							<Link href="/register" className="btn-primary">
+								Get Started
+								<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" />
+							</Link>
+						</>
+					)}
+				</div>
+
+				<button
+					type="button"
+					className="icon-chip h-11 w-11 text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white md:hidden"
+					onClick={() => setMenuOpen((open) => !open)}
+					aria-label="Toggle navigation menu"
+					aria-expanded={menuOpen}
+					aria-controls="mobile-nav-menu"
+					data-testid="nav-mobile-toggle"
+				>
+					<AnimatedIcon name={menuOpen ? "x" : "menu"} size={18} aria-hidden="true" />
+				</button>
+
+				{menuOpen && (
 					<>
-						<Link
-							href="/login"
-							className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
-						>
-							Sign In
-						</Link>
-						<Link
-							href="/register"
-							className="px-4 py-2 text-sm font-medium text-white bg-linear-to-r from-brand-500 to-brand-600 rounded-xl hover:from-brand-600 hover:to-brand-700 shadow-lg shadow-brand-500/25 dark:shadow-brand-500/10 transition-all"
-						>
-							Get Started
-						</Link>
+						<div className="fixed inset-0 z-40 bg-slate-950/25 backdrop-blur-[2px] md:hidden" onClick={closeMenu} />
+						<div ref={menuRef} id="mobile-nav-menu" data-testid="nav-mobile-menu" className="surface-panel fixed inset-x-3 top-24 z-50 p-4 md:hidden animate-fade-in">
+							<nav className="space-y-1">
+								{primaryItems.map((item) => (
+									<NavLink key={item.href} item={item} onClick={closeMenu} mobile />
+								))}
+								{accountItems.map((item) => (
+									<NavLink key={item.href} item={item} onClick={closeMenu} mobile />
+								))}
+							</nav>
+
+							<div className="mt-4 border-t border-slate-200/70 pt-4 dark:border-white/10">
+								{user ? (
+									<div className="flex items-center justify-between gap-3 rounded-2xl border border-white/55 bg-white/50 p-3 dark:border-white/10 dark:bg-white/5">
+										<div className="flex items-center gap-3">
+											<UserAvatar user={user} />
+											<div>
+												<p className="text-sm font-semibold text-slate-950 dark:text-white">{user.name || user.email}</p>
+												<p className="text-xs text-slate-500 dark:text-slate-400">Signed in</p>
+											</div>
+										</div>
+										<button
+											onClick={() => {
+												closeMenu();
+												setShowLogoutModal(true);
+											}}
+											className="btn-ghost text-red-600 dark:text-red-400"
+										>
+											<AnimatedIcon name="logout" size={16} aria-hidden="true" />
+											Sign out
+										</button>
+									</div>
+								) : (
+									<div className="flex gap-2">
+										<Link href="/login" onClick={closeMenu} className="btn-secondary flex-1 justify-center">
+											Sign In
+										</Link>
+										<Link href="/register" onClick={closeMenu} className="btn-primary flex-1 justify-center">
+											Get Started
+											<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" />
+										</Link>
+									</div>
+								)}
+							</div>
+						</div>
 					</>
 				)}
 			</div>
-
-			{/* Mobile Menu Button */}
-			<button
-				className="md:hidden p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-				onClick={() => setMenuOpen(!menuOpen)}
-				aria-label="Toggle navigation menu"
-				aria-expanded={menuOpen}
-				aria-controls="mobile-nav-menu"
-				data-testid="nav-mobile-toggle"
-			>
-				<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					{menuOpen ? (
-						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-					) : (
-						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-					)}
-				</svg>
-			</button>
-
-			{/* Mobile Menu Backdrop + Panel */}
-			{menuOpen && (
-				<>
-					<div
-						className="fixed inset-0 bg-black/30 z-40 md:hidden"
-						onClick={closeMenu}
-					/>
-					<div
-						ref={menuRef}
-						id="mobile-nav-menu"
-						data-testid="nav-mobile-menu"
-						className="fixed top-18 left-0 right-0 mx-4 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 md:hidden animate-fade-in z-50"
-					>
-						<nav className="flex flex-col gap-1">
-							<NavLink href="/ingredients" onClick={closeMenu}>
-								<i className="ri-leaf-line mr-2" />
-								Foods
-							</NavLink>
-							<NavLink href="/recipes" onClick={closeMenu}>
-								<i className="ri-restaurant-line mr-2" />
-								Recipes
-							</NavLink>
-							{user && (
-								<>
-									<NavLink href="/meals" onClick={closeMenu}>
-										<i className="ri-bowl-line mr-2" />
-										Meals
-									</NavLink>
-									<NavLink href="/goal" onClick={closeMenu}>
-										<i className="ri-target-line mr-2" />
-										Goals
-									</NavLink>
-									<NavLink href="/workouts" onClick={closeMenu}>
-										<i className="ri-boxing-line mr-2" />
-										Workouts
-									</NavLink>
-									<NavLink href="/trainers" onClick={closeMenu}>
-										<i className="ri-user-heart-line mr-2" />
-										Trainers
-									</NavLink>
-								</>
-							)}
-							{user?.role === 'admin' && (
-								<NavLink href="/admin" onClick={closeMenu}>
-									<i className="ri-shield-user-line mr-2" />
-									Admin
-								</NavLink>
-							)}
-						</nav>
-
-						<div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-							{user ? (
-								<div className="flex items-center justify-between">
-									<Link
-										href="/profile"
-										onClick={closeMenu}
-										className="flex items-center gap-3 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
-									>
-										{user.image ? (
-											<div className="relative w-8 h-8 rounded-full overflow-hidden ring-2 ring-brand-500/20">
-												<Image
-													src={user.image}
-													alt={user.name || user.email || 'User'}
-													fill
-													className="object-cover"
-													unoptimized
-												/>
-											</div>
-										) : (
-											<div className="w-8 h-8 rounded-full bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-sm font-medium ring-2 ring-brand-500/20">
-												{user.email?.charAt(0).toUpperCase() || 'U'}
-											</div>
-										)}
-										<span>Profile</span>
-									</Link>
-									<button
-										onClick={() => { closeMenu(); setShowLogoutModal(true); }}
-										className="px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg transition-colors"
-									>
-										Sign Out
-									</button>
-								</div>
-							) : (
-								<div className="flex gap-2">
-									<Link
-										href="/login"
-										onClick={closeMenu}
-										className="flex-1 px-4 py-2.5 text-sm font-medium text-center text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-									>
-										Sign In
-									</Link>
-									<Link
-										href="/register"
-										onClick={closeMenu}
-										className="flex-1 px-4 py-2.5 text-sm font-medium text-center text-white bg-linear-to-r from-brand-500 to-brand-600 rounded-xl hover:from-brand-600 hover:to-brand-700 transition-all"
-									>
-										Get Started
-									</Link>
-								</div>
-							)}
-						</div>
-					</div>
-				</>
-			)}
-		</div>
 		</>
 	);
 }

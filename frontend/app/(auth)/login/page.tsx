@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { UserInput } from "@/types/user";
 import Loading from "@/components/Loading";
 import { PasswordInput } from "@/components/PasswordInput";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
 import { authClient } from "@/lib/auth-client";
 
 export default function Page() {
@@ -99,18 +100,15 @@ export default function Page() {
 	return (
 		<div className="min-h-[70vh] flex items-center justify-center">
 			<div className="w-full max-w-md">
-				{/* Header */}
 				<div className="text-center mb-8">
-					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/30 dark:shadow-brand-500/15 mb-4">
-						<i className="ri-user-line text-3xl text-white" />
+					<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-600 text-white shadow-lg shadow-brand-500/25 dark:bg-brand-500">
+						<AnimatedIcon name="lock" size={26} aria-hidden="true" />
 					</div>
 					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Welcome back</h1>
 					<p className="text-slate-500 dark:text-slate-400 mt-1">Sign in to continue to Mizan</p>
 				</div>
 
-				{/* Form Card */}
 				<div className="card p-6 sm:p-8">
-					{/* Social Sign In */}
 					<div className="space-y-3 mb-6">
 						<button
 							type="button"
@@ -206,10 +204,10 @@ export default function Page() {
 							</p>
 						)}
 
-						{error && (
-							<div data-testid="error-message" className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
-								<i className="ri-error-warning-line text-lg" />
-								<span>{error}</span>
+					{error && (
+						<div data-testid="error-message" className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
+							<AnimatedIcon name="badgeAlert" size={18} aria-hidden="true" />
+							<span>{error}</span>
 								{error === "User is not verified" && user.email && (
 									<Link className="ml-auto text-brand-600 dark:text-brand-400 hover:underline" href={`/verify?email=${user.email}`}>
 										Resend verification
@@ -232,14 +230,13 @@ export default function Page() {
 							) : (
 								<>
 									Sign in
-									<i className="ri-arrow-right-line" />
+									<AnimatedIcon name="arrowRight" size={18} aria-hidden="true" />
 								</>
 							)}
 						</button>
 					</form>
 				</div>
 
-				{/* Footer */}
 				<p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
 					Don&apos;t have an account?{" "}
 					<Link href="/register" className="text-brand-600 dark:text-brand-400 font-medium hover:text-brand-700 dark:hover:text-brand-400">

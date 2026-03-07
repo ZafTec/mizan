@@ -30,7 +30,7 @@ export default async function ExercisesPage({
                     {exercises.map((exercise) => (
                         <div key={exercise.id} className="card-hover p-5">
                             <div className="flex items-start gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center shadow-lg shrink-0 relative overflow-hidden">
+							<div className="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center shadow-lg shrink-0 relative overflow-hidden dark:bg-brand-500">
                                     {exercise.imageUrl ? (
                                         <Image
                                             src={exercise.imageUrl}

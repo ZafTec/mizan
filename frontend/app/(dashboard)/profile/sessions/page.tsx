@@ -187,7 +187,7 @@ export default function ProfileSessionsPage() {
                 className={`card p-6 ${isCurrent ? "border-2 border-brand-500" : ""}`}
               >
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center shrink-0">
+					<div className="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center shrink-0 dark:bg-brand-500">
                     <i className={`${getDeviceIcon(session.userAgent)} text-xl text-white`} />
                   </div>
 

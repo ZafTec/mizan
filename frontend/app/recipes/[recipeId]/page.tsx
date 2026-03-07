@@ -114,7 +114,7 @@ export default async function Page({
 			)}
 
 			{/* Macros Per Serving */}
-			<div className="card p-6 bg-linear-to-br from-brand-50 to-accent-50">
+			<div className="card p-6 bg-slate-50/90 dark:bg-slate-900/60">
 				<div className="flex items-center justify-between mb-4">
 					<h2 className="font-semibold text-slate-900">Nutrition per Serving</h2>
 					<span className="text-sm text-slate-500 bg-white px-3 py-1 rounded-full">
@@ -255,7 +255,7 @@ export default async function Page({
 						{recipe.tags.map((tag, index) => (
 							<span
 								key={index}
-								className="inline-flex items-center px-4 py-2 rounded-full bg-linear-to-r from-brand-100 to-accent-100 text-brand-700 text-sm font-medium"
+							className="inline-flex items-center px-4 py-2 rounded-full bg-brand-100 text-brand-700 text-sm font-medium dark:bg-brand-900/30 dark:text-brand-300"
 							>
 								{tag}
 							</span>

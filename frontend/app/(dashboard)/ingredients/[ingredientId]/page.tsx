@@ -55,7 +55,7 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 				</div>
 			</div>
 
-			<div className="card p-6 bg-linear-to-br from-brand-50 to-accent-50">
+			<div className="card p-6 bg-slate-50/90 dark:bg-slate-900/60">
 				<h2 className="font-semibold text-slate-900 mb-4">Nutritional Information</h2>
 				<div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
 					<div className="text-center p-4 bg-white rounded-xl">

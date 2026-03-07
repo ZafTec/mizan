@@ -2,31 +2,33 @@ import Link from "next/link";
 import logoTransparent from "@/public/logo_transparent.png";
 import Image from "next/image";
 import { getUserOptionalServer } from "@/helper/session";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
 import NavbarContent from "./NavbarContent";
 
 export default async function Navbar() {
 	const user = await getUserOptionalServer();
 
 	return (
-		<nav className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-slate-200/50 shadow-sm">
-			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-				<div className="flex justify-between items-center h-16">
-					<Link href="/" className="flex items-center gap-3 group">
+		<nav className="sticky top-0 z-50 px-3 pt-3 sm:px-4 lg:px-6">
+			<div className="max-w-7xl mx-auto">
+				<div className="nav-glass flex h-16 items-center justify-between rounded-[30px] px-4 sm:px-6">
+					<Link href="/" className="group flex items-center gap-3">
 						<div className="relative">
-							<div className="absolute inset-0 bg-gradient-to-r from-brand-400 to-brand-600 rounded-xl blur-lg opacity-30 group-hover:opacity-50 transition-opacity" />
+							<div className="absolute inset-0 rounded-2xl bg-brand-500/10 blur-lg opacity-25 transition-opacity group-hover:opacity-40" />
 							<Image
 								src={logoTransparent}
 								alt="Mizan"
 								width={42}
 								height={42}
-								className="relative rounded-xl"
+								className="relative rounded-2xl"
 							/>
 						</div>
 						<div className="flex flex-col">
-							<span className="text-xl font-bold bg-gradient-to-r from-brand-600 to-brand-700 bg-clip-text text-transparent">
+							<span className="text-xl font-semibold text-slate-950 dark:text-slate-50">
 								Mizan
 							</span>
-							<span className="text-[10px] text-slate-500 -mt-1 hidden sm:block">
+							<span className="hidden items-center gap-1 text-[10px] uppercase tracking-[0.18em] text-slate-500 sm:inline-flex">
+								<AnimatedIcon name="sparkles" size={12} aria-hidden="true" />
 								ሚዛን • Balance
 							</span>
 						</div>

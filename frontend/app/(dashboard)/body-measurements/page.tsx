@@ -53,7 +53,7 @@ export default async function BodyMeasurementsPage({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="card-hover p-5">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center shadow-lg">
+						<div className="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center shadow-lg dark:bg-brand-500">
                             <i className="ri-scales-3-line text-xl text-white" />
                         </div>
                         <div className="flex-1">
@@ -74,7 +74,7 @@ export default async function BodyMeasurementsPage({
 
                 <div className="card-hover p-5">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-accent-400 to-accent-600 flex items-center justify-center shadow-lg">
+						<div className="w-12 h-12 rounded-2xl bg-accent-600 flex items-center justify-center shadow-lg">
                             <i className="ri-heart-pulse-line text-xl text-white" />
                         </div>
                         <div className="flex-1">
@@ -95,7 +95,7 @@ export default async function BodyMeasurementsPage({
 
                 <div className="card-hover p-5">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-violet-400 to-violet-600 flex items-center justify-center shadow-lg">
+						<div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center shadow-lg dark:bg-slate-100 dark:text-slate-900">
                             <i className="ri-hand-heart-line text-xl text-white" />
                         </div>
                         <div className="flex-1">

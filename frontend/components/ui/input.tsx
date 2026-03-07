@@ -23,11 +23,11 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           id={inputId}
           className={twMerge(
-            'w-full px-4 py-3 rounded-xl border bg-white text-slate-900 placeholder-slate-400 transition-all duration-200',
-            'focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500',
+            'w-full rounded-2xl border border-white/70 bg-white/90 px-4 py-3 text-slate-900 placeholder-slate-400 shadow-sm backdrop-blur-xl transition-all duration-300',
+				'focus:outline-none focus:ring-2 focus:ring-brand-500/15 focus:border-brand-500 dark:border-white/10 dark:bg-slate-950/75 dark:text-slate-100 dark:placeholder-slate-500',
             error
               ? 'border-red-300 focus:ring-red-500/20 focus:border-red-500'
-              : 'border-slate-200',
+              : '',
             className
           )}
           {...props}

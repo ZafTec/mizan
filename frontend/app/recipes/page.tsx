@@ -77,7 +77,7 @@ export default async function RecipesPage({
 						name: "Favorites",
 						icon: "ri-heart-3-line",
 						count: favoriteCount,
-						color: "from-rose-400 to-rose-600",
+						color: "bg-rose-600",
 						href: "/recipes/favorites",
 						authRequired: true,
 					},
@@ -85,7 +85,7 @@ export default async function RecipesPage({
 						name: "My Recipes",
 						icon: "ri-restaurant-line",
 						count: totalCount,
-						color: "from-brand-400 to-brand-600",
+						color: "bg-brand-600",
 						href: "/recipes",
 						authRequired: false,
 					},
@@ -93,7 +93,7 @@ export default async function RecipesPage({
 						name: "Recent",
 						icon: "ri-history-line",
 						count: Math.min(recipes.length, 5),
-						color: "from-violet-400 to-violet-600",
+						color: "bg-slate-900 dark:bg-slate-100 dark:text-slate-900",
 						href: "/recipes",
 						authRequired: false,
 					},
@@ -103,7 +103,7 @@ export default async function RecipesPage({
 						<Link key={collection.name} href={collection.href} className="card-hover p-5 group">
 							<div className="flex items-center gap-4">
 								<div
-									className={`w-12 h-12 rounded-2xl bg-linear-to-br ${collection.color} flex items-center justify-center shadow-lg`}
+									className={`w-12 h-12 rounded-2xl ${collection.color} flex items-center justify-center shadow-lg text-white`}
 								>
 									<i className={`${collection.icon} text-xl text-white`} />
 								</div>
@@ -122,10 +122,10 @@ export default async function RecipesPage({
 			{/* Create Recipe CTA — auth-gated */}
 			{user && (
 				<div className="card overflow-hidden">
-					<div className="relative p-8 bg-linear-to-br from-accent-50 to-brand-50">
-						<div className="absolute top-0 right-0 w-64 h-64 bg-brand-200/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+					<div className="relative p-8 bg-slate-50/90 dark:bg-slate-900/60">
+						<div className="absolute top-0 right-0 w-64 h-64 bg-slate-200/40 dark:bg-slate-800/40 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 						<div className="relative flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
-							<div className="w-16 h-16 rounded-2xl bg-linear-to-br from-accent-400 to-accent-600 flex items-center justify-center shadow-lg shadow-accent-500/30">
+							<div className="w-16 h-16 rounded-2xl bg-accent-600 flex items-center justify-center shadow-lg shadow-accent-500/30">
 								<i className="ri-restaurant-2-line text-3xl text-white" />
 							</div>
 							<div className="flex-1">

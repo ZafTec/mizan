@@ -80,7 +80,7 @@ export default function RecipeOptions({ recipeId, isCreator }: RecipeOptionsProp
 		<div className="relative inline-block text-left">
 			<button
 				type="button"
-				className="px-4 py-2 inline-flex items-center bg-linear-to-r from-orange-400 to-red-700 text-white font-semibold rounded-full shadow-lg hover:from-orange-500 hover:to-red-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+				className="px-4 py-2 inline-flex items-center bg-red-600 text-white font-semibold rounded-full shadow-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
 				onClick={() => setShowDropdown(!showDropdown)}
 			>
 				Options
