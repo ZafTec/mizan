@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Toaster } from "@/components/ui/sonner";
 import { AppearanceSync } from "@/components/appearance/AppearanceSync";
 import { getUserOptionalServer } from "@/helper/session";
 import { getAppearanceSettingsFromUser, getServerAppearanceClasses } from "@/lib/appearance";
@@ -33,6 +34,7 @@ async function LayoutContent({
 		<html lang="en" className={htmlClasses.join(" ")}>
 			<body className="min-h-screen antialiased flex flex-col selection:bg-brand-500/15 selection:text-slate-950 dark:selection:text-white">
 				<AppearanceSync />
+				<Toaster position="top-right" richColors />
 				<Navbar />
 				<main className="grow pb-8">
 					<div className="page-transition max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">

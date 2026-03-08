@@ -293,6 +293,7 @@ public class GetProfileExportQueryHandler : IRequestHandler<GetProfileExportQuer
         var mealPlans = await _context.MealPlans
             .AsNoTracking()
             .Where(plan => plan.UserId == request.UserId)
+            .OrderByDescending(plan => plan.CreatedAt)
             .Select(plan => new ProfileExportMealPlanDto(
                 plan.Id,
                 plan.Name,
@@ -302,7 +303,6 @@ public class GetProfileExportQueryHandler : IRequestHandler<GetProfileExportQuer
                 plan.CreatedAt,
                 plan.UpdatedAt
             ))
-            .OrderByDescending(plan => plan.CreatedAt)
             .ToListAsync(cancellationToken);
 
         var bodyMeasurements = await _context.BodyMeasurements
@@ -330,6 +330,7 @@ public class GetProfileExportQueryHandler : IRequestHandler<GetProfileExportQuer
         var workouts = await _context.Workouts
             .AsNoTracking()
             .Where(workout => workout.UserId == request.UserId)
+            .OrderByDescending(workout => workout.WorkoutDate)
             .Select(workout => new ProfileExportWorkoutDto(
                 workout.Id,
                 workout.Name,
@@ -340,12 +341,12 @@ public class GetProfileExportQueryHandler : IRequestHandler<GetProfileExportQuer
                 workout.Exercises.Count,
                 workout.CreatedAt
             ))
-            .OrderByDescending(workout => workout.WorkoutDate)
             .ToListAsync(cancellationToken);
 
         var achievements = await _context.UserAchievements
             .AsNoTracking()
             .Where(achievement => achievement.UserId == request.UserId)
+            .OrderByDescending(achievement => achievement.EarnedAt)
             .Select(achievement => new ProfileExportAchievementDto(
                 achievement.AchievementId,
                 achievement.Achievement.Name,
@@ -354,7 +355,6 @@ public class GetProfileExportQueryHandler : IRequestHandler<GetProfileExportQuer
                 achievement.Achievement.Points,
                 achievement.EarnedAt
             ))
-            .OrderByDescending(achievement => achievement.EarnedAt)
             .ToListAsync(cancellationToken);
 
         var recipes = await _context.Recipes

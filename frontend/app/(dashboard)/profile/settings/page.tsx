@@ -5,13 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CldUploadWidget } from "next-cloudinary";
-import { toast } from "sonner";
 import Loading from "@/components/Loading";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
-import { authClient, useSession } from "@/lib/auth-client";
+import { authClient, signOut, useSession } from "@/lib/auth-client";
 import { clientApi } from "@/lib/api.client";
 import { downloadProfileExport, getProfileObservations, type ProfileObservations } from "@/lib/api/profile";
 import { useTheme } from "@/lib/hooks/useTheme";
+import { appToast } from "@/lib/toast";
 
 type SessionItem = {
 	id: string;
@@ -41,11 +41,13 @@ export default function ProfileSettingsPage() {
 	const [loadingSessions, setLoadingSessions] = useState(true);
 	const [loadingObservations, setLoadingObservations] = useState(true);
 	const [savingProfile, setSavingProfile] = useState(false);
+	const [uploadingAvatar, setUploadingAvatar] = useState(false);
 	const [savingAppearance, setSavingAppearance] = useState(false);
 	const [changingPassword, setChangingPassword] = useState(false);
 	const [exportingData, setExportingData] = useState(false);
 	const [deletingAccount, setDeletingAccount] = useState(false);
 	const [revoking, setRevoking] = useState<string | null>(null);
+	const [signingOut, setSigningOut] = useState(false);
 
 	useEffect(() => {
 		if (!session?.user) {
@@ -84,7 +86,9 @@ export default function ProfileSettingsPage() {
 	}
 
 	const user = session.user;
+	const displayName = name.trim() || user.name || user.email;
 	const previewImage = image || user.image || "";
+	const hasProfileChanges = name.trim() !== (user.name ?? "") || image.trim() !== (user.image ?? "");
 
 	async function fetchSessions() {
 		setLoadingSessions(true);
@@ -108,7 +112,7 @@ export default function ProfileSettingsPage() {
 			);
 		} catch (error) {
 			console.error("Failed to fetch sessions:", error);
-			toast.error("Failed to load sessions");
+			appToast.error(error, "Failed to load sessions");
 		} finally {
 			setLoadingSessions(false);
 		}
@@ -120,39 +124,74 @@ export default function ProfileSettingsPage() {
 			setObservations(await getProfileObservations());
 		} catch (error) {
 			console.error("Failed to fetch profile observations:", error);
-			toast.error("Failed to load account observations");
+			appToast.error(error, "Failed to load account observations");
 		} finally {
 			setLoadingObservations(false);
 		}
 	}
 
+	async function syncProfileDetails({
+		nextName,
+		nextImage,
+	}: {
+		nextName?: string | null;
+		nextImage?: string | null;
+	}) {
+		const includeName = nextName !== undefined;
+		const includeImage = nextImage !== undefined;
+		const trimmedName = nextName?.trim() ?? "";
+		const trimmedImage = nextImage?.trim() ?? "";
+
+		await Promise.all([
+			authClient.updateUser({
+				...(includeName ? { name: trimmedName || undefined } : {}),
+				...(includeImage ? { image: trimmedImage || undefined } : {}),
+			} as never),
+			clientApi("/api/Users/me", {
+				method: "PUT",
+				body: {
+					...(includeName ? { name: trimmedName || null } : {}),
+					...(includeImage ? { image: trimmedImage || null } : {}),
+				},
+			}),
+		]);
+	}
+
 	async function handleUpdateProfile() {
 		setSavingProfile(true);
 		try {
-			const trimmedName = name.trim();
-			const trimmedImage = image.trim();
-
-			await Promise.all([
-				authClient.updateUser({
-					name: trimmedName || undefined,
-					image: trimmedImage || undefined,
-				} as never),
-				clientApi("/api/Users/me", {
-					method: "PUT",
-					body: {
-						name: trimmedName || null,
-						image: trimmedImage || null,
-					},
-				}),
-			]);
-
-			toast.success("Account details updated");
+			await syncProfileDetails({ nextName: name, nextImage: image });
+			appToast.success("Account details updated");
 			window.location.reload();
 		} catch (error) {
 			console.error("Failed to update profile:", error);
-			toast.error("Failed to update account details");
+			appToast.error(error, "Failed to update account details");
 		} finally {
 			setSavingProfile(false);
+		}
+	}
+
+	async function handleAvatarUpload(result: any) {
+		const nextImage = typeof result?.info?.secure_url === "string" ? result.info.secure_url : "";
+		if (!nextImage) {
+			appToast.error("Avatar upload finished but no image URL was returned");
+			return;
+		}
+
+		const previousImage = image;
+		setImage(nextImage);
+		setUploadingAvatar(true);
+
+		try {
+			await syncProfileDetails({ nextImage });
+			router.refresh();
+			appToast.success("Avatar updated");
+		} catch (error) {
+			setImage(previousImage);
+			console.error("Failed to persist uploaded avatar:", error);
+			appToast.error(error, "Failed to save uploaded avatar");
+		} finally {
+			setUploadingAvatar(false);
 		}
 	}
 
@@ -161,10 +200,10 @@ export default function ProfileSettingsPage() {
 		try {
 			await persistSettings();
 			router.refresh();
-			toast.success("Appearance preferences saved");
+			appToast.success("Appearance preferences saved");
 		} catch (error) {
 			console.error("Failed to save appearance:", error);
-			toast.error("Failed to save appearance preferences");
+			appToast.error(error, "Failed to save appearance preferences");
 		} finally {
 			setSavingAppearance(false);
 		}
@@ -172,12 +211,12 @@ export default function ProfileSettingsPage() {
 
 	async function handleChangePassword() {
 		if (newPassword !== confirmPassword) {
-			toast.error("Passwords do not match");
+			appToast.error("Passwords do not match");
 			return;
 		}
 
 		if (newPassword.length < 8) {
-			toast.error("Password must be at least 8 characters");
+			appToast.error("Password must be at least 8 characters");
 			return;
 		}
 
@@ -192,11 +231,11 @@ export default function ProfileSettingsPage() {
 			setCurrentPassword("");
 			setNewPassword("");
 			setConfirmPassword("");
-			toast.success("Password updated. Other sessions were revoked.");
+			appToast.success("Password updated. Other sessions were revoked.");
 			await fetchSessions();
 		} catch (error) {
 			console.error("Failed to change password:", error);
-			toast.error("Password change failed. Check your current password.");
+			appToast.error(error, "Password change failed. Check your current password.");
 		} finally {
 			setChangingPassword(false);
 		}
@@ -207,10 +246,10 @@ export default function ProfileSettingsPage() {
 		try {
 			await authClient.revokeSession({ token: sessionToken });
 			setSessions((current) => current.filter((item) => item.token !== sessionToken));
-			toast.success("Session revoked");
+			appToast.success("Session revoked");
 		} catch (error) {
 			console.error("Failed to revoke session:", error);
-			toast.error("Failed to revoke session");
+			appToast.error(error, "Failed to revoke session");
 		} finally {
 			setRevoking(null);
 		}
@@ -220,11 +259,11 @@ export default function ProfileSettingsPage() {
 		setRevoking("all");
 		try {
 			await authClient.revokeSessions();
-			toast.success("Other sessions revoked");
+			appToast.success("Other sessions revoked");
 			await fetchSessions();
 		} catch (error) {
 			console.error("Failed to revoke all other sessions:", error);
-			toast.error("Failed to revoke other sessions");
+			appToast.error(error, "Failed to revoke other sessions");
 		} finally {
 			setRevoking(null);
 		}
@@ -242,10 +281,10 @@ export default function ProfileSettingsPage() {
 			anchor.click();
 			anchor.remove();
 			URL.revokeObjectURL(objectUrl);
-			toast.success("Your export is downloading");
+			appToast.success("Your export is downloading");
 		} catch (error) {
 			console.error("Failed to export profile data:", error);
-			toast.error("Failed to export your data");
+			appToast.error(error, "Failed to export your data");
 		} finally {
 			setExportingData(false);
 		}
@@ -253,7 +292,7 @@ export default function ProfileSettingsPage() {
 
 	async function handleDeleteAccount() {
 		if (deleteConfirmation !== DELETE_CONFIRMATION_TEXT) {
-			toast.error(`Type ${DELETE_CONFIRMATION_TEXT} to confirm account deletion`);
+			appToast.error(`Type ${DELETE_CONFIRMATION_TEXT} to confirm account deletion`);
 			return;
 		}
 
@@ -267,9 +306,21 @@ export default function ProfileSettingsPage() {
 			window.location.href = "/";
 		} catch (error) {
 			console.error("Failed to delete account:", error);
-			toast.error("Account deletion failed. A fresh session or valid password may be required.");
+			appToast.error(error, "Account deletion failed. A fresh session or valid password may be required.");
 		} finally {
 			setDeletingAccount(false);
+		}
+	}
+
+	async function handleSignOut() {
+		setSigningOut(true);
+		try {
+			await signOut();
+			window.location.href = "/login";
+		} catch (error) {
+			console.error("Failed to sign out:", error);
+			appToast.error(error, "Failed to sign out");
+			setSigningOut(false);
 		}
 	}
 
@@ -278,14 +329,14 @@ export default function ProfileSettingsPage() {
 			<div className="surface-panel p-6 sm:p-8">
 				<div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
 					<div className="flex items-center gap-4">
-						<AvatarPreview image={previewImage} email={user.email} name={user.name} />
+						<AvatarPreview image={previewImage} email={user.email} name={displayName} />
 						<div>
 							<p className="eyebrow mb-3">
 								<AnimatedIcon name="user" size={14} aria-hidden="true" />
 								Settings center
 							</p>
 							<h1 className="text-3xl font-semibold text-slate-950 dark:text-slate-50">
-								{user.name || user.email}
+								{displayName}
 							</h1>
 							<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
 								Manage your Better Auth account, app preferences, sessions, and exported data.
@@ -321,12 +372,12 @@ export default function ProfileSettingsPage() {
 								<AvatarPreview image={previewImage} email={user.email} name={name || user.name} size="lg" />
 								<CldUploadWidget
 									uploadPreset="mizan_preset"
-									onSuccess={(result: any) => setImage(result.info.secure_url)}
+									onSuccess={(result: any) => void handleAvatarUpload(result)}
 								>
 									{({ open }) => (
-										<button onClick={() => open()} className="btn-secondary w-full justify-center">
+										<button type="button" onClick={() => open()} disabled={uploadingAvatar} className="btn-secondary w-full justify-center">
 											<AnimatedIcon name="upload" size={16} aria-hidden="true" />
-											Upload avatar
+											{uploadingAvatar ? "Saving avatar..." : "Upload avatar"}
 										</button>
 									)}
 								</CldUploadWidget>
@@ -358,7 +409,7 @@ export default function ProfileSettingsPage() {
 								</Field>
 
 								<div className="flex flex-wrap gap-3">
-									<button onClick={handleUpdateProfile} disabled={savingProfile} className="btn-primary">
+									<button onClick={handleUpdateProfile} disabled={savingProfile || uploadingAvatar || !hasProfileChanges} className="btn-primary">
 										{savingProfile ? "Saving..." : "Save account changes"}
 									</button>
 									<Link href="/profile" className="btn-secondary">
@@ -536,6 +587,38 @@ export default function ProfileSettingsPage() {
 
 					<section className="card p-6">
 						<SectionHeading
+							icon="brain"
+							title="Tools and access"
+							description="Developer and account utilities live here now, not on the profile page."
+						/>
+
+						<div className="mt-6 grid gap-3 sm:grid-cols-2">
+							<UtilityLink
+								href="/profile/mcp"
+								icon="bot"
+								title="MCP integration"
+								description="Manage tokens, usage, and local-tool setup."
+							/>
+							<UtilityLink
+								href="/profile"
+								icon="home"
+								title="Profile overview"
+								description="Go back to the cleaner account hub."
+							/>
+						</div>
+
+						<div className="mt-4 flex flex-wrap gap-3">
+							<button onClick={handleExportData} disabled={exportingData} className="btn-secondary">
+								{exportingData ? "Preparing export..." : "Download export"}
+							</button>
+							<button onClick={handleSignOut} disabled={signingOut} className="btn-secondary">
+								{signingOut ? "Signing out..." : "Sign out"}
+							</button>
+						</div>
+					</section>
+
+					<section className="card p-6">
+						<SectionHeading
 							icon="upload"
 							title="Export data"
 							description="Download a JSON export assembled by the backend from your app-owned data."
@@ -650,6 +733,32 @@ function ToggleCard({
 				<span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${checked ? "translate-x-5" : "translate-x-0.5"}`} />
 			</span>
 		</button>
+	);
+}
+
+function UtilityLink({
+	href,
+	icon,
+	title,
+	description,
+}: {
+	href: string;
+	icon: Parameters<typeof AnimatedIcon>[0]["name"];
+	title: string;
+	description: string;
+}) {
+	return (
+		<Link href={href} className="group rounded-3xl border border-slate-200 bg-white p-4 transition-colors hover:border-slate-300 dark:border-white/10 dark:bg-slate-950 dark:hover:border-white/20">
+			<div className="flex items-start gap-3">
+				<span className="icon-chip h-10 w-10 text-brand-600 dark:text-brand-300">
+					<AnimatedIcon name={icon} size={18} aria-hidden="true" />
+				</span>
+				<div>
+					<p className="font-medium text-slate-900 dark:text-slate-100">{title}</p>
+					<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+				</div>
+			</div>
+		</Link>
 	);
 }
 

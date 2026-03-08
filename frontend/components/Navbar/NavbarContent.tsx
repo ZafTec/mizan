@@ -3,11 +3,12 @@
 import type { User } from "@/lib/auth";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
 import { signOut } from "@/lib/auth-client";
+import { appToast } from "@/lib/toast";
 import { AnimatedIcon, type AnimatedIconName } from "@/components/ui/animated-icon";
 import { cn } from "@/lib/utils";
 
@@ -88,6 +89,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 	const [userMenuOpen, setUserMenuOpen] = useState(false);
 	const menuRef = useRef<HTMLDivElement>(null);
 	const userMenuRef = useRef<HTMLDivElement>(null);
+	const pathname = usePathname();
 	const router = useRouter();
 
 	const primaryItems: NavItem[] = [
@@ -99,12 +101,10 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 
 	const accountItems: NavItem[] = user
 		? [
-				{ href: "/profile", label: "Profile", icon: "user" },
-				{ href: "/goal", label: "Goals", icon: "chartLine" },
-				{ href: "/workouts", label: "Workouts", icon: "activity" },
-				{ href: "/achievements", label: "Achievements", icon: "circleCheck" },
-				{ href: "/body-measurements", label: "Measurements", icon: "trendingUp" },
-				{ href: "/trainers", label: "Trainers", icon: "users" },
+				{ href: "/profile", label: "Overview", icon: "home" },
+				{ href: "/profile/settings", label: "Settings", icon: "user" },
+				{ href: "/profile/mcp", label: "MCP", icon: "bot" },
+				{ href: "/profile/sessions", label: "Sessions", icon: "lock" },
 		  ]
 		: [];
 
@@ -115,6 +115,10 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 			document.body.style.overflow = '';
 		};
 	}, [menuOpen]);
+
+	useEffect(() => {
+		closeAllMenus();
+	}, [pathname]);
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -144,6 +148,24 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 		};
 	}, [menuOpen, userMenuOpen]);
 
+	useEffect(() => {
+		if (!menuOpen && !userMenuOpen) {
+			return;
+		}
+
+		const handleEscape = (event: KeyboardEvent) => {
+			if (event.key !== "Escape") {
+				return;
+			}
+
+			setMenuOpen(false);
+			setUserMenuOpen(false);
+		};
+
+		window.addEventListener("keydown", handleEscape);
+		return () => window.removeEventListener("keydown", handleEscape);
+	}, [menuOpen, userMenuOpen]);
+
 	async function handleLogout() {
 		try {
 			await signOut({
@@ -153,9 +175,10 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 						router.refresh();
 					},
 				},
-			});
+		});
 		} catch (error) {
 			console.error("Logout failed:", error);
+			appToast.error(error, "Failed to sign out");
 		}
 	}
 
@@ -163,11 +186,26 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 		setMenuOpen(false);
 	}
 
+	function closeAllMenus() {
+		setMenuOpen(false);
+		setUserMenuOpen(false);
+	}
+
+	function toggleUserMenu() {
+		setMenuOpen(false);
+		setUserMenuOpen((open) => !open);
+	}
+
+	function toggleMobileMenu() {
+		setUserMenuOpen(false);
+		setMenuOpen((open) => !open);
+	}
+
 	return (
 		<>
 			{showLogoutModal &&
 				createPortal(
-					<div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-sm" onClick={() => setShowLogoutModal(false)}>
+					<div className="fixed inset-0 z-100 flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-sm" onClick={() => setShowLogoutModal(false)}>
 						<div className="surface-panel w-full max-w-sm p-6" onClick={(event) => event.stopPropagation()}>
 							<div className="mb-5 flex items-start gap-4">
 								<span className="icon-chip h-12 w-12 text-red-500 dark:text-red-400">
@@ -206,11 +244,13 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 
 				<div className="hidden items-center gap-2 md:flex">
 					{user ? (
-						<div className="relative z-[60]">
+						<div className="relative z-60">
 							<button
 								type="button"
 								data-testid="nav-user-trigger"
-								onClick={() => setUserMenuOpen((open) => !open)}
+								onClick={toggleUserMenu}
+								aria-expanded={userMenuOpen}
+								aria-haspopup="menu"
 								className="group flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/90 px-2 py-1.5 text-sm text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-white dark:border-white/10 dark:bg-slate-950/70 dark:text-slate-200 dark:hover:border-white/15 dark:hover:bg-slate-950"
 							>
 								<UserAvatar user={user} />
@@ -222,20 +262,20 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 							</button>
 
 							{userMenuOpen && (
-								<div ref={userMenuRef} data-testid="nav-user-menu" className="surface-panel absolute right-0 top-[calc(100%+0.5rem)] z-[70] mt-0 w-60 p-1.5 animate-fade-in shadow-2xl shadow-slate-950/10">
+								<div ref={userMenuRef} data-testid="nav-user-menu" className="surface-panel absolute right-0 top-[calc(100%+0.5rem)] z-70 mt-0 w-60 p-1.5 animate-fade-in shadow-2xl shadow-slate-950/10">
 									<div className="mb-1 rounded-2xl px-3 py-2.5">
 										<p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{user.name || user.email}</p>
 										<p className="truncate text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
 									</div>
 									<div className="space-y-1">
 										{accountItems.map((item) => (
-											<NavLink key={item.href} item={item} onClick={() => setUserMenuOpen(false)} mobile />
+											<NavLink key={item.href} item={item} onClick={closeAllMenus} mobile />
 										))}
 									</div>
 									<div className="mt-1 border-t border-slate-200/70 pt-1.5 dark:border-white/10">
 										<button
 											onClick={() => {
-												setUserMenuOpen(false);
+												closeAllMenus();
 												setShowLogoutModal(true);
 											}}
 											className="group flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
@@ -263,10 +303,10 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 				</div>
 
 				<button
-					type="button"
-					className="icon-chip h-11 w-11 text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white md:hidden"
-					onClick={() => setMenuOpen((open) => !open)}
-					aria-label="Toggle navigation menu"
+									type="button"
+									className="icon-chip h-11 w-11 text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white md:hidden"
+									onClick={toggleMobileMenu}
+									aria-label="Toggle navigation menu"
 					aria-expanded={menuOpen}
 					aria-controls="mobile-nav-menu"
 					data-testid="nav-mobile-toggle"
@@ -280,10 +320,10 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 						<div ref={menuRef} id="mobile-nav-menu" data-testid="nav-mobile-menu" className="surface-panel fixed inset-x-3 top-24 z-50 p-4 md:hidden animate-fade-in">
 							<nav className="space-y-1">
 								{primaryItems.map((item) => (
-									<NavLink key={item.href} item={item} onClick={closeMenu} mobile />
+									<NavLink key={item.href} item={item} onClick={closeAllMenus} mobile />
 								))}
 								{accountItems.map((item) => (
-									<NavLink key={item.href} item={item} onClick={closeMenu} mobile />
+									<NavLink key={item.href} item={item} onClick={closeAllMenus} mobile />
 								))}
 							</nav>
 
@@ -299,7 +339,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 										</div>
 										<button
 											onClick={() => {
-												closeMenu();
+												closeAllMenus();
 												setShowLogoutModal(true);
 											}}
 											className="btn-ghost text-red-600 dark:text-red-400"
@@ -310,10 +350,10 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 									</div>
 								) : (
 									<div className="flex gap-2">
-										<Link href="/login" onClick={closeMenu} className="btn-secondary flex-1 justify-center">
+										<Link href="/login" onClick={closeAllMenus} className="btn-secondary flex-1 justify-center">
 											Sign In
 										</Link>
-										<Link href="/register" onClick={closeMenu} className="btn-primary flex-1 justify-center">
+										<Link href="/register" onClick={closeAllMenus} className="btn-primary flex-1 justify-center">
 											Get Started
 											<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" />
 										</Link>

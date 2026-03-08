@@ -1,29 +1,109 @@
 "use client";
 
-import { useSession, signOut, authClient } from "@/lib/auth-client";
-import { clientApi } from "@/lib/api.client";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { CldUploadWidget } from "next-cloudinary";
-import { toast } from "sonner";
-import { useTheme } from "@/lib/hooks/useTheme";
+import { signOut, useSession } from "@/lib/auth-client";
 import Loading from "@/components/Loading";
+import { AnimatedIcon, type AnimatedIconName } from "@/components/ui/animated-icon";
+import { getProfileObservations, type ProfileObservations } from "@/lib/api/profile";
+import { appToast } from "@/lib/toast";
+
+type QuickLink = {
+	href: string;
+	title: string;
+	description: string;
+	icon: AnimatedIconName;
+};
 
 export default function ProfilePage() {
 	const { data: session, isPending } = useSession();
-	const { settings: appearance, updateSettings: updateAppearance } = useTheme();
-	const [showEditModal, setShowEditModal] = useState(false);
-	const [showNotificationsModal, setShowNotificationsModal] = useState(false);
-	const [showPrivacyModal, setShowPrivacyModal] = useState(false);
-	const [showAppearanceModal, setShowAppearanceModal] = useState(false);
-	const [name, setName] = useState("");
-	const [image, setImage] = useState("");
-	const [isUpdating, setIsUpdating] = useState(false);
+	const [observations, setObservations] = useState<ProfileObservations | null>(null);
+	const [loadingObservations, setLoadingObservations] = useState(true);
+	const [signingOut, setSigningOut] = useState(false);
+
+	useEffect(() => {
+		if (!session?.user) {
+			return;
+		}
+
+		let cancelled = false;
+
+		(async () => {
+			try {
+				const result = await getProfileObservations();
+				if (!cancelled) {
+					setObservations(result);
+				}
+			} catch (error) {
+				console.error("Failed to load profile observations:", error);
+			} finally {
+				if (!cancelled) {
+					setLoadingObservations(false);
+				}
+			}
+		})();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [session?.user]);
+
+	const quickLinks = useMemo<QuickLink[]>(() => {
+		const links: QuickLink[] = [
+			{
+				href: "/profile/settings",
+				title: "Settings center",
+				description: "Account, appearance, export, sessions, and delete flow.",
+				icon: "sparkles",
+			},
+			{
+				href: "/goal",
+				title: "Nutrition goals",
+				description: "Update targets and check your current plan.",
+				icon: "chartLine",
+			},
+			{
+				href: "/meals",
+				title: "Food diary",
+				description: "Review what you have logged today and this week.",
+				icon: "flame",
+			},
+			{
+				href: "/recipes",
+				title: "Recipes",
+				description: "Manage your saved dishes and meal building blocks.",
+				icon: "cookingPot",
+			},
+			{
+				href: "/body-measurements",
+				title: "Measurements",
+				description: "Track body composition and progress changes.",
+				icon: "trendingUp",
+			},
+			{
+				href: "/achievements",
+				title: "Achievements",
+				description: "See streaks, milestones, and earned progress.",
+				icon: "circleCheck",
+			},
+		];
+
+		if (session?.user) {
+			links.push({
+				href: "/profile/mcp",
+				title: "MCP tools",
+				description: "Manage developer tokens and usage analytics.",
+				icon: "bot",
+			});
+		}
+
+		return links;
+	}, [session?.user]);
 
 	if (isPending) {
 		return (
-			<div className="flex items-center justify-center min-h-screen">
+			<div className="flex min-h-[60vh] items-center justify-center">
 				<Loading />
 			</div>
 		);
@@ -31,7 +111,7 @@ export default function ProfilePage() {
 
 	if (!session?.user) {
 		return (
-			<div className="flex items-center justify-center min-h-screen">
+			<div className="flex min-h-[60vh] items-center justify-center">
 				<p className="text-slate-500">Not authenticated</p>
 			</div>
 		);
@@ -40,760 +120,233 @@ export default function ProfilePage() {
 	const user = session.user;
 	const isTrainer = user.role === "trainer" || user.role === "admin";
 
-	const handleSignOut = async () => {
-		await signOut();
-		window.location.href = "/login";
-	};
-
-	const handleUpdateProfile = async () => {
-		setIsUpdating(true);
+	async function handleSignOut() {
+		setSigningOut(true);
 		try {
-			const updateData: Record<string, string> = {};
-			if (name) updateData.name = name;
-			if (image) updateData.image = image;
-
-			await Promise.all([
-				clientApi("/api/Users/me", {
-					method: "PUT",
-					body: {
-						name: name || null,
-						image: image || null,
-					},
-				}),
-				Object.keys(updateData).length > 0
-					? authClient.updateUser(updateData)
-					: Promise.resolve(),
-			]);
-			setShowEditModal(false);
-			window.location.reload();
+			await signOut();
+			window.location.href = "/login";
 		} catch (error) {
-			console.error("Failed to update profile:", error);
-			toast.error("Failed to update profile");
-		} finally {
-			setIsUpdating(false);
+			console.error("Failed to sign out:", error);
+			appToast.error(error, "Failed to sign out");
+			setSigningOut(false);
 		}
-	};
-
-	const handleImageUpload = (result: any) => {
-		const imageUrl = result.info.secure_url;
-		setImage(imageUrl);
-	};
+	}
 
 	return (
-		<div className="max-w-3xl mx-auto space-y-6" data-testid="profile-page">
-			{/* Header */}
-			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<div>
-					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Profile</h1>
-					<p className="text-slate-500 mt-1">Manage your account settings</p>
-				</div>
-				<Link href="/profile/settings" className="btn-secondary">
-					<i className="ri-settings-3-line" />
-					Open settings center
-				</Link>
-			</div>
-
-			{/* Profile Card */}
-			<div className="card p-6">
-				<div className="flex flex-col sm:flex-row items-center gap-6">
-					<div className="relative">
-						{user.image ? (
-							<Image
-								src={user.image}
-								alt={user.email || "User"}
-								width={96}
-								height={96}
-								className="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-lg"
-							/>
-						) : (
-							<div className="w-24 h-24 rounded-2xl bg-brand-600 flex items-center justify-center border-4 border-white shadow-lg dark:bg-brand-500">
-								<span className="text-3xl font-bold text-white">
-									{user.email?.charAt(0).toUpperCase()}
-								</span>
-							</div>
-						)}
-						<CldUploadWidget
-							uploadPreset="mizan_preset"
-							onSuccess={async (result: any) => {
-								const imageUrl = result.info.secure_url;
-								try {
-									await clientApi("/api/Users/me", {
-										method: "PUT",
-										body: {
-											name: user.name || null,
-											image: imageUrl,
-										},
-									});
-									window.location.reload();
-								} catch (error) {
-									console.error("Failed to upload image:", error);
-									toast.error("Failed to upload image");
-								}
-							}}
-						>
-							{({ open }) => (
-								<button
-									onClick={() => open()}
-									className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
-								>
-									<i className="ri-camera-line text-slate-600" />
-								</button>
-							)}
-						</CldUploadWidget>
-					</div>
-					<div className="text-center sm:text-left flex-1">
-						<h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-							{user.name || user.email?.split("@")[0]}
-						</h2>
-						<p className="text-slate-500">{user.email}</p>
-					</div>
-					<button
-						onClick={() => {
-							setName(user.name || "");
-							setImage(user.image || "");
-							setShowEditModal(true);
-						}}
-						className="btn-secondary"
-					>
-						<i className="ri-edit-line" />
-						Edit Profile
-					</button>
-				</div>
-			</div>
-
-			{/* Quick Links */}
-			<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-				<Link href="/goal" className="card-hover p-5 group">
-					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center dark:bg-brand-500">
-							<i className="ri-target-line text-xl text-white" />
-						</div>
-						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900 dark:text-slate-100">Nutrition Goals</h3>
-							<p className="text-sm text-slate-500">Set your daily targets</p>
-						</div>
-						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
-					</div>
-				</Link>
-
-				<Link href="/meals" className="card-hover p-5 group">
-					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-accent-600 flex items-center justify-center">
-							<i className="ri-bowl-line text-xl text-white" />
-						</div>
-						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900 dark:text-slate-100">Food Diary</h3>
-							<p className="text-sm text-slate-500">Track your daily meals</p>
-						</div>
-						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
-					</div>
-				</Link>
-
-				<Link href="/meal-plan" className="card-hover p-5 group">
-					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-sky-600 flex items-center justify-center">
-							<i className="ri-calendar-line text-xl text-white" />
-						</div>
-						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900 dark:text-slate-100">Meal Plan</h3>
-							<p className="text-sm text-slate-500">Plan your weekly meals</p>
-						</div>
-						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
-					</div>
-				</Link>
-
-				<Link href="/suggestions" className="card-hover p-5 group">
-					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center dark:bg-slate-100 dark:text-slate-900">
-							<i className="ri-magic-line text-xl text-white" />
-						</div>
-						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900 dark:text-slate-100">AI Coach</h3>
-							<p className="text-sm text-slate-500">Get AI-powered suggestions</p>
-						</div>
-						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
-					</div>
-				</Link>
-
-				<Link href="/recipes" className="card-hover p-5 group">
-					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-rose-600 flex items-center justify-center">
-							<i className="ri-book-3-line text-xl text-white" />
-						</div>
-						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900 dark:text-slate-100">My Recipes</h3>
-							<p className="text-sm text-slate-500">View your collection</p>
-						</div>
-						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
-					</div>
-				</Link>
-
-				<Link href="/ingredients" className="card-hover p-5 group">
-					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-green-600 flex items-center justify-center">
-							<i className="ri-leaf-line text-xl text-white" />
-						</div>
-						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900 dark:text-slate-100">Foods</h3>
-							<p className="text-sm text-slate-500">Browse food database</p>
-						</div>
-						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
-					</div>
-				</Link>
-
-				<Link href="/body-measurements" className="card-hover p-5 group">
-					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-cyan-600 flex items-center justify-center">
-							<i className="ri-body-scan-line text-xl text-white" />
-						</div>
-						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900 dark:text-slate-100">Body Measurements</h3>
-							<p className="text-sm text-slate-500">Track your progress</p>
-						</div>
-						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
-					</div>
-				</Link>
-
-				<Link href="/achievements" className="card-hover p-5 group">
-					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-amber-600 flex items-center justify-center">
-							<i className="ri-trophy-line text-xl text-white" />
-						</div>
-						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900 dark:text-slate-100">Achievements</h3>
-							<p className="text-sm text-slate-500">Badges & streaks</p>
-						</div>
-						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
-					</div>
-				</Link>
-
-				<Link href="/workouts" className="card-hover p-5 group">
-					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center">
-							<i className="ri-run-line text-xl text-white" />
-						</div>
-						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900 dark:text-slate-100">Workouts</h3>
-							<p className="text-sm text-slate-500">Log your training</p>
-						</div>
-						<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
-					</div>
-				</Link>
-			</div>
-
-			{/* Trainer Features - Only visible for users with trainer role */}
-			{isTrainer && (
-				<div className="card p-6 border border-emerald-200 bg-slate-50/90 dark:bg-slate-900/60">
-					<div className="flex items-center gap-3 mb-4">
-						<div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center">
-							<i className="ri-user-star-line text-xl text-white" />
-						</div>
+		<div className="mx-auto max-w-6xl space-y-6" data-testid="profile-page">
+			<section className="surface-panel p-6 sm:p-8">
+				<div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+					<div className="flex items-start gap-4 sm:gap-5">
+						<ProfileAvatar image={user.image} email={user.email} name={user.name} />
 						<div>
-							<h2 className="font-semibold text-slate-900 dark:text-slate-100">Trainer Features</h2>
-							<p className="text-sm text-slate-600">Manage your clients and training</p>
+							<p className="eyebrow mb-3">
+								<AnimatedIcon name="user" size={14} aria-hidden="true" />
+								Profile hub
+							</p>
+							<h1 className="text-3xl font-semibold text-slate-950 dark:text-slate-50">
+								{user.name || user.email}
+							</h1>
+							<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{user.email}</p>
+							<p className="mt-3 max-w-2xl text-sm text-slate-600 dark:text-slate-300">
+								The profile page is now the clean overview. Editing, export, deletion, sessions,
+								appearance, and tooling live in the settings center where they belong.
+							</p>
 						</div>
 					</div>
 
-					<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-						<Link href="/trainer" className="card-hover p-4 bg-white group">
-							<div className="flex items-center gap-3">
-								<div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center">
-									<i className="ri-dashboard-line text-lg text-white" />
-								</div>
-								<div className="flex-1">
-									<h3 className="font-medium text-slate-900 dark:text-slate-100">Dashboard</h3>
-									<p className="text-xs text-slate-500">View clients & stats</p>
-								</div>
-								<i className="ri-arrow-right-s-line text-lg text-slate-400 group-hover:text-emerald-500 transition-colors" />
-							</div>
+					<div className="flex flex-wrap gap-3">
+						<Link href="/profile/settings" className="btn-primary">
+							Settings center
+							<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" />
 						</Link>
-
-						<Link href="/trainer#clients" className="card-hover p-4 bg-white group">
-							<div className="flex items-center gap-3">
-								<div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
-									<i className="ri-group-line text-lg text-white" />
-								</div>
-								<div className="flex-1">
-									<h3 className="font-medium text-slate-900 dark:text-slate-100">My Clients</h3>
-									<p className="text-xs text-slate-500">Manage relationships</p>
-								</div>
-								<i className="ri-arrow-right-s-line text-lg text-slate-400 group-hover:text-emerald-500 transition-colors" />
-							</div>
-						</Link>
-
-						<Link href="/trainer#requests" className="card-hover p-4 bg-white group">
-							<div className="flex items-center gap-3">
-								<div className="w-10 h-10 rounded-xl bg-amber-600 flex items-center justify-center">
-									<i className="ri-user-add-line text-lg text-white" />
-								</div>
-								<div className="flex-1">
-									<h3 className="font-medium text-slate-900 dark:text-slate-100">Requests</h3>
-									<p className="text-xs text-slate-500">Pending client requests</p>
-								</div>
-								<i className="ri-arrow-right-s-line text-lg text-slate-400 group-hover:text-emerald-500 transition-colors" />
-							</div>
-						</Link>
-
-						<Link href="/trainer#messages" className="card-hover p-4 bg-white group">
-							<div className="flex items-center gap-3">
-								<div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center dark:bg-slate-100 dark:text-slate-900">
-									<i className="ri-message-3-line text-lg text-white" />
-								</div>
-								<div className="flex-1">
-									<h3 className="font-medium text-slate-900 dark:text-slate-100">Messages</h3>
-									<p className="text-xs text-slate-500">Chat with clients</p>
-								</div>
-								<i className="ri-arrow-right-s-line text-lg text-slate-400 group-hover:text-emerald-500 transition-colors" />
-							</div>
-						</Link>
+						<button onClick={handleSignOut} disabled={signingOut} className="btn-secondary">
+							{signingOut ? "Signing out..." : "Sign out"}
+						</button>
 					</div>
 				</div>
-			)}
 
-			{/* Find a Trainer - Only visible for regular users (non-trainers) */}
-			{!isTrainer && (
-				<div className="card p-6 border border-blue-200 bg-slate-50/90 dark:bg-slate-900/60">
-					<div className="flex items-center gap-3 mb-4">
-						<div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
-							<i className="ri-user-search-line text-xl text-white" />
-						</div>
+				<div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+					<StatCard
+						label="Role"
+						value={user.role || "user"}
+						helper={isTrainer ? "Trainer access enabled" : "Standard account access"}
+					/>
+					<StatCard
+						label="Joined"
+						value={loadingObservations || !observations ? "--" : formatDate(observations.joinedAt)}
+						helper="Account age from Better Auth"
+					/>
+					<StatCard
+						label="Current streak"
+						value={loadingObservations || !observations ? "--" : `${observations.streakCount} days`}
+						helper={loadingObservations || !observations ? "Loading..." : `Longest ${observations.longestStreak} days`}
+					/>
+					<StatCard
+						label="Active goal"
+						value={loadingObservations || !observations ? "--" : observations.goalSummary}
+						helper="Pulled from your current nutrition goal"
+					/>
+				</div>
+			</section>
+
+			<div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+				<section className="card p-6 sm:p-7">
+					<div className="flex items-center justify-between gap-4">
 						<div>
-							<h2 className="font-semibold text-slate-900 dark:text-slate-100">Personal Training</h2>
-							<p className="text-sm text-slate-600">Connect with a certified trainer</p>
+							<h2 className="text-xl font-semibold text-slate-950 dark:text-slate-50">Account hub</h2>
+							<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+								Everything important is one click away.
+							</p>
 						</div>
+						<Link href="/profile/settings" className="btn-secondary btn-sm">
+							Open settings
+							<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" />
+						</Link>
 					</div>
 
-					<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-						<Link href="/trainers" className="card-hover p-4 bg-white group">
-							<div className="flex items-center gap-3">
-								<div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
-									<i className="ri-search-line text-lg text-white" />
-								</div>
-								<div className="flex-1">
-									<h3 className="font-medium text-slate-900 dark:text-slate-100">Find a Trainer</h3>
-									<p className="text-xs text-slate-500">Browse available trainers</p>
-								</div>
-								<i className="ri-arrow-right-s-line text-lg text-slate-400 group-hover:text-blue-500 transition-colors" />
-							</div>
-						</Link>
-
-						<Link href="/trainers/my-trainer" className="card-hover p-4 bg-white group">
-							<div className="flex items-center gap-3">
-								<div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center">
-									<i className="ri-user-heart-line text-lg text-white" />
-								</div>
-								<div className="flex-1">
-									<h3 className="font-medium text-slate-900 dark:text-slate-100">My Trainer</h3>
-									<p className="text-xs text-slate-500">View current trainer</p>
-								</div>
-								<i className="ri-arrow-right-s-line text-lg text-slate-400 group-hover:text-blue-500 transition-colors" />
-							</div>
-						</Link>
-
-						<Link href="/trainers/requests" className="card-hover p-4 bg-white group">
-							<div className="flex items-center gap-3">
-								<div className="w-10 h-10 rounded-xl bg-amber-600 flex items-center justify-center">
-									<i className="ri-mail-send-line text-lg text-white" />
-								</div>
-								<div className="flex-1">
-									<h3 className="font-medium text-slate-900 dark:text-slate-100">My Requests</h3>
-									<p className="text-xs text-slate-500">Pending trainer requests</p>
-								</div>
-								<i className="ri-arrow-right-s-line text-lg text-slate-400 group-hover:text-blue-500 transition-colors" />
-							</div>
-						</Link>
-
-						<div className="card-hover p-4 bg-white">
-							<div className="flex items-center gap-3">
-								<div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center dark:bg-slate-100 dark:text-slate-900">
-									<i className="ri-star-line text-lg text-white" />
-								</div>
-								<div className="flex-1">
-									<h3 className="font-medium text-slate-900 dark:text-slate-100">Benefits</h3>
-									<div className="text-xs text-slate-500 mt-1 space-y-1">
-										<p>• Personalized meal plans</p>
-										<p>• Custom workout programs</p>
-										<p>• Progress tracking</p>
-										<p>• Direct messaging</p>
+					<div className="mt-6 grid gap-3 sm:grid-cols-2">
+						{quickLinks.map((link) => (
+							<Link
+								key={link.href}
+								href={link.href}
+								className="group rounded-3xl border border-slate-200 bg-white p-4 transition-colors hover:border-slate-300 dark:border-white/10 dark:bg-slate-950 dark:hover:border-white/20"
+							>
+								<div className="flex items-start gap-3">
+									<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
+										<AnimatedIcon name={link.icon} size={18} aria-hidden="true" />
+									</span>
+									<div className="min-w-0">
+										<div className="flex items-center justify-between gap-3">
+											<p className="font-medium text-slate-950 dark:text-slate-50">{link.title}</p>
+											<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" className="text-slate-400 group-hover:text-slate-950 dark:group-hover:text-white" />
+										</div>
+										<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{link.description}</p>
 									</div>
 								</div>
-							</div>
-						</div>
+							</Link>
+						))}
 					</div>
-				</div>
-			)}
+				</section>
 
-			{/* Developer Settings */}
-			<div className="card p-6 border border-purple-200 bg-slate-50/90 dark:bg-slate-900/60">
-				<div className="flex items-center gap-3 mb-4">
-					<div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center dark:bg-slate-100 dark:text-slate-900">
-						<i className="ri-code-s-slash-line text-xl text-white" />
-					</div>
-					<div>
-						<h2 className="font-semibold text-slate-900 dark:text-slate-100">Developer Settings</h2>
-						<p className="text-sm text-slate-600">API access and integrations</p>
-					</div>
-				</div>
-
-				<div className="grid grid-cols-1 gap-3">
-					<Link href="/profile/mcp" className="card-hover p-4 bg-white group">
-						<div className="flex items-center gap-3">
-							<div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center dark:bg-slate-100 dark:text-slate-900">
-								<i className="ri-openai-line text-lg text-white" />
-							</div>
-							<div className="flex-1">
-								<h3 className="font-medium text-slate-900 dark:text-slate-100">MCP Integration</h3>
-								<p className="text-xs text-slate-500">Model Context Protocol tokens & analytics</p>
-							</div>
-							<i className="ri-arrow-right-s-line text-lg text-slate-400 group-hover:text-purple-500 transition-colors" />
-						</div>
-					</Link>
-				</div>
-			</div>
-
-			{/* Account Settings */}
-			<div className="card p-6 space-y-4">
-				<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-					<i className="ri-settings-3-line text-brand-500" />
-					Account Settings
-				</h2>
-
-				<div className="divide-y divide-slate-100">
-					<button
-						onClick={() => setShowNotificationsModal(true)}
-						className="w-full flex items-center justify-between py-4 hover:bg-slate-50 -mx-6 px-6 transition-colors"
-					>
-						<div className="flex items-center gap-3">
-							<i className="ri-notification-3-line text-slate-400" />
-							<span className="text-slate-700">Notifications</span>
-						</div>
-						<i className="ri-arrow-right-s-line text-slate-400" />
-					</button>
-					<button
-						onClick={() => setShowPrivacyModal(true)}
-						className="w-full flex items-center justify-between py-4 hover:bg-slate-50 -mx-6 px-6 transition-colors"
-					>
-						<div className="flex items-center gap-3">
-							<i className="ri-lock-line text-slate-400" />
-							<span className="text-slate-700">Privacy & Security</span>
-						</div>
-						<i className="ri-arrow-right-s-line text-slate-400" />
-					</button>
-					<button
-						onClick={() => setShowAppearanceModal(true)}
-						className="w-full flex items-center justify-between py-4 hover:bg-slate-50 -mx-6 px-6 transition-colors"
-					>
-						<div className="flex items-center gap-3">
-							<i className="ri-palette-line text-slate-400" />
-							<span className="text-slate-700">Appearance</span>
-						</div>
-						<i className="ri-arrow-right-s-line text-slate-400" />
-					</button>
-				</div>
-			</div>
-
-			{/* Danger Zone */}
-			<div className="card p-6 border-red-200">
-				<h2 className="font-semibold text-red-600 flex items-center gap-2 mb-4">
-					<i className="ri-error-warning-line" />
-					Danger Zone
-				</h2>
-				<div className="flex items-center justify-between">
-					<div>
-						<p className="font-medium text-slate-900">Sign Out</p>
-						<p className="text-sm text-slate-500">Sign out of your account</p>
-					</div>
-					<button
-						onClick={handleSignOut}
-						className="px-4 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
-					>
-						Sign Out
-					</button>
-				</div>
-			</div>
-
-			{/* Edit Profile Modal */}
-			{showEditModal && (
-				<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-					<div className="card max-w-md w-full p-6 space-y-4">
-						<div className="flex items-center justify-between">
-							<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-								Edit Profile
-							</h3>
-							<button
-								onClick={() => setShowEditModal(false)}
-								className="text-slate-400 hover:text-slate-600"
-							>
-								<i className="ri-close-line text-xl" />
-							</button>
-						</div>
-
-						<div className="space-y-4">
+				<section className="space-y-6">
+					<div className="card p-6">
+						<div className="flex items-start gap-3">
+							<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
+								<AnimatedIcon name="activity" size={18} aria-hidden="true" />
+							</span>
 							<div>
-								<label className="block text-sm font-medium text-slate-700 mb-1">
-									Name
-								</label>
-								<input
-									type="text"
-									value={name}
-									onChange={(e) => setName(e.target.value)}
-									className="input"
-									placeholder="Enter your name"
-								/>
-							</div>
-
-							<div>
-								<label className="block text-sm font-medium text-slate-700 mb-1">
-									Profile Picture URL
-								</label>
-								<input
-									type="text"
-									value={image}
-									onChange={(e) => setImage(e.target.value)}
-									className="input"
-									placeholder="https://..."
-								/>
-								<p className="text-xs text-slate-500 mt-1">
-									Or use the camera button on your profile picture
+								<h2 className="text-xl font-semibold text-slate-950 dark:text-slate-50">Current read</h2>
+								<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+									Quick backend-derived signals for this account.
 								</p>
 							</div>
 						</div>
 
-						<div className="flex gap-3">
-							<button
-								onClick={() => setShowEditModal(false)}
-								className="btn-secondary flex-1"
-								disabled={isUpdating}
-							>
-								Cancel
-							</button>
-							<button
-								onClick={handleUpdateProfile}
-								className="btn-primary flex-1"
-								disabled={isUpdating}
-							>
-								{isUpdating ? "Saving..." : "Save Changes"}
-							</button>
-						</div>
+						{loadingObservations || !observations ? (
+							<div className="mt-6 flex min-h-48 items-center justify-center">
+								<Loading />
+							</div>
+						) : (
+							<div className="mt-6 space-y-3">
+								<InsightRow label="Meal logging cadence" value={`${observations.mealLoggingDays}/14 tracked days`} helper={`Average ${observations.averageCalories} kcal on logged days`} />
+								<InsightRow label="Achievements" value={`${observations.achievementCount} earned`} helper={`${observations.totalAchievementPoints} total points`} />
+								<InsightRow label="MCP usage" value={`${observations.mcpCalls} calls`} helper={`${observations.mcpSuccessRate}% success rate`} />
+							</div>
+						)}
 					</div>
-				</div>
-			)}
 
-			{/* Notifications Modal */}
-			{showNotificationsModal && (
-				<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-					<div className="card max-w-md w-full p-6 space-y-4">
-						<div className="flex items-center justify-between">
-							<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-								Notification Settings
-							</h3>
-							<button
-								onClick={() => setShowNotificationsModal(false)}
-								className="text-slate-400 hover:text-slate-600"
-							>
-								<i className="ri-close-line text-xl" />
-							</button>
-						</div>
-
-						<div className="space-y-4">
-							<div className="flex items-center justify-between py-3 border-b border-slate-100">
-								<div>
-									<p className="font-medium text-slate-900">Meal Reminders</p>
-									<p className="text-sm text-slate-500">
-										Get notified about upcoming meals
-									</p>
-								</div>
-								<input type="checkbox" className="toggle" defaultChecked />
-							</div>
-
-							<div className="flex items-center justify-between py-3 border-b border-slate-100">
-								<div>
-									<p className="font-medium text-slate-900">Workout Reminders</p>
-									<p className="text-sm text-slate-500">
-										Get notified about scheduled workouts
-									</p>
-								</div>
-								<input type="checkbox" className="toggle" defaultChecked />
-							</div>
-
-							<div className="flex items-center justify-between py-3 border-b border-slate-100">
-								<div>
-									<p className="font-medium text-slate-900">Goal Achievements</p>
-									<p className="text-sm text-slate-500">
-										Celebrate when you hit your targets
-									</p>
-								</div>
-								<input type="checkbox" className="toggle" defaultChecked />
-							</div>
-
-							<div className="flex items-center justify-between py-3">
-								<div>
-									<p className="font-medium text-slate-900">Weekly Reports</p>
-									<p className="text-sm text-slate-500">
-										Receive weekly progress summaries
-									</p>
-								</div>
-								<input type="checkbox" className="toggle" />
-							</div>
-						</div>
-
-						<button
-							onClick={() => setShowNotificationsModal(false)}
-							className="btn-primary w-full"
-						>
-							Save Preferences
-						</button>
-					</div>
-				</div>
-			)}
-
-			{/* Privacy & Security Modal */}
-			{showPrivacyModal && (
-				<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-					<div className="card max-w-md w-full p-6 space-y-4">
-						<div className="flex items-center justify-between">
-							<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-								Privacy & Security
-							</h3>
-							<button
-								onClick={() => setShowPrivacyModal(false)}
-								className="text-slate-400 hover:text-slate-600"
-							>
-								<i className="ri-close-line text-xl" />
-							</button>
-						</div>
-
-						<div className="space-y-4">
-							<div className="flex items-center justify-between py-3 border-b border-slate-100">
-								<div>
-									<p className="font-medium text-slate-900">Profile Visibility</p>
-									<p className="text-sm text-slate-500">
-										Who can see your profile
-									</p>
-								</div>
-								<select className="input py-1 px-2 text-sm">
-									<option>Everyone</option>
-									<option>Household Only</option>
-									<option>Private</option>
-								</select>
-							</div>
-
-							<div className="flex items-center justify-between py-3 border-b border-slate-100">
-								<div>
-									<p className="font-medium text-slate-900">Activity Sharing</p>
-									<p className="text-sm text-slate-500">
-										Share your progress with friends
-									</p>
-								</div>
-								<input type="checkbox" className="toggle" />
-							</div>
-
-							<div className="flex items-center justify-between py-3 border-b border-slate-100">
-								<div>
-									<p className="font-medium text-slate-900">
-										Two-Factor Authentication
-									</p>
-									<p className="text-sm text-slate-500">Add an extra security layer</p>
-								</div>
-								<button className="text-brand-500 text-sm font-medium">
-									Enable
-								</button>
-							</div>
-
-							<div className="flex items-center justify-between py-3">
-								<div>
-									<p className="font-medium text-slate-900">Change Password</p>
-									<p className="text-sm text-slate-500">Update your password</p>
-								</div>
-								<button className="text-brand-500 text-sm font-medium">
-									Update
-								</button>
-							</div>
-						</div>
-
-						<button
-							onClick={() => setShowPrivacyModal(false)}
-							className="btn-primary w-full"
-						>
-							Save Settings
-						</button>
-					</div>
-				</div>
-			)}
-
-			{/* Appearance Modal */}
-			{showAppearanceModal && (
-				<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-					<div className="card max-w-md w-full p-6 space-y-4">
-						<div className="flex items-center justify-between">
-							<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Appearance</h3>
-							<button
-								onClick={() => setShowAppearanceModal(false)}
-								className="text-slate-400 hover:text-slate-600"
-							>
-								<i className="ri-close-line text-xl" />
-							</button>
-						</div>
-
-						<div className="space-y-4">
+					<div className="card p-6">
+						<div className="flex items-start gap-3">
+							<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
+								<AnimatedIcon name="brain" size={18} aria-hidden="true" />
+							</span>
 							<div>
-								<p className="font-medium text-slate-900 mb-3">Theme</p>
-								<div className="grid grid-cols-3 gap-3">
-									{([
-										{ value: "light" as const, icon: "ri-sun-line", label: "Light" },
-										{ value: "dark" as const, icon: "ri-moon-line", label: "Dark" },
-										{ value: "system" as const, icon: "ri-computer-line", label: "System" },
-									]).map((opt) => (
-										<button
-											key={opt.value}
-											onClick={() => updateAppearance({ theme: opt.value })}
-											className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-colors ${
-												appearance.theme === opt.value
-													? "border-brand-500 bg-brand-50"
-													: "border-slate-200 hover:border-slate-300"
-											}`}
-										>
-											<i className={`${opt.icon} text-2xl ${appearance.theme === opt.value ? "text-brand-500" : "text-slate-400"}`} />
-											<span className={`text-sm font-medium ${appearance.theme === opt.value ? "text-slate-900" : "text-slate-600"}`}>
-												{opt.label}
-											</span>
-										</button>
-									))}
-								</div>
-							</div>
-
-							<div className="pt-4 border-t border-slate-100">
-								<p className="font-medium text-slate-900 mb-3">Display</p>
-								<div className="flex items-center justify-between py-2">
-									<span className="text-slate-700">Compact Mode</span>
-									<input
-										type="checkbox"
-										className="toggle"
-										checked={appearance.compactMode}
-										onChange={(e) => updateAppearance({ compactMode: e.target.checked })}
-									/>
-								</div>
-								<div className="flex items-center justify-between py-2">
-									<span className="text-slate-700">Reduce Animations</span>
-									<input
-										type="checkbox"
-										className="toggle"
-										checked={appearance.reduceAnimations}
-										onChange={(e) => updateAppearance({ reduceAnimations: e.target.checked })}
-									/>
-								</div>
+								<h2 className="text-xl font-semibold text-slate-950 dark:text-slate-50">What moved</h2>
+								<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+									The noisy account management UI has been removed from this page.
+								</p>
 							</div>
 						</div>
 
-						<button
-							onClick={() => setShowAppearanceModal(false)}
-							className="btn-primary w-full"
-						>
-							Done
-						</button>
+						<div className="mt-6 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+							<p>Use the settings center for profile edits, appearance, export, sessions, and deletion.</p>
+							<p>Developer tooling lives under settings and `MCP integration`, not inside profile modals anymore.</p>
+							<p>This page is now just the overview. It stops pretending to be six different pages.</p>
+						</div>
 					</div>
-				</div>
-			)}
+				</section>
+			</div>
 		</div>
 	);
+}
+
+function ProfileAvatar({
+	image,
+	email,
+	name,
+}: {
+	image?: string | null;
+	email?: string | null;
+	name?: string | null;
+}) {
+	if (image) {
+		return (
+			<div className="relative h-20 w-20 overflow-hidden rounded-[28px] ring-1 ring-brand-500/20 sm:h-24 sm:w-24">
+				<Image src={image} alt={name || email || "User"} fill className="object-cover" unoptimized />
+			</div>
+		);
+	}
+
+	return (
+		<div className="flex h-20 w-20 items-center justify-center rounded-[28px] bg-brand-600 text-2xl font-semibold text-white ring-1 ring-brand-500/20 dark:bg-brand-500 sm:h-24 sm:w-24">
+			{(email || "U").charAt(0).toUpperCase()}
+		</div>
+	);
+}
+
+function StatCard({
+	label,
+	value,
+	helper,
+}: {
+	label: string;
+	value: string;
+	helper: string;
+}) {
+	return (
+		<div className="rounded-3xl border border-slate-200 bg-white/90 p-4 dark:border-white/10 dark:bg-slate-950/70">
+			<p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">{label}</p>
+			<p className="mt-3 text-lg font-semibold text-slate-950 dark:text-slate-50">{value}</p>
+			<p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{helper}</p>
+		</div>
+	);
+}
+
+function InsightRow({
+	label,
+	value,
+	helper,
+}: {
+	label: string;
+	value: string;
+	helper: string;
+}) {
+	return (
+		<div className="rounded-3xl border border-slate-200 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-900/70">
+			<div className="flex items-center justify-between gap-3">
+				<p className="font-medium text-slate-950 dark:text-slate-50">{label}</p>
+				<p className="text-sm font-medium text-brand-700 dark:text-brand-300">{value}</p>
+			</div>
+			<p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{helper}</p>
+		</div>
+	);
+}
+
+function formatDate(value?: string | null) {
+	if (!value) return "--";
+	return new Date(value).toLocaleDateString(undefined, {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
+	});
 }
