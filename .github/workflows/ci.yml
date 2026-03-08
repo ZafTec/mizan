@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   pull_request:
-    branches: [ master, mcp ]
+    branches: [ '*' ]
 
 jobs:
   backend-test:
