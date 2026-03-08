@@ -21,7 +21,7 @@ export default function PrivacyPage() {
 			</div>
 
 			{/* Content */}
-			<div className="card p-8 prose prose-slate max-w-none">
+			<div className="card p-8 prose prose-slate dark:prose-invert max-w-none">
 				<section className="mb-8">
 					<h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">1. Introduction</h2>
 					<p className="text-slate-600 dark:text-slate-400 leading-relaxed">

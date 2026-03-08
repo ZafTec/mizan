@@ -125,14 +125,14 @@ export default function McpPage() {
 }`;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-10">
+		<div className="max-w-5xl mx-auto space-y-6 pb-10">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm uppercase tracking-wide text-brand-600 font-semibold">Model Context Protocol</p>
-          <h1 className="text-3xl font-bold text-slate-900">MCP Integration</h1>
-          <p className="text-slate-500">
-            Connect any MCP-compatible client to your Mizan data. Works with Claude Desktop, Claude Code, Cursor, and more.
-          </p>
+			<div>
+			  <p className="text-sm uppercase tracking-wide text-brand-600 font-semibold">Model Context Protocol</p>
+			  <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">MCP Integration</h1>
+			  <p className="text-slate-500 dark:text-slate-400">
+				Connect any MCP-compatible client to your Mizan data. Works with Claude Desktop, Claude Code, Cursor, and more.
+			  </p>
         </div>
 
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
@@ -202,17 +202,17 @@ export default function McpPage() {
               </div>
 
               <div className="card p-4">
-                <h4 className="font-semibold text-slate-900 mb-3">Setup Guide</h4>
-                <p className="text-sm text-slate-500 mb-3">
-                  Choose your MCP client and follow the instructions below.
-                </p>
+				<h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Setup Guide</h4>
+				<p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+				  Choose your MCP client and follow the instructions below.
+				</p>
 
-                <div className="flex gap-1 bg-slate-100 p-1 rounded-xl mb-4">
+				<div className="flex gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl mb-4">
                   <button
                     className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       guideTab === "desktop"
-                        ? "bg-white shadow text-slate-900"
-                        : "text-slate-500 hover:text-slate-700"
+						? "bg-white dark:bg-slate-950 shadow text-slate-900 dark:text-slate-100"
+						: "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                     }`}
                     onClick={() => setGuideTab("desktop")}
                   >
@@ -223,8 +223,8 @@ export default function McpPage() {
                   <button
                     className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       guideTab === "code"
-                        ? "bg-white shadow text-slate-900"
-                        : "text-slate-500 hover:text-slate-700"
+						? "bg-white dark:bg-slate-950 shadow text-slate-900 dark:text-slate-100"
+						: "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                     }`}
                     onClick={() => setGuideTab("code")}
                   >
@@ -235,8 +235,8 @@ export default function McpPage() {
                   <button
                     className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       guideTab === "cursor"
-                        ? "bg-white shadow text-slate-900"
-                        : "text-slate-500 hover:text-slate-700"
+						? "bg-white dark:bg-slate-950 shadow text-slate-900 dark:text-slate-100"
+						: "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                     }`}
                     onClick={() => setGuideTab("cursor")}
                   >
@@ -247,9 +247,9 @@ export default function McpPage() {
 
                 {guideTab === "desktop" && (
                   <div className="space-y-3">
-                    <p className="text-sm text-slate-600">
-                      Add this to your <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs">claude_desktop_config.json</code>:
-                    </p>
+					  <p className="text-sm text-slate-600 dark:text-slate-300">
+						Add this to your <code className="bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded text-xs">claude_desktop_config.json</code>:
+					  </p>
                     <div className="relative">
                       <pre className="bg-slate-900 text-slate-50 rounded-lg p-4 text-xs overflow-x-auto">
                         {desktopConfig(tokenValue)}
@@ -262,21 +262,21 @@ export default function McpPage() {
                         {copiedField === "desktop" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
                       </button>
                     </div>
-                    <div className="text-sm text-slate-500">
-                      <p>Config file locations:</p>
-                      <ul className="list-disc list-inside ml-4 space-y-1 mt-1">
-                        <li>macOS: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs">~/Library/Application Support/Claude/claude_desktop_config.json</code></li>
-                        <li>Windows: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs">%APPDATA%\Claude\claude_desktop_config.json</code></li>
-                      </ul>
-                    </div>
+					  <div className="text-sm text-slate-500 dark:text-slate-400">
+						<p>Config file locations:</p>
+						<ul className="list-disc list-inside ml-4 space-y-1 mt-1">
+						  <li>macOS: <code className="bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded text-xs">~/Library/Application Support/Claude/claude_desktop_config.json</code></li>
+						  <li>Windows: <code className="bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded text-xs">%APPDATA%\Claude\claude_desktop_config.json</code></li>
+						</ul>
+					  </div>
                   </div>
                 )}
 
                 {guideTab === "code" && (
                   <div className="space-y-3">
-                    <p className="text-sm text-slate-600">
-                      Run this command in your terminal:
-                    </p>
+					  <p className="text-sm text-slate-600 dark:text-slate-300">
+						Run this command in your terminal:
+					  </p>
                     <div className="relative">
                       <pre className="bg-slate-900 text-slate-50 rounded-lg p-4 text-xs overflow-x-auto whitespace-pre-wrap break-all">
                         {claudeCodeCommand(tokenValue)}
@@ -289,17 +289,17 @@ export default function McpPage() {
                         {copiedField === "code" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
                       </button>
                     </div>
-                    <p className="text-sm text-slate-500">
-                      This registers the Mizan MCP server globally. Use <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs">--scope project</code> to scope it to the current directory.
-                    </p>
+					  <p className="text-sm text-slate-500 dark:text-slate-400">
+						This registers the Mizan MCP server globally. Use <code className="bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded text-xs">--scope project</code> to scope it to the current directory.
+					  </p>
                   </div>
                 )}
 
                 {guideTab === "cursor" && (
                   <div className="space-y-3">
-                    <p className="text-sm text-slate-600">
-                      Add this to your <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs">.cursor/mcp.json</code> in your project root:
-                    </p>
+					  <p className="text-sm text-slate-600 dark:text-slate-300">
+						Add this to your <code className="bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded text-xs">.cursor/mcp.json</code> in your project root:
+					  </p>
                     <div className="relative">
                       <pre className="bg-slate-900 text-slate-50 rounded-lg p-4 text-xs overflow-x-auto">
                         {cursorConfig(tokenValue)}
@@ -312,20 +312,20 @@ export default function McpPage() {
                         {copiedField === "cursor" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
                       </button>
                     </div>
-                    <p className="text-sm text-slate-500">
-                      Or add it globally via Cursor Settings &gt; MCP Servers.
-                    </p>
+					  <p className="text-sm text-slate-500 dark:text-slate-400">
+						Or add it globally via Cursor Settings &gt; MCP Servers.
+					  </p>
                   </div>
                 )}
 
-                <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                  <p className="text-xs text-slate-500">
-                    <span className="font-semibold text-slate-700">Other clients:</span>{" "}
-                    Any MCP client that supports SSE transport can connect using the server URL{" "}
-                    <code className="bg-slate-100 px-1.5 py-0.5 rounded">{mcpUrl}</code>{" "}
-                    with the token as a Bearer authorization header.
-                  </p>
-                </div>
+					<div className="mt-4 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-white/10">
+					  <p className="text-xs text-slate-500 dark:text-slate-400">
+						<span className="font-semibold text-slate-700 dark:text-slate-200">Other clients:</span>{" "}
+						Any MCP client that supports SSE transport can connect using the server URL{" "}
+						<code className="bg-slate-100 dark:bg-slate-950 px-1.5 py-0.5 rounded">{mcpUrl}</code>{" "}
+						with the token as a Bearer authorization header.
+					  </p>
+					</div>
               </div>
             </div>
             <DialogFooter>
@@ -337,16 +337,16 @@ export default function McpPage() {
         </Dialog>
       )}
 
-      <div className="card p-6">
-        <Tabs defaultValue="tokens" className="w-full">
-          <TabsList className="bg-slate-100 p-1 rounded-2xl inline-flex gap-1">
-            <TabsTrigger value="tokens" className="rounded-xl px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow data-[state=active]:text-slate-900">
-              Tokens
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="rounded-xl px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow data-[state=active]:text-slate-900">
-              Analytics
-            </TabsTrigger>
-          </TabsList>
+		<div className="card p-6">
+		  <Tabs defaultValue="tokens" className="w-full">
+			<TabsList className="bg-slate-100 dark:bg-slate-900 p-1 rounded-2xl inline-flex gap-1">
+			  <TabsTrigger value="tokens" className="rounded-xl px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-950 dark:data-[state=active]:text-slate-100">
+				Tokens
+			  </TabsTrigger>
+			  <TabsTrigger value="analytics" className="rounded-xl px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-950 dark:data-[state=active]:text-slate-100">
+				Analytics
+			  </TabsTrigger>
+			</TabsList>
 
           <TabsContent value="tokens" className="mt-4 space-y-4">
             {loading ? (
@@ -354,34 +354,34 @@ export default function McpPage() {
                 <Skeleton className="h-12 w-full" />
                 <Skeleton className="h-12 w-full" />
               </div>
-            ) : tokens.length === 0 ? (
-              <div className="text-center py-10 text-slate-500">
-                No tokens yet. Generate your first token to get started.
-              </div>
-            ) : (
-              <div className="overflow-hidden rounded-2xl border border-slate-200">
-                <table className="w-full text-sm">
-                  <thead className="bg-slate-50 text-left">
-                    <tr>
-                      <th className="px-4 py-3 font-semibold text-slate-600">Name</th>
-                      <th className="px-4 py-3 font-semibold text-slate-600">Status</th>
-                      <th className="px-4 py-3 font-semibold text-slate-600 hidden sm:table-cell">Created</th>
-                      <th className="px-4 py-3 font-semibold text-slate-600 hidden md:table-cell">Last Used</th>
-                      <th className="px-4 py-3 font-semibold text-right text-slate-600">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {tokens.map((token) => (
-                      <tr key={token.id} className="hover:bg-slate-50/60">
-                        <td className="px-4 py-3 font-medium text-slate-900">{token.name}</td>
+			  ) : tokens.length === 0 ? (
+				<div className="text-center py-10 text-slate-500 dark:text-slate-400">
+				  No tokens yet. Generate your first token to get started.
+				</div>
+			  ) : (
+				<div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10">
+				  <table className="w-full text-sm">
+					<thead className="bg-slate-50 dark:bg-slate-900 text-left">
+					  <tr>
+						<th className="px-4 py-3 font-semibold text-slate-600 dark:text-slate-300">Name</th>
+						<th className="px-4 py-3 font-semibold text-slate-600 dark:text-slate-300">Status</th>
+						<th className="px-4 py-3 font-semibold text-slate-600 dark:text-slate-300 hidden sm:table-cell">Created</th>
+						<th className="px-4 py-3 font-semibold text-slate-600 dark:text-slate-300 hidden md:table-cell">Last Used</th>
+						<th className="px-4 py-3 font-semibold text-right text-slate-600 dark:text-slate-300">Actions</th>
+					  </tr>
+					</thead>
+					<tbody className="divide-y divide-slate-100 dark:divide-white/10">
+					  {tokens.map((token) => (
+						<tr key={token.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-900/70">
+						  <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">{token.name}</td>
                         <td className="px-4 py-3">
                           <span
                             className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${
                               token.isActive
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                                : "bg-slate-100 text-slate-500 border border-slate-200"
-                            }`}
-                          >
+								? "bg-emerald-50 text-emerald-700 border border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20"
+								: "bg-slate-100 text-slate-500 border border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-white/10"
+							}`}
+						  >
                             <span
                               className={`h-2 w-2 rounded-full ${
                                 token.isActive ? "bg-emerald-500" : "bg-slate-400"
@@ -390,14 +390,14 @@ export default function McpPage() {
                             {token.isActive ? "Active" : "Revoked"}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-slate-700 hidden sm:table-cell">{token.createdAt ? formatDate(token.createdAt) : "Unknown"}</td>
-                        <td className="px-4 py-3 text-slate-700 hidden md:table-cell">
+						  <td className="px-4 py-3 text-slate-700 dark:text-slate-300 hidden sm:table-cell">{token.createdAt ? formatDate(token.createdAt) : "Unknown"}</td>
+						  <td className="px-4 py-3 text-slate-700 dark:text-slate-300 hidden md:table-cell">
                           {token.lastUsedAt ? formatDate(token.lastUsedAt) : "Never"}
                         </td>
                         <td className="px-4 py-3 text-right">
                           {token.isActive && (
                             <button
-                              className="btn-secondary inline-flex items-center gap-2 text-destructive"
+							className="btn-secondary inline-flex items-center gap-2 text-destructive"
                               onClick={() => token.id && handleRevokeToken(token.id)}
                               disabled={!token.id}
                             >
@@ -444,53 +444,53 @@ export default function McpPage() {
                   />
                 </div>
 
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <div className="card p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-slate-900">Tool Usage</h3>
-                      <span className="text-xs text-slate-500">Last 30 days</span>
-                    </div>
-                    <div className="divide-y divide-slate-100">
-                      {toolUsage.map((tool) => (
-                        <div key={tool.toolName ?? `tool-${tool.callCount ?? 0}`} className="py-3 flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-slate-900">{tool.toolName || "Unknown tool"}</p>
-                            <p className="text-xs text-slate-500">
-                              {tool.successCount ?? 0} success / {tool.failureCount ?? 0} failed
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-semibold text-slate-900">{tool.callCount ?? 0} calls</p>
-                            <p className="text-xs text-slate-500">{tool.averageExecutionTimeMs ?? 0} ms avg</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+					<div className="grid gap-4 lg:grid-cols-2">
+					  <div className="card p-4">
+						<div className="flex items-center justify-between mb-3">
+						  <h3 className="font-semibold text-slate-900 dark:text-slate-100">Tool Usage</h3>
+						  <span className="text-xs text-slate-500 dark:text-slate-400">Last 30 days</span>
+						</div>
+						<div className="divide-y divide-slate-100 dark:divide-white/10">
+						  {toolUsage.map((tool) => (
+							<div key={tool.toolName ?? `tool-${tool.callCount ?? 0}`} className="py-3 flex items-center justify-between">
+							  <div>
+								<p className="font-medium text-slate-900 dark:text-slate-100">{tool.toolName || "Unknown tool"}</p>
+								<p className="text-xs text-slate-500 dark:text-slate-400">
+								  {tool.successCount ?? 0} success / {tool.failureCount ?? 0} failed
+								</p>
+							  </div>
+							  <div className="text-right">
+								<p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{tool.callCount ?? 0} calls</p>
+								<p className="text-xs text-slate-500 dark:text-slate-400">{tool.averageExecutionTimeMs ?? 0} ms avg</p>
+							  </div>
+							</div>
+						  ))}
+						</div>
+					  </div>
 
-                  <div className="card p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-slate-900">Token Usage</h3>
-                      <span className="text-xs text-slate-500">Most recent activity</span>
-                    </div>
-                    <div className="divide-y divide-slate-100">
-                      {tokenUsage.map((token) => (
-                        <div key={token.tokenId ?? token.tokenName ?? "unknown-token"} className="py-3 flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-slate-900">{token.tokenName || "Unknown token"}</p>
-                            <p className="text-xs text-slate-500">{token.callCount ?? 0} calls</p>
-                          </div>
-                          <p className="text-xs text-slate-500">{token.lastUsed ? formatDate(token.lastUsed) : "Never"}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-10 text-slate-500">
-                No analytics data yet. Start using your MCP tokens to see insights.
-              </div>
+					  <div className="card p-4">
+						<div className="flex items-center justify-between mb-3">
+						  <h3 className="font-semibold text-slate-900 dark:text-slate-100">Token Usage</h3>
+						  <span className="text-xs text-slate-500 dark:text-slate-400">Most recent activity</span>
+						</div>
+						<div className="divide-y divide-slate-100 dark:divide-white/10">
+						  {tokenUsage.map((token) => (
+							<div key={token.tokenId ?? token.tokenName ?? "unknown-token"} className="py-3 flex items-center justify-between">
+							  <div>
+								<p className="font-medium text-slate-900 dark:text-slate-100">{token.tokenName || "Unknown token"}</p>
+								<p className="text-xs text-slate-500 dark:text-slate-400">{token.callCount ?? 0} calls</p>
+							  </div>
+							  <p className="text-xs text-slate-500 dark:text-slate-400">{token.lastUsed ? formatDate(token.lastUsed) : "Never"}</p>
+							</div>
+						  ))}
+						</div>
+					  </div>
+					</div>
+				  </>
+			) : (
+				<div className="text-center py-10 text-slate-500 dark:text-slate-400">
+				  No analytics data yet. Start using your MCP tokens to see insights.
+				</div>
             )}
           </TabsContent>
         </Tabs>
@@ -511,17 +511,17 @@ function MetricCard({
   icon?: ReactNode;
 }) {
   return (
-    <div className="card p-4 border border-slate-200">
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <p className="text-xs uppercase text-slate-500 font-semibold">{title}</p>
-          <p className="text-2xl font-bold text-slate-900">{value}</p>
-          {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
-        </div>
-        <div className="h-10 w-10 rounded-2xl bg-brand-50 text-brand-700 flex items-center justify-center">
-          {icon}
-        </div>
-      </div>
+	<div className="card p-4 border border-slate-200 dark:border-white/10">
+	  <div className="flex items-center justify-between mb-3">
+		<div>
+		  <p className="text-xs uppercase text-slate-500 dark:text-slate-400 font-semibold">{title}</p>
+		  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{value}</p>
+		  {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>}
+		</div>
+		<div className="h-10 w-10 rounded-2xl bg-brand-50 text-brand-700 flex items-center justify-center dark:bg-brand-500/15 dark:text-brand-300">
+		  {icon}
+		</div>
+	  </div>
     </div>
   );
 }

@@ -86,6 +86,7 @@ export default function ProfileSettingsPage() {
 	}
 
 	const user = session.user;
+	const showRoleBadge = Boolean(user.role && user.role !== "user");
 	const displayName = name.trim() || user.name || user.email;
 	const previewImage = image || user.image || "";
 	const hasProfileChanges = name.trim() !== (user.name ?? "") || image.trim() !== (user.image ?? "");
@@ -339,13 +340,13 @@ export default function ProfileSettingsPage() {
 								{displayName}
 							</h1>
 							<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-								Manage your Better Auth account, app preferences, sessions, and exported data.
+								Manage your account, app preferences, sessions, and exported data.
 							</p>
 						</div>
 					</div>
 
-					<div className="grid gap-3 sm:grid-cols-3">
-						<SummaryBadge label="Role" value={user.role || "user"} />
+					<div className={`grid gap-3 ${showRoleBadge ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+						{showRoleBadge ? <SummaryBadge label="Role" value={user.role || "user"} /> : null}
 						<SummaryBadge
 							label="Active sessions"
 							value={loadingSessions ? "--" : String(activeSessions.length)}
@@ -364,14 +365,14 @@ export default function ProfileSettingsPage() {
 						<SectionHeading
 							icon="user"
 							title="Account details"
-							description="Keep your Better Auth profile and app mirror aligned."
+							description="Keep your profile details up to date everywhere you use them."
 						/>
 
 						<div className="mt-6 grid gap-6 lg:grid-cols-[auto_1fr]">
 							<div className="space-y-3">
 								<AvatarPreview image={previewImage} email={user.email} name={name || user.name} size="lg" />
 								<CldUploadWidget
-									uploadPreset="mizan_preset"
+									signatureEndpoint="/api/sign-cloudinary-params"
 									onSuccess={(result: any) => void handleAvatarUpload(result)}
 								>
 									{({ open }) => (
@@ -424,7 +425,7 @@ export default function ProfileSettingsPage() {
 						<SectionHeading
 							icon="lock"
 							title="Security"
-							description="Password management stays in Better Auth."
+							description="Update your password and manage sign-in security."
 						/>
 
 						<div className="mt-6 grid gap-4">
@@ -454,7 +455,7 @@ export default function ProfileSettingsPage() {
 						<SectionHeading
 							icon="sparkles"
 							title="Appearance"
-							description="Preferences persist to your Better Auth user profile and apply across sessions."
+							description="Preferences sync to your account and apply across sessions."
 						/>
 
 						<div className="mt-6 space-y-6">
@@ -513,7 +514,7 @@ export default function ProfileSettingsPage() {
 						<SectionHeading
 							icon="activity"
 							title="Usage observations"
-							description="Backend-derived signals from nutrition, progress, and developer activity."
+							description="Computed signals from your nutrition, progress, and tool activity."
 						/>
 
 						{loadingObservations || !observations ? (
@@ -522,12 +523,12 @@ export default function ProfileSettingsPage() {
 							</div>
 						) : (
 							<div className="mt-6 grid gap-3 sm:grid-cols-2">
-								<ObservationCard label="Joined" value={formatDate(observations.joinedAt)} helper="Account age from Better Auth user record" />
+								<ObservationCard label="Joined" value={formatDate(observations.joinedAt)} helper="Account age" />
 								<ObservationCard label="Current streak" value={`${observations.streakCount} days`} helper={`Longest: ${observations.longestStreak} days`} />
 								<ObservationCard label="Meal logging" value={`${observations.mealLoggingDays}/14 days`} helper={`Average ${observations.averageCalories} kcal on logged days`} />
 								<ObservationCard label="Achievements" value={`${observations.achievementCount}`} helper={`${observations.totalAchievementPoints} total points`} />
 								<ObservationCard label="MCP calls" value={`${observations.mcpCalls}`} helper={`${observations.mcpSuccessRate}% success rate`} />
-								<ObservationCard label="Active goal" value={observations.goalSummary} helper="Pulled from your current backend goal state" />
+								<ObservationCard label="Active goal" value={observations.goalSummary} helper="Based on your saved nutrition targets" />
 							</div>
 						)}
 					</section>
@@ -621,7 +622,7 @@ export default function ProfileSettingsPage() {
 						<SectionHeading
 							icon="upload"
 							title="Export data"
-							description="Download a JSON export assembled by the backend from your app-owned data."
+							description="Download a JSON export of your stored data."
 						/>
 
 						<div className="mt-6 space-y-4 rounded-3xl border border-slate-200 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-900/70">
@@ -638,14 +639,14 @@ export default function ProfileSettingsPage() {
 						<SectionHeading
 							icon="badgeAlert"
 							title="Danger zone"
-							description="Delete stays in Better Auth. This is permanent."
+							description="Delete your account permanently."
 						/>
 
 						<div className="mt-6 space-y-4 rounded-3xl border border-red-200 bg-red-50/70 p-4 dark:border-red-500/20 dark:bg-red-500/10">
 							<Field label={`Type ${DELETE_CONFIRMATION_TEXT} to confirm`}>
 								<input type="text" value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} className="input" placeholder={DELETE_CONFIRMATION_TEXT} />
 							</Field>
-							<Field label="Password (optional)" helper="Use this if Better Auth requires password confirmation instead of a fresh session.">
+							<Field label="Password (optional)" helper="Use this if password confirmation is required instead of a fresh session.">
 								<input type="password" value={deletePassword} onChange={(event) => setDeletePassword(event.target.value)} className="input" />
 							</Field>
 							<button onClick={handleDeleteAccount} disabled={deletingAccount || deleteConfirmation !== DELETE_CONFIRMATION_TEXT} className="w-full rounded-full bg-red-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60">

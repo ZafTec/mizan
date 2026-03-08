@@ -49,8 +49,9 @@ function getDateCutoff(range: TimeRange): Date | null {
 
 const chartStyle = {
     contentStyle: {
-        backgroundColor: "var(--color-white, #fff)",
-        border: "1px solid #e2e8f0",
+        backgroundColor: "var(--popover)",
+        border: "1px solid var(--border)",
+        color: "var(--popover-foreground)",
         borderRadius: "0.75rem",
         fontSize: "0.8125rem",
         boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
@@ -124,19 +125,19 @@ function CompositionChart({ data }: { data: ReturnType<typeof buildData> }) {
     return (
         <ResponsiveContainer width="100%" height={280}>
             <ComposedChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#94a3b8" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
                 <YAxis
                     yAxisId="kg"
                     tick={{ fontSize: 11 }}
-                    stroke="#94a3b8"
+                    stroke="var(--muted-foreground)"
                     tickFormatter={(v) => `${v}kg`}
                 />
                 <YAxis
                     yAxisId="pct"
                     orientation="right"
                     tick={{ fontSize: 11 }}
-                    stroke="#94a3b8"
+                    stroke="var(--muted-foreground)"
                     tickFormatter={(v) => `${v}%`}
                 />
                 <Tooltip
@@ -209,9 +210,9 @@ function CircumferenceChart({ data, active, onToggle }: {
             ) : (
                 <ResponsiveContainer width="100%" height={280}>
                     <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                        <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-                        <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" tickFormatter={(v) => `${v}cm`} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                        <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
+                        <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" tickFormatter={(v) => `${v}cm`} />
                         <Tooltip
                             {...chartStyle}
                             formatter={formatCircumferenceTooltip}

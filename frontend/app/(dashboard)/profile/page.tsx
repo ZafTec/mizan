@@ -3,11 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { signOut, useSession } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 import Loading from "@/components/Loading";
 import { AnimatedIcon, type AnimatedIconName } from "@/components/ui/animated-icon";
 import { getProfileObservations, type ProfileObservations } from "@/lib/api/profile";
-import { appToast } from "@/lib/toast";
 
 type QuickLink = {
 	href: string;
@@ -20,7 +19,6 @@ export default function ProfilePage() {
 	const { data: session, isPending } = useSession();
 	const [observations, setObservations] = useState<ProfileObservations | null>(null);
 	const [loadingObservations, setLoadingObservations] = useState(true);
-	const [signingOut, setSigningOut] = useState(false);
 
 	useEffect(() => {
 		if (!session?.user) {
@@ -119,23 +117,12 @@ export default function ProfilePage() {
 
 	const user = session.user;
 	const isTrainer = user.role === "trainer" || user.role === "admin";
-
-	async function handleSignOut() {
-		setSigningOut(true);
-		try {
-			await signOut();
-			window.location.href = "/login";
-		} catch (error) {
-			console.error("Failed to sign out:", error);
-			appToast.error(error, "Failed to sign out");
-			setSigningOut(false);
-		}
-	}
+	const showRoleCard = Boolean(user.role && user.role !== "user");
 
 	return (
 		<div className="mx-auto max-w-6xl space-y-6" data-testid="profile-page">
 			<section className="surface-panel p-6 sm:p-8">
-				<div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+				<div className="flex items-start gap-4 sm:gap-5">
 					<div className="flex items-start gap-4 sm:gap-5">
 						<ProfileAvatar image={user.image} email={user.email} name={user.name} />
 						<div>
@@ -148,33 +135,24 @@ export default function ProfilePage() {
 							</h1>
 							<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{user.email}</p>
 							<p className="mt-3 max-w-2xl text-sm text-slate-600 dark:text-slate-300">
-								The profile page is now the clean overview. Editing, export, deletion, sessions,
-								appearance, and tooling live in the settings center where they belong.
+								Your account details, preferences, export, sessions, and connected tools are available in settings.
 							</p>
 						</div>
 					</div>
-
-					<div className="flex flex-wrap gap-3">
-						<Link href="/profile/settings" className="btn-primary">
-							Settings center
-							<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" />
-						</Link>
-						<button onClick={handleSignOut} disabled={signingOut} className="btn-secondary">
-							{signingOut ? "Signing out..." : "Sign out"}
-						</button>
-					</div>
 				</div>
 
-				<div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-					<StatCard
-						label="Role"
-						value={user.role || "user"}
-						helper={isTrainer ? "Trainer access enabled" : "Standard account access"}
-					/>
+				<div className={`mt-6 grid gap-3 sm:grid-cols-2 ${showRoleCard ? "xl:grid-cols-4" : "xl:grid-cols-3"}`}>
+					{showRoleCard ? (
+						<StatCard
+							label="Role"
+							value={user.role || "user"}
+							helper={isTrainer ? "Trainer access enabled" : "Account access"}
+						/>
+					) : null}
 					<StatCard
 						label="Joined"
 						value={loadingObservations || !observations ? "--" : formatDate(observations.joinedAt)}
-						helper="Account age from Better Auth"
+						helper="Account age"
 					/>
 					<StatCard
 						label="Current streak"
@@ -184,7 +162,7 @@ export default function ProfilePage() {
 					<StatCard
 						label="Active goal"
 						value={loadingObservations || !observations ? "--" : observations.goalSummary}
-						helper="Pulled from your current nutrition goal"
+						helper="From your saved nutrition targets"
 					/>
 				</div>
 			</section>
@@ -234,12 +212,12 @@ export default function ProfilePage() {
 							<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
 								<AnimatedIcon name="activity" size={18} aria-hidden="true" />
 							</span>
-							<div>
-								<h2 className="text-xl font-semibold text-slate-950 dark:text-slate-50">Current read</h2>
-								<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-									Quick backend-derived signals for this account.
-								</p>
-							</div>
+						<div>
+							<h2 className="text-xl font-semibold text-slate-950 dark:text-slate-50">Current read</h2>
+							<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+								A quick view of your computed account activity.
+							</p>
+						</div>
 						</div>
 
 						{loadingObservations || !observations ? (
@@ -255,25 +233,6 @@ export default function ProfilePage() {
 						)}
 					</div>
 
-					<div className="card p-6">
-						<div className="flex items-start gap-3">
-							<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
-								<AnimatedIcon name="brain" size={18} aria-hidden="true" />
-							</span>
-							<div>
-								<h2 className="text-xl font-semibold text-slate-950 dark:text-slate-50">What moved</h2>
-								<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-									The noisy account management UI has been removed from this page.
-								</p>
-							</div>
-						</div>
-
-						<div className="mt-6 space-y-3 text-sm text-slate-600 dark:text-slate-300">
-							<p>Use the settings center for profile edits, appearance, export, sessions, and deletion.</p>
-							<p>Developer tooling lives under settings and `MCP integration`, not inside profile modals anymore.</p>
-							<p>This page is now just the overview. It stops pretending to be six different pages.</p>
-						</div>
-					</div>
 				</section>
 			</div>
 		</div>

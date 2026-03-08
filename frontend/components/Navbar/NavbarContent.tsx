@@ -107,6 +107,8 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 		  ]
 		: [];
 
+	const roleLabel = user?.role && user.role !== "user" ? user.role : null;
+
 	useEffect(() => {
 		document.body.style.overflow = menuOpen ? 'hidden' : '';
 
@@ -246,18 +248,18 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 								onClick={toggleUserMenu}
 								aria-expanded={userMenuOpen}
 								aria-haspopup="menu"
-								className="group flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/90 px-2 py-1.5 text-sm text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-white dark:border-white/10 dark:bg-slate-950/70 dark:text-slate-200 dark:hover:border-white/15 dark:hover:bg-slate-950"
+								className="group flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-white dark:border-white/10 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-white/15 dark:hover:bg-slate-950"
 							>
 								<UserAvatar user={user} />
 								<div className="hidden text-left sm:block">
 									<p className="max-w-28 truncate font-medium text-slate-950 dark:text-white">{user.name || user.email}</p>
-									<p className="max-w-28 truncate text-[11px] text-slate-500 dark:text-slate-400">{user.role || 'user'}</p>
+									{roleLabel ? <p className="max-w-28 truncate text-[11px] text-slate-500 dark:text-slate-400">{roleLabel}</p> : null}
 								</div>
 								<ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform duration-200 dark:text-slate-500", userMenuOpen && "rotate-180")} aria-hidden="true" />
 							</button>
 
 							{userMenuOpen && (
-								<div ref={userMenuRef} data-testid="nav-user-menu" className="surface-panel absolute right-0 top-[calc(100%+0.5rem)] z-70 mt-0 w-60 p-1.5 animate-fade-in shadow-2xl shadow-slate-950/10">
+								<div ref={userMenuRef} data-testid="nav-user-menu" className="absolute right-0 top-[calc(100%+0.5rem)] z-70 mt-0 w-60 overflow-hidden rounded-[28px] border border-slate-200 bg-white p-1.5 shadow-2xl shadow-slate-950/10 animate-fade-in dark:border-white/10 dark:bg-slate-950">
 									<div className="mb-1 rounded-2xl px-3 py-2.5">
 										<p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{user.name || user.email}</p>
 										<p className="truncate text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
@@ -309,55 +311,58 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 					<AnimatedIcon name={menuOpen ? "x" : "menu"} size={18} aria-hidden="true" />
 				</button>
 
-				{menuOpen && (
-					<>
-						<div className="fixed inset-0 z-40 bg-slate-950/25 backdrop-blur-[2px] md:hidden" onClick={closeMenu} />
-						<div ref={menuRef} id="mobile-nav-menu" data-testid="nav-mobile-menu" className="surface-panel fixed inset-x-3 top-24 z-50 p-4 md:hidden animate-fade-in">
-							<nav className="space-y-1">
-								{primaryItems.map((item) => (
-									<NavLink key={item.href} item={item} onClick={closeAllMenus} mobile />
-								))}
-								{accountItems.map((item) => (
-									<NavLink key={item.href} item={item} onClick={closeAllMenus} mobile />
-								))}
-							</nav>
+				{menuOpen && typeof document !== "undefined"
+					? createPortal(
+						<>
+							<div className="fixed inset-0 z-[90] bg-slate-950/30 backdrop-blur-[2px] md:hidden" onClick={closeMenu} />
+							<div ref={menuRef} id="mobile-nav-menu" data-testid="nav-mobile-menu" className="fixed inset-x-3 top-24 z-[95] overflow-hidden rounded-[28px] border border-slate-200 bg-white p-4 shadow-2xl shadow-slate-950/15 animate-fade-in md:hidden dark:border-white/10 dark:bg-slate-950">
+								<nav className="space-y-1">
+									{primaryItems.map((item) => (
+										<NavLink key={item.href} item={item} onClick={closeAllMenus} mobile />
+									))}
+									{accountItems.map((item) => (
+										<NavLink key={item.href} item={item} onClick={closeAllMenus} mobile />
+									))}
+								</nav>
 
-							<div className="mt-4 border-t border-slate-200/70 pt-4 dark:border-white/10">
-								{user ? (
-									<div className="flex items-center justify-between gap-3 rounded-2xl border border-white/55 bg-white/50 p-3 dark:border-white/10 dark:bg-white/5">
-										<div className="flex items-center gap-3">
-											<UserAvatar user={user} />
-											<div>
-												<p className="text-sm font-semibold text-slate-950 dark:text-white">{user.name || user.email}</p>
-												<p className="text-xs text-slate-500 dark:text-slate-400">Signed in</p>
+								<div className="mt-4 border-t border-slate-200/70 pt-4 dark:border-white/10">
+									{user ? (
+										<div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-slate-900">
+											<div className="flex items-center gap-3">
+												<UserAvatar user={user} />
+												<div>
+													<p className="text-sm font-semibold text-slate-950 dark:text-white">{user.name || user.email}</p>
+													<p className="text-xs text-slate-500 dark:text-slate-400">Signed in</p>
+												</div>
 											</div>
+											<button
+												onClick={() => {
+													closeAllMenus();
+													setShowLogoutModal(true);
+												}}
+												className="btn-ghost text-red-600 dark:text-red-400"
+											>
+												<AnimatedIcon name="logout" size={16} aria-hidden="true" />
+												Sign out
+											</button>
 										</div>
-										<button
-											onClick={() => {
-												closeAllMenus();
-												setShowLogoutModal(true);
-											}}
-											className="btn-ghost text-red-600 dark:text-red-400"
-										>
-											<AnimatedIcon name="logout" size={16} aria-hidden="true" />
-											Sign out
-										</button>
-									</div>
-								) : (
-									<div className="flex gap-2">
-										<Link href="/login" onClick={closeAllMenus} className="btn-secondary flex-1 justify-center">
-											Sign In
-										</Link>
-										<Link href="/register" onClick={closeAllMenus} className="btn-primary flex-1 justify-center">
-											Get Started
-											<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" />
-										</Link>
-									</div>
-								)}
+									) : (
+										<div className="flex gap-2">
+											<Link href="/login" onClick={closeAllMenus} className="btn-secondary flex-1 justify-center">
+												Sign In
+											</Link>
+											<Link href="/register" onClick={closeAllMenus} className="btn-primary flex-1 justify-center">
+												Get Started
+												<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" />
+											</Link>
+										</div>
+									)}
+								</div>
 							</div>
-						</div>
-					</>
-				)}
+						</>,
+						document.body
+					)
+					: null}
 			</div>
 		</>
 	);

@@ -33,19 +33,19 @@ export default function Page() {
 		<div className="max-w-3xl mx-auto space-y-6">
 			{/* Header */}
 			<div className="flex items-center gap-4">
-				<Link href="/meals" className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
-					<i className="ri-arrow-left-line text-xl text-slate-600" />
+				<Link href="/meals" className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 flex items-center justify-center transition-colors">
+					<i className="ri-arrow-left-line text-xl text-slate-600 dark:text-slate-300" />
 				</Link>
 				<div>
-					<h1 className="text-2xl font-bold text-slate-900">Log Meal</h1>
-					<p className="text-slate-500">Track what you eat</p>
+					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Log Meal</h1>
+					<p className="text-slate-500 dark:text-slate-400">Track what you eat</p>
 				</div>
 			</div>
 
 			<form action={action} className="space-y-6">
 				{/* Basic Info Card */}
 				<div className="card p-6 space-y-5">
-					<h2 className="font-semibold text-slate-900 flex items-center gap-2">
+					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
 						<i className="ri-restaurant-2-line text-brand-500" />
 						Meal Details
 					</h2>
@@ -89,7 +89,7 @@ export default function Page() {
 
 				{/* Nutrition Card */}
 				<div className="card p-6 space-y-5">
-					<h2 className="font-semibold text-slate-900 flex items-center gap-2">
+					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
 						<i className="ri-heart-pulse-line text-brand-500" />
 						Nutritional Information
 					</h2>
@@ -190,12 +190,12 @@ export default function Page() {
 				{/* Quick Add from Recipe */}
 				<div className="card p-6 bg-slate-50/90 dark:bg-slate-900/60">
 					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center">
+						<div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-950 flex items-center justify-center">
 							<i className="ri-book-open-line text-xl text-brand-600" />
 						</div>
 						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900">Add from Recipe</h3>
-							<p className="text-sm text-slate-600">Auto-fill nutrition from your saved recipes</p>
+							<h3 className="font-semibold text-slate-900 dark:text-slate-100">Add from Recipe</h3>
+							<p className="text-sm text-slate-600 dark:text-slate-300">Auto-fill nutrition from your saved recipes</p>
 						</div>
 						<Link href="/recipes" className="btn-secondary text-sm">
 							Browse Recipes
@@ -203,20 +203,20 @@ export default function Page() {
 					</div>
 				</div>
 
-				{/* Warnings from backend nutrition consistency check */}
+				{/* Warnings from nutrition consistency check */}
 				{formState.status === "success" && formState.warnings?.length ? (
 					<div ref={warningsRef} className="space-y-4">
-						<div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
+						<div className="p-4 rounded-xl bg-amber-50 border border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20">
 							<div className="flex items-start gap-3">
 								<i className="ri-error-warning-line text-xl text-amber-600 mt-0.5 shrink-0" />
 								<div>
-									<p className="font-semibold text-amber-800">Nutrition hint{formState.warnings.length > 1 ? "s" : ""}</p>
+									<p className="font-semibold text-amber-800 dark:text-amber-300">Nutrition hint{formState.warnings.length > 1 ? "s" : ""}</p>
 									<ul className="mt-2 space-y-1.5">
 										{formState.warnings.map((w, i) => (
-											<li key={i} className="text-sm text-amber-700">{w}</li>
+											<li key={i} className="text-sm text-amber-700 dark:text-amber-200">{w}</li>
 										))}
 									</ul>
-									<p className="text-xs text-amber-500 mt-3">Your entry was saved. You can adjust it or continue to the diary.</p>
+									<p className="text-xs text-amber-600 dark:text-amber-300/80 mt-3">Your entry was saved. You can adjust it or continue to the diary.</p>
 								</div>
 							</div>
 						</div>
@@ -226,7 +226,7 @@ export default function Page() {
 						</Link>
 					</div>
 				) : formState.status === "error" && formState.message ? (
-					<div className="flex items-center gap-2 p-4 rounded-xl bg-red-50 text-red-600">
+					<div className="flex items-center gap-2 p-4 rounded-xl bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300">
 						<i className="ri-error-warning-line text-xl" />
 						<span>{formState.message}</span>
 					</div>

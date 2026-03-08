@@ -2,7 +2,6 @@ import Link from "next/link";
 import logoTransparent from "@/public/logo_transparent.png";
 import Image from "next/image";
 import { getUserOptionalServer } from "@/helper/session";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
 import NavbarContent from "./NavbarContent";
 
 export default async function Navbar() {
@@ -23,15 +22,14 @@ export default async function Navbar() {
 								className="relative rounded-2xl"
 							/>
 						</div>
-						<div className="flex flex-col">
-							<span className="text-xl font-semibold text-slate-950 dark:text-slate-50">
-								Mizan
-							</span>
-							<span className="hidden items-center gap-1 text-[10px] uppercase tracking-[0.18em] text-slate-500 sm:inline-flex">
-								<AnimatedIcon name="sparkles" size={12} aria-hidden="true" />
-								ሚዛን • Balance
-							</span>
-						</div>
+					<div className="flex flex-col">
+						<span className="text-xl font-semibold text-slate-950 dark:text-slate-50">
+							Mizan
+						</span>
+						<span className="hidden items-center gap-1 text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 sm:inline-flex">
+							ሚዛን • Balance
+						</span>
+					</div>
 					</Link>
 					<NavbarContent user={user} />
 				</div>

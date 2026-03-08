@@ -111,7 +111,7 @@ export default async function RecipesPage({
 									<h3 className="font-semibold text-slate-900 dark:text-slate-100">
 										{collection.name}
 									</h3>
-									<p className="text-sm text-slate-500">{collection.count} recipes</p>
+									<p className="text-sm text-slate-500 dark:text-slate-400">{collection.count} recipes</p>
 								</div>
 								<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
 							</div>
@@ -132,7 +132,7 @@ export default async function RecipesPage({
 								<h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
 									Create Your Own Recipe
 								</h3>
-								<p className="text-slate-600">
+								<p className="text-slate-600 dark:text-slate-300">
 									Share your favorite healthy meals with the community
 								</p>
 							</div>
@@ -166,9 +166,9 @@ export default async function RecipesPage({
 							<Link
 								key={recipe.id}
 								href={`/recipes/${recipe.id}`}
-								className="group flex flex-col sm:flex-row bg-slate-50 hover:bg-slate-100 rounded-2xl overflow-hidden transition-all duration-300"
+								className="group flex flex-col sm:flex-row bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 rounded-2xl overflow-hidden transition-all duration-300"
 							>
-								<div className="sm:w-48 h-48 sm:h-auto relative bg-slate-200">
+								<div className="sm:w-48 h-48 sm:h-auto relative bg-slate-200 dark:bg-slate-800">
 									<Image
 										src={recipe.imageUrl || placeHolderImage}
 										alt={recipe.title || "Recipe"}
@@ -182,30 +182,30 @@ export default async function RecipesPage({
 											<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 group-hover:text-brand-600 transition-colors mb-2">
 												{recipe.title}
 											</h3>
-											<p className="text-slate-600 text-sm line-clamp-2 mb-4">
+											<p className="text-slate-600 dark:text-slate-300 text-sm line-clamp-2 mb-4">
 												{recipe.description || "A delicious recipe"}
 											</p>
 										</div>
 									</div>
 									<div className="flex flex-wrap gap-2 mt-4">
-										<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-50 text-orange-700 text-sm font-medium">
+										<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-50 text-orange-700 text-sm font-medium dark:bg-orange-500/15 dark:text-orange-300">
 											<i className="ri-fire-line" />
 											{recipe.nutrition?.caloriesPerServing || 0} kcal
 										</span>
-										<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 text-red-700 text-sm font-medium">
+										<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 text-red-700 text-sm font-medium dark:bg-red-500/15 dark:text-red-300">
 											<i className="ri-heart-pulse-line" />
 											{recipe.nutrition?.proteinGrams?.toFixed(0) || 0}g protein
 										</span>
-										<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 text-sm font-medium">
+										<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 text-sm font-medium dark:bg-amber-500/15 dark:text-amber-300">
 											<i className="ri-bread-line" />
 											{recipe.nutrition?.carbsGrams?.toFixed(0) || 0}g carbs
 										</span>
-										<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-yellow-50 text-yellow-700 text-sm font-medium">
+										<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-yellow-50 text-yellow-700 text-sm font-medium dark:bg-yellow-500/15 dark:text-yellow-300">
 											<i className="ri-drop-line" />
 											{recipe.nutrition?.fatGrams?.toFixed(0) || 0}g fat
 										</span>
 										{recipe.nutrition?.proteinCalorieRatio != null && recipe.nutrition.proteinCalorieRatio > 0 && (
-											<span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold">
+											<span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold dark:bg-indigo-500/15 dark:text-indigo-300">
 												{recipe.nutrition.proteinCalorieRatio.toFixed(0)}% P/Cal
 											</span>
 										)}
@@ -216,13 +216,13 @@ export default async function RecipesPage({
 					</div>
 				) : (
 					<div className="text-center py-16">
-						<div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+						<div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center mx-auto mb-4">
 							<i className="ri-restaurant-line text-3xl text-slate-400" />
 						</div>
 						<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
 							No recipes yet
 						</h3>
-						<p className="text-slate-500 mb-6">Be the first to add a delicious recipe!</p>
+						<p className="text-slate-500 dark:text-slate-400 mb-6">Be the first to add a delicious recipe!</p>
 						{user && (
 							<Link href="/recipes/add" className="btn-primary">
 								<i className="ri-add-line" />

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
@@ -6,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AppearanceSync } from "@/components/appearance/AppearanceSync";
 import { getUserOptionalServer } from "@/helper/session";
 import { getAppearanceSettingsFromUser, getServerAppearanceClasses } from "@/lib/appearance";
+import logoTransparent from "@/public/logo_transparent.png";
 import 'remixicon/fonts/remixicon.css';
 
 export const dynamic = 'force-dynamic';
@@ -46,9 +48,9 @@ async function LayoutContent({
 					<div className="surface-panel max-w-7xl mx-auto px-5 py-6 sm:px-6 sm:py-7">
 						<div className="grid grid-cols-1 gap-6 text-center sm:grid-cols-3 sm:text-left">
 							<div className="flex items-center justify-center gap-3 sm:justify-start">
-								<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
-									<AnimatedIcon name="sparkles" size={18} aria-hidden="true" />
-								</span>
+								<div className="relative h-11 w-11 overflow-hidden rounded-2xl ring-1 ring-brand-500/20">
+									<Image src={logoTransparent} alt="Mizan" fill className="object-cover" priority />
+								</div>
 								<div>
 									<p className="text-lg font-semibold text-slate-950 dark:text-slate-50">
 										Mizan

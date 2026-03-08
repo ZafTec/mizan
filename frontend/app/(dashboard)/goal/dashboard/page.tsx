@@ -15,6 +15,14 @@ const MACRO_COLORS = {
   fat: "#eab308",      // yellow
 };
 
+const CHART_COLORS = {
+	grid: "var(--border)",
+	axis: "var(--muted-foreground)",
+	tooltipBackground: "var(--popover)",
+	tooltipBorder: "var(--border)",
+	tooltipText: "var(--popover-foreground)",
+};
+
 export default function GoalDashboard() {
   const [data, setData] = useState<GoalData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -202,19 +210,20 @@ export default function GoalDashboard() {
       {/* Line Chart - Calories Trend */}
       <div className="card p-6">
         <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6">Calorie Trend</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis dataKey="date" stroke="#64748b" />
-            <YAxis stroke="#64748b" />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#ffffff",
-                border: "1px solid #e2e8f0",
-                borderRadius: "12px",
-                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-              }}
-            />
+		<ResponsiveContainer width="100%" height={300}>
+		  <LineChart data={chartData}>
+			<CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+			<XAxis dataKey="date" stroke={CHART_COLORS.axis} />
+			<YAxis stroke={CHART_COLORS.axis} />
+			<Tooltip
+			  contentStyle={{
+				backgroundColor: CHART_COLORS.tooltipBackground,
+				border: `1px solid ${CHART_COLORS.tooltipBorder}`,
+				borderRadius: "12px",
+				boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+				color: CHART_COLORS.tooltipText,
+			  }}
+			/>
             <Legend />
             <Line
               type="monotone"
@@ -240,19 +249,20 @@ export default function GoalDashboard() {
       {/* Bar Chart - Macros Breakdown */}
       <div className="card p-6">
         <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6">Macro Breakdown</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis dataKey="date" stroke="#64748b" />
-            <YAxis stroke="#64748b" />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#ffffff",
-                border: "1px solid #e2e8f0",
-                borderRadius: "12px",
-                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-              }}
-            />
+		<ResponsiveContainer width="100%" height={300}>
+		  <BarChart data={chartData}>
+			<CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+			<XAxis dataKey="date" stroke={CHART_COLORS.axis} />
+			<YAxis stroke={CHART_COLORS.axis} />
+			<Tooltip
+			  contentStyle={{
+				backgroundColor: CHART_COLORS.tooltipBackground,
+				border: `1px solid ${CHART_COLORS.tooltipBorder}`,
+				borderRadius: "12px",
+				boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+				color: CHART_COLORS.tooltipText,
+			  }}
+			/>
             <Legend />
             <Bar dataKey="protein" fill={MACRO_COLORS.protein} radius={[8, 8, 0, 0]} />
             <Bar dataKey="carbs" fill={MACRO_COLORS.carbs} radius={[8, 8, 0, 0]} />
