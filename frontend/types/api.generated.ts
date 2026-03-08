@@ -1747,6 +1747,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Profile/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Recipes": {
         parameters: {
             query?: never;
@@ -2332,7 +2365,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["ClientNutritionDto"];
+                        "application/json": components["schemas"]["ClientNutritionDto"];
+                        "text/json": components["schemas"]["ClientNutritionDto"];
+                    };
                 };
             };
         };
@@ -2408,7 +2445,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["MyTrainerDto"];
+                        "application/json": components["schemas"]["MyTrainerDto"];
+                        "text/json": components["schemas"]["MyTrainerDto"];
+                    };
                 };
             };
         };
@@ -2608,87 +2649,87 @@ export interface components {
     schemas: {
         AchievementDto: {
             /** Format: uuid */
-            id?: string;
-            name?: string | null;
+            id: string;
+            name: string;
             description?: string | null;
             iconUrl?: string | null;
             /** Format: int32 */
-            points?: number;
+            points: number;
             category?: string | null;
-            isEarned?: boolean;
+            isEarned: boolean;
             /** Format: date-time */
             earnedAt?: string | null;
         };
         AddMemberRequest: {
-            email?: string | null;
+            email: string;
         };
         AddRecipeToMealPlanRequest: {
             /** Format: uuid */
-            recipeId?: string;
+            recipeId: string;
             /** Format: date */
-            date?: string;
-            mealType?: string | null;
+            date: string;
+            mealType: string;
             /** Format: double */
-            servings?: number;
+            servings: number;
         };
         AddRecipeToMealPlanResult: {
             /** Format: uuid */
-            id?: string;
-            success?: boolean;
+            id: string;
+            success: boolean;
         };
         AddShoppingListItemRequest: {
-            itemName?: string | null;
+            itemName: string;
             /** Format: double */
             amount?: number | null;
             unit?: string | null;
             category?: string | null;
         };
         AiChatRequest: {
-            message?: string | null;
+            message: string;
         };
         AiChatResponse: {
-            response?: string | null;
+            response: string;
         };
         AuditLogDto: {
             /** Format: uuid */
-            id?: string;
+            id: string;
             /** Format: uuid */
             userId?: string | null;
             userEmail?: string | null;
-            action?: string | null;
-            entityType?: string | null;
-            entityId?: string | null;
+            action: string;
+            entityType: string;
+            entityId: string;
             details?: string | null;
             ipAddress?: string | null;
             /** Format: date-time */
-            timestamp?: string;
+            timestamp: string;
         };
         AuditLogDtoPagedResult: {
-            items?: components["schemas"]["AuditLogDto"][] | null;
+            items: components["schemas"]["AuditLogDto"][];
             /** Format: int32 */
-            totalCount?: number;
+            totalCount: number;
             /** Format: int32 */
-            page?: number;
+            page: number;
             /** Format: int32 */
-            pageSize?: number;
+            pageSize: number;
             /** Format: int32 */
-            readonly totalPages?: number;
+            readonly totalPages: number;
         };
         AuthDebugDto: {
-            isAuthenticated?: boolean;
+            isAuthenticated: boolean;
             /** Format: uuid */
             userId?: string | null;
             email?: string | null;
             claims?: components["schemas"]["ClaimDto"][] | null;
-            user?: components["schemas"]["UserDto"];
+            user: components["schemas"]["UserDto"];
             authenticationType?: string | null;
             error?: string | null;
         };
         BodyMeasurementDto: {
             /** Format: uuid */
-            id?: string;
+            id: string;
             /** Format: date-time */
-            date?: string;
+            date: string;
             /** Format: double */
             weightKg?: number | null;
             /** Format: double */
@@ -2712,35 +2753,43 @@ export interface components {
             notes?: string | null;
         };
         BodyMeasurementDtoPagedResult: {
-            items?: components["schemas"]["BodyMeasurementDto"][] | null;
+            items: components["schemas"]["BodyMeasurementDto"][];
             /** Format: int32 */
-            totalCount?: number;
+            totalCount: number;
             /** Format: int32 */
-            page?: number;
+            page: number;
             /** Format: int32 */
-            pageSize?: number;
+            pageSize: number;
             /** Format: int32 */
-            readonly totalPages?: number;
+            readonly totalPages: number;
         };
         ChatConversationDto: {
             /** Format: uuid */
-            id?: string;
+            id: string;
             /** Format: uuid */
-            relationshipId?: string;
-            messages?: components["schemas"]["ChatMessageDto"][] | null;
+            relationshipId: string;
+            messages: components["schemas"]["ChatMessageDto"][];
         };
         ChatMessageDto: {
             /** Format: uuid */
-            id?: string;
+            id: string;
             /** Format: uuid */
-            senderId?: string;
-            content?: string | null;
+            senderId: string;
+            content: string;
             /** Format: date-time */
-            sentAt?: string;
+            sentAt: string;
         };
         ClaimDto: {
-            type?: string | null;
-            value?: string | null;
+            type: string;
+            value: string;
+        };
+        ClientNutritionDto: {
+            /** Format: uuid */
+            clientId: string;
+            /** Format: date-time */
+            date: string;
+            foodLogs: components["schemas"]["FoodLogEntryDto"][];
+            summary: components["schemas"]["NutritionSummaryDto"];
         };
         CreateExerciseCommand: {
             name: string;
@@ -2753,28 +2802,28 @@ export interface components {
         };
         CreateExerciseResult: {
             /** Format: uuid */
-            id?: string;
-            name?: string | null;
-            success?: boolean;
+            id: string;
+            name: string;
+            success: boolean;
         };
         CreateFoodCommand: {
             name: string;
             brand?: string | null;
             barcode?: string | null;
             /** Format: double */
-            caloriesPer100g?: number;
+            caloriesPer100g: number;
             /** Format: double */
-            proteinPer100g?: number;
+            proteinPer100g: number;
             /** Format: double */
-            carbsPer100g?: number;
+            carbsPer100g: number;
             /** Format: double */
-            fatPer100g?: number;
+            fatPer100g: number;
             /** Format: double */
             fiberPer100g?: number | null;
             /** Format: double */
-            servingSize?: number;
-            servingUnit?: string | null;
-            isVerified?: boolean;
+            servingSize: number;
+            servingUnit: string;
+            isVerified: boolean;
         };
         CreateFoodDiaryEntryCommand: {
             /** Format: uuid */
@@ -2785,7 +2834,7 @@ export interface components {
             entryDate?: string | null;
             mealType: string;
             /** Format: double */
-            servings?: number;
+            servings: number;
             /** Format: double */
             calories?: number | null;
             /** Format: double */
@@ -2796,36 +2845,36 @@ export interface components {
             fatGrams?: number | null;
             /** Format: double */
             fiberGrams?: number | null;
-            name?: string | null;
+            name: string;
         };
         CreateFoodDiaryEntryResult: {
             /** Format: uuid */
-            id?: string;
-            success?: boolean;
+            id: string;
+            success: boolean;
             message?: string | null;
-            warnings?: string[] | null;
+            warnings: string[];
         };
         CreateFoodResult: {
             /** Format: uuid */
-            id?: string;
-            success?: boolean;
+            id: string;
+            success: boolean;
             message?: string | null;
         };
         CreateHouseholdRequest: {
-            name?: string | null;
+            name: string;
         };
         CreateMcpTokenCommand: {
-            name?: string | null;
+            name: string;
             /** Format: date-time */
             expiresAt?: string | null;
         };
         CreateMcpTokenResult: {
             /** Format: uuid */
-            id?: string;
-            plaintextToken?: string | null;
-            name?: string | null;
+            id: string;
+            plaintextToken: string;
+            name: string;
             /** Format: date-time */
-            createdAt?: string;
+            createdAt: string;
             /** Format: date-time */
             expiresAt?: string | null;
         };
@@ -2837,32 +2886,32 @@ export interface components {
             endDate: string;
             /** Format: uuid */
             householdId?: string | null;
-            recipes?: components["schemas"]["MealPlanRecipeDto"][] | null;
+            recipes: components["schemas"]["MealPlanRecipeDto"][];
         };
         CreateMealPlanResult: {
             /** Format: uuid */
-            id?: string;
+            id: string;
             name?: string | null;
             /** Format: int32 */
-            recipeCount?: number;
+            recipeCount: number;
         };
         CreateRecipeCommand: {
             title: string;
             description?: string | null;
             /** Format: int32 */
-            servings?: number;
+            servings: number;
             /** Format: int32 */
             prepTimeMinutes?: number | null;
             /** Format: int32 */
             cookTimeMinutes?: number | null;
             imageUrl?: string | null;
-            isPublic?: boolean;
+            isPublic: boolean;
             /** Format: uuid */
             householdId?: string | null;
             ingredients: components["schemas"]["CreateRecipeIngredientDto"][];
-            instructions?: string[] | null;
-            tags?: string[] | null;
-            nutrition?: components["schemas"]["CreateRecipeNutritionDto"];
+            instructions: string[];
+            tags: string[];
+            nutrition: components["schemas"]["CreateRecipeNutritionDto"];
         };
         CreateRecipeIngredientDto: {
             /** Format: uuid */
@@ -2888,11 +2937,11 @@ export interface components {
         };
         CreateRecipeResult: {
             /** Format: uuid */
-            id?: string;
-            title?: string | null;
+            id: string;
+            title: string;
         };
         CreateShoppingListRequest: {
-            name?: string | null;
+            name: string;
             /** Format: uuid */
             householdId?: string | null;
         };
@@ -2922,25 +2971,25 @@ export interface components {
         };
         CreateUserGoalResult: {
             /** Format: uuid */
-            id?: string;
-            success?: boolean;
+            id: string;
+            success: boolean;
             message?: string | null;
-            warnings?: string[] | null;
+            warnings: string[];
         };
         DailyNutritionRangeResult: {
-            days?: components["schemas"]["DailyNutritionSummaryDto"][] | null;
+            days: components["schemas"]["DailyNutritionSummaryDto"][];
         };
         DailyNutritionResult: {
             /** Format: date */
-            date?: string;
+            date: string;
             /** Format: double */
-            totalCalories?: number;
+            totalCalories: number;
             /** Format: double */
-            totalProtein?: number;
+            totalProtein: number;
             /** Format: double */
-            totalCarbs?: number;
+            totalCarbs: number;
             /** Format: double */
-            totalFat?: number;
+            totalFat: number;
             /** Format: double */
             targetCalories?: number | null;
             /** Format: double */
@@ -2949,72 +2998,72 @@ export interface components {
             targetCarbs?: number | null;
             /** Format: double */
             targetFat?: number | null;
-            mealBreakdown?: components["schemas"]["MealSummary"][] | null;
+            mealBreakdown: components["schemas"]["MealSummary"][];
         };
         DailyNutritionSummaryDto: {
             /** Format: date */
-            date?: string;
+            date: string;
             /** Format: double */
-            calories?: number;
+            calories: number;
             /** Format: double */
-            protein?: number;
+            protein: number;
             /** Format: double */
-            carbs?: number;
+            carbs: number;
             /** Format: double */
-            fat?: number;
+            fat: number;
             /** Format: double */
-            fiber?: number;
+            fiber: number;
         };
         DailyTotalsDto: {
             /** Format: double */
-            calories?: number;
+            calories: number;
             /** Format: double */
-            protein?: number;
+            protein: number;
             /** Format: double */
-            carbs?: number;
+            carbs: number;
             /** Format: double */
-            fat?: number;
+            fat: number;
             /** Format: double */
-            fiber?: number;
+            fiber: number;
         };
         DailyUsageDto: {
             /** Format: date */
-            date?: string;
+            date: string;
             /** Format: int32 */
-            callCount?: number;
+            callCount: number;
             /** Format: int32 */
-            successCount?: number;
+            successCount: number;
             /** Format: int32 */
-            failureCount?: number;
+            failureCount: number;
         };
         DeleteBodyMeasurementResult: {
-            success?: boolean;
+            success: boolean;
             message?: string | null;
         };
         DeleteFoodResult: {
-            success?: boolean;
+            success: boolean;
             message?: string | null;
         };
         DeleteMealPlanResult: {
-            success?: boolean;
+            success: boolean;
             message?: string | null;
         };
         DeleteRecipeResult: {
-            success?: boolean;
+            success: boolean;
             message?: string | null;
         };
         ExerciseDto: {
             /** Format: uuid */
-            id?: string;
-            name?: string | null;
+            id: string;
+            name: string;
             description?: string | null;
-            category?: string | null;
+            category: string;
             muscleGroup?: string | null;
             equipment?: string | null;
             videoUrl?: string | null;
             imageUrl?: string | null;
-            isCustom?: boolean;
-            isOwner?: boolean;
+            isCustom: boolean;
+            isOwner: boolean;
         };
         ExerciseSetDto: {
             /** Format: int32 */
@@ -3027,19 +3076,19 @@ export interface components {
             distanceMeters?: number | null;
         };
         FoodAnalysisResult: {
-            foods?: components["schemas"]["RecognizedFood"][] | null;
+            foods: components["schemas"]["RecognizedFood"][];
             /** Format: double */
-            totalCalories?: number;
+            totalCalories: number;
             /** Format: double */
-            confidence?: number;
+            confidence: number;
         };
         FoodDiaryEntryDto: {
             /** Format: uuid */
-            id?: string;
-            mealType?: string | null;
-            name?: string | null;
+            id: string;
+            mealType: string;
+            name: string;
             /** Format: double */
-            servings?: number;
+            servings: number;
             /** Format: double */
             calories?: number | null;
             /** Format: double */
@@ -3053,140 +3102,158 @@ export interface components {
             /** Format: double */
             proteinCalorieRatio?: number | null;
             /** Format: date-time */
-            loggedAt?: string;
+            loggedAt: string;
         };
         FoodDiaryResult: {
             /** Format: date */
-            date?: string;
-            entries?: components["schemas"]["FoodDiaryEntryDto"][] | null;
-            totals?: components["schemas"]["DailyTotalsDto"];
+            date: string;
+            entries: components["schemas"]["FoodDiaryEntryDto"][];
+            totals: components["schemas"]["DailyTotalsDto"];
         };
         FoodDto: {
             /** Format: uuid */
-            id?: string;
-            name?: string | null;
+            id: string;
+            name: string;
             brand?: string | null;
             barcode?: string | null;
             /** Format: double */
-            servingSize?: number;
-            servingUnit?: string | null;
+            servingSize: number;
+            servingUnit: string;
             /** Format: double */
-            caloriesPer100g?: number;
+            caloriesPer100g: number;
             /** Format: double */
-            proteinPer100g?: number;
+            proteinPer100g: number;
             /** Format: double */
-            carbsPer100g?: number;
+            carbsPer100g: number;
             /** Format: double */
-            fatPer100g?: number;
+            fatPer100g: number;
             /** Format: double */
             fiberPer100g?: number | null;
             /** Format: double */
-            proteinCalorieRatio?: number;
-            isVerified?: boolean;
+            proteinCalorieRatio: number;
+            isVerified: boolean;
         };
         FoodDtoPagedResult: {
-            items?: components["schemas"]["FoodDto"][] | null;
+            items: components["schemas"]["FoodDto"][];
             /** Format: int32 */
-            totalCount?: number;
+            totalCount: number;
             /** Format: int32 */
-            page?: number;
+            page: number;
             /** Format: int32 */
-            pageSize?: number;
+            pageSize: number;
             /** Format: int32 */
-            readonly totalPages?: number;
+            readonly totalPages: number;
+        };
+        FoodLogEntryDto: {
+            /** Format: uuid */
+            id: string;
+            foodName: string;
+            /** Format: double */
+            servingSize: number;
+            servingUnit?: string | null;
+            /** Format: double */
+            calories: number;
+            /** Format: double */
+            protein: number;
+            /** Format: double */
+            carbs: number;
+            /** Format: double */
+            fat: number;
+            /** Format: date-time */
+            loggedAt: string;
         };
         GetAchievementsResult: {
-            items?: components["schemas"]["AchievementDto"][] | null;
+            items: components["schemas"]["AchievementDto"][];
             /** Format: int32 */
-            totalCount?: number;
+            totalCount: number;
             /** Format: int32 */
-            page?: number;
+            page: number;
             /** Format: int32 */
-            pageSize?: number;
+            pageSize: number;
             /** Format: int32 */
-            readonly totalPages?: number;
+            readonly totalPages: number;
             /** Format: int32 */
-            totalPoints?: number;
+            totalPoints: number;
             /** Format: int32 */
-            earnedCount?: number;
+            earnedCount: number;
         };
         GetExercisesResult: {
-            items?: components["schemas"]["ExerciseDto"][] | null;
+            items: components["schemas"]["ExerciseDto"][];
             /** Format: int32 */
-            totalCount?: number;
+            totalCount: number;
             /** Format: int32 */
-            page?: number;
+            page: number;
             /** Format: int32 */
-            pageSize?: number;
+            pageSize: number;
             /** Format: int32 */
-            readonly totalPages?: number;
-            categories?: string[] | null;
-            muscleGroups?: string[] | null;
-            equipmentOptions?: string[] | null;
+            readonly totalPages: number;
+            categories: string[];
+            muscleGroups: string[];
+            equipmentOptions: string[];
         };
         GetStreakResult: {
             /** Format: int32 */
-            currentStreak?: number;
+            currentStreak: number;
             /** Format: int32 */
-            longestStreak?: number;
+            longestStreak: number;
             /** Format: date */
             lastActivityDate?: string | null;
-            isActiveToday?: boolean;
+            isActiveToday: boolean;
         };
         GoalProgressEntryDto: {
             /** Format: uuid */
-            id?: string;
+            id: string;
             /** Format: date */
-            date?: string;
+            date: string;
             /** Format: double */
-            actualCalories?: number;
+            actualCalories: number;
             /** Format: double */
-            actualProteinGrams?: number;
+            actualProteinGrams: number;
             /** Format: double */
-            actualCarbsGrams?: number;
+            actualCarbsGrams: number;
             /** Format: double */
-            actualFatGrams?: number;
+            actualFatGrams: number;
             /** Format: double */
             actualWeight?: number | null;
             notes?: string | null;
         };
         GoalProgressHistoryDto: {
-            goal?: components["schemas"]["UserGoalSummaryDto"];
-            progressEntries?: components["schemas"]["GoalProgressEntryDto"][] | null;
+            goal: components["schemas"]["UserGoalSummaryDto"];
+            progressEntries: components["schemas"]["GoalProgressEntryDto"][];
         };
         HealthCheckEntryDto: {
-            name?: string | null;
-            status?: string | null;
+            name: string;
+            status: string;
             description?: string | null;
             /** Format: double */
-            duration?: number;
-            tags?: string[] | null;
+            duration: number;
+            tags: string[];
         };
         HealthReportDto: {
-            status?: string | null;
+            status: string;
             /** Format: double */
-            totalDuration?: number;
-            system?: components["schemas"]["SystemInfoDto"];
-            entries?: components["schemas"]["HealthCheckEntryDto"][] | null;
+            totalDuration: number;
+            system: components["schemas"]["SystemInfoDto"];
+            entries: components["schemas"]["HealthCheckEntryDto"][];
         };
         HouseholdDto: {
             /** Format: uuid */
-            id?: string;
-            name?: string | null;
+            id: string;
+            name: string;
             /** Format: uuid */
             createdBy?: string | null;
             /** Format: date-time */
-            createdAt?: string;
-            members?: components["schemas"]["HouseholdMemberDto"][] | null;
+            createdAt: string;
+            members: components["schemas"]["HouseholdMemberDto"][];
         };
         HouseholdMemberDto: {
             /** Format: uuid */
-            userId?: string;
+            userId: string;
             name?: string | null;
             email?: string | null;
             role?: string | null;
             /** Format: date-time */
-            joinedAt?: string;
+            joinedAt: string;
         };
         LogFoodCommand: {
             /** Format: uuid */
@@ -3194,33 +3261,33 @@ export interface components {
             /** Format: uuid */
             recipeId?: string | null;
             /** Format: date */
-            entryDate?: string;
-            mealType?: string | null;
+            entryDate: string;
+            mealType: string;
             /** Format: double */
-            servings?: number;
+            servings: number;
         };
         LogFoodResult: {
             /** Format: uuid */
-            id?: string;
+            id: string;
             /** Format: double */
-            calories?: number;
+            calories: number;
             /** Format: double */
-            proteinGrams?: number;
+            proteinGrams: number;
             /** Format: double */
-            carbsGrams?: number;
+            carbsGrams: number;
             /** Format: double */
-            fatGrams?: number;
-            message?: string | null;
+            fatGrams: number;
+            message: string;
         };
         LogMcpUsageCommand: {
             /** Format: uuid */
-            mcpTokenId?: string;
-            toolName?: string | null;
+            mcpTokenId: string;
+            toolName: string;
             parameters?: string | null;
-            success?: boolean;
+            success: boolean;
             errorMessage?: string | null;
             /** Format: int32 */
-            executionTimeMs?: number;
+            executionTimeMs: number;
         };
         LogMeasurementRequest: {
             /** Format: date-time */
@@ -3250,119 +3317,119 @@ export interface components {
         LogWorkoutCommand: {
             name?: string | null;
             /** Format: date */
-            workoutDate?: string;
+            workoutDate: string;
             /** Format: int32 */
             durationMinutes?: number | null;
             /** Format: int32 */
             caloriesBurned?: number | null;
             notes?: string | null;
-            exercises?: components["schemas"]["WorkoutExerciseDto"][] | null;
+            exercises: components["schemas"]["WorkoutExerciseDto"][];
         };
         LogWorkoutResult: {
             /** Format: uuid */
-            id?: string;
-            message?: string | null;
+            id: string;
+            message: string;
             /** Format: int32 */
-            totalExercises?: number;
+            totalExercises: number;
             /** Format: int32 */
-            totalSets?: number;
+            totalSets: number;
         };
         McpTokenDto: {
             /** Format: uuid */
-            id?: string;
-            name?: string | null;
+            id: string;
+            name: string;
             /** Format: date-time */
-            createdAt?: string;
+            createdAt: string;
             /** Format: date-time */
             expiresAt?: string | null;
             /** Format: date-time */
             lastUsedAt?: string | null;
-            isActive?: boolean;
+            isActive: boolean;
         };
         McpTokenDtoPagedResult: {
-            items?: components["schemas"]["McpTokenDto"][] | null;
+            items: components["schemas"]["McpTokenDto"][];
             /** Format: int32 */
-            totalCount?: number;
+            totalCount: number;
             /** Format: int32 */
-            page?: number;
+            page: number;
             /** Format: int32 */
-            pageSize?: number;
+            pageSize: number;
             /** Format: int32 */
-            readonly totalPages?: number;
+            readonly totalPages: number;
         };
         McpUsageAnalyticsResult: {
-            overview?: components["schemas"]["UsageOverview"];
-            toolUsage?: components["schemas"]["ToolUsageDto"][] | null;
-            tokenUsage?: components["schemas"]["TokenUsageDto"][] | null;
-            dailyUsage?: components["schemas"]["DailyUsageDto"][] | null;
+            overview: components["schemas"]["UsageOverview"];
+            toolUsage: components["schemas"]["ToolUsageDto"][];
+            tokenUsage: components["schemas"]["TokenUsageDto"][];
+            dailyUsage: components["schemas"]["DailyUsageDto"][];
         };
         MealPlanDetailDto: {
             /** Format: uuid */
-            id?: string;
+            id: string;
             name?: string | null;
             /** Format: date */
-            startDate?: string;
+            startDate: string;
             /** Format: date */
-            endDate?: string;
-            recipes?: components["schemas"]["MealPlanRecipeDetailDto"][] | null;
-            nutritionSummary?: components["schemas"]["MealPlanNutritionSummaryDto"];
+            endDate: string;
+            recipes: components["schemas"]["MealPlanRecipeDetailDto"][];
+            nutritionSummary: components["schemas"]["MealPlanNutritionSummaryDto"];
             /** Format: date-time */
-            createdAt?: string;
+            createdAt: string;
             /** Format: date-time */
-            updatedAt?: string;
+            updatedAt: string;
         };
         MealPlanDto: {
             /** Format: uuid */
-            id?: string;
+            id: string;
             name?: string | null;
             /** Format: date */
-            startDate?: string;
+            startDate: string;
             /** Format: date */
-            endDate?: string;
+            endDate: string;
             /** Format: int32 */
-            recipeCount?: number;
+            recipeCount: number;
             /** Format: date-time */
-            createdAt?: string;
+            createdAt: string;
             /** Format: date-time */
-            updatedAt?: string;
+            updatedAt: string;
         };
         MealPlanDtoPagedResult: {
-            items?: components["schemas"]["MealPlanDto"][] | null;
+            items: components["schemas"]["MealPlanDto"][];
             /** Format: int32 */
-            totalCount?: number;
+            totalCount: number;
             /** Format: int32 */
-            page?: number;
+            page: number;
             /** Format: int32 */
-            pageSize?: number;
+            pageSize: number;
             /** Format: int32 */
-            readonly totalPages?: number;
+            readonly totalPages: number;
         };
         MealPlanNutritionSummaryDto: {
             /** Format: double */
-            totalCalories?: number;
+            totalCalories: number;
             /** Format: double */
-            totalProteinGrams?: number;
+            totalProteinGrams: number;
             /** Format: double */
-            totalCarbsGrams?: number;
+            totalCarbsGrams: number;
             /** Format: double */
-            totalFatGrams?: number;
+            totalFatGrams: number;
             /** Format: int32 */
-            daysCount?: number;
+            daysCount: number;
             /** Format: double */
-            avgCaloriesPerDay?: number;
+            avgCaloriesPerDay: number;
         };
         MealPlanRecipeDetailDto: {
             /** Format: uuid */
-            id?: string;
+            id: string;
             /** Format: uuid */
-            recipeId?: string;
-            recipeTitle?: string | null;
+            recipeId: string;
+            recipeTitle: string;
             recipeImageUrl?: string | null;
             /** Format: date */
-            date?: string;
-            mealType?: string | null;
+            date: string;
+            mealType: string;
             /** Format: double */
-            servings?: number;
+            servings: number;
             /** Format: double */
             caloriesPerServing?: number | null;
         };
@@ -3370,116 +3437,144 @@ export interface components {
             /** Format: uuid */
             recipeId: string;
             /** Format: date */
-            date?: string;
+            date: string;
             mealType: string;
             /** Format: double */
-            servings?: number;
+            servings: number;
         };
         MealSummary: {
-            mealType?: string | null;
+            mealType: string;
             /** Format: double */
-            calories?: number;
+            calories: number;
             /** Format: double */
-            protein?: number;
+            protein: number;
             /** Format: double */
-            carbs?: number;
+            carbs: number;
             /** Format: double */
-            fat?: number;
+            fat: number;
             /** Format: int32 */
-            itemCount?: number;
+            itemCount: number;
         };
-        MyTrainerRequestDto: {
+        MyTrainerDto: {
             /** Format: uuid */
-            relationshipId?: string;
+            relationshipId: string;
             /** Format: uuid */
-            trainerId?: string;
+            trainerId: string;
             trainerName?: string | null;
             trainerEmail?: string | null;
             trainerImage?: string | null;
-            status?: string | null;
+            status: string;
+            canViewNutrition: boolean;
+            canViewWorkouts: boolean;
+            canViewMeasurements: boolean;
+            canMessage: boolean;
             /** Format: date-time */
-            requestedAt?: string;
+            startedAt: string;
+            /** Format: date-time */
+            endedAt?: string | null;
+        };
+        MyTrainerRequestDto: {
+            /** Format: uuid */
+            relationshipId: string;
+            /** Format: uuid */
+            trainerId: string;
+            trainerName?: string | null;
+            trainerEmail?: string | null;
+            trainerImage?: string | null;
+            status: string;
+            /** Format: date-time */
+            requestedAt: string;
         };
         MyTrainerRequestDtoPagedResult: {
-            items?: components["schemas"]["MyTrainerRequestDto"][] | null;
+            items: components["schemas"]["MyTrainerRequestDto"][];
             /** Format: int32 */
-            totalCount?: number;
+            totalCount: number;
             /** Format: int32 */
-            page?: number;
+            page: number;
             /** Format: int32 */
-            pageSize?: number;
+            pageSize: number;
             /** Format: int32 */
-            readonly totalPages?: number;
+            readonly totalPages: number;
+        };
+        NutritionSummaryDto: {
+            /** Format: double */
+            totalCalories: number;
+            /** Format: double */
+            totalProtein: number;
+            /** Format: double */
+            totalCarbs: number;
+            /** Format: double */
+            totalFat: number;
         };
         RecipeDetailDto: {
             /** Format: uuid */
-            id?: string;
-            title?: string | null;
+            id: string;
+            title: string;
             description?: string | null;
             /** Format: int32 */
-            servings?: number;
+            servings: number;
             /** Format: int32 */
             prepTimeMinutes?: number | null;
             /** Format: int32 */
             cookTimeMinutes?: number | null;
             imageUrl?: string | null;
-            isPublic?: boolean;
-            isOwner?: boolean;
-            isFavorited?: boolean;
-            nutrition?: components["schemas"]["RecipeNutritionDto"];
-            ingredients?: components["schemas"]["RecipeIngredientDto"][] | null;
-            instructions?: components["schemas"]["RecipeInstructionDto"][] | null;
-            tags?: string[] | null;
+            isPublic: boolean;
+            isOwner: boolean;
+            isFavorited: boolean;
+            nutrition: components["schemas"]["RecipeNutritionDto"];
+            ingredients: components["schemas"]["RecipeIngredientDto"][];
+            instructions: components["schemas"]["RecipeInstructionDto"][];
+            tags: string[];
             /** Format: date-time */
-            createdAt?: string;
+            createdAt: string;
         };
         RecipeDto: {
             /** Format: uuid */
-            id?: string;
-            title?: string | null;
+            id: string;
+            title: string;
             description?: string | null;
             /** Format: int32 */
-            servings?: number;
+            servings: number;
             /** Format: int32 */
             prepTimeMinutes?: number | null;
             /** Format: int32 */
             cookTimeMinutes?: number | null;
             imageUrl?: string | null;
-            isPublic?: boolean;
-            isOwner?: boolean;
-            nutrition?: components["schemas"]["RecipeNutritionDto"];
-            tags?: string[] | null;
+            isPublic: boolean;
+            isOwner: boolean;
+            nutrition: components["schemas"]["RecipeNutritionDto"];
+            tags: string[];
             /** Format: date-time */
-            createdAt?: string;
+            createdAt: string;
         };
         RecipeDtoPagedResult: {
-            items?: components["schemas"]["RecipeDto"][] | null;
+            items: components["schemas"]["RecipeDto"][];
             /** Format: int32 */
-            totalCount?: number;
+            totalCount: number;
             /** Format: int32 */
-            page?: number;
+            page: number;
             /** Format: int32 */
-            pageSize?: number;
+            pageSize: number;
             /** Format: int32 */
-            readonly totalPages?: number;
+            readonly totalPages: number;
         };
         RecipeIngredientDto: {
             /** Format: uuid */
             foodId?: string | null;
             /** Format: uuid */
             subRecipeId?: string | null;
-            foodName?: string | null;
-            subRecipeName?: string | null;
+            foodName: string;
+            subRecipeName: string;
             /** Format: double */
             amount?: number | null;
-            unit?: string | null;
-            ingredientText?: string | null;
-            subRecipeNutrition?: components["schemas"]["RecipeNutritionDto"];
+            unit: string;
+            ingredientText: string;
+            subRecipeNutrition: components["schemas"]["RecipeNutritionDto"];
         };
         RecipeInstructionDto: {
             /** Format: int32 */
-            stepNumber?: number;
-            instruction?: string | null;
+            stepNumber: number;
+            instruction: string;
         };
         RecipeNutritionDto: {
             /** Format: double */
@@ -3496,27 +3591,27 @@ export interface components {
             proteinCalorieRatio?: number | null;
         };
         RecognizedFood: {
-            name?: string | null;
+            name: string;
             /** Format: double */
-            portionGrams?: number;
+            portionGrams: number;
             /** Format: double */
-            calories?: number;
+            calories: number;
             /** Format: double */
-            protein?: number;
+            protein: number;
             /** Format: double */
-            carbs?: number;
+            carbs: number;
             /** Format: double */
-            fat?: number;
+            fat: number;
         };
         RecordGoalProgressCommand: {
             /** Format: int32 */
-            actualCalories?: number;
+            actualCalories: number;
             /** Format: double */
-            actualProteinGrams?: number;
+            actualProteinGrams: number;
             /** Format: double */
-            actualCarbsGrams?: number;
+            actualCarbsGrams: number;
             /** Format: double */
-            actualFatGrams?: number;
+            actualFatGrams: number;
             /** Format: double */
             actualWeight?: number | null;
             /** Format: date */
@@ -3524,19 +3619,19 @@ export interface components {
             notes?: string | null;
         };
         RecordGoalProgressResult: {
-            success?: boolean;
+            success: boolean;
             message?: string | null;
             /** Format: uuid */
             id?: string | null;
         };
         RemoveRecipeFromMealPlanResult: {
-            success?: boolean;
+            success: boolean;
             message?: string | null;
         };
         RespondRequest: {
             /** Format: uuid */
-            relationshipId?: string;
-            accept?: boolean;
+            relationshipId: string;
+            accept: boolean;
             canViewNutrition?: boolean | null;
             canViewWorkouts?: boolean | null;
             canViewMeasurements?: boolean | null;
@@ -3544,204 +3639,204 @@ export interface components {
         };
         SendMessageRequest: {
             /** Format: uuid */
-            conversationId?: string;
-            content?: string | null;
+            conversationId: string;
+            content: string;
         };
         SendTrainerRequestRequest: {
             /** Format: uuid */
-            trainerId?: string;
+            trainerId: string;
         };
         ShoppingListDto: {
             /** Format: uuid */
-            id?: string;
+            id: string;
             name?: string | null;
             /** Format: uuid */
-            userId?: string;
+            userId: string;
             /** Format: uuid */
             householdId?: string | null;
-            items?: components["schemas"]["ShoppingListItemDto"][] | null;
+            items: components["schemas"]["ShoppingListItemDto"][];
         };
         ShoppingListItemDto: {
             /** Format: uuid */
-            id?: string;
-            itemName?: string | null;
+            id: string;
+            itemName: string;
             /** Format: double */
             amount?: number | null;
             unit?: string | null;
             category?: string | null;
-            isChecked?: boolean;
+            isChecked: boolean;
         };
         ShoppingListSummaryDto: {
             /** Format: uuid */
-            id?: string;
+            id: string;
             name?: string | null;
             /** Format: int32 */
-            totalItems?: number;
+            totalItems: number;
             /** Format: int32 */
-            checkedItems?: number;
+            checkedItems: number;
             /** Format: date-time */
-            createdAt?: string;
+            createdAt: string;
             /** Format: date-time */
-            updatedAt?: string;
+            updatedAt: string;
         };
         ShoppingListSummaryDtoPagedResult: {
-            items?: components["schemas"]["ShoppingListSummaryDto"][] | null;
+            items: components["schemas"]["ShoppingListSummaryDto"][];
             /** Format: int32 */
-            totalCount?: number;
+            totalCount: number;
             /** Format: int32 */
-            page?: number;
+            page: number;
             /** Format: int32 */
-            pageSize?: number;
+            pageSize: number;
             /** Format: int32 */
-            readonly totalPages?: number;
+            readonly totalPages: number;
         };
         SystemInfoDto: {
-            environment?: string | null;
+            environment: string;
             /** Format: int64 */
-            memoryUsageBytes?: number;
+            memoryUsageBytes: number;
             /** Format: double */
-            uptimeSeconds?: number;
+            uptimeSeconds: number;
         };
         ToggleFavoriteRecipeResult: {
-            isFavorited?: boolean;
-            message?: string | null;
+            isFavorited: boolean;
+            message: string;
         };
         ToggleItemRequest: {
-            isChecked?: boolean;
+            isChecked: boolean;
         };
         TokenUsageDto: {
             /** Format: uuid */
-            tokenId?: string;
-            tokenName?: string | null;
+            tokenId: string;
+            tokenName: string;
             /** Format: int32 */
-            callCount?: number;
+            callCount: number;
             /** Format: date-time */
-            lastUsed?: string;
+            lastUsed: string;
         };
         ToolUsageDto: {
-            toolName?: string | null;
+            toolName: string;
             /** Format: int32 */
-            callCount?: number;
+            callCount: number;
             /** Format: int32 */
-            successCount?: number;
+            successCount: number;
             /** Format: int32 */
-            failureCount?: number;
+            failureCount: number;
             /** Format: int32 */
-            averageExecutionTimeMs?: number;
+            averageExecutionTimeMs: number;
         };
         TrainerClientDto: {
             /** Format: uuid */
-            relationshipId?: string;
+            relationshipId: string;
             /** Format: uuid */
-            clientId?: string;
+            clientId: string;
             clientName?: string | null;
             clientEmail?: string | null;
-            status?: string | null;
-            canViewNutrition?: boolean;
-            canViewWorkouts?: boolean;
-            canMessage?: boolean;
+            status: string;
+            canViewNutrition: boolean;
+            canViewWorkouts: boolean;
+            canMessage: boolean;
             /** Format: date-time */
-            startedAt?: string;
+            startedAt: string;
             /** Format: date-time */
             endedAt?: string | null;
         };
         TrainerClientDtoPagedResult: {
-            items?: components["schemas"]["TrainerClientDto"][] | null;
+            items: components["schemas"]["TrainerClientDto"][];
             /** Format: int32 */
-            totalCount?: number;
+            totalCount: number;
             /** Format: int32 */
-            page?: number;
+            page: number;
             /** Format: int32 */
-            pageSize?: number;
+            pageSize: number;
             /** Format: int32 */
-            readonly totalPages?: number;
+            readonly totalPages: number;
         };
         TrainerPendingRequestDto: {
             /** Format: uuid */
-            relationshipId?: string;
+            relationshipId: string;
             /** Format: uuid */
-            clientId?: string;
+            clientId: string;
             clientName?: string | null;
             clientEmail?: string | null;
             /** Format: date-time */
-            requestedAt?: string;
+            requestedAt: string;
         };
         TrainerPendingRequestDtoPagedResult: {
-            items?: components["schemas"]["TrainerPendingRequestDto"][] | null;
+            items: components["schemas"]["TrainerPendingRequestDto"][];
             /** Format: int32 */
-            totalCount?: number;
+            totalCount: number;
             /** Format: int32 */
-            page?: number;
+            page: number;
             /** Format: int32 */
-            pageSize?: number;
+            pageSize: number;
             /** Format: int32 */
-            readonly totalPages?: number;
+            readonly totalPages: number;
         };
         TrainerPublicDto: {
             /** Format: uuid */
-            id?: string;
+            id: string;
             name?: string | null;
-            email?: string | null;
+            email: string;
             image?: string | null;
             bio?: string | null;
             specialties?: string | null;
             /** Format: int32 */
-            clientCount?: number;
+            clientCount: number;
         };
         TrainerPublicDtoPagedResult: {
-            items?: components["schemas"]["TrainerPublicDto"][] | null;
+            items: components["schemas"]["TrainerPublicDto"][];
             /** Format: int32 */
-            totalCount?: number;
+            totalCount: number;
             /** Format: int32 */
-            page?: number;
+            page: number;
             /** Format: int32 */
-            pageSize?: number;
+            pageSize: number;
             /** Format: int32 */
-            readonly totalPages?: number;
+            readonly totalPages: number;
         };
         UpdateFoodCommand: {
             /** Format: uuid */
             id: string;
             name: string;
             /** Format: double */
-            caloriesPer100g?: number;
+            caloriesPer100g: number;
             /** Format: double */
-            proteinPer100g?: number;
+            proteinPer100g: number;
             /** Format: double */
-            carbsPer100g?: number;
+            carbsPer100g: number;
             /** Format: double */
-            fatPer100g?: number;
+            fatPer100g: number;
             /** Format: double */
             fiberPer100g?: number | null;
             /** Format: double */
-            servingSize?: number;
-            servingUnit?: string | null;
-            isVerified?: boolean;
+            servingSize: number;
+            servingUnit: string;
+            isVerified: boolean;
         };
         UpdateFoodResult: {
-            success?: boolean;
+            success: boolean;
             message?: string | null;
         };
         UpdateMealPlanRecipeRequest: {
             /** Format: date */
-            date?: string;
-            mealType?: string | null;
+            date: string;
+            mealType: string;
             /** Format: double */
-            servings?: number;
+            servings: number;
         };
         UpdateMealPlanRecipeResult: {
-            success?: boolean;
+            success: boolean;
             message?: string | null;
         };
         UpdateMealPlanRequest: {
-            name?: string | null;
+            name: string;
             /** Format: date */
-            startDate?: string;
+            startDate: string;
             /** Format: date */
-            endDate?: string;
+            endDate: string;
         };
         UpdateMealPlanResult: {
-            success?: boolean;
+            success: boolean;
             message?: string | null;
         };
         UpdateRecipeCommand: {
@@ -3750,31 +3845,31 @@ export interface components {
             title: string;
             description?: string | null;
             /** Format: int32 */
-            servings?: number;
+            servings: number;
             /** Format: int32 */
             prepTimeMinutes?: number | null;
             /** Format: int32 */
             cookTimeMinutes?: number | null;
             imageUrl?: string | null;
-            isPublic?: boolean;
+            isPublic: boolean;
             ingredients: components["schemas"]["CreateRecipeIngredientDto"][];
-            instructions?: string[] | null;
-            tags?: string[] | null;
-            nutrition?: components["schemas"]["CreateRecipeNutritionDto"];
+            instructions: string[];
+            tags: string[];
+            nutrition: components["schemas"]["CreateRecipeNutritionDto"];
         };
         UpdateRecipeResult: {
-            success?: boolean;
+            success: boolean;
             message?: string | null;
         };
         UpdateStreakCommand: {
-            streakType?: string | null;
+            streakType: string;
         };
         UpdateStreakResult: {
             /** Format: int32 */
-            currentStreak?: number;
+            currentStreak: number;
             /** Format: int32 */
-            longestStreak?: number;
-            isNewRecord?: boolean;
+            longestStreak: number;
+            isNewRecord: boolean;
         };
         UpdateUserRequest: {
             name?: string | null;
@@ -3782,33 +3877,33 @@ export interface components {
         };
         UsageOverview: {
             /** Format: int32 */
-            totalCalls?: number;
+            totalCalls: number;
             /** Format: int32 */
-            successfulCalls?: number;
+            successfulCalls: number;
             /** Format: int32 */
-            failedCalls?: number;
+            failedCalls: number;
             /** Format: double */
-            successRate?: number;
+            successRate: number;
             /** Format: int32 */
-            averageExecutionTimeMs?: number;
+            averageExecutionTimeMs: number;
             /** Format: int32 */
-            uniqueTokensUsed?: number;
+            uniqueTokensUsed: number;
         };
         UserDto: {
             /** Format: uuid */
-            id?: string;
-            email?: string | null;
+            id: string;
+            email: string;
             name?: string | null;
             image?: string | null;
             /** Format: date-time */
-            createdAt?: string;
-            currentGoal?: components["schemas"]["UserGoalSummaryDto"];
+            createdAt: string;
+            currentGoal: components["schemas"]["UserGoalSummaryDto"];
             /** Format: int32 */
-            streakCount?: number;
+            streakCount: number;
         };
         UserGoalDto: {
             /** Format: uuid */
-            id?: string;
+            id: string;
             goalType?: string | null;
             /** Format: double */
             targetCalories?: number | null;
@@ -3831,9 +3926,9 @@ export interface components {
             targetProteinCalorieRatio?: number | null;
             /** Format: date */
             targetDate?: string | null;
-            isActive?: boolean;
+            isActive: boolean;
             /** Format: date-time */
-            createdAt?: string;
+            createdAt: string;
         };
         UserGoalSummaryDto: {
             /** Format: double */
@@ -3846,19 +3941,19 @@ export interface components {
             targetFatGrams?: number | null;
         };
         ValidateTokenCommand: {
-            token?: string | null;
+            token: string;
         };
         ValidateTokenResult: {
             /** Format: uuid */
-            userId?: string;
-            isValid?: boolean;
+            userId: string;
+            isValid: boolean;
             /** Format: uuid */
             tokenId?: string | null;
         };
         WorkoutExerciseDto: {
             /** Format: uuid */
-            exerciseId?: string;
-            sets?: components["schemas"]["ExerciseSetDto"][] | null;
+            exerciseId: string;
+            sets: components["schemas"]["ExerciseSetDto"][];
         };
     };
     responses: never;

@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ComposedChart, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import type { Formatter, ValueType } from "recharts/types/component/DefaultTooltipContent";
+import type { Formatter, ValueType, NameType } from "recharts/types/component/DefaultTooltipContent";
 // Assuming radix-ui wrap or similar, if not I'll just use HTML progress or div.
 // Actually I don't see components/ui/progress in file list. I will use custom div.
 import Loading from "@/components/Loading";
@@ -31,8 +31,8 @@ interface DailyStat {
 	goalPcal?: number;
 }
 
-const percentTooltipFormatter: Formatter<ValueType, string> = (value, name) => {
-	const label = name ?? "";
+const percentTooltipFormatter: Formatter<ValueType, NameType> = (value, name) => {
+	const label = String(name ?? "");
 
 	if (value === undefined) {
 		return ["-", label];
@@ -45,8 +45,8 @@ const percentTooltipFormatter: Formatter<ValueType, string> = (value, name) => {
 	return [`${value}%`, label];
 };
 
-const gramsTooltipFormatter: Formatter<ValueType, string> = (value, name) => {
-	const label = name ?? "";
+const gramsTooltipFormatter: Formatter<ValueType, NameType> = (value, name) => {
+	const label = String(name ?? "");
 
 	if (value === undefined) {
 		return ["-", label];

@@ -12,7 +12,7 @@ import {
     ResponsiveContainer,
     Legend,
 } from "recharts";
-import type { Formatter, ValueType } from "recharts/types/component/DefaultTooltipContent";
+import type { Formatter, ValueType, NameType } from "recharts/types/component/DefaultTooltipContent";
 import type { BodyMeasurement } from "@/data/bodyMeasurement";
 import type { UserGoal } from "@/data/goal";
 
@@ -58,8 +58,8 @@ const chartStyle = {
     },
 };
 
-const formatCompositionTooltip: Formatter<ValueType, string> = (value, name) => {
-    const label = name ?? "";
+const formatCompositionTooltip: Formatter<ValueType, NameType> = (value, name) => {
+    const label = String(name ?? "");
 
     if (value === undefined) {
         return ["-", label];
@@ -76,8 +76,8 @@ const formatCompositionTooltip: Formatter<ValueType, string> = (value, name) => 
     return [`${value} kg`, label];
 };
 
-const formatCircumferenceTooltip: Formatter<ValueType, string> = (value, name) => {
-    const label = name ?? "";
+const formatCircumferenceTooltip: Formatter<ValueType, NameType> = (value, name) => {
+    const label = String(name ?? "");
 
     if (value === undefined) {
         return ["-", label];

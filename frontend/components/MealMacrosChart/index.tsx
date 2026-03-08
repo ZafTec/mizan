@@ -15,13 +15,13 @@ import {
 	Line,
 	Brush,
 } from "recharts";
-import type { Formatter, ValueType } from "recharts/types/component/DefaultTooltipContent";
+import type { Formatter, ValueType, NameType } from "recharts/types/component/DefaultTooltipContent";
 
 interface MealMacrosChartProps {
   perDayMeals: PerDayMealsAggregate[];
 }
 
-const caloriesTooltipFormatter: Formatter<ValueType, string> = (value) => {
+const caloriesTooltipFormatter: Formatter<ValueType, NameType> = (value) => {
 	if (value === undefined) {
 		return "-";
 	}
