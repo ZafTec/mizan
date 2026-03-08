@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import ConfirmationModal from "@/components/ConfirmationModal";
 import { useMcpTokens, useMcpAnalytics } from "@/lib/hooks/useMcpTokens";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -18,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Copy, Trash2, Plus, CheckCircle2, Activity, Clock, TrendingUp, Terminal, Monitor, Code2 } from "lucide-react";
 import type { CreateMcpTokenResult } from "@/types/mcp";
+import { appToast } from "@/lib/toast";
 
 const EMPTY_OVERVIEW = {
   totalCalls: 0,
@@ -48,6 +50,7 @@ export default function McpPage() {
   const [createdToken, setCreatedToken] = useState<CreateMcpTokenResult | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [guideTab, setGuideTab] = useState<"desktop" | "code" | "cursor">("desktop");
+  const [tokenToRevoke, setTokenToRevoke] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTokens();
@@ -66,13 +69,14 @@ export default function McpPage() {
   };
 
   const handleRevokeToken = async (tokenId: string) => {
-    if (!confirm("Revoke this token? Connected clients will lose access.")) return;
-    await revokeToken(tokenId);
+	    await revokeToken(tokenId);
+	    setTokenToRevoke(null);
   };
 
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
+    appToast.success("Copied to clipboard");
     setTimeout(() => setCopiedField(null), 2000);
   };
 
@@ -398,7 +402,7 @@ export default function McpPage() {
                           {token.isActive && (
                             <button
 							className="btn-secondary inline-flex items-center gap-2 text-destructive"
-                              onClick={() => token.id && handleRevokeToken(token.id)}
+	                              onClick={() => token.id && setTokenToRevoke(token.id)}
                               disabled={!token.id}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -494,6 +498,17 @@ export default function McpPage() {
             )}
           </TabsContent>
         </Tabs>
+
+        <ConfirmationModal
+          isOpen={!!tokenToRevoke}
+          onClose={() => setTokenToRevoke(null)}
+          onConfirm={() => tokenToRevoke && handleRevokeToken(tokenToRevoke)}
+          title="Revoke Token"
+          message="Connected clients will lose access immediately."
+          confirmText="Revoke Token"
+          isDanger
+          isLoading={loading}
+        />
       </div>
     </div>
   );
