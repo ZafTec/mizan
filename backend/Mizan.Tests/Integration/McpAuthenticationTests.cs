@@ -253,7 +253,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
             catch (TaskCanceledException)
             {
                 // Should not happen with ResponseHeadersRead, but just in case
-                Assert.True(false, "Failed to get SSE response headers");
+                Assert.Fail("Failed to get SSE response headers");
                 return;
             }
         }

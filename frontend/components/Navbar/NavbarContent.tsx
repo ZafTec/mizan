@@ -301,7 +301,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 
 				<button
 					type="button"
-					className="icon-chip h-11 w-11 text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white md:hidden relative z-100"
+					className="inline-flex items-center justify-center rounded-2xl border border-white/70 bg-white/80 dark:border-white/10 dark:bg-slate-950/75 h-11 w-11 text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white md:hidden relative z-100"
 					onClick={toggleMobileMenu}
 					aria-label="Toggle navigation menu"
 					aria-expanded={menuOpen}

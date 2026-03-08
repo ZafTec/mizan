@@ -49,12 +49,12 @@ export default function ProfilePage() {
 
 	const quickLinks = useMemo<QuickLink[]>(() => {
 		const links: QuickLink[] = [
-			{
-				href: "/profile/settings",
-				title: "Settings center",
-				description: "Account, appearance, export, sessions, and delete flow.",
-				icon: "sparkles",
-			},
+			// {
+			// 	href: "/profile/settings",
+			// 	title: "Settings center",
+			// 	description: "Account, appearance, export, sessions, and delete flow.",
+			// 	icon: "sparkles",
+			// },
 			{
 				href: "/goal",
 				title: "Nutrition goals",
@@ -66,12 +66,6 @@ export default function ProfilePage() {
 				title: "Food diary",
 				description: "Review what you have logged today and this week.",
 				icon: "flame",
-			},
-			{
-				href: "/recipes",
-				title: "Recipes",
-				description: "Manage your saved dishes and meal building blocks.",
-				icon: "cookingPot",
 			},
 			{
 				href: "/body-measurements",
