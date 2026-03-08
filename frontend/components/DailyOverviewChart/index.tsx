@@ -25,9 +25,7 @@ type MacroItem = {
 	label: string;
 	unit: string;
 	value: number;
-	target: number | null;
 	dotClassName: string;
-	barClassName: string;
 	panelClassName: string;
 };
 
@@ -52,9 +50,9 @@ function getDeltaCopy(value: number, target: number | null, unit: string): strin
 	if (!target || target <= 0) return 'No target set';
 
 	const difference = roundValue(target - value);
-  if (difference > 0) return `${difference}${unit} remaining`;
-  if (difference < 0) return `${Math.abs(difference)}${unit} over`;
-  return 'Target reached';
+	if (difference > 0) return `${difference}${unit} remaining`;
+	if (difference < 0) return `${Math.abs(difference)}${unit} over`;
+	return 'Target reached';
 }
 
 export default function DailyOverviewChart() {
@@ -91,9 +89,7 @@ export default function DailyOverviewChart() {
 				label: 'Calories',
 				unit: ' kcal',
 				value: macros.calories,
-				target: goal?.targetCalories ?? null,
 				dotClassName: 'bg-brand-600',
-				barClassName: 'bg-brand-600',
 				panelClassName: 'border-brand-100 bg-brand-50/80 text-brand-800 dark:border-brand-500/20 dark:bg-brand-500/10 dark:text-brand-300',
 			},
 			{
@@ -101,9 +97,7 @@ export default function DailyOverviewChart() {
 				label: 'Protein',
 				unit: 'g',
 				value: macros.protein,
-				target: goal?.targetProteinGrams ?? null,
 				dotClassName: 'bg-sky-500',
-				barClassName: 'bg-sky-500',
 				panelClassName: 'border-sky-100 bg-sky-50/80 text-sky-800 dark:border-sky-500/20 dark:bg-sky-500/10 dark:text-sky-300',
 			},
 			{
@@ -111,9 +105,7 @@ export default function DailyOverviewChart() {
 				label: 'Carbs',
 				unit: 'g',
 				value: macros.carbs,
-				target: goal?.targetCarbsGrams ?? null,
 				dotClassName: 'bg-amber-500',
-				barClassName: 'bg-amber-500',
 				panelClassName: 'border-amber-100 bg-amber-50/80 text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300',
 			},
 			{
@@ -121,13 +113,11 @@ export default function DailyOverviewChart() {
 				label: 'Fat',
 				unit: 'g',
 				value: macros.fat,
-				target: goal?.targetFatGrams ?? null,
 				dotClassName: 'bg-rose-500',
-				barClassName: 'bg-rose-500',
 				panelClassName: 'border-rose-100 bg-rose-50/80 text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300',
 			},
 		],
-		[goal, macros]
+		[macros]
 	);
 
 	const macroDistribution = useMemo(() => {
@@ -213,10 +203,29 @@ export default function DailyOverviewChart() {
 					/>
 				</div>
 
-				<div className="mt-6 space-y-4">
-					{macroItems.map((item) => (
-						<MacroRow key={item.key} item={item} />
-					))}
+				<div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-900/70">
+					<div className="flex items-center justify-between gap-3">
+						<div>
+							<p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Daily read</p>
+							<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+								{hasGoals
+									? getDeltaCopy(macros.calories, goal?.targetCalories ?? null, ' kcal')
+									: 'Set calorie and macro goals to turn this into a real pacing view.'}
+							</p>
+						</div>
+						<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
+							<AnimatedIcon name="flame" size={18} aria-hidden="true" />
+						</span>
+					</div>
+					<div className="mt-4 flex flex-wrap gap-2">
+						{macroDistribution.map((item) => (
+							<div key={item.key} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 dark:border-white/10 dark:bg-slate-950 dark:text-slate-300">
+								<span className={`h-2 w-2 rounded-full ${item.dotClassName}`} />
+								<span>{item.label}</span>
+								<span className="font-medium text-slate-900 dark:text-slate-100">{item.share}%</span>
+							</div>
+						))}
+					</div>
 				</div>
 			</div>
 
@@ -286,34 +295,6 @@ function SummaryPanel({
 				{suffix ? <span className="pb-1 text-sm opacity-75">{suffix}</span> : null}
 			</div>
 			<p className="mt-2 text-xs opacity-75">{helper}</p>
-		</div>
-	);
-}
-
-function MacroRow({ item }: { item: MacroItem }) {
-	const value = roundValue(item.value);
-	const target = item.target ? roundValue(item.target) : null;
-	const progress = getProgress(item.value, item.target);
-
-	return (
-		<div className="space-y-2">
-			<div className="flex items-center justify-between gap-3">
-				<div className="flex items-center gap-3">
-					<span className={`h-2.5 w-2.5 rounded-full ${item.dotClassName}`} />
-					<p className="text-sm font-medium text-slate-700 dark:text-slate-200">{item.label}</p>
-				</div>
-				<p className="text-sm text-slate-500 dark:text-slate-400">
-					{value}{item.unit}
-					{target !== null ? ` / ${target}${item.unit}` : ''}
-				</p>
-			</div>
-			<div className="h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-				<div
-					className={`h-full rounded-full ${item.barClassName}`}
-					style={{ width: `${progress ?? (value > 0 ? 100 : 0)}%` }}
-				/>
-			</div>
-			<p className="text-xs text-slate-500 dark:text-slate-400">{getDeltaCopy(item.value, item.target, item.unit)}</p>
 		</div>
 	);
 }
