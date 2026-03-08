@@ -135,7 +135,6 @@ export function FoodImageAnalyzer() {
 							width={800}
 							height={600}
 							className="max-h-64 mx-auto rounded-lg object-contain"
-							unoptimized
 						/>
 					</div>
 				) : (

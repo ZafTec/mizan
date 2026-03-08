@@ -36,8 +36,8 @@ export default async function ExercisesPage({
                                             src={exercise.imageUrl}
                                             alt={exercise.name}
                                             fill
+                                            sizes="48px"
                                             className="object-cover rounded-2xl"
-                                            unoptimized
                                         />
                                     ) : (
                                         <i className="ri-run-line text-xl text-white" />

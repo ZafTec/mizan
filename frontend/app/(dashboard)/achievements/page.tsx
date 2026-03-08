@@ -60,7 +60,6 @@ export default async function AchievementsPage() {
                                                 width={32}
                                                 height={32}
                                                 className="w-8 h-8"
-                                                unoptimized
                                             />
                                         ) : (
                                             <i className="ri-trophy-line text-xl text-white" />
@@ -115,7 +114,6 @@ export default async function AchievementsPage() {
                                                 width={32}
                                                 height={32}
                                                 className="w-8 h-8 grayscale"
-                                                unoptimized
                                             />
                                         ) : (
                                             <i className="ri-trophy-line text-xl text-white" />
