@@ -365,7 +365,7 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="calories" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-full rounded-xl bg-orange-500" />
+									<span className="w-2 h-2 rounded-sm bg-orange-500" />
 									Calories (kcal)
 								</span>
 							</label>
@@ -384,7 +384,7 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="protein" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-full rounded-xl bg-red-500" />
+									<span className="w-2 h-2 rounded-sm bg-red-500" />
 									Protein (g)
 								</span>
 							</label>
@@ -406,7 +406,7 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="carbs" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-full rounded-xl bg-amber-500" />
+									<span className="w-2 h-2 rounded-sm bg-amber-500" />
 									Carbs (g)
 								</span>
 							</label>
@@ -425,7 +425,7 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="fat" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-full rounded-xl bg-yellow-500" />
+									<span className="w-2 h-2 rounded-sm bg-yellow-500" />
 									Fat (g)
 								</span>
 							</label>
@@ -444,7 +444,7 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="fiber" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-full rounded-xl bg-green-500" />
+									<span className="w-2 h-2 rounded-sm bg-green-500" />
 									Fiber (g)
 								</span>
 							</label>
@@ -474,7 +474,7 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="targetWeight" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-full rounded-xl bg-blue-500" />
+									<span className="w-2 h-2 rounded-sm bg-blue-500" />
 									Target Weight
 								</span>
 							</label>
@@ -510,7 +510,7 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="targetBodyFatPercentage" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-full rounded-xl bg-rose-500" />
+									<span className="w-2 h-2 rounded-sm bg-rose-500" />
 									Target Body Fat (%)
 								</span>
 							</label>
@@ -531,7 +531,7 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="targetMuscleMassKg" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-full rounded-xl bg-violet-500" />
+									<span className="w-2 h-2 rounded-sm bg-violet-500" />
 									Target Muscle Mass (kg)
 								</span>
 							</label>
@@ -552,7 +552,7 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="targetProteinCalorieRatio" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-full rounded-xl bg-indigo-500" />
+									<span className="w-2 h-2 rounded-sm bg-indigo-500" />
 									Target P/Cal Ratio (%)
 								</span>
 							</label>
@@ -573,7 +573,7 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="targetDate" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-full rounded-xl bg-teal-500" />
+									<span className="w-2 h-2 rounded-sm bg-teal-500" />
 									Target Date
 								</span>
 							</label>

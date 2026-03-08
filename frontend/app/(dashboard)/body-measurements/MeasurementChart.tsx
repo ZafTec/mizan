@@ -261,7 +261,7 @@ function ToggleGroup({
                         }`}
                         style={on ? { backgroundColor: s.color, borderColor: s.color } : {}}
                     >
-                        <span className="w-2 h-2 rounded-full rounded-xl inline-block" style={{ backgroundColor: on ? "white" : s.color }} />
+                        <span className="w-2 h-2 rounded-sm inline-block" style={{ backgroundColor: on ? "white" : s.color }} />
                         {s.label}
                     </button>
                 );

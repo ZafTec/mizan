@@ -127,7 +127,7 @@ export function RecentMessages() {
 							<p className="text-sm text-gray-600 dark:text-gray-400 truncate">{message.content}</p>
 						</div>
 						{!message.isRead && (
-							<div className="w-2 h-2 bg-blue-600 rounded-full shrink-0"></div>
+							<div className="w-2 h-2 bg-blue-600 rounded-sm shrink-0"></div>
 						)}
 					</div>
 				</Link>

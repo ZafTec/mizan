@@ -225,7 +225,7 @@ export default function DailyOverviewChart() {
 					<div className="mt-4 flex flex-wrap gap-2">
 						{macroDistribution.map((item) => (
 							<div key={item.key} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 dark:border-white/10 dark:bg-slate-950 dark:text-slate-300">
-								<span className={`h-2 w-2 rounded-full ${item.dotClassName}`} />
+								<span className={`h-2 w-2 rounded-sm ${item.dotClassName}`} />
 								<span>{item.label}</span>
 								<span className="font-medium text-slate-900 dark:text-slate-100">{item.share}%</span>
 							</div>

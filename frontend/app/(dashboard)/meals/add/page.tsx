@@ -98,7 +98,7 @@ export default function Page() {
 						<div>
 							<label htmlFor="calories" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-full rounded-xl bg-orange-500" />
+									<span className="w-2 h-2 rounded-sm bg-orange-500" />
 									Calories (kcal)
 								</span>
 							</label>
@@ -115,7 +115,7 @@ export default function Page() {
 						<div>
 							<label htmlFor="protein" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-full rounded-xl bg-red-500" />
+									<span className="w-2 h-2 rounded-sm bg-red-500" />
 									Protein (g)
 								</span>
 							</label>
@@ -133,7 +133,7 @@ export default function Page() {
 						<div>
 							<label htmlFor="carbs" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-full rounded-xl bg-amber-500" />
+									<span className="w-2 h-2 rounded-sm bg-amber-500" />
 									Carbs (g)
 								</span>
 							</label>
@@ -151,7 +151,7 @@ export default function Page() {
 						<div>
 							<label htmlFor="fat" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-full rounded-xl bg-yellow-500" />
+									<span className="w-2 h-2 rounded-sm bg-yellow-500" />
 									Fat (g)
 								</span>
 							</label>
@@ -169,7 +169,7 @@ export default function Page() {
 						<div>
 							<label htmlFor="fiber" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-full rounded-xl bg-green-500" />
+									<span className="w-2 h-2 rounded-sm bg-green-500" />
 									Fiber (g)
 								</span>
 							</label>

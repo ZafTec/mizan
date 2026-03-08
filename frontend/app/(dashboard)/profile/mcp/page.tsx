@@ -383,7 +383,7 @@ export default function McpPage() {
 							}`}
 						  >
                             <span
-                              className={`h-2 w-2 rounded-full ${
+                              className={`h-2 w-2 rounded-sm ${
                                 token.isActive ? "bg-emerald-500" : "bg-slate-400"
                               }`}
                             />

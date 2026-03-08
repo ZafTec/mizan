@@ -71,7 +71,7 @@ export default function LiveAuditLog() {
         <div className="bg-card rounded-lg border shadow-sm flex flex-col h-full overflow-hidden">
             <div className="p-4 border-b flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
                 <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full rounded-xl ${refreshInterval > 0 ? 'bg-green-500 animate-pulse' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                    <div className={`w-2 h-2 rounded-sm ${refreshInterval > 0 ? 'bg-green-500 animate-pulse' : 'bg-slate-300 dark:bg-slate-600'}`} />
                     <h2 className="text-lg font-semibold">Live Activity</h2>
                 </div>
 
