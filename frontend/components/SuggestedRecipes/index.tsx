@@ -85,7 +85,7 @@ export default function SuggestedRecipes({ user, suggestions, serverError }: Sug
 										<i className="ri-fire-line" />
 										{recipe.calories} kcal
 									</span>
-									<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm font-medium">
+									<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm font-medium">
 										<i className="ri-heart-pulse-line" />
 										{recipe.protein}g protein
 									</span>

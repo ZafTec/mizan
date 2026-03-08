@@ -26,7 +26,7 @@ export function DeleteConfirmModal({ isOpen, onClose, onConfirm, itemName }: Del
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" data-testid="delete-confirm-modal">
             <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
                         <i className="ri-delete-bin-line text-2xl text-red-600 dark:text-red-400" />
                     </div>
                     <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">

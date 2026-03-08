@@ -81,7 +81,7 @@ export default function Page() {
 				<div className="card p-6 sm:p-8">
 					{loading ? (
 						<div className="text-center space-y-4">
-							<div className="w-16 h-16 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center mx-auto">
+							<div className="w-16 h-16 rounded-2xl bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center mx-auto">
 								<Loading size="md" />
 							</div>
 							<div>
@@ -95,7 +95,7 @@ export default function Page() {
 						</div>
 					) : verified ? (
 						<div className="text-center space-y-4">
-							<div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto">
+							<div className="w-16 h-16 rounded-2xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto">
 								<i className="ri-checkbox-circle-line text-3xl text-green-600 dark:text-green-400" />
 							</div>
 							<div>
@@ -117,7 +117,7 @@ export default function Page() {
 						</div>
 					) : (
 						<div className="text-center space-y-4">
-							<div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto">
+							<div className="w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto">
 								<i className="ri-error-warning-line text-3xl text-red-600 dark:text-red-400" />
 							</div>
 							<div>

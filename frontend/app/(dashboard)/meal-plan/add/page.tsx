@@ -140,31 +140,31 @@ export default function AddMealPlanPage() {
     }
   };
 
-  return (
-    <div className="flex flex-col gap-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-slate-900">Add to Meal Plan</h1>
-        <Link
-          href={weekParam ? `/meal-plan?week=${weekParam}` : "/meal-plan"}
+	return (
+	  <div className="flex flex-col gap-6">
+	    <div className="flex justify-between items-center">
+	      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Add to Meal Plan</h1>
+	      <Link
+	        href={weekParam ? `/meal-plan?week=${weekParam}` : "/meal-plan"}
           className="btn-secondary"
         >
           Cancel
         </Link>
       </div>
 
-      {error && (
-        <div className="card p-4 bg-red-50 border border-red-200">
-          <div className="flex items-center gap-2 text-red-700">
-            <i className="ri-error-warning-line" />
-            <span>{error}</span>
+	    {error && (
+	      <div className="card border border-red-200 bg-red-50 p-4 dark:border-red-500/30 dark:bg-red-500/10">
+	        <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
+	          <i className="ri-error-warning-line" />
+	          <span>{error}</span>
           </div>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="card p-4">
-            <h2 className="text-lg font-semibold text-slate-900 mb-3">Select Date</h2>
+	        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+	          <div className="card p-4">
+	            <h2 className="mb-3 text-lg font-semibold text-slate-900 dark:text-slate-100">Select Date</h2>
             <input
               type="date"
               value={format(date, 'yyyy-MM-dd')}
@@ -173,21 +173,21 @@ export default function AddMealPlanPage() {
             />
           </div>
 
-          <div className="card p-4">
-            <h2 className="text-lg font-semibold text-slate-900 mb-3">Selected Recipes</h2>
-            {selectedRecipes.length === 0 ? (
-              <p className="text-slate-500">No recipes selected yet</p>
-            ) : (
-              <ul className="space-y-4">
-                {selectedRecipes.map((item, index) => (
-                  <li key={`${item.recipeId}-${index}`} className="border-b border-slate-200 pb-3">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium text-slate-900">{item.recipeName}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeRecipeFromSelection(index)}
-                        className="text-red-500 hover:text-red-700"
-                      >
+	          <div className="card p-4">
+	            <h2 className="mb-3 text-lg font-semibold text-slate-900 dark:text-slate-100">Selected Recipes</h2>
+	            {selectedRecipes.length === 0 ? (
+	              <p className="text-slate-500 dark:text-slate-400">No recipes selected yet</p>
+	            ) : (
+	              <ul className="space-y-4">
+	                {selectedRecipes.map((item, index) => (
+	                  <li key={`${item.recipeId}-${index}`} className="border-b border-slate-200 pb-3 dark:border-white/10">
+	                    <div className="flex justify-between items-center">
+	                      <span className="font-medium text-slate-900 dark:text-slate-100">{item.recipeName}</span>
+	                      <button
+	                        type="button"
+	                        onClick={() => removeRecipeFromSelection(index)}
+	                        className="text-red-500 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200"
+	                      >
                         <i className="ri-delete-bin-line"></i>
                       </button>
                     </div>
@@ -223,8 +223,8 @@ export default function AddMealPlanPage() {
           </div>
         </div>
 
-        <div className="card p-4">
-          <h2 className="text-lg font-semibold text-slate-900 mb-3">Choose Recipes</h2>
+	        <div className="card p-4">
+	          <h2 className="mb-3 text-lg font-semibold text-slate-900 dark:text-slate-100">Choose Recipes</h2>
           <div className="mb-4">
             <input
               type="text"
@@ -240,22 +240,22 @@ export default function AddMealPlanPage() {
               <Loading />
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {filteredRecipes.map((recipe) => (
-                <div
-                  key={recipe.id}
-                  className="card p-3 hover:bg-slate-50 cursor-pointer transition"
-                  onClick={() => addRecipeToSelection(recipe)}
-                >
-                  <h3 className="font-medium text-slate-900">{recipe.title}</h3>
-                  <p className="text-sm text-slate-600">
-                    {Math.round(recipe.calories)} cal | {Math.round(recipe.protein)}g protein
-                  </p>
-                </div>
-              ))}
-              {filteredRecipes.length === 0 && (
-                <p className="text-slate-500 col-span-full text-center py-4">No recipes found</p>
-              )}
+	            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+	              {filteredRecipes.map((recipe) => (
+	                <div
+	                  key={recipe.id}
+	                  className="card cursor-pointer p-3 transition hover:bg-slate-50 dark:hover:bg-slate-900/60"
+	                  onClick={() => addRecipeToSelection(recipe)}
+	                >
+	                  <h3 className="font-medium text-slate-900 dark:text-slate-100">{recipe.title}</h3>
+	                  <p className="text-sm text-slate-600 dark:text-slate-400">
+	                    {Math.round(recipe.calories)} cal | {Math.round(recipe.protein)}g protein
+	                  </p>
+	                </div>
+	              ))}
+	              {filteredRecipes.length === 0 && (
+	                <p className="col-span-full py-4 text-center text-slate-500 dark:text-slate-400">No recipes found</p>
+	              )}
             </div>
           )}
         </div>

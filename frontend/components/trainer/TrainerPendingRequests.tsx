@@ -134,7 +134,7 @@ export function TrainerPendingRequests() {
 			<div className="space-y-4">
 				{[1, 2].map((i) => (
 					<div key={i} className="animate-pulse flex items-center space-x-4">
-						<div className="w-12 h-12 bg-gray-200 dark:bg-slate-700 rounded-full"></div>
+						<div className="w-12 h-12 bg-gray-200 dark:bg-slate-700 rounded-2xl"></div>
 						<div className="flex-1">
 							<div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-1/3 mb-2"></div>
 							<div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-1/4"></div>
@@ -162,7 +162,7 @@ export function TrainerPendingRequests() {
 						className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg"
 					>
 						<div className="flex items-center space-x-3">
-							<div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
+							<div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-2xl flex items-center justify-center">
 								<span className="text-yellow-700 dark:text-yellow-300 font-semibold text-lg">
 									{request.clientName?.[0] || request.clientEmail?.[0] || "?"}
 								</span>

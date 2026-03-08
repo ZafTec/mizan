@@ -123,7 +123,7 @@ export default async function Page({
 				</div>
 				<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
 					<div className="text-center p-4 bg-white rounded-xl dark:bg-slate-950">
-						<div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-500/15 flex items-center justify-center mx-auto mb-2">
+						<div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-fire-line text-orange-600" />
 						</div>
 						<p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
@@ -132,7 +132,7 @@ export default async function Page({
 						<p className="text-xs text-slate-500 dark:text-slate-400">Calories</p>
 					</div>
 					<div className="text-center p-4 bg-white rounded-xl dark:bg-slate-950">
-						<div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-500/15 flex items-center justify-center mx-auto mb-2">
+						<div className="w-10 h-10 rounded-2xl bg-red-100 dark:bg-red-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-heart-pulse-line text-red-600" />
 						</div>
 						<p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
@@ -141,7 +141,7 @@ export default async function Page({
 						<p className="text-xs text-slate-500 dark:text-slate-400">Protein</p>
 					</div>
 					<div className="text-center p-4 bg-white rounded-xl dark:bg-slate-950">
-						<div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center mx-auto mb-2">
+						<div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-bread-line text-amber-600" />
 						</div>
 						<p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
@@ -150,7 +150,7 @@ export default async function Page({
 						<p className="text-xs text-slate-500 dark:text-slate-400">Carbs</p>
 					</div>
 					<div className="text-center p-4 bg-white rounded-xl dark:bg-slate-950">
-						<div className="w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-500/15 flex items-center justify-center mx-auto mb-2">
+						<div className="w-10 h-10 rounded-xl bg-yellow-100 dark:bg-yellow-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-drop-line text-yellow-600" />
 						</div>
 						<p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
@@ -159,7 +159,7 @@ export default async function Page({
 						<p className="text-xs text-slate-500 dark:text-slate-400">Fat</p>
 					</div>
 					<div className="text-center p-4 bg-white rounded-xl dark:bg-slate-950">
-						<div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-500/15 flex items-center justify-center mx-auto mb-2">
+						<div className="w-10 h-10 rounded-2xl bg-green-100 dark:bg-green-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-leaf-line text-green-600" />
 						</div>
 						<p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
@@ -169,7 +169,7 @@ export default async function Page({
 					</div>
 					{proteinCalRatio > 0 && (
 						<div className="text-center p-4 bg-white rounded-xl dark:bg-slate-950">
-							<div className="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-500/15 flex items-center justify-center mx-auto mb-2">
+							<div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-500/15 flex items-center justify-center mx-auto mb-2">
 								<i className="ri-percent-line text-violet-600" />
 							</div>
 							<p className="text-2xl font-bold text-slate-900 dark:text-slate-100">

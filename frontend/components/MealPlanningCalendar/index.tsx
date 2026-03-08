@@ -167,7 +167,7 @@ export default function MealPlanningCalendar({
 					>
 						<div className="text-sm font-medium">{format(day, 'EEE')}</div>
 						<div className={twMerge(
-							"w-10 h-10 rounded-full mx-auto flex items-center justify-center",
+							"w-10 h-10 rounded-xl mx-auto flex items-center justify-center",
 							isToday(day) ? "bg-emerald-600 text-white" : ""
 						)}>
 							{format(day, 'd')}

@@ -134,14 +134,14 @@ export default function ProfileSessionsPage() {
 
   const activeSessions = sessions.filter((s) => new Date(s.expiresAt) > new Date());
 
-  return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Active Sessions</h1>
-          <p className="text-slate-500 mt-1">
-            Manage devices where you're currently logged in
-          </p>
+	  return (
+	    <div className="max-w-3xl mx-auto space-y-6">
+	      <div className="flex items-center justify-between">
+	        <div>
+	          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Active Sessions</h1>
+	          <p className="mt-1 text-slate-500 dark:text-slate-400">
+	            Manage devices where you're currently logged in
+	          </p>
         </div>
         <Link href="/profile/settings" className="btn-secondary">
           <i className="ri-arrow-left-line" />
@@ -149,18 +149,18 @@ export default function ProfileSessionsPage() {
         </Link>
       </div>
 
-      <div className="card p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-slate-500">Active Sessions</p>
-            <p className="text-3xl font-bold text-slate-900">{activeSessions.length}</p>
-          </div>
-          {activeSessions.length > 1 && (
-            <button
-              onClick={handleRevokeAllOther}
-              disabled={revoking === "all"}
-              className="px-4 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
-            >
+	      <div className="card p-6">
+	        <div className="flex items-center justify-between">
+	          <div>
+	            <p className="text-sm text-slate-500 dark:text-slate-400">Active Sessions</p>
+	            <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{activeSessions.length}</p>
+	          </div>
+	          {activeSessions.length > 1 && (
+	            <button
+	              onClick={handleRevokeAllOther}
+	              disabled={revoking === "all"}
+	              className="rounded-xl border border-red-200 px-4 py-2 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-500/30 dark:text-red-300 dark:hover:bg-red-500/10"
+	            >
               {revoking === "all" ? "Revoking..." : "Revoke All Other Sessions"}
             </button>
           )}
@@ -168,15 +168,15 @@ export default function ProfileSessionsPage() {
       </div>
 
       <div className="space-y-4">
-        {activeSessions.length === 0 ? (
-          <div className="card p-12 text-center">
-            <i className="ri-lock-line text-6xl text-slate-300 mb-4" />
-            <h2 className="text-xl font-semibold text-slate-900 mb-2">
-              No Active Sessions
-            </h2>
-            <p className="text-slate-500">
-              You don't have any active sessions
-            </p>
+	        {activeSessions.length === 0 ? (
+	          <div className="card p-12 text-center">
+	            <i className="ri-lock-line mb-4 text-6xl text-slate-300 dark:text-slate-600" />
+	            <h2 className="mb-2 text-xl font-semibold text-slate-900 dark:text-slate-100">
+	              No Active Sessions
+	            </h2>
+	            <p className="text-slate-500 dark:text-slate-400">
+	              You don't have any active sessions
+	            </p>
           </div>
         ) : (
           activeSessions.map((session) => {
@@ -192,18 +192,18 @@ export default function ProfileSessionsPage() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-slate-900">
-                        {getDeviceInfo(session.userAgent)}
-                      </h3>
-                      {isCurrent && (
-                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-800">
-                          Current
-                        </span>
-                      )}
-                    </div>
+	                  <div className="flex items-center gap-2 mb-1">
+	                      <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+	                        {getDeviceInfo(session.userAgent)}
+	                      </h3>
+	                      {isCurrent && (
+	                        <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-800 dark:bg-brand-950/60 dark:text-brand-200">
+	                          Current
+	                        </span>
+	                      )}
+	                    </div>
 
-                    <div className="space-y-1 text-sm text-slate-500">
+	                    <div className="space-y-1 text-sm text-slate-500 dark:text-slate-400">
                       {session.ipAddress && (
                         <p className="flex items-center gap-2">
                           <i className="ri-map-pin-line" />
@@ -221,12 +221,12 @@ export default function ProfileSessionsPage() {
                     </div>
                   </div>
 
-                  {!isCurrent && (
-                    <button
-                      onClick={() => handleRevokeSession(session.token)}
-                      disabled={revoking === session.token}
-                      className="px-4 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 shrink-0"
-                    >
+	                  {!isCurrent && (
+	                    <button
+	                      onClick={() => handleRevokeSession(session.token)}
+	                      disabled={revoking === session.token}
+	                      className="shrink-0 rounded-xl border border-red-200 px-4 py-2 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-500/30 dark:text-red-300 dark:hover:bg-red-500/10"
+	                    >
                       {revoking === session.token ? "Revoking..." : "Revoke"}
                     </button>
                   )}
@@ -237,13 +237,13 @@ export default function ProfileSessionsPage() {
         )}
       </div>
 
-      <div className="card p-6 bg-blue-50 border-blue-200">
-        <div className="flex gap-3">
-          <i className="ri-information-line text-xl text-blue-600 shrink-0" />
-          <div>
-            <h3 className="font-semibold text-blue-900 mb-1">Security Tip</h3>
-            <p className="text-sm text-blue-800">
-              If you see a session you don't recognize, revoke it immediately and change your password.
+	      <div className="card border-blue-200 bg-blue-50 p-6 dark:border-blue-500/30 dark:bg-blue-500/10">
+	        <div className="flex gap-3">
+	          <i className="ri-information-line shrink-0 text-xl text-blue-600 dark:text-blue-300" />
+	          <div>
+	            <h3 className="mb-1 font-semibold text-blue-900 dark:text-blue-100">Security Tip</h3>
+	            <p className="text-sm text-blue-800 dark:text-blue-200">
+	              If you see a session you don't recognize, revoke it immediately and change your password.
               This helps protect your account from unauthorized access.
             </p>
           </div>

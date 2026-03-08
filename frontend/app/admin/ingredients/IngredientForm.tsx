@@ -25,11 +25,11 @@ export default function IngredientForm({ action, initialData, submitText }: Ingr
     }, [formState.status, router]);
 
     return (
-        <form action={formAction} className="space-y-6">
+	        <form action={formAction} className="space-y-6">
             {initialData?.id && <input type="hidden" name="id" value={initialData.id} />}
 
             <div className="card p-6 space-y-5">
-                <h2 className="font-semibold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-4">
+	                <h2 className="flex items-center gap-2 border-b border-slate-100 pb-4 font-semibold text-slate-900 dark:border-white/10 dark:text-slate-100">
                     <i className="ri-information-line text-brand-500" />
                     General Information
                 </h2>
@@ -76,8 +76,8 @@ export default function IngredientForm({ action, initialData, submitText }: Ingr
                         />
                         <FieldError formState={formState} name="servingUnit" />
                     </div>
-                    <div className="flex flex-col justify-end pb-3">
-                        <label className="flex items-center gap-2 cursor-pointer select-none">
+	                    <div className="flex flex-col justify-end pb-3">
+	                        <label className="flex cursor-pointer select-none items-center gap-2">
                             <input
                                 type="checkbox"
                                 name="isVerified"
@@ -85,14 +85,14 @@ export default function IngredientForm({ action, initialData, submitText }: Ingr
                                 defaultChecked={initialData?.isVerified}
                                 className="w-5 h-5 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                             />
-                            <span className="text-sm font-medium text-slate-700">Verified Ingredient</span>
+	                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Verified Ingredient</span>
                         </label>
                     </div>
                 </div>
             </div>
 
             <div className="card p-6 space-y-5">
-                <h2 className="font-semibold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-4">
+	                <h2 className="flex items-center gap-2 border-b border-slate-100 pb-4 font-semibold text-slate-900 dark:border-white/10 dark:text-slate-100">
                     <i className="ri-heart-pulse-line text-brand-500" />
                     Nutrition (per 100g)
                 </h2>
@@ -162,7 +162,7 @@ export default function IngredientForm({ action, initialData, submitText }: Ingr
                         />
                     </div>
                 </div>
-                <p className="text-xs text-slate-500 mt-2">
+	                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                     <i className="ri-information-line mr-1" />
                     Important: All nutrition values must be provided <strong>per 100g</strong> of the ingredient for consistent calculations.
                 </p>
@@ -192,8 +192,8 @@ export default function IngredientForm({ action, initialData, submitText }: Ingr
                 </button>
             </div>
 
-            {formState.status === "error" && (
-                <div className="p-4 rounded-xl bg-red-50 text-red-600 text-sm font-medium border border-red-100">
+	            {formState.status === "error" && (
+	                <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-sm font-medium text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
                     <i className="ri-error-warning-line mr-2" />
                     {formState.message}
                 </div>

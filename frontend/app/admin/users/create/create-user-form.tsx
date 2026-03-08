@@ -64,21 +64,18 @@ export function CreateUserForm() {
     }
   }
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-          <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
-        </div>
-      )}
+	  return (
+	    <form onSubmit={handleSubmit} className="space-y-6">
+	      {error && (
+	        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 dark:border-red-500/30 dark:bg-red-500/10">
+	          <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+	        </div>
+	      )}
 
       <div>
-        <label
-          htmlFor="email"
-          className="block text-sm font-medium mb-2"
-        >
-          Email <span className="text-red-500">*</span>
-        </label>
+	        <label htmlFor="email" className="label mb-2">
+	          Email <span className="text-red-500">*</span>
+	        </label>
         <input
           type="email"
           id="email"
@@ -87,19 +84,16 @@ export function CreateUserForm() {
           onChange={(e) =>
             setFormData({ ...formData, email: e.target.value })
           }
-          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+	          className="input"
           placeholder="user@example.com"
           disabled={isLoading}
         />
       </div>
 
       <div>
-        <label
-          htmlFor="name"
-          className="block text-sm font-medium mb-2"
-        >
-          Full Name <span className="text-red-500">*</span>
-        </label>
+	        <label htmlFor="name" className="label mb-2">
+	          Full Name <span className="text-red-500">*</span>
+	        </label>
         <input
           type="text"
           id="name"
@@ -108,19 +102,16 @@ export function CreateUserForm() {
           onChange={(e) =>
             setFormData({ ...formData, name: e.target.value })
           }
-          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+	          className="input"
           placeholder="John Doe"
           disabled={isLoading}
         />
       </div>
 
       <div>
-        <label
-          htmlFor="role"
-          className="block text-sm font-medium mb-2"
-        >
-          Role <span className="text-red-500">*</span>
-        </label>
+	        <label htmlFor="role" className="label mb-2">
+	          Role <span className="text-red-500">*</span>
+	        </label>
         <select
           id="role"
           required
@@ -131,25 +122,22 @@ export function CreateUserForm() {
               role: e.target.value as "user" | "admin" | "trainer",
             })
           }
-          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-          disabled={isLoading}
-        >
+	          className="input"
+	          disabled={isLoading}
+	        >
           <option value="user">User</option>
           <option value="trainer">Trainer</option>
           <option value="admin">Admin</option>
         </select>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Select the role for this user. Admins have full system access.
-        </p>
-      </div>
+	        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+	          Select the role for this user. Admins have full system access.
+	        </p>
+	      </div>
 
-      <div>
-        <label
-          htmlFor="password"
-          className="block text-sm font-medium mb-2"
-        >
-          Password <span className="text-red-500">*</span>
-        </label>
+	      <div>
+	        <label htmlFor="password" className="label mb-2">
+	          Password <span className="text-red-500">*</span>
+	        </label>
         <input
           type="password"
           id="password"
@@ -159,19 +147,16 @@ export function CreateUserForm() {
           onChange={(e) =>
             setFormData({ ...formData, password: e.target.value })
           }
-          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+	          className="input"
           placeholder="Minimum 8 characters"
           disabled={isLoading}
         />
       </div>
 
-      <div>
-        <label
-          htmlFor="confirmPassword"
-          className="block text-sm font-medium mb-2"
-        >
-          Confirm Password <span className="text-red-500">*</span>
-        </label>
+	      <div>
+	        <label htmlFor="confirmPassword" className="label mb-2">
+	          Confirm Password <span className="text-red-500">*</span>
+	        </label>
         <input
           type="password"
           id="confirmPassword"
@@ -181,24 +166,24 @@ export function CreateUserForm() {
           onChange={(e) =>
             setFormData({ ...formData, confirmPassword: e.target.value })
           }
-          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+	          className="input"
           placeholder="Re-enter password"
           disabled={isLoading}
         />
         {formData.password &&
           formData.confirmPassword &&
           formData.password !== formData.confirmPassword && (
-            <p className="mt-2 text-sm text-red-600">
+	            <p className="mt-2 text-sm text-red-600 dark:text-red-300">
               Passwords do not match
             </p>
           )}
       </div>
 
-      <div className="pt-4 flex gap-4">
+	      <div className="flex gap-4 pt-4">
         <button
           type="submit"
           disabled={isLoading || formData.password !== formData.confirmPassword}
-          className="flex-1 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 font-medium"
+	          className="btn-primary flex-1 py-3"
         >
           {isLoading ? "Creating..." : "Create User"}
         </button>
@@ -206,14 +191,14 @@ export function CreateUserForm() {
           type="button"
           onClick={() => router.back()}
           disabled={isLoading}
-          className="px-6 py-3 border rounded-lg hover:bg-accent disabled:opacity-50"
+	          className="btn-secondary"
         >
           Cancel
         </button>
       </div>
 
-      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-        <p className="text-sm text-blue-800 dark:text-blue-200">
+	      <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-500/30 dark:bg-blue-500/10">
+	        <p className="text-sm text-blue-800 dark:text-blue-200">
           <strong>Note:</strong> The user will not receive an email verification
           link. They can log in immediately with the credentials provided.
         </p>

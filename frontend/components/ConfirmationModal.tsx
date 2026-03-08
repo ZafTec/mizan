@@ -42,7 +42,7 @@ export default function ConfirmationModal({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
             <div className="card p-6 max-w-md w-full shadow-2xl animate-in fade-in zoom-in duration-200">
                 <div className="flex items-start gap-4 mb-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${isDanger ? 'bg-red-100 dark:bg-red-900/30' : 'bg-brand-100 dark:bg-brand-900/30'
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${isDanger ? 'bg-red-100 dark:bg-red-900/30' : 'bg-brand-100 dark:bg-brand-900/30'
                         }`}>
                         <i className={`text-2xl ${isDanger ? 'ri-error-warning-line text-red-600 dark:text-red-400' : 'ri-question-line text-brand-600 dark:text-brand-400'
                             }`} />

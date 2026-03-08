@@ -168,21 +168,21 @@ export default function MealPlanningCalendarWrapper({
     }));
   };
 
-  return (
-    <div className="relative">
-      {loading && (
-        <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
-          <div className="bg-white p-4 rounded-lg shadow text-gray-700">
-            Loading meal plans...
-          </div>
-        </div>
-      )}
-      
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
+	  return (
+	    <div className="relative">
+	      {loading && (
+	        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-slate-950/55">
+	          <div className="rounded-lg bg-white p-4 text-slate-700 shadow dark:bg-slate-950 dark:text-slate-200">
+	            Loading meal plans...
+	          </div>
+	        </div>
+	      )}
+	      
+	      {error && (
+	        <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
+	          {error}
+	        </div>
+	      )}
       
       <MealPlanningCalendar
         perDayMeals={initialMeals}

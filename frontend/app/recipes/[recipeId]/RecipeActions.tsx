@@ -81,21 +81,21 @@ export default function RecipeActions({ recipeId, isOwner, isFavorited: initialF
                 isLoading={isDeleting}
             />
 
-            <div className="card p-6 space-y-4">
-                <div className="flex flex-wrap gap-3">
-                    <button onClick={handleAddToMealPlan} className="btn-primary flex-1 sm:flex-none">
+	            <div className="card p-6 space-y-4">
+	                <div className="flex flex-wrap gap-3">
+	                    <button onClick={handleAddToMealPlan} className="btn-primary flex-1 sm:flex-none">
                         <i className="ri-add-line" />
                         Add to Meal Plan
                     </button>
-                    <button
-                        onClick={handleToggleFavorite}
-                        disabled={isToggling}
-                        className={`btn-secondary flex-1 sm:flex-none ${isFavorited ? "bg-red-100! text-red-600!" : ""}`}
-                    >
+	                    <button
+	                        onClick={handleToggleFavorite}
+	                        disabled={isToggling}
+	                        className={`btn-secondary flex-1 sm:flex-none ${isFavorited ? "bg-red-100! text-red-600! dark:bg-red-500/12! dark:text-red-300!" : ""}`}
+	                    >
                         <i className={isFavorited ? "ri-heart-3-fill" : "ri-heart-3-line"} />
                         {isFavorited ? "Favorited" : "Save to Favorites"}
                     </button>
-                    <button onClick={handleShare} className={`btn-secondary flex-1 sm:flex-none transition-all ${showCopied ? "bg-green-100! text-green-700!" : ""}`}>
+	                    <button onClick={handleShare} className={`btn-secondary flex-1 sm:flex-none transition-all ${showCopied ? "bg-green-100! text-green-700! dark:bg-green-500/12! dark:text-green-300!" : ""}`}>
                         {showCopied ? (
                             <>
                                 <i className="ri-check-line" />
@@ -111,7 +111,7 @@ export default function RecipeActions({ recipeId, isOwner, isFavorited: initialF
                 </div>
 
                 {isOwner && (
-                    <div className="flex flex-wrap gap-3 pt-3 border-t border-slate-200">
+	                    <div className="flex flex-wrap gap-3 border-t border-slate-200 pt-3 dark:border-white/10">
                         <button
                             onClick={() => router.push(`/recipes/${recipeId}/edit`)}
                             className="btn-secondary flex-1 sm:flex-none"
@@ -119,11 +119,11 @@ export default function RecipeActions({ recipeId, isOwner, isFavorited: initialF
                             <i className="ri-edit-line" />
                             Edit Recipe
                         </button>
-                        <button
-                            onClick={() => setShowDeleteModal(true)}
-                            disabled={isDeleting}
-                            className="btn-secondary flex-1 sm:flex-none text-red-600! border-red-200! hover:bg-red-50!"
-                        >
+	                        <button
+	                            onClick={() => setShowDeleteModal(true)}
+	                            disabled={isDeleting}
+	                            className="btn-secondary flex-1 sm:flex-none border-red-200! text-red-600! hover:bg-red-50! dark:border-red-500/30! dark:text-red-300! dark:hover:bg-red-500/10!"
+	                        >
                             <i className="ri-delete-bin-line" />
                             {isDeleting ? "Deleting..." : "Delete Recipe"}
                         </button>

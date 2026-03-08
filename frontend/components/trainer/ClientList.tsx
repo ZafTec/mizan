@@ -45,7 +45,7 @@ export function ClientList() {
 			<div className="space-y-4">
 				{[1, 2, 3].map((i) => (
 					<div key={i} className="animate-pulse flex items-center space-x-4">
-						<div className="w-12 h-12 bg-gray-200 dark:bg-slate-700 rounded-full"></div>
+						<div className="w-12 h-12 bg-gray-200 dark:bg-slate-700 rounded-2xl"></div>
 						<div className="flex-1">
 							<div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-1/4 mb-2"></div>
 							<div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-1/3"></div>
@@ -81,7 +81,7 @@ export function ClientList() {
 						className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
 					>
 						<div className="flex items-center space-x-3">
-							<div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+							<div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center">
 								<span className="text-green-600 dark:text-green-400 font-semibold">
 									{(client.clientName || client.clientEmail || "?").charAt(0)}
 								</span>

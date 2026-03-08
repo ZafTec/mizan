@@ -45,7 +45,7 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 					<div className="flex items-center gap-3">
 						<h1 className="text-2xl font-bold text-slate-900 capitalize">{ingredient.name}</h1>
 						{ingredient.isVerified && (
-							<span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
+							<span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-2xl bg-green-100 text-green-700 text-xs font-medium">
 								<i className="ri-verified-badge-line" />
 								Verified
 							</span>
@@ -59,35 +59,35 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 				<h2 className="font-semibold text-slate-900 mb-4">Nutritional Information</h2>
 				<div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
 					<div className="text-center p-4 bg-white rounded-xl">
-						<div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-2">
+						<div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-fire-line text-orange-600" />
 						</div>
 						<p className="text-2xl font-bold text-slate-900">{ingredient.caloriesPer100g}</p>
 						<p className="text-xs text-slate-500">Calories</p>
 					</div>
 					<div className="text-center p-4 bg-white rounded-xl">
-						<div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-2">
+						<div className="w-10 h-10 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-heart-pulse-line text-red-600" />
 						</div>
 						<p className="text-2xl font-bold text-slate-900">{ingredient.proteinPer100g}g</p>
 						<p className="text-xs text-slate-500">Protein</p>
 					</div>
 					<div className="text-center p-4 bg-white rounded-xl">
-						<div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-2">
+						<div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-bread-line text-amber-600" />
 						</div>
 						<p className="text-2xl font-bold text-slate-900">{ingredient.carbsPer100g}g</p>
 						<p className="text-xs text-slate-500">Carbs</p>
 					</div>
 					<div className="text-center p-4 bg-white rounded-xl">
-						<div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center mx-auto mb-2">
+						<div className="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-drop-line text-yellow-600" />
 						</div>
 						<p className="text-2xl font-bold text-slate-900">{ingredient.fatPer100g}g</p>
 						<p className="text-xs text-slate-500">Fat</p>
 					</div>
 					<div className="text-center p-4 bg-white rounded-xl">
-						<div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-2">
+						<div className="w-10 h-10 rounded-2xl bg-green-100 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-leaf-line text-green-600" />
 						</div>
 						<p className="text-2xl font-bold text-slate-900">{ingredient.fiberPer100g ?? 0}g</p>
@@ -96,7 +96,7 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 				</div>
 				{proteinCalRatio > 0 && (
 					<div className="mt-4 flex items-center gap-3 p-3 bg-white rounded-xl">
-						<div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">
+						<div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
 							<i className="ri-percent-line text-violet-600" />
 						</div>
 						<div>

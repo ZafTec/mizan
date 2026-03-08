@@ -59,6 +59,15 @@ const gramsTooltipFormatter: Formatter<ValueType, string> = (value, name) => {
 	return [`${value}g`, label];
 };
 
+const CHART_COLORS = {
+	grid: "var(--border)",
+	axis: "var(--muted-foreground)",
+	tooltipBackground: "var(--popover)",
+	tooltipBorder: "var(--border)",
+	tooltipText: "var(--popover-foreground)",
+	cursor: "color-mix(in oklab, var(--muted) 78%, transparent)",
+};
+
 export default function MealsPage() {
 	const { data: session, isPending } = useSession();
 	const searchParams = useSearchParams();
@@ -196,7 +205,7 @@ export default function MealsPage() {
 	if (!session?.user) {
 		return (
 			<div className="flex items-center justify-center min-h-screen">
-				<p className="text-slate-500">Please log in to view your meals</p>
+				<p className="text-slate-500 dark:text-slate-400">Please log in to view your meals</p>
 			</div>
 		);
 	}
@@ -209,23 +218,23 @@ export default function MealsPage() {
 					<div className="flex items-center gap-3">
 						<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Food Diary</h1>
 						{(streak?.currentStreak ?? 0) > 0 && (
-							<span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-sm font-medium bg-orange-100 text-orange-700">
+							<span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2.5 py-0.5 text-sm font-medium text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">
 								<i className="ri-fire-fill" />
 								{streak?.currentStreak ?? 0} day streak
 							</span>
 						)}
 					</div>
-					<p className="text-slate-500 mt-1">Track your daily nutrition intake</p>
+					<p className="mt-1 text-slate-500 dark:text-slate-400">Track your daily nutrition intake</p>
 				</div>
 				<div className="flex items-center gap-4">
-					<div className="flex items-center bg-white rounded-xl shadow-sm border border-slate-200 p-1">
-						<button onClick={handlePrevDay} className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 rounded-lg text-slate-600">
+					<div className="flex items-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-slate-950/75">
+						<button onClick={handlePrevDay} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900/80">
 							<i className="ri-arrow-left-s-line" />
 						</button>
-						<span className="px-4 font-medium text-slate-900 min-w-35 text-center">
+						<span className="min-w-35 px-4 text-center font-medium text-slate-900 dark:text-slate-100">
 							{new Date(queryDate).toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric' })}
 						</span>
-						<button onClick={handleNextDay} className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 rounded-lg text-slate-600">
+						<button onClick={handleNextDay} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900/80">
 							<i className="ri-arrow-right-s-line" />
 						</button>
 					</div>
@@ -247,45 +256,45 @@ export default function MealsPage() {
 						{/* Calories */}
 						<div className="space-y-2">
 							<div className="flex justify-between text-sm">
-								<span className="font-medium text-slate-700">Calories</span>
-								<span className="text-slate-500">{Math.round(totalCalories)} / {goal.targetCalories} kcal</span>
+								<span className="font-medium text-slate-700 dark:text-slate-200">Calories</span>
+								<span className="text-slate-500 dark:text-slate-400">{Math.round(totalCalories)} / {goal.targetCalories} kcal</span>
 							</div>
-							<div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+							<div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800/80">
 								<div className="h-full bg-orange-500 rounded-full transition-all duration-500" style={{ width: `${caloriePct}%` }} />
 							</div>
 						</div>
 						{/* Protein */}
 						<div className="space-y-2">
 							<div className="flex justify-between text-sm">
-								<span className="font-medium text-slate-700">Protein</span>
-								<span className="text-slate-500">{totalProtein.toFixed(1)} / {goal.targetProteinGrams} g</span>
+								<span className="font-medium text-slate-700 dark:text-slate-200">Protein</span>
+								<span className="text-slate-500 dark:text-slate-400">{totalProtein.toFixed(1)} / {goal.targetProteinGrams} g</span>
 							</div>
-							<div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+							<div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800/80">
 								<div className="h-full bg-red-500 rounded-full transition-all duration-500" style={{ width: `${proteinPct}%` }} />
 							</div>
 						</div>
 						{/* Carbs */}
 						<div className="space-y-2">
 							<div className="flex justify-between text-sm">
-								<span className="font-medium text-slate-700">Carbs</span>
-								<span className="text-slate-500">{totalCarbs.toFixed(1)} / {goal.targetCarbsGrams} g</span>
+								<span className="font-medium text-slate-700 dark:text-slate-200">Carbs</span>
+								<span className="text-slate-500 dark:text-slate-400">{totalCarbs.toFixed(1)} / {goal.targetCarbsGrams} g</span>
 							</div>
-							<div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+							<div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800/80">
 								<div className="h-full bg-amber-500 rounded-full transition-all duration-500" style={{ width: `${carbsPct}%` }} />
 							</div>
 						</div>
 						{/* Fat */}
 						<div className="space-y-2">
 							<div className="flex justify-between text-sm">
-								<span className="font-medium text-slate-700">Fat</span>
-								<span className="text-slate-500">{totalFat.toFixed(1)} / {goal.targetFatGrams} g</span>
+								<span className="font-medium text-slate-700 dark:text-slate-200">Fat</span>
+								<span className="text-slate-500 dark:text-slate-400">{totalFat.toFixed(1)} / {goal.targetFatGrams} g</span>
 							</div>
-							<div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+							<div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800/80">
 								<div className="h-full bg-yellow-500 rounded-full transition-all duration-500" style={{ width: `${fatPct}%` }} />
 							</div>
 						</div>
 					</div>
-					<div className="flex flex-wrap gap-4 mt-3 text-sm text-slate-500">
+					<div className="mt-3 flex flex-wrap gap-4 text-sm text-slate-500 dark:text-slate-400">
 						{totalFiber > 0 && (
 							<p>Fiber: <span className="font-medium text-green-600">{totalFiber.toFixed(1)}g</span></p>
 						)}
@@ -303,10 +312,10 @@ export default function MealsPage() {
 						<i className="ri-bar-chart-fill text-brand-500" />
 						Last {rangeDays} Days (Calories)
 					</h2>
-					<div className="flex gap-1 bg-slate-100 rounded-lg p-1">
+					<div className="flex gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-900/80">
 						{[7, 14, 30].map(d => (
 							<button key={d} onClick={() => setRangeDays(d)}
-								className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${rangeDays === d ? "bg-white shadow text-brand-600" : "text-slate-600 hover:text-slate-900"}`}>
+								className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${rangeDays === d ? "bg-white text-brand-600 shadow dark:bg-slate-950 dark:text-brand-300" : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"}`}>
 								{d}d
 							</button>
 						))}
@@ -314,12 +323,12 @@ export default function MealsPage() {
 				</div>
 				<ResponsiveContainer width="100%" height="85%">
 					<ComposedChart data={history}>
-						<CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-						<XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-						<YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+						<CartesianGrid strokeDasharray="3 3" vertical={false} stroke={CHART_COLORS.grid} />
+						<XAxis dataKey="date" stroke={CHART_COLORS.axis} fontSize={12} tickLine={false} axisLine={false} />
+						<YAxis stroke={CHART_COLORS.axis} fontSize={12} tickLine={false} axisLine={false} />
 						<Tooltip
-							contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-							cursor={{ fill: '#f1f5f9' }}
+							contentStyle={{ borderRadius: '12px', border: `1px solid ${CHART_COLORS.tooltipBorder}`, backgroundColor: CHART_COLORS.tooltipBackground, color: CHART_COLORS.tooltipText, boxShadow: '0 20px 45px -28px rgb(15 23 42 / 0.45)' }}
+							cursor={{ fill: CHART_COLORS.cursor }}
 						/>
 						<Bar dataKey="calories" fill="#f97316" radius={[4, 4, 0, 0]} name="Calories" />
 						{history.some(d => d.goalCalories) && (
@@ -337,10 +346,10 @@ export default function MealsPage() {
 				</h2>
 				<ResponsiveContainer width="100%" height="85%">
 					<BarChart data={history}>
-						<CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-						<XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-						<YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} unit="g" />
-						<Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} cursor={{ fill: '#f1f5f9' }} />
+						<CartesianGrid strokeDasharray="3 3" vertical={false} stroke={CHART_COLORS.grid} />
+						<XAxis dataKey="date" stroke={CHART_COLORS.axis} fontSize={12} tickLine={false} axisLine={false} />
+						<YAxis stroke={CHART_COLORS.axis} fontSize={12} tickLine={false} axisLine={false} unit="g" />
+						<Tooltip contentStyle={{ borderRadius: '12px', border: `1px solid ${CHART_COLORS.tooltipBorder}`, backgroundColor: CHART_COLORS.tooltipBackground, color: CHART_COLORS.tooltipText, boxShadow: '0 20px 45px -28px rgb(15 23 42 / 0.45)' }} cursor={{ fill: CHART_COLORS.cursor }} />
 						<Bar dataKey="protein" stackId="macros" fill="#ef4444" radius={[0, 0, 0, 0]} name="Protein (g)" />
 						<Bar dataKey="carbs" stackId="macros" fill="#f59e0b" radius={[0, 0, 0, 0]} name="Carbs (g)" />
 						<Bar dataKey="fat" stackId="macros" fill="#eab308" radius={[4, 4, 0, 0]} name="Fat (g)" />
@@ -356,10 +365,10 @@ export default function MealsPage() {
 				</h2>
 				<ResponsiveContainer width="100%" height="85%">
 					<ComposedChart data={history}>
-						<CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-						<XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-						<YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} unit="%" domain={[0, 'auto']} />
-						<Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={percentTooltipFormatter} />
+						<CartesianGrid strokeDasharray="3 3" vertical={false} stroke={CHART_COLORS.grid} />
+						<XAxis dataKey="date" stroke={CHART_COLORS.axis} fontSize={12} tickLine={false} axisLine={false} />
+						<YAxis stroke={CHART_COLORS.axis} fontSize={12} tickLine={false} axisLine={false} unit="%" domain={[0, 'auto']} />
+						<Tooltip contentStyle={{ borderRadius: '12px', border: `1px solid ${CHART_COLORS.tooltipBorder}`, backgroundColor: CHART_COLORS.tooltipBackground, color: CHART_COLORS.tooltipText, boxShadow: '0 20px 45px -28px rgb(15 23 42 / 0.45)' }} formatter={percentTooltipFormatter} />
 						<Line type="monotone" dataKey="proteinCalRatio" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: '#8b5cf6', r: 3 }} name="P/Cal Ratio (%)" />
 						{history.some(d => d.goalPcal) && (
 							<Line type="stepAfter" dataKey="goalPcal" stroke="#8b5cf6" strokeDasharray="6 3" strokeWidth={2} dot={false} name="P/Cal Goal (%)" />
@@ -377,10 +386,10 @@ export default function MealsPage() {
 					</h2>
 					<ResponsiveContainer width="100%" height="85%">
 						<ComposedChart data={history}>
-							<CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-							<XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-							<YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} unit="g" domain={[0, 'auto']} />
-							<Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={gramsTooltipFormatter} />
+							<CartesianGrid strokeDasharray="3 3" vertical={false} stroke={CHART_COLORS.grid} />
+							<XAxis dataKey="date" stroke={CHART_COLORS.axis} fontSize={12} tickLine={false} axisLine={false} />
+							<YAxis stroke={CHART_COLORS.axis} fontSize={12} tickLine={false} axisLine={false} unit="g" domain={[0, 'auto']} />
+							<Tooltip contentStyle={{ borderRadius: '12px', border: `1px solid ${CHART_COLORS.tooltipBorder}`, backgroundColor: CHART_COLORS.tooltipBackground, color: CHART_COLORS.tooltipText, boxShadow: '0 20px 45px -28px rgb(15 23 42 / 0.45)' }} formatter={gramsTooltipFormatter} />
 							<Line type="monotone" dataKey="fiber" stroke="#22c55e" strokeWidth={2} dot={{ fill: '#22c55e', r: 3 }} name="Fiber (g)" />
 							{history.some(d => d.goalFiber) && (
 								<Line type="stepAfter" dataKey="goalFiber" stroke="#22c55e" strokeDasharray="6 3" strokeWidth={2} dot={false} name="Fiber Goal (g)" />
@@ -407,20 +416,20 @@ export default function MealsPage() {
 						{todayMeals.map((meal) => (
 							<div
 								key={meal.id}
-								className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors"
+								className="flex items-center justify-between rounded-xl bg-slate-50 p-4 transition-colors hover:bg-slate-100 dark:bg-slate-900/60 dark:hover:bg-slate-900/90"
 							>
 								<div>
 									<h3 className="font-medium text-slate-900 dark:text-slate-100">
 										{meal.name || meal.mealType}
 									</h3>
-									<p className="text-sm text-slate-500 capitalize">{meal.mealType} • {new Date(meal.loggedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+									<p className="text-sm capitalize text-slate-500 dark:text-slate-400">{meal.mealType} • {new Date(meal.loggedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
 								</div>
 								<div className="flex items-center gap-4">
 									<div className="text-right">
 										<p className="font-semibold text-orange-600">
 											{meal.calories || 0} kcal
 										</p>
-										<div className="flex gap-2 text-xs text-slate-500 mt-1">
+										<div className="mt-1 flex gap-2 text-xs text-slate-500 dark:text-slate-400">
 											<span>P: {meal.proteinGrams?.toFixed(1)}g</span>
 											<span>C: {meal.carbsGrams?.toFixed(1)}g</span>
 											<span>F: {meal.fatGrams?.toFixed(1)}g</span>
@@ -430,7 +439,7 @@ export default function MealsPage() {
 									</div>
 									<button
 										onClick={() => handleDeleteClick(meal.id, meal.name || meal.mealType)}
-										className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+										className="rounded-lg p-2 text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
 										title="Delete meal"
 									>
 										<i className="ri-delete-bin-line text-xl" />
@@ -441,12 +450,13 @@ export default function MealsPage() {
 					</div>
 				) : (
 					<div className="text-center py-12">
-						<div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
-							<i className="ri-restaurant-line text-3xl text-slate-400" />
+						<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-900/80">
+							<i className="ri-restaurant-line text-3xl text-slate-400 dark:text-slate-500" />
 						</div>
 						<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
 							No meals logged
 						</h3>
+						<p className="text-slate-500 dark:text-slate-400">Log your first meal for this day to start tracking totals.</p>
 						<Link href="/meals/add" className="btn-primary mt-4">
 							Log Meal
 						</Link>

@@ -1,9 +1,9 @@
 <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="var(--color-tuscan-sun-200)" />
-      <stop offset="40%" stop-color="var(--color-tuscan-sun-500)" />
-      <stop offset="100%" stop-color="var(--color-tuscan-sun-700)" />
+      <stop offset="0%" stop-color="#FEF08A" />
+      <stop offset="40%" stop-color="#EAB308" />
+      <stop offset="100%" stop-color="#A16207" />
     </linearGradient>
     <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="rgba(255,255,255,0)" />
@@ -47,18 +47,18 @@
   </style>
 
   <!-- Confetti Burst Elements -->
-  <rect class="confetti c1" x="195" y="190" width="10" height="25" fill="var(--destructive)" style="--tx: -120px; --ty: -180px; transform: rotate(45deg);" />
-  <circle class="confetti c2" cx="200" cy="200" r="10" fill="var(--color-charcoal-blue-500)" style="--tx: 140px; --ty: -120px;" />
-  <polygon class="confetti c3" points="200,185 212,215 188,215" fill="var(--color-verdigris-500)" style="--tx: -140px; --ty: -60px; transform: rotate(-30deg);" />
+  <rect class="confetti c1" x="195" y="190" width="10" height="25" fill="#EF4444" style="--tx: -120px; --ty: -180px; transform: rotate(45deg);" />
+  <circle class="confetti c2" cx="200" cy="200" r="10" fill="#3B82F6" style="--tx: 140px; --ty: -120px;" />
+  <polygon class="confetti c3" points="200,185 212,215 188,215" fill="#10B981" style="--tx: -140px; --ty: -60px; transform: rotate(-30deg);" />
   <rect class="confetti c4" x="195" y="195" width="15" height="15" fill="#D946EF" style="--tx: 120px; --ty: -200px; transform: rotate(15deg);" />
-  <polygon class="confetti c5" points="200,190 205,200 215,200 207,207 210,217 200,212 190,217 193,207 185,200 195,200" fill="var(--color-tuscan-sun-300)" style="--tx: 0px; --ty: -220px;" />
+  <polygon class="confetti c5" points="200,190 205,200 215,200 207,207 210,217 200,212 190,217 193,207 185,200 195,200" fill="#FCD34D" style="--tx: 0px; --ty: -220px;" />
 
   <g filter="drop-shadow(0 20px 25px rgba(0,0,0,0.25))">
     <!-- Outer Shield Background -->
     <path d="M 200 50 L 320 100 L 320 220 C 320 300, 200 350, 200 350 C 200 350, 80 300, 80 220 L 80 100 Z" fill="url(#gold)" />
     
     <!-- Inner Rim (Darker Gold for depth) -->
-    <path d="M 200 70 L 300 115 L 300 215 C 300 280, 200 325, 200 325 C 200 325, 100 280, 100 215 L 100 115 Z" fill="var(--color-tuscan-sun-600)" />
+    <path d="M 200 70 L 300 115 L 300 215 C 300 280, 200 325, 200 325 C 200 325, 100 280, 100 215 L 100 115 Z" fill="#CA8A04" />
     <!-- Core Face -->
     <path d="M 200 85 L 280 125 L 280 210 C 280 260, 200 300, 200 300 C 200 300, 120 260, 120 210 L 120 125 Z" fill="url(#gold)" />
     
@@ -68,10 +68,10 @@
     </g>
 
     <!-- Center Star -->
-    <polygon class="star" points="200,120 220,165 270,170 235,205 245,255 200,230 155,255 165,205 130,170 180,165" fill="var(--background)" />
+    <polygon class="star" points="200,120 220,165 270,170 235,205 245,255 200,230 155,255 165,205 130,170 180,165" fill="#FFFFFF" />
     
     <!-- Stylized Nutrition Leaf overlay at the bottom -->
-    <path class="leaf" d="M 200 255 C 220 255, 230 270, 230 285 C 230 300, 200 310, 200 310 C 200 310, 170 300, 170 285 C 170 270, 180 255, 200 255 Z" fill="var(--color-verdigris-500)" />
+    <path class="leaf" d="M 200 255 C 220 255, 230 270, 230 285 C 230 300, 200 310, 200 310 C 200 310, 170 300, 170 285 C 170 270, 180 255, 200 255 Z" fill="#10B981" />
     <path class="leaf" d="M 200 260 L 200 305" stroke="#047857" stroke-width="3" stroke-linecap="round" fill="none" />
   </g>
 </svg>

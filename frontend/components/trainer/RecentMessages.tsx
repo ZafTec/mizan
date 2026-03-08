@@ -75,7 +75,7 @@ export function RecentMessages() {
 				{[1, 2, 3].map((i) => (
 					<div key={i} className="animate-pulse">
 						<div className="flex items-start space-x-3">
-							<div className="w-10 h-10 bg-gray-200 dark:bg-slate-700 rounded-full"></div>
+							<div className="w-10 h-10 bg-gray-200 dark:bg-slate-700 rounded-xl"></div>
 							<div className="flex-1">
 								<div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-1/4 mb-2"></div>
 								<div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-3/4"></div>
@@ -100,14 +100,14 @@ export function RecentMessages() {
 					}`}
 				>
 					<div className="flex items-start space-x-3">
-						<div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center shrink-0">
+						<div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center shrink-0">
 							{message.senderImage ? (
 								<Image
 									src={message.senderImage}
 									alt={message.senderName}
 									width={40}
 									height={40}
-									className="w-10 h-10 rounded-full"
+									className="w-10 h-10 rounded-xl"
 								/>
 							) : (
 								<span className="text-green-600 dark:text-green-400 font-semibold">

@@ -121,7 +121,7 @@ export function ChatWindow({
 			{/* Header */}
 			<div className="flex items-center justify-between p-4 border-b dark:border-slate-700">
 				<div className="flex items-center space-x-3">
-					<div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+					<div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center">
 						<span className="text-green-600 dark:text-green-400 font-semibold">
 							{recipientName.charAt(0)}
 						</span>

@@ -54,7 +54,7 @@ export default function ForgotPasswordPage() {
 				<div className="w-full max-w-md">
 					<div className="card p-6 sm:p-8">
 						<div className="text-center space-y-4">
-							<div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-950 flex items-center justify-center mx-auto">
+							<div className="w-16 h-16 rounded-2xl bg-green-100 dark:bg-green-950 flex items-center justify-center mx-auto">
 								<i className="ri-mail-send-line text-3xl text-green-600" />
 							</div>
 							<div>

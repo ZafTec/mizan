@@ -35,18 +35,18 @@ export default function AdminIngredientActions({ id, name }: AdminIngredientActi
         }
     };
 
-    return (
-        <div className="flex items-center justify-end gap-2">
+	    return (
+	        <div className="flex items-center justify-end gap-2">
             <Link
                 href={`/admin/ingredients/${id}/edit`}
-                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-brand-50 hover:text-brand-600 flex items-center justify-center transition-colors"
+	                className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 transition-colors hover:bg-brand-50 hover:text-brand-600 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-brand-950/50 dark:hover:text-brand-300"
                 title="Edit Ingredient"
             >
                 <i className="ri-edit-line" />
             </Link>
             <button
                 onClick={() => setIsDeleteModalOpen(true)}
-                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-50 hover:text-red-600 flex items-center justify-center transition-colors text-slate-500"
+	                className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-red-500/10 dark:hover:text-red-300"
                 title="Delete Ingredient"
             >
                 <i className="ri-delete-bin-line" />

@@ -25,7 +25,7 @@ export default function Error({
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="max-w-md w-full mx-4">
         <div className="bg-card rounded-lg border p-8 text-center">
-          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <span className="text-3xl">⚠️</span>
           </div>
           <h2 className="text-2xl font-bold mb-2">Something went wrong</h2>

@@ -211,12 +211,12 @@ export default function Page() {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-4">
-					<Link href="/recipes" className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
-						<i className="ri-arrow-left-line text-xl text-slate-600" />
+					<Link href="/recipes" className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 transition-colors hover:bg-slate-200 dark:bg-slate-900/75 dark:hover:bg-slate-900">
+						<i className="ri-arrow-left-line text-xl text-slate-600 dark:text-slate-300" />
 					</Link>
 					<div>
-						<h1 className="text-2xl font-bold text-slate-900">Create Recipe</h1>
-						<p className="text-slate-500">Add a new recipe to your collection</p>
+						<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Create Recipe</h1>
+						<p className="text-slate-500 dark:text-slate-400">Add a new recipe to your collection</p>
 					</div>
 				</div>
 				<button
@@ -231,62 +231,62 @@ export default function Page() {
 
 			{/* Macros Modal */}
 			<Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-				<h2 className="text-xl font-bold text-slate-900 mb-4">Recipe Macros Overview</h2>
+				<h2 className="mb-4 text-xl font-bold text-slate-900 dark:text-slate-100">Recipe Macros Overview</h2>
 				<div className="overflow-x-auto">
 					<table className="w-full text-sm">
 						<thead>
-							<tr className="bg-slate-50">
-								<th className="p-3 text-left font-medium text-slate-600 rounded-tl-xl">Ingredient</th>
-								<th className="p-3 text-right font-medium text-slate-600">Amount</th>
-								<th className="p-3 text-right font-medium text-slate-600">Calories</th>
-								<th className="p-3 text-right font-medium text-slate-600">Protein</th>
-								<th className="p-3 text-right font-medium text-slate-600">Carbs</th>
-								<th className="p-3 text-right font-medium text-slate-600">Fat</th>
-								<th className="p-3 text-right font-medium text-slate-600 rounded-tr-xl">Fiber</th>
+							<tr className="bg-slate-50 dark:bg-slate-900/80">
+								<th className="rounded-tl-xl p-3 text-left font-medium text-slate-600 dark:text-slate-300">Ingredient</th>
+								<th className="p-3 text-right font-medium text-slate-600 dark:text-slate-300">Amount</th>
+								<th className="p-3 text-right font-medium text-slate-600 dark:text-slate-300">Calories</th>
+								<th className="p-3 text-right font-medium text-slate-600 dark:text-slate-300">Protein</th>
+								<th className="p-3 text-right font-medium text-slate-600 dark:text-slate-300">Carbs</th>
+								<th className="p-3 text-right font-medium text-slate-600 dark:text-slate-300">Fat</th>
+								<th className="rounded-tr-xl p-3 text-right font-medium text-slate-600 dark:text-slate-300">Fiber</th>
 							</tr>
 						</thead>
-						<tbody className="divide-y divide-slate-100">
+						<tbody className="divide-y divide-slate-100 dark:divide-white/10">
 							{selectedIngredients.map((ing, idx) => {
 								if (!ing.amount) return null;
 								if (ing.type === "recipe" && ing.subRecipe?.nutrition) {
 									const s = ing.amount;
 									const n = ing.subRecipe.nutrition;
 									return (
-										<tr key={idx} className="hover:bg-slate-50">
-											<td className="p-3 text-slate-900">{ing.subRecipe.title} <span className="text-xs text-brand-500">(recipe)</span></td>
-											<td className="p-3 text-right text-slate-600">{ing.amount} srv</td>
-											<td className="p-3 text-right text-slate-600">{((n.caloriesPerServing || 0) * s).toFixed(0)}</td>
-											<td className="p-3 text-right text-slate-600">{((n.proteinGrams || 0) * s).toFixed(1)}g</td>
-											<td className="p-3 text-right text-slate-600">{((n.carbsGrams || 0) * s).toFixed(1)}g</td>
-											<td className="p-3 text-right text-slate-600">{((n.fatGrams || 0) * s).toFixed(1)}g</td>
-											<td className="p-3 text-right text-slate-600">{((n.fiberGrams || 0) * s).toFixed(1)}g</td>
+										<tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-900/60">
+											<td className="p-3 text-slate-900 dark:text-slate-100">{ing.subRecipe.title} <span className="text-xs text-brand-500 dark:text-brand-300">(recipe)</span></td>
+											<td className="p-3 text-right text-slate-600 dark:text-slate-300">{ing.amount} srv</td>
+											<td className="p-3 text-right text-slate-600 dark:text-slate-300">{((n.caloriesPerServing || 0) * s).toFixed(0)}</td>
+											<td className="p-3 text-right text-slate-600 dark:text-slate-300">{((n.proteinGrams || 0) * s).toFixed(1)}g</td>
+											<td className="p-3 text-right text-slate-600 dark:text-slate-300">{((n.carbsGrams || 0) * s).toFixed(1)}g</td>
+											<td className="p-3 text-right text-slate-600 dark:text-slate-300">{((n.fatGrams || 0) * s).toFixed(1)}g</td>
+											<td className="p-3 text-right text-slate-600 dark:text-slate-300">{((n.fiberGrams || 0) * s).toFixed(1)}g</td>
 										</tr>
 									);
 								}
 								if (!ing.ingredient) return null;
 								const ratio = ing.amount / 100;
 								return (
-									<tr key={idx} className="hover:bg-slate-50">
-										<td className="p-3 text-slate-900">{ing.ingredient.name}</td>
-										<td className="p-3 text-right text-slate-600">{ing.amount}g</td>
-										<td className="p-3 text-right text-slate-600">{((ing.ingredient.caloriesPer100g || 0) * ratio).toFixed(0)}</td>
-										<td className="p-3 text-right text-slate-600">{((ing.ingredient.proteinPer100g || 0) * ratio).toFixed(1)}g</td>
-										<td className="p-3 text-right text-slate-600">{((ing.ingredient.carbsPer100g || 0) * ratio).toFixed(1)}g</td>
-										<td className="p-3 text-right text-slate-600">{((ing.ingredient.fatPer100g || 0) * ratio).toFixed(1)}g</td>
-										<td className="p-3 text-right text-slate-600">{((ing.ingredient.fiberPer100g || 0) * ratio).toFixed(1)}g</td>
+									<tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-900/60">
+										<td className="p-3 text-slate-900 dark:text-slate-100">{ing.ingredient.name}</td>
+										<td className="p-3 text-right text-slate-600 dark:text-slate-300">{ing.amount}g</td>
+										<td className="p-3 text-right text-slate-600 dark:text-slate-300">{((ing.ingredient.caloriesPer100g || 0) * ratio).toFixed(0)}</td>
+										<td className="p-3 text-right text-slate-600 dark:text-slate-300">{((ing.ingredient.proteinPer100g || 0) * ratio).toFixed(1)}g</td>
+										<td className="p-3 text-right text-slate-600 dark:text-slate-300">{((ing.ingredient.carbsPer100g || 0) * ratio).toFixed(1)}g</td>
+										<td className="p-3 text-right text-slate-600 dark:text-slate-300">{((ing.ingredient.fatPer100g || 0) * ratio).toFixed(1)}g</td>
+										<td className="p-3 text-right text-slate-600 dark:text-slate-300">{((ing.ingredient.fiberPer100g || 0) * ratio).toFixed(1)}g</td>
 									</tr>
 								);
 							})}
 						</tbody>
 						<tfoot>
-							<tr className="bg-brand-50 font-semibold">
-								<td className="p-3 text-brand-900 rounded-bl-xl">Total</td>
-								<td className="p-3 text-right text-brand-600"></td>
-								<td className="p-3 text-right text-brand-600">{totalMacros.calories.toFixed(0)}</td>
-								<td className="p-3 text-right text-brand-600">{totalMacros.protein.toFixed(1)}g</td>
-								<td className="p-3 text-right text-brand-600">{totalMacros.carbs.toFixed(1)}g</td>
-								<td className="p-3 text-right text-brand-600">{totalMacros.fat.toFixed(1)}g</td>
-								<td className="p-3 text-right text-brand-600 rounded-br-xl">{totalMacros.fiber.toFixed(1)}g</td>
+							<tr className="bg-brand-50 font-semibold dark:bg-brand-950/50">
+								<td className="rounded-bl-xl p-3 text-brand-900 dark:text-brand-100">Total</td>
+								<td className="p-3 text-right text-brand-600 dark:text-brand-300"></td>
+								<td className="p-3 text-right text-brand-600 dark:text-brand-300">{totalMacros.calories.toFixed(0)}</td>
+								<td className="p-3 text-right text-brand-600 dark:text-brand-300">{totalMacros.protein.toFixed(1)}g</td>
+								<td className="p-3 text-right text-brand-600 dark:text-brand-300">{totalMacros.carbs.toFixed(1)}g</td>
+								<td className="p-3 text-right text-brand-600 dark:text-brand-300">{totalMacros.fat.toFixed(1)}g</td>
+								<td className="rounded-br-xl p-3 text-right text-brand-600 dark:text-brand-300">{totalMacros.fiber.toFixed(1)}g</td>
 							</tr>
 						</tfoot>
 					</table>
@@ -296,7 +296,7 @@ export default function Page() {
 			<form onSubmit={handleSubmit} className="space-y-6">
 				{/* Basic Information Card */}
 				<div className="card p-6 space-y-5">
-					<h2 className="font-semibold text-slate-900 flex items-center gap-2">
+					<h2 className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
 						<i className="ri-image-line text-brand-500" />
 						Basic Information
 					</h2>
@@ -325,20 +325,20 @@ export default function Page() {
 											e.preventDefault();
 											open();
 										}}
-										className="w-24 h-24 rounded-2xl border-2 border-dashed border-slate-300 hover:border-brand-400 bg-slate-50 hover:bg-brand-50 flex flex-col items-center justify-center transition-colors group"
-									>
-										<i className="ri-image-add-line text-2xl text-slate-400 group-hover:text-brand-500" />
-										<span className="text-xs text-slate-400 group-hover:text-brand-500 mt-1">Add</span>
+									className="group flex h-24 w-24 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 transition-colors hover:border-brand-400 hover:bg-brand-50 dark:border-white/10 dark:bg-slate-900/75 dark:hover:border-brand-400 dark:hover:bg-brand-950/50"
+								>
+										<i className="ri-image-add-line text-2xl text-slate-400 group-hover:text-brand-500 dark:text-slate-500 dark:group-hover:text-brand-300" />
+										<span className="mt-1 text-xs text-slate-400 group-hover:text-brand-500 dark:text-slate-500 dark:group-hover:text-brand-300">Add</span>
 									</button>
 									{images.map((image, index) => {
 										if (typeof image !== 'string' || index >= MAX_RECIPE_IMAGES_TO_PREVIEW) return null;
 										return (
-											<div key={index} className="relative w-24 h-24">
-												<Image src={image} alt="Recipe" fill className="rounded-2xl object-cover border-2 border-slate-200" />
+											<div key={index} className="relative h-24 w-24">
+												<Image src={image} alt="Recipe" fill className="rounded-2xl border-2 border-slate-200 object-cover dark:border-white/10" />
 												<button
 													type="button"
 													onClick={() => setImages(images.filter((_, i) => i !== index))}
-													className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+													className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-2xl flex items-center justify-center hover:bg-red-600 transition-colors"
 												>
 													<i className="ri-close-line text-sm" />
 												</button>
@@ -346,8 +346,8 @@ export default function Page() {
 										);
 									})}
 									{images.length > MAX_RECIPE_IMAGES_TO_PREVIEW && (
-										<div className="w-24 h-24 rounded-2xl bg-slate-100 flex items-center justify-center">
-											<span className="text-slate-500 font-medium">+{images.length - MAX_RECIPE_IMAGES_TO_PREVIEW}</span>
+										<div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-900/80">
+											<span className="font-medium text-slate-500 dark:text-slate-400">+{images.length - MAX_RECIPE_IMAGES_TO_PREVIEW}</span>
 										</div>
 									)}
 								</div>
@@ -387,7 +387,7 @@ export default function Page() {
 
 				{/* Ingredients Card */}
 				<div className="card p-6 space-y-4 relative overflow-visible!">
-					<h2 className="font-semibold text-slate-900 flex items-center gap-2">
+					<h2 className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
 						<i className="ri-list-check-2 text-brand-500" />
 						Ingredients
 					</h2>
@@ -397,11 +397,11 @@ export default function Page() {
 							<div key={index} className="space-y-2">
 								<div className="flex gap-1">
 									<button type="button" onClick={() => handleIngredientTypeToggle(index, "food")}
-										className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${ing.type === "food" ? "bg-brand-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
+										className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${ing.type === "food" ? "bg-brand-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-slate-900"}`}>
 										Food
 									</button>
 									<button type="button" onClick={() => handleIngredientTypeToggle(index, "recipe")}
-										className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${ing.type === "recipe" ? "bg-brand-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
+										className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${ing.type === "recipe" ? "bg-brand-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-slate-900"}`}>
 										Recipe
 									</button>
 								</div>
@@ -416,21 +416,21 @@ export default function Page() {
 												className="input w-full"
 											/>
 											{activeDropdownIndex === index && (
-												<div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+												<div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg dark:border-white/10 dark:bg-slate-950">
 													{ingredientSearch.length > 0 ? (
 														ingredientSearch.map((ingredient) => (
 															<button
 																key={ingredient.id}
 																type="button"
 																onClick={() => handleIngredientSelect(index, ingredient)}
-																className="w-full p-3 text-left hover:bg-slate-50 flex items-center justify-between border-b border-slate-100 last:border-0"
+																className="flex w-full items-center justify-between border-b border-slate-100 p-3 text-left hover:bg-slate-50 last:border-0 dark:border-white/10 dark:hover:bg-slate-900/80"
 															>
-																<span className="font-medium text-slate-900">{ingredient.name}</span>
-																<span className="text-xs text-slate-500">{ingredient.caloriesPer100g} kcal/100g</span>
+																<span className="font-medium text-slate-900 dark:text-slate-100">{ingredient.name}</span>
+																<span className="text-xs text-slate-500 dark:text-slate-400">{ingredient.caloriesPer100g} kcal/100g</span>
 															</button>
 														))
 													) : (
-														<div className="p-3 text-slate-500 text-center">No ingredients found</div>
+														<div className="p-3 text-center text-slate-500 dark:text-slate-400">No ingredients found</div>
 													)}
 												</div>
 											)}
@@ -454,13 +454,13 @@ export default function Page() {
 											min="0"
 											step={ing.type === "recipe" ? "0.25" : "0.1"}
 										/>
-										<span className="px-3 py-2.5 bg-slate-100 rounded-xl text-slate-600 text-sm font-medium whitespace-nowrap">
+										<span className="whitespace-nowrap rounded-xl bg-slate-100 px-3 py-2.5 text-sm font-medium text-slate-600 dark:bg-slate-900/80 dark:text-slate-300">
 											{ing.type === "food" ? "grams" : "servings"}
 										</span>
 										<button
 											type="button"
 											onClick={() => handleRemoveIngredient(index)}
-											className="w-10 h-10 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center transition-colors shrink-0"
+											className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-500 transition-colors hover:bg-red-100 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/15"
 											aria-label="Remove ingredient"
 										>
 											<i className="ri-delete-bin-line" />
@@ -483,7 +483,7 @@ export default function Page() {
 
 				{/* Instructions Card */}
 				<div className="card p-6 space-y-4">
-					<h2 className="font-semibold text-slate-900 flex items-center gap-2">
+					<h2 className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
 						<i className="ri-file-list-3-line text-brand-500" />
 						Instructions
 					</h2>
@@ -499,7 +499,7 @@ export default function Page() {
 
 				{/* Additional Details Card */}
 				<div className="card p-6 space-y-5">
-					<h2 className="font-semibold text-slate-900 flex items-center gap-2">
+					<h2 className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
 						<i className="ri-settings-3-line text-brand-500" />
 						Additional Details
 					</h2>
@@ -517,7 +517,7 @@ export default function Page() {
 							<option value="household">Household (Shared with household members)</option>
 							<option value="public">Public (Visible to everyone)</option>
 						</select>
-						<p className="text-sm text-slate-500 mt-1.5">
+						<p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
 							{visibility === 'private' && 'Only you can view and edit this recipe'}
 							{visibility === 'household' && 'All members of your household can view this recipe'}
 							{visibility === 'public' && 'Anyone can view this recipe'}
@@ -532,9 +532,9 @@ export default function Page() {
 								<button
 									type="button"
 									onClick={() => setServings(Math.max(1, servings - 1))}
-									className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+									className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 transition-colors hover:bg-slate-200 dark:bg-slate-900/80 dark:hover:bg-slate-900"
 								>
-									<i className="ri-subtract-line text-slate-600" />
+									<i className="ri-subtract-line text-slate-600 dark:text-slate-300" />
 								</button>
 								<input
 									id="servings"
@@ -547,9 +547,9 @@ export default function Page() {
 								<button
 									type="button"
 									onClick={() => setServings(servings + 1)}
-									className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+									className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 transition-colors hover:bg-slate-200 dark:bg-slate-900/80 dark:hover:bg-slate-900"
 								>
-									<i className="ri-add-line text-slate-600" />
+									<i className="ri-add-line text-slate-600 dark:text-slate-300" />
 								</button>
 							</div>
 						</div>
@@ -600,9 +600,9 @@ export default function Page() {
 						{tags.size > 0 && (
 							<div className="flex flex-wrap gap-2 mb-3">
 								{Array.from(tags).map((tag, index) => (
-									<span key={index} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-100 text-brand-700 text-sm font-medium">
+									<span key={index} className="inline-flex items-center gap-1.5 rounded-full bg-brand-100 px-3 py-1.5 text-sm font-medium text-brand-700 dark:bg-brand-950/60 dark:text-brand-200">
 										{tag}
-										<button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-brand-900">
+										<button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-brand-900 dark:hover:text-brand-50">
 											<i className="ri-close-line" />
 										</button>
 									</span>
@@ -624,27 +624,27 @@ export default function Page() {
 				{/* Macro Summary */}
 				{selectedIngredients.some(ing => (ing.ingredient || ing.subRecipe) && ing.amount) && (
 					<div className="card p-6 bg-slate-50/90 dark:bg-slate-900/60">
-						<h2 className="font-semibold text-slate-900 mb-4">Nutrition Summary</h2>
+						<h2 className="mb-4 font-semibold text-slate-900 dark:text-slate-100">Nutrition Summary</h2>
 						<div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-							<div className="text-center p-3 bg-white rounded-xl">
+							<div className="rounded-xl bg-white p-3 text-center dark:bg-slate-950/80">
 								<p className="text-2xl font-bold text-orange-600">{totalMacros.calories.toFixed(0)}</p>
-								<p className="text-xs text-slate-500">Calories</p>
+								<p className="text-xs text-slate-500 dark:text-slate-400">Calories</p>
 							</div>
-							<div className="text-center p-3 bg-white rounded-xl">
+							<div className="rounded-xl bg-white p-3 text-center dark:bg-slate-950/80">
 								<p className="text-2xl font-bold text-red-600">{totalMacros.protein.toFixed(1)}g</p>
-								<p className="text-xs text-slate-500">Protein</p>
+								<p className="text-xs text-slate-500 dark:text-slate-400">Protein</p>
 							</div>
-							<div className="text-center p-3 bg-white rounded-xl">
+							<div className="rounded-xl bg-white p-3 text-center dark:bg-slate-950/80">
 								<p className="text-2xl font-bold text-amber-600">{totalMacros.carbs.toFixed(1)}g</p>
-								<p className="text-xs text-slate-500">Carbs</p>
+								<p className="text-xs text-slate-500 dark:text-slate-400">Carbs</p>
 							</div>
-							<div className="text-center p-3 bg-white rounded-xl">
+							<div className="rounded-xl bg-white p-3 text-center dark:bg-slate-950/80">
 								<p className="text-2xl font-bold text-yellow-600">{totalMacros.fat.toFixed(1)}g</p>
-								<p className="text-xs text-slate-500">Fat</p>
+								<p className="text-xs text-slate-500 dark:text-slate-400">Fat</p>
 							</div>
-							<div className="text-center p-3 bg-white rounded-xl">
+							<div className="rounded-xl bg-white p-3 text-center dark:bg-slate-950/80">
 								<p className="text-2xl font-bold text-green-600">{totalMacros.fiber.toFixed(1)}g</p>
-								<p className="text-xs text-slate-500">Fiber</p>
+								<p className="text-xs text-slate-500 dark:text-slate-400">Fiber</p>
 							</div>
 						</div>
 					</div>

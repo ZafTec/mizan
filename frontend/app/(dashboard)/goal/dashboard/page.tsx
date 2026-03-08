@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { clientApi } from "@/lib/api.client";
 import Link from "next/link";
+import Image from "next/image";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, RadialBarChart, RadialBar, ReferenceLine } from "recharts";
 import { GoalData } from "@/types/goal";
 import Loading from "@/components/Loading";

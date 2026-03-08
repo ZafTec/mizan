@@ -10,7 +10,7 @@
       .st6 { fill: #f8cc1b; } /* Warm Yellow Corn/Peppers */
       .st7 { fill: #ffecb3; stroke: #333; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; } /* Light Pastel Yellow (Calendar Top) */
       .st8 { fill: #d1d1d1; } /* Cloche Shine */
-      .st9 { fill: var(--background)fff; stroke: var(--background)fff; stroke-width: 3; stroke-linecap: round; opacity: 0; } /* Steam Lines (Starts Hidden) */
+      .st9 { fill: #FFFFFFfff; stroke: #FFFFFFfff; stroke-width: 3; stroke-linecap: round; opacity: 0; } /* Steam Lines (Starts Hidden) */
 
       /* CSS Animations */
 

@@ -24,11 +24,11 @@
         animation: figureEight 6s ease-in-out infinite;
       }
       
-      .bg-cream { fill: var(--background)9F0; }
+      .bg-cream { fill: #FFFFFF9F0; }
       .brand-terracotta { fill: #D66D55; }
       .brand-sage { fill: #8DAA91; }
       .brand-brown { fill: #4A3728; }
-      .accent-silver { fill: var(--border); }
+      .accent-silver { fill: #E5E7EB; }
     </style>
   </defs>
 
@@ -38,9 +38,9 @@
   
   <!-- Left Page -->
   <rect x="65" y="95" width="85" height="120" rx="4" class="bg-cream" />
-  <rect x="75" y="110" width="60" height="5" rx="2" fill="var(--border)" />
-  <rect x="75" y="125" width="60" height="5" rx="2" fill="var(--border)" />
-  <rect x="75" y="140" width="40" height="5" rx="2" fill="var(--border)" />
+  <rect x="75" y="110" width="60" height="5" rx="2" fill="#E5E7EB" />
+  <rect x="75" y="125" width="60" height="5" rx="2" fill="#E5E7EB" />
+  <rect x="75" y="140" width="40" height="5" rx="2" fill="#E5E7EB" />
 
   <!-- Right Page (Static) -->
   <rect x="170" y="95" width="85" height="120" rx="4" class="bg-cream" />
@@ -48,9 +48,9 @@
   <!-- Right Page (Fluttering Overlay) -->
   <g class="page-flutter">
     <rect x="170" y="95" width="85" height="120" rx="4" class="bg-cream" />
-    <rect x="180" y="110" width="65" height="5" rx="2" fill="var(--border)" />
-    <rect x="180" y="125" width="65" height="5" rx="2" fill="var(--border)" />
-    <rect x="180" y="140" width="65" height="5" rx="2" fill="var(--border)" />
+    <rect x="180" y="110" width="65" height="5" rx="2" fill="#E5E7EB" />
+    <rect x="180" y="125" width="65" height="5" rx="2" fill="#E5E7EB" />
+    <rect x="180" y="140" width="65" height="5" rx="2" fill="#E5E7EB" />
   </g>
 
   <!-- Crossed Tools -->

@@ -43,68 +43,68 @@ export default async function Page(
 				<div className="overflow-x-auto">
 					<table className="w-full">
 						<thead>
-							<tr className="bg-slate-50 border-b border-slate-200">
-								<SortableHeader sortKey="name" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="w-52 text-left px-6 py-4 text-sm font-semibold text-slate-600">Name</SortableHeader>
-								<SortableHeader sortKey="calories" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Calories</SortableHeader>
-								<SortableHeader sortKey="protein" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Protein</SortableHeader>
-								<th className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Fat</th>
-								<th className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Carbs</th>
-								<th className="text-center px-4 py-4 text-sm font-semibold text-slate-600">Fiber</th>
-								<SortableHeader sortKey="proteinCalorieRatio" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="text-center px-4 py-4 text-sm font-semibold text-violet-600">P/Cal</SortableHeader>
+							<tr className="border-b border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-slate-900/85">
+								<SortableHeader sortKey="name" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="w-52 px-6 py-4 text-left text-sm font-semibold text-slate-600 dark:text-slate-300">Name</SortableHeader>
+								<SortableHeader sortKey="calories" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-4 py-4 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">Calories</SortableHeader>
+								<SortableHeader sortKey="protein" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-4 py-4 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">Protein</SortableHeader>
+								<th className="px-4 py-4 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">Fat</th>
+								<th className="px-4 py-4 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">Carbs</th>
+								<th className="px-4 py-4 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">Fiber</th>
+								<SortableHeader sortKey="proteinCalorieRatio" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-4 py-4 text-center text-sm font-semibold text-violet-600 dark:text-violet-300">P/Cal</SortableHeader>
 							</tr>
 						</thead>
-						<tbody className="divide-y divide-slate-100">
+						<tbody className="divide-y divide-slate-100 dark:divide-white/10">
 							{!ingredients || ingredients.length === 0 ? (
 								<tr>
 									<td colSpan={7} className="px-6 py-16 text-center">
-										<div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
-											<i className="ri-leaf-line text-3xl text-slate-400" />
+										<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-900/80">
+											<i className="ri-leaf-line text-3xl text-slate-400 dark:text-slate-500" />
 										</div>
 										<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No ingredients found</h3>
-										<p className="text-slate-500 mb-4">Try adjusting your search or add a new ingredient</p>
+										<p className="mb-4 text-slate-500 dark:text-slate-400">Try adjusting your search or add a new ingredient</p>
 									</td>
 								</tr>
 							) : (
 								ingredients.map((ingredient) => (
 									<tr
 										key={ingredient.id}
-										className="hover:bg-slate-50 transition-colors group"
+										className="group transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/60"
 									>
 										<td className="px-6 py-4">
 											<Link
 												href={`/ingredients/${ingredient.id}`}
-												className="font-medium text-slate-900 capitalize group-hover:text-brand-600 transition-colors"
+												className="font-medium capitalize text-slate-900 transition-colors group-hover:text-brand-600 dark:text-slate-100 dark:group-hover:text-brand-300"
 											>
 												{ingredient.name}
 											</Link>
 										</td>
 										<td className="px-4 py-4 text-center">
-											<span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-orange-50 text-orange-700 text-sm font-medium">
+											<span className="inline-flex items-center rounded-lg bg-orange-50 px-2.5 py-1 text-sm font-medium text-orange-700 dark:bg-orange-500/12 dark:text-orange-300">
 												{ingredient.caloriesPer100g}
 											</span>
 										</td>
 										<td className="px-4 py-4 text-center">
-											<span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-red-50 text-red-700 text-sm font-medium">
+											<span className="inline-flex items-center rounded-lg bg-red-50 px-2.5 py-1 text-sm font-medium text-red-700 dark:bg-red-500/12 dark:text-red-300">
 												{ingredient.proteinPer100g}g
 											</span>
 										</td>
 										<td className="px-4 py-4 text-center">
-											<span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-yellow-50 text-yellow-700 text-sm font-medium">
+											<span className="inline-flex items-center rounded-lg bg-yellow-50 px-2.5 py-1 text-sm font-medium text-yellow-700 dark:bg-yellow-500/12 dark:text-yellow-300">
 												{ingredient.fatPer100g}g
 											</span>
 										</td>
 										<td className="px-4 py-4 text-center">
-											<span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 text-sm font-medium">
+											<span className="inline-flex items-center rounded-lg bg-amber-50 px-2.5 py-1 text-sm font-medium text-amber-700 dark:bg-amber-500/12 dark:text-amber-300">
 												{ingredient.carbsPer100g}g
 											</span>
 										</td>
 										<td className="px-4 py-4 text-center">
-											<span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-green-50 text-green-700 text-sm font-medium">
+											<span className="inline-flex items-center rounded-lg bg-green-50 px-2.5 py-1 text-sm font-medium text-green-700 dark:bg-green-500/12 dark:text-green-300">
 												{ingredient.fiberPer100g ?? 0}g
 											</span>
 										</td>
 										<td className="px-4 py-4 text-center">
-											<span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-violet-50 text-violet-700 text-sm font-medium">
+											<span className="inline-flex items-center rounded-lg bg-violet-50 px-2.5 py-1 text-sm font-medium text-violet-700 dark:bg-violet-500/12 dark:text-violet-300">
 												{ingredient.proteinCalorieRatio.toFixed(0)}%
 											</span>
 										</td>

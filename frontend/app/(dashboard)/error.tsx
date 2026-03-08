@@ -18,7 +18,7 @@ export default function DashboardError({
     <div className="container mx-auto px-4 py-16">
       <div className="max-w-md mx-auto">
         <div className="bg-card rounded-lg border p-8 text-center">
-          <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <span className="text-3xl">⚡</span>
           </div>
           <h2 className="text-2xl font-bold mb-2">Oops! Something broke</h2>
