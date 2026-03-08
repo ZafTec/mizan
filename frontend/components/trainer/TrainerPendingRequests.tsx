@@ -12,7 +12,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { useToast } from "@/lib/hooks/use-toast";
+import { appToast } from "@/lib/toast";
 import type { TrainerPendingRequestDto, TrainerPendingRequestPagedResultDto } from "@/types/api-contracts";
 import { getPagedItems } from "@/types/api-contracts";
 
@@ -37,8 +37,6 @@ export function TrainerPendingRequests() {
 		canViewMeasurements: false,
 		canMessage: true,
 	});
-	const { toast } = useToast();
-
 	async function fetchRequests() {
 		try {
 			const data = await clientApi<TrainerPendingRequestPagedResultDto>(
@@ -47,11 +45,7 @@ export function TrainerPendingRequests() {
 			setRequests(getPagedItems(data));
 		} catch (error) {
 			console.error("Failed to fetch pending requests:", error);
-			toast({
-				title: "Error",
-				description: "Failed to load pending requests",
-				variant: "destructive",
-			});
+			appToast.error(error, "Failed to load pending requests");
 		} finally {
 			setLoading(false);
 		}
@@ -80,21 +74,14 @@ export function TrainerPendingRequests() {
 				},
 			});
 
-			toast({
-				title: "Request Accepted",
-				description: `${selectedRequest.clientName || selectedRequest.clientEmail} is now your client`,
-			});
+			appToast.success("Request Accepted", `${selectedRequest.clientName || selectedRequest.clientEmail} is now your client`);
 
 			setRequests((prev) => prev.filter((r) => r.relationshipId !== selectedRequest.relationshipId));
 			setShowPermissionsDialog(false);
 			setSelectedRequest(null);
 		} catch (error) {
 			console.error("Failed to accept request:", error);
-			toast({
-				title: "Error",
-				description: "Failed to accept request. Please try again.",
-				variant: "destructive",
-			});
+			appToast.error(error, "Failed to accept request");
 		} finally {
 			setProcessingId(null);
 		}
@@ -111,19 +98,12 @@ export function TrainerPendingRequests() {
 				},
 			});
 
-			toast({
-				title: "Request Declined",
-				description: "The request has been declined",
-			});
+			appToast.success("Request Declined", "The request has been declined");
 
 			setRequests((prev) => prev.filter((r) => r.relationshipId !== relationshipId));
 		} catch (error) {
 			console.error("Failed to decline request:", error);
-			toast({
-				title: "Error",
-				description: "Failed to decline request. Please try again.",
-				variant: "destructive",
-			});
+			appToast.error(error, "Failed to decline request");
 		} finally {
 			setProcessingId(null);
 		}

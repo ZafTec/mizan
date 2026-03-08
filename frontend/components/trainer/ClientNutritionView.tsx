@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/popover";
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
-import { useToast } from "@/lib/hooks/use-toast";
+import { appToast } from "@/lib/toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	BarChart,
@@ -68,7 +68,6 @@ export function ClientNutritionView({ clientId }: ClientNutritionViewProps) {
 		null
 	);
 	const [loading, setLoading] = useState(true);
-	const { toast } = useToast();
 
 	async function fetchNutritionData(selectedDate: Date) {
 		setLoading(true);
@@ -78,22 +77,15 @@ export function ClientNutritionView({ clientId }: ClientNutritionViewProps) {
 				`/api/Trainers/clients/${clientId}/nutrition?date=${dateStr}`
 			);
 			setNutritionData(data);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error("Failed to fetch nutrition data:", error);
-			if (error.status === 401) {
-				toast({
-					title: "Permission Denied",
-					description: "You don't have permission to view this client's nutrition data",
-					variant: "destructive",
-				});
-			} else if (error.status === 404) {
+			const status = error instanceof Error && "status" in error ? (error as { status: number }).status : undefined;
+			if (status === 401 || status === 403) {
+				appToast.error("You don't have permission to view this client's nutrition data");
+			} else if (status === 404) {
 				setNutritionData(null);
 			} else {
-				toast({
-					title: "Error",
-					description: "Failed to load nutrition data",
-					variant: "destructive",
-				});
+				appToast.error(error, "Failed to load nutrition data");
 			}
 		} finally {
 			setLoading(false);

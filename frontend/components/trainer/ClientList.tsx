@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { clientApi } from "@/lib/api.client";
 import Link from "next/link";
-import { useToast } from "@/lib/hooks/use-toast";
+import { appToast } from "@/lib/toast";
 import type { TrainerClientDto, TrainerClientPagedResultDto } from "@/types/api-contracts";
 import { getPagedItems } from "@/types/api-contracts";
 
@@ -11,7 +11,6 @@ export function ClientList() {
 	const [clients, setClients] = useState<TrainerClientDto[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [filter, setFilter] = useState<"all" | "active" | "paused">("all");
-	const { toast } = useToast();
 
 	useEffect(() => {
 		async function fetchClients() {
@@ -20,11 +19,7 @@ export function ClientList() {
 				setClients(getPagedItems(data));
 			} catch (error) {
 				console.error("Failed to fetch clients:", error);
-				toast({
-					title: "Error",
-					description: "Failed to load clients",
-					variant: "destructive",
-				});
+				appToast.error(error, "Failed to load clients");
 			} finally {
 				setLoading(false);
 			}

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Mizan.Api.Authentication;
 using Mizan.Api.Hubs;
@@ -15,6 +16,7 @@ using Serilog.Events;
 using Serilog.Exceptions;
 using Mizan.Application.Exceptions;
 using StackExchange.Redis;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,6 +57,7 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "Mizan API", Version = "v1" });
     c.SupportNonNullableReferenceTypes();
+    c.SchemaFilter<RequireNonNullablePropertiesSchemaFilter>();
     c.AddSecurityDefinition("Bearer", new()
     {
         Description = "JWT Bearer token",
@@ -356,3 +359,15 @@ finally
 }
 
 public partial class Program { }
+
+internal class RequireNonNullablePropertiesSchemaFilter : ISchemaFilter
+{
+    public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+    {
+        foreach (var (name, prop) in schema.Properties)
+        {
+            if (!prop.Nullable && !schema.Required.Contains(name))
+                schema.Required.Add(name);
+        }
+    }
+}
