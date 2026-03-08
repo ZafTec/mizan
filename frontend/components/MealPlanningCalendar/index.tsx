@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { toast } from "sonner";
+import ConfirmationModal from '@/components/ConfirmationModal';
+import { appToast } from "@/lib/toast";
 import { PerDayMealsAggregate } from '@/types/meal';
 import { format, addDays, startOfWeek, endOfWeek, addWeeks, subWeeks, isToday, isWithinInterval } from 'date-fns';
 import { twMerge } from 'tailwind-merge';
@@ -52,6 +53,7 @@ export default function MealPlanningCalendar({
 	const [weekEnd, setWeekEnd] = useState(endOfWeek(currentDate, { weekStartsOn: 1 }));
 	const [weekDays, setWeekDays] = useState<Date[]>([]);
 	const [deleting, setDeleting] = useState(false);
+	const [deleteMealPlanId, setDeleteMealPlanId] = useState<string | null>(null);
 
 	// Generate days for the week
 	useEffect(() => {
@@ -93,18 +95,18 @@ export default function MealPlanningCalendar({
 	// Handle meal plan deletion
 	const handleDeleteMealPlan = async (mealPlanId: string) => {
 		if (!mealPlanId) return;
-		
-		if (confirm('Are you sure you want to delete this meal plan?')) {
-			try {
-				setDeleting(true);
-				await deleteMealPlan(mealPlanId);
-				router.refresh();
-			} catch (error) {
-				console.error('Failed to delete meal plan:', error);
-				toast.error('Failed to delete meal plan');
-			} finally {
-				setDeleting(false);
-			}
+
+		try {
+			setDeleting(true);
+			await deleteMealPlan(mealPlanId);
+			appToast.success('Meal plan deleted');
+			router.refresh();
+		} catch (error) {
+			console.error('Failed to delete meal plan:', error);
+			appToast.error(error, 'Failed to delete meal plan');
+		} finally {
+			setDeleting(false);
+			setDeleteMealPlanId(null);
 		}
 	};
 
@@ -228,7 +230,7 @@ export default function MealPlanningCalendar({
 										</Link>
 										{plannedMealsForDay._id && (
 											<button
-												onClick={() => handleDeleteMealPlan(plannedMealsForDay._id!.toString())}
+												onClick={() => setDeleteMealPlanId(plannedMealsForDay._id!.toString())}
 												className="text-red-500 hover:text-red-700 text-xs"
 												disabled={deleting}
 											>
@@ -286,6 +288,17 @@ export default function MealPlanningCalendar({
 					)}
 				</div>
 			</div>
+
+			<ConfirmationModal
+				isOpen={!!deleteMealPlanId}
+				onClose={() => setDeleteMealPlanId(null)}
+				onConfirm={() => deleteMealPlanId && handleDeleteMealPlan(deleteMealPlanId)}
+				title="Delete Meal Plan"
+				message="Are you sure you want to delete this meal plan?"
+				confirmText="Delete Meal Plan"
+				isDanger
+				isLoading={deleting}
+			/>
 		</div>
 	);
 }

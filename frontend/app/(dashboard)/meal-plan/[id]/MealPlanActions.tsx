@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { deleteMealPlan } from "@/data/mealPlan";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
-import { toast } from "sonner";
+import { appToast } from "@/lib/toast";
 
 interface MealPlanActionsProps {
 	planId: string;
@@ -19,10 +19,10 @@ export default function MealPlanActions({ planId, planName }: MealPlanActionsPro
 	const handleDelete = async () => {
 		const success = await deleteMealPlan(planId);
 		if (success) {
-			toast.success("Meal plan deleted");
+			appToast.success("Meal plan deleted");
 			router.push("/meal-plan");
 		} else {
-			toast.error("Failed to delete meal plan");
+			appToast.error("Failed to delete meal plan");
 		}
 	};
 

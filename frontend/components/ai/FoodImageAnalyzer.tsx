@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { clientApi } from "@/lib/api.client";
-import { toast } from "sonner";
+import { appToast } from "@/lib/toast";
 import Image from "next/image";
 
 interface RecognizedFood {
@@ -92,10 +92,10 @@ export function FoodImageAnalyzer() {
 			});
 
 			// Show success feedback
-			toast.success(`Logged ${food.name} successfully!`);
+			appToast.success(`Logged ${food.name}`);
 		} catch (err) {
 			console.error("Failed to log food:", err);
-			toast.error("Failed to log food. Please try again.");
+			appToast.error(err, "Failed to log food. Please try again.");
 		}
 	};
 

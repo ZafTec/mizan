@@ -55,6 +55,9 @@ export const appToast = {
 	info(message: string, description?: string) {
 		toast.info(message, { description });
 	},
+	warning(message: string, description?: string) {
+		toast.warning(message, { description });
+	},
 	error(error: unknown, fallback = "Something went wrong") {
 		toast.error(getErrorMessage(error, fallback));
 	},

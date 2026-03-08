@@ -12,7 +12,7 @@ import {
 } from "@/data/mealPlan";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import RecipeSearchModal from "@/app/(dashboard)/meal-plan/create/RecipeSearchModal";
-import { toast } from "sonner";
+import { appToast } from "@/lib/toast";
 import Loading from "@/components/Loading";
 
 interface MealPlanEditFormProps {
@@ -37,10 +37,10 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 		const result = await updateMealPlan(plan.id, { name, startDate, endDate });
 		setSaving(false);
 		if (result.success) {
-			toast.success("Meal plan updated");
+			appToast.success("Meal plan updated");
 			router.refresh();
 		} else {
-			toast.error(result.message || "Failed to update meal plan");
+			appToast.error(result.message || "Failed to update meal plan");
 		}
 	};
 
@@ -49,9 +49,9 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 		const result = await removeRecipeFromMealPlan(plan.id, deleteTarget.id);
 		if (result.success) {
 			setRecipes((prev) => prev.filter((r) => r.id !== deleteTarget.id));
-			toast.success("Recipe removed");
+			appToast.success("Recipe removed");
 		} else {
-			toast.error(result.message || "Failed to remove recipe");
+			appToast.error(result.message || "Failed to remove recipe");
 		}
 		setDeleteTarget(null);
 	};
@@ -63,10 +63,10 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 			servings: recipe.servings,
 		});
 		if (result.success) {
-			toast.success("Recipe updated");
+			appToast.success("Recipe updated");
 			setEditingRecipe(null);
 		} else {
-			toast.error(result.message || "Failed to update recipe");
+			appToast.error(result.message || "Failed to update recipe");
 		}
 	};
 
@@ -85,10 +85,10 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 			servings,
 		});
 		if (success) {
-			toast.success("Recipe added");
+			appToast.success("Recipe added");
 			router.refresh();
 		} else {
-			toast.error("Failed to add recipe");
+			appToast.error("Failed to add recipe");
 		}
 	};
 

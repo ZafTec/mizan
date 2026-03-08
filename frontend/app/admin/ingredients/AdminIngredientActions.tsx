@@ -5,7 +5,7 @@ import { useState } from "react";
 import { deleteIngredient } from "@/data/ingredient";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { appToast } from "@/lib/toast";
 
 interface AdminIngredientActionsProps {
     id: string;
@@ -22,14 +22,15 @@ export default function AdminIngredientActions({ id, name }: AdminIngredientActi
         try {
             const result = await deleteIngredient(id);
             if (result.success) {
+                appToast.success("Ingredient deleted");
                 router.refresh();
                 setIsDeleteModalOpen(false);
             } else {
-                toast.error(result.message || "Failed to delete ingredient");
+                appToast.error(result.message || "Failed to delete ingredient");
             }
         } catch (error) {
             console.error("Delete error:", error);
-            toast.error("An error occurred while deleting");
+            appToast.error(error, "An error occurred while deleting");
         } finally {
             setIsDeleting(false);
         }

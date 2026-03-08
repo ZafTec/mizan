@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { CldUploadWidget } from "next-cloudinary";
 import Loading from "@/components/Loading";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
-import { authClient, signOut, useSession } from "@/lib/auth-client";
+import { authClient, useSession } from "@/lib/auth-client";
 import { clientApi } from "@/lib/api.client";
 import { downloadProfileExport, getProfileObservations, type ProfileObservations } from "@/lib/api/profile";
 import { useTheme } from "@/lib/hooks/useTheme";
@@ -47,7 +47,6 @@ export default function ProfileSettingsPage() {
 	const [exportingData, setExportingData] = useState(false);
 	const [deletingAccount, setDeletingAccount] = useState(false);
 	const [revoking, setRevoking] = useState<string | null>(null);
-	const [signingOut, setSigningOut] = useState(false);
 
 	useEffect(() => {
 		if (!session?.user) {
@@ -310,18 +309,6 @@ export default function ProfileSettingsPage() {
 			appToast.error(error, "Account deletion failed. A fresh session or valid password may be required.");
 		} finally {
 			setDeletingAccount(false);
-		}
-	}
-
-	async function handleSignOut() {
-		setSigningOut(true);
-		try {
-			await signOut();
-			window.location.href = "/login";
-		} catch (error) {
-			console.error("Failed to sign out:", error);
-			appToast.error(error, "Failed to sign out");
-			setSigningOut(false);
 		}
 	}
 
@@ -588,38 +575,6 @@ export default function ProfileSettingsPage() {
 
 					<section className="card p-6">
 						<SectionHeading
-							icon="brain"
-							title="Tools and access"
-							description="Developer and account utilities live here now, not on the profile page."
-						/>
-
-						<div className="mt-6 grid gap-3 sm:grid-cols-2">
-							<UtilityLink
-								href="/profile/mcp"
-								icon="bot"
-								title="MCP integration"
-								description="Manage tokens, usage, and local-tool setup."
-							/>
-							<UtilityLink
-								href="/profile"
-								icon="home"
-								title="Profile overview"
-								description="Go back to the cleaner account hub."
-							/>
-						</div>
-
-						<div className="mt-4 flex flex-wrap gap-3">
-							<button onClick={handleExportData} disabled={exportingData} className="btn-secondary">
-								{exportingData ? "Preparing export..." : "Download export"}
-							</button>
-							<button onClick={handleSignOut} disabled={signingOut} className="btn-secondary">
-								{signingOut ? "Signing out..." : "Sign out"}
-							</button>
-						</div>
-					</section>
-
-					<section className="card p-6">
-						<SectionHeading
 							icon="upload"
 							title="Export data"
 							description="Download a JSON export of your stored data."
@@ -734,32 +689,6 @@ function ToggleCard({
 				<span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${checked ? "translate-x-5" : "translate-x-0.5"}`} />
 			</span>
 		</button>
-	);
-}
-
-function UtilityLink({
-	href,
-	icon,
-	title,
-	description,
-}: {
-	href: string;
-	icon: Parameters<typeof AnimatedIcon>[0]["name"];
-	title: string;
-	description: string;
-}) {
-	return (
-		<Link href={href} className="group rounded-3xl border border-slate-200 bg-white p-4 transition-colors hover:border-slate-300 dark:border-white/10 dark:bg-slate-950 dark:hover:border-white/20">
-			<div className="flex items-start gap-3">
-				<span className="icon-chip h-10 w-10 text-brand-600 dark:text-brand-300">
-					<AnimatedIcon name={icon} size={18} aria-hidden="true" />
-				</span>
-				<div>
-					<p className="font-medium text-slate-900 dark:text-slate-100">{title}</p>
-					<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
-				</div>
-			</div>
-		</Link>
 	);
 }
 

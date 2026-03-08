@@ -6,7 +6,7 @@ import { clientApi } from "@/lib/api.client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { toast } from "sonner";
+import { appToast } from "@/lib/toast";
 
 export default function LogProgress() {
   const router = useRouter();
@@ -32,8 +32,8 @@ export default function LogProgress() {
     setLoading(true);
 
     try {
-      await clientApi("/api/Goals/progress", {
-        method: "POST",
+		await clientApi("/api/Goals/progress", {
+			method: "POST",
         body: {
           actualCalories: parseInt(formData.actualCalories),
           actualProteinGrams: parseFloat(formData.actualProteinGrams),
@@ -42,15 +42,16 @@ export default function LogProgress() {
           actualWeight: formData.actualWeight ? parseFloat(formData.actualWeight) : null,
           notes: formData.notes || null,
         },
-      });
+		});
 
-      router.push("/goal/dashboard");
-    } catch (error) {
-      console.error("Failed to log progress:", error);
-      toast.error("Failed to log progress. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+		appToast.success("Progress saved");
+		router.push("/goal/dashboard");
+	} catch (error) {
+		console.error("Failed to log progress:", error);
+		appToast.error(error, "Failed to log progress. Please try again.");
+	} finally {
+		setLoading(false);
+	}
   }
 
   return (

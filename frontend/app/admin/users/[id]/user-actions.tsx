@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import ConfirmationModal from "@/components/ConfirmationModal";
+import { appToast } from "@/lib/toast";
 
 interface User {
   id: string;
@@ -23,6 +24,7 @@ export function UserActions({ user }: { user: User }) {
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showRevokeSessionsConfirm, setShowRevokeSessionsConfirm] = useState(false);
 
   async function handleBanUser(reason: string, expiresInDays?: number) {
     setIsLoading(true);
@@ -40,8 +42,10 @@ export function UserActions({ user }: { user: User }) {
       });
 
       setShowBanDialog(false);
+      appToast.success("User banned");
       router.refresh();
     } catch (err) {
+      appToast.error(err, "Failed to ban user");
       setError(err instanceof Error ? err.message : "Failed to ban user");
     } finally {
       setIsLoading(false);
@@ -57,8 +61,10 @@ export function UserActions({ user }: { user: User }) {
         userId: user.id,
       });
 
+      appToast.success("User unbanned");
       router.refresh();
     } catch (err) {
+      appToast.error(err, "Failed to unban user");
       setError(err instanceof Error ? err.message : "Failed to unban user");
     } finally {
       setIsLoading(false);
@@ -81,8 +87,10 @@ export function UserActions({ user }: { user: User }) {
       // TODO: If role is "trainer", call backend API to set trainer status
 
       setShowRoleDialog(false);
+      appToast.success("User role updated");
       router.refresh();
     } catch (err) {
+      appToast.error(err, "Failed to set role");
       setError(err instanceof Error ? err.message : "Failed to set role");
     } finally {
       setIsLoading(false);
@@ -100,9 +108,10 @@ export function UserActions({ user }: { user: User }) {
       });
 
       setShowPasswordDialog(false);
-      toast.success("Password updated successfully");
+      appToast.success("Password updated");
       router.refresh();
     } catch (err) {
+      appToast.error(err, "Failed to set password");
       setError(
         err instanceof Error ? err.message : "Failed to set password"
       );
@@ -120,8 +129,10 @@ export function UserActions({ user }: { user: User }) {
         userId: user.id,
       });
 
+      appToast.success("User deleted");
       router.push("/admin/users");
     } catch (err) {
+      appToast.error(err, "Failed to delete user");
       setError(err instanceof Error ? err.message : "Failed to delete user");
     } finally {
       setIsLoading(false);
@@ -137,8 +148,10 @@ export function UserActions({ user }: { user: User }) {
         userId: user.id,
       });
 
+      appToast.success("Impersonation started");
       router.push("/");
     } catch (err) {
+      appToast.error(err, "Failed to impersonate user");
       setError(
         err instanceof Error ? err.message : "Failed to impersonate user"
       );
@@ -148,8 +161,6 @@ export function UserActions({ user }: { user: User }) {
   }
 
   async function handleRevokeAllSessions() {
-    if (!confirm("Revoke all sessions for this user?")) return;
-
     setIsLoading(true);
     setError(null);
 
@@ -158,9 +169,11 @@ export function UserActions({ user }: { user: User }) {
         userId: user.id,
       });
 
-      toast.success("All sessions revoked");
+      appToast.success("All sessions revoked");
+      setShowRevokeSessionsConfirm(false);
       router.refresh();
     } catch (err) {
+      appToast.error(err, "Failed to revoke sessions");
       setError(
         err instanceof Error ? err.message : "Failed to revoke sessions"
       );
@@ -212,7 +225,7 @@ export function UserActions({ user }: { user: User }) {
       </button>
 
       <button
-        onClick={handleRevokeAllSessions}
+        onClick={() => setShowRevokeSessionsConfirm(true)}
         disabled={isLoading}
         className="w-full px-4 py-2 border rounded-lg hover:bg-accent disabled:opacity-50"
       >
@@ -264,6 +277,17 @@ export function UserActions({ user }: { user: User }) {
           onCancel={() => setShowDeleteConfirm(false)}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={showRevokeSessionsConfirm}
+        onClose={() => setShowRevokeSessionsConfirm(false)}
+        onConfirm={handleRevokeAllSessions}
+        title="Revoke All Sessions"
+        message="This will sign the user out on every device."
+        confirmText="Revoke Sessions"
+        isDanger
+        isLoading={isLoading}
+      />
     </div>
   );
 }

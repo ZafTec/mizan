@@ -5,7 +5,8 @@ import { useState, useEffect } from "react";
 import Loading from "@/components/Loading";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { toast } from "sonner";
+import ConfirmationModal from "@/components/ConfirmationModal";
+import { appToast } from "@/lib/toast";
 
 interface Session {
   id: string;
@@ -22,6 +23,8 @@ export default function ProfileSessionsPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [revoking, setRevoking] = useState<string | null>(null);
+  const [sessionToRevoke, setSessionToRevoke] = useState<string | null>(null);
+  const [confirmRevokeAll, setConfirmRevokeAll] = useState(false);
 
   useEffect(() => {
     if (currentSession?.user) {
@@ -52,34 +55,32 @@ export default function ProfileSessionsPage() {
   }
 
   async function handleRevokeSession(sessionToken: string) {
-    if (!confirm("Revoke this session?")) return;
-
     setRevoking(sessionToken);
     try {
       await authClient.revokeSession({ token: sessionToken });
-      toast.success("Session revoked");
+	      appToast.success("Session revoked");
       setSessions((prev) => prev.filter((s) => s.token !== sessionToken));
     } catch (error) {
       console.error("Failed to revoke session:", error);
-      toast.error("Failed to revoke session");
+	      appToast.error(error, "Failed to revoke session");
     } finally {
       setRevoking(null);
+	      setSessionToRevoke(null);
     }
   }
 
   async function handleRevokeAllOther() {
-    if (!confirm("Revoke all other sessions? You'll stay logged in on this device.")) return;
-
     setRevoking("all");
     try {
       await authClient.revokeSessions();
-      toast.success("All other sessions revoked");
+	      appToast.success("All other sessions revoked");
       await fetchSessions();
     } catch (error) {
       console.error("Failed to revoke other sessions:", error);
-      toast.error("Failed to revoke other sessions");
+	      appToast.error(error, "Failed to revoke other sessions");
     } finally {
       setRevoking(null);
+	      setConfirmRevokeAll(false);
     }
   }
 
@@ -157,7 +158,7 @@ export default function ProfileSessionsPage() {
 	          </div>
 	          {activeSessions.length > 1 && (
 	            <button
-	              onClick={handleRevokeAllOther}
+	              onClick={() => setConfirmRevokeAll(true)}
 	              disabled={revoking === "all"}
 	              className="rounded-xl border border-red-200 px-4 py-2 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-500/30 dark:text-red-300 dark:hover:bg-red-500/10"
 	            >
@@ -223,7 +224,7 @@ export default function ProfileSessionsPage() {
 
 	                  {!isCurrent && (
 	                    <button
-	                      onClick={() => handleRevokeSession(session.token)}
+	                      onClick={() => setSessionToRevoke(session.token)}
 	                      disabled={revoking === session.token}
 	                      className="shrink-0 rounded-xl border border-red-200 px-4 py-2 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-500/30 dark:text-red-300 dark:hover:bg-red-500/10"
 	                    >
@@ -248,7 +249,29 @@ export default function ProfileSessionsPage() {
             </p>
           </div>
         </div>
-      </div>
+	      </div>
+
+	      <ConfirmationModal
+	        isOpen={!!sessionToRevoke}
+	        onClose={() => setSessionToRevoke(null)}
+	        onConfirm={() => sessionToRevoke && handleRevokeSession(sessionToRevoke)}
+	        title="Revoke Session"
+	        message="Are you sure you want to revoke this session?"
+	        confirmText="Revoke Session"
+	        isDanger
+	        isLoading={!!sessionToRevoke && revoking === sessionToRevoke}
+	      />
+
+	      <ConfirmationModal
+	        isOpen={confirmRevokeAll}
+	        onClose={() => setConfirmRevokeAll(false)}
+	        onConfirm={handleRevokeAllOther}
+	        title="Revoke All Other Sessions"
+	        message="This will sign you out everywhere except this device."
+	        confirmText="Revoke Sessions"
+	        isDanger
+	        isLoading={revoking === "all"}
+	      />
     </div>
   );
 }

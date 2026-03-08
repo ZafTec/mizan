@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
 import Modal from "@/components/Modal";
-import { toast } from "sonner";
+import { appToast } from "@/lib/toast";
 import Loading from "@/components/Loading";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import RecipeIngredientSearch from "@/components/Recipes/RecipeIngredientSearch";
@@ -197,10 +197,11 @@ export default function Page() {
 				method: 'POST',
 				body: recipeData,
 			});
+			appToast.success('Recipe created');
 			router.push('/recipes');
 		} catch (err) {
 			console.error('[Recipe Create] Failed:', err);
-			toast.error('Failed to create recipe. Please try again.');
+			appToast.error(err, 'Failed to create recipe. Please try again.');
 		} finally {
 			setIsSubmitting(false);
 		}

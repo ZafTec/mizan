@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
-import { toast } from "sonner";
+import { appToast } from "@/lib/toast";
 
 export default function AddMeasurementForm() {
     const router = useRouter();
@@ -36,10 +36,11 @@ export default function AddMeasurementForm() {
                 body: data,
             });
             setIsOpen(false);
+            appToast.success("Measurement added");
             router.refresh();
         } catch (error) {
             console.error("Failed to add measurement:", error);
-            toast.error("Failed to add measurement");
+            appToast.error(error, "Failed to add measurement");
         } finally {
             setIsSubmitting(false);
         }

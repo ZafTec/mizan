@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { coachSearchService, CoachSearchResult } from "@/lib/services/signalr-coach-search";
-import { toast } from "sonner";
+import { appToast } from "@/lib/toast";
 
 export function useCoachSearch() {
   const [results, setResults] = useState<CoachSearchResult[]>([]);
@@ -25,9 +25,10 @@ export function useCoachSearch() {
         coachSearchService.onCoachRequestReceived((coachId) => {
           // Feature not yet implemented
           console.log("Coach request received:", coachId);
-          toast.info("Coach Request Feature", {
-            description: "This feature is coming soon! You'll be able to receive and respond to coach requests."
-          });
+          appToast.info(
+            "Coach request feature",
+            "This feature is coming soon. You'll be able to receive and respond to coach requests."
+          );
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to connect");

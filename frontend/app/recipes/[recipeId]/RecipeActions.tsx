@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
-import { toast } from "sonner";
+import { appToast } from "@/lib/toast";
 import ConfirmationModal from "@/components/ConfirmationModal";
 
 interface RecipeActionsProps {
@@ -27,10 +27,11 @@ export default function RecipeActions({ recipeId, isOwner, isFavorited: initialF
                 method: "POST",
             });
             setIsFavorited(data.isFavorited);
+            appToast.success(data.isFavorited ? "Saved to favorites" : "Removed from favorites");
             router.refresh();
         } catch (error) {
             console.error("[Recipe Favorite] Error:", error);
-            toast.error("Failed to update favorites");
+            appToast.error(error, "Failed to update favorites");
         } finally {
             setIsToggling(false);
         }
@@ -44,11 +45,12 @@ export default function RecipeActions({ recipeId, isOwner, isFavorited: initialF
             await clientApi(`/api/Recipes/${recipeId}`, {
                 method: "DELETE",
             });
+            appToast.success("Recipe deleted");
             router.push("/recipes");
             router.refresh();
         } catch (error: any) {
             console.error('[Recipe Delete] Failed:', error);
-            toast.error(error.message || "Failed to delete recipe");
+            appToast.error(error, "Failed to delete recipe");
             setIsDeleting(false);
         }
     };
@@ -58,10 +60,11 @@ export default function RecipeActions({ recipeId, isOwner, isFavorited: initialF
         try {
             await navigator.clipboard.writeText(url);
             setShowCopied(true);
+            appToast.success("Recipe link copied");
             setTimeout(() => setShowCopied(false), 2000);
         } catch (error) {
             console.error("Error copying to clipboard:", error);
-            toast.error("Failed to copy link");
+            appToast.error(error, "Failed to copy link");
         }
     };
 

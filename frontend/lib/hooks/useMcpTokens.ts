@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { mcpTokenApi, McpTokenApiError } from "@/lib/api/mcp-tokens";
 import type { McpTokenDto, CreateMcpTokenCommand, CreateMcpTokenResult, McpUsageAnalyticsResult } from "@/types/mcp";
+import { appToast } from "@/lib/toast";
 
 export function useMcpTokens() {
   const [tokens, setTokens] = useState<McpTokenDto[]>([]);
@@ -29,10 +30,12 @@ export function useMcpTokens() {
     try {
       const result = await mcpTokenApi.createToken(command);
       await fetchTokens(); // Refresh list
+      appToast.success("Token created");
       return result;
     } catch (err) {
       const message = err instanceof McpTokenApiError ? err.message : "Failed to create token";
       setError(message);
+      appToast.error(message);
       return null;
     } finally {
       setLoading(false);
@@ -45,10 +48,12 @@ export function useMcpTokens() {
     try {
       await mcpTokenApi.revokeToken(tokenId);
       await fetchTokens(); // Refresh list
+      appToast.success("Token revoked");
       return true;
     } catch (err) {
       const message = err instanceof McpTokenApiError ? err.message : "Failed to revoke token";
       setError(message);
+      appToast.error(message);
       return false;
     } finally {
       setLoading(false);

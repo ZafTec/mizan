@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { appToast } from "@/lib/toast";
 
 export default function DeleteMeasurementButton({ id }: { id: string }) {
   const router = useRouter();
@@ -24,9 +25,10 @@ export default function DeleteMeasurementButton({ id }: { id: string }) {
     try {
       await clientApi(`/api/BodyMeasurements/${id}`, { method: "DELETE" });
       setOpen(false);
+      appToast.success("Measurement deleted");
       router.refresh();
-    } catch {
-      alert("Failed to delete measurement");
+	    } catch (error) {
+	      appToast.error(error, "Failed to delete measurement");
     } finally {
       setIsDeleting(false);
     }

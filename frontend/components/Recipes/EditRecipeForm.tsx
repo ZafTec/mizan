@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Loading from "@/components/Loading";
-import { toast } from "sonner";
+import { appToast } from "@/lib/toast";
 import { getAllIngredient } from "@/data/ingredient";
 import type { Ingredient } from "@/data/ingredient";
 import { CldUploadWidget } from 'next-cloudinary';
@@ -200,11 +200,12 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                 method: "PUT",
                 body: recipeData,
             });
+            appToast.success("Recipe updated");
             router.push(`/recipes/${recipe.id}`);
             router.refresh();
         } catch (err) {
             console.error('[Recipe Update] Failed:', err);
-            toast.error('Failed to update recipe. Please try again.');
+            appToast.error(err, 'Failed to update recipe. Please try again.');
         } finally {
             setIsSubmitting(false);
         }

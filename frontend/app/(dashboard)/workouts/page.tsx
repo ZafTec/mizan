@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { clientApi } from "@/lib/api.client";
-import { toast } from "sonner";
+import { appToast } from "@/lib/toast";
 import Loading from "@/components/Loading";
 
 interface WorkoutExercise {
@@ -74,7 +74,7 @@ export default function WorkoutsPage() {
         e.preventDefault();
 
         if (!name || !date || !durationMinutes || exercises.length === 0) {
-            toast.error("Please fill in all required fields and add at least one exercise");
+            appToast.error("Please fill in all required fields and add at least one exercise");
             return;
         }
 
@@ -103,11 +103,11 @@ export default function WorkoutsPage() {
             setDurationMinutes("");
             setCaloriesBurned("");
             setExercises([]);
-            toast.success("Workout logged successfully!");
+            appToast.success("Workout logged");
             router.refresh();
         } catch (error) {
             console.error("Failed to log workout:", error);
-            toast.error("Failed to log workout");
+            appToast.error(error, "Failed to log workout");
         } finally {
             setIsSubmitting(false);
         }

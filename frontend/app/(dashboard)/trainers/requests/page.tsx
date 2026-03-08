@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import Loading from "@/components/Loading";
-import { toast } from "sonner";
+import { appToast } from "@/lib/toast";
 import type { MyTrainerRequestDto, MyTrainerRequestPagedResultDto } from "@/types/api-contracts";
 import { getPagedItems } from "@/types/api-contracts";
 
@@ -121,12 +121,12 @@ export default function TrainerRequestsPage() {
 								</div>
 
 								<div className="flex gap-2 shrink-0">
-									<button
-										className="btn-secondary"
-										onClick={() => {
-											toast.info("Cancel request functionality coming soon");
-										}}
-									>
+								<button
+									className="btn-secondary"
+									onClick={() => {
+										appToast.info("Cancel request is not available yet");
+									}}
+								>
 										<i className="ri-close-line" />
 										Cancel
 									</button>

@@ -5,7 +5,7 @@ import { clientApi } from "@/lib/api.client";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { appToast } from "@/lib/toast";
 import Loading from "@/components/Loading";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import type { TrainerPublicDto, TrainerPublicPagedResultDto } from "@/types/api-contracts";
@@ -44,10 +44,10 @@ export default function TrainersPage() {
 				method: "POST",
 				body: { trainerId },
 			});
-			toast.success("Trainer request sent successfully!");
+			appToast.success("Trainer request sent");
 		} catch (error) {
 			console.error("Failed to send request:", error);
-			toast.error("Failed to send trainer request");
+			appToast.error(error, "Failed to send trainer request");
 		} finally {
 			setRequestingTrainerId(null);
 		}
