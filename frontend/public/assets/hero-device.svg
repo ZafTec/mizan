@@ -1,0 +1,41 @@
+<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .bob-device { animation: bob 6s ease-in-out infinite alternate; transform-origin: center; filter: drop-shadow(0 20px 25px rgba(0,0,0,0.15)); }
+    .orbit-1 { animation: orbit1 10s linear infinite; transform-origin: center; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1)); }
+    .orbit-2 { animation: orbit2 8s linear infinite reverse; transform-origin: center; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1)); }
+    .orbit-3 { animation: orbit3 12s linear infinite; transform-origin: center; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1)); }
+    .ring-fill { stroke-dasharray: 400; stroke-dashoffset: 400; animation: fill 2s ease-out forwards 0.5s; stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; }
+    
+    @keyframes bob { 0% { transform: translateY(0px) rotate3d(1,1,0, -10deg); } 100% { transform: translateY(-30px) rotate3d(1,1,0, -5deg); } }
+    @keyframes orbit1 { 0% { transform: rotate(0deg) translate(200px) rotate(0deg); } 100% { transform: rotate(360deg) translate(200px) rotate(-360deg); } }
+    @keyframes orbit2 { 0% { transform: rotate(120deg) translate(250px) rotate(-120deg); } 100% { transform: rotate(480deg) translate(250px) rotate(-480deg); } }
+    @keyframes orbit3 { 0% { transform: rotate(240deg) translate(220px) rotate(-240deg); } 100% { transform: rotate(600deg) translate(220px) rotate(-600deg); } }
+    @keyframes fill { to { stroke-dashoffset: 80; } }
+  </style>
+  <defs>
+    <linearGradient id="screenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+  </defs>
+  <!-- Orbiting elements (Avocado, Dumbbell, Leaf) -->
+  <g class="orbit-1" transform="translate(400,300)"><circle cx="0" cy="0" r="30" fill="#10B981" /><path d="M-10,0 Q0,-20 10,0 Q0,20 -10,0" fill="#34D399"/></g>
+  <g class="orbit-2" transform="translate(400,300)"><rect x="-20" y="-10" width="40" height="20" rx="5" fill="#3B82F6" /><circle cx="-25" cy="0" r="10" fill="#60A5FA" /><circle cx="25" cy="0" r="10" fill="#60A5FA" /></g>
+  <g class="orbit-3" transform="translate(400,300)"><path d="M0,-25 C15,-25 25,-10 25,10 C25,20 15,30 0,30 C-15,30 -25,20 -25,10 C-25,-10 -15,-25 0,-25 Z" fill="#F59E0B" /><circle cx="0" cy="10" r="10" fill="#FBBF24" /></g>
+
+  <g class="bob-device" transform="translate(250, 100)">
+    <!-- Main Device Chassis -->
+    <rect x="0" y="0" width="300" height="400" rx="30" fill="#E2E8F0" />
+    <rect x="15" y="15" width="270" height="370" rx="20" fill="url(#screenGrad)" />
+    <!-- Screen content -->
+    <g transform="translate(150,150)">
+       <circle r="60" fill="none" stroke="#334155" stroke-width="12" />
+       <circle class="ring-fill" r="60" fill="none" stroke="#10B981" stroke-width="12" />
+       <text y="10" fill="#FFF" text-anchor="middle" font-size="28" font-family="sans-serif" font-weight="bold">80%</text>
+    </g>
+    <!-- Bar Charts on Device -->
+    <rect x="50" y="260" width="60" height="80" rx="10" fill="#3B82F6" />
+    <rect x="120" y="280" width="60" height="60" rx="10" fill="#F59E0B" />
+    <rect x="190" y="240" width="60" height="100" rx="10" fill="#8B5CF6" />
+  </g>
+</svg>

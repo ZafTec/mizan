@@ -1,0 +1,35 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .cloche { transform-origin: center; animation: liftCloche 4s ease-in-out infinite; }
+    .steam { opacity: 0; animation: riseSteam 4s ease-in-out infinite; stroke-width: 4; stroke: #9CA3AF; stroke-linecap: round; fill: none; }
+    .s1 { animation-delay: 1.5s; } .s2 { animation-delay: 1.7s; } .s3 { animation-delay: 1.9s; }
+    @keyframes liftCloche { 0%, 20%, 100% { transform: translateY(0) rotate(0); } 40%, 80% { transform: translateY(-70px) rotate(5deg); } }
+    @keyframes riseSteam { 0%, 30%, 100% { transform: translateY(10px); opacity: 0; } 50% { opacity: 0.6; } 80% { transform: translateY(-30px); opacity: 0; } }
+  </style>
+  
+  <!-- Serving Table -->
+  <rect x="80" y="260" width="240" height="12" rx="6" fill="#374151" />
+  
+  <!-- Salad Bowl / Base Food -->
+  <path d="M 120 250 Q 200 270 280 250 L 250 200 Q 200 190 150 200 Z" fill="#10B981" />
+  <!-- Tomatoes / Corn Accents -->
+  <circle cx="200" cy="200" r="20" fill="#EF4444" />
+  <circle cx="160" cy="210" r="15" fill="#FCD34D" />
+  <circle cx="240" cy="210" r="15" fill="#FCD34D" />
+  
+  <!-- Steam lines -->
+  <path class="steam s1" d="M 170 180 Q 160 160 170 140 T 170 100" />
+  <path class="steam s2" d="M 200 170 Q 190 150 200 130 T 200 90" />
+  <path class="steam s3" d="M 230 180 Q 220 160 230 140 T 230 100" />
+  
+  <!-- Silver Cloche -->
+  <g class="cloche">
+    <!-- Main Dome -->
+    <path d="M 90 255 C 90 120, 310 120, 310 255 Z" fill="#9CA3AF" />
+    <rect x="80" y="250" width="240" height="10" rx="5" fill="#6B7280" />
+    <!-- Handle -->
+    <circle cx="200" cy="140" r="15" fill="#6B7280" />
+    <!-- Metallic reflection highlight -->
+    <path d="M 110 250 C 110 140, 200 140, 200 140 C 180 160, 180 250, 180 250 Z" fill="rgba(255,255,255,0.2)" />
+  </g>
+</svg>

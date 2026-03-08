@@ -1,0 +1,79 @@
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      /* Page Flutter Animation */
+      @keyframes pageFlip {
+        0%, 90%, 100% { transform: scaleX(1) skewY(0deg); }
+        95% { transform: scaleX(0.8) skewY(-2deg); transform-origin: left; }
+      }
+
+      /* Figure-Eight Floating Animation */
+      @keyframes figureEight {
+        0% { transform: translate(0, 0); }
+        25% { transform: translate(20px, -15px); }
+        50% { transform: translate(0, -30px); }
+        75% { transform: translate(-20px, -15px); }
+        100% { transform: translate(0, 0); }
+      }
+
+      .page-flutter {
+        animation: pageFlip 4s ease-in-out infinite;
+      }
+
+      .floating-glass {
+        animation: figureEight 6s ease-in-out infinite;
+      }
+      
+      .bg-cream { fill: #FFF9F0; }
+      .brand-terracotta { fill: #D66D55; }
+      .brand-sage { fill: #8DAA91; }
+      .brand-brown { fill: #4A3728; }
+      .accent-silver { fill: #D1D5DB; }
+    </style>
+  </defs>
+
+  <!-- Recipe Book Base -->
+  <rect x="50" y="80" width="220" height="150" rx="8" class="brand-terracotta" />
+  <path d="M160 80 L160 230" stroke="#B05642" stroke-width="2" />
+  
+  <!-- Left Page -->
+  <rect x="65" y="95" width="85" height="120" rx="4" class="bg-cream" />
+  <rect x="75" y="110" width="60" height="5" rx="2" fill="#E5E7EB" />
+  <rect x="75" y="125" width="60" height="5" rx="2" fill="#E5E7EB" />
+  <rect x="75" y="140" width="40" height="5" rx="2" fill="#E5E7EB" />
+
+  <!-- Right Page (Static) -->
+  <rect x="170" y="95" width="85" height="120" rx="4" class="bg-cream" />
+  
+  <!-- Right Page (Fluttering Overlay) -->
+  <g class="page-flutter">
+    <rect x="170" y="95" width="85" height="120" rx="4" class="bg-cream" />
+    <rect x="180" y="110" width="65" height="5" rx="2" fill="#E5E7EB" />
+    <rect x="180" y="125" width="65" height="5" rx="2" fill="#E5E7EB" />
+    <rect x="180" y="140" width="65" height="5" rx="2" fill="#E5E7EB" />
+  </g>
+
+  <!-- Crossed Tools -->
+  <g transform="translate(320, 150)">
+    <!-- Chef's Knife (Diagonal) -->
+    <g transform="rotate(-45)">
+        <rect x="-5" y="0" width="10" height="30" rx="2" class="brand-brown" />
+        <path d="M-5 0 L-5 -60 Q-5 -70 5 -60 L5 0 Z" class="accent-silver" />
+    </g>
+    <!-- Whisk (Diagonal) -->
+    <g transform="rotate(45)">
+        <rect x="-3" y="0" width="6" height="40" rx="2" class="brand-sage" />
+        <ellipse cx="0" cy="-35" rx="12" ry="20" fill="none" stroke="#4A3728" stroke-width="2" />
+        <ellipse cx="0" cy="-35" rx="6" ry="18" fill="none" stroke="#4A3728" stroke-width="1.5" />
+    </g>
+  </g>
+
+  <!-- Magnifying Glass -->
+  <g class="floating-glass">
+    <g transform="translate(160, 140)">
+        <rect x="-3" y="15" width="6" height="25" rx="2" class="brand-brown" transform="rotate(-45 0 15)" />
+        <circle cx="0" cy="0" r="25" fill="white" fill-opacity="0.3" stroke="#4A3728" stroke-width="4" />
+        <circle cx="-8" cy="-8" r="5" fill="white" fill-opacity="0.5" />
+    </g>
+  </g>
+</svg>

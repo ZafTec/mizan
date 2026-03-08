@@ -1,0 +1,58 @@
+<svg viewBox="0 0 500 300" xmlns="http://www.w3.org/2000/svg">
+   <style>
+     .ekg { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: dash 3s linear infinite; filter: drop-shadow(0 0 8px #06B6D4); }
+     .dumbbell { animation: curl 2s ease-in-out infinite; transform-origin: center; filter: drop-shadow(0 15px 15px rgba(0,0,0,0.4)); }
+     .bg-glow { animation: pulseBg 4s infinite alternate; }
+     
+     @keyframes dash { 
+         0% { stroke-dashoffset: 1000; }
+         50% { stroke-dashoffset: 500; }
+         100% { stroke-dashoffset: 0; } 
+     }
+     @keyframes curl { 
+         0%, 100% { transform: translateY(15px); } 
+         50% { transform: translateY(-25px) rotate(-3deg); } 
+     }
+     @keyframes pulseBg {
+         from { fill: rgba(6, 182, 212, 0.05); }
+         to { fill: rgba(6, 182, 212, 0.15); }
+     }
+   </style>
+   
+   <defs>
+      <linearGradient id="barGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+         <stop offset="0%" stop-color="#4B5563" />
+         <stop offset="100%" stop-color="#1F2937" />
+      </linearGradient>
+      <linearGradient id="weightGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+         <stop offset="0%" stop-color="#E879F9" />
+         <stop offset="100%" stop-color="#A21CAF" />
+      </linearGradient>
+   </defs>
+
+   <!-- Glowing Background representing fitness zone -->
+   <rect class="bg-glow" width="500" height="300" rx="20" />
+
+   <!-- EKG Line moving left to right -->
+   <path class="ekg" d="M -50 150 L 100 150 L 130 80 L 170 230 L 220 50 L 270 250 L 310 100 L 340 150 L 550 150" fill="none" stroke="#06B6D4" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+   
+   <!-- Animated Dumbbell -->
+   <g class="dumbbell">
+     <!-- Central Bar -->
+     <rect x="150" y="135" width="200" height="16" rx="4" fill="url(#barGrad)" />
+     
+     <!-- Left Weights -->
+     <rect x="110" y="90" width="40" height="106" rx="8" fill="url(#weightGrad)" />
+     <rect x="90" y="105" width="20" height="76" rx="6" fill="#86198F" />
+     <rect x="150" y="115" width="10" height="56" rx="2" fill="#374151" />
+     
+     <!-- Right Weights -->
+     <rect x="350" y="90" width="40" height="106" rx="8" fill="url(#weightGrad)" />
+     <rect x="390" y="105" width="20" height="76" rx="6" fill="#86198F" />
+     <rect x="340" y="115" width="10" height="56" rx="2" fill="#374151" />
+     
+     <!-- Highlight reflections on weights -->
+     <path d="M 115 100 L 115 186" stroke="rgba(255,255,255,0.4)" stroke-width="4" stroke-linecap="round" />
+     <path d="M 355 100 L 355 186" stroke="rgba(255,255,255,0.4)" stroke-width="4" stroke-linecap="round" />
+   </g>
+</svg>

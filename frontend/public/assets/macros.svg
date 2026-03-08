@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 250" width="100%" height="100%">
+  <defs>
+    <style>
+      text {
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        text-anchor: middle;
+      }
+      .title {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 2.5px;
+        fill: #6b7280;
+      }
+      .value {
+        font-size: 24px;
+        font-weight: 800;
+        fill: #f3f4f6;
+      }
+      .track {
+        stroke: #2a2a35;
+        stroke-width: 14;
+        fill: none;
+      }
+      .ring {
+        stroke-width: 14;
+        fill: none;
+        stroke-linecap: round;
+        stroke-dasharray: 471.24;
+        stroke-dashoffset: 471.24;
+      }
+      
+      /* Protein Animation: 85% */
+      .protein-ring {
+        stroke: #00E5FF;
+        animation: fillProtein 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards, 
+                   pulseProtein 2s ease-in-out 1.5s infinite;
+      }
+      
+      /* Carbs Animation: 50% */
+      .carbs-ring {
+        stroke: #FF9100;
+        animation: fillCarbs 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards, 
+                   pulseCarbs 2s ease-in-out 1.5s infinite;
+      }
+      
+      /* Fats Animation: 60% */
+      .fats-ring {
+        stroke: #00E676;
+        animation: fillFats 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards, 
+                   pulseFats 2s ease-in-out 1.5s infinite;
+      }
+
+      /* Fill Keyframes */
+      @keyframes fillProtein {
+        0% { stroke-dashoffset: 471.24; }
+        100% { stroke-dashoffset: 70.68; }
+      }
+      @keyframes fillCarbs {
+        0% { stroke-dashoffset: 471.24; }
+        100% { stroke-dashoffset: 235.62; }
+      }
+      @keyframes fillFats {
+        0% { stroke-dashoffset: 471.24; }
+        100% { stroke-dashoffset: 188.50; }
+      }
+
+      /* Glow Pulse Keyframes */
+      @keyframes pulseProtein {
+        0%, 100% { filter: drop-shadow(0 0 3px rgba(0, 229, 255, 0.3)); }
+        50% { filter: drop-shadow(0 0 12px rgba(0, 229, 255, 0.8)); }
+      }
+      @keyframes pulseCarbs {
+        0%, 100% { filter: drop-shadow(0 0 3px rgba(255, 145, 0, 0.3)); }
+        50% { filter: drop-shadow(0 0 12px rgba(255, 145, 0, 0.8)); }
+      }
+      @keyframes pulseFats {
+        0%, 100% { filter: drop-shadow(0 0 3px rgba(0, 230, 118, 0.3)); }
+        50% { filter: drop-shadow(0 0 12px rgba(0, 230, 118, 0.8)); }
+      }
+    </style>
+  </defs>
+
+  <!-- Background container -->
+  <rect width="600" height="250" rx="24" fill="#121218" />
+
+  <!-- PROTEIN SECTION (85%) -->
+  <g transform="translate(125, 110)">
+    <!-- Track -->
+    <circle cx="0" cy="0" r="75" class="track" />
+    <!-- Progress Ring -->
+    <circle cx="0" cy="0" r="75" class="ring protein-ring" transform="rotate(-90)" />
+    
+    <!-- Minimalist Bean/Meat Icon -->
+    <g transform="translate(0, -14)">
+      <path d="M -10 -8 C 8 -22 22 -2 10 12 C 0 24 -24 22 -12 8 C -18 0 -20 -4 -10 -8 Z" 
+            fill="none" stroke="#00E5FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <!-- Value -->
+    <text y="32" class="value">85%</text>
+  </g>
+  <text x="125" y="222" class="title">PROTEIN</text>
+
+  <!-- CARBS SECTION (50%) -->
+  <g transform="translate(300, 110)">
+    <!-- Track -->
+    <circle cx="0" cy="0" r="75" class="track" />
+    <!-- Progress Ring -->
+    <circle cx="0" cy="0" r="75" class="ring carbs-ring" transform="rotate(-90)" />
+    
+    <!-- Minimalist Wheat Icon -->
+    <g transform="translate(0, -12)">
+      <path d="M 0 14 L 0 -16 M 0 4 L -8 -4 M 0 0 L 8 -8 M 0 -5 L -8 -13 M 0 -10 L 8 -18" 
+            fill="none" stroke="#FF9100" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <!-- Value -->
+    <text y="32" class="value">50%</text>
+  </g>
+  <text x="300" y="222" class="title">CARBS</text>
+
+  <!-- FATS SECTION (60%) -->
+  <g transform="translate(475, 110)">
+    <!-- Track -->
+    <circle cx="0" cy="0" r="75" class="track" />
+    <!-- Progress Ring -->
+    <circle cx="0" cy="0" r="75" class="ring fats-ring" transform="rotate(-90)" />
+    
+    <!-- Minimalist Avocado/Drop Icon -->
+    <g transform="translate(0, -12)">
+      <path d="M 0 -16 C 13 -2 14 14 0 14 C -14 14 -13 -2 0 -16 Z" 
+            fill="none" stroke="#00E676" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="0" cy="5" r="3" fill="#00E676" />
+    </g>
+    <!-- Value -->
+    <text y="32" class="value">60%</text>
+  </g>
+  <text x="475" y="222" class="title">FATS</text>
+
+</svg>

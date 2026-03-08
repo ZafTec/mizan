@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <style>
+      /* Style Definitions for the Flat Vector Look */
+      .st1 { fill: #fdfdfd; stroke: #333; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; } /* White Fill, Dark Outline */
+      .st2 { fill: #f5f5f5; stroke: #333; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; } /* Gray Fill */
+      .st3 { fill: #f8cc1b; stroke: #333; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; } /* Warm Yellow */
+      .st4 { fill: #a3a3a3; stroke: #333; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; } /* Silver/Gray Cloche */
+      .st5 { fill: #2e7d32; } /* Forest Green Salad */
+      .st6 { fill: #f8cc1b; } /* Warm Yellow Corn/Peppers */
+      .st7 { fill: #ffecb3; stroke: #333; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; } /* Light Pastel Yellow (Calendar Top) */
+      .st8 { fill: #d1d1d1; } /* Cloche Shine */
+      .st9 { fill: #ffffff; stroke: #ffffff; stroke-width: 3; stroke-linecap: round; opacity: 0; } /* Steam Lines (Starts Hidden) */
+
+      /* CSS Animations */
+
+      /* Cloche Lift and Reveal */
+      @keyframes liftAndReveal {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        30%, 70% { transform: translate(-20px, -70px) rotate(-10deg); }
+      }
+
+      /* Steam Rise and Fade */
+      @keyframes steamRise {
+        0% { transform: translateY(0); opacity: 0; }
+        20% { opacity: 0.8; }
+        100% { transform: translateY(-30px); opacity: 0; }
+      }
+
+      /* Application of Animations */
+      #cloche-group {
+        animation: liftAndReveal 8s ease-in-out infinite;
+        transform-origin: center bottom;
+      }
+
+      #steam-group {
+        animation: fadeInThenLoop 8s infinite;
+        opacity: 0;
+      }
+
+      @keyframes fadeInThenLoop {
+        0%, 25% { opacity: 0; } /* Invisible when cloche is down/lifting */
+        30%, 70% { opacity: 1; } /* Visible when cloche is up and revealed */
+        75%, 100% { opacity: 0; } /* Invisible when cloche is lowering/down */
+      }
+
+      #steam-1 {
+        animation: steamRise 2s linear infinite;
+        animation-delay: 2.5s; /* Starts when cloche is lifted */
+      }
+      #steam-2 {
+        animation: steamRise 2s linear infinite;
+        animation-delay: 3s;
+      }
+      #steam-3 {
+        animation: steamRise 2s linear infinite;
+        animation-delay: 3.5s;
+      }
+
+    </style>
+  </defs>
+
+  <rect x="50" y="50" width="300" height="200" rx="10" ry="10" class="st1" />
+  <rect x="50" y="50" width="300" height="40" rx="10" ry="10" class="st7" />
+  <text x="200" y="78" font-family="Arial, sans-serif" font-size="20" fill="#333" text-anchor="middle" font-weight="bold">MEAL PLANNER</text>
+  <line x1="110" y1="120" x2="290" y2="120" class="st1" stroke-width="2"/>
+  <line x1="110" y1="150" x2="290" y2="150" class="st1" stroke-width="2"/>
+  <line x1="110" y1="180" x2="290" y2="180" class="st1" stroke-width="2"/>
+  <line x1="110" y1="210" x2="290" y2="210" class="st1" stroke-width="2"/>
+  <line x1="150" y1="100" x2="150" y2="230" class="st1" stroke-width="2"/>
+  <line x1="190" y1="100" x2="190" y2="230" class="st1" stroke-width="2"/>
+  <line x1="230" y1="100" x2="230" y2="230" class="st1" stroke-width="2"/>
+  <line x1="270" y1="100" x2="270" y2="230" class="st1" stroke-width="2"/>
+  
+  <g id="bowl-group" transform="translate(140, 150)">
+    <circle cx="60" cy="50" r="45" class="st2" /> <path d="M 30,50 a 30,30 0 0,1 60,0 Z" class="st5" /> <circle cx="50" cy="40" r="5" class="st6" /> <circle cx="70" cy="45" r="5" class="st6" /> <circle cx="60" cy="35" r="5" class="st6" /> <path d="M 45,55 c 3,-3 7,3 10,0 s 7,3 10,0" fill="none" stroke="#333" stroke-width="3" stroke-linecap="round"/> </g>
+
+  <g id="steam-group">
+    <path id="steam-1" d="M 195,160 c 2,-5 -2,-10 0,-15 s 2,-10 0,-15" class="st9" />
+    <path id="steam-2" d="M 215,160 c 2,-5 -2,-10 0,-15 s 2,-10 0,-15" class="st9" />
+    <path id="steam-3" d="M 235,160 c 2,-5 -2,-10 0,-15 s 2,-10 0,-15" class="st9" />
+  </g>
+
+  <g id="cloche-group">
+    <path d="M 140,200 c 0,-50 120,-50 120,0 h -120 z" class="st4" /> <circle cx="200" cy="145" r="10" class="st4" /> <rect x="185" y="152" width="30" height="10" rx="3" ry="3" class="st4" /> <path d="M 140,200 h 120 a 5,5 0 0,1 0,10 h -120 a 5,5 0 0,1 0,-10 z" class="st4" /> <path d="M 160,180 c 10,-20 50,-20 60,0" class="st8" fill="none" stroke-width="5" stroke-linecap="round" opacity="0.5"/> </g>
+
+</svg>
