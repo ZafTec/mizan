@@ -148,9 +148,9 @@ export default async function AchievementsPage() {
             )}
 
             {achievements.length === 0 && (
-                <div className="card p-16 text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                        <i className="ri-trophy-line text-3xl text-slate-400" />
+                <div className="card p-16 text-center flex flex-col items-center">
+                    <div className="relative w-48 h-48 mb-6 opacity-90 drop-shadow-md">
+                        <Image src="/assets/gamification-badge.svg" alt="No achievements yet" fill className="object-contain" />
                     </div>
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No achievements yet</h3>
                     <p className="text-slate-500">Start using MacroChef to earn achievements!</p>

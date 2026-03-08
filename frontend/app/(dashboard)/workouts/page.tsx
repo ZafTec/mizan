@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { clientApi } from "@/lib/api.client";
 import { toast } from "sonner";
 import Loading from "@/components/Loading";
@@ -115,9 +116,14 @@ export default function WorkoutsPage() {
     return (
         <div className="space-y-8" data-testid="workouts-page">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Log Workout</h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">Track your training sessions</p>
+                <div className="flex items-center gap-4">
+                    <div className="relative w-16 h-16 hidden sm:block opacity-90">
+                        <Image src="/assets/workout-tracker.svg" alt="Workout Tracker" fill className="object-contain drop-shadow-sm" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Log Workout</h1>
+                        <p className="text-slate-500 dark:text-slate-400 mt-1">Track your training sessions</p>
+                    </div>
                 </div>
             </div>
 

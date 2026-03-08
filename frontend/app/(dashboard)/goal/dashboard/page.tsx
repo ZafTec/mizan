@@ -54,9 +54,9 @@ export default function GoalDashboard() {
   if (!data?.goal) {
     return (
       <div className="max-w-4xl mx-auto">
-        <div className="card p-12 text-center">
-			<div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-brand-600 flex items-center justify-center dark:bg-brand-500">
-            <i className="ri-target-line text-4xl text-white" />
+        <div className="card p-12 text-center flex flex-col items-center">
+			<div className="relative w-48 h-48 mb-6 opacity-90 drop-shadow-md">
+            <Image src="/assets/daily-macros.svg" alt="No Active Goal" fill className="object-contain" />
           </div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">
             No Active Goal

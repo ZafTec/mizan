@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { clientApi } from '@/lib/api.client';
 import Loading from '@/components/Loading';
@@ -126,9 +127,9 @@ export default function ShoppingListPage() {
             <Loading />
           </div>
         ) : allItems.length === 0 ? (
-          <div className="text-center py-10">
-            <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
-              <i className="ri-shopping-cart-line text-3xl text-slate-400" />
+          <div className="text-center py-10 flex flex-col items-center">
+            <div className="relative w-48 h-48 mb-6 opacity-90 drop-shadow-md">
+              <Image src="/assets/shopping-list.svg" alt="Empty Shopping List" fill className="object-contain" />
             </div>
             <p className="text-slate-600 mb-4">No items in your shopping list</p>
             <p className="text-sm text-slate-500">Add meals to your meal plan to generate a shopping list</p>

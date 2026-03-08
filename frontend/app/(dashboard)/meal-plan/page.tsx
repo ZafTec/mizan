@@ -1,5 +1,6 @@
 import { getUserServer } from "@/helper/session";
 import Link from "next/link";
+import Image from "next/image";
 import { getMealPlans } from "@/data/mealPlan";
 import Pagination from "@/components/Pagination";
 import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
@@ -117,9 +118,9 @@ export default async function MealPlanPage({
 							))}
 						</div>
 					) : (
-						<div className="text-center py-12">
-							<div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
-								<i className="ri-calendar-line text-3xl text-slate-400" />
+						<div className="text-center py-12 flex flex-col items-center">
+							<div className="relative w-48 h-48 mb-6 opacity-90 drop-shadow-md">
+								<Image src="/assets/meal-planner-empty.svg" alt="Empty Meal Planner" fill className="object-contain" />
 							</div>
 							<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No meal plans yet</h3>
 							<p className="text-slate-500 mb-4">Start planning your meals for the week</p>

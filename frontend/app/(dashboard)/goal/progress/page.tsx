@@ -4,6 +4,7 @@ import { useState } from "react";
 import Loading from "@/components/Loading";
 import { clientApi } from "@/lib/api.client";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -56,9 +57,14 @@ export default function LogProgress() {
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Log Today's Progress</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Record your daily nutrition intake</p>
+        <div className="flex items-center gap-4">
+          <div className="relative w-16 h-16 hidden sm:block opacity-90">
+            <Image src="/assets/progress-chart.svg" alt="Log Progress" fill className="object-contain drop-shadow-sm" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Log Today's Progress</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">Record your daily nutrition intake</p>
+          </div>
         </div>
         <Link href="/goal/dashboard" className="btn-secondary">
           <i className="ri-arrow-left-line" />
