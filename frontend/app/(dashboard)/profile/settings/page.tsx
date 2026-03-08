@@ -797,7 +797,7 @@ function AvatarPreview({
 	if (image) {
 		return (
 			<div className="relative overflow-hidden rounded-[28px] ring-1 ring-brand-500/20" style={{ width: dimension, height: dimension }}>
-				<Image src={image} alt={name || email || "User"} fill className="object-cover" unoptimized />
+				<Image src={image} alt={name || email || "User"} fill sizes={`${dimension}px`} className="object-cover" />
 			</div>
 		);
 	}

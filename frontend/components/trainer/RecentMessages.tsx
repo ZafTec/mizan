@@ -108,7 +108,6 @@ export function RecentMessages() {
 									width={40}
 									height={40}
 									className="w-10 h-10 rounded-full"
-									unoptimized
 								/>
 							) : (
 								<span className="text-green-600 dark:text-green-400 font-semibold">

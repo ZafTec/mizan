@@ -30,8 +30,8 @@ function UserAvatar({ user }: { user: User }) {
 					src={user.image}
 					alt={user.name || user.email || 'User'}
 					fill
+					sizes="36px"
 					className="object-cover"
-					unoptimized
 				/>
 			</div>
 		);
