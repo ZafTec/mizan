@@ -15,6 +15,13 @@
       "when": 1772452847047,
       "tag": "0001_colossal_rattler",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772955102130,
+      "tag": "0002_rapid_exiles",
+      "breakpoints": true
     }
   ]
 }

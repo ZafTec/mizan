@@ -34,6 +34,28 @@ const hasRedis = !!process.env.REDIS_URL;
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  user: {
+    deleteUser: {
+      enabled: true,
+    },
+    additionalFields: {
+      themePreference: {
+        type: ["light", "dark", "system"],
+        required: false,
+        defaultValue: "system",
+      },
+      compactMode: {
+        type: "boolean",
+        required: false,
+        defaultValue: false,
+      },
+      reduceAnimations: {
+        type: "boolean",
+        required: false,
+        defaultValue: false,
+      },
+    },
+  },
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {

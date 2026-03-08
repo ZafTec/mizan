@@ -1,356 +1,737 @@
 "use client";
 
-import { useSession, authClient } from "@/lib/auth-client";
-import { useState } from "react";
-import Loading from "@/components/Loading";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { CldUploadWidget } from "next-cloudinary";
 import { toast } from "sonner";
+import Loading from "@/components/Loading";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { authClient, useSession } from "@/lib/auth-client";
+import { clientApi } from "@/lib/api.client";
+import { downloadProfileExport, getProfileObservations, type ProfileObservations } from "@/lib/api/profile";
+import { useTheme } from "@/lib/hooks/useTheme";
+
+type SessionItem = {
+	id: string;
+	token: string;
+	ipAddress?: string;
+	userAgent?: string;
+	createdAt: string;
+	expiresAt: string;
+};
+
+const DELETE_CONFIRMATION_TEXT = "DELETE";
 
 export default function ProfileSettingsPage() {
-  const { data: session, isPending } = useSession();
-  const router = useRouter();
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+	const { data: session, isPending } = useSession();
+	const { settings: appearance, updateSettings: updateAppearance, persistSettings } = useTheme();
+	const router = useRouter();
 
-  // Form states
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+	const [name, setName] = useState("");
+	const [image, setImage] = useState("");
+	const [currentPassword, setCurrentPassword] = useState("");
+	const [newPassword, setNewPassword] = useState("");
+	const [confirmPassword, setConfirmPassword] = useState("");
+	const [deletePassword, setDeletePassword] = useState("");
+	const [deleteConfirmation, setDeleteConfirmation] = useState("");
+	const [sessions, setSessions] = useState<SessionItem[]>([]);
+	const [observations, setObservations] = useState<ProfileObservations | null>(null);
+	const [loadingSessions, setLoadingSessions] = useState(true);
+	const [loadingObservations, setLoadingObservations] = useState(true);
+	const [savingProfile, setSavingProfile] = useState(false);
+	const [savingAppearance, setSavingAppearance] = useState(false);
+	const [changingPassword, setChangingPassword] = useState(false);
+	const [exportingData, setExportingData] = useState(false);
+	const [deletingAccount, setDeletingAccount] = useState(false);
+	const [revoking, setRevoking] = useState<string | null>(null);
 
-  if (isPending) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loading />
-      </div>
-    );
-  }
+	useEffect(() => {
+		if (!session?.user) {
+			return;
+		}
 
-  if (!session?.user) {
-    router.push("/login");
-    return null;
-  }
+		setName(session.user.name ?? "");
+		setImage(session.user.image ?? "");
+	}, [session?.user]);
 
-  const user = session.user;
+	useEffect(() => {
+		if (!session?.user) {
+			return;
+		}
 
-  async function handleUpdateProfile() {
-    setIsUpdating(true);
-    try {
-      await authClient.updateUser({
-        name: name || user.name || undefined,
-      });
-      toast.success("Profile updated successfully");
-      window.location.reload();
-    } catch (error) {
-      console.error("Failed to update profile:", error);
-      toast.error("Failed to update profile");
-    } finally {
-      setIsUpdating(false);
-    }
-  }
+		void fetchSessions();
+		void fetchObservations();
+	}, [session?.user]);
 
-  async function handleChangePassword() {
-    if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
+	const activeSessions = useMemo(
+		() => sessions.filter((activeSession) => new Date(activeSession.expiresAt) > new Date()),
+		[sessions]
+	);
 
-    if (newPassword.length < 8) {
-      toast.error("Password must be at least 8 characters");
-      return;
-    }
+	if (isPending) {
+		return (
+			<div className="flex min-h-[60vh] items-center justify-center">
+				<Loading />
+			</div>
+		);
+	}
 
-    setIsUpdating(true);
-    try {
-      await authClient.changePassword({
-        currentPassword,
-        newPassword,
-        revokeOtherSessions: true,
-      });
-      toast.success("Password changed successfully");
-      setShowPasswordDialog(false);
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (error) {
-      console.error("Failed to change password:", error);
-      toast.error("Failed to change password. Check your current password.");
-    } finally {
-      setIsUpdating(false);
-    }
-  }
+	if (!session?.user) {
+		router.push("/login");
+		return null;
+	}
 
-  async function handleDeleteAccount() {
-    setIsUpdating(true);
-    try {
-      await authClient.deleteUser();
-      router.push("/");
-    } catch (error) {
-      console.error("Failed to delete account:", error);
-      toast.error("Failed to delete account");
-    } finally {
-      setIsUpdating(false);
-    }
-  }
+	const user = session.user;
+	const previewImage = image || user.image || "";
 
-  return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Account Settings</h1>
-          <p className="text-slate-500 mt-1">Manage your account information and security</p>
-        </div>
-        <Link href="/profile" className="btn-secondary">
-          ← Back to Profile
-        </Link>
-      </div>
+	async function fetchSessions() {
+		setLoadingSessions(true);
+		try {
+			const result = await authClient.listSessions();
+			setSessions(
+				(result.data ?? []).map((item: any) => ({
+					id: item.id,
+					token: item.token,
+					ipAddress: item.ipAddress || undefined,
+					userAgent: item.userAgent || undefined,
+					createdAt:
+						typeof item.createdAt === "string"
+							? item.createdAt
+							: new Date(item.createdAt).toISOString(),
+					expiresAt:
+						typeof item.expiresAt === "string"
+							? item.expiresAt
+							: new Date(item.expiresAt).toISOString(),
+				}))
+			);
+		} catch (error) {
+			console.error("Failed to fetch sessions:", error);
+			toast.error("Failed to load sessions");
+		} finally {
+			setLoadingSessions(false);
+		}
+	}
 
-      {/* Profile Information */}
-      <div className="card p-6 space-y-4">
-        <h2 className="font-semibold text-slate-900 flex items-center gap-2">
-          <i className="ri-user-line text-brand-500" />
-          Profile Information
-        </h2>
+	async function fetchObservations() {
+		setLoadingObservations(true);
+		try {
+			setObservations(await getProfileObservations());
+		} catch (error) {
+			console.error("Failed to fetch profile observations:", error);
+			toast.error("Failed to load account observations");
+		} finally {
+			setLoadingObservations(false);
+		}
+	}
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Name
-            </label>
-            <input
-              type="text"
-              value={name || user.name || ""}
-              onChange={(e) => setName(e.target.value)}
-              className="input"
-              placeholder="Enter your name"
-            />
-          </div>
+	async function handleUpdateProfile() {
+		setSavingProfile(true);
+		try {
+			const trimmedName = name.trim();
+			const trimmedImage = image.trim();
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              value={user.email}
-              disabled
-              className="input bg-slate-50 cursor-not-allowed"
-            />
-            <p className="text-xs text-slate-500 mt-1">
-              Email changes are not supported yet
-            </p>
-          </div>
+			await Promise.all([
+				authClient.updateUser({
+					name: trimmedName || undefined,
+					image: trimmedImage || undefined,
+				} as never),
+				clientApi("/api/Users/me", {
+					method: "PUT",
+					body: {
+						name: trimmedName || null,
+						image: trimmedImage || null,
+					},
+				}),
+			]);
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleUpdateProfile}
-              disabled={isUpdating}
-              className="btn-primary"
-            >
-              {isUpdating ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
-        </div>
-      </div>
+			toast.success("Account details updated");
+			window.location.reload();
+		} catch (error) {
+			console.error("Failed to update profile:", error);
+			toast.error("Failed to update account details");
+		} finally {
+			setSavingProfile(false);
+		}
+	}
 
-      {/* Security */}
-      <div className="card p-6 space-y-4">
-        <h2 className="font-semibold text-slate-900 flex items-center gap-2">
-          <i className="ri-lock-line text-brand-500" />
-          Security
-        </h2>
+	async function handleSaveAppearance() {
+		setSavingAppearance(true);
+		try {
+			await persistSettings();
+			router.refresh();
+			toast.success("Appearance preferences saved");
+		} catch (error) {
+			console.error("Failed to save appearance:", error);
+			toast.error("Failed to save appearance preferences");
+		} finally {
+			setSavingAppearance(false);
+		}
+	}
 
-        <div className="divide-y divide-slate-100">
-          <div className="flex items-center justify-between py-4">
-            <div>
-              <p className="font-medium text-slate-900">Password</p>
-              <p className="text-sm text-slate-500">
-                Change your password regularly to keep your account secure
-              </p>
-            </div>
-            <button
-              onClick={() => setShowPasswordDialog(true)}
-              className="btn-secondary"
-            >
-              Change Password
-            </button>
-          </div>
+	async function handleChangePassword() {
+		if (newPassword !== confirmPassword) {
+			toast.error("Passwords do not match");
+			return;
+		}
 
-          <div className="flex items-center justify-between py-4">
-            <div>
-              <p className="font-medium text-slate-900">Active Sessions</p>
-              <p className="text-sm text-slate-500">
-                Manage devices and sessions where you're logged in
-              </p>
-            </div>
-            <Link href="/profile/sessions" className="btn-secondary">
-              Manage Sessions
-            </Link>
-          </div>
-        </div>
-      </div>
+		if (newPassword.length < 8) {
+			toast.error("Password must be at least 8 characters");
+			return;
+		}
 
-      {/* Danger Zone */}
-      <div className="card p-6 border-red-200 space-y-4">
-        <h2 className="font-semibold text-red-600 flex items-center gap-2">
-          <i className="ri-error-warning-line" />
-          Danger Zone
-        </h2>
+		setChangingPassword(true);
+		try {
+			await authClient.changePassword({
+				currentPassword,
+				newPassword,
+				revokeOtherSessions: true,
+			});
 
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-medium text-slate-900">Delete Account</p>
-            <p className="text-sm text-slate-500">
-              Permanently delete your account and all associated data
-            </p>
-          </div>
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="px-4 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
-          >
-            Delete Account
-          </button>
-        </div>
-      </div>
+			setCurrentPassword("");
+			setNewPassword("");
+			setConfirmPassword("");
+			toast.success("Password updated. Other sessions were revoked.");
+			await fetchSessions();
+		} catch (error) {
+			console.error("Failed to change password:", error);
+			toast.error("Password change failed. Check your current password.");
+		} finally {
+			setChangingPassword(false);
+		}
+	}
 
-      {/* Change Password Dialog */}
-      {showPasswordDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="card max-w-md w-full p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900">
-                Change Password
-              </h3>
-              <button
-                onClick={() => setShowPasswordDialog(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <i className="ri-close-line text-xl" />
-              </button>
-            </div>
+	async function handleRevokeSession(sessionToken: string) {
+		setRevoking(sessionToken);
+		try {
+			await authClient.revokeSession({ token: sessionToken });
+			setSessions((current) => current.filter((item) => item.token !== sessionToken));
+			toast.success("Session revoked");
+		} catch (error) {
+			console.error("Failed to revoke session:", error);
+			toast.error("Failed to revoke session");
+		} finally {
+			setRevoking(null);
+		}
+	}
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Current Password
-                </label>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="input"
-                  placeholder="Enter current password"
-                />
-              </div>
+	async function handleRevokeAllOtherSessions() {
+		setRevoking("all");
+		try {
+			await authClient.revokeSessions();
+			toast.success("Other sessions revoked");
+			await fetchSessions();
+		} catch (error) {
+			console.error("Failed to revoke all other sessions:", error);
+			toast.error("Failed to revoke other sessions");
+		} finally {
+			setRevoking(null);
+		}
+	}
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  New Password
-                </label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="input"
-                  placeholder="Enter new password"
-                />
-                <p className="text-xs text-slate-500 mt-1">
-                  At least 8 characters
-                </p>
-              </div>
+	async function handleExportData() {
+		setExportingData(true);
+		try {
+			const { blob, filename } = await downloadProfileExport();
+			const objectUrl = URL.createObjectURL(blob);
+			const anchor = document.createElement("a");
+			anchor.href = objectUrl;
+			anchor.download = filename;
+			document.body.appendChild(anchor);
+			anchor.click();
+			anchor.remove();
+			URL.revokeObjectURL(objectUrl);
+			toast.success("Your export is downloading");
+		} catch (error) {
+			console.error("Failed to export profile data:", error);
+			toast.error("Failed to export your data");
+		} finally {
+			setExportingData(false);
+		}
+	}
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Confirm New Password
-                </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="input"
-                  placeholder="Confirm new password"
-                />
-              </div>
+	async function handleDeleteAccount() {
+		if (deleteConfirmation !== DELETE_CONFIRMATION_TEXT) {
+			toast.error(`Type ${DELETE_CONFIRMATION_TEXT} to confirm account deletion`);
+			return;
+		}
 
-              {newPassword && confirmPassword && newPassword !== confirmPassword && (
-                <p className="text-sm text-red-600">Passwords do not match</p>
-              )}
+		setDeletingAccount(true);
+		try {
+			await authClient.deleteUser(
+				deletePassword.trim()
+					? { password: deletePassword.trim(), callbackURL: "/" }
+					: { callbackURL: "/" }
+			);
+			window.location.href = "/";
+		} catch (error) {
+			console.error("Failed to delete account:", error);
+			toast.error("Account deletion failed. A fresh session or valid password may be required.");
+		} finally {
+			setDeletingAccount(false);
+		}
+	}
 
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                <p className="text-sm text-blue-800 dark:text-blue-200">
-                  This will sign you out on all other devices
-                </p>
-              </div>
-            </div>
+	return (
+		<div className="mx-auto max-w-5xl space-y-6">
+			<div className="surface-panel p-6 sm:p-8">
+				<div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+					<div className="flex items-center gap-4">
+						<AvatarPreview image={previewImage} email={user.email} name={user.name} />
+						<div>
+							<p className="eyebrow mb-3">
+								<AnimatedIcon name="user" size={14} aria-hidden="true" />
+								Settings center
+							</p>
+							<h1 className="text-3xl font-semibold text-slate-950 dark:text-slate-50">
+								{user.name || user.email}
+							</h1>
+							<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+								Manage your Better Auth account, app preferences, sessions, and exported data.
+							</p>
+						</div>
+					</div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowPasswordDialog(false)}
-                className="btn-secondary flex-1"
-                disabled={isUpdating}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleChangePassword}
-                className="btn-primary flex-1"
-                disabled={isUpdating || !currentPassword || !newPassword || !confirmPassword}
-              >
-                {isUpdating ? "Updating..." : "Change Password"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+					<div className="grid gap-3 sm:grid-cols-3">
+						<SummaryBadge label="Role" value={user.role || "user"} />
+						<SummaryBadge
+							label="Active sessions"
+							value={loadingSessions ? "--" : String(activeSessions.length)}
+						/>
+						<SummaryBadge
+							label="Streak"
+							value={loadingObservations || !observations ? "--" : `${observations.streakCount} days`}
+						/>
+					</div>
+				</div>
+			</div>
 
-      {/* Delete Account Confirmation */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="card max-w-md w-full p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-red-600">
-                Delete Account
-              </h3>
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <i className="ri-close-line text-xl" />
-              </button>
-            </div>
+			<div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+				<div className="space-y-6">
+					<section className="card p-6">
+						<SectionHeading
+							icon="user"
+							title="Account details"
+							description="Keep your Better Auth profile and app mirror aligned."
+						/>
 
-            <div>
-              <p className="text-slate-700 mb-2">
-                Are you sure you want to delete your account? This action cannot be undone.
-              </p>
-              <p className="text-sm text-red-600">
-                All your data including meals, recipes, and goals will be permanently deleted.
-              </p>
-            </div>
+						<div className="mt-6 grid gap-6 lg:grid-cols-[auto_1fr]">
+							<div className="space-y-3">
+								<AvatarPreview image={previewImage} email={user.email} name={name || user.name} size="lg" />
+								<CldUploadWidget
+									uploadPreset="mizan_preset"
+									onSuccess={(result: any) => setImage(result.info.secure_url)}
+								>
+									{({ open }) => (
+										<button onClick={() => open()} className="btn-secondary w-full justify-center">
+											<AnimatedIcon name="upload" size={16} aria-hidden="true" />
+											Upload avatar
+										</button>
+									)}
+								</CldUploadWidget>
+							</div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="btn-secondary flex-1"
-                disabled={isUpdating}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteAccount}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50"
-                disabled={isUpdating}
-              >
-                {isUpdating ? "Deleting..." : "Delete Permanently"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+							<div className="grid gap-4">
+								<Field label="Display name">
+									<input
+										type="text"
+										value={name}
+										onChange={(event) => setName(event.target.value)}
+										className="input"
+										placeholder="Enter your display name"
+									/>
+								</Field>
+
+								<Field label="Email address" helper="Email changes are still not implemented.">
+									<input type="email" value={user.email} disabled className="input cursor-not-allowed bg-slate-50 dark:bg-slate-900" />
+								</Field>
+
+								<Field label="Avatar URL" helper="You can paste a URL or use the upload button.">
+									<input
+										type="text"
+										value={image}
+										onChange={(event) => setImage(event.target.value)}
+										className="input"
+										placeholder="https://..."
+									/>
+								</Field>
+
+								<div className="flex flex-wrap gap-3">
+									<button onClick={handleUpdateProfile} disabled={savingProfile} className="btn-primary">
+										{savingProfile ? "Saving..." : "Save account changes"}
+									</button>
+									<Link href="/profile" className="btn-secondary">
+										Back to profile
+									</Link>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<section className="card p-6">
+						<SectionHeading
+							icon="lock"
+							title="Security"
+							description="Password management stays in Better Auth."
+						/>
+
+						<div className="mt-6 grid gap-4">
+							<Field label="Current password">
+								<input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} className="input" />
+							</Field>
+							<Field label="New password" helper="Minimum 8 characters.">
+								<input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} className="input" />
+							</Field>
+							<Field label="Confirm new password">
+								<input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="input" />
+							</Field>
+							<div className="rounded-3xl border border-slate-200 bg-slate-50/90 p-4 text-sm text-slate-600 dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-300">
+								Changing your password revokes other active sessions.
+							</div>
+							<button
+								onClick={handleChangePassword}
+								disabled={changingPassword || !currentPassword || !newPassword || !confirmPassword}
+								className="btn-primary w-full justify-center sm:w-auto"
+							>
+								{changingPassword ? "Updating..." : "Change password"}
+							</button>
+						</div>
+					</section>
+
+					<section className="card p-6">
+						<SectionHeading
+							icon="sparkles"
+							title="Appearance"
+							description="Preferences persist to your Better Auth user profile and apply across sessions."
+						/>
+
+						<div className="mt-6 space-y-6">
+							<div className="grid gap-3 sm:grid-cols-3">
+								{([
+									{ value: "light", label: "Light", icon: "sun" },
+									{ value: "dark", label: "Dark", icon: "moon" },
+									{ value: "system", label: "System", icon: "home" },
+								] as const).map((option) => (
+									<button
+										key={option.value}
+										onClick={() => updateAppearance({ theme: option.value })}
+										className={`rounded-3xl border p-4 text-left transition-colors ${
+											appearance.theme === option.value
+												? "border-brand-300 bg-brand-50/80 text-brand-900 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-200"
+												: "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-white/10 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-white/20"
+										}`}
+									>
+										<div className="flex items-center gap-3">
+											<span className="icon-chip h-10 w-10 text-current">
+												<AnimatedIcon name={option.icon} size={18} aria-hidden="true" />
+											</span>
+											<div>
+												<p className="font-medium">{option.label}</p>
+												<p className="text-xs opacity-70">{option.value === "system" ? "Follow OS preference" : `${option.label} mode always`}</p>
+											</div>
+										</div>
+									</button>
+								))}
+							</div>
+
+							<div className="grid gap-3 sm:grid-cols-2">
+								<ToggleCard
+									label="Compact mode"
+									description="Tighten spacing for denser layouts."
+									checked={appearance.compactMode}
+									onChange={(checked) => updateAppearance({ compactMode: checked })}
+								/>
+								<ToggleCard
+									label="Reduce animations"
+									description="Keep motion subdued across the app."
+									checked={appearance.reduceAnimations}
+									onChange={(checked) => updateAppearance({ reduceAnimations: checked })}
+								/>
+							</div>
+
+							<button onClick={handleSaveAppearance} disabled={savingAppearance} className="btn-primary w-full justify-center sm:w-auto">
+								{savingAppearance ? "Saving..." : "Save appearance"}
+							</button>
+						</div>
+					</section>
+				</div>
+
+				<div className="space-y-6">
+					<section className="card p-6">
+						<SectionHeading
+							icon="activity"
+							title="Usage observations"
+							description="Backend-derived signals from nutrition, progress, and developer activity."
+						/>
+
+						{loadingObservations || !observations ? (
+							<div className="mt-6 flex min-h-40 items-center justify-center">
+								<Loading />
+							</div>
+						) : (
+							<div className="mt-6 grid gap-3 sm:grid-cols-2">
+								<ObservationCard label="Joined" value={formatDate(observations.joinedAt)} helper="Account age from Better Auth user record" />
+								<ObservationCard label="Current streak" value={`${observations.streakCount} days`} helper={`Longest: ${observations.longestStreak} days`} />
+								<ObservationCard label="Meal logging" value={`${observations.mealLoggingDays}/14 days`} helper={`Average ${observations.averageCalories} kcal on logged days`} />
+								<ObservationCard label="Achievements" value={`${observations.achievementCount}`} helper={`${observations.totalAchievementPoints} total points`} />
+								<ObservationCard label="MCP calls" value={`${observations.mcpCalls}`} helper={`${observations.mcpSuccessRate}% success rate`} />
+								<ObservationCard label="Active goal" value={observations.goalSummary} helper="Pulled from your current backend goal state" />
+							</div>
+						)}
+					</section>
+
+					<section className="card p-6">
+						<SectionHeading
+							icon="users"
+							title="Sessions"
+							description="Revoke devices without leaving this page."
+						/>
+
+						{loadingSessions ? (
+							<div className="mt-6 flex min-h-40 items-center justify-center">
+								<Loading />
+							</div>
+						) : (
+							<div className="mt-6 space-y-4">
+								<div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-900/70">
+									<div>
+										<p className="text-sm font-medium text-slate-900 dark:text-slate-100">{activeSessions.length} active session{activeSessions.length === 1 ? "" : "s"}</p>
+										<p className="text-sm text-slate-500 dark:text-slate-400">Current device remains signed in when revoking others.</p>
+									</div>
+									{activeSessions.length > 1 ? (
+										<button onClick={handleRevokeAllOtherSessions} disabled={revoking === "all"} className="btn-secondary">
+											{revoking === "all" ? "Revoking..." : "Revoke other sessions"}
+										</button>
+									) : null}
+								</div>
+
+								<div className="space-y-3">
+									{activeSessions.map((activeSession) => {
+										const isCurrent = activeSession.token === session.session?.token;
+										return (
+											<div key={activeSession.id} className={`rounded-3xl border p-4 ${isCurrent ? "border-brand-300 bg-brand-50/80 dark:border-brand-500/30 dark:bg-brand-500/10" : "border-slate-200 bg-white dark:border-white/10 dark:bg-slate-950"}`}>
+												<div className="flex items-start justify-between gap-4">
+													<div className="min-w-0">
+														<div className="flex items-center gap-2">
+															<p className="font-medium text-slate-900 dark:text-slate-100">{getDeviceInfo(activeSession.userAgent)}</p>
+															{isCurrent ? <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-800 dark:bg-brand-500/20 dark:text-brand-200">Current</span> : null}
+														</div>
+														<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{activeSession.ipAddress || "Unknown IP"} - Started {formatDateTime(activeSession.createdAt)}</p>
+														<p className="text-sm text-slate-500 dark:text-slate-400">Expires {formatDateTime(activeSession.expiresAt)}</p>
+													</div>
+													{!isCurrent ? (
+														<button onClick={() => handleRevokeSession(activeSession.token)} disabled={revoking === activeSession.token} className="rounded-full border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-500/20 dark:hover:bg-red-500/10">
+															{revoking === activeSession.token ? "Revoking..." : "Revoke"}
+														</button>
+													) : null}
+												</div>
+											</div>
+										);
+									})}
+								</div>
+							</div>
+						)}
+					</section>
+
+					<section className="card p-6">
+						<SectionHeading
+							icon="upload"
+							title="Export data"
+							description="Download a JSON export assembled by the backend from your app-owned data."
+						/>
+
+						<div className="mt-6 space-y-4 rounded-3xl border border-slate-200 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-900/70">
+							<p className="text-sm text-slate-600 dark:text-slate-300">
+								The export includes your account profile, goals, meals, meal plans, measurements, workouts, achievements, recipes, favorites, and MCP usage metadata.
+							</p>
+							<button onClick={handleExportData} disabled={exportingData} className="btn-primary w-full justify-center">
+								{exportingData ? "Preparing export..." : "Download my data"}
+							</button>
+						</div>
+					</section>
+
+					<section className="card border-red-200 p-6 dark:border-red-500/20">
+						<SectionHeading
+							icon="badgeAlert"
+							title="Danger zone"
+							description="Delete stays in Better Auth. This is permanent."
+						/>
+
+						<div className="mt-6 space-y-4 rounded-3xl border border-red-200 bg-red-50/70 p-4 dark:border-red-500/20 dark:bg-red-500/10">
+							<Field label={`Type ${DELETE_CONFIRMATION_TEXT} to confirm`}>
+								<input type="text" value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} className="input" placeholder={DELETE_CONFIRMATION_TEXT} />
+							</Field>
+							<Field label="Password (optional)" helper="Use this if Better Auth requires password confirmation instead of a fresh session.">
+								<input type="password" value={deletePassword} onChange={(event) => setDeletePassword(event.target.value)} className="input" />
+							</Field>
+							<button onClick={handleDeleteAccount} disabled={deletingAccount || deleteConfirmation !== DELETE_CONFIRMATION_TEXT} className="w-full rounded-full bg-red-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60">
+								{deletingAccount ? "Deleting account..." : "Delete account permanently"}
+							</button>
+						</div>
+					</section>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function SectionHeading({
+	icon,
+	title,
+	description,
+}: {
+	icon: Parameters<typeof AnimatedIcon>[0]["name"];
+	title: string;
+	description: string;
+}) {
+	return (
+		<div className="flex items-start gap-3">
+			<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
+				<AnimatedIcon name={icon} size={18} aria-hidden="true" />
+			</span>
+			<div>
+				<h2 className="text-lg font-semibold text-slate-950 dark:text-slate-50">{title}</h2>
+				<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+			</div>
+		</div>
+	);
+}
+
+function SummaryBadge({ label, value }: { label: string; value: string }) {
+	return (
+		<div className="rounded-3xl border border-slate-200 bg-white/90 px-4 py-3 dark:border-white/10 dark:bg-slate-950/70">
+			<p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">{label}</p>
+			<p className="mt-2 text-lg font-semibold text-slate-950 dark:text-slate-50">{value}</p>
+		</div>
+	);
+}
+
+function ObservationCard({
+	label,
+	value,
+	helper,
+}: {
+	label: string;
+	value: string;
+	helper: string;
+}) {
+	return (
+		<div className="rounded-3xl border border-slate-200 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-900/70">
+			<p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">{label}</p>
+			<p className="mt-3 text-lg font-semibold text-slate-950 dark:text-slate-50">{value}</p>
+			<p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{helper}</p>
+		</div>
+	);
+}
+
+function ToggleCard({
+	label,
+	description,
+	checked,
+	onChange,
+}: {
+	label: string;
+	description: string;
+	checked: boolean;
+	onChange: (checked: boolean) => void;
+}) {
+	return (
+		<button
+			type="button"
+			onClick={() => onChange(!checked)}
+			className="flex items-center justify-between rounded-3xl border border-slate-200 bg-white p-4 text-left transition-colors hover:border-slate-300 dark:border-white/10 dark:bg-slate-950 dark:hover:border-white/20"
+		>
+			<div>
+				<p className="font-medium text-slate-900 dark:text-slate-100">{label}</p>
+				<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+			</div>
+			<span className={`relative h-6 w-11 rounded-full transition-colors ${checked ? "bg-brand-600" : "bg-slate-300 dark:bg-slate-700"}`}>
+				<span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${checked ? "translate-x-5" : "translate-x-0.5"}`} />
+			</span>
+		</button>
+	);
+}
+
+function Field({
+	label,
+	helper,
+	children,
+}: {
+	label: string;
+	helper?: string;
+	children: React.ReactNode;
+}) {
+	return (
+		<label className="grid gap-2">
+			<span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
+			{children}
+			{helper ? <span className="text-xs text-slate-500 dark:text-slate-400">{helper}</span> : null}
+		</label>
+	);
+}
+
+function AvatarPreview({
+	image,
+	email,
+	name,
+	size = "md",
+}: {
+	image?: string;
+	email?: string | null;
+	name?: string | null;
+	size?: "md" | "lg";
+}) {
+	const dimension = size === "lg" ? 96 : 72;
+
+	if (image) {
+		return (
+			<div className="relative overflow-hidden rounded-[28px] ring-1 ring-brand-500/20" style={{ width: dimension, height: dimension }}>
+				<Image src={image} alt={name || email || "User"} fill className="object-cover" unoptimized />
+			</div>
+		);
+	}
+
+	return (
+		<div
+			className="flex items-center justify-center rounded-[28px] bg-brand-600 font-semibold text-white ring-1 ring-brand-500/20 dark:bg-brand-500"
+			style={{ width: dimension, height: dimension }}
+		>
+			{(email || "U").charAt(0).toUpperCase()}
+		</div>
+	);
+}
+
+function getDeviceInfo(userAgent?: string) {
+	if (!userAgent) return "Unknown device";
+	const ua = userAgent.toLowerCase();
+	let browser = "Unknown browser";
+	let os = "Unknown OS";
+
+	if (ua.includes("chrome") && !ua.includes("edge")) browser = "Chrome";
+	else if (ua.includes("firefox")) browser = "Firefox";
+	else if (ua.includes("safari") && !ua.includes("chrome")) browser = "Safari";
+	else if (ua.includes("edge")) browser = "Edge";
+
+	if (ua.includes("windows")) os = "Windows";
+	else if (ua.includes("mac")) os = "macOS";
+	else if (ua.includes("linux")) os = "Linux";
+	else if (ua.includes("android")) os = "Android";
+	else if (ua.includes("ios") || ua.includes("iphone") || ua.includes("ipad")) os = "iOS";
+
+	return `${browser} on ${os}`;
+}
+
+function formatDate(value?: string | null) {
+	if (!value) return "-";
+	return new Date(value).toLocaleDateString(undefined, {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
+	});
+}
+
+function formatDateTime(value?: string | null) {
+	if (!value) return "-";
+	return new Date(value).toLocaleString();
 }

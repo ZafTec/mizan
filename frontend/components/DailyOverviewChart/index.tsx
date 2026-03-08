@@ -132,7 +132,12 @@ export default function DailyOverviewChart() {
 	}, [macroItems, macros.carbs, macros.fat, macros.protein]);
 
 	const calorieProgress = getProgress(macros.calories, goal?.targetCalories ?? null);
-	const hasGoals = macroItems.some((item) => item.target && item.target > 0);
+	const hasGoals = Boolean(
+		goal?.targetCalories ||
+		goal?.targetProteinGrams ||
+		goal?.targetCarbsGrams ||
+		goal?.targetFatGrams
+	);
 	const trackedMetrics = macroItems.filter((item) => item.value > 0).length;
 
 	if (loading) {

@@ -82,9 +82,15 @@ export default function ProfilePage() {
 	return (
 		<div className="max-w-3xl mx-auto space-y-6" data-testid="profile-page">
 			{/* Header */}
-			<div>
-				<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Profile</h1>
-				<p className="text-slate-500 mt-1">Manage your account settings</p>
+			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+				<div>
+					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Profile</h1>
+					<p className="text-slate-500 mt-1">Manage your account settings</p>
+				</div>
+				<Link href="/profile/settings" className="btn-secondary">
+					<i className="ri-settings-3-line" />
+					Open settings center
+				</Link>
 			</div>
 
 			{/* Profile Card */}

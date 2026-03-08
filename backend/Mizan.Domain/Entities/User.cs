@@ -13,6 +13,9 @@ public class User
     public bool EmailVerified { get; set; }
     public string? Name { get; set; }
     public string? Image { get; set; }
+    public string ThemePreference { get; set; } = "system";
+    public bool CompactMode { get; set; }
+    public bool ReduceAnimations { get; set; }
     public string Role { get; set; } = "user";
     public bool Banned { get; set; } = false;
     public string? BanReason { get; set; }
