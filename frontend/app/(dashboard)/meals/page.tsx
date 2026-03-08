@@ -218,7 +218,7 @@ export default function MealsPage() {
 					<div className="flex items-center gap-3">
 						<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Food Diary</h1>
 						{(streak?.currentStreak ?? 0) > 0 && (
-							<span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2.5 py-0.5 text-sm font-medium text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">
+							<span className="inline-flex items-center gap-1 rounded-2xl bg-orange-100 px-2.5 py-0.5 text-sm font-medium text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">
 								<i className="ri-fire-fill" />
 								{streak?.currentStreak ?? 0} day streak
 							</span>

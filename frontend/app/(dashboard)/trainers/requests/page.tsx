@@ -110,7 +110,7 @@ export default function TrainerRequestsPage() {
 									</h3>
 									<p className="text-slate-500 dark:text-slate-400">{request.trainerEmail}</p>
 									<div className="flex items-center gap-2 mt-2 justify-center sm:justify-start">
-										<span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-medium">
+										<span className="inline-flex items-center gap-1 px-3 py-1 rounded-2xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-medium">
 											<i className="ri-time-line" />
 											Pending
 										</span>

@@ -131,17 +131,17 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 				</div>
 				<div className="flex flex-wrap gap-6">
 					<div className="flex items-center gap-2">
-						<div className="w-4 h-4 rounded-full bg-red-500" />
+						<div className="w-4 h-4 rounded-md bg-red-500" />
 						<span className="text-sm text-slate-600">Protein</span>
 						<span className="text-sm font-semibold text-slate-900">{proteinPercentage.toFixed(0)}%</span>
 					</div>
 					<div className="flex items-center gap-2">
-						<div className="w-4 h-4 rounded-full bg-amber-500" />
+						<div className="w-4 h-4 rounded-md bg-amber-500" />
 						<span className="text-sm text-slate-600">Carbs</span>
 						<span className="text-sm font-semibold text-slate-900">{carbsPercentage.toFixed(0)}%</span>
 					</div>
 					<div className="flex items-center gap-2">
-						<div className="w-4 h-4 rounded-full bg-yellow-500" />
+						<div className="w-4 h-4 rounded-md bg-yellow-500" />
 						<span className="text-sm text-slate-600">Fat</span>
 						<span className="text-sm font-semibold text-slate-900">{fatPercentage.toFixed(0)}%</span>
 					</div>

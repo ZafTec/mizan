@@ -113,7 +113,7 @@ export default function EditIngredientForm({ ingredient }: { ingredient: Ingredi
 					<div>
 						<label htmlFor="calories" className="label">
 							<span className="flex items-center gap-1.5">
-								<span className="w-2 h-2 rounded-full bg-orange-500" />
+								<span className="w-2 h-2 rounded-xl bg-orange-500" />
 								Calories (kcal)
 							</span>
 						</label>
@@ -129,7 +129,7 @@ export default function EditIngredientForm({ ingredient }: { ingredient: Ingredi
 					<div>
 						<label htmlFor="protein" className="label">
 							<span className="flex items-center gap-1.5">
-								<span className="w-2 h-2 rounded-full bg-red-500" />
+								<span className="w-2 h-2 rounded-xl bg-red-500" />
 								Protein (g)
 							</span>
 						</label>
@@ -146,7 +146,7 @@ export default function EditIngredientForm({ ingredient }: { ingredient: Ingredi
 					<div>
 						<label htmlFor="carbs" className="label">
 							<span className="flex items-center gap-1.5">
-								<span className="w-2 h-2 rounded-full bg-amber-500" />
+								<span className="w-2 h-2 rounded-xl bg-amber-500" />
 								Carbs (g)
 							</span>
 						</label>
@@ -163,7 +163,7 @@ export default function EditIngredientForm({ ingredient }: { ingredient: Ingredi
 					<div>
 						<label htmlFor="fat" className="label">
 							<span className="flex items-center gap-1.5">
-								<span className="w-2 h-2 rounded-full bg-yellow-500" />
+								<span className="w-2 h-2 rounded-xl bg-yellow-500" />
 								Fat (g)
 							</span>
 						</label>
@@ -180,7 +180,7 @@ export default function EditIngredientForm({ ingredient }: { ingredient: Ingredi
 					<div>
 						<label htmlFor="fiber" className="label">
 							<span className="flex items-center gap-1.5">
-								<span className="w-2 h-2 rounded-full bg-green-500" />
+								<span className="w-2 h-2 rounded-xl bg-green-500" />
 								Fiber (g)
 							</span>
 						</label>
@@ -197,7 +197,7 @@ export default function EditIngredientForm({ ingredient }: { ingredient: Ingredi
 					<div>
 						<label htmlFor="servingSize" className="label">
 							<span className="flex items-center gap-1.5">
-								<span className="w-2 h-2 rounded-full bg-slate-400" />
+								<span className="w-2 h-2 rounded-xl bg-slate-400" />
 								Serving Size (g)
 							</span>
 						</label>

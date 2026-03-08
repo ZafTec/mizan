@@ -37,7 +37,7 @@ export default function RecipeMoreButton({ recipeId }: { recipeId: ID }) {
 		<div className="relative">
 			<button
 				ref={buttonRef}
-				className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 z-10 hover:bg-emerald-50 dark:hover:bg-emerald-950 w-8 h-8 rounded-full"
+				className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 z-10 hover:bg-emerald-50 dark:hover:bg-emerald-950 w-8 h-8 rounded-lg"
 				onClick={handleClicked}
 				type="button"
 				>

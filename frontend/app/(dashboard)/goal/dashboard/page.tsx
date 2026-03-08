@@ -185,7 +185,7 @@ export default function GoalDashboard() {
                 <div key={macro.label}>
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full" style={{ backgroundColor: macro.color }} />
+                      <span className="w-3 h-3 rounded-xl" style={{ backgroundColor: macro.color }} />
                       {macro.label}
                     </span>
                     <span className="text-sm text-slate-600 dark:text-slate-400">

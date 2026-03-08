@@ -202,7 +202,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 		<>
 			{showLogoutModal &&
 				createPortal(
-					<div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-sm" onClick={() => setShowLogoutModal(false)}>
+					<div className="fixed inset-0 z-100 flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-sm" onClick={() => setShowLogoutModal(false)}>
 						<div className="surface-panel w-full max-w-sm p-6" onClick={(event) => event.stopPropagation()}>
 							<div className="mb-5 flex items-start gap-4">
 								<span className="icon-chip h-12 w-12 text-red-500 dark:text-red-400">
@@ -241,7 +241,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 
 				<div className="hidden items-center gap-2 md:flex">
 					{user ? (
-						<div className="relative z-[60]">
+						<div className="relative z-60">
 							<button
 								type="button"
 								data-testid="nav-user-trigger"
@@ -259,7 +259,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 							</button>
 
 							{userMenuOpen && (
-								<div ref={userMenuRef} data-testid="nav-user-menu" className="absolute right-0 top-[calc(100%+0.5rem)] z-[70] mt-0 w-60 overflow-hidden rounded-[28px] border border-slate-200 bg-white p-1.5 shadow-2xl shadow-slate-950/10 animate-fade-in dark:border-white/10 dark:bg-slate-950">
+								<div ref={userMenuRef} data-testid="nav-user-menu" className="absolute right-0 top-[calc(100%+0.5rem)] z-70 mt-0 w-60 overflow-hidden rounded-[28px] border border-slate-200 bg-white p-1.5 shadow-2xl shadow-slate-950/10 animate-fade-in dark:border-white/10 dark:bg-slate-950">
 									<div className="mb-1 rounded-2xl px-3 py-2.5">
 										<p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{user.name || user.email}</p>
 										<p className="truncate text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
@@ -301,7 +301,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 
 				<button
 					type="button"
-					className="icon-chip h-11 w-11 text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white md:hidden relative z-[100]"
+					className="icon-chip h-11 w-11 text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white md:hidden relative z-100"
 					onClick={toggleMobileMenu}
 					aria-label="Toggle navigation menu"
 					aria-expanded={menuOpen}
@@ -313,8 +313,8 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 
 				{menuOpen && (
 					<>
-						<div className="fixed inset-0 z-[80] bg-slate-950/30 backdrop-blur-[2px] md:hidden" onClick={closeMenu} />
-						<div ref={menuRef} id="mobile-nav-menu" data-testid="nav-mobile-menu" className="fixed inset-x-3 top-24 z-[90] overflow-hidden rounded-[28px] border border-slate-200 bg-white p-4 shadow-2xl shadow-slate-950/15 animate-fade-in md:hidden dark:border-white/10 dark:bg-slate-950">
+						<div className="fixed inset-0 z-80 bg-slate-950/30 backdrop-blur-[2px] md:hidden" onClick={closeMenu} />
+						<div ref={menuRef} id="mobile-nav-menu" data-testid="nav-mobile-menu" className="fixed inset-x-3 top-24 z-90 overflow-hidden rounded-[28px] border border-slate-200 bg-white p-4 shadow-2xl shadow-slate-950/15 animate-fade-in md:hidden dark:border-white/10 dark:bg-slate-950">
 							<nav className="space-y-1">
 								{primaryItems.map((item) => (
 									<NavLink key={item.href} item={item} onClick={closeAllMenus} mobile />

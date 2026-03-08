@@ -81,7 +81,7 @@ export default function SuggestedRecipes({ user, suggestions, serverError }: Sug
 									</p>
 								</div>
 								<div className="flex flex-wrap gap-2">
-									<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-sm font-medium">
+									<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-sm font-medium">
 										<i className="ri-fire-line" />
 										{recipe.calories} kcal
 									</span>
@@ -89,11 +89,11 @@ export default function SuggestedRecipes({ user, suggestions, serverError }: Sug
 										<i className="ri-heart-pulse-line" />
 										{recipe.protein}g protein
 									</span>
-									<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-medium">
+									<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-medium">
 										<i className="ri-bread-line" />
 										{recipe.carbs}g carbs
 									</span>
-									<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-sm font-medium">
+									<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-sm font-medium">
 										<i className="ri-drop-line" />
 										{recipe.fat}g fat
 									</span>
