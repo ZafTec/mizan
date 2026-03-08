@@ -248,15 +248,18 @@ export default function DailyOverviewChart() {
 				<div className="mt-6 space-y-3">
 					{macroDistribution.map((item) => (
 						<div key={item.key} className={`rounded-3xl border p-4 ${item.panelClassName}`}>
-							<div className="flex items-center justify-between gap-3">
+							<div className="flex items-center justify-between gap-3 mb-2.5">
 								<div className="flex items-center gap-3">
-									<span className={`h-2.5 w-2.5 rounded-full ${item.dotClassName}`} />
+									<span className={`h-2.5 w-2.5 rounded-xl ${item.dotClassName}`} />
 									<div>
 										<p className="text-sm font-semibold">{item.label}</p>
 										<p className="text-xs opacity-75">{roundValue(item.value)}{item.unit}</p>
 									</div>
 								</div>
 								<p className="text-sm font-semibold">{item.share}%</p>
+							</div>
+							<div className="h-1.5 w-full rounded-xl bg-slate-900/10 dark:bg-white/10 overflow-hidden">
+								<div className={`h-full rounded-xl ${item.dotClassName} transition-all duration-500`} style={{ width: `${item.share}%` }} />
 							</div>
 						</div>
 					))}
