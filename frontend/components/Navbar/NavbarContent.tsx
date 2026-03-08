@@ -89,7 +89,6 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 	const [userMenuOpen, setUserMenuOpen] = useState(false);
 	const menuRef = useRef<HTMLDivElement>(null);
 	const userMenuRef = useRef<HTMLDivElement>(null);
-	const pathname = usePathname();
 	const router = useRouter();
 
 	const primaryItems: NavItem[] = [
@@ -115,10 +114,6 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 			document.body.style.overflow = '';
 		};
 	}, [menuOpen]);
-
-	useEffect(() => {
-		closeAllMenus();
-	}, [pathname]);
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
