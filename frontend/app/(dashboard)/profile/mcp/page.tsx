@@ -394,7 +394,7 @@ export default function McpPage() {
                             {token.isActive ? "Active" : "Revoked"}
                           </span>
                         </td>
-						  <td className="px-4 py-3 text-slate-700 dark:text-slate-300 hidden sm:table-cell">{token.createdAt ? formatDate(token.createdAt) : "Unknown"}</td>
+						  <td className="px-4 py-3 text-slate-700 dark:text-slate-300 hidden sm:table-cell">{formatDate(token.createdAt)}</td>
 						  <td className="px-4 py-3 text-slate-700 dark:text-slate-300 hidden md:table-cell">
                           {token.lastUsedAt ? formatDate(token.lastUsedAt) : "Never"}
                         </td>
@@ -402,8 +402,7 @@ export default function McpPage() {
                           {token.isActive && (
                             <button
 							className="btn-secondary inline-flex items-center gap-2 text-destructive"
-	                              onClick={() => token.id && setTokenToRevoke(token.id)}
-                              disabled={!token.id}
+	                              onClick={() => setTokenToRevoke(token.id)}
                             >
                               <Trash2 className="h-4 w-4" />
                               <span className="hidden sm:inline">Revoke</span>
