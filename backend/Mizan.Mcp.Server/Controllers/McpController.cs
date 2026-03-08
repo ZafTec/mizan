@@ -64,13 +64,13 @@ public class McpController : ControllerBase
         var sessionId = Guid.NewGuid().ToString();
         _logger.LogInformation("SSE Connected: {SessionId} User: {UserId}", sessionId, userId);
 
-        // Send endpoint URL event
-        var endpointEvent = new
-        {
-            type = "endpoint",
-            uri = $"/mcp/messages?sessionId={sessionId}" 
-        };
-        await Response.WriteAsync($"event: endpoint\ndata: {JsonSerializer.Serialize(endpointEvent)}\n\n");
+        // Include token in messages URL if auth came via query param (for web connectors that can't set headers)
+        var tokenParam = Request.Query.TryGetValue("token", out var queryToken) && !string.IsNullOrEmpty(queryToken)
+            ? $"&token={Uri.EscapeDataString(queryToken.ToString())}"
+            : "";
+
+        // MCP SSE spec expects plain URI as data, not JSON
+        await Response.WriteAsync($"event: endpoint\ndata: /mcp/messages?sessionId={sessionId}{tokenParam}\n\n");
         await Response.Body.FlushAsync();
 
         try

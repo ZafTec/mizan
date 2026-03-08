@@ -213,8 +213,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        var origins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
-            ?? new[] { "http://localhost:3000" };
+        var origins = (builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
+            ?? new[] { "http://localhost:3000" })
+            .Select(o => o.Trim()).Where(o => !string.IsNullOrEmpty(o)).ToArray();
 
         policy.WithOrigins(origins)
             .AllowAnyHeader()
