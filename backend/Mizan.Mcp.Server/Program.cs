@@ -54,6 +54,12 @@ builder.Services.AddHttpClient<IBackendApiClient, BackendApiClient>(client =>
 {
     client.BaseAddress = new Uri(backendUrl);
     client.DefaultRequestHeaders.Add("X-Api-Key", apiKey);
+    client.Timeout = TimeSpan.FromSeconds(30);
+})
+.ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+{
+    PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+    PooledConnectionIdleTimeout = TimeSpan.FromSeconds(30),
 });
 
 // MCP Server

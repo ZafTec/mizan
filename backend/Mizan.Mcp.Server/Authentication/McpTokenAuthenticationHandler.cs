@@ -31,7 +31,11 @@ public class McpTokenAuthenticationHandler : AuthenticationHandler<McpTokenAuthe
         if (string.IsNullOrEmpty(token))
             return AuthenticateResult.NoResult();
 
-        var validation = await _backend.ValidateTokenAsync(token, Context.RequestAborted);
+        // Don't pass Context.RequestAborted — SSE disconnect cancels it,
+        // which kills validation on the subsequent reconnect attempt.
+        // 30s matches HttpClient.Timeout — covers cold DB connection pool warmup.
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var validation = await _backend.ValidateTokenAsync(token, cts.Token);
         if (validation == null)
             return AuthenticateResult.Fail("Invalid or expired MCP token");
 
