@@ -158,7 +158,7 @@ public class AuthFlowTests
         var createResult = await createResponse.Content.ReadFromJsonAsync<CreateMcpTokenResponse>();
         var plaintextToken = createResult!.PlaintextToken;
 
-        await _fixture.SeedMcpUsageLogAsync(createResult.Id, userId, "foods.search", success: true, executionTimeMs: 120);
+        await _fixture.SeedMcpUsageLogAsync(createResult.Id, userId, "search_foods", success: true, executionTimeMs: 120);
 
         var analyticsResponse = await client.GetAsync("/api/McpTokens/analytics");
         analyticsResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -168,7 +168,7 @@ public class AuthFlowTests
         analytics!.Overview.TotalCalls.Should().Be(1);
         analytics!.Overview.SuccessfulCalls.Should().Be(1);
         analytics!.ToolUsage.Should().HaveCount(1);
-        analytics!.ToolUsage.Should().OnlyContain(t => t.ToolName == "foods.search");
+        analytics!.ToolUsage.Should().OnlyContain(t => t.ToolName == "search_foods");
         analytics!.ToolUsage.First().CallCount.Should().Be(1);
     }
 

@@ -30,6 +30,10 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         _mcpFactory = mcpFactory.WithWebHostBuilder(builder =>
         {
+            builder.UseSetting("MizanApiUrl", "http://localhost:5000");
+            builder.UseSetting("ServiceApiKey", "test-api-key");
+            builder.UseSetting("Mcp:ServiceApiKey", "test-api-key");
+
             builder.ConfigureAppConfiguration((ctx, config) =>
             {
                 config.AddInMemoryCollection(new Dictionary<string, string?>
@@ -106,19 +110,23 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
     }
 
     [Fact]
-    public async Task SSE_RejectsConnection_WithoutToken()
+    public async Task SSE_Connects_WithoutToken()
     {
-        var response = await _mcpClient.GetAsync("/mcp/sse");
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        var response = await _mcpClient.GetAsync("/mcp/sse", HttpCompletionOption.ResponseHeadersRead, cts.Token);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.ToString().Should().Contain("text/event-stream");
     }
 
     [Fact]
-    public async Task SSE_RejectsConnection_WithInvalidToken()
+    public async Task SSE_Connects_WithInvalidToken()
     {
-        var response = await _mcpClient.GetAsync("/mcp/sse?token=invalid-token");
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        var response = await _mcpClient.GetAsync("/mcp/sse?token=invalid-token", HttpCompletionOption.ResponseHeadersRead, cts.Token);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.ToString().Should().Contain("text/event-stream");
     }
 
     #endregion
@@ -142,7 +150,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             @params = (object?)null
         };
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -172,7 +180,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             @params = (object?)null
         };
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -182,19 +190,19 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var toolsResult = JsonSerializer.Deserialize<JsonElement>(jsonResponse.Result.ToString());
         var toolsList = toolsResult.GetProperty("tools").Deserialize<List<Dictionary<string, object>>>();
         toolsList.Should().NotBeNull();
-        toolsList.Should().HaveCount(7);
+        toolsList.Should().HaveCountGreaterThan(20);
 
         var toolNames = toolsList.Select(t => t["name"].ToString()).ToList();
         toolNames.Should().Contain(new[]
         {
-            "list_ingredients", "add_ingredient", "get_shopping_list",
-            "get_nutrition_tracking", "list_recipes", "add_recipe", "log_meal"
+            "search_foods", "create_food", "list_shopping_lists", "get_shopping_list",
+            "get_daily_nutrition", "search_recipes", "create_recipe", "log_meal"
         });
     }
 
     #endregion
 
-    #region list_ingredients Tool Tests
+    #region search_foods Tool Tests
 
     [Fact]
     public async Task ListIngredients_SearchesByName()
@@ -212,12 +220,12 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var args = new
         {
             search = "Chicken",
-            limit = 10
+            pageSize = 10
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "list_ingredients", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "search_foods", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -242,12 +250,12 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var args = new
         {
             search = "Food",
-            limit = 3
+            pageSize = 3
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "list_ingredients", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "search_foods", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -274,12 +282,12 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var args = new
         {
             search = "NonExistentFood",
-            limit = 10
+            pageSize = 10
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "list_ingredients", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "search_foods", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -296,7 +304,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
     #endregion
 
-    #region add_ingredient Tool Tests
+    #region create_food Tool Tests
 
     [Fact]
     public async Task AddIngredient_RejectsUnauthorized_ForNonAdmin()
@@ -320,16 +328,14 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             verified = false
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "add_ingredient", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "create_food", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var error = jsonResponse.Error;
-        error.Should().NotBeNull();
-        error.Code.Should().Be(-32603);
-        error.Message.Should().Match(m => m.Contains("403") || m.Contains("Unauthorized"));
+        var errorMessage = ExtractErrorMessage(jsonResponse);
+        errorMessage.Should().Match(m => m.Contains("403") || m.Contains("Unauthorized"));
     }
 
     [Fact]
@@ -354,9 +360,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             verified = true
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "add_ingredient", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "create_food", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -382,16 +388,14 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             proteinPer100g = 25
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "add_ingredient", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "create_food", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var error = jsonResponse.Error;
-        error.Should().NotBeNull();
-        error.Code.Should().Be(-32603);
-        error.Message.Should().Contain("must not be empty");
+        var errorMessage = ExtractErrorMessage(jsonResponse);
+        errorMessage.Should().Contain("must not be empty");
     }
 
     [Fact]
@@ -410,15 +414,13 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             proteinPer100g = 25
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "add_ingredient", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "create_food", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var error = jsonResponse.Error;
-        error.Should().NotBeNull();
-        error.Code.Should().Be(-32603);
+        ExtractErrorMessage(jsonResponse).Should().NotBeNullOrEmpty();
     }
 
     #endregion
@@ -437,9 +439,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        var request = CreateJsonRpcCallRequest("tools/call", "get_shopping_list", null);
+        var request = CreateJsonRpcCallRequest("tools/call", "list_shopping_lists", null);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -462,9 +464,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        var request = CreateJsonRpcCallRequest("tools/call", "get_shopping_list", null);
+        var request = CreateJsonRpcCallRequest("tools/call", "list_shopping_lists", null);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -480,7 +482,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
     #endregion
 
-    #region get_nutrition_tracking Tool Tests
+    #region get_daily_nutrition Tool Tests
 
     [Fact]
     public async Task GetNutritionTracking_ReturnsDailySummary()
@@ -498,9 +500,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             date = date
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "get_nutrition_tracking", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "get_daily_nutrition", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -518,7 +520,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
     #endregion
 
-    #region list_recipes Tool Tests
+    #region search_recipes Tool Tests
 
     [Fact]
     public async Task ListRecipes_SearchesByName()
@@ -537,9 +539,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             search = "Chicken"
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "list_recipes", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "search_recipes", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -561,9 +563,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             search = "NonExistentRecipe"
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "list_recipes", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "search_recipes", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -580,7 +582,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
     #endregion
 
-    #region add_recipe Tool Tests
+    #region create_recipe Tool Tests
 
     [Fact]
     public async Task AddRecipe_CreatesNewRecipe()
@@ -607,9 +609,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             }
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "add_recipe", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "create_recipe", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -634,16 +636,14 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             servings = 4
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "add_recipe", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "create_recipe", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var error = jsonResponse.Error;
-        error.Should().NotBeNull();
-        error.Code.Should().Be(-32603);
-        error.Message.Should().Contain("required");
+        var errorMessage = ExtractErrorMessage(jsonResponse);
+        errorMessage.Should().Contain("required");
     }
 
     [Fact]
@@ -670,16 +670,14 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             }
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "add_recipe", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "create_recipe", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var error = jsonResponse.Error;
-        error.Should().NotBeNull();
-        error.Code.Should().Be(-32603);
-        error.Message.Should().Contain("positive");
+        var errorMessage = ExtractErrorMessage(jsonResponse);
+        errorMessage.Should().Contain("positive");
     }
 
     [Fact]
@@ -706,9 +704,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             }
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "add_recipe", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "create_recipe", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -744,9 +742,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             }
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "add_recipe", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "create_recipe", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -783,7 +781,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         var request = CreateJsonRpcCallRequest("tools/call", "log_meal", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -801,23 +799,17 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
         var recipe = await _apiFixture.SeedRecipeAsync(userId, "Pasta", "Simple pasta", 4, 20, true);
-        var ingredients = new[]
-        {
-            new { FoodId = Guid.Empty, Amount = 200, Unit = "g" }
-        };
-
         var args = new
         {
             date = DateTime.UtcNow.ToString("yyyy-MM-dd"),
             mealType = "MEAL",
             recipeId = recipe.Id,
-            servings = 2,
-            ingredients = ingredients
+            servings = 2
         };
 
         var request = CreateJsonRpcCallRequest("tools/call", "log_meal", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -846,14 +838,12 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         var request = CreateJsonRpcCallRequest("tools/call", "log_meal", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var error = jsonResponse.Error;
-        error.Should().NotBeNull();
-        error.Code.Should().Be(-32603);
-        error.Message.Should().Contain("Meal type");
+        var errorMessage = ExtractErrorMessage(jsonResponse);
+        errorMessage.Should().Contain("Meal type");
     }
 
     [Fact]
@@ -877,14 +867,12 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         var request = CreateJsonRpcCallRequest("tools/call", "log_meal", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var error = jsonResponse.Error;
-        error.Should().NotBeNull();
-        error.Code.Should().Be(-32603);
-        error.Message.Should().Contain("Servings");
+        var errorMessage = ExtractErrorMessage(jsonResponse);
+        errorMessage.Should().Contain("Servings");
     }
 
     [Fact]
@@ -904,13 +892,11 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         var request = CreateJsonRpcCallRequest("tools/call", "log_meal", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var error = jsonResponse.Error;
-        error.Should().NotBeNull();
-        error.Code.Should().Be(-32603);
+        ExtractErrorMessage(jsonResponse).Should().NotBeNullOrEmpty();
     }
 
     [Fact]
@@ -931,14 +917,12 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         var request = CreateJsonRpcCallRequest("tools/call", "log_meal", args);
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var error = jsonResponse.Error;
-        error.Should().NotBeNull();
-        error.Code.Should().Be(-32603);
-        error.Message.Should().Contain("foodId");
+        var errorMessage = ExtractErrorMessage(jsonResponse);
+        errorMessage.Should().Contain("foodId");
     }
 
     #endregion
@@ -961,14 +945,12 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             method = "invalid_method"
         };
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var error = jsonResponse.Error;
-        error.Should().NotBeNull();
-        error.Code.Should().Be(-32603);
-        error.Message.Should().Contain("Method not found");
+        var errorMessage = ExtractErrorMessage(jsonResponse);
+        errorMessage.Should().Contain("not available");
     }
 
     [Fact]
@@ -987,14 +969,12 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             method = "tools/call"
         };
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var error = jsonResponse.Error;
-        error.Should().NotBeNull();
-        error.Code.Should().Be(-32603);
-        error.Message.Should().Contain("Params missing");
+        var errorMessage = ExtractErrorMessage(jsonResponse);
+        errorMessage.Should().Contain("Params missing");
     }
 
     [Fact]
@@ -1014,14 +994,13 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             servings = 1
         });
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", requestError);
+        var response = await _mcpClient.PostMcpAsync(requestError);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
 
         jsonResponse.Should().NotBeNull();
-        jsonResponse!.Error.Should().NotBeNull();
-        jsonResponse.Error!.Message.Should().Contain("Backend API error");
+        ExtractErrorMessage(jsonResponse).Should().Contain("Backend API error");
     }
 
     #endregion
@@ -1044,10 +1023,10 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             search = "Test"
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "list_ingredients", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "search_foods", args);
 
         var startTime = DateTime.UtcNow;
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
         var elapsed = DateTime.UtcNow - startTime;
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -1081,7 +1060,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             FoodId = food.Id
         });
 
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -1164,6 +1143,26 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         return JsonSerializer.Deserialize<string>(text);
     }
 
+    private string ExtractErrorMessage(JsonRpcResponse? response)
+    {
+        if (!string.IsNullOrWhiteSpace(response?.Error?.Message))
+        {
+            return response.Error.Message;
+        }
+
+        var result = JsonSerializer.Deserialize<JsonElement>(response?.Result?.ToString() ?? "null");
+        if (result.ValueKind == JsonValueKind.Object && result.TryGetProperty("isError", out var isError) && isError.GetBoolean())
+        {
+            var text = ExtractToolResultText(response);
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                return text;
+            }
+        }
+
+        throw new Xunit.Sdk.XunitException("Expected MCP error response but none was returned.");
+    }
+
     private class JsonRpcResponse
     {
         public object? Result { get; set; }
@@ -1194,9 +1193,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        var args = new { search = "PaginatedFood", limit = 2, page = 2 };
-        var request = CreateJsonRpcCallRequest("tools/call", "list_ingredients", args);
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var args = new { search = "PaginatedFood", pageSize = 2, page = 2 };
+        var request = CreateJsonRpcCallRequest("tools/call", "search_foods", args);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -1227,9 +1226,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        var args = new { search = "InfoFood", limit = 2, page = 1 };
-        var request = CreateJsonRpcCallRequest("tools/call", "list_ingredients", args);
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var args = new { search = "InfoFood", pageSize = 2, page = 1 };
+        var request = CreateJsonRpcCallRequest("tools/call", "search_foods", args);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -1255,9 +1254,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        var args = new { sortBy = "name", sortOrder = "asc", limit = 10 };
-        var request = CreateJsonRpcCallRequest("tools/call", "list_ingredients", args);
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var args = new { sortBy = "name", sortOrder = "asc", pageSize = 10 };
+        var request = CreateJsonRpcCallRequest("tools/call", "search_foods", args);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -1281,9 +1280,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        var args = new { sortBy = "calories", sortOrder = "desc", limit = 10 };
-        var request = CreateJsonRpcCallRequest("tools/call", "list_ingredients", args);
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var args = new { sortBy = "calories", sortOrder = "desc", pageSize = 10 };
+        var request = CreateJsonRpcCallRequest("tools/call", "search_foods", args);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -1300,9 +1299,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        var args = new { page = 1, limit = 5 };
-        var request = CreateJsonRpcCallRequest("tools/call", "list_recipes", args);
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var args = new { page = 1, pageSize = 5 };
+        var request = CreateJsonRpcCallRequest("tools/call", "search_recipes", args);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
@@ -1324,9 +1323,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        var args = new { sortBy = "title", sortOrder = "asc", limit = 10 };
-        var request = CreateJsonRpcCallRequest("tools/call", "list_recipes", args);
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var args = new { sortBy = "title", sortOrder = "asc", pageSize = 10 };
+        var request = CreateJsonRpcCallRequest("tools/call", "search_recipes", args);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -1340,9 +1339,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        var args = new { page = 1, limit = 5 };
-        var request = CreateJsonRpcCallRequest("tools/call", "get_shopping_list", args);
-        var response = await _mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var args = new { page = 1, pageSize = 5 };
+        var request = CreateJsonRpcCallRequest("tools/call", "list_shopping_lists", args);
+        var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();

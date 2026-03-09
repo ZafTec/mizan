@@ -46,6 +46,10 @@ public class McpSystemTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         // 3. Configure MCP Server to talk to In-Memory Main API
         var mcpClient = _mcpFactory.WithWebHostBuilder(builder =>
         {
+            builder.UseSetting("MizanApiUrl", "http://localhost:5000");
+            builder.UseSetting("ServiceApiKey", "test-api-key");
+            builder.UseSetting("Mcp:ServiceApiKey", "test-api-key");
+
             builder.ConfigureAppConfiguration((ctx, config) =>
             {
                 config.AddInMemoryCollection(new Dictionary<string, string?>
@@ -95,7 +99,7 @@ public class McpSystemTests : IClassFixture<WebApplicationFactory<McpServer::Pro
             Id = 1
         };
 
-        var response = await mcpClient.PostAsJsonAsync("/mcp/messages?sessionId=sys", request);
+        var response = await mcpClient.PostMcpAsync(request);
 
         // Debug output if fails
         if (response.StatusCode != HttpStatusCode.OK)

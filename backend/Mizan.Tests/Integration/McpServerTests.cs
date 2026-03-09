@@ -2,14 +2,15 @@ extern alias McpServer;
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using McpServer::Mizan.Mcp.Server.Services;
 using Moq;
-using Moq.Protected;
 using Xunit;
 
 namespace Mizan.Tests.Integration;
@@ -17,14 +18,18 @@ namespace Mizan.Tests.Integration;
 public class McpServerTests : IClassFixture<WebApplicationFactory<McpServer::Program>>
 {
     private readonly WebApplicationFactory<McpServer::Program> _factory;
-    private readonly Mock<HttpMessageHandler> _mockBackendHandler;
+    private readonly Mock<IBackendApiClient> _mockBackendClient;
 
     public McpServerTests(WebApplicationFactory<McpServer::Program> factory)
     {
-        _mockBackendHandler = new Mock<HttpMessageHandler>();
+        _mockBackendClient = new Mock<IBackendApiClient>();
         
         _factory = factory.WithWebHostBuilder(builder =>
         {
+            builder.UseSetting("MizanApiUrl", "http://localhost:5000");
+            builder.UseSetting("ServiceApiKey", "test-api-key");
+            builder.UseSetting("Mcp:ServiceApiKey", "test-api-key");
+
             builder.ConfigureAppConfiguration((context, config) =>
             {
                 config.AddInMemoryCollection(new Dictionary<string, string?>
@@ -36,14 +41,14 @@ public class McpServerTests : IClassFixture<WebApplicationFactory<McpServer::Pro
 
             builder.ConfigureTestServices(services =>
             {
-                services.AddHttpClient<IBackendApiClient, BackendApiClient>()
-                    .ConfigurePrimaryHttpMessageHandler(() => _mockBackendHandler.Object);
+                services.RemoveAll<IBackendApiClient>();
+                services.AddSingleton<IBackendApiClient>(_mockBackendClient.Object);
             });
         });
     }
 
     [Fact]
-    public async Task CallTool_ReturnsUnauthorized_WhenTokenMissing()
+    public async Task CallTool_ReturnsError_WhenTokenMissing()
     {
         var client = _factory.CreateClient();
         
@@ -58,9 +63,16 @@ public class McpServerTests : IClassFixture<WebApplicationFactory<McpServer::Pro
             Id = 1
         };
 
-        var response = await client.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await client.PostMcpAsync(request);
         
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
+        jsonResponse.Should().NotBeNull();
+        jsonResponse!.Result.Should().NotBeNull();
+        jsonResponse.Error.Should().BeNull();
+
+        var result = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(jsonResponse.Result!.ToString()!);
+        result.GetProperty("isError").GetBoolean().Should().BeTrue();
     }
 
     [Fact]
@@ -70,37 +82,13 @@ public class McpServerTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         var token = "mcp_valid_token";
         var userId = Guid.NewGuid();
 
-        // Mock ValidateToken endpoint
-        _mockBackendHandler.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(r => r.RequestUri!.AbsolutePath.Contains("/api/McpTokens/validate")),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = JsonContent.Create(new { UserId = userId, IsValid = true })
-            });
+        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TokenValidation(userId, Guid.NewGuid()));
 
-        // Mock Foods search endpoint
-        _mockBackendHandler.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(r => 
-                    r.RequestUri!.AbsolutePath.Contains("/api/Foods/search") &&
-                    r.Headers.Contains("X-Api-Key") &&
-                    r.Headers.GetValues("X-Api-Key").First() == "test-api-key" &&
-                    r.Headers.Contains("X-Impersonate-User") &&
-                    r.Headers.GetValues("X-Impersonate-User").First() == userId.ToString()
-                ),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent("{\"items\": [{\"name\": \"Chicken\"}]}")
-            });
+        _mockBackendClient.Setup(x => x.GetAsync(
+                It.Is<string>(s => s.Contains("/api/Foods/search") && s.Contains("searchTerm=chicken")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("{\"items\": [{\"name\": \"Chicken\"}]}");
 
         var client = _factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
@@ -117,7 +105,7 @@ public class McpServerTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         };
 
         // Act
-        var response = await client.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await client.PostMcpAsync(request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);

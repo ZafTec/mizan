@@ -13,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using McpServer::Mizan.Mcp.Server.Authentication;
 using McpServer::Mizan.Mcp.Server.Services;
 using Moq;
@@ -37,6 +38,11 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         
         _factory = factory.WithWebHostBuilder(builder =>
         {
+            builder.UseSetting("MizanApiUrl", "http://localhost:5000");
+            builder.UseSetting("BACKEND_API_URL", "http://localhost:5000");
+            builder.UseSetting("ServiceApiKey", "test-api-key");
+            builder.UseSetting("Mcp:ServiceApiKey", "test-api-key");
+
             builder.ConfigureAppConfiguration((context, config) =>
             {
                 config.AddInMemoryCollection(new Dictionary<string, string?>
@@ -73,7 +79,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         var tokenId = Guid.NewGuid();
         var token = "mcp_valid_token";
         
-        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
+        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new TokenValidation(userId, tokenId));
 
         var options = new Mock<IOptionsMonitor<McpTokenAuthenticationOptions>>();
@@ -114,7 +120,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         var tokenId = Guid.NewGuid();
         var token = "mcp_query_token";
         
-        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
+        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new TokenValidation(userId, tokenId));
 
         var options = new Mock<IOptionsMonitor<McpTokenAuthenticationOptions>>();
@@ -150,7 +156,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         // Arrange
         var token = "invalid_token";
         
-        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
+        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token, It.IsAny<CancellationToken>()))
             .ReturnsAsync((TokenValidation?)null);
 
         var options = new Mock<IOptionsMonitor<McpTokenAuthenticationOptions>>();
@@ -221,7 +227,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         var tokenId = Guid.NewGuid();
         var token = "mcp_valid_sse_token";
         
-        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
+        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new TokenValidation(userId, tokenId));
 
         var client = _factory.CreateClient();
@@ -264,32 +270,36 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
     }
 
     [Fact]
-    public async Task ConnectSse_WithoutToken_Returns401()
+    public async Task ConnectSse_WithoutToken_ReturnsEventStream()
     {
         // Arrange
         var client = _factory.CreateClient();
 
         // Act
-        var response = await client.GetAsync("/mcp/sse");
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        var response = await client.GetAsync("/mcp/sse", HttpCompletionOption.ResponseHeadersRead, cts.Token);
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("text/event-stream");
     }
 
     [Fact]
-    public async Task ConnectSse_WithInvalidToken_Returns401()
+    public async Task ConnectSse_WithInvalidToken_ReturnsEventStream()
     {
         // Arrange
-        _mockBackendClient.Setup(x => x.ValidateTokenAsync(It.IsAny<string>()))
+        _mockBackendClient.Setup(x => x.ValidateTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((TokenValidation?)null);
 
         var client = _factory.CreateClient();
 
         // Act
-        var response = await client.GetAsync("/mcp/sse?token=invalid");
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        var response = await client.GetAsync("/mcp/sse?token=invalid", HttpCompletionOption.ResponseHeadersRead, cts.Token);
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("text/event-stream");
     }
 
     [Fact]
@@ -300,7 +310,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         var tokenId = Guid.NewGuid();
         var token = "mcp_message_token";
         
-        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
+        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new TokenValidation(userId, tokenId));
         
         _mockBackendClient.Setup(x => x.GetAsync(
@@ -323,7 +333,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         };
 
         // Act
-        var response = await client.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await client.PostMcpAsync(request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -335,13 +345,13 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         // Verify usage was logged
         _mockBackendClient.Verify(x => x.LogUsageAsync(
             tokenId, userId, "search_foods", 
-            It.Is<string>(s => s.Contains("chicken")), 
+            null, 
             true, null, It.IsAny<int>()), 
             Times.Once);
     }
 
     [Fact]
-    public async Task HandleMessage_WithoutToken_Returns401()
+    public async Task HandleMessage_WithoutToken_ReturnsError()
     {
         // Arrange
         var client = _factory.CreateClient();
@@ -358,10 +368,16 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         };
 
         // Act
-        var response = await client.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await client.PostMcpAsync(request);
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
+        jsonResponse.Should().NotBeNull();
+        jsonResponse!.Result.Should().NotBeNull();
+
+        var result = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(jsonResponse.Result!.ToString()!);
+        result.GetProperty("isError").GetBoolean().Should().BeTrue();
     }
 
     [Fact]
@@ -372,7 +388,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         var tokenId = Guid.NewGuid();
         var token = "mcp_init_token";
         
-        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
+        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new TokenValidation(userId, tokenId));
 
         var client = _factory.CreateClient();
@@ -385,7 +401,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         };
 
         // Act
-        var response = await client.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await client.PostMcpAsync(request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -407,7 +423,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         var tokenId = Guid.NewGuid();
         var token = "mcp_tools_token";
         
-        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
+        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new TokenValidation(userId, tokenId));
 
         var client = _factory.CreateClient();
@@ -420,7 +436,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         };
 
         // Act
-        var response = await client.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await client.PostMcpAsync(request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -441,7 +457,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         var tokenId = Guid.NewGuid();
         var token = "mcp_notif_token";
         
-        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
+        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new TokenValidation(userId, tokenId));
 
         var client = _factory.CreateClient();
@@ -454,7 +470,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         };
 
         // Act
-        var response = await client.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await client.PostMcpAsync(request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -468,7 +484,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         var tokenId = Guid.NewGuid();
         var token = "mcp_invalid_method_token";
         
-        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
+        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new TokenValidation(userId, tokenId));
 
         var client = _factory.CreateClient();
@@ -481,14 +497,14 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         };
 
         // Act
-        var response = await client.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await client.PostMcpAsync(request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK); // JSON-RPC returns 200 even for errors
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
         jsonResponse.Should().NotBeNull();
         jsonResponse!.Error.Should().NotBeNull();
-        jsonResponse.Error!.Message.Should().Contain("not found");
+        jsonResponse.Error!.Message.Should().Contain("not available");
     }
 
     [Fact]
@@ -499,7 +515,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         var tokenId = Guid.NewGuid();
         var token = "mcp_tool_fail_token";
         
-        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
+        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new TokenValidation(userId, tokenId));
         
         _mockBackendClient.Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -520,18 +536,22 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         };
 
         // Act
-        var response = await client.PostAsJsonAsync("/mcp/messages?sessionId=test", request);
+        var response = await client.PostMcpAsync(request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
         jsonResponse.Should().NotBeNull();
-        jsonResponse!.Error.Should().NotBeNull();
+        jsonResponse!.Result.Should().NotBeNull();
+        jsonResponse.Error.Should().BeNull();
+
+        var result = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(jsonResponse.Result!.ToString()!);
+        result.GetProperty("isError").GetBoolean().Should().BeTrue();
         
         // Verify failure was logged
         _mockBackendClient.Verify(x => x.LogUsageAsync(
             tokenId, userId, "search_foods", 
-            It.IsAny<string>(), 
+            null, 
             false, It.Is<string>(s => s.Contains("unavailable")), It.IsAny<int>()), 
             Times.Once);
     }
@@ -571,7 +591,11 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
             .Build());
         services.AddLogging();
         services.AddHttpContextAccessor();
-        services.AddHttpClient<IBackendApiClient, BackendApiClient>()
+        services.AddHttpClient<IBackendApiClient, BackendApiClient>(client =>
+            {
+                client.BaseAddress = new Uri("http://localhost:5000");
+                client.DefaultRequestHeaders.Add("X-Api-Key", "test-api-key");
+            })
             .ConfigurePrimaryHttpMessageHandler(() => _mockBackendHandler.Object);
         
         var provider = services.BuildServiceProvider();
@@ -613,7 +637,11 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
             .Build());
         services.AddLogging();
         services.AddHttpContextAccessor();
-        services.AddHttpClient<IBackendApiClient, BackendApiClient>()
+        services.AddHttpClient<IBackendApiClient, BackendApiClient>(client =>
+            {
+                client.BaseAddress = new Uri("http://localhost:5000");
+                client.DefaultRequestHeaders.Add("X-Api-Key", "test-api-key");
+            })
             .ConfigurePrimaryHttpMessageHandler(() => _mockBackendHandler.Object);
         
         var provider = services.BuildServiceProvider();

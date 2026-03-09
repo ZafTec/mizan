@@ -75,7 +75,7 @@ public class McpTokensControllerTests
         var created = await createResponse.Content.ReadFromJsonAsync<CreateMcpTokenResponse>();
         created.Should().NotBeNull();
 
-        await _fixture.SeedMcpUsageLogAsync(created!.Id, userId, "foods.search", success: true, executionTimeMs: 120);
+        await _fixture.SeedMcpUsageLogAsync(created!.Id, userId, "search_foods", success: true, executionTimeMs: 120);
 
         var analyticsResponse = await client.GetAsync("/api/McpTokens/analytics");
         analyticsResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -84,7 +84,7 @@ public class McpTokensControllerTests
         analytics.Should().NotBeNull();
         analytics!.Overview.TotalCalls.Should().Be(1);
         analytics.Overview.SuccessfulCalls.Should().Be(1);
-        analytics.ToolUsage.Should().Contain(t => t.ToolName == "foods.search");
+        analytics.ToolUsage.Should().Contain(t => t.ToolName == "search_foods");
     }
 
     private sealed record CreateMcpTokenResponse(Guid Id, string PlaintextToken, string Name);

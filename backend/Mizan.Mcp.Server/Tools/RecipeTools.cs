@@ -4,6 +4,15 @@ using ModelContextProtocol.Server;
 
 namespace Mizan.Mcp.Server.Tools;
 
+public sealed record RecipeIngredientInput
+{
+    public Guid? FoodId { get; init; }
+    public Guid? SubRecipeId { get; init; }
+    public string IngredientText { get; init; } = string.Empty;
+    public decimal? Amount { get; init; }
+    public string? Unit { get; init; }
+}
+
 [McpServerToolType]
 public sealed class RecipeTools
 {
@@ -52,12 +61,13 @@ public sealed class RecipeTools
         [Description("Number of servings")] int? servings = null,
         [Description("Prep time in minutes")] int? prepTimeMinutes = null,
         [Description("Cook time in minutes")] int? cookTimeMinutes = null,
+        [Description("Recipe ingredients")] List<RecipeIngredientInput>? ingredients = null,
         [Description("Make recipe public (default true)")] bool isPublic = true,
         CancellationToken ct = default)
     {
         return await _api.PostAsync("/api/Recipes", new
         {
-            title, description, servings, prepTimeMinutes, cookTimeMinutes, isPublic
+            title, description, servings, prepTimeMinutes, cookTimeMinutes, ingredients, isPublic
         }, ct);
     }
 
@@ -70,12 +80,13 @@ public sealed class RecipeTools
         [Description("Number of servings")] int? servings = null,
         [Description("Prep time in minutes")] int? prepTimeMinutes = null,
         [Description("Cook time in minutes")] int? cookTimeMinutes = null,
+        [Description("Recipe ingredients")] List<RecipeIngredientInput>? ingredients = null,
         [Description("Make recipe public")] bool? isPublic = null,
         CancellationToken ct = default)
     {
         return await _api.PutAsync($"/api/Recipes/{id}", new
         {
-            id, title, description, servings, prepTimeMinutes, cookTimeMinutes, isPublic
+            id, title, description, servings, prepTimeMinutes, cookTimeMinutes, ingredients, isPublic
         }, ct);
     }
 
