@@ -9,11 +9,15 @@ public record UpdateFoodCommand : IRequest<UpdateFoodResult>
 {
     public Guid Id { get; init; }
     public string Name { get; init; } = string.Empty;
+    public string? Brand { get; init; }
+    public string? Barcode { get; init; }
     public decimal CaloriesPer100g { get; init; }
     public decimal ProteinPer100g { get; init; }
     public decimal CarbsPer100g { get; init; }
     public decimal FatPer100g { get; init; }
     public decimal? FiberPer100g { get; init; }
+    public decimal? SugarPer100g { get; init; }
+    public decimal? SodiumPer100g { get; init; }
     public decimal ServingSize { get; init; } = 100;
     public string ServingUnit { get; init; } = "g";
     public bool IsVerified { get; init; } = false;
@@ -31,6 +35,8 @@ public class UpdateFoodCommandValidator : AbstractValidator<UpdateFoodCommand>
     {
         RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x.Name).NotEmpty().MaximumLength(255);
+        RuleFor(x => x.Brand).MaximumLength(255);
+        RuleFor(x => x.Barcode).MaximumLength(64);
         RuleFor(x => x.CaloriesPer100g).GreaterThanOrEqualTo(0);
         RuleFor(x => x.ProteinPer100g).GreaterThanOrEqualTo(0);
         RuleFor(x => x.CarbsPer100g).GreaterThanOrEqualTo(0);
@@ -59,11 +65,15 @@ public class UpdateFoodCommandHandler : IRequestHandler<UpdateFoodCommand, Updat
         }
 
         food.Name = request.Name;
+        food.Brand = request.Brand;
+        food.Barcode = request.Barcode;
         food.CaloriesPer100g = request.CaloriesPer100g;
         food.ProteinPer100g = request.ProteinPer100g;
         food.CarbsPer100g = request.CarbsPer100g;
         food.FatPer100g = request.FatPer100g;
         food.FiberPer100g = request.FiberPer100g;
+        food.SugarPer100g = request.SugarPer100g;
+        food.SodiumPer100g = request.SodiumPer100g;
         food.ServingSize = request.ServingSize;
         food.ServingUnit = request.ServingUnit;
         food.IsVerified = request.IsVerified;

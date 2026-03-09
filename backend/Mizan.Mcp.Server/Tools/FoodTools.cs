@@ -45,13 +45,21 @@ public sealed class FoodTools
         [Description("Protein grams per 100g")] decimal proteinPer100g,
         [Description("Carbs grams per 100g")] decimal carbsPer100g,
         [Description("Fat grams per 100g")] decimal fatPer100g,
-        [Description("Brand name (optional)")] string? brand = null,
-        [Description("Fiber grams per 100g (optional)")] decimal? fiberPer100g = null,
+        [Description("Brand name")] string? brand = null,
+        [Description("Barcode (EAN/UPC)")] string? barcode = null,
+        [Description("Fiber grams per 100g")] decimal? fiberPer100g = null,
+        [Description("Sugar grams per 100g")] decimal? sugarPer100g = null,
+        [Description("Sodium mg per 100g")] decimal? sodiumPer100g = null,
+        [Description("Serving size in servingUnit (default 100)")] decimal? servingSize = null,
+        [Description("Serving unit, e.g. 'g', 'ml', 'oz' (default 'g')")] string? servingUnit = null,
+        [Description("Mark as verified (default false)")] bool isVerified = false,
         CancellationToken ct = default)
     {
         return await _api.PostAsync("/api/Foods", new
         {
-            name, brand, caloriesPer100g, proteinPer100g, carbsPer100g, fatPer100g, fiberPer100g
+            name, brand, barcode, caloriesPer100g, proteinPer100g, carbsPer100g, fatPer100g,
+            fiberPer100g, sugarPer100g, sodiumPer100g,
+            servingSize = servingSize ?? 100m, servingUnit = servingUnit ?? "g", isVerified
         }, ct);
     }
 
@@ -64,13 +72,21 @@ public sealed class FoodTools
         [Description("Protein grams per 100g")] decimal proteinPer100g,
         [Description("Carbs grams per 100g")] decimal carbsPer100g,
         [Description("Fat grams per 100g")] decimal fatPer100g,
-        [Description("Brand name (optional)")] string? brand = null,
-        [Description("Fiber grams per 100g (optional)")] decimal? fiberPer100g = null,
+        [Description("Brand name")] string? brand = null,
+        [Description("Barcode (EAN/UPC)")] string? barcode = null,
+        [Description("Fiber grams per 100g")] decimal? fiberPer100g = null,
+        [Description("Sugar grams per 100g")] decimal? sugarPer100g = null,
+        [Description("Sodium mg per 100g")] decimal? sodiumPer100g = null,
+        [Description("Serving size in servingUnit (default 100)")] decimal? servingSize = null,
+        [Description("Serving unit, e.g. 'g', 'ml', 'oz' (default 'g')")] string? servingUnit = null,
+        [Description("Mark as verified (default false)")] bool isVerified = false,
         CancellationToken ct = default)
     {
         return await _api.PutAsync($"/api/Foods/{id}", new
         {
-            id, name, brand, caloriesPer100g, proteinPer100g, carbsPer100g, fatPer100g, fiberPer100g
+            id, name, brand, barcode, caloriesPer100g, proteinPer100g, carbsPer100g, fatPer100g,
+            fiberPer100g, sugarPer100g, sodiumPer100g,
+            servingSize = servingSize ?? 100m, servingUnit = servingUnit ?? "g", isVerified
         }, ct);
     }
 

@@ -15,6 +15,8 @@ public record CreateFoodCommand : IRequest<CreateFoodResult>
     public decimal CarbsPer100g { get; init; }
     public decimal FatPer100g { get; init; }
     public decimal? FiberPer100g { get; init; }
+    public decimal? SugarPer100g { get; init; }
+    public decimal? SodiumPer100g { get; init; }
     public decimal ServingSize { get; init; } = 100;
     public string ServingUnit { get; init; } = "g";
     public bool IsVerified { get; init; } = false;
@@ -65,6 +67,8 @@ public class CreateFoodCommandHandler : IRequestHandler<CreateFoodCommand, Creat
             CarbsPer100g = request.CarbsPer100g,
             FatPer100g = request.FatPer100g,
             FiberPer100g = request.FiberPer100g,
+            SugarPer100g = request.SugarPer100g,
+            SodiumPer100g = request.SodiumPer100g,
             ServingSize = request.ServingSize,
             ServingUnit = request.ServingUnit,
             ProteinCalorieRatio = Food.ComputeProteinCalorieRatio(request.CaloriesPer100g, request.ProteinPer100g),
