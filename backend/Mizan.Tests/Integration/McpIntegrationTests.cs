@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
@@ -40,15 +41,19 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
             builder.ConfigureTestServices(services =>
             {
-                services.RemoveAll<IBackendClient>();
+                services.RemoveAll<IBackendApiClient>();
 
-                services.AddScoped<IBackendClient>(sp =>
+                services.AddScoped<IBackendApiClient>(sp =>
                 {
-                    var config = sp.GetRequiredService<IConfiguration>();
-                    var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<BackendClient>>();
+                    var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<BackendApiClient>>();
+                    var accessor = sp.GetRequiredService<IHttpContextAccessor>();
                     var handler = _apiFixture.Server.CreateHandler();
-                    var client = new HttpClient(handler);
-                    return new BackendClient(client, config, logger);
+                    var client = new HttpClient(handler)
+                    {
+                        BaseAddress = new Uri("http://localhost:5000")
+                    };
+                    client.DefaultRequestHeaders.Add("X-Api-Key", "test-api-key");
+                    return new BackendApiClient(client, accessor, logger);
                 });
             });
         });

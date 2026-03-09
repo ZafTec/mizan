@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using McpServer::Mizan.Mcp.Server.Models;
 using McpServer::Mizan.Mcp.Server.Services;
 using Moq;
 using Moq.Protected;
@@ -37,7 +36,7 @@ public class McpServerTests : IClassFixture<WebApplicationFactory<McpServer::Pro
 
             builder.ConfigureTestServices(services =>
             {
-                services.AddHttpClient<IBackendClient, BackendClient>()
+                services.AddHttpClient<IBackendApiClient, BackendApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => _mockBackendHandler.Object);
             });
         });
@@ -53,7 +52,7 @@ public class McpServerTests : IClassFixture<WebApplicationFactory<McpServer::Pro
             Method = "tools/call",
             Params = System.Text.Json.JsonSerializer.SerializeToElement(new
             {
-                name = "list_ingredients",
+                name = "search_foods",
                 arguments = new { search = "chicken" }
             }),
             Id = 1
@@ -111,7 +110,7 @@ public class McpServerTests : IClassFixture<WebApplicationFactory<McpServer::Pro
             Method = "tools/call",
             Params = System.Text.Json.JsonSerializer.SerializeToElement(new
             {
-                name = "list_ingredients",
+                name = "search_foods",
                 arguments = new { search = "chicken" }
             }),
             Id = 1

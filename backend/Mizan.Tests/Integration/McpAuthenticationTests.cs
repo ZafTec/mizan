@@ -14,7 +14,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using McpServer::Mizan.Mcp.Server.Authentication;
-using McpServer::Mizan.Mcp.Server.Models;
 using McpServer::Mizan.Mcp.Server.Services;
 using Moq;
 using Moq.Protected;
@@ -29,12 +28,12 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
 {
     private readonly WebApplicationFactory<McpServer::Program> _factory;
     private readonly Mock<HttpMessageHandler> _mockBackendHandler;
-    private readonly Mock<IBackendClient> _mockBackendClient;
+    private readonly Mock<IBackendApiClient> _mockBackendClient;
 
     public McpAuthenticationTests(WebApplicationFactory<McpServer::Program> factory)
     {
         _mockBackendHandler = new Mock<HttpMessageHandler>();
-        _mockBackendClient = new Mock<IBackendClient>();
+        _mockBackendClient = new Mock<IBackendApiClient>();
         
         _factory = factory.WithWebHostBuilder(builder =>
         {
@@ -51,15 +50,15 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
 
             builder.ConfigureTestServices(services =>
             {
-                // Remove existing IBackendClient registration
-                var descriptors = services.Where(d => d.ServiceType == typeof(IBackendClient)).ToList();
+                // Remove existing IBackendApiClient registration
+                var descriptors = services.Where(d => d.ServiceType == typeof(IBackendApiClient)).ToList();
                 foreach (var descriptor in descriptors)
                 {
                     services.Remove(descriptor);
                 }
                 
                 // Add the mock as a singleton so it's used everywhere including the auth handler
-                services.AddSingleton<IBackendClient>(_mockBackendClient.Object);
+                services.AddSingleton<IBackendApiClient>(_mockBackendClient.Object);
             });
         });
     }
@@ -75,7 +74,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         var token = "mcp_valid_token";
         
         _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
-            .ReturnsAsync(new McpTokenValidation(userId, tokenId));
+            .ReturnsAsync(new TokenValidation(userId, tokenId));
 
         var options = new Mock<IOptionsMonitor<McpTokenAuthenticationOptions>>();
         options.Setup(x => x.Get(It.IsAny<string>())).Returns(new McpTokenAuthenticationOptions());
@@ -116,7 +115,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         var token = "mcp_query_token";
         
         _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
-            .ReturnsAsync(new McpTokenValidation(userId, tokenId));
+            .ReturnsAsync(new TokenValidation(userId, tokenId));
 
         var options = new Mock<IOptionsMonitor<McpTokenAuthenticationOptions>>();
         options.Setup(x => x.Get(It.IsAny<string>())).Returns(new McpTokenAuthenticationOptions());
@@ -152,7 +151,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         var token = "invalid_token";
         
         _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
-            .ReturnsAsync((McpTokenValidation?)null);
+            .ReturnsAsync((TokenValidation?)null);
 
         var options = new Mock<IOptionsMonitor<McpTokenAuthenticationOptions>>();
         options.Setup(x => x.Get(It.IsAny<string>())).Returns(new McpTokenAuthenticationOptions());
@@ -223,7 +222,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         var token = "mcp_valid_sse_token";
         
         _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
-            .ReturnsAsync(new McpTokenValidation(userId, tokenId));
+            .ReturnsAsync(new TokenValidation(userId, tokenId));
 
         var client = _factory.CreateClient();
         
@@ -282,7 +281,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
     {
         // Arrange
         _mockBackendClient.Setup(x => x.ValidateTokenAsync(It.IsAny<string>()))
-            .ReturnsAsync((McpTokenValidation?)null);
+            .ReturnsAsync((TokenValidation?)null);
 
         var client = _factory.CreateClient();
 
@@ -302,9 +301,11 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         var token = "mcp_message_token";
         
         _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
-            .ReturnsAsync(new McpTokenValidation(userId, tokenId));
+            .ReturnsAsync(new TokenValidation(userId, tokenId));
         
-        _mockBackendClient.Setup(x => x.CallApiAsync(userId, "GET", "/api/Foods/search?search=chicken", null))
+        _mockBackendClient.Setup(x => x.GetAsync(
+                It.Is<string>(s => s.Contains("/api/Foods/search") && s.Contains("searchTerm=chicken")),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync("{\"items\": [{\"name\": \"Chicken Breast\"}]}");
 
         var client = _factory.CreateClient();
@@ -315,7 +316,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
             Method = "tools/call",
             Params = System.Text.Json.JsonSerializer.SerializeToElement(new
             {
-                name = "list_ingredients",
+                name = "search_foods",
                 arguments = new { search = "chicken" }
             }),
             Id = 1
@@ -333,7 +334,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         
         // Verify usage was logged
         _mockBackendClient.Verify(x => x.LogUsageAsync(
-            tokenId, userId, "list_ingredients", 
+            tokenId, userId, "search_foods", 
             It.Is<string>(s => s.Contains("chicken")), 
             true, null, It.IsAny<int>()), 
             Times.Once);
@@ -350,7 +351,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
             Method = "tools/call",
             Params = System.Text.Json.JsonSerializer.SerializeToElement(new
             {
-                name = "list_ingredients",
+                name = "search_foods",
                 arguments = new { search = "chicken" }
             }),
             Id = 1
@@ -372,7 +373,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         var token = "mcp_init_token";
         
         _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
-            .ReturnsAsync(new McpTokenValidation(userId, tokenId));
+            .ReturnsAsync(new TokenValidation(userId, tokenId));
 
         var client = _factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
@@ -407,7 +408,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         var token = "mcp_tools_token";
         
         _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
-            .ReturnsAsync(new McpTokenValidation(userId, tokenId));
+            .ReturnsAsync(new TokenValidation(userId, tokenId));
 
         var client = _factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
@@ -441,7 +442,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         var token = "mcp_notif_token";
         
         _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
-            .ReturnsAsync(new McpTokenValidation(userId, tokenId));
+            .ReturnsAsync(new TokenValidation(userId, tokenId));
 
         var client = _factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
@@ -468,7 +469,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         var token = "mcp_invalid_method_token";
         
         _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
-            .ReturnsAsync(new McpTokenValidation(userId, tokenId));
+            .ReturnsAsync(new TokenValidation(userId, tokenId));
 
         var client = _factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
@@ -499,9 +500,9 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         var token = "mcp_tool_fail_token";
         
         _mockBackendClient.Setup(x => x.ValidateTokenAsync(token))
-            .ReturnsAsync(new McpTokenValidation(userId, tokenId));
+            .ReturnsAsync(new TokenValidation(userId, tokenId));
         
-        _mockBackendClient.Setup(x => x.CallApiAsync(userId, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<object>()))
+        _mockBackendClient.Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Backend service unavailable"));
 
         var client = _factory.CreateClient();
@@ -512,7 +513,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
             Method = "tools/call",
             Params = System.Text.Json.JsonSerializer.SerializeToElement(new
             {
-                name = "list_ingredients",
+                name = "search_foods",
                 arguments = new { search = "chicken" }
             }),
             Id = 1
@@ -529,7 +530,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
         
         // Verify failure was logged
         _mockBackendClient.Verify(x => x.LogUsageAsync(
-            tokenId, userId, "list_ingredients", 
+            tokenId, userId, "search_foods", 
             It.IsAny<string>(), 
             false, It.Is<string>(s => s.Contains("unavailable")), It.IsAny<int>()), 
             Times.Once);
@@ -569,11 +570,12 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
             })
             .Build());
         services.AddLogging();
-        services.AddHttpClient<IBackendClient, BackendClient>()
+        services.AddHttpContextAccessor();
+        services.AddHttpClient<IBackendApiClient, BackendApiClient>()
             .ConfigurePrimaryHttpMessageHandler(() => _mockBackendHandler.Object);
         
         var provider = services.BuildServiceProvider();
-        var backendClient = provider.GetRequiredService<IBackendClient>();
+        var backendClient = provider.GetRequiredService<IBackendApiClient>();
 
         // Act
         var result = await backendClient.ValidateTokenAsync(token);
@@ -610,11 +612,12 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
             })
             .Build());
         services.AddLogging();
-        services.AddHttpClient<IBackendClient, BackendClient>()
+        services.AddHttpContextAccessor();
+        services.AddHttpClient<IBackendApiClient, BackendApiClient>()
             .ConfigurePrimaryHttpMessageHandler(() => _mockBackendHandler.Object);
         
         var provider = services.BuildServiceProvider();
-        var backendClient = provider.GetRequiredService<IBackendClient>();
+        var backendClient = provider.GetRequiredService<IBackendApiClient>();
 
         // Act
         var result = await backendClient.ValidateTokenAsync("invalid_token");
@@ -644,22 +647,33 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
             });
 
         var services = new ServiceCollection();
-        services.AddSingleton<IConfiguration>(new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
+        var httpContextAccessor = new HttpContextAccessor
+        {
+            HttpContext = new DefaultHttpContext
             {
-                { "MizanApiUrl", "http://localhost:5000" },
-                { "ServiceApiKey", "test-api-key" }
-            })
-            .Build());
+                User = new ClaimsPrincipal(new ClaimsIdentity(
+                [
+                    new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                    new Claim("sub", userId.ToString()),
+                    new Claim("mcp_token_id", Guid.NewGuid().ToString())
+                ], "TestAuth"))
+            }
+        };
+
+        services.AddSingleton<IHttpContextAccessor>(httpContextAccessor);
         services.AddLogging();
-        services.AddHttpClient<IBackendClient, BackendClient>()
+        services.AddHttpClient<IBackendApiClient, BackendApiClient>(client =>
+            {
+                client.BaseAddress = new Uri("http://localhost:5000");
+                client.DefaultRequestHeaders.Add("X-Api-Key", "test-api-key");
+            })
             .ConfigurePrimaryHttpMessageHandler(() => _mockBackendHandler.Object);
         
         var provider = services.BuildServiceProvider();
-        var backendClient = provider.GetRequiredService<IBackendClient>();
+        var backendClient = provider.GetRequiredService<IBackendApiClient>();
 
         // Act
-        await backendClient.CallApiAsync(userId, "GET", "/api/test");
+        await backendClient.GetAsync("/api/test");
 
         // Assert
         capturedRequest.Should().HaveCount(1);
@@ -689,9 +703,9 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
             .Build();
 
         var services = new ServiceCollection();
-        services.AddSingleton<IConfiguration>(config);
         services.AddLogging();
-        services.AddHttpClient<IBackendClient, BackendClient>();
+        services.AddHttpContextAccessor();
+        services.AddHttpClient<IBackendApiClient, BackendApiClient>();
         
         // The base address should be set correctly during construction
         // We can't easily test this without creating the client, but we can verify the configuration is read
@@ -707,14 +721,14 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
             .Build();
 
         var services = new ServiceCollection();
-        services.AddSingleton<IConfiguration>(config);
         services.AddLogging();
-        services.AddHttpClient<IBackendClient, BackendClient>();
+        services.AddHttpContextAccessor();
+        services.AddHttpClient<IBackendApiClient, BackendApiClient>();
         
         var provider = services.BuildServiceProvider();
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<IBackendClient>());
+        provider.GetRequiredService<IBackendApiClient>().Should().NotBeNull();
     }
 
     #endregion

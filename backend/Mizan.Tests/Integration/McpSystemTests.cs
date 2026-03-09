@@ -2,13 +2,12 @@ extern alias McpServer;
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Http;
-using McpServer::Mizan.Mcp.Server.Models;
 using McpServer::Mizan.Mcp.Server.Services;
 using Xunit;
 
@@ -59,21 +58,25 @@ public class McpSystemTests : IClassFixture<WebApplicationFactory<McpServer::Pro
             builder.ConfigureTestServices(services =>
             {
                 // CRITICAL: Remove the default registration first
-                services.RemoveAll<IBackendClient>();
+                services.RemoveAll<IBackendApiClient>();
                 
-                // Manually register IBackendClient to bypass IHttpClientFactory and its default logging handlers.
+                // Manually register IBackendApiClient to bypass IHttpClientFactory and its default logging handlers.
                 // This prevents the NullReferenceException in LogRequestEnd because TestServer's handler
                 // returns responses with RequestMessage == null, which crashes the default logger.
-                services.AddScoped<IBackendClient>(sp =>
+                services.AddScoped<IBackendApiClient>(sp =>
                 {
-                    var config = sp.GetRequiredService<IConfiguration>();
-                    var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<BackendClient>>();
+                    var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<BackendApiClient>>();
+                    var accessor = sp.GetRequiredService<IHttpContextAccessor>();
                     
                     // Get the handler directly from the TestServer (Backend API)
                     var handler = _apiFixture.Server.CreateHandler();
                     
-                    var client = new HttpClient(handler);
-                    return new BackendClient(client, config, logger);
+                    var client = new HttpClient(handler)
+                    {
+                        BaseAddress = new Uri("http://localhost:5000")
+                    };
+                    client.DefaultRequestHeaders.Add("X-Api-Key", "test-api-key");
+                    return new BackendApiClient(client, accessor, logger);
                 });
             });
         }).CreateClient();
@@ -86,7 +89,7 @@ public class McpSystemTests : IClassFixture<WebApplicationFactory<McpServer::Pro
             Method = "tools/call",
             Params = System.Text.Json.JsonSerializer.SerializeToElement(new
             {
-                name = "list_ingredients",
+                name = "search_foods",
                 arguments = new { search = "test" }
             }),
             Id = 1
