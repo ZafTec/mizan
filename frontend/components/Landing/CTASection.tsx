@@ -12,20 +12,20 @@ export function CTASection() {
 			<div className="absolute -bottom-16 right-0 h-48 w-48 rounded-full bg-brand-500/10 blur-3xl" />
 
 			<div className="relative z-10 max-w-lg mx-auto">
-				<div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/75 backdrop-blur-sm">
+				<div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] backdrop-blur-sm">
 					<AnimatedIcon name="rocket" size={14} aria-hidden="true" />
 					Ready when you are
 				</div>
-				<h2 className="mb-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+				<h2 className="mb-4 text-3xl font-semibold tracking-tight sm:text-4xl">
 					Start tracking for free
 				</h2>
-				<p className="text-white/80 mb-8 leading-relaxed">
+				<p className="mb-8 leading-relaxed">
 					No credit card required. Set up in under a minute. Cancel anytime.
 				</p>
 				<div className="flex flex-col sm:flex-row gap-4 justify-center">
 					<Link
 						href="/register"
-						className="btn-secondary btn-lg border-white/20 bg-white/95 text-brand-700 shadow-xl shadow-slate-950/10 hover:bg-white"
+						className="btn-secondary btn-lg border-white/20 bg-white/95 dark:bg-slate-900/80 text-brand-700 dark:text-brand-400 shadow-xl shadow-slate-950/10 hover:bg-white dark:hover:bg-slate-900"
 					>
 						Get Started Free
 						<AnimatedIcon name="arrowRight" size={18} aria-hidden="true" />

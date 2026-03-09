@@ -53,7 +53,7 @@ export function TestimonialSection() {
 								<AnimatedIcon name="circleCheck" size={16} aria-hidden="true" />
 							</span>
 						</div>
-						<p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed italic">&ldquo;{t.quote}&rdquo;</p>
+						<p className="text-sm leading-relaxed italic text-slate-700 dark:text-slate-400">&ldquo;{t.quote}&rdquo;</p>
 					</div>
 				))}
 			</div>

@@ -46,7 +46,7 @@ export function FeatureSection() {
 							<AnimatedIcon name={f.icon} size={22} aria-hidden="true" />
 						</div>
 						<h3 className="mb-2 text-lg font-semibold text-slate-950 dark:text-slate-50">{f.title}</h3>
-						<p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{f.description}</p>
+						<p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">{f.description}</p>
 					</div>
 				))}
 			</div>

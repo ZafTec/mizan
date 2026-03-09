@@ -12,6 +12,11 @@ import { CTASection } from "@/components/Landing/CTASection";
 
 export const dynamic = 'force-dynamic';
 
+const sectionHeadingClass = "text-2xl font-semibold tracking-tight text-slate-950 dark:text-slate-50 sm:text-3xl";
+const sectionBodyClass = "mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300";
+const cardTitleClass = "mb-1 font-semibold text-slate-950 dark:text-slate-50";
+const cardBodyClass = "text-sm leading-6 text-slate-700 dark:text-slate-300";
+
 const quickActions: Array<{
 	href: string;
 	title: string;
@@ -61,20 +66,20 @@ export default async function Home() {
 					</div>
 
 					<div className="relative z-10 max-w-3xl">
-						<h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
-							Find Your <span className="text-brand-300">Balance</span> Across Food, Training, and Progress.
+						<h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-black dark:text-white sm:text-5xl lg:text-6xl">
+							Find Your <span className="text-brand-400 dark:text-brand-300">Balance</span> Across Food, Training, and Progress.
 						</h1>
-						<p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/80 sm:text-xl">
+						<p className="mt-5 max-w-2xl text-lg leading-relaxed text-black/90 dark:text-white/90 sm:text-xl">
 							Track your nutrition, plan meals, and achieve your fitness goals with personalized AI coaching. Mizan helps you find the perfect balance.
 						</p>
 						<div className="mt-8 flex flex-col gap-4 sm:flex-row">
-							<Link href="/register" className="btn-secondary btn-lg border-white/20 bg-white/95 text-brand-700 hover:bg-white">
+							<Link href="/register" className="btn-secondary btn-lg border-slate-900/20 dark:border-white/20 bg-white/95 dark:bg-slate-800/95 text-brand-500 dark:text-brand-700 hover:bg-white dark:hover:bg-slate-800">
 								Get Started Free
 								<AnimatedIcon name="arrowRight" size={18} aria-hidden="true" />
 							</Link>
 							<Link
 								href="/login"
-								className="btn-lg inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-6 py-3.5 font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/18"
+								className="btn-lg inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-800/20 dark:border-white/10 dark:bg-white/10 px-6 py-3.5 font-semibold dark:text-white text-slate-800/70 backdrop-blur-sm transition-colors hover:bg-slate-800/10 dark:hover:bg-slate-800/10"
 							>
 								<AnimatedIcon name="lock" size={18} aria-hidden="true" />
 								Sign In
@@ -83,7 +88,7 @@ export default async function Home() {
 
 						<div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
 							{["Fast logging", "Smart planning", "Trainer-ready progress"].map((item, index) => (
-								<div key={item} className="stagger-item rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white/80 backdrop-blur-sm" style={{ animationDelay: `${index * 100}ms` }}>
+								<div key={item} className="stagger-item rounded-2xl border border-slate-800/10 dark:border-white/10bg-slate-800/10  dark:bg-white/10 px-4 py-3 text-sm text-slate-800/90 dark:text-white/90 backdrop-blur-sm" style={{ animationDelay: `${index * 100}ms` }}>
 									{item}
 								</div>
 							))}
@@ -100,10 +105,10 @@ export default async function Home() {
 								<AnimatedIcon name="home" size={14} aria-hidden="true" />
 								Daily snapshot
 							</div>
-							<h2 className="text-2xl font-semibold text-slate-950 dark:text-slate-50 sm:text-3xl">
+							<h2 className={sectionHeadingClass}>
 								Welcome back{user.name ? `, ${user.name}` : ''}
 							</h2>
-							<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Here&apos;s how today is trending across meals and goals.</p>
+							<p className={sectionBodyClass}>Here&apos;s how today is trending across meals and goals.</p>
 						</div>
 						<Link href="/goal/dashboard" className="btn-secondary w-full justify-center sm:w-auto">
 							View goal dashboard
@@ -118,12 +123,12 @@ export default async function Home() {
 				{quickActions.map((action, index) => (
 					<Link key={action.href} href={action.href} className="card-hover stagger-item group p-6 sm:p-7" style={{ animationDelay: `${index * 90}ms` }}>
 						<div className="flex items-start gap-4">
-							<div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${action.iconClass} text-white shadow-lg shadow-slate-950/10`}>
+							<div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${action.iconClass} text-white shadow-lg shadow-slate-950/80 dark:shadow-slate-950/10`}>
 								<AnimatedIcon name={action.icon} size={20} aria-hidden="true" />
 							</div>
-							<div>
-								<h3 className="mb-1 font-semibold text-slate-950 dark:text-slate-50">{action.title}</h3>
-								<p className="text-sm text-slate-500 dark:text-slate-400">{action.description}</p>
+							<div className="space-y-1">
+								<h3 className={cardTitleClass}>{action.title}</h3>
+								<p className={cardBodyClass}>{action.description}</p>
 							</div>
 						</div>
 					</Link>
@@ -135,8 +140,8 @@ export default async function Home() {
 			<div className="surface-panel p-6 sm:p-8">
 				<div className="mb-6 flex items-center justify-between gap-4">
 					<div>
-						<h2 className="section-title">Popular Recipes</h2>
-						<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Discover community favorites</p>
+						<h2 className={sectionHeadingClass}>Popular Recipes</h2>
+						<p className={sectionBodyClass}>Discover community favorites</p>
 					</div>
 					<Link href="/recipes" className="btn-secondary btn-sm">
 						View All
@@ -150,7 +155,7 @@ export default async function Home() {
 							<Link
 								key={recipe._id.toString()}
 								href={`/recipes/${recipe._id}`}
-								className="group relative overflow-hidden rounded-[24px] border border-white/60 bg-slate-100/80 shadow-lg shadow-slate-950/5 dark:border-white/10 dark:bg-slate-900/80"
+								className="group relative overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50 shadow-lg shadow-slate-950/5 dark:border-white/10 dark:bg-slate-900/80"
 							>
 								<Image
 									src={placeHolderImage}
@@ -159,10 +164,10 @@ export default async function Home() {
 									width={400}
 									height={300}
 								/>
-							<div className="absolute inset-0 bg-black/45" />
+								<div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
 								<div className="absolute bottom-0 left-0 right-0 p-4">
-									<h3 className="mb-1 line-clamp-1 font-semibold text-white">{recipe.name}</h3>
-									<div className="flex items-center gap-3 text-sm text-white/80">
+									<h3 className="mb-1 line-clamp-1 font-semibold text-white drop-shadow-md">{recipe.name}</h3>
+									<div className="flex items-center gap-3 text-sm text-white/90 drop-shadow-md">
 										<span className="flex items-center gap-1">
 											<i className="ri-fire-line" aria-hidden="true" />
 											{recipe.totalMacros.calories.toFixed()} kcal
@@ -176,8 +181,8 @@ export default async function Home() {
 							</Link>
 						))
 					) : (
-						<div className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400">
-							<i className="ri-restaurant-line mb-2 block text-4xl opacity-50" aria-hidden="true" />
+						<div className="col-span-full py-12 text-center text-slate-700 dark:text-slate-300">
+							<i className="ri-restaurant-line mb-2 block text-4xl text-slate-400 dark:text-slate-500" aria-hidden="true" />
 							<p>No recipes yet. Be the first to add one!</p>
 						</div>
 					)}
@@ -190,8 +195,8 @@ export default async function Home() {
 				<div className="surface-panel p-6 sm:p-8">
 					<div className="mb-6 flex items-center justify-between gap-4">
 						<div>
-							<h2 className="section-title">Nutrition Overview</h2>
-							<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Your daily progress</p>
+							<h2 className={sectionHeadingClass}>Nutrition Overview</h2>
+							<p className={sectionBodyClass}>Your daily progress</p>
 						</div>
 						<Link href="/goal" className="btn-primary btn-sm">
 							<AnimatedIcon name="rocket" size={16} aria-hidden="true" />

@@ -30,7 +30,7 @@ export default async function Page(
 				<div className="flex items-center gap-3">
 					<SearchBar />
 					<IngredientFilters currentMinPcal={minPcal || undefined} />
-					{user && (
+					{user?.role === "admin" && (
 						<Link href="/ingredients/add" className="btn-primary">
 							<i className="ri-add-line" />
 							Add
