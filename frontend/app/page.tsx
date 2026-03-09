@@ -56,15 +56,11 @@ export default async function Home() {
 					<div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
 					<div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-brand-500/10 blur-3xl" />
 					<div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
-					<div className="absolute right-0 top-1/2 -translate-y-1/2 hidden lg:block w-[450px] h-[450px] opacity-90 xl:right-10 2xl:right-20 pointer-events-none">
+					<div className="absolute right-0 top-1/2 -translate-y-1/2 hidden lg:block w-112.5 h-112.5 opacity-90 xl:right-10 2xl:right-20 pointer-events-none">
 						<Image src="/assets/hero-device.svg" alt="Mizan App Preview" fill className="object-contain drop-shadow-2xl" />
 					</div>
 
 					<div className="relative z-10 max-w-3xl">
-						<div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-sm text-white/90 backdrop-blur-sm">
-							<AnimatedIcon name="sparkles" size={16} className="text-amber-300" aria-hidden="true" />
-							AI-Powered Nutrition Coaching
-						</div>
 						<h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
 							Find Your <span className="text-brand-300">Balance</span> Across Food, Training, and Progress.
 						</h1>

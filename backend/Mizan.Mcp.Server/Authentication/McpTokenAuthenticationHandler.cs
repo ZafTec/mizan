@@ -13,32 +13,27 @@ public class McpTokenAuthenticationOptions : AuthenticationSchemeOptions
 
 public class McpTokenAuthenticationHandler : AuthenticationHandler<McpTokenAuthenticationOptions>
 {
-    private readonly IBackendClient _backendClient;
+    private readonly IBackendApiClient _backend;
 
     public McpTokenAuthenticationHandler(
         IOptionsMonitor<McpTokenAuthenticationOptions> options,
         ILoggerFactory logger,
         UrlEncoder encoder,
-        IBackendClient backendClient)
+        IBackendApiClient backend)
         : base(options, logger, encoder)
     {
-        _backendClient = backendClient;
+        _backend = backend;
     }
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         var token = ExtractToken();
-
         if (string.IsNullOrEmpty(token))
-        {
             return AuthenticateResult.NoResult();
-        }
 
-        var validation = await _backendClient.ValidateTokenAsync(token);
+        var validation = await _backend.ValidateTokenAsync(token, Context.RequestAborted);
         if (validation == null)
-        {
             return AuthenticateResult.Fail("Invalid or expired MCP token");
-        }
 
         var claims = new[]
         {
@@ -57,18 +52,12 @@ public class McpTokenAuthenticationHandler : AuthenticationHandler<McpTokenAuthe
 
     private string? ExtractToken()
     {
-        // Try Authorization: Bearer <token> header first
         var authHeader = Request.Headers.Authorization.ToString();
         if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-        {
             return authHeader["Bearer ".Length..].Trim();
-        }
 
-        // Fall back to ?token= query parameter (for SSE connections that can't set headers)
         if (Request.Query.TryGetValue("token", out var queryToken) && !string.IsNullOrEmpty(queryToken))
-        {
             return queryToken.ToString();
-        }
 
         return null;
     }

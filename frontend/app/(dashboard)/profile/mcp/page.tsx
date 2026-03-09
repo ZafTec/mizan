@@ -34,11 +34,10 @@ function getMcpUrl(): string {
     const host = window.location.hostname;
     const protocol = window.location.protocol;
     if (host !== "localhost" && host !== "127.0.0.1") {
-      // The SSE endpoint is at /mcp/sse based on the backend controller
-      return `${protocol}//mcp.${host}/mcp/sse`;
+      return `${protocol}//mcp.${host}/mcp`;
     }
   }
-  return "http://localhost:5001/mcp/sse";
+  return "http://localhost:5001/mcp";
 }
 
 export default function McpPage() {
@@ -101,21 +100,17 @@ export default function McpPage() {
   const desktopConfig = (token: string) => `{
   "mcpServers": {
     "mizan": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "supergateway",
-        "--sse",
-        "${mcpUrl}",
-        "--header",
-        "Authorization: Bearer ${token}"
-      ]
+      "type": "streamable-http",
+      "url": "${mcpUrl}",
+      "headers": {
+        "Authorization": "Bearer ${token}"
+      }
     }
   }
 }`;
 
   const claudeCodeCommand = (token: string) =>
-    `claude mcp add mizan --transport sse "${mcpUrl}" --header "Authorization: Bearer ${token}"`;
+    `claude mcp add mizan --transport http "${mcpUrl}" --header "Authorization: Bearer ${token}"`;
 
   const cursorConfig = (token: string) => `{
   "mcpServers": {
