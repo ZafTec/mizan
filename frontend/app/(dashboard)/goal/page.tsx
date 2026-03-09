@@ -199,7 +199,7 @@ export default function GoalForm() {
 												className={`text-xs px-2 py-0.5 rounded font-medium transition-colors ${
 													weightUnit === u
 														? "bg-brand-500 text-white"
-														: "text-slate-400 hover:text-slate-600"
+														: "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
 												}`}
 											>
 												{u}
@@ -231,7 +231,7 @@ export default function GoalForm() {
 												className={`text-xs px-2 py-0.5 rounded font-medium transition-colors ${
 													heightUnit === u
 														? "bg-brand-500 text-white"
-														: "text-slate-400 hover:text-slate-600"
+														: "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
 												}`}
 											>
 												{u}

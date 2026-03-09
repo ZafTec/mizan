@@ -1,10 +1,10 @@
 import { getUserServer } from "@/helper/session";
 import Link from "next/link";
-import Image from "next/image";
 import { getMealPlans } from "@/data/mealPlan";
 import Pagination from "@/components/Pagination";
 import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
 import MealPlanListItem from "./MealPlanListItem";
+import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
 
 import { logger } from "@/lib/logger";
 const mealLogger = logger.createModuleLogger("meal-plan-page");
@@ -94,7 +94,7 @@ export default async function MealPlanPage({
 						<div key={stat.label} className="card p-4">
 							<div className="flex items-center gap-3">
 								<div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center text-white`}>
-									<i className={`${stat.icon} text-white`} />
+									<i className={`${stat.icon} text-current`} />
 								</div>
 								<div>
 									<p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stat.value}</p>
@@ -119,11 +119,11 @@ export default async function MealPlanPage({
 						</div>
 					) : (
 						<div className="text-center py-12 flex flex-col items-center">
-							<div className="relative w-48 h-48 mb-6 opacity-90 drop-shadow-md">
-								<Image src="/assets/meal-planner-empty.svg" alt="Empty Meal Planner" fill className="object-contain" />
+							<div className="mb-6 w-full max-w-[18rem] opacity-95 drop-shadow-md">
+								<AppFeatureIllustration variant="meal-plan" className="h-auto w-full" />
 							</div>
 							<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No meal plans yet</h3>
-							<p className="text-slate-500 mb-4">Start planning your meals for the week</p>
+							<p className="text-slate-500 dark:text-slate-400 mb-4">Start planning your meals for the week</p>
 							<Link href="/meal-plan/create" className="btn-primary">
 								<i className="ri-add-line" />
 								Create Meal Plan

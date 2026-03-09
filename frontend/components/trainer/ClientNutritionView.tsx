@@ -62,6 +62,14 @@ const COLORS = {
 	fat: "#f59e0b",
 };
 
+const CHART_COLORS = {
+	grid: "var(--border)",
+	axis: "var(--muted-foreground)",
+	tooltipBackground: "var(--popover)",
+	tooltipBorder: "var(--border)",
+	tooltipText: "var(--popover-foreground)",
+};
+
 export function ClientNutritionView({ clientId }: ClientNutritionViewProps) {
 	const [date, setDate] = useState<Date>(new Date());
 	const [nutritionData, setNutritionData] = useState<ClientNutritionData | null>(
@@ -124,8 +132,36 @@ export function ClientNutritionView({ clientId }: ClientNutritionViewProps) {
 					Carbs: nutritionData.summary.totalCarbs,
 					Fat: nutritionData.summary.totalFat,
 				},
-		  ]
+			  ]
 		: [];
+
+	const renderPieLabel = ({
+		name,
+		value,
+		x,
+		y,
+		textAnchor,
+		dominantBaseline,
+	}: {
+		name?: string;
+		value?: number;
+		x?: number;
+		y?: number;
+		textAnchor?: "start" | "middle" | "end" | "inherit";
+		dominantBaseline?: string;
+	}) => (
+		<text
+			x={x}
+			y={y}
+			fill="var(--foreground)"
+			fontSize="12"
+			fontWeight="600"
+			textAnchor={textAnchor}
+			dominantBaseline={dominantBaseline as "middle" | "central" | "auto" | "hanging" | "mathematical" | "text-after-edge" | "text-before-edge" | undefined}
+		>
+			{`${name}: ${Math.round(value ?? 0)}g`}
+		</text>
+	);
 
 	if (loading) {
 		return (
@@ -261,7 +297,7 @@ export function ClientNutritionView({ clientId }: ClientNutritionViewProps) {
 											cx="50%"
 											cy="50%"
 											labelLine={false}
-											label={({ name, value }) => `${name}: ${Math.round(value)}g`}
+											label={renderPieLabel}
 											outerRadius={80}
 											fill="#8884d8"
 											dataKey="value"
@@ -270,7 +306,16 @@ export function ClientNutritionView({ clientId }: ClientNutritionViewProps) {
 												<Cell key={`cell-${index}`} fill={entry.color} />
 											))}
 										</Pie>
-										<Tooltip />
+										<Tooltip
+											contentStyle={{
+												backgroundColor: CHART_COLORS.tooltipBackground,
+												border: `1px solid ${CHART_COLORS.tooltipBorder}`,
+												borderRadius: "12px",
+												color: CHART_COLORS.tooltipText,
+											}}
+											itemStyle={{ color: CHART_COLORS.tooltipText }}
+											labelStyle={{ color: CHART_COLORS.tooltipText }}
+										/>
 									</PieChart>
 								</ResponsiveContainer>
 							</CardContent>
@@ -283,10 +328,19 @@ export function ClientNutritionView({ clientId }: ClientNutritionViewProps) {
 							<CardContent>
 								<ResponsiveContainer width="100%" height={300}>
 									<BarChart data={barData}>
-										<CartesianGrid strokeDasharray="3 3" />
-										<XAxis dataKey="name" />
-										<YAxis />
-										<Tooltip />
+										<CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+										<XAxis dataKey="name" stroke={CHART_COLORS.axis} tickLine={false} axisLine={false} />
+										<YAxis stroke={CHART_COLORS.axis} tickLine={false} axisLine={false} />
+										<Tooltip
+											contentStyle={{
+												backgroundColor: CHART_COLORS.tooltipBackground,
+												border: `1px solid ${CHART_COLORS.tooltipBorder}`,
+												borderRadius: "12px",
+												color: CHART_COLORS.tooltipText,
+											}}
+											itemStyle={{ color: CHART_COLORS.tooltipText }}
+											labelStyle={{ color: CHART_COLORS.tooltipText }}
+										/>
 										<Bar dataKey="Protein" fill={COLORS.protein} />
 										<Bar dataKey="Carbs" fill={COLORS.carbs} />
 										<Bar dataKey="Fat" fill={COLORS.fat} />

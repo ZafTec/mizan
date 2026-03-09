@@ -93,11 +93,11 @@ export default async function BodyMeasurementsPage({
                     </div>
                 </div>
 
-                <div className="card-hover p-5">
-                    <div className="flex items-center gap-4">
+				<div className="card-hover p-5">
+					<div className="flex items-center gap-4">
 						<div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center shadow-lg dark:bg-slate-100 dark:text-slate-900">
-                            <i className="ri-hand-heart-line text-xl text-white" />
-                        </div>
+							<i className="ri-hand-heart-line text-xl text-current" />
+						</div>
                         <div className="flex-1">
                             <h3 className="font-semibold text-slate-900 dark:text-slate-100">Muscle Mass</h3>
                             <div className="flex items-center gap-2">

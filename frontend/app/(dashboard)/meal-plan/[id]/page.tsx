@@ -56,11 +56,11 @@ export default async function MealPlanDetailPage({
 						<div key={stat.label} className="card p-4">
 							<div className="flex items-center gap-3">
 								<div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center text-white`}>
-									<i className={`${stat.icon} text-white`} />
+									<i className={`${stat.icon} text-current`} />
 								</div>
 								<div>
 									<p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-										{stat.value}{stat.unit && <span className="text-sm font-normal text-slate-500 ml-1">{stat.unit}</span>}
+										{stat.value}{stat.unit && <span className="ml-1 text-sm font-normal text-slate-500 dark:text-slate-400">{stat.unit}</span>}
 									</p>
 									<p className="text-xs text-slate-500 dark:text-slate-400">{stat.label}</p>
 								</div>
@@ -111,10 +111,10 @@ export default async function MealPlanDetailPage({
 				) : (
 					<div className="text-center py-12">
 						<div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
-							<i className="ri-restaurant-line text-3xl text-slate-400" />
+							<i className="ri-restaurant-line text-3xl text-slate-400 dark:text-slate-500" />
 						</div>
 						<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No meals scheduled</h3>
-						<p className="text-slate-500 mb-4">Add recipes to this meal plan</p>
+						<p className="text-slate-500 dark:text-slate-400 mb-4">Add recipes to this meal plan</p>
 						<Link href={`/meal-plan/${plan.id}/edit`} className="btn-primary">
 							<i className="ri-add-line" />
 							Edit Plan

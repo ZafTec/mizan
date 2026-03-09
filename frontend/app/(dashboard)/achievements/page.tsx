@@ -1,6 +1,7 @@
 import { getAchievements, getStreak } from "@/data/achievement";
 import { getUserServer } from "@/helper/session";
 import Image from "next/image";
+import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
 
 export const dynamic = 'force-dynamic';
 
@@ -147,9 +148,9 @@ export default async function AchievementsPage() {
 
 			{achievements.length === 0 && (
 				<div className="card p-16 text-center flex flex-col items-center">
-                    <div className="relative w-48 h-48 mb-6 opacity-90 drop-shadow-md">
-                        <Image src="/assets/gamification-badge.svg" alt="No achievements yet" fill className="object-contain" />
-                    </div>
+	                    <div className="mb-6 w-full max-w-[18rem] opacity-95 drop-shadow-md">
+	                        <AppFeatureIllustration variant="achievements" className="h-auto w-full" />
+	                    </div>
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No achievements yet</h3>
 					<p className="text-slate-500 dark:text-slate-400">Start using MacroChef to earn achievements!</p>
 				</div>

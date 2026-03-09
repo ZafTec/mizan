@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { clientApi } from "@/lib/api.client";
 import { appToast } from "@/lib/toast";
 import Loading from "@/components/Loading";
+import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
 
 interface WorkoutExercise {
     exerciseId: string;
@@ -117,8 +117,8 @@ export default function WorkoutsPage() {
         <div className="space-y-8" data-testid="workouts-page">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <div className="relative w-16 h-16 hidden sm:block opacity-90">
-                        <Image src="/assets/workout-tracker.svg" alt="Workout Tracker" fill className="object-contain drop-shadow-sm" />
+                    <div className="hidden w-20 sm:block opacity-95">
+                        <AppFeatureIllustration variant="workouts" className="h-auto w-full" />
                     </div>
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Log Workout</h1>

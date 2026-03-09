@@ -10,6 +10,7 @@ import Loading from "@/components/Loading";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import type { TrainerPublicDto, TrainerPublicPagedResultDto } from "@/types/api-contracts";
 import { getPagedItems } from "@/types/api-contracts";
+import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
 
 export default function TrainersPage() {
 	const { data: session, isPending } = useSession();
@@ -85,8 +86,8 @@ export default function TrainersPage() {
 			{/* Header */}
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div className="flex items-center gap-4">
-					<div className="relative w-16 h-16 hidden sm:block opacity-90">
-						<Image src="/assets/trainer-collaboration.svg" alt="Trainer Collaboration" fill className="object-contain drop-shadow-sm" />
+					<div className="hidden w-20 sm:block opacity-95">
+						<AppFeatureIllustration variant="trainers" className="h-auto w-full" />
 					</div>
 					<div>
 						<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Find a Trainer</h1>

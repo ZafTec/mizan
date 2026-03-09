@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { clientApi } from "@/lib/api.client";
 import Link from "next/link";
-import Image from "next/image";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, RadialBarChart, RadialBar, ReferenceLine } from "recharts";
 import { GoalData } from "@/types/goal";
 import Loading from "@/components/Loading";
+import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
 
 
 const MACRO_COLORS = {
@@ -23,6 +23,10 @@ const CHART_COLORS = {
 	tooltipBorder: "var(--border)",
 	tooltipText: "var(--popover-foreground)",
 };
+
+const legendFormatter = (value: string) => (
+	<span style={{ color: "var(--foreground)", fontSize: "12px", fontWeight: 600 }}>{value}</span>
+);
 
 export default function GoalDashboard() {
   const [data, setData] = useState<GoalData | null>(null);
@@ -54,11 +58,11 @@ export default function GoalDashboard() {
 
   if (!data?.goal) {
     return (
-      <div className="max-w-4xl mx-auto">
-        <div className="card p-12 text-center flex flex-col items-center">
-			<div className="relative w-48 h-48 mb-6 opacity-90 drop-shadow-md">
-            <Image src="/assets/daily-macros.svg" alt="No Active Goal" fill className="object-contain" />
-          </div>
+        <div className="max-w-4xl mx-auto">
+          <div className="card p-12 text-center flex flex-col items-center">
+			<div className="mb-8 w-full max-w-[30rem] opacity-95 drop-shadow-md">
+	            <AppFeatureIllustration variant="dashboard" className="h-auto w-full" />
+	          </div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">
             No Active Goal
           </h2>
@@ -169,6 +173,7 @@ export default function GoalDashboard() {
                     layout="vertical"
                     verticalAlign="middle"
                     align="right"
+					formatter={legendFormatter}
                   />
                 </RadialBarChart>
               </ResponsiveContainer>
@@ -224,8 +229,10 @@ export default function GoalDashboard() {
 				boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
 				color: CHART_COLORS.tooltipText,
 			  }}
+			  itemStyle={{ color: CHART_COLORS.tooltipText }}
+			  labelStyle={{ color: CHART_COLORS.tooltipText }}
 			/>
-            <Legend />
+	            <Legend formatter={legendFormatter} />
             <Line
               type="monotone"
               dataKey="calories"
@@ -263,8 +270,10 @@ export default function GoalDashboard() {
 				boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
 				color: CHART_COLORS.tooltipText,
 			  }}
+			  itemStyle={{ color: CHART_COLORS.tooltipText }}
+			  labelStyle={{ color: CHART_COLORS.tooltipText }}
 			/>
-            <Legend />
+	            <Legend formatter={legendFormatter} />
             <Bar dataKey="protein" fill={MACRO_COLORS.protein} radius={[8, 8, 0, 0]} />
             <Bar dataKey="carbs" fill={MACRO_COLORS.carbs} radius={[8, 8, 0, 0]} />
             <Bar dataKey="fat" fill={MACRO_COLORS.fat} radius={[8, 8, 0, 0]} />

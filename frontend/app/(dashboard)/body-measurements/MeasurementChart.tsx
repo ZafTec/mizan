@@ -58,6 +58,10 @@ const chartStyle = {
     },
 };
 
+const legendFormatter = (value: string) => (
+    <span style={{ color: "var(--foreground)", fontSize: "12px", fontWeight: 600 }}>{value}</span>
+);
+
 const formatCompositionTooltip: Formatter<ValueType, NameType> = (value, name) => {
     const label = String(name ?? "");
 
@@ -144,7 +148,7 @@ function CompositionChart({ data }: { data: ReturnType<typeof buildData> }) {
                     {...chartStyle}
                     formatter={formatCompositionTooltip}
                 />
-                <Legend />
+                <Legend formatter={legendFormatter} />
                 {hasWeight && (
                     <Line yAxisId="kg" type="monotone" dataKey="weight" name="Weight" stroke="#2563eb" strokeWidth={2.5} dot={{ r: 3, fill: "#2563eb" }} connectNulls />
                 )}
@@ -217,7 +221,7 @@ function CircumferenceChart({ data, active, onToggle }: {
                             {...chartStyle}
                             formatter={formatCircumferenceTooltip}
                         />
-                        <Legend />
+                        <Legend formatter={legendFormatter} />
                         {visible.map((s) => (
                             <Line
                                 key={s.key}
@@ -256,12 +260,16 @@ function ToggleGroup({
                         onClick={() => onToggle(s.key)}
                         className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all border ${
                             on
-                                ? "text-white border-transparent"
+                                ? "border-transparent"
                                 : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700"
                         }`}
-                        style={on ? { backgroundColor: s.color, borderColor: s.color } : {}}
+                        style={on ? {
+                            backgroundColor: `color-mix(in oklab, ${s.color} 16%, var(--card))`,
+                            borderColor: `color-mix(in oklab, ${s.color} 40%, transparent)`,
+                            color: s.color,
+                        } : {}}
                     >
-                        <span className="w-2 h-2 rounded-sm inline-block" style={{ backgroundColor: on ? "white" : s.color }} />
+                        <span className="w-2 h-2 rounded-sm inline-block" style={{ backgroundColor: s.color }} />
                         {s.label}
                     </button>
                 );
@@ -350,7 +358,7 @@ export default function MeasurementChart({ measurements, goalHistory = [] }: { m
                         className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
                             tab === "composition"
                                 ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm"
-                                : "text-slate-500 dark:text-slate-400 hover:text-slate-700"
+                                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                         }`}
                     >
                         Body Composition
@@ -360,7 +368,7 @@ export default function MeasurementChart({ measurements, goalHistory = [] }: { m
                         className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
                             tab === "circumference"
                                 ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm"
-                                : "text-slate-500 dark:text-slate-400 hover:text-slate-700"
+                                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                         }`}
                     >
                         Circumference

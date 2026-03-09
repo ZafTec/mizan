@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { clientApi } from '@/lib/api.client';
 import Loading from '@/components/Loading';
+import { AppFeatureIllustration } from '@/components/illustrations/AppFeatureIllustration';
 
 interface ShoppingListItem {
   id: string;
@@ -128,8 +128,8 @@ export default function ShoppingListPage() {
           </div>
 	        ) : allItems.length === 0 ? (
 	          <div className="text-center py-10 flex flex-col items-center">
-	            <div className="relative w-48 h-48 mb-6 opacity-90 drop-shadow-md">
-	              <Image src="/assets/shopping-list.svg" alt="Empty Shopping List" fill className="object-contain" />
+	            <div className="mb-6 w-full max-w-[18rem] opacity-95 drop-shadow-md">
+	              <AppFeatureIllustration variant="shopping" className="h-auto w-full" />
 	            </div>
 	            <p className="mb-4 text-slate-600 dark:text-slate-300">No items in your shopping list</p>
 	            <p className="text-sm text-slate-500 dark:text-slate-400">Add meals to your meal plan to generate a shopping list</p>

@@ -4,9 +4,9 @@ import { useState } from "react";
 import Loading from "@/components/Loading";
 import { clientApi } from "@/lib/api.client";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { appToast } from "@/lib/toast";
+import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
 
 export default function LogProgress() {
   const router = useRouter();
@@ -59,8 +59,8 @@ export default function LogProgress() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="relative w-16 h-16 hidden sm:block opacity-90">
-            <Image src="/assets/progress-chart.svg" alt="Log Progress" fill className="object-contain drop-shadow-sm" />
+          <div className="hidden w-20 sm:block opacity-95">
+            <AppFeatureIllustration variant="progress" className="h-auto w-full" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Log Today's Progress</h1>

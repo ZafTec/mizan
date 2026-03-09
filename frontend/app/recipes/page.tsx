@@ -7,6 +7,7 @@ import { getUserOptionalServer } from "@/helper/session";
 import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
 import Pagination from "@/components/Pagination";
 import RecipeFilters from "./RecipeFilters";
+import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
 
 export const dynamic = "force-dynamic";
 
@@ -105,7 +106,7 @@ export default async function RecipesPage({
 								<div
 									className={`w-12 h-12 rounded-2xl ${collection.color} flex items-center justify-center shadow-lg text-white`}
 								>
-									<i className={`${collection.icon} text-xl text-white`} />
+									<i className={`${collection.icon} text-xl text-current`} />
 								</div>
 								<div className="flex-1">
 									<h3 className="font-semibold text-slate-900 dark:text-slate-100">
@@ -113,7 +114,7 @@ export default async function RecipesPage({
 									</h3>
 									<p className="text-sm text-slate-500 dark:text-slate-400">{collection.count} recipes</p>
 								</div>
-								<i className="ri-arrow-right-s-line text-xl text-slate-400 group-hover:text-brand-500 transition-colors" />
+								<i className="ri-arrow-right-s-line text-xl text-slate-400 dark:text-slate-500 group-hover:text-brand-500 transition-colors" />
 							</div>
 						</Link>
 					))}
@@ -216,8 +217,8 @@ export default async function RecipesPage({
 					</div>
 				) : (
 					<div className="text-center py-16 flex flex-col items-center">
-						<div className="relative w-48 h-48 mb-6 opacity-90 drop-shadow-md">
-							<Image src="/assets/recipe-book.svg" alt="Empty Recipe Book" fill className="object-contain" />
+						<div className="mb-6 w-full max-w-[18rem] opacity-95 drop-shadow-md">
+							<AppFeatureIllustration variant="recipes" className="h-auto w-full" />
 						</div>
 						<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
 							No recipes yet
