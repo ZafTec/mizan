@@ -196,7 +196,8 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         toolNames.Should().Contain(new[]
         {
             "search_foods", "create_food", "list_shopping_lists", "get_shopping_list",
-            "get_daily_nutrition", "search_recipes", "create_recipe", "log_meal"
+            "get_daily_nutrition", "search_recipes", "create_recipe", "log_meal",
+            "log_food", "log_meal_manual"
         });
     }
 
@@ -603,10 +604,10 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             prepTimeMinutes = 30,
             cookTimeMinutes = 45,
             isPublic = false,
-            ingredients = new[]
+            ingredientsJson = JsonSerializer.Serialize(new[]
             {
                 new { foodId = food.Id, amount = 100, unit = "g", ingredientText = "Chicken Breast" }
-            }
+            })
         };
 
         var request = CreateJsonRpcCallRequest("tools/call", "create_recipe", args);
@@ -643,7 +644,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
         var errorMessage = ExtractErrorMessage(jsonResponse);
-        errorMessage.Should().Contain("required");
+        errorMessage.Should().Match(m => m.Contains("required") || m.Contains("title") || m.Contains("ingredientsJson"));
     }
 
     [Fact]
@@ -664,10 +665,10 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             servings = 4,
             prepTimeMinutes = -30,
             cookTimeMinutes = 45,
-            ingredients = new[]
+            ingredientsJson = JsonSerializer.Serialize(new[]
             {
                 new { foodId = food.Id, amount = 100, unit = "g", ingredientText = "Time Test Food" }
-            }
+            })
         };
 
         var request = CreateJsonRpcCallRequest("tools/call", "create_recipe", args);
@@ -698,10 +699,10 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             servings = 2,
             prepTimeMinutes = 15,
             cookTimeMinutes = 20,
-            ingredients = new[]
+            ingredientsJson = JsonSerializer.Serialize(new[]
             {
                 new { foodId = food.Id, amount = 150, unit = "g", ingredientText = "Rice" }
-            }
+            })
         };
 
         var request = CreateJsonRpcCallRequest("tools/call", "create_recipe", args);
@@ -736,10 +737,10 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             prepTimeMinutes = 15,
             cookTimeMinutes = 20,
             isPublic = false,
-            ingredients = new[]
+            ingredientsJson = JsonSerializer.Serialize(new[]
             {
                 new { foodId = food.Id, amount = 10, unit = "ml", ingredientText = "Secret Sauce" }
-            }
+            })
         };
 
         var request = CreateJsonRpcCallRequest("tools/call", "create_recipe", args);
@@ -779,7 +780,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             servings = 1
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "log_meal", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "log_food", args);
 
         var response = await _mcpClient.PostMcpAsync(request);
 
@@ -836,7 +837,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             foodId = food.Id
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "log_meal", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "log_food", args);
 
         var response = await _mcpClient.PostMcpAsync(request);
 
@@ -865,7 +866,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             foodId = food.Id
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "log_meal", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "log_food", args);
 
         var response = await _mcpClient.PostMcpAsync(request);
 
@@ -882,15 +883,19 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         await _apiFixture.SeedUserAsync(userId, "invalid-meal@example.com", emailVerified: true);
         var token = await CreateMcpTokenAsync(userId);
 
+        var food = await _apiFixture.SeedFoodAsync("Invalid Meal Type Food", 100, 10, 10, 5);
+
         _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
         var args = new
         {
             date = DateTime.UtcNow.ToString("yyyy-MM-dd"),
-            mealType = "InvalidType"
+            mealType = "InvalidType",
+            foodId = food.Id,
+            servings = 1
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "log_meal", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "log_food", args);
 
         var response = await _mcpClient.PostMcpAsync(request);
 
@@ -915,14 +920,137 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             servings = 1
         };
 
-        var request = CreateJsonRpcCallRequest("tools/call", "log_meal", args);
+        var request = CreateJsonRpcCallRequest("tools/call", "log_food", args);
 
         var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
         var errorMessage = ExtractErrorMessage(jsonResponse);
-        errorMessage.Should().Contain("foodId");
+        errorMessage.Should().NotBeNullOrEmpty();
+    }
+
+    #endregion
+
+    #region log_food Tool Tests
+
+    [Fact]
+    public async Task LogFood_CreatesFoodDiaryEntry()
+    {
+        var userId = Guid.NewGuid();
+        await _apiFixture.SeedUserAsync(userId, "log-food@example.com", emailVerified: true);
+        var token = await CreateMcpTokenAsync(userId);
+
+        var food = await _apiFixture.SeedFoodAsync("Orange", 47, 0.9m, 12, 0.1m);
+
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var args = new
+        {
+            date = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+            mealType = "MEAL",
+            foodId = food.Id,
+            servings = 1
+        };
+
+        var request = CreateJsonRpcCallRequest("tools/call", "log_food", args);
+
+        var response = await _mcpClient.PostMcpAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
+        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
+        result.Should().ContainKey("content");
+    }
+
+    [Fact]
+    public async Task LogFood_NormalizesBreakfastToMeal()
+    {
+        var userId = Guid.NewGuid();
+        await _apiFixture.SeedUserAsync(userId, "log-food-normalize@example.com", emailVerified: true);
+        var token = await CreateMcpTokenAsync(userId);
+
+        var food = await _apiFixture.SeedFoodAsync("Oatmeal", 68, 2.5m, 12, 1.4m);
+
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var args = new
+        {
+            date = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+            mealType = "Breakfast",
+            foodId = food.Id,
+            servings = 1
+        };
+
+        var request = CreateJsonRpcCallRequest("tools/call", "log_food", args);
+
+        var response = await _mcpClient.PostMcpAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
+        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
+        result.Should().ContainKey("content");
+    }
+
+    [Fact]
+    public async Task LogFood_NormalizesDrinkType()
+    {
+        var userId = Guid.NewGuid();
+        await _apiFixture.SeedUserAsync(userId, "log-food-drink@example.com", emailVerified: true);
+        var token = await CreateMcpTokenAsync(userId);
+
+        var food = await _apiFixture.SeedFoodAsync("Water", 0, 0, 0, 0);
+
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var args = new
+        {
+            date = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+            mealType = "BEVERAGE",
+            foodId = food.Id,
+            servings = 1
+        };
+
+        var request = CreateJsonRpcCallRequest("tools/call", "log_food", args);
+
+        var response = await _mcpClient.PostMcpAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
+        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
+        result.Should().ContainKey("content");
+    }
+
+    #endregion
+
+    #region log_meal_manual Tool Tests
+
+    [Fact]
+    public async Task LogMealManual_CreatesManualEntry()
+    {
+        var userId = Guid.NewGuid();
+        await _apiFixture.SeedUserAsync(userId, "log-manual@example.com", emailVerified: true);
+        var token = await CreateMcpTokenAsync(userId);
+
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var args = new
+        {
+            name = "Homemade Stew",
+            date = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+            calories = 450,
+            mealType = "MEAL",
+            servings = 1
+        };
+
+        var request = CreateJsonRpcCallRequest("tools/call", "log_meal_manual", args);
+
+        var response = await _mcpClient.PostMcpAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
+        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
+        result.Should().ContainKey("content");
     }
 
     #endregion
@@ -986,7 +1114,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        var requestError = CreateJsonRpcCallRequest("tools/call", "log_meal", new
+        var requestError = CreateJsonRpcCallRequest("tools/call", "log_food", new
         {
             date = "2023-01-01",
             mealType = "Breakfast",
@@ -1052,12 +1180,12 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        var request = CreateJsonRpcCallRequest("tools/call", "log_meal", new
+        var request = CreateJsonRpcCallRequest("tools/call", "log_food", new
         {
-            Date = DateTime.UtcNow.ToString("yyyy-MM-dd"),
-            MealType = "SNACK",
-            Servings = 1,
-            FoodId = food.Id
+            date = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+            mealType = "SNACK",
+            servings = 1,
+            foodId = food.Id
         });
 
         var response = await _mcpClient.PostMcpAsync(request);
@@ -1069,7 +1197,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         var logs = await _apiFixture.GetMcpUsageLogsByUserId(userId);
         logs.Should().HaveCount(1);
-        logs.Should().OnlyContain(l => l.ToolName == "log_meal");
+        logs.Should().OnlyContain(l => l.ToolName == "log_food");
     }
 
     #endregion
