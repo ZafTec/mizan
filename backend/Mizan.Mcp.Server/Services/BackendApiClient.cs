@@ -50,7 +50,15 @@ public sealed class BackendApiClient : IBackendApiClient
         request.Headers.Add("X-Impersonate-User", GetUserId().ToString());
 
         if (body != null)
+        {
             request.Content = JsonContent.Create(body);
+
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                var json = JsonSerializer.Serialize(body, body.GetType());
+                _logger.LogDebug("API {Method} {Endpoint} body: {Body}", method, endpoint, json);
+            }
+        }
 
         return request;
     }
