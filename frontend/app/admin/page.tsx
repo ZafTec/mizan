@@ -193,6 +193,18 @@ export default async function AdminDashboard() {
           icon="🍎"
         />
         <QuickActionCard
+          title="Exercise Library"
+          description="Browse and manage the exercise database"
+          link="/admin/exercises"
+          icon="🏋️"
+        />
+        <QuickActionCard
+          title="Recipe Management"
+          description="Browse and moderate community recipes"
+          link="/admin/recipes"
+          icon="🍳"
+        />
+        <QuickActionCard
           title="Audit Logs"
           description="View system-wide activity and security logs"
           link="/admin/audit-logs"
