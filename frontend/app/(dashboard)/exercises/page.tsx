@@ -1,18 +1,27 @@
 import { getExercises } from "@/data/exercise";
 import { getUserServer } from "@/helper/session";
+import Pagination from "@/components/Pagination";
 import SearchExercises from "./SearchExercises";
 import Image from "next/image";
 
 export const dynamic = 'force-dynamic';
 
+const PAGE_SIZE = 18;
+
 export default async function ExercisesPage({
     searchParams,
 }: {
-    searchParams: Promise<{ search?: string; category?: string }>;
+    searchParams: Promise<{ search?: string; category?: string; page?: string }>;
 }) {
     await getUserServer();
     const params = await searchParams;
-    const { exercises, totalCount } = await getExercises(params.search, params.category);
+    const page = Math.max(1, parseInt(params.page || "1", 10) || 1);
+    const { exercises, totalCount, totalPages } = await getExercises(params.search, params.category, page, PAGE_SIZE);
+
+    const baseUrl = `/exercises?${[
+        params.search ? `search=${encodeURIComponent(params.search)}` : "",
+        params.category ? `category=${encodeURIComponent(params.category)}` : "",
+    ].filter(Boolean).join("&")}`;
 
     return (
         <div className="space-y-8" data-testid="exercises-page">
@@ -92,6 +101,14 @@ export default async function ExercisesPage({
                     <p className="text-slate-500">Try adjusting your search criteria</p>
                 </div>
             )}
+
+            <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                baseUrl={baseUrl}
+                totalCount={totalCount}
+                pageSize={PAGE_SIZE}
+            />
         </div>
     );
 }

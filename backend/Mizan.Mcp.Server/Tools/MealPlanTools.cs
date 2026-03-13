@@ -74,7 +74,7 @@ public sealed class MealPlanTools
     {
         return await _api.PostAsync($"/api/MealPlans/{mealPlanId}/recipes", new
         {
-            recipeId, date, mealType, servings
+            recipeId, date, mealType = mealType.Trim().ToLowerInvariant(), servings
         }, ct);
     }
 
@@ -100,7 +100,7 @@ public sealed class MealPlanTools
     {
         return await _api.PutAsync($"/api/MealPlans/{mealPlanId}/recipes/{recipeId}", new
         {
-            date, mealType, servings
+            date, mealType = mealType.Trim().ToLowerInvariant(), servings
         }, ct);
     }
 }
