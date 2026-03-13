@@ -150,16 +150,17 @@ export default function WorkoutsPage() {
                 method: "POST",
                 body: {
                     name,
-                    date,
+                    workoutDate: date,
                     durationMinutes: Number(durationMinutes),
                     caloriesBurned: caloriesBurned ? Number(caloriesBurned) : null,
-                    exercises: exercises.map(({ exerciseId, sets, reps, weightKg, durationSeconds, notes }) => ({
+                    notes: exercises.map((e) => e.notes).filter(Boolean).join("; ") || null,
+                    exercises: exercises.map(({ exerciseId, sets, reps, weightKg, durationSeconds }) => ({
                         exerciseId,
-                        sets,
-                        reps,
-                        weightKg: weightKg || null,
-                        durationSeconds: durationSeconds || null,
-                        notes: notes || null,
+                        sets: Array.from({ length: sets || 1 }, () => ({
+                            reps: reps || null,
+                            weightKg: weightKg || null,
+                            durationSeconds: durationSeconds || null,
+                        })),
                     })),
                 },
             });
