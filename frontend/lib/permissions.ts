@@ -2,7 +2,7 @@ import { createAccessControl } from "better-auth/plugins/access";
 import { adminAc } from "better-auth/plugins/admin/access";
 
 /**
- * Permission System for MacroChef
+ * Permission System for Mizan
  *
  * Defines resources and actions for fine-grained access control.
  * Used by Better Auth access plugin to enforce permissions beyond simple roles.

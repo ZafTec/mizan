@@ -8,7 +8,7 @@ import { getAuditLogs } from "@/data/audit";
 
 
 export const metadata = {
-  title: "Admin Dashboard | Macro Chef",
+  title: "Admin Dashboard | Mizan",
   description: "System administration dashboard",
 };
 

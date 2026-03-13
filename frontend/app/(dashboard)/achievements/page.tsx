@@ -152,7 +152,7 @@ export default async function AchievementsPage() {
 	                        <AppFeatureIllustration variant="achievements" className="h-auto w-full" />
 	                    </div>
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No achievements yet</h3>
-					<p className="text-slate-500 dark:text-slate-400">Start using MacroChef to earn achievements!</p>
+					<p className="text-slate-500 dark:text-slate-400">Start using Mizan to earn achievements!</p>
 				</div>
 			)}
         </div>

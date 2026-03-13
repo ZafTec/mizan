@@ -160,8 +160,8 @@ export default function PrivacyPage() {
 						If you have any questions about this Privacy Policy or our data practices, please contact us:
 					</p>
 					<div className="mt-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
-						<p className="text-slate-700 dark:text-slate-300"><strong>Email:</strong> privacy@mizan.app</p>
-						<p className="text-slate-700 dark:text-slate-300 mt-2"><strong>Website:</strong> <a href="https://mizan.app" className="text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300">mizan.app</a></p>
+						<p className="text-slate-700 dark:text-slate-300"><strong>Email:</strong> contact@zaftech.co</p>
+						<p className="text-slate-700 dark:text-slate-300 mt-2"><strong>Website:</strong> <a href="https://mizan.example.com" className="text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300">mizan.example.com</a></p>
 					</div>
 				</section>
 			</div>

@@ -73,13 +73,13 @@ export default async function Home() {
 							Track your nutrition, plan meals, and achieve your fitness goals with personalized AI coaching. Mizan helps you find the perfect balance.
 						</p>
 						<div className="mt-8 flex flex-col gap-4 sm:flex-row">
-							<Link href="/register" className="btn-secondary btn-lg border-slate-900/20 dark:border-white/20 bg-white/95 dark:bg-slate-800/95 text-brand-500 dark:text-brand-700 hover:bg-white dark:hover:bg-slate-800">
+							<Link href="/register" className="btn-secondary btn-lg border-white/20 bg-white/95 dark:bg-white/95 text-brand-600 dark:text-brand-600 hover:bg-white dark:hover:bg-white">
 								Get Started Free
 								<AnimatedIcon name="arrowRight" size={18} aria-hidden="true" />
 							</Link>
 							<Link
 								href="/login"
-								className="btn-lg inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-800/20 dark:border-white/10 dark:bg-white/10 px-6 py-3.5 font-semibold dark:text-white text-slate-800/70 backdrop-blur-sm transition-colors hover:bg-slate-800/10 dark:hover:bg-slate-800/10"
+								className="btn-lg inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 dark:border-white/10 bg-white/10 dark:bg-white/10 px-6 py-3.5 font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20 dark:hover:bg-white/20"
 							>
 								<AnimatedIcon name="lock" size={18} aria-hidden="true" />
 								Sign In
@@ -88,7 +88,7 @@ export default async function Home() {
 
 						<div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
 							{["Fast logging", "Smart planning", "Trainer-ready progress"].map((item, index) => (
-								<div key={item} className="stagger-item rounded-2xl border border-slate-800/10 dark:border-white/10bg-slate-800/10  dark:bg-white/10 px-4 py-3 text-sm text-slate-800/90 dark:text-white/90 backdrop-blur-sm" style={{ animationDelay: `${index * 100}ms` }}>
+								<div key={item} className="stagger-item rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white/90 backdrop-blur-sm" style={{ animationDelay: `${index * 100}ms` }}>
 									{item}
 								</div>
 							))}
@@ -158,7 +158,7 @@ export default async function Home() {
 								className="group relative overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50 shadow-lg shadow-slate-950/5 dark:border-white/10 dark:bg-slate-900/80"
 							>
 								<Image
-									src={placeHolderImage}
+									src={recipe.imageUrl || placeHolderImage}
 									alt={recipe.name}
 									className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105"
 									width={400}

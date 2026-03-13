@@ -33,6 +33,7 @@ export interface RecipeDto extends Omit<components["schemas"]["RecipeDto"], "nut
 export interface PopularRecipe {
     _id: string;
     name: string;
+    imageUrl?: string | null;
     totalMacros: {
         calories: number;
         protein: number;
@@ -54,6 +55,7 @@ export async function getPopularRecipes(): Promise<PopularRecipe[]> {
         return (result.items || []).map((r) => ({
             _id: r.id || "",
             name: r.title || "",
+            imageUrl: r.imageUrl,
             totalMacros: {
                 calories: r.nutrition?.caloriesPerServing || 0,
                 protein: r.nutrition?.proteinGrams || 0,

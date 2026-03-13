@@ -3,6 +3,7 @@ import { getUserServer } from "@/helper/session";
 import Pagination from "@/components/Pagination";
 import SearchExercises from "./SearchExercises";
 import Image from "next/image";
+import Link from "next/link";
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +31,10 @@ export default async function ExercisesPage({
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Exercises</h1>
                     <p className="text-slate-500 mt-1">Browse {totalCount} exercises for your workouts</p>
                 </div>
+                <Link href="/workouts" className="btn-primary">
+                    <i className="ri-add-circle-line" />
+                    Log Workout
+                </Link>
             </div>
 
             <SearchExercises initialSearch={params.search} initialCategory={params.category} />

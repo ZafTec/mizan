@@ -71,80 +71,84 @@ export default async function RecipesPage({
 				)}
 			</div>
 
-			{/* Quick Collections */}
+			{/* Quick Stats */}
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-				{[
-					{
-						name: "Favorites",
-						icon: "ri-heart-3-line",
-						count: favoriteCount,
-						color: "bg-rose-600",
-						href: "/recipes/favorites",
-						authRequired: true,
-					},
-					{
-						name: "My Recipes",
-						icon: "ri-restaurant-line",
-						count: totalCount,
-						color: "bg-brand-600",
-						href: "/recipes",
-						authRequired: false,
-					},
-					{
-						name: "Recent",
-						icon: "ri-history-line",
-						count: Math.min(recipes.length, 5),
-						color: "bg-slate-900 dark:bg-slate-100 dark:text-slate-900",
-						href: "/recipes",
-						authRequired: false,
-					},
-				]
-					.filter((c) => !c.authRequired || user)
-					.map((collection) => (
-						<Link key={collection.name} href={collection.href} className="card-hover p-5 group">
+				{user ? (
+					<>
+						<Link href="/recipes/favorites" className="card-hover p-5 group">
 							<div className="flex items-center gap-4">
-								<div
-									className={`w-12 h-12 rounded-2xl ${collection.color} flex items-center justify-center shadow-lg text-white`}
-								>
-									<i className={`${collection.icon} text-xl text-current`} />
+								<div className="w-12 h-12 rounded-2xl bg-rose-600 flex items-center justify-center shadow-lg text-white">
+									<i className="ri-heart-3-line text-xl" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-semibold text-slate-900 dark:text-slate-100">
-										{collection.name}
-									</h3>
-									<p className="text-sm text-slate-500 dark:text-slate-400">{collection.count} recipes</p>
+									<h3 className="font-semibold text-slate-900 dark:text-slate-100">Favorites</h3>
+									<p className="text-sm text-slate-500 dark:text-slate-400">{favoriteCount} saved</p>
 								</div>
 								<i className="ri-arrow-right-s-line text-xl text-slate-400 dark:text-slate-500 group-hover:text-brand-500 transition-colors" />
 							</div>
 						</Link>
-					))}
-			</div>
-
-			{/* Create Recipe CTA — auth-gated */}
-			{user && (
-				<div className="card overflow-hidden">
-					<div className="relative p-8 bg-slate-50/90 dark:bg-slate-900/60">
-						<div className="absolute top-0 right-0 w-64 h-64 bg-slate-200/40 dark:bg-slate-800/40 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-						<div className="relative flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
-							<div className="w-16 h-16 rounded-2xl bg-accent-600 flex items-center justify-center shadow-lg shadow-accent-500/30">
-								<i className="ri-restaurant-2-line text-3xl text-white" />
+						<div className="card p-5">
+							<div className="flex items-center gap-4">
+								<div className="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center shadow-lg text-white">
+									<i className="ri-restaurant-line text-xl" />
+								</div>
+								<div className="flex-1">
+									<h3 className="font-semibold text-slate-900 dark:text-slate-100">Community</h3>
+									<p className="text-sm text-slate-500 dark:text-slate-400">{totalCount} recipes</p>
+								</div>
 							</div>
-							<div className="flex-1">
-								<h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
-									Create Your Own Recipe
-								</h3>
-								<p className="text-slate-600 dark:text-slate-300">
-									Share your favorite healthy meals with the community
-								</p>
-							</div>
-							<Link href="/recipes/add" className="btn-secondary whitespace-nowrap">
-								<i className="ri-add-line" />
-								Add Recipe
-							</Link>
 						</div>
-					</div>
-				</div>
-			)}
+						<div className="card p-5">
+							<div className="flex items-center gap-4">
+								<div className="w-12 h-12 rounded-2xl bg-accent-600 flex items-center justify-center shadow-lg text-white">
+									<i className="ri-line-chart-line text-xl" />
+								</div>
+								<div className="flex-1">
+									<h3 className="font-semibold text-slate-900 dark:text-slate-100">This Page</h3>
+									<p className="text-sm text-slate-500 dark:text-slate-400">{recipes.length} shown</p>
+								</div>
+							</div>
+						</div>
+					</>
+				) : (
+					<>
+						<div className="card p-5">
+							<div className="flex items-center gap-4">
+								<div className="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center shadow-lg text-white">
+									<i className="ri-restaurant-line text-xl" />
+								</div>
+								<div className="flex-1">
+									<h3 className="font-semibold text-slate-900 dark:text-slate-100">Recipes</h3>
+									<p className="text-sm text-slate-500 dark:text-slate-400">{totalCount} available</p>
+								</div>
+							</div>
+						</div>
+						<div className="card p-5">
+							<div className="flex items-center gap-4">
+								<div className="w-12 h-12 rounded-2xl bg-accent-600 flex items-center justify-center shadow-lg text-white">
+									<i className="ri-fire-line text-xl" />
+								</div>
+								<div className="flex-1">
+									<h3 className="font-semibold text-slate-900 dark:text-slate-100">Nutrition Tracked</h3>
+									<p className="text-sm text-slate-500 dark:text-slate-400">Calories &amp; macros</p>
+								</div>
+							</div>
+						</div>
+						<Link href="/register" className="card-hover p-5 group">
+							<div className="flex items-center gap-4">
+								<div className="w-12 h-12 rounded-2xl bg-rose-600 flex items-center justify-center shadow-lg text-white">
+									<i className="ri-heart-3-line text-xl" />
+								</div>
+								<div className="flex-1">
+									<h3 className="font-semibold text-slate-900 dark:text-slate-100">Sign Up</h3>
+									<p className="text-sm text-slate-500 dark:text-slate-400">Save favorites &amp; create</p>
+								</div>
+								<i className="ri-arrow-right-s-line text-xl text-slate-400 dark:text-slate-500 group-hover:text-brand-500 transition-colors" />
+							</div>
+						</Link>
+					</>
+				)}
+			</div>
 
 			{/* All Recipes */}
 			<div className="card p-6">
@@ -241,6 +245,32 @@ export default async function RecipesPage({
 					baseUrl={baseUrl}
 				/>
 			</div>
+
+			{/* Create Recipe CTA */}
+			{user && (
+				<div className="card overflow-hidden">
+					<div className="relative p-8 bg-slate-50/90 dark:bg-slate-900/60">
+						<div className="absolute top-0 right-0 w-64 h-64 bg-slate-200/40 dark:bg-slate-800/40 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+						<div className="relative flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
+							<div className="w-16 h-16 rounded-2xl bg-accent-600 flex items-center justify-center shadow-lg shadow-accent-500/30">
+								<i className="ri-restaurant-2-line text-3xl text-white" />
+							</div>
+							<div className="flex-1">
+								<h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
+									Create Your Own Recipe
+								</h3>
+								<p className="text-slate-600 dark:text-slate-300">
+									Share your favorite healthy meals with the community
+								</p>
+							</div>
+							<Link href="/recipes/add" className="btn-secondary whitespace-nowrap">
+								<i className="ri-add-line" />
+								Add Recipe
+							</Link>
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

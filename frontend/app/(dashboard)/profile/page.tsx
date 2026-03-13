@@ -68,6 +68,12 @@ export default function ProfilePage() {
 				icon: "flame",
 			},
 			{
+				href: "/workouts",
+				title: "Workouts",
+				description: "Log sessions and browse the exercise library.",
+				icon: "rocket",
+			},
+			{
 				href: "/body-measurements",
 				title: "Measurements",
 				description: "Track body composition and progress changes.",
