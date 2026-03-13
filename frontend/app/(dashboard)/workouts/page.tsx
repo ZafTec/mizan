@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { clientApi } from "@/lib/api.client";
@@ -34,11 +34,40 @@ function getDefaults(category: ExerciseCategory): Pick<WorkoutExercise, "sets" |
     return { sets: 3, reps: 10 };
 }
 
-type Tab = "log" | "library";
+interface WorkoutSet {
+    setNumber: number;
+    reps: number | null;
+    weightKg: number | null;
+    durationSeconds: number | null;
+    distanceMeters: number | null;
+    completed: boolean;
+}
+
+interface WorkoutExerciseHistory {
+    id: string;
+    exerciseName: string;
+    category: string;
+    muscleGroup: string | null;
+    sortOrder: number;
+    sets: WorkoutSet[];
+}
+
+interface WorkoutHistory {
+    id: string;
+    name: string | null;
+    workoutDate: string;
+    durationMinutes: number | null;
+    caloriesBurned: number | null;
+    notes: string | null;
+    createdAt: string;
+    exercises: WorkoutExerciseHistory[];
+}
+
+type Tab = "log" | "history" | "library";
 
 export default function WorkoutsPage() {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<Tab>("log");
+    const [activeTab, setActiveTab] = useState<Tab>("history");
 
     // Workout form state
     const [name, setName] = useState("");
@@ -62,6 +91,41 @@ export default function WorkoutsPage() {
     const [libraryTotalPages, setLibraryTotalPages] = useState(0);
     const [isLoadingLibrary, setIsLoadingLibrary] = useState(false);
     const [libraryLoaded, setLibraryLoaded] = useState(false);
+
+    // History state
+    const [historyWorkouts, setHistoryWorkouts] = useState<WorkoutHistory[]>([]);
+    const [historyPage, setHistoryPage] = useState(1);
+    const [historyTotal, setHistoryTotal] = useState(0);
+    const [historyTotalPages, setHistoryTotalPages] = useState(0);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+    const [historyLoaded, setHistoryLoaded] = useState(false);
+    const [expandedWorkout, setExpandedWorkout] = useState<string | null>(null);
+
+    const loadHistory = useCallback(async (page = 1) => {
+        setIsLoadingHistory(true);
+        try {
+            const result = await clientApi<{
+                items: WorkoutHistory[];
+                totalCount: number;
+                totalPages: number;
+            }>(`/api/Workouts?page=${page}&pageSize=10&sortBy=date&sortOrder=desc`);
+            setHistoryWorkouts(result.items || []);
+            setHistoryTotal(result.totalCount || 0);
+            setHistoryTotalPages(result.totalPages || 0);
+            setHistoryPage(page);
+            setHistoryLoaded(true);
+        } catch {
+            appToast.error("Failed to load workout history");
+        } finally {
+            setIsLoadingHistory(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (activeTab === "history" && !historyLoaded) {
+            loadHistory();
+        }
+    }, [activeTab, historyLoaded, loadHistory]);
 
     const handleSearch = async () => {
         if (!searchTerm.trim()) return;
@@ -104,6 +168,9 @@ export default function WorkoutsPage() {
         setActiveTab(tab);
         if (tab === "library" && !libraryLoaded) {
             loadLibrary();
+        }
+        if (tab === "history" && !historyLoaded) {
+            loadHistory();
         }
     };
 
@@ -171,7 +238,8 @@ export default function WorkoutsPage() {
             setCaloriesBurned("");
             setExercises([]);
             appToast.success("Workout logged");
-            router.refresh();
+            setHistoryLoaded(false);
+            setActiveTab("history");
         } catch (error) {
             appToast.error(error, "Failed to log workout");
         } finally {
@@ -303,6 +371,18 @@ export default function WorkoutsPage() {
             <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
                 <button
                     type="button"
+                    onClick={() => handleTabChange("history")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        activeTab === "history"
+                            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm"
+                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                    }`}
+                >
+                    <i className="ri-history-line mr-1.5" />
+                    History
+                </button>
+                <button
+                    type="button"
                     onClick={() => handleTabChange("log")}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         activeTab === "log"
@@ -326,6 +406,188 @@ export default function WorkoutsPage() {
                     Exercise Library
                 </button>
             </div>
+
+            {/* History Tab */}
+            {activeTab === "history" && (
+                <div className="space-y-6">
+                    {/* Stats Summary */}
+                    {historyLoaded && !isLoadingHistory && historyWorkouts.length > 0 && (
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <div className="card p-4 text-center">
+                                <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{historyTotal}</div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Total Workouts</div>
+                            </div>
+                            <div className="card p-4 text-center">
+                                <div className="text-2xl font-bold text-brand-600 dark:text-brand-400">
+                                    {historyWorkouts.reduce((sum, w) => sum + (w.exercises?.length || 0), 0)}
+                                </div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Exercises (this page)</div>
+                            </div>
+                            <div className="card p-4 text-center">
+                                <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                                    {historyWorkouts.reduce((sum, w) => sum + (w.durationMinutes || 0), 0)}
+                                </div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Minutes (this page)</div>
+                            </div>
+                            <div className="card p-4 text-center">
+                                <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                                    {historyWorkouts.reduce((sum, w) => sum + (w.caloriesBurned || 0), 0)}
+                                </div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Calories (this page)</div>
+                            </div>
+                        </div>
+                    )}
+
+                    {isLoadingHistory ? (
+                        <div className="card p-16 flex items-center justify-center">
+                            <Loading />
+                        </div>
+                    ) : historyWorkouts.length === 0 ? (
+                        <div className="card p-16 text-center">
+                            <i className="ri-dumbbell-line text-4xl text-slate-400 dark:text-slate-500 mb-3 block" />
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No workouts yet</h3>
+                            <p className="text-slate-500 dark:text-slate-400 mb-4">Start logging workouts to see your history here.</p>
+                            <button type="button" onClick={() => setActiveTab("log")} className="btn-primary">
+                                <i className="ri-add-line mr-1.5" />
+                                Log Your First Workout
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {historyWorkouts.map((workout) => {
+                                const isExpanded = expandedWorkout === workout.id;
+                                const totalSets = workout.exercises.reduce((sum, e) => sum + e.sets.length, 0);
+                                const totalVolume = workout.exercises.reduce((sum, e) =>
+                                    sum + e.sets.reduce((s, set) =>
+                                        s + ((set.reps || 0) * (set.weightKg || 0)), 0), 0);
+
+                                return (
+                                    <div key={workout.id} className="card overflow-hidden">
+                                        <button
+                                            type="button"
+                                            onClick={() => setExpandedWorkout(isExpanded ? null : workout.id)}
+                                            className="w-full p-4 sm:p-5 text-left hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <div className="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-500/20 flex items-center justify-center shrink-0">
+                                                        <i className="ri-dumbbell-line text-lg text-brand-600 dark:text-brand-400" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                                                            {workout.name || "Workout"}
+                                                        </h3>
+                                                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                                                            {new Date(workout.workoutDate + "T00:00:00").toLocaleDateString("en-US", {
+                                                                weekday: "short", month: "short", day: "numeric",
+                                                            })}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-4 shrink-0">
+                                                    <div className="hidden sm:flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+                                                        {workout.durationMinutes && (
+                                                            <span className="flex items-center gap-1">
+                                                                <i className="ri-time-line" />{workout.durationMinutes}m
+                                                            </span>
+                                                        )}
+                                                        <span className="flex items-center gap-1">
+                                                            <i className="ri-list-check-2" />{workout.exercises.length} exercises
+                                                        </span>
+                                                        <span className="flex items-center gap-1">
+                                                            <i className="ri-repeat-line" />{totalSets} sets
+                                                        </span>
+                                                        {totalVolume > 0 && (
+                                                            <span className="flex items-center gap-1">
+                                                                <i className="ri-scales-line" />{Math.round(totalVolume)} kg
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <i className={`ri-arrow-${isExpanded ? "up" : "down"}-s-line text-lg text-slate-400`} />
+                                                </div>
+                                            </div>
+
+                                            {/* Mobile stats row */}
+                                            <div className="sm:hidden flex flex-wrap gap-3 mt-2 text-xs text-slate-500 dark:text-slate-400">
+                                                {workout.durationMinutes && (
+                                                    <span className="flex items-center gap-1"><i className="ri-time-line" />{workout.durationMinutes}m</span>
+                                                )}
+                                                <span className="flex items-center gap-1"><i className="ri-list-check-2" />{workout.exercises.length} ex</span>
+                                                <span className="flex items-center gap-1"><i className="ri-repeat-line" />{totalSets} sets</span>
+                                                {totalVolume > 0 && (
+                                                    <span className="flex items-center gap-1"><i className="ri-scales-line" />{Math.round(totalVolume)} kg</span>
+                                                )}
+                                                {workout.caloriesBurned && (
+                                                    <span className="flex items-center gap-1"><i className="ri-fire-line" />{workout.caloriesBurned} kcal</span>
+                                                )}
+                                            </div>
+                                        </button>
+
+                                        {isExpanded && (
+                                            <div className="border-t border-slate-100 dark:border-slate-800 px-4 sm:px-5 pb-4 sm:pb-5 pt-3 space-y-3">
+                                                {workout.notes && (
+                                                    <p className="text-sm text-slate-500 dark:text-slate-400 italic">{workout.notes}</p>
+                                                )}
+                                                {workout.exercises.map((ex) => (
+                                                    <div key={ex.id} className="rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3 space-y-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-medium text-sm text-slate-900 dark:text-slate-100">{ex.exerciseName}</span>
+                                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${categoryBadge(ex.category)}`}>
+                                                                {ex.category}
+                                                            </span>
+                                                            {ex.muscleGroup && (
+                                                                <span className="text-xs text-slate-500 dark:text-slate-400">{ex.muscleGroup}</span>
+                                                            )}
+                                                        </div>
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1">
+                                                            {ex.sets.map((set, si) => (
+                                                                <div key={si} className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-2">
+                                                                    <span className="font-mono text-slate-400 dark:text-slate-500 w-5">#{set.setNumber}</span>
+                                                                    {set.reps != null && <span>{set.reps} reps</span>}
+                                                                    {set.weightKg != null && <span className="text-brand-600 dark:text-brand-400">{set.weightKg} kg</span>}
+                                                                    {set.durationSeconds != null && (
+                                                                        <span>{set.durationSeconds >= 60 ? `${Math.round(set.durationSeconds / 60)}m` : `${set.durationSeconds}s`}</span>
+                                                                    )}
+                                                                    {set.distanceMeters != null && <span>{set.distanceMeters}m</span>}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* History Pagination */}
+                    {historyTotalPages > 1 && (
+                        <div className="flex justify-center items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => loadHistory(historyPage - 1)}
+                                disabled={historyPage <= 1 || isLoadingHistory}
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-700"
+                            >
+                                <i className="ri-arrow-left-s-line" />
+                            </button>
+                            <span className="text-sm text-slate-500 dark:text-slate-400">
+                                Page {historyPage} of {historyTotalPages}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => loadHistory(historyPage + 1)}
+                                disabled={historyPage >= historyTotalPages || isLoadingHistory}
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-700"
+                            >
+                                <i className="ri-arrow-right-s-line" />
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Log Workout Tab */}
             {activeTab === "log" && (

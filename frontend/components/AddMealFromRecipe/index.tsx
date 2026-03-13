@@ -22,8 +22,11 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const warningsRef = useRef<HTMLDivElement>(null);
-	const today = new Date().toISOString().split("T")[0];
-	const defaultDate = searchParams.get("date") || today;
+	const now = new Date();
+	const today = now.toISOString().split("T")[0];
+	const nowLocal = `${today}T${now.toTimeString().slice(0, 5)}`;
+	const queryDate = searchParams.get("date") || today;
+	const defaultDateTime = queryDate === today ? nowLocal : `${queryDate}T12:00`;
 
 	const [servings, setServings] = useState(1);
 	const [vals, setVals] = useState({
@@ -89,13 +92,13 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 						<FieldError formState={formState} name="mealType" />
 					</div>
 					<div>
-						<label htmlFor="date" className="label">Date</label>
+						<label htmlFor="date" className="label">Date & Time</label>
 						<input
-							type="date"
+							type="datetime-local"
 							id="date"
 							name="date"
-							defaultValue={defaultDate}
-							max={today}
+							defaultValue={defaultDateTime}
+							max={nowLocal}
 							className="input"
 						/>
 						<FieldError formState={formState} name="date" />
