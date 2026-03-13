@@ -145,6 +145,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapMcp("/mcp");
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "mizan-mcp", version = "2.0.0" }));
 
 Log.Information("[MCP] MCP endpoint mapped to /mcp");
 Log.Information("[MCP] Backend API URL: {BackendUrl}", builder.Configuration["BACKEND_API_URL"]);

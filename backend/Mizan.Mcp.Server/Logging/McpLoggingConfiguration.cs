@@ -1,11 +1,12 @@
 using Serilog;
 using Serilog.Events;
+using Serilog.Exceptions;
 
 namespace Mizan.Mcp.Server.Logging;
 
 public static class McpLoggingConfiguration
 {
-    public static ILogger CreateLogger(IConfiguration configuration)
+    public static Serilog.ILogger CreateLogger(IConfiguration configuration)
     {
         var showMcpLogs = configuration.GetValue<bool>("SHOW_MCP_LOGS", false);
         var minimumLevel = showMcpLogs ? LogEventLevel.Debug : LogEventLevel.Information;

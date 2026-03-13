@@ -217,89 +217,101 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
 
     #endregion
 
-    #region Controller Integration Tests
+    #region Streamable HTTP Integration Tests
 
     [Fact]
-    public async Task ConnectSse_WithValidToken_ReturnsEventStream()
+    public async Task StreamableHttp_WithValidToken_InitializesSuccessfully()
     {
         // Arrange
         var userId = Guid.NewGuid();
         var tokenId = Guid.NewGuid();
         var token = "mcp_valid_sse_token";
-        
+
         _mockBackendClient.Setup(x => x.ValidateTokenAsync(token, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new TokenValidation(userId, tokenId));
 
         var client = _factory.CreateClient();
-        
-        // Use a cancellation token to abort the SSE connection after we verify headers
-        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(500));
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        HttpResponseMessage? response = null;
+        var request = new JsonRpcRequest
+        {
+            Method = "initialize",
+            Id = 1
+        };
 
-        // Act - SSE endpoint keeps connection open, so we catch the cancellation
-        try
-        {
-            response = await client.GetAsync($"/mcp/sse?token={token}", cts.Token);
-        }
-        catch (TaskCanceledException)
-        {
-            // Expected - SSE connection was aborted by cancellation token
-        }
-
-        // If we didn't get a response before cancellation, make a new request without waiting for body
-        if (response == null)
-        {
-            using var quickCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
-            try
-            {
-                response = await client.GetAsync($"/mcp/sse?token={token}", HttpCompletionOption.ResponseHeadersRead, quickCts.Token);
-            }
-            catch (TaskCanceledException)
-            {
-                // Should not happen with ResponseHeadersRead, but just in case
-                Assert.Fail("Failed to get SSE response headers");
-                return;
-            }
-        }
+        // Act
+        var response = await client.PostMcpAsync(request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        response.Content.Headers.ContentType?.MediaType.Should().Be("text/event-stream");
-        response.Headers.CacheControl?.NoCache.Should().BeTrue();
+        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
+        jsonResponse.Should().NotBeNull();
+        jsonResponse!.Error.Should().BeNull();
+        jsonResponse.Result.Should().NotBeNull();
     }
 
     [Fact]
-    public async Task ConnectSse_WithoutToken_ReturnsEventStream()
+    public async Task StreamableHttp_WithoutToken_ToolCallReturnsAuthError()
     {
         // Arrange
         var client = _factory.CreateClient();
 
+        var request = new JsonRpcRequest
+        {
+            Method = "tools/call",
+            Params = System.Text.Json.JsonSerializer.SerializeToElement(new
+            {
+                name = "search_foods",
+                arguments = new { search = "chicken" }
+            }),
+            Id = 1
+        };
+
         // Act
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-        var response = await client.GetAsync("/mcp/sse", HttpCompletionOption.ResponseHeadersRead, cts.Token);
+        var response = await client.PostMcpAsync(request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        response.Content.Headers.ContentType?.MediaType.Should().Be("text/event-stream");
+        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
+        jsonResponse.Should().NotBeNull();
+        jsonResponse!.Result.Should().NotBeNull();
+
+        var result = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(jsonResponse.Result!.ToString()!);
+        result.GetProperty("isError").GetBoolean().Should().BeTrue();
     }
 
     [Fact]
-    public async Task ConnectSse_WithInvalidToken_ReturnsEventStream()
+    public async Task StreamableHttp_WithInvalidToken_ToolCallReturnsAuthError()
     {
         // Arrange
         _mockBackendClient.Setup(x => x.ValidateTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((TokenValidation?)null);
 
         var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "invalid-token");
+
+        var request = new JsonRpcRequest
+        {
+            Method = "tools/call",
+            Params = System.Text.Json.JsonSerializer.SerializeToElement(new
+            {
+                name = "search_foods",
+                arguments = new { search = "chicken" }
+            }),
+            Id = 1
+        };
 
         // Act
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-        var response = await client.GetAsync("/mcp/sse?token=invalid", HttpCompletionOption.ResponseHeadersRead, cts.Token);
+        var response = await client.PostMcpAsync(request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        response.Content.Headers.ContentType?.MediaType.Should().Be("text/event-stream");
+        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
+        jsonResponse.Should().NotBeNull();
+        jsonResponse!.Result.Should().NotBeNull();
+
+        var result = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(jsonResponse.Result!.ToString()!);
+        result.GetProperty("isError").GetBoolean().Should().BeTrue();
     }
 
     [Fact]
