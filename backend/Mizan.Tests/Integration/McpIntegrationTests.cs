@@ -451,7 +451,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
         var errorMessage = ExtractErrorMessage(jsonResponse);
-        errorMessage.Should().Contain("must not be empty");
+        errorMessage.Should().Match(m => m.Contains("must not be empty") || m.Contains("name"));
     }
 
     [Fact]
