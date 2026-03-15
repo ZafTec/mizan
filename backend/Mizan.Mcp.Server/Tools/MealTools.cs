@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Text.Json;
 using Mizan.Mcp.Server.Services;
 using ModelContextProtocol.Server;
 
@@ -30,7 +31,26 @@ public sealed class MealTools
     {
         var qs = "/api/Meals/range?days=1";
         if (!string.IsNullOrEmpty(date)) qs += $"&endDate={date}";
-        return await _api.GetAsync(qs, ct);
+        var raw = await _api.GetAsync(qs, ct);
+
+        using var doc = JsonDocument.Parse(raw);
+        var days = doc.RootElement.GetProperty("days");
+
+        if (days.GetArrayLength() == 0)
+        {
+            var targetDate = date ?? DateTime.UtcNow.ToString("yyyy-MM-dd");
+            return JsonSerializer.Serialize(new { date = targetDate, totalCalories = 0m, totalProtein = 0m, totalCarbs = 0m, totalFat = 0m });
+        }
+
+        var day = days[0];
+        return JsonSerializer.Serialize(new
+        {
+            date = day.GetProperty("date").ToString(),
+            totalCalories = day.GetProperty("calories").GetDecimal(),
+            totalProtein = day.GetProperty("protein").GetDecimal(),
+            totalCarbs = day.GetProperty("carbs").GetDecimal(),
+            totalFat = day.GetProperty("fat").GetDecimal()
+        });
     }
 
     [McpServerTool(Name = "get_nutrition_range", ReadOnly = true, Idempotent = true)]
@@ -125,7 +145,7 @@ public sealed class MealTools
             "MEAL" or "BREAKFAST" or "LUNCH" or "DINNER" => "MEAL",
             "SNACK" => "SNACK",
             "DRINK" or "BEVERAGE" => "DRINK",
-            _ => "MEAL"
+            var raw => throw new ArgumentException($"Meal type '{raw}' is invalid. Use MEAL, SNACK, or DRINK.")
         };
     }
 }

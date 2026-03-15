@@ -62,6 +62,11 @@ public sealed class RecipeTools
         [Description("Manual nutrition JSON (only used when no ingredients have foodId). Object with: caloriesPerServing, proteinGrams, carbsGrams, fatGrams, fiberGrams")] string? nutritionJson = null,
         CancellationToken ct = default)
     {
+        if (string.IsNullOrWhiteSpace(title))
+            throw new ArgumentException("'title' is required.");
+        if (string.IsNullOrWhiteSpace(ingredientsJson))
+            throw new ArgumentException("'ingredientsJson' is required.");
+
         var ingredients = ParseIngredients(ingredientsJson);
         var instructions = ParseStringArray(instructionsJson);
         var tagList = ParseTags(tags);

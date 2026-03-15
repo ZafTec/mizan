@@ -104,12 +104,12 @@ builder.Services.AddMcpServer(options =>
             Log.Information("[MCP Tool] Tool succeeded: {ToolName} (elapsed: {ElapsedMs}ms, error: {IsError})",
                 toolName, sw.ElapsedMilliseconds, result.IsError);
 
-            var backend = context.Server.Services?.GetService<IBackendApiClient>();
+            var backend = httpContext.RequestServices.GetService<IBackendApiClient>();
             var tokenId = Guid.TryParse(httpContext.User.FindFirst("mcp_token_id")?.Value, out var tid) ? tid : Guid.Empty;
 
             if (backend != null && userId != Guid.Empty)
             {
-                _ = backend.LogUsageAsync(tokenId, userId, toolName, null, result.IsError != true, null, (int)sw.ElapsedMilliseconds);
+                await backend.LogUsageAsync(tokenId, userId, toolName, null, result.IsError != true, null, (int)sw.ElapsedMilliseconds);
             }
 
             return result;
@@ -121,15 +121,19 @@ builder.Services.AddMcpServer(options =>
             Log.Error("[MCP Tool] Tool failed: {ToolName} (elapsed: {ElapsedMs}ms, error: {Error})",
                 toolName, sw.ElapsedMilliseconds, ex.Message);
 
-            var backend = context.Server.Services?.GetService<IBackendApiClient>();
+            var backend = httpContext.RequestServices.GetService<IBackendApiClient>();
             var tokenId = Guid.TryParse(httpContext.User.FindFirst("mcp_token_id")?.Value, out var tid) ? tid : Guid.Empty;
 
             if (backend != null && userId != Guid.Empty)
             {
-                _ = backend.LogUsageAsync(tokenId, userId, toolName, null, false, ex.Message, (int)sw.ElapsedMilliseconds);
+                await backend.LogUsageAsync(tokenId, userId, toolName, null, false, ex.Message, (int)sw.ElapsedMilliseconds);
             }
 
-            throw;
+            return new CallToolResult
+            {
+                Content = [new TextContentBlock { Text = ex.Message }],
+                IsError = true
+            };
         }
     });
 });

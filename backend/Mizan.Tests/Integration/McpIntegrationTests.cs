@@ -1183,7 +1183,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
 
         jsonResponse.Should().NotBeNull();
-        ExtractErrorMessage(jsonResponse).Should().Contain("Backend API error");
+        ExtractErrorMessage(jsonResponse).Should().Contain("API error");
     }
 
     #endregion
