@@ -1250,7 +1250,14 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
         result.Should().ContainKey("content");
 
-        var logs = await _apiFixture.GetMcpUsageLogsByUserId(userId);
+        // LogUsageAsync is fire-and-forget in Program.cs — poll until it completes.
+        List<McpUsageLog> logs = [];
+        for (var i = 0; i < 20; i++)
+        {
+            logs = await _apiFixture.GetMcpUsageLogsByUserId(userId);
+            if (logs.Count >= 1) break;
+            await Task.Delay(100);
+        }
         logs.Should().HaveCount(1);
         logs.Should().OnlyContain(l => l.ToolName == "log_food");
     }
@@ -1322,8 +1329,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         if (result == null || !result.ContainsKey("content")) return null;
         var contentArray = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(result["content"].ToString());
         if (contentArray == null || contentArray.Count == 0) return null;
-        var text = contentArray[0]["text"].ToString();
-        return JsonSerializer.Deserialize<string>(text);
+        // JsonElement.ToString() on a String type returns the raw value without JSON quotes.
+        // The tool text is already a plain string (not a JSON-encoded string), so return it directly.
+        return contentArray[0]["text"].ToString();
     }
 
     private string ExtractErrorMessage(JsonRpcResponse? response)
