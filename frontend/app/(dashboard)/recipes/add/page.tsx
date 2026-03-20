@@ -166,6 +166,52 @@ export default function Page() {
 		setSelectedIngredients(newIngredients);
 	}
 
+	const [isLoggingMeal, setIsLoggingMeal] = useState(false);
+
+	const handleLogMealDirectly = async (e: React.MouseEvent) => {
+		e.preventDefault();
+		if (!name) {
+			appToast.error('Please enter a recipe name before logging');
+			return;
+		}
+
+		if (selectedIngredients.length === 0 || totalMacros.calories === 0) {
+			appToast.error('Please add ingredients before logging');
+			return;
+		}
+
+		setIsLoggingMeal(true);
+		
+		// Divide by servings to get 1 serving of the recipe
+		const ratio = 1 / Math.max(1, servings);
+		
+		const mealData = {
+			name: `${name} (1 serving)`,
+			mealType: "MEAL",
+			entryDate: new Date().toISOString().split("T")[0],
+			servings: 1,
+			calories: Math.round(totalMacros.calories * ratio),
+			proteinGrams: Number((totalMacros.protein * ratio).toFixed(1)),
+			carbsGrams: Number((totalMacros.carbs * ratio).toFixed(1)),
+			fatGrams: Number((totalMacros.fat * ratio).toFixed(1)),
+			fiberGrams: Number((totalMacros.fiber * ratio).toFixed(1))
+		};
+
+		try {
+			await clientApi('/api/Meals', {
+				method: 'POST',
+				body: mealData,
+			});
+			appToast.success('Meal logged successfully!');
+			router.push('/meals');
+		} catch (err) {
+			console.error('[Recipe Create] Failed to log meal:', err);
+			appToast.error(err, 'Failed to log meal. Please try again.');
+		} finally {
+			setIsLoggingMeal(false);
+		}
+	}
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsSubmitting(true);
@@ -387,7 +433,7 @@ export default function Page() {
 				</div>
 
 				{/* Ingredients Card */}
-				<div className="card p-6 space-y-4 relative overflow-visible!">
+				<div className="card p-6 space-y-4 relative overflow-visible! z-20">
 					<h2 className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
 						<i className="ri-list-check-2 text-brand-500" />
 						Ingredients
@@ -651,24 +697,45 @@ export default function Page() {
 					</div>
 				)}
 
-				{/* Submit Button */}
-				<button
-					type="submit"
-					disabled={isSubmitting}
-					className="btn-primary w-full py-4 text-lg"
-				>
-					{isSubmitting ? (
-						<>
-							<Loading size="sm" />
-							Creating Recipe...
-						</>
-					) : (
-						<>
-							<i className="ri-check-line text-xl" />
-							Create Recipe
-						</>
-					)}
-				</button>
+				{/* Action Buttons */}
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+					<button
+						type="button"
+						onClick={handleLogMealDirectly}
+						disabled={isLoggingMeal || isSubmitting}
+						className="btn-secondary w-full py-4 text-lg"
+					>
+						{isLoggingMeal ? (
+							<>
+								<Loading size="sm" />
+								Logging Meal...
+							</>
+						) : (
+							<>
+								<i className="ri-restaurant-line text-xl" />
+								Log as Meal Directly
+							</>
+						)}
+					</button>
+
+					<button
+						type="submit"
+						disabled={isSubmitting || isLoggingMeal}
+						className="btn-primary w-full py-4 text-lg"
+					>
+						{isSubmitting ? (
+							<>
+								<Loading size="sm" />
+								Creating Recipe...
+							</>
+						) : (
+							<>
+								<i className="ri-check-line text-xl" />
+								Create Recipe
+							</>
+						)}
+					</button>
+				</div>
 			</form>
 		</div>
 	);

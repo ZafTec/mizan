@@ -281,7 +281,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
             </div>
 
             {/* Ingredients Card */}
-            <div className="card p-6 space-y-4 relative overflow-visible!">
+            <div className="card p-6 space-y-4 relative overflow-visible z-20">
                 <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                     <i className="ri-list-check-2 text-brand-500" />
                     Ingredients
