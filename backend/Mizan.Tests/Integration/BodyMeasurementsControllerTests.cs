@@ -37,8 +37,9 @@ public class BodyMeasurementsControllerTests
         var logResponse = await client.PostAsJsonAsync("/api/BodyMeasurements", logCommand);
         logResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var measurementId = await logResponse.Content.ReadFromJsonAsync<Guid>();
-        measurementId.Should().NotBe(Guid.Empty);
+        var logResult = await logResponse.Content.ReadFromJsonAsync<LogMeasurementResponse>();
+        logResult.Should().NotBeNull();
+        logResult!.Id.Should().NotBe(Guid.Empty);
 
         var listResponse = await client.GetAsync("/api/BodyMeasurements");
         listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -62,7 +63,9 @@ public class BodyMeasurementsControllerTests
         var logCommand = new { Date = DateTime.UtcNow, WeightKg = 75.0m };
         var logResponse = await client.PostAsJsonAsync("/api/BodyMeasurements", logCommand);
         logResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var measurementId = await logResponse.Content.ReadFromJsonAsync<Guid>();
+        var logResult = await logResponse.Content.ReadFromJsonAsync<LogMeasurementResponse>();
+        logResult.Should().NotBeNull();
+        var measurementId = logResult!.Id;
 
         var deleteResponse = await client.DeleteAsync($"/api/BodyMeasurements/{measurementId}");
         deleteResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -96,4 +99,5 @@ public class BodyMeasurementsControllerTests
 
     private sealed record MeasurementPagedResult(List<MeasurementItem> Items, int TotalCount);
     private sealed record MeasurementItem(Guid Id, decimal? WeightKg, decimal? BodyFatPercentage, DateTime Date);
+    private sealed record LogMeasurementResponse(Guid Id);
 }
