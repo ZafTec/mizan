@@ -4,6 +4,7 @@ import Pagination from "@/components/Pagination";
 import SearchExercises from "./SearchExercises";
 import Image from "next/image";
 import Link from "next/link";
+import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
 
 export const dynamic = 'force-dynamic';
 
@@ -26,15 +27,20 @@ export default async function ExercisesPage({
 
     return (
         <div className="space-y-6 lg:space-y-8" data-testid="exercises-page">
-            <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div className="space-y-2">
-                    <p className="eyebrow">Library</p>
-                    <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-                        Exercises
-                    </h1>
-                    <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-                        Browse {totalCount} exercises for your workouts.
-                    </p>
+            <header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+                <div className="flex items-start gap-6">
+                    <div className="hidden w-28 shrink-0 drop-shadow-md sm:block">
+                        <AppFeatureIllustration variant="workouts" />
+                    </div>
+                    <div className="space-y-2">
+                        <p className="eyebrow">Library</p>
+                        <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+                            Exercises
+                        </h1>
+                        <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+                            Browse {totalCount} exercises for your workouts.
+                        </p>
+                    </div>
                 </div>
                 <Link href="/workouts" className="btn-primary">
                     <i className="ri-add-circle-line" />

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { clientApi } from "@/lib/api.client";
 import { appToast } from "@/lib/toast";
 import Loading from "@/components/Loading";
+import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
 
 type ExerciseCategory = "Strength" | "Cardio" | "Flexibility" | "Balance" | string;
 
@@ -360,7 +361,7 @@ export default function WorkoutsPage() {
 
     return (
         <div className="space-y-6 lg:space-y-8" data-testid="workouts-page">
-            <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
                 <div className="space-y-2">
                     <p className="eyebrow">Training</p>
                     <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
@@ -369,6 +370,9 @@ export default function WorkoutsPage() {
                     <p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
                         Log sessions, browse the exercise library, and track volume over time.
                     </p>
+                </div>
+                <div className="hidden w-40 shrink-0 drop-shadow-md sm:block">
+                    <AppFeatureIllustration variant="workouts" />
                 </div>
             </header>
 

@@ -6,6 +6,7 @@ import { getUserOptionalServer } from "@/helper/session";
 import Pagination from "@/components/Pagination";
 import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
 import IngredientFilters from "./IngredientFilters";
+import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
 
 export const dynamic = 'force-dynamic';
 
@@ -22,15 +23,20 @@ export default async function Page(
 
 	return (
 		<div className="space-y-6 lg:space-y-8" data-testid="ingredient-list">
-			<header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-				<div className="space-y-2">
-					<p className="eyebrow">Catalogue</p>
-					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-						Foods
-					</h1>
-					<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						Browse and manage nutritional ingredients.
-					</p>
+			<header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+				<div className="flex items-start gap-6">
+					<div className="hidden w-28 shrink-0 drop-shadow-md sm:block">
+						<AppFeatureIllustration variant="recipes" />
+					</div>
+					<div className="space-y-2">
+						<p className="eyebrow">Catalogue</p>
+						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+							Foods
+						</h1>
+						<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+							Browse and manage nutritional ingredients.
+						</p>
+					</div>
 				</div>
 				<div className="flex items-center gap-3">
 					<SearchBar />

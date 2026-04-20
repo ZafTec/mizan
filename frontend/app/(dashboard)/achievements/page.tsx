@@ -15,7 +15,7 @@ export default async function AchievementsPage() {
 
     return (
 			<div className="space-y-6 lg:space-y-8" data-testid="achievements-page">
-				<header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+				<header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
 					<div className="space-y-2">
 						<p className="eyebrow">Milestones</p>
 						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
@@ -24,6 +24,9 @@ export default async function AchievementsPage() {
 						<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 							Track your streak, unlock badges and celebrate the small wins.
 						</p>
+					</div>
+					<div className="hidden w-40 shrink-0 drop-shadow-md sm:block">
+						<AppFeatureIllustration variant="achievements" />
 					</div>
 				</header>
 
