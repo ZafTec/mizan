@@ -70,3 +70,10 @@ postgres_data/
 redis_data/
 
 *.log
+
+# Superdesign scratch (local-only draft cache)
+.superdesign/v2_drafts/
+.superdesign/design-system.md
+
+# Host notes (not for repo)
+vps_setup.txt

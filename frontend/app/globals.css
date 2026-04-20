@@ -537,3 +537,61 @@ html.reduce-motion *::after {
     transform: translate3d(4rem, -2rem, 0) scale(1.08);
   }
 }
+
+/* ---------- App Shell overrides (dashboard / admin) ---------- */
+/* When an AppShell is mounted, suppress the root-layout Navbar + footer
+   and let the AppShell take the full viewport. */
+body:has(.shell-fullbleed) > nav,
+body:has(.shell-fullbleed) > footer {
+  display: none !important;
+}
+body:has(.shell-fullbleed) > main {
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: none !important;
+  width: 100% !important;
+  grow: 1;
+}
+body:has(.shell-fullbleed) > main > div.page-transition {
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: none !important;
+}
+body:has(.shell-fullbleed) {
+  padding-bottom: 0 !important;
+}
+body:has(.shell-fullbleed)::before,
+body:has(.shell-fullbleed)::after {
+  display: none;
+}
+
+/* ---------- Morning Dashboard accents ---------- */
+.macro-chip-calories { color: var(--color-burnt-peach-600); background: color-mix(in oklab, var(--color-burnt-peach-500) 12%, white); }
+.macro-chip-protein  { color: var(--color-verdigris-700);   background: color-mix(in oklab, var(--color-verdigris-500) 16%, white); }
+.macro-chip-carbs    { color: var(--color-tuscan-sun-700);  background: color-mix(in oklab, var(--color-tuscan-sun-500) 16%, white); }
+.macro-chip-fat      { color: var(--color-sandy-brown-700); background: color-mix(in oklab, var(--color-sandy-brown-500) 16%, white); }
+
+html.dark .macro-chip-calories { color: var(--color-burnt-peach-300); background: color-mix(in oklab, var(--color-burnt-peach-500) 18%, var(--color-charcoal-blue-950)); }
+html.dark .macro-chip-protein  { color: var(--color-verdigris-300);   background: color-mix(in oklab, var(--color-verdigris-500) 18%, var(--color-charcoal-blue-950)); }
+html.dark .macro-chip-carbs    { color: var(--color-tuscan-sun-300);  background: color-mix(in oklab, var(--color-tuscan-sun-500) 18%, var(--color-charcoal-blue-950)); }
+html.dark .macro-chip-fat      { color: var(--color-sandy-brown-300); background: color-mix(in oklab, var(--color-sandy-brown-500) 18%, var(--color-charcoal-blue-950)); }
+
+.streak-gradient {
+  background: linear-gradient(135deg, var(--color-sandy-brown-500), var(--color-tuscan-sun-500));
+  box-shadow: 0 8px 24px -12px color-mix(in oklab, var(--color-sandy-brown-500) 55%, transparent);
+}
+
+.glass-panel {
+  background: color-mix(in oklab, white 78%, transparent);
+  backdrop-filter: blur(18px);
+  border: 1px solid color-mix(in oklab, var(--color-charcoal-blue-200) 60%, transparent);
+  box-shadow: var(--shadow-panel);
+  border-radius: 28px;
+}
+html.dark .glass-panel {
+  background: color-mix(in oklab, var(--color-charcoal-blue-950) 72%, transparent);
+  border-color: color-mix(in oklab, var(--color-charcoal-blue-700) 40%, transparent);
+}
+
+.ring-track { stroke: color-mix(in oklab, var(--color-charcoal-blue-200) 75%, transparent); }
+html.dark .ring-track { stroke: color-mix(in oklab, var(--color-charcoal-blue-700) 55%, transparent); }

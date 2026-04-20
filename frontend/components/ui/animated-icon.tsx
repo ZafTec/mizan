@@ -5,9 +5,11 @@ import {
 	ActivityIcon,
 	ArrowRightIcon,
 	BadgeAlertIcon,
+	BellIcon,
 	BotIcon,
 	BrainIcon,
 	CalendarCheckIcon,
+	CartIcon,
 	ChartLineIcon,
 	CircleCheckIcon,
 	CookingPotIcon,
@@ -22,6 +24,7 @@ import {
 	MoonIcon,
 	RocketIcon,
 	SearchIcon,
+	SettingsIcon,
 	ShieldCheckIcon,
 	SparklesIcon,
 	SunIcon,
@@ -31,6 +34,7 @@ import {
 	UserIcon,
 	UsersIcon,
 	XIcon,
+	ZapIcon,
 } from "lucide-animated";
 import { cn } from "@/lib/utils";
 
@@ -38,9 +42,11 @@ const iconMap = {
 	activity: ActivityIcon,
 	arrowRight: ArrowRightIcon,
 	badgeAlert: BadgeAlertIcon,
+	bell: BellIcon,
 	bot: BotIcon,
 	brain: BrainIcon,
 	calendarCheck: CalendarCheckIcon,
+	cart: CartIcon,
 	chartLine: ChartLineIcon,
 	circleCheck: CircleCheckIcon,
 	cookingPot: CookingPotIcon,
@@ -55,6 +61,7 @@ const iconMap = {
 	moon: MoonIcon,
 	rocket: RocketIcon,
 	search: SearchIcon,
+	settings: SettingsIcon,
 	shieldCheck: ShieldCheckIcon,
 	sparkles: SparklesIcon,
 	sun: SunIcon,
@@ -64,6 +71,7 @@ const iconMap = {
 	user: UserIcon,
 	users: UsersIcon,
 	x: XIcon,
+	zap: ZapIcon,
 } as const;
 
 export type AnimatedIconName = keyof typeof iconMap;

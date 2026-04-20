@@ -1,21 +1,25 @@
 import { getUserOptionalServer } from "@/helper/session";
 import { redirect } from "next/navigation";
+import AppShell from "@/components/Layout/AppShell";
 
 export default async function AdminLayout({
-    children,
+	children,
 }: {
-    children: React.ReactNode;
+	children: React.ReactNode;
 }) {
-    const user = await getUserOptionalServer();
+	const user = await getUserOptionalServer();
 
-    if (!user) {
-        redirect("/login");
-    }
+	if (!user) {
+		redirect("/login");
+	}
 
-    // Enforce admin role verification
-    if (user.role !== "admin") {
-        redirect("/");
-    }
+	if (user.role !== "admin") {
+		redirect("/");
+	}
 
-    return <>{children}</>;
+	return (
+		<AppShell user={user} variant="admin">
+			{children}
+		</AppShell>
+	);
 }
