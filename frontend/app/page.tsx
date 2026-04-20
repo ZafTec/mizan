@@ -9,6 +9,7 @@ import { getPopularRecipes } from "@/data/recipe";
 import { FeatureSection } from "@/components/Landing/FeatureSection";
 import { TestimonialSection } from "@/components/Landing/TestimonialCard";
 import { CTASection } from "@/components/Landing/CTASection";
+import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
 
 export const dynamic = 'force-dynamic';
 
@@ -66,8 +67,8 @@ export default async function Home() {
 					<div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
 					<div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-brand-500/10 blur-3xl" />
 					<div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
-					<div className="absolute right-0 top-1/2 -translate-y-1/2 hidden lg:block w-112.5 h-112.5 opacity-90 xl:right-10 2xl:right-20 pointer-events-none">
-						<Image src="/assets/hero-device.svg" alt="Mizan App Preview" fill sizes="(max-width: 1024px) 0px, 450px" className="object-contain drop-shadow-2xl" />
+					<div className="pointer-events-none absolute right-0 top-1/2 hidden w-[28rem] -translate-y-1/2 opacity-95 drop-shadow-2xl lg:block xl:right-10 2xl:right-20">
+						<AppFeatureIllustration variant="dashboard" priority />
 					</div>
 
 					<div className="relative z-10 max-w-3xl">
