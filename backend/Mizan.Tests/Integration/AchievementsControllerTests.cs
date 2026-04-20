@@ -29,6 +29,7 @@ public class AchievementsControllerTests
     public async Task Get_PaginatesResults()
     {
         await _fixture.ResetDatabaseAsync();
+        await ResetAchievementsAsync();
 
         var userId = Guid.NewGuid();
         var email = $"ach-page-{userId:N}@example.com";
@@ -51,6 +52,7 @@ public class AchievementsControllerTests
     public async Task Get_SearchesByName()
     {
         await _fixture.ResetDatabaseAsync();
+        await ResetAchievementsAsync();
 
         var userId = Guid.NewGuid();
         var email = $"ach-search-{userId:N}@example.com";
@@ -72,6 +74,7 @@ public class AchievementsControllerTests
     public async Task Get_FiltersByCategory()
     {
         await _fixture.ResetDatabaseAsync();
+        await ResetAchievementsAsync();
 
         var userId = Guid.NewGuid();
         var email = $"ach-cat-{userId:N}@example.com";
@@ -93,6 +96,7 @@ public class AchievementsControllerTests
     public async Task Get_SortsByNameAscendingAndDescending()
     {
         await _fixture.ResetDatabaseAsync();
+        await ResetAchievementsAsync();
 
         var userId = Guid.NewGuid();
         var email = $"ach-sort-{userId:N}@example.com";
@@ -115,6 +119,7 @@ public class AchievementsControllerTests
     public async Task Get_SortsByPointsDescending()
     {
         await _fixture.ResetDatabaseAsync();
+        await ResetAchievementsAsync();
 
         var userId = Guid.NewGuid();
         var email = $"ach-points-{userId:N}@example.com";
@@ -137,6 +142,7 @@ public class AchievementsControllerTests
     public async Task Analytics_RequiresAdmin()
     {
         await _fixture.ResetDatabaseAsync();
+        await ResetAchievementsAsync();
 
         var userId = Guid.NewGuid();
         var email = $"ach-nonadmin-{userId:N}@example.com";
@@ -152,6 +158,7 @@ public class AchievementsControllerTests
     public async Task Analytics_PaginatesRowsWhileKeepingGlobalStats()
     {
         await _fixture.ResetDatabaseAsync();
+        await ResetAchievementsAsync();
 
         var adminId = Guid.NewGuid();
         var email = $"ach-admin-{adminId:N}@example.com";
@@ -174,6 +181,7 @@ public class AchievementsControllerTests
     public async Task Analytics_SearchesFilterRows()
     {
         await _fixture.ResetDatabaseAsync();
+        await ResetAchievementsAsync();
 
         var adminId = Guid.NewGuid();
         var email = $"ach-admin-s-{adminId:N}@example.com";
@@ -197,6 +205,7 @@ public class AchievementsControllerTests
     public async Task Analytics_SortsByName()
     {
         await _fixture.ResetDatabaseAsync();
+        await ResetAchievementsAsync();
 
         var adminId = Guid.NewGuid();
         var email = $"ach-admin-sort-{adminId:N}@example.com";
@@ -214,6 +223,28 @@ public class AchievementsControllerTests
     }
 
     // ---------- helpers ----------
+
+    // ApiTestFixture.ResetDatabaseAsync does NOT truncate achievements/user_achievements
+    // because the migration seeds 20 baseline achievements (referenced by the evaluator).
+    // These tests need a clean slate to assert exact counts, so we clear both tables
+    // explicitly. Order matters: user_achievements has an FK to achievements.
+    private async Task ResetAchievementsAsync()
+    {
+        using var scope = _fixture.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+
+        if (db.Database.IsInMemory())
+        {
+            db.UserAchievements.RemoveRange(db.UserAchievements);
+            db.Achievements.RemoveRange(db.Achievements);
+            await db.SaveChangesAsync();
+        }
+        else
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "TRUNCATE TABLE \"user_achievements\", \"achievements\" RESTART IDENTITY CASCADE;");
+        }
+    }
 
     private async Task SeedAchievementsAsync(int count)
     {
