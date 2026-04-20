@@ -504,8 +504,10 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 					</>
 				)}
 
-				{/* Page content */}
-				<main className="flex-1 px-4 pb-24 pt-6 sm:px-6 lg:px-8 lg:pb-10">
+				{/* Page content — flex-1 fills the column so long pages scroll inside
+					it and short pages don't leave unclaimed space. Bottom padding clears
+					the fixed mobile bottom-nav (~4.5rem tall). */}
+				<main className="flex-1 px-4 pt-6 pb-[calc(4.5rem+env(safe-area-inset-bottom,0))] sm:px-6 lg:px-8 lg:pb-10">
 					<div className="page-transition mx-auto w-full max-w-7xl">{children}</div>
 				</main>
 

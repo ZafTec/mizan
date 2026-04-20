@@ -34,14 +34,15 @@ export function ModalShell({
 
 	useEffect(() => {
 		if (!open) return;
-		const prev = document.body.style.overflow;
 		document.body.style.overflow = "hidden";
 		const onEsc = (e: KeyboardEvent) => {
 			if (e.key === "Escape") onClose();
 		};
 		window.addEventListener("keydown", onEsc);
 		return () => {
-			document.body.style.overflow = prev;
+			// Always clear the inline override rather than restoring a saved value —
+			// a saved "hidden" from overlapping modals can lock scroll permanently.
+			document.body.style.overflow = "";
 			window.removeEventListener("keydown", onEsc);
 		};
 	}, [open, onClose]);

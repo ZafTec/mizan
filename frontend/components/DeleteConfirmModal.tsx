@@ -27,7 +27,6 @@ export function DeleteConfirmModal({
 
 	useEffect(() => {
 		if (!isOpen) return;
-		const prev = document.body.style.overflow;
 		document.body.style.overflow = "hidden";
 		const handleEscape = (e: KeyboardEvent) => {
 			if (e.key === "Escape") onClose();
@@ -35,7 +34,7 @@ export function DeleteConfirmModal({
 		window.addEventListener("keydown", handleEscape);
 		return () => {
 			window.removeEventListener("keydown", handleEscape);
-			document.body.style.overflow = prev;
+			document.body.style.overflow = "";
 		};
 	}, [isOpen, onClose]);
 

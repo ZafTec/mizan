@@ -46,10 +46,9 @@ export default function ConfirmationModal({
     // Lock body scroll while open so the modal truly overlays the viewport.
     useEffect(() => {
         if (!isOpen) return;
-        const prev = document.body.style.overflow;
         document.body.style.overflow = "hidden";
         return () => {
-            document.body.style.overflow = prev;
+            document.body.style.overflow = "";
         };
     }, [isOpen]);
 

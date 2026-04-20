@@ -230,8 +230,9 @@ html {
 
   html {
     @apply scroll-smooth;
-    /* `overflow-x: clip` prevents horizontal scroll from decorative fixed blobs
-       + animated blur filters without creating a new scroll container. */
+    /* `overflow-x: clip` on the html element kills horizontal overflow from
+       decorative fixed blobs + animated blur filters without creating a new
+       vertical scroll context. Keep it OFF the body — body owns vertical scroll. */
     overflow-x: clip;
   }
 
@@ -242,7 +243,6 @@ html {
     font-family: var(--font-sans);
     position: relative;
     isolation: isolate;
-    overflow-x: clip;
   }
 
   html.dark body {
