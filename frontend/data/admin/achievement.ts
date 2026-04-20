@@ -27,9 +27,26 @@ export interface AdminAchievementList {
     totalPages: number;
 }
 
-export async function getAchievementsAdmin(page: number = 1, pageSize: number = 50): Promise<AdminAchievementList> {
+export interface AchievementListQuery {
+    page?: number;
+    pageSize?: number;
+    searchTerm?: string;
+    category?: string;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+}
+
+export async function getAchievementsAdmin(query: AchievementListQuery = {}): Promise<AdminAchievementList> {
     try {
-        const params = new URLSearchParams({ Page: String(page), PageSize: String(pageSize) });
+        const params = new URLSearchParams({
+            Page: String(query.page ?? 1),
+            PageSize: String(query.pageSize ?? 20),
+        });
+        if (query.searchTerm) params.set("SearchTerm", query.searchTerm);
+        if (query.category) params.set("Category", query.category);
+        if (query.sortBy) params.set("SortBy", query.sortBy);
+        if (query.sortOrder) params.set("SortOrder", query.sortOrder);
+
         const result = await serverApi<{
             items: AdminAchievement[];
             totalCount: number;
@@ -163,12 +180,34 @@ export interface AchievementAnalytics {
     usersWithAtLeastOne: number;
     averageUnlocksPerUser: number;
     rows: AchievementAnalyticsRow[];
+    rowsTotalCount: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
     categories: AchievementAnalyticsCategory[];
 }
 
-export async function getAchievementAnalytics(): Promise<AchievementAnalytics | null> {
+export interface AnalyticsQuery {
+    page?: number;
+    pageSize?: number;
+    searchTerm?: string;
+    category?: string;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+}
+
+export async function getAchievementAnalytics(query: AnalyticsQuery = {}): Promise<AchievementAnalytics | null> {
     try {
-        return await serverApi<AchievementAnalytics>("/api/Achievements/analytics");
+        const params = new URLSearchParams({
+            Page: String(query.page ?? 1),
+            PageSize: String(query.pageSize ?? 20),
+        });
+        if (query.searchTerm) params.set("SearchTerm", query.searchTerm);
+        if (query.category) params.set("Category", query.category);
+        if (query.sortBy) params.set("SortBy", query.sortBy);
+        if (query.sortOrder) params.set("SortOrder", query.sortOrder);
+
+        return await serverApi<AchievementAnalytics>(`/api/Achievements/analytics?${params}`);
     } catch (error) {
         adminAchievementLogger.error("Failed to load analytics", { error });
         return null;

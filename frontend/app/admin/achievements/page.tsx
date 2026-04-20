@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { getAchievementsAdmin } from "@/data/admin/achievement";
 import AchievementActions from "./AchievementActions";
+import SortableHeader from "@/components/SortableHeader";
+import Pagination from "@/components/Pagination";
+import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
 
 export const dynamic = "force-dynamic";
 
@@ -25,8 +28,33 @@ function criteriaSummary(criteriaType?: string | null, threshold?: number): stri
     }
 }
 
-export default async function AdminAchievementsPage() {
-    const { items, totalCount } = await getAchievementsAdmin(1, 100);
+export default async function AdminAchievementsPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+    const params = await searchParams;
+    const { page, pageSize, sortBy, sortOrder } = parseListParams(params, {
+        pageSize: 20,
+        sortBy: "category",
+        sortOrder: "asc",
+    });
+    const searchTerm = typeof params.search === "string" ? params.search.trim() : "";
+    const categoryFilter = typeof params.category === "string" ? params.category.trim() : "";
+
+    const { items, totalCount, totalPages } = await getAchievementsAdmin({
+        page,
+        pageSize,
+        searchTerm: searchTerm || undefined,
+        category: categoryFilter || undefined,
+        sortBy: sortBy ?? undefined,
+        sortOrder,
+    });
+
+    const baseUrl = buildListUrl("/admin/achievements", {
+        search: searchTerm || undefined,
+        category: categoryFilter || undefined,
+    });
 
     return (
         <div className="space-y-6 lg:space-y-8">
@@ -52,9 +80,34 @@ export default async function AdminAchievementsPage() {
                 </div>
             </header>
 
-            <div className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-                Showing <span className="font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{items.length}</span>
-                {" "}of <span className="font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{totalCount}</span> achievements
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <form method="GET" className="flex flex-col gap-2 sm:flex-row">
+                    <input
+                        type="search"
+                        name="search"
+                        placeholder="Search name, description, category..."
+                        defaultValue={searchTerm}
+                        className="input h-10 w-full sm:w-80"
+                    />
+                    <input
+                        type="text"
+                        name="category"
+                        placeholder="Category"
+                        defaultValue={categoryFilter}
+                        className="input h-10 w-full sm:w-40"
+                    />
+                    <button type="submit" className="btn-primary h-10">Apply</button>
+                    {(searchTerm || categoryFilter) && (
+                        <Link href="/admin/achievements" className="btn-ghost h-10">
+                            Clear
+                        </Link>
+                    )}
+                </form>
+
+                <div className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+                    Showing <span className="font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{items.length}</span>{" "}
+                    of <span className="font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{totalCount}</span> achievements
+                </div>
             </div>
 
             <div className="card overflow-hidden">
@@ -62,10 +115,10 @@ export default async function AdminAchievementsPage() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-charcoal-blue-100 bg-charcoal-blue-50/50 dark:border-white/10 dark:bg-charcoal-blue-900/60">
-                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Name</th>
-                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Category</th>
-                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Unlock criteria</th>
-                                <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Points</th>
+                                <SortableHeader sortKey="name" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Name</SortableHeader>
+                                <SortableHeader sortKey="category" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Category</SortableHeader>
+                                <SortableHeader sortKey="criteriaType" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Unlock criteria</SortableHeader>
+                                <SortableHeader sortKey="points" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Points</SortableHeader>
                                 <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Actions</th>
                             </tr>
                         </thead>
@@ -73,7 +126,9 @@ export default async function AdminAchievementsPage() {
                             {items.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-12 text-center text-charcoal-blue-500 dark:text-charcoal-blue-400">
-                                        No achievements yet. Create one to get started.
+                                        {searchTerm || categoryFilter
+                                            ? "No achievements match your filters."
+                                            : "No achievements yet. Create one to get started."}
                                     </td>
                                 </tr>
                             ) : (
@@ -108,6 +163,16 @@ export default async function AdminAchievementsPage() {
                     </table>
                 </div>
             </div>
+
+            {totalPages > 1 && (
+                <Pagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    totalCount={totalCount}
+                    pageSize={pageSize}
+                    baseUrl={baseUrl}
+                />
+            )}
         </div>
     );
 }

@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Common;
@@ -8,6 +9,7 @@ namespace Mizan.Application.Queries;
 public record GetAchievementsQuery : IRequest<GetAchievementsResult>, IPagedQuery, ISortableQuery
 {
     public string? Category { get; init; }
+    public string? SearchTerm { get; init; }
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 50;
     public string? SortBy { get; init; }
@@ -46,6 +48,16 @@ public record AchievementDto
 
 public class GetAchievementsQueryHandler : IRequestHandler<GetAchievementsQuery, GetAchievementsResult>
 {
+    private static readonly Dictionary<string, Expression<Func<Domain.Entities.Achievement, object>>> SortMappings =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["name"] = a => a.Name,
+            ["category"] = a => a.Category ?? string.Empty,
+            ["points"] = a => a.Points,
+            ["threshold"] = a => a.Threshold,
+            ["criteriatype"] = a => a.CriteriaType ?? string.Empty,
+        };
+
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
 
@@ -71,6 +83,15 @@ public class GetAchievementsQueryHandler : IRequestHandler<GetAchievementsQuery,
             query = query.Where(a => a.Category == request.Category);
         }
 
+        if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+        {
+            var searchTerm = request.SearchTerm.Trim().ToLower();
+            query = query.Where(a =>
+                a.Name.ToLower().Contains(searchTerm) ||
+                (a.Description != null && a.Description.ToLower().Contains(searchTerm)) ||
+                (a.Category != null && a.Category.ToLower().Contains(searchTerm)));
+        }
+
         var userAchievements = await _context.UserAchievements
             .Where(ua => ua.UserId == userId)
             .ToListAsync(cancellationToken);
@@ -79,9 +100,13 @@ public class GetAchievementsQueryHandler : IRequestHandler<GetAchievementsQuery,
 
         var totalCount = await query.CountAsync(cancellationToken);
 
-        var pageAchievements = await query
-            .OrderBy(a => a.Category)
-            .ThenBy(a => a.Points)
+        var sortedQuery = query.ApplySorting(
+            request,
+            SortMappings,
+            defaultSort: a => a.Category ?? string.Empty,
+            defaultDescending: false);
+
+        var pageAchievements = await sortedQuery
             .ApplyPaging(request)
             .ToListAsync(cancellationToken);
 

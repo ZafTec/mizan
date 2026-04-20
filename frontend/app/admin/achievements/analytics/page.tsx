@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getAchievementAnalytics, type AchievementAnalyticsRow } from "@/data/admin/achievement";
+import { getAchievementAnalytics } from "@/data/admin/achievement";
 import SortableHeader from "@/components/SortableHeader";
 import Pagination from "@/components/Pagination";
 import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
@@ -19,27 +19,6 @@ function fmtDate(iso?: string | null): string {
     }
 }
 
-type SortKey = "name" | "category" | "unlockedBy" | "unlockRate" | "mostRecentUnlockAt" | "points";
-
-function sortRows(
-    rows: AchievementAnalyticsRow[],
-    sortBy: SortKey | null,
-    sortOrder: "asc" | "desc"
-): AchievementAnalyticsRow[] {
-    if (!sortBy) return rows;
-    const dir = sortOrder === "asc" ? 1 : -1;
-    const sorted = [...rows].sort((a, b) => {
-        const av = a[sortBy as keyof AchievementAnalyticsRow];
-        const bv = b[sortBy as keyof AchievementAnalyticsRow];
-        if (av == null && bv == null) return 0;
-        if (av == null) return 1;
-        if (bv == null) return -1;
-        if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
-        return String(av).localeCompare(String(bv)) * dir;
-    });
-    return sorted;
-}
-
 export default async function AnalyticsPage({
     searchParams,
 }: {
@@ -54,7 +33,14 @@ export default async function AnalyticsPage({
     const searchTerm = typeof params.search === "string" ? params.search.trim() : "";
     const categoryFilter = typeof params.category === "string" ? params.category.trim() : "";
 
-    const analytics = await getAchievementAnalytics();
+    const analytics = await getAchievementAnalytics({
+        page,
+        pageSize,
+        searchTerm: searchTerm || undefined,
+        category: categoryFilter || undefined,
+        sortBy: sortBy ?? undefined,
+        sortOrder,
+    });
 
     if (!analytics) {
         return (
@@ -77,27 +63,14 @@ export default async function AnalyticsPage({
         usersWithAtLeastOne,
         averageUnlocksPerUser,
         rows,
+        rowsTotalCount,
+        totalPages,
         categories,
     } = analytics;
 
     const engagementPct = totalUsers > 0 ? Math.round((usersWithAtLeastOne / totalUsers) * 100) : 0;
     const maxUnlocked = rows.reduce((m, r) => Math.max(m, r.unlockedBy), 0);
     const zeroUnlock = rows.filter((r) => r.unlockedBy === 0);
-
-    // Client-side filter + sort + paginate (row count is bounded by total achievements).
-    const needle = searchTerm.toLowerCase();
-    const filteredRows = rows.filter((r) => {
-        if (needle && !r.name.toLowerCase().includes(needle) && !(r.category ?? "").toLowerCase().includes(needle)) {
-            return false;
-        }
-        if (categoryFilter && (r.category ?? "") !== categoryFilter) return false;
-        return true;
-    });
-    const sortedRows = sortRows(filteredRows, sortBy as SortKey | null, sortOrder);
-    const totalCount = sortedRows.length;
-    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-    const safePage = Math.min(Math.max(1, page), totalPages);
-    const pagedRows = sortedRows.slice((safePage - 1) * pageSize, safePage * pageSize);
 
     const baseUrl = buildListUrl("/admin/achievements/analytics", {
         search: searchTerm || undefined,
@@ -135,7 +108,7 @@ export default async function AnalyticsPage({
 
             {zeroUnlock.length > 0 && (
                 <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
-                    <strong>{zeroUnlock.length}</strong> achievement{zeroUnlock.length === 1 ? "" : "s"} with zero unlocks:{" "}
+                    <strong>{zeroUnlock.length}</strong> achievement{zeroUnlock.length === 1 ? "" : "s"} on this page with zero unlocks:{" "}
                     {zeroUnlock.map((r) => r.name).join(", ")}. Consider lowering the threshold or archiving.
                 </div>
             )}
@@ -186,21 +159,16 @@ export default async function AnalyticsPage({
                                 </option>
                             ))}
                         </select>
-                        <button type="submit" className="btn-primary h-10">
-                            Apply
-                        </button>
+                        <button type="submit" className="btn-primary h-10">Apply</button>
                         {(searchTerm || categoryFilter) && (
-                            <Link href="/admin/achievements/analytics" className="btn-ghost h-10">
-                                Clear
-                            </Link>
+                            <Link href="/admin/achievements/analytics" className="btn-ghost h-10">Clear</Link>
                         )}
                     </form>
                 </div>
 
                 <div className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-                    Showing <span className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{pagedRows.length}</span> of{" "}
-                    <span className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{totalCount}</span>
-                    {totalCount !== rows.length ? ` (filtered from ${rows.length})` : ""}
+                    Showing <span className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{rows.length}</span> of{" "}
+                    <span className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{rowsTotalCount}</span>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -216,14 +184,14 @@ export default async function AnalyticsPage({
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-charcoal-blue-100 dark:divide-white/10">
-                            {pagedRows.length === 0 ? (
+                            {rows.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="py-10 text-center text-charcoal-blue-500 dark:text-charcoal-blue-400">
                                         No results. {searchTerm || categoryFilter ? "Try clearing filters." : "No data yet."}
                                     </td>
                                 </tr>
                             ) : (
-                                pagedRows.map((r) => {
+                                rows.map((r) => {
                                     const widthPct = maxUnlocked > 0 ? Math.round((r.unlockedBy / maxUnlocked) * 100) : 0;
                                     return (
                                         <tr key={r.id}>
@@ -270,9 +238,9 @@ export default async function AnalyticsPage({
 
                 {totalPages > 1 && (
                     <Pagination
-                        currentPage={safePage}
+                        currentPage={page}
                         totalPages={totalPages}
-                        totalCount={totalCount}
+                        totalCount={rowsTotalCount}
                         pageSize={pageSize}
                         baseUrl={baseUrl}
                     />
