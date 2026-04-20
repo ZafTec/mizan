@@ -10,10 +10,10 @@ import Loading from "@/components/Loading";
 
 
 const MACRO_COLORS = {
-  calories: "#f97316", // orange
-  protein: "#ef4444",  // red
-  carbs: "#f59e0b",    // amber
-  fat: "#eab308",      // yellow
+  calories: "#D4654A", // burnt peach
+  protein: "#4DCFC4",  // verdigris
+  carbs: "#E8B849",    // tuscan sun
+  fat: "#B89968",      // sandy brown
 };
 
 const CHART_COLORS = {

@@ -84,22 +84,22 @@ export default async function Page(
 											</Link>
 										</td>
 										<td className="px-4 py-4 text-center">
-											<span className="inline-flex items-center rounded-lg bg-orange-50 px-2.5 py-1 text-sm font-medium text-orange-700 dark:bg-orange-500/12 dark:text-orange-300">
+											<span className="macro-chip-calories inline-flex items-center rounded-lg px-2.5 py-1 text-sm font-medium">
 												{ingredient.caloriesPer100g}
 											</span>
 										</td>
 										<td className="px-4 py-4 text-center">
-											<span className="inline-flex items-center rounded-lg bg-red-50 px-2.5 py-1 text-sm font-medium text-red-700 dark:bg-red-500/12 dark:text-red-300">
+											<span className="macro-chip-protein inline-flex items-center rounded-lg px-2.5 py-1 text-sm font-medium">
 												{ingredient.proteinPer100g}g
 											</span>
 										</td>
 										<td className="px-4 py-4 text-center">
-											<span className="inline-flex items-center rounded-lg bg-yellow-50 px-2.5 py-1 text-sm font-medium text-yellow-700 dark:bg-yellow-500/12 dark:text-yellow-300">
+											<span className="macro-chip-fat inline-flex items-center rounded-lg px-2.5 py-1 text-sm font-medium">
 												{ingredient.fatPer100g}g
 											</span>
 										</td>
 										<td className="px-4 py-4 text-center">
-											<span className="inline-flex items-center rounded-lg bg-amber-50 px-2.5 py-1 text-sm font-medium text-amber-700 dark:bg-amber-500/12 dark:text-amber-300">
+											<span className="macro-chip-carbs inline-flex items-center rounded-lg px-2.5 py-1 text-sm font-medium">
 												{ingredient.carbsPer100g}g
 											</span>
 										</td>
