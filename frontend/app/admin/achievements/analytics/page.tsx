@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { getAchievementAnalytics } from "@/data/admin/achievement";
+import { getAchievementAnalytics, type AchievementAnalyticsRow } from "@/data/admin/achievement";
+import SortableHeader from "@/components/SortableHeader";
+import Pagination from "@/components/Pagination";
+import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +19,41 @@ function fmtDate(iso?: string | null): string {
     }
 }
 
-export default async function AnalyticsPage() {
+type SortKey = "name" | "category" | "unlockedBy" | "unlockRate" | "mostRecentUnlockAt" | "points";
+
+function sortRows(
+    rows: AchievementAnalyticsRow[],
+    sortBy: SortKey | null,
+    sortOrder: "asc" | "desc"
+): AchievementAnalyticsRow[] {
+    if (!sortBy) return rows;
+    const dir = sortOrder === "asc" ? 1 : -1;
+    const sorted = [...rows].sort((a, b) => {
+        const av = a[sortBy as keyof AchievementAnalyticsRow];
+        const bv = b[sortBy as keyof AchievementAnalyticsRow];
+        if (av == null && bv == null) return 0;
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
+        return String(av).localeCompare(String(bv)) * dir;
+    });
+    return sorted;
+}
+
+export default async function AnalyticsPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+    const params = await searchParams;
+    const { page, pageSize, sortBy, sortOrder } = parseListParams(params, {
+        pageSize: 20,
+        sortBy: "unlockedBy",
+        sortOrder: "desc",
+    });
+    const searchTerm = typeof params.search === "string" ? params.search.trim() : "";
+    const categoryFilter = typeof params.category === "string" ? params.category.trim() : "";
+
     const analytics = await getAchievementAnalytics();
 
     if (!analytics) {
@@ -46,6 +83,26 @@ export default async function AnalyticsPage() {
     const engagementPct = totalUsers > 0 ? Math.round((usersWithAtLeastOne / totalUsers) * 100) : 0;
     const maxUnlocked = rows.reduce((m, r) => Math.max(m, r.unlockedBy), 0);
     const zeroUnlock = rows.filter((r) => r.unlockedBy === 0);
+
+    // Client-side filter + sort + paginate (row count is bounded by total achievements).
+    const needle = searchTerm.toLowerCase();
+    const filteredRows = rows.filter((r) => {
+        if (needle && !r.name.toLowerCase().includes(needle) && !(r.category ?? "").toLowerCase().includes(needle)) {
+            return false;
+        }
+        if (categoryFilter && (r.category ?? "") !== categoryFilter) return false;
+        return true;
+    });
+    const sortedRows = sortRows(filteredRows, sortBy as SortKey | null, sortOrder);
+    const totalCount = sortedRows.length;
+    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+    const safePage = Math.min(Math.max(1, page), totalPages);
+    const pagedRows = sortedRows.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+    const baseUrl = buildListUrl("/admin/achievements/analytics", {
+        search: searchTerm || undefined,
+        category: categoryFilter || undefined,
+    });
 
     return (
         <div className="space-y-6 lg:space-y-8">
@@ -107,28 +164,66 @@ export default async function AnalyticsPage() {
             </section>
 
             <section className="card p-6 space-y-4">
-                <h2 className="section-title">Per-achievement unlocks</h2>
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <h2 className="section-title">Per-achievement unlocks</h2>
+                    <form method="GET" className="flex flex-col gap-2 sm:flex-row">
+                        <input
+                            type="search"
+                            name="search"
+                            placeholder="Search name or category..."
+                            defaultValue={searchTerm}
+                            className="input h-10 w-full sm:w-64"
+                        />
+                        <select
+                            name="category"
+                            defaultValue={categoryFilter}
+                            className="input h-10 w-full sm:w-40"
+                        >
+                            <option value="">All categories</option>
+                            {categories.map((c) => (
+                                <option key={c.category} value={c.category}>
+                                    {c.category}
+                                </option>
+                            ))}
+                        </select>
+                        <button type="submit" className="btn-primary h-10">
+                            Apply
+                        </button>
+                        {(searchTerm || categoryFilter) && (
+                            <Link href="/admin/achievements/analytics" className="btn-ghost h-10">
+                                Clear
+                            </Link>
+                        )}
+                    </form>
+                </div>
+
+                <div className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+                    Showing <span className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{pagedRows.length}</span> of{" "}
+                    <span className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{totalCount}</span>
+                    {totalCount !== rows.length ? ` (filtered from ${rows.length})` : ""}
+                </div>
+
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-charcoal-blue-100 dark:border-white/10">
-                                <th className="py-3 pr-4 text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Name</th>
-                                <th className="py-3 pr-4 text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Category</th>
-                                <th className="py-3 pr-4 text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Unlocked</th>
-                                <th className="py-3 pr-4 text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Rate</th>
-                                <th className="py-3 pr-4 text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Last unlock</th>
-                                <th className="py-3 text-right text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Points</th>
+                                <SortableHeader sortKey="name" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="py-3 pr-4 text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Name</SortableHeader>
+                                <SortableHeader sortKey="category" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="py-3 pr-4 text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Category</SortableHeader>
+                                <SortableHeader sortKey="unlockedBy" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="py-3 pr-4 text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Unlocked</SortableHeader>
+                                <SortableHeader sortKey="unlockRate" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="py-3 pr-4 text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Rate</SortableHeader>
+                                <SortableHeader sortKey="mostRecentUnlockAt" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="py-3 pr-4 text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Last unlock</SortableHeader>
+                                <SortableHeader sortKey="points" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="py-3 text-right text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Points</SortableHeader>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-charcoal-blue-100 dark:divide-white/10">
-                            {rows.length === 0 ? (
+                            {pagedRows.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="py-10 text-center text-charcoal-blue-500 dark:text-charcoal-blue-400">
-                                        No data yet.
+                                        No results. {searchTerm || categoryFilter ? "Try clearing filters." : "No data yet."}
                                     </td>
                                 </tr>
                             ) : (
-                                rows.map((r) => {
+                                pagedRows.map((r) => {
                                     const widthPct = maxUnlocked > 0 ? Math.round((r.unlockedBy / maxUnlocked) * 100) : 0;
                                     return (
                                         <tr key={r.id}>
@@ -140,12 +235,12 @@ export default async function AnalyticsPage() {
                                                     {r.name}
                                                 </Link>
                                             </td>
-                                            <td className="py-3 pr-4 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 capitalize">
+                                            <td className="py-3 pr-4 text-sm capitalize text-charcoal-blue-500 dark:text-charcoal-blue-400">
                                                 {r.category ?? "-"}
                                             </td>
                                             <td className="py-3 pr-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-24 h-1.5 overflow-hidden rounded-full bg-charcoal-blue-100 dark:bg-charcoal-blue-900">
+                                                    <div className="h-1.5 w-24 overflow-hidden rounded-full bg-charcoal-blue-100 dark:bg-charcoal-blue-900">
                                                         <div
                                                             className="h-full rounded-full bg-brand-500"
                                                             style={{ width: `${widthPct}%` }}
@@ -172,6 +267,16 @@ export default async function AnalyticsPage() {
                         </tbody>
                     </table>
                 </div>
+
+                {totalPages > 1 && (
+                    <Pagination
+                        currentPage={safePage}
+                        totalPages={totalPages}
+                        totalCount={totalCount}
+                        pageSize={pageSize}
+                        baseUrl={baseUrl}
+                    />
+                )}
             </section>
         </div>
     );
