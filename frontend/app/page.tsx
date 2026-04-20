@@ -67,7 +67,7 @@ export default async function Home() {
 					<div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-brand-500/10 blur-3xl" />
 					<div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
 					<div className="absolute right-0 top-1/2 -translate-y-1/2 hidden lg:block w-112.5 h-112.5 opacity-90 xl:right-10 2xl:right-20 pointer-events-none">
-						<Image src="/assets/hero-device.svg" alt="Mizan App Preview" fill className="object-contain drop-shadow-2xl" />
+						<Image src="/assets/hero-device.svg" alt="Mizan App Preview" fill sizes="(max-width: 1024px) 0px, 450px" className="object-contain drop-shadow-2xl" />
 					</div>
 
 					<div className="relative z-10 max-w-3xl">

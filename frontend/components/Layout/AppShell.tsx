@@ -222,6 +222,10 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 
 	return (
 		<div className="shell-fullbleed flex min-h-screen bg-[color-mix(in_oklab,var(--color-charcoal-blue-50)_92%,white)] dark:bg-[color-mix(in_oklab,var(--color-charcoal-blue-950)_92%,black)]">
+			{/* Soft decorative blobs (v2 aesthetic) */}
+			<div aria-hidden="true" className="pointer-events-none fixed right-[-5%] top-[-10%] h-[500px] w-[500px] rounded-full bg-verdigris-200/30 blur-[120px] -z-10" />
+			<div aria-hidden="true" className="pointer-events-none fixed bottom-[-10%] left-[-5%] h-[400px] w-[400px] rounded-full bg-sandy-brown-200/25 blur-[100px] -z-10" />
+
 			{/* Desktop Sidebar */}
 			<aside
 				className={cn(
@@ -229,10 +233,10 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 					collapsed ? "w-20" : "w-72"
 				)}
 			>
-				<div className={cn("flex items-center gap-3 border-b border-charcoal-blue-200/70 px-4 py-5 dark:border-white/10", collapsed && "justify-center px-2")}>
-					<Link href="/dashboard" className="flex items-center gap-3">
+				<div className={cn("flex shrink-0 items-center gap-3 border-b border-charcoal-blue-200/70 px-4 py-5 dark:border-white/10", collapsed && "flex-col gap-2 px-2")}>
+					<Link href="/dashboard" className={cn("flex items-center gap-3", collapsed && "flex-col gap-1")}>
 						<div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-2xl ring-1 ring-brand-500/20">
-							<Image src={logoTransparent} alt="Mizan" fill className="object-cover" priority />
+							<Image src={logoTransparent} alt="Mizan" fill sizes="44px" className="object-cover" priority />
 						</div>
 						{!collapsed && (
 							<div className="flex flex-col leading-tight">
@@ -247,16 +251,17 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 						type="button"
 						onClick={() => setCollapsed((c) => !c)}
 						className={cn(
-							"ml-auto flex h-8 w-8 items-center justify-center rounded-xl border border-charcoal-blue-200 text-charcoal-blue-500 transition-colors hover:bg-charcoal-blue-50 hover:text-charcoal-blue-900 dark:border-white/10 dark:text-charcoal-blue-300 dark:hover:bg-white/5 dark:hover:text-white",
-							collapsed && "hidden"
+							"flex h-8 w-8 items-center justify-center rounded-xl border border-charcoal-blue-200 text-charcoal-blue-500 transition-colors hover:bg-charcoal-blue-50 hover:text-charcoal-blue-900 dark:border-white/10 dark:text-charcoal-blue-300 dark:hover:bg-white/5 dark:hover:text-white",
+							collapsed ? "mx-auto" : "ml-auto"
 						)}
-						aria-label="Collapse sidebar"
+						aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+						title={collapsed ? "Expand" : "Collapse"}
 					>
-						<ChevronDown className="h-4 w-4 -rotate-90" />
+						<ChevronDown className={cn("h-4 w-4 transition-transform", collapsed ? "rotate-90" : "-rotate-90")} />
 					</button>
 				</div>
 
-				<nav className={cn("flex-1 space-y-1 overflow-y-auto px-3 py-4", collapsed && "px-2")}>
+				<nav className={cn("custom-scrollbar flex-1 space-y-1 overflow-y-auto px-3 py-4", collapsed && "px-2")}>
 					{!collapsed && (
 						<p className="px-2 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-400 dark:text-charcoal-blue-400">
 							Main
@@ -276,15 +281,16 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 					))}
 				</nav>
 
-				<div className={cn("border-t border-charcoal-blue-200/70 p-3 dark:border-white/10", collapsed && "px-2")}>
+				<div className={cn("shrink-0 border-t border-charcoal-blue-200/70 p-3 dark:border-white/10", collapsed && "px-2")}>
 					{collapsed ? (
 						<button
 							type="button"
-							onClick={() => setCollapsed(false)}
-							className="flex h-10 w-full items-center justify-center rounded-2xl border border-charcoal-blue-200 text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:border-white/10 dark:text-charcoal-blue-300 dark:hover:text-white"
-							aria-label="Expand sidebar"
+							onClick={() => setShowLogoutModal(true)}
+							className="flex h-10 w-full items-center justify-center rounded-2xl text-charcoal-blue-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10"
+							aria-label="Sign out"
+							title="Sign out"
 						>
-							<ChevronDown className="h-4 w-4 rotate-90" />
+							<AnimatedIcon name="logout" size={16} />
 						</button>
 					) : (
 						<div className="flex items-center gap-3 rounded-2xl border border-charcoal-blue-200 bg-white/80 p-2.5 dark:border-white/10 dark:bg-charcoal-blue-950/60">
@@ -332,7 +338,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 						{/* Mobile logo */}
 						<Link href="/dashboard" className="flex items-center gap-2 lg:hidden">
 							<div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-xl ring-1 ring-brand-500/20">
-								<Image src={logoTransparent} alt="Mizan" fill className="object-cover" />
+								<Image src={logoTransparent} alt="Mizan" fill sizes="36px" className="object-cover" />
 							</div>
 							<span className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Mizan</span>
 						</Link>
@@ -436,11 +442,11 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 						/>
 						<aside
 							ref={mobileSheetRef}
-							className="fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] overflow-y-auto border-r border-charcoal-blue-200 bg-white p-4 shadow-2xl animate-fade-in dark:border-white/10 dark:bg-charcoal-blue-950 lg:hidden"
+							className="fixed inset-y-0 left-0 z-50 flex w-80 max-w-[85vw] flex-col border-r border-charcoal-blue-200 bg-white shadow-2xl animate-fade-in dark:border-white/10 dark:bg-charcoal-blue-950 lg:hidden"
 						>
-							<div className="mb-4 flex items-center gap-3">
+							<div className="flex shrink-0 items-center gap-3 border-b border-charcoal-blue-200/70 p-4 dark:border-white/10">
 								<div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-2xl ring-1 ring-brand-500/20">
-									<Image src={logoTransparent} alt="Mizan" fill className="object-cover" />
+									<Image src={logoTransparent} alt="Mizan" fill sizes="44px" className="object-cover" />
 								</div>
 								<div>
 									<p className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Mizan</p>
@@ -457,24 +463,28 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 									<AnimatedIcon name="x" size={16} />
 								</button>
 							</div>
-							<p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-400">
-								Main
-							</p>
-							<nav className="space-y-1" onClick={() => setMobileSheetOpen(false)}>
-								{visiblePrimary.map((item) => (
-									<SidebarLink key={item.href} item={item} collapsed={false} />
-								))}
-							</nav>
-							<div className="my-3 border-t border-charcoal-blue-200/60 dark:border-white/5" />
-							<p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-400">
-								Account
-							</p>
-							<nav className="space-y-1" onClick={() => setMobileSheetOpen(false)}>
-								{visibleSecondary.map((item) => (
-									<SidebarLink key={item.href} item={item} collapsed={false} />
-								))}
-							</nav>
-							<div className="mt-4 border-t border-charcoal-blue-200/70 pt-4 dark:border-white/10">
+
+							<div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-4">
+								<p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-400">
+									Main
+								</p>
+								<nav className="space-y-1" onClick={() => setMobileSheetOpen(false)}>
+									{visiblePrimary.map((item) => (
+										<SidebarLink key={item.href} item={item} collapsed={false} />
+									))}
+								</nav>
+								<div className="my-3 border-t border-charcoal-blue-200/60 dark:border-white/5" />
+								<p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-400">
+									Account
+								</p>
+								<nav className="space-y-1" onClick={() => setMobileSheetOpen(false)}>
+									{visibleSecondary.map((item) => (
+										<SidebarLink key={item.href} item={item} collapsed={false} />
+									))}
+								</nav>
+							</div>
+
+							<div className="shrink-0 border-t border-charcoal-blue-200/70 p-4 dark:border-white/10">
 								<button
 									type="button"
 									onClick={() => {

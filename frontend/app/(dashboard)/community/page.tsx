@@ -101,7 +101,7 @@ export default async function CommunityPage() {
 										src={recipe.imageUrl || placeholder}
 										alt={recipe.name}
 										fill
-										sizes="(max-width: 768px) 100vw, 33vw"
+										sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
 										className="object-cover transition-transform group-hover:scale-[1.03]"
 									/>
 								</div>

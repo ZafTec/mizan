@@ -538,6 +538,40 @@ html.reduce-motion *::after {
   }
 }
 
+/* ---------- Custom scrollbar (used on sidebar + any long scroll surface) ---------- */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-charcoal-blue-400) 40%, transparent) transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--color-charcoal-blue-300) 55%, transparent);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--color-verdigris-500) 55%, transparent);
+  background-clip: padding-box;
+}
+html.dark .custom-scrollbar {
+  scrollbar-color: color-mix(in oklab, var(--color-charcoal-blue-600) 55%, transparent) transparent;
+}
+html.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--color-charcoal-blue-600) 65%, transparent);
+  background-clip: padding-box;
+}
+html.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--color-verdigris-500) 50%, transparent);
+  background-clip: padding-box;
+}
+
 /* ---------- App Shell overrides (dashboard / admin) ---------- */
 /* When an AppShell is mounted, suppress the root-layout Navbar + footer
    and let the AppShell take the full viewport. */

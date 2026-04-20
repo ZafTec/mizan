@@ -178,6 +178,7 @@ export default async function RecipesPage({
 										src={recipe.imageUrl || placeHolderImage}
 										alt={recipe.title || "Recipe"}
 										fill
+										sizes="(max-width: 640px) 100vw, 192px"
 										className="object-cover group-hover:scale-105 transition-transform duration-300"
 									/>
 								</div>

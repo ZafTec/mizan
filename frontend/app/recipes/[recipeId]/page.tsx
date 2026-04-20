@@ -101,6 +101,7 @@ export default async function Page({
 						src={recipe.imageUrl || placeHolderImage}
 						alt={recipe.title || "Recipe"}
 						fill
+						sizes="(max-width: 768px) 100vw, 896px"
 						className="object-cover"
 					/>
 				</div>

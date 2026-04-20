@@ -381,7 +381,7 @@ export default function Page() {
 										if (typeof image !== 'string' || index >= MAX_RECIPE_IMAGES_TO_PREVIEW) return null;
 										return (
 											<div key={index} className="relative h-24 w-24">
-												<Image src={image} alt="Recipe" fill className="rounded-2xl border-2 border-charcoal-blue-200 object-cover dark:border-white/10" />
+												<Image src={image} alt="Recipe" fill sizes="96px" className="rounded-2xl border-2 border-charcoal-blue-200 object-cover dark:border-white/10" />
 												<button
 													type="button"
 													onClick={() => setImages(images.filter((_, i) => i !== index))}

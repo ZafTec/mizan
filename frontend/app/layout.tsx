@@ -49,7 +49,7 @@ async function LayoutContent({
 						<div className="grid grid-cols-1 gap-6 text-center sm:grid-cols-3 sm:text-left">
 							<div className="flex items-center justify-center gap-3 sm:justify-start">
 								<div className="relative h-11 w-11 overflow-hidden rounded-2xl ring-1 ring-brand-500/20">
-									<Image src={logoTransparent} alt="Mizan" fill className="object-cover" priority />
+									<Image src={logoTransparent} alt="Mizan" fill sizes="44px" className="object-cover" priority />
 								</div>
 								<div>
 									<p className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">

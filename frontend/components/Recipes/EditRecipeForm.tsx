@@ -243,7 +243,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                                 </button>
                                 {images.map((image, index) => (
                                     <div key={index} className="relative w-24 h-24">
-                                        <Image src={image} alt="Recipe" fill className="rounded-2xl object-cover border-2 border-charcoal-blue-200 dark:border-charcoal-blue-800" />
+                                        <Image src={image} alt="Recipe" fill sizes="96px" className="rounded-2xl object-cover border-2 border-charcoal-blue-200 dark:border-charcoal-blue-800" />
                                     </div>
                                 ))}
                             </div>
