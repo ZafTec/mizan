@@ -68,14 +68,14 @@ export default function AddIngredientForm() {
 					<i className="ri-arrow-left-line text-xl" />
 				</Link>
 				<div>
-					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Add Ingredient</h1>
+					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Add Ingredient</h1>
 					<p className="text-slate-600 dark:text-slate-400">Add a new ingredient to the database</p>
 				</div>
 			</div>
 
 			<form onSubmit={handleSubmit} className="space-y-6">
 				<div className="card p-6 space-y-5">
-					<h2 className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
+					<h2 className="flex items-center gap-2 font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 						<i className="ri-leaf-line text-brand-500 dark:text-brand-400" />
 						Basic Information
 					</h2>
@@ -96,7 +96,7 @@ export default function AddIngredientForm() {
 				</div>
 
 				<div className="card p-6 space-y-5">
-					<h2 className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
+					<h2 className="flex items-center gap-2 font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 						<i className="ri-heart-pulse-line text-brand-500 dark:text-brand-400" />
 						Nutritional Information
 					</h2>

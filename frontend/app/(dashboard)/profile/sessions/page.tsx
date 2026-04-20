@@ -156,8 +156,8 @@ export default function ProfileSessionsPage() {
 	      <div className="card p-6">
 	        <div className="flex items-center justify-between">
 	          <div>
-	            <p className="text-sm text-slate-500 dark:text-slate-400">Active Sessions</p>
-	            <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{activeSessions.length}</p>
+	            <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">Active Sessions</p>
+	            <p className="text-3xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{activeSessions.length}</p>
 	          </div>
 	          {activeSessions.length > 1 && (
 	            <button
@@ -175,10 +175,10 @@ export default function ProfileSessionsPage() {
 	        {activeSessions.length === 0 ? (
 	          <div className="card p-12 text-center">
 	            <i className="ri-lock-line mb-4 text-6xl text-slate-300 dark:text-slate-600" />
-	            <h2 className="mb-2 text-xl font-semibold text-slate-900 dark:text-slate-100">
+	            <h2 className="mb-2 text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 	              No Active Sessions
 	            </h2>
-	            <p className="text-slate-500 dark:text-slate-400">
+	            <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">
 	              You don't have any active sessions
 	            </p>
           </div>
@@ -197,7 +197,7 @@ export default function ProfileSessionsPage() {
 
                   <div className="flex-1 min-w-0">
 	                  <div className="flex items-center gap-2 mb-1">
-	                      <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+	                      <h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 	                        {getDeviceInfo(session.userAgent)}
 	                      </h3>
 	                      {isCurrent && (
@@ -207,7 +207,7 @@ export default function ProfileSessionsPage() {
 	                      )}
 	                    </div>
 
-	                    <div className="space-y-1 text-sm text-slate-500 dark:text-slate-400">
+	                    <div className="space-y-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
                       {session.ipAddress && (
                         <p className="flex items-center gap-2">
                           <i className="ri-map-pin-line" />

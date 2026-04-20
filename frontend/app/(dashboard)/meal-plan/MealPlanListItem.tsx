@@ -36,13 +36,13 @@ export default function MealPlanListItem({ plan }: MealPlanListItemProps) {
             <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
                 <div className="flex justify-between items-start gap-4">
                     <Link href={`/meal-plan/${plan.id}`} className="flex-1 min-w-0 group">
-                        <h3 className="font-medium text-slate-900 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+                        <h3 className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
                             {plan.name || "Weekly Plan"}
                         </h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                        <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
                             {plan.startDate} to {plan.endDate}
                         </p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                        <p className="text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500 mt-1">
                             {plan.recipes?.length || 0} meals
                         </p>
                     </Link>

@@ -49,8 +49,8 @@ export default async function AdminRecipesPage({
 						className="input pl-10 h-11"
 					/>
 				</form>
-				<div className="text-sm text-slate-500 dark:text-slate-400">
-					<span className="font-bold text-slate-900 dark:text-slate-100">{totalCount}</span> recipes
+				<div className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+					<span className="font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{totalCount}</span> recipes
 				</div>
 			</div>
 
@@ -70,7 +70,7 @@ export default async function AdminRecipesPage({
 						<tbody className="divide-y divide-slate-100 dark:divide-white/10">
 							{recipes.length === 0 ? (
 								<tr>
-									<td colSpan={6} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+									<td colSpan={6} className="px-6 py-12 text-center text-charcoal-blue-500 dark:text-charcoal-blue-400">
 										No recipes found.
 									</td>
 								</tr>
@@ -78,11 +78,11 @@ export default async function AdminRecipesPage({
 								recipes.map((recipe) => (
 									<tr key={recipe.id} className="group transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-900/60">
 										<td className="px-6 py-4">
-											<a href={`/recipes/${recipe.id}`} className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-300 transition-colors">
+											<a href={`/recipes/${recipe.id}`} className="text-sm font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 group-hover:text-brand-600 dark:group-hover:text-brand-300 transition-colors">
 												{recipe.title}
 											</a>
 											{recipe.description && (
-												<div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">{recipe.description}</div>
+												<div className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 line-clamp-1">{recipe.description}</div>
 											)}
 										</td>
 										<td className="px-6 py-4 text-center text-sm text-slate-700 dark:text-slate-300">

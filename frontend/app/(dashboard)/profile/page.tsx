@@ -130,11 +130,11 @@ export default function ProfilePage() {
 								<AnimatedIcon name="user" size={14} aria-hidden="true" />
 								Profile hub
 							</p>
-							<h1 className="text-3xl font-semibold text-slate-950 dark:text-slate-50">
+							<h1 className="text-3xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
 								{user.name || user.email}
 							</h1>
-							<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{user.email}</p>
-							<p className="mt-3 max-w-2xl text-sm text-slate-600 dark:text-slate-300">
+							<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{user.email}</p>
+							<p className="mt-3 max-w-2xl text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
 								Your account details, preferences, export, sessions, and connected tools are available in settings.
 							</p>
 						</div>
@@ -171,8 +171,8 @@ export default function ProfilePage() {
 				<section className="card p-6 sm:p-7">
 					<div className="flex items-center justify-between gap-4">
 						<div>
-							<h2 className="text-xl font-semibold text-slate-950 dark:text-slate-50">Account hub</h2>
-							<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+							<h2 className="text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Account hub</h2>
+							<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 								Everything important is one click away.
 							</p>
 						</div>
@@ -195,10 +195,10 @@ export default function ProfilePage() {
 									</span>
 									<div className="min-w-0">
 										<div className="flex items-center justify-between gap-3">
-											<p className="font-medium text-slate-950 dark:text-slate-50">{link.title}</p>
+											<p className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">{link.title}</p>
 											<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" className="text-slate-400 group-hover:text-slate-950 dark:group-hover:text-white" />
 										</div>
-										<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{link.description}</p>
+										<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{link.description}</p>
 									</div>
 								</div>
 							</Link>
@@ -213,8 +213,8 @@ export default function ProfilePage() {
 								<AnimatedIcon name="activity" size={18} aria-hidden="true" />
 							</span>
 						<div>
-							<h2 className="text-xl font-semibold text-slate-950 dark:text-slate-50">Current read</h2>
-							<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+							<h2 className="text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Current read</h2>
+							<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 								A quick view of your computed account activity.
 							</p>
 						</div>
@@ -274,9 +274,9 @@ function StatCard({
 }) {
 	return (
 		<div className="rounded-3xl border border-slate-200 bg-white/90 p-4 dark:border-white/10 dark:bg-slate-950/70">
-			<p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">{label}</p>
-			<p className="mt-3 text-lg font-semibold text-slate-950 dark:text-slate-50">{value}</p>
-			<p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{helper}</p>
+			<p className="text-xs font-semibold uppercase tracking-[0.14em] text-charcoal-blue-500 dark:text-charcoal-blue-400">{label}</p>
+			<p className="mt-3 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{value}</p>
+			<p className="mt-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{helper}</p>
 		</div>
 	);
 }
@@ -293,10 +293,10 @@ function InsightRow({
 	return (
 		<div className="rounded-3xl border border-slate-200 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-900/70">
 			<div className="flex items-center justify-between gap-3">
-				<p className="font-medium text-slate-950 dark:text-slate-50">{label}</p>
+				<p className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">{label}</p>
 				<p className="text-sm font-medium text-brand-700 dark:text-brand-300">{value}</p>
 			</div>
-			<p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{helper}</p>
+			<p className="mt-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{helper}</p>
 		</div>
 	);
 }

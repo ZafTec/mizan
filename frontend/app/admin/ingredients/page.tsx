@@ -53,8 +53,8 @@ export default async function AdminIngredientsPage({
                         className="input pl-10 h-11"
                     />
                 </form>
-	                <div className="text-sm text-slate-500 dark:text-slate-400">
-	                    Showing <span className="font-bold text-slate-900 dark:text-slate-100">{ingredients.length}</span> of <span className="font-bold text-slate-900 dark:text-slate-100">{totalCount}</span> ingredients
+	                <div className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+	                    Showing <span className="font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{ingredients.length}</span> of <span className="font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{totalCount}</span> ingredients
                 </div>
             </div>
 
@@ -77,7 +77,7 @@ export default async function AdminIngredientsPage({
 	                        <tbody className="divide-y divide-slate-100 dark:divide-white/10">
                             {ingredients.length === 0 ? (
                                 <tr>
-	                                    <td colSpan={8} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+	                                    <td colSpan={8} className="px-6 py-12 text-center text-charcoal-blue-500 dark:text-charcoal-blue-400">
                                         No ingredients found.
                                     </td>
                                 </tr>
@@ -89,7 +89,7 @@ export default async function AdminIngredientsPage({
                                                 {ingredient.name}
                                             </div>
                                             {ingredient.brand && (
-	                                                <div className="text-xs text-slate-500 dark:text-slate-400">{ingredient.brand}</div>
+	                                                <div className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{ingredient.brand}</div>
                                             )}
                                         </td>
                                         <td className="px-6 py-4">

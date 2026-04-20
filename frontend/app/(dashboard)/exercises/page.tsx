@@ -63,7 +63,7 @@ export default async function ExercisesPage({
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                                    <h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 truncate">
                                         {exercise.name}
                                     </h3>
                                     {exercise.description && (
@@ -107,7 +107,7 @@ export default async function ExercisesPage({
                     <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
                         <i className="ri-run-line text-3xl text-slate-400" />
                     </div>
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No exercises found</h3>
+                    <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No exercises found</h3>
                     <p className="text-slate-500">Try adjusting your search criteria</p>
                 </div>
             )}

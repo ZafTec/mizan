@@ -81,7 +81,7 @@ export default function LiveAuditLog() {
                             Next refresh in {countdown}s
                         </span>
                     )}
-                    <div className="flex bg-slate-100 dark:bg-slate-800 rounded-md p-0.5">
+                    <div className="flex bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 rounded-md p-0.5">
                         {INTERVALS.map((interval) => (
                             <button
                                 key={interval.value}
@@ -127,10 +127,10 @@ export default function LiveAuditLog() {
                                     <span className="font-medium">{log.userEmail || 'System'}</span>
                                     <span className="text-muted-foreground mx-1">performed</span>
                                     <span className="font-medium">{log.entityType}</span>
-                                    <span className="text-slate-400 dark:text-slate-500 font-mono text-[10px] ml-1">#{log.entityId.split('-')[0]}</span>
+                                    <span className="text-charcoal-blue-400 dark:text-charcoal-blue-500 font-mono text-[10px] ml-1">#{log.entityId.split('-')[0]}</span>
                                 </div>
                                 {log.ipAddress && (
-                                    <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 flex items-center gap-1">
+                                    <div className="text-[10px] text-charcoal-blue-400 dark:text-charcoal-blue-500 mt-1 flex items-center gap-1">
                                         <i className="ri-map-pin-line text-[12px]" />
                                         {log.ipAddress}
                                     </div>

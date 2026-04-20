@@ -38,7 +38,7 @@ export default function DeleteMeasurementButton({ id }: { id: string }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button
-          className="text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors disabled:opacity-50"
+          className="text-charcoal-blue-400 dark:text-charcoal-blue-500 hover:text-red-500 transition-colors disabled:opacity-50"
           title="Delete measurement"
         >
           <i className="ri-delete-bin-line" />

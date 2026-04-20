@@ -48,7 +48,7 @@ export default async function AuditLogsPage({
             <div className="card p-4">
                 <form className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className="label text-xs uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">Action Name</label>
+                        <label className="label text-xs uppercase tracking-wider font-bold text-charcoal-blue-400 dark:text-charcoal-blue-500">Action Name</label>
                         <input
                             name="action"
                             type="text"
@@ -58,7 +58,7 @@ export default async function AuditLogsPage({
                         />
                     </div>
                     <div>
-                        <label className="label text-xs uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">Entity Type</label>
+                        <label className="label text-xs uppercase tracking-wider font-bold text-charcoal-blue-400 dark:text-charcoal-blue-500">Entity Type</label>
                         <input
                             name="entityType"
                             type="text"
@@ -81,17 +81,17 @@ export default async function AuditLogsPage({
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                                <SortableHeader sortKey="timestamp" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">Timestamp</SortableHeader>
-                                <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">User</th>
-                                <SortableHeader sortKey="action" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">Action</SortableHeader>
-                                <SortableHeader sortKey="entityType" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">Entity</SortableHeader>
-                                <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">IP Address</th>
+                                <SortableHeader sortKey="timestamp" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-charcoal-blue-500 dark:text-charcoal-blue-400">Timestamp</SortableHeader>
+                                <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-charcoal-blue-500 dark:text-charcoal-blue-400">User</th>
+                                <SortableHeader sortKey="action" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-charcoal-blue-500 dark:text-charcoal-blue-400">Action</SortableHeader>
+                                <SortableHeader sortKey="entityType" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-charcoal-blue-500 dark:text-charcoal-blue-400">Entity</SortableHeader>
+                                <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-charcoal-blue-500 dark:text-charcoal-blue-400">IP Address</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {logs.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                                    <td colSpan={5} className="px-6 py-12 text-center text-charcoal-blue-500 dark:text-charcoal-blue-400">
                                         No audit logs found.
                                     </td>
                                 </tr>
@@ -99,16 +99,16 @@ export default async function AuditLogsPage({
                                 logs.map((log) => (
                                     <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group">
                                         <td className="px-6 py-4">
-                                            <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                            <div className="text-sm font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
                                                 {format(new Date(log.timestamp), "MMM d, yyyy")}
                                             </div>
-                                            <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                                            <div className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 font-mono">
                                                 {format(new Date(log.timestamp), "HH:mm:ss")}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="text-sm text-slate-900 dark:text-slate-100 font-medium">{log.userEmail || "System"}</div>
-                                            <div className="text-xs text-slate-400 dark:text-slate-500 font-mono">{log.userId || ""}</div>
+                                            <div className="text-sm text-charcoal-blue-900 dark:text-charcoal-blue-100 font-medium">{log.userEmail || "System"}</div>
+                                            <div className="text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500 font-mono">{log.userId || ""}</div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="px-2 py-1 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-xs font-bold border border-blue-100 dark:border-blue-800">
@@ -119,11 +119,11 @@ export default async function AuditLogsPage({
                                             <div className="text-sm text-slate-700 dark:text-slate-300 font-medium">
                                                 {log.entityType}
                                             </div>
-                                            <div className="text-xs text-slate-400 dark:text-slate-500 font-mono">
+                                            <div className="text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500 font-mono">
                                                 {log.entityId}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 font-mono">
+                                        <td className="px-6 py-4 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 font-mono">
                                             {log.ipAddress || "—"}
                                         </td>
                                     </tr>

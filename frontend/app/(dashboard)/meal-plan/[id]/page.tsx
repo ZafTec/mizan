@@ -30,15 +30,15 @@ export default async function MealPlanDetailPage({
 		<div className="space-y-6" data-testid="meal-plan-detail-page">
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
-					<div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-1">
+					<div className="flex items-center gap-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-1">
 						<Link href="/meal-plan" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
 							Meal Plans
 						</Link>
 						<i className="ri-arrow-right-s-line" />
-						<span className="text-slate-900 dark:text-slate-100">{plan.name || "Meal Plan"}</span>
+						<span className="text-charcoal-blue-900 dark:text-charcoal-blue-100">{plan.name || "Meal Plan"}</span>
 					</div>
-					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{plan.name || "Meal Plan"}</h1>
-					<p className="text-slate-500 dark:text-slate-400 mt-1">
+					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{plan.name || "Meal Plan"}</h1>
+					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
 						{plan.startDate} to {plan.endDate}
 					</p>
 				</div>
@@ -59,10 +59,10 @@ export default async function MealPlanDetailPage({
 									<i className={`${stat.icon} text-current`} />
 								</div>
 								<div>
-									<p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-										{stat.value}{stat.unit && <span className="ml-1 text-sm font-normal text-slate-500 dark:text-slate-400">{stat.unit}</span>}
+									<p className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+										{stat.value}{stat.unit && <span className="ml-1 text-sm font-normal text-charcoal-blue-500 dark:text-charcoal-blue-400">{stat.unit}</span>}
 									</p>
-									<p className="text-xs text-slate-500 dark:text-slate-400">{stat.label}</p>
+									<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{stat.label}</p>
 								</div>
 							</div>
 						</div>
@@ -71,7 +71,7 @@ export default async function MealPlanDetailPage({
 			)}
 
 			<div className="card p-6">
-				<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-4">
+				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2 mb-4">
 					<i className="ri-restaurant-line text-brand-500 dark:text-brand-400" />
 					Scheduled Meals
 				</h2>
@@ -80,24 +80,24 @@ export default async function MealPlanDetailPage({
 					<div className="space-y-6">
 						{sortedDates.map((date) => (
 							<div key={date}>
-								<h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
+								<h3 className="text-sm font-medium text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-3 flex items-center gap-2">
 									<i className="ri-calendar-event-line" />
 									{new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
 								</h3>
 								<div className="space-y-2">
 									{recipesByDate[date].map((recipe) => (
 										<div key={recipe.id} className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
-											<div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-medium text-slate-600 dark:text-slate-300 uppercase">
+											<div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300 uppercase">
 												{recipe.mealType.slice(0, 1)}
 											</div>
 											<div className="flex-1 min-w-0">
 												<Link
 													href={`/recipes/${recipe.recipeId}`}
-													className="text-sm font-medium text-slate-900 dark:text-slate-100 hover:text-brand-600 dark:hover:text-brand-400 transition-colors truncate block"
+													className="text-sm font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100 hover:text-brand-600 dark:hover:text-brand-400 transition-colors truncate block"
 												>
 													{recipe.recipeTitle || "Recipe"}
 												</Link>
-												<p className="text-xs text-slate-500 dark:text-slate-400">
+												<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
 													{recipe.mealType} &middot; {recipe.servings} serving{recipe.servings !== 1 ? "s" : ""}
 													{recipe.caloriesPerServing ? ` · ${Math.round(recipe.caloriesPerServing * recipe.servings)} kcal` : ""}
 												</p>
@@ -110,11 +110,11 @@ export default async function MealPlanDetailPage({
 					</div>
 				) : (
 					<div className="text-center py-12">
-						<div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
-							<i className="ri-restaurant-line text-3xl text-slate-400 dark:text-slate-500" />
+						<div className="w-16 h-16 rounded-2xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 flex items-center justify-center mx-auto mb-4">
+							<i className="ri-restaurant-line text-3xl text-charcoal-blue-400 dark:text-charcoal-blue-500" />
 						</div>
-						<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No meals scheduled</h3>
-						<p className="text-slate-500 dark:text-slate-400 mb-4">Add recipes to this meal plan</p>
+						<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No meals scheduled</h3>
+						<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-4">Add recipes to this meal plan</p>
 						<Link href={`/meal-plan/${plan.id}/edit`} className="btn-primary">
 							<i className="ri-add-line" />
 							Edit Plan

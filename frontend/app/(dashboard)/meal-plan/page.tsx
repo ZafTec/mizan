@@ -107,8 +107,8 @@ export default async function MealPlanPage({
 									<i className={`${stat.icon} text-current`} />
 								</div>
 								<div>
-									<p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stat.value}</p>
-									<p className="text-xs text-slate-500 dark:text-slate-400">{stat.label}</p>
+									<p className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{stat.value}</p>
+									<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{stat.label}</p>
 								</div>
 							</div>
 						</div>
@@ -117,7 +117,7 @@ export default async function MealPlanPage({
 
 				{/* Meal Plans */}
 				<div className="card p-6">
-					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-4">
+					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2 mb-4">
 						<i className="ri-calendar-2-line text-brand-500 dark:text-brand-400" />
 						Your Meal Plans
 					</h2>
@@ -132,8 +132,8 @@ export default async function MealPlanPage({
 							<div className="mb-6 w-full max-w-[18rem] opacity-95 drop-shadow-md">
 								<AppFeatureIllustration variant="meal-plan" className="h-auto w-full" />
 							</div>
-							<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No meal plans yet</h3>
-							<p className="text-slate-500 dark:text-slate-400 mb-4">Start planning your meals for the week</p>
+							<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No meal plans yet</h3>
+							<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-4">Start planning your meals for the week</p>
 							<Link href="/meal-plan/create" className="btn-primary">
 								<i className="ri-add-line" />
 								Create Meal Plan

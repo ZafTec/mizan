@@ -58,10 +58,10 @@ export default function AddMeasurementForm() {
                   <div className="flex min-h-full items-center justify-center p-4">
                     <div className="card max-w-2xl w-full p-6">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Add Measurement</h3>
+                            <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Add Measurement</h3>
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
+                                className="text-charcoal-blue-400 dark:text-charcoal-blue-500 hover:text-slate-600 dark:hover:text-slate-300"
                             >
                                 <i className="ri-close-line text-xl" />
                             </button>
@@ -110,11 +110,11 @@ export default function AddMeasurementForm() {
                                 <p className="label mb-2">Arms (cm)</p>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Left</label>
+                                        <label className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-1 block">Left</label>
                                         <input type="number" step="0.1" name="leftArmCm" className="input" />
                                     </div>
                                     <div>
-                                        <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Right</label>
+                                        <label className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-1 block">Right</label>
                                         <input type="number" step="0.1" name="rightArmCm" className="input" />
                                     </div>
                                 </div>
@@ -124,11 +124,11 @@ export default function AddMeasurementForm() {
                                 <p className="label mb-2">Thighs (cm)</p>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Left</label>
+                                        <label className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-1 block">Left</label>
                                         <input type="number" step="0.1" name="leftThighCm" className="input" />
                                     </div>
                                     <div>
-                                        <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Right</label>
+                                        <label className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-1 block">Right</label>
                                         <input type="number" step="0.1" name="rightThighCm" className="input" />
                                     </div>
                                 </div>

@@ -143,7 +143,7 @@ export default function AddMealPlanPage() {
 	return (
 	  <div className="flex flex-col gap-6">
 	    <div className="flex justify-between items-center">
-	      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Add to Meal Plan</h1>
+	      <h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Add to Meal Plan</h1>
 	      <Link
 	        href={weekParam ? `/meal-plan?week=${weekParam}` : "/meal-plan"}
           className="btn-secondary"
@@ -164,7 +164,7 @@ export default function AddMealPlanPage() {
       <form onSubmit={handleSubmit} className="space-y-6">
 	        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 	          <div className="card p-4">
-	            <h2 className="mb-3 text-lg font-semibold text-slate-900 dark:text-slate-100">Select Date</h2>
+	            <h2 className="mb-3 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Select Date</h2>
             <input
               type="date"
               value={format(date, 'yyyy-MM-dd')}
@@ -174,15 +174,15 @@ export default function AddMealPlanPage() {
           </div>
 
 	          <div className="card p-4">
-	            <h2 className="mb-3 text-lg font-semibold text-slate-900 dark:text-slate-100">Selected Recipes</h2>
+	            <h2 className="mb-3 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Selected Recipes</h2>
 	            {selectedRecipes.length === 0 ? (
-	              <p className="text-slate-500 dark:text-slate-400">No recipes selected yet</p>
+	              <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">No recipes selected yet</p>
 	            ) : (
 	              <ul className="space-y-4">
 	                {selectedRecipes.map((item, index) => (
 	                  <li key={`${item.recipeId}-${index}`} className="border-b border-slate-200 pb-3 dark:border-white/10">
 	                    <div className="flex justify-between items-center">
-	                      <span className="font-medium text-slate-900 dark:text-slate-100">{item.recipeName}</span>
+	                      <span className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{item.recipeName}</span>
 	                      <button
 	                        type="button"
 	                        onClick={() => removeRecipeFromSelection(index)}
@@ -224,7 +224,7 @@ export default function AddMealPlanPage() {
         </div>
 
 	        <div className="card p-4">
-	          <h2 className="mb-3 text-lg font-semibold text-slate-900 dark:text-slate-100">Choose Recipes</h2>
+	          <h2 className="mb-3 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Choose Recipes</h2>
           <div className="mb-4">
             <input
               type="text"
@@ -247,14 +247,14 @@ export default function AddMealPlanPage() {
 	                  className="card cursor-pointer p-3 transition hover:bg-slate-50 dark:hover:bg-slate-900/60"
 	                  onClick={() => addRecipeToSelection(recipe)}
 	                >
-	                  <h3 className="font-medium text-slate-900 dark:text-slate-100">{recipe.title}</h3>
+	                  <h3 className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{recipe.title}</h3>
 	                  <p className="text-sm text-slate-600 dark:text-slate-400">
 	                    {Math.round(recipe.calories)} cal | {Math.round(recipe.protein)}g protein
 	                  </p>
 	                </div>
 	              ))}
 	              {filteredRecipes.length === 0 && (
-	                <p className="col-span-full py-4 text-center text-slate-500 dark:text-slate-400">No recipes found</p>
+	                <p className="col-span-full py-4 text-center text-charcoal-blue-500 dark:text-charcoal-blue-400">No recipes found</p>
 	              )}
             </div>
           )}

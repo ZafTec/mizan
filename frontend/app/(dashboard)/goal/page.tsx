@@ -114,13 +114,13 @@ export default function GoalForm() {
 			</header>
 
 			{/* Info Card */}
-			<div className="card p-6 bg-slate-50/90 dark:bg-slate-900/60">
+			<div className="card p-6 bg-white/70 dark:bg-charcoal-blue-950/60">
 				<div className="flex items-start gap-4">
 					<div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center shrink-0">
 						<i className="ri-target-line text-xl text-brand-600 dark:text-brand-400" />
 					</div>
 					<div>
-						<h3 className="font-semibold text-slate-900 dark:text-slate-100">Why Set Goals?</h3>
+						<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Why Set Goals?</h3>
 						<p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
 							Setting nutrition goals helps you stay on track. Our AI coach will use these targets
 							to provide personalized recipe suggestions and track your daily progress.
@@ -141,8 +141,8 @@ export default function GoalForm() {
 							<i className="ri-calculator-line text-brand-600 dark:text-brand-400" />
 						</div>
 						<div>
-							<h2 className="font-semibold text-slate-900 dark:text-slate-100">Calculate TDEE</h2>
-							<p className="text-sm text-slate-500 dark:text-slate-400">
+							<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Calculate TDEE</h2>
+							<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 								{tdeeResult
 									? `Estimated: ${tdeeResult} kcal/day`
 									: "Get your Total Daily Energy Expenditure"}
@@ -166,7 +166,7 @@ export default function GoalForm() {
 										className={`flex-1 py-2 rounded-xl font-medium capitalize transition-colors ${
 											sex === s
 												? "bg-brand-500 text-white"
-												: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+												: "bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
 										}`}
 									>
 										{s}
@@ -203,7 +203,7 @@ export default function GoalForm() {
 												className={`text-xs px-2 py-0.5 rounded font-medium transition-colors ${
 													weightUnit === u
 														? "bg-brand-500 text-white"
-														: "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
+														: "text-charcoal-blue-400 dark:text-charcoal-blue-500 hover:text-slate-600 dark:hover:text-slate-300"
 												}`}
 											>
 												{u}
@@ -235,7 +235,7 @@ export default function GoalForm() {
 												className={`text-xs px-2 py-0.5 rounded font-medium transition-colors ${
 													heightUnit === u
 														? "bg-brand-500 text-white"
-														: "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
+														: "text-charcoal-blue-400 dark:text-charcoal-blue-500 hover:text-slate-600 dark:hover:text-slate-300"
 												}`}
 											>
 												{u}
@@ -319,7 +319,7 @@ export default function GoalForm() {
 								</button>
 							</div>
 						) : (
-							<p className="text-sm text-slate-400 dark:text-slate-500 text-center py-2">
+							<p className="text-sm text-charcoal-blue-400 dark:text-charcoal-blue-500 text-center py-2">
 								Fill in your details above to calculate
 							</p>
 						)}
@@ -335,7 +335,7 @@ export default function GoalForm() {
 
 				{/* Goal Type Card */}
 				<div className="card p-6 space-y-5">
-					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
 						<i className="ri-bookmark-line text-brand-500" />
 						Goal Type
 					</h2>
@@ -360,7 +360,7 @@ export default function GoalForm() {
 
 				{/* Macro Targets Card */}
 				<div className="card p-6 space-y-5">
-					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
 						<i className="ri-pie-chart-2-line text-brand-500" />
 						Daily Macro Targets
 					</h2>
@@ -469,7 +469,7 @@ export default function GoalForm() {
 
 				{/* Body Composition Goals */}
 				<div className="card p-6 space-y-5">
-					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
 						<i className="ri-body-scan-line text-brand-500" />
 						Body Composition Goals
 					</h2>

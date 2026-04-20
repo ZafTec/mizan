@@ -49,12 +49,12 @@ export default async function Page(
 					<table className="w-full">
 						<thead>
 							<tr className="border-b border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-slate-900/85">
-								<SortableHeader sortKey="name" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="w-52 px-6 py-4 text-left text-sm font-semibold text-slate-600 dark:text-slate-300">Name</SortableHeader>
-								<SortableHeader sortKey="calories" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-4 py-4 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">Calories</SortableHeader>
-								<SortableHeader sortKey="protein" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-4 py-4 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">Protein</SortableHeader>
-								<th className="px-4 py-4 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">Fat</th>
-								<th className="px-4 py-4 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">Carbs</th>
-								<th className="px-4 py-4 text-center text-sm font-semibold text-slate-600 dark:text-slate-300">Fiber</th>
+								<SortableHeader sortKey="name" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="w-52 px-6 py-4 text-left text-sm font-semibold text-charcoal-blue-600 dark:text-charcoal-blue-300">Name</SortableHeader>
+								<SortableHeader sortKey="calories" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-4 py-4 text-center text-sm font-semibold text-charcoal-blue-600 dark:text-charcoal-blue-300">Calories</SortableHeader>
+								<SortableHeader sortKey="protein" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-4 py-4 text-center text-sm font-semibold text-charcoal-blue-600 dark:text-charcoal-blue-300">Protein</SortableHeader>
+								<th className="px-4 py-4 text-center text-sm font-semibold text-charcoal-blue-600 dark:text-charcoal-blue-300">Fat</th>
+								<th className="px-4 py-4 text-center text-sm font-semibold text-charcoal-blue-600 dark:text-charcoal-blue-300">Carbs</th>
+								<th className="px-4 py-4 text-center text-sm font-semibold text-charcoal-blue-600 dark:text-charcoal-blue-300">Fiber</th>
 								<SortableHeader sortKey="proteinCalorieRatio" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-4 py-4 text-center text-sm font-semibold text-violet-600 dark:text-violet-300">P/Cal</SortableHeader>
 							</tr>
 						</thead>
@@ -63,10 +63,10 @@ export default async function Page(
 								<tr>
 									<td colSpan={7} className="px-6 py-16 text-center">
 										<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-900/80">
-											<i className="ri-leaf-line text-3xl text-slate-400 dark:text-slate-500" />
+											<i className="ri-leaf-line text-3xl text-charcoal-blue-400 dark:text-charcoal-blue-500" />
 										</div>
-										<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No ingredients found</h3>
-										<p className="mb-4 text-slate-500 dark:text-slate-400">Try adjusting your search or add a new ingredient</p>
+										<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No ingredients found</h3>
+										<p className="mb-4 text-charcoal-blue-500 dark:text-charcoal-blue-400">Try adjusting your search or add a new ingredient</p>
 									</td>
 								</tr>
 							) : (

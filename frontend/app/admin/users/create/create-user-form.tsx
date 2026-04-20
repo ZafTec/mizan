@@ -129,7 +129,7 @@ export function CreateUserForm() {
           <option value="trainer">Trainer</option>
           <option value="admin">Admin</option>
         </select>
-	        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+	        <p className="mt-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 	          Select the role for this user. Admins have full system access.
 	        </p>
 	      </div>

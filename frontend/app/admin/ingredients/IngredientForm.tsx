@@ -162,7 +162,7 @@ export default function IngredientForm({ action, initialData, submitText }: Ingr
                         />
                     </div>
                 </div>
-	                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+	                <p className="mt-2 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
                     <i className="ri-information-line mr-1" />
                     Important: All nutrition values must be provided <strong>per 100g</strong> of the ingredient for consistent calculations.
                 </p>

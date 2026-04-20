@@ -74,7 +74,7 @@ export default function ShoppingListPage() {
 	return (
 	  <div className="flex flex-col gap-6">
 	    <div className="flex justify-between items-center">
-	      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Shopping List</h1>
+	      <h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Shopping List</h1>
 	      <Link href="/meal-plan" className="btn-primary">
 	        Back to Meal Plan
         </Link>
@@ -91,7 +91,7 @@ export default function ShoppingListPage() {
 
 	      <div className="card p-6">
 	        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-	          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Your Shopping Items</h2>
+	          <h2 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Your Shopping Items</h2>
 	          <div className="flex flex-col sm:flex-row gap-2">
             <button
               onClick={loadShoppingLists}
@@ -131,8 +131,8 @@ export default function ShoppingListPage() {
 	            <div className="mb-6 w-full max-w-[18rem] opacity-95 drop-shadow-md">
 	              <AppFeatureIllustration variant="shopping" className="h-auto w-full" />
 	            </div>
-	            <p className="mb-4 text-slate-600 dark:text-slate-300">No items in your shopping list</p>
-	            <p className="text-sm text-slate-500 dark:text-slate-400">Add meals to your meal plan to generate a shopping list</p>
+	            <p className="mb-4 text-charcoal-blue-600 dark:text-charcoal-blue-300">No items in your shopping list</p>
+	            <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">Add meals to your meal plan to generate a shopping list</p>
             <Link
               href="/meal-plan/add"
               className="mt-4 inline-block btn-primary"
@@ -143,7 +143,7 @@ export default function ShoppingListPage() {
 	        ) : (
 	          <div>
 	            {displayedItems.length === 0 && (
-	              <p className="py-4 text-center text-slate-500 dark:text-slate-400">All items have been checked off!</p>
+	              <p className="py-4 text-center text-charcoal-blue-500 dark:text-charcoal-blue-400">All items have been checked off!</p>
 	            )}
 
             {displayedItems.length > 0 && (
@@ -159,10 +159,10 @@ export default function ShoppingListPage() {
                       onChange={() => toggleItemChecked(item.id, item.isChecked)}
                       className="h-5 w-5 cursor-pointer"
                     />
-	                      <span className={item.isChecked ? "line-through text-slate-400 dark:text-slate-500" : "text-slate-900 dark:text-slate-100"}>
+	                      <span className={item.isChecked ? "line-through text-charcoal-blue-400 dark:text-charcoal-blue-500" : "text-charcoal-blue-900 dark:text-charcoal-blue-100"}>
 	                        {item.ingredientText}
 	                        {item.quantity && item.unit && (
-	                          <span className="ml-2 text-slate-500 dark:text-slate-400">
+	                          <span className="ml-2 text-charcoal-blue-500 dark:text-charcoal-blue-400">
 	                            - {item.quantity} {item.unit}
 	                          </span>
                       )}
@@ -175,11 +175,11 @@ export default function ShoppingListPage() {
 	            <div className="mt-6 border-t border-slate-200 pt-4 dark:border-white/10">
 	              <div className="flex justify-between items-center">
 	                <div>
-	                  <span className="text-sm text-slate-500 dark:text-slate-400">
+	                  <span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 	                    {allItems.length} total items
 	                  </span>
 	                  <span className="mx-2 text-slate-300 dark:text-slate-600">|</span>
-	                  <span className="text-sm text-slate-500 dark:text-slate-400">
+	                  <span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 	                    {allItems.filter(item => item.isChecked).length} checked off
 	                  </span>
                 </div>

@@ -34,18 +34,18 @@ export default function Page() {
 			{/* Header */}
 			<div className="flex items-center gap-4">
 				<Link href="/meals" className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 flex items-center justify-center transition-colors">
-					<i className="ri-arrow-left-line text-xl text-slate-600 dark:text-slate-300" />
+					<i className="ri-arrow-left-line text-xl text-charcoal-blue-600 dark:text-charcoal-blue-300" />
 				</Link>
 				<div>
-					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Log Meal</h1>
-					<p className="text-slate-500 dark:text-slate-400">Track what you eat</p>
+					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Log Meal</h1>
+					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">Track what you eat</p>
 				</div>
 			</div>
 
 			<form action={action} className="space-y-6">
 				{/* Basic Info Card */}
 				<div className="card p-6 space-y-5">
-					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
 						<i className="ri-restaurant-2-line text-brand-500" />
 						Meal Details
 					</h2>
@@ -89,7 +89,7 @@ export default function Page() {
 
 				{/* Nutrition Card */}
 				<div className="card p-6 space-y-5">
-					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
 						<i className="ri-heart-pulse-line text-brand-500" />
 						Nutritional Information
 					</h2>
@@ -188,14 +188,14 @@ export default function Page() {
 				</div>
 
 				{/* Quick Add from Recipe */}
-				<div className="card p-6 bg-slate-50/90 dark:bg-slate-900/60">
+				<div className="card p-6 bg-white/70 dark:bg-charcoal-blue-950/60">
 					<div className="flex items-center gap-4">
 						<div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-950 flex items-center justify-center">
 							<i className="ri-book-open-line text-xl text-brand-600" />
 						</div>
 						<div className="flex-1">
-							<h3 className="font-semibold text-slate-900 dark:text-slate-100">Add from Recipe</h3>
-							<p className="text-sm text-slate-600 dark:text-slate-300">Auto-fill nutrition from your saved recipes</p>
+							<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Add from Recipe</h3>
+							<p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">Auto-fill nutrition from your saved recipes</p>
 						</div>
 						<Link href="/recipes" className="btn-secondary text-sm">
 							Browse Recipes

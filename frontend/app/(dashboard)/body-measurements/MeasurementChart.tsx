@@ -96,15 +96,15 @@ const formatCircumferenceTooltip: Formatter<ValueType, NameType> = (value, name)
 
 function TimeRangePicker({ range, onChange }: { range: TimeRange; onChange: (r: TimeRange) => void }) {
     return (
-        <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+        <div className="flex gap-1 bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 rounded-lg p-1">
             {TIME_RANGES.map((r) => (
                 <button
                     key={r.value}
                     onClick={() => onChange(r.value)}
                     className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                         range === r.value
-                            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm"
-                            : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                            ? "bg-white dark:bg-slate-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
+                            : "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-slate-700 dark:hover:text-slate-300"
                     }`}
                 >
                     {r.label}
@@ -192,7 +192,7 @@ function CircumferenceChart({ data, active, onToggle }: {
             {/* Grouped toggles */}
             {coreAvail.length > 0 && (
                 <div className="mb-3">
-                    <p className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold mb-1.5">Core</p>
+                    <p className="text-[10px] uppercase tracking-wider text-charcoal-blue-400 dark:text-charcoal-blue-500 font-semibold mb-1.5">Core</p>
                     <div className="flex flex-wrap gap-2">
                         <ToggleGroup series={coreAvail} active={active} onToggle={onToggle} />
                     </div>
@@ -200,7 +200,7 @@ function CircumferenceChart({ data, active, onToggle }: {
             )}
             {limbsAvail.length > 0 && (
                 <div className="mb-4">
-                    <p className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold mb-1.5">Limbs</p>
+                    <p className="text-[10px] uppercase tracking-wider text-charcoal-blue-400 dark:text-charcoal-blue-500 font-semibold mb-1.5">Limbs</p>
                     <div className="flex flex-wrap gap-2">
                         <ToggleGroup series={limbsAvail} active={active} onToggle={onToggle} />
                     </div>
@@ -208,7 +208,7 @@ function CircumferenceChart({ data, active, onToggle }: {
             )}
 
             {visible.length === 0 ? (
-                <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-sm">
+                <div className="text-center py-8 text-charcoal-blue-500 dark:text-charcoal-blue-400 text-sm">
                     Select a measurement above to display it.
                 </div>
             ) : (
@@ -261,7 +261,7 @@ function ToggleGroup({
                         className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all border ${
                             on
                                 ? "border-transparent"
-                                : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700"
+                                : "bg-white dark:bg-slate-900 text-charcoal-blue-500 dark:text-charcoal-blue-400 border-slate-200 dark:border-slate-700"
                         }`}
                         style={on ? {
                             backgroundColor: `color-mix(in oklab, ${s.color} 16%, var(--card))`,
@@ -280,7 +280,7 @@ function ToggleGroup({
 
 function EmptyChart({ message }: { message: string }) {
     return (
-        <div className="text-center py-10 text-slate-500 dark:text-slate-400 text-sm">{message}</div>
+        <div className="text-center py-10 text-charcoal-blue-500 dark:text-charcoal-blue-400 text-sm">{message}</div>
     );
 }
 
@@ -341,7 +341,7 @@ export default function MeasurementChart({ measurements, goalHistory = [] }: { m
         return (
             <div className="card p-6">
                 <h2 className="section-title mb-4">Progress Chart</h2>
-                <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                <div className="text-center py-8 text-charcoal-blue-500 dark:text-charcoal-blue-400">
                     Add at least 2 measurements to see your progress chart.
                 </div>
             </div>
@@ -352,13 +352,13 @@ export default function MeasurementChart({ measurements, goalHistory = [] }: { m
         <div className="card p-6">
             {/* Header row */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
-                <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1 w-fit">
+                <div className="flex gap-1 bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 rounded-lg p-1 w-fit">
                     <button
                         onClick={() => setTab("composition")}
                         className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
                             tab === "composition"
-                                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm"
-                                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                                ? "bg-white dark:bg-slate-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
+                                : "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-slate-700 dark:hover:text-slate-300"
                         }`}
                     >
                         Body Composition
@@ -367,8 +367,8 @@ export default function MeasurementChart({ measurements, goalHistory = [] }: { m
                         onClick={() => setTab("circumference")}
                         className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
                             tab === "circumference"
-                                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm"
-                                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                                ? "bg-white dark:bg-slate-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
+                                : "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-slate-700 dark:hover:text-slate-300"
                         }`}
                     >
                         Circumference
@@ -379,7 +379,7 @@ export default function MeasurementChart({ measurements, goalHistory = [] }: { m
 
             {/* Composition legend note */}
             {tab === "composition" && (
-                <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-4">
+                <p className="text-[11px] text-charcoal-blue-400 dark:text-charcoal-blue-500 mb-4">
                     <span className="text-blue-600 font-medium">Weight</span> &amp; <span className="text-green-600 font-medium">Muscle</span> use the left axis (kg) · <span className="text-red-600 font-medium">Body Fat</span> uses the right axis (%) · Dashed lines = goals
                 </p>
             )}

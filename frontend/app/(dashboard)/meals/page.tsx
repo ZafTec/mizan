@@ -205,7 +205,7 @@ export default function MealsPage() {
 	if (!session?.user) {
 		return (
 			<div className="flex items-center justify-center min-h-screen">
-				<p className="text-slate-500 dark:text-slate-400">Please log in to view your meals</p>
+				<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">Please log in to view your meals</p>
 			</div>
 		);
 	}
@@ -236,7 +236,7 @@ export default function MealsPage() {
 						<button onClick={handlePrevDay} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900/80">
 							<i className="ri-arrow-left-s-line" />
 						</button>
-						<span className="min-w-35 px-4 text-center font-medium text-slate-900 dark:text-slate-100">
+						<span className="min-w-35 px-4 text-center font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
 							{new Date(queryDate).toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric' })}
 						</span>
 						<button onClick={handleNextDay} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900/80">
@@ -253,7 +253,7 @@ export default function MealsPage() {
 			{/* Goals & Progress */}
 			{goal && (
 				<div className="card p-6">
-					<h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
+					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-4 flex items-center gap-2">
 						<i className="ri-target-line text-brand-500" />
 						Daily Goals
 					</h2>
@@ -261,45 +261,45 @@ export default function MealsPage() {
 						{/* Calories */}
 						<div className="space-y-2">
 							<div className="flex justify-between text-sm">
-								<span className="font-medium text-slate-700 dark:text-slate-200">Calories</span>
-								<span className="text-slate-500 dark:text-slate-400">{Math.round(totalCalories)} / {goal.targetCalories} kcal</span>
+								<span className="font-medium text-charcoal-blue-700 dark:text-charcoal-blue-200">Calories</span>
+								<span className="text-charcoal-blue-500 dark:text-charcoal-blue-400">{Math.round(totalCalories)} / {goal.targetCalories} kcal</span>
 							</div>
-							<div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800/80">
-								<div className="h-full bg-orange-500 rounded-full transition-all duration-500" style={{ width: `${caloriePct}%` }} />
+							<div className="h-2 overflow-hidden rounded-full bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60">
+								<div className="h-full bg-burnt-peach-500 rounded-full transition-all duration-500" style={{ width: `${caloriePct}%` }} />
 							</div>
 						</div>
 						{/* Protein */}
 						<div className="space-y-2">
 							<div className="flex justify-between text-sm">
-								<span className="font-medium text-slate-700 dark:text-slate-200">Protein</span>
-								<span className="text-slate-500 dark:text-slate-400">{totalProtein.toFixed(1)} / {goal.targetProteinGrams} g</span>
+								<span className="font-medium text-charcoal-blue-700 dark:text-charcoal-blue-200">Protein</span>
+								<span className="text-charcoal-blue-500 dark:text-charcoal-blue-400">{totalProtein.toFixed(1)} / {goal.targetProteinGrams} g</span>
 							</div>
-							<div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800/80">
-								<div className="h-full bg-red-500 rounded-full transition-all duration-500" style={{ width: `${proteinPct}%` }} />
+							<div className="h-2 overflow-hidden rounded-full bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60">
+								<div className="h-full bg-verdigris-500 rounded-full transition-all duration-500" style={{ width: `${proteinPct}%` }} />
 							</div>
 						</div>
 						{/* Carbs */}
 						<div className="space-y-2">
 							<div className="flex justify-between text-sm">
-								<span className="font-medium text-slate-700 dark:text-slate-200">Carbs</span>
-								<span className="text-slate-500 dark:text-slate-400">{totalCarbs.toFixed(1)} / {goal.targetCarbsGrams} g</span>
+								<span className="font-medium text-charcoal-blue-700 dark:text-charcoal-blue-200">Carbs</span>
+								<span className="text-charcoal-blue-500 dark:text-charcoal-blue-400">{totalCarbs.toFixed(1)} / {goal.targetCarbsGrams} g</span>
 							</div>
-							<div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800/80">
-								<div className="h-full bg-amber-500 rounded-full transition-all duration-500" style={{ width: `${carbsPct}%` }} />
+							<div className="h-2 overflow-hidden rounded-full bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60">
+								<div className="h-full bg-tuscan-sun-500 rounded-full transition-all duration-500" style={{ width: `${carbsPct}%` }} />
 							</div>
 						</div>
 						{/* Fat */}
 						<div className="space-y-2">
 							<div className="flex justify-between text-sm">
-								<span className="font-medium text-slate-700 dark:text-slate-200">Fat</span>
-								<span className="text-slate-500 dark:text-slate-400">{totalFat.toFixed(1)} / {goal.targetFatGrams} g</span>
+								<span className="font-medium text-charcoal-blue-700 dark:text-charcoal-blue-200">Fat</span>
+								<span className="text-charcoal-blue-500 dark:text-charcoal-blue-400">{totalFat.toFixed(1)} / {goal.targetFatGrams} g</span>
 							</div>
-							<div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800/80">
-								<div className="h-full bg-yellow-500 rounded-full transition-all duration-500" style={{ width: `${fatPct}%` }} />
+							<div className="h-2 overflow-hidden rounded-full bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60">
+								<div className="h-full bg-sandy-brown-500 rounded-full transition-all duration-500" style={{ width: `${fatPct}%` }} />
 							</div>
 						</div>
 					</div>
-					<div className="mt-3 flex flex-wrap gap-4 text-sm text-slate-500 dark:text-slate-400">
+					<div className="mt-3 flex flex-wrap gap-4 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 						{totalFiber > 0 && (
 							<p>Fiber: <span className="font-medium text-green-600">{totalFiber.toFixed(1)}g</span></p>
 						)}
@@ -313,7 +313,7 @@ export default function MealsPage() {
 			{/* History Chart */}
 			<div className="card p-6 h-100">
 				<div className="flex items-center justify-between mb-6">
-					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
 						<i className="ri-bar-chart-fill text-brand-500" />
 						Last {rangeDays} Days (Calories)
 					</h2>
@@ -335,9 +335,9 @@ export default function MealsPage() {
 							contentStyle={{ borderRadius: '12px', border: `1px solid ${CHART_COLORS.tooltipBorder}`, backgroundColor: CHART_COLORS.tooltipBackground, color: CHART_COLORS.tooltipText, boxShadow: '0 20px 45px -28px rgb(15 23 42 / 0.45)' }}
 							cursor={{ fill: CHART_COLORS.cursor }}
 						/>
-						<Bar dataKey="calories" fill="#f97316" radius={[4, 4, 0, 0]} name="Calories" />
+						<Bar dataKey="calories" fill="#D4654A" radius={[4, 4, 0, 0]} name="Calories" />
 						{history.some(d => d.goalCalories) && (
-							<Line type="stepAfter" dataKey="goalCalories" stroke="#f97316" strokeDasharray="6 3" strokeWidth={2} dot={false} name="Calorie Goal" />
+							<Line type="stepAfter" dataKey="goalCalories" stroke="#D4654A" strokeDasharray="6 3" strokeWidth={2} dot={false} name="Calorie Goal" />
 						)}
 					</ComposedChart>
 				</ResponsiveContainer>
@@ -345,7 +345,7 @@ export default function MealsPage() {
 
 			{/* Macro Breakdown Chart */}
 			<div className="card p-6 h-80">
-				<h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
+				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-4 flex items-center gap-2">
 					<i className="ri-stack-fill text-brand-500" />
 					Macro Breakdown (Last {rangeDays} Days)
 				</h2>
@@ -355,16 +355,16 @@ export default function MealsPage() {
 						<XAxis dataKey="date" stroke={CHART_COLORS.axis} fontSize={12} tickLine={false} axisLine={false} />
 						<YAxis stroke={CHART_COLORS.axis} fontSize={12} tickLine={false} axisLine={false} unit="g" />
 						<Tooltip contentStyle={{ borderRadius: '12px', border: `1px solid ${CHART_COLORS.tooltipBorder}`, backgroundColor: CHART_COLORS.tooltipBackground, color: CHART_COLORS.tooltipText, boxShadow: '0 20px 45px -28px rgb(15 23 42 / 0.45)' }} cursor={{ fill: CHART_COLORS.cursor }} />
-						<Bar dataKey="protein" stackId="macros" fill="#ef4444" radius={[0, 0, 0, 0]} name="Protein (g)" />
-						<Bar dataKey="carbs" stackId="macros" fill="#f59e0b" radius={[0, 0, 0, 0]} name="Carbs (g)" />
-						<Bar dataKey="fat" stackId="macros" fill="#eab308" radius={[4, 4, 0, 0]} name="Fat (g)" />
+						<Bar dataKey="protein" stackId="macros" fill="#4DCFC4" radius={[0, 0, 0, 0]} name="Protein (g)" />
+						<Bar dataKey="carbs" stackId="macros" fill="#E8B849" radius={[0, 0, 0, 0]} name="Carbs (g)" />
+						<Bar dataKey="fat" stackId="macros" fill="#B89968" radius={[4, 4, 0, 0]} name="Fat (g)" />
 					</BarChart>
 				</ResponsiveContainer>
 			</div>
 
 			{/* P/Cal Ratio Trend */}
 			<div className="card p-6 h-72">
-				<h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
+				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-4 flex items-center gap-2">
 					<i className="ri-percent-line text-violet-500" />
 					Protein/Calorie Ratio (Last {rangeDays} Days)
 				</h2>
@@ -385,7 +385,7 @@ export default function MealsPage() {
 			{/* Fiber Trend */}
 			{history.some(d => d.fiber > 0) && (
 				<div className="card p-6 h-72">
-					<h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
+					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-4 flex items-center gap-2">
 						<i className="ri-leaf-line text-green-500" />
 						Fiber Intake (Last {rangeDays} Days)
 					</h2>
@@ -407,7 +407,7 @@ export default function MealsPage() {
 			{/* Meal List */}
 			<div className="card p-6">
 				<div className="flex items-center justify-between mb-4">
-					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
 						<i className="ri-restaurant-2-line text-brand-500" />
 						Meals ({new Date(queryDate).toLocaleDateString()})
 					</h2>
@@ -424,17 +424,17 @@ export default function MealsPage() {
 								className="flex items-center justify-between rounded-xl bg-slate-50 p-4 transition-colors hover:bg-slate-100 dark:bg-slate-900/60 dark:hover:bg-slate-900/90"
 							>
 								<div>
-									<h3 className="font-medium text-slate-900 dark:text-slate-100">
+									<h3 className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
 										{meal.name || meal.mealType}
 									</h3>
-									<p className="text-sm capitalize text-slate-500 dark:text-slate-400">{meal.mealType} • {new Date(meal.loggedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+									<p className="text-sm capitalize text-charcoal-blue-500 dark:text-charcoal-blue-400">{meal.mealType} • {new Date(meal.loggedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
 								</div>
 								<div className="flex items-center gap-4">
 									<div className="text-right">
 										<p className="font-semibold text-orange-600">
 											{meal.calories || 0} kcal
 										</p>
-										<div className="mt-1 flex gap-2 text-xs text-slate-500 dark:text-slate-400">
+										<div className="mt-1 flex gap-2 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
 											<span>P: {meal.proteinGrams?.toFixed(1)}g</span>
 											<span>C: {meal.carbsGrams?.toFixed(1)}g</span>
 											<span>F: {meal.fatGrams?.toFixed(1)}g</span>
@@ -456,12 +456,12 @@ export default function MealsPage() {
 				) : (
 					<div className="text-center py-12">
 						<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-900/80">
-							<i className="ri-restaurant-line text-3xl text-slate-400 dark:text-slate-500" />
+							<i className="ri-restaurant-line text-3xl text-charcoal-blue-400 dark:text-charcoal-blue-500" />
 						</div>
-						<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+						<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 							No meals logged
 						</h3>
-						<p className="text-slate-500 dark:text-slate-400">Log your first meal for this day to start tracking totals.</p>
+						<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">Log your first meal for this day to start tracking totals.</p>
 						<Link href="/meals/add" className="btn-primary mt-4">
 							Log Meal
 						</Link>

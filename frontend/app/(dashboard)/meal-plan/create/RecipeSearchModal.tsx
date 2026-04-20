@@ -50,7 +50,7 @@ export default function RecipeSearchModal({ onSelect, onClose }: RecipeSearchMod
 				<div className="w-full max-w-lg rounded-2xl bg-white shadow-xl dark:bg-slate-950" onClick={(e) => e.stopPropagation()}>
 					<div className="border-b border-slate-200 p-4 dark:border-white/10">
 						<div className="flex items-center gap-3">
-							<i className="ri-search-line text-slate-400 dark:text-slate-500" />
+							<i className="ri-search-line text-charcoal-blue-400 dark:text-charcoal-blue-500" />
 							<input
 								type="text"
 								value={query}
@@ -66,19 +66,19 @@ export default function RecipeSearchModal({ onSelect, onClose }: RecipeSearchMod
 					</div>
 					<div className="max-h-80 overflow-y-auto p-2">
 						{loading && (
-							<div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">Searching...</div>
+							<div className="py-8 text-center text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">Searching...</div>
 						)}
 						{!loading && query && results.length === 0 && (
-							<div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">No recipes found</div>
+							<div className="py-8 text-center text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">No recipes found</div>
 						)}
 						{!loading && !query && (
-							<div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">Type to search recipes</div>
+							<div className="py-8 text-center text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">Type to search recipes</div>
 						)}
 						{results.map((recipe) => (
 							<div key={recipe.id} className="flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/60">
 								<div className="flex-1 min-w-0">
-									<p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">{recipe.title}</p>
-									<p className="text-xs text-slate-500 dark:text-slate-400">
+									<p className="truncate text-sm font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{recipe.title}</p>
+									<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
 										{recipe.nutrition?.caloriesPerServing || 0} kcal
 										{recipe.nutrition?.proteinGrams ? ` · ${recipe.nutrition.proteinGrams.toFixed(0)}g protein` : ""}
 									</p>

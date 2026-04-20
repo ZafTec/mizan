@@ -79,13 +79,13 @@ export default function LogProgress() {
       </header>
 
       {/* Quick Tips */}
-		<div className="card p-6 bg-slate-50/90 dark:bg-slate-900/60">
+		<div className="card p-6 bg-white/70 dark:bg-charcoal-blue-950/60">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center shrink-0">
             <i className="ri-lightbulb-line text-xl text-brand-600 dark:text-brand-400" />
           </div>
           <div>
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">Pro Tips</h3>
+            <h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-1">Pro Tips</h3>
             <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
               <li>• Track your meals throughout the day for accuracy</li>
               <li>• Use the meal diary to calculate totals automatically</li>
@@ -98,7 +98,7 @@ export default function LogProgress() {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Macros Card */}
         <div className="card p-6 space-y-5">
-          <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+          <h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
             <i className="ri-pie-chart-2-line text-brand-500" />
             Daily Totals
           </h2>
@@ -191,7 +191,7 @@ export default function LogProgress() {
 
         {/* Optional Fields Card */}
         <div className="card p-6 space-y-5">
-          <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+          <h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
             <i className="ri-more-line text-brand-500" />
             Additional Info
           </h2>
@@ -211,7 +211,7 @@ export default function LogProgress() {
               placeholder="70.5"
               className="input"
             />
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Track your weight to see correlations with your nutrition</p>
+            <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">Track your weight to see correlations with your nutrition</p>
           </div>
 
           <div>

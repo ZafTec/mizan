@@ -373,13 +373,13 @@ export default function WorkoutsPage() {
             </header>
 
             {/* Tabs */}
-            <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
+            <div className="flex gap-1 p-1 bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 rounded-xl w-fit">
                 <button
                     type="button"
                     onClick={() => handleTabChange("history")}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         activeTab === "history"
-                            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm"
+                            ? "bg-white dark:bg-slate-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
                             : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                     }`}
                 >
@@ -391,7 +391,7 @@ export default function WorkoutsPage() {
                     onClick={() => handleTabChange("log")}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         activeTab === "log"
-                            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm"
+                            ? "bg-white dark:bg-slate-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
                             : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                     }`}
                 >
@@ -403,7 +403,7 @@ export default function WorkoutsPage() {
                     onClick={() => handleTabChange("library")}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         activeTab === "library"
-                            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm"
+                            ? "bg-white dark:bg-slate-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
                             : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                     }`}
                 >
@@ -419,26 +419,26 @@ export default function WorkoutsPage() {
                     {historyLoaded && !isLoadingHistory && historyWorkouts.length > 0 && (
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             <div className="card p-4 text-center">
-                                <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{historyTotal}</div>
-                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Total Workouts</div>
+                                <div className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{historyTotal}</div>
+                                <div className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">Total Workouts</div>
                             </div>
                             <div className="card p-4 text-center">
                                 <div className="text-2xl font-bold text-brand-600 dark:text-brand-400">
                                     {historyWorkouts.reduce((sum, w) => sum + (w.exercises?.length || 0), 0)}
                                 </div>
-                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Exercises (this page)</div>
+                                <div className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">Exercises (this page)</div>
                             </div>
                             <div className="card p-4 text-center">
                                 <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                                     {historyWorkouts.reduce((sum, w) => sum + (w.durationMinutes || 0), 0)}
                                 </div>
-                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Minutes (this page)</div>
+                                <div className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">Minutes (this page)</div>
                             </div>
                             <div className="card p-4 text-center">
                                 <div className="text-2xl font-bold text-red-600 dark:text-red-400">
                                     {historyWorkouts.reduce((sum, w) => sum + (w.caloriesBurned || 0), 0)}
                                 </div>
-                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Calories (this page)</div>
+                                <div className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">Calories (this page)</div>
                             </div>
                         </div>
                     )}
@@ -449,9 +449,9 @@ export default function WorkoutsPage() {
                         </div>
                     ) : historyWorkouts.length === 0 ? (
                         <div className="card p-16 text-center">
-                            <i className="ri-dumbbell-line text-4xl text-slate-400 dark:text-slate-500 mb-3 block" />
-                            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No workouts yet</h3>
-                            <p className="text-slate-500 dark:text-slate-400 mb-4">Start logging workouts to see your history here.</p>
+                            <i className="ri-dumbbell-line text-4xl text-charcoal-blue-400 dark:text-charcoal-blue-500 mb-3 block" />
+                            <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No workouts yet</h3>
+                            <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-4">Start logging workouts to see your history here.</p>
                             <button type="button" onClick={() => setActiveTab("log")} className="btn-primary">
                                 <i className="ri-add-line mr-1.5" />
                                 Log Your First Workout
@@ -479,10 +479,10 @@ export default function WorkoutsPage() {
                                                         <i className="ri-dumbbell-line text-lg text-brand-600 dark:text-brand-400" />
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                                                        <h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 truncate">
                                                             {workout.name || "Workout"}
                                                         </h3>
-                                                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                                                        <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
                                                             {new Date(workout.workoutDate + "T00:00:00").toLocaleDateString("en-US", {
                                                                 weekday: "short", month: "short", day: "numeric",
                                                             })}
@@ -490,7 +490,7 @@ export default function WorkoutsPage() {
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-4 shrink-0">
-                                                    <div className="hidden sm:flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+                                                    <div className="hidden sm:flex items-center gap-3 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
                                                         {workout.durationMinutes && (
                                                             <span className="flex items-center gap-1">
                                                                 <i className="ri-time-line" />{workout.durationMinutes}m
@@ -513,7 +513,7 @@ export default function WorkoutsPage() {
                                             </div>
 
                                             {/* Mobile stats row */}
-                                            <div className="sm:hidden flex flex-wrap gap-3 mt-2 text-xs text-slate-500 dark:text-slate-400">
+                                            <div className="sm:hidden flex flex-wrap gap-3 mt-2 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
                                                 {workout.durationMinutes && (
                                                     <span className="flex items-center gap-1"><i className="ri-time-line" />{workout.durationMinutes}m</span>
                                                 )}
@@ -531,23 +531,23 @@ export default function WorkoutsPage() {
                                         {isExpanded && (
                                             <div className="border-t border-slate-100 dark:border-slate-800 px-4 sm:px-5 pb-4 sm:pb-5 pt-3 space-y-3">
                                                 {workout.notes && (
-                                                    <p className="text-sm text-slate-500 dark:text-slate-400 italic">{workout.notes}</p>
+                                                    <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 italic">{workout.notes}</p>
                                                 )}
                                                 {workout.exercises.map((ex) => (
                                                     <div key={ex.id} className="rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3 space-y-2">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="font-medium text-sm text-slate-900 dark:text-slate-100">{ex.exerciseName}</span>
+                                                            <span className="font-medium text-sm text-charcoal-blue-900 dark:text-charcoal-blue-100">{ex.exerciseName}</span>
                                                             <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${categoryBadge(ex.category)}`}>
                                                                 {ex.category}
                                                             </span>
                                                             {ex.muscleGroup && (
-                                                                <span className="text-xs text-slate-500 dark:text-slate-400">{ex.muscleGroup}</span>
+                                                                <span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{ex.muscleGroup}</span>
                                                             )}
                                                         </div>
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1">
                                                             {ex.sets.map((set, si) => (
                                                                 <div key={si} className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-2">
-                                                                    <span className="font-mono text-slate-400 dark:text-slate-500 w-5">#{set.setNumber}</span>
+                                                                    <span className="font-mono text-charcoal-blue-400 dark:text-charcoal-blue-500 w-5">#{set.setNumber}</span>
                                                                     {set.reps != null && <span>{set.reps} reps</span>}
                                                                     {set.weightKg != null && <span className="text-brand-600 dark:text-brand-400">{set.weightKg} kg</span>}
                                                                     {set.durationSeconds != null && (
@@ -574,18 +574,18 @@ export default function WorkoutsPage() {
                                 type="button"
                                 onClick={() => loadHistory(historyPage - 1)}
                                 disabled={historyPage <= 1 || isLoadingHistory}
-                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 text-slate-600 dark:text-slate-400 transition-colors disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-700"
                             >
                                 <i className="ri-arrow-left-s-line" />
                             </button>
-                            <span className="text-sm text-slate-500 dark:text-slate-400">
+                            <span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
                                 Page {historyPage} of {historyTotalPages}
                             </span>
                             <button
                                 type="button"
                                 onClick={() => loadHistory(historyPage + 1)}
                                 disabled={historyPage >= historyTotalPages || isLoadingHistory}
-                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 text-slate-600 dark:text-slate-400 transition-colors disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-700"
                             >
                                 <i className="ri-arrow-right-s-line" />
                             </button>
@@ -664,7 +664,7 @@ export default function WorkoutsPage() {
                             </button>
                         </div>
 
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
                             Or <button type="button" onClick={() => handleTabChange("library")} className="text-brand-500 hover:text-brand-600 font-medium">browse the exercise library</button> to find exercises
                         </p>
 
@@ -678,13 +678,13 @@ export default function WorkoutsPage() {
                                         className="w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-between"
                                     >
                                         <div>
-                                            <div className="font-medium text-slate-900 dark:text-slate-100">{exercise.name}</div>
+                                            <div className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{exercise.name}</div>
                                             <div className="flex items-center gap-2 mt-1">
                                                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${categoryBadge(exercise.category)}`}>
                                                     {exercise.category}
                                                 </span>
                                                 {exercise.muscleGroup && (
-                                                    <span className="text-xs text-slate-500 dark:text-slate-400">{exercise.muscleGroup}</span>
+                                                    <span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{exercise.muscleGroup}</span>
                                                 )}
                                             </div>
                                         </div>
@@ -696,14 +696,14 @@ export default function WorkoutsPage() {
 
                         {exercises.length > 0 && (
                             <div className="space-y-3 mt-4">
-                                <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                                <h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
                                     Added ({exercises.length})
                                 </h3>
                                 {exercises.map((exercise, index) => (
                                     <div key={index} className="border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-3">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
-                                                <h4 className="font-medium text-slate-900 dark:text-slate-100">{exercise.exerciseName}</h4>
+                                                <h4 className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{exercise.exerciseName}</h4>
                                                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${categoryBadge(exercise.category)}`}>
                                                     {exercise.category}
                                                 </span>
@@ -795,7 +795,7 @@ export default function WorkoutsPage() {
                             </button>
                         </div>
 
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                        <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
                             {libraryTotal} exercises found
                         </p>
                     </div>
@@ -811,7 +811,7 @@ export default function WorkoutsPage() {
                                                 <i className={`${isCardio(exercise.category) ? "ri-run-line" : isStrength(exercise.category) ? "ri-boxing-line" : "ri-mental-health-line"} text-lg text-white`} />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">{exercise.name}</h3>
+                                                <h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 truncate">{exercise.name}</h3>
                                                 {exercise.description && (
                                                     <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 line-clamp-2">{exercise.description}</p>
                                                 )}
@@ -867,9 +867,9 @@ export default function WorkoutsPage() {
                         </div>
                     ) : libraryLoaded && !isLoadingLibrary ? (
                         <div className="card p-16 text-center">
-                            <i className="ri-run-line text-4xl text-slate-400 dark:text-slate-500 mb-3 block" />
-                            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No exercises found</h3>
-                            <p className="text-slate-500 dark:text-slate-400">Try a different search or category</p>
+                            <i className="ri-run-line text-4xl text-charcoal-blue-400 dark:text-charcoal-blue-500 mb-3 block" />
+                            <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No exercises found</h3>
+                            <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">Try a different search or category</p>
                         </div>
                     ) : null}
 
@@ -880,18 +880,18 @@ export default function WorkoutsPage() {
                                 type="button"
                                 onClick={() => loadLibrary(libraryPage - 1)}
                                 disabled={libraryPage <= 1 || isLoadingLibrary}
-                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 text-slate-600 dark:text-slate-400 transition-colors disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-700"
                             >
                                 <i className="ri-arrow-left-s-line" />
                             </button>
-                            <span className="text-sm text-slate-500 dark:text-slate-400">
+                            <span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
                                 Page {libraryPage} of {libraryTotalPages}
                             </span>
                             <button
                                 type="button"
                                 onClick={() => loadLibrary(libraryPage + 1)}
                                 disabled={libraryPage >= libraryTotalPages || isLoadingLibrary}
-                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 text-slate-600 dark:text-slate-400 transition-colors disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-700"
                             >
                                 <i className="ri-arrow-right-s-line" />
                             </button>

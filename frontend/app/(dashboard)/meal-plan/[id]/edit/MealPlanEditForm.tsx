@@ -95,7 +95,7 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 	return (
 		<>
 			<div className="card p-6">
-				<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-4">
+				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2 mb-4">
 					<i className="ri-settings-3-line text-brand-500 dark:text-brand-400" />
 					Plan Details
 				</h2>
@@ -139,7 +139,7 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 
 			<div className="card p-6">
 				<div className="flex items-center justify-between mb-4">
-					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
 						<i className="ri-restaurant-line text-brand-500 dark:text-brand-400" />
 						Recipes ({recipes.length})
 					</h2>
@@ -157,11 +157,11 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 								<div key={recipe.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
 									<div className="flex items-start justify-between gap-4">
 										<div className="flex-1 min-w-0">
-											<p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+											<p className="text-sm font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
 												{recipe.recipeTitle || "Recipe"}
 											</p>
 											{!isEditing && (
-												<p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+												<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
 													{recipe.date} &middot; {recipe.mealType} &middot; {recipe.servings} serving{recipe.servings !== 1 ? "s" : ""}
 													{recipe.caloriesPerServing ? ` · ${Math.round(recipe.caloriesPerServing * recipe.servings)} kcal` : ""}
 												</p>

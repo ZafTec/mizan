@@ -62,9 +62,9 @@ export default async function BodyMeasurementsPage({
                             <i className="ri-scales-3-line text-xl text-white" />
                         </div>
                         <div className="flex-1">
-                            <h3 className="font-semibold text-slate-900 dark:text-slate-100">Weight</h3>
+                            <h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Weight</h3>
                             <div className="flex items-center gap-2">
-                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
                                     {latest?.weightKg ? `${latest.weightKg} kg` : "No data"}
                                 </p>
                                 {weightDelta && (
@@ -83,9 +83,9 @@ export default async function BodyMeasurementsPage({
                             <i className="ri-heart-pulse-line text-xl text-white" />
                         </div>
                         <div className="flex-1">
-                            <h3 className="font-semibold text-slate-900 dark:text-slate-100">Body Fat</h3>
+                            <h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Body Fat</h3>
                             <div className="flex items-center gap-2">
-                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
                                     {latest?.bodyFatPercentage ? `${latest.bodyFatPercentage}%` : "No data"}
                                 </p>
                                 {bodyFatDelta && (
@@ -104,9 +104,9 @@ export default async function BodyMeasurementsPage({
 							<i className="ri-hand-heart-line text-xl text-current" />
 						</div>
                         <div className="flex-1">
-                            <h3 className="font-semibold text-slate-900 dark:text-slate-100">Muscle Mass</h3>
+                            <h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Muscle Mass</h3>
                             <div className="flex items-center gap-2">
-                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
                                     {latest?.muscleMassKg ? `${latest.muscleMassKg} kg` : "No data"}
                                 </p>
                                 {muscleDelta && (
@@ -149,7 +149,7 @@ export default async function BodyMeasurementsPage({
                             <tbody>
                                 {measurements.map((m) => (
                                     <tr key={m.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800">
-                                        <td className="py-3 px-4 text-sm text-slate-900 dark:text-slate-100">
+                                        <td className="py-3 px-4 text-sm text-charcoal-blue-900 dark:text-charcoal-blue-100">
                                             {new Date(m.date).toLocaleDateString()}
                                         </td>
                                         <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
@@ -195,11 +195,11 @@ export default async function BodyMeasurementsPage({
                     </div>
                 ) : (
                     <div className="text-center py-16">
-                        <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
-                            <i className="ri-body-scan-line text-3xl text-slate-400 dark:text-slate-500" />
+                        <div className="w-16 h-16 rounded-2xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 flex items-center justify-center mx-auto mb-4">
+                            <i className="ri-body-scan-line text-3xl text-charcoal-blue-400 dark:text-charcoal-blue-500" />
                         </div>
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No measurements yet</h3>
-                        <p className="text-slate-500 dark:text-slate-400">Start tracking your progress today!</p>
+                        <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No measurements yet</h3>
+                        <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">Start tracking your progress today!</p>
                     </div>
                 )}
             </div>

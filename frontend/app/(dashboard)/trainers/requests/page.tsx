@@ -43,7 +43,7 @@ export default function TrainerRequestsPage() {
 	if (!session?.user) {
 		return (
 			<div className="flex items-center justify-center min-h-screen">
-				<p className="text-slate-500 dark:text-slate-400">Not authenticated</p>
+				<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">Not authenticated</p>
 			</div>
 		);
 	}
@@ -53,10 +53,10 @@ export default function TrainerRequestsPage() {
 			{/* Header */}
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
-					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 						Trainer Requests
 					</h1>
-					<p className="text-slate-500 dark:text-slate-400 mt-1">
+					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
 						View your pending trainer connection requests
 					</p>
 				</div>
@@ -70,10 +70,10 @@ export default function TrainerRequestsPage() {
 			{requests.length === 0 ? (
 				<div className="card p-12 text-center">
 					<i className="ri-mail-send-line text-6xl text-slate-300 dark:text-slate-600 mb-4" />
-					<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+					<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 						No Pending Requests
 					</h3>
-					<p className="text-slate-500 dark:text-slate-400 mb-6">
+					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-6">
 						You don't have any pending trainer connection requests
 					</p>
 					<Link href="/trainers" className="btn-primary inline-flex items-center gap-2">
@@ -105,16 +105,16 @@ export default function TrainerRequestsPage() {
 								</div>
 
 								<div className="flex-1 text-center sm:text-left">
-									<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+									<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 										{request.trainerName || request.trainerEmail?.split("@")[0]}
 									</h3>
-									<p className="text-slate-500 dark:text-slate-400">{request.trainerEmail}</p>
+									<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">{request.trainerEmail}</p>
 									<div className="flex items-center gap-2 mt-2 justify-center sm:justify-start">
 										<span className="inline-flex items-center gap-1 px-3 py-1 rounded-2xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-medium">
 											<i className="ri-time-line" />
 											Pending
 										</span>
-										<span className="text-sm text-slate-500 dark:text-slate-400">
+										<span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 											Sent {request.requestedAt ? new Date(request.requestedAt).toLocaleDateString() : "Unknown date"}
 										</span>
 									</div>
@@ -138,13 +138,13 @@ export default function TrainerRequestsPage() {
 			)}
 
 			{/* Info Card */}
-			<div className="card p-6 border border-blue-200 dark:border-blue-800 bg-slate-50/90 dark:bg-slate-900/60">
+			<div className="card p-6 border border-blue-200 dark:border-blue-800 bg-white/70 dark:bg-charcoal-blue-950/60">
 				<div className="flex items-start gap-4">
 					<div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
 						<i className="ri-information-line text-2xl text-white" />
 					</div>
 					<div>
-						<h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">
+						<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 							What happens next?
 						</h3>
 						<ul className="text-sm text-slate-600 dark:text-slate-400 space-y-2">

@@ -66,8 +66,8 @@ export default async function AdminExercisesPage({
 					</select>
 					<button type="submit" className="btn-primary h-11">Filter</button>
 				</form>
-				<div className="text-sm text-slate-500 dark:text-slate-400">
-					<span className="font-bold text-slate-900 dark:text-slate-100">{totalCount}</span> exercises
+				<div className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+					<span className="font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{totalCount}</span> exercises
 				</div>
 			</div>
 
@@ -86,7 +86,7 @@ export default async function AdminExercisesPage({
 						<tbody className="divide-y divide-slate-100 dark:divide-white/10">
 							{exercises.length === 0 ? (
 								<tr>
-									<td colSpan={5} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+									<td colSpan={5} className="px-6 py-12 text-center text-charcoal-blue-500 dark:text-charcoal-blue-400">
 										No exercises found.
 									</td>
 								</tr>
@@ -94,11 +94,11 @@ export default async function AdminExercisesPage({
 								exercises.map((exercise) => (
 									<tr key={exercise.id} className="group transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-900/60">
 										<td className="px-6 py-4">
-											<div className="text-sm font-bold text-slate-900 dark:text-slate-100">
+											<div className="text-sm font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 												{exercise.name}
 											</div>
 											{exercise.description && (
-												<div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">{exercise.description}</div>
+												<div className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 line-clamp-1">{exercise.description}</div>
 											)}
 										</td>
 										<td className="px-6 py-4">

@@ -65,7 +65,7 @@ export default function TrainersPage() {
 	if (!session?.user) {
 		return (
 			<div className="flex items-center justify-center min-h-[50vh]">
-				<p className="text-slate-500 dark:text-slate-400">Not authenticated</p>
+				<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">Not authenticated</p>
 			</div>
 		);
 	}
@@ -124,10 +124,10 @@ export default function TrainersPage() {
 			{filteredTrainers.length === 0 ? (
 				<div className="card p-12 text-center">
 					<i className="ri-user-search-line text-6xl text-slate-300 dark:text-slate-600 mb-4" />
-					<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+					<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 						No trainers found
 					</h3>
-					<p className="text-slate-500 dark:text-slate-400">
+					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">
 						Try adjusting your search or check back later
 					</p>
 				</div>
@@ -151,10 +151,10 @@ export default function TrainersPage() {
 										</span>
 									</div>
 								)}
-								<h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">
+								<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-1">
 									{trainer.name || trainer.email?.split("@")[0] || "Unknown trainer"}
 								</h3>
-								<p className="text-sm text-slate-500 dark:text-slate-400 mb-2">{trainer.email}</p>
+								<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-2">{trainer.email}</p>
 								<div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
 									<i className="ri-group-line" />
 									<span>{trainer.clientCount || 0} clients</span>
@@ -190,13 +190,13 @@ export default function TrainersPage() {
 			)}
 
 			{/* Info Card */}
-			<div className="card p-6 border border-blue-200 dark:border-blue-800 bg-slate-50/90 dark:bg-slate-900/60">
+			<div className="card p-6 border border-blue-200 dark:border-blue-800 bg-white/70 dark:bg-charcoal-blue-950/60">
 				<div className="flex items-start gap-4">
 					<div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
 						<i className="ri-information-line text-2xl text-white" />
 					</div>
 					<div>
-						<h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">
+						<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 							How it works
 						</h3>
 						<ul className="text-sm text-slate-600 dark:text-slate-400 space-y-2">

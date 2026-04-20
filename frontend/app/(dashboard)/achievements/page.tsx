@@ -57,7 +57,7 @@ export default async function AchievementsPage() {
                         {earned.map((achievement) => (
 							<div
 								key={achievement.id}
-							className="card-hover p-5 border border-brand-200 bg-slate-50/90 dark:bg-slate-900/60"
+							className="card-hover p-5 border border-brand-200 bg-white/70 dark:bg-charcoal-blue-950/60"
 						>
 							<div className="flex items-start gap-4">
 								<div className="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center shadow-lg shrink-0 dark:bg-brand-500">
@@ -74,10 +74,10 @@ export default async function AchievementsPage() {
                                         )}
                                     </div>
 									<div className="flex-1">
-                                        <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                                        <h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
                                             {achievement.name || "Achievement"}
                                         </h3>
-										<p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+										<p className="mt-1 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
                                             {achievement.description || "No description"}
                                         </p>
                                         <div className="flex items-center gap-3 mt-3">
@@ -86,12 +86,12 @@ export default async function AchievementsPage() {
                                                 {achievement.points} points
                                             </span>
                                             {achievement.category && (
-												<span className="text-xs text-slate-500 dark:text-slate-400">
+												<span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
                                                     {achievement.category}
                                                 </span>
                                             )}
                                             {achievement.earnedAt && (
-												<span className="text-xs text-slate-500 dark:text-slate-400">
+												<span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
                                                     Earned {new Date(achievement.earnedAt).toLocaleDateString()}
                                                 </span>
                                             )}
@@ -128,10 +128,10 @@ export default async function AchievementsPage() {
                                         )}
                                     </div>
 									<div className="flex-1">
-                                        <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                                        <h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
                                             {achievement.name || "Achievement"}
                                         </h3>
-										<p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+										<p className="mt-1 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
                                             {achievement.description || "No description"}
                                         </p>
                                         <div className="flex items-center gap-3 mt-3">
@@ -140,7 +140,7 @@ export default async function AchievementsPage() {
                                                 {achievement.points} points
                                             </span>
                                             {achievement.category && (
-												<span className="text-xs text-slate-500 dark:text-slate-400">
+												<span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
                                                     {achievement.category}
                                                 </span>
                                             )}
@@ -158,8 +158,8 @@ export default async function AchievementsPage() {
 	                    <div className="mb-6 w-full max-w-[18rem] opacity-95 drop-shadow-md">
 	                        <AppFeatureIllustration variant="achievements" className="h-auto w-full" />
 	                    </div>
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No achievements yet</h3>
-					<p className="text-slate-500 dark:text-slate-400">Start using Mizan to earn achievements!</p>
+                    <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No achievements yet</h3>
+					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">Start using Mizan to earn achievements!</p>
 				</div>
 			)}
         </div>

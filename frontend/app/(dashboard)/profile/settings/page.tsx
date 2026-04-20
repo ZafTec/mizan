@@ -323,10 +323,10 @@ export default function ProfileSettingsPage() {
 								<AnimatedIcon name="user" size={14} aria-hidden="true" />
 								Settings center
 							</p>
-							<h1 className="text-3xl font-semibold text-slate-950 dark:text-slate-50">
+							<h1 className="text-3xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
 								{displayName}
 							</h1>
-							<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+							<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 								Manage your account, app preferences, sessions, and exported data.
 							</p>
 						</div>
@@ -535,8 +535,8 @@ export default function ProfileSettingsPage() {
 							<div className="mt-6 space-y-4">
 								<div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-900/70">
 									<div>
-										<p className="text-sm font-medium text-slate-900 dark:text-slate-100">{activeSessions.length} active session{activeSessions.length === 1 ? "" : "s"}</p>
-										<p className="text-sm text-slate-500 dark:text-slate-400">Current device remains signed in when revoking others.</p>
+										<p className="text-sm font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{activeSessions.length} active session{activeSessions.length === 1 ? "" : "s"}</p>
+										<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">Current device remains signed in when revoking others.</p>
 									</div>
 									{activeSessions.length > 1 ? (
 										<button onClick={handleRevokeAllOtherSessions} disabled={revoking === "all"} className="btn-secondary">
@@ -553,11 +553,11 @@ export default function ProfileSettingsPage() {
 												<div className="flex items-start justify-between gap-4">
 													<div className="min-w-0">
 														<div className="flex items-center gap-2">
-															<p className="font-medium text-slate-900 dark:text-slate-100">{getDeviceInfo(activeSession.userAgent)}</p>
+															<p className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{getDeviceInfo(activeSession.userAgent)}</p>
 															{isCurrent ? <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-800 dark:bg-brand-500/20 dark:text-brand-200">Current</span> : null}
 														</div>
-														<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{activeSession.ipAddress || "Unknown IP"} - Started {formatDateTime(activeSession.createdAt)}</p>
-														<p className="text-sm text-slate-500 dark:text-slate-400">Expires {formatDateTime(activeSession.expiresAt)}</p>
+														<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{activeSession.ipAddress || "Unknown IP"} - Started {formatDateTime(activeSession.createdAt)}</p>
+														<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">Expires {formatDateTime(activeSession.expiresAt)}</p>
 													</div>
 													{!isCurrent ? (
 														<button onClick={() => handleRevokeSession(activeSession.token)} disabled={revoking === activeSession.token} className="rounded-full border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-500/20 dark:hover:bg-red-500/10">
@@ -581,7 +581,7 @@ export default function ProfileSettingsPage() {
 						/>
 
 						<div className="mt-6 space-y-4 rounded-3xl border border-slate-200 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-900/70">
-							<p className="text-sm text-slate-600 dark:text-slate-300">
+							<p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
 								The export includes your account profile, goals, meals, meal plans, measurements, workouts, achievements, recipes, favorites, and MCP usage metadata.
 							</p>
 							<button onClick={handleExportData} disabled={exportingData} className="btn-primary w-full justify-center">
@@ -630,8 +630,8 @@ function SectionHeading({
 				<AnimatedIcon name={icon} size={18} aria-hidden="true" />
 			</span>
 			<div>
-				<h2 className="text-lg font-semibold text-slate-950 dark:text-slate-50">{title}</h2>
-				<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+				<h2 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{title}</h2>
+				<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{description}</p>
 			</div>
 		</div>
 	);
@@ -640,8 +640,8 @@ function SectionHeading({
 function SummaryBadge({ label, value }: { label: string; value: string }) {
 	return (
 		<div className="rounded-3xl border border-slate-200 bg-white/90 px-4 py-3 dark:border-white/10 dark:bg-slate-950/70">
-			<p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">{label}</p>
-			<p className="mt-2 text-lg font-semibold text-slate-950 dark:text-slate-50">{value}</p>
+			<p className="text-xs font-semibold uppercase tracking-[0.14em] text-charcoal-blue-500 dark:text-charcoal-blue-400">{label}</p>
+			<p className="mt-2 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{value}</p>
 		</div>
 	);
 }
@@ -657,9 +657,9 @@ function ObservationCard({
 }) {
 	return (
 		<div className="rounded-3xl border border-slate-200 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-900/70">
-			<p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">{label}</p>
-			<p className="mt-3 text-lg font-semibold text-slate-950 dark:text-slate-50">{value}</p>
-			<p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{helper}</p>
+			<p className="text-xs font-semibold uppercase tracking-[0.14em] text-charcoal-blue-500 dark:text-charcoal-blue-400">{label}</p>
+			<p className="mt-3 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{value}</p>
+			<p className="mt-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{helper}</p>
 		</div>
 	);
 }
@@ -682,8 +682,8 @@ function ToggleCard({
 			className="flex items-center justify-between rounded-3xl border border-slate-200 bg-white p-4 text-left transition-colors hover:border-slate-300 dark:border-white/10 dark:bg-slate-950 dark:hover:border-white/20"
 		>
 			<div>
-				<p className="font-medium text-slate-900 dark:text-slate-100">{label}</p>
-				<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+				<p className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{label}</p>
+				<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{description}</p>
 			</div>
 			<span className={`relative h-6 w-11 rounded-full transition-colors ${checked ? "bg-brand-600" : "bg-slate-300 dark:bg-slate-700"}`}>
 				<span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${checked ? "translate-x-5" : "translate-x-0.5"}`} />
@@ -705,7 +705,7 @@ function Field({
 		<label className="grid gap-2">
 			<span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
 			{children}
-			{helper ? <span className="text-xs text-slate-500 dark:text-slate-400">{helper}</span> : null}
+			{helper ? <span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{helper}</span> : null}
 		</label>
 	);
 }
