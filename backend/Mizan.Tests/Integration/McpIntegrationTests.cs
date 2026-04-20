@@ -323,7 +323,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         foodsResult.Should().ContainKey("items");
 
         var items = JsonSerializer.Deserialize<List<object>>(foodsResult["items"].ToString());
-        items.Should().HaveCountLessOrEqualTo(3);
+        items.Should().HaveCountLessThanOrEqualTo(3);
     }
 
     [Fact]
@@ -1400,7 +1400,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         result.Should().ContainKey("pageSize");
 
         var items = JsonSerializer.Deserialize<List<object>>(result!["items"].ToString()!);
-        items.Should().HaveCountLessOrEqualTo(2);
+        items.Should().HaveCountLessThanOrEqualTo(2);
     }
 
     [Fact]
@@ -1455,7 +1455,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var result = JsonSerializer.Deserialize<JsonElement>(textContent!);
 
         var items = result.GetProperty("items");
-        items.GetArrayLength().Should().BeGreaterOrEqualTo(3);
+        items.GetArrayLength().Should().BeGreaterThanOrEqualTo(3);
     }
 
     [Fact]
