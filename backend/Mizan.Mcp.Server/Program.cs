@@ -8,6 +8,11 @@ using Serilog.Events;
 using Serilog.Exceptions;
 using ModelContextProtocol.Protocol;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +47,65 @@ builder.Services.AddHttpClient<IBackendApiClient, BackendApiClient>(client =>
     PooledConnectionLifetime = TimeSpan.FromMinutes(2),
     PooledConnectionIdleTimeout = TimeSpan.FromSeconds(30),
 });
+
+// ============================================================================
+// OpenTelemetry Configuration
+// ============================================================================
+var serviceName = "Mizan.Mcp";
+var serviceVersion = "2.0.0";
+
+var tracingEndpoint = builder.Configuration["OTLP_ENDPOINT_URL"];
+var lokiEndpoint = builder.Configuration["LOKI_OTLP_ENDPOINT"];
+
+var mcpActivitySource = new ActivitySource("Mizan.Mcp.Tools");
+var mcpMeter = new Meter("Mizan.Mcp", "2.0.0");
+var toolCallCounter = mcpMeter.CreateCounter<int>("mcp.tool_calls.count");
+var toolCallDuration = mcpMeter.CreateHistogram<double>("mcp.tool_calls.duration", unit: "ms");
+
+var otel = builder.Services.AddOpenTelemetry();
+
+otel.ConfigureResource(resource => resource
+    .AddService(serviceName: serviceName, serviceVersion: serviceVersion)
+);
+
+otel.WithMetrics(metrics => metrics
+    .AddAspNetCoreInstrumentation()
+    .AddMeter("Microsoft.AspNetCore.Hosting")
+    .AddMeter("Microsoft.AspNetCore.Server.Kestrel")
+    .AddMeter("System.Net.Http")
+    .AddMeter("Mizan.Mcp")
+    .AddPrometheusExporter()
+);
+
+otel.WithTracing(tracing =>
+{
+    tracing.AddAspNetCoreInstrumentation();
+    tracing.AddHttpClientInstrumentation();
+    tracing.AddSource("Mizan.Mcp.Tools");
+
+    if (tracingEndpoint != null)
+    {
+        tracing.AddOtlpExporter(o => o.Endpoint = new Uri(tracingEndpoint));
+    }
+});
+
+if (lokiEndpoint != null)
+{
+    builder.Logging.AddOpenTelemetry(logging =>
+    {
+        logging.IncludeFormattedMessage = true;
+        logging.IncludeScopes = true;
+        logging.SetResourceBuilder(
+            ResourceBuilder.CreateDefault()
+                .AddService(serviceName: serviceName, serviceVersion: serviceVersion)
+        );
+        logging.AddOtlpExporter(o =>
+        {
+            o.Endpoint = new Uri(lokiEndpoint);
+            o.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+        });
+    });
+}
 
 // MCP Server
 builder.Services.AddMcpServer(options =>
@@ -94,12 +158,23 @@ builder.Services.AddMcpServer(options =>
         var userId = Guid.TryParse(httpContext.User.FindFirst("sub")?.Value, out var uid) ? uid : Guid.Empty;
         Log.Debug("[MCP Tool] Tool: {ToolName}, UserId: {UserId}", toolName, userId);
 
+        using var activity = mcpActivitySource.StartActivity($"Tool:{toolName}");
+        activity?.SetTag("mcp.tool.name", toolName);
+        activity?.SetTag("mcp.user.id", userId.ToString());
+
         var sw = Stopwatch.StartNew();
 
         try
         {
             var result = await next(context, cancellationToken);
             sw.Stop();
+
+            activity?.SetTag("mcp.tool.success", result.IsError != true);
+            toolCallCounter.Add(1,
+                new KeyValuePair<string, object?>("tool", toolName),
+                new KeyValuePair<string, object?>("success", (result.IsError != true).ToString()));
+            toolCallDuration.Record(sw.Elapsed.TotalMilliseconds,
+                new KeyValuePair<string, object?>("tool", toolName));
 
             Log.Information("[MCP Tool] Tool succeeded: {ToolName} (elapsed: {ElapsedMs}ms, error: {IsError})",
                 toolName, sw.ElapsedMilliseconds, result.IsError);
@@ -117,6 +192,15 @@ builder.Services.AddMcpServer(options =>
         catch (Exception ex)
         {
             sw.Stop();
+
+            activity?.SetTag("mcp.tool.success", false);
+            activity?.SetTag("mcp.tool.error", ex.Message);
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            toolCallCounter.Add(1,
+                new KeyValuePair<string, object?>("tool", toolName),
+                new KeyValuePair<string, object?>("success", "False"));
+            toolCallDuration.Record(sw.Elapsed.TotalMilliseconds,
+                new KeyValuePair<string, object?>("tool", toolName));
 
             Log.Error("[MCP Tool] Tool failed: {ToolName} (elapsed: {ElapsedMs}ms, error: {Error})",
                 toolName, sw.ElapsedMilliseconds, ex.Message);
@@ -150,6 +234,7 @@ app.UseAuthorization();
 
 app.MapMcp("/mcp");
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "mizan-mcp", version = "2.0.0" }));
+app.MapPrometheusScrapingEndpoint();
 
 Log.Information("[MCP] MCP endpoint mapped to /mcp");
 Log.Information("[MCP] Backend API URL: {BackendUrl}", builder.Configuration["BACKEND_API_URL"]);

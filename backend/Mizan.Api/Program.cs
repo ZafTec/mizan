@@ -11,6 +11,10 @@ using Mizan.Api.Middleware;
 using Mizan.Application;
 using Mizan.Application.Interfaces;
 using Mizan.Infrastructure;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
@@ -228,6 +232,60 @@ builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("PostgreSQL")!)
     .AddRedis(redisConnectionString ?? "localhost");
 
+// ============================================================================
+// OpenTelemetry Configuration
+// ============================================================================
+var serviceName = "Mizan.Api";
+var serviceVersion = "1.0.0";
+
+var tracingEndpoint = builder.Configuration["OTLP_ENDPOINT_URL"];
+var lokiEndpoint = builder.Configuration["LOKI_OTLP_ENDPOINT"];
+
+var otel = builder.Services.AddOpenTelemetry();
+
+otel.ConfigureResource(resource => resource
+    .AddService(serviceName: serviceName, serviceVersion: serviceVersion)
+);
+
+otel.WithMetrics(metrics => metrics
+    .AddAspNetCoreInstrumentation()
+    .AddMeter("Microsoft.AspNetCore.Hosting")
+    .AddMeter("Microsoft.AspNetCore.Server.Kestrel")
+    .AddMeter("System.Net.Http")
+    .AddMeter("System.Net.NameResolution")
+    .AddPrometheusExporter()
+);
+
+otel.WithTracing(tracing =>
+{
+    tracing.AddAspNetCoreInstrumentation();
+    tracing.AddHttpClientInstrumentation();
+    tracing.AddEntityFrameworkCoreInstrumentation();
+
+    if (tracingEndpoint != null)
+    {
+        tracing.AddOtlpExporter(o => o.Endpoint = new Uri(tracingEndpoint));
+    }
+});
+
+if (lokiEndpoint != null)
+{
+    builder.Logging.AddOpenTelemetry(logging =>
+    {
+        logging.IncludeFormattedMessage = true;
+        logging.IncludeScopes = true;
+        logging.SetResourceBuilder(
+            ResourceBuilder.CreateDefault()
+                .AddService(serviceName: serviceName, serviceVersion: serviceVersion)
+        );
+        logging.AddOtlpExporter(o =>
+        {
+            o.Endpoint = new Uri(lokiEndpoint);
+            o.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+        });
+    });
+}
+
 var app = builder.Build();
 
 JwksProviderAccessor.Set(app.Services.GetRequiredService<IJwksProvider>());
@@ -327,6 +385,7 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<ChatHub>("/hubs/chat");
 app.MapHealthChecks("/health");
+app.MapPrometheusScrapingEndpoint();
 
 if (app.Environment.IsDevelopment())
 {

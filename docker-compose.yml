@@ -83,6 +83,10 @@ services:
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
       - REDIS_URL=redis://redis:6379
+      # OpenTelemetry (optional — no-op if endpoints not set)
+      - OTLP_ENDPOINT_URL=${OTLP_ENDPOINT_URL:-}
+      - LOKI_OTLP_ENDPOINT=${LOKI_OTLP_ENDPOINT:-}
+      - OTEL_METRICS_PORT=9464
     depends_on:
       postgres:
         condition: service_healthy
@@ -123,6 +127,9 @@ services:
       - OpenAI__ApiKey=${OPENAI_API_KEY:-}
       # MCP service-to-service API key (must match MCP server's key)
       - Mcp__ServiceApiKey=${MCP_SERVICE_KEY:-dev_mcp_key_change_in_production}
+      # OpenTelemetry (optional — no-op if endpoints not set)
+      - OTLP_ENDPOINT_URL=${OTLP_ENDPOINT_URL:-}
+      - LOKI_OTLP_ENDPOINT=${LOKI_OTLP_ENDPOINT:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -147,6 +154,9 @@ services:
       - BACKEND_API_URL=http://backend:8080
       # Service API Key for backend authentication
       - Mcp__ServiceApiKey=${MCP_SERVICE_KEY:-dev_mcp_key_change_in_production}
+      # OpenTelemetry (optional — no-op if endpoints not set)
+      - OTLP_ENDPOINT_URL=${OTLP_ENDPOINT_URL:-}
+      - LOKI_OTLP_ENDPOINT=${LOKI_OTLP_ENDPOINT:-}
     volumes:
       - ./backend/Mizan.Mcp.Server/logs:/app/logs
     depends_on:
