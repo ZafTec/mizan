@@ -28,17 +28,22 @@ export default async function AdminExercisesPage({
 	const baseUrl = buildListUrl("/admin/exercises", listParams);
 
 	return (
-		<div className="space-y-6">
-			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-				<div>
-					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Manage Exercises</h1>
-					<p className="text-slate-500 dark:text-slate-400 mt-1">Browse and manage the exercise library</p>
+		<div className="space-y-6 lg:space-y-8">
+			<header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+				<div className="space-y-2">
+					<p className="eyebrow">Moderation</p>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+						Manage exercises
+					</h1>
+					<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+						Browse and manage the exercise library.
+					</p>
 				</div>
 				<Link href="/workouts" className="btn-secondary">
 					<i className="ri-arrow-left-line" />
 					Back to Workouts
 				</Link>
-			</div>
+			</header>
 
 			<div className="flex flex-col md:flex-row gap-4 items-center justify-between">
 				<form className="flex gap-3 w-full md:w-auto">

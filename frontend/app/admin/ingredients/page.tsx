@@ -24,17 +24,22 @@ export default async function AdminIngredientsPage({
     const baseUrl = buildListUrl('/admin/ingredients', { search: searchTerm });
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Manage Ingredients</h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">Add, edit, or delete public food ingredients</p>
+        <div className="space-y-6 lg:space-y-8">
+            <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div className="space-y-2">
+                    <p className="eyebrow">Moderation</p>
+                    <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+                        Manage ingredients
+                    </h1>
+                    <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+                        Add, edit, or delete public food ingredients.
+                    </p>
                 </div>
                 <Link href="/admin/ingredients/add" className="btn-primary">
                     <i className="ri-add-line" />
                     Add Ingredient
                 </Link>
-            </div>
+            </header>
 
             {/* Search & Stats */}
 	            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">

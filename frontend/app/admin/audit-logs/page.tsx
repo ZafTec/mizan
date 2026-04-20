@@ -27,17 +27,22 @@ export default async function AuditLogsPage({
     const baseUrl = buildListUrl('/admin/audit-logs', { action, entityType });
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Audit Logs</h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">Monitor system activities and user actions</p>
+        <div className="space-y-6 lg:space-y-8">
+            <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div className="space-y-2">
+                    <p className="eyebrow">Security</p>
+                    <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+                        Audit logs
+                    </h1>
+                    <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+                        Monitor system activities and user actions.
+                    </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Activities:</span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-bold">{totalCount}</span>
+                    <span className="text-sm font-medium text-charcoal-blue-500 dark:text-charcoal-blue-400">Total:</span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-charcoal-blue-100 dark:bg-charcoal-blue-900 text-charcoal-blue-700 dark:text-charcoal-blue-200 text-sm font-bold">{totalCount}</span>
                 </div>
-            </div>
+            </header>
 
             {/* Filters */}
             <div className="card p-4">
