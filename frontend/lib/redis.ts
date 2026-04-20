@@ -3,7 +3,6 @@ import { logger } from "@/lib/logger";
 
 const redisLogger = logger.createModuleLogger("redis");
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let client: any | null = null;
 
 // Dynamic import so `bun` is never evaluated during Next.js build workers

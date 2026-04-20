@@ -102,6 +102,7 @@ export function ClientNutritionView({ clientId }: ClientNutritionViewProps) {
 
 	useEffect(() => {
 		fetchNutritionData(date);
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- fetchNutritionData is stable; we only want to refetch on id/date changes
 	}, [clientId, date]);
 
 	function handlePreviousDay() {

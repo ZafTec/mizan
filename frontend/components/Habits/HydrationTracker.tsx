@@ -25,7 +25,6 @@ export default function HydrationTracker() {
 		}
 		// eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage at mount
 		setGlasses(initial);
-		// eslint-disable-next-line react-hooks/set-state-in-effect -- pair with above
 		setMounted(true);
 	}, []);
 
@@ -77,7 +76,7 @@ export default function HydrationTracker() {
 					type="button"
 					onClick={() => persist(Math.max(0, glasses - 1))}
 					disabled={!mounted || glasses === 0}
-					className="btn-ghost !rounded-2xl !py-2 text-sm"
+					className="btn-ghost rounded-2xl! py-2! text-sm"
 					aria-label="Remove a glass"
 				>
 					-
@@ -86,7 +85,7 @@ export default function HydrationTracker() {
 					type="button"
 					onClick={() => persist(glasses + 1)}
 					disabled={!mounted}
-					className="btn-primary !rounded-2xl !py-2 text-sm"
+					className="btn-primary rounded-2xl! py-2! text-sm"
 				>
 					<AnimatedIcon name="sparkles" size={14} />
 					+ Glass
@@ -95,7 +94,7 @@ export default function HydrationTracker() {
 					type="button"
 					onClick={() => persist(0)}
 					disabled={!mounted || glasses === 0}
-					className="btn-ghost !rounded-2xl !py-2 text-sm"
+					className="btn-ghost rounded-2xl! py-2! text-sm"
 					aria-label="Reset hydration"
 				>
 					Reset

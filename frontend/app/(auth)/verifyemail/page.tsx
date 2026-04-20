@@ -56,6 +56,7 @@ export default function Page() {
 		if (token.length > 0) {
 			verifyUserEmail();
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- verifyUserEmail is stable in this component; we only want to fire once per token change
 	}, [token]);
 
 	useEffect(() => {

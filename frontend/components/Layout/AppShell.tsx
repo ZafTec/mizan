@@ -223,16 +223,16 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 	const roleLabel = user.role && user.role !== "user" ? user.role : null;
 
 	return (
-		<div className="shell-fullbleed relative flex min-h-screen overflow-x-clip bg-[color-mix(in_oklab,var(--color-charcoal-blue-50)_92%,white)] dark:bg-[color-mix(in_oklab,var(--color-charcoal-blue-950)_92%,black)]">
+		<div className="shell-fullbleed relative flex h-[100dvh] overflow-x-clip bg-[color-mix(in_oklab,var(--color-charcoal-blue-50)_92%,white)] dark:bg-[color-mix(in_oklab,var(--color-charcoal-blue-950)_92%,black)]">
 			{/* Soft decorative blobs (v2 aesthetic). Kept inside the shell so the body
 				never scrolls to reveal them; html/body overflow-x: clip is the backstop. */}
 			<div aria-hidden="true" className="pointer-events-none absolute right-[-5%] top-[-10%] h-[500px] w-[500px] rounded-full bg-verdigris-200/30 blur-[120px] -z-10" />
 			<div aria-hidden="true" className="pointer-events-none absolute bottom-[-10%] left-[-5%] h-[400px] w-[400px] rounded-full bg-sandy-brown-200/25 blur-[100px] -z-10" />
 
-			{/* Desktop Sidebar */}
+			{/* Desktop Sidebar — fills shell height; inner nav scrolls via custom-scrollbar */}
 			<aside
 				className={cn(
-					"sticky top-0 hidden h-screen shrink-0 flex-col border-r border-charcoal-blue-200/70 bg-white/85 backdrop-blur-xl dark:border-white/10 dark:bg-charcoal-blue-950/80 lg:flex",
+					"hidden h-full shrink-0 flex-col border-r border-charcoal-blue-200/70 bg-white/85 backdrop-blur-xl dark:border-white/10 dark:bg-charcoal-blue-950/80 lg:flex",
 					collapsed ? "w-20" : "w-72"
 				)}
 			>
@@ -321,10 +321,10 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 				</div>
 			</aside>
 
-			{/* Main column */}
-			<div className="flex min-w-0 flex-1 flex-col">
-				{/* Top bar */}
-				<header className="sticky top-0 z-40 border-b border-charcoal-blue-200/70 bg-white/80 backdrop-blur-xl dark:border-white/10 dark:bg-charcoal-blue-950/75">
+			{/* Main column — full shell height; only <main> scrolls internally */}
+			<div className="flex h-full min-w-0 flex-1 flex-col">
+				{/* Top bar — shrink-0 so it stays visible while main scrolls */}
+				<header className="shrink-0 border-b border-charcoal-blue-200/70 bg-white/80 backdrop-blur-xl dark:border-white/10 dark:bg-charcoal-blue-950/75">
 					<div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
 						{/* Mobile menu */}
 						<button
@@ -505,9 +505,9 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 				)}
 
 				{/* Page content — flex-1 fills the column so long pages scroll inside
-					it and short pages don't leave unclaimed space. Bottom padding clears
-					the fixed mobile bottom-nav (~4.5rem tall). */}
-				<main className="flex-1 px-4 pt-6 pb-[calc(4.5rem+env(safe-area-inset-bottom,0))] sm:px-6 lg:px-8 lg:pb-10">
+					it and short pages don't leave unclaimed space. Scrolls internally so
+					the body stays viewport-sized. */}
+				<main className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-4 pt-6 pb-[calc(4.5rem+env(safe-area-inset-bottom,0))] sm:px-6 lg:px-8 lg:pb-10">
 					<div className="page-transition mx-auto w-full max-w-7xl">{children}</div>
 				</main>
 

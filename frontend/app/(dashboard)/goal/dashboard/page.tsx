@@ -34,19 +34,18 @@ export default function GoalDashboard() {
   const [days, setDays] = useState(7);
 
   useEffect(() => {
+    async function fetchData() {
+      try {
+        const result = await clientApi<GoalData>(`/api/Goals/progress?days=${days}`);
+        setData(result);
+      } catch (error) {
+        console.error("Failed to fetch goal data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
     fetchData();
   }, [days]);
-
-  async function fetchData() {
-    try {
-      const result = await clientApi<GoalData>(`/api/Goals/progress?days=${days}`);
-      setData(result);
-    } catch (error) {
-      console.error("Failed to fetch goal data:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   if (loading) {
     return (

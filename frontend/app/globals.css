@@ -646,25 +646,31 @@ html.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
 }
 
 /* ---------- App Shell overrides (dashboard / admin) ---------- */
-/* When an AppShell is mounted, suppress the root-layout Navbar + footer
-   and let the AppShell take the full viewport. */
+/* The AppShell is exactly viewport-tall and its <main> owns the scroll.
+   Pin body to 100dvh + overflow:hidden so the body never scrolls and can't
+   produce stray space below. */
 body:has(.shell-fullbleed) > nav,
 body:has(.shell-fullbleed) > footer {
   display: none !important;
 }
 body:has(.shell-fullbleed) > main {
+  flex: 1 1 auto;
   padding: 0 !important;
   margin: 0 !important;
   max-width: none !important;
   width: 100% !important;
-  grow: 1;
+  min-height: 0 !important;
 }
 body:has(.shell-fullbleed) > main > div.page-transition {
   padding: 0 !important;
   margin: 0 !important;
   max-width: none !important;
+  height: 100%;
 }
 body:has(.shell-fullbleed) {
+  height: 100dvh;
+  min-height: 0 !important;
+  overflow: hidden;
   padding-bottom: 0 !important;
 }
 body:has(.shell-fullbleed)::before,
