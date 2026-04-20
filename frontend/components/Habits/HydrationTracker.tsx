@@ -16,13 +16,17 @@ export default function HydrationTracker() {
 	const [mounted, setMounted] = useState(false);
 
 	useEffect(() => {
-		setMounted(true);
+		let initial = 0;
 		try {
 			const raw = window.localStorage.getItem(todayKey());
-			if (raw) setGlasses(Math.max(0, parseInt(raw, 10) || 0));
+			if (raw) initial = Math.max(0, parseInt(raw, 10) || 0);
 		} catch {
 			// ignore persistence errors
 		}
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage at mount
+		setGlasses(initial);
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- pair with above
+		setMounted(true);
 	}, []);
 
 	function persist(next: number) {

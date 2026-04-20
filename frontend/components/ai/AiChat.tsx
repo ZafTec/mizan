@@ -9,7 +9,6 @@ interface Message {
 	id: string;
 	role: "user" | "assistant";
 	content: string;
-	createdAt: number;
 }
 
 interface QuickPrompt {
@@ -23,8 +22,10 @@ interface AiChatProps {
 	quickPrompts: QuickPrompt[];
 }
 
+let messageCounter = 0;
 function makeId() {
-	return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+	messageCounter += 1;
+	return `msg-${messageCounter}`;
 }
 
 export default function AiChat({ quickPrompts }: AiChatProps) {
@@ -48,7 +49,6 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 			id: makeId(),
 			role: "user",
 			content: trimmed,
-			createdAt: Date.now(),
 		};
 		setMessages((m) => [...m, userMessage]);
 		setInput("");
@@ -64,7 +64,7 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 				const replyText = res?.response?.trim() || "Sorry, I couldn't produce a response.";
 				setMessages((m) => [
 					...m,
-					{ id: makeId(), role: "assistant", content: replyText, createdAt: Date.now() },
+					{ id: makeId(), role: "assistant", content: replyText },
 				]);
 				scrollToBottom();
 			} catch (err) {
