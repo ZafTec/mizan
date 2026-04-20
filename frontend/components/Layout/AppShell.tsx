@@ -32,7 +32,10 @@ const PRIMARY_NAV: NavItem[] = [
 	{ href: "/body-measurements", label: "Body", icon: "chartLine" },
 	{ href: "/goal", label: "Goals", icon: "rocket" },
 	{ href: "/achievements", label: "Achievements", icon: "sparkles" },
-	{ href: "/trainers", label: "Trainers", icon: "users" },
+	{ href: "/ai", label: "AI Coach", icon: "brain" },
+	{ href: "/messaging", label: "Messages", icon: "messageCircle" },
+	{ href: "/community", label: "Community", icon: "users" },
+	{ href: "/trainers", label: "Trainers", icon: "heart" },
 ];
 
 const SECONDARY_NAV: NavItem[] = [
@@ -45,8 +48,8 @@ const SECONDARY_NAV: NavItem[] = [
 const BOTTOM_NAV: NavItem[] = [
 	{ href: "/dashboard", label: "Home", icon: "home" },
 	{ href: "/meals", label: "Meals", icon: "flame" },
-	{ href: "/recipes", label: "Recipes", icon: "cookingPot" },
 	{ href: "/workouts", label: "Train", icon: "activity" },
+	{ href: "/ai", label: "AI", icon: "brain" },
 	{ href: "/profile", label: "Me", icon: "user" },
 ];
 
