@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface ConfirmationModalProps {
     isOpen: boolean;
@@ -23,33 +24,69 @@ export default function ConfirmationModal({
     confirmText = "Confirm",
     cancelText = "Cancel",
     isLoading = false,
-    isDanger = false
+    isDanger = false,
 }: ConfirmationModalProps) {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- mount detection for SSR-safe portal
+        setMounted(true);
+    }, []);
+
     // Close on Escape key
     useEffect(() => {
+        if (!isOpen) return;
         const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === "Escape" && isOpen) {
-                onClose();
-            }
+            if (e.key === "Escape") onClose();
         };
         window.addEventListener("keydown", handleEscape);
         return () => window.removeEventListener("keydown", handleEscape);
     }, [isOpen, onClose]);
 
-    if (!isOpen) return null;
+    // Lock body scroll while open so the modal truly overlays the viewport.
+    useEffect(() => {
+        if (!isOpen) return;
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        return () => {
+            document.body.style.overflow = prev;
+        };
+    }, [isOpen]);
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="card p-6 max-w-md w-full shadow-2xl animate-in fade-in zoom-in duration-200">
+    if (!isOpen || !mounted) return null;
+
+    const modal = (
+        <div
+            className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm"
+            onClick={onClose}
+        >
+            <div
+                className="card my-auto w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in duration-200"
+                onClick={(e) => e.stopPropagation()}
+            >
                 <div className="flex items-start gap-4 mb-4">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${isDanger ? 'bg-red-100 dark:bg-red-900/30' : 'bg-brand-100 dark:bg-brand-900/30'
-                        }`}>
-                        <i className={`text-2xl ${isDanger ? 'ri-error-warning-line text-red-600 dark:text-red-400' : 'ri-question-line text-brand-600 dark:text-brand-400'
-                            }`} />
+                    <div
+                        className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+                            isDanger
+                                ? "bg-red-100 dark:bg-red-900/30"
+                                : "bg-brand-100 dark:bg-brand-900/30"
+                        }`}
+                    >
+                        <i
+                            className={`text-2xl ${
+                                isDanger
+                                    ? "ri-error-warning-line text-red-600 dark:text-red-400"
+                                    : "ri-question-line text-brand-600 dark:text-brand-400"
+                            }`}
+                        />
                     </div>
                     <div className="flex-1">
-                        <h2 className="text-xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-1">{title}</h2>
-                        <p className="text-charcoal-blue-600 dark:text-charcoal-blue-400">{message}</p>
+                        <h2 className="text-xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-1">
+                            {title}
+                        </h2>
+                        <p className="text-charcoal-blue-600 dark:text-charcoal-blue-400">
+                            {message}
+                        </p>
                     </div>
                 </div>
 
@@ -64,17 +101,22 @@ export default function ConfirmationModal({
                     <button
                         onClick={onConfirm}
                         disabled={isLoading}
-                        className={`btn-primary flex items-center gap-2 ${isDanger ? '!bg-red-600 hover:!bg-red-700' : ''
-                            }`}
+                        className={`btn-primary flex items-center gap-2 ${
+                            isDanger ? "!bg-red-600 hover:!bg-red-700" : ""
+                        }`}
                     >
                         {isLoading ? (
                             <>
                                 <i className="ri-loader-4-line animate-spin" />
-                                {isDanger ? 'Deleting...' : 'Processing...'}
+                                {isDanger ? "Deleting..." : "Processing..."}
                             </>
                         ) : (
                             <>
-                                <i className={isDanger ? "ri-delete-bin-line" : "ri-check-line"} />
+                                <i
+                                    className={
+                                        isDanger ? "ri-delete-bin-line" : "ri-check-line"
+                                    }
+                                />
                                 {confirmText}
                             </>
                         )}
@@ -83,4 +125,6 @@ export default function ConfirmationModal({
             </div>
         </div>
     );
+
+    return createPortal(modal, document.body);
 }

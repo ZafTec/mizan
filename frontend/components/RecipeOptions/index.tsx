@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { appToast } from "@/lib/toast";
 
 interface RecipeOptionsProps {
@@ -136,26 +137,22 @@ export default function RecipeOptions({ recipeId, isCreator }: RecipeOptionsProp
 			)}
 
 			{/* Confirmation popup */}
-			{showConfirm && (
-				<div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 dark:bg-black dark:bg-opacity-60 z-50">
-					<div ref={popupRef} className="bg-white dark:bg-charcoal-blue-900 p-4 rounded shadow-lg dark:text-charcoal-blue-100">
-						<p>Are you sure you want to delete this recipe?</p>
-						<div className="mt-4 flex justify-end space-x-2 text-white text-sm">
-							<button
-								className="bg-charcoal-blue-500 px-5 py-2 rounded hover:bg-charcoal-blue-700"
-								onClick={cancelDelete}
-							>
+			{showConfirm && typeof document !== "undefined" && createPortal(
+				<div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4">
+					<div ref={popupRef} className="my-auto w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-charcoal-blue-900 dark:text-charcoal-blue-100">
+						<p className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Delete recipe?</p>
+						<p className="mt-2 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">Are you sure? This cannot be undone.</p>
+						<div className="mt-4 flex justify-end gap-2 text-sm">
+							<button className="btn-secondary" onClick={cancelDelete}>
 								Cancel
 							</button>
-							<button
-								className="bg-red-600 px-5 py-2 rounded hover:bg-red-800"
-								onClick={handleDelete}
-							>
+							<button className="btn-danger" onClick={handleDelete}>
 								Delete
 							</button>
 						</div>
 					</div>
-				</div>
+				</div>,
+				document.body
 			)}
 		</div>
 	)

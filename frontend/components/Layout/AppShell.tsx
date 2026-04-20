@@ -223,10 +223,11 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 	const roleLabel = user.role && user.role !== "user" ? user.role : null;
 
 	return (
-		<div className="shell-fullbleed flex min-h-screen bg-[color-mix(in_oklab,var(--color-charcoal-blue-50)_92%,white)] dark:bg-[color-mix(in_oklab,var(--color-charcoal-blue-950)_92%,black)]">
-			{/* Soft decorative blobs (v2 aesthetic) */}
-			<div aria-hidden="true" className="pointer-events-none fixed right-[-5%] top-[-10%] h-[500px] w-[500px] rounded-full bg-verdigris-200/30 blur-[120px] -z-10" />
-			<div aria-hidden="true" className="pointer-events-none fixed bottom-[-10%] left-[-5%] h-[400px] w-[400px] rounded-full bg-sandy-brown-200/25 blur-[100px] -z-10" />
+		<div className="shell-fullbleed relative flex min-h-screen overflow-x-clip bg-[color-mix(in_oklab,var(--color-charcoal-blue-50)_92%,white)] dark:bg-[color-mix(in_oklab,var(--color-charcoal-blue-950)_92%,black)]">
+			{/* Soft decorative blobs (v2 aesthetic). Kept inside the shell so the body
+				never scrolls to reveal them; html/body overflow-x: clip is the backstop. */}
+			<div aria-hidden="true" className="pointer-events-none absolute right-[-5%] top-[-10%] h-[500px] w-[500px] rounded-full bg-verdigris-200/30 blur-[120px] -z-10" />
+			<div aria-hidden="true" className="pointer-events-none absolute bottom-[-10%] left-[-5%] h-[400px] w-[400px] rounded-full bg-sandy-brown-200/25 blur-[100px] -z-10" />
 
 			{/* Desktop Sidebar */}
 			<aside

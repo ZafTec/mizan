@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
 import { appToast } from "@/lib/toast";
@@ -9,6 +10,20 @@ export default function AddMeasurementForm() {
     const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        return () => {
+            document.body.style.overflow = prev;
+        };
+    }, [isOpen]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -53,10 +68,13 @@ export default function AddMeasurementForm() {
                 Add Measurement
             </button>
 
-            {isOpen && (
-                <div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
+            {isOpen && mounted && createPortal(
+                <div
+                    className="fixed inset-0 z-[100] overflow-y-auto bg-black/50"
+                    onClick={() => setIsOpen(false)}
+                >
                   <div className="flex min-h-full items-center justify-center p-4">
-                    <div className="card max-w-2xl w-full p-6">
+                    <div className="card max-w-2xl w-full p-6" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Add Measurement</h3>
                             <button
@@ -159,7 +177,8 @@ export default function AddMeasurementForm() {
                         </form>
                     </div>
                   </div>
-                </div>
+                </div>,
+                document.body
             )}
         </>
     );

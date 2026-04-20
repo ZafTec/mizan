@@ -4,6 +4,7 @@ import Meal from "@/types/meal";
 import MealTypePill from "./MealTypePill";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Loading from "@/components/Loading";
 
 interface MealCardProps {
@@ -91,36 +92,35 @@ export default function MealCard({ meal }: MealCardProps) {
 			</div>
 
 		{/* Confirmation popup */}
-		{showConfirm && (
-			<div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
-				<div ref={popupRef} className="bg-white dark:bg-charcoal-blue-900 p-6 rounded shadow-lg max-w-sm w-full">
-					<p className="text-gray-800 dark:text-gray-200 text-lg font-semibold">
+		{showConfirm && typeof document !== "undefined" && createPortal(
+			<div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4">
+				<div ref={popupRef} className="my-auto w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-charcoal-blue-900">
+					<p className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 						Confirm Deletion
 					</p>
-					<p className="mt-2 text-gray-600 dark:text-gray-400">
+					<p className="mt-2 text-charcoal-blue-600 dark:text-charcoal-blue-400">
 						Are you sure you want to delete this meal?
 					</p>
 					<div className="mt-4 flex justify-end space-x-2 text-sm">
 						<button
-							className="px-4 py-2 rounded bg-gray-500 hover:bg-gray-600 text-white"
+							className="btn-secondary"
 							onClick={() => setShowConfirm(false)}
 							disabled={isLoading}
 						>
 							Cancel
 						</button>
 						<button
-							className="px-4 py-2 rounded bg-red-600 hover:bg-red-700 text-white flex items-center"
+							className="btn-danger flex items-center"
 							onClick={handleDelete}
 							disabled={isLoading}
 						>
-							{isLoading && (
-								<Loading size="sm" />
-							)}
+							{isLoading && <Loading size="sm" />}
 							{isLoading ? "Deleting..." : "Delete"}
 						</button>
 					</div>
 				</div>
-			</div>
+			</div>,
+			document.body
 		)}
 		</div>
 	)

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import ConfirmationModal from "@/components/ConfirmationModal";
+import { ModalShell } from "@/components/ModalShell";
 import { appToast } from "@/lib/toast";
 
 interface User {
@@ -303,8 +304,8 @@ function BanDialog({
   const [expiresInDays, setExpiresInDays] = useState<number | undefined>();
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-card rounded-lg p-6 max-w-md w-full mx-4">
+    <ModalShell open onClose={onCancel}>
+      <div className="bg-card rounded-lg p-6 w-full">
         <h3 className="text-lg font-semibold mb-4">Ban User</h3>
         <div className="space-y-4">
           <div>
@@ -350,7 +351,7 @@ function BanDialog({
           </div>
         </div>
       </div>
-    </div>
+    </ModalShell>
   );
 }
 
@@ -366,8 +367,8 @@ function RoleDialog({
   const [role, setRole] = useState(currentRole);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-card rounded-lg p-6 max-w-md w-full mx-4">
+    <ModalShell open onClose={onCancel}>
+      <div className="bg-card rounded-lg p-6 w-full">
         <h3 className="text-lg font-semibold mb-4">Change Role</h3>
         <div className="space-y-4">
           <div>
@@ -398,7 +399,7 @@ function RoleDialog({
           </div>
         </div>
       </div>
-    </div>
+    </ModalShell>
   );
 }
 
@@ -413,8 +414,8 @@ function PasswordDialog({
   const [confirmPassword, setConfirmPassword] = useState("");
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-card rounded-lg p-6 max-w-md w-full mx-4">
+    <ModalShell open onClose={onCancel}>
+      <div className="bg-card rounded-lg p-6 w-full">
         <h3 className="text-lg font-semibold mb-4">Set Password</h3>
         <div className="space-y-4">
           <div>
@@ -461,7 +462,7 @@ function PasswordDialog({
           </div>
         </div>
       </div>
-    </div>
+    </ModalShell>
   );
 }
 
@@ -475,8 +476,8 @@ function DeleteConfirmDialog({
   onCancel: () => void;
 }) {
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-card rounded-lg p-6 max-w-md w-full mx-4">
+    <ModalShell open onClose={onCancel}>
+      <div className="bg-card rounded-lg p-6 w-full">
         <h3 className="text-lg font-semibold mb-4 text-red-600">
           Delete User
         </h3>
@@ -499,6 +500,6 @@ function DeleteConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </ModalShell>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { clientApi } from "@/lib/api.client";
 
 interface RecipeResult {
@@ -22,6 +23,19 @@ export default function RecipeSearchModal({ onSelect, onClose }: RecipeSearchMod
 	const [results, setResults] = useState<RecipeResult[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [servings, setServings] = useState<Record<string, number>>({});
+	const [mounted, setMounted] = useState(false);
+
+	useEffect(() => {
+		setMounted(true);
+	}, []);
+
+	useEffect(() => {
+		const prev = document.body.style.overflow;
+		document.body.style.overflow = "hidden";
+		return () => {
+			document.body.style.overflow = prev;
+		};
+	}, []);
 
 	useEffect(() => {
 		const timer = setTimeout(async () => {
@@ -44,8 +58,10 @@ export default function RecipeSearchModal({ onSelect, onClose }: RecipeSearchMod
 		return () => clearTimeout(timer);
 	}, [query]);
 
-	return (
-		<div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto" onClick={onClose}>
+	if (!mounted) return null;
+
+	const modal = (
+		<div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50" onClick={onClose}>
 			<div className="flex min-h-full items-center justify-center p-4">
 				<div className="w-full max-w-lg rounded-2xl bg-white shadow-xl dark:bg-charcoal-blue-950" onClick={(e) => e.stopPropagation()}>
 					<div className="border-b border-charcoal-blue-200 p-4 dark:border-white/10">
@@ -105,4 +121,6 @@ export default function RecipeSearchModal({ onSelect, onClose }: RecipeSearchMod
 			</div>
 		</div>
 	);
+
+	return createPortal(modal, document.body);
 }

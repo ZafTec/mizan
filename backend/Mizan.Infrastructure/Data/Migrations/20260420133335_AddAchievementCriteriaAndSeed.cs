@@ -13,6 +13,10 @@ namespace Mizan.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropIndex(
+                name: "IX_streaks_user_id",
+                table: "streaks");
+
             migrationBuilder.AddColumn<string>(
                 name: "criteria_type",
                 table: "achievements",
@@ -26,21 +30,6 @@ namespace Mizan.Infrastructure.Data.Migrations
                 type: "integer",
                 nullable: false,
                 defaultValue: 0);
-
-            migrationBuilder.DropIndex(
-                name: "IX_streaks_user_id",
-                table: "streaks");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_streaks_user_id_streak_type",
-                table: "streaks",
-                columns: new[] { "user_id", "streak_type" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_achievements_criteria_type_threshold",
-                table: "achievements",
-                columns: new[] { "criteria_type", "threshold" });
 
             migrationBuilder.InsertData(
                 table: "achievements",
@@ -75,11 +64,30 @@ namespace Mizan.Infrastructure.Data.Migrations
                     { new Guid("ac000000-0000-0000-0000-000000000019"), "milestone", "points_total", "Earn 500 achievement points", null, "Silver Badge", 500 },
                     { new Guid("ac000000-0000-0000-0000-000000000020"), "milestone", "points_total", "Earn 1500 achievement points", null, "Gold Badge", 1500 }
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_streaks_user_id_streak_type",
+                table: "streaks",
+                columns: new[] { "user_id", "streak_type" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_achievements_criteria_type_threshold",
+                table: "achievements",
+                columns: new[] { "criteria_type", "threshold" });
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropIndex(
+                name: "IX_streaks_user_id_streak_type",
+                table: "streaks");
+
+            migrationBuilder.DropIndex(
+                name: "IX_achievements_criteria_type_threshold",
+                table: "achievements");
+
             migrationBuilder.DeleteData(
                 table: "achievements",
                 keyColumn: "id",
@@ -180,19 +188,6 @@ namespace Mizan.Infrastructure.Data.Migrations
                 keyColumn: "id",
                 keyValue: new Guid("ac000000-0000-0000-0000-000000000020"));
 
-            migrationBuilder.DropIndex(
-                name: "IX_achievements_criteria_type_threshold",
-                table: "achievements");
-
-            migrationBuilder.DropIndex(
-                name: "IX_streaks_user_id_streak_type",
-                table: "streaks");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_streaks_user_id",
-                table: "streaks",
-                column: "user_id");
-
             migrationBuilder.DropColumn(
                 name: "criteria_type",
                 table: "achievements");
@@ -200,6 +195,11 @@ namespace Mizan.Infrastructure.Data.Migrations
             migrationBuilder.DropColumn(
                 name: "threshold",
                 table: "achievements");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_streaks_user_id",
+                table: "streaks",
+                column: "user_id");
         }
     }
 }

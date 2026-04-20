@@ -1,27 +1,60 @@
-import React from 'react';
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  children: React.ReactNode;
+	isOpen: boolean;
+	onClose: () => void;
+	children: React.ReactNode;
 }
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white dark:bg-charcoal-blue-900 rounded-lg shadow-lg p-6 relative min-w-[320px] max-w-xl w-full">
-        <button
-          className="absolute top-2 right-2 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl"
-          onClick={onClose}
-          aria-label="Close modal"
-        >
-          &times;
-        </button>
-        {children}
-      </div>
-    </div>
-  );
+	const [mounted, setMounted] = useState(false);
+
+	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- mount detection for SSR-safe portal
+		setMounted(true);
+	}, []);
+
+	useEffect(() => {
+		if (!isOpen) return;
+		const prev = document.body.style.overflow;
+		document.body.style.overflow = "hidden";
+		const handleEscape = (e: KeyboardEvent) => {
+			if (e.key === "Escape") onClose();
+		};
+		window.addEventListener("keydown", handleEscape);
+		return () => {
+			window.removeEventListener("keydown", handleEscape);
+			document.body.style.overflow = prev;
+		};
+	}, [isOpen, onClose]);
+
+	if (!isOpen || !mounted) return null;
+
+	const modal = (
+		<div
+			className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/40 p-4"
+			onClick={onClose}
+		>
+			<div
+				className="relative my-auto w-full min-w-[320px] max-w-xl rounded-lg bg-white p-6 shadow-lg dark:bg-charcoal-blue-900"
+				onClick={(e) => e.stopPropagation()}
+			>
+				<button
+					className="absolute top-2 right-2 text-2xl text-charcoal-blue-400 hover:text-charcoal-blue-700 dark:text-charcoal-blue-500 dark:hover:text-charcoal-blue-300"
+					onClick={onClose}
+					aria-label="Close modal"
+				>
+					&times;
+				</button>
+				{children}
+			</div>
+		</div>
+	);
+
+	return createPortal(modal, document.body);
 };
 
-export default Modal; 
+export default Modal;
