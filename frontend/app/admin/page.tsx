@@ -86,13 +86,16 @@ export default async function AdminDashboard() {
   const stats = await getAdminStats();
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-        <p className="text-muted-foreground">
-          System overview and quick actions
+    <div className="space-y-6 lg:space-y-8">
+      <header className="space-y-2">
+        <p className="eyebrow">Administration</p>
+        <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+          Admin dashboard
+        </h1>
+        <p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+          System overview, recent activity, and quick actions.
         </p>
-      </div>
+      </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
         <StatCard

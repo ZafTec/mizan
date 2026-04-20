@@ -25,17 +25,22 @@ export default async function ExercisesPage({
     ].filter(Boolean).join("&")}`;
 
     return (
-        <div className="space-y-8" data-testid="exercises-page">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Exercises</h1>
-                    <p className="text-slate-500 mt-1">Browse {totalCount} exercises for your workouts</p>
+        <div className="space-y-6 lg:space-y-8" data-testid="exercises-page">
+            <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div className="space-y-2">
+                    <p className="eyebrow">Library</p>
+                    <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+                        Exercises
+                    </h1>
+                    <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+                        Browse {totalCount} exercises for your workouts.
+                    </p>
                 </div>
                 <Link href="/workouts" className="btn-primary">
                     <i className="ri-add-circle-line" />
                     Log Workout
                 </Link>
-            </div>
+            </header>
 
             <SearchExercises initialSearch={params.search} initialCategory={params.category} />
 
