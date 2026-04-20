@@ -17,15 +17,20 @@ export default async function EditIngredientPage({
 
 	    return (
 	        <div className="max-w-2xl mx-auto space-y-6">
-            <div className="flex items-center gap-4">
-	                <Link href="/admin/ingredients" className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-100 bg-white transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-slate-950/75 dark:hover:bg-slate-900">
-	                    <i className="ri-arrow-left-line text-slate-600 dark:text-slate-300" />
+            <header className="flex items-center gap-4">
+                <Link href="/admin/ingredients" className="flex h-10 w-10 items-center justify-center rounded-xl border border-charcoal-blue-200 bg-white transition-colors hover:bg-charcoal-blue-50 dark:border-white/10 dark:bg-charcoal-blue-950 dark:hover:bg-charcoal-blue-900">
+                    <i className="ri-arrow-left-line text-charcoal-blue-600 dark:text-charcoal-blue-300" />
                 </Link>
-                <div>
-	                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Edit Ingredient</h1>
-	                    <p className="text-slate-500 dark:text-slate-400">Update details for &quot;{ingredient.name}&quot;</p>
+                <div className="space-y-2">
+                    <p className="eyebrow">Catalogue</p>
+                    <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+                        Edit ingredient
+                    </h1>
+                    <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+                        Update details for &quot;{ingredient.name}&quot;.
+                    </p>
                 </div>
-            </div>
+            </header>
 
             <IngredientForm
                 action={updateIngredient}
