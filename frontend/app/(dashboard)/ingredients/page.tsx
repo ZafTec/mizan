@@ -21,11 +21,16 @@ export default async function Page(
 	const baseUrl = buildListUrl('/ingredients', { searchIngredient, sortBy, sortOrder, ...(minPcal > 0 ? { minPcal: String(minPcal) } : {}) });
 
 	return (
-		<div className="space-y-6" data-testid="ingredient-list">
-			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-				<div>
-					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Ingredients</h1>
-					<p className="text-slate-500 dark:text-slate-400 mt-1">Browse and manage nutritional ingredients</p>
+		<div className="space-y-6 lg:space-y-8" data-testid="ingredient-list">
+			<header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+				<div className="space-y-2">
+					<p className="eyebrow">Catalogue</p>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+						Foods
+					</h1>
+					<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+						Browse and manage nutritional ingredients.
+					</p>
 				</div>
 				<div className="flex items-center gap-3">
 					<SearchBar />
@@ -37,7 +42,7 @@ export default async function Page(
 						</Link>
 					)}
 				</div>
-			</div>
+			</header>
 
 			<div className="card overflow-hidden">
 				<div className="overflow-x-auto">

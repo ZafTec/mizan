@@ -42,13 +42,18 @@ export default async function BodyMeasurementsPage({
     const muscleDelta = getDelta(latest?.muscleMassKg, previous?.muscleMassKg);
 
     return (
-        <div className="space-y-8" data-testid="body-measurements-page">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Body Measurements</h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">Track your body composition progress</p>
+        <div className="space-y-6 lg:space-y-8" data-testid="body-measurements-page">
+            <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div className="space-y-2">
+                    <p className="eyebrow">Composition</p>
+                    <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+                        Body metrics
+                    </h1>
+                    <p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+                        Track weight, body fat and muscle mass over time.
+                    </p>
                 </div>
-            </div>
+            </header>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="card-hover p-5">

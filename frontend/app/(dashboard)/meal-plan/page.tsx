@@ -42,16 +42,21 @@ export default async function MealPlanPage({
 	if (loadError) {
 		return (
 			<div className="space-y-6" data-testid="meal-plan-page">
-				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-					<div>
-						<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Meal Planning</h1>
-						<p className="text-slate-500 dark:text-slate-400 mt-1">Plan your meals for the week ahead</p>
+				<header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+					<div className="space-y-2">
+						<p className="eyebrow">Planner</p>
+						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+							Meal planning
+						</h1>
+						<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+							Plan your meals for the week ahead.
+						</p>
 					</div>
 					<Link href="/meal-plan/create" className="btn-primary">
 						<i className="ri-add-line" />
 						Create Meal Plan
 					</Link>
-				</div>
+				</header>
 
 				<div className="card p-6">
 					<div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400">
@@ -66,10 +71,15 @@ export default async function MealPlanPage({
 	return (
 		<div className="space-y-6" data-testid="meal-plan-page">
 				{/* Page Header */}
-				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-					<div>
-						<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Meal Planning</h1>
-						<p className="text-slate-500 dark:text-slate-400 mt-1">Plan your meals for the week ahead</p>
+				<header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+					<div className="space-y-2">
+						<p className="eyebrow">Planner</p>
+						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+							Meal planning
+						</h1>
+						<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+							Plan your meals for the week ahead.
+						</p>
 					</div>
 					<div className="flex gap-3">
 						<Link href="/meal-plan/shopping-list" className="btn-secondary">
@@ -81,7 +91,7 @@ export default async function MealPlanPage({
 							Create Meal Plan
 						</Link>
 					</div>
-				</div>
+				</header>
 
 				{/* Quick Stats */}
 				<div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
