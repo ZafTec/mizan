@@ -15,15 +15,20 @@ export default async function Page({ params }: { params: Promise<{ recipeId: str
 	return (
 		<div className="max-w-4xl mx-auto space-y-6">
 			{/* Header */}
-			<div className="flex items-center gap-4">
-				<Link href={`/recipes/${recipeId}`} className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
-					<i className="ri-arrow-left-line text-xl text-slate-600" />
+			<header className="flex items-center gap-4">
+				<Link href={`/recipes/${recipeId}`} className="flex h-10 w-10 items-center justify-center rounded-xl bg-charcoal-blue-100 transition-colors hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900/60 dark:hover:bg-charcoal-blue-900">
+					<i className="ri-arrow-left-line text-xl text-charcoal-blue-600 dark:text-charcoal-blue-300" />
 				</Link>
-				<div>
-					<h1 className="text-2xl font-bold text-slate-900">Edit Recipe</h1>
-					<p className="text-slate-500">Update your recipe details and nutrition</p>
+				<div className="space-y-2">
+					<p className="eyebrow">Cookbook</p>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+						Edit recipe
+					</h1>
+					<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+						Update your recipe details and nutrition.
+					</p>
 				</div>
-			</div>
+			</header>
 
 			<EditRecipeForm recipe={recipe} />
 		</div>

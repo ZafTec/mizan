@@ -126,10 +126,12 @@ export default function McpPage() {
   return (
 		<div className="max-w-5xl mx-auto space-y-6 pb-10">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-			<div>
-			  <p className="text-sm uppercase tracking-wide text-brand-600 font-semibold">Model Context Protocol</p>
-			  <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">MCP Integration</h1>
-			  <p className="text-slate-500 dark:text-slate-400">
+			<div className="space-y-2">
+			  <p className="eyebrow">Model Context Protocol</p>
+			  <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+				MCP integration
+			  </h1>
+			  <p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 				Connect any MCP-compatible client to your Mizan data. Works with Claude Desktop, Claude Code, Cursor, and more.
 			  </p>
         </div>
