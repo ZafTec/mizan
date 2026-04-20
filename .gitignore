@@ -51,6 +51,9 @@ yarn-error.log*
 .env.production.local
 !.env.example
 
+# Local dev config (contains VPS connection strings + secrets — don't commit)
+backend/Mizan.Api/appsettings.Development.json
+
 # Vercel
 .vercel
 

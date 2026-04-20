@@ -59,7 +59,14 @@ public class RedisCacheService : IRedisCacheService
         try
         {
             var json = JsonSerializer.Serialize(value);
-            await _database.StringSetAsync(key, json, expiration);
+            if (expiration.HasValue)
+            {
+                await _database.StringSetAsync(key, json, expiration.Value);
+            }
+            else
+            {
+                await _database.StringSetAsync(key, json);
+            }
             _logger.LogDebug("Redis SET: {Key} (expires in {Expiration})", key, expiration?.ToString() ?? "never");
         }
         catch (Exception ex)
