@@ -1076,6 +1076,65 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         result.Should().ContainKey("content");
     }
 
+    [Fact]
+    public async Task LogFood_PersistsExplicitLoggedAtTimestamp()
+    {
+        var userId = Guid.NewGuid();
+        await _apiFixture.SeedUserAsync(userId, "log-food-time@example.com", emailVerified: true);
+        var token = await CreateMcpTokenAsync(userId);
+
+        var food = await _apiFixture.SeedFoodAsync("Morning Bagel", 250, 9, 48, 1.5m);
+
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var eatenAt = DateTime.UtcNow.AddHours(-3);
+        var args = new
+        {
+            date = eatenAt.ToString("yyyy-MM-dd"),
+            mealType = "MEAL",
+            foodId = food.Id,
+            servings = 1,
+            loggedAt = eatenAt.ToString("o")
+        };
+
+        var request = CreateJsonRpcCallRequest("tools/call", "log_food", args);
+        var response = await _mcpClient.PostMcpAsync(request);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var entries = await _apiFixture.GetFoodDiaryEntriesByUserId(userId);
+        entries.Should().ContainSingle();
+        var entry = entries.Single();
+        entry.LoggedAt.Should().BeCloseTo(eatenAt, TimeSpan.FromSeconds(2));
+    }
+
+    [Fact]
+    public async Task LogFood_RejectsInvalidLoggedAt()
+    {
+        var userId = Guid.NewGuid();
+        await _apiFixture.SeedUserAsync(userId, "log-food-bad-time@example.com", emailVerified: true);
+        var token = await CreateMcpTokenAsync(userId);
+
+        var food = await _apiFixture.SeedFoodAsync("Any Food", 100, 5, 10, 2);
+
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var args = new
+        {
+            date = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+            mealType = "MEAL",
+            foodId = food.Id,
+            servings = 1,
+            loggedAt = "not-a-timestamp"
+        };
+
+        var request = CreateJsonRpcCallRequest("tools/call", "log_food", args);
+        var response = await _mcpClient.PostMcpAsync(request);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
+        ExtractErrorMessage(jsonResponse).Should().NotBeNullOrEmpty();
+    }
+
     #endregion
 
     #region log_meal_manual Tool Tests

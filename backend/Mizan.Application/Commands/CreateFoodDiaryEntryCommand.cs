@@ -11,6 +11,12 @@ public record CreateFoodDiaryEntryCommand : IRequest<CreateFoodDiaryEntryResult>
     public Guid? FoodId { get; init; }
     public Guid? RecipeId { get; init; }
     public DateOnly? EntryDate { get; init; }
+    /// <summary>
+    /// Optional precise timestamp of when the meal was eaten. Lets callers
+    /// (MCP, frontend, apps) backfill entries at a specific time.
+    /// Stored as UTC; falls back to <c>DateTime.UtcNow</c> when omitted.
+    /// </summary>
+    public DateTime? LoggedAt { get; init; }
     public string MealType { get; init; } = "SNACK";
     public decimal Servings { get; init; } = 1;
     public decimal? Calories { get; init; }
@@ -48,6 +54,10 @@ public class CreateFoodDiaryEntryCommandValidator : AbstractValidator<CreateFood
         RuleFor(x => x.CarbsGrams).GreaterThanOrEqualTo(0).When(x => x.CarbsGrams.HasValue);
         RuleFor(x => x.FatGrams).GreaterThanOrEqualTo(0).When(x => x.FatGrams.HasValue);
         RuleFor(x => x.FiberGrams).GreaterThanOrEqualTo(0).When(x => x.FiberGrams.HasValue);
+        RuleFor(x => x.LoggedAt)
+            .LessThanOrEqualTo(_ => DateTime.UtcNow.AddMinutes(5))
+            .When(x => x.LoggedAt.HasValue)
+            .WithMessage("LoggedAt cannot be in the future");
     }
 }
 
@@ -81,13 +91,22 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
             };
         }
 
+        // LoggedAt precedence: explicit client value > now.
+        // EntryDate precedence: explicit > derived from LoggedAt > today.
+        // Stored UTC so range queries are timezone-deterministic.
+        var loggedAt = request.LoggedAt?.ToUniversalTime() ?? DateTime.UtcNow;
+        var entryDate = request.EntryDate
+            ?? (request.LoggedAt.HasValue
+                ? DateOnly.FromDateTime(loggedAt)
+                : DateOnly.FromDateTime(DateTime.UtcNow));
+
         var entry = new FoodDiaryEntry
         {
             Id = Guid.NewGuid(),
             UserId = _currentUser.UserId.Value,
             FoodId = request.FoodId,
             RecipeId = request.RecipeId,
-            EntryDate = request.EntryDate ?? DateOnly.FromDateTime(DateTime.UtcNow),
+            EntryDate = entryDate,
             MealType = request.MealType.ToUpper(),
             Servings = request.Servings,
             Calories = request.Calories,
@@ -97,7 +116,7 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
             FiberGrams = request.FiberGrams,
             ProteinCalorieRatio = Food.ComputeProteinCalorieRatio(request.Calories ?? 0, request.ProteinGrams ?? 0),
             Name = request.Name,
-            LoggedAt = DateTime.UtcNow
+            LoggedAt = loggedAt
         };
 
         _context.FoodDiaryEntries.Add(entry);
