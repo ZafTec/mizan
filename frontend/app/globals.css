@@ -93,11 +93,19 @@
   --shadow-panel: 0 24px 60px -36px rgba(15, 23, 42, 0.28);
   --shadow-glow: 0 0 24px color-mix(in oklab, var(--color-verdigris-500) 30%, transparent);
   --font-sans: 'Inter', system-ui, sans-serif;
+
+  /* Emil-style strong easing curves — default easings are too weak */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
-  --duration-fast: 180ms;
-  --duration-medium: 280ms;
-  --duration-slow: 520ms;
+
+  /* Kept under 300ms for UI, never `ease-in` */
+  --duration-instant: 120ms;
+  --duration-fast: 160ms;
+  --duration-medium: 220ms;
+  --duration-slow: 300ms;
 }
 
 @theme inline {
@@ -285,21 +293,23 @@ html {
 .btn-accent,
 .btn-danger,
 .btn-ghost {
-  @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-slate-950;
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-charcoal-blue-950;
   transform: translateZ(0);
-  transition-property: transform, box-shadow, background-color, border-color, color, opacity;
-  transition-duration: var(--duration-medium);
-  transition-timing-function: var(--ease-emphasized);
+  transition-property: transform, box-shadow, background-color, border-color, color, opacity, filter;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-out);
   will-change: transform;
 }
 
-.btn:hover,
-.btn-primary:hover,
-.btn-secondary:hover,
-.btn-accent:hover,
-.btn-danger:hover,
-.btn-ghost:hover {
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover,
+  .btn-primary:hover,
+  .btn-secondary:hover,
+  .btn-accent:hover,
+  .btn-danger:hover,
+  .btn-ghost:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .btn:active,
@@ -308,7 +318,8 @@ html {
 .btn-accent:active,
 .btn-danger:active,
 .btn-ghost:active {
-  transform: translateY(0) scale(0.985);
+  transform: translateY(0) scale(0.97);
+  transition-duration: var(--duration-instant);
 }
 
 .btn-primary {
@@ -347,24 +358,26 @@ html {
   box-shadow: var(--shadow-panel);
   transition-property: transform, box-shadow, border-color, background-color;
   transition-duration: var(--duration-medium);
-  transition-timing-function: var(--ease-emphasized);
+  transition-timing-function: var(--ease-out);
 }
 
 .card-hover {
   @apply hover:border-charcoal-blue-300 dark:hover:border-white/15;
 }
 
-.card-hover:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 30px 80px -42px rgba(15, 23, 42, 0.4);
+@media (hover: hover) and (pointer: fine) {
+  .card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 30px 80px -42px rgba(15, 23, 42, 0.4);
+  }
 }
 
 .input {
   @apply w-full rounded-2xl border border-charcoal-blue-300 bg-white px-4 py-3 text-charcoal-blue-900 placeholder-charcoal-blue-400 focus:outline-none focus:ring-2 focus:ring-brand-500/15 dark:border-white/10 dark:bg-charcoal-blue-950/75 dark:text-charcoal-blue-100 dark:placeholder-charcoal-blue-500;
   backdrop-filter: blur(14px);
   transition-property: border-color, box-shadow, background-color, color;
-  transition-duration: var(--duration-medium);
-  transition-timing-function: var(--ease-emphasized);
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-out);
 }
 
 .input:focus {
@@ -413,17 +426,73 @@ html {
 
 .page-transition,
 .animate-in {
-  animation: page-enter var(--duration-slow) var(--ease-emphasized) both;
+  animation: page-enter 300ms var(--ease-out) both;
 }
 
 .animate-fade-in,
 .stagger-item {
-  animation: fade-up var(--duration-slow) var(--ease-emphasized) both;
+  animation: fade-up 280ms var(--ease-out) both;
+}
+
+/* Stagger — keep delays under 80ms each so interface stays responsive */
+.stagger-children > * {
+  opacity: 0;
+  animation: fade-up 260ms var(--ease-out) both;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 40ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 80ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 120ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 160ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 280ms; }
+
+/* Origin-aware popover/menu: scales from its anchor, not center */
+.menu-pop {
+  transform-origin: top right;
+  animation: menu-pop-in 180ms var(--ease-out) both;
+}
+.menu-pop.from-left { transform-origin: top left; }
+.menu-pop.from-bottom-right { transform-origin: bottom right; }
+
+/* Origin-aware tooltip/dropdown: starts at 0.95 (never scale(0)) */
+@keyframes menu-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Mobile drawer: iOS-style curve, starts off-screen (translateX(-100%)) */
+.mobile-sheet-enter {
+  animation: mobile-sheet-slide 280ms var(--ease-drawer) both;
+}
+@keyframes mobile-sheet-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 .footer-link {
   @apply text-sm text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:text-charcoal-blue-400 dark:hover:text-charcoal-blue-100;
-  transition: color var(--duration-fast) var(--ease-emphasized);
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+/* Interactive press feedback — Emil: every pressable element should scale(0.97) on :active */
+.press-feedback {
+  transition: transform var(--duration-instant) var(--ease-out);
+  will-change: transform;
+}
+.press-feedback:active {
+  transform: scale(0.97);
 }
 
 .toggle {
@@ -434,7 +503,7 @@ html {
   background: rgba(148, 163, 184, 0.45);
   position: relative;
   cursor: pointer;
-  transition: background-color var(--duration-medium) var(--ease-emphasized);
+  transition: background-color var(--duration-fast) var(--ease-out);
 }
 
 .toggle::after {
@@ -447,7 +516,7 @@ html {
   border-radius: 9999px;
   background: white;
   box-shadow: 0 8px 18px -12px rgba(15, 23, 42, 0.8);
-  transition: transform var(--duration-medium) var(--ease-emphasized);
+  transition: transform var(--duration-fast) var(--ease-out);
 }
 
 .toggle:checked {

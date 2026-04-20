@@ -13,8 +13,8 @@ type Action = {
 
 const ACTIONS: Action[] = [
 	{ href: "/meals/add", label: "Log Meal", icon: "flame", tone: "peach" },
-	{ href: "/workouts", label: "Start Workout", icon: "activity", tone: "brand" },
-	{ href: "/body-measurements", label: "Log Weight", icon: "chartLine", tone: "sun" },
+	{ href: "/habits", label: "Log Water", icon: "sparkles", tone: "brand" },
+	{ href: "/workouts", label: "Start Workout", icon: "activity", tone: "sun" },
 	{ href: "/recipes/add", label: "New Recipe", icon: "cookingPot", tone: "accent" },
 ];
 
@@ -37,12 +37,12 @@ export default function QuickActions() {
 					key={a.href}
 					href={a.href}
 					className={cn(
-						"glass-panel group flex items-center justify-between gap-3 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-22px_rgba(15,23,42,0.32)]",
+						"glass-panel press-feedback group flex items-center justify-between gap-3 p-4 transition-[transform,box-shadow,border-color] duration-[220ms] ease-[cubic-bezier(0.23,1,0.32,1)] md:hover:-translate-y-0.5 md:hover:shadow-[0_18px_40px_-22px_rgba(15,23,42,0.32)]",
 						toneClass[a.tone]
 					)}
 				>
 					<span className="text-sm font-semibold">{a.label}</span>
-					<span className="qa-icon flex h-10 w-10 items-center justify-center rounded-2xl transition-transform group-hover:scale-110">
+					<span className="qa-icon flex h-10 w-10 items-center justify-center rounded-2xl transition-transform duration-[220ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:scale-110">
 						<AnimatedIcon name={a.icon} size={18} />
 					</span>
 				</Link>

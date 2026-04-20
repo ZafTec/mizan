@@ -94,10 +94,10 @@ function SidebarLink({ item, collapsed }: { item: NavItem; collapsed: boolean })
 		<Link
 			href={item.href}
 			className={cn(
-				"group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors",
+				"press-feedback group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-[background-color,color,box-shadow] duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)]",
 				active
 					? "bg-brand-600 text-white shadow-lg shadow-brand-500/25 dark:bg-brand-500 dark:text-charcoal-blue-950"
-					: "text-charcoal-blue-600 hover:bg-white/70 hover:text-charcoal-blue-900 dark:text-charcoal-blue-200 dark:hover:bg-white/5 dark:hover:text-white",
+					: "text-charcoal-blue-600 hover:bg-white/70 hover:text-charcoal-blue-900 dark:text-charcoal-blue-200 dark:hover:bg-white/5 dark:hover:text-charcoal-blue-50",
 				collapsed && "justify-center px-2"
 			)}
 			title={collapsed ? item.label : undefined}
@@ -386,7 +386,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 								{userMenuOpen && (
 									<div
 										ref={userMenuRef}
-										className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-60 overflow-hidden rounded-[24px] border border-charcoal-blue-200 bg-white p-1.5 shadow-2xl shadow-charcoal-blue-950/15 animate-fade-in dark:border-white/10 dark:bg-charcoal-blue-950"
+										className="menu-pop absolute right-0 top-[calc(100%+0.5rem)] z-50 w-60 overflow-hidden rounded-[24px] border border-charcoal-blue-200 bg-white p-1.5 shadow-2xl shadow-charcoal-blue-950/15 dark:border-white/10 dark:bg-charcoal-blue-950"
 									>
 										<div className="mb-1 rounded-2xl px-3 py-2.5">
 											<p className="truncate text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -442,7 +442,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 						/>
 						<aside
 							ref={mobileSheetRef}
-							className="fixed inset-y-0 left-0 z-50 flex w-80 max-w-[85vw] flex-col border-r border-charcoal-blue-200 bg-white shadow-2xl animate-fade-in dark:border-white/10 dark:bg-charcoal-blue-950 lg:hidden"
+							className="mobile-sheet-enter fixed inset-y-0 left-0 z-50 flex w-80 max-w-[85vw] flex-col border-r border-charcoal-blue-200 bg-white shadow-2xl dark:border-white/10 dark:bg-charcoal-blue-950 lg:hidden"
 						>
 							<div className="flex shrink-0 items-center gap-3 border-b border-charcoal-blue-200/70 p-4 dark:border-white/10">
 								<div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-2xl ring-1 ring-brand-500/20">
