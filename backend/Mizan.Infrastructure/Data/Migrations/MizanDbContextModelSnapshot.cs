@@ -17,7 +17,7 @@ namespace Mizan.Infrastructure.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.0")
+                .HasAnnotation("ProductVersion", "10.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -34,6 +34,11 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("category");
+
+                    b.Property<string>("CriteriaType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("criteria_type");
 
                     b.Property<string>("Description")
                         .HasColumnType("text")
@@ -55,9 +60,219 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasDefaultValue(0)
                         .HasColumnName("points");
 
+                    b.Property<int>("Threshold")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("threshold");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("CriteriaType", "Threshold");
+
                     b.ToTable("achievements", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000001"),
+                            Category = "nutrition",
+                            CriteriaType = "meals_logged",
+                            Description = "Log your first meal",
+                            Name = "First Meal",
+                            Points = 10,
+                            Threshold = 1
+                        },
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000002"),
+                            Category = "nutrition",
+                            CriteriaType = "meals_logged",
+                            Description = "Log 10 meals",
+                            Name = "Getting Started",
+                            Points = 25,
+                            Threshold = 10
+                        },
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000003"),
+                            Category = "nutrition",
+                            CriteriaType = "meals_logged",
+                            Description = "Log 100 meals",
+                            Name = "Century Club",
+                            Points = 100,
+                            Threshold = 100
+                        },
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000004"),
+                            Category = "nutrition",
+                            CriteriaType = "meals_logged",
+                            Description = "Log 500 meals",
+                            Name = "Half Grand",
+                            Points = 250,
+                            Threshold = 500
+                        },
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000005"),
+                            Category = "consistency",
+                            CriteriaType = "streak_nutrition",
+                            Description = "Log meals 3 days in a row",
+                            Name = "Three-Day Runner",
+                            Points = 15,
+                            Threshold = 3
+                        },
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000006"),
+                            Category = "consistency",
+                            CriteriaType = "streak_nutrition",
+                            Description = "Log meals 7 days in a row",
+                            Name = "One-Week Warrior",
+                            Points = 50,
+                            Threshold = 7
+                        },
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000007"),
+                            Category = "consistency",
+                            CriteriaType = "streak_nutrition",
+                            Description = "Log meals 14 days in a row",
+                            Name = "Two-Week Titan",
+                            Points = 100,
+                            Threshold = 14
+                        },
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000008"),
+                            Category = "consistency",
+                            CriteriaType = "streak_nutrition",
+                            Description = "Log meals 30 days in a row",
+                            Name = "Monthly Master",
+                            Points = 250,
+                            Threshold = 30
+                        },
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000009"),
+                            Category = "consistency",
+                            CriteriaType = "streak_nutrition",
+                            Description = "Log meals 90 days in a row",
+                            Name = "Quarter-Year Habit",
+                            Points = 500,
+                            Threshold = 90
+                        },
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000010"),
+                            Category = "workout",
+                            CriteriaType = "workouts_logged",
+                            Description = "Log your first workout",
+                            Name = "First Rep",
+                            Points = 10,
+                            Threshold = 1
+                        },
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000011"),
+                            Category = "workout",
+                            CriteriaType = "workouts_logged",
+                            Description = "Log 10 workouts",
+                            Name = "Gym Regular",
+                            Points = 50,
+                            Threshold = 10
+                        },
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000012"),
+                            Category = "workout",
+                            CriteriaType = "workouts_logged",
+                            Description = "Log 50 workouts",
+                            Name = "Iron Habit",
+                            Points = 200,
+                            Threshold = 50
+                        },
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000013"),
+                            Category = "workout",
+                            CriteriaType = "streak_workout",
+                            Description = "Complete workouts 7 days in a row",
+                            Name = "Workout Week",
+                            Points = 75,
+                            Threshold = 7
+                        },
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000014"),
+                            Category = "milestone",
+                            CriteriaType = "body_measurements_logged",
+                            Description = "Record your first body measurement",
+                            Name = "Baseline Set",
+                            Points = 10,
+                            Threshold = 1
+                        },
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000015"),
+                            Category = "milestone",
+                            CriteriaType = "body_measurements_logged",
+                            Description = "Record 10 body measurements",
+                            Name = "Body Tracker",
+                            Points = 50,
+                            Threshold = 10
+                        },
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000016"),
+                            Category = "nutrition",
+                            CriteriaType = "recipes_created",
+                            Description = "Create your first recipe",
+                            Name = "Kitchen Opener",
+                            Points = 15,
+                            Threshold = 1
+                        },
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000017"),
+                            Category = "nutrition",
+                            CriteriaType = "recipes_created",
+                            Description = "Create 10 recipes",
+                            Name = "Chef's Shelf",
+                            Points = 75,
+                            Threshold = 10
+                        },
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000018"),
+                            Category = "milestone",
+                            CriteriaType = "points_total",
+                            Description = "Earn 100 achievement points",
+                            Name = "Bronze Badge",
+                            Points = 0,
+                            Threshold = 100
+                        },
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000019"),
+                            Category = "milestone",
+                            CriteriaType = "points_total",
+                            Description = "Earn 500 achievement points",
+                            Name = "Silver Badge",
+                            Points = 0,
+                            Threshold = 500
+                        },
+                        new
+                        {
+                            Id = new Guid("ac000000-0000-0000-0000-000000000020"),
+                            Category = "milestone",
+                            CriteriaType = "points_total",
+                            Description = "Earn 1500 achievement points",
+                            Name = "Gold Badge",
+                            Points = 0,
+                            Threshold = 1500
+                        });
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.AiChatThread", b =>
@@ -1360,7 +1575,8 @@ namespace Mizan.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "StreakType")
+                        .IsUnique();
 
                     b.ToTable("streaks", (string)null);
                 });
@@ -1462,6 +1678,10 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("banned");
 
+                    b.Property<bool>("CompactMode")
+                        .HasColumnType("boolean")
+                        .HasColumnName("compact_mode");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -1483,10 +1703,19 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name");
 
+                    b.Property<bool>("ReduceAnimations")
+                        .HasColumnType("boolean")
+                        .HasColumnName("reduce_animations");
+
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("role");
+
+                    b.Property<string>("ThemePreference")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("theme_preference");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")

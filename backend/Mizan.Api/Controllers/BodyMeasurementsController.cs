@@ -57,7 +57,7 @@ public class BodyMeasurementsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Guid>> LogMeasurement([FromBody] LogMeasurementRequest request)
+    public async Task<ActionResult<LogBodyMeasurementResult>> LogMeasurement([FromBody] LogMeasurementRequest request)
     {
         if (!_currentUser.UserId.HasValue)
         {
@@ -80,8 +80,8 @@ public class BodyMeasurementsController : ControllerBase
             request.Notes
         );
 
-        var id = await _mediator.Send(command);
-        return Ok(id);
+        var result = await _mediator.Send(command);
+        return Ok(result);
     }
 }
 

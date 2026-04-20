@@ -1,7 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Mizan.Application.Commands;
 using Mizan.Application.Queries;
 
 namespace Mizan.Api.Controllers;
@@ -26,16 +25,9 @@ public class AchievementsController : ControllerBase
     }
 
     [HttpGet("streak")]
-    public async Task<ActionResult<GetStreakResult>> GetStreak()
+    public async Task<ActionResult<GetStreakResult>> GetStreak([FromQuery] string? streakType = "nutrition")
     {
-        var result = await _mediator.Send(new GetStreakQuery());
-        return Ok(result);
-    }
-
-    [HttpPost("streak")]
-    public async Task<ActionResult<UpdateStreakResult>> UpdateStreak([FromBody] UpdateStreakCommand command)
-    {
-        var result = await _mediator.Send(command);
+        var result = await _mediator.Send(new GetStreakQuery { StreakType = streakType ?? "nutrition" });
         return Ok(result);
     }
 }

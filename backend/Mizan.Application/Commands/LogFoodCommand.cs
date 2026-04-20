@@ -23,6 +23,8 @@ public record LogFoodResult
     public decimal CarbsGrams { get; init; }
     public decimal FatGrams { get; init; }
     public string Message { get; init; } = string.Empty;
+    public StreakUpdate? Streak { get; init; }
+    public IReadOnlyList<UnlockedAchievement> UnlockedAchievements { get; init; } = [];
 }
 
 public class LogFoodCommandValidator : AbstractValidator<LogFoodCommand>
@@ -41,11 +43,19 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
 {
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly IStreakService _streakService;
+    private readonly IAchievementEvaluator _achievements;
 
-    public LogFoodCommandHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public LogFoodCommandHandler(
+        IMizanDbContext context,
+        ICurrentUserService currentUser,
+        IStreakService streakService,
+        IAchievementEvaluator achievements)
     {
         _context = context;
         _currentUser = currentUser;
+        _streakService = streakService;
+        _achievements = achievements;
     }
 
     public async Task<LogFoodResult> Handle(LogFoodCommand request, CancellationToken cancellationToken)
@@ -107,6 +117,9 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
         _context.FoodDiaryEntries.Add(entry);
         await _context.SaveChangesAsync(cancellationToken);
 
+        var streak = await _streakService.RecordActivityAsync("nutrition", cancellationToken);
+        var unlocked = await _achievements.EvaluateAsync(cancellationToken);
+
         return new LogFoodResult
         {
             Id = entry.Id,
@@ -114,7 +127,9 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
             ProteinGrams = protein,
             CarbsGrams = carbs,
             FatGrams = fat,
-            Message = $"Logged {request.Servings} serving(s) of {itemName} ({calories} kcal)"
+            Message = $"Logged {request.Servings} serving(s) of {itemName} ({calories} kcal)",
+            Streak = streak,
+            UnlockedAchievements = unlocked
         };
     }
 }

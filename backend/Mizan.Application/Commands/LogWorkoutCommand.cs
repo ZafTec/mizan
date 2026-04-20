@@ -35,6 +35,8 @@ public record LogWorkoutResult
     public string Message { get; init; } = string.Empty;
     public int TotalExercises { get; init; }
     public int TotalSets { get; init; }
+    public StreakUpdate? Streak { get; init; }
+    public IReadOnlyList<UnlockedAchievement> UnlockedAchievements { get; init; } = [];
 }
 
 public class LogWorkoutCommandValidator : AbstractValidator<LogWorkoutCommand>
@@ -50,11 +52,19 @@ public class LogWorkoutCommandHandler : IRequestHandler<LogWorkoutCommand, LogWo
 {
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly IStreakService _streakService;
+    private readonly IAchievementEvaluator _achievements;
 
-    public LogWorkoutCommandHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public LogWorkoutCommandHandler(
+        IMizanDbContext context,
+        ICurrentUserService currentUser,
+        IStreakService streakService,
+        IAchievementEvaluator achievements)
     {
         _context = context;
         _currentUser = currentUser;
+        _streakService = streakService;
+        _achievements = achievements;
     }
 
     public async Task<LogWorkoutResult> Handle(LogWorkoutCommand request, CancellationToken cancellationToken)
@@ -111,12 +121,17 @@ public class LogWorkoutCommandHandler : IRequestHandler<LogWorkoutCommand, LogWo
         _context.Workouts.Add(workout);
         await _context.SaveChangesAsync(cancellationToken);
 
+        var streak = await _streakService.RecordActivityAsync("workout", cancellationToken);
+        var unlocked = await _achievements.EvaluateAsync(cancellationToken);
+
         return new LogWorkoutResult
         {
             Id = workout.Id,
             Message = $"Logged workout: {workout.Name}",
             TotalExercises = request.Exercises.Count,
-            TotalSets = totalSets
+            TotalSets = totalSets,
+            Streak = streak,
+            UnlockedAchievements = unlocked
         };
     }
 }

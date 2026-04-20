@@ -18,18 +18,26 @@ public record LogBodyMeasurementCommand(
     decimal? LeftThighCm,
     decimal? RightThighCm,
     string? Notes
-) : IRequest<Guid>;
+) : IRequest<LogBodyMeasurementResult>;
 
-public class LogBodyMeasurementCommandHandler : IRequestHandler<LogBodyMeasurementCommand, Guid>
+public record LogBodyMeasurementResult
+{
+    public Guid Id { get; init; }
+    public IReadOnlyList<UnlockedAchievement> UnlockedAchievements { get; init; } = [];
+}
+
+public class LogBodyMeasurementCommandHandler : IRequestHandler<LogBodyMeasurementCommand, LogBodyMeasurementResult>
 {
     private readonly IMizanDbContext _context;
+    private readonly IAchievementEvaluator _achievements;
 
-    public LogBodyMeasurementCommandHandler(IMizanDbContext context)
+    public LogBodyMeasurementCommandHandler(IMizanDbContext context, IAchievementEvaluator achievements)
     {
         _context = context;
+        _achievements = achievements;
     }
 
-    public async Task<Guid> Handle(LogBodyMeasurementCommand request, CancellationToken cancellationToken)
+    public async Task<LogBodyMeasurementResult> Handle(LogBodyMeasurementCommand request, CancellationToken cancellationToken)
     {
         var measurement = new BodyMeasurement
         {
@@ -53,6 +61,12 @@ public class LogBodyMeasurementCommandHandler : IRequestHandler<LogBodyMeasureme
         _context.BodyMeasurements.Add(measurement);
         await _context.SaveChangesAsync(cancellationToken);
 
-        return measurement.Id;
+        var unlocked = await _achievements.EvaluateAsync(cancellationToken);
+
+        return new LogBodyMeasurementResult
+        {
+            Id = measurement.Id,
+            UnlockedAchievements = unlocked
+        };
     }
 }

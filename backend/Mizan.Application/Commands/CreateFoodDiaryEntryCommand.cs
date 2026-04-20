@@ -27,6 +27,8 @@ public record CreateFoodDiaryEntryResult
     public bool Success { get; init; }
     public string? Message { get; init; }
     public IReadOnlyList<string> Warnings { get; init; } = [];
+    public StreakUpdate? Streak { get; init; }
+    public IReadOnlyList<UnlockedAchievement> UnlockedAchievements { get; init; } = [];
 }
 
 public class CreateFoodDiaryEntryCommandValidator : AbstractValidator<CreateFoodDiaryEntryCommand>
@@ -53,11 +55,19 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
 {
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly IStreakService _streakService;
+    private readonly IAchievementEvaluator _achievements;
 
-    public CreateFoodDiaryEntryCommandHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public CreateFoodDiaryEntryCommandHandler(
+        IMizanDbContext context,
+        ICurrentUserService currentUser,
+        IStreakService streakService,
+        IAchievementEvaluator achievements)
     {
         _context = context;
         _currentUser = currentUser;
+        _streakService = streakService;
+        _achievements = achievements;
     }
 
     public async Task<CreateFoodDiaryEntryResult> Handle(CreateFoodDiaryEntryCommand request, CancellationToken cancellationToken)
@@ -93,6 +103,9 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
         _context.FoodDiaryEntries.Add(entry);
         await _context.SaveChangesAsync(cancellationToken);
 
+        var streak = await _streakService.RecordActivityAsync("nutrition", cancellationToken);
+        var unlocked = await _achievements.EvaluateAsync(cancellationToken);
+
         var warnings = NutritionHints.CheckConsistency(
             request.Calories,
             request.ProteinGrams,
@@ -105,7 +118,9 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
             Id = entry.Id,
             Success = true,
             Message = "Entry logged successfully",
-            Warnings = warnings
+            Warnings = warnings,
+            Streak = streak,
+            UnlockedAchievements = unlocked
         };
     }
 }

@@ -27,6 +27,8 @@ public static class DependencyInjection
         services.AddScoped<ITrainerAuthorizationService, TrainerAuthorizationService>();
         services.AddScoped<IUserStatusService, UserStatusService>();
         services.AddScoped<INutritionAiService, NutritionAiService>();
+        services.AddScoped<IStreakService, StreakService>();
+        services.AddScoped<IAchievementEvaluator, AchievementEvaluator>();
         services.AddSingleton<IRedisCacheService, RedisCacheService>();
 
         return services;
