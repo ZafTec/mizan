@@ -48,7 +48,7 @@ export default function ConfirmationModal({
                             }`} />
                     </div>
                     <div className="flex-1">
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">{title}</h2>
+                        <h2 className="text-xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-1">{title}</h2>
                         <p className="text-slate-600 dark:text-slate-400">{message}</p>
                     </div>
                 </div>

@@ -215,7 +215,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
         <form onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Information Card */}
             <div className="card p-6 space-y-5">
-                <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
                     <i className="ri-image-line text-brand-500" />
                     Basic Information
                 </h2>
@@ -282,7 +282,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
 
             {/* Ingredients Card */}
             <div className="card p-6 space-y-4 relative overflow-visible z-20">
-                <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
                     <i className="ri-list-check-2 text-brand-500" />
                     Ingredients
                 </h2>
@@ -320,12 +320,12 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                                                             onClick={() => handleIngredientSelect(index, ingredient)}
                                                             className="w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 last:border-0"
                                                         >
-                                                            <span className="font-medium text-slate-900 dark:text-slate-100">{ingredient.name}</span>
-                                                            <span className="text-xs text-slate-500 dark:text-slate-400">{ingredient.caloriesPer100g} kcal/100g</span>
+                                                            <span className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{ingredient.name}</span>
+                                                            <span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{ingredient.caloriesPer100g} kcal/100g</span>
                                                         </button>
                                                     ))
                                                 ) : (
-                                                    <div className="p-3 text-slate-500 dark:text-slate-400 text-center">No ingredients found</div>
+                                                    <div className="p-3 text-charcoal-blue-500 dark:text-charcoal-blue-400 text-center">No ingredients found</div>
                                                 )}
                                             </div>
                                         )}
@@ -378,7 +378,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
 
             {/* Instructions Card */}
             <div className="card p-6 space-y-4">
-                <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
                     <i className="ri-file-list-3-line text-brand-500" />
                     Instructions
                 </h2>
@@ -394,7 +394,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
 
             {/* Additional Details Card */}
             <div className="card p-6 space-y-5">
-                <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
                     <i className="ri-settings-3-line text-brand-500" />
                     Additional Details
                 </h2>

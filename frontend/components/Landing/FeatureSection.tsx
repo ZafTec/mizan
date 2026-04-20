@@ -32,10 +32,10 @@ export function FeatureSection() {
 					<AnimatedIcon name="sparkles" size={14} aria-hidden="true" />
 					Daily clarity
 				</div>
-				<h2 className="text-3xl font-semibold tracking-tight text-slate-950 dark:text-slate-50 sm:text-4xl">
+				<h2 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 					Everything you need to hit your goals
 				</h2>
-				<p className="mx-auto mt-3 max-w-2xl text-slate-500 dark:text-slate-400">
+				<p className="mx-auto mt-3 max-w-2xl text-charcoal-blue-500 dark:text-charcoal-blue-400">
 					From tracking to planning to coaching — one platform, zero friction.
 				</p>
 			</div>
@@ -45,7 +45,7 @@ export function FeatureSection() {
 						<div className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl ${f.gradient} text-white shadow-lg ${f.shadow}`}>
 							<AnimatedIcon name={f.icon} size={22} aria-hidden="true" />
 						</div>
-						<h3 className="mb-2 text-lg font-semibold text-slate-950 dark:text-slate-50">{f.title}</h3>
+						<h3 className="mb-2 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{f.title}</h3>
 						<p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">{f.description}</p>
 					</div>
 				))}

@@ -23,10 +23,10 @@ export default async function Navbar() {
 							/>
 						</div>
 					<div className="flex flex-col">
-						<span className="text-xl font-semibold text-slate-950 dark:text-slate-50">
+						<span className="text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
 							Mizan
 						</span>
-						<span className="hidden items-center gap-1 text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 sm:inline-flex">
+						<span className="hidden items-center gap-1 text-[10px] uppercase tracking-[0.18em] text-charcoal-blue-500 dark:text-charcoal-blue-400 sm:inline-flex">
 							ሚዛን • Balance
 						</span>
 					</div>

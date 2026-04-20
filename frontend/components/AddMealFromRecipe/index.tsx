@@ -63,7 +63,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 
 			{/* Basic Info Card */}
 			<div className="card p-6 space-y-5">
-				<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
 					<i className="ri-edit-line text-brand-500" />
 					Log Details
 				</h2>
@@ -108,7 +108,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 
 			{/* Serving Size Card */}
 			<div className="card p-6 space-y-4">
-				<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
 					<i className="ri-scales-line text-brand-500" />
 					Serving Size
 				</h2>
@@ -117,7 +117,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 					<button
 						type="button"
 						onClick={() => scaleToServings(Math.max(0.25, Math.round((servings - 0.25) * 4) / 4))}
-						className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-bold"
+						className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-charcoal-blue-600 dark:text-charcoal-blue-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-bold"
 					>
 						−
 					</button>
@@ -137,11 +137,11 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 					<button
 						type="button"
 						onClick={() => scaleToServings(Math.round((servings + 0.25) * 4) / 4)}
-						className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-bold"
+						className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-charcoal-blue-600 dark:text-charcoal-blue-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-bold"
 					>
 						+
 					</button>
-					<span className="text-sm text-slate-500 dark:text-slate-400 shrink-0">servings</span>
+					<span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 shrink-0">servings</span>
 				</div>
 
 				{/* Quick presets */}
@@ -164,8 +164,8 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 			</div>
 
 			{/* Nutrition Info Card */}
-			<div className="card p-6 space-y-5 text-slate-900 dark:text-slate-100">
-				<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+			<div className="card p-6 space-y-5 text-charcoal-blue-900 dark:text-charcoal-blue-100">
+				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
 					<i className="ri-heart-pulse-line text-brand-500" />
 					Nutritional Information
 					{servings !== 1 && (
@@ -177,7 +177,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 
 				<div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
 					<div>
-						<label htmlFor="calories" className="label text-slate-900 dark:text-slate-100">Calories (kcal)</label>
+						<label htmlFor="calories" className="label text-charcoal-blue-900 dark:text-charcoal-blue-100">Calories (kcal)</label>
 						<input
 							type="number"
 							id="calories"
@@ -191,7 +191,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 						<FieldError formState={formState} name="calories" />
 					</div>
 					<div>
-						<label htmlFor="protein" className="label text-slate-900 dark:text-slate-100">Protein (g)</label>
+						<label htmlFor="protein" className="label text-charcoal-blue-900 dark:text-charcoal-blue-100">Protein (g)</label>
 						<input
 							type="number"
 							id="protein"
@@ -206,7 +206,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 						<FieldError formState={formState} name="protein" />
 					</div>
 					<div>
-						<label htmlFor="carbs" className="label text-slate-900 dark:text-slate-100">Carbs (g)</label>
+						<label htmlFor="carbs" className="label text-charcoal-blue-900 dark:text-charcoal-blue-100">Carbs (g)</label>
 						<input
 							type="number"
 							id="carbs"
@@ -221,7 +221,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 						<FieldError formState={formState} name="carbs" />
 					</div>
 					<div>
-						<label htmlFor="fat" className="label text-slate-900 dark:text-slate-100">Fat (g)</label>
+						<label htmlFor="fat" className="label text-charcoal-blue-900 dark:text-charcoal-blue-100">Fat (g)</label>
 						<input
 							type="number"
 							id="fat"
@@ -236,7 +236,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 						<FieldError formState={formState} name="fat" />
 					</div>
 					<div>
-						<label htmlFor="fiber" className="label text-slate-900 dark:text-slate-100">Fiber (g)</label>
+						<label htmlFor="fiber" className="label text-charcoal-blue-900 dark:text-charcoal-blue-100">Fiber (g)</label>
 						<input
 							type="number"
 							id="fiber"

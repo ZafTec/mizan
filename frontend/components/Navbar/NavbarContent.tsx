@@ -63,7 +63,7 @@ function NavLink({
 			className={cn(
 				"group flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors duration-200",
 				isActive
-					? "text-slate-950 dark:text-white"
+					? "text-charcoal-blue-900 dark:text-charcoal-blue-50"
 					: "text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white",
 				mobile ? "w-full rounded-2xl hover:bg-slate-900/5 dark:hover:bg-white/5" : "rounded-full"
 			)}
@@ -72,7 +72,7 @@ function NavLink({
 				className={cn(
 					mobile
 						? "icon-chip h-9 w-9 text-slate-500 dark:text-slate-300"
-						: "flex h-5 w-5 items-center justify-center text-slate-400 dark:text-slate-500",
+						: "flex h-5 w-5 items-center justify-center text-charcoal-blue-400 dark:text-charcoal-blue-500",
 					isActive ? "text-brand-600 dark:text-brand-300" : "group-hover:text-slate-950 dark:group-hover:text-white"
 				)}
 			>
@@ -209,8 +209,8 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 									<AnimatedIcon name="logout" size={20} aria-hidden="true" />
 								</span>
 								<div className="space-y-1">
-									<h3 className="text-lg font-semibold text-slate-950 dark:text-slate-50">Sign out</h3>
-									<p className="text-sm text-slate-500 dark:text-slate-400">Your session will end on this device immediately.</p>
+									<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Sign out</h3>
+									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">Your session will end on this device immediately.</p>
 								</div>
 							</div>
 							<div className="flex gap-3">
@@ -252,8 +252,8 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 							>
 								<UserAvatar user={user} />
 								<div className="hidden text-left sm:block">
-									<p className="max-w-28 truncate font-medium text-slate-950 dark:text-white">{user.name || user.email}</p>
-									{roleLabel ? <p className="max-w-28 truncate text-[11px] text-slate-500 dark:text-slate-400">{roleLabel}</p> : null}
+									<p className="max-w-28 truncate font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">{user.name || user.email}</p>
+									{roleLabel ? <p className="max-w-28 truncate text-[11px] text-charcoal-blue-500 dark:text-charcoal-blue-400">{roleLabel}</p> : null}
 								</div>
 								<ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform duration-200 dark:text-slate-500", userMenuOpen && "rotate-180")} aria-hidden="true" />
 							</button>
@@ -261,8 +261,8 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 							{userMenuOpen && (
 								<div ref={userMenuRef} data-testid="nav-user-menu" className="absolute right-0 top-[calc(100%+0.5rem)] z-70 mt-0 w-60 overflow-hidden rounded-[28px] border border-slate-200 bg-white p-1.5 shadow-2xl shadow-slate-950/10 animate-fade-in dark:border-white/10 dark:bg-slate-950">
 									<div className="mb-1 rounded-2xl px-3 py-2.5">
-										<p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{user.name || user.email}</p>
-										<p className="truncate text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
+										<p className="truncate text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{user.name || user.email}</p>
+										<p className="truncate text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{user.email}</p>
 									</div>
 									<div className="space-y-1">
 										{accountItems.map((item) => (
@@ -330,8 +330,8 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 										<div className="flex items-center gap-3">
 											<UserAvatar user={user} />
 											<div>
-												<p className="text-sm font-semibold text-slate-950 dark:text-white">{user.name || user.email}</p>
-												<p className="text-xs text-slate-500 dark:text-slate-400">Signed in</p>
+												<p className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{user.name || user.email}</p>
+												<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Signed in</p>
 											</div>
 										</div>
 										<button

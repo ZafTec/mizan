@@ -55,7 +55,7 @@ export function PasswordInput({ showStrength, className, ...props }: PasswordInp
 							/>
 						))}
 					</div>
-					<span className="text-xs text-slate-500 dark:text-slate-400">{strength.label}</span>
+					<span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{strength.label}</span>
 				</div>
 			)}
 		</div>

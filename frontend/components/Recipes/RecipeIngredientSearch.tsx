@@ -95,10 +95,10 @@ export default function RecipeIngredientSearch({
 							}}
 							className="w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 last:border-0"
 						>
-							<span className="font-medium text-slate-900 dark:text-slate-100 truncate">
+							<span className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100 truncate">
 								{recipe.title}
 							</span>
-							<span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap ml-2">
+							<span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 whitespace-nowrap ml-2">
 								{recipe.nutrition?.caloriesPerServing?.toFixed(0) || 0} kcal/srv
 							</span>
 						</button>

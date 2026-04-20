@@ -109,17 +109,17 @@ export default function DashboardStats() {
 					<div className="p-2 bg-brand-50 dark:bg-brand-950 rounded-lg group-hover:bg-brand-100 transition-colors">
 						<i className="ri-fire-line text-xl text-brand-600 dark:text-brand-400" />
 					</div>
-					<span className="text-sm text-slate-500 dark:text-slate-400 font-medium">Calories</span>
+					<span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 font-medium">Calories</span>
 				</div>
 				<div className="flex items-baseline gap-2">
-					<span className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+					<span className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 						{calories.toLocaleString()}
 					</span>
 					{goal?.targetCalories && (
-						<span className="text-sm text-slate-400 dark:text-slate-500">/ {goal.targetCalories.toLocaleString()}</span>
+						<span className="text-sm text-charcoal-blue-400 dark:text-charcoal-blue-500">/ {goal.targetCalories.toLocaleString()}</span>
 					)}
 				</div>
-				<div className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+				<div className="mt-2 text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500">
 					{goal?.targetCalories ? (
 						<>
 							{Math.round((calories / goal.targetCalories) * 100)}% of goal
@@ -136,17 +136,17 @@ export default function DashboardStats() {
 					<div className="p-2 bg-blue-50 dark:bg-blue-950 rounded-lg group-hover:bg-blue-100 transition-colors">
 						<i className="ri-heart-pulse-line text-xl text-blue-600" />
 					</div>
-					<span className="text-sm text-slate-500 dark:text-slate-400 font-medium">Protein</span>
+					<span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 font-medium">Protein</span>
 				</div>
 				<div className="flex items-baseline gap-2">
-					<span className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+					<span className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 						{protein}g
 					</span>
 					{goal?.targetProteinGrams && (
-						<span className="text-sm text-slate-400 dark:text-slate-500">/ {Math.round(goal.targetProteinGrams)}g</span>
+						<span className="text-sm text-charcoal-blue-400 dark:text-charcoal-blue-500">/ {Math.round(goal.targetProteinGrams)}g</span>
 					)}
 				</div>
-				<div className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+				<div className="mt-2 text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500">
 					{goal?.targetProteinGrams ? (
 						<>
 							{Math.round((protein / goal.targetProteinGrams) * 100)}% of goal
@@ -163,13 +163,13 @@ export default function DashboardStats() {
 					<div className="p-2 bg-cyan-50 dark:bg-cyan-950 rounded-lg group-hover:bg-cyan-100 transition-colors">
 						<i className="ri-drop-line text-xl text-cyan-600" />
 					</div>
-					<span className="text-sm text-slate-500 dark:text-slate-400 font-medium">Water</span>
+					<span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 font-medium">Water</span>
 				</div>
 				<div className="flex items-baseline gap-2">
-					<span className="text-2xl font-bold text-slate-900 dark:text-slate-100">0</span>
-					<span className="text-sm text-slate-400 dark:text-slate-500">/ 8 cups</span>
+					<span className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">0</span>
+					<span className="text-sm text-charcoal-blue-400 dark:text-charcoal-blue-500">/ 8 cups</span>
 				</div>
-				<div className="mt-2 text-xs text-slate-400 dark:text-slate-500">Coming soon</div>
+				<div className="mt-2 text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500">Coming soon</div>
 			</Link>
 
 			{/* Streak */}
@@ -178,13 +178,13 @@ export default function DashboardStats() {
 					<div className="p-2 bg-amber-50 dark:bg-amber-950 rounded-lg group-hover:bg-amber-100 transition-colors">
 						<i className="ri-fire-fill text-xl text-amber-600" />
 					</div>
-					<span className="text-sm text-slate-500 dark:text-slate-400 font-medium">Streak</span>
+					<span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 font-medium">Streak</span>
 				</div>
 				<div className="flex items-baseline gap-2">
-					<span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{streak?.currentStreak ?? 0}</span>
-					<span className="text-sm text-slate-400 dark:text-slate-500">days</span>
+					<span className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{streak?.currentStreak ?? 0}</span>
+					<span className="text-sm text-charcoal-blue-400 dark:text-charcoal-blue-500">days</span>
 				</div>
-				<div className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+				<div className="mt-2 text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500">
 					{streak?.longestStreak ? `Best: ${streak.longestStreak} days` : 'Log a meal to start'}
 				</div>
 			</Link>

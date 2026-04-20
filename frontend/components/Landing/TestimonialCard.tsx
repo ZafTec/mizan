@@ -32,7 +32,7 @@ export function TestimonialSection() {
 					<AnimatedIcon name="heart" size={14} aria-hidden="true" />
 					Real outcomes
 				</div>
-				<h2 className="text-3xl font-semibold tracking-tight text-slate-950 dark:text-slate-50 sm:text-4xl">
+				<h2 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 					Trusted by people who take nutrition seriously
 				</h2>
 			</div>
@@ -45,8 +45,8 @@ export function TestimonialSection() {
 									{t.initials}
 								</div>
 								<div>
-									<p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t.name}</p>
-									<p className="text-xs text-slate-500 dark:text-slate-400">{t.role}</p>
+									<p className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">{t.name}</p>
+									<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{t.role}</p>
 								</div>
 							</div>
 							<span className="icon-chip h-9 w-9 text-brand-600 dark:text-brand-300">

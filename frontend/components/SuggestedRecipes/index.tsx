@@ -30,8 +30,8 @@ export default function SuggestedRecipes({ user, suggestions, serverError }: Sug
 			{/* Page Header */}
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
-					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Recipe Suggestions</h1>
-					<p className="text-slate-500 dark:text-slate-400 mt-1">Personalized recipes based on your remaining macros</p>
+					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Recipe Suggestions</h1>
+					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">Personalized recipes based on your remaining macros</p>
 				</div>
 				{user && (
 					<Link href="/suggestions/regenerate" className="btn-secondary">
@@ -44,10 +44,10 @@ export default function SuggestedRecipes({ user, suggestions, serverError }: Sug
 			{!suggestions || suggestions.length === 0 ? (
 				<div className="card p-8 text-center">
 					<div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
-						<i className="ri-lightbulb-line text-3xl text-slate-400 dark:text-slate-500" />
+						<i className="ri-lightbulb-line text-3xl text-charcoal-blue-400 dark:text-charcoal-blue-500" />
 					</div>
-					<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No Suggestions Available</h3>
-					<p className="text-slate-500 dark:text-slate-400 mb-4">
+					<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No Suggestions Available</h3>
+					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-4">
 						Add more meals or update your preferences to get personalized recipe suggestions.
 					</p>
 					<Link href="/meals" className="btn-primary">
@@ -73,7 +73,7 @@ export default function SuggestedRecipes({ user, suggestions, serverError }: Sug
 							</div>
 							<div className="flex-1 p-6">
 								<div className="mb-4">
-									<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors mb-2">
+									<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors mb-2">
 										{recipe.title}
 									</h3>
 									<p className="text-slate-600 dark:text-slate-400 text-sm line-clamp-2">

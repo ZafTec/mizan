@@ -39,7 +39,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           </p>
         )}
 			{hint && !error && (
-			  <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">{hint}</p>
+			  <p className="mt-1.5 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{hint}</p>
 			)}
 		  </div>
 		);

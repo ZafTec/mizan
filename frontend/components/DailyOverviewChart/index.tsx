@@ -171,9 +171,9 @@ export default function DailyOverviewChart() {
 			<div className="card p-6 sm:p-7">
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 					<div>
-						<p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Today&apos;s intake</p>
-						<h3 className="mt-2 text-2xl font-semibold text-slate-950 dark:text-slate-50">Nutrition pace</h3>
-						<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+						<p className="text-xs font-semibold uppercase tracking-[0.18em] text-charcoal-blue-500 dark:text-charcoal-blue-400">Today&apos;s intake</p>
+						<h3 className="mt-2 text-2xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Nutrition pace</h3>
+						<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 							{trackedMetrics > 0
 								? `You have tracked ${trackedMetrics} core nutrition metric${trackedMetrics === 1 ? '' : 's'} today.`
 								: 'No meals logged yet. Start with a quick entry and the dashboard will fill in.'}
@@ -211,8 +211,8 @@ export default function DailyOverviewChart() {
 				<div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-900/70">
 					<div className="flex items-center justify-between gap-3">
 						<div>
-							<p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Daily read</p>
-							<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+							<p className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Daily read</p>
+							<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 								{hasGoals
 									? getDeltaCopy(macros.calories, goal?.targetCalories ?? null, ' kcal')
 									: 'Set calorie and macro goals to turn this into a real pacing view.'}
@@ -227,7 +227,7 @@ export default function DailyOverviewChart() {
 							<div key={item.key} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 dark:border-white/10 dark:bg-slate-950 dark:text-slate-300">
 								<span className={`h-2 w-2 rounded-sm ${item.dotClassName}`} />
 								<span>{item.label}</span>
-								<span className="font-medium text-slate-900 dark:text-slate-100">{item.share}%</span>
+								<span className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{item.share}%</span>
 							</div>
 						))}
 					</div>
@@ -240,8 +240,8 @@ export default function DailyOverviewChart() {
 						<AnimatedIcon name="chartLine" size={18} aria-hidden="true" />
 					</span>
 					<div>
-						<p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Breakdown</p>
-						<h3 className="text-lg font-semibold text-slate-950 dark:text-slate-50">Macro balance</h3>
+						<p className="text-xs font-semibold uppercase tracking-[0.18em] text-charcoal-blue-500 dark:text-charcoal-blue-400">Breakdown</p>
+						<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Macro balance</h3>
 					</div>
 				</div>
 
@@ -266,8 +266,8 @@ export default function DailyOverviewChart() {
 				</div>
 
 				<div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-900/70">
-					<p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Next step</p>
-					<p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+					<p className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Next step</p>
+					<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 						{hasGoals
 							? 'Use the goal dashboard to compare today against your trend and tighten any weak macro.'
 							: 'Set daily targets to unlock progress tracking and make this section actually useful.'}

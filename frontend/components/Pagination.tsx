@@ -120,7 +120,7 @@ export default function Pagination({
 
   const showingSummary =
     totalCount !== undefined && pageSize !== undefined ? (
-      <div className="text-sm text-slate-500 dark:text-slate-400 mb-3 text-center">
+      <div className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-3 text-center">
         Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-
         {Math.min(currentPage * pageSize, totalCount)} of {totalCount}
       </div>
@@ -144,7 +144,7 @@ export default function Pagination({
 
             if (page === currentPage - 2 || page === currentPage + 2) {
               return (
-                <span key={page} className="text-slate-400 dark:text-slate-500 px-1">
+                <span key={page} className="text-charcoal-blue-400 dark:text-charcoal-blue-500 px-1">
                   ...
                 </span>
               );
