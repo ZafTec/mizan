@@ -213,18 +213,23 @@ export default function MealsPage() {
 	return (
 		<div className="space-y-6" data-testid="meal-list">
 			{/* Header & Date Nav */}
-			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-				<div>
+			<header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+				<div className="space-y-2">
+					<p className="eyebrow">Diary</p>
 					<div className="flex items-center gap-3">
-						<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Food Diary</h1>
+						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+							Food diary
+						</h1>
 						{(streak?.currentStreak ?? 0) > 0 && (
-							<span className="inline-flex items-center gap-1 rounded-2xl bg-orange-100 px-2.5 py-0.5 text-sm font-medium text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">
+							<span className="streak-gradient inline-flex items-center gap-1 rounded-2xl px-2.5 py-1 text-xs font-semibold text-white">
 								<i className="ri-fire-fill" />
 								{streak?.currentStreak ?? 0} day streak
 							</span>
 						)}
 					</div>
-					<p className="mt-1 text-slate-500 dark:text-slate-400">Track your daily nutrition intake</p>
+					<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+						Track your daily nutrition intake.
+					</p>
 				</div>
 				<div className="flex items-center gap-4">
 					<div className="flex items-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-slate-950/75">
@@ -243,7 +248,7 @@ export default function MealsPage() {
 						Log Meal
 					</Link>
 				</div>
-			</div>
+			</header>
 
 			{/* Goals & Progress */}
 			{goal && (

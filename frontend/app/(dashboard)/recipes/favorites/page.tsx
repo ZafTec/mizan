@@ -23,12 +23,17 @@ export default async function FavoritesPage({
 		<div className="space-y-8">
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div className="flex items-center gap-4">
-					<Link href="/recipes" className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
-						<i className="ri-arrow-left-line text-xl text-slate-600" />
+					<Link href="/recipes" className="w-10 h-10 rounded-xl bg-charcoal-blue-100 hover:bg-charcoal-blue-200 flex items-center justify-center transition-colors dark:bg-charcoal-blue-900/60 dark:hover:bg-charcoal-blue-900">
+						<i className="ri-arrow-left-line text-xl text-charcoal-blue-600 dark:text-charcoal-blue-300" />
 					</Link>
-					<div>
-						<h1 className="text-2xl font-bold text-slate-900">Favorite Recipes</h1>
-						<p className="text-slate-500 mt-1">{totalCount} saved recipes</p>
+					<div className="space-y-2">
+						<p className="eyebrow">Cookbook</p>
+						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+							Favorite recipes
+						</h1>
+						<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+							{totalCount} saved recipes.
+						</p>
 					</div>
 				</div>
 			</div>
