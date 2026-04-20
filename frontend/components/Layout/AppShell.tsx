@@ -22,22 +22,49 @@ type NavItem = {
 	adminOnly?: boolean;
 };
 
-const PRIMARY_NAV: NavItem[] = [
-	{ href: "/dashboard", label: "Dashboard", icon: "home" },
-	{ href: "/meals", label: "Meals", icon: "flame" },
-	{ href: "/recipes", label: "Recipes", icon: "cookingPot" },
-	{ href: "/meal-plan", label: "Meal Plan", icon: "calendarCheck" },
-	{ href: "/ingredients", label: "Foods", icon: "search" },
-	{ href: "/workouts", label: "Workouts", icon: "activity" },
-	{ href: "/exercises", label: "Exercises", icon: "zap" },
-	{ href: "/body-measurements", label: "Body", icon: "chartLine" },
-	{ href: "/goal", label: "Goals", icon: "rocket" },
-	{ href: "/achievements", label: "Achievements", icon: "sparkles" },
-	{ href: "/habits", label: "Habits", icon: "circleCheck" },
-	{ href: "/ai", label: "AI Coach", icon: "brain" },
-	{ href: "/messaging", label: "Messages", icon: "messageCircle" },
-	{ href: "/community", label: "Community", icon: "users" },
-	{ href: "/trainers", label: "Trainers", icon: "heart" },
+type NavGroup = {
+	label: string;
+	items: NavItem[];
+};
+
+// Three compact groups instead of a flat 15-item list.
+// Workouts + Exercises live together, meal-planning cluster together, etc.
+const NAV_GROUPS: NavGroup[] = [
+	{
+		label: "Today",
+		items: [
+			{ href: "/dashboard", label: "Dashboard", icon: "home" },
+			{ href: "/meals", label: "Meals", icon: "flame" },
+			{ href: "/habits", label: "Habits", icon: "circleCheck" },
+		],
+	},
+	{
+		label: "Food",
+		items: [
+			{ href: "/recipes", label: "Recipes", icon: "cookingPot" },
+			{ href: "/meal-plan", label: "Meal Plan", icon: "calendarCheck" },
+			{ href: "/ingredients", label: "Foods", icon: "search" },
+		],
+	},
+	{
+		label: "Fitness",
+		items: [
+			{ href: "/workouts", label: "Workouts", icon: "activity" },
+			{ href: "/exercises", label: "Exercises", icon: "zap" },
+			{ href: "/body-measurements", label: "Body", icon: "chartLine" },
+			{ href: "/goal", label: "Goals", icon: "rocket" },
+			{ href: "/achievements", label: "Achievements", icon: "sparkles" },
+		],
+	},
+	{
+		label: "Community",
+		items: [
+			{ href: "/ai", label: "AI Coach", icon: "brain" },
+			{ href: "/messaging", label: "Messages", icon: "messageCircle" },
+			{ href: "/trainers", label: "Trainers", icon: "heart" },
+			{ href: "/community", label: "Feed", icon: "users" },
+		],
+	},
 ];
 
 const SECONDARY_NAV: NavItem[] = [
@@ -95,7 +122,7 @@ function SidebarLink({ item, collapsed }: { item: NavItem; collapsed: boolean })
 		<Link
 			href={item.href}
 			className={cn(
-				"press-feedback group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-[background-color,color,box-shadow] duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)]",
+				"press-feedback group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-[background-color,color,box-shadow] duration-160 ease-out",
 				active
 					? "bg-brand-600 text-white shadow-lg shadow-brand-500/25 dark:bg-brand-500 dark:text-charcoal-blue-950"
 					: "text-charcoal-blue-600 hover:bg-white/70 hover:text-charcoal-blue-900 dark:text-charcoal-blue-200 dark:hover:bg-white/5 dark:hover:text-charcoal-blue-50",
@@ -164,7 +191,6 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 	const mobileSheetRef = useRef<HTMLDivElement>(null);
 
 	const isAdmin = user.role === "admin";
-	const visiblePrimary = PRIMARY_NAV;
 	const visibleSecondary = SECONDARY_NAV.filter((item) => !item.adminOnly || isAdmin);
 
 	// Menus close via their own onClick handlers, not via a pathname-tracking effect.
@@ -223,11 +249,11 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 	const roleLabel = user.role && user.role !== "user" ? user.role : null;
 
 	return (
-		<div className="shell-fullbleed relative flex h-[100dvh] overflow-x-clip bg-[color-mix(in_oklab,var(--color-charcoal-blue-50)_92%,white)] dark:bg-[color-mix(in_oklab,var(--color-charcoal-blue-950)_92%,black)]">
+		<div className="shell-fullbleed relative flex h-dvh overflow-x-clip bg-[color-mix(in_oklab,var(--color-charcoal-blue-50)_92%,white)] dark:bg-[color-mix(in_oklab,var(--color-charcoal-blue-950)_92%,black)]">
 			{/* Soft decorative blobs (v2 aesthetic). Kept inside the shell so the body
 				never scrolls to reveal them; html/body overflow-x: clip is the backstop. */}
-			<div aria-hidden="true" className="pointer-events-none absolute right-[-5%] top-[-10%] h-[500px] w-[500px] rounded-full bg-verdigris-200/30 blur-[120px] -z-10" />
-			<div aria-hidden="true" className="pointer-events-none absolute bottom-[-10%] left-[-5%] h-[400px] w-[400px] rounded-full bg-sandy-brown-200/25 blur-[100px] -z-10" />
+			<div aria-hidden="true" className="pointer-events-none absolute right-[-5%] top-[-10%] h-125 w-125 rounded-full bg-verdigris-200/30 blur-[120px] -z-10" />
+			<div aria-hidden="true" className="pointer-events-none absolute bottom-[-10%] left-[-5%] h-100 w-100 rounded-full bg-sandy-brown-200/25 blur-[100px] -z-10" />
 
 			{/* Desktop Sidebar — fills shell height; inner nav scrolls via custom-scrollbar */}
 			<aside
@@ -265,17 +291,24 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 				</div>
 
 				<nav className={cn("custom-scrollbar flex-1 space-y-1 overflow-y-auto px-3 py-4", collapsed && "px-2")}>
-					{!collapsed && (
-						<p className="px-2 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-400 dark:text-charcoal-blue-400">
-							Main
-						</p>
-					)}
-					{visiblePrimary.map((item) => (
-						<SidebarLink key={item.href} item={item} collapsed={collapsed} />
+					{NAV_GROUPS.map((group, idx) => (
+						<div key={group.label} className={cn("space-y-1", idx > 0 && "pt-3")}>
+							{!collapsed && (
+								<p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-400 dark:text-charcoal-blue-400">
+									{group.label}
+								</p>
+							)}
+							{collapsed && idx > 0 && (
+								<div className="my-2 border-t border-charcoal-blue-200/50 dark:border-white/5" />
+							)}
+							{group.items.map((item) => (
+								<SidebarLink key={item.href} item={item} collapsed={collapsed} />
+							))}
+						</div>
 					))}
 					<div className="my-3 border-t border-charcoal-blue-200/60 dark:border-white/5" />
 					{!collapsed && (
-						<p className="px-2 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-400 dark:text-charcoal-blue-400">
+						<p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-400 dark:text-charcoal-blue-400">
 							Account
 						</p>
 					)}
@@ -376,7 +409,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 									aria-haspopup="menu"
 								>
 									<UserAvatar user={user} size={30} />
-									<span className="hidden max-w-[10rem] truncate font-medium text-charcoal-blue-900 sm:inline dark:text-charcoal-blue-50">
+									<span className="hidden max-w-40 truncate font-medium text-charcoal-blue-900 sm:inline dark:text-charcoal-blue-50">
 										{user.name || user.email?.split("@")[0]}
 									</span>
 									<ChevronDown
@@ -467,20 +500,22 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 								</button>
 							</div>
 
-							<div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-4">
-								<p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-400">
-									Main
-								</p>
-								<nav className="space-y-1" onClick={() => setMobileSheetOpen(false)}>
-									{visiblePrimary.map((item) => (
-										<SidebarLink key={item.href} item={item} collapsed={false} />
-									))}
-								</nav>
+							<div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-4" onClick={() => setMobileSheetOpen(false)}>
+								{NAV_GROUPS.map((group, idx) => (
+									<div key={group.label} className={cn("space-y-1", idx > 0 && "pt-3")}>
+										<p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-400">
+											{group.label}
+										</p>
+										{group.items.map((item) => (
+											<SidebarLink key={item.href} item={item} collapsed={false} />
+										))}
+									</div>
+								))}
 								<div className="my-3 border-t border-charcoal-blue-200/60 dark:border-white/5" />
-								<p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-400">
+								<p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-400">
 									Account
 								</p>
-								<nav className="space-y-1" onClick={() => setMobileSheetOpen(false)}>
+								<nav className="space-y-1">
 									{visibleSecondary.map((item) => (
 										<SidebarLink key={item.href} item={item} collapsed={false} />
 									))}
@@ -527,7 +562,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 				typeof document !== "undefined" &&
 				createPortal(
 					<div
-						className="fixed inset-0 z-[100] flex items-center justify-center bg-charcoal-blue-950/40 p-4 backdrop-blur-sm"
+						className="fixed inset-0 z-100 flex items-center justify-center bg-charcoal-blue-950/40 p-4 backdrop-blur-sm"
 						onClick={() => setShowLogoutModal(false)}
 					>
 						<div

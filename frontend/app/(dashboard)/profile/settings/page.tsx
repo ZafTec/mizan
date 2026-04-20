@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { CldUploadWidget } from "next-cloudinary";
 import Loading from "@/components/Loading";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
+import ConfirmationModal from "@/components/ConfirmationModal";
 import { authClient, useSession } from "@/lib/auth-client";
 import { clientApi } from "@/lib/api.client";
 import { downloadProfileExport, getProfileObservations, type ProfileObservations } from "@/lib/api/profile";
@@ -36,6 +37,7 @@ export default function ProfileSettingsPage() {
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const [deletePassword, setDeletePassword] = useState("");
 	const [deleteConfirmation, setDeleteConfirmation] = useState("");
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [sessions, setSessions] = useState<SessionItem[]>([]);
 	const [observations, setObservations] = useState<ProfileObservations | null>(null);
 	const [loadingSessions, setLoadingSessions] = useState(true);
@@ -290,12 +292,16 @@ export default function ProfileSettingsPage() {
 		}
 	}
 
-	async function handleDeleteAccount() {
+	function requestDeleteAccount() {
 		if (deleteConfirmation !== DELETE_CONFIRMATION_TEXT) {
 			appToast.error(`Type ${DELETE_CONFIRMATION_TEXT} to confirm account deletion`);
 			return;
 		}
+		setShowDeleteModal(true);
+	}
 
+	async function handleDeleteAccount() {
+		setShowDeleteModal(false);
 		setDeletingAccount(true);
 		try {
 			await authClient.deleteUser(
@@ -604,13 +610,24 @@ export default function ProfileSettingsPage() {
 							<Field label="Password (optional)" helper="Use this if password confirmation is required instead of a fresh session.">
 								<input type="password" value={deletePassword} onChange={(event) => setDeletePassword(event.target.value)} className="input" />
 							</Field>
-							<button onClick={handleDeleteAccount} disabled={deletingAccount || deleteConfirmation !== DELETE_CONFIRMATION_TEXT} className="w-full rounded-full bg-red-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60">
+							<button onClick={requestDeleteAccount} disabled={deletingAccount || deleteConfirmation !== DELETE_CONFIRMATION_TEXT} className="w-full rounded-full bg-red-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60">
 								{deletingAccount ? "Deleting account..." : "Delete account permanently"}
 							</button>
 						</div>
 					</section>
 				</div>
 			</div>
+		<ConfirmationModal
+			isOpen={showDeleteModal}
+			onClose={() => setShowDeleteModal(false)}
+			onConfirm={handleDeleteAccount}
+			title="Delete account permanently?"
+			message="All your meals, recipes, workouts, and progress will be erased. This cannot be undone."
+			confirmText="Yes, delete my account"
+			cancelText="Keep account"
+			isDanger
+			isLoading={deletingAccount}
+		/>
 		</div>
 	);
 }
