@@ -3,7 +3,6 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import placeHolderImage from "@/public/placeholder-recipe.jpg";
 import DailyOverviewChart from "@/components/DailyOverviewChart";
-import DashboardStats from "@/components/Dashboard/DashboardStats";
 import { AnimatedIcon, type AnimatedIconName } from "@/components/ui/animated-icon";
 import { getUserOptionalServer } from "@/helper/session";
 import { getPopularRecipes } from "@/data/recipe";
@@ -100,28 +99,6 @@ export default async function Home() {
 							))}
 						</div>
 					</div>
-				</div>
-			)}
-
-			{user && (
-				<div className="surface-panel animate-in p-6 sm:p-8">
-					<div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-						<div>
-							<div className="eyebrow mb-3">
-								<AnimatedIcon name="home" size={14} aria-hidden="true" />
-								Daily snapshot
-							</div>
-							<h2 className={sectionHeadingClass}>
-								Welcome back{user.name ? `, ${user.name}` : ''}
-							</h2>
-							<p className={sectionBodyClass}>Here&apos;s how today is trending across meals and goals.</p>
-						</div>
-						<Link href="/goal/dashboard" className="btn-secondary w-full justify-center sm:w-auto">
-							View goal dashboard
-							<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" />
-						</Link>
-					</div>
-					<DashboardStats />
 				</div>
 			)}
 

@@ -6,6 +6,7 @@ export type AchievementListResultDto = Schemas["GetAchievementsResult"];
 export type AchievementDto = Schemas["AchievementDto"];
 export type StreakDto = Schemas["GetStreakResult"];
 
+export type MyTrainerDto = Schemas["MyTrainerDto"];
 export type MyTrainerRequestDto = Schemas["MyTrainerRequestDto"];
 export type MyTrainerRequestPagedResultDto = Schemas["MyTrainerRequestDtoPagedResult"];
 export type TrainerClientDto = Schemas["TrainerClientDto"];
