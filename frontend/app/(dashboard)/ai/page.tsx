@@ -102,7 +102,7 @@ export default async function AiHubPage() {
 						</div>
 						<ul className="space-y-2 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
 							<li className="flex gap-2">
-								<span className="text-verdigris-600">•</span> Responses use your current goals and recent logs — no training data leaves your account.
+								<span className="text-verdigris-600">•</span> Responses use your current goals and recent logs. No training data leaves your account.
 							</li>
 							<li className="flex gap-2">
 								<span className="text-verdigris-600">•</span> The assistant can't update goals or log meals for you. It returns suggestions you can accept manually.

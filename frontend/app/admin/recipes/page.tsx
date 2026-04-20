@@ -86,7 +86,7 @@ export default async function AdminRecipesPage({
 											)}
 										</td>
 										<td className="px-6 py-4 text-center text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300">
-											{recipe.servings || "—"}
+											{recipe.servings || "-"}
 										</td>
 										<td className="px-6 py-4 text-center">
 											<span className="text-sm font-bold text-orange-600">

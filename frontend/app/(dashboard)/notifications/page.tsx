@@ -25,7 +25,7 @@ export default function NotificationsPage() {
 						All caught up
 					</p>
 					<p className="max-w-md text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						The full notification center — trainer messages, goal pings, community activity, and AI coach nudges — lands with the v2 rollout. This is the placeholder.
+						The full notification center (trainer messages, goal pings, community activity, and AI coach nudges) lands with the v2 rollout. This is the placeholder.
 					</p>
 				</div>
 				<Link href="/dashboard" className="btn-primary !rounded-2xl !py-2 text-sm">

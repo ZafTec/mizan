@@ -176,7 +176,7 @@ public class GoalHintsTests
             targetCalories: 600,
             targetProteinGrams: 50m,  // 200 kcal (33%)
             targetCarbsGrams: 50m,    // 200 kcal (33%)
-            targetFatGrams: 50m,      // 450 kcal (75%) — extremely high
+            targetFatGrams: 50m,      // 450 kcal (75%): extremely high
             targetDate: DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-5)));
 
         hints.Should().HaveCountGreaterThan(1);
@@ -224,7 +224,7 @@ public class GoalHintsTests
     [Fact]
     public void CheckGoalSanity_MacroImbalance_WarnsWhenMacrosDontMatchCalories()
     {
-        // 200g protein (800) + 100g carbs (400) + 20g fat (180) = 1380 kcal vs target 2000 — 44.9% deviation
+        // 200g protein (800) + 100g carbs (400) + 20g fat (180) = 1380 kcal vs target 2000, 44.9% deviation
         var hints = GoalHints.CheckGoalSanity(
             goalType: "maintenance",
             targetCalories: 2000,

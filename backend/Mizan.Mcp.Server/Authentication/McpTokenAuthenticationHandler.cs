@@ -39,9 +39,9 @@ public class McpTokenAuthenticationHandler : AuthenticationHandler<McpTokenAuthe
 
         Log.Debug("[MCP Auth] Token extracted (length: {TokenLength})", token.Length);
 
-        // Don't pass Context.RequestAborted — SSE disconnect cancels it,
+        // Don't pass Context.RequestAborted: SSE disconnect cancels it,
         // which kills validation on the subsequent reconnect attempt.
-        // 30s matches HttpClient.Timeout — covers cold DB connection pool warmup.
+        // 30s matches HttpClient.Timeout: covers cold DB connection pool warmup.
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 
         Log.Debug("[MCP Auth] Validating token with backend...");

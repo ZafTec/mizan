@@ -12,7 +12,7 @@ import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIll
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-	title: "Recipes — Mizan",
+	title: "Recipes - Mizan",
 	description:
 		"Browse healthy, nutrition-tracked recipes. Find meals by macros, calories, and dietary goals.",
 };

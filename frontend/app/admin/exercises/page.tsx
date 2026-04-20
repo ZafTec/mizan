@@ -107,10 +107,10 @@ export default async function AdminExercisesPage({
 											</span>
 										</td>
 										<td className="px-6 py-4 text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300">
-											{exercise.muscleGroup || "—"}
+											{exercise.muscleGroup || "-"}
 										</td>
 										<td className="px-6 py-4 text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300">
-											{exercise.equipment || "—"}
+											{exercise.equipment || "-"}
 										</td>
 										<td className="px-6 py-4 text-center">
 											<span className="inline-flex items-center gap-1 rounded-full border border-charcoal-blue-200 bg-charcoal-blue-100 px-2 py-0.5 text-xs font-bold text-charcoal-blue-500 dark:border-white/10 dark:bg-charcoal-blue-900/60 dark:text-charcoal-blue-300">

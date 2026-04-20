@@ -3,7 +3,7 @@ namespace Mizan.Application.Services;
 /// <summary>
 /// Pure functions for checking nutritional consistency using Atwater general factors.
 /// Protein = 4 kcal/g, Carbohydrates = 4 kcal/g, Fat = 9 kcal/g.
-/// Results are informational hints — entries are always saved regardless.
+/// Results are informational hints: entries are always saved regardless.
 /// </summary>
 public static class NutritionHints
 {
@@ -46,8 +46,8 @@ public static class NutritionHints
                     hints.Add(
                         $"Your entered calories ({calories.Value:F0} kcal) differ from the macro-based estimate " +
                         $"({atwaterEstimate:F0} kcal using protein×4 + carbs×4 + fat×9). " +
-                        "This may be correct if the food contains alcohol, sugar alcohols, or other non-standard components — " +
-                        "otherwise consider reviewing your entries.");
+                        "This may be correct if the food contains alcohol, sugar alcohols, or other non-standard components. " +
+                        "Otherwise consider reviewing your entries.");
                 }
             }
         }

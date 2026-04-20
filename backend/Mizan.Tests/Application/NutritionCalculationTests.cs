@@ -159,7 +159,7 @@ public class NutritionCalculationTests
     [Fact]
     public void RecipeIngredientMacros_FiberCannotExceedCarbs()
     {
-        // Fiber is a type of carbohydrate — it must not exceed total carbs
+        // Fiber is a type of carbohydrate: it must not exceed total carbs
         var carbsPer100g = 30m;
         var fiberPer100g = 8m; // fiber is subset of carbs
 

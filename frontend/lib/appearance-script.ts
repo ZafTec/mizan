@@ -1,4 +1,4 @@
-// Pre-hydration script — runs synchronously in <head> before React mounts.
+// Pre-hydration script: runs synchronously in <head> before React mounts.
 // Reads the mizan-appearance cookie, falls back to prefers-color-scheme,
 // and sets classes on <html> so the first paint never flashes.
 //

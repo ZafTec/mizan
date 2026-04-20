@@ -232,13 +232,13 @@ export default async function UsersPage({
                     {user.emailVerified ? (
                       <span className="text-green-600">✓</span>
                     ) : (
-                      <span className="text-muted-foreground">—</span>
+                      <span className="text-muted-foreground">-</span>
                     )}
                   </td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">
                     {user.createdAt
                       ? new Date(user.createdAt).toLocaleDateString()
-                      : "—"}
+                      : "-"}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <Link

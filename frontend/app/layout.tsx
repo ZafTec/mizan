@@ -34,7 +34,7 @@ async function LayoutContent({
 }: Readonly<{ children: React.ReactNode; userPromise: ReturnType<typeof getUserOptionalServer> }>) {
 	const [user, cookieStore] = await Promise.all([userPromise, cookies()]);
 
-	// Cookie wins over user record — cookie is the latest local intent and the client
+	// Cookie wins over user record: cookie is the latest local intent and the client
 	// has already applied it via the pre-hydration script. Falling back to the user
 	// record covers fresh devices where the cookie isn't set yet.
 	const cookieAppearance = parseAppearanceCookie(cookieStore.get(APPEARANCE_COOKIE)?.value);
@@ -45,7 +45,7 @@ async function LayoutContent({
 		<html lang="en" className={htmlClasses.join(" ")} suppressHydrationWarning>
 			<head>
 				{/* Runs synchronously before hydration so "system" preference + prefers-color-scheme
-					apply to the first paint — no flash. */}
+					apply to the first paint. No flash. */}
 				<script dangerouslySetInnerHTML={{ __html: APPEARANCE_SCRIPT }} />
 			</head>
 			<body className="min-h-screen antialiased flex flex-col selection:bg-brand-500/15 selection:text-charcoal-blue-900 dark:selection:text-charcoal-blue-50">

@@ -64,7 +64,7 @@ export function applyAppearanceClasses(settings: AppearanceSettings): void {
 }
 
 // Server-side: used from layout.tsx to pre-set classes based on cookie or user record.
-// "system" intentionally produces no class on SSR — the inline pre-hydration script
+// "system" intentionally produces no class on SSR: the inline pre-hydration script
 // picks the correct class before React mounts using window.matchMedia.
 export function getServerAppearanceClasses(settings: AppearanceSettings): string[] {
 	const classes: string[] = [];

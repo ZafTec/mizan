@@ -1250,7 +1250,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
         result.Should().ContainKey("content");
 
-        // LogUsageAsync is fire-and-forget in Program.cs — poll until it completes.
+        // LogUsageAsync is fire-and-forget in Program.cs: poll until it completes.
         List<McpUsageLog> logs = [];
         for (var i = 0; i < 20; i++)
         {

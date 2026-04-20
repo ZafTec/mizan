@@ -36,7 +36,7 @@ export function FeatureSection() {
 					Everything you need to hit your goals
 				</h2>
 				<p className="mx-auto mt-3 max-w-2xl text-charcoal-blue-500 dark:text-charcoal-blue-400">
-					From tracking to planning to coaching — one platform, zero friction.
+					From tracking to planning to coaching: one platform, zero friction.
 				</p>
 			</div>
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

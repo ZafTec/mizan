@@ -85,7 +85,7 @@ export default async function CommunityPage() {
 							<AnimatedIcon name="cookingPot" size={18} />
 						</span>
 						<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-							Nothing trending yet — be the first to publish a recipe.
+							Nothing trending yet. Be the first to publish a recipe.
 						</p>
 					</div>
 				) : (

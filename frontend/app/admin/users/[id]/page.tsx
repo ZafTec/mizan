@@ -112,7 +112,7 @@ export default async function UserDetailPage({
             <h2 className="text-xl font-semibold mb-4">User Information</h2>
             <div className="space-y-4">
               <InfoRow label="ID" value={user.id} />
-              <InfoRow label="Name" value={user.name || "—"} />
+              <InfoRow label="Name" value={user.name || "-"} />
               <InfoRow label="Email" value={user.email} />
               <InfoRow
                 label="Email Verified"
@@ -134,7 +134,7 @@ export default async function UserDetailPage({
                 value={
                   user.createdAt
                     ? new Date(user.createdAt).toLocaleString()
-                    : "—"
+                    : "-"
                 }
               />
               <InfoRow
@@ -142,7 +142,7 @@ export default async function UserDetailPage({
                 value={
                   user.updatedAt
                     ? new Date(user.updatedAt).toLocaleString()
-                    : "—"
+                    : "-"
                 }
               />
             </div>

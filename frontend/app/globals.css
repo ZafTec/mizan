@@ -94,7 +94,7 @@
   --shadow-glow: 0 0 24px color-mix(in oklab, var(--color-verdigris-500) 30%, transparent);
   --font-sans: 'Inter', system-ui, sans-serif;
 
-  /* Emil-style strong easing curves — default easings are too weak */
+  /* Emil-style strong easing curves: default easings are too weak */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
@@ -434,7 +434,7 @@ html {
   animation: fade-up 280ms var(--ease-out) both;
 }
 
-/* Stagger — keep delays under 80ms each so interface stays responsive */
+/* Stagger: keep delays under 80ms each so interface stays responsive */
 .stagger-children > * {
   opacity: 0;
   animation: fade-up 260ms var(--ease-out) both;
@@ -486,7 +486,7 @@ html {
   transition: color var(--duration-fast) var(--ease-out);
 }
 
-/* Interactive press feedback — Emil: every pressable element should scale(0.97) on :active */
+/* Interactive press feedback: Emil: every pressable element should scale(0.97) on :active */
 .press-feedback {
   transition: transform var(--duration-instant) var(--ease-out);
   will-change: transform;

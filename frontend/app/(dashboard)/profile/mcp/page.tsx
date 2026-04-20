@@ -147,7 +147,7 @@ export default function McpPage() {
             <DialogHeader>
               <DialogTitle>Generate New MCP Token</DialogTitle>
               <DialogDescription>
-                Create a token for any MCP-compatible client — Claude Desktop, Claude Code, Cursor, or others.
+                Create a token for any MCP-compatible client: Claude Desktop, Claude Code, Cursor, or others.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -187,7 +187,7 @@ export default function McpPage() {
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Token Created</DialogTitle>
-              <DialogDescription>Copy this value now — it won&apos;t be shown again.</DialogDescription>
+              <DialogDescription>Copy this value now. It won&apos;t be shown again.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="bg-charcoal-blue-900 text-white rounded-xl p-4 flex items-center justify-between gap-3">

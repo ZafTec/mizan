@@ -64,7 +64,7 @@ export default function ForgotPasswordPage() {
 								<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-sm">
 									{mode === "reset"
 										? <>We sent a password reset link to <span className="font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300">{email}</span></>
-										: <>We sent a sign-in link to <span className="font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300">{email}</span>. Click it to sign in instantly — no password needed.</>
+										: <>We sent a sign-in link to <span className="font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300">{email}</span>. Click it to sign in instantly. No password needed.</>
 									}
 								</p>
 							</div>
@@ -138,7 +138,7 @@ export default function ForgotPasswordPage() {
 					<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 text-center">
 						{mode === "reset"
 							? "We'll email you a link to set a new password."
-							: "We'll email you a one-click sign-in link — no password required."}
+							: "We'll email you a one-click sign-in link. No password required."}
 					</p>
 
 					<form data-testid="forgot-password-form" onSubmit={handleSubmit} className="space-y-5">

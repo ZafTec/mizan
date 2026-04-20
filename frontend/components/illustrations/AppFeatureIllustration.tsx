@@ -13,7 +13,7 @@ export type IllustrationVariant =
 	| "trainers"
 	| "workouts";
 
-// 1:1 mapping to /public/assets/*.svg — the assets are the source of truth,
+// 1:1 mapping to /public/assets/*.svg: the assets are the source of truth,
 // inline SVG scenes were removed so every page uses the same illustration set.
 const ASSET_MAP: Record<IllustrationVariant, { src: string; alt: string }> = {
 	dashboard: { src: "/assets/dashboard-overview.svg", alt: "Dashboard overview" },

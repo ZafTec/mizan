@@ -48,7 +48,7 @@ export default async function HabitsPage() {
 		{
 			id: "lunch",
 			label: "Log lunch",
-			description: "Mid-day refuel — aim for protein + fibre.",
+			description: "Mid-day refuel. Aim for protein + fibre.",
 			done: mealsByType.has("lunch"),
 			icon: "cookingPot",
 			href: "/meals/add",
@@ -72,7 +72,7 @@ export default async function HabitsPage() {
 		{
 			id: "protein",
 			label: "Hit protein target",
-			description: "Protein is the anchor macro — nail it first.",
+			description: "Protein is the anchor macro. Nail it first.",
 			done: hitProtein,
 			icon: "sparkles",
 			href: "/goal",

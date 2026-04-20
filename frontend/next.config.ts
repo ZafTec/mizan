@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
 	// Enable standalone output for Docker
 	output: "standalone",
 
-	// bun is a runtime-only module — tell Next.js not to bundle it
+	// bun is a runtime-only module: tell Next.js not to bundle it
 	serverExternalPackages: ["bun"],
 
 	// Image configuration

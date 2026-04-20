@@ -8,7 +8,7 @@ namespace Mizan.Tests.Integration;
 /// HTTP helpers for the MCP streamable HTTP transport.
 ///
 /// The server runs in stateful mode (Stateless = false), meaning:
-///   1. The first request must be "initialize" — the server creates a session and
+///   1. The first request must be "initialize": the server creates a session and
 ///      returns an Mcp-Session-Id response header.
 ///   2. Every subsequent request must carry that Mcp-Session-Id header.
 ///

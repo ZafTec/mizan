@@ -172,7 +172,7 @@ export default async function RelationshipsPage() {
                     <td className="px-6 py-4 text-sm text-muted-foreground">
                       {rel.startedAt
                         ? new Date(rel.startedAt).toLocaleDateString()
-                        : "—"}
+                        : "-"}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button className="text-primary hover:underline text-sm">

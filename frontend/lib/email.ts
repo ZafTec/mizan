@@ -139,7 +139,7 @@ export function getMagicLinkEmailTemplate(url: string, userName?: string) {
             </div>
             <div class="content">
               <p>Hi${userName ? ` ${userName}` : ""},</p>
-              <p>Click the button below to sign in instantly — no password required.</p>
+              <p>Click the button below to sign in instantly. No password required.</p>
               <p style="text-align: center;">
                 <a href="${url}" class="button">Sign In to Mizan</a>
               </p>

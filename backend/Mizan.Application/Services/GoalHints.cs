@@ -3,7 +3,7 @@ namespace Mizan.Application.Services;
 /// <summary>
 /// Pure functions for checking goal reasonableness using nutrition science guidelines.
 /// Helps users avoid setting unrealistic or unhealthy goals.
-/// Results are informational hints — goals are always created regardless.
+/// Results are informational hints: goals are always created regardless.
 /// </summary>
 public static class GoalHints
 {
@@ -104,21 +104,21 @@ public static class GoalHints
             if (proteinPercent > MaxProteinPercent)
             {
                 hints.Add(
-                    $"Protein is {proteinPercent:P0} of your calories — above the recommended 40% upper limit. " +
+                    $"Protein is {proteinPercent:P0} of your calories, above the recommended 40% upper limit. " +
                     "Most guidelines suggest keeping protein under 35%. This may be intentional if following a specific protocol.");
             }
 
             if (carbsPercent > MaxCarbsPercent)
             {
                 hints.Add(
-                    $"Carbs are {carbsPercent:P0} of your calories — above the 70% threshold. " +
+                    $"Carbs are {carbsPercent:P0} of your calories, above the 70% threshold. " +
                     "Most guidelines recommend 45–65%. Consider if this aligns with your dietary plan.");
             }
 
             if (fatPercent < MinFatPercent)
             {
                 hints.Add(
-                    $"Fat is {fatPercent:P0} of your calories — below the recommended 15% minimum. " +
+                    $"Fat is {fatPercent:P0} of your calories, below the recommended 15% minimum. " +
                     "Very low fat intake may affect hormone production and fat-soluble vitamin absorption.");
             }
         }

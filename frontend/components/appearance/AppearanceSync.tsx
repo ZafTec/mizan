@@ -33,7 +33,7 @@ export function AppearanceSync() {
 		);
 
 		// If a logged-in user visits from a fresh device (no cookie), seed it from their record.
-		// Otherwise keep the cookie — it represents the most recent local intent.
+		// Otherwise keep the cookie: it represents the most recent local intent.
 		const active = cookie ?? fromUser;
 		applyAppearanceClasses(active);
 		if (!cookie) writeAppearanceCookie(active);

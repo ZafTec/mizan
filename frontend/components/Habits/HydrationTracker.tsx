@@ -102,7 +102,7 @@ export default function HydrationTracker() {
 				</button>
 			</div>
 			<p className="text-center text-[11px] text-charcoal-blue-500 dark:text-charcoal-blue-400">
-				Stored locally — a server-side hydration log is planned.
+				Stored locally. A server-side hydration log is planned.
 			</p>
 		</section>
 	);

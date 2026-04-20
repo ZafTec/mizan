@@ -37,7 +37,7 @@ public class NutritionHintsTests
     [Fact]
     public void CheckConsistency_Warning_WhenCaloriesExceedThreshold()
     {
-        // Atwater = 290. Entered 600 — 107% deviation.
+        // Atwater = 290. Entered 600, 107% deviation.
         var hints = NutritionHints.CheckConsistency(
             calories: 600m,
             proteinGrams: 20m,
@@ -51,7 +51,7 @@ public class NutritionHintsTests
     [Fact]
     public void CheckConsistency_Warning_WhenCaloriesSignificantlyLow()
     {
-        // Atwater = 290. Entered 50 — 83% deviation.
+        // Atwater = 290. Entered 50, 83% deviation.
         var hints = NutritionHints.CheckConsistency(
             calories: 50m,
             proteinGrams: 20m,

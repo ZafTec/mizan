@@ -124,7 +124,7 @@ export default async function AuditLogsPage({
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 font-mono">
-                                            {log.ipAddress || "—"}
+                                            {log.ipAddress || "-"}
                                         </td>
                                     </tr>
                                 ))
