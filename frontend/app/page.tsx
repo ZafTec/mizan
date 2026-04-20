@@ -71,10 +71,10 @@ export default async function Home() {
 					</div>
 
 					<div className="relative z-10 max-w-3xl">
-						<h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-black dark:text-white sm:text-5xl lg:text-6xl">
-							Find Your <span className="text-brand-400 dark:text-brand-300">Balance</span> Across Food, Training, and Progress.
+						<h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
+							Find Your <span className="text-brand-300">Balance</span> Across Food, Training, and Progress.
 						</h1>
-						<p className="mt-5 max-w-2xl text-lg leading-relaxed text-black/90 dark:text-white/90 sm:text-xl">
+						<p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/85 sm:text-xl">
 							Track your nutrition, plan meals, and achieve your fitness goals with personalized AI coaching. Mizan helps you find the perfect balance.
 						</p>
 						<div className="mt-8 flex flex-col gap-4 sm:flex-row">
