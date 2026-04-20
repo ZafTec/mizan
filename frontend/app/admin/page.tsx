@@ -213,6 +213,12 @@ export default async function AdminDashboard() {
           link="/admin/audit-logs"
           icon="📋"
         />
+        <QuickActionCard
+          title="Achievements"
+          description="Create, edit, and analyze gamification unlocks"
+          link="/admin/achievements"
+          icon="🏆"
+        />
       </div>
     </div>
   );

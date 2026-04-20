@@ -40,7 +40,34 @@ export interface paths {
             };
         };
         put?: never;
-        post?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateAchievementCommand"];
+                    "text/json": components["schemas"]["CreateAchievementCommand"];
+                    "application/*+json": components["schemas"]["CreateAchievementCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CreateAchievementResult"];
+                        "application/json": components["schemas"]["CreateAchievementResult"];
+                        "text/json": components["schemas"]["CreateAchievementResult"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -48,6 +75,128 @@ export interface paths {
         trace?: never;
     };
     "/api/Achievements/streak": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    streakType?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GetStreakResult"];
+                        "application/json": components["schemas"]["GetStreakResult"];
+                        "text/json": components["schemas"]["GetStreakResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Achievements/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AchievementDto"];
+                        "application/json": components["schemas"]["AchievementDto"];
+                        "text/json": components["schemas"]["AchievementDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateAchievementCommand"];
+                    "text/json": components["schemas"]["UpdateAchievementCommand"];
+                    "application/*+json": components["schemas"]["UpdateAchievementCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Achievements/analytics": {
         parameters: {
             query?: never;
             header?: never;
@@ -69,42 +218,15 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["GetStreakResult"];
-                        "application/json": components["schemas"]["GetStreakResult"];
-                        "text/json": components["schemas"]["GetStreakResult"];
+                        "text/plain": components["schemas"]["GetAchievementAnalyticsResult"];
+                        "application/json": components["schemas"]["GetAchievementAnalyticsResult"];
+                        "text/json": components["schemas"]["GetAchievementAnalyticsResult"];
                     };
                 };
             };
         };
         put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["UpdateStreakCommand"];
-                    "text/json": components["schemas"]["UpdateStreakCommand"];
-                    "application/*+json": components["schemas"]["UpdateStreakCommand"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["UpdateStreakResult"];
-                        "application/json": components["schemas"]["UpdateStreakResult"];
-                        "text/json": components["schemas"]["UpdateStreakResult"];
-                    };
-                };
-            };
-        };
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -213,9 +335,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": string;
-                        "application/json": string;
-                        "text/json": string;
+                        "text/plain": components["schemas"]["LogBodyMeasurementResult"];
+                        "application/json": components["schemas"]["LogBodyMeasurementResult"];
+                        "text/json": components["schemas"]["LogBodyMeasurementResult"];
                     };
                 };
             };
@@ -2607,7 +2729,33 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    pageSize?: number;
+                    sortBy?: string;
+                    sortOrder?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WorkoutSummaryDtoPagedResult"];
+                        "application/json": components["schemas"]["WorkoutSummaryDtoPagedResult"];
+                        "text/json": components["schemas"]["WorkoutSummaryDtoPagedResult"];
+                    };
+                };
+            };
+        };
         put?: never;
         post: {
             parameters: {
@@ -2647,6 +2795,23 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AchievementAnalyticsRow: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            category?: string | null;
+            criteriaType?: string | null;
+            /** Format: int32 */
+            threshold: number;
+            /** Format: int32 */
+            points: number;
+            /** Format: int32 */
+            unlockedBy: number;
+            /** Format: double */
+            unlockRate: number;
+            /** Format: date-time */
+            mostRecentUnlockAt?: string | null;
+        };
         AchievementDto: {
             /** Format: uuid */
             id: string;
@@ -2656,6 +2821,11 @@ export interface components {
             /** Format: int32 */
             points: number;
             category?: string | null;
+            criteriaType?: string | null;
+            /** Format: int32 */
+            threshold: number;
+            /** Format: int32 */
+            progress: number;
             isEarned: boolean;
             /** Format: date-time */
             earnedAt?: string | null;
@@ -2721,7 +2891,7 @@ export interface components {
             userId?: string | null;
             email?: string | null;
             claims?: components["schemas"]["ClaimDto"][] | null;
-            user: components["schemas"]["UserDto"];
+            user?: components["schemas"]["UserDto"];
             authenticationType?: string | null;
             error?: string | null;
         };
@@ -2763,6 +2933,15 @@ export interface components {
             /** Format: int32 */
             readonly totalPages: number;
         };
+        CategoryBreakdown: {
+            category: string;
+            /** Format: int32 */
+            achievementCount: number;
+            /** Format: int32 */
+            totalUnlocks: number;
+            /** Format: int32 */
+            totalPointsEarned: number;
+        };
         ChatConversationDto: {
             /** Format: uuid */
             id: string;
@@ -2790,6 +2969,21 @@ export interface components {
             date: string;
             foodLogs: components["schemas"]["FoodLogEntryDto"][];
             summary: components["schemas"]["NutritionSummaryDto"];
+        };
+        CreateAchievementCommand: {
+            name: string;
+            description?: string | null;
+            iconUrl?: string | null;
+            /** Format: int32 */
+            points: number;
+            category?: string | null;
+            criteriaType?: string | null;
+            /** Format: int32 */
+            threshold: number;
+        };
+        CreateAchievementResult: {
+            /** Format: uuid */
+            id: string;
         };
         CreateExerciseCommand: {
             name: string;
@@ -2820,6 +3014,10 @@ export interface components {
             fatPer100g: number;
             /** Format: double */
             fiberPer100g?: number | null;
+            /** Format: double */
+            sugarPer100g?: number | null;
+            /** Format: double */
+            sodiumPer100g?: number | null;
             /** Format: double */
             servingSize: number;
             servingUnit: string;
@@ -2853,6 +3051,8 @@ export interface components {
             success: boolean;
             message?: string | null;
             warnings: string[];
+            streak?: components["schemas"]["StreakUpdate"];
+            unlockedAchievements: components["schemas"]["UnlockedAchievement"][];
         };
         CreateFoodResult: {
             /** Format: uuid */
@@ -2911,7 +3111,7 @@ export interface components {
             ingredients: components["schemas"]["CreateRecipeIngredientDto"][];
             instructions: string[];
             tags: string[];
-            nutrition: components["schemas"]["CreateRecipeNutritionDto"];
+            nutrition?: components["schemas"]["CreateRecipeNutritionDto"];
         };
         CreateRecipeIngredientDto: {
             /** Format: uuid */
@@ -3162,6 +3362,20 @@ export interface components {
             /** Format: date-time */
             loggedAt: string;
         };
+        GetAchievementAnalyticsResult: {
+            /** Format: int32 */
+            totalAchievements: number;
+            /** Format: int32 */
+            totalUsers: number;
+            /** Format: int32 */
+            totalUnlocks: number;
+            /** Format: int32 */
+            usersWithAtLeastOne: number;
+            /** Format: double */
+            averageUnlocksPerUser: number;
+            rows: components["schemas"]["AchievementAnalyticsRow"][];
+            categories: components["schemas"]["CategoryBreakdown"][];
+        };
         GetAchievementsResult: {
             items: components["schemas"]["AchievementDto"][];
             /** Format: int32 */
@@ -3176,6 +3390,13 @@ export interface components {
             totalPoints: number;
             /** Format: int32 */
             earnedCount: number;
+            /** Format: int32 */
+            level: number;
+            levelName: string;
+            /** Format: int32 */
+            levelFloor: number;
+            /** Format: int32 */
+            nextLevelAt?: number | null;
         };
         GetExercisesResult: {
             items: components["schemas"]["ExerciseDto"][];
@@ -3192,6 +3413,7 @@ export interface components {
             equipmentOptions: string[];
         };
         GetStreakResult: {
+            streakType: string;
             /** Format: int32 */
             currentStreak: number;
             /** Format: int32 */
@@ -3218,7 +3440,7 @@ export interface components {
             notes?: string | null;
         };
         GoalProgressHistoryDto: {
-            goal: components["schemas"]["UserGoalSummaryDto"];
+            goal?: components["schemas"]["UserGoalSummaryDto"];
             progressEntries: components["schemas"]["GoalProgressEntryDto"][];
         };
         HealthCheckEntryDto: {
@@ -3255,6 +3477,11 @@ export interface components {
             /** Format: date-time */
             joinedAt: string;
         };
+        LogBodyMeasurementResult: {
+            /** Format: uuid */
+            id: string;
+            unlockedAchievements: components["schemas"]["UnlockedAchievement"][];
+        };
         LogFoodCommand: {
             /** Format: uuid */
             foodId?: string | null;
@@ -3278,6 +3505,8 @@ export interface components {
             /** Format: double */
             fatGrams: number;
             message: string;
+            streak?: components["schemas"]["StreakUpdate"];
+            unlockedAchievements: components["schemas"]["UnlockedAchievement"][];
         };
         LogMcpUsageCommand: {
             /** Format: uuid */
@@ -3333,6 +3562,8 @@ export interface components {
             totalExercises: number;
             /** Format: int32 */
             totalSets: number;
+            streak?: components["schemas"]["StreakUpdate"];
+            unlockedAchievements: components["schemas"]["UnlockedAchievement"][];
         };
         McpTokenDto: {
             /** Format: uuid */
@@ -3521,7 +3752,7 @@ export interface components {
             isPublic: boolean;
             isOwner: boolean;
             isFavorited: boolean;
-            nutrition: components["schemas"]["RecipeNutritionDto"];
+            nutrition?: components["schemas"]["RecipeNutritionDto"];
             ingredients: components["schemas"]["RecipeIngredientDto"][];
             instructions: components["schemas"]["RecipeInstructionDto"][];
             tags: string[];
@@ -3542,7 +3773,7 @@ export interface components {
             imageUrl?: string | null;
             isPublic: boolean;
             isOwner: boolean;
-            nutrition: components["schemas"]["RecipeNutritionDto"];
+            nutrition?: components["schemas"]["RecipeNutritionDto"];
             tags: string[];
             /** Format: date-time */
             createdAt: string;
@@ -3569,7 +3800,7 @@ export interface components {
             amount?: number | null;
             unit: string;
             ingredientText: string;
-            subRecipeNutrition: components["schemas"]["RecipeNutritionDto"];
+            subRecipeNutrition?: components["schemas"]["RecipeNutritionDto"];
         };
         RecipeInstructionDto: {
             /** Format: int32 */
@@ -3690,6 +3921,17 @@ export interface components {
             /** Format: int32 */
             readonly totalPages: number;
         };
+        StreakUpdate: {
+            streakType: string;
+            /** Format: int32 */
+            currentCount: number;
+            /** Format: int32 */
+            longestCount: number;
+            isNewRecord: boolean;
+            extended: boolean;
+            /** Format: date */
+            lastActivityDate: string;
+        };
         SystemInfoDto: {
             environment: string;
             /** Format: int64 */
@@ -3794,10 +4036,35 @@ export interface components {
             /** Format: int32 */
             readonly totalPages: number;
         };
+        UnlockedAchievement: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            description?: string | null;
+            iconUrl?: string | null;
+            /** Format: int32 */
+            points: number;
+            category?: string | null;
+        };
+        UpdateAchievementCommand: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            description?: string | null;
+            iconUrl?: string | null;
+            /** Format: int32 */
+            points: number;
+            category?: string | null;
+            criteriaType?: string | null;
+            /** Format: int32 */
+            threshold: number;
+        };
         UpdateFoodCommand: {
             /** Format: uuid */
             id: string;
             name: string;
+            brand?: string | null;
+            barcode?: string | null;
             /** Format: double */
             caloriesPer100g: number;
             /** Format: double */
@@ -3808,6 +4075,10 @@ export interface components {
             fatPer100g: number;
             /** Format: double */
             fiberPer100g?: number | null;
+            /** Format: double */
+            sugarPer100g?: number | null;
+            /** Format: double */
+            sodiumPer100g?: number | null;
             /** Format: double */
             servingSize: number;
             servingUnit: string;
@@ -3855,21 +4126,11 @@ export interface components {
             ingredients: components["schemas"]["CreateRecipeIngredientDto"][];
             instructions: string[];
             tags: string[];
-            nutrition: components["schemas"]["CreateRecipeNutritionDto"];
+            nutrition?: components["schemas"]["CreateRecipeNutritionDto"];
         };
         UpdateRecipeResult: {
             success: boolean;
             message?: string | null;
-        };
-        UpdateStreakCommand: {
-            streakType: string;
-        };
-        UpdateStreakResult: {
-            /** Format: int32 */
-            currentStreak: number;
-            /** Format: int32 */
-            longestStreak: number;
-            isNewRecord: boolean;
         };
         UpdateUserRequest: {
             name?: string | null;
@@ -3897,7 +4158,7 @@ export interface components {
             image?: string | null;
             /** Format: date-time */
             createdAt: string;
-            currentGoal: components["schemas"]["UserGoalSummaryDto"];
+            currentGoal?: components["schemas"]["UserGoalSummaryDto"];
             /** Format: int32 */
             streakCount: number;
         };
@@ -3954,6 +4215,55 @@ export interface components {
             /** Format: uuid */
             exerciseId: string;
             sets: components["schemas"]["ExerciseSetDto"][];
+        };
+        WorkoutExerciseSummaryDto: {
+            /** Format: uuid */
+            id: string;
+            exerciseName: string;
+            category: string;
+            muscleGroup?: string | null;
+            /** Format: int32 */
+            sortOrder: number;
+            sets: components["schemas"]["WorkoutSetDto"][];
+        };
+        WorkoutSetDto: {
+            /** Format: int32 */
+            setNumber: number;
+            /** Format: int32 */
+            reps?: number | null;
+            /** Format: double */
+            weightKg?: number | null;
+            /** Format: int32 */
+            durationSeconds?: number | null;
+            /** Format: double */
+            distanceMeters?: number | null;
+            completed: boolean;
+        };
+        WorkoutSummaryDto: {
+            /** Format: uuid */
+            id: string;
+            name?: string | null;
+            /** Format: date */
+            workoutDate: string;
+            /** Format: int32 */
+            durationMinutes?: number | null;
+            /** Format: int32 */
+            caloriesBurned?: number | null;
+            notes?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            exercises: components["schemas"]["WorkoutExerciseSummaryDto"][];
+        };
+        WorkoutSummaryDtoPagedResult: {
+            items: components["schemas"]["WorkoutSummaryDto"][];
+            /** Format: int32 */
+            totalCount: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            readonly totalPages: number;
         };
     };
     responses: never;

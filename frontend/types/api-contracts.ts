@@ -6,6 +6,17 @@ export type AchievementListResultDto = Schemas["GetAchievementsResult"];
 export type AchievementDto = Schemas["AchievementDto"];
 export type StreakDto = Schemas["GetStreakResult"];
 
+export type StreakUpdateDto = Schemas["StreakUpdate"];
+export type UnlockedAchievementDto = Schemas["UnlockedAchievement"];
+
+export type CreateAchievementCommandDto = Schemas["CreateAchievementCommand"];
+export type UpdateAchievementCommandDto = Schemas["UpdateAchievementCommand"];
+export type AchievementAnalyticsDto = Schemas["GetAchievementAnalyticsResult"];
+export type AchievementAnalyticsRowDto = Schemas["AchievementAnalyticsRow"];
+export type AchievementAnalyticsCategoryDto = Schemas["CategoryBreakdown"];
+
+export type LogBodyMeasurementResultDto = Schemas["LogBodyMeasurementResult"];
+
 export type MyTrainerDto = Schemas["MyTrainerDto"];
 export type MyTrainerRequestDto = Schemas["MyTrainerRequestDto"];
 export type MyTrainerRequestPagedResultDto = Schemas["MyTrainerRequestDtoPagedResult"];

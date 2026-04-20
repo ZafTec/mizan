@@ -1,28 +1,14 @@
-// Gamification surface: streak updates, achievement unlocks, and user level.
-// Mirrors backend StreakUpdate / UnlockedAchievement / GetAchievementsResult so the
-// UI can react immediately after a command completes without another round trip.
-//
-// These live here (and not in api.generated.ts) because they're shared across
-// several response DTOs (meal log, workout log, body measurement); if the OpenAPI
-// codegen ever splits them out, this file can re-export from the generated set.
+// Gamification types re-exported from OpenAPI-generated schemas so UI code imports a
+// stable path even if codegen paths shift later. Safe to treat these as the source
+// of truth for shape; runtime backend already guarantees camelCase keys.
 
-export interface StreakUpdate {
-    streakType: string;
-    currentCount: number;
-    longestCount: number;
-    isNewRecord: boolean;
-    extended: boolean;
-    lastActivityDate: string;
-}
+import type {
+    StreakUpdateDto,
+    UnlockedAchievementDto,
+} from "@/types/api-contracts";
 
-export interface UnlockedAchievement {
-    id: string;
-    name: string;
-    description?: string | null;
-    iconUrl?: string | null;
-    points: number;
-    category?: string | null;
-}
+export type StreakUpdate = StreakUpdateDto;
+export type UnlockedAchievement = UnlockedAchievementDto;
 
 export interface GamificationFeedback {
     streak?: StreakUpdate | null;
