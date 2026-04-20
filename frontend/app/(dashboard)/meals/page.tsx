@@ -232,14 +232,14 @@ export default function MealsPage() {
 					</p>
 				</div>
 				<div className="flex items-center gap-4">
-					<div className="flex items-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-slate-950/75">
-						<button onClick={handlePrevDay} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900/80">
+					<div className="flex items-center rounded-xl border border-charcoal-blue-200 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-charcoal-blue-950/75">
+						<button onClick={handlePrevDay} className="flex h-8 w-8 items-center justify-center rounded-lg text-charcoal-blue-600 hover:bg-charcoal-blue-100 dark:text-charcoal-blue-300 dark:hover:bg-charcoal-blue-900/80">
 							<i className="ri-arrow-left-s-line" />
 						</button>
 						<span className="min-w-35 px-4 text-center font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
 							{new Date(queryDate).toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric' })}
 						</span>
-						<button onClick={handleNextDay} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900/80">
+						<button onClick={handleNextDay} className="flex h-8 w-8 items-center justify-center rounded-lg text-charcoal-blue-600 hover:bg-charcoal-blue-100 dark:text-charcoal-blue-300 dark:hover:bg-charcoal-blue-900/80">
 							<i className="ri-arrow-right-s-line" />
 						</button>
 					</div>
@@ -317,10 +317,10 @@ export default function MealsPage() {
 						<i className="ri-bar-chart-fill text-brand-500" />
 						Last {rangeDays} Days (Calories)
 					</h2>
-					<div className="flex gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-900/80">
+					<div className="flex gap-1 rounded-lg bg-charcoal-blue-100 p-1 dark:bg-charcoal-blue-900/60">
 						{[7, 14, 30].map(d => (
 							<button key={d} onClick={() => setRangeDays(d)}
-								className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${rangeDays === d ? "bg-white text-brand-600 shadow dark:bg-slate-950 dark:text-brand-300" : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"}`}>
+								className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${rangeDays === d ? "bg-white text-brand-600 shadow dark:bg-charcoal-blue-950 dark:text-brand-300" : "text-charcoal-blue-600 hover:text-charcoal-blue-900 dark:text-charcoal-blue-400 dark:hover:text-charcoal-blue-100"}`}>
 								{d}d
 							</button>
 						))}
@@ -411,7 +411,7 @@ export default function MealsPage() {
 						<i className="ri-restaurant-2-line text-brand-500" />
 						Meals ({new Date(queryDate).toLocaleDateString()})
 					</h2>
-					<span className="text-sm text-slate-500">
+					<span className="text-sm text-charcoal-blue-500">
 						{todayMeals.length} meals logged
 					</span>
 				</div>
@@ -421,7 +421,7 @@ export default function MealsPage() {
 						{todayMeals.map((meal) => (
 							<div
 								key={meal.id}
-								className="flex items-center justify-between rounded-xl bg-slate-50 p-4 transition-colors hover:bg-slate-100 dark:bg-slate-900/60 dark:hover:bg-slate-900/90"
+								className="flex items-center justify-between rounded-xl bg-charcoal-blue-50 p-4 transition-colors hover:bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 dark:hover:bg-charcoal-blue-900/90"
 							>
 								<div>
 									<h3 className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
@@ -455,7 +455,7 @@ export default function MealsPage() {
 					</div>
 				) : (
 					<div className="text-center py-12">
-						<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-900/80">
+						<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60">
 							<i className="ri-restaurant-line text-3xl text-charcoal-blue-400 dark:text-charcoal-blue-500" />
 						</div>
 						<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">

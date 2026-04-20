@@ -112,7 +112,7 @@ export default function Page() {
 														alt="Profile"
 														width={80}
 														height={80}
-														className="w-20 h-20 rounded-2xl object-cover border-2 border-slate-200 dark:border-slate-700"
+														className="w-20 h-20 rounded-2xl object-cover border-2 border-charcoal-blue-200 dark:border-charcoal-blue-800"
 													/>
 													<button
 														type="button"
@@ -129,7 +129,7 @@ export default function Page() {
 														e.preventDefault();
 														open();
 													}}
-													className="w-20 h-20 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-400 bg-slate-50 dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-brand-950 flex flex-col items-center justify-center transition-colors group"
+													className="w-20 h-20 rounded-2xl border-2 border-dashed border-charcoal-blue-300 dark:border-charcoal-blue-700 hover:border-brand-400 bg-charcoal-blue-50 dark:bg-charcoal-blue-900 hover:bg-brand-50 dark:hover:bg-brand-950 flex flex-col items-center justify-center transition-colors group"
 												>
 													<AnimatedIcon name="upload" size={22} className="text-charcoal-blue-400 dark:text-charcoal-blue-500 group-hover:text-brand-500" aria-hidden="true" />
 													<span className="text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500 group-hover:text-brand-500 mt-1">Upload</span>
@@ -146,8 +146,8 @@ export default function Page() {
 							<input type="hidden" name="userImage" value={image} />
 						</div>
 
-						<label className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer">
-							<input type="checkbox" required className="mt-0.5 rounded border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-500" />
+						<label className="flex items-start gap-2 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 cursor-pointer">
+							<input type="checkbox" required className="mt-0.5 rounded border-charcoal-blue-300 dark:border-charcoal-blue-700 text-brand-600 focus:ring-brand-500" />
 							<span>
 								I agree to the{" "}
 								<span className="text-brand-600 dark:text-brand-400 font-medium">Terms of Service</span>

@@ -34,7 +34,7 @@ export default function IngredientFilters({ currentMinPcal }: { currentMinPcal?:
 
 	return (
 		<div className="flex items-center gap-2">
-			<label className="text-sm font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap">
+			<label className="text-sm font-medium text-charcoal-blue-600 dark:text-charcoal-blue-400 whitespace-nowrap">
 				Min P/Cal
 			</label>
 			<div className="relative w-20">
@@ -47,7 +47,7 @@ export default function IngredientFilters({ currentMinPcal }: { currentMinPcal?:
 					onChange={(e) => setMinPcal(e.target.value)}
 					className="input text-center pr-6"
 				/>
-				<span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
+				<span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-charcoal-blue-400">%</span>
 			</div>
 		</div>
 	);

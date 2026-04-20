@@ -47,8 +47,8 @@ export default function RecipeSearchModal({ onSelect, onClose }: RecipeSearchMod
 	return (
 		<div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto" onClick={onClose}>
 			<div className="flex min-h-full items-center justify-center p-4">
-				<div className="w-full max-w-lg rounded-2xl bg-white shadow-xl dark:bg-slate-950" onClick={(e) => e.stopPropagation()}>
-					<div className="border-b border-slate-200 p-4 dark:border-white/10">
+				<div className="w-full max-w-lg rounded-2xl bg-white shadow-xl dark:bg-charcoal-blue-950" onClick={(e) => e.stopPropagation()}>
+					<div className="border-b border-charcoal-blue-200 p-4 dark:border-white/10">
 						<div className="flex items-center gap-3">
 							<i className="ri-search-line text-charcoal-blue-400 dark:text-charcoal-blue-500" />
 							<input
@@ -56,10 +56,10 @@ export default function RecipeSearchModal({ onSelect, onClose }: RecipeSearchMod
 								value={query}
 								onChange={(e) => setQuery(e.target.value)}
 								placeholder="Search recipes..."
-								className="flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
+								className="flex-1 bg-transparent text-sm text-charcoal-blue-900 outline-none placeholder:text-charcoal-blue-400 dark:text-charcoal-blue-100 dark:placeholder:text-charcoal-blue-500"
 								autoFocus
 							/>
-							<button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
+							<button onClick={onClose} className="text-charcoal-blue-400 hover:text-charcoal-blue-600 dark:text-charcoal-blue-500 dark:hover:text-charcoal-blue-300">
 								<i className="ri-close-line text-xl" />
 							</button>
 						</div>
@@ -75,7 +75,7 @@ export default function RecipeSearchModal({ onSelect, onClose }: RecipeSearchMod
 							<div className="py-8 text-center text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">Type to search recipes</div>
 						)}
 						{results.map((recipe) => (
-							<div key={recipe.id} className="flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/60">
+							<div key={recipe.id} className="flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-900/60">
 								<div className="flex-1 min-w-0">
 									<p className="truncate text-sm font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{recipe.title}</p>
 									<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
@@ -89,11 +89,11 @@ export default function RecipeSearchModal({ onSelect, onClose }: RecipeSearchMod
 										min={1}
 										value={servings[recipe.id] ?? 1}
 										onChange={(e) => setServings({ ...servings, [recipe.id]: Math.max(1, parseInt(e.target.value) || 1) })}
-										className="w-14 rounded-lg border border-slate-200 bg-white px-2 py-1 text-center text-sm text-slate-900 dark:border-white/10 dark:bg-slate-900 dark:text-slate-100"
+										className="w-14 rounded-lg border border-charcoal-blue-200 bg-white px-2 py-1 text-center text-sm text-charcoal-blue-900 dark:border-white/10 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-100"
 									/>
 									<button
 										onClick={() => onSelect(recipe, servings[recipe.id] ?? 1)}
-										className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-brand-700 dark:bg-brand-500 dark:text-slate-950 dark:hover:bg-brand-400"
+										className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-brand-700 dark:bg-brand-500 dark:text-charcoal-blue-900 dark:hover:bg-brand-400"
 									>
 										Add
 									</button>

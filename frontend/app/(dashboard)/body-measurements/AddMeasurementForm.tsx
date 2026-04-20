@@ -61,7 +61,7 @@ export default function AddMeasurementForm() {
                             <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Add Measurement</h3>
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="text-charcoal-blue-400 dark:text-charcoal-blue-500 hover:text-slate-600 dark:hover:text-slate-300"
+                                className="text-charcoal-blue-400 dark:text-charcoal-blue-500 hover:text-charcoal-blue-600 dark:hover:text-charcoal-blue-300"
                             >
                                 <i className="ri-close-line text-xl" />
                             </button>

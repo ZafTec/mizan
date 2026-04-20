@@ -93,20 +93,20 @@ export default function RecipeFilters({
 	return (
 		<div className="space-y-4">
 			{/* Search bar */}
-			<div className="flex items-center gap-3 w-full px-4 py-3 rounded-xl border border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-700 transition-all duration-200 focus-within:ring-2 focus-within:ring-brand-500/20 focus-within:border-brand-500 dark:focus-within:border-brand-400">
-				<i className="ri-search-line text-slate-400 text-lg shrink-0" />
+			<div className="flex items-center gap-3 w-full px-4 py-3 rounded-xl border border-charcoal-blue-200 bg-white dark:bg-charcoal-blue-900 dark:border-charcoal-blue-800 transition-all duration-200 focus-within:ring-2 focus-within:ring-brand-500/20 focus-within:border-brand-500 dark:focus-within:border-brand-400">
+				<i className="ri-search-line text-charcoal-blue-400 text-lg shrink-0" />
 				<input
 					type="text"
 					placeholder="Search by name, description, or tag..."
 					value={search}
 					onChange={(e) => setSearch(e.target.value)}
-					className="flex-1 bg-transparent text-charcoal-blue-900 dark:text-charcoal-blue-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none text-base min-w-0"
+					className="flex-1 bg-transparent text-charcoal-blue-900 dark:text-charcoal-blue-100 placeholder-charcoal-blue-400 dark:placeholder-charcoal-blue-500 outline-none text-base min-w-0"
 				/>
 				{search && (
 					<button
 						type="button"
 						onClick={() => setSearch("")}
-						className="text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+						className="text-charcoal-blue-400 hover:text-charcoal-blue-600 transition-colors shrink-0"
 					>
 						<i className="ri-close-circle-fill text-lg" />
 					</button>
@@ -126,7 +126,7 @@ export default function RecipeFilters({
 							className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
 								active
 									? "bg-brand-500 text-white border-brand-500 shadow-sm shadow-brand-500/25"
-									: "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-brand-300 hover:text-brand-600"
+									: "bg-white dark:bg-charcoal-blue-900 text-charcoal-blue-600 dark:text-charcoal-blue-400 border-charcoal-blue-200 dark:border-charcoal-blue-800 hover:border-brand-300 hover:text-brand-600"
 							}`}
 						>
 							{icon && <i className={`${icon} text-base`} />}
@@ -147,8 +147,8 @@ export default function RecipeFilters({
 						onClick={() => handleSort(opt.sortBy, opt.sortOrder)}
 						className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
 							currentSortIndex === i
-								? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
-								: "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+								? "bg-charcoal-blue-900 text-white dark:bg-charcoal-blue-100 dark:text-charcoal-blue-900"
+								: "bg-charcoal-blue-100 text-charcoal-blue-500 hover:bg-charcoal-blue-200 hover:text-charcoal-blue-700 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-400 dark:hover:bg-charcoal-blue-700"
 						}`}
 					>
 						{opt.label}

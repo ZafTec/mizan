@@ -108,7 +108,7 @@ export function FoodImageAnalyzer() {
 	};
 
 	return (
-		<div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6">
+		<div className="bg-white dark:bg-charcoal-blue-900 rounded-lg shadow-md p-6">
 			<h2 className="text-xl font-semibold mb-4 flex items-center">
 				<i className="ri-camera-line mr-2 text-green-600"></i>
 				Food Image Analyzer
@@ -199,7 +199,7 @@ export function FoodImageAnalyzer() {
 						{result.foods.map((food, index) => (
 							<div
 								key={index}
-								className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg flex items-center justify-between"
+								className="p-3 bg-gray-50 dark:bg-charcoal-blue-900 rounded-lg flex items-center justify-between"
 							>
 								<div>
 									<p className="font-medium">{food.name}</p>

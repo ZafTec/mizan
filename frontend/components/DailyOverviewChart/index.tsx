@@ -144,23 +144,23 @@ export default function DailyOverviewChart() {
 		return (
 			<div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
 				<div className="card p-6">
-					<div className="h-6 w-36 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />
+					<div className="h-6 w-36 animate-pulse rounded-full bg-charcoal-blue-200 dark:bg-charcoal-blue-900" />
 					<div className="mt-6 grid gap-3 sm:grid-cols-3">
 						{Array.from({ length: 3 }).map((_, index) => (
-							<div key={index} className="h-24 animate-pulse rounded-3xl bg-slate-100 dark:bg-slate-900" />
+							<div key={index} className="h-24 animate-pulse rounded-3xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900" />
 						))}
 					</div>
 					<div className="mt-6 space-y-4">
 						{Array.from({ length: 4 }).map((_, index) => (
 							<div key={index} className="space-y-2">
-								<div className="h-4 w-24 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />
-								<div className="h-2.5 animate-pulse rounded-full bg-slate-100 dark:bg-slate-900" />
+								<div className="h-4 w-24 animate-pulse rounded-full bg-charcoal-blue-200 dark:bg-charcoal-blue-900" />
+								<div className="h-2.5 animate-pulse rounded-full bg-charcoal-blue-100 dark:bg-charcoal-blue-900" />
 							</div>
 						))}
 					</div>
 				</div>
 				<div className="card h-full p-6">
-					<div className="h-full animate-pulse rounded-3xl bg-slate-100 dark:bg-slate-900" />
+					<div className="h-full animate-pulse rounded-3xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900" />
 				</div>
 			</div>
 		);
@@ -191,7 +191,7 @@ export default function DailyOverviewChart() {
 						value={`${roundValue(macros.calories)}`}
 						suffix="kcal"
 						helper={goal?.targetCalories ? `${roundValue(goal.targetCalories)} kcal target` : 'Goal not set'}
-						className="border-slate-200 bg-slate-50/90 text-slate-900 dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-100"
+						className="border-charcoal-blue-200 bg-charcoal-blue-50/90 text-charcoal-blue-900 dark:border-white/10 dark:bg-charcoal-blue-900/70 dark:text-charcoal-blue-100"
 					/>
 					<SummaryPanel
 						label="Goal progress"
@@ -208,7 +208,7 @@ export default function DailyOverviewChart() {
 					/>
 				</div>
 
-				<div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-900/70">
+				<div className="mt-6 rounded-3xl border border-charcoal-blue-200 bg-charcoal-blue-50/90 p-4 dark:border-white/10 dark:bg-charcoal-blue-900/70">
 					<div className="flex items-center justify-between gap-3">
 						<div>
 							<p className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Daily read</p>
@@ -224,7 +224,7 @@ export default function DailyOverviewChart() {
 					</div>
 					<div className="mt-4 flex flex-wrap gap-2">
 						{macroDistribution.map((item) => (
-							<div key={item.key} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 dark:border-white/10 dark:bg-slate-950 dark:text-slate-300">
+							<div key={item.key} className="inline-flex items-center gap-2 rounded-full border border-charcoal-blue-200 bg-white px-3 py-2 text-sm text-charcoal-blue-600 dark:border-white/10 dark:bg-charcoal-blue-950 dark:text-charcoal-blue-300">
 								<span className={`h-2 w-2 rounded-sm ${item.dotClassName}`} />
 								<span>{item.label}</span>
 								<span className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{item.share}%</span>
@@ -258,14 +258,14 @@ export default function DailyOverviewChart() {
 								</div>
 								<p className="text-sm font-semibold">{item.share}%</p>
 							</div>
-							<div className="h-1.5 w-full rounded-xl bg-slate-900/10 dark:bg-white/10 overflow-hidden">
+							<div className="h-1.5 w-full rounded-xl bg-charcoal-blue-900/10 dark:bg-white/10 overflow-hidden">
 								<div className={`h-full rounded-xl ${item.dotClassName} transition-all duration-500`} style={{ width: `${item.share}%` }} />
 							</div>
 						</div>
 					))}
 				</div>
 
-				<div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-900/70">
+				<div className="mt-6 rounded-3xl border border-charcoal-blue-200 bg-charcoal-blue-50/90 p-4 dark:border-white/10 dark:bg-charcoal-blue-900/70">
 					<p className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Next step</p>
 					<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 						{hasGoals

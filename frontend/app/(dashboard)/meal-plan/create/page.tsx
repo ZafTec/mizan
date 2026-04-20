@@ -145,12 +145,12 @@ export default function CreateMealPlanPage() {
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center gap-4">
-				<Link href="/meal-plan" className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
-					<i className="ri-arrow-left-line text-xl text-slate-600" />
+				<Link href="/meal-plan" className="w-10 h-10 rounded-xl bg-charcoal-blue-100 hover:bg-charcoal-blue-200 flex items-center justify-center transition-colors">
+					<i className="ri-arrow-left-line text-xl text-charcoal-blue-600" />
 				</Link>
 				<div className="flex-1">
-					<h1 className="text-2xl font-bold text-slate-900">Create Meal Plan</h1>
-					<p className="text-slate-500">
+					<h1 className="text-2xl font-bold text-charcoal-blue-900">Create Meal Plan</h1>
+					<p className="text-charcoal-blue-500">
 						{formatDateLabel(startDate)} - {formatDateLabel(endDate)}
 					</p>
 				</div>
@@ -193,10 +193,10 @@ export default function CreateMealPlanPage() {
 					return (
 						<div key={dateKey} className={`card p-3 ${isToday ? "ring-2 ring-brand-400" : ""}`}>
 							<div className="text-center mb-3">
-								<p className="text-xs font-medium text-slate-500 uppercase">
+								<p className="text-xs font-medium text-charcoal-blue-500 uppercase">
 									{day.toLocaleDateString(undefined, { weekday: "short" })}
 								</p>
-								<p className={`text-lg font-bold ${isToday ? "text-brand-600" : "text-slate-900"}`}>
+								<p className={`text-lg font-bold ${isToday ? "text-brand-600" : "text-charcoal-blue-900"}`}>
 									{day.getDate()}
 								</p>
 							</div>
@@ -206,21 +206,21 @@ export default function CreateMealPlanPage() {
 									return (
 										<div key={mealType}>
 											<div className="flex items-center justify-between mb-1">
-												<span className="text-[10px] font-medium text-slate-400 uppercase flex items-center gap-1">
+												<span className="text-[10px] font-medium text-charcoal-blue-400 uppercase flex items-center gap-1">
 													<i className={`${MEAL_ICONS[mealType]} text-xs`} />
 													{MEAL_LABELS[mealType]}
 												</span>
 												<button
 													onClick={() => setActiveSlot({ dateKey, mealType })}
-													className="w-5 h-5 rounded-md bg-slate-100 hover:bg-brand-100 hover:text-brand-600 flex items-center justify-center text-slate-400 transition-colors"
+													className="w-5 h-5 rounded-md bg-charcoal-blue-100 hover:bg-brand-100 hover:text-brand-600 flex items-center justify-center text-charcoal-blue-400 transition-colors"
 												>
 													<i className="ri-add-line text-xs" />
 												</button>
 											</div>
 											{mealRecipes.map((recipe, idx) => (
-												<div key={idx} className="group flex items-center gap-1.5 p-1.5 bg-slate-50 rounded-lg text-xs">
-													<span className="flex-1 truncate text-slate-700">{recipe.title}</span>
-													<span className="text-slate-400 shrink-0">{recipe.servings}x</span>
+												<div key={idx} className="group flex items-center gap-1.5 p-1.5 bg-charcoal-blue-50 rounded-lg text-xs">
+													<span className="flex-1 truncate text-charcoal-blue-700">{recipe.title}</span>
+													<span className="text-charcoal-blue-400 shrink-0">{recipe.servings}x</span>
 													<button
 														onClick={() => handleRemoveRecipe(dateKey, mealType, idx)}
 														className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-opacity"

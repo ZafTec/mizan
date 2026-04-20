@@ -114,7 +114,7 @@ export default async function AchievementsPage() {
 								className="card-hover p-5 opacity-60 hover:opacity-80 transition-opacity"
 							>
                                 <div className="flex items-start gap-4">
-								<div className="w-12 h-12 rounded-2xl bg-slate-400 flex items-center justify-center shadow-lg shrink-0 dark:bg-slate-700">
+								<div className="w-12 h-12 rounded-2xl bg-charcoal-blue-300 flex items-center justify-center shadow-lg shrink-0 dark:bg-charcoal-blue-700">
                                         {achievement.iconUrl ? (
                                             <Image
                                                 src={achievement.iconUrl}
@@ -135,7 +135,7 @@ export default async function AchievementsPage() {
                                             {achievement.description || "No description"}
                                         </p>
                                         <div className="flex items-center gap-3 mt-3">
-											<span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-slate-900/80 dark:text-slate-300">
+											<span className="inline-flex items-center gap-1 rounded-full bg-charcoal-blue-100 px-2 py-1 text-xs font-medium text-charcoal-blue-600 dark:bg-charcoal-blue-900/60 dark:text-charcoal-blue-300">
                                                 <i className="ri-star-line" />
                                                 {achievement.points} points
                                             </span>

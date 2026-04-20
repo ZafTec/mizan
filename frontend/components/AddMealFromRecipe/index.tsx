@@ -117,7 +117,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 					<button
 						type="button"
 						onClick={() => scaleToServings(Math.max(0.25, Math.round((servings - 0.25) * 4) / 4))}
-						className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-charcoal-blue-600 dark:text-charcoal-blue-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-bold"
+						className="w-9 h-9 rounded-lg bg-charcoal-blue-100 dark:bg-charcoal-blue-900 flex items-center justify-center text-charcoal-blue-600 dark:text-charcoal-blue-300 hover:bg-charcoal-blue-200 dark:hover:bg-charcoal-blue-700 transition-colors font-bold"
 					>
 						−
 					</button>
@@ -137,7 +137,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 					<button
 						type="button"
 						onClick={() => scaleToServings(Math.round((servings + 0.25) * 4) / 4)}
-						className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-charcoal-blue-600 dark:text-charcoal-blue-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-bold"
+						className="w-9 h-9 rounded-lg bg-charcoal-blue-100 dark:bg-charcoal-blue-900 flex items-center justify-center text-charcoal-blue-600 dark:text-charcoal-blue-300 hover:bg-charcoal-blue-200 dark:hover:bg-charcoal-blue-700 transition-colors font-bold"
 					>
 						+
 					</button>
@@ -154,7 +154,7 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 							className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
 								servings === p
 									? "bg-brand-500 text-white"
-									: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+									: "bg-charcoal-blue-100 dark:bg-charcoal-blue-900 text-charcoal-blue-600 dark:text-charcoal-blue-400 hover:bg-charcoal-blue-200 dark:hover:bg-charcoal-blue-700"
 							}`}
 						>
 							{p}×

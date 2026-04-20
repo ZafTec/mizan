@@ -166,8 +166,8 @@ export function ClientNutritionView({ clientId }: ClientNutritionViewProps) {
 	if (loading) {
 		return (
 			<div className="animate-pulse space-y-4">
-				<div className="h-12 bg-gray-200 dark:bg-slate-700 rounded w-1/3"></div>
-				<div className="h-64 bg-gray-200 dark:bg-slate-700 rounded"></div>
+				<div className="h-12 bg-gray-200 dark:bg-charcoal-blue-700 rounded w-1/3"></div>
+				<div className="h-64 bg-gray-200 dark:bg-charcoal-blue-700 rounded"></div>
 			</div>
 		);
 	}
@@ -359,7 +359,7 @@ export function ClientNutritionView({ clientId }: ClientNutritionViewProps) {
 								{nutritionData.foodLogs.map((entry) => (
 									<div
 										key={entry.id}
-										className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg"
+										className="flex items-center justify-between p-3 bg-gray-50 dark:bg-charcoal-blue-900 rounded-lg"
 									>
 										<div>
 											<p className="font-medium">{entry.foodName}</p>

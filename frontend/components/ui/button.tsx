@@ -12,11 +12,11 @@ const buttonVariants = cva(
         destructive:
           "bg-red-600 text-white shadow-lg shadow-red-500/20 hover:-translate-y-0.5 hover:bg-red-700",
         outline:
-          "border border-charcoal-blue-300 bg-white text-charcoal-blue-700 shadow-sm hover:-translate-y-0.5 hover:bg-charcoal-blue-50 hover:border-charcoal-blue-400 dark:border-white/10 dark:bg-slate-950/75 dark:text-slate-200 dark:hover:bg-slate-900 dark:hover:border-white/20",
+          "border border-charcoal-blue-300 bg-white text-charcoal-blue-700 shadow-sm hover:-translate-y-0.5 hover:bg-charcoal-blue-50 hover:border-charcoal-blue-400 dark:border-white/10 dark:bg-charcoal-blue-950/75 dark:text-charcoal-blue-200 dark:hover:bg-charcoal-blue-900 dark:hover:border-white/20",
         secondary:
           "border border-charcoal-blue-200 bg-secondary text-secondary-foreground shadow-sm hover:-translate-y-0.5 hover:bg-charcoal-blue-100 hover:border-charcoal-blue-300 dark:border-white/10 dark:hover:border-white/15 dark:hover:bg-white/5",
         ghost:
-          "border border-charcoal-blue-200 text-charcoal-blue-600 hover:bg-charcoal-blue-50 hover:border-charcoal-blue-300 hover:text-charcoal-blue-900 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:border-white/15 dark:hover:text-white",
+          "border border-charcoal-blue-200 text-charcoal-blue-600 hover:bg-charcoal-blue-50 hover:border-charcoal-blue-300 hover:text-charcoal-blue-900 dark:border-white/10 dark:text-charcoal-blue-300 dark:hover:bg-white/5 dark:hover:border-white/15 dark:hover:text-white",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

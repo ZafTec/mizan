@@ -80,7 +80,7 @@ export default async function AuditLogsPage({
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                            <tr className="bg-charcoal-blue-50/50 dark:bg-charcoal-blue-800/50 border-b border-charcoal-blue-100 dark:border-white/10">
                                 <SortableHeader sortKey="timestamp" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-charcoal-blue-500 dark:text-charcoal-blue-400">Timestamp</SortableHeader>
                                 <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-charcoal-blue-500 dark:text-charcoal-blue-400">User</th>
                                 <SortableHeader sortKey="action" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-charcoal-blue-500 dark:text-charcoal-blue-400">Action</SortableHeader>
@@ -88,7 +88,7 @@ export default async function AuditLogsPage({
                                 <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-charcoal-blue-500 dark:text-charcoal-blue-400">IP Address</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        <tbody className="divide-y divide-charcoal-blue-100 dark:divide-white/10">
                             {logs.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-12 text-center text-charcoal-blue-500 dark:text-charcoal-blue-400">
@@ -97,7 +97,7 @@ export default async function AuditLogsPage({
                                 </tr>
                             ) : (
                                 logs.map((log) => (
-                                    <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group">
+                                    <tr key={log.id} className="hover:bg-charcoal-blue-50/50 dark:hover:bg-charcoal-blue-800/50 transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="text-sm font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
                                                 {format(new Date(log.timestamp), "MMM d, yyyy")}
@@ -116,7 +116,7 @@ export default async function AuditLogsPage({
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="text-sm text-slate-700 dark:text-slate-300 font-medium">
+                                            <div className="text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300 font-medium">
                                                 {log.entityType}
                                             </div>
                                             <div className="text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500 font-mono">

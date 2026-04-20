@@ -43,7 +43,7 @@ export default function SuggestedRecipes({ user, suggestions, serverError }: Sug
 
 			{!suggestions || suggestions.length === 0 ? (
 				<div className="card p-8 text-center">
-					<div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
+					<div className="w-16 h-16 rounded-2xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900 flex items-center justify-center mx-auto mb-4">
 						<i className="ri-lightbulb-line text-3xl text-charcoal-blue-400 dark:text-charcoal-blue-500" />
 					</div>
 					<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No Suggestions Available</h3>
@@ -63,7 +63,7 @@ export default function SuggestedRecipes({ user, suggestions, serverError }: Sug
 							href={`/recipes/${recipe.id}`}
 							className="card-hover flex flex-col sm:flex-row overflow-hidden group"
 						>
-							<div className="sm:w-48 h-48 sm:h-auto bg-slate-200 dark:bg-slate-700 relative">
+							<div className="sm:w-48 h-48 sm:h-auto bg-charcoal-blue-200 dark:bg-charcoal-blue-700 relative">
 								<Image
 									src={recipe.imageUrl || placeHolderImage}
 									alt={recipe.title}
@@ -76,7 +76,7 @@ export default function SuggestedRecipes({ user, suggestions, serverError }: Sug
 									<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors mb-2">
 										{recipe.title}
 									</h3>
-									<p className="text-slate-600 dark:text-slate-400 text-sm line-clamp-2">
+									<p className="text-charcoal-blue-600 dark:text-charcoal-blue-400 text-sm line-clamp-2">
 										{recipe.description || recipe.reason}
 									</p>
 								</div>

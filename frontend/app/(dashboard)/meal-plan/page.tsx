@@ -98,8 +98,8 @@ export default async function MealPlanPage({
 					{[
 						{ label: "Meal Plans", value: mealPlans.length, icon: "ri-calendar-check-line", color: "bg-brand-600" },
 						{ label: "This Week", value: mealPlans.filter(p => p.recipes?.length > 0).length, icon: "ri-calendar-line", color: "bg-accent-600" },
-						{ label: "Total Meals", value: mealPlans.reduce((acc, p) => acc + (p.recipes?.length || 0), 0), icon: "ri-restaurant-line", color: "bg-slate-900 dark:bg-slate-100 dark:text-slate-900" },
-						{ label: "Recipes", value: new Set(mealPlans.flatMap(p => p.recipes?.map(m => m.recipeId) || [])).size, icon: "ri-book-3-line", color: "bg-slate-700" },
+						{ label: "Total Meals", value: mealPlans.reduce((acc, p) => acc + (p.recipes?.length || 0), 0), icon: "ri-restaurant-line", color: "bg-charcoal-blue-900 dark:bg-charcoal-blue-100 dark:text-charcoal-blue-900" },
+						{ label: "Recipes", value: new Set(mealPlans.flatMap(p => p.recipes?.map(m => m.recipeId) || [])).size, icon: "ri-book-3-line", color: "bg-charcoal-blue-700" },
 					].map((stat) => (
 						<div key={stat.label} className="card p-4">
 							<div className="flex items-center gap-3">

@@ -180,7 +180,7 @@ export default function AddMealPlanPage() {
 	            ) : (
 	              <ul className="space-y-4">
 	                {selectedRecipes.map((item, index) => (
-	                  <li key={`${item.recipeId}-${index}`} className="border-b border-slate-200 pb-3 dark:border-white/10">
+	                  <li key={`${item.recipeId}-${index}`} className="border-b border-charcoal-blue-200 pb-3 dark:border-white/10">
 	                    <div className="flex justify-between items-center">
 	                      <span className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{item.recipeName}</span>
 	                      <button
@@ -244,11 +244,11 @@ export default function AddMealPlanPage() {
 	              {filteredRecipes.map((recipe) => (
 	                <div
 	                  key={recipe.id}
-	                  className="card cursor-pointer p-3 transition hover:bg-slate-50 dark:hover:bg-slate-900/60"
+	                  className="card cursor-pointer p-3 transition hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-900/60"
 	                  onClick={() => addRecipeToSelection(recipe)}
 	                >
 	                  <h3 className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{recipe.title}</h3>
-	                  <p className="text-sm text-slate-600 dark:text-slate-400">
+	                  <p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
 	                    {Math.round(recipe.calories)} cal | {Math.round(recipe.protein)}g protein
 	                  </p>
 	                </div>

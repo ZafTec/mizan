@@ -108,7 +108,7 @@ export default function TrainersPage() {
 			{/* Search Bar */}
 			<div className="card p-4">
 				<div className="relative">
-					<i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+					<i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-blue-400" />
 					<input
 						type="text"
 						placeholder="Search trainers by name, email, or specialty..."
@@ -123,7 +123,7 @@ export default function TrainersPage() {
 			{/* Trainers Grid */}
 			{filteredTrainers.length === 0 ? (
 				<div className="card p-12 text-center">
-					<i className="ri-user-search-line text-6xl text-slate-300 dark:text-slate-600 mb-4" />
+					<i className="ri-user-search-line text-6xl text-charcoal-blue-300 dark:text-charcoal-blue-600 mb-4" />
 					<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 						No trainers found
 					</h3>
@@ -142,10 +142,10 @@ export default function TrainersPage() {
 										alt={trainer.name || trainer.email || "Trainer"}
 										width={80}
 										height={80}
-										className="w-20 h-20 rounded-2xl object-cover border-4 border-white dark:border-slate-900 shadow-lg mb-3"
+										className="w-20 h-20 rounded-2xl object-cover border-4 border-white dark:border-charcoal-blue-900 shadow-lg mb-3"
 									/>
 								) : (
-									<div className="w-20 h-20 rounded-2xl bg-emerald-600 flex items-center justify-center border-4 border-white dark:border-slate-900 shadow-lg mb-3">
+									<div className="w-20 h-20 rounded-2xl bg-emerald-600 flex items-center justify-center border-4 border-white dark:border-charcoal-blue-900 shadow-lg mb-3">
 										<span className="text-2xl font-bold text-white">
 											{(trainer.email || "?").charAt(0).toUpperCase()}
 										</span>
@@ -155,7 +155,7 @@ export default function TrainersPage() {
 									{trainer.name || trainer.email?.split("@")[0] || "Unknown trainer"}
 								</h3>
 								<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-2">{trainer.email}</p>
-								<div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+								<div className="flex items-center gap-2 text-xs text-charcoal-blue-600 dark:text-charcoal-blue-400">
 									<i className="ri-group-line" />
 									<span>{trainer.clientCount || 0} clients</span>
 								</div>
@@ -163,7 +163,7 @@ export default function TrainersPage() {
 
 							{trainer.specialties && (
 								<div className="mb-4">
-									<p className="text-sm text-slate-700 dark:text-slate-300">{trainer.specialties}</p>
+									<p className="text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300">{trainer.specialties}</p>
 								</div>
 							)}
 
@@ -199,7 +199,7 @@ export default function TrainersPage() {
 						<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 							How it works
 						</h3>
-						<ul className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
+						<ul className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 space-y-2">
 							<li className="flex items-start gap-2">
 								<i className="ri-arrow-right-s-line text-blue-500 mt-0.5" />
 								<span>Send a connection request to your preferred trainer</span>

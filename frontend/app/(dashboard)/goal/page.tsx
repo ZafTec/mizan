@@ -116,12 +116,12 @@ export default function GoalForm() {
 			{/* Info Card */}
 			<div className="card p-6 bg-white/70 dark:bg-charcoal-blue-950/60">
 				<div className="flex items-start gap-4">
-					<div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center shrink-0">
+					<div className="w-12 h-12 rounded-xl bg-white dark:bg-charcoal-blue-900 flex items-center justify-center shrink-0">
 						<i className="ri-target-line text-xl text-brand-600 dark:text-brand-400" />
 					</div>
 					<div>
 						<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Why Set Goals?</h3>
-						<p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+						<p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 mt-1">
 							Setting nutrition goals helps you stay on track. Our AI coach will use these targets
 							to provide personalized recipe suggestions and track your daily progress.
 						</p>
@@ -134,7 +134,7 @@ export default function GoalForm() {
 				<button
 					type="button"
 					onClick={() => setTdeeOpen((o) => !o)}
-					className="w-full flex items-center justify-between p-6 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+					className="w-full flex items-center justify-between p-6 text-left hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-800/50 transition-colors"
 				>
 					<div className="flex items-center gap-3">
 						<div className="w-9 h-9 rounded-lg bg-brand-100 dark:bg-brand-900/40 flex items-center justify-center shrink-0">
@@ -149,11 +149,11 @@ export default function GoalForm() {
 							</p>
 						</div>
 					</div>
-					<i className={`ri-arrow-${tdeeOpen ? "up" : "down"}-s-line text-xl text-slate-400`} />
+					<i className={`ri-arrow-${tdeeOpen ? "up" : "down"}-s-line text-xl text-charcoal-blue-400`} />
 				</button>
 
 				{tdeeOpen && (
-					<div className="px-6 pb-6 space-y-5 border-t border-slate-100 dark:border-slate-800 pt-5">
+					<div className="px-6 pb-6 space-y-5 border-t border-charcoal-blue-100 dark:border-white/10 pt-5">
 						{/* Sex */}
 						<div>
 							<label className="label">Biological Sex</label>
@@ -166,7 +166,7 @@ export default function GoalForm() {
 										className={`flex-1 py-2 rounded-xl font-medium capitalize transition-colors ${
 											sex === s
 												? "bg-brand-500 text-white"
-												: "bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+												: "bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 text-charcoal-blue-600 dark:text-charcoal-blue-400 hover:bg-charcoal-blue-200 dark:hover:bg-charcoal-blue-700"
 										}`}
 									>
 										{s}
@@ -203,7 +203,7 @@ export default function GoalForm() {
 												className={`text-xs px-2 py-0.5 rounded font-medium transition-colors ${
 													weightUnit === u
 														? "bg-brand-500 text-white"
-														: "text-charcoal-blue-400 dark:text-charcoal-blue-500 hover:text-slate-600 dark:hover:text-slate-300"
+														: "text-charcoal-blue-400 dark:text-charcoal-blue-500 hover:text-charcoal-blue-600 dark:hover:text-charcoal-blue-300"
 												}`}
 											>
 												{u}
@@ -235,7 +235,7 @@ export default function GoalForm() {
 												className={`text-xs px-2 py-0.5 rounded font-medium transition-colors ${
 													heightUnit === u
 														? "bg-brand-500 text-white"
-														: "text-charcoal-blue-400 dark:text-charcoal-blue-500 hover:text-slate-600 dark:hover:text-slate-300"
+														: "text-charcoal-blue-400 dark:text-charcoal-blue-500 hover:text-charcoal-blue-600 dark:hover:text-charcoal-blue-300"
 												}`}
 											>
 												{u}
@@ -502,7 +502,7 @@ export default function GoalForm() {
 											className={`text-xs px-2 py-1 rounded font-medium transition-colors ${
 												targetWeightUnit === u
 													? "bg-brand-500 text-white"
-													: "text-slate-400 hover:text-slate-600"
+													: "text-charcoal-blue-400 hover:text-charcoal-blue-600"
 											}`}
 										>
 											{u}

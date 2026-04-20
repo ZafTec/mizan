@@ -24,7 +24,7 @@ export function DeleteConfirmModal({ isOpen, onClose, onConfirm, itemName }: Del
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" data-testid="delete-confirm-modal">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="bg-white dark:bg-charcoal-blue-900 rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
                 <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
                         <i className="ri-delete-bin-line text-2xl text-red-600 dark:text-red-400" />
@@ -34,7 +34,7 @@ export function DeleteConfirmModal({ isOpen, onClose, onConfirm, itemName }: Del
                     </h3>
                 </div>
 
-                <p className="text-slate-600 dark:text-slate-400 mb-6">
+                <p className="text-charcoal-blue-600 dark:text-charcoal-blue-400 mb-6">
                     This action cannot be undone. Are you sure you want to delete this {itemName?.toLowerCase() || "item"}?
                 </p>
 

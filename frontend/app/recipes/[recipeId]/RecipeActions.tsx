@@ -114,7 +114,7 @@ export default function RecipeActions({ recipeId, isOwner, isFavorited: initialF
                 </div>
 
                 {isOwner && (
-	                    <div className="flex flex-wrap gap-3 border-t border-slate-200 pt-3 dark:border-white/10">
+	                    <div className="flex flex-wrap gap-3 border-t border-charcoal-blue-200 pt-3 dark:border-white/10">
                         <button
                             onClick={() => router.push(`/recipes/${recipeId}/edit`)}
                             className="btn-secondary flex-1 sm:flex-none"

@@ -190,7 +190,7 @@ export default function McpPage() {
               <DialogDescription>Copy this value now — it won&apos;t be shown again.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="bg-slate-900 text-white rounded-xl p-4 flex items-center justify-between gap-3">
+              <div className="bg-charcoal-blue-900 text-white rounded-xl p-4 flex items-center justify-between gap-3">
                   <code className="text-sm break-all">{tokenValue}</code>
                   <button
                     type="button"
@@ -208,12 +208,12 @@ export default function McpPage() {
 				  Choose your MCP client and follow the instructions below.
 				</p>
 
-				<div className="flex gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl mb-4">
+				<div className="flex gap-1 bg-charcoal-blue-100 dark:bg-charcoal-blue-900 p-1 rounded-xl mb-4">
                   <button
                     className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       guideTab === "desktop"
-						? "bg-white dark:bg-slate-950 shadow text-charcoal-blue-900 dark:text-charcoal-blue-100"
-						: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-slate-700 dark:hover:text-slate-200"
+						? "bg-white dark:bg-charcoal-blue-950 shadow text-charcoal-blue-900 dark:text-charcoal-blue-100"
+						: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-charcoal-blue-700 dark:hover:text-charcoal-blue-200"
                     }`}
                     onClick={() => setGuideTab("desktop")}
                   >
@@ -224,8 +224,8 @@ export default function McpPage() {
                   <button
                     className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       guideTab === "code"
-						? "bg-white dark:bg-slate-950 shadow text-charcoal-blue-900 dark:text-charcoal-blue-100"
-						: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-slate-700 dark:hover:text-slate-200"
+						? "bg-white dark:bg-charcoal-blue-950 shadow text-charcoal-blue-900 dark:text-charcoal-blue-100"
+						: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-charcoal-blue-700 dark:hover:text-charcoal-blue-200"
                     }`}
                     onClick={() => setGuideTab("code")}
                   >
@@ -236,8 +236,8 @@ export default function McpPage() {
                   <button
                     className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       guideTab === "cursor"
-						? "bg-white dark:bg-slate-950 shadow text-charcoal-blue-900 dark:text-charcoal-blue-100"
-						: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-slate-700 dark:hover:text-slate-200"
+						? "bg-white dark:bg-charcoal-blue-950 shadow text-charcoal-blue-900 dark:text-charcoal-blue-100"
+						: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-charcoal-blue-700 dark:hover:text-charcoal-blue-200"
                     }`}
                     onClick={() => setGuideTab("cursor")}
                   >
@@ -249,10 +249,10 @@ export default function McpPage() {
                 {guideTab === "desktop" && (
                   <div className="space-y-3">
 					  <p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
-						Add this to your <code className="bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded text-xs">claude_desktop_config.json</code>:
+						Add this to your <code className="bg-charcoal-blue-100 dark:bg-charcoal-blue-900 px-1.5 py-0.5 rounded text-xs">claude_desktop_config.json</code>:
 					  </p>
                     <div className="relative">
-                      <pre className="bg-slate-900 text-slate-50 rounded-lg p-4 text-xs overflow-x-auto">
+                      <pre className="bg-charcoal-blue-900 text-charcoal-blue-50 rounded-lg p-4 text-xs overflow-x-auto">
                         {desktopConfig(tokenValue)}
                       </pre>
                       <button
@@ -266,8 +266,8 @@ export default function McpPage() {
 					  <div className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 						<p>Config file locations:</p>
 						<ul className="list-disc list-inside ml-4 space-y-1 mt-1">
-						  <li>macOS: <code className="bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded text-xs">~/Library/Application Support/Claude/claude_desktop_config.json</code></li>
-						  <li>Windows: <code className="bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded text-xs">%APPDATA%\Claude\claude_desktop_config.json</code></li>
+						  <li>macOS: <code className="bg-charcoal-blue-100 dark:bg-charcoal-blue-900 px-1.5 py-0.5 rounded text-xs">~/Library/Application Support/Claude/claude_desktop_config.json</code></li>
+						  <li>Windows: <code className="bg-charcoal-blue-100 dark:bg-charcoal-blue-900 px-1.5 py-0.5 rounded text-xs">%APPDATA%\Claude\claude_desktop_config.json</code></li>
 						</ul>
 					  </div>
                   </div>
@@ -279,7 +279,7 @@ export default function McpPage() {
 						Run this command in your terminal:
 					  </p>
                     <div className="relative">
-                      <pre className="bg-slate-900 text-slate-50 rounded-lg p-4 text-xs overflow-x-auto whitespace-pre-wrap break-all">
+                      <pre className="bg-charcoal-blue-900 text-charcoal-blue-50 rounded-lg p-4 text-xs overflow-x-auto whitespace-pre-wrap break-all">
                         {claudeCodeCommand(tokenValue)}
                       </pre>
                       <button
@@ -291,7 +291,7 @@ export default function McpPage() {
                       </button>
                     </div>
 					  <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						This registers the Mizan MCP server globally. Use <code className="bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded text-xs">--scope project</code> to scope it to the current directory.
+						This registers the Mizan MCP server globally. Use <code className="bg-charcoal-blue-100 dark:bg-charcoal-blue-900 px-1.5 py-0.5 rounded text-xs">--scope project</code> to scope it to the current directory.
 					  </p>
                   </div>
                 )}
@@ -299,10 +299,10 @@ export default function McpPage() {
                 {guideTab === "cursor" && (
                   <div className="space-y-3">
 					  <p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
-						Add this to your <code className="bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded text-xs">.cursor/mcp.json</code> in your project root:
+						Add this to your <code className="bg-charcoal-blue-100 dark:bg-charcoal-blue-900 px-1.5 py-0.5 rounded text-xs">.cursor/mcp.json</code> in your project root:
 					  </p>
                     <div className="relative">
-                      <pre className="bg-slate-900 text-slate-50 rounded-lg p-4 text-xs overflow-x-auto">
+                      <pre className="bg-charcoal-blue-900 text-charcoal-blue-50 rounded-lg p-4 text-xs overflow-x-auto">
                         {cursorConfig(tokenValue)}
                       </pre>
                       <button
@@ -319,11 +319,11 @@ export default function McpPage() {
                   </div>
                 )}
 
-					<div className="mt-4 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-charcoal-blue-200 dark:border-white/10">
+					<div className="mt-4 p-3 bg-charcoal-blue-50 dark:bg-charcoal-blue-900 rounded-lg border border-charcoal-blue-200 dark:border-white/10">
 					  <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
 						<span className="font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-200">Other clients:</span>{" "}
 						Any MCP client that supports SSE transport can connect using the server URL{" "}
-						<code className="bg-slate-100 dark:bg-slate-950 px-1.5 py-0.5 rounded">{mcpUrl}</code>{" "}
+						<code className="bg-charcoal-blue-100 dark:bg-charcoal-blue-950 px-1.5 py-0.5 rounded">{mcpUrl}</code>{" "}
 						with the token as a Bearer authorization header.
 					  </p>
 					</div>
@@ -340,11 +340,11 @@ export default function McpPage() {
 
 		<div className="card p-6">
 		  <Tabs defaultValue="tokens" className="w-full">
-			<TabsList className="bg-slate-100 dark:bg-slate-900 p-1 rounded-2xl inline-flex gap-1">
-			  <TabsTrigger value="tokens" className="rounded-xl px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-950 dark:data-[state=active]:text-slate-100">
+			<TabsList className="bg-charcoal-blue-100 dark:bg-charcoal-blue-900 p-1 rounded-2xl inline-flex gap-1">
+			  <TabsTrigger value="tokens" className="rounded-xl px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow data-[state=active]:text-charcoal-blue-900 dark:data-[state=active]:bg-charcoal-blue-950 dark:data-[state=active]:text-charcoal-blue-100">
 				Tokens
 			  </TabsTrigger>
-			  <TabsTrigger value="analytics" className="rounded-xl px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-950 dark:data-[state=active]:text-slate-100">
+			  <TabsTrigger value="analytics" className="rounded-xl px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow data-[state=active]:text-charcoal-blue-900 dark:data-[state=active]:bg-charcoal-blue-950 dark:data-[state=active]:text-charcoal-blue-100">
 				Analytics
 			  </TabsTrigger>
 			</TabsList>
@@ -362,7 +362,7 @@ export default function McpPage() {
 			  ) : (
 				<div className="overflow-hidden rounded-2xl border border-charcoal-blue-200 dark:border-white/10">
 				  <table className="w-full text-sm">
-					<thead className="bg-slate-50 dark:bg-slate-900 text-left">
+					<thead className="bg-charcoal-blue-50 dark:bg-charcoal-blue-900 text-left">
 					  <tr>
 						<th className="px-4 py-3 font-semibold text-charcoal-blue-600 dark:text-charcoal-blue-300">Name</th>
 						<th className="px-4 py-3 font-semibold text-charcoal-blue-600 dark:text-charcoal-blue-300">Status</th>
@@ -371,28 +371,28 @@ export default function McpPage() {
 						<th className="px-4 py-3 font-semibold text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">Actions</th>
 					  </tr>
 					</thead>
-					<tbody className="divide-y divide-slate-100 dark:divide-white/10">
+					<tbody className="divide-y divide-charcoal-blue-100 dark:divide-white/10">
 					  {tokens.map((token) => (
-						<tr key={token.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-900/70">
+						<tr key={token.id} className="hover:bg-charcoal-blue-50/60 dark:hover:bg-charcoal-blue-900/70">
 						  <td className="px-4 py-3 font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{token.name}</td>
                         <td className="px-4 py-3">
                           <span
                             className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${
                               token.isActive
 								? "bg-emerald-50 text-emerald-700 border border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20"
-								: "bg-slate-100 text-slate-500 border border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-white/10"
+								: "bg-charcoal-blue-100 text-charcoal-blue-500 border border-charcoal-blue-200 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-400 dark:border-white/10"
 							}`}
 						  >
                             <span
                               className={`h-2 w-2 rounded-sm ${
-                                token.isActive ? "bg-emerald-500" : "bg-slate-400"
+                                token.isActive ? "bg-emerald-500" : "bg-charcoal-blue-300"
                               }`}
                             />
                             {token.isActive ? "Active" : "Revoked"}
                           </span>
                         </td>
-						  <td className="px-4 py-3 text-slate-700 dark:text-slate-300 hidden sm:table-cell">{formatDate(token.createdAt)}</td>
-						  <td className="px-4 py-3 text-slate-700 dark:text-slate-300 hidden md:table-cell">
+						  <td className="px-4 py-3 text-charcoal-blue-700 dark:text-charcoal-blue-300 hidden sm:table-cell">{formatDate(token.createdAt)}</td>
+						  <td className="px-4 py-3 text-charcoal-blue-700 dark:text-charcoal-blue-300 hidden md:table-cell">
                           {token.lastUsedAt ? formatDate(token.lastUsedAt) : "Never"}
                         </td>
                         <td className="px-4 py-3 text-right">
@@ -450,7 +450,7 @@ export default function McpPage() {
 						  <h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Tool Usage</h3>
 						  <span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Last 30 days</span>
 						</div>
-						<div className="divide-y divide-slate-100 dark:divide-white/10">
+						<div className="divide-y divide-charcoal-blue-100 dark:divide-white/10">
 						  {toolUsage.map((tool) => (
 							<div key={tool.toolName ?? `tool-${tool.callCount ?? 0}`} className="py-3 flex items-center justify-between">
 							  <div>
@@ -473,7 +473,7 @@ export default function McpPage() {
 						  <h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Token Usage</h3>
 						  <span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Most recent activity</span>
 						</div>
-						<div className="divide-y divide-slate-100 dark:divide-white/10">
+						<div className="divide-y divide-charcoal-blue-100 dark:divide-white/10">
 						  {tokenUsage.map((token) => (
 							<div key={token.tokenId ?? token.tokenName ?? "unknown-token"} className="py-3 flex items-center justify-between">
 							  <div>

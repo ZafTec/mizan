@@ -110,7 +110,7 @@ export default function ShoppingListPage() {
                 </>
               )}
             </button>
-	            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+	            <label className="flex items-center gap-2 text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300">
 	              <input
 	                type="checkbox"
                 checked={showCompleted}
@@ -151,7 +151,7 @@ export default function ShoppingListPage() {
 	                  {displayedItems.map((item) => (
 	                    <li
 	                      key={item.id}
-	                      className="flex items-center gap-3 rounded-lg p-2 transition hover:bg-slate-50 dark:hover:bg-slate-900/60"
+	                      className="flex items-center gap-3 rounded-lg p-2 transition hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-900/60"
 	                    >
                     <input
                       type="checkbox"
@@ -172,13 +172,13 @@ export default function ShoppingListPage() {
               </ul>
             )}
 
-	            <div className="mt-6 border-t border-slate-200 pt-4 dark:border-white/10">
+	            <div className="mt-6 border-t border-charcoal-blue-200 pt-4 dark:border-white/10">
 	              <div className="flex justify-between items-center">
 	                <div>
 	                  <span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 	                    {allItems.length} total items
 	                  </span>
-	                  <span className="mx-2 text-slate-300 dark:text-slate-600">|</span>
+	                  <span className="mx-2 text-charcoal-blue-300 dark:text-charcoal-blue-600">|</span>
 	                  <span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 	                    {allItems.filter(item => item.isChecked).length} checked off
 	                  </span>

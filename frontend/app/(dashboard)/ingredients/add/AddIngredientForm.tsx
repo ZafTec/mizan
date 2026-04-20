@@ -64,12 +64,12 @@ export default function AddIngredientForm() {
 	return (
 		<div className="mx-auto max-w-3xl space-y-6">
 			<div className="flex items-center gap-4">
-				<Link href="/ingredients" className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:border-white/10 dark:bg-slate-950/75 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100">
+				<Link href="/ingredients" className="flex h-10 w-10 items-center justify-center rounded-xl border border-charcoal-blue-200 bg-white text-charcoal-blue-600 transition-colors hover:bg-charcoal-blue-100 hover:text-charcoal-blue-900 dark:border-white/10 dark:bg-charcoal-blue-950/75 dark:text-charcoal-blue-300 dark:hover:bg-charcoal-blue-900 dark:hover:text-charcoal-blue-100">
 					<i className="ri-arrow-left-line text-xl" />
 				</Link>
 				<div>
 					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Add Ingredient</h1>
-					<p className="text-slate-600 dark:text-slate-400">Add a new ingredient to the database</p>
+					<p className="text-charcoal-blue-600 dark:text-charcoal-blue-400">Add a new ingredient to the database</p>
 				</div>
 			</div>
 
@@ -150,7 +150,7 @@ export default function AddIngredientForm() {
 						<div>
 							<label htmlFor="servingSize" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="h-2 w-2 rounded-sm bg-slate-400 dark:bg-slate-500" />
+									<span className="h-2 w-2 rounded-sm bg-charcoal-blue-300 dark:bg-charcoal-blue-500" />
 									Serving Size (g)
 								</span>
 							</label>

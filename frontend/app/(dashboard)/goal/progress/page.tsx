@@ -81,12 +81,12 @@ export default function LogProgress() {
       {/* Quick Tips */}
 		<div className="card p-6 bg-white/70 dark:bg-charcoal-blue-950/60">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 rounded-xl bg-white dark:bg-charcoal-blue-900 flex items-center justify-center shrink-0">
             <i className="ri-lightbulb-line text-xl text-brand-600 dark:text-brand-400" />
           </div>
           <div>
             <h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-1">Pro Tips</h3>
-            <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
+            <ul className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 space-y-1">
               <li>• Track your meals throughout the day for accuracy</li>
               <li>• Use the meal diary to calculate totals automatically</li>
               <li>• Add notes about how you felt or what worked well</li>

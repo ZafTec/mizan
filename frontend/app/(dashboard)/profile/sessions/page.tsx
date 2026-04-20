@@ -174,7 +174,7 @@ export default function ProfileSessionsPage() {
       <div className="space-y-4">
 	        {activeSessions.length === 0 ? (
 	          <div className="card p-12 text-center">
-	            <i className="ri-lock-line mb-4 text-6xl text-slate-300 dark:text-slate-600" />
+	            <i className="ri-lock-line mb-4 text-6xl text-charcoal-blue-300 dark:text-charcoal-blue-600" />
 	            <h2 className="mb-2 text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 	              No Active Sessions
 	            </h2>

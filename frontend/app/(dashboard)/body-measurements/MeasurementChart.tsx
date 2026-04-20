@@ -103,8 +103,8 @@ function TimeRangePicker({ range, onChange }: { range: TimeRange; onChange: (r: 
                     onClick={() => onChange(r.value)}
                     className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                         range === r.value
-                            ? "bg-white dark:bg-slate-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
-                            : "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-slate-700 dark:hover:text-slate-300"
+                            ? "bg-white dark:bg-charcoal-blue-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
+                            : "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-charcoal-blue-700 dark:hover:text-charcoal-blue-300"
                     }`}
                 >
                     {r.label}
@@ -261,7 +261,7 @@ function ToggleGroup({
                         className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all border ${
                             on
                                 ? "border-transparent"
-                                : "bg-white dark:bg-slate-900 text-charcoal-blue-500 dark:text-charcoal-blue-400 border-slate-200 dark:border-slate-700"
+                                : "bg-white dark:bg-charcoal-blue-900 text-charcoal-blue-500 dark:text-charcoal-blue-400 border-charcoal-blue-200 dark:border-charcoal-blue-800"
                         }`}
                         style={on ? {
                             backgroundColor: `color-mix(in oklab, ${s.color} 16%, var(--card))`,
@@ -357,8 +357,8 @@ export default function MeasurementChart({ measurements, goalHistory = [] }: { m
                         onClick={() => setTab("composition")}
                         className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
                             tab === "composition"
-                                ? "bg-white dark:bg-slate-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
-                                : "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-slate-700 dark:hover:text-slate-300"
+                                ? "bg-white dark:bg-charcoal-blue-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
+                                : "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-charcoal-blue-700 dark:hover:text-charcoal-blue-300"
                         }`}
                     >
                         Body Composition
@@ -367,8 +367,8 @@ export default function MeasurementChart({ measurements, goalHistory = [] }: { m
                         onClick={() => setTab("circumference")}
                         className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
                             tab === "circumference"
-                                ? "bg-white dark:bg-slate-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
-                                : "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-slate-700 dark:hover:text-slate-300"
+                                ? "bg-white dark:bg-charcoal-blue-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
+                                : "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-charcoal-blue-700 dark:hover:text-charcoal-blue-300"
                         }`}
                     >
                         Circumference

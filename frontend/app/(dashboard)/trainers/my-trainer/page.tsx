@@ -80,11 +80,11 @@ export default function MyTrainerPage() {
 				</div>
 
 				<div className="card p-12 text-center">
-					<i className="ri-user-heart-line text-6xl text-slate-300 mb-4" />
-					<h3 className="text-lg font-semibold text-slate-900 mb-2">
+					<i className="ri-user-heart-line text-6xl text-charcoal-blue-300 mb-4" />
+					<h3 className="text-lg font-semibold text-charcoal-blue-900 mb-2">
 						No Active Trainer
 					</h3>
-					<p className="text-slate-500 mb-6">
+					<p className="text-charcoal-blue-500 mb-6">
 						You don't have an active trainer relationship yet
 					</p>
 					<Link href="/trainers" className="btn-primary inline-flex items-center gap-2">
@@ -101,8 +101,8 @@ export default function MyTrainerPage() {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-bold text-slate-900">My Trainer</h1>
-					<p className="text-slate-500 mt-1">Your current trainer relationship</p>
+					<h1 className="text-2xl font-bold text-charcoal-blue-900">My Trainer</h1>
+					<p className="text-charcoal-blue-500 mt-1">Your current trainer relationship</p>
 				</div>
 				<Link href="/profile" className="btn-secondary">
 					<i className="ri-arrow-left-line" />
@@ -131,16 +131,16 @@ export default function MyTrainerPage() {
 						)}
 					</div>
 					<div className="text-center sm:text-left flex-1">
-						<h2 className="text-xl font-bold text-slate-900">
+						<h2 className="text-xl font-bold text-charcoal-blue-900">
 							{trainer.trainerName || trainer.trainerEmail?.split("@")[0]}
 						</h2>
-						<p className="text-slate-500">{trainer.trainerEmail}</p>
+						<p className="text-charcoal-blue-500">{trainer.trainerEmail}</p>
 						<div className="flex items-center gap-2 mt-2 justify-center sm:justify-start">
 							<span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-sm font-medium">
 								<i className="ri-checkbox-circle-line" />
 								Active
 							</span>
-							<span className="text-sm text-slate-500">
+							<span className="text-sm text-charcoal-blue-500">
 								Since {trainer.startedAt ? new Date(trainer.startedAt).toLocaleDateString() : "Unknown date"}
 							</span>
 						</div>
@@ -148,70 +148,70 @@ export default function MyTrainerPage() {
 				</div>
 
 				{/* Permissions */}
-				<div className="border-t border-slate-100 pt-6">
-					<h3 className="font-semibold text-slate-900 mb-4">
+				<div className="border-t border-charcoal-blue-100 pt-6">
+					<h3 className="font-semibold text-charcoal-blue-900 mb-4">
 						What your trainer can access
 					</h3>
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-						<div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
+						<div className="flex items-center gap-3 p-3 rounded-xl bg-charcoal-blue-50">
 							<div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
 								trainer.canViewNutrition
 									? "bg-emerald-100 text-emerald-600"
-									: "bg-slate-200 text-slate-400"
+									: "bg-charcoal-blue-200 text-charcoal-blue-400"
 							}`}>
 								<i className="ri-restaurant-2-line text-lg" />
 							</div>
 							<div>
-								<p className="font-medium text-slate-900">Nutrition Data</p>
-								<p className="text-xs text-slate-500">
+								<p className="font-medium text-charcoal-blue-900">Nutrition Data</p>
+								<p className="text-xs text-charcoal-blue-500">
 									{trainer.canViewNutrition ? "Allowed" : "Not allowed"}
 								</p>
 							</div>
 						</div>
 
-						<div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
+						<div className="flex items-center gap-3 p-3 rounded-xl bg-charcoal-blue-50">
 							<div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
 								trainer.canViewWorkouts
 									? "bg-emerald-100 text-emerald-600"
-									: "bg-slate-200 text-slate-400"
+									: "bg-charcoal-blue-200 text-charcoal-blue-400"
 							}`}>
 								<i className="ri-run-line text-lg" />
 							</div>
 							<div>
-								<p className="font-medium text-slate-900">Workout Data</p>
-								<p className="text-xs text-slate-500">
+								<p className="font-medium text-charcoal-blue-900">Workout Data</p>
+								<p className="text-xs text-charcoal-blue-500">
 									{trainer.canViewWorkouts ? "Allowed" : "Not allowed"}
 								</p>
 							</div>
 						</div>
 
-						<div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
+						<div className="flex items-center gap-3 p-3 rounded-xl bg-charcoal-blue-50">
 							<div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
 								trainer.canViewMeasurements
 									? "bg-emerald-100 text-emerald-600"
-									: "bg-slate-200 text-slate-400"
+									: "bg-charcoal-blue-200 text-charcoal-blue-400"
 							}`}>
 								<i className="ri-ruler-line text-lg" />
 							</div>
 							<div>
-								<p className="font-medium text-slate-900">Body Measurements</p>
-								<p className="text-xs text-slate-500">
+								<p className="font-medium text-charcoal-blue-900">Body Measurements</p>
+								<p className="text-xs text-charcoal-blue-500">
 									{trainer.canViewMeasurements ? "Allowed" : "Not allowed"}
 								</p>
 							</div>
 						</div>
 
-						<div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
+						<div className="flex items-center gap-3 p-3 rounded-xl bg-charcoal-blue-50">
 							<div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
 								trainer.canMessage
 									? "bg-emerald-100 text-emerald-600"
-									: "bg-slate-200 text-slate-400"
+									: "bg-charcoal-blue-200 text-charcoal-blue-400"
 							}`}>
 								<i className="ri-message-3-line text-lg" />
 							</div>
 							<div>
-								<p className="font-medium text-slate-900">Direct Messaging</p>
-								<p className="text-xs text-slate-500">
+								<p className="font-medium text-charcoal-blue-900">Direct Messaging</p>
+								<p className="text-xs text-charcoal-blue-500">
 									{trainer.canMessage ? "Allowed" : "Not allowed"}
 								</p>
 							</div>
@@ -222,7 +222,7 @@ export default function MyTrainerPage() {
 
 			{/* Actions */}
 			<div className="card p-6">
-				<h3 className="font-semibold text-slate-900 mb-4">Actions</h3>
+				<h3 className="font-semibold text-charcoal-blue-900 mb-4">Actions</h3>
 				<div className="space-y-3">
 					{trainer.canMessage && (
 						trainer.trainerId ? (

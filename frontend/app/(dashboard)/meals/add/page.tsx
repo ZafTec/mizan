@@ -33,7 +33,7 @@ export default function Page() {
 		<div className="max-w-3xl mx-auto space-y-6">
 			{/* Header */}
 			<div className="flex items-center gap-4">
-				<Link href="/meals" className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 flex items-center justify-center transition-colors">
+				<Link href="/meals" className="w-10 h-10 rounded-xl bg-charcoal-blue-100 hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900 dark:hover:bg-charcoal-blue-800 flex items-center justify-center transition-colors">
 					<i className="ri-arrow-left-line text-xl text-charcoal-blue-600 dark:text-charcoal-blue-300" />
 				</Link>
 				<div>
@@ -190,7 +190,7 @@ export default function Page() {
 				{/* Quick Add from Recipe */}
 				<div className="card p-6 bg-white/70 dark:bg-charcoal-blue-950/60">
 					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-950 flex items-center justify-center">
+						<div className="w-12 h-12 rounded-xl bg-white dark:bg-charcoal-blue-950 flex items-center justify-center">
 							<i className="ri-book-open-line text-xl text-brand-600" />
 						</div>
 						<div className="flex-1">

@@ -258,7 +258,7 @@ export default function Page() {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-4">
-					<Link href="/recipes" className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 transition-colors hover:bg-slate-200 dark:bg-slate-900/75 dark:hover:bg-slate-900">
+					<Link href="/recipes" className="flex h-10 w-10 items-center justify-center rounded-xl bg-charcoal-blue-100 transition-colors hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900/75 dark:hover:bg-charcoal-blue-900">
 						<i className="ri-arrow-left-line text-xl text-charcoal-blue-600 dark:text-charcoal-blue-300" />
 					</Link>
 					<div>
@@ -292,14 +292,14 @@ export default function Page() {
 								<th className="rounded-tr-xl p-3 text-right font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300">Fiber</th>
 							</tr>
 						</thead>
-						<tbody className="divide-y divide-slate-100 dark:divide-white/10">
+						<tbody className="divide-y divide-charcoal-blue-100 dark:divide-white/10">
 							{selectedIngredients.map((ing, idx) => {
 								if (!ing.amount) return null;
 								if (ing.type === "recipe" && ing.subRecipe?.nutrition) {
 									const s = ing.amount;
 									const n = ing.subRecipe.nutrition;
 									return (
-										<tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-900/60">
+										<tr key={idx} className="hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-900/60">
 											<td className="p-3 text-charcoal-blue-900 dark:text-charcoal-blue-100">{ing.subRecipe.title} <span className="text-xs text-brand-500 dark:text-brand-300">(recipe)</span></td>
 											<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">{ing.amount} srv</td>
 											<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">{((n.caloriesPerServing || 0) * s).toFixed(0)}</td>
@@ -313,7 +313,7 @@ export default function Page() {
 								if (!ing.ingredient) return null;
 								const ratio = ing.amount / 100;
 								return (
-									<tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-900/60">
+									<tr key={idx} className="hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-900/60">
 										<td className="p-3 text-charcoal-blue-900 dark:text-charcoal-blue-100">{ing.ingredient.name}</td>
 										<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">{ing.amount}g</td>
 										<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">{((ing.ingredient.caloriesPer100g || 0) * ratio).toFixed(0)}</td>
@@ -372,16 +372,16 @@ export default function Page() {
 											e.preventDefault();
 											open();
 										}}
-									className="group flex h-24 w-24 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 transition-colors hover:border-brand-400 hover:bg-brand-50 dark:border-white/10 dark:bg-slate-900/75 dark:hover:border-brand-400 dark:hover:bg-brand-950/50"
+									className="group flex h-24 w-24 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-charcoal-blue-300 bg-charcoal-blue-50 transition-colors hover:border-brand-400 hover:bg-brand-50 dark:border-white/10 dark:bg-charcoal-blue-900/75 dark:hover:border-brand-400 dark:hover:bg-brand-950/50"
 								>
-										<i className="ri-image-add-line text-2xl text-slate-400 group-hover:text-brand-500 dark:text-slate-500 dark:group-hover:text-brand-300" />
-										<span className="mt-1 text-xs text-slate-400 group-hover:text-brand-500 dark:text-slate-500 dark:group-hover:text-brand-300">Add</span>
+										<i className="ri-image-add-line text-2xl text-charcoal-blue-400 group-hover:text-brand-500 dark:text-charcoal-blue-500 dark:group-hover:text-brand-300" />
+										<span className="mt-1 text-xs text-charcoal-blue-400 group-hover:text-brand-500 dark:text-charcoal-blue-500 dark:group-hover:text-brand-300">Add</span>
 									</button>
 									{images.map((image, index) => {
 										if (typeof image !== 'string' || index >= MAX_RECIPE_IMAGES_TO_PREVIEW) return null;
 										return (
 											<div key={index} className="relative h-24 w-24">
-												<Image src={image} alt="Recipe" fill className="rounded-2xl border-2 border-slate-200 object-cover dark:border-white/10" />
+												<Image src={image} alt="Recipe" fill className="rounded-2xl border-2 border-charcoal-blue-200 object-cover dark:border-white/10" />
 												<button
 													type="button"
 													onClick={() => setImages(images.filter((_, i) => i !== index))}
@@ -393,7 +393,7 @@ export default function Page() {
 										);
 									})}
 									{images.length > MAX_RECIPE_IMAGES_TO_PREVIEW && (
-										<div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-900/80">
+										<div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60">
 											<span className="font-medium text-charcoal-blue-500 dark:text-charcoal-blue-400">+{images.length - MAX_RECIPE_IMAGES_TO_PREVIEW}</span>
 										</div>
 									)}
@@ -444,11 +444,11 @@ export default function Page() {
 							<div key={index} className="space-y-2">
 								<div className="flex gap-1">
 									<button type="button" onClick={() => handleIngredientTypeToggle(index, "food")}
-										className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${ing.type === "food" ? "bg-brand-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-slate-900"}`}>
+										className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${ing.type === "food" ? "bg-brand-500 text-white" : "bg-charcoal-blue-100 text-charcoal-blue-600 hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900/60 dark:text-charcoal-blue-300 dark:hover:bg-charcoal-blue-900"}`}>
 										Food
 									</button>
 									<button type="button" onClick={() => handleIngredientTypeToggle(index, "recipe")}
-										className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${ing.type === "recipe" ? "bg-brand-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-slate-900"}`}>
+										className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${ing.type === "recipe" ? "bg-brand-500 text-white" : "bg-charcoal-blue-100 text-charcoal-blue-600 hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900/60 dark:text-charcoal-blue-300 dark:hover:bg-charcoal-blue-900"}`}>
 										Recipe
 									</button>
 								</div>
@@ -463,14 +463,14 @@ export default function Page() {
 												className="input w-full"
 											/>
 											{activeDropdownIndex === index && (
-												<div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg dark:border-white/10 dark:bg-slate-950">
+												<div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-charcoal-blue-200 bg-white shadow-lg dark:border-white/10 dark:bg-charcoal-blue-950">
 													{ingredientSearch.length > 0 ? (
 														ingredientSearch.map((ingredient) => (
 															<button
 																key={ingredient.id}
 																type="button"
 																onClick={() => handleIngredientSelect(index, ingredient)}
-																className="flex w-full items-center justify-between border-b border-slate-100 p-3 text-left hover:bg-slate-50 last:border-0 dark:border-white/10 dark:hover:bg-slate-900/80"
+																className="flex w-full items-center justify-between border-b border-charcoal-blue-100 p-3 text-left hover:bg-charcoal-blue-50 last:border-0 dark:border-white/10 dark:hover:bg-charcoal-blue-900/80"
 															>
 																<span className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{ingredient.name}</span>
 																<span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{ingredient.caloriesPer100g} kcal/100g</span>
@@ -501,7 +501,7 @@ export default function Page() {
 											min="0"
 											step={ing.type === "recipe" ? "0.25" : "0.1"}
 										/>
-										<span className="whitespace-nowrap rounded-xl bg-slate-100 px-3 py-2.5 text-sm font-medium text-slate-600 dark:bg-slate-900/80 dark:text-slate-300">
+										<span className="whitespace-nowrap rounded-xl bg-charcoal-blue-100 px-3 py-2.5 text-sm font-medium text-charcoal-blue-600 dark:bg-charcoal-blue-900/60 dark:text-charcoal-blue-300">
 											{ing.type === "food" ? "grams" : "servings"}
 										</span>
 										<button
@@ -579,7 +579,7 @@ export default function Page() {
 								<button
 									type="button"
 									onClick={() => setServings(Math.max(1, servings - 1))}
-									className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 transition-colors hover:bg-slate-200 dark:bg-slate-900/80 dark:hover:bg-slate-900"
+									className="flex h-10 w-10 items-center justify-center rounded-xl bg-charcoal-blue-100 transition-colors hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900/60 dark:hover:bg-charcoal-blue-900"
 								>
 									<i className="ri-subtract-line text-charcoal-blue-600 dark:text-charcoal-blue-300" />
 								</button>
@@ -594,7 +594,7 @@ export default function Page() {
 								<button
 									type="button"
 									onClick={() => setServings(servings + 1)}
-									className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 transition-colors hover:bg-slate-200 dark:bg-slate-900/80 dark:hover:bg-slate-900"
+									className="flex h-10 w-10 items-center justify-center rounded-xl bg-charcoal-blue-100 transition-colors hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900/60 dark:hover:bg-charcoal-blue-900"
 								>
 									<i className="ri-add-line text-charcoal-blue-600 dark:text-charcoal-blue-300" />
 								</button>
@@ -673,23 +673,23 @@ export default function Page() {
 					<div className="card p-6 bg-white/70 dark:bg-charcoal-blue-950/60">
 						<h2 className="mb-4 font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Nutrition Summary</h2>
 						<div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-							<div className="rounded-xl bg-white p-3 text-center dark:bg-slate-950/80">
+							<div className="rounded-xl bg-white p-3 text-center dark:bg-charcoal-blue-950/80">
 								<p className="text-2xl font-bold text-orange-600">{totalMacros.calories.toFixed(0)}</p>
 								<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Calories</p>
 							</div>
-							<div className="rounded-xl bg-white p-3 text-center dark:bg-slate-950/80">
+							<div className="rounded-xl bg-white p-3 text-center dark:bg-charcoal-blue-950/80">
 								<p className="text-2xl font-bold text-red-600">{totalMacros.protein.toFixed(1)}g</p>
 								<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Protein</p>
 							</div>
-							<div className="rounded-xl bg-white p-3 text-center dark:bg-slate-950/80">
+							<div className="rounded-xl bg-white p-3 text-center dark:bg-charcoal-blue-950/80">
 								<p className="text-2xl font-bold text-amber-600">{totalMacros.carbs.toFixed(1)}g</p>
 								<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Carbs</p>
 							</div>
-							<div className="rounded-xl bg-white p-3 text-center dark:bg-slate-950/80">
+							<div className="rounded-xl bg-white p-3 text-center dark:bg-charcoal-blue-950/80">
 								<p className="text-2xl font-bold text-yellow-600">{totalMacros.fat.toFixed(1)}g</p>
 								<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Fat</p>
 							</div>
-							<div className="rounded-xl bg-white p-3 text-center dark:bg-slate-950/80">
+							<div className="rounded-xl bg-white p-3 text-center dark:bg-charcoal-blue-950/80">
 								<p className="text-2xl font-bold text-green-600">{totalMacros.fiber.toFixed(1)}g</p>
 								<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Fiber</p>
 							</div>

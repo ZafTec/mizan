@@ -84,7 +84,7 @@ export default function RecipeIngredientSearch({
 				className="input w-full"
 			/>
 			{isOpen && results.length > 0 && (
-				<div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+				<div className="absolute z-50 w-full mt-1 bg-white dark:bg-charcoal-blue-900 border border-charcoal-blue-200 dark:border-charcoal-blue-800 rounded-xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
 					{results.map((recipe) => (
 						<button
 							key={recipe.id}
@@ -93,7 +93,7 @@ export default function RecipeIngredientSearch({
 								onSelect(recipe);
 								setIsOpen(false);
 							}}
-							className="w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 last:border-0"
+							className="w-full p-3 text-left hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-800 flex items-center justify-between border-b border-charcoal-blue-100 dark:border-white/10 last:border-0"
 						>
 							<span className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100 truncate">
 								{recipe.title}

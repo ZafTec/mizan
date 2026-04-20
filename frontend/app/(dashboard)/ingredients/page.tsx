@@ -48,7 +48,7 @@ export default async function Page(
 				<div className="overflow-x-auto">
 					<table className="w-full">
 						<thead>
-							<tr className="border-b border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-slate-900/85">
+							<tr className="border-b border-charcoal-blue-200 bg-charcoal-blue-50 dark:border-white/10 dark:bg-charcoal-blue-900/85">
 								<SortableHeader sortKey="name" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="w-52 px-6 py-4 text-left text-sm font-semibold text-charcoal-blue-600 dark:text-charcoal-blue-300">Name</SortableHeader>
 								<SortableHeader sortKey="calories" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-4 py-4 text-center text-sm font-semibold text-charcoal-blue-600 dark:text-charcoal-blue-300">Calories</SortableHeader>
 								<SortableHeader sortKey="protein" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-4 py-4 text-center text-sm font-semibold text-charcoal-blue-600 dark:text-charcoal-blue-300">Protein</SortableHeader>
@@ -58,11 +58,11 @@ export default async function Page(
 								<SortableHeader sortKey="proteinCalorieRatio" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-4 py-4 text-center text-sm font-semibold text-violet-600 dark:text-violet-300">P/Cal</SortableHeader>
 							</tr>
 						</thead>
-						<tbody className="divide-y divide-slate-100 dark:divide-white/10">
+						<tbody className="divide-y divide-charcoal-blue-100 dark:divide-white/10">
 							{!ingredients || ingredients.length === 0 ? (
 								<tr>
 									<td colSpan={7} className="px-6 py-16 text-center">
-										<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-900/80">
+										<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60">
 											<i className="ri-leaf-line text-3xl text-charcoal-blue-400 dark:text-charcoal-blue-500" />
 										</div>
 										<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No ingredients found</h3>
@@ -73,12 +73,12 @@ export default async function Page(
 								ingredients.map((ingredient) => (
 									<tr
 										key={ingredient.id}
-										className="group transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/60"
+										className="group transition-colors hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-900/60"
 									>
 										<td className="px-6 py-4">
 											<Link
 												href={`/ingredients/${ingredient.id}`}
-												className="font-medium capitalize text-slate-900 transition-colors group-hover:text-brand-600 dark:text-slate-100 dark:group-hover:text-brand-300"
+												className="font-medium capitalize text-charcoal-blue-900 transition-colors group-hover:text-brand-600 dark:text-charcoal-blue-100 dark:group-hover:text-brand-300"
 											>
 												{ingredient.name}
 											</Link>

@@ -20,7 +20,7 @@ const testimonials = [
 		role: "Certified trainer",
 		quote: "I manage all my clients through Mizan. The real-time chat and goal tracking make remote coaching seamless.",
 		initials: "AT",
-		gradient: "bg-slate-900 dark:bg-slate-100 dark:text-slate-900",
+		gradient: "bg-charcoal-blue-900 dark:bg-charcoal-blue-100 dark:text-charcoal-blue-900",
 	},
 ];
 
@@ -53,7 +53,7 @@ export function TestimonialSection() {
 								<AnimatedIcon name="circleCheck" size={16} aria-hidden="true" />
 							</span>
 						</div>
-						<p className="text-sm leading-relaxed italic text-slate-700 dark:text-slate-400">&ldquo;{t.quote}&rdquo;</p>
+						<p className="text-sm leading-relaxed italic text-charcoal-blue-700 dark:text-charcoal-blue-400">&ldquo;{t.quote}&rdquo;</p>
 					</div>
 				))}
 			</div>

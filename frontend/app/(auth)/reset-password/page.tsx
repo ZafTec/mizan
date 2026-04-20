@@ -197,7 +197,7 @@ export default function ResetPasswordPage() {
 							<div className="text-center">
 								<Link
 									href="/login"
-									className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 inline-flex items-center gap-1"
+									className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 hover:text-charcoal-blue-900 dark:hover:text-charcoal-blue-100 inline-flex items-center gap-1"
 								>
 									<i className="ri-arrow-left-line" />
 									Back to login

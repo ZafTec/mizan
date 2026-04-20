@@ -69,9 +69,9 @@ export default function LiveAuditLog() {
 
     return (
         <div className="bg-card rounded-lg border shadow-sm flex flex-col h-full overflow-hidden">
-            <div className="p-4 border-b flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+            <div className="p-4 border-b flex items-center justify-between bg-charcoal-blue-50/50 dark:bg-charcoal-blue-800/50">
                 <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-sm ${refreshInterval > 0 ? 'bg-green-500 animate-pulse' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                    <div className={`w-2 h-2 rounded-sm ${refreshInterval > 0 ? 'bg-green-500 animate-pulse' : 'bg-charcoal-blue-300 dark:bg-charcoal-blue-700'}`} />
                     <h2 className="text-lg font-semibold">Live Activity</h2>
                 </div>
 
@@ -87,7 +87,7 @@ export default function LiveAuditLog() {
                                 key={interval.value}
                                 onClick={() => setRefreshInterval(interval.value)}
                                 className={`px-2 py-1 text-xs rounded-sm transition-all ${refreshInterval === interval.value
-                                        ? "bg-white dark:bg-slate-900 text-primary shadow-sm font-medium"
+                                        ? "bg-white dark:bg-charcoal-blue-900 text-primary shadow-sm font-medium"
                                         : "text-muted-foreground hover:text-foreground"
                                     }`}
                             >
@@ -98,7 +98,7 @@ export default function LiveAuditLog() {
                     <button
                         onClick={() => loadLogs()}
                         disabled={isLoading}
-                        className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors disabled:opacity-50"
+                        className="p-1.5 hover:bg-charcoal-blue-200 dark:hover:bg-charcoal-blue-700 rounded-md transition-colors disabled:opacity-50"
                         title="Refresh Now"
                     >
                         <i className={`ri-refresh-line ${isLoading ? 'animate-spin' : ''}`} />
@@ -114,7 +114,7 @@ export default function LiveAuditLog() {
                 ) : (
                     <div className="divide-y">
                         {logs.map((log) => (
-                            <div key={log.id} className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group">
+                            <div key={log.id} className="p-3 hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-800 transition-colors group">
                                 <div className="flex justify-between items-start mb-1">
                                     <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-400 uppercase tracking-wider">
                                         {log.action.replace("Command", "")}
@@ -141,7 +141,7 @@ export default function LiveAuditLog() {
                 )}
             </div>
 
-            <div className="p-3 border-t bg-slate-50/30 dark:bg-slate-800/30 flex justify-between items-center">
+            <div className="p-3 border-t bg-charcoal-blue-50/30 dark:bg-charcoal-blue-800/30 flex justify-between items-center">
                 <span className="text-[10px] text-muted-foreground">
                     Last updated: {lastUpdated.toLocaleTimeString()}
                 </span>

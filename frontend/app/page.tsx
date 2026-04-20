@@ -13,9 +13,9 @@ import { CTASection } from "@/components/Landing/CTASection";
 export const dynamic = 'force-dynamic';
 
 const sectionHeadingClass = "text-2xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-3xl";
-const sectionBodyClass = "mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300";
+const sectionBodyClass = "mt-2 text-sm leading-6 text-charcoal-blue-700 dark:text-charcoal-blue-300";
 const cardTitleClass = "mb-1 font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50";
-const cardBodyClass = "text-sm leading-6 text-slate-700 dark:text-slate-300";
+const cardBodyClass = "text-sm leading-6 text-charcoal-blue-700 dark:text-charcoal-blue-300";
 
 const quickActions: Array<{
 	href: string;
@@ -43,7 +43,7 @@ const quickActions: Array<{
 		title: "AI Coach",
 		description: "Get suggestions that match goals, habits, and constraints.",
 		icon: "brain",
-		iconClass: "bg-slate-900 dark:bg-slate-100 dark:text-slate-900",
+		iconClass: "bg-charcoal-blue-900 dark:bg-charcoal-blue-100 dark:text-charcoal-blue-900",
 	},
 ];
 
@@ -61,7 +61,7 @@ export default async function Home() {
 			{!user && (
 				<div
 					data-testid="hero-section"
-					className="surface-panel relative overflow-hidden rounded-[34px] border-slate-900 bg-slate-900 p-8 sm:p-10 lg:p-12 dark:border-white/10 dark:bg-slate-950"
+					className="surface-panel relative overflow-hidden rounded-[34px] border-charcoal-blue-900 bg-charcoal-blue-900 p-8 sm:p-10 lg:p-12 dark:border-white/10 dark:bg-charcoal-blue-950"
 				>
 					<div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
 					<div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-brand-500/10 blur-3xl" />
@@ -106,7 +106,7 @@ export default async function Home() {
 				{quickActions.map((action, index) => (
 					<Link key={action.href} href={action.href} className="card-hover stagger-item group p-6 sm:p-7" style={{ animationDelay: `${index * 90}ms` }}>
 						<div className="flex items-start gap-4">
-							<div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${action.iconClass} text-white shadow-lg shadow-slate-950/80 dark:shadow-slate-950/10`}>
+							<div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${action.iconClass} text-white shadow-lg shadow-charcoal-blue-950/80 dark:shadow-charcoal-blue-950/10`}>
 								<AnimatedIcon name={action.icon} size={20} aria-hidden="true" />
 							</div>
 							<div className="space-y-1">
@@ -138,7 +138,7 @@ export default async function Home() {
 							<Link
 								key={recipe._id.toString()}
 								href={`/recipes/${recipe._id}`}
-								className="group relative overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50 shadow-lg shadow-slate-950/5 dark:border-white/10 dark:bg-slate-900/80"
+								className="group relative overflow-hidden rounded-[24px] border border-charcoal-blue-200 bg-charcoal-blue-50 shadow-lg shadow-charcoal-blue-950/5 dark:border-white/10 dark:bg-charcoal-blue-900/60"
 							>
 								<Image
 									src={recipe.imageUrl || placeHolderImage}
@@ -164,8 +164,8 @@ export default async function Home() {
 							</Link>
 						))
 					) : (
-						<div className="col-span-full py-12 text-center text-slate-700 dark:text-slate-300">
-							<i className="ri-restaurant-line mb-2 block text-4xl text-slate-400 dark:text-slate-500" aria-hidden="true" />
+						<div className="col-span-full py-12 text-center text-charcoal-blue-700 dark:text-charcoal-blue-300">
+							<i className="ri-restaurant-line mb-2 block text-4xl text-charcoal-blue-400 dark:text-charcoal-blue-500" aria-hidden="true" />
 							<p>No recipes yet. Be the first to add one!</p>
 						</div>
 					)}

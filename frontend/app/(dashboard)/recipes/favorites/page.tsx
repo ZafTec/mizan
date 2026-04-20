@@ -45,9 +45,9 @@ export default async function FavoritesPage({
 							<Link
 								key={recipe.id}
 								href={`/recipes/${recipe.id}`}
-								className="group flex flex-col sm:flex-row bg-slate-50 hover:bg-slate-100 rounded-2xl overflow-hidden transition-all duration-300"
+								className="group flex flex-col sm:flex-row bg-charcoal-blue-50 hover:bg-charcoal-blue-100 rounded-2xl overflow-hidden transition-all duration-300"
 							>
-								<div className="sm:w-48 h-48 sm:h-auto relative bg-slate-200">
+								<div className="sm:w-48 h-48 sm:h-auto relative bg-charcoal-blue-200">
 									<Image
 										src={recipe.imageUrl || placeHolderImage}
 										alt={recipe.title || "Recipe"}
@@ -59,12 +59,12 @@ export default async function FavoritesPage({
 									<div className="flex justify-between items-start gap-4">
 										<div className="flex-1">
 											<div className="flex items-center gap-2 mb-2">
-												<h3 className="text-lg font-semibold text-slate-900 group-hover:text-brand-600 transition-colors">
+												<h3 className="text-lg font-semibold text-charcoal-blue-900 group-hover:text-brand-600 transition-colors">
 													{recipe.title}
 												</h3>
 												<i className="ri-heart-3-fill text-rose-500" />
 											</div>
-											<p className="text-slate-600 text-sm line-clamp-2 mb-4">
+											<p className="text-charcoal-blue-600 text-sm line-clamp-2 mb-4">
 												{recipe.description || "A delicious recipe"}
 											</p>
 										</div>
@@ -96,8 +96,8 @@ export default async function FavoritesPage({
 						<div className="w-16 h-16 rounded-2xl bg-rose-100 flex items-center justify-center mx-auto mb-4">
 							<i className="ri-heart-3-line text-3xl text-rose-400" />
 						</div>
-						<h3 className="text-lg font-semibold text-slate-900 mb-2">No favorites yet</h3>
-						<p className="text-slate-500 mb-6">Save recipes you love by clicking the heart icon</p>
+						<h3 className="text-lg font-semibold text-charcoal-blue-900 mb-2">No favorites yet</h3>
+						<p className="text-charcoal-blue-500 mb-6">Save recipes you love by clicking the heart icon</p>
 						<Link href="/recipes" className="btn-primary">
 							<i className="ri-restaurant-line" />
 							Browse Recipes

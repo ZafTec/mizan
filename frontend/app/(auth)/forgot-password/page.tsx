@@ -63,8 +63,8 @@ export default function ForgotPasswordPage() {
 								</h3>
 								<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-sm">
 									{mode === "reset"
-										? <>We sent a password reset link to <span className="font-medium text-slate-700 dark:text-slate-300">{email}</span></>
-										: <>We sent a sign-in link to <span className="font-medium text-slate-700 dark:text-slate-300">{email}</span>. Click it to sign in instantly — no password needed.</>
+										? <>We sent a password reset link to <span className="font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300">{email}</span></>
+										: <>We sent a sign-in link to <span className="font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300">{email}</span>. Click it to sign in instantly — no password needed.</>
 									}
 								</p>
 							</div>
@@ -107,14 +107,14 @@ export default function ForgotPasswordPage() {
 				{/* Form Card */}
 				<div className="card p-6 sm:p-8 space-y-5">
 					{/* Mode toggle */}
-					<div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+					<div className="grid grid-cols-2 gap-1 p-1 bg-charcoal-blue-100 dark:bg-charcoal-blue-900 rounded-xl">
 						<button
 							type="button"
 							onClick={() => { setMode("reset"); setError(""); }}
 							className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
 								mode === "reset"
-									? "bg-white dark:bg-slate-700 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
-									: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-slate-700 dark:hover:text-slate-200"
+									? "bg-white dark:bg-charcoal-blue-700 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
+									: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-charcoal-blue-700 dark:hover:text-charcoal-blue-200"
 							}`}
 						>
 							<i className="ri-lock-2-line mr-1.5" />
@@ -125,8 +125,8 @@ export default function ForgotPasswordPage() {
 							onClick={() => { setMode("magic"); setError(""); }}
 							className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
 								mode === "magic"
-									? "bg-white dark:bg-slate-700 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
-									: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-slate-700 dark:hover:text-slate-200"
+									? "bg-white dark:bg-charcoal-blue-700 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
+									: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-charcoal-blue-700 dark:hover:text-charcoal-blue-200"
 							}`}
 						>
 							<i className="ri-magic-line mr-1.5" />
@@ -190,7 +190,7 @@ export default function ForgotPasswordPage() {
 						<div className="text-center">
 							<Link
 								href="/login"
-								className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 inline-flex items-center gap-1"
+								className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 hover:text-charcoal-blue-900 dark:hover:text-charcoal-blue-100 inline-flex items-center gap-1"
 							>
 								<i className="ri-arrow-left-line" />
 								Back to login

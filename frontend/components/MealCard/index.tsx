@@ -57,7 +57,7 @@ export default function MealCard({ meal }: MealCardProps) {
 	}
 
 	return (
-		<div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-4 min-w-fit relative">
+		<div className="bg-white dark:bg-charcoal-blue-900 rounded-lg shadow-md p-4 min-w-fit relative">
 			<div className="flex flex-row justify-between items-center">
 				<h2 className="text-lg font-semibold">{meal.name}</h2>
 				<button
@@ -93,7 +93,7 @@ export default function MealCard({ meal }: MealCardProps) {
 		{/* Confirmation popup */}
 		{showConfirm && (
 			<div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
-				<div ref={popupRef} className="bg-white dark:bg-slate-900 p-6 rounded shadow-lg max-w-sm w-full">
+				<div ref={popupRef} className="bg-white dark:bg-charcoal-blue-900 p-6 rounded shadow-lg max-w-sm w-full">
 					<p className="text-gray-800 dark:text-gray-200 text-lg font-semibold">
 						Confirm Deletion
 					</p>

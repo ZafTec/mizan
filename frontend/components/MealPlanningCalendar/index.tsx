@@ -117,13 +117,13 @@ export default function MealPlanningCalendar({
 	});
 
 	return (
-		<div className="bg-white dark:bg-slate-900 rounded-lg shadow p-4 w-full">
+		<div className="bg-white dark:bg-charcoal-blue-900 rounded-lg shadow p-4 w-full">
 			<div className="flex justify-between items-center mb-4">
 				<h2 className="text-xl font-bold">Meal Planning Calendar</h2>
 				<div className="flex items-center space-x-2">
 					<button 
 						onClick={() => navigateWeek('prev')}
-						className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"
+						className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-charcoal-blue-800"
 						disabled={deleting}
 					>
 						<i className="ri-arrow-left-s-line"></i>
@@ -133,7 +133,7 @@ export default function MealPlanningCalendar({
 					</span>
 					<button 
 						onClick={() => navigateWeek('next')}
-						className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"
+						className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-charcoal-blue-800"
 						disabled={deleting}
 					>
 						<i className="ri-arrow-right-s-line"></i>
@@ -185,7 +185,7 @@ export default function MealPlanningCalendar({
 					return (
 						<div 
 							key={`meals-${format(day, 'yyyy-MM-dd')}`} 
-							className="border dark:border-slate-700 rounded-lg p-2 min-h-50"
+							className="border dark:border-charcoal-blue-800 rounded-lg p-2 min-h-50"
 						>
 							<div className="flex flex-col h-full">
 								{/* Actual meals */}
@@ -197,7 +197,7 @@ export default function MealPlanningCalendar({
 										</div>
 										<div className="max-h-24 overflow-y-auto mt-1">
 											{dayMeals.meals.map((meal) => (
-												<div key={meal._id.toString()} className="text-xs bg-gray-50 dark:bg-slate-800 p-1 rounded mb-1">
+												<div key={meal._id.toString()} className="text-xs bg-gray-50 dark:bg-charcoal-blue-900 p-1 rounded mb-1">
 													{meal.name}
 												</div>
 											))}
@@ -256,7 +256,7 @@ export default function MealPlanningCalendar({
 			</div>
 
 			{/* Shopping list section */}
-			<div className="mt-6 border-t dark:border-slate-700 pt-4">
+			<div className="mt-6 border-t dark:border-charcoal-blue-800 pt-4">
 				<div className="flex justify-between items-center mb-3">
 					<h3 className="font-bold">Weekly Ingredients</h3>
 					<Link 
@@ -273,7 +273,7 @@ export default function MealPlanningCalendar({
 					) : weeklyIngredients.length > 0 ? (
 						<div className="mt-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
 							{weeklyIngredients.map(category => (
-								<div key={category.category} className="bg-gray-50 dark:bg-slate-800 rounded p-2">
+								<div key={category.category} className="bg-gray-50 dark:bg-charcoal-blue-900 rounded p-2">
 									<div className="font-medium">{category.category}</div>
 									<ul className="list-disc list-inside text-xs">
 										{category.items.map((item, index) => (

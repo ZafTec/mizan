@@ -171,9 +171,9 @@ export default async function RecipesPage({
 							<Link
 								key={recipe.id}
 								href={`/recipes/${recipe.id}`}
-								className="group flex flex-col sm:flex-row bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 rounded-2xl overflow-hidden transition-all duration-300"
+								className="group flex flex-col sm:flex-row bg-charcoal-blue-50 hover:bg-charcoal-blue-100 dark:bg-charcoal-blue-900 dark:hover:bg-charcoal-blue-800 rounded-2xl overflow-hidden transition-all duration-300"
 							>
-								<div className="sm:w-48 h-48 sm:h-auto relative bg-slate-200 dark:bg-slate-800">
+								<div className="sm:w-48 h-48 sm:h-auto relative bg-charcoal-blue-200 dark:bg-charcoal-blue-900">
 									<Image
 										src={recipe.imageUrl || placeHolderImage}
 										alt={recipe.title || "Recipe"}
@@ -249,8 +249,8 @@ export default async function RecipesPage({
 			{/* Create Recipe CTA */}
 			{user && (
 				<div className="card overflow-hidden">
-					<div className="relative p-8 bg-slate-50/90 dark:bg-slate-900/60">
-						<div className="absolute top-0 right-0 w-64 h-64 bg-slate-200/40 dark:bg-slate-800/40 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+					<div className="relative p-8 bg-charcoal-blue-50/90 dark:bg-charcoal-blue-900/60">
+						<div className="absolute top-0 right-0 w-64 h-64 bg-charcoal-blue-200/40 dark:bg-charcoal-blue-800/40 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 						<div className="relative flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
 							<div className="w-16 h-16 rounded-2xl bg-accent-600 flex items-center justify-center shadow-lg shadow-accent-500/30">
 								<i className="ri-restaurant-2-line text-3xl text-white" />

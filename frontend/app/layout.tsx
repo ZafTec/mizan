@@ -34,7 +34,7 @@ async function LayoutContent({
 
 	return (
 		<html lang="en" className={htmlClasses.join(" ")}>
-			<body className="min-h-screen antialiased flex flex-col selection:bg-brand-500/15 selection:text-slate-950 dark:selection:text-white">
+			<body className="min-h-screen antialiased flex flex-col selection:bg-brand-500/15 selection:text-charcoal-blue-900 dark:selection:text-white">
 				<AppearanceSync />
 				<Toaster position="top-right" />
 				<Navbar />
@@ -63,21 +63,21 @@ async function LayoutContent({
 								<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 									&copy; {new Date().getFullYear()} Mizan
 								</p>
-								<span className="hidden text-slate-300 dark:text-slate-600 sm:inline">|</span>
+								<span className="hidden text-charcoal-blue-300 dark:text-charcoal-blue-600 sm:inline">|</span>
 								<a href="/privacy" className="footer-link">
 									Privacy
 								</a>
-								<span className="hidden text-slate-300 dark:text-slate-600 sm:inline">|</span>
+								<span className="hidden text-charcoal-blue-300 dark:text-charcoal-blue-600 sm:inline">|</span>
 								<a href="/terms" className="footer-link">
 									Terms
 								</a>
 							</div>
 
 							<div className="flex items-center justify-center gap-3 sm:justify-end">
-								<a href="#" className="icon-chip h-11 w-11 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white" aria-label="GitHub">
+								<a href="#" className="icon-chip h-11 w-11 text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:text-charcoal-blue-400 dark:hover:text-white" aria-label="GitHub">
 									<AnimatedIcon name="github" size={18} aria-hidden="true" />
 								</a>
-								<a href="#" className="icon-chip h-11 w-11 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white" aria-label="Twitter">
+								<a href="#" className="icon-chip h-11 w-11 text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:text-charcoal-blue-400 dark:hover:text-white" aria-label="Twitter">
 									<AnimatedIcon name="twitter" size={18} aria-hidden="true" />
 								</a>
 							</div>

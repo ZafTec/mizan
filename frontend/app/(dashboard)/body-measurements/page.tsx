@@ -100,7 +100,7 @@ export default async function BodyMeasurementsPage({
 
 				<div className="card-hover p-5">
 					<div className="flex items-center gap-4">
-						<div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center shadow-lg dark:bg-slate-100 dark:text-slate-900">
+						<div className="w-12 h-12 rounded-2xl bg-charcoal-blue-900 flex items-center justify-center shadow-lg dark:bg-charcoal-blue-100 dark:text-charcoal-blue-900">
 							<i className="ri-hand-heart-line text-xl text-current" />
 						</div>
                         <div className="flex-1">
@@ -129,60 +129,60 @@ export default async function BodyMeasurementsPage({
                 {measurements.length > 0 ? (
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead className="border-b border-slate-200 dark:border-slate-700">
+                            <thead className="border-b border-charcoal-blue-200 dark:border-charcoal-blue-800">
                                 <tr>
-                                    <SortableHeader sortKey="Date" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Date</SortableHeader>
-                                    <SortableHeader sortKey="WeightKg" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Weight</SortableHeader>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Body Fat</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Muscle</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Waist</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Hips</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Chest</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">L Arm</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">R Arm</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">L Thigh</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">R Thigh</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Notes</th>
+                                    <SortableHeader sortKey="Date" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">Date</SortableHeader>
+                                    <SortableHeader sortKey="WeightKg" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">Weight</SortableHeader>
+                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">Body Fat</th>
+                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">Muscle</th>
+                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">Waist</th>
+                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">Hips</th>
+                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">Chest</th>
+                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">L Arm</th>
+                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">R Arm</th>
+                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">L Thigh</th>
+                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">R Thigh</th>
+                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">Notes</th>
                                     <th className="w-10"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {measurements.map((m) => (
-                                    <tr key={m.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800">
+                                    <tr key={m.id} className="border-b border-charcoal-blue-100 dark:border-white/10 hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-800">
                                         <td className="py-3 px-4 text-sm text-charcoal-blue-900 dark:text-charcoal-blue-100">
                                             {new Date(m.date).toLocaleDateString()}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
+                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
                                             {m.weightKg ? `${m.weightKg} kg` : "-"}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
+                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
                                             {m.bodyFatPercentage ? `${m.bodyFatPercentage}%` : "-"}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
+                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
                                             {m.muscleMassKg ? `${m.muscleMassKg} kg` : "-"}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
+                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
                                             {m.waistCm ? `${m.waistCm} cm` : "-"}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
+                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
                                             {m.hipsCm ? `${m.hipsCm} cm` : "-"}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
+                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
                                             {m.chestCm ? `${m.chestCm} cm` : "-"}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
+                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
                                             {m.leftArmCm ? `${m.leftArmCm} cm` : "-"}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
+                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
                                             {m.rightArmCm ? `${m.rightArmCm} cm` : "-"}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
+                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
                                             {m.leftThighCm ? `${m.leftThighCm} cm` : "-"}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
+                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
                                             {m.rightThighCm ? `${m.rightThighCm} cm` : "-"}
                                         </td>
-                                        <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400 max-w-xs truncate">
+                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 max-w-xs truncate">
                                             {m.notes || "-"}
                                         </td>
                                         <td className="py-3 px-4">

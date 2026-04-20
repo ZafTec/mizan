@@ -14,7 +14,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 		return (
 		  <div className="w-full">
 			{label && (
-			  <label htmlFor={inputId} className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+			  <label htmlFor={inputId} className="block text-sm font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300 mb-1.5">
 				{label}
 				{props.required && <span className="text-red-500 ml-1">*</span>}
 			  </label>
@@ -23,8 +23,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           id={inputId}
           className={twMerge(
-            'w-full rounded-2xl border border-white/70 bg-white/90 px-4 py-3 text-slate-900 placeholder-slate-400 shadow-sm backdrop-blur-xl transition-all duration-300',
-				'focus:outline-none focus:ring-2 focus:ring-brand-500/15 focus:border-brand-500 dark:border-white/10 dark:bg-slate-950/75 dark:text-slate-100 dark:placeholder-slate-500',
+            'w-full rounded-2xl border border-white/70 bg-white/90 px-4 py-3 text-charcoal-blue-900 placeholder-charcoal-blue-400 shadow-sm backdrop-blur-xl transition-all duration-300',
+				'focus:outline-none focus:ring-2 focus:ring-brand-500/15 focus:border-brand-500 dark:border-white/10 dark:bg-charcoal-blue-950/75 dark:text-charcoal-blue-100 dark:placeholder-charcoal-blue-500',
             error
               ? 'border-red-300 focus:ring-red-500/20 focus:border-red-500'
               : '',

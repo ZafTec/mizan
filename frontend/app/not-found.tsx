@@ -6,11 +6,11 @@ export default function NotFound() {
 			<div className="w-full max-w-md">
 				{/* Header */}
 				<div className="text-center mb-8">
-					<div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-slate-900 shadow-lg shadow-slate-500/30 dark:bg-slate-700 mb-6">
+					<div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-charcoal-blue-900 shadow-lg shadow-slate-500/30 dark:bg-charcoal-blue-700 mb-6">
 						<i className="ri-error-warning-line text-4xl text-white" />
 					</div>
 					<h1 className="text-6xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">404</h1>
-					<h2 className="text-2xl font-bold text-slate-700 dark:text-slate-300 mb-2">Page not found</h2>
+					<h2 className="text-2xl font-bold text-charcoal-blue-700 dark:text-charcoal-blue-300 mb-2">Page not found</h2>
 					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">
 						Sorry, we couldn&apos;t find the page you&apos;re looking for.
 					</p>
@@ -29,7 +29,7 @@ export default function NotFound() {
 						</Link>
 					</div>
 
-					<div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+					<div className="pt-4 border-t border-charcoal-blue-200 dark:border-charcoal-blue-800">
 						<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 text-center mb-3">
 							Need help? Try these popular pages:
 						</p>

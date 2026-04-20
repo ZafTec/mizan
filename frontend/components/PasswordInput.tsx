@@ -37,7 +37,7 @@ export function PasswordInput({ showStrength, className, ...props }: PasswordInp
 					type="button"
 					data-testid="password-toggle"
 					onClick={() => setVisible(!visible)}
-					className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+					className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal-blue-400 hover:text-charcoal-blue-600 dark:hover:text-charcoal-blue-300 transition-colors"
 					tabIndex={-1}
 				>
 					<i className={visible ? "ri-eye-off-line" : "ri-eye-line"} />
@@ -50,7 +50,7 @@ export function PasswordInput({ showStrength, className, ...props }: PasswordInp
 							<div
 								key={i}
 								className={`h-1 flex-1 rounded-full transition-colors ${
-									i <= strength.level ? strength.color : "bg-slate-200 dark:bg-slate-700"
+									i <= strength.level ? strength.color : "bg-charcoal-blue-200 dark:bg-charcoal-blue-700"
 								}`}
 							/>
 						))}

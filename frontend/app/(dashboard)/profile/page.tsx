@@ -110,7 +110,7 @@ export default function ProfilePage() {
 	if (!session?.user) {
 		return (
 			<div className="flex min-h-[60vh] items-center justify-center">
-				<p className="text-slate-500">Not authenticated</p>
+				<p className="text-charcoal-blue-500">Not authenticated</p>
 			</div>
 		);
 	}
@@ -187,7 +187,7 @@ export default function ProfilePage() {
 							<Link
 								key={link.href}
 								href={link.href}
-								className="group rounded-3xl border border-slate-200 bg-white p-4 transition-colors hover:border-slate-300 dark:border-white/10 dark:bg-slate-950 dark:hover:border-white/20"
+								className="group rounded-3xl border border-charcoal-blue-200 bg-white p-4 transition-colors hover:border-charcoal-blue-300 dark:border-white/10 dark:bg-charcoal-blue-950 dark:hover:border-white/20"
 							>
 								<div className="flex items-start gap-3">
 									<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
@@ -196,7 +196,7 @@ export default function ProfilePage() {
 									<div className="min-w-0">
 										<div className="flex items-center justify-between gap-3">
 											<p className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">{link.title}</p>
-											<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" className="text-slate-400 group-hover:text-slate-950 dark:group-hover:text-white" />
+											<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" className="text-charcoal-blue-400 group-hover:text-charcoal-blue-900 dark:group-hover:text-white" />
 										</div>
 										<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{link.description}</p>
 									</div>
@@ -273,7 +273,7 @@ function StatCard({
 	helper: string;
 }) {
 	return (
-		<div className="rounded-3xl border border-slate-200 bg-white/90 p-4 dark:border-white/10 dark:bg-slate-950/70">
+		<div className="rounded-3xl border border-charcoal-blue-200 bg-white/90 p-4 dark:border-white/10 dark:bg-charcoal-blue-950/70">
 			<p className="text-xs font-semibold uppercase tracking-[0.14em] text-charcoal-blue-500 dark:text-charcoal-blue-400">{label}</p>
 			<p className="mt-3 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{value}</p>
 			<p className="mt-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{helper}</p>
@@ -291,7 +291,7 @@ function InsightRow({
 	helper: string;
 }) {
 	return (
-		<div className="rounded-3xl border border-slate-200 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-900/70">
+		<div className="rounded-3xl border border-charcoal-blue-200 bg-charcoal-blue-50/90 p-4 dark:border-white/10 dark:bg-charcoal-blue-900/70">
 			<div className="flex items-center justify-between gap-3">
 				<p className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">{label}</p>
 				<p className="text-sm font-medium text-brand-700 dark:text-brand-300">{value}</p>

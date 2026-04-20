@@ -64,7 +64,7 @@ export default function EditIngredientForm({ ingredient }: { ingredient: Ingredi
 	return (
 		<form onSubmit={handleSubmit} className="space-y-6">
 			<div className="card p-6 space-y-5">
-				<h2 className="font-semibold text-slate-900 flex items-center gap-2">
+				<h2 className="font-semibold text-charcoal-blue-900 flex items-center gap-2">
 					<i className="ri-leaf-line text-brand-500" />
 					Basic Information
 				</h2>
@@ -104,7 +104,7 @@ export default function EditIngredientForm({ ingredient }: { ingredient: Ingredi
 			</div>
 
 			<div className="card p-6 space-y-5">
-				<h2 className="font-semibold text-slate-900 flex items-center gap-2">
+				<h2 className="font-semibold text-charcoal-blue-900 flex items-center gap-2">
 					<i className="ri-heart-pulse-line text-brand-500" />
 					Nutritional Information
 				</h2>
@@ -197,7 +197,7 @@ export default function EditIngredientForm({ ingredient }: { ingredient: Ingredi
 					<div>
 						<label htmlFor="servingSize" className="label">
 							<span className="flex items-center gap-1.5">
-								<span className="w-2 h-2 rounded-xl bg-slate-400" />
+								<span className="w-2 h-2 rounded-xl bg-charcoal-blue-300" />
 								Serving Size (g)
 							</span>
 						</label>
@@ -219,9 +219,9 @@ export default function EditIngredientForm({ ingredient }: { ingredient: Ingredi
 						type="checkbox"
 						name="isVerified"
 						defaultChecked={ingredient.isVerified}
-						className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+						className="w-4 h-4 rounded border-charcoal-blue-300 text-brand-600 focus:ring-brand-500"
 					/>
-					<span className="text-sm font-medium text-slate-700">Mark as verified</span>
+					<span className="text-sm font-medium text-charcoal-blue-700">Mark as verified</span>
 				</label>
 			</div>
 

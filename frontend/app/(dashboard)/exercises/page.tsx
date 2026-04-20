@@ -67,7 +67,7 @@ export default async function ExercisesPage({
                                         {exercise.name}
                                     </h3>
                                     {exercise.description && (
-                                        <p className="text-sm text-slate-600 mt-1 line-clamp-2">
+                                        <p className="text-sm text-charcoal-blue-600 mt-1 line-clamp-2">
                                             {exercise.description}
                                         </p>
                                     )}
@@ -81,7 +81,7 @@ export default async function ExercisesPage({
                                             </span>
                                         )}
                                         {exercise.equipment && (
-                                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-charcoal-blue-100 text-charcoal-blue-600 text-xs font-medium">
                                                 {exercise.equipment}
                                             </span>
                                         )}
@@ -104,11 +104,11 @@ export default async function ExercisesPage({
                 </div>
             ) : (
                 <div className="card p-16 text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                        <i className="ri-run-line text-3xl text-slate-400" />
+                    <div className="w-16 h-16 rounded-2xl bg-charcoal-blue-100 flex items-center justify-center mx-auto mb-4">
+                        <i className="ri-run-line text-3xl text-charcoal-blue-400" />
                     </div>
                     <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No exercises found</h3>
-                    <p className="text-slate-500">Try adjusting your search criteria</p>
+                    <p className="text-charcoal-blue-500">Try adjusting your search criteria</p>
                 </div>
             )}
 

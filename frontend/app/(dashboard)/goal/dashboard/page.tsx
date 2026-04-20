@@ -66,7 +66,7 @@ export default function GoalDashboard() {
           <h2 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-3">
             No Active Goal
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-md mx-auto">
+          <p className="text-charcoal-blue-600 dark:text-charcoal-blue-400 mb-6 max-w-md mx-auto">
             Start tracking your nutrition journey by setting up your first goal. Define your targets and watch your progress unfold.
           </p>
           <Link href="/goal" className="btn-primary inline-flex">
@@ -143,7 +143,7 @@ export default function GoalDashboard() {
             className={`px-4 py-2 rounded-xl font-medium transition-all ${
               days === d
                 ? "bg-brand-500 text-white shadow-lg"
-                : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                : "bg-white dark:bg-charcoal-blue-900 text-charcoal-blue-700 dark:text-charcoal-blue-300 hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-800"
             }`}
           >
             {d} Days
@@ -193,11 +193,11 @@ export default function GoalDashboard() {
               ].map((macro) => (
                 <div key={macro.label}>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                    <span className="text-sm font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300 flex items-center gap-2">
                       <span className="w-3 h-3 rounded-xl" style={{ backgroundColor: macro.color }} />
                       {macro.label}
                     </span>
-                    <span className="text-sm text-slate-800 dark:text-slate-200">
+                    <span className="text-sm text-charcoal-blue-800 dark:text-charcoal-blue-200">
                       {macro.actual?.toFixed(1)} / {macro.target} {macro.unit}
                     </span>
                   </div>
@@ -299,28 +299,28 @@ export default function GoalDashboard() {
         <h2 className="text-xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-6">Recent Entries</h2>
         <div className="space-y-3">
           {progressEntries.slice(-5).reverse().map((entry) => (
-            <div key={entry.id} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+            <div key={entry.id} className="flex items-center justify-between p-4 rounded-xl bg-charcoal-blue-50 dark:bg-charcoal-blue-900 hover:bg-charcoal-blue-100 dark:hover:bg-charcoal-blue-800 transition-colors">
               <div>
                 <div className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
                   {new Date(entry.date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
                 </div>
-                {entry.notes && <div className="text-sm text-slate-700 dark:text-slate-300 mt-1">{entry.notes}</div>}
+                {entry.notes && <div className="text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300 mt-1">{entry.notes}</div>}
               </div>
               <div className="flex gap-6 text-sm">
                 <div className="text-center">
-                  <div className="text-slate-700 dark:text-slate-300">Calories</div>
+                  <div className="text-charcoal-blue-700 dark:text-charcoal-blue-300">Calories</div>
                   <div className="font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{entry.actualCalories}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-slate-700 dark:text-slate-300">Protein</div>
+                  <div className="text-charcoal-blue-700 dark:text-charcoal-blue-300">Protein</div>
                   <div className="font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{entry.actualProteinGrams.toFixed(1)}g</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-slate-700 dark:text-slate-300">Carbs</div>
+                  <div className="text-charcoal-blue-700 dark:text-charcoal-blue-300">Carbs</div>
                   <div className="font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{entry.actualCarbsGrams.toFixed(1)}g</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-slate-700 dark:text-slate-300">Fat</div>
+                  <div className="text-charcoal-blue-700 dark:text-charcoal-blue-300">Fat</div>
                   <div className="font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{entry.actualFatGrams.toFixed(1)}g</div>
                 </div>
               </div>

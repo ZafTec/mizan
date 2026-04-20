@@ -50,8 +50,8 @@ export default async function MealPlanDetailPage({
 					{[
 						{ label: "Total Calories", value: Math.round(plan.nutritionSummary.totalCalories), unit: "kcal", icon: "ri-fire-line", color: "bg-accent-600" },
 						{ label: "Avg/Day", value: Math.round(plan.nutritionSummary.avgCaloriesPerDay), unit: "kcal", icon: "ri-bar-chart-line", color: "bg-brand-600" },
-						{ label: "Protein", value: Math.round(plan.nutritionSummary.totalProteinGrams), unit: "g", icon: "ri-heart-pulse-line", color: "bg-slate-900 dark:bg-slate-100 dark:text-slate-900" },
-						{ label: "Days", value: plan.nutritionSummary.daysCount, unit: "", icon: "ri-calendar-line", color: "bg-slate-700" },
+						{ label: "Protein", value: Math.round(plan.nutritionSummary.totalProteinGrams), unit: "g", icon: "ri-heart-pulse-line", color: "bg-charcoal-blue-900 dark:bg-charcoal-blue-100 dark:text-charcoal-blue-900" },
+						{ label: "Days", value: plan.nutritionSummary.daysCount, unit: "", icon: "ri-calendar-line", color: "bg-charcoal-blue-700" },
 					].map((stat) => (
 						<div key={stat.label} className="card p-4">
 							<div className="flex items-center gap-3">
@@ -86,8 +86,8 @@ export default async function MealPlanDetailPage({
 								</h3>
 								<div className="space-y-2">
 									{recipesByDate[date].map((recipe) => (
-										<div key={recipe.id} className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
-											<div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300 uppercase">
+										<div key={recipe.id} className="flex items-center gap-4 p-3 bg-charcoal-blue-50 dark:bg-charcoal-blue-900 rounded-xl">
+											<div className="w-8 h-8 rounded-lg bg-charcoal-blue-200 dark:bg-charcoal-blue-700 flex items-center justify-center text-xs font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300 uppercase">
 												{recipe.mealType.slice(0, 1)}
 											</div>
 											<div className="flex-1 min-w-0">

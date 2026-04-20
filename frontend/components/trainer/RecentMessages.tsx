@@ -75,10 +75,10 @@ export function RecentMessages() {
 				{[1, 2, 3].map((i) => (
 					<div key={i} className="animate-pulse">
 						<div className="flex items-start space-x-3">
-							<div className="w-10 h-10 bg-gray-200 dark:bg-slate-700 rounded-xl"></div>
+							<div className="w-10 h-10 bg-gray-200 dark:bg-charcoal-blue-700 rounded-xl"></div>
 							<div className="flex-1">
-								<div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-1/4 mb-2"></div>
-								<div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-3/4"></div>
+								<div className="h-4 bg-gray-200 dark:bg-charcoal-blue-700 rounded w-1/4 mb-2"></div>
+								<div className="h-3 bg-gray-200 dark:bg-charcoal-blue-700 rounded w-3/4"></div>
 							</div>
 						</div>
 					</div>
@@ -95,7 +95,7 @@ export function RecentMessages() {
 					href={`/trainer/chat/${message.conversationId}`}
 					className={`block p-3 rounded-lg transition-colors ${
 						message.isRead
-							? "bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700"
+							? "bg-gray-50 dark:bg-charcoal-blue-900 hover:bg-gray-100 dark:hover:bg-charcoal-blue-700"
 							: "bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900/30"
 					}`}
 				>

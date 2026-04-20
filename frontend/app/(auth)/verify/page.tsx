@@ -9,7 +9,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
 						<i className="ri-error-warning-line text-3xl text-red-600 dark:text-red-400" />
 					</div>
 					<h1 className="text-xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">Error</h1>
-					<p className="text-slate-600 dark:text-slate-400">
+					<p className="text-charcoal-blue-600 dark:text-charcoal-blue-400">
 						No email address provided. Please go back and enter a valid email address.
 					</p>
 				</div>
@@ -24,11 +24,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
 					<i className="ri-mail-check-line text-3xl text-brand-600 dark:text-brand-400" />
 				</div>
 				<h1 className="text-xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">Verify Your Email Address</h1>
-				<p className="text-slate-600 dark:text-slate-400 mb-4">
+				<p className="text-charcoal-blue-600 dark:text-charcoal-blue-400 mb-4">
 					Thank you for registering! A verification email has been sent to{' '}
 					<span className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{email}</span>.
 				</p>
-				<p className="text-slate-600 dark:text-slate-400 mb-6">
+				<p className="text-charcoal-blue-600 dark:text-charcoal-blue-400 mb-6">
 					Please check your inbox and click on the verification link to activate your account.
 				</p>
 				<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">

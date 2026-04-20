@@ -171,8 +171,8 @@ export default function MealPlanningCalendarWrapper({
 	  return (
 	    <div className="relative">
 	      {loading && (
-	        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-slate-950/55">
-	          <div className="rounded-lg bg-white p-4 text-slate-700 shadow dark:bg-slate-950 dark:text-slate-200">
+	        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-charcoal-blue-950/55">
+	          <div className="rounded-lg bg-white p-4 text-charcoal-blue-700 shadow dark:bg-charcoal-blue-950 dark:text-charcoal-blue-200">
 	            Loading meal plans...
 	          </div>
 	        </div>

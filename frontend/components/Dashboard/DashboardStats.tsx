@@ -74,9 +74,9 @@ export default function DashboardStats() {
 			<div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
 				{[1, 2, 3, 4].map((i) => (
 					<div key={i} className="card p-4 sm:p-6 animate-pulse">
-						<div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-20 mb-4" />
-						<div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-16 mb-2" />
-						<div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-24" />
+						<div className="h-4 bg-charcoal-blue-200 dark:bg-charcoal-blue-700 rounded w-20 mb-4" />
+						<div className="h-8 bg-charcoal-blue-200 dark:bg-charcoal-blue-700 rounded w-16 mb-2" />
+						<div className="h-3 bg-charcoal-blue-200 dark:bg-charcoal-blue-700 rounded w-24" />
 					</div>
 				))}
 			</div>
@@ -87,7 +87,7 @@ export default function DashboardStats() {
 		return (
 			<div className="card p-6 text-center">
 				<i className="ri-error-warning-line text-4xl text-red-500 mb-2" />
-				<p className="text-slate-600 dark:text-slate-400">{error}</p>
+				<p className="text-charcoal-blue-600 dark:text-charcoal-blue-400">{error}</p>
 				<button
 					onClick={() => window.location.reload()}
 					className="mt-4 px-4 py-2 text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700"

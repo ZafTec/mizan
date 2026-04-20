@@ -52,8 +52,8 @@ export function ClientHeader({ clientId }: ClientHeaderProps) {
 	if (loading) {
 		return (
 			<div className="animate-pulse">
-				<div className="h-8 bg-gray-200 dark:bg-slate-700 rounded w-1/4 mb-4"></div>
-				<div className="h-12 bg-gray-200 dark:bg-slate-700 rounded w-1/3"></div>
+				<div className="h-8 bg-gray-200 dark:bg-charcoal-blue-700 rounded w-1/4 mb-4"></div>
+				<div className="h-12 bg-gray-200 dark:bg-charcoal-blue-700 rounded w-1/3"></div>
 			</div>
 		);
 	}

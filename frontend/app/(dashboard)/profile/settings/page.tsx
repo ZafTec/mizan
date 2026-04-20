@@ -383,7 +383,7 @@ export default function ProfileSettingsPage() {
 								</Field>
 
 								<Field label="Email address" helper="Email changes are still not implemented.">
-									<input type="email" value={user.email} disabled className="input cursor-not-allowed bg-slate-50 dark:bg-slate-900" />
+									<input type="email" value={user.email} disabled className="input cursor-not-allowed bg-charcoal-blue-50 dark:bg-charcoal-blue-900" />
 								</Field>
 
 								<Field label="Avatar URL" helper="You can paste a URL or use the upload button.">
@@ -425,7 +425,7 @@ export default function ProfileSettingsPage() {
 							<Field label="Confirm new password">
 								<input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="input" />
 							</Field>
-							<div className="rounded-3xl border border-slate-200 bg-slate-50/90 p-4 text-sm text-slate-600 dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-300">
+							<div className="rounded-3xl border border-charcoal-blue-200 bg-charcoal-blue-50/90 p-4 text-sm text-charcoal-blue-600 dark:border-white/10 dark:bg-charcoal-blue-900/70 dark:text-charcoal-blue-300">
 								Changing your password revokes other active sessions.
 							</div>
 							<button
@@ -458,7 +458,7 @@ export default function ProfileSettingsPage() {
 										className={`rounded-3xl border p-4 text-left transition-colors ${
 											appearance.theme === option.value
 												? "border-brand-300 bg-brand-50/80 text-brand-900 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-200"
-												: "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-white/10 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-white/20"
+												: "border-charcoal-blue-200 bg-white text-charcoal-blue-700 hover:border-charcoal-blue-300 dark:border-white/10 dark:bg-charcoal-blue-950 dark:text-charcoal-blue-300 dark:hover:border-white/20"
 										}`}
 									>
 										<div className="flex items-center gap-3">
@@ -533,7 +533,7 @@ export default function ProfileSettingsPage() {
 							</div>
 						) : (
 							<div className="mt-6 space-y-4">
-								<div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-900/70">
+								<div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-charcoal-blue-200 bg-charcoal-blue-50/90 p-4 dark:border-white/10 dark:bg-charcoal-blue-900/70">
 									<div>
 										<p className="text-sm font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{activeSessions.length} active session{activeSessions.length === 1 ? "" : "s"}</p>
 										<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">Current device remains signed in when revoking others.</p>
@@ -549,7 +549,7 @@ export default function ProfileSettingsPage() {
 									{activeSessions.map((activeSession) => {
 										const isCurrent = activeSession.token === session.session?.token;
 										return (
-											<div key={activeSession.id} className={`rounded-3xl border p-4 ${isCurrent ? "border-brand-300 bg-brand-50/80 dark:border-brand-500/30 dark:bg-brand-500/10" : "border-slate-200 bg-white dark:border-white/10 dark:bg-slate-950"}`}>
+											<div key={activeSession.id} className={`rounded-3xl border p-4 ${isCurrent ? "border-brand-300 bg-brand-50/80 dark:border-brand-500/30 dark:bg-brand-500/10" : "border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-charcoal-blue-950"}`}>
 												<div className="flex items-start justify-between gap-4">
 													<div className="min-w-0">
 														<div className="flex items-center gap-2">
@@ -580,7 +580,7 @@ export default function ProfileSettingsPage() {
 							description="Download a JSON export of your stored data."
 						/>
 
-						<div className="mt-6 space-y-4 rounded-3xl border border-slate-200 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-900/70">
+						<div className="mt-6 space-y-4 rounded-3xl border border-charcoal-blue-200 bg-charcoal-blue-50/90 p-4 dark:border-white/10 dark:bg-charcoal-blue-900/70">
 							<p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
 								The export includes your account profile, goals, meals, meal plans, measurements, workouts, achievements, recipes, favorites, and MCP usage metadata.
 							</p>
@@ -639,7 +639,7 @@ function SectionHeading({
 
 function SummaryBadge({ label, value }: { label: string; value: string }) {
 	return (
-		<div className="rounded-3xl border border-slate-200 bg-white/90 px-4 py-3 dark:border-white/10 dark:bg-slate-950/70">
+		<div className="rounded-3xl border border-charcoal-blue-200 bg-white/90 px-4 py-3 dark:border-white/10 dark:bg-charcoal-blue-950/70">
 			<p className="text-xs font-semibold uppercase tracking-[0.14em] text-charcoal-blue-500 dark:text-charcoal-blue-400">{label}</p>
 			<p className="mt-2 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{value}</p>
 		</div>
@@ -656,7 +656,7 @@ function ObservationCard({
 	helper: string;
 }) {
 	return (
-		<div className="rounded-3xl border border-slate-200 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-900/70">
+		<div className="rounded-3xl border border-charcoal-blue-200 bg-charcoal-blue-50/90 p-4 dark:border-white/10 dark:bg-charcoal-blue-900/70">
 			<p className="text-xs font-semibold uppercase tracking-[0.14em] text-charcoal-blue-500 dark:text-charcoal-blue-400">{label}</p>
 			<p className="mt-3 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{value}</p>
 			<p className="mt-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{helper}</p>
@@ -679,13 +679,13 @@ function ToggleCard({
 		<button
 			type="button"
 			onClick={() => onChange(!checked)}
-			className="flex items-center justify-between rounded-3xl border border-slate-200 bg-white p-4 text-left transition-colors hover:border-slate-300 dark:border-white/10 dark:bg-slate-950 dark:hover:border-white/20"
+			className="flex items-center justify-between rounded-3xl border border-charcoal-blue-200 bg-white p-4 text-left transition-colors hover:border-charcoal-blue-300 dark:border-white/10 dark:bg-charcoal-blue-950 dark:hover:border-white/20"
 		>
 			<div>
 				<p className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{label}</p>
 				<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{description}</p>
 			</div>
-			<span className={`relative h-6 w-11 rounded-full transition-colors ${checked ? "bg-brand-600" : "bg-slate-300 dark:bg-slate-700"}`}>
+			<span className={`relative h-6 w-11 rounded-full transition-colors ${checked ? "bg-brand-600" : "bg-charcoal-blue-300 dark:bg-charcoal-blue-700"}`}>
 				<span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${checked ? "translate-x-5" : "translate-x-0.5"}`} />
 			</span>
 		</button>
@@ -703,7 +703,7 @@ function Field({
 }) {
 	return (
 		<label className="grid gap-2">
-			<span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
+			<span className="text-sm font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300">{label}</span>
 			{children}
 			{helper ? <span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{helper}</span> : null}
 		</label>

@@ -29,7 +29,7 @@ export default function IngredientForm({ action, initialData, submitText }: Ingr
             {initialData?.id && <input type="hidden" name="id" value={initialData.id} />}
 
             <div className="card p-6 space-y-5">
-	                <h2 className="flex items-center gap-2 border-b border-slate-100 pb-4 font-semibold text-slate-900 dark:border-white/10 dark:text-slate-100">
+	                <h2 className="flex items-center gap-2 border-b border-charcoal-blue-100 pb-4 font-semibold text-charcoal-blue-900 dark:border-white/10 dark:text-charcoal-blue-100">
                     <i className="ri-information-line text-brand-500" />
                     General Information
                 </h2>
@@ -83,16 +83,16 @@ export default function IngredientForm({ action, initialData, submitText }: Ingr
                                 name="isVerified"
                                 value="true"
                                 defaultChecked={initialData?.isVerified}
-                                className="w-5 h-5 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                                className="w-5 h-5 rounded border-charcoal-blue-300 text-brand-600 focus:ring-brand-500"
                             />
-	                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Verified Ingredient</span>
+	                            <span className="text-sm font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300">Verified Ingredient</span>
                         </label>
                     </div>
                 </div>
             </div>
 
             <div className="card p-6 space-y-5">
-	                <h2 className="flex items-center gap-2 border-b border-slate-100 pb-4 font-semibold text-slate-900 dark:border-white/10 dark:text-slate-100">
+	                <h2 className="flex items-center gap-2 border-b border-charcoal-blue-100 pb-4 font-semibold text-charcoal-blue-900 dark:border-white/10 dark:text-charcoal-blue-100">
                     <i className="ri-heart-pulse-line text-brand-500" />
                     Nutrition (per 100g)
                 </h2>

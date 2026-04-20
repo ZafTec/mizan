@@ -236,14 +236,14 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                                 <button
                                     type="button"
                                     onClick={() => open()}
-                                    className="w-24 h-24 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-400 bg-slate-50 dark:bg-slate-800 hover:bg-brand-50 flex flex-col items-center justify-center transition-colors group"
+                                    className="w-24 h-24 rounded-2xl border-2 border-dashed border-charcoal-blue-300 dark:border-charcoal-blue-700 hover:border-brand-400 bg-charcoal-blue-50 dark:bg-charcoal-blue-900 hover:bg-brand-50 flex flex-col items-center justify-center transition-colors group"
                                 >
-                                    <i className="ri-image-add-line text-2xl text-slate-400 group-hover:text-brand-500" />
-                                    <span className="text-xs text-slate-400 group-hover:text-brand-500 mt-1">Change</span>
+                                    <i className="ri-image-add-line text-2xl text-charcoal-blue-400 group-hover:text-brand-500" />
+                                    <span className="text-xs text-charcoal-blue-400 group-hover:text-brand-500 mt-1">Change</span>
                                 </button>
                                 {images.map((image, index) => (
                                     <div key={index} className="relative w-24 h-24">
-                                        <Image src={image} alt="Recipe" fill className="rounded-2xl object-cover border-2 border-slate-200 dark:border-slate-700" />
+                                        <Image src={image} alt="Recipe" fill className="rounded-2xl object-cover border-2 border-charcoal-blue-200 dark:border-charcoal-blue-800" />
                                     </div>
                                 ))}
                             </div>
@@ -292,11 +292,11 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                         <div key={index} className="space-y-2">
                             <div className="flex gap-1">
                                 <button type="button" onClick={() => handleIngredientTypeToggle(index, "food")}
-                                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${ing.type === "food" ? "bg-brand-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400"}`}>
+                                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${ing.type === "food" ? "bg-brand-500 text-white" : "bg-charcoal-blue-100 text-charcoal-blue-600 hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-400"}`}>
                                     Food
                                 </button>
                                 <button type="button" onClick={() => handleIngredientTypeToggle(index, "recipe")}
-                                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${ing.type === "recipe" ? "bg-brand-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400"}`}>
+                                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${ing.type === "recipe" ? "bg-brand-500 text-white" : "bg-charcoal-blue-100 text-charcoal-blue-600 hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-400"}`}>
                                     Recipe
                                 </button>
                             </div>
@@ -311,14 +311,14 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                                             className="input w-full"
                                         />
                                         {activeDropdownIndex === index && (
-                                            <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+                                            <div className="absolute z-50 w-full mt-1 bg-white dark:bg-charcoal-blue-900 border border-charcoal-blue-200 dark:border-charcoal-blue-800 rounded-xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
                                                 {ingredientSearch.length > 0 ? (
                                                     ingredientSearch.map((ingredient) => (
                                                         <button
                                                             key={ingredient.id}
                                                             type="button"
                                                             onClick={() => handleIngredientSelect(index, ingredient)}
-                                                            className="w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 last:border-0"
+                                                            className="w-full p-3 text-left hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-800 flex items-center justify-between border-b border-charcoal-blue-100 dark:border-white/10 last:border-0"
                                                         >
                                                             <span className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{ingredient.name}</span>
                                                             <span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{ingredient.caloriesPer100g} kcal/100g</span>
@@ -349,7 +349,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                                         min="0"
                                         step={ing.type === "recipe" ? "0.25" : "0.1"}
                                     />
-                                    <span className="px-3 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-600 dark:text-slate-400 text-sm font-medium whitespace-nowrap">
+                                    <span className="px-3 py-2.5 bg-charcoal-blue-100 dark:bg-charcoal-blue-900 rounded-xl text-charcoal-blue-600 dark:text-charcoal-blue-400 text-sm font-medium whitespace-nowrap">
                                         {ing.type === "food" ? "grams" : "servings"}
                                     </span>
                                     <button
@@ -406,9 +406,9 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                         <button
                             type="button"
                             onClick={() => setServings(Math.max(1, servings - 1))}
-                            className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
+                            className="w-10 h-10 rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900 hover:bg-charcoal-blue-200 dark:hover:bg-charcoal-blue-700 flex items-center justify-center transition-colors"
                         >
-                            <i className="ri-subtract-line text-slate-600 dark:text-slate-400" />
+                            <i className="ri-subtract-line text-charcoal-blue-600 dark:text-charcoal-blue-400" />
                         </button>
                         <input
                             id="servings"
@@ -421,9 +421,9 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                         <button
                             type="button"
                             onClick={() => setServings(servings + 1)}
-                            className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
+                            className="w-10 h-10 rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900 hover:bg-charcoal-blue-200 dark:hover:bg-charcoal-blue-700 flex items-center justify-center transition-colors"
                         >
-                            <i className="ri-add-line text-slate-600 dark:text-slate-400" />
+                            <i className="ri-add-line text-charcoal-blue-600 dark:text-charcoal-blue-400" />
                         </button>
                     </div>
                 </div>

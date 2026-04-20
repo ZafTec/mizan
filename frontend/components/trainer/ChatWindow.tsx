@@ -117,9 +117,9 @@ export function ChatWindow({
 	};
 
 	return (
-		<div className="flex flex-col h-150 bg-white dark:bg-slate-900 rounded-lg shadow-md">
+		<div className="flex flex-col h-150 bg-white dark:bg-charcoal-blue-900 rounded-lg shadow-md">
 			{/* Header */}
-			<div className="flex items-center justify-between p-4 border-b dark:border-slate-700">
+			<div className="flex items-center justify-between p-4 border-b dark:border-charcoal-blue-800">
 				<div className="flex items-center space-x-3">
 					<div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center">
 						<span className="text-green-600 dark:text-green-400 font-semibold">
@@ -152,7 +152,7 @@ export function ChatWindow({
 								className={`max-w-[70%] rounded-lg px-4 py-2 ${
 									isOwn
 										? "bg-green-600 text-white rounded-br-none"
-										: "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-gray-200 rounded-bl-none"
+										: "bg-gray-100 dark:bg-charcoal-blue-900 text-gray-800 dark:text-gray-200 rounded-bl-none"
 								}`}
 							>
 								<p className="wrap-break-word">{message.content}</p>
@@ -172,7 +172,7 @@ export function ChatWindow({
 
 				{otherUserTyping && (
 					<div className="flex justify-start">
-						<div className="bg-gray-100 dark:bg-slate-800 rounded-lg px-4 py-2 rounded-bl-none">
+						<div className="bg-gray-100 dark:bg-charcoal-blue-900 rounded-lg px-4 py-2 rounded-bl-none">
 							<div className="flex space-x-1">
 								<div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-sm animate-bounce"></div>
 								<div
@@ -192,7 +192,7 @@ export function ChatWindow({
 			</div>
 
 			{/* Input */}
-			<div className="p-4 border-t dark:border-slate-700">
+			<div className="p-4 border-t dark:border-charcoal-blue-800">
 				<div className="flex items-center space-x-2">
 					<input
 						type="text"
@@ -203,7 +203,7 @@ export function ChatWindow({
 						}}
 						onKeyPress={handleKeyPress}
 						placeholder="Type a message..."
-						className="flex-1 px-4 py-2 border dark:border-slate-700 rounded-full bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-green-500"
+						className="flex-1 px-4 py-2 border dark:border-charcoal-blue-800 rounded-full bg-white dark:bg-charcoal-blue-900 dark:text-charcoal-blue-100 focus:outline-none focus:ring-2 focus:ring-green-500"
 						disabled={!isConnected}
 					/>
 					<button

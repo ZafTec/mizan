@@ -19,7 +19,7 @@ const features = [
 		icon: "users" as AnimatedIconName,
 		title: "Get Coached",
 		description: "Connect with certified trainers for personalized guidance. Real-time chat and goal tracking keep you accountable.",
-		gradient: "bg-slate-900 dark:bg-slate-100 dark:text-slate-900",
+		gradient: "bg-charcoal-blue-900 dark:bg-charcoal-blue-100 dark:text-charcoal-blue-900",
 		shadow: "shadow-brand-500/20",
 	},
 ];
@@ -46,7 +46,7 @@ export function FeatureSection() {
 							<AnimatedIcon name={f.icon} size={22} aria-hidden="true" />
 						</div>
 						<h3 className="mb-2 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{f.title}</h3>
-						<p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">{f.description}</p>
+						<p className="text-sm leading-relaxed text-charcoal-blue-600 dark:text-charcoal-blue-400">{f.description}</p>
 					</div>
 				))}
 			</div>

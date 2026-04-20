@@ -104,28 +104,28 @@ export default function RecipeOptions({ recipeId, isCreator }: RecipeOptionsProp
 			{showDropdown && (
 				<div
 					ref={dropdownRef}
-					className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-slate-900 z-10"
+					className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-charcoal-blue-900 z-10"
 				>
 					<div className="py-1">
 						<Link
 							href={`/meals/add/${recipeId}`}
-							className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+							className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-charcoal-blue-800"
 						>
 							Add to Meal
 						</Link>
-						<div className="border-t border-gray-200 dark:border-slate-700"></div>
+						<div className="border-t border-gray-200 dark:border-charcoal-blue-800"></div>
 
 						{isCreator && (
 							<div>
 								<Link
 									href={`/recipes/${recipeId}/edit`}
-									className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+									className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-charcoal-blue-800"
 								>
 									Edit
 								</Link>
 								<button
 									onClick={confirmDelete}
-									className="block w-full text-left px-4 py-2 text-red-700 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-slate-800"
+									className="block w-full text-left px-4 py-2 text-red-700 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-charcoal-blue-800"
 								>
 									Delete
 								</button>
@@ -138,11 +138,11 @@ export default function RecipeOptions({ recipeId, isCreator }: RecipeOptionsProp
 			{/* Confirmation popup */}
 			{showConfirm && (
 				<div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 dark:bg-black dark:bg-opacity-60 z-50">
-					<div ref={popupRef} className="bg-white dark:bg-slate-900 p-4 rounded shadow-lg dark:text-slate-100">
+					<div ref={popupRef} className="bg-white dark:bg-charcoal-blue-900 p-4 rounded shadow-lg dark:text-charcoal-blue-100">
 						<p>Are you sure you want to delete this recipe?</p>
 						<div className="mt-4 flex justify-end space-x-2 text-white text-sm">
 							<button
-								className="bg-slate-500 px-5 py-2 rounded hover:bg-slate-700"
+								className="bg-charcoal-blue-500 px-5 py-2 rounded hover:bg-charcoal-blue-700"
 								onClick={cancelDelete}
 							>
 								Cancel

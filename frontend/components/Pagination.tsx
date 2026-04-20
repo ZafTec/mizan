@@ -40,7 +40,7 @@ export default function Pagination({
     const className = `w-10 h-10 flex items-center justify-center rounded-xl transition-colors font-medium ${
       isActive
         ? "bg-brand-500 text-white shadow-lg shadow-brand-500/30 dark:shadow-brand-500/15"
-        : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+        : "bg-white dark:bg-charcoal-blue-900 text-charcoal-blue-600 dark:text-charcoal-blue-400 hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-800"
     }`;
 
     if (onPageChange) {
@@ -63,8 +63,8 @@ export default function Pagination({
   };
 
   const renderPrevButton = () => {
-    const className = `w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors ${
-      isFirstPage ? "opacity-50 pointer-events-none" : "hover:bg-slate-200 dark:hover:bg-slate-700"
+    const className = `w-10 h-10 flex items-center justify-center rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900 text-charcoal-blue-600 dark:text-charcoal-blue-400 transition-colors ${
+      isFirstPage ? "opacity-50 pointer-events-none" : "hover:bg-charcoal-blue-200 dark:hover:bg-charcoal-blue-700"
     }`;
 
     if (onPageChange) {
@@ -91,8 +91,8 @@ export default function Pagination({
   };
 
   const renderNextButton = () => {
-    const className = `w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors ${
-      isLastPage ? "opacity-50 pointer-events-none" : "hover:bg-slate-200 dark:hover:bg-slate-700"
+    const className = `w-10 h-10 flex items-center justify-center rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900 text-charcoal-blue-600 dark:text-charcoal-blue-400 transition-colors ${
+      isLastPage ? "opacity-50 pointer-events-none" : "hover:bg-charcoal-blue-200 dark:hover:bg-charcoal-blue-700"
     }`;
 
     if (onPageChange) {

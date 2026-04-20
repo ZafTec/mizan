@@ -95,7 +95,7 @@ export function NutritionAiChat() {
 	];
 
 	return (
-		<div className="flex flex-col h-150 bg-white dark:bg-slate-900 rounded-lg shadow-md">
+		<div className="flex flex-col h-150 bg-white dark:bg-charcoal-blue-900 rounded-lg shadow-md">
 			{/* Header */}
 			<div className="flex items-center space-x-3 p-4 border-b bg-green-700 text-white rounded-t-lg dark:bg-green-800">
 				<div className="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center">
@@ -110,12 +110,12 @@ export function NutritionAiChat() {
 			</div>
 
 			{/* Quick Actions */}
-			<div className="flex flex-wrap gap-2 p-3 border-b dark:border-slate-700 bg-gray-50 dark:bg-slate-800">
+			<div className="flex flex-wrap gap-2 p-3 border-b dark:border-charcoal-blue-800 bg-gray-50 dark:bg-charcoal-blue-900">
 				{quickActions.map((action, index) => (
 					<button
 						key={index}
 						onClick={() => setInput(action.prompt)}
-						className="px-3 py-1 text-xs bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+						className="px-3 py-1 text-xs bg-white dark:bg-charcoal-blue-900 border border-gray-200 dark:border-charcoal-blue-800 rounded-full hover:bg-gray-100 dark:hover:bg-charcoal-blue-800 transition-colors"
 					>
 						{action.label}
 					</button>
@@ -135,7 +135,7 @@ export function NutritionAiChat() {
 							className={`max-w-[80%] rounded-lg px-4 py-3 ${
 								message.role === "user"
 									? "bg-green-600 text-white rounded-br-none"
-									: "bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-gray-200 rounded-bl-none"
+									: "bg-gray-100 dark:bg-charcoal-blue-900 text-gray-800 dark:text-gray-200 rounded-bl-none"
 							}`}
 						>
 							<p className="whitespace-pre-wrap wrap-break-word">{message.content}</p>
@@ -155,7 +155,7 @@ export function NutritionAiChat() {
 
 				{isLoading && (
 					<div className="flex justify-start">
-						<div className="bg-gray-100 dark:bg-slate-800 rounded-lg px-4 py-3 rounded-bl-none">
+						<div className="bg-gray-100 dark:bg-charcoal-blue-900 rounded-lg px-4 py-3 rounded-bl-none">
 							<div className="flex space-x-1">
 								<div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-sm animate-bounce"></div>
 								<div
@@ -175,14 +175,14 @@ export function NutritionAiChat() {
 			</div>
 
 			{/* Input */}
-			<div className="p-4 border-t dark:border-slate-700">
+			<div className="p-4 border-t dark:border-charcoal-blue-800">
 				<div className="flex items-end space-x-2">
 					<textarea
 						value={input}
 						onChange={(e) => setInput(e.target.value)}
 						onKeyPress={handleKeyPress}
 						placeholder="Ask about nutrition, log food, or get recipe ideas..."
-						className="flex-1 px-4 py-2 border dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+						className="flex-1 px-4 py-2 border dark:border-charcoal-blue-800 rounded-lg bg-white dark:bg-charcoal-blue-900 dark:text-charcoal-blue-100 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
 						rows={1}
 						disabled={isLoading}
 					/>

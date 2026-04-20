@@ -101,7 +101,7 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 				</h2>
 				<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 					<div>
-						<label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
+						<label className="block text-sm font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300 mb-1">Name</label>
 						<input
 							type="text"
 							value={name}
@@ -111,7 +111,7 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 						/>
 					</div>
 					<div>
-						<label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Start Date</label>
+						<label className="block text-sm font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300 mb-1">Start Date</label>
 						<input
 							type="date"
 							value={startDate}
@@ -120,7 +120,7 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 						/>
 					</div>
 					<div>
-						<label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">End Date</label>
+						<label className="block text-sm font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300 mb-1">End Date</label>
 						<input
 							type="date"
 							value={endDate}
@@ -154,7 +154,7 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 						{recipes.map((recipe) => {
 							const isEditing = editingRecipe === recipe.id;
 							return (
-								<div key={recipe.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+								<div key={recipe.id} className="p-4 bg-charcoal-blue-50 dark:bg-charcoal-blue-900 rounded-xl">
 									<div className="flex items-start justify-between gap-4">
 										<div className="flex-1 min-w-0">
 											<p className="text-sm font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
@@ -179,7 +179,7 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 													</button>
 													<button
 														onClick={() => setEditingRecipe(null)}
-														className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
+														className="p-2 text-charcoal-blue-400 hover:text-charcoal-blue-600 transition-colors"
 														title="Cancel"
 													>
 														<i className="ri-close-line" />
@@ -188,7 +188,7 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 											) : (
 												<button
 													onClick={() => setEditingRecipe(recipe.id)}
-													className="p-2 text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+													className="p-2 text-charcoal-blue-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
 													title="Edit"
 												>
 													<i className="ri-edit-line" />
@@ -196,7 +196,7 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 											)}
 											<button
 												onClick={() => setDeleteTarget(recipe)}
-												className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+												className="p-2 text-charcoal-blue-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
 												title="Remove"
 											>
 												<i className="ri-delete-bin-line" />
@@ -204,9 +204,9 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 										</div>
 									</div>
 									{isEditing && (
-										<div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+										<div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3 pt-3 border-t border-charcoal-blue-200 dark:border-charcoal-blue-800">
 											<div>
-												<label className="block text-xs font-medium text-slate-500 mb-1">Date</label>
+												<label className="block text-xs font-medium text-charcoal-blue-500 mb-1">Date</label>
 												<input
 													type="date"
 													value={recipe.date}
@@ -215,7 +215,7 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 												/>
 											</div>
 											<div>
-												<label className="block text-xs font-medium text-slate-500 mb-1">Meal Type</label>
+												<label className="block text-xs font-medium text-charcoal-blue-500 mb-1">Meal Type</label>
 												<select
 													value={recipe.mealType}
 													onChange={(e) => handleRecipeFieldChange(recipe.id, "mealType", e.target.value)}
@@ -227,7 +227,7 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 												</select>
 											</div>
 											<div>
-												<label className="block text-xs font-medium text-slate-500 mb-1">Servings</label>
+												<label className="block text-xs font-medium text-charcoal-blue-500 mb-1">Servings</label>
 												<input
 													type="number"
 													min={0.25}
@@ -244,7 +244,7 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 						})}
 					</div>
 				) : (
-					<div className="text-center py-8 text-slate-500">
+					<div className="text-center py-8 text-charcoal-blue-500">
 						<p>No recipes in this plan yet.</p>
 					</div>
 				)}

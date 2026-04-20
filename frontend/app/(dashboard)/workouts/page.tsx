@@ -355,7 +355,7 @@ export default function WorkoutsPage() {
             Flexibility: "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300",
             Balance: "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300",
         };
-        return colors[cat] || "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300";
+        return colors[cat] || "bg-charcoal-blue-100 text-charcoal-blue-600 dark:bg-charcoal-blue-700 dark:text-charcoal-blue-300";
     };
 
     return (
@@ -379,8 +379,8 @@ export default function WorkoutsPage() {
                     onClick={() => handleTabChange("history")}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         activeTab === "history"
-                            ? "bg-white dark:bg-slate-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
-                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                            ? "bg-white dark:bg-charcoal-blue-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
+                            : "text-charcoal-blue-600 dark:text-charcoal-blue-400 hover:text-charcoal-blue-900 dark:hover:text-charcoal-blue-200"
                     }`}
                 >
                     <i className="ri-history-line mr-1.5" />
@@ -391,8 +391,8 @@ export default function WorkoutsPage() {
                     onClick={() => handleTabChange("log")}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         activeTab === "log"
-                            ? "bg-white dark:bg-slate-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
-                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                            ? "bg-white dark:bg-charcoal-blue-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
+                            : "text-charcoal-blue-600 dark:text-charcoal-blue-400 hover:text-charcoal-blue-900 dark:hover:text-charcoal-blue-200"
                     }`}
                 >
                     <i className="ri-add-circle-line mr-1.5" />
@@ -403,8 +403,8 @@ export default function WorkoutsPage() {
                     onClick={() => handleTabChange("library")}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         activeTab === "library"
-                            ? "bg-white dark:bg-slate-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
-                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                            ? "bg-white dark:bg-charcoal-blue-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
+                            : "text-charcoal-blue-600 dark:text-charcoal-blue-400 hover:text-charcoal-blue-900 dark:hover:text-charcoal-blue-200"
                     }`}
                 >
                     <i className="ri-run-line mr-1.5" />
@@ -471,7 +471,7 @@ export default function WorkoutsPage() {
                                         <button
                                             type="button"
                                             onClick={() => setExpandedWorkout(isExpanded ? null : workout.id)}
-                                            className="w-full p-4 sm:p-5 text-left hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors"
+                                            className="w-full p-4 sm:p-5 text-left hover:bg-charcoal-blue-50/50 dark:hover:bg-charcoal-blue-800/50 transition-colors"
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3 min-w-0">
@@ -508,7 +508,7 @@ export default function WorkoutsPage() {
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <i className={`ri-arrow-${isExpanded ? "up" : "down"}-s-line text-lg text-slate-400`} />
+                                                    <i className={`ri-arrow-${isExpanded ? "up" : "down"}-s-line text-lg text-charcoal-blue-400`} />
                                                 </div>
                                             </div>
 
@@ -529,12 +529,12 @@ export default function WorkoutsPage() {
                                         </button>
 
                                         {isExpanded && (
-                                            <div className="border-t border-slate-100 dark:border-slate-800 px-4 sm:px-5 pb-4 sm:pb-5 pt-3 space-y-3">
+                                            <div className="border-t border-charcoal-blue-100 dark:border-white/10 px-4 sm:px-5 pb-4 sm:pb-5 pt-3 space-y-3">
                                                 {workout.notes && (
                                                     <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 italic">{workout.notes}</p>
                                                 )}
                                                 {workout.exercises.map((ex) => (
-                                                    <div key={ex.id} className="rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3 space-y-2">
+                                                    <div key={ex.id} className="rounded-lg bg-charcoal-blue-50 dark:bg-charcoal-blue-800/60 p-3 space-y-2">
                                                         <div className="flex items-center gap-2">
                                                             <span className="font-medium text-sm text-charcoal-blue-900 dark:text-charcoal-blue-100">{ex.exerciseName}</span>
                                                             <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${categoryBadge(ex.category)}`}>
@@ -546,7 +546,7 @@ export default function WorkoutsPage() {
                                                         </div>
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1">
                                                             {ex.sets.map((set, si) => (
-                                                                <div key={si} className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-2">
+                                                                <div key={si} className="text-xs text-charcoal-blue-600 dark:text-charcoal-blue-400 flex items-center gap-2">
                                                                     <span className="font-mono text-charcoal-blue-400 dark:text-charcoal-blue-500 w-5">#{set.setNumber}</span>
                                                                     {set.reps != null && <span>{set.reps} reps</span>}
                                                                     {set.weightKg != null && <span className="text-brand-600 dark:text-brand-400">{set.weightKg} kg</span>}
@@ -574,7 +574,7 @@ export default function WorkoutsPage() {
                                 type="button"
                                 onClick={() => loadHistory(historyPage - 1)}
                                 disabled={historyPage <= 1 || isLoadingHistory}
-                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 text-slate-600 dark:text-slate-400 transition-colors disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 text-charcoal-blue-600 dark:text-charcoal-blue-400 transition-colors disabled:opacity-50 hover:bg-charcoal-blue-200 dark:hover:bg-charcoal-blue-700"
                             >
                                 <i className="ri-arrow-left-s-line" />
                             </button>
@@ -585,7 +585,7 @@ export default function WorkoutsPage() {
                                 type="button"
                                 onClick={() => loadHistory(historyPage + 1)}
                                 disabled={historyPage >= historyTotalPages || isLoadingHistory}
-                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 text-slate-600 dark:text-slate-400 transition-colors disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 text-charcoal-blue-600 dark:text-charcoal-blue-400 transition-colors disabled:opacity-50 hover:bg-charcoal-blue-200 dark:hover:bg-charcoal-blue-700"
                             >
                                 <i className="ri-arrow-right-s-line" />
                             </button>
@@ -669,13 +669,13 @@ export default function WorkoutsPage() {
                         </p>
 
                         {searchResults.length > 0 && (
-                            <div className="border border-slate-200 dark:border-slate-700 rounded-xl divide-y divide-slate-100 dark:divide-slate-800">
+                            <div className="border border-charcoal-blue-200 dark:border-charcoal-blue-800 rounded-xl divide-y divide-charcoal-blue-100 dark:divide-white/10">
                                 {searchResults.map((exercise) => (
                                     <button
                                         key={exercise.id}
                                         type="button"
                                         onClick={() => handleAddExercise(exercise)}
-                                        className="w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-between"
+                                        className="w-full p-3 text-left hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-800 transition-colors flex items-center justify-between"
                                     >
                                         <div>
                                             <div className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{exercise.name}</div>
@@ -700,7 +700,7 @@ export default function WorkoutsPage() {
                                     Added ({exercises.length})
                                 </h3>
                                 {exercises.map((exercise, index) => (
-                                    <div key={index} className="border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-3">
+                                    <div key={index} className="border border-charcoal-blue-200 dark:border-charcoal-blue-800 rounded-xl p-4 space-y-3">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 <h4 className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{exercise.exerciseName}</h4>
@@ -813,7 +813,7 @@ export default function WorkoutsPage() {
                                             <div className="flex-1 min-w-0">
                                                 <h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 truncate">{exercise.name}</h3>
                                                 {exercise.description && (
-                                                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 line-clamp-2">{exercise.description}</p>
+                                                    <p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 mt-1 line-clamp-2">{exercise.description}</p>
                                                 )}
                                                 <div className="flex flex-wrap gap-2 mt-2">
                                                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${categoryBadge(exercise.category)}`}>
@@ -825,7 +825,7 @@ export default function WorkoutsPage() {
                                                         </span>
                                                     )}
                                                     {exercise.equipment && (
-                                                        <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 text-xs font-medium">
+                                                        <span className="px-2 py-0.5 rounded-full bg-charcoal-blue-100 text-charcoal-blue-600 dark:bg-charcoal-blue-700 dark:text-charcoal-blue-300 text-xs font-medium">
                                                             {exercise.equipment}
                                                         </span>
                                                     )}
@@ -880,7 +880,7 @@ export default function WorkoutsPage() {
                                 type="button"
                                 onClick={() => loadLibrary(libraryPage - 1)}
                                 disabled={libraryPage <= 1 || isLoadingLibrary}
-                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 text-slate-600 dark:text-slate-400 transition-colors disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 text-charcoal-blue-600 dark:text-charcoal-blue-400 transition-colors disabled:opacity-50 hover:bg-charcoal-blue-200 dark:hover:bg-charcoal-blue-700"
                             >
                                 <i className="ri-arrow-left-s-line" />
                             </button>
@@ -891,7 +891,7 @@ export default function WorkoutsPage() {
                                 type="button"
                                 onClick={() => loadLibrary(libraryPage + 1)}
                                 disabled={libraryPage >= libraryTotalPages || isLoadingLibrary}
-                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 text-slate-600 dark:text-slate-400 transition-colors disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 text-charcoal-blue-600 dark:text-charcoal-blue-400 transition-colors disabled:opacity-50 hover:bg-charcoal-blue-200 dark:hover:bg-charcoal-blue-700"
                             >
                                 <i className="ri-arrow-right-s-line" />
                             </button>

@@ -312,11 +312,11 @@ html {
 }
 
 .btn-primary {
-  @apply bg-brand-700 text-white focus:ring-brand-500 shadow-lg shadow-brand-500/20 hover:bg-brand-800 dark:bg-brand-500 dark:text-slate-950 dark:hover:bg-brand-400 dark:shadow-brand-500/10;
+  @apply bg-brand-700 text-white focus:ring-brand-500 shadow-lg shadow-brand-500/20 hover:bg-brand-800 dark:bg-brand-500 dark:text-charcoal-blue-950 dark:hover:bg-brand-400 dark:shadow-brand-500/10;
 }
 
 .btn-secondary {
-  @apply border border-charcoal-blue-300 bg-white text-charcoal-blue-700 focus:ring-charcoal-blue-400 hover:bg-charcoal-blue-50 hover:border-charcoal-blue-400 dark:border-white/10 dark:bg-slate-950/75 dark:text-slate-200 dark:hover:bg-white/5 dark:hover:border-white/15;
+  @apply border border-charcoal-blue-300 bg-white text-charcoal-blue-700 focus:ring-charcoal-blue-400 hover:bg-charcoal-blue-50 hover:border-charcoal-blue-400 dark:border-white/10 dark:bg-charcoal-blue-950/75 dark:text-charcoal-blue-200 dark:hover:bg-white/5 dark:hover:border-white/15;
   backdrop-filter: blur(18px);
 }
 
@@ -329,7 +329,7 @@ html {
 }
 
 .btn-ghost {
-  @apply border border-charcoal-blue-200 bg-transparent text-charcoal-blue-600 focus:ring-charcoal-blue-400 hover:bg-charcoal-blue-50 hover:border-charcoal-blue-300 hover:text-charcoal-blue-900 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:border-white/15 dark:hover:text-white;
+  @apply border border-charcoal-blue-200 bg-transparent text-charcoal-blue-600 focus:ring-charcoal-blue-400 hover:bg-charcoal-blue-50 hover:border-charcoal-blue-300 hover:text-charcoal-blue-900 dark:border-white/10 dark:text-charcoal-blue-300 dark:hover:bg-white/5 dark:hover:border-white/15 dark:hover:text-charcoal-blue-50;
 }
 
 .btn-sm {
@@ -342,7 +342,7 @@ html {
 
 .card,
 .card-hover {
-  @apply overflow-hidden rounded-[28px] border border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-slate-950/75;
+  @apply overflow-hidden rounded-[28px] border border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-charcoal-blue-950/75;
   backdrop-filter: blur(20px);
   box-shadow: var(--shadow-panel);
   transition-property: transform, box-shadow, border-color, background-color;
@@ -360,7 +360,7 @@ html {
 }
 
 .input {
-  @apply w-full rounded-2xl border border-charcoal-blue-300 bg-white px-4 py-3 text-charcoal-blue-900 placeholder-charcoal-blue-400 focus:outline-none focus:ring-2 focus:ring-brand-500/15 dark:border-white/10 dark:bg-slate-950/75 dark:text-slate-100 dark:placeholder-slate-500;
+  @apply w-full rounded-2xl border border-charcoal-blue-300 bg-white px-4 py-3 text-charcoal-blue-900 placeholder-charcoal-blue-400 focus:outline-none focus:ring-2 focus:ring-brand-500/15 dark:border-white/10 dark:bg-charcoal-blue-950/75 dark:text-charcoal-blue-100 dark:placeholder-charcoal-blue-500;
   backdrop-filter: blur(14px);
   transition-property: border-color, box-shadow, background-color, color;
   transition-duration: var(--duration-medium);
@@ -377,7 +377,7 @@ html {
 }
 
 .label {
-  @apply block text-sm font-medium text-charcoal-blue-700 mb-1.5 dark:text-slate-300;
+  @apply block text-sm font-medium text-charcoal-blue-700 mb-1.5 dark:text-charcoal-blue-300;
 }
 
 .section-title {
@@ -385,24 +385,24 @@ html {
 }
 
 .eyebrow {
-  @apply inline-flex items-center gap-2 rounded-full border border-charcoal-blue-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal-blue-600 dark:border-white/10 dark:bg-slate-950/70 dark:text-slate-300;
+  @apply inline-flex items-center gap-2 rounded-full border border-charcoal-blue-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal-blue-600 dark:border-white/10 dark:bg-charcoal-blue-950/70 dark:text-charcoal-blue-300;
   backdrop-filter: blur(14px);
 }
 
 .icon-chip {
-  @apply inline-flex items-center justify-center rounded-2xl border border-charcoal-blue-200 bg-white text-charcoal-blue-700 dark:border-white/10 dark:bg-slate-950/75 dark:text-slate-100;
+  @apply inline-flex items-center justify-center rounded-2xl border border-charcoal-blue-200 bg-white text-charcoal-blue-700 dark:border-white/10 dark:bg-charcoal-blue-950/75 dark:text-charcoal-blue-100;
   backdrop-filter: blur(16px);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .surface-panel {
-  @apply overflow-hidden rounded-[32px] border border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-slate-950/75;
+  @apply overflow-hidden rounded-[32px] border border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-charcoal-blue-950/75;
   backdrop-filter: blur(22px);
   box-shadow: var(--shadow-panel);
 }
 
 .nav-glass {
-  @apply border border-charcoal-blue-200 bg-white/98 dark:border-white/10 dark:bg-slate-950/75;
+  @apply border border-charcoal-blue-200 bg-white/98 dark:border-white/10 dark:bg-charcoal-blue-950/75;
   backdrop-filter: blur(20px);
   box-shadow: var(--shadow-panel);
 }
@@ -422,7 +422,7 @@ html {
 }
 
 .footer-link {
-  @apply text-sm text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:text-slate-400 dark:hover:text-slate-100;
+  @apply text-sm text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:text-charcoal-blue-400 dark:hover:text-charcoal-blue-100;
   transition: color var(--duration-fast) var(--ease-emphasized);
 }
 

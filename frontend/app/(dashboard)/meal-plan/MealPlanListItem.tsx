@@ -33,7 +33,7 @@ export default function MealPlanListItem({ plan }: MealPlanListItemProps) {
 
     return (
         <>
-            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+            <div className="p-4 bg-charcoal-blue-50 dark:bg-charcoal-blue-900 rounded-xl">
                 <div className="flex justify-between items-start gap-4">
                     <Link href={`/meal-plan/${plan.id}`} className="flex-1 min-w-0 group">
                         <h3 className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
@@ -49,21 +49,21 @@ export default function MealPlanListItem({ plan }: MealPlanListItemProps) {
                     <div className="flex items-center gap-1">
                         <Link
                             href={`/meal-plan/${plan.id}`}
-                            className="p-2 text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+                            className="p-2 text-charcoal-blue-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
                             title="View"
                         >
                             <i className="ri-eye-line" />
                         </Link>
                         <Link
                             href={`/meal-plan/${plan.id}/edit`}
-                            className="p-2 text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+                            className="p-2 text-charcoal-blue-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
                             title="Edit"
                         >
                             <i className="ri-edit-line" />
                         </Link>
                         <button
                             onClick={() => setShowDelete(true)}
-                            className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                            className="p-2 text-charcoal-blue-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                             title="Delete"
                         >
                             <i className="ri-delete-bin-line" />

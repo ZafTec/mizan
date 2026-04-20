@@ -46,8 +46,8 @@ export default async function Page({
 	if (!recipe) {
 		return (
 			<div className="min-h-[50vh] flex flex-col items-center justify-center">
-				<div className="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center mb-4">
-					<i className="ri-restaurant-line text-4xl text-slate-400" />
+				<div className="w-20 h-20 rounded-2xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900 flex items-center justify-center mb-4">
+					<i className="ri-restaurant-line text-4xl text-charcoal-blue-400" />
 				</div>
 				<h2 className="text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 					Recipe not found
@@ -80,7 +80,7 @@ export default async function Page({
 			<div className="flex items-center gap-4">
 				<Link
 					href="/recipes"
-					className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 flex items-center justify-center transition-colors"
+					className="w-10 h-10 rounded-xl bg-charcoal-blue-100 hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900 dark:hover:bg-charcoal-blue-800 flex items-center justify-center transition-colors"
 				>
 					<i className="ri-arrow-left-line text-xl text-charcoal-blue-600 dark:text-charcoal-blue-300" />
 				</Link>
@@ -109,20 +109,20 @@ export default async function Page({
 			{/* Description */}
 			{recipe.description && (
 				<div className="card p-6">
-					<p className="text-slate-700 dark:text-slate-300 leading-relaxed">{recipe.description}</p>
+					<p className="text-charcoal-blue-700 dark:text-charcoal-blue-300 leading-relaxed">{recipe.description}</p>
 				</div>
 			)}
 
 			{/* Macros Per Serving */}
-			<div className="card p-6 bg-slate-50/90 dark:bg-slate-900/60">
+			<div className="card p-6 bg-charcoal-blue-50/90 dark:bg-charcoal-blue-900/60">
 				<div className="flex items-center justify-between mb-4">
 					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Nutrition per Serving</h2>
-					<span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 bg-white px-3 py-1 rounded-full dark:bg-slate-950">
+					<span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 bg-white px-3 py-1 rounded-full dark:bg-charcoal-blue-950">
 						{recipe.servings} servings
 					</span>
 				</div>
 				<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-					<div className="text-center p-4 bg-white rounded-xl dark:bg-slate-950">
+					<div className="text-center p-4 bg-white rounded-xl dark:bg-charcoal-blue-950">
 						<div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-fire-line text-orange-600" />
 						</div>
@@ -131,7 +131,7 @@ export default async function Page({
 						</p>
 						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Calories</p>
 					</div>
-					<div className="text-center p-4 bg-white rounded-xl dark:bg-slate-950">
+					<div className="text-center p-4 bg-white rounded-xl dark:bg-charcoal-blue-950">
 						<div className="w-10 h-10 rounded-2xl bg-red-100 dark:bg-red-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-heart-pulse-line text-red-600" />
 						</div>
@@ -140,7 +140,7 @@ export default async function Page({
 						</p>
 						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Protein</p>
 					</div>
-					<div className="text-center p-4 bg-white rounded-xl dark:bg-slate-950">
+					<div className="text-center p-4 bg-white rounded-xl dark:bg-charcoal-blue-950">
 						<div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-bread-line text-amber-600" />
 						</div>
@@ -149,7 +149,7 @@ export default async function Page({
 						</p>
 						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Carbs</p>
 					</div>
-					<div className="text-center p-4 bg-white rounded-xl dark:bg-slate-950">
+					<div className="text-center p-4 bg-white rounded-xl dark:bg-charcoal-blue-950">
 						<div className="w-10 h-10 rounded-xl bg-yellow-100 dark:bg-yellow-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-drop-line text-yellow-600" />
 						</div>
@@ -158,7 +158,7 @@ export default async function Page({
 						</p>
 						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Fat</p>
 					</div>
-					<div className="text-center p-4 bg-white rounded-xl dark:bg-slate-950">
+					<div className="text-center p-4 bg-white rounded-xl dark:bg-charcoal-blue-950">
 						<div className="w-10 h-10 rounded-2xl bg-green-100 dark:bg-green-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-leaf-line text-green-600" />
 						</div>
@@ -168,7 +168,7 @@ export default async function Page({
 						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Fiber</p>
 					</div>
 					{proteinCalRatio > 0 && (
-						<div className="text-center p-4 bg-white rounded-xl dark:bg-slate-950">
+						<div className="text-center p-4 bg-white rounded-xl dark:bg-charcoal-blue-950">
 							<div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-500/15 flex items-center justify-center mx-auto mb-2">
 								<i className="ri-percent-line text-violet-600" />
 							</div>
@@ -194,7 +194,7 @@ export default async function Page({
 							{recipe.ingredients.map((item, index) => (
 								<li
 									key={index}
-									className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl"
+									className="flex items-center gap-3 p-3 bg-charcoal-blue-50 dark:bg-charcoal-blue-900 rounded-xl"
 								>
 									<div className="w-8 h-8 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center text-sm font-medium">
 										{index + 1}
@@ -232,7 +232,7 @@ export default async function Page({
 									<div className="w-8 h-8 rounded-lg bg-accent-100 text-accent-600 flex items-center justify-center text-sm font-bold shrink-0">
 										{instruction.stepNumber || index + 1}
 									</div>
-									<p className="text-slate-700 dark:text-slate-300 pt-1">{instruction.instruction}</p>
+									<p className="text-charcoal-blue-700 dark:text-charcoal-blue-300 pt-1">{instruction.instruction}</p>
 								</li>
 							))}
 						</ol>

@@ -69,7 +69,7 @@ export default function TrainerRequestsPage() {
 			{/* Requests List */}
 			{requests.length === 0 ? (
 				<div className="card p-12 text-center">
-					<i className="ri-mail-send-line text-6xl text-slate-300 dark:text-slate-600 mb-4" />
+					<i className="ri-mail-send-line text-6xl text-charcoal-blue-300 dark:text-charcoal-blue-600 mb-4" />
 					<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 						No Pending Requests
 					</h3>
@@ -93,10 +93,10 @@ export default function TrainerRequestsPage() {
 											alt={request.trainerName || request.trainerEmail || "Trainer"}
 											width={80}
 											height={80}
-											className="w-20 h-20 rounded-2xl object-cover border-4 border-white dark:border-slate-800 shadow-lg"
+											className="w-20 h-20 rounded-2xl object-cover border-4 border-white dark:border-white/10 shadow-lg"
 										/>
 									) : (
-									<div className="w-20 h-20 rounded-2xl bg-emerald-600 flex items-center justify-center border-4 border-white dark:border-slate-800 shadow-lg">
+									<div className="w-20 h-20 rounded-2xl bg-emerald-600 flex items-center justify-center border-4 border-white dark:border-white/10 shadow-lg">
 											<span className="text-2xl font-bold text-white">
 												{(request.trainerEmail || "?").charAt(0).toUpperCase()}
 											</span>
@@ -147,7 +147,7 @@ export default function TrainerRequestsPage() {
 						<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 							What happens next?
 						</h3>
-						<ul className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
+						<ul className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 space-y-2">
 							<li className="flex items-start gap-2">
 								<i className="ri-arrow-right-s-line text-blue-500 mt-0.5" />
 								<span>

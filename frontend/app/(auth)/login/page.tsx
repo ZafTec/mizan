@@ -114,7 +114,7 @@ export default function Page() {
 							type="button"
 							onClick={() => handleSocialSignIn("google")}
 							disabled={!!socialLoading}
-							className="relative w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-charcoal-blue-700 dark:text-charcoal-blue-200 text-sm font-medium transition-colors disabled:opacity-60"
+							className="relative w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-charcoal-blue-200 dark:border-charcoal-blue-800 bg-white dark:bg-charcoal-blue-900 hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-700 text-charcoal-blue-700 dark:text-charcoal-blue-200 text-sm font-medium transition-colors disabled:opacity-60"
 						>
 							{socialLoading === "google" ? (
 								<Loading size="sm" />
@@ -133,7 +133,7 @@ export default function Page() {
 							type="button"
 							onClick={() => handleSocialSignIn("github")}
 							disabled={!!socialLoading}
-							className="relative w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-charcoal-blue-700 dark:text-charcoal-blue-200 text-sm font-medium transition-colors disabled:opacity-60"
+							className="relative w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-charcoal-blue-200 dark:border-charcoal-blue-800 bg-white dark:bg-charcoal-blue-900 hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-700 text-charcoal-blue-700 dark:text-charcoal-blue-200 text-sm font-medium transition-colors disabled:opacity-60"
 						>
 							{socialLoading === "github" ? (
 								<Loading size="sm" />
@@ -151,10 +151,10 @@ export default function Page() {
 
 					<div className="relative mb-6">
 						<div className="absolute inset-0 flex items-center">
-							<div className="w-full border-t border-slate-200 dark:border-slate-700" />
+							<div className="w-full border-t border-charcoal-blue-200 dark:border-charcoal-blue-800" />
 						</div>
 						<div className="relative flex justify-center text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500">
-							<span className="bg-white dark:bg-slate-900 px-3">or continue with email</span>
+							<span className="bg-white dark:bg-charcoal-blue-900 px-3">or continue with email</span>
 						</div>
 					</div>
 

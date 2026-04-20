@@ -40,10 +40,10 @@ export function ClientList() {
 			<div className="space-y-4">
 				{[1, 2, 3].map((i) => (
 					<div key={i} className="animate-pulse flex items-center space-x-4">
-						<div className="w-12 h-12 bg-gray-200 dark:bg-slate-700 rounded-2xl"></div>
+						<div className="w-12 h-12 bg-gray-200 dark:bg-charcoal-blue-700 rounded-2xl"></div>
 						<div className="flex-1">
-							<div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-1/4 mb-2"></div>
-							<div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-1/3"></div>
+							<div className="h-4 bg-gray-200 dark:bg-charcoal-blue-700 rounded w-1/4 mb-2"></div>
+							<div className="h-3 bg-gray-200 dark:bg-charcoal-blue-700 rounded w-1/3"></div>
 						</div>
 					</div>
 				))}
@@ -61,7 +61,7 @@ export function ClientList() {
 						className={`px-3 py-1 rounded-full text-sm capitalize ${
 							filter === f
 								? "bg-green-600 text-white"
-								: "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700"
+								: "bg-gray-100 dark:bg-charcoal-blue-900 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-charcoal-blue-700"
 						}`}
 					>
 						{f}
@@ -73,7 +73,7 @@ export function ClientList() {
 				{filteredClients.map((client) => (
 					<div
 						key={client.relationshipId || client.clientId || "trainer-client"}
-						className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+						className="flex items-center justify-between p-3 bg-gray-50 dark:bg-charcoal-blue-900 rounded-lg hover:bg-gray-100 dark:hover:bg-charcoal-blue-700 transition-colors"
 					>
 						<div className="flex items-center space-x-3">
 							<div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center">
@@ -100,7 +100,7 @@ export function ClientList() {
 							{client.clientId ? (
 								<Link
 									href={`/trainer/clients/${client.clientId}`}
-									className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full"
+									className="p-2 hover:bg-gray-200 dark:hover:bg-charcoal-blue-700 rounded-full"
 								>
 									<i className="ri-arrow-right-line text-gray-600 dark:text-gray-300"></i>
 								</Link>
