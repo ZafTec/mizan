@@ -88,21 +88,24 @@ export default async function SessionsPage({
   ).length;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Session Management</h1>
-          <p className="text-muted-foreground">
-            {totalCount} total sessions ({activeSessions} active)
+    <div className="space-y-6 lg:space-y-8">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-2">
+          <p className="eyebrow">Security</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+            Session management
+          </h1>
+          <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+            {totalCount} total sessions · {activeSessions} active
           </p>
         </div>
         <Link
           href="/admin"
-          className="px-4 py-2 text-sm border rounded-lg hover:bg-accent"
+          className="btn-ghost !rounded-2xl !py-2 text-sm"
         >
           ← Back to Dashboard
         </Link>
-      </div>
+      </header>
 
       <div className="mb-6 bg-card rounded-lg border p-4">
         <form className="flex gap-4">

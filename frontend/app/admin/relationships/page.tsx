@@ -45,23 +45,24 @@ export default async function RelationshipsPage() {
   const relationships = await getRelationships();
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">
-            Trainer-Client Relationships
+    <div className="space-y-6 lg:space-y-8">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-2">
+          <p className="eyebrow">Coaching</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+            Trainer-client relationships
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
             {relationships.length} total relationships
           </p>
         </div>
         <Link
           href="/admin"
-          className="px-4 py-2 text-sm border rounded-lg hover:bg-accent"
+          className="btn-ghost !rounded-2xl !py-2 text-sm"
         >
           ← Back to Dashboard
         </Link>
-      </div>
+      </header>
 
       <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 mb-6">
         <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
