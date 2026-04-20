@@ -16,14 +16,14 @@ export default function TermsPage() {
 					<i className="ri-arrow-left-line" />
 					Back to Home
 				</Link>
-				<h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-2">Terms of Service</h1>
-				<p className="text-slate-500 dark:text-slate-400">Last updated: {lastUpdated}</p>
+				<h1 className="text-4xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">Terms of Service</h1>
+				<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">Last updated: {lastUpdated}</p>
 			</div>
 
 			{/* Content */}
 			<div className="card p-8 prose prose-slate dark:prose-invert max-w-none">
 				<section className="mb-8">
-					<h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">1. Acceptance of Terms</h2>
+					<h2 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-4">1. Acceptance of Terms</h2>
 					<p className="text-slate-600 dark:text-slate-400 leading-relaxed">
 						Welcome to Mizan. By accessing or using our nutrition tracking and meal planning application ("Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, please do not use our Service.
 					</p>
@@ -33,7 +33,7 @@ export default function TermsPage() {
 				</section>
 
 				<section className="mb-8">
-					<h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">2. Description of Service</h2>
+					<h2 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-4">2. Description of Service</h2>
 					<p className="text-slate-600 dark:text-slate-400 leading-relaxed">
 						Mizan is a nutrition tracking and meal planning application that helps users:
 					</p>
@@ -47,7 +47,7 @@ export default function TermsPage() {
 				</section>
 
 				<section className="mb-8">
-					<h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">3. User Accounts and Registration</h2>
+					<h2 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-4">3. User Accounts and Registration</h2>
 					<h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-3 mt-6">3.1 Account Creation</h3>
 					<p className="text-slate-600 dark:text-slate-400 leading-relaxed">
 						To use certain features of our Service, you must create an account. You agree to:
@@ -67,7 +67,7 @@ export default function TermsPage() {
 				</section>
 
 				<section className="mb-8">
-					<h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">4. Acceptable Use</h2>
+					<h2 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-4">4. Acceptable Use</h2>
 					<p className="text-slate-600 dark:text-slate-400 leading-relaxed">You agree not to:</p>
 					<ul className="list-disc list-inside text-slate-600 dark:text-slate-400 space-y-2 ml-4">
 						<li>Violate any applicable laws or regulations</li>
@@ -83,7 +83,7 @@ export default function TermsPage() {
 				</section>
 
 				<section className="mb-8">
-					<h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">5. Medical Disclaimer</h2>
+					<h2 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-4">5. Medical Disclaimer</h2>
 					<div className="p-4 bg-amber-50 dark:bg-amber-950 border-l-4 border-amber-500 rounded">
 						<p className="text-slate-700 dark:text-slate-300 leading-relaxed font-semibold mb-2">
 							IMPORTANT: The Service is not a substitute for professional medical advice, diagnosis, or treatment.
@@ -98,7 +98,7 @@ export default function TermsPage() {
 				</section>
 
 				<section className="mb-8">
-					<h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">6. User Content</h2>
+					<h2 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-4">6. User Content</h2>
 					<h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-3 mt-6">6.1 Your Content</h3>
 					<p className="text-slate-600 dark:text-slate-400 leading-relaxed">
 						You retain ownership of any content you submit to the Service (recipes, meal logs, etc.). By submitting content, you grant us a worldwide, non-exclusive, royalty-free license to use, store, display, and distribute your content as necessary to provide the Service.
@@ -117,21 +117,21 @@ export default function TermsPage() {
 				</section>
 
 				<section className="mb-8">
-					<h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">7. Intellectual Property</h2>
+					<h2 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-4">7. Intellectual Property</h2>
 					<p className="text-slate-600 dark:text-slate-400 leading-relaxed">
 						The Service, including all content, features, and functionality, is owned by Mizan and protected by copyright, trademark, and other intellectual property laws. You may not copy, modify, distribute, sell, or lease any part of our Service without our express written permission.
 					</p>
 				</section>
 
 				<section className="mb-8">
-					<h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">8. Third-Party Services and Links</h2>
+					<h2 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-4">8. Third-Party Services and Links</h2>
 					<p className="text-slate-600 dark:text-slate-400 leading-relaxed">
 						Our Service may contain links to third-party websites or services that are not owned or controlled by Mizan. We are not responsible for the content, privacy policies, or practices of any third-party sites or services.
 					</p>
 				</section>
 
 				<section className="mb-8">
-					<h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">9. Disclaimer of Warranties</h2>
+					<h2 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-4">9. Disclaimer of Warranties</h2>
 					<p className="text-slate-600 dark:text-slate-400 leading-relaxed">
 						THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:
 					</p>
@@ -144,7 +144,7 @@ export default function TermsPage() {
 				</section>
 
 				<section className="mb-8">
-					<h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">10. Limitation of Liability</h2>
+					<h2 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-4">10. Limitation of Liability</h2>
 					<p className="text-slate-600 dark:text-slate-400 leading-relaxed">
 						TO THE MAXIMUM EXTENT PERMITTED BY LAW, MIZAN SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS OR REVENUES, WHETHER INCURRED DIRECTLY OR INDIRECTLY, OR ANY LOSS OF DATA, USE, GOODWILL, OR OTHER INTANGIBLE LOSSES RESULTING FROM:
 					</p>
@@ -157,14 +157,14 @@ export default function TermsPage() {
 				</section>
 
 				<section className="mb-8">
-					<h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">11. Indemnification</h2>
+					<h2 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-4">11. Indemnification</h2>
 					<p className="text-slate-600 dark:text-slate-400 leading-relaxed">
 						You agree to indemnify and hold harmless Mizan, its affiliates, and their respective officers, directors, employees, and agents from any claims, liabilities, damages, losses, and expenses arising from your use of the Service or violation of these Terms.
 					</p>
 				</section>
 
 				<section className="mb-8">
-					<h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">12. Termination</h2>
+					<h2 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-4">12. Termination</h2>
 					<p className="text-slate-600 dark:text-slate-400 leading-relaxed">
 						We reserve the right to suspend or terminate your account at any time, with or without notice, for conduct that we believe violates these Terms or is harmful to other users, us, or third parties, or for any other reason.
 					</p>
@@ -174,21 +174,21 @@ export default function TermsPage() {
 				</section>
 
 				<section className="mb-8">
-					<h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">13. Governing Law</h2>
+					<h2 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-4">13. Governing Law</h2>
 					<p className="text-slate-600 dark:text-slate-400 leading-relaxed">
 						These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in which Mizan operates, without regard to conflict of law principles.
 					</p>
 				</section>
 
 				<section className="mb-8">
-					<h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">14. Changes to Terms</h2>
+					<h2 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-4">14. Changes to Terms</h2>
 					<p className="text-slate-600 dark:text-slate-400 leading-relaxed">
 						We reserve the right to modify or replace these Terms at any time. If a revision is material, we will provide at least 30 days' notice before new terms take effect. Your continued use of the Service after changes become effective constitutes acceptance of the revised Terms.
 					</p>
 				</section>
 
 				<section className="mb-8">
-					<h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">15. Contact Information</h2>
+					<h2 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-4">15. Contact Information</h2>
 					<p className="text-slate-600 dark:text-slate-400 leading-relaxed">
 						If you have any questions about these Terms, please contact us:
 					</p>

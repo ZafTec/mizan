@@ -100,7 +100,7 @@ export default function RecipeFilters({
 					placeholder="Search by name, description, or tag..."
 					value={search}
 					onChange={(e) => setSearch(e.target.value)}
-					className="flex-1 bg-transparent text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none text-base min-w-0"
+					className="flex-1 bg-transparent text-charcoal-blue-900 dark:text-charcoal-blue-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none text-base min-w-0"
 				/>
 				{search && (
 					<button
@@ -139,7 +139,7 @@ export default function RecipeFilters({
 
 			{/* Sort row */}
 			<div className="flex flex-wrap items-center gap-1.5">
-				<span className="text-xs text-slate-400 dark:text-slate-500 font-medium mr-1">Sort:</span>
+				<span className="text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500 font-medium mr-1">Sort:</span>
 				{SORT_OPTIONS.map((opt, i) => (
 					<button
 						key={opt.label}
@@ -159,7 +159,7 @@ export default function RecipeFilters({
 			{/* Active filter summary */}
 			{hasActiveFilters && (
 				<div className="flex items-center justify-between">
-					<p className="text-xs text-slate-400 dark:text-slate-500">
+					<p className="text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500">
 						{currentTags.length > 0 && `${currentTags.length} tag${currentTags.length > 1 ? "s" : ""} selected`}
 						{currentTags.length > 0 && currentSortIndex >= 0 && " · "}
 						{currentSortIndex >= 0 && `Sorted by ${SORT_OPTIONS[currentSortIndex].label}`}

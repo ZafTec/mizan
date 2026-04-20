@@ -52,15 +52,15 @@ async function LayoutContent({
 									<Image src={logoTransparent} alt="Mizan" fill className="object-cover" priority />
 								</div>
 								<div>
-									<p className="text-lg font-semibold text-slate-950 dark:text-slate-50">
+									<p className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
 										Mizan
 									</p>
-									<p className="text-sm text-slate-500 dark:text-slate-400">ሚዛን • Balanced nutrition, training, and coaching.</p>
+									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">ሚዛን • Balanced nutrition, training, and coaching.</p>
 								</div>
 							</div>
 
 							<div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-4">
-								<p className="text-sm text-slate-500 dark:text-slate-400">
+								<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 									&copy; {new Date().getFullYear()} Mizan
 								</p>
 								<span className="hidden text-slate-300 dark:text-slate-600 sm:inline">|</span>

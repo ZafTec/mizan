@@ -85,10 +85,10 @@ export default function Page() {
 								<Loading size="md" />
 							</div>
 							<div>
-								<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+								<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 									Verifying your email
 								</h3>
-								<p className="text-slate-500 dark:text-slate-400 text-sm">
+								<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-sm">
 									Please wait while we verify your email address...
 								</p>
 							</div>
@@ -99,15 +99,15 @@ export default function Page() {
 								<i className="ri-checkbox-circle-line text-3xl text-green-600 dark:text-green-400" />
 							</div>
 							<div>
-								<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+								<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 									Email verified successfully!
 								</h3>
-								<p className="text-slate-500 dark:text-slate-400 text-sm">
+								<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-sm">
 									Your email has been verified. You can now sign in to your account.
 								</p>
 							</div>
 							<div className="pt-4">
-								<div className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+								<div className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-3">
 									Redirecting to login in {countdown} seconds...
 								</div>
 								<Link href="/login" className="btn-primary w-full py-3">
@@ -121,10 +121,10 @@ export default function Page() {
 								<i className="ri-error-warning-line text-3xl text-red-600 dark:text-red-400" />
 							</div>
 							<div>
-								<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+								<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 									Verification failed
 								</h3>
-								<p className="text-slate-500 dark:text-slate-400 text-sm">
+								<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-sm">
 									{errorMessage}
 								</p>
 							</div>

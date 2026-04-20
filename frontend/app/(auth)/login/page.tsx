@@ -104,8 +104,8 @@ export default function Page() {
 					<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-600 text-white shadow-lg shadow-brand-500/25 dark:bg-brand-500">
 						<AnimatedIcon name="lock" size={26} aria-hidden="true" />
 					</div>
-					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Welcome back</h1>
-					<p className="text-slate-500 dark:text-slate-400 mt-1">Sign in to continue to Mizan</p>
+					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Welcome back</h1>
+					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">Sign in to continue to Mizan</p>
 				</div>
 
 				<div className="card p-6 sm:p-8">
@@ -114,7 +114,7 @@ export default function Page() {
 							type="button"
 							onClick={() => handleSocialSignIn("google")}
 							disabled={!!socialLoading}
-							className="relative w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-medium transition-colors disabled:opacity-60"
+							className="relative w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-charcoal-blue-700 dark:text-charcoal-blue-200 text-sm font-medium transition-colors disabled:opacity-60"
 						>
 							{socialLoading === "google" ? (
 								<Loading size="sm" />
@@ -133,7 +133,7 @@ export default function Page() {
 							type="button"
 							onClick={() => handleSocialSignIn("github")}
 							disabled={!!socialLoading}
-							className="relative w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-medium transition-colors disabled:opacity-60"
+							className="relative w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-charcoal-blue-700 dark:text-charcoal-blue-200 text-sm font-medium transition-colors disabled:opacity-60"
 						>
 							{socialLoading === "github" ? (
 								<Loading size="sm" />
@@ -153,7 +153,7 @@ export default function Page() {
 						<div className="absolute inset-0 flex items-center">
 							<div className="w-full border-t border-slate-200 dark:border-slate-700" />
 						</div>
-						<div className="relative flex justify-center text-xs text-slate-400 dark:text-slate-500">
+						<div className="relative flex justify-center text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500">
 							<span className="bg-white dark:bg-slate-900 px-3">or continue with email</span>
 						</div>
 					</div>
@@ -196,7 +196,7 @@ export default function Page() {
 						</div>
 
 						{lastMethod === "email" && (
-							<p className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+							<p className="text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500 flex items-center gap-1.5">
 								<span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-xs font-medium bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300">
 									Last used
 								</span>
@@ -237,7 +237,7 @@ export default function Page() {
 					</form>
 				</div>
 
-				<p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
+				<p className="text-center text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-6">
 					Don&apos;t have an account?{" "}
 					<Link href="/register" className="text-brand-600 dark:text-brand-400 font-medium hover:text-brand-700 dark:hover:text-brand-400">
 						Create one

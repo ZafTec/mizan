@@ -12,9 +12,9 @@ import { CTASection } from "@/components/Landing/CTASection";
 
 export const dynamic = 'force-dynamic';
 
-const sectionHeadingClass = "text-2xl font-semibold tracking-tight text-slate-950 dark:text-slate-50 sm:text-3xl";
+const sectionHeadingClass = "text-2xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-3xl";
 const sectionBodyClass = "mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300";
-const cardTitleClass = "mb-1 font-semibold text-slate-950 dark:text-slate-50";
+const cardTitleClass = "mb-1 font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50";
 const cardBodyClass = "text-sm leading-6 text-slate-700 dark:text-slate-300";
 
 const quickActions: Array<{

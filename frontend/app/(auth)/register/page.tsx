@@ -33,8 +33,8 @@ export default function Page() {
 					<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-600 text-white shadow-lg shadow-brand-500/25 dark:bg-brand-500">
 						<AnimatedIcon name="rocket" size={26} aria-hidden="true" />
 					</div>
-					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Create your account</h1>
-					<p className="text-slate-500 dark:text-slate-400 mt-1">Start your nutrition journey with Mizan</p>
+					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Create your account</h1>
+					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">Start your nutrition journey with Mizan</p>
 				</div>
 
 				<div className="card p-6 sm:p-8">
@@ -92,7 +92,7 @@ export default function Page() {
 
 						<div>
 							<label className="label">
-								Profile Image <span className="text-slate-400 dark:text-slate-500 font-normal">(optional)</span>
+								Profile Image <span className="text-charcoal-blue-400 dark:text-charcoal-blue-500 font-normal">(optional)</span>
 							</label>
 							{hasCloudinary ? (
 								<CldUploadWidget
@@ -131,13 +131,13 @@ export default function Page() {
 													}}
 													className="w-20 h-20 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-400 bg-slate-50 dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-brand-950 flex flex-col items-center justify-center transition-colors group"
 												>
-													<AnimatedIcon name="upload" size={22} className="text-slate-400 dark:text-slate-500 group-hover:text-brand-500" aria-hidden="true" />
-													<span className="text-xs text-slate-400 dark:text-slate-500 group-hover:text-brand-500 mt-1">Upload</span>
+													<AnimatedIcon name="upload" size={22} className="text-charcoal-blue-400 dark:text-charcoal-blue-500 group-hover:text-brand-500" aria-hidden="true" />
+													<span className="text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500 group-hover:text-brand-500 mt-1">Upload</span>
 												</button>
 											)}
-											<div className="text-sm text-slate-500 dark:text-slate-400">
+											<div className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 												<p>Add a profile photo</p>
-												<p className="text-xs text-slate-400 dark:text-slate-500">JPG, PNG up to 5MB</p>
+												<p className="text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500">JPG, PNG up to 5MB</p>
 											</div>
 										</div>
 									)}
@@ -201,7 +201,7 @@ export default function Page() {
 					</form>
 				</div>
 
-				<p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
+				<p className="text-center text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-6">
 					Already have an account?{" "}
 					<Link href="/login" className="text-brand-600 dark:text-brand-400 font-medium hover:text-brand-700 dark:hover:text-brand-400">
 						Sign in

@@ -49,10 +49,10 @@ export default async function Page({
 				<div className="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center mb-4">
 					<i className="ri-restaurant-line text-4xl text-slate-400" />
 				</div>
-				<h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
+				<h2 className="text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 					Recipe not found
 				</h2>
-				<p className="text-slate-500 dark:text-slate-400 mb-6">
+				<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-6">
 					The recipe you&apos;re looking for doesn&apos;t exist.
 				</p>
 				<Link href="/recipes" className="btn-primary">
@@ -82,11 +82,11 @@ export default async function Page({
 					href="/recipes"
 					className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 flex items-center justify-center transition-colors"
 				>
-					<i className="ri-arrow-left-line text-xl text-slate-600 dark:text-slate-300" />
+					<i className="ri-arrow-left-line text-xl text-charcoal-blue-600 dark:text-charcoal-blue-300" />
 				</Link>
 				<div className="flex-1">
-					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{recipe.title}</h1>
-					<p className="text-slate-500 dark:text-slate-400 text-sm">
+					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{recipe.title}</h1>
+					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-sm">
 						{recipe.prepTimeMinutes && `${recipe.prepTimeMinutes} min prep`}
 						{recipe.prepTimeMinutes && recipe.cookTimeMinutes && " • "}
 						{recipe.cookTimeMinutes && `${recipe.cookTimeMinutes} min cook`}
@@ -116,8 +116,8 @@ export default async function Page({
 			{/* Macros Per Serving */}
 			<div className="card p-6 bg-slate-50/90 dark:bg-slate-900/60">
 				<div className="flex items-center justify-between mb-4">
-					<h2 className="font-semibold text-slate-900 dark:text-slate-100">Nutrition per Serving</h2>
-					<span className="text-sm text-slate-500 dark:text-slate-400 bg-white px-3 py-1 rounded-full dark:bg-slate-950">
+					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Nutrition per Serving</h2>
+					<span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 bg-white px-3 py-1 rounded-full dark:bg-slate-950">
 						{recipe.servings} servings
 					</span>
 				</div>
@@ -126,56 +126,56 @@ export default async function Page({
 						<div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-fire-line text-orange-600" />
 						</div>
-						<p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+						<p className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 							{macrosPerServing.calories}
 						</p>
-						<p className="text-xs text-slate-500 dark:text-slate-400">Calories</p>
+						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Calories</p>
 					</div>
 					<div className="text-center p-4 bg-white rounded-xl dark:bg-slate-950">
 						<div className="w-10 h-10 rounded-2xl bg-red-100 dark:bg-red-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-heart-pulse-line text-red-600" />
 						</div>
-						<p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+						<p className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 							{macrosPerServing.protein}g
 						</p>
-						<p className="text-xs text-slate-500 dark:text-slate-400">Protein</p>
+						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Protein</p>
 					</div>
 					<div className="text-center p-4 bg-white rounded-xl dark:bg-slate-950">
 						<div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-bread-line text-amber-600" />
 						</div>
-						<p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+						<p className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 							{macrosPerServing.carbs}g
 						</p>
-						<p className="text-xs text-slate-500 dark:text-slate-400">Carbs</p>
+						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Carbs</p>
 					</div>
 					<div className="text-center p-4 bg-white rounded-xl dark:bg-slate-950">
 						<div className="w-10 h-10 rounded-xl bg-yellow-100 dark:bg-yellow-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-drop-line text-yellow-600" />
 						</div>
-						<p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+						<p className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 							{macrosPerServing.fat}g
 						</p>
-						<p className="text-xs text-slate-500 dark:text-slate-400">Fat</p>
+						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Fat</p>
 					</div>
 					<div className="text-center p-4 bg-white rounded-xl dark:bg-slate-950">
 						<div className="w-10 h-10 rounded-2xl bg-green-100 dark:bg-green-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-leaf-line text-green-600" />
 						</div>
-						<p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+						<p className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 							{macrosPerServing.fiber}g
 						</p>
-						<p className="text-xs text-slate-500 dark:text-slate-400">Fiber</p>
+						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Fiber</p>
 					</div>
 					{proteinCalRatio > 0 && (
 						<div className="text-center p-4 bg-white rounded-xl dark:bg-slate-950">
 							<div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-500/15 flex items-center justify-center mx-auto mb-2">
 								<i className="ri-percent-line text-violet-600" />
 							</div>
-							<p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+							<p className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 								{proteinCalRatio.toFixed(0)}%
 							</p>
-							<p className="text-xs text-slate-500 dark:text-slate-400">P/Cal Ratio</p>
+							<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">P/Cal Ratio</p>
 						</div>
 					)}
 				</div>
@@ -185,7 +185,7 @@ export default async function Page({
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 				{/* Ingredients */}
 				<div className="card p-6">
-					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-4">
+					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2 mb-4">
 						<i className="ri-list-check-2 text-brand-500" />
 						Ingredients
 					</h2>
@@ -200,12 +200,12 @@ export default async function Page({
 										{index + 1}
 									</div>
 									<div className="flex-1">
-										<span className="font-medium text-slate-900 dark:text-slate-100">
+										<span className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
 											{item.foodName || item.ingredientText}
 										</span>
 									</div>
 									{item.amount && (
-										<span className="text-slate-500 dark:text-slate-400 text-sm">
+										<span className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-sm">
 											{item.amount} {item.unit}
 										</span>
 									)}
@@ -213,7 +213,7 @@ export default async function Page({
 							))}
 						</ul>
 					) : (
-						<p className="text-slate-500 dark:text-slate-400 text-center py-4">
+						<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-center py-4">
 							No ingredients listed
 						</p>
 					)}
@@ -221,7 +221,7 @@ export default async function Page({
 
 				{/* Instructions */}
 				<div className="card p-6">
-					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-4">
+					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2 mb-4">
 						<i className="ri-file-list-3-line text-brand-500" />
 						Instructions
 					</h2>
@@ -237,7 +237,7 @@ export default async function Page({
 							))}
 						</ol>
 					) : (
-						<p className="text-slate-500 dark:text-slate-400 text-center py-4">
+						<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-center py-4">
 							No instructions listed
 						</p>
 					)}
@@ -247,7 +247,7 @@ export default async function Page({
 			{/* Tags */}
 			{recipe.tags && recipe.tags.length > 0 && (
 				<div className="card p-6">
-					<h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-4">
+					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2 mb-4">
 						<i className="ri-price-tag-3-line text-brand-500" />
 						Tags
 					</h2>

@@ -81,8 +81,8 @@ export default function ResetPasswordPage() {
 					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 shadow-lg shadow-brand-500/30 dark:bg-brand-500 dark:shadow-brand-500/15 mb-4">
 						<i className="ri-lock-unlock-line text-3xl text-white" />
 					</div>
-					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Set new password</h1>
-					<p className="text-slate-500 dark:text-slate-400 mt-1">
+					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Set new password</h1>
+					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
 						Your new password must be different from previous passwords
 					</p>
 				</div>
@@ -95,10 +95,10 @@ export default function ResetPasswordPage() {
 								<i className="ri-error-warning-line text-3xl text-red-600 dark:text-red-400" />
 							</div>
 							<div>
-								<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+								<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 									Invalid or expired link
 								</h3>
-								<p className="text-slate-500 dark:text-slate-400 text-sm">
+								<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-sm">
 									{tokenError}
 								</p>
 							</div>
@@ -118,10 +118,10 @@ export default function ResetPasswordPage() {
 								<i className="ri-checkbox-circle-line text-3xl text-green-600 dark:text-green-400" />
 							</div>
 							<div>
-								<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+								<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 									Password reset successful!
 								</h3>
-								<p className="text-slate-500 dark:text-slate-400 text-sm">
+								<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-sm">
 									Your password has been updated. Redirecting to login...
 								</p>
 							</div>
@@ -148,7 +148,7 @@ export default function ResetPasswordPage() {
 									minLength={8}
 									showStrength
 								/>
-								<p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+								<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1.5">
 									Must be at least 8 characters
 								</p>
 							</div>

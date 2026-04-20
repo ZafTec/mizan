@@ -58,8 +58,8 @@ export default async function RecipesPage({
 		<div className="space-y-8" data-testid="recipe-list">
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
-					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Recipes</h1>
-					<p className="text-slate-500 dark:text-slate-400 mt-1">
+					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Recipes</h1>
+					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
 						Discover and create delicious healthy meals
 					</p>
 				</div>
@@ -81,10 +81,10 @@ export default async function RecipesPage({
 									<i className="ri-heart-3-line text-xl" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-semibold text-slate-900 dark:text-slate-100">Favorites</h3>
-									<p className="text-sm text-slate-500 dark:text-slate-400">{favoriteCount} saved</p>
+									<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Favorites</h3>
+									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{favoriteCount} saved</p>
 								</div>
-								<i className="ri-arrow-right-s-line text-xl text-slate-400 dark:text-slate-500 group-hover:text-brand-500 transition-colors" />
+								<i className="ri-arrow-right-s-line text-xl text-charcoal-blue-400 dark:text-charcoal-blue-500 group-hover:text-brand-500 transition-colors" />
 							</div>
 						</Link>
 						<div className="card p-5">
@@ -93,8 +93,8 @@ export default async function RecipesPage({
 									<i className="ri-restaurant-line text-xl" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-semibold text-slate-900 dark:text-slate-100">Community</h3>
-									<p className="text-sm text-slate-500 dark:text-slate-400">{totalCount} recipes</p>
+									<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Community</h3>
+									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{totalCount} recipes</p>
 								</div>
 							</div>
 						</div>
@@ -104,8 +104,8 @@ export default async function RecipesPage({
 									<i className="ri-line-chart-line text-xl" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-semibold text-slate-900 dark:text-slate-100">This Page</h3>
-									<p className="text-sm text-slate-500 dark:text-slate-400">{recipes.length} shown</p>
+									<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">This Page</h3>
+									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{recipes.length} shown</p>
 								</div>
 							</div>
 						</div>
@@ -118,8 +118,8 @@ export default async function RecipesPage({
 									<i className="ri-restaurant-line text-xl" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-semibold text-slate-900 dark:text-slate-100">Recipes</h3>
-									<p className="text-sm text-slate-500 dark:text-slate-400">{totalCount} available</p>
+									<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Recipes</h3>
+									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{totalCount} available</p>
 								</div>
 							</div>
 						</div>
@@ -129,8 +129,8 @@ export default async function RecipesPage({
 									<i className="ri-fire-line text-xl" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-semibold text-slate-900 dark:text-slate-100">Nutrition Tracked</h3>
-									<p className="text-sm text-slate-500 dark:text-slate-400">Calories &amp; macros</p>
+									<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Nutrition Tracked</h3>
+									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">Calories &amp; macros</p>
 								</div>
 							</div>
 						</div>
@@ -140,10 +140,10 @@ export default async function RecipesPage({
 									<i className="ri-heart-3-line text-xl" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-semibold text-slate-900 dark:text-slate-100">Sign Up</h3>
-									<p className="text-sm text-slate-500 dark:text-slate-400">Save favorites &amp; create</p>
+									<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Sign Up</h3>
+									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">Save favorites &amp; create</p>
 								</div>
-								<i className="ri-arrow-right-s-line text-xl text-slate-400 dark:text-slate-500 group-hover:text-brand-500 transition-colors" />
+								<i className="ri-arrow-right-s-line text-xl text-charcoal-blue-400 dark:text-charcoal-blue-500 group-hover:text-brand-500 transition-colors" />
 							</div>
 						</Link>
 					</>
@@ -184,10 +184,10 @@ export default async function RecipesPage({
 								<div className="flex-1 p-5">
 									<div className="flex justify-between items-start gap-4">
 										<div className="flex-1">
-											<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 group-hover:text-brand-600 transition-colors mb-2">
+											<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 group-hover:text-brand-600 transition-colors mb-2">
 												{recipe.title}
 											</h3>
-											<p className="text-slate-600 dark:text-slate-300 text-sm line-clamp-2 mb-4">
+											<p className="text-charcoal-blue-600 dark:text-charcoal-blue-300 text-sm line-clamp-2 mb-4">
 												{recipe.description || "A delicious recipe"}
 											</p>
 										</div>
@@ -224,10 +224,10 @@ export default async function RecipesPage({
 						<div className="mb-6 w-full max-w-[18rem] opacity-95 drop-shadow-md">
 							<AppFeatureIllustration variant="recipes" className="h-auto w-full" />
 						</div>
-						<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+						<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 							No recipes yet
 						</h3>
-						<p className="text-slate-500 dark:text-slate-400 mb-6">Be the first to add a delicious recipe!</p>
+						<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-6">Be the first to add a delicious recipe!</p>
 						{user && (
 							<Link href="/recipes/add" className="btn-primary">
 								<i className="ri-add-line" />
@@ -256,10 +256,10 @@ export default async function RecipesPage({
 								<i className="ri-restaurant-2-line text-3xl text-white" />
 							</div>
 							<div className="flex-1">
-								<h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
+								<h3 className="text-xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-1">
 									Create Your Own Recipe
 								</h3>
-								<p className="text-slate-600 dark:text-slate-300">
+								<p className="text-charcoal-blue-600 dark:text-charcoal-blue-300">
 									Share your favorite healthy meals with the community
 								</p>
 							</div>

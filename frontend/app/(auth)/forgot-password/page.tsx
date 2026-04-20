@@ -58,10 +58,10 @@ export default function ForgotPasswordPage() {
 								<i className="ri-mail-send-line text-3xl text-green-600" />
 							</div>
 							<div>
-								<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+								<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 									Check your email
 								</h3>
-								<p className="text-slate-500 dark:text-slate-400 text-sm">
+								<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-sm">
 									{mode === "reset"
 										? <>We sent a password reset link to <span className="font-medium text-slate-700 dark:text-slate-300">{email}</span></>
 										: <>We sent a sign-in link to <span className="font-medium text-slate-700 dark:text-slate-300">{email}</span>. Click it to sign in instantly — no password needed.</>
@@ -74,7 +74,7 @@ export default function ForgotPasswordPage() {
 									Back to login
 								</Link>
 							</div>
-							<p className="text-sm text-slate-500 dark:text-slate-400">
+							<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 								Didn&apos;t receive the email?{" "}
 								<button
 									onClick={() => { setState("idle"); setEmail(""); }}
@@ -98,8 +98,8 @@ export default function ForgotPasswordPage() {
 					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 shadow-lg shadow-brand-500/30 dark:bg-brand-500 dark:shadow-brand-500/15 mb-4">
 						<i className="ri-lock-password-line text-3xl text-white" />
 					</div>
-					<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Forgot password?</h1>
-					<p className="text-slate-500 dark:text-slate-400 mt-1">
+					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Forgot password?</h1>
+					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
 						No worries, choose how you want to recover access
 					</p>
 				</div>
@@ -113,8 +113,8 @@ export default function ForgotPasswordPage() {
 							onClick={() => { setMode("reset"); setError(""); }}
 							className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
 								mode === "reset"
-									? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm"
-									: "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+									? "bg-white dark:bg-slate-700 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
+									: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-slate-700 dark:hover:text-slate-200"
 							}`}
 						>
 							<i className="ri-lock-2-line mr-1.5" />
@@ -125,8 +125,8 @@ export default function ForgotPasswordPage() {
 							onClick={() => { setMode("magic"); setError(""); }}
 							className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
 								mode === "magic"
-									? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm"
-									: "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+									? "bg-white dark:bg-slate-700 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
+									: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-slate-700 dark:hover:text-slate-200"
 							}`}
 						>
 							<i className="ri-magic-line mr-1.5" />
@@ -135,7 +135,7 @@ export default function ForgotPasswordPage() {
 					</div>
 
 					{/* Mode description */}
-					<p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+					<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 text-center">
 						{mode === "reset"
 							? "We'll email you a link to set a new password."
 							: "We'll email you a one-click sign-in link — no password required."}
