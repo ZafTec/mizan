@@ -14,34 +14,41 @@ export default async function AchievementsPage() {
     const unearned = achievements.filter(a => !a.isEarned);
 
     return (
-			<div className="space-y-8" data-testid="achievements-page">
-				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-					<div>
-						<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Achievements</h1>
-						<p className="mt-1 text-slate-500 dark:text-slate-400">Track your progress and earn rewards</p>
+			<div className="space-y-6 lg:space-y-8" data-testid="achievements-page">
+				<header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+					<div className="space-y-2">
+						<p className="eyebrow">Milestones</p>
+						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+							Achievements
+						</h1>
+						<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+							Track your streak, unlock badges and celebrate the small wins.
+						</p>
 					</div>
-				</div>
+				</header>
 
-			<div className="card p-6 border border-accent-200 bg-slate-50/90 dark:bg-slate-900/60">
-					<div className="flex items-center gap-4">
-						<div className="w-16 h-16 rounded-2xl bg-accent-600 flex items-center justify-center shadow-lg">
-                        <i className="ri-fire-line text-3xl text-white" />
-                    </div>
-                    <div className="flex-1">
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                            {streak?.currentStreak || 0} Day Streak
-                        </h2>
-						<p className="text-slate-600 dark:text-slate-300">
-                            Longest: {streak?.longestStreak || 0} days
-                            {streak?.lastActivityDate && ` • Last logged: ${new Date(streak.lastActivityDate).toLocaleDateString()}`}
-                        </p>
-                    </div>
-                    <div className="text-center">
-                        <div className="text-3xl font-bold text-accent-600">{earned.length}</div>
-						<div className="text-sm text-slate-600 dark:text-slate-300">Earned</div>
-                    </div>
-                </div>
-            </div>
+				<section className="glass-panel p-6 sm:p-8">
+					<div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+						<div className="streak-gradient flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-lg">
+							<i className="ri-fire-line text-3xl" />
+						</div>
+						<div className="flex-1">
+							<h2 className="text-2xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+								{streak?.currentStreak || 0} day streak
+							</h2>
+							<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+								Longest: {streak?.longestStreak || 0} days
+								{streak?.lastActivityDate && ` • Last logged: ${new Date(streak.lastActivityDate).toLocaleDateString()}`}
+							</p>
+						</div>
+						<div className="sm:text-right">
+							<p className="text-3xl font-bold text-burnt-peach-600 dark:text-burnt-peach-300">{earned.length}</p>
+							<p className="text-xs uppercase tracking-[0.16em] text-charcoal-blue-500 dark:text-charcoal-blue-400">
+								Earned
+							</p>
+						</div>
+					</div>
+				</section>
 
             {earned.length > 0 && (
                 <div className="card p-6">
