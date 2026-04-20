@@ -68,9 +68,9 @@ public class AchievementsController : ControllerBase
 
     [HttpGet("analytics")]
     [Authorize(Policy = "RequireAdmin")]
-    public async Task<ActionResult<GetAchievementAnalyticsResult>> Analytics()
+    public async Task<ActionResult<GetAchievementAnalyticsResult>> Analytics([FromQuery] GetAchievementAnalyticsQuery query)
     {
-        var result = await _mediator.Send(new GetAchievementAnalyticsQuery());
+        var result = await _mediator.Send(query);
         return Ok(result);
     }
 }

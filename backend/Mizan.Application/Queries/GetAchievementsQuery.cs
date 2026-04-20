@@ -100,11 +100,15 @@ public class GetAchievementsQueryHandler : IRequestHandler<GetAchievementsQuery,
 
         var totalCount = await query.CountAsync(cancellationToken);
 
+        // Append Id as tie-breaker so pages don't overlap when many rows share the
+        // primary sort key (e.g. 30 achievements with distinct categories but
+        // several in each — without this the DB may return the same row twice).
         var sortedQuery = query.ApplySorting(
             request,
             SortMappings,
             defaultSort: a => a.Category ?? string.Empty,
-            defaultDescending: false);
+            defaultDescending: false)
+            .ThenBy(a => a.Id);
 
         var pageAchievements = await sortedQuery
             .ApplyPaging(request)
