@@ -359,13 +359,18 @@ export default function WorkoutsPage() {
     };
 
     return (
-        <div className="space-y-6" data-testid="workouts-page">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Workouts</h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">Log workouts and browse exercises</p>
+        <div className="space-y-6 lg:space-y-8" data-testid="workouts-page">
+            <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div className="space-y-2">
+                    <p className="eyebrow">Training</p>
+                    <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+                        Workouts
+                    </h1>
+                    <p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+                        Log sessions, browse the exercise library, and track volume over time.
+                    </p>
                 </div>
-            </div>
+            </header>
 
             {/* Tabs */}
             <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">

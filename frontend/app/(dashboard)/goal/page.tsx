@@ -102,12 +102,16 @@ export default function GoalForm() {
 	})();
 
 	return (
-		<div className="max-w-3xl mx-auto space-y-6" data-testid="goal-page">
-			{/* Header */}
-			<div>
-				<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Nutrition Goals</h1>
-				<p className="text-slate-500 dark:text-slate-400 mt-1">Set your daily macro targets to track your progress</p>
-			</div>
+		<div className="max-w-3xl mx-auto space-y-6 lg:space-y-8" data-testid="goal-page">
+			<header className="space-y-2">
+				<p className="eyebrow">Targets</p>
+				<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+					Nutrition goals
+				</h1>
+				<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+					Set your daily macro targets to track progress against what you eat.
+				</p>
+			</header>
 
 			{/* Info Card */}
 			<div className="card p-6 bg-slate-50/90 dark:bg-slate-900/60">

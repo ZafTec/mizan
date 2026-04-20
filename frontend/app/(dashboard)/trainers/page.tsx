@@ -89,16 +89,19 @@ export default function TrainersPage() {
 					<div className="hidden w-20 sm:block opacity-95">
 						<AppFeatureIllustration variant="trainers" className="h-auto w-full" />
 					</div>
-					<div>
-						<h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Find a Trainer</h1>
-						<p className="text-slate-500 dark:text-slate-400 mt-1">
-							Connect with certified trainers to achieve your goals
+					<div className="space-y-2">
+						<p className="eyebrow">Coaching</p>
+						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+							Find a trainer
+						</h1>
+						<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+							Connect with certified coaches to hit your goals faster.
 						</p>
 					</div>
 				</div>
 				<Link href="/profile" className="btn-secondary">
 					<i className="ri-arrow-left-line" />
-					Back to Profile
+					Back to profile
 				</Link>
 			</div>
 
