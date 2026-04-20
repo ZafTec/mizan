@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 import placeHolderImage from "@/public/placeholder-recipe.jpg";
 import DailyOverviewChart from "@/components/DailyOverviewChart";
 import DashboardStats from "@/components/Dashboard/DashboardStats";
@@ -49,6 +50,11 @@ const quickActions: Array<{
 
 export default async function Home() {
 	const user = await getUserOptionalServer();
+
+	if (user) {
+		redirect("/dashboard");
+	}
+
 	const popularRecipes = await getPopularRecipes();
 
 	return (
