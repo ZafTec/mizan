@@ -32,6 +32,7 @@ const PRIMARY_NAV: NavItem[] = [
 	{ href: "/body-measurements", label: "Body", icon: "chartLine" },
 	{ href: "/goal", label: "Goals", icon: "rocket" },
 	{ href: "/achievements", label: "Achievements", icon: "sparkles" },
+	{ href: "/habits", label: "Habits", icon: "circleCheck" },
 	{ href: "/ai", label: "AI Coach", icon: "brain" },
 	{ href: "/messaging", label: "Messages", icon: "messageCircle" },
 	{ href: "/community", label: "Community", icon: "users" },

@@ -234,9 +234,9 @@ export default async function DashboardPage() {
 								<AnimatedIcon name="calendarCheck" size={14} />
 								Meal plan
 							</Link>
-							<Link href="/suggestions" className="btn-ghost !rounded-2xl !py-2 text-xs">
-								<AnimatedIcon name="brain" size={14} />
-								AI ideas
+							<Link href="/habits" className="btn-ghost !rounded-2xl !py-2 text-xs">
+								<AnimatedIcon name="circleCheck" size={14} />
+								Habits
 							</Link>
 						</div>
 					</div>
