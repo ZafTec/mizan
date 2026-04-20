@@ -9,6 +9,7 @@ import { ChevronDown } from "lucide-react";
 import type { User } from "@/lib/auth";
 import { signOut } from "@/lib/auth-client";
 import { appToast } from "@/lib/toast";
+import { clearAppearanceCookie } from "@/lib/appearance-cookie";
 import { AnimatedIcon, type AnimatedIconName } from "@/components/ui/animated-icon";
 import { cn } from "@/lib/utils";
 import logoTransparent from "@/public/logo_transparent.png";
@@ -205,6 +206,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 
 	async function handleLogout() {
 		try {
+			clearAppearanceCookie();
 			await signOut({
 				fetchOptions: {
 					onSuccess: () => {

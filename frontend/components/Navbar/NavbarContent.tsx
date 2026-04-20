@@ -9,6 +9,7 @@ import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
 import { signOut } from "@/lib/auth-client";
 import { appToast } from "@/lib/toast";
+import { clearAppearanceCookie } from "@/lib/appearance-cookie";
 import { AnimatedIcon, type AnimatedIconName } from "@/components/ui/animated-icon";
 import { cn } from "@/lib/utils";
 
@@ -165,6 +166,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 
 	async function handleLogout() {
 		try {
+			clearAppearanceCookie();
 			await signOut({
 				fetchOptions: {
 					onSuccess: () => {

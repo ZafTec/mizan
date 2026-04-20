@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { cookies } from "next/headers";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
@@ -7,6 +8,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { AppearanceSync } from "@/components/appearance/AppearanceSync";
 import { getUserOptionalServer } from "@/helper/session";
 import { getAppearanceSettingsFromUser, getServerAppearanceClasses } from "@/lib/appearance";
+import { APPEARANCE_COOKIE, parseAppearanceCookie } from "@/lib/appearance-cookie";
+import { APPEARANCE_SCRIPT } from "@/lib/appearance-script";
 import logoTransparent from "@/public/logo_transparent.png";
 import 'remixicon/fonts/remixicon.css';
 
@@ -29,12 +32,23 @@ async function LayoutContent({
 	children,
 	userPromise,
 }: Readonly<{ children: React.ReactNode; userPromise: ReturnType<typeof getUserOptionalServer> }>) {
-	const user = await userPromise;
-	const htmlClasses = getServerAppearanceClasses(getAppearanceSettingsFromUser(user));
+	const [user, cookieStore] = await Promise.all([userPromise, cookies()]);
+
+	// Cookie wins over user record — cookie is the latest local intent and the client
+	// has already applied it via the pre-hydration script. Falling back to the user
+	// record covers fresh devices where the cookie isn't set yet.
+	const cookieAppearance = parseAppearanceCookie(cookieStore.get(APPEARANCE_COOKIE)?.value);
+	const effectiveAppearance = cookieAppearance ?? getAppearanceSettingsFromUser(user);
+	const htmlClasses = getServerAppearanceClasses(effectiveAppearance);
 
 	return (
-		<html lang="en" className={htmlClasses.join(" ")}>
-			<body className="min-h-screen antialiased flex flex-col selection:bg-brand-500/15 selection:text-charcoal-blue-900 dark:selection:text-white">
+		<html lang="en" className={htmlClasses.join(" ")} suppressHydrationWarning>
+			<head>
+				{/* Runs synchronously before hydration so "system" preference + prefers-color-scheme
+					apply to the first paint — no flash. */}
+				<script dangerouslySetInnerHTML={{ __html: APPEARANCE_SCRIPT }} />
+			</head>
+			<body className="min-h-screen antialiased flex flex-col selection:bg-brand-500/15 selection:text-charcoal-blue-900 dark:selection:text-charcoal-blue-50">
 				<AppearanceSync />
 				<Toaster position="top-right" />
 				<Navbar />
