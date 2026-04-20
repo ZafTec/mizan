@@ -1,0 +1,679 @@
+# Theme & Design Tokens
+
+MacroChef uses **Tailwind CSS v4** (alpha-style `@theme` + `@custom-variant` blocks in globals.css) and a legacy PostCSS `tailwind.config.ts`. The v4 `@theme` block in `globals.css` is the source of truth for colors, shadows, font, motion. The separate `tailwind.config.ts` exists for back-compat with a prior v3 color palette (green/orange); **most pages reference the v4 brand/accent/charcoal-blue/sandy-brown/verdigris/tuscan-sun/burnt-peach scales** defined in `globals.css`.
+
+Brand palette:
+- **brand** = verdigris (teal-green) — primary CTAs, charts, focus rings
+- **accent** = sandy-brown (warm orange) — secondary highlights, "Create Recipe" CTA
+- **charcoal-blue** = neutral slate-ish — surfaces, text, borders
+- **tuscan-sun**, **burnt-peach** — data viz colors in charts
+- Also uses plain Tailwind slate/red/amber/yellow/green/orange/rose/violet/indigo for chart accents and domain colors (macros map: calories=orange, protein=red, carbs=amber, fat=yellow, fiber=green, P/Cal=violet).
+
+---
+
+## `frontend/app/globals.css` (full contents)
+
+```css
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-charcoal-blue-50: oklch(96.35% 0.008 228.85);
+  --color-charcoal-blue-100: oklch(92.8% 0.016 221.08);
+  --color-charcoal-blue-200: oklch(85.34% 0.033 224.29);
+  --color-charcoal-blue-300: oklch(78.04% 0.049 223.72);
+  --color-charcoal-blue-400: oklch(70.51% 0.065 225.45);
+  --color-charcoal-blue-500: oklch(63.25% 0.08 226.07);
+  --color-charcoal-blue-600: oklch(53.76% 0.067 226.59);
+  --color-charcoal-blue-700: oklch(44.09% 0.053 225.4);
+  --color-charcoal-blue-800: oklch(33.58% 0.038 226.15);
+  --color-charcoal-blue-900: oklch(22.47% 0.022 222.52);
+  --color-charcoal-blue-950: oklch(18.75% 0.016 218.52);
+
+  --color-verdigris-50: oklch(97.35% 0.016 187.34);
+  --color-verdigris-100: oklch(94.54% 0.03 189.08);
+  --color-verdigris-200: oklch(89.44% 0.061 187.19);
+  --color-verdigris-300: oklch(84.49% 0.087 186.51);
+  --color-verdigris-400: oklch(79.86% 0.108 184.77);
+  --color-verdigris-500: oklch(75.68% 0.122 183.49);
+  --color-verdigris-600: oklch(64.22% 0.103 183.3);
+  --color-verdigris-700: oklch(52.26% 0.083 184.04);
+  --color-verdigris-800: oklch(39.53% 0.061 183.92);
+  --color-verdigris-900: oklch(25.39% 0.035 185.95);
+  --color-verdigris-950: oklch(20.84% 0.027 187.02);
+
+  --color-tuscan-sun-50: oklch(97.43% 0.018 86.15);
+  --color-tuscan-sun-100: oklch(94.99% 0.037 90.07);
+  --color-tuscan-sun-200: oklch(89.97% 0.074 88.43);
+  --color-tuscan-sun-300: oklch(85.21% 0.107 88.55);
+  --color-tuscan-sun-400: oklch(80.64% 0.133 87.58);
+  --color-tuscan-sun-500: oklch(76.18% 0.149 83.92);
+  --color-tuscan-sun-600: oklch(64.68% 0.125 84.92);
+  --color-tuscan-sun-700: oklch(52.54% 0.1 84.92);
+  --color-tuscan-sun-800: oklch(39.65% 0.074 84.85);
+  --color-tuscan-sun-900: oklch(25.73% 0.044 88.51);
+  --color-tuscan-sun-950: oklch(21.24% 0.034 89.82);
+
+  --color-sandy-brown-50: oklch(96.48% 0.019 62.46);
+  --color-sandy-brown-100: oklch(93.09% 0.038 60.99);
+  --color-sandy-brown-200: oklch(86.53% 0.076 61.36);
+  --color-sandy-brown-300: oklch(80.18% 0.115 59.53);
+  --color-sandy-brown-400: oklch(74.33% 0.15 56.44);
+  --color-sandy-brown-500: oklch(69.05% 0.176 50.62);
+  --color-sandy-brown-600: oklch(58.74% 0.148 51.12);
+  --color-sandy-brown-700: oklch(47.81% 0.118 52.11);
+  --color-sandy-brown-800: oklch(36.22% 0.085 53.98);
+  --color-sandy-brown-900: oklch(23.59% 0.051 57.17);
+  --color-sandy-brown-950: oklch(19.38% 0.039 62.02);
+
+  --color-burnt-peach-50: oklch(95.49% 0.018 30.27);
+  --color-burnt-peach-100: oklch(91.19% 0.036 34.81);
+  --color-burnt-peach-200: oklch(82.61% 0.076 34.96);
+  --color-burnt-peach-300: oklch(74.49% 0.119 35.29);
+  --color-burnt-peach-400: oklch(67.03% 0.162 35.12);
+  --color-burnt-peach-500: oklch(60.91% 0.198 34.41);
+  --color-burnt-peach-600: oklch(51.88% 0.167 34.57);
+  --color-burnt-peach-700: oklch(42.39% 0.132 35.06);
+  --color-burnt-peach-800: oklch(32.23% 0.095 35.29);
+  --color-burnt-peach-900: oklch(21.26% 0.054 36.36);
+  --color-burnt-peach-950: oklch(17.69% 0.039 40.16);
+
+  --color-brand-50: var(--color-verdigris-50);
+  --color-brand-100: var(--color-verdigris-100);
+  --color-brand-200: var(--color-verdigris-200);
+  --color-brand-300: var(--color-verdigris-300);
+  --color-brand-400: var(--color-verdigris-400);
+  --color-brand-500: var(--color-verdigris-500);
+  --color-brand-600: var(--color-verdigris-600);
+  --color-brand-700: var(--color-verdigris-700);
+  --color-brand-800: var(--color-verdigris-800);
+  --color-brand-900: var(--color-verdigris-900);
+  --color-brand-950: var(--color-verdigris-950);
+
+  --color-accent-50: var(--color-sandy-brown-50);
+  --color-accent-100: var(--color-sandy-brown-100);
+  --color-accent-200: var(--color-sandy-brown-200);
+  --color-accent-300: var(--color-sandy-brown-300);
+  --color-accent-400: var(--color-sandy-brown-400);
+  --color-accent-500: var(--color-sandy-brown-500);
+  --color-accent-600: var(--color-sandy-brown-600);
+  --color-accent-700: var(--color-sandy-brown-700);
+  --color-accent-800: var(--color-sandy-brown-800);
+  --color-accent-900: var(--color-sandy-brown-900);
+  --color-accent-950: var(--color-sandy-brown-950);
+
+  --shadow-soft: 0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04);
+  --shadow-panel: 0 24px 60px -36px rgba(15, 23, 42, 0.28);
+  --shadow-glow: 0 0 24px color-mix(in oklab, var(--color-verdigris-500) 30%, transparent);
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 180ms;
+  --duration-medium: 280ms;
+  --duration-slow: 520ms;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: var(--color-charcoal-blue-50);
+  --foreground: var(--color-charcoal-blue-900);
+  --card: oklch(99% 0.004 220);
+  --card-foreground: var(--color-charcoal-blue-900);
+  --popover: oklch(99% 0.004 220);
+  --popover-foreground: var(--color-charcoal-blue-900);
+  --primary: var(--color-verdigris-700);
+  --primary-foreground: oklch(99% 0.004 220);
+  --secondary: var(--color-charcoal-blue-100);
+  --secondary-foreground: var(--color-charcoal-blue-800);
+  --muted: var(--color-charcoal-blue-100);
+  --muted-foreground: var(--color-charcoal-blue-500);
+  --accent: var(--color-sandy-brown-100);
+  --accent-foreground: var(--color-sandy-brown-900);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: var(--color-charcoal-blue-200);
+  --input: var(--color-charcoal-blue-200);
+  --ring: var(--color-verdigris-600);
+  --chart-1: var(--color-verdigris-700);
+  --chart-2: var(--color-tuscan-sun-600);
+  --chart-3: var(--color-sandy-brown-600);
+  --chart-4: var(--color-burnt-peach-600);
+  --chart-5: var(--color-charcoal-blue-500);
+  --sidebar: var(--color-charcoal-blue-50);
+  --sidebar-foreground: var(--color-charcoal-blue-900);
+  --sidebar-primary: var(--color-verdigris-700);
+  --sidebar-primary-foreground: oklch(99% 0.004 220);
+  --sidebar-accent: var(--color-charcoal-blue-100);
+  --sidebar-accent-foreground: var(--color-charcoal-blue-800);
+  --sidebar-border: color-mix(in oklab, var(--color-charcoal-blue-200) 72%, white);
+  --sidebar-ring: var(--color-verdigris-600);
+}
+
+html {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: var(--color-charcoal-blue-950);
+  --foreground: var(--color-charcoal-blue-50);
+  --card: color-mix(in oklab, var(--color-charcoal-blue-900) 86%, black);
+  --card-foreground: var(--color-charcoal-blue-50);
+  --popover: color-mix(in oklab, var(--color-charcoal-blue-900) 88%, black);
+  --popover-foreground: var(--color-charcoal-blue-50);
+  --primary: var(--color-verdigris-500);
+  --primary-foreground: var(--color-charcoal-blue-950);
+  --secondary: color-mix(in oklab, var(--color-charcoal-blue-900) 88%, black);
+  --secondary-foreground: var(--color-charcoal-blue-50);
+  --muted: color-mix(in oklab, var(--color-charcoal-blue-900) 88%, black);
+  --muted-foreground: var(--color-charcoal-blue-300);
+  --accent: color-mix(in oklab, var(--color-sandy-brown-900) 35%, var(--color-charcoal-blue-900));
+  --accent-foreground: var(--color-sandy-brown-100);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: color-mix(in oklab, var(--color-charcoal-blue-700) 30%, transparent);
+  --input: color-mix(in oklab, var(--color-charcoal-blue-700) 38%, transparent);
+  --ring: var(--color-verdigris-500);
+  --chart-1: var(--color-verdigris-500);
+  --chart-2: var(--color-tuscan-sun-500);
+  --chart-3: var(--color-sandy-brown-500);
+  --chart-4: var(--color-burnt-peach-500);
+  --chart-5: var(--color-charcoal-blue-300);
+  --sidebar: color-mix(in oklab, var(--color-charcoal-blue-900) 92%, black);
+  --sidebar-foreground: var(--color-charcoal-blue-50);
+  --sidebar-primary: var(--color-verdigris-500);
+  --sidebar-primary-foreground: var(--color-charcoal-blue-950);
+  --sidebar-accent: color-mix(in oklab, var(--color-charcoal-blue-900) 88%, black);
+  --sidebar-accent-foreground: var(--color-charcoal-blue-50);
+  --sidebar-border: color-mix(in oklab, var(--color-charcoal-blue-700) 30%, transparent);
+  --sidebar-ring: var(--color-verdigris-500);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply min-h-screen antialiased;
+    color: var(--foreground);
+    background: color-mix(in oklab, var(--color-charcoal-blue-50) 92%, white);
+    font-family: var(--font-sans);
+    position: relative;
+    isolation: isolate;
+  }
+
+  html.dark body {
+    background: color-mix(in oklab, var(--color-charcoal-blue-950) 92%, black);
+  }
+
+  body::before,
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  body::before {
+    background-image:
+      linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: radial-gradient(circle at center, black 24%, transparent 78%);
+    opacity: 0.5;
+    z-index: -2;
+  }
+
+  body::after {
+    inset: auto auto -10rem -8rem;
+    width: 26rem;
+    height: 26rem;
+    border-radius: 9999px;
+    background: color-mix(in oklab, var(--color-verdigris-300) 18%, transparent);
+    filter: blur(10px);
+    animation: float-field 18s var(--ease-emphasized) infinite alternate;
+    z-index: -1;
+  }
+
+  html.dark body::before {
+    opacity: 0.18;
+  }
+
+  a,
+  button,
+  input,
+  textarea,
+  select {
+    transition-timing-function: var(--ease-emphasized);
+  }
+}
+
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-accent,
+.btn-danger,
+.btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-slate-950;
+  transform: translateZ(0);
+  transition-property: transform, box-shadow, background-color, border-color, color, opacity;
+  transition-duration: var(--duration-medium);
+  transition-timing-function: var(--ease-emphasized);
+  will-change: transform;
+}
+
+.btn:hover,
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-accent:hover,
+.btn-danger:hover,
+.btn-ghost:hover {
+  transform: translateY(-1px);
+}
+
+.btn:active,
+.btn-primary:active,
+.btn-secondary:active,
+.btn-accent:active,
+.btn-danger:active,
+.btn-ghost:active {
+  transform: translateY(0) scale(0.985);
+}
+
+.btn-primary {
+  @apply bg-brand-700 text-white focus:ring-brand-500 shadow-lg shadow-brand-500/20 hover:bg-brand-800 dark:bg-brand-500 dark:text-slate-950 dark:hover:bg-brand-400 dark:shadow-brand-500/10;
+}
+
+.btn-secondary {
+  @apply border border-charcoal-blue-300 bg-white text-charcoal-blue-700 focus:ring-charcoal-blue-400 hover:bg-charcoal-blue-50 hover:border-charcoal-blue-400 dark:border-white/10 dark:bg-slate-950/75 dark:text-slate-200 dark:hover:bg-white/5 dark:hover:border-white/15;
+  backdrop-filter: blur(18px);
+}
+
+.btn-accent {
+  @apply bg-accent-600 text-white focus:ring-accent-500 shadow-lg shadow-accent-500/20 hover:bg-accent-700 dark:shadow-accent-500/10;
+}
+
+.btn-danger {
+  @apply bg-red-600 text-white focus:ring-red-500 shadow-lg shadow-red-500/20 hover:bg-red-700 dark:shadow-red-500/10;
+}
+
+.btn-ghost {
+  @apply border border-charcoal-blue-200 bg-transparent text-charcoal-blue-600 focus:ring-charcoal-blue-400 hover:bg-charcoal-blue-50 hover:border-charcoal-blue-300 hover:text-charcoal-blue-900 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:border-white/15 dark:hover:text-white;
+}
+
+.btn-sm {
+  @apply px-3 py-2 text-xs rounded-xl;
+}
+
+.btn-lg {
+  @apply px-6 py-3.5 text-base rounded-2xl;
+}
+
+.card,
+.card-hover {
+  @apply overflow-hidden rounded-[28px] border border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-slate-950/75;
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-panel);
+  transition-property: transform, box-shadow, border-color, background-color;
+  transition-duration: var(--duration-medium);
+  transition-timing-function: var(--ease-emphasized);
+}
+
+.card-hover {
+  @apply hover:border-charcoal-blue-300 dark:hover:border-white/15;
+}
+
+.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 30px 80px -42px rgba(15, 23, 42, 0.4);
+}
+
+.input {
+  @apply w-full rounded-2xl border border-charcoal-blue-300 bg-white px-4 py-3 text-charcoal-blue-900 placeholder-charcoal-blue-400 focus:outline-none focus:ring-2 focus:ring-brand-500/15 dark:border-white/10 dark:bg-slate-950/75 dark:text-slate-100 dark:placeholder-slate-500;
+  backdrop-filter: blur(14px);
+  transition-property: border-color, box-shadow, background-color, color;
+  transition-duration: var(--duration-medium);
+  transition-timing-function: var(--ease-emphasized);
+}
+
+.input:focus {
+  border-color: color-mix(in oklab, var(--color-verdigris-500) 65%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-verdigris-300) 22%, transparent);
+}
+
+.input-error {
+  @apply border-red-400 focus:ring-red-500/20 focus:border-red-500 dark:border-red-500;
+}
+
+.label {
+  @apply block text-sm font-medium text-charcoal-blue-700 mb-1.5 dark:text-slate-300;
+}
+
+.section-title {
+  @apply text-2xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50;
+}
+
+.eyebrow {
+  @apply inline-flex items-center gap-2 rounded-full border border-charcoal-blue-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal-blue-600 dark:border-white/10 dark:bg-slate-950/70 dark:text-slate-300;
+  backdrop-filter: blur(14px);
+}
+
+.icon-chip {
+  @apply inline-flex items-center justify-center rounded-2xl border border-charcoal-blue-200 bg-white text-charcoal-blue-700 dark:border-white/10 dark:bg-slate-950/75 dark:text-slate-100;
+  backdrop-filter: blur(16px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.surface-panel {
+  @apply overflow-hidden rounded-[32px] border border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-slate-950/75;
+  backdrop-filter: blur(22px);
+  box-shadow: var(--shadow-panel);
+}
+
+.nav-glass {
+  @apply border border-charcoal-blue-200 bg-white/98 dark:border-white/10 dark:bg-slate-950/75;
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-panel);
+}
+
+.text-gradient {
+  @apply text-charcoal-blue-900 dark:text-charcoal-blue-50;
+}
+
+.page-transition,
+.animate-in {
+  animation: page-enter var(--duration-slow) var(--ease-emphasized) both;
+}
+
+.animate-fade-in,
+.stagger-item {
+  animation: fade-up var(--duration-slow) var(--ease-emphasized) both;
+}
+
+.footer-link {
+  @apply text-sm text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:text-slate-400 dark:hover:text-slate-100;
+  transition: color var(--duration-fast) var(--ease-emphasized);
+}
+
+.toggle {
+  appearance: none;
+  width: 2.75rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  background: rgba(148, 163, 184, 0.45);
+  position: relative;
+  cursor: pointer;
+  transition: background-color var(--duration-medium) var(--ease-emphasized);
+}
+
+.toggle::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background: white;
+  box-shadow: 0 8px 18px -12px rgba(15, 23, 42, 0.8);
+  transition: transform var(--duration-medium) var(--ease-emphasized);
+}
+
+.toggle:checked {
+  background: color-mix(in oklab, var(--color-verdigris-600) 88%, white);
+}
+
+.toggle:checked::after {
+  transform: translateX(1.25rem);
+}
+
+html.dark .toggle {
+  background: rgba(148, 163, 184, 0.22);
+}
+
+html.compact .btn,
+html.compact .btn-primary,
+html.compact .btn-secondary,
+html.compact .btn-accent,
+html.compact .btn-danger,
+html.compact .btn-ghost {
+  @apply px-3.5 py-2;
+}
+
+html.compact .card,
+html.compact .card-hover,
+html.compact .surface-panel {
+  border-radius: 1.5rem;
+}
+
+html.compact .input {
+  @apply py-2.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+html.reduce-motion {
+  scroll-behavior: auto;
+}
+
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float-field {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(4rem, -2rem, 0) scale(1.08);
+  }
+}
+```
+
+---
+
+## `frontend/tailwind.config.ts` (legacy — partially used)
+
+```ts
+import type { Config } from "tailwindcss";
+
+export default {
+  darkMode: "class",
+  content: [
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        background: "var(--background)",
+        foreground: "var(--foreground)",
+        brand: {
+          50: '#f0fdf4',
+          100: '#dcfce7',
+          200: '#bbf7d0',
+          300: '#86efac',
+          400: '#4ade80',
+          500: '#22c55e',
+          600: '#16a34a',
+          700: '#15803d',
+          800: '#166534',
+          900: '#14532d',
+        },
+        accent: {
+          50: '#fff7ed',
+          100: '#ffedd5',
+          200: '#fed7aa',
+          300: '#fdba74',
+          400: '#fb923c',
+          500: '#f97316',
+          600: '#ea580c',
+          700: '#c2410c',
+          800: '#9a3412',
+          900: '#7c2d12',
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
+        'glow': '0 0 20px rgba(34, 197, 94, 0.3)',
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.5s ease-out',
+        'slide-up': 'slideUp 0.5s ease-out',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+    },
+  },
+  plugins: [],
+} satisfies Config;
+```
+
+**IMPORTANT:** this file's `brand` palette (green hex values) conflicts with the OKLCH verdigris palette in `globals.css`. The v4 `@theme` in `globals.css` takes precedence when both define the same token — so runtime `brand-*` colors are the teal verdigris, not green. Ignore the green hex codes here when designing.
+
+---
+
+## `frontend/postcss.config.mjs`
+
+```js
+
+const config = {
+  plugins: {
+    "@tailwindcss/postcss": {}
+  },
+};
+
+export default config;
+```
+
+This is the only PostCSS setup; Tailwind v4 does all token processing through `@import "tailwindcss"` in globals.css.
+
+---
+
+## Quick reference — key design values
+
+| Token | Value |
+|-------|-------|
+| Font | Inter (Google Fonts, weights 400-800) + system-ui fallback |
+| Base radius | `--radius: 0.625rem` (Tailwind `rounded-lg`) |
+| Large surface radius | `28px` (`.card`, `.card-hover`), `32px` (`.surface-panel`), `30px` (`.nav-glass` pill) |
+| Button radius | `rounded-2xl` (16px, `.btn*`) |
+| Input radius | `rounded-2xl` (16px, `.input`, `<Input>`) |
+| Durations | `180ms` fast, `280ms` medium, `520ms` slow |
+| Easings | `cubic-bezier(0.16, 1, 0.3, 1)` emphasized, `cubic-bezier(0.4, 0, 0.2, 1)` standard |
+| Shadows | `--shadow-soft`, `--shadow-panel` (primary elevation), `--shadow-glow` |
+| Backdrop blur | `blur(14px)` input, `blur(16px)` icon-chip, `blur(18px)` btn-secondary, `blur(20px)` nav-glass/card, `blur(22px)` surface-panel |
+| Background | subtle grid mask + floating verdigris blob in `body::before/::after` |
+| Appearance classes | `.dark`, `.compact`, `.reduce-motion` on `<html>` |
+
+## Chart colors (macro domain convention)
+
+Used across `app/(dashboard)/meals/page.tsx`, `goal/dashboard/page.tsx`, `components/DailyOverviewChart`, `components/MealMacrosChart`:
+
+| Macro | Tailwind color | Hex |
+|-------|---------------|-----|
+| Calories | orange-500 | `#f97316` |
+| Protein | red-500 | `#ef4444` |
+| Carbs | amber-500 | `#f59e0b` |
+| Fat | yellow-500 | `#eab308` |
+| Fiber | green-500 | `#22c55e` |
+| P/Cal ratio | violet-500 | `#8b5cf6` |
+
+Recharts tooltips use CSS variables (`var(--popover)`, `var(--border)`, `var(--muted-foreground)`) so dark-mode tooltips invert automatically.
