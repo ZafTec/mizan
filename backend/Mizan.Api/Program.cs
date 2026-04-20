@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Mizan.Api.Authentication;
 using Mizan.Api.Hubs;
@@ -61,25 +61,17 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "Mizan API", Version = "v1" });
     c.SupportNonNullableReferenceTypes();
-    c.SchemaFilter<RequireNonNullablePropertiesSchemaFilter>();
-    c.AddSecurityDefinition("Bearer", new()
+    c.NonNullableReferenceTypesAsRequired();
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Bearer token",
-        Name = "Authorization",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Type = SecuritySchemeType.Http,
         Scheme = "bearer",
-        BearerFormat = "JWT"
+        BearerFormat = "JWT",
+        Description = "JWT Authorization header using the Bearer scheme."
     });
-    c.AddSecurityRequirement(new()
+    c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
-        {
-            new()
-            {
-                Reference = new() { Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, Id = "Bearer" }
-            },
-            Array.Empty<string>()
-        }
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
     });
 });
 
@@ -419,15 +411,3 @@ finally
 }
 
 public partial class Program { }
-
-internal class RequireNonNullablePropertiesSchemaFilter : ISchemaFilter
-{
-    public void Apply(OpenApiSchema schema, SchemaFilterContext context)
-    {
-        foreach (var (name, prop) in schema.Properties)
-        {
-            if (!prop.Nullable && !schema.Required.Contains(name))
-                schema.Required.Add(name);
-        }
-    }
-}
