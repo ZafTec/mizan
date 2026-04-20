@@ -149,7 +149,7 @@ export default function CreateMealPlanPage() {
 					<i className="ri-arrow-left-line text-xl text-charcoal-blue-600" />
 				</Link>
 				<div className="flex-1">
-					<h1 className="text-2xl font-bold text-charcoal-blue-900">Create Meal Plan</h1>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900">Create Meal Plan</h1>
 					<p className="text-charcoal-blue-500">
 						{formatDateLabel(startDate)} - {formatDateLabel(endDate)}
 					</p>

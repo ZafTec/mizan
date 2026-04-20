@@ -38,7 +38,7 @@ export default async function Page({ params }: { params: Promise<{ recipeId: str
 					<i className="ri-arrow-left-line text-xl text-charcoal-blue-600 dark:text-charcoal-blue-300" />
 				</Link>
 				<div>
-					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Log from Recipe</h1>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Log from Recipe</h1>
 					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">Quick-log nutrition from &quot;{recipe.title}&quot;</p>
 				</div>
 			</div>

@@ -98,7 +98,7 @@ export default function ForgotPasswordPage() {
 					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 shadow-lg shadow-brand-500/30 dark:bg-brand-500 dark:shadow-brand-500/15 mb-4">
 						<i className="ri-lock-password-line text-3xl text-white" />
 					</div>
-					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Forgot password?</h1>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Forgot password?</h1>
 					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
 						No worries, choose how you want to recover access
 					</p>

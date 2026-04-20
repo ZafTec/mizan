@@ -526,7 +526,7 @@ function MetricCard({
 	  <div className="flex items-center justify-between mb-3">
 		<div>
 		  <p className="text-xs uppercase text-charcoal-blue-500 dark:text-charcoal-blue-400 font-semibold">{title}</p>
-		  <p className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{value}</p>
+		  <p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">{value}</p>
 		  {subtitle && <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{subtitle}</p>}
 		</div>
 		<div className="h-10 w-10 rounded-2xl bg-brand-50 text-brand-700 flex items-center justify-center dark:bg-brand-500/15 dark:text-brand-300">

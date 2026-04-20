@@ -31,7 +31,7 @@ export default async function MealPlanEditPage({
 					<i className="ri-arrow-right-s-line" />
 					<span className="text-charcoal-blue-900 dark:text-charcoal-blue-100">Edit</span>
 				</div>
-				<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Edit Meal Plan</h1>
+				<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Edit Meal Plan</h1>
 			</div>
 
 			<MealPlanEditForm plan={plan} />

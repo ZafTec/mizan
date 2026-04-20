@@ -58,7 +58,7 @@ export default async function RecipesPage({
 		<div className="space-y-8" data-testid="recipe-list">
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
-					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Recipes</h1>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Recipes</h1>
 					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
 						Discover and create delicious healthy meals
 					</p>

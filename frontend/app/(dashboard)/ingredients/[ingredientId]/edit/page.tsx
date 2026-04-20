@@ -38,7 +38,7 @@ export default async function EditIngredientPage({ params }: { params: Promise<{
 					<i className="ri-arrow-left-line text-xl text-charcoal-blue-600" />
 				</Link>
 				<div>
-					<h1 className="text-2xl font-bold text-charcoal-blue-900">Edit Ingredient</h1>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900">Edit Ingredient</h1>
 					<p className="text-charcoal-blue-500 capitalize">{ingredient.name}</p>
 				</div>
 			</div>

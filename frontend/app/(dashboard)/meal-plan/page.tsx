@@ -107,7 +107,7 @@ export default async function MealPlanPage({
 									<i className={`${stat.icon} text-current`} />
 								</div>
 								<div>
-									<p className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{stat.value}</p>
+									<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">{stat.value}</p>
 									<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{stat.label}</p>
 								</div>
 							</div>

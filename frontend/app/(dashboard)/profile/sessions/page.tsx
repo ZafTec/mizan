@@ -157,7 +157,7 @@ export default function ProfileSessionsPage() {
 	        <div className="flex items-center justify-between">
 	          <div>
 	            <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">Active Sessions</p>
-	            <p className="text-3xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{activeSessions.length}</p>
+	            <p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">{activeSessions.length}</p>
 	          </div>
 	          {activeSessions.length > 1 && (
 	            <button

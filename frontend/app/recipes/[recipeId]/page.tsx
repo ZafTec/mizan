@@ -85,7 +85,7 @@ export default async function Page({
 					<i className="ri-arrow-left-line text-xl text-charcoal-blue-600 dark:text-charcoal-blue-300" />
 				</Link>
 				<div className="flex-1">
-					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{recipe.title}</h1>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">{recipe.title}</h1>
 					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-sm">
 						{recipe.prepTimeMinutes && `${recipe.prepTimeMinutes} min prep`}
 						{recipe.prepTimeMinutes && recipe.cookTimeMinutes && " • "}
@@ -126,7 +126,7 @@ export default async function Page({
 						<div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-fire-line text-orange-600" />
 						</div>
-						<p className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+						<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 							{macrosPerServing.calories}
 						</p>
 						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Calories</p>
@@ -135,7 +135,7 @@ export default async function Page({
 						<div className="w-10 h-10 rounded-2xl bg-red-100 dark:bg-red-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-heart-pulse-line text-red-600" />
 						</div>
-						<p className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+						<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 							{macrosPerServing.protein}g
 						</p>
 						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Protein</p>
@@ -144,7 +144,7 @@ export default async function Page({
 						<div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-bread-line text-amber-600" />
 						</div>
-						<p className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+						<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 							{macrosPerServing.carbs}g
 						</p>
 						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Carbs</p>
@@ -153,7 +153,7 @@ export default async function Page({
 						<div className="w-10 h-10 rounded-xl bg-yellow-100 dark:bg-yellow-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-drop-line text-yellow-600" />
 						</div>
-						<p className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+						<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 							{macrosPerServing.fat}g
 						</p>
 						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Fat</p>
@@ -162,7 +162,7 @@ export default async function Page({
 						<div className="w-10 h-10 rounded-2xl bg-green-100 dark:bg-green-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-leaf-line text-green-600" />
 						</div>
-						<p className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+						<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 							{macrosPerServing.fiber}g
 						</p>
 						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Fiber</p>
@@ -172,7 +172,7 @@ export default async function Page({
 							<div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-500/15 flex items-center justify-center mx-auto mb-2">
 								<i className="ri-percent-line text-violet-600" />
 							</div>
-							<p className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+							<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 								{proteinCalRatio.toFixed(0)}%
 							</p>
 							<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">P/Cal Ratio</p>

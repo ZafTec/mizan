@@ -70,7 +70,7 @@ export default function MyTrainerPage() {
 			<div className="max-w-3xl mx-auto space-y-6">
 				<div className="flex items-center justify-between">
 					<div>
-						<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">My Trainer</h1>
+						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">My Trainer</h1>
 						<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">No active trainer relationship</p>
 					</div>
 					<Link href="/profile" className="btn-secondary">
@@ -101,7 +101,7 @@ export default function MyTrainerPage() {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-bold text-charcoal-blue-900">My Trainer</h1>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900">My Trainer</h1>
 					<p className="text-charcoal-blue-500 mt-1">Your current trainer relationship</p>
 				</div>
 				<Link href="/profile" className="btn-secondary">

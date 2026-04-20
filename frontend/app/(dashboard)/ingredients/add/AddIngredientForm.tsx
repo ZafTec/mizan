@@ -68,7 +68,7 @@ export default function AddIngredientForm() {
 					<i className="ri-arrow-left-line text-xl" />
 				</Link>
 				<div>
-					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Add Ingredient</h1>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Add Ingredient</h1>
 					<p className="text-charcoal-blue-600 dark:text-charcoal-blue-400">Add a new ingredient to the database</p>
 				</div>
 			</div>

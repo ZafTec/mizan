@@ -37,7 +37,7 @@ export default async function MealPlanDetailPage({
 						<i className="ri-arrow-right-s-line" />
 						<span className="text-charcoal-blue-900 dark:text-charcoal-blue-100">{plan.name || "Meal Plan"}</span>
 					</div>
-					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{plan.name || "Meal Plan"}</h1>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">{plan.name || "Meal Plan"}</h1>
 					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
 						{plan.startDate} to {plan.endDate}
 					</p>
@@ -59,7 +59,7 @@ export default async function MealPlanDetailPage({
 									<i className={`${stat.icon} text-current`} />
 								</div>
 								<div>
-									<p className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+									<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 										{stat.value}{stat.unit && <span className="ml-1 text-sm font-normal text-charcoal-blue-500 dark:text-charcoal-blue-400">{stat.unit}</span>}
 									</p>
 									<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{stat.label}</p>

@@ -104,7 +104,7 @@ export default function Page() {
 					<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-600 text-white shadow-lg shadow-brand-500/25 dark:bg-brand-500">
 						<AnimatedIcon name="lock" size={26} aria-hidden="true" />
 					</div>
-					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Welcome back</h1>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Welcome back</h1>
 					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">Sign in to continue to Mizan</p>
 				</div>
 

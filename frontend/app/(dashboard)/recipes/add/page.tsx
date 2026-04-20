@@ -262,7 +262,7 @@ export default function Page() {
 						<i className="ri-arrow-left-line text-xl text-charcoal-blue-600 dark:text-charcoal-blue-300" />
 					</Link>
 					<div>
-						<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Create Recipe</h1>
+						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Create Recipe</h1>
 						<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">Add a new recipe to your collection</p>
 					</div>
 				</div>

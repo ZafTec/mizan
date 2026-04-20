@@ -143,7 +143,7 @@ export default function AddMealPlanPage() {
 	return (
 	  <div className="flex flex-col gap-6">
 	    <div className="flex justify-between items-center">
-	      <h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Add to Meal Plan</h1>
+	      <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Add to Meal Plan</h1>
 	      <Link
 	        href={weekParam ? `/meal-plan?week=${weekParam}` : "/meal-plan"}
           className="btn-secondary"

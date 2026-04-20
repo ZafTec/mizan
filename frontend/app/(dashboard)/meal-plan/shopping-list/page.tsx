@@ -74,7 +74,7 @@ export default function ShoppingListPage() {
 	return (
 	  <div className="flex flex-col gap-6">
 	    <div className="flex justify-between items-center">
-	      <h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Shopping List</h1>
+	      <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Shopping List</h1>
 	      <Link href="/meal-plan" className="btn-primary">
 	        Back to Meal Plan
         </Link>

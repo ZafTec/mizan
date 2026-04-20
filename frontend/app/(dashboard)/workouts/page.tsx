@@ -419,7 +419,7 @@ export default function WorkoutsPage() {
                     {historyLoaded && !isLoadingHistory && historyWorkouts.length > 0 && (
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             <div className="card p-4 text-center">
-                                <div className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">{historyTotal}</div>
+                                <div className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">{historyTotal}</div>
                                 <div className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">Total Workouts</div>
                             </div>
                             <div className="card p-4 text-center">

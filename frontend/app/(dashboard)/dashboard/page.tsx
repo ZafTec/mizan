@@ -187,7 +187,7 @@ export default async function DashboardPage() {
 							<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-500 dark:text-charcoal-blue-400">
 								Current
 							</p>
-							<p className="mt-1 text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+							<p className="mt-1 text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">
 								{currentStreak}
 								<span className="ml-1 text-xs font-medium text-charcoal-blue-500">days</span>
 							</p>
@@ -207,7 +207,7 @@ export default async function DashboardPage() {
 							<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-500 dark:text-charcoal-blue-400">
 								Longest
 							</p>
-							<p className="mt-1 text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+							<p className="mt-1 text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">
 								{longestStreak}
 								<span className="ml-1 text-xs font-medium text-charcoal-blue-500">days</span>
 							</p>

@@ -63,7 +63,7 @@ export default function GoalDashboard() {
 			<div className="mb-8 w-full max-w-120 opacity-95 drop-shadow-md">
 	            <Image src="/assets/dashboard-overview.svg" alt="Goal dashboard overview" width={920} height={640} className="h-auto w-full" priority />
 	          </div>
-          <h2 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-3">
+          <h2 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl mb-3">
             No Active Goal
           </h2>
           <p className="text-charcoal-blue-600 dark:text-charcoal-blue-400 mb-6 max-w-md mx-auto">

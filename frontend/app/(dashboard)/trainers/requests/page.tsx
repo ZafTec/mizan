@@ -53,7 +53,7 @@ export default function TrainerRequestsPage() {
 			{/* Header */}
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
-					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 						Trainer Requests
 					</h1>
 					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
