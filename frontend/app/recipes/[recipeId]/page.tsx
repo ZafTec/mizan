@@ -123,7 +123,7 @@ export default async function Page({
 				</div>
 				<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
 					<div className="text-center p-4 bg-white rounded-xl dark:bg-charcoal-blue-950">
-						<div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-500/15 flex items-center justify-center mx-auto mb-2">
+						<div className="w-10 h-10 rounded-xl bg-burnt-peach-100 dark:bg-orange-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-fire-line text-orange-600" />
 						</div>
 						<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
@@ -141,7 +141,7 @@ export default async function Page({
 						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Protein</p>
 					</div>
 					<div className="text-center p-4 bg-white rounded-xl dark:bg-charcoal-blue-950">
-						<div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center mx-auto mb-2">
+						<div className="w-10 h-10 rounded-xl bg-tuscan-sun-100 dark:bg-amber-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-bread-line text-amber-600" />
 						</div>
 						<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
@@ -150,7 +150,7 @@ export default async function Page({
 						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Carbs</p>
 					</div>
 					<div className="text-center p-4 bg-white rounded-xl dark:bg-charcoal-blue-950">
-						<div className="w-10 h-10 rounded-xl bg-yellow-100 dark:bg-yellow-500/15 flex items-center justify-center mx-auto mb-2">
+						<div className="w-10 h-10 rounded-xl bg-sandy-brown-100 dark:bg-yellow-500/15 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-drop-line text-yellow-600" />
 						</div>
 						<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">

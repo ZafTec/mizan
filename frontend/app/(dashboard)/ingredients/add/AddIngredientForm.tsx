@@ -105,7 +105,7 @@ export default function AddIngredientForm() {
 						<div>
 							<label htmlFor="calories" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="h-2 w-2 rounded-sm bg-orange-500" />
+									<span className="h-2 w-2 rounded-sm bg-burnt-peach-500" />
 									Calories (kcal)
 								</span>
 							</label>
@@ -114,7 +114,7 @@ export default function AddIngredientForm() {
 						<div>
 							<label htmlFor="protein" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="h-2 w-2 rounded-sm bg-red-500" />
+									<span className="h-2 w-2 rounded-sm bg-verdigris-500" />
 									Protein (g)
 								</span>
 							</label>
@@ -123,7 +123,7 @@ export default function AddIngredientForm() {
 						<div>
 							<label htmlFor="carbs" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="h-2 w-2 rounded-sm bg-amber-500" />
+									<span className="h-2 w-2 rounded-sm bg-tuscan-sun-500" />
 									Carbs (g)
 								</span>
 							</label>
@@ -132,7 +132,7 @@ export default function AddIngredientForm() {
 						<div>
 							<label htmlFor="fat" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="h-2 w-2 rounded-sm bg-yellow-500" />
+									<span className="h-2 w-2 rounded-sm bg-sandy-brown-500" />
 									Fat (g)
 								</span>
 							</label>

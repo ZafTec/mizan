@@ -59,7 +59,7 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 				<h2 className="font-semibold text-charcoal-blue-900 mb-4">Nutritional Information</h2>
 				<div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
 					<div className="text-center p-4 bg-white rounded-xl">
-						<div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center mx-auto mb-2">
+						<div className="w-10 h-10 rounded-xl bg-burnt-peach-100 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-fire-line text-orange-600" />
 						</div>
 						<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900">{ingredient.caloriesPer100g}</p>
@@ -73,14 +73,14 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 						<p className="text-xs text-charcoal-blue-500">Protein</p>
 					</div>
 					<div className="text-center p-4 bg-white rounded-xl">
-						<div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center mx-auto mb-2">
+						<div className="w-10 h-10 rounded-xl bg-tuscan-sun-100 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-bread-line text-amber-600" />
 						</div>
 						<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900">{ingredient.carbsPer100g}g</p>
 						<p className="text-xs text-charcoal-blue-500">Carbs</p>
 					</div>
 					<div className="text-center p-4 bg-white rounded-xl">
-						<div className="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center mx-auto mb-2">
+						<div className="w-10 h-10 rounded-xl bg-sandy-brown-100 flex items-center justify-center mx-auto mb-2">
 							<i className="ri-drop-line text-yellow-600" />
 						</div>
 						<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900">{ingredient.fatPer100g}g</p>
