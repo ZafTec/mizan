@@ -57,21 +57,26 @@ export default function LogProgress() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <header className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="hidden w-20 sm:block opacity-95">
             <AppFeatureIllustration variant="progress" className="h-auto w-full" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Log Today's Progress</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1">Record your daily nutrition intake</p>
+          <div className="space-y-2">
+            <p className="eyebrow">Log</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+              Log today's progress
+            </h1>
+            <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+              Record your daily nutrition intake.
+            </p>
           </div>
         </div>
         <Link href="/goal/dashboard" className="btn-secondary">
           <i className="ri-arrow-left-line" />
           Back to Dashboard
         </Link>
-      </div>
+      </header>
 
       {/* Quick Tips */}
 		<div className="card p-6 bg-slate-50/90 dark:bg-slate-900/60">

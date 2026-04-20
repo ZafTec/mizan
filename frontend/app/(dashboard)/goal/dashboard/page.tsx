@@ -111,12 +111,16 @@ export default function GoalDashboard() {
     : [];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Goal Dashboard</h1>
-          <p className="text-slate-700 dark:text-slate-300 mt-1">Track your daily nutrition progress</p>
+    <div className="space-y-6 lg:space-y-8">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-2">
+          <p className="eyebrow">Progress</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+            Goal dashboard
+          </h1>
+          <p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+            Track your daily nutrition progress against your active goal.
+          </p>
         </div>
         <div className="flex gap-3">
           <Link href="/goal/progress" className="btn-primary">
@@ -128,7 +132,7 @@ export default function GoalDashboard() {
             Edit Goal
           </Link>
         </div>
-      </div>
+      </header>
 
       {/* Time Range Selector */}
       <div className="flex gap-2">

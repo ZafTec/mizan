@@ -136,19 +136,22 @@ export default function ProfileSessionsPage() {
   const activeSessions = sessions.filter((s) => new Date(s.expiresAt) > new Date());
 
 	  return (
-	    <div className="max-w-3xl mx-auto space-y-6">
-	      <div className="flex items-center justify-between">
-	        <div>
-	          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Active Sessions</h1>
-	          <p className="mt-1 text-slate-500 dark:text-slate-400">
-	            Manage devices where you're currently logged in
+	    <div className="max-w-3xl mx-auto space-y-6 lg:space-y-8">
+	      <header className="flex items-center justify-between">
+	        <div className="space-y-2">
+	          <p className="eyebrow">Security</p>
+	          <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+	            Active sessions
+	          </h1>
+	          <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+	            Manage devices where you're currently logged in.
 	          </p>
         </div>
         <Link href="/profile/settings" className="btn-secondary">
           <i className="ri-arrow-left-line" />
           Back to Settings
         </Link>
-      </div>
+      </header>
 
 	      <div className="card p-6">
 	        <div className="flex items-center justify-between">
