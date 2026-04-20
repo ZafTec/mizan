@@ -1,35 +1,95 @@
+import { AnimatedIcon } from "@/components/ui/animated-icon";
 import { ClientList } from "@/components/trainer/ClientList";
 import { TrainerStats } from "@/components/trainer/TrainerStats";
 import { RecentMessages } from "@/components/trainer/RecentMessages";
 import { TrainerPendingRequests } from "@/components/trainer/TrainerPendingRequests";
 
+export const dynamic = "force-dynamic";
+
 export default function TrainerDashboard() {
 	return (
-		<div className="container mx-auto px-4 py-8">
-			<h1 className="text-3xl font-bold mb-8">Trainer Dashboard</h1>
+		<div className="space-y-6 lg:space-y-8">
+			<header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+				<div className="space-y-2">
+					<p className="eyebrow">Coaching</p>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+						Trainer command center
+					</h1>
+					<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+						Incoming requests, recent client check-ins, and your roster in one view.
+					</p>
+				</div>
+			</header>
 
-			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+			<section className="glass-panel p-6 sm:p-8">
+				<header className="mb-4 flex items-center gap-3">
+					<span className="icon-chip h-10 w-10 text-verdigris-700 dark:text-verdigris-300">
+						<AnimatedIcon name="chartLine" size={18} />
+					</span>
+					<div>
+						<h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+							Stats at a glance
+						</h2>
+						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+							Active clients, pending requests, today's activity.
+						</p>
+					</div>
+				</header>
 				<TrainerStats />
-			</div>
+			</section>
 
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-				<div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6">
-					<h2 className="text-xl font-semibold mb-4">Pending Requests</h2>
+			<div className="grid gap-6 lg:grid-cols-2">
+				<section className="glass-panel p-6 sm:p-8">
+					<header className="mb-4 flex items-center gap-3">
+						<span className="icon-chip h-10 w-10 text-sandy-brown-700 dark:text-sandy-brown-300">
+							<AnimatedIcon name="badgeAlert" size={18} />
+						</span>
+						<div>
+							<h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+								Pending requests
+							</h2>
+							<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+								Clients waiting for you to accept.
+							</p>
+						</div>
+					</header>
 					<TrainerPendingRequests />
-				</div>
+				</section>
 
-				<div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6">
-					<h2 className="text-xl font-semibold mb-4">Recent Messages</h2>
+				<section className="glass-panel p-6 sm:p-8">
+					<header className="mb-4 flex items-center gap-3">
+						<span className="icon-chip h-10 w-10 text-tuscan-sun-700 dark:text-tuscan-sun-300">
+							<AnimatedIcon name="messageCircle" size={18} />
+						</span>
+						<div>
+							<h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+								Recent messages
+							</h2>
+							<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+								Jump into the latest conversations.
+							</p>
+						</div>
+					</header>
 					<RecentMessages />
-				</div>
+				</section>
 			</div>
 
-			<div className="grid grid-cols-1 gap-6">
-				<div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6">
-					<h2 className="text-xl font-semibold mb-4">Your Clients</h2>
-					<ClientList />
-				</div>
-			</div>
+			<section className="glass-panel p-6 sm:p-8">
+				<header className="mb-4 flex items-center gap-3">
+					<span className="icon-chip h-10 w-10 text-verdigris-700 dark:text-verdigris-300">
+						<AnimatedIcon name="users" size={18} />
+					</span>
+					<div>
+						<h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+							Your clients
+						</h2>
+						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+							Full roster with status and last seen.
+						</p>
+					</div>
+				</header>
+				<ClientList />
+			</section>
 		</div>
 	);
 }
