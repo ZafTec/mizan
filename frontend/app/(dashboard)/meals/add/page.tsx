@@ -1,6 +1,7 @@
 "use client";
 
 import { FieldError } from "@/components/FieldError";
+import { GamificationToaster } from "@/components/gamification/GamificationToaster";
 import Loading from "@/components/Loading";
 import { addMeal } from "@/data/meal";
 import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
@@ -21,16 +22,27 @@ export default function Page() {
 	const warningsRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
-		if (formState.status === "success" && !formState.warnings?.length) {
-			router.push("/meals");
-		}
-		if (formState.status === "success" && formState.warnings?.length) {
+		if (formState.status !== "success") return;
+		const hasUnlocks = (formState.unlockedAchievements?.length ?? 0) > 0;
+		const hasStreak = formState.streak?.extended ?? false;
+		const hasWarnings = (formState.warnings?.length ?? 0) > 0;
+
+		if (hasWarnings) {
 			warningsRef.current?.scrollIntoView({ behavior: "smooth" });
+			return;
 		}
-	}, [formState.status, formState.warnings, router]);
+		// Hold on the page briefly so toasts can land before redirect.
+		const delay = hasUnlocks ? 3200 : hasStreak ? 1600 : 0;
+		const t = setTimeout(() => router.push("/meals"), delay);
+		return () => clearTimeout(t);
+	}, [formState.status, formState.warnings, formState.streak, formState.unlockedAchievements, router]);
 
 	return (
 		<div className="max-w-3xl mx-auto space-y-6">
+			<GamificationToaster
+				streak={formState.streak}
+				unlockedAchievements={formState.unlockedAchievements}
+			/>
 			{/* Header */}
 			<div className="flex items-center gap-4">
 				<Link href="/meals" className="w-10 h-10 rounded-xl bg-charcoal-blue-100 hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900 dark:hover:bg-charcoal-blue-800 flex items-center justify-center transition-colors">

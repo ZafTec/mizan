@@ -1,3 +1,5 @@
+import type { StreakUpdate, UnlockedAchievement } from "@/types/gamification";
+
 export interface FieldError {
     field: string;
     message: string;
@@ -8,6 +10,8 @@ export interface FormState {
     message?: string;
     fieldErrors?: FieldError[];
     warnings?: string[];
+    streak?: StreakUpdate | null;
+    unlockedAchievements?: UnlockedAchievement[] | null;
 }
 
 export const EMPTY_FORM_STATE: FormState = {

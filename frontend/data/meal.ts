@@ -3,7 +3,7 @@
 import { serverApi } from "@/lib/api.server";
 import { logger } from "@/lib/logger";
 import { createErrorState, createSuccessState, FormState } from "@/helper/FormErrorHandler";
-import { updateStreak } from "@/data/achievement";
+import type { GamificationFeedback } from "@/types/gamification";
 
 const mealLogger = logger.createModuleLogger("meal-data");
 
@@ -110,7 +110,12 @@ export async function addMeal(prevState: FormState, formData: FormData): Promise
         const fat = parseFloat(formData.get("fat") as string);
         const fiber = parseFloat(formData.get("fiber") as string);
 
-        const result = await serverApi<{ id: string; success: boolean; message?: string; warnings?: string[] }>("/api/Meals", {
+        const result = await serverApi<{
+            id: string;
+            success: boolean;
+            message?: string;
+            warnings?: string[];
+        } & GamificationFeedback>("/api/Meals", {
             method: "POST",
             body: {
                 recipeId: recipeId || null,
@@ -128,11 +133,12 @@ export async function addMeal(prevState: FormState, formData: FormData): Promise
         });
 
         mealLogger.info("Meal logged successfully", { mealType, servings, date });
-        updateStreak().catch(() => {});
         return {
             status: "success",
             message: "Meal logged successfully!",
             warnings: result?.warnings?.length ? result.warnings : undefined,
+            streak: result?.streak ?? null,
+            unlockedAchievements: result?.unlockedAchievements ?? null,
         };
     } catch (error) {
         mealLogger.error("Failed to log meal", {

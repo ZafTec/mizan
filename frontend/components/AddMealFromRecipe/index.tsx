@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { addMeal } from "@/data/meal";
 import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
 import { FieldError } from "@/components/FieldError";
+import { GamificationToaster } from "@/components/gamification/GamificationToaster";
 import Macros from "@/types/macro";
 
 interface AddMealFromRecipeProps {
@@ -49,16 +50,26 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 	}
 
 	useEffect(() => {
-		if (formState.status === "success" && !formState.warnings?.length) {
-			router.push("/meals");
-		}
-		if (formState.status === "success" && formState.warnings?.length) {
+		if (formState.status !== "success") return;
+		const hasUnlocks = (formState.unlockedAchievements?.length ?? 0) > 0;
+		const hasStreak = formState.streak?.extended ?? false;
+		const hasWarnings = (formState.warnings?.length ?? 0) > 0;
+
+		if (hasWarnings) {
 			warningsRef.current?.scrollIntoView({ behavior: "smooth" });
+			return;
 		}
-	}, [formState.status, formState.warnings, router]);
+		const delay = hasUnlocks ? 3200 : hasStreak ? 1600 : 0;
+		const t = setTimeout(() => router.push("/meals"), delay);
+		return () => clearTimeout(t);
+	}, [formState.status, formState.warnings, formState.streak, formState.unlockedAchievements, router]);
 
 	return (
 		<form action={action} className="space-y-6">
+			<GamificationToaster
+				streak={formState.streak}
+				unlockedAchievements={formState.unlockedAchievements}
+			/>
 			<input type="hidden" name="recipeId" value={recipeId} />
 
 			{/* Basic Info Card */}
