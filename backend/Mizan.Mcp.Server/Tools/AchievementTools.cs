@@ -45,11 +45,4 @@ public sealed class AchievementTools
             : $"?streakType={Uri.EscapeDataString(streakType)}";
         return await _api.GetAsync($"/api/Achievements/streak{qs}", ct);
     }
-
-    [McpServerTool(Name = "update_streak")]
-    [Description("Record a check-in for today's streak. Tracks by streakType (nutrition | workout).")]
-    public async Task<string> UpdateStreak(CancellationToken ct = default)
-    {
-        return await _api.PostAsync("/api/Achievements/streak", new { }, ct);
-    }
 }
