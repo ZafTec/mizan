@@ -51,7 +51,7 @@ yarn-error.log*
 .env.production.local
 !.env.example
 
-# Local dev config (contains VPS connection strings + secrets — don't commit)
+# Local dev config
 backend/Mizan.Api/appsettings.Development.json
 
 # Vercel
@@ -76,7 +76,6 @@ redis_data/
 
 # Superdesign scratch (local-only draft cache)
 .superdesign/v2_drafts/
-.superdesign/design-system.md
 
-# Host notes (not for repo)
+# Host notes
 vps_setup.txt
