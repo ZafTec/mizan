@@ -222,6 +222,155 @@ public class AchievementsControllerTests
         result!.Rows.Select(r => r.Name).Should().ContainInOrder("Alpha", "Delta", "Zeta");
     }
 
+    // ---------- authorization: write endpoints must be admin-only ----------
+
+    [Fact]
+    public async Task Create_ReturnsForbidden_ForNonAdmin()
+    {
+        await _fixture.ResetDatabaseAsync();
+        await ResetAchievementsAsync();
+
+        var userId = Guid.NewGuid();
+        var email = $"ach-noadmin-create-{userId:N}@example.com";
+        await _fixture.SeedUserAsync(userId, email, role: "user");
+
+        using var client = _fixture.CreateAuthenticatedClient(userId, email);
+        var response = await client.PostAsJsonAsync("/api/Achievements", new
+        {
+            name = "Bad Actor Badge",
+            points = 10,
+            threshold = 1,
+            criteriaType = "meals_logged",
+            category = "nutrition"
+        });
+
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Forbidden, HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Update_ReturnsForbidden_ForNonAdmin()
+    {
+        await _fixture.ResetDatabaseAsync();
+        await ResetAchievementsAsync();
+
+        var userId = Guid.NewGuid();
+        var email = $"ach-noadmin-upd-{userId:N}@example.com";
+        await _fixture.SeedUserAsync(userId, email, role: "user");
+        var achId = await SeedOneAchievementAsync("Stable", "nutrition", "meals_logged", 10);
+
+        using var client = _fixture.CreateAuthenticatedClient(userId, email);
+        var response = await client.PutAsJsonAsync($"/api/Achievements/{achId}", new
+        {
+            id = achId,
+            name = "Hijacked",
+            points = 10_000,
+            threshold = 0,
+            criteriaType = (string?)null,
+            category = (string?)null
+        });
+
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Forbidden, HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Delete_ReturnsForbidden_ForNonAdmin()
+    {
+        await _fixture.ResetDatabaseAsync();
+        await ResetAchievementsAsync();
+
+        var userId = Guid.NewGuid();
+        var email = $"ach-noadmin-del-{userId:N}@example.com";
+        await _fixture.SeedUserAsync(userId, email, role: "user");
+        var achId = await SeedOneAchievementAsync("Keep Me", "nutrition", "meals_logged", 10);
+
+        using var client = _fixture.CreateAuthenticatedClient(userId, email);
+        var response = await client.DeleteAsync($"/api/Achievements/{achId}");
+
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Forbidden, HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Admin_CanCreate_Update_AndDelete()
+    {
+        await _fixture.ResetDatabaseAsync();
+        await ResetAchievementsAsync();
+
+        var adminId = Guid.NewGuid();
+        var email = $"ach-admin-crud-{adminId:N}@example.com";
+        await _fixture.SeedUserAsync(adminId, email, role: "admin");
+
+        using var client = _fixture.CreateAuthenticatedClient(adminId, email, role: "admin");
+
+        var create = await client.PostAsJsonAsync("/api/Achievements", new
+        {
+            name = "CRUD Badge",
+            description = "round trip",
+            points = 25,
+            threshold = 5,
+            criteriaType = "meals_logged",
+            category = "nutrition"
+        });
+        create.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await create.Content.ReadFromJsonAsync<CreateResponse>();
+        created!.Id.Should().NotBeEmpty();
+
+        var getOne = await client.GetAsync($"/api/Achievements/{created.Id}");
+        getOne.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var update = await client.PutAsJsonAsync($"/api/Achievements/{created.Id}", new
+        {
+            id = created.Id,
+            name = "CRUD Badge v2",
+            description = "updated",
+            points = 30,
+            threshold = 6,
+            criteriaType = "meals_logged",
+            category = "nutrition"
+        });
+        update.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var delete = await client.DeleteAsync($"/api/Achievements/{created.Id}");
+        delete.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var getAfterDelete = await client.GetAsync($"/api/Achievements/{created.Id}");
+        getAfterDelete.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task StreakPost_NoLongerExists()
+    {
+        await _fixture.ResetDatabaseAsync();
+
+        var userId = Guid.NewGuid();
+        var email = $"ach-streakpost-{userId:N}@example.com";
+        await _fixture.SeedUserAsync(userId, email);
+
+        using var client = _fixture.CreateAuthenticatedClient(userId, email);
+        var response = await client.PostAsJsonAsync("/api/Achievements/streak", new { });
+
+        response.StatusCode.Should().Be(HttpStatusCode.MethodNotAllowed);
+    }
+
+    private record CreateResponse(Guid Id);
+
+    private async Task<Guid> SeedOneAchievementAsync(string name, string category, string criteria, int threshold)
+    {
+        using var scope = _fixture.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+        var ach = new Achievement
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            Category = category,
+            CriteriaType = criteria,
+            Threshold = threshold,
+            Points = 10
+        };
+        db.Achievements.Add(ach);
+        await db.SaveChangesAsync();
+        return ach.Id;
+    }
+
     // ---------- helpers ----------
 
     // ApiTestFixture.ResetDatabaseAsync does NOT truncate achievements/user_achievements
