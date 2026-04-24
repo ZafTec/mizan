@@ -119,9 +119,9 @@ services:
       - ConnectionStrings__Redis=redis:6379
 
       # JWT/JWKS Authentication
-      - BetterAuth__Issuer=http://localhost:3000
-      - BetterAuth__Audience=mizan-api
-      - BetterAuth__JwksUrl=http://frontend:3000/api/auth/jwks
+      - Jwt__Issuer=http://localhost:3000
+      - Jwt__Audience=mizan-api
+      - Jwt__JwksUrl=http://frontend:3000/api/auth/jwks
       - Cors__Origins__0=http://frontend:3000
       - Cors__Origins__1=http://localhost:3000
       - OpenAI__ApiKey=${OPENAI_API_KEY:-}
@@ -179,9 +179,9 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__PostgreSQL=Host=postgres;Database=mizan_test;Username=mizan;Password=${DB_PASSWORD:-mizan_dev_password}
       - ConnectionStrings__Redis=redis:6379
-      - BetterAuth__Issuer=http://localhost:3000
-      - BetterAuth__Audience=mizan-api
-      - BetterAuth__JwksUrl=http://frontend:3000/api/auth/jwks
+      - Jwt__Issuer=http://localhost:3000
+      - Jwt__Audience=mizan-api
+      - Jwt__JwksUrl=http://frontend:3000/api/auth/jwks
     command: dotnet test --logger "console;verbosity=normal"
     depends_on:
       postgres:

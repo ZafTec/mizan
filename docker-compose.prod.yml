@@ -16,9 +16,9 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
       # JWT/JWKS validation
-      - BetterAuth__Issuer=${BetterAuth__Issuer}
-      - BetterAuth__Audience=${BetterAuth__Audience}
-      - BetterAuth__JwksUrl=${BetterAuth__JwksUrl}
+      - Jwt__Issuer=${Jwt__Issuer}
+      - Jwt__Audience=${Jwt__Audience}
+      - Jwt__JwksUrl=${Jwt__JwksUrl}
       - Cors__Origins__0=${BETTER_AUTH_URL}
       # OpenTelemetry
       - OTLP_ENDPOINT_URL=http://tempo:4317

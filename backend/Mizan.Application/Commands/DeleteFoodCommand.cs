@@ -1,5 +1,7 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.Extensions.Caching.Hybrid;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Commands;
@@ -26,9 +28,9 @@ public class DeleteFoodCommandValidator : AbstractValidator<DeleteFoodCommand>
 public class DeleteFoodCommandHandler : IRequestHandler<DeleteFoodCommand, DeleteFoodResult>
 {
     private readonly IMizanDbContext _context;
-    private readonly IRedisCacheService _cache;
+    private readonly HybridCache _cache;
 
-    public DeleteFoodCommandHandler(IMizanDbContext context, IRedisCacheService cache)
+    public DeleteFoodCommandHandler(IMizanDbContext context, HybridCache cache)
     {
         _context = context;
         _cache = cache;
@@ -46,7 +48,7 @@ public class DeleteFoodCommandHandler : IRequestHandler<DeleteFoodCommand, Delet
         _context.Foods.Remove(food);
         await _context.SaveChangesAsync(cancellationToken);
 
-        await _cache.RemoveByPrefixAsync("foods:search:", cancellationToken);
+        await _cache.RemoveByTagAsync(CacheTags.Foods, cancellationToken);
 
         return new DeleteFoodResult { Success = true, Message = "Food deleted successfully" };
     }

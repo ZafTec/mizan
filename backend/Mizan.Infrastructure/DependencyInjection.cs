@@ -20,8 +20,18 @@ public static class DependencyInjection
 
         services.AddScoped<IMizanDbContext>(provider => provider.GetRequiredService<MizanDbContext>());
 
-        // Services
-        services.AddMemoryCache();
+        // Distributed cache (L2) wraps Redis. HybridCache will use this
+        // automatically when registered, combining in-proc L1 + Redis L2
+        // with stampede protection in one API.
+        var redis = configuration.GetConnectionString("Redis");
+        if (!string.IsNullOrWhiteSpace(redis))
+        {
+            services.AddStackExchangeRedisCache(o => o.Configuration = redis);
+        }
+
+        services.AddHybridCache();
+
+        // Domain services
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<ITrainerAuthorizationService, TrainerAuthorizationService>();
@@ -29,7 +39,6 @@ public static class DependencyInjection
         services.AddScoped<INutritionAiService, NutritionAiService>();
         services.AddScoped<IStreakService, StreakService>();
         services.AddScoped<IAchievementEvaluator, AchievementEvaluator>();
-        services.AddSingleton<IRedisCacheService, RedisCacheService>();
 
         return services;
     }

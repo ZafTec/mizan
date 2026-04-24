@@ -2,15 +2,14 @@ using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Mizan.Api.Authentication;
 using Mizan.Api.Hubs;
 using Mizan.Api.Middleware;
 using Mizan.Application;
-using Mizan.Application.Interfaces;
 using Mizan.Infrastructure;
+using Mizan.Infrastructure.Auth.BetterAuth;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -21,7 +20,6 @@ using Serilog.Exceptions;
 using Mizan.Application.Exceptions;
 using StackExchange.Redis;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -80,75 +78,24 @@ builder.Services.AddFluentValidationRulesToSwagger();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-var jwtIssuer = builder.Configuration["BetterAuth:Issuer"]
-    ?? builder.Configuration["Jwt:Issuer"];
-var jwtAudience = builder.Configuration["BetterAuth:Audience"]
-    ?? builder.Configuration["Jwt:Audience"];
+var authBuilder = builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
 
-builder.Services.AddHttpClient<IJwksProvider, JwksProvider>();
+authBuilder.AddBetterAuthJwtBearer(builder.Configuration, builder.Environment);
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+{
+    options.Events = new JwtBearerEvents
     {
-        options.MapInboundClaims = true;
-        options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = !string.IsNullOrWhiteSpace(jwtIssuer),
-            ValidIssuer = jwtIssuer,
-            ValidateAudience = !string.IsNullOrWhiteSpace(jwtAudience),
-            ValidAudience = jwtAudience,
-            ValidateIssuerSigningKey = false,
-            RequireSignedTokens = true,
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromMinutes(2),
-            NameClaimType = ClaimTypes.NameIdentifier,
-            RoleClaimType = ClaimTypes.Role,
-            ValidAlgorithms = new[] { "EdDSA" },
-        };
-        options.TokenHandlers.Clear();
-        options.TokenHandlers.Add(new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler());
-        options.TokenValidationParameters.SignatureValidator = EdDsaJwtSignatureValidator.Validate;
+        OnTokenValidated = JwtTokenValidatedHandler.HandleAsync
+    };
+});
 
-        options.Events = new JwtBearerEvents
-        {
-            OnTokenValidated = async context =>
-            {
-                var userIdValue = context.Principal?.FindFirst("sub")?.Value
-                    ?? context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-                if (!Guid.TryParse(userIdValue, out var userId))
-                {
-                    context.Fail("Invalid user id");
-                    return;
-                }
-
-                var userStatus = context.HttpContext.RequestServices
-                    .GetRequiredService<IUserStatusService>();
-                var status = await userStatus.GetStatusAsync(userId, context.HttpContext.RequestAborted);
-
-                if (!status.Exists)
-                {
-                    context.Fail("User not found");
-                    return;
-                }
-
-                if (!status.EmailVerified)
-                {
-                    context.Fail("Email not verified");
-                    return;
-                }
-
-                if (status.IsBanned)
-                {
-                    context.Fail("User banned");
-                    return;
-                }
-            }
-        };
-    })
-    .AddScheme<ApiKeyAuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(ApiKeyAuthenticationSchemeOptions.DefaultScheme, options =>
+authBuilder.AddScheme<ApiKeyAuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
+    ApiKeyAuthenticationSchemeOptions.DefaultScheme,
+    options =>
     {
-        options.ApiKey = builder.Configuration["Mcp:ServiceApiKey"] ?? throw new InvalidOperationException("Mcp:ServiceApiKey is not configured");
+        options.ApiKey = builder.Configuration["Mcp:ServiceApiKey"]
+            ?? throw new InvalidOperationException("Mcp:ServiceApiKey is not configured");
     });
 
 builder.Services.AddAuthorization(options =>
@@ -279,8 +226,6 @@ if (lokiEndpoint != null)
 }
 
 var app = builder.Build();
-
-JwksProviderAccessor.Set(app.Services.GetRequiredService<IJwksProvider>());
 
 if (app.Environment.IsDevelopment())
 {

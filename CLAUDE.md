@@ -656,9 +656,9 @@ See `.env.example` for complete list. Key variables:
 **Backend:**
 - `ConnectionStrings__PostgreSQL` - PostgreSQL connection
 - `ConnectionStrings__Redis` - Redis connection
-- `BetterAuth__JwksUrl` - JWKS endpoint from frontend
-- `BetterAuth__Issuer` - JWT issuer
-- `BetterAuth__Audience` - JWT audience
+- `Jwt__JwksUrl` - JWKS endpoint from frontend
+- `Jwt__Issuer` - JWT issuer
+- `Jwt__Audience` - JWT audience
 
 ## Critical Reminders
 

@@ -273,9 +273,9 @@ NEXT_PUBLIC_API_URL="http://localhost:5000"      # Client-side (direct backend)
 ```bash
 ConnectionStrings__PostgreSQL="Host=postgres;Database=mizan;Username=mizan;Password=password"
 ConnectionStrings__Redis="redis:6379"
-BetterAuth__Issuer="http://localhost:3000"
-BetterAuth__Audience="mizan-api"
-BetterAuth__JwksUrl="http://localhost:3000/api/auth/jwks"
+Jwt__Issuer="http://localhost:3000"
+Jwt__Audience="mizan-api"
+Jwt__JwksUrl="http://localhost:3000/api/auth/jwks"
 ```
 
 See `.env.example` for complete list with descriptions.

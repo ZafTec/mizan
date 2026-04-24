@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Mizan.Api.Authentication;
 using Mizan.Domain.Entities;
+using Mizan.Infrastructure.Auth.BetterAuth;
 using Mizan.Infrastructure.Data;
 using NSec.Cryptography;
 using Testcontainers.PostgreSql;
@@ -89,8 +90,8 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             }
         }
 
-        _issuer = Environment.GetEnvironmentVariable("BetterAuth__Issuer") ?? "http://localhost:3000";
-        _audience = Environment.GetEnvironmentVariable("BetterAuth__Audience") ?? "mizan-api";
+        _issuer = Environment.GetEnvironmentVariable("Jwt__Issuer") ?? "http://localhost:3000";
+        _audience = Environment.GetEnvironmentVariable("Jwt__Audience") ?? "mizan-api";
         _jwtIssuer = TestJwtIssuer.Create();
         
         _redisConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__Redis");
@@ -114,9 +115,9 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             {
                 ["ConnectionStrings:PostgreSQL"] = connString,
                 ["ConnectionStrings:Redis"] = _redisConnectionString,
-                ["BetterAuth:Issuer"] = _issuer,
-                ["BetterAuth:Audience"] = _audience,
-                ["BetterAuth:JwksUrl"] = "http://jwks.test",
+                ["Jwt:Issuer"] = _issuer,
+                ["Jwt:Audience"] = _audience,
+                ["Jwt:JwksUrl"] = "http://jwks.test",
                 ["Mcp:ServiceApiKey"] = "test-api-key"
             };
 
@@ -168,13 +169,11 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
 
     protected override IHost CreateHost(IHostBuilder builder)
     {
-        var host = base.CreateHost(builder);
-        
-        // Set the JWKS provider accessor for EdDSA signature validation
-        var jwksProvider = host.Services.GetRequiredService<IJwksProvider>();
-        JwksProviderAccessor.Set(jwksProvider);
-        
-        return host;
+        // The SignatureValidator resolves IJwksProvider via
+        // IPostConfigureOptions<JwtBearerOptions> at options-build time, so no
+        // static accessor priming is needed — ConfigureTestServices swaps in
+        // the TestJwksProvider before the options post-configure runs.
+        return base.CreateHost(builder);
     }
 
     public async Task InitializeAsync()
@@ -465,8 +464,8 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         if (string.IsNullOrWhiteSpace(value))
         {
             // Default fallbacks for tests if env not set
-            if (name == "BetterAuth__Issuer") return "http://localhost:3000";
-            if (name == "BetterAuth__Audience") return "mizan-api";
+            if (name == "Jwt__Issuer") return "http://localhost:3000";
+            if (name == "Jwt__Audience") return "mizan-api";
             return string.Empty; 
         }
 

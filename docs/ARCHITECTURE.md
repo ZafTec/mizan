@@ -155,7 +155,7 @@ Browser → Next.js → Backend API
 **Configuration:**
 ```
 Frontend: BETTER_AUTH_SECRET, BETTER_AUTH_URL, BETTER_AUTH_ISSUER, BETTER_AUTH_AUDIENCE
-Backend: BetterAuth:Issuer, BetterAuth:Audience, BetterAuth:JwksUrl
+Backend: Jwt:Issuer, Jwt:Audience, Jwt:JwksUrl
 ```
 
 ### Authentication
@@ -573,9 +573,9 @@ services:
 **Backend:**
 - `ConnectionStrings__PostgreSQL` - PostgreSQL connection string
 - `ConnectionStrings__Redis` - Redis connection string
-- `BetterAuth__JwksUrl` - JWKS endpoint from BetterAuth
-- `BetterAuth__Issuer` - JWT issuer (must match frontend)
-- `BetterAuth__Audience` - JWT audience (must match frontend)
+- `Jwt__JwksUrl` - JWKS endpoint from BetterAuth
+- `Jwt__Issuer` - JWT issuer (must match frontend)
+- `Jwt__Audience` - JWT audience (must match frontend)
 - `ASPNETCORE_ENVIRONMENT` - Environment: Development, Staging, Production
 
 ---

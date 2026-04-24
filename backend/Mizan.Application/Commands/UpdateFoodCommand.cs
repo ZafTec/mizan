@@ -1,5 +1,7 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.Extensions.Caching.Hybrid;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 
@@ -47,9 +49,9 @@ public class UpdateFoodCommandValidator : AbstractValidator<UpdateFoodCommand>
 public class UpdateFoodCommandHandler : IRequestHandler<UpdateFoodCommand, UpdateFoodResult>
 {
     private readonly IMizanDbContext _context;
-    private readonly IRedisCacheService _cache;
+    private readonly HybridCache _cache;
 
-    public UpdateFoodCommandHandler(IMizanDbContext context, IRedisCacheService cache)
+    public UpdateFoodCommandHandler(IMizanDbContext context, HybridCache cache)
     {
         _context = context;
         _cache = cache;
@@ -82,7 +84,7 @@ public class UpdateFoodCommandHandler : IRequestHandler<UpdateFoodCommand, Updat
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        await _cache.RemoveByPrefixAsync("foods:search:", cancellationToken);
+        await _cache.RemoveByTagAsync(CacheTags.Foods, cancellationToken);
 
         return new UpdateFoodResult { Success = true, Message = "Food updated successfully" };
     }

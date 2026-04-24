@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
@@ -45,10 +46,16 @@ public class SearchFoodsQueryHandler : IRequestHandler<SearchFoodsQuery, PagedRe
         ["proteinCalorieRatio"] = f => f.ProteinCalorieRatio
     };
 
-    private readonly IMizanDbContext _context;
-    private readonly IRedisCacheService _cache;
+    private static readonly HybridCacheEntryOptions CacheOptions = new()
+    {
+        Expiration = TimeSpan.FromHours(1),
+        LocalCacheExpiration = TimeSpan.FromMinutes(5)
+    };
 
-    public SearchFoodsQueryHandler(IMizanDbContext context, IRedisCacheService cache)
+    private readonly IMizanDbContext _context;
+    private readonly HybridCache _cache;
+
+    public SearchFoodsQueryHandler(IMizanDbContext context, HybridCache cache)
     {
         _context = context;
         _cache = cache;
@@ -58,12 +65,17 @@ public class SearchFoodsQueryHandler : IRequestHandler<SearchFoodsQuery, PagedRe
     {
         var cacheKey = $"foods:search:{request.SearchTerm?.ToLower() ?? ""}:{request.Barcode ?? ""}:{request.MinProteinCalorieRatio}:{request.Page}:{request.PageSize}:{request.SortBy ?? ""}:{request.SortOrder ?? ""}";
 
-        var cachedResult = await _cache.GetAsync<PagedResult<FoodDto>>(cacheKey, cancellationToken);
-        if (cachedResult != null)
-        {
-            return cachedResult;
-        }
+        return await _cache.GetOrCreateAsync(
+            cacheKey,
+            request,
+            LoadAsync,
+            CacheOptions,
+            tags: new[] { CacheTags.Foods },
+            cancellationToken: cancellationToken);
+    }
 
+    private async ValueTask<PagedResult<FoodDto>> LoadAsync(SearchFoodsQuery request, CancellationToken cancellationToken)
+    {
         IQueryable<Domain.Entities.Food> query = _context.Foods;
 
         if (!string.IsNullOrWhiteSpace(request.Barcode))
@@ -111,16 +123,12 @@ public class SearchFoodsQueryHandler : IRequestHandler<SearchFoodsQuery, PagedRe
             })
             .ToListAsync(cancellationToken);
 
-        var result = new PagedResult<FoodDto>
+        return new PagedResult<FoodDto>
         {
             Items = foods,
             TotalCount = totalCount,
             Page = request.Page,
             PageSize = request.PageSize
         };
-
-        await _cache.SetAsync(cacheKey, result, TimeSpan.FromHours(1), cancellationToken);
-
-        return result;
     }
 }

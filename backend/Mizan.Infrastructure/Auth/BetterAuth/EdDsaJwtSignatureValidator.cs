@@ -3,13 +3,16 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using NSec.Cryptography;
 
-namespace Mizan.Api.Authentication;
+namespace Mizan.Infrastructure.Auth.BetterAuth;
 
+// Pure function taking the JWKS provider as a parameter instead of resolving
+// it through a static accessor. The JwtBearer options wire this up via a
+// closure that captures the provider from DI — see AddBetterAuthJwt.
 public static class EdDsaJwtSignatureValidator
 {
     private static readonly JwtSecurityTokenHandler TokenHandler = new();
 
-    public static SecurityToken Validate(string token, TokenValidationParameters parameters)
+    public static SecurityToken Validate(string token, TokenValidationParameters parameters, IJwksProvider provider)
     {
         try
         {
@@ -19,12 +22,6 @@ public static class EdDsaJwtSignatureValidator
             if (!string.Equals(alg, "EdDSA", StringComparison.Ordinal))
             {
                 throw new SecurityTokenInvalidSignatureException($"Unsupported JWT algorithm '{alg}'.");
-            }
-
-            var provider = JwksProviderAccessor.Current;
-            if (provider == null)
-            {
-                throw new SecurityTokenInvalidSignatureException("JWKS provider not configured.");
             }
 
             var keys = provider.GetSigningKeysAsync(CancellationToken.None).GetAwaiter().GetResult();
