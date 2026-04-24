@@ -140,29 +140,10 @@ bun run dev
 
 Comprehensive documentation is available in the `docs/` directory:
 
-### Core Documentation
 - **[Architecture](docs/ARCHITECTURE.md)** - System design, schema boundaries, and architectural principles
 - **[API Reference](docs/API_REFERENCE.md)** - Complete API endpoint documentation
-- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Production deployment instructions
-- **[Testing Guide](docs/TESTING_GUIDE.md)** - Testing strategy and how to run tests
-- **[SignalR Implementation](docs/SIGNALR_IMPLEMENTATION.md)** - Real-time chat and notifications setup
-
-### Security & Implementation
-- **[Security Analysis](docs/SECURITY_ANALYSIS.md)** - Security audit and authorization patterns
-- **[Security](docs/SECURITY.md)** - Security policies and vulnerability reporting
-- **[Implementation Summary](docs/IMPLEMENTATION_SUMMARY.md)** - Recent feature implementations
-- **[Session Summary](docs/SESSION_SUMMARY.md)** - Development session notes
-
-### Project History
-- **[Changelog](docs/CHANGELOG.md)** - Version history and release notes
-- **[BFF Refactoring Summary](docs/BFF_REFACTORING_SUMMARY.md)** - Backend-for-Frontend pattern migration
-- **[Tasks](docs/TASKS.md)** - Project task list and roadmap
-
-### Context Documents
-- **[Access Control Design](docs/context/access-control-design.md)** - Authorization patterns
-- **[Admin Features](docs/context/admin-features.md)** - Admin panel implementation
-- **[Auth Architecture](docs/context/auth-architecture.md)** - Authentication flow details
-- **[Better Auth Admin Implementation](docs/context/BETTER_AUTH_ADMIN_IMPLEMENTATION.md)** - Admin role setup
+- **[Developer Onboarding](docs/DEVELOPER_ONBOARDING.md)** - New contributor setup, workflows, and testing
+- **[DTO Contracts](docs/DTO_CONTRACTS.md)** - Contract rules between backend DTOs and generated frontend types
 
 ## Development
 

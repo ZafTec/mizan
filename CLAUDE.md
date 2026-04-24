@@ -15,8 +15,6 @@ This file provides guidance to Claude Code and other LLM tools when working with
 3. Run `docker-compose up -d` and verify services are healthy
 4. Review `docs/ARCHITECTURE.md` to understand structure
 
-**Something broken?** Check `docs/TROUBLESHOOTING.md` first (90% of issues covered).
-
 ---
 
 ## Communication Style
@@ -183,8 +181,7 @@ When reasoning through problems, apply these principles:
 ### 2. Investigate the Codebase
 - **Check `.fpf/context.md` first** — Project context, constraints, and tech stack
 - **Check `.fpf/knowledge/`** — Project knowledge base with verified claims
-- **Check `docs/` directory** — Comprehensive documentation (architecture, API, deployment, testing)
-- **Check `docs/context/` directory** — Design decisions and access control documentation
+- **Check `docs/` directory** — Architecture, API reference, onboarding, DTO contracts
 - Use Task tool for broader/multi-file exploration (preferred for context efficiency)
 - Explore relevant files and directories
 - Search for key functions, classes, variables
@@ -411,8 +408,6 @@ await chatService.sendMessage(recipientId, message);
 **Backend Configuration:**
 - SignalR uses Redis backplane for horizontal scaling
 - Configured in `Program.cs` with `AddStackExchangeRedis`
-
-See `docs/SIGNALR_IMPLEMENTATION.md` for detailed implementation guide.
 
 ## Caching Strategy
 
@@ -644,13 +639,8 @@ mcp__MCP_DOCKER__listRepositoryTags
 - `README.md` - Getting started and deployment
 - `docs/ARCHITECTURE.md` - Comprehensive architecture documentation
 - `docs/API_REFERENCE.md` - Complete API endpoint documentation
-- `docs/DEPLOYMENT_GUIDE.md` - Production deployment instructions
-- `docs/TESTING_GUIDE.md` - Testing strategy and how to run tests
-- `docs/SIGNALR_IMPLEMENTATION.md` - SignalR setup and usage guide
-- `docs/SECURITY_ANALYSIS.md` - Security audit and authorization patterns
-- `docs/SECURITY.md` - Security policies and vulnerability reporting
-- `docs/IMPLEMENTATION_2025_12_27.md` - December 2025 feature implementations (recipe visibility, trainer discovery)
-- `docs/context/` - Design decisions and access control documentation
+- `docs/DEVELOPER_ONBOARDING.md` - New-contributor setup, workflows, and testing
+- `docs/DTO_CONTRACTS.md` - Contract rules between backend DTOs and generated frontend types
 - `.fpf/` - First Principles Framework knowledge base (if initialized)
 
 ## Environment Variables
