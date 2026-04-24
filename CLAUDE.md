@@ -179,9 +179,9 @@ When reasoning through problems, apply these principles:
 - For URLs provided: fetch immediately and follow relevant links
 
 ### 2. Investigate the Codebase
-- **Check `.fpf/context.md` first** — Project context, constraints, and tech stack
-- **Check `.fpf/knowledge/`** — Project knowledge base with verified claims
-- **Check `docs/` directory** — Architecture, API reference, onboarding, DTO contracts
+- **Check `.fpf/context.md` first**, Project context, constraints, and tech stack
+- **Check `.fpf/knowledge/`**, Project knowledge base with verified claims
+- **Check `docs/` directory**, Architecture, API reference, onboarding, DTO contracts
 - Use Task tool for broader/multi-file exploration (preferred for context efficiency)
 - Explore relevant files and directories
 - Search for key functions, classes, variables
@@ -524,7 +524,7 @@ mcp__MCP_DOCKER__listRepositoryTags
 - Never swallow errors silently (empty catch blocks are bugs)
 - Handle exceptions at boundaries, not deep in call stack
 - Return error values when codebase uses them (Result, Option, error tuples)
-- If codebase uses exceptions — use exceptions consistently, but explicitly
+- If codebase uses exceptions, use exceptions consistently, but explicitly
 - Fail fast for programmer errors, handle gracefully for expected failures
 - Keep execution flow deterministic and linear
 
@@ -534,7 +534,7 @@ mcp__MCP_DOCKER__listRepositoryTags
 - Keep functions small and focused (<25 lines as guideline)
 - Avoid high cyclomatic complexity
 - No deeply nested conditions (max 2 levels)
-- No loops nested in loops — extract inner loop
+- No loops nested in loops, extract inner loop
 - Extract complex conditions into named functions
 
 ### Code Style

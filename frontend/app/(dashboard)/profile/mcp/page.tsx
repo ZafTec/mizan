@@ -132,7 +132,7 @@ export default function McpPage() {
 				MCP integration
 			  </h1>
 			  <p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-				Connect any MCP-compatible client to your Mizan data. Works with Claude Desktop, Claude Code, Cursor, and more.
+				Connect MCP-compatible clients (Claude Desktop, Cursor, etc.) to your Mizan data.
 			  </p>
         </div>
 

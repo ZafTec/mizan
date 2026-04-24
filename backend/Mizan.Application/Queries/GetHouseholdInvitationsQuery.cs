@@ -4,7 +4,7 @@ using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Queries;
 
-// Lists pending invitations sent from a household — shown to admins in the
+// Lists pending invitations sent from a household, shown to admins in the
 // /settings/household UI so they can see who hasn't responded yet and revoke.
 public record GetHouseholdInvitationsQuery(Guid HouseholdId, Guid RequestingUserId) : IRequest<List<HouseholdInvitationAdminDto>?>;
 

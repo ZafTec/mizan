@@ -72,7 +72,7 @@ public class GetAchievementAnalyticsQueryHandler : IRequestHandler<GetAchievemen
 
         // Pull every achievement with its aggregated unlock stats once. Row count is
         // bounded by total achievements (typically <200), so filter/sort/paginate in
-        // memory after the single DB hit — cheaper than repeating groupjoin per page.
+        // memory after the single DB hit, cheaper than repeating groupjoin per page.
         var perAchievement = await _context.Achievements
             .GroupJoin(
                 _context.UserAchievements,

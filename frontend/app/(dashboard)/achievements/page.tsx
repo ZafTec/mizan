@@ -40,7 +40,7 @@ export default async function AchievementsPage() {
                         Achievements
                     </h1>
                     <p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-                        Track your streak, unlock badges and celebrate the small wins.
+                        Your streak, badges, and progress.
                     </p>
                 </div>
                 <div className="hidden w-40 shrink-0 drop-shadow-md sm:block">
@@ -234,7 +234,7 @@ export default async function AchievementsPage() {
                         <AppFeatureIllustration variant="achievements" className="h-auto w-full" />
                     </div>
                     <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No achievements yet</h3>
-                    <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">Start using Mizan to earn achievements!</p>
+                    <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">No achievements yet.</p>
                 </div>
             )}
         </div>

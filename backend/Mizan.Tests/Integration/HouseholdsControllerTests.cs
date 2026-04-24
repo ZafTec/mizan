@@ -93,7 +93,7 @@ public class HouseholdsControllerTests
             new { Action = "accept" });
         accept.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        // Non-admin member tries to invite the outsider — must be rejected.
+        // Non-admin member tries to invite the outsider, must be rejected.
         var forbiddenResponse = await memberClient.PostAsJsonAsync(
             $"/api/Households/{householdId}/invitations",
             new { Email = outsiderEmail, Role = "member" });

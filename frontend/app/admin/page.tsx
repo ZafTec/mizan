@@ -92,9 +92,6 @@ export default async function AdminDashboard() {
         <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
           Admin dashboard
         </h1>
-        <p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-          System overview, recent activity, and quick actions.
-        </p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
@@ -172,56 +169,56 @@ export default async function AdminDashboard() {
 
       <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <QuickActionCard
-          title="User Management"
+          title="Users"
           description="Manage users, roles, and permissions"
           link="/admin/users"
           icon="👥"
         />
         <QuickActionCard
-          title="Session Management"
-          description="View and manage active user sessions"
+          title="Sessions"
+          description="View and revoke active sessions"
           link="/admin/sessions"
           icon="🔐"
         />
         <QuickActionCard
-          title="Trainer-Client Relationships"
-          description="Monitor and manage trainer-client connections"
+          title="Relationships"
+          description="Trainer-client connections"
           link="/admin/relationships"
           icon="🤝"
         />
         <QuickActionCard
-          title="Ingredient Management"
-          description="Add, edit, and verify public food ingredients"
+          title="Ingredients"
+          description="Add and verify public food ingredients"
           link="/admin/ingredients"
           icon="🍎"
         />
         <QuickActionCard
-          title="Exercise Library"
-          description="Browse and manage the exercise database"
+          title="Exercises"
+          description="Manage the exercise database"
           link="/admin/exercises"
           icon="🏋️"
         />
         <QuickActionCard
-          title="Recipe Management"
-          description="Browse and moderate community recipes"
+          title="Recipes"
+          description="Moderate community recipes"
           link="/admin/recipes"
           icon="🍳"
         />
         <QuickActionCard
-          title="Audit Logs"
-          description="View system-wide activity and security logs"
+          title="Audit logs"
+          description="System-wide activity and security logs"
           link="/admin/audit-logs"
           icon="📋"
         />
         <QuickActionCard
           title="Achievements"
-          description="Create, edit, and analyze gamification unlocks"
+          description="Create and edit gamification unlocks"
           link="/admin/achievements"
           icon="🏆"
         />
         <QuickActionCard
           title="Households"
-          description="List, inspect, and remove households and their members"
+          description="Inspect and remove households"
           link="/admin/households"
           icon="🏠"
         />

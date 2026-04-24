@@ -143,9 +143,6 @@ export default function ProfileSessionsPage() {
 	          <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 	            Active sessions
 	          </h1>
-	          <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-	            Manage devices where you're currently logged in.
-	          </p>
         </div>
         <Link href="/profile/settings" className="btn-secondary">
           <i className="ri-arrow-left-line" />
@@ -247,8 +244,7 @@ export default function ProfileSessionsPage() {
 	          <div>
 	            <h3 className="mb-1 font-semibold text-blue-900 dark:text-blue-100">Security Tip</h3>
 	            <p className="text-sm text-blue-800 dark:text-blue-200">
-	              If you see a session you don't recognize, revoke it immediately and change your password.
-              This helps protect your account from unauthorized access.
+	              If you see a session you don't recognize, revoke it and change your password.
             </p>
           </div>
         </div>

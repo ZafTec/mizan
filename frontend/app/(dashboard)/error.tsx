@@ -21,9 +21,9 @@ export default function DashboardError({
           <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <span className="text-3xl">⚡</span>
           </div>
-          <h2 className="text-2xl font-bold mb-2">Oops! Something broke</h2>
+          <h2 className="text-2xl font-bold mb-2">Something went wrong</h2>
           <p className="text-muted-foreground mb-6">
-            We encountered an error loading this page.
+            Failed to load this page.
           </p>
           {error.message && (
             <div className="mb-6 p-4 bg-muted rounded-lg">

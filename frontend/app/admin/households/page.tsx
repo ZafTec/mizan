@@ -45,9 +45,6 @@ export default async function AdminHouseholdsPage({
 					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 						Households
 					</h1>
-					<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						Every household on the platform. Use this view to inspect membership and remove households if needed.
-					</p>
 				</div>
 			</header>
 
@@ -102,7 +99,7 @@ export default async function AdminHouseholdsPage({
 											</Link>
 										</td>
 										<td className="px-6 py-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
-											<div>{h.createdByName ?? "—"}</div>
+											<div>{h.createdByName ?? "-"}</div>
 											<div className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{h.createdByEmail}</div>
 										</td>
 										<td className="px-6 py-4 text-center text-sm font-semibold text-charcoal-blue-800 dark:text-charcoal-blue-200">

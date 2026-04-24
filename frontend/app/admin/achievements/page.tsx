@@ -64,9 +64,6 @@ export default async function AdminAchievementsPage({
                     <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
                         Manage achievements
                     </h1>
-                    <p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-                        Create, edit, and retire unlockable achievements. Criteria are evaluated automatically after every activity log.
-                    </p>
                 </div>
                 <div className="flex items-center gap-2">
                     <Link href="/admin/achievements/analytics" className="btn-ghost">

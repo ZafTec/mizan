@@ -43,7 +43,7 @@ export default async function HouseholdSettingsPage({
 						Your households
 					</h1>
 					<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						Share recipes, meal plans, and shopping lists with the people you cook and train with.
+						Share recipes, meal plans, and shopping lists with others.
 					</p>
 				</div>
 			</header>
@@ -59,7 +59,7 @@ export default async function HouseholdSettingsPage({
 							Active household
 						</h2>
 						<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-							The household that new recipes, meal plans, and shopping lists are shared to by default.
+							New items are shared here by default.
 						</p>
 					</div>
 					<HouseholdSwitcherForm

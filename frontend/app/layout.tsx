@@ -17,7 +17,7 @@ import 'remixicon/fonts/remixicon.css';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-	title: "Mizan - Balanced Nutrition & Fitness",
+	title: "Mizan",
 	description: "Your personal nutrition and fitness companion. Track meals, plan diets, and achieve your health goals with AI-powered coaching.",
 };
 
@@ -71,7 +71,7 @@ async function LayoutContent({
 									<p className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
 										Mizan
 									</p>
-									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">ሚዛን • Balanced nutrition, training, and coaching.</p>
+									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">ሚዛን • Nutrition, training, coaching.</p>
 								</div>
 							</div>
 
@@ -95,18 +95,6 @@ async function LayoutContent({
 								<span className="hidden text-charcoal-blue-300 dark:text-charcoal-blue-600 sm:inline">|</span>
 								<a href="https://zaftech.co/terms" target="_blank" rel="noopener noreferrer" className="footer-link">
 									Terms
-								</a>
-								<span className="hidden text-charcoal-blue-300 dark:text-charcoal-blue-600 sm:inline">|</span>
-								<a href="https://zaftech.co/cookies" target="_blank" rel="noopener noreferrer" className="footer-link">
-									Cookies
-								</a>
-								<span className="hidden text-charcoal-blue-300 dark:text-charcoal-blue-600 sm:inline">|</span>
-								<a href="https://zaftech.co/refunds" target="_blank" rel="noopener noreferrer" className="footer-link">
-									Refunds
-								</a>
-								<span className="hidden text-charcoal-blue-300 dark:text-charcoal-blue-600 sm:inline">|</span>
-								<a href="https://zaftech.co/acceptable-use" target="_blank" rel="noopener noreferrer" className="footer-link">
-									Acceptable use
 								</a>
 							</div>
 

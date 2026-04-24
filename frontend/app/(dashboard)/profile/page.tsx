@@ -58,31 +58,31 @@ export default function ProfilePage() {
 			{
 				href: "/goal",
 				title: "Nutrition goals",
-				description: "Update targets and check your current plan.",
+				description: "Set and update your daily macro targets.",
 				icon: "chartLine",
 			},
 			{
 				href: "/meals",
 				title: "Food diary",
-				description: "Review what you have logged today and this week.",
+				description: "View your logged meals and daily totals.",
 				icon: "flame",
 			},
 			{
 				href: "/workouts",
 				title: "Workouts",
-				description: "Log sessions and browse the exercise library.",
+				description: "Log sessions and browse exercises.",
 				icon: "rocket",
 			},
 			{
 				href: "/body-measurements",
 				title: "Measurements",
-				description: "Track body composition and progress changes.",
+				description: "Track your body composition over time.",
 				icon: "trendingUp",
 			},
 			{
 				href: "/achievements",
 				title: "Achievements",
-				description: "See streaks, milestones, and earned progress.",
+				description: "Your streaks, badges, and milestones.",
 				icon: "circleCheck",
 			},
 		];
@@ -91,7 +91,7 @@ export default function ProfilePage() {
 			links.push({
 				href: "/profile/mcp",
 				title: "MCP tools",
-				description: "Manage developer tokens and usage analytics.",
+				description: "Developer tokens and usage.",
 				icon: "bot",
 			});
 		}
@@ -134,9 +134,6 @@ export default function ProfilePage() {
 								{user.name || user.email}
 							</h1>
 							<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{user.email}</p>
-							<p className="mt-3 max-w-2xl text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
-								Your account details, preferences, export, sessions, and connected tools are available in settings.
-							</p>
 						</div>
 					</div>
 				</div>
@@ -146,7 +143,7 @@ export default function ProfilePage() {
 						<StatCard
 							label="Role"
 							value={user.role || "user"}
-							helper={isTrainer ? "Trainer access enabled" : "Account access"}
+							helper={isTrainer ? "Trainer access" : "Standard access"}
 						/>
 					) : null}
 					<StatCard
@@ -162,7 +159,7 @@ export default function ProfilePage() {
 					<StatCard
 						label="Active goal"
 						value={loadingObservations || !observations ? "--" : observations.goalSummary}
-						helper="From your saved nutrition targets"
+						helper="Saved nutrition targets"
 					/>
 				</div>
 			</section>
@@ -172,9 +169,6 @@ export default function ProfilePage() {
 					<div className="flex items-center justify-between gap-4">
 						<div>
 							<h2 className="text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Account hub</h2>
-							<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-								Everything important is one click away.
-							</p>
 						</div>
 						<Link href="/profile/settings" className="btn-secondary btn-sm">
 							Open settings
@@ -214,9 +208,6 @@ export default function ProfilePage() {
 							</span>
 						<div>
 							<h2 className="text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Current read</h2>
-							<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-								A quick view of your computed account activity.
-							</p>
 						</div>
 						</div>
 

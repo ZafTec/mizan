@@ -40,7 +40,7 @@ export default async function AiHubPage() {
 						Nutrition assistant
 					</h1>
 					<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						Chat with your AI coach, ask for meal suggestions, or get quick analysis of your day. Your macros, goals, and recent logs are used for context.
+						Ask for meal suggestions or get analysis of your day. Your macros, goals, and recent logs are used for context.
 					</p>
 				</div>
 			</header>
@@ -59,13 +59,13 @@ export default async function AiHubPage() {
 									Weekly pulse
 								</h2>
 								<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-									Generated every Sunday
+									Sundays
 								</p>
 							</div>
 						</div>
 						<div className="space-y-3 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
 							<p>
-								Ask the assistant for a weekly summary using the quick prompt above. A dedicated scheduled digest will drop into this card once enabled.
+								Use the quick prompt above for a weekly summary. A scheduled digest will appear here once enabled.
 							</p>
 						</div>
 					</section>
@@ -85,7 +85,7 @@ export default async function AiHubPage() {
 							</div>
 						</div>
 						<p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
-							Upload a photo of your meal and the assistant will estimate portions and log it for you. Enable the vision model from Admin → Settings when ready.
+							Upload a meal photo and the assistant will estimate portions and log it. Enable the vision model in Admin settings when ready.
 						</p>
 					</section>
 
@@ -102,10 +102,10 @@ export default async function AiHubPage() {
 						</div>
 						<ul className="space-y-2 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
 							<li className="flex gap-2">
-								<span className="text-verdigris-600">•</span> Responses use your current goals and recent logs. No training data leaves your account.
+								<span className="text-verdigris-600">•</span> Responses use your goals and recent logs. No data leaves your account.
 							</li>
 							<li className="flex gap-2">
-								<span className="text-verdigris-600">•</span> The assistant can't update goals or log meals for you. It returns suggestions you can accept manually.
+								<span className="text-verdigris-600">•</span> The assistant returns suggestions; it can't log meals or update goals for you.
 							</li>
 						</ul>
 					</section>

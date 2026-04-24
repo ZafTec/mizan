@@ -31,9 +31,6 @@ export default async function AdminIngredientsPage({
                     <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
                         Manage ingredients
                     </h1>
-                    <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-                        Add, edit, or delete public food ingredients.
-                    </p>
                 </div>
                 <Link href="/admin/ingredients/add" className="btn-primary">
                     <i className="ri-add-line" />

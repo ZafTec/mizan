@@ -5,7 +5,7 @@ Complete recursive local-import trees for the 10 most important pages. These are
 Convention:
 - Each node is a local path beginning with `@/` (alias for `frontend/`) or relative.
 - Indentation = import depth. Duplicates (files reached by multiple paths) are only expanded once.
-- `[shared]` marks a file that shows up in many pages — include it once per context set.
+- `[shared]` marks a file that shows up in many pages, include it once per context set.
 
 Shared foundational files (used by nearly every page):
 - `@/components/ui/animated-icon.tsx`
@@ -19,7 +19,7 @@ Shared foundational files (used by nearly every page):
 
 ---
 
-## 1. Home / Landing — `app/page.tsx` → `/`
+## 1. Home / Landing, `app/page.tsx` → `/`
 
 ```
 @/app/page.tsx
@@ -47,7 +47,7 @@ Also wrapped by: `@/app/layout.tsx` → `@/components/Navbar/*`, `@/components/u
 
 ---
 
-## 2. Dashboard snapshot — lives inside `/` but is worth isolating
+## 2. Dashboard snapshot, lives inside `/` but is worth isolating
 
 When designing the authed home, the authed-only blocks are:
 
@@ -60,14 +60,14 @@ When designing the authed home, the authed-only blocks are:
 @/components/DailyOverviewChart/index.tsx
 ├── @/lib/api.client.ts
 ├── @/components/ui/animated-icon.tsx
-└── @/components/DailyOverviewChart/PieChart.tsx (if imported — verify)
+└── @/components/DailyOverviewChart/PieChart.tsx (if imported, verify)
 ```
 
 Pair these with `app/page.tsx` when recreating the authed dashboard-snapshot card.
 
 ---
 
-## 3. Meals / Food diary — `app/(dashboard)/meals/page.tsx` → `/meals`
+## 3. Meals / Food diary, `app/(dashboard)/meals/page.tsx` → `/meals`
 
 ```
 @/app/(dashboard)/meals/page.tsx
@@ -90,7 +90,7 @@ Guard: `@/app/(dashboard)/layout.tsx` → `@/helper/session.ts`.
 
 ---
 
-## 4. Recipes list — `app/recipes/page.tsx` → `/recipes`
+## 4. Recipes list, `app/recipes/page.tsx` → `/recipes`
 
 ```
 @/app/recipes/page.tsx
@@ -106,7 +106,7 @@ Guard: `@/app/(dashboard)/layout.tsx` → `@/helper/session.ts`.
 
 ---
 
-## 5. Recipe detail — `app/recipes/[recipeId]/page.tsx` → `/recipes/:id`
+## 5. Recipe detail, `app/recipes/[recipeId]/page.tsx` → `/recipes/:id`
 
 ```
 @/app/recipes/[recipeId]/page.tsx
@@ -121,7 +121,7 @@ Guard: `@/app/(dashboard)/layout.tsx` → `@/helper/session.ts`.
 
 ---
 
-## 6. Goal setup — `app/(dashboard)/goal/page.tsx` → `/goal`
+## 6. Goal setup, `app/(dashboard)/goal/page.tsx` → `/goal`
 
 ```
 @/app/(dashboard)/goal/page.tsx
@@ -138,12 +138,12 @@ Notable behaviors to preserve: TDEE calculator (Mifflin-St Jeor) collapsible car
 
 ---
 
-## 7. Goal dashboard — `app/(dashboard)/goal/dashboard/page.tsx` → `/goal/dashboard`
+## 7. Goal dashboard, `app/(dashboard)/goal/dashboard/page.tsx` → `/goal/dashboard`
 
 ```
 @/app/(dashboard)/goal/dashboard/page.tsx
 ├── @/lib/api.client.ts → @/lib/api.ts
-├── @/types/goal.ts     (GoalData type — may live at @/types/goal)
+├── @/types/goal.ts     (GoalData type, may live at @/types/goal)
 └── @/components/Loading/index.tsx
 ```
 
@@ -153,7 +153,7 @@ Empty state includes `next/image` referencing `/assets/dashboard-overview.svg` f
 
 ---
 
-## 8. Workouts — `app/(dashboard)/workouts/page.tsx` → `/workouts`
+## 8. Workouts, `app/(dashboard)/workouts/page.tsx` → `/workouts`
 
 ```
 @/app/(dashboard)/workouts/page.tsx
@@ -166,7 +166,7 @@ Self-contained page (no other local components). Three-tab interface (History / 
 
 ---
 
-## 9. Trainers discovery — `app/(dashboard)/trainers/page.tsx` → `/trainers`
+## 9. Trainers discovery, `app/(dashboard)/trainers/page.tsx` → `/trainers`
 
 ```
 @/app/(dashboard)/trainers/page.tsx
@@ -181,7 +181,7 @@ Self-contained page (no other local components). Three-tab interface (History / 
 
 ---
 
-## 10. Profile hub — `app/(dashboard)/profile/page.tsx` → `/profile`
+## 10. Profile hub, `app/(dashboard)/profile/page.tsx` → `/profile`
 
 ```
 @/app/(dashboard)/profile/page.tsx
@@ -194,7 +194,7 @@ Self-contained page (no other local components). Three-tab interface (History / 
 
 ---
 
-## Bonus: Meals / Add manual — `app/(dashboard)/meals/add/page.tsx` → `/meals/add`
+## Bonus: Meals / Add manual, `app/(dashboard)/meals/add/page.tsx` → `/meals/add`
 
 ```
 @/app/(dashboard)/meals/add/page.tsx
@@ -204,19 +204,19 @@ Self-contained page (no other local components). Three-tab interface (History / 
 └── @/helper/FormErrorHandler.ts
 ```
 
-## Bonus: Admin dashboard — `app/admin/page.tsx` → `/admin`
+## Bonus: Admin dashboard, `app/admin/page.tsx` → `/admin`
 
 ```
 @/app/admin/page.tsx
 ├── @/lib/auth.ts                 (BetterAuth server config)
-├── @/db/client.ts                (Drizzle client — frontend auth schema only)
+├── @/db/client.ts                (Drizzle client, frontend auth schema only)
 ├── @/db/schema.ts                (users, sessions tables)
 ├── @/app/admin/LiveAuditLog.tsx
 │   └── @/data/audit.ts → @/lib/api.client.ts
 └── @/data/audit.ts → @/lib/api.client.ts
 ```
 
-Admin page uses inline `StatCard` and `QuickActionCard` function components (not shared). Uses Tailwind `bg-card` / `border` utilities rather than the glass `.card` class, so it looks stylistically different from the rest of the app — **worth flagging when redesigning for visual consistency.**
+Admin page uses inline `StatCard` and `QuickActionCard` function components (not shared). Uses Tailwind `bg-card` / `border` utilities rather than the glass `.card` class, so it looks stylistically different from the rest of the app, **worth flagging when redesigning for visual consistency.**
 
 ---
 
@@ -243,13 +243,13 @@ Admin page uses inline `StatCard` and `QuickActionCard` function components (not
 
 ---
 
-## Frequently-imported shared chunks — pass these alongside page context
+## Frequently-imported shared chunks, pass these alongside page context
 
 | File | What it gives |
 |------|---------------|
 | `@/components/Pagination.tsx` | Page-number buttons for listing routes |
 | `@/components/SortableHeader.tsx` | Column header with asc/desc toggle |
-| `@/components/FieldError/index.tsx` | Inline form error display — used in every server-action form |
+| `@/components/FieldError/index.tsx` | Inline form error display, used in every server-action form |
 | `@/components/ConfirmationModal.tsx` | Generic confirm dialog |
 | `@/components/DeleteConfirmModal.tsx` | Variant with destructive styling |
 | `@/components/illustrations/AppFeatureIllustration.tsx` | Empty-state SVG illustrations (variants: `recipes`, `trainers`, etc.) |

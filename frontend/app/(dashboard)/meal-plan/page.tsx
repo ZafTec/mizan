@@ -48,9 +48,6 @@ export default async function MealPlanPage({
 						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 							Meal planning
 						</h1>
-						<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-							Plan your meals for the week ahead.
-						</p>
 					</div>
 					<Link href="/meal-plan/create" className="btn-primary">
 						<i className="ri-add-line" />
@@ -77,9 +74,6 @@ export default async function MealPlanPage({
 						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 							Meal planning
 						</h1>
-						<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-							Plan your meals for the week ahead.
-						</p>
 					</div>
 					<div className="flex gap-3">
 						<Link href="/meal-plan/shopping-list" className="btn-secondary">
@@ -133,7 +127,7 @@ export default async function MealPlanPage({
 								<AppFeatureIllustration variant="meal-plan" className="h-auto w-full" />
 							</div>
 							<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No meal plans yet</h3>
-							<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-4">Start planning your meals for the week</p>
+							<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-4">No meal plans yet.</p>
 							<Link href="/meal-plan/create" className="btn-primary">
 								<i className="ri-add-line" />
 								Create Meal Plan

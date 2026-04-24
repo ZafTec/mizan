@@ -88,8 +88,8 @@ export default async function MessagingPage({
 					</h1>
 					<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 						{isTrainer
-							? "Coaching conversations with each of your active clients."
-							: "Send questions, updates and progress notes to your coach."}
+							? "Conversations with your clients."
+							: "Messages to and from your coach."}
 					</p>
 				</div>
 			</header>
@@ -104,7 +104,7 @@ export default async function MessagingPage({
 					</p>
 					<p className="max-w-md text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 						{isTrainer
-							? "You'll see conversations here as soon as clients start messaging you."
+							? "Conversations appear here when clients message you."
 							: "Connect with a coach to start messaging."}
 					</p>
 					{!isTrainer && (

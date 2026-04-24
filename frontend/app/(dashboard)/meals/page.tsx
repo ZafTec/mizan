@@ -227,9 +227,6 @@ export default function MealsPage() {
 							</span>
 						)}
 					</div>
-					<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						Track your daily nutrition intake.
-					</p>
 				</div>
 				<div className="flex items-center gap-4">
 					<div className="flex items-center rounded-xl border border-charcoal-blue-200 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-charcoal-blue-950/75">
@@ -461,7 +458,7 @@ export default function MealsPage() {
 						<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 							No meals logged
 						</h3>
-						<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">Log your first meal for this day to start tracking totals.</p>
+						<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">No meals logged.</p>
 						<Link href="/meals/add" className="btn-primary mt-4">
 							Log Meal
 						</Link>

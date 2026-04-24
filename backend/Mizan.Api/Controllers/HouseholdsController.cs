@@ -142,7 +142,7 @@ public class HouseholdsController : ControllerBase
         // Admins implicitly have remove rights even when not a household member;
         // RemoveHouseholdMemberCommand gates on household role, so we fake
         // admin-level membership at the controller by invoking a dedicated
-        // flow — simpler: just require an explicit admin-only path that
+        // flow, simpler: just require an explicit admin-only path that
         // bypasses the household-role check.
         var result = await _mediator.Send(new AdminRemoveHouseholdMemberCommand(id, userId));
         if (!result.Success) return BadRequest(result);

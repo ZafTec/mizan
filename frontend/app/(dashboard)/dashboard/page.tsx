@@ -91,8 +91,8 @@ export default async function DashboardPage() {
 					</h1>
 					<p className="max-w-xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 						{goal
-							? "Here's where your macros stand right now. Stay on target."
-							: "Set a goal to unlock personalized macro targets and progress tracking."}
+							? "Your macros today."
+							: "Set a goal to unlock macro targets."}
 					</p>
 				</div>
 				<div className="flex items-center gap-2">
@@ -122,7 +122,7 @@ export default async function DashboardPage() {
 								Macros today
 							</h2>
 							<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-								{goal ? "Tracking against your active goal" : "Targets appear once you set a goal"}
+								{goal ? "vs. your goal" : "Set a goal to see targets"}
 							</p>
 						</div>
 						<Link
@@ -178,7 +178,7 @@ export default async function DashboardPage() {
 							Consistency
 						</h2>
 						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-							Your streak and today's check-ins
+							Streak and today's check-ins
 						</p>
 					</header>
 
@@ -250,9 +250,6 @@ export default async function DashboardPage() {
 						<h2 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
 							Quick actions
 						</h2>
-						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-							One tap to log or train
-						</p>
 					</div>
 				</div>
 				<QuickActions />
@@ -267,8 +264,8 @@ export default async function DashboardPage() {
 						</h2>
 						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
 							{meals.length === 0
-								? "No meals logged yet"
-								: `${meals.length} meal${meals.length === 1 ? "" : "s"} logged`}
+								? "Nothing logged yet"
+								: `${meals.length} meal${meals.length === 1 ? "" : "s"}`}
 						</p>
 					</div>
 					<Link href="/meals/add" className="btn-primary !rounded-2xl !py-2 text-sm">
@@ -283,13 +280,10 @@ export default async function DashboardPage() {
 							<AnimatedIcon name="cookingPot" size={20} />
 						</span>
 						<p className="text-sm font-medium text-charcoal-blue-700 dark:text-charcoal-blue-200">
-							Nothing logged yet today
-						</p>
-						<p className="max-w-xs text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-							Log what you eat to see macros fill your rings in real time.
+							Nothing logged today
 						</p>
 						<Link href="/meals/add" className="btn-primary !rounded-2xl !py-2 text-sm">
-							Log your first meal
+							Log a meal
 							<AnimatedIcon name="arrowRight" size={14} />
 						</Link>
 					</div>

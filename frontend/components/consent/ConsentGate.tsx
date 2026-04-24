@@ -27,7 +27,7 @@ function writeConsentCookie(value: "accepted" | "declined") {
 
 // useSyncExternalStore keeps React in sync with the cookie without tripping
 // the lint rule that bans setState-in-effect. Cookies don't fire change
-// events, so subscribe is a no-op — we only need the initial snapshot plus
+// events, so subscribe is a no-op, we only need the initial snapshot plus
 // a way to force-refresh when the user clicks Accept/Decline.
 const subscribe = () => () => {};
 

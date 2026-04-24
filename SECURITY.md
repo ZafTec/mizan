@@ -22,7 +22,7 @@ older images should update before reporting issues.
 
 Use one of these private channels instead:
 
-1. **Preferred — GitHub private advisory:**
+1. **Preferred, GitHub private advisory:**
    [https://github.com/Euaell/macro_chef/security/advisories/new](https://github.com/Euaell/macro_chef/security/advisories/new).
    This is end-to-end private, lets us coordinate a fix with you, and
    auto-assigns a CVE if we publish.
@@ -32,7 +32,7 @@ Use one of these private channels instead:
 Include:
 
 - A description of the issue and its impact.
-- Reproduction steps — commands, requests, payloads, or a proof of concept.
+- Reproduction steps, commands, requests, payloads, or a proof of concept.
 - Affected versions, endpoints, or files.
 - Your name or handle if you'd like credit in the advisory.
 
@@ -73,7 +73,7 @@ the issue affects production data, notify affected users.
 - Missing SPF/DKIM/DMARC on non-production subdomains.
 - Version disclosure in server headers.
 - Self-XSS or issues that need an already-compromised browser.
-- Issues in third-party dependencies with no exploitable path in Mizan —
+- Issues in third-party dependencies with no exploitable path in Mizan -
   report those upstream (Dependabot covers these).
 - Vulnerabilities in self-hosted forks running old code.
 

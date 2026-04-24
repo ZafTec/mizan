@@ -380,7 +380,7 @@ export default function MeasurementChart({ measurements, goalHistory = [] }: { m
             {/* Composition legend note */}
             {tab === "composition" && (
                 <p className="text-[11px] text-charcoal-blue-400 dark:text-charcoal-blue-500 mb-4">
-                    <span className="text-blue-600 font-medium">Weight</span> &amp; <span className="text-green-600 font-medium">Muscle</span> use the left axis (kg) · <span className="text-red-600 font-medium">Body Fat</span> uses the right axis (%) · Dashed lines = goals
+                    <span className="text-blue-600 dark:text-blue-400 font-medium">Weight</span> &amp; <span className="text-green-600 dark:text-green-400 font-medium">Muscle</span> use the left axis (kg) · <span className="text-red-600 dark:text-red-400 font-medium">Body Fat</span> uses the right axis (%) · Dashed lines = goals
                 </p>
             )}
 

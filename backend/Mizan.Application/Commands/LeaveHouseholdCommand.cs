@@ -40,7 +40,7 @@ public class LeaveHouseholdCommandHandler : IRequestHandler<LeaveHouseholdComman
             return new LeaveHouseholdResult { Success = false, Message = "You're not a member of this household." };
         }
 
-        // If the leaving user is the last admin/owner, block — the household would be orphaned.
+        // If the leaving user is the last admin/owner, block, the household would be orphaned.
         if (membership.Role == "admin" || membership.Role == "owner")
         {
             var otherAdmins = await _context.HouseholdMembers

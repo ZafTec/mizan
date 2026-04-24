@@ -558,10 +558,10 @@ export default async function AdminLayout({
 
 ---
 
-## Auth — login Suspense layout
+## Auth, login Suspense layout
 
 **Path:** `frontend/app/(auth)/login/layout.tsx`
-**Description:** Only special-case auth layout — wraps the login page in `<Suspense fallback={<Loading />}>` so `useSearchParams` can be read client-side. All other auth pages (register, verify, forgot-password) use the root layout directly.
+**Description:** Only special-case auth layout, wraps the login page in `<Suspense fallback={<Loading />}>` so `useSearchParams` can be read client-side. All other auth pages (register, verify, forgot-password) use the root layout directly.
 
 ```tsx
 import Loading from "@/components/Loading";
@@ -584,7 +584,7 @@ export default function Layout(
 ## Verify-email Suspense layout
 
 **Path:** `frontend/app/(auth)/verifyemail/layout.tsx`
-**Description:** Same pattern as login — wraps the verifyemail page in a `<Suspense>` fallback.
+**Description:** Same pattern as login, wraps the verifyemail page in a `<Suspense>` fallback.
 
 Layout structure is essentially the same as the login layout above. Confirm in-repo before copying.
 
@@ -593,5 +593,5 @@ Layout structure is essentially the same as the login layout above. Confirm in-r
 ## Notes on shell architecture
 
 - **Single-shell design:** unlike many dashboard apps, Mizan has no sidebar. Primary navigation (Foods/Recipes/Meals/Admin) lives in the top Navbar; user-scoped nav (Overview/Settings/MCP/Sessions) is in the avatar dropdown.
-- **No separate marketing shell:** the landing hero in `app/page.tsx` sits inside the same Navbar/Footer shell — auth state just toggles hero vs dashboard-snapshot.
-- **Route-group layouts are guards only** — they do not paint UI. To redesign the app shell, edit `app/layout.tsx` and `components/Navbar/*` only.
+- **No separate marketing shell:** the landing hero in `app/page.tsx` sits inside the same Navbar/Footer shell, auth state just toggles hero vs dashboard-snapshot.
+- **Route-group layouts are guards only**, they do not paint UI. To redesign the app shell, edit `app/layout.tsx` and `components/Navbar/*` only.

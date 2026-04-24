@@ -3,10 +3,10 @@
 MacroChef uses **Tailwind CSS v4** (alpha-style `@theme` + `@custom-variant` blocks in globals.css) and a legacy PostCSS `tailwind.config.ts`. The v4 `@theme` block in `globals.css` is the source of truth for colors, shadows, font, motion. The separate `tailwind.config.ts` exists for back-compat with a prior v3 color palette (green/orange); **most pages reference the v4 brand/accent/charcoal-blue/sandy-brown/verdigris/tuscan-sun/burnt-peach scales** defined in `globals.css`.
 
 Brand palette:
-- **brand** = verdigris (teal-green) — primary CTAs, charts, focus rings
-- **accent** = sandy-brown (warm orange) — secondary highlights, "Create Recipe" CTA
-- **charcoal-blue** = neutral slate-ish — surfaces, text, borders
-- **tuscan-sun**, **burnt-peach** — data viz colors in charts
+- **brand** = verdigris (teal-green), primary CTAs, charts, focus rings
+- **accent** = sandy-brown (warm orange), secondary highlights, "Create Recipe" CTA
+- **charcoal-blue** = neutral slate-ish, surfaces, text, borders
+- **tuscan-sun**, **burnt-peach**, data viz colors in charts
 - Also uses plain Tailwind slate/red/amber/yellow/green/orange/rose/violet/indigo for chart accents and domain colors (macros map: calories=orange, protein=red, carbs=amber, fat=yellow, fiber=green, P/Cal=violet).
 
 ---
@@ -557,7 +557,7 @@ html.reduce-motion *::after {
 
 ---
 
-## `frontend/tailwind.config.ts` (legacy — partially used)
+## `frontend/tailwind.config.ts` (legacy, partially used)
 
 ```ts
 import type { Config } from "tailwindcss";
@@ -626,7 +626,7 @@ export default {
 } satisfies Config;
 ```
 
-**IMPORTANT:** this file's `brand` palette (green hex values) conflicts with the OKLCH verdigris palette in `globals.css`. The v4 `@theme` in `globals.css` takes precedence when both define the same token — so runtime `brand-*` colors are the teal verdigris, not green. Ignore the green hex codes here when designing.
+**IMPORTANT:** this file's `brand` palette (green hex values) conflicts with the OKLCH verdigris palette in `globals.css`. The v4 `@theme` in `globals.css` takes precedence when both define the same token, so runtime `brand-*` colors are the teal verdigris, not green. Ignore the green hex codes here when designing.
 
 ---
 
@@ -647,7 +647,7 @@ This is the only PostCSS setup; Tailwind v4 does all token processing through `@
 
 ---
 
-## Quick reference — key design values
+## Quick reference, key design values
 
 | Token | Value |
 |-------|-------|

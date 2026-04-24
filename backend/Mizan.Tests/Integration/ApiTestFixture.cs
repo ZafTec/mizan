@@ -171,7 +171,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     {
         // The SignatureValidator resolves IJwksProvider via
         // IPostConfigureOptions<JwtBearerOptions> at options-build time, so no
-        // static accessor priming is needed — ConfigureTestServices swaps in
+        // static accessor priming is needed, ConfigureTestServices swaps in
         // the TestJwksProvider before the options post-configure runs.
         return base.CreateHost(builder);
     }

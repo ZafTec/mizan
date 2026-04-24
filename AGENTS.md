@@ -67,9 +67,9 @@ When reasoning through problems, apply these principles:
 
 ### 2. Investigate the Codebase
 
-- **Check `.fpf/context.md` first** — Project context, constraints, and tech stack
-- **Check `.fpf/knowledge/`** — Project knowledge base with verified claims at different assurance levels
-- **Check `.context/` directory** — Architectural documentation and design decisions
+- **Check `.fpf/context.md` first**, Project context, constraints, and tech stack
+- **Check `.fpf/knowledge/`**, Project knowledge base with verified claims at different assurance levels
+- **Check `.context/` directory**, Architectural documentation and design decisions
 - Use Task tool for broader/multi-file exploration (preferred for context efficiency)
 - Explore relevant files and directories
 - Search for key functions, classes, variables
@@ -80,7 +80,7 @@ When reasoning through problems, apply these principles:
 
 - Knowledge may be outdated (cutoff: January 2025)
 - When using third-party packages/libraries/frameworks, verify current usage patterns
-- **Use Context7 MCP** (`mcp__context7`) for up-to-date library/framework documentation — preferred over web search for API references
+- **Use Context7 MCP** (`mcp__context7`) for up-to-date library/framework documentation, preferred over web search for API references
 - Don't rely on summaries - fetch actual content
 - WebSearch/WebFetch for general research, Context7 for library docs
 
@@ -172,9 +172,9 @@ RECOMMENDATION: [Which + why, or "need your input on X"]
 | 3b | `/q3-research` | Induction | Web search, docs (external) |
 | 4 | `/q4-audit` | Bias-Audit | WLNK analysis, congruence check |
 | 5 | `/q5-decide` | Decision | Create DRR from winning hypothesis |
-| S | `/q-status` | — | Show current state and next steps |
-| Q | `/q-query` | — | Search knowledge base |
-| D | `/q-decay` | — | Check evidence freshness |
+| S | `/q-status` |, | Show current state and next steps |
+| Q | `/q-query` |, | Search knowledge base |
+| D | `/q-decay` |, | Check evidence freshness |
 
 **Assurance Levels:**
 - **L0** (Observation): Unverified hypothesis or note
@@ -185,12 +185,12 @@ RECOMMENDATION: [Which + why, or "need your input on X"]
 **Key Concepts:**
 - **WLNK (Weakest Link)**: Assurance = min(evidence), never average
 - **Congruence**: External evidence must match our context (high/medium/low)
-- **Validity**: Evidence expires — check with `/fpf-decay`
+- **Validity**: Evidence expires, check with `/fpf-decay`
 - **Scope**: Knowledge applies within specified conditions only
 
 **State Location:** `.fpf/` directory (git-tracked)
 
-**Key Principle:** You (Claude) generate options with evidence. Human decides. This is the Transformer Mandate — a system cannot transform itself.
+**Key Principle:** You (Claude) generate options with evidence. Human decides. This is the Transformer Mandate, a system cannot transform itself.
 
 ## Code Generation Guidelines
 
@@ -211,7 +211,7 @@ RECOMMENDATION: [Which + why, or "need your input on X"]
 - Never swallow errors silently (empty catch blocks are bugs)
 - Handle exceptions at boundaries, not deep in call stack
 - Return error values when codebase uses them (Result, Option, error tuples)
-- If codebase uses exceptions — use exceptions consistently, but explicitly
+- If codebase uses exceptions, use exceptions consistently, but explicitly
 - Fail fast for programmer errors, handle gracefully for expected failures
 - Keep execution flow deterministic and linear
 
@@ -222,7 +222,7 @@ RECOMMENDATION: [Which + why, or "need your input on X"]
 - Keep functions small and focused (<25 lines as guideline)
 - Avoid high cyclomatic complexity
 - No deeply nested conditions (max 2 levels)
-- No loops nested in loops — extract inner loop
+- No loops nested in loops, extract inner loop
 - Extract complex conditions into named functions
 
 ### Testing Philosophy
@@ -271,11 +271,11 @@ If you have MCP servers configured, these are recommended:
 **Context7 usage:**
 
 ```
-mcp__context7__resolve-library-id  — find library ID
-mcp__context7__get-library-docs    — fetch documentation
+mcp__context7__resolve-library-id , find library ID
+mcp__context7__get-library-docs   , fetch documentation
 ```
 
-Prefer Context7 over web search for library docs — it's more accurate and structured.
+Prefer Context7 over web search for library docs, it's more accurate and structured.
 
 ## Available Subagents
 

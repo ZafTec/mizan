@@ -50,7 +50,6 @@ export default function Page() {
 				</Link>
 				<div>
 					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Log Meal</h1>
-					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">Track what you eat</p>
 				</div>
 			</div>
 

@@ -29,7 +29,7 @@ export default async function CommunityPage() {
 						Community
 					</h1>
 					<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						See what the community is cooking, climb the consistency leaderboard, and join challenges.
+						Recipes, leaderboards, and challenges.
 					</p>
 				</div>
 			</header>
@@ -39,10 +39,10 @@ export default async function CommunityPage() {
 				<div className="relative grid gap-6 sm:grid-cols-[1fr_auto] sm:items-end">
 					<div className="space-y-3">
 						<h2 className="text-2xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-							Join the community conversation
+							Community
 						</h2>
 						<p className="max-w-xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-							Trade recipes, swap progress notes, and celebrate wins. Community feeds, groups and challenges roll out with the v2 release.
+							Feeds, groups, and challenges roll out with the v2 release.
 						</p>
 						<div className="flex flex-wrap gap-2 pt-1">
 							<Link href="/recipes" className="btn-primary !rounded-2xl !py-2 text-sm">
@@ -69,9 +69,6 @@ export default async function CommunityPage() {
 						<h2 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
 							Popular recipes this week
 						</h2>
-						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-							Community-favourited dishes sorted by saves.
-						</p>
 					</div>
 					<Link href="/recipes" className="btn-ghost !rounded-2xl !py-2 text-sm">
 						Browse all
@@ -138,7 +135,7 @@ export default async function CommunityPage() {
 						</div>
 					</div>
 					<p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
-						Weekly logging, protein-target and workout consistency challenges arrive with the next release. Track your solo streak on the <Link href="/dashboard" className="text-verdigris-700 underline underline-offset-2 dark:text-verdigris-300">dashboard</Link> until then.
+						Coming in the next release. Track your solo streak on the <Link href="/dashboard" className="text-verdigris-700 underline underline-offset-2 dark:text-verdigris-300">dashboard</Link> until then.
 					</p>
 				</div>
 				<div className="glass-panel p-6">
@@ -156,7 +153,7 @@ export default async function CommunityPage() {
 						</div>
 					</div>
 					<p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
-						Household-sized groups and coach-led pods are in design. Want to beta-test? Ping your coach in <Link href="/messaging" className="text-verdigris-700 underline underline-offset-2 dark:text-verdigris-300">messaging</Link>.
+						In design. Ping your coach in <Link href="/messaging" className="text-verdigris-700 underline underline-offset-2 dark:text-verdigris-300">messaging</Link> to beta-test.
 					</p>
 				</div>
 			</section>

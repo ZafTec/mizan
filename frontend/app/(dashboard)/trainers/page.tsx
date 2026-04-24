@@ -95,7 +95,7 @@ export default function TrainersPage() {
 							Find a trainer
 						</h1>
 						<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-							Connect with certified coaches to hit your goals faster.
+							Connect with a coach.
 						</p>
 					</div>
 				</div>
@@ -128,7 +128,7 @@ export default function TrainersPage() {
 						No trainers found
 					</h3>
 					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						Try adjusting your search or check back later
+						No trainers found.
 					</p>
 				</div>
 			) : (
@@ -189,33 +189,6 @@ export default function TrainersPage() {
 				</div>
 			)}
 
-			{/* Info Card */}
-			<div className="card p-6 border border-blue-200 dark:border-blue-800 bg-white/70 dark:bg-charcoal-blue-950/60">
-				<div className="flex items-start gap-4">
-					<div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
-						<i className="ri-information-line text-2xl text-white" />
-					</div>
-					<div>
-						<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
-							How it works
-						</h3>
-						<ul className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 space-y-2">
-							<li className="flex items-start gap-2">
-								<i className="ri-arrow-right-s-line text-blue-500 mt-0.5" />
-								<span>Send a connection request to your preferred trainer</span>
-							</li>
-							<li className="flex items-start gap-2">
-								<i className="ri-arrow-right-s-line text-blue-500 mt-0.5" />
-								<span>Wait for the trainer to accept and set your permissions</span>
-							</li>
-							<li className="flex items-start gap-2">
-								<i className="ri-arrow-right-s-line text-blue-500 mt-0.5" />
-								<span>Once accepted, your trainer can view your progress and send you personalized plans</span>
-							</li>
-						</ul>
-					</div>
-				</div>
-			</div>
 		</div>
 	);
 }

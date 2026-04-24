@@ -67,9 +67,6 @@ export default function LogProgress() {
             <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
               Log today's progress
             </h1>
-            <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-              Record your daily nutrition intake.
-            </p>
           </div>
         </div>
         <Link href="/goal/dashboard" className="btn-secondary">
@@ -85,11 +82,9 @@ export default function LogProgress() {
             <i className="ri-lightbulb-line text-xl text-brand-600 dark:text-brand-400" />
           </div>
           <div>
-            <h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-1">Pro Tips</h3>
             <ul className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 space-y-1">
-              <li>• Track your meals throughout the day for accuracy</li>
-              <li>• Use the meal diary to calculate totals automatically</li>
-              <li>• Add notes about how you felt or what worked well</li>
+              <li>• Track meals throughout the day for accuracy</li>
+              <li>• Use the food diary to calculate totals automatically</li>
             </ul>
           </div>
         </div>

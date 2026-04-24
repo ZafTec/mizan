@@ -367,9 +367,6 @@ export default function WorkoutsPage() {
                     <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
                         Workouts
                     </h1>
-                    <p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-                        Log sessions, browse the exercise library, and track volume over time.
-                    </p>
                 </div>
                 <div className="hidden w-40 shrink-0 drop-shadow-md sm:block">
                     <AppFeatureIllustration variant="workouts" />
@@ -455,10 +452,10 @@ export default function WorkoutsPage() {
                         <div className="card p-16 text-center">
                             <i className="ri-dumbbell-line text-4xl text-charcoal-blue-400 dark:text-charcoal-blue-500 mb-3 block" />
                             <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No workouts yet</h3>
-                            <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-4">Start logging workouts to see your history here.</p>
+                            <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-4">No workouts yet.</p>
                             <button type="button" onClick={() => setActiveTab("log")} className="btn-primary">
                                 <i className="ri-add-line mr-1.5" />
-                                Log Your First Workout
+                                Log a workout
                             </button>
                         </div>
                     ) : (
@@ -669,7 +666,7 @@ export default function WorkoutsPage() {
                         </div>
 
                         <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-                            Or <button type="button" onClick={() => handleTabChange("library")} className="text-brand-500 hover:text-brand-600 font-medium">browse the exercise library</button> to find exercises
+                            Or <button type="button" onClick={() => handleTabChange("library")} className="text-brand-500 hover:text-brand-600 font-medium">browse the library</button>
                         </p>
 
                         {searchResults.length > 0 && (
@@ -873,7 +870,7 @@ export default function WorkoutsPage() {
                         <div className="card p-16 text-center">
                             <i className="ri-run-line text-4xl text-charcoal-blue-400 dark:text-charcoal-blue-500 mb-3 block" />
                             <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No exercises found</h3>
-                            <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">Try a different search or category</p>
+                            <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">No exercises found.</p>
                         </div>
                     ) : null}
 

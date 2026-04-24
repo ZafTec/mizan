@@ -13,11 +13,8 @@ export default function TrainerDashboard() {
 				<div className="space-y-2">
 					<p className="eyebrow">Coaching</p>
 					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-						Trainer command center
+						Trainer dashboard
 					</h1>
-					<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						Incoming requests, recent client check-ins, and your roster in one view.
-					</p>
 				</div>
 			</header>
 
@@ -30,9 +27,6 @@ export default function TrainerDashboard() {
 						<h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
 							Stats at a glance
 						</h2>
-						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-							Active clients, pending requests, today's activity.
-						</p>
 					</div>
 				</header>
 				<TrainerStats />
@@ -48,10 +42,7 @@ export default function TrainerDashboard() {
 							<h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
 								Pending requests
 							</h2>
-							<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-								Clients waiting for you to accept.
-							</p>
-						</div>
+							</div>
 					</header>
 					<TrainerPendingRequests />
 				</section>
@@ -65,10 +56,7 @@ export default function TrainerDashboard() {
 							<h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
 								Recent messages
 							</h2>
-							<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-								Jump into the latest conversations.
-							</p>
-						</div>
+							</div>
 					</header>
 					<RecentMessages />
 				</section>
@@ -83,9 +71,6 @@ export default function TrainerDashboard() {
 						<h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
 							Your clients
 						</h2>
-						<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-							Full roster with status and last seen.
-						</p>
 					</div>
 				</header>
 				<ClientList />

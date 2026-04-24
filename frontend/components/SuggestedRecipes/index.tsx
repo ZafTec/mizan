@@ -30,8 +30,8 @@ export default function SuggestedRecipes({ user, suggestions, serverError }: Sug
 			{/* Page Header */}
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
-					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Recipe Suggestions</h1>
-					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">Personalized recipes based on your remaining macros</p>
+					<h1 className="text-2xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Suggestions</h1>
+					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">Based on your remaining macros</p>
 				</div>
 				{user && (
 					<Link href="/suggestions/regenerate" className="btn-secondary">
@@ -46,9 +46,9 @@ export default function SuggestedRecipes({ user, suggestions, serverError }: Sug
 					<div className="w-16 h-16 rounded-2xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900 flex items-center justify-center mx-auto mb-4">
 						<i className="ri-lightbulb-line text-3xl text-charcoal-blue-400 dark:text-charcoal-blue-500" />
 					</div>
-					<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No Suggestions Available</h3>
+					<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No suggestions yet</h3>
 					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-4">
-						Add more meals or update your preferences to get personalized recipe suggestions.
+						Log more meals to get personalized suggestions.
 					</p>
 					<Link href="/meals" className="btn-primary">
 						<i className="ri-add-line" />

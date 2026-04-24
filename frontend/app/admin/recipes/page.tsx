@@ -32,9 +32,6 @@ export default async function AdminRecipesPage({
 					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 						Manage recipes
 					</h1>
-					<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						Browse and moderate community recipes.
-					</p>
 				</div>
 			</header>
 

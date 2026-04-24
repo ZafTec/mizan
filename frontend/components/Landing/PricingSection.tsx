@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
 
 const TIERS = [
 	{
@@ -19,15 +20,15 @@ const TIERS = [
 	{
 		id: "pro" as const,
 		name: "Pro",
-		price: "$0.99",
+		price: "$1.99",
 		cadence: "per month",
-		altPrice: "or $9 / year",
+		altPrice: "or $15 / year",
 		description: "Everything in Free, plus the tools that make progress visible.",
 		features: [
 			"Unlimited meal plans & shopping lists",
 			"Household invitations (up to 6)",
 			"AI coach + food-image analysis",
-			"Trainer–client chat and goals",
+			"Trainer + client chat and goals",
 			"Advanced analytics + trends",
 		],
 		cta: "Go Pro",
@@ -37,7 +38,7 @@ const TIERS = [
 	{
 		id: "lifetime" as const,
 		name: "Lifetime",
-		price: "$29",
+		price: "$48",
 		cadence: "one-time",
 		description: "Pay once. Pro forever, plus every feature we ship next.",
 		features: [
@@ -53,100 +54,81 @@ const TIERS = [
 
 export function PricingSection() {
 	return (
-		<section aria-labelledby="pricing-heading" className="py-16 sm:py-24" id="pricing">
-			<div className="mb-12 max-w-3xl sm:mb-16">
-				<span className="eth-label eth-text-primary">Three tiers, no fine print</span>
-				<h2 id="pricing-heading" className="eth-display-md mt-3">
+		<section aria-labelledby="pricing-heading" id="pricing" className="py-12 sm:py-16">
+			<div className="mb-8 max-w-3xl sm:mb-10">
+				<div className="eyebrow mb-4">
+					<AnimatedIcon name="shieldCheck" size={14} aria-hidden="true" />
+					Three tiers, no fine print
+				</div>
+				<h2 id="pricing-heading" className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 					Less than a coffee. Or once, and never again.
 				</h2>
-				<p className="eth-body-lg eth-text-muted mt-4 max-w-2xl">
+				<p className="mt-3 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 					14-day refund on every paid plan. Cancel from your account in two clicks.
 				</p>
 			</div>
 
-			<div className="relative grid grid-cols-1 items-stretch gap-6 md:grid-cols-3 md:gap-5">
-				{/* Ambient glow behind the Pro tier. */}
+			<div className="relative grid grid-cols-1 items-stretch gap-4 md:grid-cols-3">
 				<div
 					aria-hidden="true"
-					className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full hidden md:block"
+					className="pointer-events-none absolute left-1/2 top-1/2 -z-10 hidden h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 rounded-full md:block"
 					style={{
-						background: "radial-gradient(closest-side, rgba(110, 235, 224, 0.18), transparent 70%)",
-						filter: "blur(60px)",
+						background: "radial-gradient(closest-side, color-mix(in oklab, var(--color-brand-500) 18%, transparent), transparent 70%)",
+						filter: "blur(55px)",
 					}}
 				/>
-
 				{TIERS.map((tier) => {
 					const highlight = tier.highlight;
 					return (
 						<article
 							key={tier.id}
-							className="relative flex flex-col overflow-hidden p-7 sm:p-8"
-							style={{
-								background: highlight ? "var(--eth-surface-high)" : "var(--eth-surface-low)",
-								borderRadius: "28px",
-								transform: highlight ? "translateY(-24px)" : "translateY(0)",
-							}}
+							className={`relative flex flex-col overflow-hidden rounded-[28px] p-6 ${
+								highlight
+									? "border border-brand-500/30 bg-white shadow-xl shadow-brand-500/10 dark:border-brand-500/30 dark:bg-charcoal-blue-900"
+									: "border border-charcoal-blue-100 bg-white dark:border-white/10 dark:bg-charcoal-blue-900/60"
+							}`}
 						>
-							{/* Gradient top bar for the highlighted tier. */}
 							{highlight && (
 								<div
 									aria-hidden="true"
-									className="absolute inset-x-0 top-0 h-1"
-									style={{
-										background: "linear-gradient(90deg, var(--eth-primary), var(--eth-primary-container))",
-									}}
+									className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand-500 to-brand-300"
 								/>
 							)}
-							{highlight && (
-								<span
-									className="absolute -top-3 right-6 inline-flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
-									style={{
-										background: "linear-gradient(135deg, var(--eth-primary), var(--eth-primary-container))",
-										color: "#0A0F1C",
-									}}
-								>
-									<i className="ri-star-fill" aria-hidden="true" />
-									Most popular
-								</span>
-							)}
 							<header>
-								<h3 className="eth-headline-md">{tier.name}</h3>
-								<div className="mt-3 flex items-baseline gap-2">
-									<span className="eth-display-md">{tier.price}</span>
-									<span className="eth-label eth-text-dim">{tier.cadence}</span>
+								<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{tier.name}</h3>
+								<div className="mt-2 flex items-baseline gap-2">
+									<span className="text-4xl font-bold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-5xl">
+										{tier.price}
+									</span>
+									<span className="text-xs font-medium uppercase tracking-[0.14em] text-charcoal-blue-500 dark:text-charcoal-blue-400">
+										{tier.cadence}
+									</span>
 								</div>
 								{tier.altPrice && (
-									<p className="eth-label eth-text-primary mt-1 tracking-normal normal-case text-sm">{tier.altPrice}</p>
+									<p className="mt-1 text-xs font-medium text-brand-700 dark:text-brand-300">{tier.altPrice}</p>
 								)}
-								<p className="eth-body-md eth-text-muted mt-3">{tier.description}</p>
+								<p className="mt-3 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">{tier.description}</p>
 							</header>
-							<ul className="mt-6 space-y-3 flex-1">
+							<ul className="mt-5 flex-1 space-y-2.5">
 								{tier.features.map((feature) => (
-									<li key={feature} className="flex items-start gap-2">
-										<span
-											className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
-											style={{ background: "rgba(110, 235, 224, 0.16)", color: "var(--eth-primary)" }}
-										>
-											<i className="ri-check-line text-sm" aria-hidden="true" />
-										</span>
-										<span className="eth-body-md">{feature}</span>
+									<li key={feature} className="flex items-start gap-2 text-sm text-charcoal-blue-700 dark:text-charcoal-blue-200">
+										<span className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" aria-hidden="true" />
+										<span>{feature}</span>
 									</li>
 								))}
 							</ul>
-							<div className="mt-7 pt-6 eth-divider" aria-hidden="true" />
 							<Link
 								href={tier.ctaHref}
-								className={highlight ? "eth-btn-primary mt-6 w-full" : "eth-btn-glass mt-6 w-full"}
+								className={`mt-6 w-full ${highlight ? "btn-primary" : "btn-secondary"}`}
 							>
 								{tier.cta}
-								<i className="ri-arrow-right-line text-lg" aria-hidden="true" />
 							</Link>
 						</article>
 					);
 				})}
 			</div>
-			<p className="eth-label eth-text-dim mt-12 text-center tracking-normal normal-case text-sm">
-				Billing handled by Paddle (our Merchant of Record). Prices in USD.
+			<p className="mt-8 text-center text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+				Billing handled by Paddle · Prices in USD
 			</p>
 		</section>
 	);

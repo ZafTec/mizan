@@ -186,10 +186,31 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 	const pathname = usePathname();
 	const [collapsed, setCollapsed] = useState(false);
 	const [userMenuOpen, setUserMenuOpen] = useState(false);
+	const [userMenuPos, setUserMenuPos] = useState<{ top: number; right: number } | null>(null);
 	const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
 	const [showLogoutModal, setShowLogoutModal] = useState(false);
 	const userMenuRef = useRef<HTMLDivElement>(null);
+	const userTriggerRef = useRef<HTMLButtonElement>(null);
 	const mobileSheetRef = useRef<HTMLDivElement>(null);
+
+	// Anchor the portal'd user menu to the trigger's viewport rect. Refresh on
+	// scroll/resize while open so the menu tracks the button.
+	useEffect(() => {
+		if (!userMenuOpen) return;
+		const sync = () => {
+			const el = userTriggerRef.current;
+			if (!el) return;
+			const rect = el.getBoundingClientRect();
+			setUserMenuPos({ top: rect.bottom + 8, right: Math.max(8, window.innerWidth - rect.right) });
+		};
+		sync();
+		window.addEventListener("scroll", sync, true);
+		window.addEventListener("resize", sync);
+		return () => {
+			window.removeEventListener("scroll", sync, true);
+			window.removeEventListener("resize", sync);
+		};
+	}, [userMenuOpen]);
 
 	const isAdmin = user.role === "admin";
 	const visibleSecondary = SECONDARY_NAV.filter((item) => !item.adminOnly || isAdmin);
@@ -256,7 +277,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 			<div aria-hidden="true" className="pointer-events-none absolute right-[-5%] top-[-10%] h-125 w-125 rounded-full bg-verdigris-200/30 blur-[120px] -z-10" />
 			<div aria-hidden="true" className="pointer-events-none absolute bottom-[-10%] left-[-5%] h-100 w-100 rounded-full bg-sandy-brown-200/25 blur-[100px] -z-10" />
 
-			{/* Desktop Sidebar — fills shell height; inner nav scrolls via custom-scrollbar */}
+			{/* Desktop Sidebar, fills shell height; inner nav scrolls via custom-scrollbar */}
 			<aside
 				className={cn(
 					"hidden h-full shrink-0 flex-col border-r border-charcoal-blue-200/70 bg-white/85 backdrop-blur-xl dark:border-white/10 dark:bg-charcoal-blue-950/80 lg:flex",
@@ -355,9 +376,9 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 				</div>
 			</aside>
 
-			{/* Main column — full shell height; only <main> scrolls internally */}
+			{/* Main column, full shell height; only <main> scrolls internally */}
 			<div className="flex h-full min-w-0 flex-1 flex-col">
-				{/* Top bar — shrink-0 so it stays visible while main scrolls */}
+				{/* Top bar, shrink-0 so it stays visible while main scrolls */}
 				<header className="shrink-0 border-b border-charcoal-blue-200/70 bg-white/80 backdrop-blur-xl dark:border-white/10 dark:bg-charcoal-blue-950/75">
 					<div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
 						{/* Mobile menu */}
@@ -402,6 +423,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 							</Link>
 							<div className="relative">
 								<button
+									ref={userTriggerRef}
 									type="button"
 									data-app-shell-user-trigger
 									onClick={() => setUserMenuOpen((o) => !o)}
@@ -420,51 +442,57 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 										)}
 									/>
 								</button>
-								{userMenuOpen && (
-									<div
-										ref={userMenuRef}
-										className="menu-pop absolute right-0 top-[calc(100%+0.5rem)] z-50 w-60 overflow-hidden rounded-[24px] border border-charcoal-blue-200 bg-white p-1.5 shadow-2xl shadow-charcoal-blue-950/15 dark:border-white/10 dark:bg-charcoal-blue-950"
-									>
-										<div className="mb-1 rounded-2xl px-3 py-2.5">
-											<p className="truncate text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-												{user.name || user.email}
-											</p>
-											<p className="truncate text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-												{user.email}
-											</p>
-										</div>
-										<div className="space-y-1">
-											{visibleSecondary.map((item) => (
-												<Link
-													key={item.href}
-													href={item.href}
-													onClick={() => setUserMenuOpen(false)}
-													className="flex items-center gap-3 rounded-2xl px-3 py-2 text-sm text-charcoal-blue-700 hover:bg-charcoal-blue-50 dark:text-charcoal-blue-200 dark:hover:bg-white/5"
+								{/* User menu is portalled to document.body so any overflow/isolate
+								    ancestor (sticky header, scroll containers) can't clip it. */}
+								{userMenuOpen && userMenuPos &&
+									createPortal(
+										<div
+											ref={userMenuRef}
+											role="menu"
+											className="menu-pop fixed w-60 overflow-hidden rounded-[24px] border border-charcoal-blue-200 bg-white p-1.5 shadow-2xl shadow-charcoal-blue-950/15 dark:border-white/10 dark:bg-charcoal-blue-950"
+											style={{ top: userMenuPos.top, right: userMenuPos.right, zIndex: 1000 }}
+										>
+											<div className="mb-1 rounded-2xl px-3 py-2.5">
+												<p className="truncate text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+													{user.name || user.email}
+												</p>
+												<p className="truncate text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+													{user.email}
+												</p>
+											</div>
+											<div className="space-y-1">
+												{visibleSecondary.map((item) => (
+													<Link
+														key={item.href}
+														href={item.href}
+														onClick={() => setUserMenuOpen(false)}
+														className="flex items-center gap-3 rounded-2xl px-3 py-2 text-sm text-charcoal-blue-700 hover:bg-charcoal-blue-50 dark:text-charcoal-blue-200 dark:hover:bg-white/5"
+													>
+														<span className="icon-chip h-8 w-8">
+															<AnimatedIcon name={item.icon} size={14} />
+														</span>
+														{item.label}
+													</Link>
+												))}
+											</div>
+											<div className="mt-1 border-t border-charcoal-blue-200/70 pt-1.5 dark:border-white/10">
+												<button
+													type="button"
+													onClick={() => {
+														setUserMenuOpen(false);
+														setShowLogoutModal(true);
+													}}
+													className="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
 												>
-													<span className="icon-chip h-8 w-8">
-														<AnimatedIcon name={item.icon} size={14} />
+													<span className="flex h-8 w-8 items-center justify-center rounded-2xl border border-red-200 text-red-500 dark:border-red-500/20 dark:text-red-400">
+														<AnimatedIcon name="logout" size={14} />
 													</span>
-													{item.label}
-												</Link>
-											))}
-										</div>
-										<div className="mt-1 border-t border-charcoal-blue-200/70 pt-1.5 dark:border-white/10">
-											<button
-												type="button"
-												onClick={() => {
-													setUserMenuOpen(false);
-													setShowLogoutModal(true);
-												}}
-												className="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
-											>
-												<span className="flex h-8 w-8 items-center justify-center rounded-2xl border border-red-200 text-red-500 dark:border-red-500/20 dark:text-red-400">
-													<AnimatedIcon name="logout" size={14} />
-												</span>
-												Sign out
-											</button>
-										</div>
-									</div>
-								)}
+													Sign out
+												</button>
+											</div>
+										</div>,
+										document.body,
+									)}
 							</div>
 						</div>
 					</div>
@@ -540,7 +568,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 					</>
 				)}
 
-				{/* Page content — flex-1 fills the column so long pages scroll inside
+				{/* Page content, flex-1 fills the column so long pages scroll inside
 					it and short pages don't leave unclaimed space. Scrolls internally so
 					the body stays viewport-sized. */}
 				<main className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-4 pt-6 pb-[calc(4.5rem+env(safe-area-inset-bottom,0))] sm:px-6 lg:px-8 lg:pb-10">

@@ -12,7 +12,7 @@ export default function NotFound() {
 					<h1 className="text-6xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">404</h1>
 					<h2 className="text-2xl font-bold text-charcoal-blue-700 dark:text-charcoal-blue-300 mb-2">Page not found</h2>
 					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						Sorry, we couldn&apos;t find the page you&apos;re looking for.
+						That page doesn&apos;t exist.
 					</p>
 				</div>
 
@@ -30,9 +30,6 @@ export default function NotFound() {
 					</div>
 
 					<div className="pt-4 border-t border-charcoal-blue-200 dark:border-charcoal-blue-800">
-						<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 text-center mb-3">
-							Need help? Try these popular pages:
-						</p>
 						<div className="grid grid-cols-2 gap-2 text-sm">
 							<Link
 								href="/meals"

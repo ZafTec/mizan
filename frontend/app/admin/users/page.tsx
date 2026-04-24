@@ -108,7 +108,7 @@ export default async function UsersPage({
             User management
           </h1>
           <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-            {totalCount} total users.
+            {totalCount} users
           </p>
         </div>
         <div className="flex gap-3">

@@ -102,7 +102,7 @@ public class GetAchievementsQueryHandler : IRequestHandler<GetAchievementsQuery,
 
         // Append Id as tie-breaker so pages don't overlap when many rows share the
         // primary sort key (e.g. 30 achievements with distinct categories but
-        // several in each — without this the DB may return the same row twice).
+        // several in each, without this the DB may return the same row twice).
         var sortedQuery = query.ApplySorting(
             request,
             SortMappings,

@@ -5,7 +5,7 @@ import { AnimatedIcon } from "@/components/ui/animated-icon";
 
 // Slides up from the bottom with a strong ease-out on enter (400ms) and a
 // fast exit (200ms) once the user decides. The banner only mounts when GA
-// tracking is configured and the user hasn't chosen yet — see ConsentGate.
+// tracking is configured and the user hasn't chosen yet, see ConsentGate.
 export function CookieConsentBanner({
 	onDecision,
 }: {
@@ -23,7 +23,7 @@ export function CookieConsentBanner({
 
 	const decide = (decision: "accepted" | "declined") => {
 		setExiting(true);
-		// Exit is deliberately snappy — the user already made the call.
+		// Exit is deliberately snappy, the user already made the call.
 		window.setTimeout(() => onDecision(decision), 180);
 	};
 

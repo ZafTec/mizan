@@ -56,9 +56,6 @@ export default function TrainerRequestsPage() {
 					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 						Trainer Requests
 					</h1>
-					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
-						View your pending trainer connection requests
-					</p>
 				</div>
 				<Link href="/profile" className="btn-secondary">
 					<i className="ri-arrow-left-line" />
@@ -74,7 +71,7 @@ export default function TrainerRequestsPage() {
 						No Pending Requests
 					</h3>
 					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-6">
-						You don't have any pending trainer connection requests
+						No pending trainer requests.
 					</p>
 					<Link href="/trainers" className="btn-primary inline-flex items-center gap-2">
 						<i className="ri-search-line" />

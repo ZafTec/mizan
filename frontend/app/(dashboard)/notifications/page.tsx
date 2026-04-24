@@ -11,9 +11,6 @@ export default function NotificationsPage() {
 				<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">
 					Notifications
 				</h1>
-				<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-					Stay on top of trainer replies, streak reminders, new achievements, and meal-plan updates.
-				</p>
 			</header>
 
 			<section className="glass-panel flex flex-col items-center justify-center gap-4 p-12 text-center">
@@ -25,7 +22,7 @@ export default function NotificationsPage() {
 						All caught up
 					</p>
 					<p className="max-w-md text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						The full notification center (trainer messages, goal pings, community activity, and AI coach nudges) lands with the v2 rollout. This is the placeholder.
+						Full notifications land with the v2 rollout.
 					</p>
 				</div>
 				<Link href="/dashboard" className="btn-primary !rounded-2xl !py-2 text-sm">

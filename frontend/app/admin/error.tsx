@@ -23,7 +23,7 @@ export default function AdminError({
           </div>
           <h2 className="text-2xl font-bold mb-2">Admin Panel Error</h2>
           <p className="text-muted-foreground mb-6">
-            An error occurred while loading the admin panel.
+            Admin panel failed to load.
           </p>
           {error.message && (
             <div className="mb-6 p-4 bg-muted rounded-lg">

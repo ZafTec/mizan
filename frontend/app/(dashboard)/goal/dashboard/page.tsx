@@ -66,11 +66,11 @@ export default function GoalDashboard() {
             No Active Goal
           </h2>
           <p className="text-charcoal-blue-600 dark:text-charcoal-blue-400 mb-6 max-w-md mx-auto">
-            Start tracking your nutrition journey by setting up your first goal. Define your targets and watch your progress unfold.
+            Set a goal to start tracking your nutrition progress.
           </p>
           <Link href="/goal" className="btn-primary inline-flex">
             <i className="ri-add-line text-xl" />
-            Create Your First Goal
+            Set a goal
           </Link>
         </div>
       </div>
@@ -117,14 +117,11 @@ export default function GoalDashboard() {
           <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
             Goal dashboard
           </h1>
-          <p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-            Track your daily nutrition progress against your active goal.
-          </p>
         </div>
         <div className="flex gap-3">
           <Link href="/goal/progress" className="btn-primary">
             <i className="ri-add-line text-xl" />
-            Log Today's Progress
+            Log progress
           </Link>
           <Link href="/goal" className="btn-secondary">
             <i className="ri-settings-line" />

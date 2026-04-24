@@ -90,7 +90,7 @@ export default async function HabitsPage() {
 						Habits & hydration
 					</h1>
 					<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						The small, repeatable actions that keep the streak alive. Tick them off as your day progresses.
+						Daily check-ins to keep your streak alive.
 					</p>
 				</div>
 				<div className="flex items-center gap-2">

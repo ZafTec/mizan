@@ -7,7 +7,7 @@ namespace Mizan.Infrastructure.Auth.BetterAuth;
 
 // Pure function taking the JWKS provider as a parameter instead of resolving
 // it through a static accessor. The JwtBearer options wire this up via a
-// closure that captures the provider from DI — see AddBetterAuthJwt.
+// closure that captures the provider from DI, see AddBetterAuthJwt.
 public static class EdDsaJwtSignatureValidator
 {
     private static readonly JwtSecurityTokenHandler TokenHandler = new();

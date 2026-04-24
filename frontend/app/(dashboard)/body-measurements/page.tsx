@@ -49,9 +49,6 @@ export default async function BodyMeasurementsPage({
                     <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
                         Body metrics
                     </h1>
-                    <p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-                        Track weight, body fat and muscle mass over time.
-                    </p>
                 </div>
             </header>
 
@@ -199,7 +196,7 @@ export default async function BodyMeasurementsPage({
                             <i className="ri-body-scan-line text-3xl text-charcoal-blue-400 dark:text-charcoal-blue-500" />
                         </div>
                         <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No measurements yet</h3>
-                        <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">Start tracking your progress today!</p>
+                        <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">No measurements yet.</p>
                     </div>
                 )}
             </div>

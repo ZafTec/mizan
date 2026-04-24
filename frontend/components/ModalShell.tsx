@@ -40,7 +40,7 @@ export function ModalShell({
 		};
 		window.addEventListener("keydown", onEsc);
 		return () => {
-			// Always clear the inline override rather than restoring a saved value —
+			// Always clear the inline override rather than restoring a saved value -
 			// a saved "hidden" from overlapping modals can lock scroll permanently.
 			document.body.style.overflow = "";
 			window.removeEventListener("keydown", onEsc);

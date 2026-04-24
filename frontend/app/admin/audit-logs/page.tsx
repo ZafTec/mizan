@@ -34,9 +34,6 @@ export default async function AuditLogsPage({
                     <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
                         Audit logs
                     </h1>
-                    <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-                        Monitor system activities and user actions.
-                    </p>
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-charcoal-blue-500 dark:text-charcoal-blue-400">Total:</span>

@@ -1,10 +1,10 @@
 # Extractable Components
 
-Reusable components worth registering in the design system. Only **state / navigation / visibility / count** props are listed — not every presentation prop. Hardcoded elements (specific icons, text, brand-coded classes) are called out so the design agent knows what's intentional vs parameterizable.
+Reusable components worth registering in the design system. Only **state / navigation / visibility / count** props are listed, not every presentation prop. Hardcoded elements (specific icons, text, brand-coded classes) are called out so the design agent knows what's intentional vs parameterizable.
 
 Categories:
-- **layout** — shell, navigation, header/footer
-- **basic** — small reusable primitives used across many pages
+- **layout**, shell, navigation, header/footer
+- **basic**, small reusable primitives used across many pages
 
 ---
 
@@ -16,9 +16,9 @@ Categories:
 **Category:** layout
 **Description:** Sticky top glass-pill navigation with logo, primary links, user menu, mobile sheet, and sign-out modal.
 **Props to extract:**
-- `user: User | null` — controls sign-in vs signed-in UI, avatar, role pill, admin link visibility
-- (derived from `usePathname`) active link highlight — no external prop needed
-- `userMenuOpen: boolean`, `menuOpen: boolean`, `showLogoutModal: boolean` — internal state
+- `user: User | null`, controls sign-in vs signed-in UI, avatar, role pill, admin link visibility
+- (derived from `usePathname`) active link highlight, no external prop needed
+- `userMenuOpen: boolean`, `menuOpen: boolean`, `showLogoutModal: boolean`, internal state
 
 **Hardcoded elements:**
 - Logo: `@/public/logo_transparent.png` (Mizan wordmark image)
@@ -35,9 +35,9 @@ Categories:
 
 **Source:** inlined in `frontend/app/layout.tsx` (no dedicated file)
 **Category:** layout
-**Description:** Three-column glass-panel footer — brand block with logo + Amharic tagline, copyright + privacy/terms links, social icon chips (GitHub, Twitter).
+**Description:** Three-column glass-panel footer, brand block with logo + Amharic tagline, copyright + privacy/terms links, social icon chips (GitHub, Twitter).
 **Props to extract:**
-- `year: number` — currently `new Date().getFullYear()`, could be passed in
+- `year: number`, currently `new Date().getFullYear()`, could be passed in
 
 **Hardcoded elements:**
 - Logo image `@/public/logo_transparent.png`
@@ -53,16 +53,16 @@ Categories:
 
 **Source:** `frontend/app/layout.tsx`
 **Category:** layout
-**Description:** The entire page chrome — `<html>` with appearance classes, `<body>` flex column, global Toaster, Navbar, max-w-7xl main container with page-transition animation, Footer.
+**Description:** The entire page chrome, `<html>` with appearance classes, `<body>` flex column, global Toaster, Navbar, max-w-7xl main container with page-transition animation, Footer.
 **Props to extract:**
-- `user: User | null` (from `getUserOptionalServer()`) — threads into Navbar and appearance classes
-- `htmlClasses: string[]` — controls theme mode (`dark`, `compact`, `reduce-motion`)
+- `user: User | null` (from `getUserOptionalServer()`), threads into Navbar and appearance classes
+- `htmlClasses: string[]`, controls theme mode (`dark`, `compact`, `reduce-motion`)
 
 **Hardcoded elements:**
 - Page title/metadata: "Mizan - Balanced Nutrition & Fitness"
 - `lang="en"`
 - Body selection color: `bg-brand-500/15`
-- Remixicon font import (`'remixicon/fonts/remixicon.css'`) — enables all `ri-*` icon classes across pages
+- Remixicon font import (`'remixicon/fonts/remixicon.css'`), enables all `ri-*` icon classes across pages
 - Toaster position: `top-right`
 
 ---
@@ -87,7 +87,7 @@ Not a component yet, but worth isolating from `app/layout.tsx`:
 
 **Source:** `frontend/app/(dashboard)/layout.tsx`
 **Category:** layout
-**Description:** Invisible server-side guard — redirects unauthenticated users to `/login`. No visual output; wraps children in fragment.
+**Description:** Invisible server-side guard, redirects unauthenticated users to `/login`. No visual output; wraps children in fragment.
 **Props to extract:** none (uses `getUserOptionalServer()` internally).
 
 ---
@@ -107,10 +107,10 @@ Not a component yet, but worth isolating from `app/layout.tsx`:
 
 **Source:** inlined in `frontend/components/Navbar/NavbarContent.tsx`
 **Category:** basic
-**Description:** Square-rounded 36×36 avatar — renders user's `image` if set, otherwise brand-filled initial letter of email.
+**Description:** Square-rounded 36×36 avatar, renders user's `image` if set, otherwise brand-filled initial letter of email.
 **Props to extract:**
 - `user: { image?: string | null; name?: string | null; email?: string | null }`
-- `size: number` — currently hardcoded `h-9 w-9`
+- `size: number`, currently hardcoded `h-9 w-9`
 
 **Hardcoded elements:**
 - Ring: `ring-1 ring-brand-500/15`
@@ -136,8 +136,8 @@ Not a component yet, but worth isolating from `app/layout.tsx`:
 **Description:** Pill-style nav link with icon + label. Active state driven by `usePathname`. Has `mobile` variant with full-width rounded-2xl, icon-chip wrapper.
 **Props to extract:**
 - `item: { href: string; label: string; icon: AnimatedIconName }`
-- `mobile: boolean` — switches between compact desktop and wide mobile layouts
-- `onClick?: () => void` — optional close-menu handler
+- `mobile: boolean`, switches between compact desktop and wide mobile layouts
+- `onClick?: () => void`, optional close-menu handler
 
 **Hardcoded elements:**
 - Active text: `text-slate-950 dark:text-white`
@@ -152,8 +152,8 @@ Not a component yet, but worth isolating from `app/layout.tsx`:
 **Category:** basic
 **Description:** 28px rounded white/slate-950 glass panel with backdrop-blur(20px) and `--shadow-panel`. Most pages use the CSS class directly rather than the `<Card>` component.
 **Props to extract:**
-- `hover: boolean` — switches to `.card-hover` (lift + border accent on hover)
-- `className` — padding is typically added per-instance (`p-4`, `p-6`, `p-7`, `p-8`)
+- `hover: boolean`, switches to `.card-hover` (lift + border accent on hover)
+- `className`, padding is typically added per-instance (`p-4`, `p-6`, `p-7`, `p-8`)
 
 **Hardcoded elements:**
 - Radius: `rounded-[28px]`
@@ -167,7 +167,7 @@ Not a component yet, but worth isolating from `app/layout.tsx`:
 
 **Source:** `.surface-panel` class in `globals.css`
 **Category:** basic
-**Description:** Larger variant of Card — 32px radius, blur(22px). Used for the navbar container, big hero panels, the footer wrapper, modal dialogs.
+**Description:** Larger variant of Card, 32px radius, blur(22px). Used for the navbar container, big hero panels, the footer wrapper, modal dialogs.
 **Props to extract:** none (CSS-only utility).
 
 ---
@@ -189,7 +189,7 @@ Not a component yet, but worth isolating from `app/layout.tsx`:
 - `btn-primary` ≈ `<Button variant="default">` (brand-600 filled)
 - `btn-secondary` ≈ `<Button variant="outline">` (white bg, border)
 - `btn-danger` ≈ `<Button variant="destructive">` (red-600 filled)
-- `btn-accent` (sandy-brown filled) — NO equivalent component variant
+- `btn-accent` (sandy-brown filled), NO equivalent component variant
 - `btn-ghost` ≈ `<Button variant="ghost">` (transparent)
 - Modifier classes: `btn-sm`, `btn-lg`
 
@@ -204,7 +204,7 @@ Not a component yet, but worth isolating from `app/layout.tsx`:
 - `variant`: default | secondary | destructive | outline
 - `className`
 
-**Domain-specific inline pills** (not using the component) — catalog these for meal/recipe pages:
+**Domain-specific inline pills** (not using the component), catalog these for meal/recipe pages:
 - Calorie chip: `bg-orange-50 text-orange-700` + `ri-fire-line`
 - Protein chip: `bg-red-50 text-red-700` + `ri-heart-pulse-line`
 - Carbs chip: `bg-amber-50 text-amber-700` + `ri-bread-line`
@@ -236,8 +236,8 @@ Not a component yet, but worth isolating from `app/layout.tsx`:
 **Category:** basic
 **Description:** Square-rounded icon container with inset highlight. Used in navbar mobile menu, footer social icons, profile quick-link cards, etc.
 **Props to extract:**
-- `size` — typically `h-9 w-9`, `h-11 w-11`, `h-12 w-12`
-- `tone` — default/brand/red/accent (wraps class with text-color utility)
+- `size`, typically `h-9 w-9`, `h-11 w-11`, `h-12 w-12`
+- `tone`, default/brand/red/accent (wraps class with text-color utility)
 
 **Hardcoded elements:**
 - Border: `border-charcoal-blue-200 dark:border-white/10`
@@ -255,9 +255,9 @@ Not a component yet, but worth isolating from `app/layout.tsx`:
 - `label: string`
 - `value: string | number`
 - `helper?: string`
-- `link?: string` (admin variant) — renders a `linkText` affordance
+- `link?: string` (admin variant), renders a `linkText` affordance
 
-Note: the two implementations diverge — profile uses glass-card styling, admin uses plain `bg-card border` Tailwind. Consolidate before extracting.
+Note: the two implementations diverge, profile uses glass-card styling, admin uses plain `bg-card border` Tailwind. Consolidate before extracting.
 
 ---
 
@@ -271,7 +271,7 @@ Note: the two implementations diverge — profile uses glass-card styling, admin
 - `title: string`
 - `description: string`
 - `icon: AnimatedIconName | string (emoji)`
-- `iconClass: string` (color token for the icon tile — e.g. `bg-brand-600`, `bg-accent-600`, `bg-slate-900`)
+- `iconClass: string` (color token for the icon tile, e.g. `bg-brand-600`, `bg-accent-600`, `bg-slate-900`)
 
 **Hardcoded elements:**
 - Tile: `h-12 w-12 rounded-2xl` with white icon + brand-coded bg
@@ -281,7 +281,7 @@ Note: the two implementations diverge — profile uses glass-card styling, admin
 
 ### MacroProgressBar
 
-**Source:** inlined multiple times — `frontend/app/(dashboard)/meals/page.tsx` (Daily Goals grid) and `frontend/app/(dashboard)/goal/dashboard/page.tsx` (Today's Progress macro list)
+**Source:** inlined multiple times, `frontend/app/(dashboard)/meals/page.tsx` (Daily Goals grid) and `frontend/app/(dashboard)/goal/dashboard/page.tsx` (Today's Progress macro list)
 **Category:** basic
 **Description:** Label + `actual / target` numeric + thin colored fill bar.
 **Props to extract:**
@@ -321,7 +321,7 @@ Note: the two implementations diverge — profile uses glass-card styling, admin
 **Category:** basic
 **Description:** Segmented pill group to pick a time range for the history charts.
 **Props to extract:**
-- `options: number[]` — currently `[7, 14, 30]`
+- `options: number[]`, currently `[7, 14, 30]`
 - `value: number`
 - `onChange: (days: number) => void`
 
@@ -337,7 +337,7 @@ Note: the two implementations diverge — profile uses glass-card styling, admin
 **Category:** basic
 **Description:** Small orange fire-icon pill showing `<n> day streak`.
 **Props to extract:**
-- `days: number` — hidden when 0
+- `days: number`, hidden when 0
 
 **Hardcoded elements:**
 - Classes: `inline-flex items-center gap-1 rounded-2xl bg-orange-100 px-2.5 py-0.5 text-sm font-medium text-orange-700 dark:bg-orange-500/15 dark:text-orange-300`
@@ -368,7 +368,7 @@ Two common implementations:
 
 **Source:** inlined in `frontend/app/(dashboard)/workouts/page.tsx` (History / Log / Library)
 **Category:** basic
-**Description:** Rounded chip strip with active state highlighted by white bg + shadow. Different from `@/components/ui/tabs.tsx` (which uses Radix) — most page tab switching uses this inline pattern.
+**Description:** Rounded chip strip with active state highlighted by white bg + shadow. Different from `@/components/ui/tabs.tsx` (which uses Radix), most page tab switching uses this inline pattern.
 **Props to extract:**
 - `tabs: { value: string; label: string; icon: string }[]`
 - `active: string`

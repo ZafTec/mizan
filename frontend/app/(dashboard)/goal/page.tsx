@@ -109,25 +109,9 @@ export default function GoalForm() {
 					Nutrition goals
 				</h1>
 				<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-					Set your daily macro targets to track progress against what you eat.
+					Set your daily macro targets.
 				</p>
 			</header>
-
-			{/* Info Card */}
-			<div className="card p-6 bg-white/70 dark:bg-charcoal-blue-950/60">
-				<div className="flex items-start gap-4">
-					<div className="w-12 h-12 rounded-xl bg-white dark:bg-charcoal-blue-900 flex items-center justify-center shrink-0">
-						<i className="ri-target-line text-xl text-brand-600 dark:text-brand-400" />
-					</div>
-					<div>
-						<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Why Set Goals?</h3>
-						<p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 mt-1">
-							Setting nutrition goals helps you stay on track. Our AI coach will use these targets
-							to provide personalized recipe suggestions and track your daily progress.
-						</p>
-					</div>
-				</div>
-			</div>
 
 			{/* TDEE Calculator */}
 			<div className="card overflow-hidden">
@@ -145,7 +129,7 @@ export default function GoalForm() {
 							<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 								{tdeeResult
 									? `Estimated: ${tdeeResult} kcal/day`
-									: "Get your Total Daily Energy Expenditure"}
+									: "Estimate your daily energy expenditure"}
 							</p>
 						</div>
 					</div>
@@ -320,7 +304,7 @@ export default function GoalForm() {
 							</div>
 						) : (
 							<p className="text-sm text-charcoal-blue-400 dark:text-charcoal-blue-500 text-center py-2">
-								Fill in your details above to calculate
+								Fill in your details to calculate
 							</p>
 						)}
 					</div>
@@ -340,7 +324,7 @@ export default function GoalForm() {
 						Goal Type
 					</h2>
 					<div>
-						<label htmlFor="goalType" className="label">What are you working towards?</label>
+						<label htmlFor="goalType" className="label">Goal type</label>
 						<select
 							id="goalType"
 							name="goalType"
@@ -612,7 +596,7 @@ export default function GoalForm() {
 										<li key={i} className="text-sm text-amber-700 dark:text-amber-300">{w}</li>
 									))}
 								</ul>
-								<p className="text-xs text-amber-500 dark:text-amber-400 mt-3">Your goal was saved. Review the hints above if you&#39;d like to adjust your targets.</p>
+								<p className="text-xs text-amber-500 dark:text-amber-400 mt-3">Goal saved. Adjust targets if needed.</p>
 							</div>
 						</div>
 					</div>

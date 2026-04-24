@@ -17,11 +17,11 @@ export async function generateMetadata({
 	const recipe = await getRecipeById(recipeId);
 
 	if (!recipe) {
-		return { title: "Recipe not found - Mizan" };
+		return { title: "Recipe not found | Mizan" };
 	}
 
 	return {
-		title: `${recipe.title} - Mizan`,
+		title: `${recipe.title} | Mizan`,
 		description:
 			recipe.description ||
 			`${recipe.nutrition?.caloriesPerServing || 0} kcal · ${recipe.nutrition?.proteinGrams?.toFixed(0) || 0}g protein`,

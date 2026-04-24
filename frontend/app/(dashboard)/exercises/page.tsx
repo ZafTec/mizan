@@ -38,7 +38,7 @@ export default async function ExercisesPage({
                             Exercises
                         </h1>
                         <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-                            Browse {totalCount} exercises for your workouts.
+                            {totalCount} exercises
                         </p>
                     </div>
                 </div>
@@ -114,7 +114,7 @@ export default async function ExercisesPage({
                         <i className="ri-run-line text-3xl text-charcoal-blue-400" />
                     </div>
                     <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No exercises found</h3>
-                    <p className="text-charcoal-blue-500">Try adjusting your search criteria</p>
+                    <p className="text-charcoal-blue-500">No exercises found.</p>
                 </div>
             )}
 

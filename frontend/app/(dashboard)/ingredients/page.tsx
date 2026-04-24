@@ -33,9 +33,6 @@ export default async function Page(
 						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 							Foods
 						</h1>
-						<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-							Browse and manage nutritional ingredients.
-						</p>
 					</div>
 				</div>
 				<div className="flex items-center gap-3">
@@ -72,7 +69,7 @@ export default async function Page(
 											<i className="ri-leaf-line text-3xl text-charcoal-blue-400 dark:text-charcoal-blue-500" />
 										</div>
 										<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No ingredients found</h3>
-										<p className="mb-4 text-charcoal-blue-500 dark:text-charcoal-blue-400">Try adjusting your search or add a new ingredient</p>
+										<p className="mb-4 text-charcoal-blue-500 dark:text-charcoal-blue-400">No ingredients found.</p>
 									</td>
 								</tr>
 							) : (

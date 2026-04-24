@@ -1,6 +1,6 @@
 # Route Map (Next.js App Router)
 
-All routes under `frontend/app/`. Root layout (`app/layout.tsx`) wraps everything — Navbar, max-w-7xl main container, branded footer. Route-group layouts in this codebase are **auth guards only**, not visual wrappers.
+All routes under `frontend/app/`. Root layout (`app/layout.tsx`) wraps everything, Navbar, max-w-7xl main container, branded footer. Route-group layouts in this codebase are **auth guards only**, not visual wrappers.
 
 ## Layout chain
 
@@ -13,7 +13,7 @@ app/layout.tsx                 Root: <html>, Navbar, Footer, Toaster, page-trans
 ├── admin/layout.tsx           Redirects to / if not admin role
 ```
 
-There is **no sidebar / dashboard chrome** layer — every authed page sits directly inside the root shell.
+There is **no sidebar / dashboard chrome** layer, every authed page sits directly inside the root shell.
 
 ---
 
@@ -44,7 +44,7 @@ No layout wrapping except Suspense for the two pages that read `useSearchParams`
 
 ---
 
-## Dashboard route group `(dashboard)` — requires authentication
+## Dashboard route group `(dashboard)`, requires authentication
 
 All guarded by `app/(dashboard)/layout.tsx`. Visual chrome still comes from root layout.
 
@@ -85,7 +85,7 @@ All guarded by `app/(dashboard)/layout.tsx`. Visual chrome still comes from root
 | `/meal-plan` | `app/(dashboard)/meal-plan/page.tsx` | List of active/archived meal plans. |
 | `/meal-plan/create` | `app/(dashboard)/meal-plan/create/page.tsx` | Create new meal plan (name, date range). |
 | `/meal-plan/add` | `app/(dashboard)/meal-plan/add/page.tsx` | Add recipe(s) to a plan on specific day+slot. |
-| `/meal-plan/[id]` | `app/(dashboard)/meal-plan/[id]/page.tsx` | Meal plan detail — calendar grid with drag-assigned recipes per day. |
+| `/meal-plan/[id]` | `app/(dashboard)/meal-plan/[id]/page.tsx` | Meal plan detail, calendar grid with drag-assigned recipes per day. |
 | `/meal-plan/[id]/edit` | `app/(dashboard)/meal-plan/[id]/edit/page.tsx` | Edit plan metadata. |
 | `/meal-plan/shopping-list` | `app/(dashboard)/meal-plan/shopping-list/page.tsx` | Aggregated shopping list for the active plan. |
 
@@ -112,20 +112,20 @@ All guarded by `app/(dashboard)/layout.tsx`. Visual chrome still comes from root
 
 | URL | File | Summary |
 |-----|------|---------|
-| `/profile` | `app/(dashboard)/profile/page.tsx` | Profile hub — stat cards (role/joined/streak/goal), quick-link grid (Goals/Diary/Workouts/Measurements/Achievements/MCP), current-read insight rows. |
+| `/profile` | `app/(dashboard)/profile/page.tsx` | Profile hub, stat cards (role/joined/streak/goal), quick-link grid (Goals/Diary/Workouts/Measurements/Achievements/MCP), current-read insight rows. |
 | `/profile/settings` | `app/(dashboard)/profile/settings/page.tsx` | Account, appearance (light/dark/compact/reduce-motion), data export, delete account. |
 | `/profile/sessions` | `app/(dashboard)/profile/sessions/page.tsx` | Active sessions list with revoke per-device. |
 | `/profile/mcp` | `app/(dashboard)/profile/mcp/page.tsx` | MCP token management + usage analytics for the Mizan MCP server. |
 
 ---
 
-## Admin route group — requires admin role
+## Admin route group, requires admin role
 
-Guarded by `app/admin/layout.tsx`. No separate sidebar — stays inside root Navbar.
+Guarded by `app/admin/layout.tsx`. No separate sidebar, stays inside root Navbar.
 
 | URL | File | Summary |
 |-----|------|---------|
-| `/admin` | `app/admin/page.tsx` | Admin dashboard — 6 stat cards (users/trainers/banned/ingredients/audit/sessions), Recent Users list, `LiveAuditLog` feed, Quick Actions grid with emoji tiles. |
+| `/admin` | `app/admin/page.tsx` | Admin dashboard, 6 stat cards (users/trainers/banned/ingredients/audit/sessions), Recent Users list, `LiveAuditLog` feed, Quick Actions grid with emoji tiles. |
 | `/admin/users` | `app/admin/users/page.tsx` | User management table. |
 | `/admin/users/[id]` | `app/admin/users/[id]/page.tsx` | Single user detail / role + ban controls. |
 | `/admin/users/create` | `app/admin/users/create/page.tsx` | Admin-create-user form. |
@@ -140,12 +140,12 @@ Guarded by `app/admin/layout.tsx`. No separate sidebar — stays inside root Nav
 
 ---
 
-## API routes (not pages — enumerated for completeness)
+## API routes (not pages, enumerated for completeness)
 
 Under `frontend/app/api/`:
-- `/api/auth/[...all]` — BetterAuth catchall
-- `/api/csrf` — Double-submit CSRF token
-- `/api/health` — Frontend healthcheck
+- `/api/auth/[...all]`, BetterAuth catchall
+- `/api/csrf`, Double-submit CSRF token
+- `/api/health`, Frontend healthcheck
 
 All domain APIs (foods, recipes, meals, workouts, etc.) are **proxied or direct to the .NET backend**, not exposed through Next.js route handlers.
 
@@ -153,7 +153,7 @@ All domain APIs (foods, recipes, meals, workouts, etc.) are **proxied or direct 
 
 ## Error & status pages
 
-- `app/error.tsx`, `app/not-found.tsx` — root error boundaries
-- `app/(dashboard)/error.tsx`, `app/admin/error.tsx` — group-scoped error boundaries
+- `app/error.tsx`, `app/not-found.tsx`, root error boundaries
+- `app/(dashboard)/error.tsx`, `app/admin/error.tsx`, group-scoped error boundaries
 
 Skipped in design context; these are minimal error handlers.

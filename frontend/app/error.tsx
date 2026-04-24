@@ -30,7 +30,7 @@ export default function Error({
           </div>
           <h2 className="text-2xl font-bold mb-2">Something went wrong</h2>
           <p className="text-muted-foreground mb-6">
-            An unexpected error occurred. Our team has been notified.
+            An unexpected error occurred.
           </p>
           {error.message && (
             <div className="mb-6 p-4 bg-muted rounded-lg">

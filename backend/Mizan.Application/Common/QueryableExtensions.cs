@@ -13,7 +13,7 @@ public static class QueryableExtensions
     }
 
     // Returns IOrderedQueryable so callers can append .ThenBy(x => x.Id) for stable
-    // pagination — without a deterministic tie-breaker, pages can overlap when many
+    // pagination, without a deterministic tie-breaker, pages can overlap when many
     // rows share the same primary sort key.
     public static IOrderedQueryable<T> ApplySorting<T>(
         this IQueryable<T> query,

@@ -77,16 +77,16 @@ export default function MealMacrosChart({ perDayMeals }: MealMacrosChartProps) {
 			<div className="customized-tooltip-content">
 				<p className="label">{`${label}`}</p>
 				<ul className="list">
-					<li style={{ color: '#8884d8' }}>
+					<li className="text-burnt-peach-700 dark:text-burnt-peach-300">
 						Protein: {toPercent(entry.proteinPercent, 1)} ({entry.protein}g)
 					</li>
-					<li style={{ color: '#82ca9d' }}>
+					<li className="text-tuscan-sun-700 dark:text-tuscan-sun-300">
 						Carbs: {toPercent(entry.carbsPercent, 1)} ({entry.carbs}g)
 					</li>
-					<li style={{ color: '#ffc658' }}>
+					<li className="text-sandy-brown-700 dark:text-sandy-brown-300">
 						Fat: {toPercent(entry.fatPercent, 1)} ({entry.fat}g)
 					</li>
-					<li style={{ color: '#a4de6c' }}>
+					<li className="text-brand-700 dark:text-brand-300">
 						Fiber: {toPercent(entry.fiberPercent, 1)} ({entry.fiber}g)
 					</li>
 				</ul>

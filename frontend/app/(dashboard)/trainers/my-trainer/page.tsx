@@ -85,11 +85,11 @@ export default function MyTrainerPage() {
 						No Active Trainer
 					</h3>
 					<p className="text-charcoal-blue-500 mb-6">
-						You don't have an active trainer relationship yet
+						No active trainer relationship.
 					</p>
 					<Link href="/trainers" className="btn-primary inline-flex items-center gap-2">
 						<i className="ri-search-line" />
-						Find a Trainer
+						Find a trainer
 					</Link>
 				</div>
 			</div>
@@ -102,7 +102,6 @@ export default function MyTrainerPage() {
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900">My Trainer</h1>
-					<p className="text-charcoal-blue-500 mt-1">Your current trainer relationship</p>
 				</div>
 				<Link href="/profile" className="btn-secondary">
 					<i className="ri-arrow-left-line" />
@@ -150,7 +149,7 @@ export default function MyTrainerPage() {
 				{/* Permissions */}
 				<div className="border-t border-charcoal-blue-100 pt-6">
 					<h3 className="font-semibold text-charcoal-blue-900 mb-4">
-						What your trainer can access
+						Access
 					</h3>
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 						<div className="flex items-center gap-3 p-3 rounded-xl bg-charcoal-blue-50">
@@ -222,7 +221,6 @@ export default function MyTrainerPage() {
 
 			{/* Actions */}
 			<div className="card p-6">
-				<h3 className="font-semibold text-charcoal-blue-900 mb-4">Actions</h3>
 				<div className="space-y-3">
 					{trainer.canMessage && (
 						trainer.trainerId ? (

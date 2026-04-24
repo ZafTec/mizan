@@ -332,9 +332,6 @@ export default function ProfileSettingsPage() {
 							<h1 className="text-3xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
 								{displayName}
 							</h1>
-							<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-								Manage your account, app preferences, sessions, and exported data.
-							</p>
 						</div>
 					</div>
 
