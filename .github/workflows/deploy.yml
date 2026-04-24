@@ -42,11 +42,11 @@ jobs:
             type=sha,prefix=
             type=raw,value=latest
 
-      - name: Debug - Verify secrets are set
+      - name: Debug - Verify build inputs are set
         run: |
-          echo "Checking build-time environment variables..."
-          echo "NEXT_PUBLIC_APP_URL is set: ${{ secrets.NEXT_PUBLIC_APP_URL != '' }}"
-          echo "NEXT_PUBLIC_API_URL is set: ${{ secrets.NEXT_PUBLIC_API_URL != '' }}"
+          echo "Checking build-time inputs..."
+          echo "NEXT_PUBLIC_APP_URL is set: ${{ vars.NEXT_PUBLIC_APP_URL != '' }}"
+          echo "NEXT_PUBLIC_API_URL is set: ${{ vars.NEXT_PUBLIC_API_URL != '' }}"
           echo "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME is set: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME != '' }}"
           echo "NEXT_PUBLIC_CLOUDINARY_API_KEY is set: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_API_KEY != '' }}"
 
@@ -61,8 +61,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            NEXT_PUBLIC_APP_URL=${{ secrets.NEXT_PUBLIC_APP_URL }}
-            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
             NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
             NEXT_PUBLIC_CLOUDINARY_API_KEY=${{ secrets.NEXT_PUBLIC_CLOUDINARY_API_KEY }}
             NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
