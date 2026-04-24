@@ -12,6 +12,8 @@ public interface IMizanDbContext
     // Business tables (managed by backend)
     DbSet<Household> Households { get; }
     DbSet<HouseholdMember> HouseholdMembers { get; }
+    DbSet<HouseholdInvitation> HouseholdInvitations { get; }
+    DbSet<UserHouseholdPreference> UserHouseholdPreferences { get; }
     DbSet<Food> Foods { get; }
     DbSet<Recipe> Recipes { get; }
     DbSet<RecipeIngredient> RecipeIngredients { get; }

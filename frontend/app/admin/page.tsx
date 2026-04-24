@@ -219,6 +219,12 @@ export default async function AdminDashboard() {
           link="/admin/achievements"
           icon="🏆"
         />
+        <QuickActionCard
+          title="Households"
+          description="List, inspect, and remove households and their members"
+          link="/admin/households"
+          icon="🏠"
+        />
       </div>
     </div>
   );

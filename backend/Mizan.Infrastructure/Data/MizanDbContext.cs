@@ -18,6 +18,8 @@ public class MizanDbContext : DbContext, IMizanDbContext
     // Household/Organization
     public DbSet<Household> Households => Set<Household>();
     public DbSet<HouseholdMember> HouseholdMembers => Set<HouseholdMember>();
+    public DbSet<HouseholdInvitation> HouseholdInvitations => Set<HouseholdInvitation>();
+    public DbSet<UserHouseholdPreference> UserHouseholdPreferences => Set<UserHouseholdPreference>();
 
     // Food & Nutrition
     public DbSet<Food> Foods => Set<Food>();
@@ -121,6 +123,39 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.JoinedAt).HasColumnName("joined_at").HasDefaultValueSql("NOW()");
             entity.HasOne(e => e.Household).WithMany(h => h.Members).HasForeignKey(e => e.HouseholdId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.User).WithMany(u => u.HouseholdMemberships).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // HouseholdInvitation configuration
+        modelBuilder.Entity<HouseholdInvitation>(entity =>
+        {
+            entity.ToTable("household_invitations");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.HouseholdId).HasColumnName("household_id");
+            entity.Property(e => e.InvitedUserId).HasColumnName("invited_user_id");
+            entity.Property(e => e.InvitedByUserId).HasColumnName("invited_by_user_id");
+            entity.Property(e => e.Role).HasColumnName("role").HasMaxLength(20).HasDefaultValue("member");
+            entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(20).HasDefaultValue("pending");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+            entity.Property(e => e.RespondedAt).HasColumnName("responded_at");
+            entity.HasOne(e => e.Household).WithMany().HasForeignKey(e => e.HouseholdId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.InvitedUser).WithMany().HasForeignKey(e => e.InvitedUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.InvitedBy).WithMany().HasForeignKey(e => e.InvitedByUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(e => new { e.HouseholdId, e.InvitedUserId, e.Status });
+            entity.HasIndex(e => new { e.InvitedUserId, e.Status });
+        });
+
+        // UserHouseholdPreference configuration (per-user active household, backend-owned)
+        modelBuilder.Entity<UserHouseholdPreference>(entity =>
+        {
+            entity.ToTable("user_household_preferences");
+            entity.HasKey(e => e.UserId);
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.ActiveHouseholdId).HasColumnName("active_household_id");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.ActiveHousehold).WithMany().HasForeignKey(e => e.ActiveHouseholdId).OnDelete(DeleteBehavior.SetNull);
         });
 
         // Food configuration

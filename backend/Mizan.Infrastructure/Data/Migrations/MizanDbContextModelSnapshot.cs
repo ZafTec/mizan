@@ -962,6 +962,67 @@ namespace Mizan.Infrastructure.Data.Migrations
                     b.ToTable("households", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.HouseholdInvitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("HouseholdId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("household_id");
+
+                    b.Property<Guid>("InvitedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("invited_by_user_id");
+
+                    b.Property<Guid>("InvitedUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("invited_user_id");
+
+                    b.Property<DateTime?>("RespondedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("responded_at");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("member")
+                        .HasColumnName("role");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("pending")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvitedByUserId");
+
+                    b.HasIndex("InvitedUserId", "Status");
+
+                    b.HasIndex("HouseholdId", "InvitedUserId", "Status");
+
+                    b.ToTable("household_invitations", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.HouseholdMember", b =>
                 {
                     b.Property<Guid>("HouseholdId")
@@ -1850,6 +1911,29 @@ namespace Mizan.Infrastructure.Data.Migrations
                     b.ToTable("user_goals", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.UserHouseholdPreference", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid?>("ActiveHouseholdId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("active_household_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("UserId");
+
+                    b.HasIndex("ActiveHouseholdId");
+
+                    b.ToTable("user_household_preferences", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.Workout", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2071,6 +2155,33 @@ namespace Mizan.Infrastructure.Data.Migrations
                     b.Navigation("User");
 
                     b.Navigation("UserGoal");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.HouseholdInvitation", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.Household", "Household")
+                        .WithMany()
+                        .HasForeignKey("HouseholdId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Mizan.Domain.Entities.User", "InvitedBy")
+                        .WithMany()
+                        .HasForeignKey("InvitedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Mizan.Domain.Entities.User", "InvitedUser")
+                        .WithMany()
+                        .HasForeignKey("InvitedUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Household");
+
+                    b.Navigation("InvitedBy");
+
+                    b.Navigation("InvitedUser");
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.HouseholdMember", b =>
@@ -2326,6 +2437,24 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.UserHouseholdPreference", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.Household", "ActiveHousehold")
+                        .WithMany()
+                        .HasForeignKey("ActiveHouseholdId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ActiveHousehold");
 
                     b.Navigation("User");
                 });
