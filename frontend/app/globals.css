@@ -707,4 +707,225 @@ html.dark .glass-panel {
 }
 
 .ring-track { stroke: color-mix(in oklab, var(--color-charcoal-blue-200) 75%, transparent); }
+
+/* ============================================================================
+ * The Ethereal Lab — landing page scoped design system.
+ *
+ * Scoped via `.eth-lab` so it doesn't leak into the dashboard. The landing is
+ * always dark. No borders, no drop shadows, no pure black. Depth by tone +
+ * ambient glow, never by lines.
+ * ========================================================================= */
+.eth-lab {
+  --eth-surface: #0D1322;
+  --eth-surface-lowest: #0A0F1C;
+  --eth-surface-low: #141B2F;
+  --eth-surface-container: #1B2338;
+  --eth-surface-high: #222B44;
+  --eth-surface-highest: #2A3451;
+
+  --eth-primary: #6EEBE0;
+  --eth-primary-container: #4DCFC4;
+  --eth-secondary: #FFB4A2;
+  --eth-tertiary: #FFD26F;
+  --eth-accent-brown: #B89968;
+
+  --eth-on-surface: #E8EFF8;
+  --eth-on-surface-variant: #B5C4D9;
+  --eth-on-surface-muted: #8496B0;
+  --eth-outline-variant: rgba(181, 196, 217, 0.12);
+
+  --eth-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --eth-duration: 420ms;
+
+  background: var(--eth-surface);
+  color: var(--eth-on-surface);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Primary CTA: luminous 135deg gradient, 28px radius, no shadow, ambient glow. */
+.eth-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.9rem 1.5rem;
+  border-radius: 28px;
+  border: 0;
+  background: linear-gradient(135deg, var(--eth-primary) 0%, var(--eth-primary-container) 100%);
+  color: #0A0F1C;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  position: relative;
+  isolation: isolate;
+  transition: transform 160ms var(--eth-ease), filter 180ms var(--eth-ease);
+}
+.eth-btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 36px;
+  background: radial-gradient(closest-side, rgba(90, 218, 207, 0.45), transparent 70%);
+  z-index: -1;
+  opacity: 0.65;
+  filter: blur(22px);
+  transition: opacity 200ms var(--eth-ease);
+}
+.eth-btn-primary:hover { filter: brightness(1.05); }
+.eth-btn-primary:hover::after { opacity: 0.9; }
+.eth-btn-primary:active { transform: scale(0.97); }
+
+/* Secondary CTA: glassmorphism with ghost border. */
+.eth-btn-glass {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.9rem 1.5rem;
+  border-radius: 28px;
+  background: color-mix(in oklab, var(--eth-surface-high) 40%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--eth-outline-variant);
+  color: var(--eth-on-surface);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: transform 160ms var(--eth-ease), background-color 180ms var(--eth-ease);
+}
+.eth-btn-glass:hover { background: color-mix(in oklab, var(--eth-surface-high) 55%, transparent); }
+.eth-btn-glass:active { transform: scale(0.97); }
+
+.eth-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem;
+  border-radius: 28px;
+  background: transparent;
+  border: 0;
+  color: var(--eth-on-surface-variant);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 160ms var(--eth-ease), transform 160ms var(--eth-ease);
+}
+.eth-btn-ghost:hover { color: var(--eth-primary); }
+.eth-btn-ghost:active { transform: scale(0.97); }
+
+/* Cards: tone separation + 28px radius. Glass uses ghost border, not 1px line. */
+.eth-card {
+  background: var(--eth-surface-low);
+  border-radius: 28px;
+  padding: 1.75rem;
+  position: relative;
+  isolation: isolate;
+}
+.eth-card-high { background: var(--eth-surface-high); }
+.eth-card-glass {
+  background: color-mix(in oklab, var(--eth-surface-high) 45%, transparent);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 28px;
+  border: 1px solid var(--eth-outline-variant);
+  padding: 1.75rem;
+  position: relative;
+  isolation: isolate;
+}
+
+/* Ambient teal glow that replaces drop shadows. Apply as ::after on any layer. */
+.eth-ambient-glow {
+  position: relative;
+  isolation: isolate;
+}
+.eth-ambient-glow::after {
+  content: "";
+  position: absolute;
+  inset: -40px;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at center, rgba(110, 235, 224, 0.10), transparent 70%);
+  filter: blur(40px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Typography scale */
+.eth-display-lg {
+  font-size: clamp(3.5rem, 9vw, 7rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+}
+.eth-display-md {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+.eth-headline-lg {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.eth-headline-md {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+.eth-body-lg { font-size: 1.125rem; font-weight: 400; line-height: 1.6; }
+.eth-body-md { font-size: 1rem; font-weight: 400; line-height: 1.6; }
+.eth-label { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; }
+
+.eth-text-primary { color: var(--eth-primary); }
+.eth-text-muted { color: var(--eth-on-surface-variant); }
+.eth-text-dim { color: var(--eth-on-surface-muted); }
+
+/* Pill macro chips — desaturated bg, vibrant text/icon. */
+.eth-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+.eth-chip-protein { background: rgba(255, 180, 162, 0.12); color: var(--eth-secondary); }
+.eth-chip-carbs { background: rgba(255, 210, 111, 0.12); color: var(--eth-tertiary); }
+.eth-chip-fat { background: rgba(184, 153, 104, 0.18); color: #D8B889; }
+.eth-chip-primary { background: rgba(110, 235, 224, 0.12); color: var(--eth-primary); }
+
+/* Separators — an 8px block of the lowest surface, NOT a 1px line. */
+.eth-divider {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--eth-surface-lowest);
+}
+
+/* Entrance animation — 420ms, translateY(16px) → 0, opacity 0 → 1, stagger. */
+@keyframes eth-enter {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.eth-reveal { animation: eth-enter 420ms var(--eth-ease) both; }
+
+/* Marquee ticker */
+@keyframes eth-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.eth-marquee { animation: eth-marquee 32s linear infinite; }
+.eth-marquee-track:hover .eth-marquee { animation-play-state: paused; }
+
+/* Hide scrollbar for horizontal scrollers inside the landing. */
+.eth-lab ::-webkit-scrollbar { display: none; }
+.eth-lab { scrollbar-width: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .eth-reveal { animation-duration: 0ms; }
+  .eth-marquee { animation-duration: 0ms; }
+}
 html.dark .ring-track { stroke: color-mix(in oklab, var(--color-charcoal-blue-700) 55%, transparent); }

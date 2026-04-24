@@ -1,71 +1,77 @@
-import { AnimatedIcon, type AnimatedIconName } from "@/components/ui/animated-icon";
-
-const steps: Array<{
-	title: string;
-	description: string;
-	icon: AnimatedIconName;
-}> = [
+const STEPS = [
 	{
+		num: "01",
 		title: "Log without thinking",
-		description: "Search a food, snap a photo, or paste a recipe. Macros are on screen before you finish reading this step.",
-		icon: "flame",
+		description: "Search a food, snap a photo, or paste a recipe. Macros land on screen before you finish typing.",
+		icon: "ri-flashlight-line",
 	},
 	{
+		num: "02",
 		title: "Plan the week",
-		description: "Drag meals onto a calendar. A shopping list, grouped by aisle, falls out the other side.",
-		icon: "calendarCheck",
+		description: "Drag meals onto a calendar. A grouped shopping list falls out of the other side.",
+		icon: "ri-calendar-line",
 	},
 	{
+		num: "03",
 		title: "Adjust with data",
-		description: "Weekly trends, streaks, and AI suggestions nudge you toward the goal you actually set.",
-		icon: "trendingUp",
+		description: "Weekly trends, streaks, and AI suggestions nudge you toward the goal you set.",
+		icon: "ri-line-chart-line",
 	},
 ];
 
+// Three strokes, one line. Each step is a tall glass column. Step numbers
+// bleed out of the card top-left. No 1px connectors — translucent teal
+// glows flow between them instead.
 export function HowItWorksSection() {
 	return (
-		<section aria-labelledby="how-it-works-heading" className="py-12 sm:py-16">
-			<div className="mb-10 text-center sm:mb-12">
-				<div className="eyebrow mb-4">
-					<AnimatedIcon name="rocket" size={14} aria-hidden="true" />
-					Three short steps
-				</div>
-				<h2
-					id="how-it-works-heading"
-					className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl"
-				>
+		<section aria-labelledby="how-heading" className="relative py-16 sm:py-24">
+			<div className="mb-12 max-w-3xl sm:mb-16">
+				<span className="eth-label eth-text-primary">Three strokes</span>
+				<h2 id="how-heading" className="eth-display-md mt-3">
 					From first log to visible progress.
 				</h2>
 			</div>
-			<ol className="relative grid grid-cols-1 gap-6 sm:grid-cols-3">
-				{/* Connector line between steps on desktop. Decorative only. */}
-				<div
-					className="pointer-events-none absolute left-0 right-0 top-6 hidden h-px sm:block"
-					style={{
-						background:
-							"linear-gradient(to right, transparent, var(--color-brand-400, #f5a3a3) 20%, var(--color-brand-400, #f5a3a3) 80%, transparent)",
-					}}
-					aria-hidden="true"
-				/>
-				{steps.map((step, index) => (
+
+			{/* Ambient flow between columns — replaces the 1px connector. */}
+			<div
+				aria-hidden="true"
+				className="pointer-events-none absolute inset-x-0 top-1/2 -z-10 h-60 -translate-y-1/2"
+				style={{
+					background: "radial-gradient(ellipse at center, rgba(110, 235, 224, 0.06), transparent 70%)",
+					filter: "blur(50px)",
+				}}
+			/>
+
+			<ol className="relative grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
+				{STEPS.map((step, i) => (
 					<li
-						key={step.title}
-						className="relative stagger-item"
-						style={{ animationDelay: `${index * 90}ms` }}
+						key={step.num}
+						className="relative"
+						style={{ transform: i === 1 ? "translateY(32px)" : "translateY(0)" }}
 					>
-						<div className="relative z-10 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-brand-500/20 bg-white text-sm font-semibold text-brand-700 shadow-lg shadow-brand-500/10 dark:bg-charcoal-blue-900 dark:text-brand-300">
-							{String(index + 1).padStart(2, "0")}
-						</div>
-						<div className="card p-6 text-center">
-							<div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">
-								<AnimatedIcon name={step.icon} size={20} aria-hidden="true" />
+						{/* Number bleeds out of the card top-left corner. */}
+						<span
+							className="absolute -top-6 -left-2 eth-display-md eth-text-primary opacity-80 pointer-events-none select-none"
+							aria-hidden="true"
+							style={{ fontVariantNumeric: "tabular-nums" }}
+						>
+							{step.num}
+						</span>
+						<div
+							className="eth-card relative h-full pt-14"
+							style={{ background: "var(--eth-surface-low)" }}
+						>
+							<div
+								className="mb-5 inline-flex h-10 w-10 items-center justify-center rounded-2xl"
+								style={{
+									background: "rgba(110, 235, 224, 0.14)",
+									color: "var(--eth-primary)",
+								}}
+							>
+								<i className={`${step.icon} text-lg`} aria-hidden="true" />
 							</div>
-							<h3 className="mb-2 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-								{step.title}
-							</h3>
-							<p className="text-sm leading-relaxed text-charcoal-blue-600 dark:text-charcoal-blue-400">
-								{step.description}
-							</p>
+							<h3 className="eth-headline-md mb-2">{step.title}</h3>
+							<p className="eth-body-md eth-text-muted">{step.description}</p>
 						</div>
 					</li>
 				))}
