@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 import { Toaster } from "@/components/ui/sonner";
 import { AppearanceSync } from "@/components/appearance/AppearanceSync";
+import { ConsentGate } from "@/components/consent/ConsentGate";
 import { getUserOptionalServer } from "@/helper/session";
 import { getAppearanceSettingsFromUser, getServerAppearanceClasses } from "@/lib/appearance";
 import { APPEARANCE_COOKIE, parseAppearanceCookie } from "@/lib/appearance-cookie";
@@ -51,6 +52,7 @@ async function LayoutContent({
 			<body className="min-h-screen antialiased flex flex-col selection:bg-brand-500/15 selection:text-charcoal-blue-900 dark:selection:text-charcoal-blue-50">
 				<AppearanceSync />
 				<Toaster position="top-right" />
+				<ConsentGate gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
 				<Navbar />
 				<main className="grow pb-8">
 					<div className="page-transition max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
