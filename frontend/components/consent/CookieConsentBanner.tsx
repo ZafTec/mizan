@@ -55,14 +55,23 @@ export function CookieConsentBanner({
 							Mind if we count visits?
 						</p>
 						<p className="mt-1 text-charcoal-blue-600 dark:text-charcoal-blue-400">
-							We use Google Analytics to see which pages help and which don&apos;t. No ads, no selling data.{" "}
+							We use Google Analytics to see which pages help and which don&apos;t. No ads, no selling data. See our{" "}
+							<a
+								href="https://zaftech.co/cookies"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="font-medium text-brand-700 underline-offset-2 hover:underline dark:text-brand-300"
+							>
+								cookie policy
+							</a>
+							{" "}and{" "}
 							<a
 								href="https://zaftech.co/privacy"
 								target="_blank"
 								rel="noopener noreferrer"
 								className="font-medium text-brand-700 underline-offset-2 hover:underline dark:text-brand-300"
 							>
-								Privacy policy
+								privacy policy
 							</a>
 							.
 						</p>

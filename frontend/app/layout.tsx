@@ -97,8 +97,16 @@ async function LayoutContent({
 									Terms
 								</a>
 								<span className="hidden text-charcoal-blue-300 dark:text-charcoal-blue-600 sm:inline">|</span>
+								<a href="https://zaftech.co/cookies" target="_blank" rel="noopener noreferrer" className="footer-link">
+									Cookies
+								</a>
+								<span className="hidden text-charcoal-blue-300 dark:text-charcoal-blue-600 sm:inline">|</span>
 								<a href="https://zaftech.co/refunds" target="_blank" rel="noopener noreferrer" className="footer-link">
 									Refunds
+								</a>
+								<span className="hidden text-charcoal-blue-300 dark:text-charcoal-blue-600 sm:inline">|</span>
+								<a href="https://zaftech.co/acceptable-use" target="_blank" rel="noopener noreferrer" className="footer-link">
+									Acceptable use
 								</a>
 							</div>
 

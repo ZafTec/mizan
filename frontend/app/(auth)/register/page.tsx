@@ -150,9 +150,23 @@ export default function Page() {
 							<input type="checkbox" required className="mt-0.5 rounded border-charcoal-blue-300 dark:border-charcoal-blue-700 text-brand-600 focus:ring-brand-500" />
 							<span>
 								I agree to the{" "}
-								<span className="text-brand-600 dark:text-brand-400 font-medium">Terms of Service</span>
+								<a
+									href="https://zaftech.co/terms"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-brand-600 dark:text-brand-400 font-medium underline-offset-2 hover:underline"
+								>
+									Terms of Service
+								</a>
 								{" "}and{" "}
-								<span className="text-brand-600 dark:text-brand-400 font-medium">Privacy Policy</span>
+								<a
+									href="https://zaftech.co/privacy"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-brand-600 dark:text-brand-400 font-medium underline-offset-2 hover:underline"
+								>
+									Privacy Policy
+								</a>
 							</span>
 						</label>
 
