@@ -73,26 +73,60 @@ async function LayoutContent({
 								</div>
 							</div>
 
-							<div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-4">
-								<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-									&copy; {new Date().getFullYear()} Mizan
+							<div className="flex flex-col items-center justify-center gap-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 sm:flex-row sm:flex-wrap sm:gap-x-4 sm:gap-y-2">
+								<p>
+									&copy; {new Date().getFullYear()} Mizan, a{" "}
+									<a
+										href="https://zaftech.co"
+										target="_blank"
+										rel="noopener noreferrer"
+										className="footer-link font-medium"
+									>
+										Zaftech
+									</a>
+									{" "}product
 								</p>
 								<span className="hidden text-charcoal-blue-300 dark:text-charcoal-blue-600 sm:inline">|</span>
-								<a href="/privacy" className="footer-link">
+								<a href="https://zaftech.co/privacy" target="_blank" rel="noopener noreferrer" className="footer-link">
 									Privacy
 								</a>
 								<span className="hidden text-charcoal-blue-300 dark:text-charcoal-blue-600 sm:inline">|</span>
-								<a href="/terms" className="footer-link">
+								<a href="https://zaftech.co/terms" target="_blank" rel="noopener noreferrer" className="footer-link">
 									Terms
+								</a>
+								<span className="hidden text-charcoal-blue-300 dark:text-charcoal-blue-600 sm:inline">|</span>
+								<a href="https://zaftech.co/refunds" target="_blank" rel="noopener noreferrer" className="footer-link">
+									Refunds
 								</a>
 							</div>
 
 							<div className="flex items-center justify-center gap-3 sm:justify-end">
-								<a href="#" className="icon-chip h-11 w-11 text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:text-charcoal-blue-400 dark:hover:text-white" aria-label="GitHub">
-									<AnimatedIcon name="github" size={18} aria-hidden="true" />
+								<a
+									href="https://www.youtube.com/@Zaftec"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="icon-chip h-11 w-11 text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:text-charcoal-blue-400 dark:hover:text-white"
+									aria-label="Zaftech on YouTube"
+								>
+									<i className="ri-youtube-fill text-lg" aria-hidden="true" />
 								</a>
-								<a href="#" className="icon-chip h-11 w-11 text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:text-charcoal-blue-400 dark:hover:text-white" aria-label="Twitter">
+								<a
+									href="https://x.com/ZaftechS"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="icon-chip h-11 w-11 text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:text-charcoal-blue-400 dark:hover:text-white"
+									aria-label="Zaftech on X"
+								>
 									<AnimatedIcon name="twitter" size={18} aria-hidden="true" />
+								</a>
+								<a
+									href="https://zaftech.co"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="icon-chip h-11 w-11 text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:text-charcoal-blue-400 dark:hover:text-white"
+									aria-label="Zaftech website"
+								>
+									<i className="ri-global-line text-lg" aria-hidden="true" />
 								</a>
 							</div>
 						</div>
