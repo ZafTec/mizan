@@ -5,6 +5,7 @@ import Link from "next/link";
 import Loading from "@/components/Loading";
 import { useRouter, useSearchParams } from "next/navigation";
 import { addMeal } from "@/data/meal";
+import { MEAL_TYPES, defaultMealTypeForHour, formatMealType } from "@/lib/utils/mealType";
 import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
 import { FieldError } from "@/components/FieldError";
 import { GamificationToaster } from "@/components/gamification/GamificationToaster";
@@ -95,10 +96,10 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 					</div>
 					<div>
 						<label htmlFor="mealType" className="label">Meal Type</label>
-						<select id="mealType" name="mealType" className="input">
-							<option value="MEAL">Meal</option>
-							<option value="SNACK">Snack</option>
-							<option value="DRINK">Drink</option>
+						<select id="mealType" name="mealType" className="input" defaultValue={defaultMealTypeForHour(now.getHours())}>
+							{MEAL_TYPES.map((t) => (
+								<option key={t} value={t}>{formatMealType(t)}</option>
+							))}
 						</select>
 						<FieldError formState={formState} name="mealType" />
 					</div>
