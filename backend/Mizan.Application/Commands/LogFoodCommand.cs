@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
+using Mizan.Domain.Constants;
 using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Commands;
@@ -11,7 +12,7 @@ public record LogFoodCommand : IRequest<LogFoodResult>
     public Guid? FoodId { get; init; }
     public Guid? RecipeId { get; init; }
     public DateOnly EntryDate { get; init; }
-    public string MealType { get; init; } = "snack";
+    public string MealType { get; init; } = MealTypes.Snack;
     public decimal Servings { get; init; } = 1;
 }
 
@@ -32,8 +33,8 @@ public class LogFoodCommandValidator : AbstractValidator<LogFoodCommand>
     public LogFoodCommandValidator()
     {
         RuleFor(x => x.Servings).GreaterThan(0).WithMessage("Servings must be greater than 0");
-        RuleFor(x => x.MealType).Must(x => new[] { "breakfast", "lunch", "dinner", "snack" }.Contains(x))
-            .WithMessage("Meal type must be breakfast, lunch, dinner, or snack");
+        RuleFor(x => x.MealType).Must(x => MealTypes.IsValid(x))
+            .WithMessage($"Meal type must be one of: {string.Join(", ", MealTypes.All)}");
         RuleFor(x => x).Must(x => x.FoodId.HasValue || x.RecipeId.HasValue)
             .WithMessage("Either FoodId or RecipeId must be provided");
     }
@@ -104,7 +105,7 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
             FoodId = request.FoodId,
             RecipeId = request.RecipeId,
             EntryDate = request.EntryDate,
-            MealType = request.MealType,
+            MealType = MealTypes.Normalize(request.MealType),
             Servings = request.Servings,
             Calories = calories,
             ProteinGrams = protein,
