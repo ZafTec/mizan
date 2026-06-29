@@ -44,5 +44,9 @@ public interface IMizanDbContext
     DbSet<McpToken> McpTokens { get; }
     DbSet<McpUsageLog> McpUsageLogs { get; }
 
+    // Billing
+    DbSet<Subscription> Subscriptions { get; }
+    DbSet<PaddleWebhookEvent> PaddleWebhookEvents { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

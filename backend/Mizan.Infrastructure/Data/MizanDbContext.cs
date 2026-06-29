@@ -66,6 +66,10 @@ public class MizanDbContext : DbContext, IMizanDbContext
     public DbSet<McpToken> McpTokens => Set<McpToken>();
     public DbSet<McpUsageLog> McpUsageLogs => Set<McpUsageLog>();
 
+    // Billing
+    public DbSet<Subscription> Subscriptions => Set<Subscription>();
+    public DbSet<PaddleWebhookEvent> PaddleWebhookEvents => Set<PaddleWebhookEvent>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -660,6 +664,42 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.HasIndex(e => e.ToolName);
             entity.HasOne(e => e.McpToken).WithMany().HasForeignKey(e => e.McpTokenId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Subscription configuration (backend-owned billing state)
+        modelBuilder.Entity<Subscription>(entity =>
+        {
+            entity.ToTable("subscriptions");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Plan).HasColumnName("plan").HasMaxLength(20).HasDefaultValue("free");
+            entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(20).HasDefaultValue("none");
+            entity.Property(e => e.IsLifetime).HasColumnName("is_lifetime").HasDefaultValue(false);
+            entity.Property(e => e.PaddleCustomerId).HasColumnName("paddle_customer_id").HasMaxLength(100);
+            entity.Property(e => e.PaddleSubscriptionId).HasColumnName("paddle_subscription_id").HasMaxLength(100);
+            entity.Property(e => e.PaddlePriceId).HasColumnName("paddle_price_id").HasMaxLength(100);
+            entity.Property(e => e.CurrentPeriodEnd).HasColumnName("current_period_end");
+            entity.Property(e => e.TrialEndsAt).HasColumnName("trial_ends_at");
+            entity.Property(e => e.CanceledAt).HasColumnName("canceled_at");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasIndex(e => e.PaddleSubscriptionId);
+            entity.HasIndex(e => e.PaddleCustomerId);
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // PaddleWebhookEvent configuration (webhook idempotency)
+        modelBuilder.Entity<PaddleWebhookEvent>(entity =>
+        {
+            entity.ToTable("paddle_webhook_events");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.EventId).HasColumnName("event_id").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.EventType).HasColumnName("event_type").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.ReceivedAt).HasColumnName("received_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => e.EventId).IsUnique();
         });
 
         SeedAchievements(modelBuilder);
