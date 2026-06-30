@@ -43,6 +43,7 @@ public class NutritionController : ControllerBase
     }
 
     [HttpPost("ai/chat")]
+    [Authorize(Policy = "RequirePro")]
     public async Task<ActionResult<AiChatResponse>> ChatWithAi([FromBody] AiChatRequest request)
     {
         if (!_currentUser.UserId.HasValue)
@@ -58,6 +59,7 @@ public class NutritionController : ControllerBase
     }
 
     [HttpPost("ai/analyze-image")]
+    [Authorize(Policy = "RequirePro")]
     public async Task<ActionResult<FoodAnalysisResult>> AnalyzeFoodImage(IFormFile image)
     {
         if (image.Length == 0)
