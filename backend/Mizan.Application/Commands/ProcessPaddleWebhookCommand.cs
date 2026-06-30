@@ -21,15 +21,18 @@ public class ProcessPaddleWebhookCommandHandler
     : IRequestHandler<ProcessPaddleWebhookCommand, ProcessPaddleWebhookResult>
 {
     private readonly IMizanDbContext _context;
+    private readonly IEntitlementService _entitlements;
     private readonly PaddleOptions _options;
     private readonly ILogger<ProcessPaddleWebhookCommandHandler> _logger;
 
     public ProcessPaddleWebhookCommandHandler(
         IMizanDbContext context,
+        IEntitlementService entitlements,
         IOptions<PaddleOptions> options,
         ILogger<ProcessPaddleWebhookCommandHandler> logger)
     {
         _context = context;
+        _entitlements = entitlements;
         _options = options.Value;
         _logger = logger;
     }
@@ -70,20 +73,27 @@ public class ProcessPaddleWebhookCommandHandler
             return new ProcessPaddleWebhookResult { Handled = false };
         }
 
+        Guid? affectedUserId = null;
         if (eventType.StartsWith("subscription.", StringComparison.Ordinal))
         {
-            ApplySubscriptionEvent(data, eventType);
+            affectedUserId = ApplySubscriptionEvent(data, eventType);
         }
         else if (eventType == "transaction.completed")
         {
-            ApplyLifetimeIfApplicable(data);
+            affectedUserId = ApplyLifetimeIfApplicable(data);
         }
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        if (affectedUserId is not null)
+        {
+            await _entitlements.InvalidateAsync(affectedUserId.Value, cancellationToken);
+        }
+
         return new ProcessPaddleWebhookResult { Handled = true };
     }
 
-    private void ApplySubscriptionEvent(JsonElement data, string eventType)
+    private Guid? ApplySubscriptionEvent(JsonElement data, string eventType)
     {
         var userId = TryGetUserId(data);
         var subscriptionId = GetString(data, "id");
@@ -98,7 +108,7 @@ public class ProcessPaddleWebhookCommandHandler
             if (userId is null)
             {
                 _logger.LogWarning("Subscription event {EventType} for {SubId} has no resolvable user; skipping", eventType, subscriptionId);
-                return;
+                return null;
             }
 
             sub = NewSubscription(userId.Value);
@@ -119,21 +129,22 @@ public class ProcessPaddleWebhookCommandHandler
             ? (GetDateTime(data, "canceled_at") ?? DateTime.UtcNow)
             : sub.CanceledAt;
         sub.UpdatedAt = DateTime.UtcNow;
+        return sub.UserId;
     }
 
-    private void ApplyLifetimeIfApplicable(JsonElement data)
+    private Guid? ApplyLifetimeIfApplicable(JsonElement data)
     {
         // Lifetime is a one-time purchase: a completed transaction with no subscription
         // whose items include the configured Lifetime price.
         var subscriptionId = GetString(data, "subscription_id");
         if (!string.IsNullOrEmpty(subscriptionId))
         {
-            return; // subscription-related charge, handled by subscription.* events
+            return null; // subscription-related charge, handled by subscription.* events
         }
 
         if (string.IsNullOrEmpty(_options.LifetimePriceId) || !ContainsPriceId(data, _options.LifetimePriceId))
         {
-            return;
+            return null;
         }
 
         var userId = TryGetUserId(data);
@@ -145,7 +156,7 @@ public class ProcessPaddleWebhookCommandHandler
             if (userId is null)
             {
                 _logger.LogWarning("Lifetime transaction has no resolvable user; skipping");
-                return;
+                return null;
             }
 
             sub = NewSubscription(userId.Value);
@@ -158,6 +169,7 @@ public class ProcessPaddleWebhookCommandHandler
         sub.PaddleCustomerId = customerId ?? sub.PaddleCustomerId;
         sub.PaddlePriceId = _options.LifetimePriceId;
         sub.UpdatedAt = DateTime.UtcNow;
+        return sub.UserId;
     }
 
     private Subscription? Resolve(Guid? userId, string? subscriptionId, string? customerId)
