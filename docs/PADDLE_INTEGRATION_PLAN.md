@@ -1,6 +1,6 @@
 # Paddle Billing Integration Plan
 
-**Status:** Phase 1 (sandbox catalog) done. App code not yet implemented.
+**Status:** Phase 1 (sandbox catalog) + Phase 2 (data model) done. Migration applied to the shared prod DB (`alpha.euaell.me`) on 2026-06-29, which also applied the previously-pending household-invitations migration. Phases 3-6 (webhook, entitlements, enforcement, frontend) pending.
 **Decisions locked:** Sandbox-first build; backend-enforced entitlements; 7-day card-required trial on Pro; free caps = 1 meal plan / 1 shopping list / 0 household invites; downgrade keeps read, blocks create, never deletes; 3-day past_due grace.
 **Last updated:** 2026-06-29
 
