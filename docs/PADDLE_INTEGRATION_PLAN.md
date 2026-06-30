@@ -1,6 +1,11 @@
 # Paddle Billing Integration Plan
 
-**Status:** Backend complete (Phases 1-5). Phase 6 (frontend) pending.
+**Status:** Backend complete (Phases 1-5) + webhook e2e verified + Phase 6 frontend core done. Remaining: real Paddle-delivered webhook test, backend tests, entitlement-aware UI hiding, production go-live.
+
+Webhook e2e (2026-06-30): self-signed HMAC payload through the real backend + DB proved valid→200+row, duplicate→idempotent, bad-sig→401; test rows cleaned up. Real Paddle→ngrok delivery still pending (sandbox MCP was disconnected).
+
+Phase 6 done: `@paddle/paddle-js`, `lib/paddle.ts`, `/billing` page (checkout + post-purchase polling + `?checkout=` auto-open), `useSubscription` hook, Billing nav link, signup `?plan=` → `/login?callbackUrl=/billing?checkout=<plan>`. api types regenerated; tsc clean.
+
 - Phase 1 sandbox catalog: done.
 - Phase 2 data model: done, migration applied to shared prod DB (`alpha.euaell.me`) on 2026-06-29 (also applied the previously-pending household-invitations migration).
 - Phase 3 webhook ingestion: `POST /api/webhooks/paddle`, HMAC verify, idempotent, subscription upsert + lifetime detection.
