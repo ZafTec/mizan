@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Infrastructure.AI;
 using Mizan.Infrastructure.Data;
@@ -39,6 +40,9 @@ public static class DependencyInjection
         services.AddScoped<INutritionAiService, NutritionAiService>();
         services.AddScoped<IStreakService, StreakService>();
         services.AddScoped<IAchievementEvaluator, AchievementEvaluator>();
+
+        // Billing
+        services.Configure<PaddleOptions>(configuration.GetSection(PaddleOptions.SectionName));
 
         return services;
     }
