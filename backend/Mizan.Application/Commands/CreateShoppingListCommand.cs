@@ -1,4 +1,6 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 
@@ -8,15 +10,29 @@ public record CreateShoppingListCommand(string Name, Guid UserId, Guid? Househol
 
 public class CreateShoppingListCommandHandler : IRequestHandler<CreateShoppingListCommand, Guid>
 {
-    private readonly IMizanDbContext _context;
+    private const int FreeShoppingListLimit = 1;
 
-    public CreateShoppingListCommandHandler(IMizanDbContext context)
+    private readonly IMizanDbContext _context;
+    private readonly IEntitlementService _entitlements;
+
+    public CreateShoppingListCommandHandler(IMizanDbContext context, IEntitlementService entitlements)
     {
         _context = context;
+        _entitlements = entitlements;
     }
 
     public async Task<Guid> Handle(CreateShoppingListCommand request, CancellationToken cancellationToken)
     {
+        var entitlement = await _entitlements.GetAsync(request.UserId, cancellationToken);
+        if (!entitlement.IsPro)
+        {
+            var existing = await _context.ShoppingLists.CountAsync(s => s.UserId == request.UserId, cancellationToken);
+            if (existing >= FreeShoppingListLimit)
+            {
+                throw new ForbiddenAccessException("Free plan is limited to 1 shopping list. Upgrade to Pro for unlimited shopping lists.");
+            }
+        }
+
         var shoppingList = new ShoppingList
         {
             Id = Guid.NewGuid(),
