@@ -43,6 +43,7 @@ public static class DependencyInjection
 
         // Billing
         services.Configure<PaddleOptions>(configuration.GetSection(PaddleOptions.SectionName));
+        services.AddScoped<IEntitlementService, EntitlementService>();
 
         return services;
     }
