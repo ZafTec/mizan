@@ -71,6 +71,7 @@ const SECONDARY_NAV: NavItem[] = [
 	{ href: "/notifications", label: "Notifications", icon: "bell" },
 	{ href: "/profile", label: "Profile", icon: "user" },
 	{ href: "/profile/household", label: "Household", icon: "home" },
+	{ href: "/billing", label: "Billing", icon: "sparkles" },
 	{ href: "/profile/settings", label: "Settings", icon: "settings" },
 	{ href: "/admin", label: "Admin", icon: "shieldCheck", adminOnly: true },
 ];
