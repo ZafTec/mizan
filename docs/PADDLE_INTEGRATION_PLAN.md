@@ -1,6 +1,13 @@
 # Paddle Billing Integration Plan
 
-**Status:** Phase 1 (sandbox catalog) + Phase 2 (data model) done. Migration applied to the shared prod DB (`alpha.euaell.me`) on 2026-06-29, which also applied the previously-pending household-invitations migration. Phases 3-6 (webhook, entitlements, enforcement, frontend) pending.
+**Status:** Backend complete (Phases 1-5). Phase 6 (frontend) pending.
+- Phase 1 sandbox catalog: done.
+- Phase 2 data model: done, migration applied to shared prod DB (`alpha.euaell.me`) on 2026-06-29 (also applied the previously-pending household-invitations migration).
+- Phase 3 webhook ingestion: `POST /api/webhooks/paddle`, HMAC verify, idempotent, subscription upsert + lifetime detection.
+- Phase 4 entitlements: `IEntitlementService` (HybridCache) + `GET /api/Subscriptions/me`.
+- Phase 5 enforcement: policy `RequirePro` on `POST /api/Nutrition/ai/chat`, `POST /api/Nutrition/ai/analyze-image`, `GET /api/Goals/history`, `GET /api/Goals/progress`. Quota throws `ForbiddenAccessException` (403) in `CreateMealPlanCommand` (free=1), `CreateShoppingListCommand` (free=1), `InviteHouseholdMemberCommand` (free=0; Pro capped at 6 members). Trainer-chat gating deferred per decision.
+
+Still pending before go-live: create the Paddle webhook destination (ngrok for sandbox) + set `Paddle__WebhookSecret`; backend tests; frontend.
 **Decisions locked:** Sandbox-first build; backend-enforced entitlements; 7-day card-required trial on Pro; free caps = 1 meal plan / 1 shopping list / 0 household invites; downgrade keeps read, blocks create, never deletes; 3-day past_due grace.
 **Last updated:** 2026-06-29
 
