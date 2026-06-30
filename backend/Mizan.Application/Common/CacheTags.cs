@@ -8,4 +8,5 @@ public static class CacheTags
     public const string Foods = "foods";
 
     public static string UserStatus(Guid userId) => $"user:{userId}";
+    public static string Entitlement(Guid userId) => $"entitlement:{userId}";
 }
