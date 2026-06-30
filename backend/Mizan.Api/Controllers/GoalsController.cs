@@ -26,6 +26,7 @@ public class GoalsController : ControllerBase
     }
 
     [HttpGet("history")]
+    [Authorize(Policy = "RequirePro")]
     public async Task<ActionResult<List<UserGoalDto>>> GetGoalHistory()
     {
         var result = await _mediator.Send(new GetUserGoalHistoryQuery());
@@ -51,6 +52,7 @@ public class GoalsController : ControllerBase
     }
 
     [HttpGet("progress")]
+    [Authorize(Policy = "RequirePro")]
     public async Task<ActionResult<GoalProgressHistoryDto>> GetProgressHistory([FromQuery] int days = 30)
     {
         var result = await _mediator.Send(new GetGoalProgressHistoryQuery { Days = days });

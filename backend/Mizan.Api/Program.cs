@@ -114,7 +114,14 @@ builder.Services.AddAuthorization(options =>
         .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser()
         .RequireRole("trainer"));
+
+    options.AddPolicy("RequirePro", policy => policy
+        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .RequireAuthenticatedUser()
+        .AddRequirements(new Mizan.Api.Authorization.ProRequirement()));
 });
+
+builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, Mizan.Api.Authorization.ProAuthorizationHandler>();
 
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
 

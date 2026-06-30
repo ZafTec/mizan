@@ -1,5 +1,7 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 
@@ -51,13 +53,17 @@ public class CreateMealPlanCommandValidator : AbstractValidator<CreateMealPlanCo
 
 public class CreateMealPlanCommandHandler : IRequestHandler<CreateMealPlanCommand, CreateMealPlanResult>
 {
+    private const int FreeMealPlanLimit = 1;
+
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly IEntitlementService _entitlements;
 
-    public CreateMealPlanCommandHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public CreateMealPlanCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, IEntitlementService entitlements)
     {
         _context = context;
         _currentUser = currentUser;
+        _entitlements = entitlements;
     }
 
     public async Task<CreateMealPlanResult> Handle(CreateMealPlanCommand request, CancellationToken cancellationToken)
@@ -67,10 +73,22 @@ public class CreateMealPlanCommandHandler : IRequestHandler<CreateMealPlanComman
             throw new UnauthorizedAccessException("User must be authenticated");
         }
 
+        var userId = _currentUser.UserId.Value;
+
+        var entitlement = await _entitlements.GetAsync(userId, cancellationToken);
+        if (!entitlement.IsPro)
+        {
+            var existing = await _context.MealPlans.CountAsync(m => m.UserId == userId, cancellationToken);
+            if (existing >= FreeMealPlanLimit)
+            {
+                throw new ForbiddenAccessException("Free plan is limited to 1 meal plan. Upgrade to Pro for unlimited meal plans.");
+            }
+        }
+
         var mealPlan = new MealPlan
         {
             Id = Guid.NewGuid(),
-            UserId = _currentUser.UserId.Value,
+            UserId = userId,
             HouseholdId = request.HouseholdId,
             Name = request.Name,
             StartDate = request.StartDate,

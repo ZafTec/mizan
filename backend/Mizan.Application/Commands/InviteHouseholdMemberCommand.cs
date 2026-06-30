@@ -1,6 +1,7 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 
@@ -34,13 +35,16 @@ public class InviteHouseholdMemberCommandValidator : AbstractValidator<InviteHou
 
 public class InviteHouseholdMemberCommandHandler : IRequestHandler<InviteHouseholdMemberCommand, InviteHouseholdMemberResult>
 {
+    private const int HouseholdMemberLimit = 6;
     private static readonly TimeSpan InvitationTtl = TimeSpan.FromDays(14);
 
     private readonly IMizanDbContext _context;
+    private readonly IEntitlementService _entitlements;
 
-    public InviteHouseholdMemberCommandHandler(IMizanDbContext context)
+    public InviteHouseholdMemberCommandHandler(IMizanDbContext context, IEntitlementService entitlements)
     {
         _context = context;
+        _entitlements = entitlements;
     }
 
     public async Task<InviteHouseholdMemberResult> Handle(InviteHouseholdMemberCommand request, CancellationToken cancellationToken)
@@ -51,6 +55,21 @@ public class InviteHouseholdMemberCommandHandler : IRequestHandler<InviteHouseho
         if (requester == null || !(requester.Role == "admin" || requester.Role == "owner"))
         {
             return new InviteHouseholdMemberResult { Success = false, Message = "Only household admins can invite members." };
+        }
+
+        var entitlement = await _entitlements.GetAsync(request.RequestingUserId, cancellationToken);
+        if (!entitlement.IsPro)
+        {
+            throw new ForbiddenAccessException("Household invitations are a Pro feature. Upgrade to invite members.");
+        }
+
+        var memberCount = await _context.HouseholdMembers
+            .CountAsync(m => m.HouseholdId == request.HouseholdId, cancellationToken);
+        var pendingCount = await _context.HouseholdInvitations
+            .CountAsync(i => i.HouseholdId == request.HouseholdId && i.Status == "pending", cancellationToken);
+        if (memberCount + pendingCount >= HouseholdMemberLimit)
+        {
+            throw new ForbiddenAccessException("Households are limited to 6 members.");
         }
 
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
