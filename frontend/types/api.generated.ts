@@ -15,6 +15,7 @@ export interface paths {
             parameters: {
                 query?: {
                     Category?: string;
+                    SearchTerm?: string;
                     Page?: number;
                     PageSize?: number;
                     SortBy?: string;
@@ -205,7 +206,14 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    SearchTerm?: string;
+                    Category?: string;
+                    Page?: number;
+                    PageSize?: number;
+                    SortBy?: string;
+                    SortOrder?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -933,6 +941,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Households/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GetMyHouseholdsResult"];
+                        "application/json": components["schemas"]["GetMyHouseholdsResult"];
+                        "text/json": components["schemas"]["GetMyHouseholdsResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Households/{id}": {
         parameters: {
             query?: never;
@@ -1015,7 +1060,203 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/Households/{id}/members": {
+    "/api/Households/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SetActiveHouseholdRequest"];
+                    "text/json": components["schemas"]["SetActiveHouseholdRequest"];
+                    "application/*+json": components["schemas"]["SetActiveHouseholdRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SetActiveHouseholdResult"];
+                        "application/json": components["schemas"]["SetActiveHouseholdResult"];
+                        "text/json": components["schemas"]["SetActiveHouseholdResult"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Households/{id}/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["HouseholdInvitationAdminDto"][];
+                        "application/json": components["schemas"]["HouseholdInvitationAdminDto"][];
+                        "text/json": components["schemas"]["HouseholdInvitationAdminDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["InviteMemberRequest"];
+                    "text/json": components["schemas"]["InviteMemberRequest"];
+                    "application/*+json": components["schemas"]["InviteMemberRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["InviteHouseholdMemberResult"];
+                        "application/json": components["schemas"]["InviteHouseholdMemberResult"];
+                        "text/json": components["schemas"]["InviteHouseholdMemberResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Households/invitations/{invitationId}/respond": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    invitationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RespondInvitationRequest"];
+                    "text/json": components["schemas"]["RespondInvitationRequest"];
+                    "application/*+json": components["schemas"]["RespondInvitationRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RespondToHouseholdInvitationResult"];
+                        "application/json": components["schemas"]["RespondToHouseholdInvitationResult"];
+                        "text/json": components["schemas"]["RespondToHouseholdInvitationResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Households/{id}/members/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    userId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RemoveHouseholdMemberResult"];
+                        "application/json": components["schemas"]["RemoveHouseholdMemberResult"];
+                        "text/json": components["schemas"]["RemoveHouseholdMemberResult"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Households/{id}/leave": {
         parameters: {
             query?: never;
             header?: never;
@@ -1033,24 +1274,144 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["AddMemberRequest"];
-                    "text/json": components["schemas"]["AddMemberRequest"];
-                    "application/*+json": components["schemas"]["AddMemberRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["LeaveHouseholdResult"];
+                        "application/json": components["schemas"]["LeaveHouseholdResult"];
+                        "text/json": components["schemas"]["LeaveHouseholdResult"];
+                    };
                 };
             };
         };
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Households/admin/all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    SearchTerm?: string;
+                    Page?: number;
+                    PageSize?: number;
+                    SortBy?: string;
+                    SortOrder?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AdminHouseholdSummaryPagedResult"];
+                        "application/json": components["schemas"]["AdminHouseholdSummaryPagedResult"];
+                        "text/json": components["schemas"]["AdminHouseholdSummaryPagedResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Households/admin/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AdminDeleteHouseholdResult"];
+                        "application/json": components["schemas"]["AdminDeleteHouseholdResult"];
+                        "text/json": components["schemas"]["AdminDeleteHouseholdResult"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Households/admin/{id}/members/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    userId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RemoveHouseholdMemberResult"];
+                        "application/json": components["schemas"]["RemoveHouseholdMemberResult"];
+                        "text/json": components["schemas"]["RemoveHouseholdMemberResult"];
+                    };
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -1869,6 +2230,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/webhooks/paddle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Profile/export": {
         parameters: {
             query?: never;
@@ -2298,6 +2692,43 @@ export interface paths {
                 };
             };
         };
+        trace?: never;
+    };
+    "/api/Subscriptions/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MySubscriptionDto"];
+                        "application/json": components["schemas"]["MySubscriptionDto"];
+                        "text/json": components["schemas"]["MySubscriptionDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/Trainers/request": {
@@ -2830,9 +3261,6 @@ export interface components {
             /** Format: date-time */
             earnedAt?: string | null;
         };
-        AddMemberRequest: {
-            email: string;
-        };
         AddRecipeToMealPlanRequest: {
             /** Format: uuid */
             recipeId: string;
@@ -2853,6 +3281,36 @@ export interface components {
             amount?: number | null;
             unit?: string | null;
             category?: string | null;
+        };
+        AdminDeleteHouseholdResult: {
+            success: boolean;
+            message?: string | null;
+        };
+        AdminHouseholdSummary: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: uuid */
+            createdBy: string;
+            createdByName?: string | null;
+            createdByEmail?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: int32 */
+            memberCount: number;
+            /** Format: int32 */
+            pendingInviteCount: number;
+        };
+        AdminHouseholdSummaryPagedResult: {
+            items: components["schemas"]["AdminHouseholdSummary"][];
+            /** Format: int32 */
+            totalCount: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            readonly totalPages: number;
         };
         AiChatRequest: {
             message: string;
@@ -3030,6 +3488,8 @@ export interface components {
             recipeId?: string | null;
             /** Format: date */
             entryDate?: string | null;
+            /** Format: date-time */
+            loggedAt?: string | null;
             mealType: string;
             /** Format: double */
             servings: number;
@@ -3374,6 +3834,14 @@ export interface components {
             /** Format: double */
             averageUnlocksPerUser: number;
             rows: components["schemas"]["AchievementAnalyticsRow"][];
+            /** Format: int32 */
+            rowsTotalCount: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            readonly totalPages: number;
             categories: components["schemas"]["CategoryBreakdown"][];
         };
         GetAchievementsResult: {
@@ -3411,6 +3879,12 @@ export interface components {
             categories: string[];
             muscleGroups: string[];
             equipmentOptions: string[];
+        };
+        GetMyHouseholdsResult: {
+            households: components["schemas"]["MyHouseholdSummary"][];
+            pendingInvitations: components["schemas"]["MyHouseholdInvitationSummary"][];
+            /** Format: uuid */
+            activeHouseholdId?: string | null;
         };
         GetStreakResult: {
             streakType: string;
@@ -3468,6 +3942,20 @@ export interface components {
             createdAt: string;
             members: components["schemas"]["HouseholdMemberDto"][];
         };
+        HouseholdInvitationAdminDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            householdId: string;
+            invitedEmail: string;
+            invitedName?: string | null;
+            role: string;
+            status: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+        };
         HouseholdMemberDto: {
             /** Format: uuid */
             userId: string;
@@ -3476,6 +3964,20 @@ export interface components {
             role?: string | null;
             /** Format: date-time */
             joinedAt: string;
+        };
+        InviteHouseholdMemberResult: {
+            success: boolean;
+            /** Format: uuid */
+            invitationId?: string | null;
+            message?: string | null;
+        };
+        InviteMemberRequest: {
+            email: string;
+            role?: string | null;
+        };
+        LeaveHouseholdResult: {
+            success: boolean;
+            message?: string | null;
         };
         LogBodyMeasurementResult: {
             /** Format: uuid */
@@ -3686,6 +4188,42 @@ export interface components {
             /** Format: int32 */
             itemCount: number;
         };
+        MyHouseholdInvitationSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            householdId: string;
+            householdName: string;
+            role: string;
+            invitedByName: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+        };
+        MyHouseholdSummary: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            myRole: string;
+            /** Format: int32 */
+            memberCount: number;
+            /** Format: date-time */
+            joinedAt: string;
+            isActive: boolean;
+        };
+        MySubscriptionDto: {
+            plan: string;
+            status: string;
+            isPro: boolean;
+            isLifetime: boolean;
+            /** Format: date-time */
+            currentPeriodEnd?: string | null;
+            /** Format: date-time */
+            trialEndsAt?: string | null;
+            /** Format: date-time */
+            canceledAt?: string | null;
+        };
         MyTrainerDto: {
             /** Format: uuid */
             relationshipId: string;
@@ -3855,9 +4393,16 @@ export interface components {
             /** Format: uuid */
             id?: string | null;
         };
+        RemoveHouseholdMemberResult: {
+            success: boolean;
+            message?: string | null;
+        };
         RemoveRecipeFromMealPlanResult: {
             success: boolean;
             message?: string | null;
+        };
+        RespondInvitationRequest: {
+            action: string;
         };
         RespondRequest: {
             /** Format: uuid */
@@ -3868,6 +4413,12 @@ export interface components {
             canViewMeasurements?: boolean | null;
             canMessage?: boolean | null;
         };
+        RespondToHouseholdInvitationResult: {
+            success: boolean;
+            message?: string | null;
+            /** Format: uuid */
+            householdId?: string | null;
+        };
         SendMessageRequest: {
             /** Format: uuid */
             conversationId: string;
@@ -3876,6 +4427,16 @@ export interface components {
         SendTrainerRequestRequest: {
             /** Format: uuid */
             trainerId: string;
+        };
+        SetActiveHouseholdRequest: {
+            /** Format: uuid */
+            householdId?: string | null;
+        };
+        SetActiveHouseholdResult: {
+            success: boolean;
+            message?: string | null;
+            /** Format: uuid */
+            activeHouseholdId?: string | null;
         };
         ShoppingListDto: {
             /** Format: uuid */
