@@ -22,7 +22,11 @@ export default function Page() {
 
 	useEffect(() => {
 		if (formState.status === "success") {
-			router.push("/login");
+			const plan = new URLSearchParams(window.location.search).get("plan");
+			const dest = plan
+				? `/login?callbackUrl=${encodeURIComponent(`/billing?checkout=${plan}`)}`
+				: "/login";
+			router.push(dest);
 		}
 	}, [formState.status, router]);
 
