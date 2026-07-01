@@ -3,9 +3,12 @@ import { getUserServer } from "@/helper/session";
 import { getCurrentGoal } from "@/data/goal";
 import { getTodayMeal, getDailyTotals, type MealEntry } from "@/data/meal";
 import { getStreak } from "@/data/achievement";
+import { getMySubscription } from "@/data/subscription";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 import MacroRing from "@/components/Dashboard/MacroRing";
 import QuickActions from "@/components/Dashboard/QuickActions";
+import { UpgradeBanner } from "@/components/billing/UpgradeBanner";
+import { ProBadge } from "@/components/billing/ProBadge";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -45,11 +48,12 @@ function mealTypeColor(type: string | undefined): string {
 export default async function DashboardPage() {
 	const user = await getUserServer();
 
-	const [goal, meals, totals, streak] = await Promise.all([
+	const [goal, meals, totals, streak, subscription] = await Promise.all([
 		getCurrentGoal(),
 		getTodayMeal(),
 		getDailyTotals(),
 		getStreak(),
+		getMySubscription(),
 	]);
 
 	const now = new Date();
@@ -86,8 +90,9 @@ export default async function DashboardPage() {
 			<section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 				<div className="space-y-2">
 					<p className="eyebrow">Today • {dateLabel}</p>
-					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+					<h1 className="flex flex-wrap items-center gap-2.5 text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 						{greeting}, {firstName}
+						{subscription.isPro && <ProBadge className="translate-y-0.5 text-[11px]" />}
 					</h1>
 					<p className="max-w-xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 						{goal
@@ -111,6 +116,15 @@ export default async function DashboardPage() {
 					</Link>
 				</div>
 			</section>
+
+			{!subscription.isPro && (
+				<UpgradeBanner
+					id="dashboard-hero"
+					variant="hero"
+					title="Unlock the full Mizan experience"
+					message="Unlimited meal plans, AI coach with food-photo logging, trend charts, and household sharing for up to 6 people. 7-day free trial, cancel anytime."
+				/>
+			)}
 
 			{/* Main grid */}
 			<div className="grid gap-6 lg:grid-cols-[1.65fr_1fr]">

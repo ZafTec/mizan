@@ -1,10 +1,12 @@
 import { getUserServer } from "@/helper/session";
 import Link from "next/link";
 import { getMealPlans } from "@/data/mealPlan";
+import { getMySubscription } from "@/data/subscription";
 import Pagination from "@/components/Pagination";
 import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
 import MealPlanListItem from "./MealPlanListItem";
 import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
+import { UpgradeBanner } from "@/components/billing/UpgradeBanner";
 
 import { logger } from "@/lib/logger";
 const mealLogger = logger.createModuleLogger("meal-plan-page");
@@ -25,6 +27,7 @@ export default async function MealPlanPage({
 	let totalCount = 0;
 	let totalPages = 0;
 	let loadError: string | null = null;
+	const subscription = await getMySubscription();
 
 	try {
 		const result = await getMealPlans(page, 20, sortBy ?? undefined, sortOrder);
@@ -86,6 +89,14 @@ export default async function MealPlanPage({
 						</Link>
 					</div>
 				</header>
+
+				{!subscription.isPro && totalCount >= 1 && (
+					<UpgradeBanner
+						id="meal-plan-cap"
+						title="You've used your free meal plan"
+						message="Upgrade to Pro for unlimited meal plans and shopping lists."
+					/>
+				)}
 
 				{/* Quick Stats */}
 				<div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

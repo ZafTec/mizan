@@ -121,27 +121,46 @@ export default function BillingPage() {
       {loading ? (
         <div className="flex justify-center py-16"><Loading /></div>
       ) : isPro ? (
-        <div className="card p-6 sm:p-8">
-          <div className="flex items-start gap-4">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-600 text-white dark:bg-brand-500">
-              <AnimatedIcon name="sparkles" size={22} aria-hidden="true" />
+        <div className="relative overflow-hidden rounded-[28px] border border-brand-500/25 bg-gradient-to-br from-brand-600 to-brand-800 p-6 text-white shadow-xl shadow-brand-500/25 sm:p-8">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute right-[-10%] top-[-20%] h-64 w-64 rounded-full bg-white/10 blur-3xl"
+          />
+          <div className="relative flex items-start gap-4">
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white ring-1 ring-white/20">
+              <AnimatedIcon name="sparkles" size={24} aria-hidden="true" />
             </span>
             <div className="flex-1">
-              <h2 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-                {subscription?.isLifetime ? "Lifetime — Pro forever" : "Pro plan active"}
-              </h2>
-              <p className="mt-1 text-sm capitalize text-charcoal-blue-500 dark:text-charcoal-blue-400">
-                Status: {subscription?.status}
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
+                  {subscription?.isLifetime ? "Lifetime Pro, forever" : "You're on Pro"}
+                </h2>
+                <span className="inline-flex items-center rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.1em]">
+                  {subscription?.status}
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-white/85">
+                {subscription?.isLifetime
+                  ? "Thanks for being a founding member. Every feature we ship next is already yours."
+                  : "Thanks for supporting Mizan. Every Pro feature is unlocked on your account."}
               </p>
               {!subscription?.isLifetime && subscription?.status === "trialing" && trialEnd && (
-                <p className="mt-1 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">Trial ends {trialEnd}.</p>
+                <p className="mt-2 text-sm text-white/85">Trial ends {trialEnd}, then billing starts automatically.</p>
               )}
               {!subscription?.isLifetime && canceled && periodEnd && (
-                <p className="mt-1 text-sm text-burnt-peach-700 dark:text-burnt-peach-300">Cancels on {periodEnd}. You keep Pro until then.</p>
+                <p className="mt-2 text-sm text-tuscan-sun-200">Cancels {periodEnd}. You keep Pro until then.</p>
               )}
               {!subscription?.isLifetime && !canceled && periodEnd && (
-                <p className="mt-1 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">Renews {periodEnd}.</p>
+                <p className="mt-2 text-sm text-white/85">Renews {periodEnd}.</p>
               )}
+              <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {["Unlimited meal plans & shopping lists", "AI coach + food-photo logging", "Trend charts & progress history", "Household sharing (up to 6)"].map((perk) => (
+                  <li key={perk} className="flex items-center gap-2 text-sm text-white/90">
+                    <AnimatedIcon name="circleCheck" size={14} aria-hidden="true" />
+                    {perk}
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>
