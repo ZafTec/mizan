@@ -1,9 +1,18 @@
 "use server";
 
 import { serverApi } from "@/lib/api.server";
+import { ApiError } from "@/lib/api";
 import { logger } from "@/lib/logger";
 
 const mealPlanLogger = logger.createModuleLogger("meal-plan-data");
+
+function apiErrorMessage(error: unknown, fallback: string): string {
+    if (error instanceof ApiError && error.body && typeof error.body === "object") {
+        const message = (error.body as { error?: unknown }).error;
+        if (typeof message === "string" && message.trim()) return message;
+    }
+    return fallback;
+}
 
 export interface MealPlanRecipe {
     id: string;
@@ -76,7 +85,7 @@ export async function createMealPlan(data: {
     startDate: string;
     endDate: string;
     recipes?: { recipeId: string; date: string; mealType: string; servings: number }[];
-}): Promise<{ id: string; success: boolean } | null> {
+}): Promise<{ id: string; success: boolean; message?: string } | null> {
     try {
         const result = await serverApi<{ id: string; name: string; recipeCount: number }>("/api/MealPlans", {
             method: "POST",
@@ -85,7 +94,7 @@ export async function createMealPlan(data: {
         return { id: result.id, success: true };
     } catch (error) {
         mealPlanLogger.error("Failed to create meal plan", { error });
-        return null;
+        return { id: "", success: false, message: apiErrorMessage(error, "Failed to create meal plan") };
     }
 }
 

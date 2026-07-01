@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { format, parse } from 'date-fns';
 import { clientApi } from '@/lib/api.client';
+import { getErrorMessage } from '@/lib/toast';
 import Loading from '@/components/Loading';
 
 type SimplifiedRecipe = {
@@ -135,7 +136,7 @@ export default function AddMealPlanPage() {
       router.refresh();
     } catch (err) {
       console.error('Error adding meal plan:', err);
-      setError('Failed to save meal plan');
+      setError(getErrorMessage(err, 'Failed to save meal plan'));
       setSubmitting(false);
     }
   };
