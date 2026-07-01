@@ -65,6 +65,9 @@ export async function request<T>(
   const url = `${baseUrl}${path}`;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    // Harmless outside ngrok; bypasses ngrok's free-tier browser-warning
+    // interstitial, which otherwise intercepts API calls made through a tunnel.
+    "ngrok-skip-browser-warning": "true",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...extraHeaders,
   };
