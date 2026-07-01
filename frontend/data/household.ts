@@ -1,10 +1,19 @@
 "use server";
 
 import { serverApi } from "@/lib/api.server";
+import { ApiError } from "@/lib/api";
 import { logger } from "@/lib/logger";
 import { revalidatePath } from "next/cache";
 
 const householdLogger = logger.createModuleLogger("household");
+
+function apiErrorMessage(error: unknown, fallback: string): string {
+	if (error instanceof ApiError && error.body && typeof error.body === "object") {
+		const message = (error.body as { error?: unknown }).error;
+		if (typeof message === "string" && message.trim()) return message;
+	}
+	return fallback;
+}
 
 export interface HouseholdSummary {
 	id: string;
@@ -109,7 +118,7 @@ export async function inviteToHousehold(householdId: string, email: string, role
 		return result;
 	} catch (error) {
 		householdLogger.error("Invite failed", { error, householdId });
-		return { success: false, message: "Could not send invitation." };
+		return { success: false, message: apiErrorMessage(error, "Could not send invitation.") };
 	}
 }
 
