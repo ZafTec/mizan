@@ -133,7 +133,7 @@ export default function CreateMealPlanPage() {
 				router.push("/meal-plan");
 				router.refresh();
 			} else {
-				setError("Failed to create meal plan");
+				setError(result?.message || "Failed to create meal plan");
 			}
 		} catch {
 			setError("Failed to create meal plan");
