@@ -58,16 +58,17 @@ services:
 
       # BetterAuth config
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-dev_secret_change_in_production}
-      - BETTER_AUTH_URL=http://localhost:3000
-      - BETTER_AUTH_ISSUER=http://localhost:3000
+      - BETTER_AUTH_URL=${PUBLIC_APP_URL:-http://localhost:3000}
+      - BETTER_AUTH_ISSUER=${PUBLIC_APP_URL:-http://localhost:3000}
       - BETTER_AUTH_AUDIENCE=mizan-api
 
       # Backend API (internal network - server-side)
-      - API_URL=http://backend:8080
+      - API_URL=${SERVER_API_URL:-http://backend:8080}
 
       # Public URLs
-      - NEXT_PUBLIC_APP_URL=http://localhost:3000
-      - NEXT_PUBLIC_API_URL=http://localhost:5000
+      - NEXT_PUBLIC_APP_URL=${PUBLIC_APP_URL:-http://localhost:3000}
+      - NEXT_PUBLIC_API_URL=${PUBLIC_API_URL:-http://localhost:5000}
+      - ALLOWED_DEV_ORIGINS=${ALLOWED_DEV_ORIGINS:-}
 
       # External services
       - NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}
@@ -83,6 +84,12 @@ services:
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
       - REDIS_URL=redis://redis:6379
+      # Paddle (sandbox)
+      - NEXT_PUBLIC_PADDLE_ENV=${NEXT_PUBLIC_PADDLE_ENV:-sandbox}
+      - NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=${NEXT_PUBLIC_PADDLE_CLIENT_TOKEN:-}
+      - NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY=${NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY:-}
+      - NEXT_PUBLIC_PADDLE_PRICE_PRO_YEARLY=${NEXT_PUBLIC_PADDLE_PRICE_PRO_YEARLY:-}
+      - NEXT_PUBLIC_PADDLE_PRICE_LIFETIME=${NEXT_PUBLIC_PADDLE_PRICE_LIFETIME:-}
       # OpenTelemetry (optional, no-op if endpoints not set)
       - OTLP_ENDPOINT_URL=${OTLP_ENDPOINT_URL:-}
       - LOKI_OTLP_ENDPOINT=${LOKI_OTLP_ENDPOINT:-}
@@ -119,17 +126,24 @@ services:
       - ConnectionStrings__Redis=redis:6379
 
       # JWT/JWKS Authentication
-      - Jwt__Issuer=http://localhost:3000
+      - Jwt__Issuer=${PUBLIC_APP_URL:-http://localhost:3000}
       - Jwt__Audience=mizan-api
       - Jwt__JwksUrl=http://frontend:3000/api/auth/jwks
       - Cors__Origins__0=http://frontend:3000
       - Cors__Origins__1=http://localhost:3000
+      - Cors__Origins__2=${PUBLIC_APP_URL:-http://localhost:3000}
       - OpenAI__ApiKey=${OPENAI_API_KEY:-}
       # MCP service-to-service API key (must match MCP server's key)
       - Mcp__ServiceApiKey=${MCP_SERVICE_KEY:-dev_mcp_key_change_in_production}
       # OpenTelemetry (optional, no-op if endpoints not set)
       - OTLP_ENDPOINT_URL=${OTLP_ENDPOINT_URL:-}
       - LOKI_OTLP_ENDPOINT=${LOKI_OTLP_ENDPOINT:-}
+      # Paddle (sandbox)
+      - Paddle__Environment=${PADDLE_ENVIRONMENT:-sandbox}
+      - Paddle__ApiKey=${PADDLE_API_KEY:-}
+      - Paddle__WebhookSecret=${PADDLE_WEBHOOK_SECRET:-}
+      - Paddle__GraceDays=${PADDLE_GRACE_DAYS:-3}
+      - Paddle__LifetimePriceId=${NEXT_PUBLIC_PADDLE_PRICE_LIFETIME:-}
     depends_on:
       postgres:
         condition: service_healthy

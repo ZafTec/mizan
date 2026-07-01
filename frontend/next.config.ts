@@ -4,6 +4,12 @@ const nextConfig: NextConfig = {
 	// Enable standalone output for Docker
 	output: "standalone",
 
+	// Allow the dev server to serve HMR/dev resources when the app is accessed
+	// through a tunnel (e.g. ngrok, for local Paddle checkout domain testing).
+	// Without this, Next.js blocks cross-origin dev requests and pages silently
+	// fail to hydrate client-side handlers (forms fall back to native GET submit).
+	allowedDevOrigins: process.env.ALLOWED_DEV_ORIGINS?.split(",") ?? [],
+
 	// bun is a runtime-only module: tell Next.js not to bundle it
 	serverExternalPackages: ["bun"],
 
