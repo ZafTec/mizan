@@ -147,10 +147,10 @@ export default function BillingPage() {
               {!subscription?.isLifetime && subscription?.status === "trialing" && trialEnd && (
                 <p className="mt-2 text-sm text-white/85">Trial ends {trialEnd}, then billing starts automatically.</p>
               )}
-              {!subscription?.isLifetime && canceled && periodEnd && (
+              {!subscription?.isLifetime && subscription?.status !== "trialing" && canceled && periodEnd && (
                 <p className="mt-2 text-sm text-tuscan-sun-200">Cancels {periodEnd}. You keep Pro until then.</p>
               )}
-              {!subscription?.isLifetime && !canceled && periodEnd && (
+              {!subscription?.isLifetime && subscription?.status !== "trialing" && !canceled && periodEnd && (
                 <p className="mt-2 text-sm text-white/85">Renews {periodEnd}.</p>
               )}
               <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
