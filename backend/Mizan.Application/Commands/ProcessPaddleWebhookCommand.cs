@@ -73,17 +73,34 @@ public class ProcessPaddleWebhookCommandHandler
             return new ProcessPaddleWebhookResult { Handled = false };
         }
 
+        // Paddle can deliver multiple events for one checkout (e.g. subscription.created
+        // and subscription.trialing) in close succession. Two concurrent requests can
+        // both see "no row for this user" and both try to insert, tripping the unique
+        // index on user_id. Detect that race and retry once, which re-resolves against
+        // the row the other request just committed.
         Guid? affectedUserId = null;
-        if (eventType.StartsWith("subscription.", StringComparison.Ordinal))
+        for (var attempt = 0; attempt < 2; attempt++)
         {
-            affectedUserId = ApplySubscriptionEvent(data, eventType);
-        }
-        else if (eventType == "transaction.completed")
-        {
-            affectedUserId = ApplyLifetimeIfApplicable(data);
-        }
+            if (eventType.StartsWith("subscription.", StringComparison.Ordinal))
+            {
+                affectedUserId = ApplySubscriptionEvent(data, eventType);
+            }
+            else if (eventType == "transaction.completed")
+            {
+                affectedUserId = ApplyLifetimeIfApplicable(data);
+            }
 
-        await _context.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+                break;
+            }
+            catch (DbUpdateException ex) when (attempt == 0 && IsDuplicateUserSubscription(ex))
+            {
+                _logger.LogInformation("Concurrent webhook created the subscription row first for {EventId}; retrying as update", eventId);
+                DetachPendingSubscriptionInserts();
+            }
+        }
 
         if (affectedUserId is not null)
         {
@@ -170,6 +187,25 @@ public class ProcessPaddleWebhookCommandHandler
         sub.PaddlePriceId = _options.LifetimePriceId;
         sub.UpdatedAt = DateTime.UtcNow;
         return sub.UserId;
+    }
+
+    private static bool IsDuplicateUserSubscription(DbUpdateException ex) =>
+        ex.InnerException is System.Data.Common.DbException { SqlState: "23505" } dbEx
+            && dbEx.Message.Contains("IX_subscriptions_user_id", StringComparison.Ordinal);
+
+    private void DetachPendingSubscriptionInserts()
+    {
+        if (_context is not DbContext dbContext)
+        {
+            return;
+        }
+
+        foreach (var entry in dbContext.ChangeTracker.Entries<Subscription>()
+            .Where(e => e.State == EntityState.Added)
+            .ToList())
+        {
+            entry.State = EntityState.Detached;
+        }
     }
 
     private Subscription? Resolve(Guid? userId, string? subscriptionId, string? customerId)
