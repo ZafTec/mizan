@@ -25,8 +25,9 @@ public class GoalsController : ControllerBase
         return Ok(result);
     }
 
+    // Not Pro-gated: consumed by the (free) meals and body-measurements pages
+    // to draw goal-target reference lines, not just the Pro trends dashboard.
     [HttpGet("history")]
-    [Authorize(Policy = "RequirePro")]
     public async Task<ActionResult<List<UserGoalDto>>> GetGoalHistory()
     {
         var result = await _mediator.Send(new GetUserGoalHistoryQuery());
