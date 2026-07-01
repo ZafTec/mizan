@@ -376,21 +376,27 @@ html {
   }
 }
 
-.input {
-  @apply w-full rounded-2xl border border-charcoal-blue-300 bg-white px-4 py-3 text-charcoal-blue-900 placeholder-charcoal-blue-400 focus:outline-none focus:ring-2 focus:ring-brand-500/15 dark:border-white/10 dark:bg-charcoal-blue-950/75 dark:text-charcoal-blue-100 dark:placeholder-charcoal-blue-500;
-  backdrop-filter: blur(14px);
-  transition-property: border-color, box-shadow, background-color, color;
-  transition-duration: var(--duration-fast);
-  transition-timing-function: var(--ease-out);
-}
+/* Layered so a plain utility class (e.g. `sm:w-40`) placed alongside `.input`
+   in a className can actually override its width. Tailwind v4 gives unlayered
+   CSS higher priority than the `utilities` layer, so without this @layer,
+   `.input`'s `w-full` always wins over `sm:w-40`, no matter the source order. */
+@layer components {
+  .input {
+    @apply w-full rounded-2xl border border-charcoal-blue-300 bg-white px-4 py-3 text-charcoal-blue-900 placeholder-charcoal-blue-400 focus:outline-none focus:ring-2 focus:ring-brand-500/15 dark:border-white/10 dark:bg-charcoal-blue-950/75 dark:text-charcoal-blue-100 dark:placeholder-charcoal-blue-500;
+    backdrop-filter: blur(14px);
+    transition-property: border-color, box-shadow, background-color, color;
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--ease-out);
+  }
 
-.input:focus {
-  border-color: color-mix(in oklab, var(--color-verdigris-500) 65%, transparent);
-  box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-verdigris-300) 22%, transparent);
-}
+  .input:focus {
+    border-color: color-mix(in oklab, var(--color-verdigris-500) 65%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-verdigris-300) 22%, transparent);
+  }
 
-.input-error {
-  @apply border-red-400 focus:ring-red-500/20 focus:border-red-500 dark:border-red-500;
+  .input-error {
+    @apply border-red-400 focus:ring-red-500/20 focus:border-red-500 dark:border-red-500;
+  }
 }
 
 .label {
