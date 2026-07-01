@@ -83,13 +83,13 @@ otel.WithTracing(tracing =>
     tracing.AddHttpClientInstrumentation();
     tracing.AddSource("Mizan.Mcp.Tools");
 
-    if (tracingEndpoint != null)
+    if (!string.IsNullOrWhiteSpace(tracingEndpoint))
     {
         tracing.AddOtlpExporter(o => o.Endpoint = new Uri(tracingEndpoint));
     }
 });
 
-if (lokiEndpoint != null)
+if (!string.IsNullOrWhiteSpace(lokiEndpoint))
 {
     builder.Logging.AddOpenTelemetry(logging =>
     {
