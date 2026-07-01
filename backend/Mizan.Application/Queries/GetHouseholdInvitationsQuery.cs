@@ -41,6 +41,7 @@ public class GetHouseholdInvitationsQueryHandler : IRequestHandler<GetHouseholdI
         return await _context.HouseholdInvitations
             .AsNoTracking()
             .Where(i => i.HouseholdId == request.HouseholdId && i.Status == "pending")
+            .OrderByDescending(i => i.CreatedAt)
             .Join(_context.Users.AsNoTracking(),
                 i => i.InvitedUserId,
                 u => u.Id,
@@ -53,7 +54,6 @@ public class GetHouseholdInvitationsQueryHandler : IRequestHandler<GetHouseholdI
                     i.Status,
                     i.CreatedAt,
                     i.ExpiresAt))
-            .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
     }
 }
