@@ -24,6 +24,7 @@ type SessionItem = {
 };
 
 const DELETE_CONFIRMATION_TEXT = "DELETE";
+const CLOUDINARY_CONFIGURED = Boolean(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME);
 
 export default function ProfileSettingsPage() {
 	const { data: session, isPending } = useSession();
@@ -361,17 +362,19 @@ export default function ProfileSettingsPage() {
 						<div className="mt-6 grid gap-6 lg:grid-cols-[auto_1fr]">
 							<div className="space-y-3">
 								<AvatarPreview image={previewImage} email={user.email} name={name || user.name} size="lg" />
-								<CldUploadWidget
-									signatureEndpoint="/api/sign-cloudinary-params"
-									onSuccess={(result: any) => void handleAvatarUpload(result)}
-								>
-									{({ open }) => (
-										<button type="button" onClick={() => open()} disabled={uploadingAvatar} className="btn-secondary w-full justify-center">
-											<AnimatedIcon name="upload" size={16} aria-hidden="true" />
-											{uploadingAvatar ? "Saving avatar..." : "Upload avatar"}
-										</button>
-									)}
-								</CldUploadWidget>
+								{CLOUDINARY_CONFIGURED && (
+									<CldUploadWidget
+										signatureEndpoint="/api/sign-cloudinary-params"
+										onSuccess={(result: any) => void handleAvatarUpload(result)}
+									>
+										{({ open }) => (
+											<button type="button" onClick={() => open()} disabled={uploadingAvatar} className="btn-secondary w-full justify-center">
+												<AnimatedIcon name="upload" size={16} aria-hidden="true" />
+												{uploadingAvatar ? "Saving avatar..." : "Upload avatar"}
+											</button>
+										)}
+									</CldUploadWidget>
+								)}
 							</div>
 
 							<div className="grid gap-4">
