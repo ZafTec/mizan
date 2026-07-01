@@ -12,6 +12,8 @@ import { appToast } from "@/lib/toast";
 import { clearAppearanceCookie } from "@/lib/appearance-cookie";
 import { AnimatedIcon, type AnimatedIconName } from "@/components/ui/animated-icon";
 import { cn } from "@/lib/utils";
+import { useSubscription } from "@/lib/hooks/useSubscription";
+import { ProBadge } from "@/components/billing/ProBadge";
 import logoTransparent from "@/public/logo_transparent.png";
 
 type NavItem = {
@@ -90,11 +92,15 @@ function isActive(pathname: string | null, href: string) {
 	return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function UserAvatar({ user, size = 36 }: { user: User; size?: number }) {
+function UserAvatar({ user, size = 36, pro = false }: { user: User; size?: number; pro?: boolean }) {
+	const ringClass = pro
+		? "ring-2 ring-brand-500 shadow-md shadow-brand-500/30"
+		: "ring-1 ring-brand-500/15";
+
 	if (user.image) {
 		return (
 			<div
-				className="relative overflow-hidden rounded-2xl ring-1 ring-brand-500/15"
+				className={cn("relative overflow-hidden rounded-2xl", ringClass)}
 				style={{ width: size, height: size }}
 			>
 				<Image
@@ -109,7 +115,7 @@ function UserAvatar({ user, size = 36 }: { user: User; size?: number }) {
 	}
 	return (
 		<div
-			className="flex items-center justify-center rounded-2xl bg-brand-600 font-semibold text-white ring-1 ring-brand-500/15 dark:bg-brand-500"
+			className={cn("flex items-center justify-center rounded-2xl bg-brand-600 font-semibold text-white dark:bg-brand-500", ringClass)}
 			style={{ width: size, height: size, fontSize: size * 0.38 }}
 		>
 			{user.email?.charAt(0).toUpperCase() || "U"}
@@ -117,9 +123,10 @@ function UserAvatar({ user, size = 36 }: { user: User; size?: number }) {
 	);
 }
 
-function SidebarLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
+function SidebarLink({ item, collapsed, isPro }: { item: NavItem; collapsed: boolean; isPro?: boolean }) {
 	const pathname = usePathname();
 	const active = isActive(pathname, item.href);
+	const isBilling = item.href === "/billing";
 	return (
 		<Link
 			href={item.href}
@@ -127,20 +134,26 @@ function SidebarLink({ item, collapsed }: { item: NavItem; collapsed: boolean })
 				"press-feedback group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-[background-color,color,box-shadow] duration-160 ease-out",
 				active
 					? "bg-brand-600 text-white shadow-lg shadow-brand-500/25 dark:bg-brand-500 dark:text-charcoal-blue-950"
-					: "text-charcoal-blue-600 hover:bg-white/70 hover:text-charcoal-blue-900 dark:text-charcoal-blue-200 dark:hover:bg-white/5 dark:hover:text-charcoal-blue-50",
+					: isBilling && !isPro
+						? "text-brand-700 hover:bg-brand-500/10 dark:text-brand-300 dark:hover:bg-brand-500/10"
+						: "text-charcoal-blue-600 hover:bg-white/70 hover:text-charcoal-blue-900 dark:text-charcoal-blue-200 dark:hover:bg-white/5 dark:hover:text-charcoal-blue-50",
 				collapsed && "justify-center px-2"
 			)}
 			title={collapsed ? item.label : undefined}
 		>
 			<span
 				className={cn(
-					"flex h-5 w-5 shrink-0 items-center justify-center",
-					active ? "text-white dark:text-charcoal-blue-950" : "text-charcoal-blue-500 group-hover:text-current dark:text-charcoal-blue-300"
+					"relative flex h-5 w-5 shrink-0 items-center justify-center",
+					active ? "text-white dark:text-charcoal-blue-950" : isBilling && !isPro ? "text-brand-600 dark:text-brand-300" : "text-charcoal-blue-500 group-hover:text-current dark:text-charcoal-blue-300"
 				)}
 			>
 				<AnimatedIcon name={item.icon} size={18} aria-hidden="true" />
+				{isBilling && !isPro && (
+					<span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 animate-pulse rounded-full bg-brand-500" aria-hidden="true" />
+				)}
 			</span>
 			{!collapsed && <span className="truncate">{item.label}</span>}
+			{!collapsed && isBilling && isPro && <ProBadge className="ml-auto" />}
 			{!collapsed && item.badge ? (
 				<span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-burnt-peach-500 px-1.5 text-[10px] font-semibold text-white">
 					{item.badge}
@@ -185,6 +198,7 @@ export interface AppShellProps {
 export default function AppShell({ user, children, variant = "dashboard" }: AppShellProps) {
 	const router = useRouter();
 	const pathname = usePathname();
+	const { isPro } = useSubscription();
 	const [collapsed, setCollapsed] = useState(false);
 	const [userMenuOpen, setUserMenuOpen] = useState(false);
 	const [userMenuPos, setUserMenuPos] = useState<{ top: number; right: number } | null>(null);
@@ -325,7 +339,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 								<div className="my-2 border-t border-charcoal-blue-200/50 dark:border-white/5" />
 							)}
 							{group.items.map((item) => (
-								<SidebarLink key={item.href} item={item} collapsed={collapsed} />
+								<SidebarLink key={item.href} item={item} collapsed={collapsed} isPro={isPro} />
 							))}
 						</div>
 					))}
@@ -336,7 +350,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 						</p>
 					)}
 					{visibleSecondary.map((item) => (
-						<SidebarLink key={item.href} item={item} collapsed={collapsed} />
+						<SidebarLink key={item.href} item={item} collapsed={collapsed} isPro={isPro} />
 					))}
 				</nav>
 
@@ -352,12 +366,22 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 							<AnimatedIcon name="logout" size={16} />
 						</button>
 					) : (
-						<div className="flex items-center gap-3 rounded-2xl border border-charcoal-blue-200 bg-white/80 p-2.5 dark:border-white/10 dark:bg-charcoal-blue-950/60">
-							<UserAvatar user={user} size={36} />
+						<div
+							className={cn(
+								"flex items-center gap-3 rounded-2xl border p-2.5",
+								isPro
+									? "border-brand-500/30 bg-gradient-to-r from-brand-500/10 to-transparent dark:border-brand-500/25"
+									: "border-charcoal-blue-200 bg-white/80 dark:border-white/10 dark:bg-charcoal-blue-950/60"
+							)}
+						>
+							<UserAvatar user={user} size={36} pro={isPro} />
 							<div className="min-w-0 flex-1 leading-tight">
-								<p className="truncate text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-									{user.name || user.email}
-								</p>
+								<div className="flex items-center gap-1.5">
+									<p className="truncate text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+										{user.name || user.email}
+									</p>
+									{isPro && <ProBadge />}
+								</div>
 								{roleLabel && (
 									<p className="truncate text-[11px] text-charcoal-blue-500 dark:text-charcoal-blue-400">
 										{roleLabel}
@@ -432,9 +456,12 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 									aria-expanded={userMenuOpen}
 									aria-haspopup="menu"
 								>
-									<UserAvatar user={user} size={30} />
-									<span className="hidden max-w-40 truncate font-medium text-charcoal-blue-900 sm:inline dark:text-charcoal-blue-50">
-										{user.name || user.email?.split("@")[0]}
+									<UserAvatar user={user} size={30} pro={isPro} />
+									<span className="hidden items-center gap-1.5 sm:flex">
+										<span className="max-w-40 truncate font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
+											{user.name || user.email?.split("@")[0]}
+										</span>
+										{isPro && <ProBadge />}
 									</span>
 									<ChevronDown
 										className={cn(
@@ -454,9 +481,12 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 											style={{ top: userMenuPos.top, right: userMenuPos.right, zIndex: 1000 }}
 										>
 											<div className="mb-1 rounded-2xl px-3 py-2.5">
-												<p className="truncate text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-													{user.name || user.email}
-												</p>
+												<div className="flex items-center gap-1.5">
+													<p className="truncate text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+														{user.name || user.email}
+													</p>
+													{isPro && <ProBadge />}
+												</div>
 												<p className="truncate text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
 													{user.email}
 												</p>
@@ -473,6 +503,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 															<AnimatedIcon name={item.icon} size={14} />
 														</span>
 														{item.label}
+														{item.href === "/billing" && isPro && <ProBadge className="ml-auto" />}
 													</Link>
 												))}
 											</div>
@@ -537,7 +568,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 											{group.label}
 										</p>
 										{group.items.map((item) => (
-											<SidebarLink key={item.href} item={item} collapsed={false} />
+											<SidebarLink key={item.href} item={item} collapsed={false} isPro={isPro} />
 										))}
 									</div>
 								))}
@@ -547,7 +578,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 								</p>
 								<nav className="space-y-1">
 									{visibleSecondary.map((item) => (
-										<SidebarLink key={item.href} item={item} collapsed={false} />
+										<SidebarLink key={item.href} item={item} collapsed={false} isPro={isPro} />
 									))}
 								</nav>
 							</div>
