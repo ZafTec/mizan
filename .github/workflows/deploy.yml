@@ -49,6 +49,11 @@ jobs:
           echo "NEXT_PUBLIC_API_URL is set: ${{ vars.NEXT_PUBLIC_API_URL != '' }}"
           echo "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME is set: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME != '' }}"
           echo "NEXT_PUBLIC_CLOUDINARY_API_KEY is set: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_API_KEY != '' }}"
+          echo "NEXT_PUBLIC_PADDLE_ENV is set: ${{ vars.NEXT_PUBLIC_PADDLE_ENV != '' }}"
+          echo "NEXT_PUBLIC_PADDLE_CLIENT_TOKEN is set: ${{ secrets.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN != '' }}"
+          echo "NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY is set: ${{ vars.NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY != '' }}"
+          echo "NEXT_PUBLIC_PADDLE_PRICE_PRO_YEARLY is set: ${{ vars.NEXT_PUBLIC_PADDLE_PRICE_PRO_YEARLY != '' }}"
+          echo "NEXT_PUBLIC_PADDLE_PRICE_LIFETIME is set: ${{ vars.NEXT_PUBLIC_PADDLE_PRICE_LIFETIME != '' }}"
 
       - name: Build and push
         uses: docker/build-push-action@v5
@@ -66,6 +71,11 @@ jobs:
             NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
             NEXT_PUBLIC_CLOUDINARY_API_KEY=${{ secrets.NEXT_PUBLIC_CLOUDINARY_API_KEY }}
             NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
+            NEXT_PUBLIC_PADDLE_ENV=${{ vars.NEXT_PUBLIC_PADDLE_ENV }}
+            NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=${{ secrets.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN }}
+            NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY=${{ vars.NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY }}
+            NEXT_PUBLIC_PADDLE_PRICE_PRO_YEARLY=${{ vars.NEXT_PUBLIC_PADDLE_PRICE_PRO_YEARLY }}
+            NEXT_PUBLIC_PADDLE_PRICE_LIFETIME=${{ vars.NEXT_PUBLIC_PADDLE_PRICE_LIFETIME }}
 
   build-and-push-backend:
     name: Build & Push Backend
