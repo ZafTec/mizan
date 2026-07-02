@@ -42,6 +42,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         "foods",
         "household_members",
         "households",
+        "subscriptions",
         "audit_logs",
         "users"
     };
@@ -238,6 +239,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             db.Foods.RemoveRange(db.Foods);
             db.HouseholdMembers.RemoveRange(db.HouseholdMembers);
             db.Households.RemoveRange(db.Households);
+            db.Subscriptions.RemoveRange(db.Subscriptions);
             db.AuditLogs.RemoveRange(db.AuditLogs);
             db.Users.RemoveRange(db.Users);
             await db.SaveChangesAsync();
@@ -275,6 +277,28 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         db.Users.Add(user);
         await db.SaveChangesAsync();
         return user;
+    }
+
+    // Entitlement is resolved from the subscriptions table (see EntitlementService),
+    // not a user flag, so tests hitting Pro-gated endpoints need a row here.
+    public async Task GrantProAsync(Guid userId)
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+
+        var now = DateTime.UtcNow;
+        db.Subscriptions.Add(new Subscription
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Plan = "pro",
+            Status = "active",
+            IsLifetime = false,
+            CurrentPeriodEnd = now.AddDays(30),
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+        await db.SaveChangesAsync();
     }
 
     public async Task<Recipe> SeedRecipeAsync(Guid userId, string title, string description, int servings, int prepTimeMinutes, bool isPublic = false)

@@ -26,6 +26,7 @@ public class HouseholdsControllerTests
         var ownerId = Guid.NewGuid();
         var ownerEmail = $"owner-{ownerId:N}@example.com";
         await _fixture.SeedUserAsync(ownerId, ownerEmail);
+        await _fixture.GrantProAsync(ownerId); // household invites are Pro-gated
 
         var memberId = Guid.NewGuid();
         var memberEmail = $"member-{memberId:N}@example.com";
@@ -67,6 +68,7 @@ public class HouseholdsControllerTests
         var ownerId = Guid.NewGuid();
         var ownerEmail = $"owner-{ownerId:N}@example.com";
         await _fixture.SeedUserAsync(ownerId, ownerEmail);
+        await _fixture.GrantProAsync(ownerId); // household invites are Pro-gated
 
         var memberId = Guid.NewGuid();
         var memberEmail = $"member-{memberId:N}@example.com";
@@ -108,6 +110,7 @@ public class HouseholdsControllerTests
         var ownerId = Guid.NewGuid();
         var ownerEmail = $"owner-{ownerId:N}@example.com";
         await _fixture.SeedUserAsync(ownerId, ownerEmail);
+        await _fixture.GrantProAsync(ownerId); // household invites are Pro-gated
 
         using var ownerClient = _fixture.CreateAuthenticatedClient(ownerId, ownerEmail);
         var createResponse = await ownerClient.PostAsJsonAsync("/api/Households", new { Name = "Ghosts" });
