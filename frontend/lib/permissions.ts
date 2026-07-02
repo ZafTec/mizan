@@ -30,6 +30,9 @@ export const statement = {
 
   // Client data access (trainer permissions)
   clientData: ["viewNutrition", "viewWorkouts", "viewMeasurements"],
+
+  // Session management (matches better-auth's built-in admin statements, spread into adminRole below)
+  session: ["list", "revoke", "delete"],
 } as const;
 
 // Create access controller

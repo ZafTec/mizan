@@ -77,6 +77,7 @@ export default function BillingPage() {
 
   useEffect(() => {
     if (isPro && awaitingActivation) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reacting to the poll above flipping isPro, not derivable from props/state alone
       setAwaitingActivation(false);
       setCheckingOut(null);
       appToast.success("You're on Pro. Welcome aboard.");
@@ -96,6 +97,7 @@ export default function BillingPage() {
     const priceId = map[checkout];
     if (priceId) {
       window.history.replaceState({}, "", "/billing");
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- opening checkout on arrival from a pricing CTA's ?checkout= param, not derivable from render
       startCheckout(priceId, checkout);
     }
   }, [user, startCheckout]);
