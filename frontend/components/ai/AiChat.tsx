@@ -2,8 +2,12 @@
 
 import { useRef, useState, useTransition } from "react";
 import { AnimatedIcon, type AnimatedIconName } from "@/components/ui/animated-icon";
+import { ApiError } from "@/lib/api";
 import { clientApi } from "@/lib/api.client";
 import { cn } from "@/lib/utils";
+import { useSubscription } from "@/lib/hooks/useSubscription";
+import { ProUpsell } from "@/components/billing/ProUpsell";
+import Loading from "@/components/Loading";
 
 interface Message {
 	id: string;
@@ -34,6 +38,7 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 	const [pending, startTransition] = useTransition();
 	const [error, setError] = useState<string | null>(null);
 	const threadRef = useRef<HTMLDivElement>(null);
+	const { isPro, loading: subLoading } = useSubscription();
 
 	function scrollToBottom() {
 		requestAnimationFrame(() => {
@@ -68,7 +73,11 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 				]);
 				scrollToBottom();
 			} catch (err) {
-				setError(err instanceof Error ? err.message : "Chat request failed.");
+				if (err instanceof ApiError && err.status === 403) {
+					setError("AI Coach is a Pro feature. Upgrade to keep chatting.");
+				} else {
+					setError(err instanceof Error ? err.message : "Chat request failed.");
+				}
 			}
 		});
 	}
@@ -76,6 +85,26 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 	function onSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
 		send(input);
+	}
+
+	if (subLoading) {
+		return (
+			<section className="glass-panel flex min-h-[620px] items-center justify-center p-0">
+				<Loading />
+			</section>
+		);
+	}
+
+	if (!isPro) {
+		return (
+			<section className="glass-panel flex min-h-[620px] flex-col items-center justify-center p-0">
+				<ProUpsell
+					icon="bot"
+					title="AI Coach is a Pro feature"
+					message="Get personalised meal suggestions, day analysis, and food-photo logging. Upgrade to unlock the assistant."
+				/>
+			</section>
+		);
 	}
 
 	return (
