@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" role="img" aria-labelledby="hp-title">
+  <title id="hp-title">Three dumbbells growing in size along a rising arrow with weight increase chips</title>
+  <circle cx="240" cy="160" r="120" fill="var(--secondary, #DDE7EB)" opacity="0.45"/>
+  <!-- rising arrow -->
+  <path d="M96 236 C 180 220, 280 160, 372 92" fill="none" stroke="var(--primary, #2E837B)" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 14"/>
+  <path d="M372 92 l-22 2 M372 92 l-6 21" stroke="var(--primary, #2E837B)" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <!-- dumbbell small -->
+  <g transform="translate(96 216)">
+    <rect x="0" y="6" width="9" height="26" rx="4" fill="var(--foreground, #1E2A32)"/>
+    <rect x="43" y="6" width="9" height="26" rx="4" fill="var(--foreground, #1E2A32)"/>
+    <rect x="9" y="15" width="34" height="8" rx="4" fill="var(--muted-foreground, #64828F)"/>
+  </g>
+  <!-- dumbbell medium -->
+  <g transform="translate(196 158)">
+    <rect x="0" y="4" width="12" height="40" rx="5" fill="var(--primary, #2E837B)"/>
+    <rect x="58" y="4" width="12" height="40" rx="5" fill="var(--primary, #2E837B)"/>
+    <rect x="12" y="19" width="46" height="10" rx="5" fill="var(--muted-foreground, #64828F)"/>
+  </g>
+  <!-- dumbbell large with proud sparkle -->
+  <g transform="translate(300 82)">
+    <rect x="0" y="0" width="15" height="58" rx="6" fill="#E8B849"/>
+    <rect x="75" y="0" width="15" height="58" rx="6" fill="#E8B849"/>
+    <rect x="15" y="23" width="60" height="12" rx="6" fill="var(--muted-foreground, #64828F)"/>
+  </g>
+  <path d="M404 62 l4 9 9 4 -9 4 -4 9 -4 -9 -9 -4 9 -4 z" fill="#E8B849"/>
+  <!-- increase chips -->
+  <g font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" font-weight="800" text-anchor="middle">
+    <rect x="132" y="256" width="64" height="24" rx="12" fill="var(--secondary, #DDE7EB)"/>
+    <text x="164" y="273" fill="var(--foreground, #1E2A32)">60 kg</text>
+    <rect x="220" y="226" width="72" height="24" rx="12" fill="var(--primary, #2E837B)"/>
+    <text x="256" y="243" fill="#FFFFFF">62.5 kg</text>
+    <rect x="316" y="168" width="64" height="24" rx="12" fill="#E8B849"/>
+    <text x="348" y="185" fill="#1E2A32">65 kg</text>
+  </g>
+  <!-- sparkles -->
+  <circle cx="86" cy="120" r="4" fill="#D4654A" opacity="0.7"/>
+  <circle cx="420" cy="250" r="3.5" fill="var(--primary, #2E837B)" opacity="0.6"/>
+</svg>

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-labelledby="cb-title">
+  <title id="cb-title">A looping confetti burst overlay for celebration moments</title>
+  <style>
+    .cb-p { animation: cb-fall 2.8s linear infinite; }
+    .cb-p2 { animation-delay: .5s; } .cb-p3 { animation-delay: 1s; } .cb-p4 { animation-delay: 1.5s; } .cb-p5 { animation-delay: 2s; }
+    .cb-spin { transform-box: fill-box; transform-origin: center; animation: cb-spin 1.6s linear infinite; }
+    @keyframes cb-fall { 0% { transform: translateY(-40px); opacity: 0; } 12% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translateY(300px); opacity: 0; } }
+    @keyframes cb-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .cb-p, .cb-spin { animation: none; } .cb-p { opacity: .9; transform: translateY(80px); } }
+  </style>
+  <g class="cb-p">
+    <rect class="cb-spin" x="60" y="10" width="12" height="12" rx="3" fill="#D4654A"/>
+    <circle cx="180" cy="24" r="5" fill="#4DCFC4"/>
+    <rect class="cb-spin" x="320" y="16" width="10" height="10" rx="2" fill="#E8B849"/>
+  </g>
+  <g class="cb-p cb-p2">
+    <rect class="cb-spin" x="120" y="4" width="11" height="11" rx="2.5" fill="#E8B849"/>
+    <circle cx="260" cy="18" r="4.5" fill="#D4654A"/>
+    <path d="M348 20 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3 z" fill="#4DCFC4"/>
+  </g>
+  <g class="cb-p cb-p3">
+    <circle cx="90" cy="12" r="5" fill="#E8B849"/>
+    <rect class="cb-spin" x="220" y="8" width="12" height="12" rx="3" fill="#4DCFC4"/>
+    <rect class="cb-spin" x="300" y="26" width="9" height="9" rx="2" fill="#D4654A"/>
+  </g>
+  <g class="cb-p cb-p4">
+    <rect class="cb-spin" x="40" y="20" width="10" height="10" rx="2" fill="#4DCFC4"/>
+    <path d="M160 10 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3 z" fill="#E8B849"/>
+    <circle cx="370" cy="14" r="4" fill="#D4654A"/>
+  </g>
+  <g class="cb-p cb-p5">
+    <circle cx="140" cy="26" r="4" fill="#D4654A"/>
+    <rect class="cb-spin" x="250" y="14" width="11" height="11" rx="2.5" fill="#E8B849"/>
+    <circle cx="330" cy="8" r="5" fill="#4DCFC4"/>
+  </g>
+</svg>

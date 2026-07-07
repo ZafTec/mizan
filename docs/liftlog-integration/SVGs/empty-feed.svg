@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-labelledby="ef-title">
+  <title id="ef-title">Two quiet feed cards with a heart bubble, waiting for friends to share workouts</title>
+  <circle cx="200" cy="150" r="108" fill="var(--secondary, #DDE7EB)" opacity="0.45"/>
+  <!-- back card -->
+  <rect x="86" y="64" width="220" height="84" rx="16" fill="var(--secondary, #DDE7EB)"/>
+  <circle cx="116" cy="94" r="14" fill="var(--muted-foreground, #64828F)" opacity="0.5"/>
+  <rect x="140" y="84" width="90" height="9" rx="4.5" fill="var(--muted-foreground, #64828F)" opacity="0.5"/>
+  <rect x="140" y="100" width="130" height="8" rx="4" fill="var(--muted-foreground, #64828F)" opacity="0.3"/>
+  <!-- front card -->
+  <rect x="98" y="128" width="220" height="102" rx="16" fill="var(--card, #FFFFFF)" stroke="var(--border, #DDE7EB)" stroke-width="2"/>
+  <circle cx="130" cy="160" r="15" fill="var(--primary, #2E837B)"/>
+  <path d="M124 160 a6 6 0 0 1 12 0 M130 154 a4 4 0 1 0 0.01 0" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+  <rect x="156" y="150" width="96" height="10" rx="5" fill="var(--foreground, #1E2A32)" opacity="0.8"/>
+  <rect x="156" y="167" width="70" height="8" rx="4" fill="var(--muted-foreground, #64828F)" opacity="0.5"/>
+  <!-- mini workout summary chips -->
+  <rect x="116" y="192" width="58" height="20" rx="10" fill="var(--secondary, #DDE7EB)"/>
+  <rect x="182" y="192" width="58" height="20" rx="10" fill="var(--secondary, #DDE7EB)"/>
+  <rect x="248" y="192" width="42" height="20" rx="10" fill="#E8B849" opacity="0.9"/>
+  <text x="269" y="206" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#1E2A32">PR</text>
+  <!-- floating heart bubble -->
+  <g>
+    <circle cx="316" cy="98" r="24" fill="#D4654A"/>
+    <path d="M316 108 c-8 -6 -12 -10 -12 -15 a6 6 0 0 1 12 -2 a6 6 0 0 1 12 2 c0 5 -4 9 -12 15 z" fill="#FFFFFF"/>
+    <path d="M304 118 l-6 10 12 -4 z" fill="#D4654A"/>
+  </g>
+  <!-- sparkles -->
+  <path d="M74 190 l3.5 8 8 3.5 -8 3.5 -3.5 8 -3.5 -8 -8 -3.5 8 -3.5 z" fill="#E8B849"/>
+  <circle cx="342" cy="176" r="3" fill="var(--primary, #2E837B)" opacity="0.5"/>
+</svg>
