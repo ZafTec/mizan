@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" role="img" aria-labelledby="rt-title">
+  <title id="rt-title">A circular rest timer counting down between sets</title>
+  <style>
+    .rt-arc { animation: rt-drain 6s linear infinite; }
+    .rt-tip { transform-origin: 150px 160px; animation: rt-sweep 6s linear infinite; }
+    .rt-spark { transform-box: fill-box; transform-origin: center; animation: rt-twinkle 2.4s ease-in-out infinite; }
+    @keyframes rt-drain { from { stroke-dasharray: 540 540; } to { stroke-dasharray: 0 540; } }
+    @keyframes rt-sweep { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+    @keyframes rt-twinkle { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.55); opacity: 0.5; } }
+    @media (prefers-reduced-motion: reduce) { .rt-arc, .rt-tip, .rt-spark { animation: none; } }
+  </style>
+  <!-- bezel -->
+  <circle cx="150" cy="160" r="104" fill="var(--card, #FFFFFF)" stroke="var(--border, #DDE7EB)" stroke-width="2"/>
+  <!-- track -->
+  <circle cx="150" cy="160" r="86" fill="none" stroke="var(--secondary, #DDE7EB)" stroke-width="14"/>
+  <!-- draining arc, sweeps from full to empty -->
+  <circle class="rt-arc" cx="150" cy="160" r="86" fill="none" stroke="var(--primary, #2E837B)" stroke-width="14" stroke-linecap="round"
+          stroke-dasharray="378 540" transform="rotate(-90 150 160)"/>
+  <!-- arc tip dot -->
+  <circle class="rt-tip" cx="150" cy="74" r="7" fill="#E8B849"/>
+  <!-- top button and crown -->
+  <rect x="138" y="34" width="24" height="14" rx="5" fill="var(--muted-foreground, #64828F)"/>
+  <rect x="145" y="46" width="10" height="12" fill="var(--muted-foreground, #64828F)"/>
+  <g transform="rotate(38 150 160)">
+    <rect x="138" y="40" width="24" height="12" rx="5" fill="var(--muted-foreground, #64828F)" opacity="0.7"/>
+  </g>
+  <!-- time -->
+  <text x="150" y="168" font-family="ui-sans-serif, system-ui, sans-serif" font-size="44" font-weight="800" text-anchor="middle" fill="var(--foreground, #1E2A32)">1:30</text>
+  <text x="150" y="196" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="var(--muted-foreground, #64828F)">REST</text>
+  <!-- tiny waiting dumbbell -->
+  <g transform="translate(118 216)">
+    <rect x="0" y="4" width="7" height="18" rx="3" fill="var(--foreground, #1E2A32)"/>
+    <rect x="57" y="4" width="7" height="18" rx="3" fill="var(--foreground, #1E2A32)"/>
+    <rect x="7" y="10" width="50" height="6" rx="3" fill="var(--muted-foreground, #64828F)"/>
+  </g>
+  <!-- sparks -->
+  <path class="rt-spark" d="M250 92 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3 z" fill="#E8B849"/>
+  <circle cx="48" cy="110" r="3.5" fill="#D4654A" opacity="0.6"/>
+</svg>
