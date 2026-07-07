@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-labelledby="sc-title">
+  <title id="sc-title">A check mark drawing itself inside a circle, workout saved</title>
+  <style>
+    .sc-ring { stroke-dasharray: 502; stroke-dashoffset: 502; animation: sc-draw .6s ease-out forwards; }
+    .sc-check { stroke-dasharray: 90; stroke-dashoffset: 90; animation: sc-draw .35s ease-out .5s forwards; }
+    .sc-burst { transform-box: fill-box; transform-origin: center; opacity: 0; animation: sc-pop .5s ease-out .8s forwards; }
+    @keyframes sc-draw { to { stroke-dashoffset: 0; } }
+    @keyframes sc-pop { 0% { opacity: 0; transform: scale(.4); } 60% { opacity: 1; transform: scale(1.15); } 100% { opacity: 1; transform: scale(1); } }
+    @media (prefers-reduced-motion: reduce) {
+      .sc-ring, .sc-check { animation: none; stroke-dashoffset: 0; }
+      .sc-burst { animation: none; opacity: 1; }
+    }
+  </style>
+  <!-- soft fill -->
+  <circle cx="100" cy="100" r="80" fill="var(--primary, #2E837B)" opacity="0.12"/>
+  <!-- ring draws on -->
+  <circle class="sc-ring" cx="100" cy="100" r="80" fill="none" stroke="var(--primary, #2E837B)" stroke-width="10" stroke-linecap="round" transform="rotate(-90 100 100)"/>
+  <!-- check draws on -->
+  <path class="sc-check" d="M66 102 l24 24 44 -50" fill="none" stroke="var(--primary, #2E837B)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- sparkle burst -->
+  <g class="sc-burst">
+    <path d="M164 40 l4 9 9 4 -9 4 -4 9 -4 -9 -9 -4 9 -4 z" fill="#E8B849"/>
+    <circle cx="36" cy="52" r="5" fill="#D4654A"/>
+    <circle cx="170" cy="150" r="4" fill="#E8B849"/>
+  </g>
+</svg>

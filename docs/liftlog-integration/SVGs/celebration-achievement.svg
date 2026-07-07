@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-labelledby="ca-title">
+  <title id="ca-title">A hexagonal achievement badge with a star bursting open, achievement unlocked</title>
+  <style>
+    .ca-burst { transform-box: fill-box; transform-origin: center; animation: ca-burst 1.9s ease-in-out infinite; }
+    .ca-badge { transform-box: fill-box; transform-origin: center; animation: ca-pop 2.8s ease-in-out infinite; }
+    .ca-star { transform-box: fill-box; transform-origin: center; animation: ca-spin 2.8s ease-in-out infinite; }
+    @keyframes ca-burst { 0%,100% { opacity: .6; transform: scale(1); } 50% { opacity: 1; transform: scale(1.07); } }
+    @keyframes ca-pop { 0%,90%,100% { transform: scale(1); } 94% { transform: scale(1.06); } 97% { transform: scale(.98); } }
+    @keyframes ca-spin { 0%,80%,100% { transform: rotate(0deg); } 88% { transform: rotate(-8deg); } 94% { transform: rotate(6deg); } }
+    @media (prefers-reduced-motion: reduce) { .ca-burst, .ca-badge, .ca-star { animation: none; } }
+  </style>
+  <!-- burst lines -->
+  <g class="ca-burst" stroke="#E8B849" stroke-width="5" stroke-linecap="round" opacity="0.6">
+    <line x1="200" y1="30" x2="200" y2="50"/>
+    <line x1="126" y1="52" x2="138" y2="68"/>
+    <line x1="274" y1="52" x2="262" y2="68"/>
+    <line x1="94" y1="122" x2="112" y2="128"/>
+    <line x1="306" y1="122" x2="288" y2="128"/>
+  </g>
+  <!-- ribbons -->
+  <path d="M172 190 l-22 66 22 -14 12 20 16 -60 z" fill="var(--primary, #2E837B)"/>
+  <path d="M228 190 l22 66 -22 -14 -12 20 -16 -60 z" fill="#2E837B" opacity="0.75"/>
+  <!-- hex badge -->
+  <g class="ca-badge">
+    <path d="M200 56 l62 36 v72 l-62 36 -62 -36 v-72 z" fill="var(--primary, #2E837B)"/>
+    <path d="M200 70 l50 29 v58 l-50 29 -50 -29 v-58 z" fill="#E8B849"/>
+    <path d="M200 70 l50 29 v10 l-50 -29 -50 29 v-10 z" fill="#FFFFFF" opacity="0.28"/>
+    <!-- star -->
+    <path class="ca-star" d="M200 96 l10.8 22.4 24.6 3.3 -18 17.1 4.5 24.4 -21.9 -11.9 -21.9 11.9 4.5 -24.4 -18 -17.1 24.6 -3.3 z" fill="#1E2A32"/>
+  </g>
+  <!-- confetti -->
+  <rect x="92" y="176" width="10" height="10" rx="2" fill="#D4654A" transform="rotate(28 97 181)"/>
+  <rect x="300" y="182" width="10" height="10" rx="2" fill="var(--primary, #2E837B)" transform="rotate(-22 305 187)"/>
+  <circle cx="118" cy="86" r="4" fill="#D4654A"/>
+  <circle cx="286" cy="92" r="4" fill="var(--primary, #2E837B)"/>
+  <path d="M320 220 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3 z" fill="#E8B849"/>
+  <path d="M76 224 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3 z" fill="#E8B849"/>
+</svg>

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-labelledby="ees-title">
+  <title id="ees-title">A magnifying glass searching for an exercise, finding only a tiny dumbbell</title>
+  <circle cx="200" cy="150" r="105" fill="var(--secondary, #DDE7EB)" opacity="0.45"/>
+  <!-- magnifier -->
+  <circle cx="178" cy="132" r="64" fill="var(--card, #FFFFFF)" stroke="var(--primary, #2E837B)" stroke-width="10"/>
+  <line x1="226" y1="180" x2="278" y2="232" stroke="var(--primary, #2E837B)" stroke-width="16" stroke-linecap="round"/>
+  <!-- lens glint -->
+  <path d="M136 106 a52 52 0 0 1 30 -20" fill="none" stroke="var(--secondary, #DDE7EB)" stroke-width="8" stroke-linecap="round"/>
+  <!-- tiny dumbbell inside lens -->
+  <g transform="rotate(-18 178 138)">
+    <rect x="150" y="130" width="10" height="26" rx="4" fill="var(--foreground, #1E2A32)"/>
+    <rect x="196" y="130" width="10" height="26" rx="4" fill="var(--foreground, #1E2A32)"/>
+    <rect x="160" y="139" width="36" height="8" rx="4" fill="var(--muted-foreground, #64828F)"/>
+  </g>
+  <!-- floating question marks -->
+  <g fill="var(--muted-foreground, #64828F)" font-family="ui-sans-serif, system-ui, sans-serif" font-weight="800">
+    <text x="286" y="96" font-size="26">?</text>
+    <text x="312" y="128" font-size="18" opacity="0.7">?</text>
+  </g>
+  <!-- sparkles -->
+  <path d="M96 220 l3.5 8 8 3.5 -8 3.5 -3.5 8 -3.5 -8 -8 -3.5 8 -3.5 z" fill="#E8B849"/>
+  <circle cx="88" cy="84" r="3.5" fill="#D4654A" opacity="0.6"/>
+  <circle cx="316" cy="210" r="3" fill="var(--primary, #2E837B)" opacity="0.5"/>
+</svg>

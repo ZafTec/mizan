@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="lbw-title">
+  <title id="lbw-title">Mizan workouts app badge: a barbell wearing a chef hat</title>
+  <defs>
+    <linearGradient id="lbw-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1E2A32"/>
+      <stop offset="1" stop-color="#12262B"/>
+    </linearGradient>
+    <linearGradient id="lbw-teal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4DCFC4"/>
+      <stop offset="1" stop-color="#2E837B"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#lbw-bg)"/>
+  <!-- halo -->
+  <circle cx="256" cy="276" r="150" fill="#4DCFC4" opacity="0.08"/>
+  <!-- chef hat above the bar -->
+  <g>
+    <path d="M256 118c-16 0-29 8-35 20a34 34 0 0 0-46 32c0 14 8 26 20 31v17h122v-17c12-5 20-17 20-31a34 34 0 0 0-46-32c-6-12-19-20-35-20z" fill="#F0F4F6"/>
+    <rect x="195" y="218" width="122" height="18" rx="8" fill="#DDE7EB"/>
+    <path d="M226 168v46M256 172v42M286 168v46" stroke="#C9D6DC" stroke-width="7" stroke-linecap="round"/>
+  </g>
+  <!-- barbell -->
+  <g>
+    <rect x="96" y="300" width="320" height="26" rx="13" fill="#64828F"/>
+    <rect x="150" y="252" width="42" height="122" rx="16" fill="url(#lbw-teal)"/>
+    <rect x="116" y="270" width="28" height="86" rx="12" fill="#E8B849"/>
+    <rect x="320" y="252" width="42" height="122" rx="16" fill="url(#lbw-teal)"/>
+    <rect x="368" y="270" width="28" height="86" rx="12" fill="#E8B849"/>
+    <rect x="204" y="292" width="14" height="42" rx="6" fill="#9FB8C2"/>
+    <rect x="294" y="292" width="14" height="42" rx="6" fill="#9FB8C2"/>
+  </g>
+  <!-- happy face on the bar center -->
+  <g>
+    <circle cx="243" cy="310" r="4" fill="#0F171C"/>
+    <circle cx="269" cy="310" r="4" fill="#0F171C"/>
+    <path d="M244 318q12 9 24 0" stroke="#0F171C" stroke-width="5" fill="none" stroke-linecap="round"/>
+  </g>
+  <!-- sparkles -->
+  <path d="M396 150l7 16 16 7-16 7-7 16-7-16-16-7 16-7z" fill="#E8B849"/>
+  <circle cx="118" cy="170" r="9" fill="#D4654A"/>
+  <circle cx="404" cy="404" r="8" fill="#4DCFC4" opacity="0.8"/>
+</svg>
