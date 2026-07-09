@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Mizan.Application.Interfaces;
 using Mizan.Application.Services;
+using Mizan.Domain.Constants;
 using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Commands;
@@ -42,8 +43,8 @@ public class CreateFoodDiaryEntryCommandValidator : AbstractValidator<CreateFood
     public CreateFoodDiaryEntryCommandValidator()
     {
         RuleFor(x => x.MealType).NotEmpty()
-            .Must(m => new[] { "MEAL", "SNACK", "DRINK" }.Contains(m.ToUpper()))
-            .WithMessage("Meal type must be MEAL, SNACK, or DRINK");
+            .Must(m => MealTypes.IsValid(m))
+            .WithMessage($"Meal type must be one of: {string.Join(", ", MealTypes.All)}");
         RuleFor(x => x.Servings).GreaterThan(0);
         RuleFor(x => x)
             .Must(x => x.FoodId.HasValue || x.RecipeId.HasValue || !string.IsNullOrWhiteSpace(x.Name))
@@ -107,7 +108,7 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
             FoodId = request.FoodId,
             RecipeId = request.RecipeId,
             EntryDate = entryDate,
-            MealType = request.MealType.ToUpper(),
+            MealType = MealTypes.Normalize(request.MealType),
             Servings = request.Servings,
             Calories = request.Calories,
             ProteinGrams = request.ProteinGrams,

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-labelledby="efo-title">
+  <title id="efo-title">Two profile avatars reaching toward each other over a share link, not yet connected</title>
+  <circle cx="200" cy="150" r="108" fill="var(--secondary, #DDE7EB)" opacity="0.45"/>
+  <!-- left avatar (you) -->
+  <circle cx="128" cy="128" r="40" fill="var(--primary, #2E837B)"/>
+  <circle cx="128" cy="116" r="13" fill="#FFFFFF" opacity="0.95"/>
+  <path d="M104 152 a24 24 0 0 1 48 0" fill="#FFFFFF" opacity="0.95"/>
+  <!-- right avatar (future friend), dashed outline -->
+  <circle cx="272" cy="128" r="40" fill="none" stroke="var(--muted-foreground, #64828F)" stroke-width="3.5" stroke-dasharray="9 7"/>
+  <circle cx="272" cy="116" r="13" fill="var(--muted-foreground, #64828F)" opacity="0.4"/>
+  <path d="M248 152 a24 24 0 0 1 48 0" fill="var(--muted-foreground, #64828F)" opacity="0.4"/>
+  <!-- dotted connection -->
+  <path d="M168 128 h64" stroke="#E8B849" stroke-width="5" stroke-linecap="round" stroke-dasharray="1 12"/>
+  <!-- share-link chip -->
+  <rect x="118" y="196" width="164" height="34" rx="17" fill="var(--card, #FFFFFF)" stroke="var(--border, #DDE7EB)" stroke-width="2"/>
+  <g stroke="var(--primary, #2E837B)" stroke-width="2.6" stroke-linecap="round" fill="none">
+    <path d="M140 218 a6 6 0 0 1 0 -9 l6 -3 a6 6 0 0 1 6 9"/>
+    <path d="M156 204 a6 6 0 0 1 0 9 l-6 3 a6 6 0 0 1 -6 -9"/>
+  </g>
+  <text x="216" y="218" font-family="ui-monospace, monospace" font-size="13" font-weight="600" text-anchor="middle" fill="var(--muted-foreground, #64828F)">/u/share?t=...</text>
+  <!-- paper plane -->
+  <path d="M310 74 l-30 16 12 5 3 12 6 -9 14 4 z" fill="#D4654A"/>
+  <!-- sparkles -->
+  <path d="M84 74 l3.5 8 8 3.5 -8 3.5 -3.5 8 -3.5 -8 -8 -3.5 8 -3.5 z" fill="#E8B849"/>
+  <circle cx="328" cy="196" r="3" fill="var(--primary, #2E837B)" opacity="0.5"/>
+</svg>

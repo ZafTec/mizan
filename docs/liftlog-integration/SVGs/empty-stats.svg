@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-labelledby="es-title">
+  <title id="es-title">An empty progress chart with a flag waiting at the top of a dashed trend line</title>
+  <circle cx="200" cy="150" r="108" fill="var(--secondary, #DDE7EB)" opacity="0.45"/>
+  <!-- axes -->
+  <g stroke="var(--muted-foreground, #64828F)" stroke-width="4" stroke-linecap="round">
+    <path d="M92 66 V226 H320"/>
+  </g>
+  <!-- ghost bars -->
+  <g fill="var(--secondary, #DDE7EB)">
+    <rect x="112" y="182" width="28" height="44" rx="6"/>
+    <rect x="156" y="162" width="28" height="64" rx="6"/>
+    <rect x="200" y="138" width="28" height="88" rx="6"/>
+    <rect x="244" y="118" width="28" height="108" rx="6"/>
+  </g>
+  <!-- dashed trend line -->
+  <path d="M112 190 C 160 178, 200 150, 258 112" fill="none" stroke="var(--primary, #2E837B)" stroke-width="5" stroke-linecap="round" stroke-dasharray="1 12"/>
+  <!-- PR flag at the top -->
+  <g>
+    <line x1="284" y1="96" x2="284" y2="60" stroke="var(--foreground, #1E2A32)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M284 60 h34 l-9 10 9 10 h-34 z" fill="#D4654A"/>
+    <circle cx="284" cy="100" r="7" fill="#E8B849" stroke="var(--card, #FFFFFF)" stroke-width="3"/>
+  </g>
+  <!-- data point dots -->
+  <circle cx="126" cy="188" r="5" fill="var(--muted-foreground, #64828F)" opacity="0.6"/>
+  <circle cx="214" cy="146" r="5" fill="var(--muted-foreground, #64828F)" opacity="0.6"/>
+  <!-- sparkle -->
+  <path d="M330 158 l3.5 8 8 3.5 -8 3.5 -3.5 8 -3.5 -8 -8 -3.5 8 -3.5 z" fill="#E8B849"/>
+</svg>

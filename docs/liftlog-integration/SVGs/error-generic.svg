@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-labelledby="eg-title">
+  <title id="eg-title">A barbell bent in the middle with a plate rolling away, something went wrong</title>
+  <circle cx="200" cy="150" r="105" fill="var(--secondary, #DDE7EB)" opacity="0.45"/>
+  <ellipse cx="190" cy="234" rx="120" ry="10" fill="var(--secondary, #DDE7EB)"/>
+  <!-- bent bar -->
+  <path d="M86 196 Q 190 236 294 196" fill="none" stroke="var(--muted-foreground, #64828F)" stroke-width="12" stroke-linecap="round"/>
+  <!-- left plates stay on -->
+  <rect x="96" y="158" width="24" height="84" rx="9" fill="var(--primary, #2E837B)" transform="rotate(-8 108 200)"/>
+  <rect x="76" y="172" width="17" height="56" rx="7" fill="#E8B849" transform="rotate(-8 84 200)"/>
+  <!-- right plate slot empty, collar popped -->
+  <rect x="272" y="176" width="10" height="26" rx="4" fill="var(--foreground, #1E2A32)" opacity="0.55" transform="rotate(10 277 189)"/>
+  <!-- runaway plate -->
+  <g transform="rotate(24 330 196)">
+    <circle cx="330" cy="196" r="30" fill="#D4654A"/>
+    <circle cx="330" cy="196" r="8" fill="var(--background, #F0F4F6)"/>
+  </g>
+  <!-- motion lines -->
+  <g stroke="var(--muted-foreground, #64828F)" stroke-width="3" stroke-linecap="round" opacity="0.6">
+    <line x1="284" y1="150" x2="296" y2="146"/>
+    <line x1="278" y1="162" x2="292" y2="158"/>
+  </g>
+  <!-- worried face on left plate -->
+  <g stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" fill="none" transform="rotate(-8 108 200)">
+    <circle cx="103" cy="190" r="1.6" fill="#FFFFFF" stroke="none"/>
+    <circle cx="113" cy="190" r="1.6" fill="#FFFFFF" stroke="none"/>
+    <path d="M103 202 q5 -4 10 0"/>
+  </g>
+  <!-- exclamation bubble -->
+  <g>
+    <circle cx="206" cy="92" r="26" fill="#E8B849"/>
+    <rect x="202" y="76" width="8" height="22" rx="4" fill="#1E2A32"/>
+    <circle cx="206" cy="106" r="4.5" fill="#1E2A32"/>
+    <path d="M192 114 l-8 12 16 -5 z" fill="#E8B849"/>
+  </g>
+</svg>
