@@ -15,6 +15,7 @@ Handoff package for rebuilding Mizan's workout/exercise features by sampling htt
 | `05-implementation-roadmap.md` | Phased plan (0-6) with gates, tests, effort, and open user decisions |
 | `06-test-baseline.md` | What was run on 2026-07-07 and the results the implementing agent starts from |
 | `07-svg-assets.md` | SVG asset pack guide: inventory of the illustrations, icon sprites, animated assets, and marketing/social media graphics in `SVGs/`, with per-feature placement and integration rules |
+| `08-mcp-hardening.md` | MCP server review (2026-07-09): duplicate/shadowed tools, meal-type collapse bug, pro/entitlement gating surface, error mapping, missing tools, testing strategy. Parallelizable with the feature work except where marked blocked on doc 04 phases |
 
 ## One-paragraph summary
 
