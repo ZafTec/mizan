@@ -80,10 +80,10 @@ Per 04 §7-8: new achievement criteria seeds + evaluator triggers (fix the two d
 
 Total ≈ 6-7 weeks single-agent. Phases 2/3 parallelize; 5 depends on 3; 6 depends on 4+5.
 
-## Open decisions for the user (do not block Phases 0-2 on these)
+## Product decisions resolved 2026-07-18
 
-1. **Feed snapshot vs live-read** of workout summaries (04 §6 recommends snapshot-at-publish).
-2. **Feed retention:** keep items forever or LiftLog-style TTL (~90 days)?
-3. **Social gating:** is any of the social layer Pro-gated (Paddle entitlements exist now) or free?
-4. **Emoji reaction set:** which ~8 emoji.
-5. **Handle namespace:** reserve handles now (unique column, nullable) even though search ships later? (04 assumes yes.)
+1. Workout summaries use live reads.
+2. Feed items are retained indefinitely.
+3. Social features are free.
+4. Reactions are fixed to `👍 ❤️ 💪 🔥 👏 🎉 🏆`.
+5. Handles and public discovery search are deferred.
