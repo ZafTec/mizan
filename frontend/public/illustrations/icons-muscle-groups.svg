@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:none">
+  <!--
+    Muscle group sprite. 32x32 symbols. A shared body silhouette (#mg-base) renders at
+    25% opacity; the targeted region renders solid. Everything is currentColor.
+    Usage: <svg class="size-8" aria-hidden="true"><use href="/illustrations/icons-muscle-groups.svg#mg-chest"/></svg>
+  -->
+  <defs>
+    <g id="mg-base" fill="currentColor">
+      <circle cx="16" cy="4.5" r="3"/>
+      <path d="M12 9h8a2 2 0 0 1 2 2v7.5h-1.5V31h-3.5v-9h-2v9H11.5V18.5H10V11a2 2 0 0 1 2-2z"/>
+      <rect x="7" y="9.8" width="2.6" height="9.5" rx="1.3"/>
+      <rect x="22.4" y="9.8" width="2.6" height="9.5" rx="1.3"/>
+    </g>
+    <symbol id="mg-chest" viewBox="0 0 32 32">
+      <g opacity="0.25"><use href="#mg-base"/></g>
+      <rect x="11.5" y="10.5" width="9" height="4.5" rx="1.5" fill="currentColor"/>
+    </symbol>
+    <symbol id="mg-back" viewBox="0 0 32 32">
+      <g opacity="0.25"><use href="#mg-base"/></g>
+      <path d="M12 10h8a1.5 1.5 0 0 1 1.5 1.5V15l-5.5 3.5L10.5 15v-3.5A1.5 1.5 0 0 1 12 10z" fill="currentColor"/>
+    </symbol>
+    <symbol id="mg-shoulders" viewBox="0 0 32 32">
+      <g opacity="0.25"><use href="#mg-base"/></g>
+      <circle cx="10.2" cy="10.6" r="2.6" fill="currentColor"/>
+      <circle cx="21.8" cy="10.6" r="2.6" fill="currentColor"/>
+    </symbol>
+    <symbol id="mg-arms" viewBox="0 0 32 32">
+      <g opacity="0.25"><use href="#mg-base"/></g>
+      <rect x="7" y="9.8" width="2.6" height="9.5" rx="1.3" fill="currentColor"/>
+      <rect x="22.4" y="9.8" width="2.6" height="9.5" rx="1.3" fill="currentColor"/>
+    </symbol>
+    <symbol id="mg-core" viewBox="0 0 32 32">
+      <g opacity="0.25"><use href="#mg-base"/></g>
+      <rect x="12.5" y="15" width="7" height="4" rx="1.2" fill="currentColor"/>
+    </symbol>
+    <symbol id="mg-glutes" viewBox="0 0 32 32">
+      <g opacity="0.25"><use href="#mg-base"/></g>
+      <rect x="12" y="18" width="8" height="3.6" rx="1.8" fill="currentColor"/>
+    </symbol>
+    <symbol id="mg-legs" viewBox="0 0 32 32">
+      <g opacity="0.25"><use href="#mg-base"/></g>
+      <path d="M11.5 20h4v8h-4zM16.5 20h4v8h-4z" fill="currentColor"/>
+    </symbol>
+    <symbol id="mg-calves" viewBox="0 0 32 32">
+      <g opacity="0.25"><use href="#mg-base"/></g>
+      <path d="M11.5 26h3.5v5h-3.5zM17 26h3.5v5H17z" fill="currentColor"/>
+    </symbol>
+    <symbol id="mg-cardio" viewBox="0 0 32 32">
+      <g opacity="0.25"><use href="#mg-base"/></g>
+      <path d="M16 17.5c-3.2-2.2-4.5-3.6-4.5-5.3a2.5 2.5 0 0 1 4.5-1.5 2.5 2.5 0 0 1 4.5 1.5c0 1.7-1.3 3.1-4.5 5.3z" fill="currentColor"/>
+    </symbol>
+    <symbol id="mg-fullbody" viewBox="0 0 32 32">
+      <use href="#mg-base"/>
+    </symbol>
+  </defs>
+</svg>

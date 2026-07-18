@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" role="img" aria-labelledby="lb-title">
+  <title id="lb-title">A barbell doing little reps while content loads</title>
+  <style>
+    .lb-bar { animation: lb-rep 1.4s ease-in-out infinite; }
+    .lb-shadow { transform-box: fill-box; transform-origin: center; animation: lb-shadow 1.4s ease-in-out infinite; }
+    .lb-dot { animation: lb-blink 1.4s ease-in-out infinite; }
+    .lb-d2 { animation-delay: .2s; } .lb-d3 { animation-delay: .4s; }
+    @keyframes lb-rep { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-16px); } }
+    @keyframes lb-shadow { 0%,100% { transform: scaleX(1); opacity: .5; } 50% { transform: scaleX(.7); opacity: .28; } }
+    @keyframes lb-blink { 0%,100% { opacity: .25; } 50% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) {
+      .lb-bar, .lb-shadow { animation: none; }
+      .lb-dot { animation-duration: 2.8s; }
+    }
+  </style>
+  <!-- floor shadow -->
+  <ellipse class="lb-shadow" cx="100" cy="96" rx="56" ry="6" fill="var(--secondary, #DDE7EB)"/>
+  <!-- bouncing barbell -->
+  <g class="lb-bar">
+    <rect x="30" y="58" width="140" height="8" rx="4" fill="var(--muted-foreground, #64828F)"/>
+    <rect x="52" y="40" width="14" height="44" rx="6" fill="var(--primary, #2E837B)"/>
+    <rect x="40" y="48" width="10" height="28" rx="4" fill="#E8B849"/>
+    <rect x="134" y="40" width="14" height="44" rx="6" fill="var(--primary, #2E837B)"/>
+    <rect x="150" y="48" width="10" height="28" rx="4" fill="#E8B849"/>
+  </g>
+  <!-- loading dots -->
+  <g fill="var(--muted-foreground, #64828F)">
+    <circle class="lb-dot" cx="86" cy="112" r="4"/>
+    <circle class="lb-dot lb-d2" cx="100" cy="112" r="4"/>
+    <circle class="lb-dot lb-d3" cx="114" cy="112" r="4"/>
+  </g>
+</svg>

@@ -2,6 +2,7 @@ import { getExercises } from "@/data/exercise";
 import Pagination from "@/components/Pagination";
 import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
 import Link from "next/link";
+import ExerciseAdminActions from "./ExerciseAdminActions";
 
 export const dynamic = "force-dynamic";
 
@@ -78,12 +79,13 @@ export default async function AdminExercisesPage({
 								<th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Muscle Group</th>
 								<th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Equipment</th>
 								<th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Type</th>
+								<th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-charcoal-blue-500 dark:text-charcoal-blue-300">Actions</th>
 							</tr>
 						</thead>
 						<tbody className="divide-y divide-charcoal-blue-100 dark:divide-white/10">
 							{exercises.length === 0 ? (
 								<tr>
-									<td colSpan={5} className="px-6 py-12 text-center text-charcoal-blue-500 dark:text-charcoal-blue-400">
+									<td colSpan={6} className="px-6 py-12 text-center text-charcoal-blue-500 dark:text-charcoal-blue-400">
 										No exercises found.
 									</td>
 								</tr>
@@ -111,9 +113,10 @@ export default async function AdminExercisesPage({
 										</td>
 										<td className="px-6 py-4 text-center">
 											<span className="inline-flex items-center gap-1 rounded-full border border-charcoal-blue-200 bg-charcoal-blue-100 px-2 py-0.5 text-xs font-bold text-charcoal-blue-500 dark:border-white/10 dark:bg-charcoal-blue-900/60 dark:text-charcoal-blue-300">
-												System
+												{exercise.isCustom ? "Custom" : "System"}
 											</span>
 										</td>
+										<td className="px-6 py-4"><ExerciseAdminActions id={exercise.id} custom={Boolean(exercise.isCustom)} /></td>
 									</tr>
 								))
 							)}

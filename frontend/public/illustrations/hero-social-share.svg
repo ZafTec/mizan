@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" role="img" aria-labelledby="hss-title">
+  <title id="hss-title">A finished workout summary card with a share-to-feed toggle and floating reactions</title>
+  <circle cx="240" cy="160" r="120" fill="var(--secondary, #DDE7EB)" opacity="0.45"/>
+  <!-- summary card -->
+  <rect x="110" y="56" width="260" height="192" rx="20" fill="var(--card, #FFFFFF)" stroke="var(--border, #DDE7EB)" stroke-width="2"/>
+  <!-- header: avatar + name -->
+  <circle cx="142" cy="90" r="16" fill="var(--primary, #2E837B)"/>
+  <path d="M135 91 a7 7 0 0 1 14 0 M142 84 a4.5 4.5 0 1 0 0.01 0" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round"/>
+  <rect x="168" y="78" width="104" height="11" rx="5.5" fill="var(--foreground, #1E2A32)" opacity="0.85"/>
+  <rect x="168" y="96" width="64" height="8" rx="4" fill="var(--muted-foreground, #64828F)" opacity="0.5"/>
+  <!-- PR badge -->
+  <rect x="300" y="76" width="52" height="24" rx="12" fill="#E8B849"/>
+  <text x="326" y="93" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" font-weight="800" text-anchor="middle" fill="#1E2A32">PR!</text>
+  <!-- stat tiles -->
+  <g font-family="ui-sans-serif, system-ui, sans-serif" text-anchor="middle">
+    <rect x="130" y="122" width="66" height="52" rx="12" fill="var(--secondary, #DDE7EB)"/>
+    <text x="163" y="146" font-size="16" font-weight="800" fill="var(--foreground, #1E2A32)">52:10</text>
+    <text x="163" y="164" font-size="10" font-weight="600" fill="var(--muted-foreground, #64828F)">TIME</text>
+    <rect x="206" y="122" width="66" height="52" rx="12" fill="var(--secondary, #DDE7EB)"/>
+    <text x="239" y="146" font-size="16" font-weight="800" fill="var(--foreground, #1E2A32)">4,320</text>
+    <text x="239" y="164" font-size="10" font-weight="600" fill="var(--muted-foreground, #64828F)">KG VOL</text>
+    <rect x="282" y="122" width="66" height="52" rx="12" fill="var(--secondary, #DDE7EB)"/>
+    <text x="315" y="146" font-size="16" font-weight="800" fill="var(--foreground, #1E2A32)">18</text>
+    <text x="315" y="164" font-size="10" font-weight="600" fill="var(--muted-foreground, #64828F)">SETS</text>
+  </g>
+  <!-- share toggle -->
+  <text x="130" y="212" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700" fill="var(--foreground, #1E2A32)">Share to feed</text>
+  <rect x="292" y="196" width="56" height="28" rx="14" fill="var(--primary, #2E837B)"/>
+  <circle cx="334" cy="210" r="11" fill="#FFFFFF"/>
+  <!-- floating reactions -->
+  <g>
+    <circle cx="396" cy="96" r="20" fill="#D4654A"/>
+    <path d="M396 104 c-6.5 -5 -10 -8 -10 -12 a5 5 0 0 1 10 -1.5 a5 5 0 0 1 10 1.5 c0 4 -3.5 7 -10 12 z" fill="#FFFFFF"/>
+    <circle cx="418" cy="146" r="15" fill="#E8B849"/>
+    <path d="M411 146 l5 5 9 -10" fill="none" stroke="#1E2A32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="388" cy="184" r="12" fill="var(--primary, #2E837B)"/>
+    <path d="M383 182 h10 M383 187 h6" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"/>
+  </g>
+  <!-- sparkles -->
+  <path d="M80 110 l3.5 8 8 3.5 -8 3.5 -3.5 8 -3.5 -8 -8 -3.5 8 -3.5 z" fill="#E8B849"/>
+  <circle cx="70" cy="204" r="4" fill="#D4654A" opacity="0.7"/>
+  <circle cx="426" cy="230" r="3.5" fill="var(--primary, #2E837B)" opacity="0.6"/>
+</svg>
