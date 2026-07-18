@@ -34,8 +34,6 @@ public static class JwtAuthenticationExtensions
         builder.Services.AddHostedService<JwksRefreshService>();
         builder.Services.AddSingleton<IPostConfigureOptions<JwtBearerOptions>, JwtBearerOptionsSetup>();
 
-        var jwt = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
-
         return builder.AddJwtBearer(options =>
         {
             options.MapInboundClaims = true;
@@ -43,9 +41,7 @@ public static class JwtAuthenticationExtensions
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
-                ValidIssuer = jwt.Issuer,
                 ValidateAudience = true,
-                ValidAudience = jwt.Audience,
                 ValidateIssuerSigningKey = false,
                 RequireSignedTokens = true,
                 ValidateLifetime = true,
@@ -54,8 +50,9 @@ public static class JwtAuthenticationExtensions
                 RoleClaimType = ClaimTypes.Role,
                 ValidAlgorithms = new[] { "EdDSA" }
             };
-            options.TokenHandlers.Clear();
-            options.TokenHandlers.Add(new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler());
+            options.UseSecurityTokenValidators = true;
+            options.SecurityTokenValidators.Clear();
+            options.SecurityTokenValidators.Add(new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler());
         });
     }
 
@@ -65,15 +62,19 @@ public static class JwtAuthenticationExtensions
     private sealed class JwtBearerOptionsSetup : IPostConfigureOptions<JwtBearerOptions>
     {
         private readonly IJwksProvider _jwksProvider;
+        private readonly IOptions<JwtOptions> _jwtOptions;
 
-        public JwtBearerOptionsSetup(IJwksProvider jwksProvider)
+        public JwtBearerOptionsSetup(IJwksProvider jwksProvider, IOptions<JwtOptions> jwtOptions)
         {
             _jwksProvider = jwksProvider;
+            _jwtOptions = jwtOptions;
         }
 
         public void PostConfigure(string? name, JwtBearerOptions options)
         {
             if (name != JwtBearerDefaults.AuthenticationScheme) return;
+            options.TokenValidationParameters.ValidIssuer = _jwtOptions.Value.Issuer;
+            options.TokenValidationParameters.ValidAudience = _jwtOptions.Value.Audience;
             options.TokenValidationParameters.SignatureValidator = (token, parameters) =>
                 EdDsaJwtSignatureValidator.Validate(token, parameters, _jwksProvider);
         }
