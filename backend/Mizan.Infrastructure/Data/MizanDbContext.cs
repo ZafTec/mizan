@@ -47,6 +47,9 @@ public class MizanDbContext : DbContext, IMizanDbContext
     public DbSet<Workout> Workouts => Set<Workout>();
     public DbSet<WorkoutExercise> WorkoutExercises => Set<WorkoutExercise>();
     public DbSet<ExerciseSet> ExerciseSets => Set<ExerciseSet>();
+    public DbSet<WorkoutTemplate> WorkoutTemplates => Set<WorkoutTemplate>();
+    public DbSet<WorkoutTemplateExercise> WorkoutTemplateExercises => Set<WorkoutTemplateExercise>();
+    public DbSet<WorkoutDraft> WorkoutDrafts => Set<WorkoutDraft>();
     public DbSet<BodyMeasurement> BodyMeasurements => Set<BodyMeasurement>();
 
     // Trainer/Client
@@ -58,6 +61,15 @@ public class MizanDbContext : DbContext, IMizanDbContext
     public DbSet<Achievement> Achievements => Set<Achievement>();
     public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
     public DbSet<Streak> Streaks => Set<Streak>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+
+    // Social
+    public DbSet<SocialProfile> SocialProfiles => Set<SocialProfile>();
+    public DbSet<Follow> Follows => Set<Follow>();
+    public DbSet<FeedItem> FeedItems => Set<FeedItem>();
+    public DbSet<FeedReaction> FeedReactions => Set<FeedReaction>();
+    public DbSet<FeedComment> FeedComments => Set<FeedComment>();
+    public DbSet<ContentReport> ContentReports => Set<ContentReport>();
 
     // AI
     public DbSet<AiChatThread> AiChatThreads => Set<AiChatThread>();
@@ -431,6 +443,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.VideoUrl).HasColumnName("video_url");
             entity.Property(e => e.ImageUrl).HasColumnName("image_url");
             entity.Property(e => e.IsCustom).HasColumnName("is_custom").HasDefaultValue(false);
+            entity.Property(e => e.IsApproved).HasColumnName("is_approved").HasDefaultValue(true);
             entity.Property(e => e.CreatedByUserId).HasColumnName("created_by_user_id");
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
             entity.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.SetNull);
@@ -445,11 +458,16 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(255);
             entity.Property(e => e.WorkoutDate).HasColumnName("workout_date").IsRequired();
+            entity.Property(e => e.TemplateId).HasColumnName("template_id");
+            entity.Property(e => e.BodyweightKg).HasColumnName("bodyweight_kg").HasPrecision(6, 2);
+            entity.Property(e => e.StartedAt).HasColumnName("started_at");
+            entity.Property(e => e.CompletedAt).HasColumnName("completed_at");
             entity.Property(e => e.DurationMinutes).HasColumnName("duration_minutes");
             entity.Property(e => e.CaloriesBurned).HasColumnName("calories_burned");
             entity.Property(e => e.Notes).HasColumnName("notes");
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
             entity.HasOne(e => e.User).WithMany(u => u.Workouts).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Template).WithMany(t => t.Workouts).HasForeignKey(e => e.TemplateId).OnDelete(DeleteBehavior.SetNull);
         });
 
         // WorkoutExercise configuration
@@ -461,6 +479,8 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.WorkoutId).HasColumnName("workout_id");
             entity.Property(e => e.ExerciseId).HasColumnName("exercise_id");
             entity.Property(e => e.SortOrder).HasColumnName("sort_order").HasDefaultValue(0);
+            entity.Property(e => e.Notes).HasColumnName("notes").HasMaxLength(500);
+            entity.Property(e => e.SupersetWithNext).HasColumnName("superset_with_next").HasDefaultValue(false);
             entity.HasOne(e => e.Workout).WithMany(w => w.Exercises).HasForeignKey(e => e.WorkoutId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Exercise).WithMany(e => e.WorkoutExercises).HasForeignKey(e => e.ExerciseId).OnDelete(DeleteBehavior.Cascade);
         });
@@ -477,8 +497,66 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.WeightKg).HasColumnName("weight_kg").HasPrecision(6, 2);
             entity.Property(e => e.DurationSeconds).HasColumnName("duration_seconds");
             entity.Property(e => e.DistanceMeters).HasColumnName("distance_meters").HasPrecision(10, 2);
+            entity.Property(e => e.ResistanceLevel).HasColumnName("resistance_level").HasPrecision(8, 2);
+            entity.Property(e => e.InclinePercent).HasColumnName("incline_percent").HasPrecision(5, 2);
+            entity.Property(e => e.Steps).HasColumnName("steps");
+            entity.Property(e => e.CompletedAt).HasColumnName("completed_at");
             entity.Property(e => e.Completed).HasColumnName("completed").HasDefaultValue(false);
             entity.HasOne(e => e.WorkoutExercise).WithMany(w => w.Sets).HasForeignKey(e => e.WorkoutExerciseId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WorkoutTemplate>(entity =>
+        {
+            entity.ToTable("workout_templates");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.ProgramName).HasColumnName("program_name").HasMaxLength(100);
+            entity.Property(e => e.SessionOrder).HasColumnName("session_order").HasDefaultValue(0);
+            entity.Property(e => e.Notes).HasColumnName("notes").HasMaxLength(500);
+            entity.Property(e => e.IsBuiltIn).HasColumnName("is_built_in").HasDefaultValue(false);
+            entity.Property(e => e.SortOrder).HasColumnName("sort_order").HasDefaultValue(0);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.UserId, e.Name });
+        });
+
+        modelBuilder.Entity<WorkoutTemplateExercise>(entity =>
+        {
+            entity.ToTable("workout_template_exercises");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.TemplateId).HasColumnName("template_id");
+            entity.Property(e => e.ExerciseId).HasColumnName("exercise_id");
+            entity.Property(e => e.SortOrder).HasColumnName("sort_order");
+            entity.Property(e => e.Sets).HasColumnName("sets");
+            entity.Property(e => e.RepsPerSet).HasColumnName("reps_per_set");
+            entity.Property(e => e.TargetWeightKg).HasColumnName("target_weight_kg").HasPrecision(6, 2);
+            entity.Property(e => e.RestSecondsMin).HasColumnName("rest_seconds_min");
+            entity.Property(e => e.RestSecondsMax).HasColumnName("rest_seconds_max");
+            entity.Property(e => e.RestSecondsFailure).HasColumnName("rest_seconds_failure");
+            entity.Property(e => e.SupersetWithNext).HasColumnName("superset_with_next");
+            entity.Property(e => e.Notes).HasColumnName("notes").HasMaxLength(500);
+            entity.Property(e => e.ProgressionType).HasColumnName("progression_type").HasMaxLength(40);
+            entity.Property(e => e.ProgressionStrategy).HasColumnName("progression_strategy").HasMaxLength(20);
+            entity.Property(e => e.ProgressionAmountKg).HasColumnName("progression_amount_kg").HasPrecision(6, 2);
+            entity.Property(e => e.TargetType).HasColumnName("target_type").HasMaxLength(20);
+            entity.Property(e => e.TargetSeconds).HasColumnName("target_seconds");
+            entity.Property(e => e.TargetDistanceMeters).HasColumnName("target_distance_meters").HasPrecision(10, 2);
+            entity.HasOne(e => e.Template).WithMany(t => t.Exercises).HasForeignKey(e => e.TemplateId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Exercise).WithMany().HasForeignKey(e => e.ExerciseId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<WorkoutDraft>(entity =>
+        {
+            entity.ToTable("workout_drafts");
+            entity.HasKey(e => e.UserId);
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Payload).HasColumnName("payload").HasColumnType("jsonb");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // BodyMeasurement configuration
@@ -593,8 +671,121 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.CurrentCount).HasColumnName("current_count").HasDefaultValue(0);
             entity.Property(e => e.LongestCount).HasColumnName("longest_count").HasDefaultValue(0);
             entity.Property(e => e.LastActivityDate).HasColumnName("last_activity_date");
+            entity.Property(e => e.FreezesAvailable).HasColumnName("freezes_available").HasDefaultValue(0);
             entity.HasIndex(e => new { e.UserId, e.StreakType }).IsUnique();
             entity.HasOne(e => e.User).WithMany(u => u.Streaks).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.ToTable("notifications");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Type).HasColumnName("type").HasMaxLength(50);
+            entity.Property(e => e.Title).HasColumnName("title").HasMaxLength(150);
+            entity.Property(e => e.Body).HasColumnName("body").HasMaxLength(500);
+            entity.Property(e => e.LinkUrl).HasColumnName("link_url").HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.ReadAt).HasColumnName("read_at");
+            entity.HasIndex(e => new { e.UserId, e.ReadAt, e.CreatedAt });
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SocialProfile>(entity =>
+        {
+            entity.ToTable("social_profiles");
+            entity.HasKey(e => e.UserId);
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.DisplayName).HasColumnName("display_name").HasMaxLength(100);
+            entity.Property(e => e.Bio).HasColumnName("bio").HasMaxLength(200);
+            entity.Property(e => e.AvatarUrl).HasColumnName("avatar_url").HasMaxLength(500);
+            entity.Property(e => e.DefaultPublishWorkouts).HasColumnName("default_publish_workouts");
+            entity.Property(e => e.ShareToken).HasColumnName("share_token").HasMaxLength(64);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => e.ShareToken).IsUnique();
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Follow>(entity =>
+        {
+            entity.ToTable("follows");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.FollowerUserId).HasColumnName("follower_user_id");
+            entity.Property(e => e.FolloweeUserId).HasColumnName("followee_user_id");
+            entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(20);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.RespondedAt).HasColumnName("responded_at");
+            entity.HasIndex(e => new { e.FollowerUserId, e.FolloweeUserId }).IsUnique();
+            entity.HasOne(e => e.Follower).WithMany().HasForeignKey(e => e.FollowerUserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Followee).WithMany().HasForeignKey(e => e.FolloweeUserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<FeedItem>(entity =>
+        {
+            entity.ToTable("feed_items");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Type).HasColumnName("type").HasMaxLength(40);
+            entity.Property(e => e.WorkoutId).HasColumnName("workout_id");
+            entity.Property(e => e.AchievementId).HasColumnName("achievement_id");
+            entity.Property(e => e.TemplateId).HasColumnName("template_id");
+            entity.Property(e => e.Caption).HasColumnName("caption").HasMaxLength(280);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.UserId, e.CreatedAt });
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Workout).WithMany().HasForeignKey(e => e.WorkoutId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Achievement).WithMany().HasForeignKey(e => e.AchievementId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.Template).WithMany().HasForeignKey(e => e.TemplateId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<FeedReaction>(entity =>
+        {
+            entity.ToTable("feed_reactions");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.FeedItemId).HasColumnName("feed_item_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Emoji).HasColumnName("emoji").HasMaxLength(8);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.FeedItemId, e.UserId, e.Emoji }).IsUnique();
+            entity.HasOne(e => e.FeedItem).WithMany(i => i.Reactions).HasForeignKey(e => e.FeedItemId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<FeedComment>(entity =>
+        {
+            entity.ToTable("feed_comments");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.FeedItemId).HasColumnName("feed_item_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Body).HasColumnName("body").HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.DeletedAt).HasColumnName("deleted_at");
+            entity.Property(e => e.DeletedByUserId).HasColumnName("deleted_by_user_id");
+            entity.HasOne(e => e.FeedItem).WithMany(i => i.Comments).HasForeignKey(e => e.FeedItemId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ContentReport>(entity =>
+        {
+            entity.ToTable("content_reports");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.ReporterUserId).HasColumnName("reporter_user_id");
+            entity.Property(e => e.TargetType).HasColumnName("target_type").HasMaxLength(30);
+            entity.Property(e => e.TargetId).HasColumnName("target_id");
+            entity.Property(e => e.Reason).HasColumnName("reason").HasMaxLength(500);
+            entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(20);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.ResolvedAt).HasColumnName("resolved_at");
+            entity.Property(e => e.ResolvedByUserId).HasColumnName("resolved_by_user_id");
+            entity.Property(e => e.ResolutionNote).HasColumnName("resolution_note").HasMaxLength(500);
+            entity.HasIndex(e => new { e.Status, e.CreatedAt });
         });
 
         // AiChatThread configuration

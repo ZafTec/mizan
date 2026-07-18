@@ -7,7 +7,7 @@ public interface IStreakService
     /// Idempotent within a single day: if the user already has activity logged today for this streak type,
     /// returns the current state without double-incrementing.
     /// </summary>
-    Task<StreakUpdate> RecordActivityAsync(string streakType, CancellationToken cancellationToken = default);
+    Task<StreakUpdate> RecordActivityAsync(string streakType, DateOnly? activityDate = null, CancellationToken cancellationToken = default);
 }
 
 public record StreakUpdate(
@@ -16,4 +16,6 @@ public record StreakUpdate(
     int LongestCount,
     bool IsNewRecord,
     bool Extended,
-    DateOnly LastActivityDate);
+    DateOnly LastActivityDate,
+    bool FreezeConsumed = false,
+    int FreezesAvailable = 0);

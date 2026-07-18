@@ -11,6 +11,7 @@ public class Exercise
     public string? VideoUrl { get; set; }
     public string? ImageUrl { get; set; }
     public bool IsCustom { get; set; }
+    public bool IsApproved { get; set; } = true;
     public Guid? CreatedByUserId { get; set; }
     public DateTime CreatedAt { get; set; }
 

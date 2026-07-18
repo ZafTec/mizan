@@ -42,6 +42,7 @@ public record ExerciseDto
     public string? VideoUrl { get; init; }
     public string? ImageUrl { get; init; }
     public bool IsCustom { get; init; }
+    public bool IsApproved { get; init; }
     public bool IsOwner { get; init; }
 }
 
@@ -68,11 +69,11 @@ public class GetExercisesQueryHandler : IRequestHandler<GetExercisesQuery, GetEx
 
         if (_currentUser.UserId.HasValue && request.IncludeCustom)
         {
-            query = query.Where(e => !e.IsCustom || e.CreatedByUserId == _currentUser.UserId);
+            query = query.Where(e => (!e.IsCustom && e.IsApproved) || e.CreatedByUserId == _currentUser.UserId);
         }
         else
         {
-            query = query.Where(e => !e.IsCustom);
+            query = query.Where(e => !e.IsCustom && e.IsApproved);
         }
 
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
@@ -85,7 +86,8 @@ public class GetExercisesQueryHandler : IRequestHandler<GetExercisesQuery, GetEx
 
         if (!string.IsNullOrWhiteSpace(request.Category))
         {
-            query = query.Where(e => e.Category == request.Category);
+            var category = request.Category.ToLower();
+            query = query.Where(e => e.Category.ToLower() == category);
         }
 
         if (!string.IsNullOrWhiteSpace(request.MuscleGroup))
@@ -118,11 +120,12 @@ public class GetExercisesQueryHandler : IRequestHandler<GetExercisesQuery, GetEx
                 VideoUrl = e.VideoUrl,
                 ImageUrl = e.ImageUrl,
                 IsCustom = e.IsCustom,
+                IsApproved = e.IsApproved,
                 IsOwner = e.CreatedByUserId == _currentUser.UserId
             })
             .ToListAsync(cancellationToken);
 
-        var allExercises = _context.Exercises.Where(e => !e.IsCustom);
+        var allExercises = _context.Exercises.Where(e => !e.IsCustom && e.IsApproved);
         var categories = await allExercises.Select(e => e.Category).Distinct().OrderBy(c => c).ToListAsync(cancellationToken);
         var muscleGroups = await allExercises.Where(e => e.MuscleGroup != null).Select(e => e.MuscleGroup!).Distinct().OrderBy(m => m).ToListAsync(cancellationToken);
         var equipment = await allExercises.Where(e => e.Equipment != null).Select(e => e.Equipment!).Distinct().OrderBy(eq => eq).ToListAsync(cancellationToken);

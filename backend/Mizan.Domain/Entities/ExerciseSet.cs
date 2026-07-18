@@ -9,6 +9,10 @@ public class ExerciseSet
     public decimal? WeightKg { get; set; }
     public int? DurationSeconds { get; set; }
     public decimal? DistanceMeters { get; set; }
+    public decimal? ResistanceLevel { get; set; }
+    public decimal? InclinePercent { get; set; }
+    public int? Steps { get; set; }
+    public DateTime? CompletedAt { get; set; }
     public bool Completed { get; set; }
 
     // Navigation property

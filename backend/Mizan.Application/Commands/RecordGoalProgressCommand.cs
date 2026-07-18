@@ -22,11 +22,13 @@ public class RecordGoalProgressHandler : IRequestHandler<RecordGoalProgressComma
 {
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IAchievementEvaluator? _achievements;
 
-    public RecordGoalProgressHandler(IMizanDbContext context, ICurrentUserService currentUserService)
+    public RecordGoalProgressHandler(IMizanDbContext context, ICurrentUserService currentUserService, IAchievementEvaluator? achievements = null)
     {
         _context = context;
         _currentUserService = currentUserService;
+        _achievements = achievements;
     }
 
     public async Task<RecordGoalProgressResult> Handle(RecordGoalProgressCommand request, CancellationToken cancellationToken)
@@ -66,6 +68,7 @@ public class RecordGoalProgressHandler : IRequestHandler<RecordGoalProgressComma
             existingProgress.Notes = request.Notes;
 
             await _context.SaveChangesAsync(cancellationToken);
+            if (_achievements is not null) await _achievements.EvaluateAsync(cancellationToken);
             return new RecordGoalProgressResult(true, "Progress updated successfully", existingProgress.Id);
         }
 
@@ -87,6 +90,7 @@ public class RecordGoalProgressHandler : IRequestHandler<RecordGoalProgressComma
 
         _context.GoalProgress.Add(progress);
         await _context.SaveChangesAsync(cancellationToken);
+        if (_achievements is not null) await _achievements.EvaluateAsync(cancellationToken);
 
         return new RecordGoalProgressResult(true, "Progress recorded successfully", progress.Id);
     }

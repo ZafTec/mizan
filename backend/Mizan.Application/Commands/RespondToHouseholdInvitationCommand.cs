@@ -38,10 +38,12 @@ public class RespondToHouseholdInvitationCommandValidator : AbstractValidator<Re
 public class RespondToHouseholdInvitationCommandHandler : IRequestHandler<RespondToHouseholdInvitationCommand, RespondToHouseholdInvitationResult>
 {
     private readonly IMizanDbContext _context;
+    private readonly INotificationWriter? _notifications;
 
-    public RespondToHouseholdInvitationCommandHandler(IMizanDbContext context)
+    public RespondToHouseholdInvitationCommandHandler(IMizanDbContext context, INotificationWriter? notifications = null)
     {
         _context = context;
+        _notifications = notifications;
     }
 
     public async Task<RespondToHouseholdInvitationResult> Handle(RespondToHouseholdInvitationCommand request, CancellationToken cancellationToken)
@@ -114,6 +116,10 @@ public class RespondToHouseholdInvitationCommandHandler : IRequestHandler<Respon
             invitation.Status = "revoked";
         }
 
+        if (_notifications is not null && request.Action is "accept" or "decline")
+        {
+            await _notifications.AddAsync(invitation.InvitedByUserId, "household_invite_response", $"Household invitation {invitation.Status}", linkUrl: "/profile/household", cancellationToken: cancellationToken);
+        }
         await _context.SaveChangesAsync(cancellationToken);
 
         return new RespondToHouseholdInvitationResult
