@@ -121,7 +121,7 @@ public class CreateFoodDiaryEntryCommandTests
         var command = new CreateFoodDiaryEntryCommand
         {
             Name = "Test",
-            MealType = "BREAKFAST",
+            MealType = "BRUNCH",
             Servings = 1
         };
 
