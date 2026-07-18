@@ -82,13 +82,55 @@ public sealed class DeleteFollowCommandHandler : IRequestHandler<DeleteFollowCom
 public record PublishFeedItemCommand(string Type, Guid? WorkoutId, Guid? TemplateId, Guid? AchievementId, string? Caption) : IRequest<Guid>;
 public sealed class PublishFeedItemCommandValidator : AbstractValidator<PublishFeedItemCommand>
 {
-    public PublishFeedItemCommandValidator() { RuleFor(x => x.Type).Must(v => new[] { "WorkoutCompleted", "AchievementUnlocked", "StreakMilestone", "TemplateShared" }.Contains(v)); RuleFor(x => x.Caption).MaximumLength(280); }
+    public PublishFeedItemCommandValidator()
+    {
+        RuleFor(x => x.Type).Must(value => new[] { "WorkoutCompleted", "AchievementUnlocked", "StreakMilestone", "TemplateShared" }.Contains(value));
+        RuleFor(x => x.Caption).MaximumLength(280);
+        RuleFor(x => x.WorkoutId).NotEmpty().When(x => x.Type == "WorkoutCompleted");
+        RuleFor(x => x.TemplateId).NotEmpty().When(x => x.Type == "TemplateShared");
+        RuleFor(x => x.AchievementId).NotEmpty().When(x => x.Type == "AchievementUnlocked");
+    }
 }
 public sealed class PublishFeedItemCommandHandler : IRequestHandler<PublishFeedItemCommand, Guid>
 {
     private readonly IMizanDbContext _context; private readonly ICurrentUserService _currentUser; private readonly IAchievementEvaluator _achievements;
     public PublishFeedItemCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, IAchievementEvaluator achievements) { _context = context; _currentUser = currentUser; _achievements = achievements; }
-    public async Task<Guid> Handle(PublishFeedItemCommand request, CancellationToken ct) { var id = _currentUser.UserId ?? throw new UnauthorizedAccessException(); if (!await _context.SocialProfiles.AnyAsync(p => p.UserId == id, ct)) throw new DomainValidationException("Create a social profile first"); if (request.WorkoutId.HasValue && !await _context.Workouts.AnyAsync(w => w.Id == request.WorkoutId && w.UserId == id, ct)) throw new EntityNotFoundException("Workout not found"); var row = new FeedItem { Id = Guid.NewGuid(), UserId = id, Type = request.Type, WorkoutId = request.WorkoutId, TemplateId = request.TemplateId, AchievementId = request.AchievementId, Caption = request.Caption, CreatedAt = DateTime.UtcNow }; _context.FeedItems.Add(row); await _context.SaveChangesAsync(ct); await _achievements.EvaluateAsync(ct); return row.Id; }
+    public async Task<Guid> Handle(PublishFeedItemCommand request, CancellationToken ct)
+    {
+        var id = _currentUser.UserId ?? throw new UnauthorizedAccessException();
+        if (!await _context.SocialProfiles.AnyAsync(profile => profile.UserId == id, ct))
+        {
+            throw new DomainValidationException("Create a social profile first");
+        }
+        if (request.WorkoutId.HasValue && !await _context.Workouts.AnyAsync(workout => workout.Id == request.WorkoutId && workout.UserId == id, ct))
+        {
+            throw new EntityNotFoundException("Workout not found");
+        }
+        if (request.TemplateId.HasValue && !await _context.WorkoutTemplates.AnyAsync(template => template.Id == request.TemplateId && (template.IsBuiltIn || template.UserId == id), ct))
+        {
+            throw new EntityNotFoundException("Workout template not found");
+        }
+        if (request.AchievementId.HasValue && !await _context.UserAchievements.AnyAsync(achievement => achievement.UserId == id && achievement.AchievementId == request.AchievementId, ct))
+        {
+            throw new EntityNotFoundException("Achievement not found");
+        }
+
+        var row = new FeedItem
+        {
+            Id = Guid.NewGuid(),
+            UserId = id,
+            Type = request.Type,
+            WorkoutId = request.WorkoutId,
+            TemplateId = request.TemplateId,
+            AchievementId = request.AchievementId,
+            Caption = request.Caption,
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.FeedItems.Add(row);
+        await _context.SaveChangesAsync(ct);
+        await _achievements.EvaluateAsync(ct);
+        return row.Id;
+    }
 }
 public record DeleteFeedItemCommand(Guid Id) : IRequest;
 public sealed class DeleteFeedItemCommandHandler : IRequestHandler<DeleteFeedItemCommand>
@@ -138,11 +180,61 @@ public sealed class ReportContentCommandHandler : IRequestHandler<ReportContentC
     public async Task<Guid> Handle(ReportContentCommand request, CancellationToken ct) { var id = _currentUser.UserId ?? throw new UnauthorizedAccessException(); var row = new ContentReport { Id = Guid.NewGuid(), ReporterUserId = id, TargetType = request.TargetType, TargetId = request.TargetId, Reason = request.Reason, CreatedAt = DateTime.UtcNow }; _context.ContentReports.Add(row); await _context.SaveChangesAsync(ct); return row.Id; }
 }
 public record ResolveContentReportCommand(Guid Id, string Action, string? Note) : IRequest;
+public sealed class ResolveContentReportCommandValidator : AbstractValidator<ResolveContentReportCommand>
+{
+    public ResolveContentReportCommandValidator()
+    {
+        RuleFor(x => x.Action).Must(action => action is "dismiss" or "delete");
+        RuleFor(x => x.Note).MaximumLength(500);
+    }
+}
 public sealed class ResolveContentReportCommandHandler : IRequestHandler<ResolveContentReportCommand>
 {
-    private readonly IMizanDbContext _context; private readonly ICurrentUserService _currentUser; private readonly INotificationWriter _notifications;
-    public ResolveContentReportCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, INotificationWriter notifications) { _context = context; _currentUser = currentUser; _notifications = notifications; }
-    public async Task Handle(ResolveContentReportCommand request, CancellationToken ct) { var admin = _currentUser.UserId ?? throw new UnauthorizedAccessException(); if (!_currentUser.IsInRole("admin")) throw new UnauthorizedAccessException(); var report = await _context.ContentReports.FirstOrDefaultAsync(r => r.Id == request.Id && r.Status == "Open", ct) ?? throw new EntityNotFoundException("Report not found"); report.Status = request.Action == "dismiss" ? "Dismissed" : "Actioned"; report.ResolvedAt = DateTime.UtcNow; report.ResolvedByUserId = admin; report.ResolutionNote = request.Note; if (request.Action == "delete" && report.TargetType == "FeedComment") { var comment = await _context.FeedComments.FirstOrDefaultAsync(c => c.Id == report.TargetId, ct); if (comment is not null) { comment.DeletedAt = DateTime.UtcNow; comment.DeletedByUserId = admin; } } if (request.Action == "delete" && report.TargetType == "FeedItem") await _context.FeedItems.Where(i => i.Id == report.TargetId).ExecuteDeleteAsync(ct); if (report.ReporterUserId.HasValue) await _notifications.AddAsync(report.ReporterUserId.Value, "content_report_actioned", "Your report was reviewed", request.Note, "/social", ct); await _context.SaveChangesAsync(ct); }
+    private readonly IMizanDbContext _context;
+    private readonly ICurrentUserService _currentUser;
+    private readonly INotificationWriter _notifications;
+
+    public ResolveContentReportCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, INotificationWriter notifications)
+    {
+        _context = context;
+        _currentUser = currentUser;
+        _notifications = notifications;
+    }
+
+    public async Task Handle(ResolveContentReportCommand request, CancellationToken ct)
+    {
+        var admin = _currentUser.UserId ?? throw new UnauthorizedAccessException();
+        if (!_currentUser.IsInRole("admin")) throw new UnauthorizedAccessException();
+        var report = await _context.ContentReports.FirstOrDefaultAsync(item => item.Id == request.Id && item.Status == "Open", ct)
+            ?? throw new EntityNotFoundException("Report not found");
+        if (request.Action == "delete" && report.TargetType is not ("FeedComment" or "FeedItem"))
+        {
+            throw new DomainValidationException($"Delete action is not supported for {report.TargetType} reports");
+        }
+
+        report.Status = request.Action == "dismiss" ? "Dismissed" : "Actioned";
+        report.ResolvedAt = DateTime.UtcNow;
+        report.ResolvedByUserId = admin;
+        report.ResolutionNote = request.Note;
+        if (request.Action == "delete" && report.TargetType == "FeedComment")
+        {
+            var comment = await _context.FeedComments.FirstOrDefaultAsync(item => item.Id == report.TargetId, ct);
+            if (comment is not null)
+            {
+                comment.DeletedAt = DateTime.UtcNow;
+                comment.DeletedByUserId = admin;
+            }
+        }
+        if (request.Action == "delete" && report.TargetType == "FeedItem")
+        {
+            await _context.FeedItems.Where(item => item.Id == report.TargetId).ExecuteDeleteAsync(ct);
+        }
+        if (report.ReporterUserId.HasValue)
+        {
+            await _notifications.AddAsync(report.ReporterUserId.Value, "content_report_actioned", "Your report was reviewed", request.Note, "/social", ct);
+        }
+        await _context.SaveChangesAsync(ct);
+    }
 }
 
 internal static class SocialAccess

@@ -29,7 +29,7 @@ public class CreateShoppingListCommandHandler : IRequestHandler<CreateShoppingLi
             var existing = await _context.ShoppingLists.CountAsync(s => s.UserId == request.UserId, cancellationToken);
             if (existing >= FreeShoppingListLimit)
             {
-                throw new ForbiddenAccessException("Free plan is limited to 1 shopping list. Upgrade to Pro for unlimited shopping lists.");
+                throw new UpgradeRequiredException("Free plan is limited to 1 shopping list. Upgrade to Pro for unlimited shopping lists.");
             }
         }
 

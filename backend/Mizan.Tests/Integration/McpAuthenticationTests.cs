@@ -43,6 +43,7 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
             builder.UseSetting("BACKEND_API_URL", "http://localhost:5000");
             builder.UseSetting("ServiceApiKey", "test-api-key");
             builder.UseSetting("Mcp:ServiceApiKey", "test-api-key");
+            builder.UseSetting("Mcp:AdminServiceApiKey", "test-admin-api-key");
 
             builder.ConfigureAppConfiguration((context, config) =>
             {
@@ -51,7 +52,8 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
                     { "MizanApiUrl", "http://localhost:5000" },
                     { "BACKEND_API_URL", "http://localhost:5000" },
                     { "ServiceApiKey", "test-api-key" },
-                    { "Mcp:ServiceApiKey", "test-api-key" }
+                    { "Mcp:ServiceApiKey", "test-api-key" },
+                    { "Mcp:AdminServiceApiKey", "test-admin-api-key" }
                 });
             });
 

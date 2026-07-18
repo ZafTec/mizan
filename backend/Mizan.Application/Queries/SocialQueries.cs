@@ -62,12 +62,13 @@ public sealed class GetSocialFeedQueryHandler : IRequestHandler<GetSocialFeedQue
         var hasProfile = await _context.SocialProfiles.AnyAsync(p => p.UserId == id, ct);
         if (!hasProfile) return new SocialFeedResult([], 0, 1, Math.Clamp(request.PageSize, 1, 100));
         var allowed = _context.Follows.Where(f => f.FollowerUserId == id && f.Status == "Accepted").Select(f => f.FolloweeUserId);
-        var query = _context.FeedItems.Where(item => item.UserId == id || allowed.Contains(item.UserId));
+        var query = _context.FeedItems.AsNoTracking().Where(item => item.UserId == id || allowed.Contains(item.UserId));
         var total = await query.CountAsync(ct); var page = Math.Max(1, request.Page); var size = Math.Clamp(request.PageSize, 1, 100);
         var items = await query.OrderByDescending(item => item.CreatedAt).Skip((page - 1) * size).Take(size)
             .Include(item => item.User).Include(item => item.Workout)!.ThenInclude(workout => workout.Exercises).ThenInclude(exercise => exercise.Exercise)
             .Include(item => item.Workout)!.ThenInclude(workout => workout.Exercises).ThenInclude(exercise => exercise.Sets)
-            .Include(item => item.Reactions).Include(item => item.Comments).ThenInclude(comment => comment.User).ToListAsync(ct);
+            .Include(item => item.Reactions).Include(item => item.Comments).ThenInclude(comment => comment.User)
+            .ToListAsync(ct);
         return new SocialFeedResult(items.Select(item => new FeedItemDto(item.Id, item.UserId, item.User.Name ?? item.User.Email, item.User.Image,
             item.Type, item.Caption, item.CreatedAt, item.Workout is null ? null : new WorkoutFeedSummaryDto(item.Workout.Id,
                 item.Workout.Name ?? "Workout", item.Workout.WorkoutDate, item.Workout.DurationMinutes,

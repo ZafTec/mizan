@@ -39,6 +39,18 @@ public sealed class WorkoutSocialIntegrationTests
     }
 
     [Fact]
+    public async Task MarkNotificationRead_ReturnsNotFoundForUnknownNotification()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (userId, email) = await SeedUserAsync("notification-owner");
+        using var client = _fixture.CreateAuthenticatedClient(userId, email);
+
+        var response = await client.PostAsync($"/api/Notifications/{Guid.NewGuid()}/read", null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public async Task UpdateAndDeleteWorkout_HideAnotherUsersWorkout()
     {
         await _fixture.ResetDatabaseAsync();
@@ -68,6 +80,52 @@ public sealed class WorkoutSocialIntegrationTests
         updateResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
         deleteResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
         (await ownerClient.GetAsync($"/api/Workouts/{workoutId}")).StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task SaveTemplate_RejectsAnotherUsersCustomExercise()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (ownerId, ownerEmail) = await SeedUserAsync("template-owner");
+        var (otherId, _) = await SeedUserAsync("template-other");
+        var inaccessibleExerciseId = await SeedExerciseAsync(otherId);
+        using var client = _fixture.CreateAuthenticatedClient(ownerId, ownerEmail);
+
+        var response = await client.PostAsJsonAsync("/api/WorkoutTemplates", new
+        {
+            name = "Invalid template",
+            programName = (string?)null,
+            sessionOrder = 1,
+            notes = (string?)null,
+            sortOrder = 0,
+            isBuiltIn = false,
+            exercises = new[]
+            {
+                new
+                {
+                    exerciseId = inaccessibleExerciseId,
+                    sortOrder = 0,
+                    sets = 3,
+                    repsPerSet = 5,
+                    targetWeightKg = 50m,
+                    restSecondsMin = 60,
+                    restSecondsMax = 120,
+                    restSecondsFailure = 180,
+                    supersetWithNext = false,
+                    notes = (string?)null,
+                    progressionType = "IncreaseAllEvenly",
+                    progressionStrategy = "all",
+                    progressionAmountKg = 2.5m,
+                    targetType = "Reps",
+                    targetSeconds = (int?)null,
+                    targetDistanceMeters = (decimal?)null
+                }
+            }
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var error = await response.Content.ReadFromJsonAsync<ApiError>();
+        error!.ErrorCode.Should().Be("domain_validation_failed");
     }
 
     [Fact]

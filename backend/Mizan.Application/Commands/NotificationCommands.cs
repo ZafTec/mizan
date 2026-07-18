@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Commands;
@@ -14,7 +15,7 @@ public sealed class MarkNotificationReadCommandHandler : IRequestHandler<MarkNot
     {
         var userId = _currentUser.UserId ?? throw new UnauthorizedAccessException();
         var row = await _context.Notifications.FirstOrDefaultAsync(n => n.Id == request.Id && n.UserId == userId, ct)
-            ?? throw new InvalidOperationException("Notification not found");
+            ?? throw new EntityNotFoundException("Notification not found");
         row.ReadAt ??= DateTime.UtcNow;
         await _context.SaveChangesAsync(ct);
     }

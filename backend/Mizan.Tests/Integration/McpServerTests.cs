@@ -29,6 +29,7 @@ public class McpServerTests : IClassFixture<WebApplicationFactory<McpServer::Pro
             builder.UseSetting("MizanApiUrl", "http://localhost:5000");
             builder.UseSetting("ServiceApiKey", "test-api-key");
             builder.UseSetting("Mcp:ServiceApiKey", "test-api-key");
+            builder.UseSetting("Mcp:AdminServiceApiKey", "test-admin-api-key");
 
             builder.ConfigureAppConfiguration((context, config) =>
             {

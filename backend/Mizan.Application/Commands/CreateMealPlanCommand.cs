@@ -81,7 +81,7 @@ public class CreateMealPlanCommandHandler : IRequestHandler<CreateMealPlanComman
             var existing = await _context.MealPlans.CountAsync(m => m.UserId == userId, cancellationToken);
             if (existing >= FreeMealPlanLimit)
             {
-                throw new ForbiddenAccessException("Free plan is limited to 1 meal plan. Upgrade to Pro for unlimited meal plans.");
+                throw new UpgradeRequiredException("Free plan is limited to 1 meal plan. Upgrade to Pro for unlimited meal plans.");
             }
         }
 

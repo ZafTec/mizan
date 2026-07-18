@@ -25,4 +25,34 @@ public class WorkoutProgressionTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(error => error.PropertyName == "Exercises");
     }
+
+    [Fact]
+    public void WorkoutTemplateValidator_RejectsUnknownProgressionStrategy()
+    {
+        var command = new SaveWorkoutTemplateCommand
+        {
+            Name = "Invalid strategy",
+            Exercises =
+            [
+                new WorkoutTemplateExerciseInput(
+                    Guid.NewGuid(), 0, 3, 5, 50m, 60, 120, 180, false,
+                    null, "IncreaseLowestSet", "weird", 2.5m, "Reps", null, null)
+            ]
+        };
+
+        var result = new SaveWorkoutTemplateCommandValidator().Validate(command);
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(error => error.PropertyName.EndsWith("ProgressionStrategy"));
+    }
+
+    [Fact]
+    public void PublishFeedItemValidator_RequiresTypeSpecificReference()
+    {
+        var result = new PublishFeedItemCommandValidator().Validate(
+            new PublishFeedItemCommand("WorkoutCompleted", null, null, null, null));
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(error => error.PropertyName == "WorkoutId");
+    }
 }
