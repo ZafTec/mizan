@@ -66,7 +66,7 @@
 - Subscription lookup and existing nutrition, recipe, meal, shopping, goal, household, trainer, profile, and measurement features.
 - Admin social analytics, reports, audit logs, exercise promotion, built-in templates, and achievement management.
 - Structured backend error parsing with upgrade, validation, not-found, authorization, and rate-limit handling.
-- Successful token-validation cache and hashed token logging.
+- Unlimited-plan token-validation cache, live quota checks for limited plans, and hashed token logging.
 - Duplicate nutrition tools removed and canonical meal types retained.
 - No nutrition AI tools.
 
@@ -97,8 +97,8 @@
 | Gate | Result |
 |---|---|
 | `dotnet build backend/Mizan.sln --no-restore` | Passed |
-| `dotnet test backend/Mizan.sln --no-restore` | 230 passed, 0 failed |
-| MCP integration suite | 47 passed, 0 failed |
+| `dotnet test backend/Mizan.sln --no-restore` | 233 passed, 0 failed |
+| MCP integration suite | 48 passed, 0 failed |
 | Workout/social access contracts | 6 passed, 0 failed |
 | `bun run --cwd frontend test` | 2 files, 4 tests passed |
 | `bun run --cwd frontend lint` | Passed with 11 existing `no-img-element` warnings and no errors |

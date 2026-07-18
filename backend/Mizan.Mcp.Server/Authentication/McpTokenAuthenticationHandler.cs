@@ -32,7 +32,10 @@ public class McpTokenAuthenticationHandler : AuthenticationHandler<McpTokenAuthe
         {
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             validation = await _backend.ValidateTokenAsync(token, cts.Token);
-            if (validation is not null) _cache.Set(hash, validation, TimeSpan.FromSeconds(60));
+            if (validation is not null && !validation.MonthlyLimit.HasValue)
+            {
+                _cache.Set(hash, validation, TimeSpan.FromSeconds(60));
+            }
         }
         if (validation is null)
         {

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -213,6 +214,32 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
 
         // Assert
         result.None.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task McpTokenAuthenticationHandler_DoesNotCacheQuotaLimitedValidation()
+    {
+        var token = "mcp_free_token";
+        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TokenValidation(Guid.NewGuid(), Guid.NewGuid(), "user", "free", 15, 14, 1));
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+
+        await AuthenticateTwiceAsync(token, cache);
+
+        _mockBackendClient.Verify(x => x.ValidateTokenAsync(token, It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task McpTokenAuthenticationHandler_CachesUnlimitedValidation()
+    {
+        var token = "mcp_pro_token";
+        _mockBackendClient.Setup(x => x.ValidateTokenAsync(token, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TokenValidation(Guid.NewGuid(), Guid.NewGuid(), "user", "pro"));
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+
+        await AuthenticateTwiceAsync(token, cache);
+
+        _mockBackendClient.Verify(x => x.ValidateTokenAsync(token, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -772,4 +799,23 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
     }
 
     #endregion
+
+    private async Task AuthenticateTwiceAsync(string token, IMemoryCache cache)
+    {
+        var options = new Mock<IOptionsMonitor<McpTokenAuthenticationOptions>>();
+        options.Setup(x => x.Get(It.IsAny<string>())).Returns(new McpTokenAuthenticationOptions());
+        var loggerFactory = new Mock<ILoggerFactory>();
+        loggerFactory.Setup(x => x.CreateLogger(It.IsAny<string>())).Returns(Mock.Of<ILogger>());
+        var scheme = new AuthenticationScheme("McpToken", "MCP Token", typeof(McpTokenAuthenticationHandler));
+
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            var handler = new McpTokenAuthenticationHandler(options.Object, loggerFactory.Object, UrlEncoder.Default, _mockBackendClient.Object, cache);
+            var context = new DefaultHttpContext();
+            context.Request.Headers.Authorization = $"Bearer {token}";
+            await handler.InitializeAsync(scheme, context);
+            var result = await handler.AuthenticateAsync();
+            result.Succeeded.Should().BeTrue();
+        }
+    }
 }
