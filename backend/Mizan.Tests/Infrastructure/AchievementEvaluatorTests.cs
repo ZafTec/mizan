@@ -64,8 +64,13 @@ public class AchievementEvaluatorTests
         for (int i = 0; i < 9; i++)
             db.FoodDiaryEntries.Add(new FoodDiaryEntry
             {
-                Id = Guid.NewGuid(), UserId = userId, Name = "x", MealType = "MEAL",
-                Servings = 1, EntryDate = DateOnly.FromDateTime(DateTime.UtcNow), LoggedAt = DateTime.UtcNow
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Name = "x",
+                MealType = "MEAL",
+                Servings = 1,
+                EntryDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                LoggedAt = DateTime.UtcNow
             });
         await db.SaveChangesAsync();
 
@@ -83,12 +88,19 @@ public class AchievementEvaluatorTests
         db.Achievements.Add(ach);
         db.UserAchievements.Add(new UserAchievement
         {
-            UserId = userId, AchievementId = ach.Id, EarnedAt = DateTime.UtcNow.AddDays(-1)
+            UserId = userId,
+            AchievementId = ach.Id,
+            EarnedAt = DateTime.UtcNow.AddDays(-1)
         });
         db.FoodDiaryEntries.Add(new FoodDiaryEntry
         {
-            Id = Guid.NewGuid(), UserId = userId, Name = "x", MealType = "MEAL",
-            Servings = 1, EntryDate = DateOnly.FromDateTime(DateTime.UtcNow), LoggedAt = DateTime.UtcNow
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Name = "x",
+            MealType = "MEAL",
+            Servings = 1,
+            EntryDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            LoggedAt = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -109,8 +121,13 @@ public class AchievementEvaluatorTests
         db.Achievements.AddRange(primary, pointsBadge);
         db.FoodDiaryEntries.Add(new FoodDiaryEntry
         {
-            Id = Guid.NewGuid(), UserId = userId, Name = "x", MealType = "MEAL",
-            Servings = 1, EntryDate = DateOnly.FromDateTime(DateTime.UtcNow), LoggedAt = DateTime.UtcNow
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Name = "x",
+            MealType = "MEAL",
+            Servings = 1,
+            EntryDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            LoggedAt = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -126,7 +143,11 @@ public class AchievementEvaluatorTests
         var (db, svc, userId) = Make();
         db.Achievements.Add(new Achievement
         {
-            Id = Guid.NewGuid(), Name = "Manual-only", CriteriaType = null, Threshold = 0, Points = 50
+            Id = Guid.NewGuid(),
+            Name = "Manual-only",
+            CriteriaType = null,
+            Threshold = 0,
+            Points = 50
         });
         await db.SaveChangesAsync();
 
@@ -156,8 +177,12 @@ public class AchievementEvaluatorTests
         var (db, svc, userId) = Make();
         db.Streaks.Add(new Streak
         {
-            Id = Guid.NewGuid(), UserId = userId, StreakType = "nutrition",
-            CurrentCount = 7, LongestCount = 7, LastActivityDate = DateOnly.FromDateTime(DateTime.UtcNow)
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            StreakType = "nutrition",
+            CurrentCount = 7,
+            LongestCount = 7,
+            LastActivityDate = DateOnly.FromDateTime(DateTime.UtcNow)
         });
         var ach = Ach("7-day nutrition", "streak_nutrition", 7, 50, category: "consistency");
         db.Achievements.Add(ach);

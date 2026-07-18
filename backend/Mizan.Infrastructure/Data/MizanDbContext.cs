@@ -902,36 +902,36 @@ public class MizanDbContext : DbContext, IMizanDbContext
 
         modelBuilder.Entity<Achievement>().HasData(
             // Nutrition - meals logged
-            new Achievement { Id = AchId(1),  Name = "First Meal",        Description = "Log your first meal",                           Category = "nutrition",   CriteriaType = "meals_logged",               Threshold = 1,   Points = 10 },
-            new Achievement { Id = AchId(2),  Name = "Getting Started",   Description = "Log 10 meals",                                  Category = "nutrition",   CriteriaType = "meals_logged",               Threshold = 10,  Points = 25 },
-            new Achievement { Id = AchId(3),  Name = "Century Club",      Description = "Log 100 meals",                                 Category = "nutrition",   CriteriaType = "meals_logged",               Threshold = 100, Points = 100 },
-            new Achievement { Id = AchId(4),  Name = "Half Grand",        Description = "Log 500 meals",                                 Category = "nutrition",   CriteriaType = "meals_logged",               Threshold = 500, Points = 250 },
+            new Achievement { Id = AchId(1), Name = "First Meal", Description = "Log your first meal", Category = "nutrition", CriteriaType = "meals_logged", Threshold = 1, Points = 10 },
+            new Achievement { Id = AchId(2), Name = "Getting Started", Description = "Log 10 meals", Category = "nutrition", CriteriaType = "meals_logged", Threshold = 10, Points = 25 },
+            new Achievement { Id = AchId(3), Name = "Century Club", Description = "Log 100 meals", Category = "nutrition", CriteriaType = "meals_logged", Threshold = 100, Points = 100 },
+            new Achievement { Id = AchId(4), Name = "Half Grand", Description = "Log 500 meals", Category = "nutrition", CriteriaType = "meals_logged", Threshold = 500, Points = 250 },
 
             // Consistency - nutrition streak
-            new Achievement { Id = AchId(5),  Name = "Three-Day Runner",  Description = "Log meals 3 days in a row",                     Category = "consistency", CriteriaType = "streak_nutrition",           Threshold = 3,   Points = 15 },
-            new Achievement { Id = AchId(6),  Name = "One-Week Warrior",  Description = "Log meals 7 days in a row",                     Category = "consistency", CriteriaType = "streak_nutrition",           Threshold = 7,   Points = 50 },
-            new Achievement { Id = AchId(7),  Name = "Two-Week Titan",    Description = "Log meals 14 days in a row",                    Category = "consistency", CriteriaType = "streak_nutrition",           Threshold = 14,  Points = 100 },
-            new Achievement { Id = AchId(8),  Name = "Monthly Master",    Description = "Log meals 30 days in a row",                    Category = "consistency", CriteriaType = "streak_nutrition",           Threshold = 30,  Points = 250 },
-            new Achievement { Id = AchId(9),  Name = "Quarter-Year Habit",Description = "Log meals 90 days in a row",                    Category = "consistency", CriteriaType = "streak_nutrition",           Threshold = 90,  Points = 500 },
+            new Achievement { Id = AchId(5), Name = "Three-Day Runner", Description = "Log meals 3 days in a row", Category = "consistency", CriteriaType = "streak_nutrition", Threshold = 3, Points = 15 },
+            new Achievement { Id = AchId(6), Name = "One-Week Warrior", Description = "Log meals 7 days in a row", Category = "consistency", CriteriaType = "streak_nutrition", Threshold = 7, Points = 50 },
+            new Achievement { Id = AchId(7), Name = "Two-Week Titan", Description = "Log meals 14 days in a row", Category = "consistency", CriteriaType = "streak_nutrition", Threshold = 14, Points = 100 },
+            new Achievement { Id = AchId(8), Name = "Monthly Master", Description = "Log meals 30 days in a row", Category = "consistency", CriteriaType = "streak_nutrition", Threshold = 30, Points = 250 },
+            new Achievement { Id = AchId(9), Name = "Quarter-Year Habit", Description = "Log meals 90 days in a row", Category = "consistency", CriteriaType = "streak_nutrition", Threshold = 90, Points = 500 },
 
             // Workout
-            new Achievement { Id = AchId(10), Name = "First Rep",          Description = "Log your first workout",                        Category = "workout",     CriteriaType = "workouts_logged",            Threshold = 1,   Points = 10 },
-            new Achievement { Id = AchId(11), Name = "Gym Regular",        Description = "Log 10 workouts",                               Category = "workout",     CriteriaType = "workouts_logged",            Threshold = 10,  Points = 50 },
-            new Achievement { Id = AchId(12), Name = "Iron Habit",         Description = "Log 50 workouts",                               Category = "workout",     CriteriaType = "workouts_logged",            Threshold = 50,  Points = 200 },
-            new Achievement { Id = AchId(13), Name = "Workout Week",       Description = "Complete workouts 7 days in a row",             Category = "workout",     CriteriaType = "streak_workout",             Threshold = 7,   Points = 75 },
+            new Achievement { Id = AchId(10), Name = "First Rep", Description = "Log your first workout", Category = "workout", CriteriaType = "workouts_logged", Threshold = 1, Points = 10 },
+            new Achievement { Id = AchId(11), Name = "Gym Regular", Description = "Log 10 workouts", Category = "workout", CriteriaType = "workouts_logged", Threshold = 10, Points = 50 },
+            new Achievement { Id = AchId(12), Name = "Iron Habit", Description = "Log 50 workouts", Category = "workout", CriteriaType = "workouts_logged", Threshold = 50, Points = 200 },
+            new Achievement { Id = AchId(13), Name = "Workout Week", Description = "Complete workouts 7 days in a row", Category = "workout", CriteriaType = "streak_workout", Threshold = 7, Points = 75 },
 
             // Body measurements
-            new Achievement { Id = AchId(14), Name = "Baseline Set",       Description = "Record your first body measurement",            Category = "milestone",   CriteriaType = "body_measurements_logged",   Threshold = 1,   Points = 10 },
-            new Achievement { Id = AchId(15), Name = "Body Tracker",       Description = "Record 10 body measurements",                   Category = "milestone",   CriteriaType = "body_measurements_logged",   Threshold = 10,  Points = 50 },
+            new Achievement { Id = AchId(14), Name = "Baseline Set", Description = "Record your first body measurement", Category = "milestone", CriteriaType = "body_measurements_logged", Threshold = 1, Points = 10 },
+            new Achievement { Id = AchId(15), Name = "Body Tracker", Description = "Record 10 body measurements", Category = "milestone", CriteriaType = "body_measurements_logged", Threshold = 10, Points = 50 },
 
             // Recipes
-            new Achievement { Id = AchId(16), Name = "Kitchen Opener",     Description = "Create your first recipe",                      Category = "nutrition",   CriteriaType = "recipes_created",            Threshold = 1,   Points = 15 },
-            new Achievement { Id = AchId(17), Name = "Chef's Shelf",       Description = "Create 10 recipes",                             Category = "nutrition",   CriteriaType = "recipes_created",            Threshold = 10,  Points = 75 },
+            new Achievement { Id = AchId(16), Name = "Kitchen Opener", Description = "Create your first recipe", Category = "nutrition", CriteriaType = "recipes_created", Threshold = 1, Points = 15 },
+            new Achievement { Id = AchId(17), Name = "Chef's Shelf", Description = "Create 10 recipes", Category = "nutrition", CriteriaType = "recipes_created", Threshold = 10, Points = 75 },
 
             // Points milestones (meta)
-            new Achievement { Id = AchId(18), Name = "Bronze Badge",       Description = "Earn 100 achievement points",                   Category = "milestone",   CriteriaType = "points_total",               Threshold = 100, Points = 0 },
-            new Achievement { Id = AchId(19), Name = "Silver Badge",       Description = "Earn 500 achievement points",                   Category = "milestone",   CriteriaType = "points_total",               Threshold = 500, Points = 0 },
-            new Achievement { Id = AchId(20), Name = "Gold Badge",         Description = "Earn 1500 achievement points",                  Category = "milestone",   CriteriaType = "points_total",               Threshold = 1500, Points = 0 }
+            new Achievement { Id = AchId(18), Name = "Bronze Badge", Description = "Earn 100 achievement points", Category = "milestone", CriteriaType = "points_total", Threshold = 100, Points = 0 },
+            new Achievement { Id = AchId(19), Name = "Silver Badge", Description = "Earn 500 achievement points", Category = "milestone", CriteriaType = "points_total", Threshold = 500, Points = 0 },
+            new Achievement { Id = AchId(20), Name = "Gold Badge", Description = "Earn 1500 achievement points", Category = "milestone", CriteriaType = "points_total", Threshold = 1500, Points = 0 }
         );
     }
 }

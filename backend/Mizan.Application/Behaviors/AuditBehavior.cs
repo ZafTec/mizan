@@ -44,7 +44,7 @@ public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
         {
             var userId = _currentUserService.UserId;
             var ipAddress = _currentUserService.IpAddress;
-            
+
             // Try to extract an ID from the request or response if possible
             string entityId = string.Empty;
             var idProperty = typeof(TRequest).GetProperty("Id") ?? typeof(TRequest).GetProperty("recipeId") ?? typeof(TRequest).GetProperty("foodId");
@@ -52,7 +52,7 @@ public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
             {
                 entityId = idProperty.GetValue(request)?.ToString() ?? string.Empty;
             }
-            
+
             if (string.IsNullOrEmpty(entityId) && response != null)
             {
                 var responseIdProperty = response.GetType().GetProperty("Id");
@@ -76,7 +76,7 @@ public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
 
             _context.AuditLogs.Add(auditLog);
             await _context.SaveChangesAsync(cancellationToken);
-            
+
             _logger.LogInformation("Audit log created for {Action} by {User}", requestName, userId?.ToString() ?? "Anonymous");
         }
         catch (Exception ex)

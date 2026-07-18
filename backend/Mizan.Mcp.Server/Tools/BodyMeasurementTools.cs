@@ -45,9 +45,18 @@ public sealed class BodyMeasurementTools
     {
         return await _api.PostAsync("/api/BodyMeasurements", new
         {
-            date, weightKg, bodyFatPercentage, muscleMassKg,
-            waistCm, hipsCm, chestCm, leftArmCm, rightArmCm,
-            leftThighCm, rightThighCm, notes
+            date,
+            weightKg,
+            bodyFatPercentage,
+            muscleMassKg,
+            waistCm,
+            hipsCm,
+            chestCm,
+            leftArmCm,
+            rightArmCm,
+            leftThighCm,
+            rightThighCm,
+            notes
         }, ct);
     }
 

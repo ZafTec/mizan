@@ -140,8 +140,12 @@ public sealed class BackendApiClient : IBackendApiClient
 
     private sealed class ValidateResponse
     {
-        public Guid UserId { get; set; } public Guid TokenId { get; set; } public bool IsValid { get; set; }
+        public Guid UserId { get; set; }
+        public Guid TokenId { get; set; }
+        public bool IsValid { get; set; }
         public string Role { get; set; } = "user";
-        public string Plan { get; set; } = "free"; public int? MonthlyLimit { get; set; } public int UsedThisMonth { get; set; } public int? RemainingThisMonth { get; set; }
+        public string Plan { get; set; } = "free"; public int? MonthlyLimit { get; set; }
+        public int UsedThisMonth { get; set; }
+        public int? RemainingThisMonth { get; set; }
     }
 }

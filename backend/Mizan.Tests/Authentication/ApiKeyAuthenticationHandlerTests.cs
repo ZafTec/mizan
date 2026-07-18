@@ -29,7 +29,7 @@ public class ApiKeyAuthenticationHandlerTests
 
         _loggerFactory = new Mock<ILoggerFactory>();
         _loggerFactory.Setup(x => x.CreateLogger(It.IsAny<string>())).Returns(Mock.Of<ILogger>());
-        
+
         _encoder = new Mock<UrlEncoder>();
         _userStatusService = new Mock<IUserStatusService>();
 
