@@ -109,3 +109,39 @@ If `Mcp:AdminServiceApiKey` is unset (any non-Compose environment, local dev, a 
 9. Deployment actions from doc 09 stand: migrate with backup, rotate MCP user tokens and both service keys, set `REDIS_PASSWORD`, run the Compose gate + authenticated Playwright flows when the SDK image pull works.
 
 Fast-follow (post-merge issues): F1-F5, M7 evaluator scoping, L4/L5/L6/L8, feed pagination, PR surfacing in stats/post-workout once M2 lands.
+
+---
+
+## Re-review: 2026-07-18, commits `52aafcf..681d858`
+
+Four commits landed in response to this review (`52aafcf` format pass, `dade276` commits this file, `ee382c1` security fixes, `681d858` correctness fixes). Every backend finding was verified against the new code, not the commit messages.
+
+### Resolved and verified
+
+| Finding | Fix | Evidence |
+|---|---|---|
+| H1 admin key fallback | Fixed properly | `Program.cs` now throws on missing `Mcp:AdminServiceApiKey` AND refuses `ServiceApiKey == AdminServiceApiKey`. Handler unit tests added: `RejectsAdminImpersonationWithRegularKey`, `AllowsAdminImpersonationWithAdminKey` |
+| M2 pr_count semantics | Fixed well | New pure `Mizan.Domain/PersonalRecords.cs` walks each exercise's workout-best history chronologically and counts strict improvements; evaluator uses it; `LogWorkoutResult` now returns `PersonalRecords` with `PreviousBestKg`; unit + integration tests added (`PersonalRecords_CountsOnlyWorkoutBestImprovements`, `LogWorkout_ReturnsOnlyNewPersonalRecords`). Note the chosen semantic: the first-ever weighted session for an exercise counts as a baseline PR (`PreviousBestKg = null`). Defensible, matches LiftLog behavior; just keep the UI copy honest ("first record" vs "new PR") |
+| M3 template exercise ids | Fixed | Accessibility check copied into `SaveWorkoutTemplateCommandHandler` + `ExerciseId NotEmpty` in validator; test `SaveTemplate_RejectsAnotherUsersCustomExercise` |
+| M4 ProgressionStrategy | Fixed | Validator constrains to `first/middle/last/all` case-insensitively; test `WorkoutTemplateValidator_RejectsUnknownProgressionStrategy` |
+| M5 wrong exceptions | Fixed | `MarkNotificationReadCommand` throws `EntityNotFoundException` (test added); new `UpgradeRequiredException : ForbiddenAccessException` with its own handler branch, thrown from the entitlement-gated commands; string sniffing kept only as fallback for legacy `ForbiddenAccessException` messages |
+| M6 feed query | Fixed beyond ask | Rewrote from the 4-collection Include into separate `AsNoTracking` queries per collection (page of items, then exercises/sets, reactions, comments by item id). No cartesian risk at all now |
+| M7 evaluator cost | Fixed | `EvaluateAsync(ct, criteriaTypes)` filters candidates and `BuildStatsAsync` computes only the aggregates the candidate set needs; all triggers pass scoped lists (`LogWorkout` passes 5, reactions/comments/follows pass 1). `points_total` correctly always included |
+| M8 transaction | Fixed | `IMizanDbContext.ExecuteInTransactionAsync` (no-op when non-relational or already in a transaction, so tests and nested calls are safe); workout save + streak + achievement evaluation now commit atomically |
+| L4 publish references | Fixed | Type-specific reference required by validator; `TemplateId`/`AchievementId` ownership validated in the handler (template built-in-or-own, achievement actually earned) |
+| L5 report delete no-op | Fixed | `delete` action now rejected with a 400 for `Exercise`/`SocialProfile` targets instead of silently marking Actioned |
+| L6 rate limit key | Fixed | `SocialWrites` partitions on `ClaimTypes.NameIdentifier` first, then `sub`, then IP |
+
+### Still open
+
+1. **L1 formatting, partially done.** The format pass cleaned validators, queries, and several handlers, but `SocialCommands.cs` still has ~25 lines over 160 chars (whole handlers on one line, `field; field;` declarations) and the MCP tool classes are still one-liners. If the one-line MCP proxy style is a deliberate convention, fine, but the multi-statement handler bodies in `SocialCommands.cs` are not; finish the pass there.
+2. **All frontend findings (F1-F5) untouched.** No frontend files changed in these commits: scoped weight editing still reducer-only, share flow still ignores `DefaultPublishWorkouts` and captions, no feed pagination or reaction removal, draft resume race, rest-timer restart on decrement. The new `PersonalRecords` payload in `LogWorkoutResult` is also not consumed by the post-workout screen yet, so M2's user-visible half (the "New PR: Bench 85kg" moment, `celebration-pr.svg`) is still missing. Run `bun run codegen` when picking this up.
+3. **L2:** CLAUDE.md still says ES256 at the auth-flow section (~lines 315, 322).
+4. **L3:** `.env.example` still lacks `REDIS_PASSWORD` and `MCP_ADMIN_SERVICE_KEY`; with the new fail-fast this is now a guaranteed first-run failure for anyone following the example file.
+5. **M1 residual:** the broad `UserOrMcp` surface stands as a product decision, but the accepted-risk note has not been added to doc 09, and the admin-key negative test is handler-level only; an endpoint-level test (regular key + impersonated admin against a `RequireAdmin` route returning 401/403) would pin the policy wiring too.
+6. **L8:** no change to request logging around `/mcp` and token-validation query strings.
+7. **Doc 09 not updated** for the re-review changes (PR semantics, transaction, quota of fixed items). Minor, but it is the status document of record.
+
+### Updated verdict
+
+All blocking backend findings (H1, M2-M8) are resolved with tests; the fixes are the right shape, not patches over symptoms. Remaining work is the frontend follow-ups, two doc/config chores (L2, L3, doc 09), and finishing the format pass. Once L3 lands (it is now a hard startup failure, not just hygiene) I would merge this branch and take the rest as fast-follow issues.
