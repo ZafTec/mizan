@@ -50,7 +50,7 @@ MacroChef (also referred to as "Mizan" internally) is a full-stack meal planning
 - **Backend:** ASP.NET Core 10 (Web API) + Clean Architecture + C#
 - **Database:** PostgreSQL 18
 - **Cache:** Redis 7 (SignalR backplane + application caching)
-- **Authentication:** BetterAuth (JWT-based, ES256)
+- **Authentication:** BetterAuth (JWT-based, EdDSA/Ed25519)
 - **Real-time:** SignalR (for trainer-client chat and notifications)
 - **Deployment:** Docker Compose (self-hosted)
 
@@ -140,12 +140,10 @@ bun run db:push       # Push schema without migrations
 bun run db:studio     # Open Drizzle Studio
 
 # Code generation from OpenAPI
-bun run codegen              # Generate both types and Zod schemas
-bun run codegen:types        # Generate TypeScript types only
-bun run codegen:zod          # Generate Zod validation schemas only
+bun run codegen              # Generate TypeScript API types
 ```
 
-**CRITICAL:** Always run `bun run codegen` after backend API/DTO changes to sync types and validation schemas.
+**CRITICAL:** Always run `bun run codegen` after backend API/DTO changes to sync frontend API types.
 
 ## Thinking Principles
 
