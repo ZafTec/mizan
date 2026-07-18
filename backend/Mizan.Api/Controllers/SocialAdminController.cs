@@ -18,11 +18,8 @@ public sealed class SocialAdminController : ControllerBase
     public async Task<ActionResult<SocialAnalyticsDto>> Analytics() => Ok(await _mediator.Send(new GetSocialAnalyticsQuery()));
 
     [HttpGet("reports")]
-    public async Task<IActionResult> Reports([FromQuery] string status = "Open", [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
-    {
-        var result = await _mediator.Send(new GetContentReportsQuery(status, page, pageSize));
-        return Ok(new { result.Items, result.TotalCount, page, pageSize });
-    }
+    public async Task<ActionResult<ContentReportListResult>> Reports([FromQuery] string status = "Open", [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        => Ok(await _mediator.Send(new GetContentReportsQuery(status, page, pageSize)));
 
     [HttpPost("reports/{id:guid}/resolve")]
     public async Task<IActionResult> Resolve(Guid id, [FromBody] ResolveReportRequest request)

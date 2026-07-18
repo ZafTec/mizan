@@ -24,12 +24,14 @@ public class UpdateAchievementCommandValidator : AbstractValidator<UpdateAchieve
     {
         "meals_logged", "recipes_created", "workouts_logged",
         "body_measurements_logged", "goal_progress_logged",
-        "streak_nutrition", "streak_workout", "points_total"
+        "streak_nutrition", "streak_workout", "points_total", "total_volume_kg",
+        "template_completed_count", "followers_count", "workouts_shared", "reactions_given",
+        "comments_made", "pr_count"
     };
 
     private static readonly string[] KnownCategories =
     {
-        "nutrition", "consistency", "workout", "milestone"
+        "nutrition", "consistency", "workout", "milestone", "social"
     };
 
     public UpdateAchievementCommandValidator()

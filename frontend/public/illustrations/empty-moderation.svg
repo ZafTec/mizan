@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-labelledby="em-title">
+  <title id="em-title">A shield with a check mark and a leaning broom, the moderation queue is clear</title>
+  <circle cx="200" cy="150" r="105" fill="var(--secondary, #DDE7EB)" opacity="0.45"/>
+  <!-- shield -->
+  <path d="M200 62 l64 22 v52 c0 40 -28 66 -64 80 c-36 -14 -64 -40 -64 -80 v-52 z" fill="var(--primary, #2E837B)"/>
+  <path d="M200 76 l50 17 v43 c0 32 -22 53 -50 65 z" fill="#FFFFFF" opacity="0.12"/>
+  <!-- check -->
+  <path d="M172 148 l20 20 38 -42" fill="none" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- broom -->
+  <g transform="rotate(14 320 190)">
+    <line x1="320" y1="96" x2="320" y2="188" stroke="#B89968" stroke-width="7" stroke-linecap="round"/>
+    <path d="M304 188 h32 l8 34 h-48 z" fill="#E8B849"/>
+    <g stroke="#C09539" stroke-width="3" stroke-linecap="round">
+      <line x1="312" y1="196" x2="308" y2="218"/>
+      <line x1="320" y1="196" x2="320" y2="218"/>
+      <line x1="328" y1="196" x2="332" y2="218"/>
+    </g>
+  </g>
+  <!-- dust puffs -->
+  <circle cx="284" cy="238" r="4" fill="var(--muted-foreground, #64828F)" opacity="0.4"/>
+  <circle cx="270" cy="244" r="2.5" fill="var(--muted-foreground, #64828F)" opacity="0.3"/>
+  <!-- sparkles -->
+  <path d="M112 90 l3.5 8 8 3.5 -8 3.5 -3.5 8 -3.5 -8 -8 -3.5 8 -3.5 z" fill="#E8B849"/>
+  <circle cx="88" cy="182" r="3.5" fill="#D4654A" opacity="0.6"/>
+  <circle cx="140" cy="234" r="3" fill="var(--primary, #2E837B)" opacity="0.5"/>
+</svg>

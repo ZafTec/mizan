@@ -67,13 +67,12 @@ public class GetExercisesQueryHandler : IRequestHandler<GetExercisesQuery, GetEx
     {
         var query = _context.Exercises.AsQueryable();
 
-        if (_currentUser.UserId.HasValue && request.IncludeCustom)
+        var canSeeAllExercises = _currentUser.IsInRole("admin") && request.IncludeCustom;
+        if (!canSeeAllExercises)
         {
-            query = query.Where(e => (!e.IsCustom && e.IsApproved) || e.CreatedByUserId == _currentUser.UserId);
-        }
-        else
-        {
-            query = query.Where(e => !e.IsCustom && e.IsApproved);
+            query = _currentUser.UserId.HasValue && request.IncludeCustom
+                ? query.Where(e => (!e.IsCustom && e.IsApproved) || e.CreatedByUserId == _currentUser.UserId)
+                : query.Where(e => !e.IsCustom && e.IsApproved);
         }
 
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))

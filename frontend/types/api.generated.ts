@@ -547,6 +547,101 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Exercises/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateExerciseCommand"];
+                    "text/json": components["schemas"]["UpdateExerciseCommand"];
+                    "application/*+json": components["schemas"]["UpdateExerciseCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Exercises/{id}/promote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Foods/{id}": {
         parameters: {
             query?: never;
@@ -2061,6 +2156,147 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    pageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["NotificationListResult"];
+                        "application/json": components["schemas"]["NotificationListResult"];
+                        "text/json": components["schemas"]["NotificationListResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Notifications/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Notifications/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Nutrition/log": {
         parameters: {
             query?: never;
@@ -2694,6 +2930,688 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/Social/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SocialProfileDto"];
+                        "application/json": components["schemas"]["SocialProfileDto"];
+                        "text/json": components["schemas"]["SocialProfileDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SaveSocialProfileCommand"];
+                    "text/json": components["schemas"]["SaveSocialProfileCommand"];
+                    "application/*+json": components["schemas"]["SaveSocialProfileCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Social/profile/rotate-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Social/share/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SocialProfileDto"];
+                        "application/json": components["schemas"]["SocialProfileDto"];
+                        "text/json": components["schemas"]["SocialProfileDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Social/follows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    direction?: string;
+                    status?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FollowDto"][];
+                        "application/json": components["schemas"]["FollowDto"][];
+                        "text/json": components["schemas"]["FollowDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RequestFollowCommand"];
+                    "text/json": components["schemas"]["RequestFollowCommand"];
+                    "application/*+json": components["schemas"]["RequestFollowCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Social/follows/{id}/respond": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["FollowResponse"];
+                    "text/json": components["schemas"]["FollowResponse"];
+                    "application/*+json": components["schemas"]["FollowResponse"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Social/follows/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Social/feed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    pageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SocialFeedResult"];
+                        "application/json": components["schemas"]["SocialFeedResult"];
+                        "text/json": components["schemas"]["SocialFeedResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PublishFeedItemCommand"];
+                    "text/json": components["schemas"]["PublishFeedItemCommand"];
+                    "application/*+json": components["schemas"]["PublishFeedItemCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Social/feed/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Social/feed/{id}/reactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ReactionRequest"];
+                    "text/json": components["schemas"]["ReactionRequest"];
+                    "application/*+json": components["schemas"]["ReactionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete: {
+            parameters: {
+                query?: {
+                    emoji?: string;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Social/feed/{id}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CommentRequest"];
+                    "text/json": components["schemas"]["CommentRequest"];
+                    "application/*+json": components["schemas"]["CommentRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Social/comments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Social/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ReportContentCommand"];
+                    "text/json": components["schemas"]["ReportContentCommand"];
+                    "application/*+json": components["schemas"]["ReportContentCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/social/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SocialAnalyticsDto"];
+                        "application/json": components["schemas"]["SocialAnalyticsDto"];
+                        "text/json": components["schemas"]["SocialAnalyticsDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/social/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    status?: string;
+                    page?: number;
+                    pageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ContentReportListResult"];
+                        "application/json": components["schemas"]["ContentReportListResult"];
+                        "text/json": components["schemas"]["ContentReportListResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/social/reports/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ResolveReportRequest"];
+                    "text/json": components["schemas"]["ResolveReportRequest"];
+                    "application/*+json": components["schemas"]["ResolveReportRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Subscriptions/me": {
         parameters: {
             query?: never;
@@ -3056,6 +3974,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Trainers/clients/{clientId}/workouts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    pageSize?: number;
+                };
+                header?: never;
+                path: {
+                    clientId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WorkoutSummaryDtoPagedResult"];
+                        "application/json": components["schemas"]["WorkoutSummaryDtoPagedResult"];
+                        "text/json": components["schemas"]["WorkoutSummaryDtoPagedResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Users/me": {
         parameters: {
             query?: never;
@@ -3109,43 +4069,6 @@ export interface paths {
                 };
             };
         };
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/Users/me/debug": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["AuthDebugDto"];
-                        "application/json": components["schemas"]["AuthDebugDto"];
-                        "text/json": components["schemas"]["AuthDebugDto"];
-                    };
-                };
-            };
-        };
-        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -3216,6 +4139,400 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Workouts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WorkoutSummaryDto"];
+                        "application/json": components["schemas"]["WorkoutSummaryDto"];
+                        "text/json": components["schemas"]["WorkoutSummaryDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateWorkoutCommand"];
+                    "text/json": components["schemas"]["UpdateWorkoutCommand"];
+                    "application/*+json": components["schemas"]["UpdateWorkoutCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Workouts/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    from?: string;
+                    to?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WorkoutStatsDto"];
+                        "application/json": components["schemas"]["WorkoutStatsDto"];
+                        "text/json": components["schemas"]["WorkoutStatsDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Workouts/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WorkoutDraftDto"];
+                        "application/json": components["schemas"]["WorkoutDraftDto"];
+                        "text/json": components["schemas"]["WorkoutDraftDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SaveWorkoutDraftCommand"];
+                    "text/json": components["schemas"]["SaveWorkoutDraftCommand"];
+                    "application/*+json": components["schemas"]["SaveWorkoutDraftCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/WorkoutTemplates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WorkoutTemplateDto"][];
+                        "application/json": components["schemas"]["WorkoutTemplateDto"][];
+                        "text/json": components["schemas"]["WorkoutTemplateDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SaveWorkoutTemplateCommand"];
+                    "text/json": components["schemas"]["SaveWorkoutTemplateCommand"];
+                    "application/*+json": components["schemas"]["SaveWorkoutTemplateCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/WorkoutTemplates/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SaveWorkoutTemplateCommand"];
+                    "text/json": components["schemas"]["SaveWorkoutTemplateCommand"];
+                    "application/*+json": components["schemas"]["SaveWorkoutTemplateCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/WorkoutTemplates/{id}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/WorkoutTemplates/{id}/next-session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["NextSessionDto"];
+                        "application/json": components["schemas"]["NextSessionDto"];
+                        "text/json": components["schemas"]["NextSessionDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3343,16 +4660,6 @@ export interface components {
             /** Format: int32 */
             readonly totalPages: number;
         };
-        AuthDebugDto: {
-            isAuthenticated: boolean;
-            /** Format: uuid */
-            userId?: string | null;
-            email?: string | null;
-            claims?: components["schemas"]["ClaimDto"][] | null;
-            user?: components["schemas"]["UserDto"];
-            authenticationType?: string | null;
-            error?: string | null;
-        };
         BodyMeasurementDto: {
             /** Format: uuid */
             id: string;
@@ -3416,10 +4723,6 @@ export interface components {
             /** Format: date-time */
             sentAt: string;
         };
-        ClaimDto: {
-            type: string;
-            value: string;
-        };
         ClientNutritionDto: {
             /** Format: uuid */
             clientId: string;
@@ -3427,6 +4730,36 @@ export interface components {
             date: string;
             foodLogs: components["schemas"]["FoodLogEntryDto"][];
             summary: components["schemas"]["NutritionSummaryDto"];
+        };
+        CommentRequest: {
+            body: string;
+        };
+        ContentReportDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            reporterUserId?: string | null;
+            targetType: string;
+            /** Format: uuid */
+            targetId: string;
+            reason: string;
+            status: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            resolvedAt?: string | null;
+            /** Format: uuid */
+            resolvedByUserId?: string | null;
+            resolutionNote?: string | null;
+        };
+        ContentReportListResult: {
+            items: components["schemas"]["ContentReportDto"][];
+            /** Format: int32 */
+            totalCount: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
         };
         CreateAchievementCommand: {
             name: string;
@@ -3723,7 +5056,16 @@ export interface components {
             videoUrl?: string | null;
             imageUrl?: string | null;
             isCustom: boolean;
+            isApproved: boolean;
             isOwner: boolean;
+        };
+        ExercisePoint: {
+            /** Format: date */
+            date: string;
+            /** Format: double */
+            topWeightKg: number;
+            /** Format: double */
+            estimatedOneRepMax: number;
         };
         ExerciseSetDto: {
             /** Format: int32 */
@@ -3734,6 +5076,69 @@ export interface components {
             durationSeconds?: number | null;
             /** Format: double */
             distanceMeters?: number | null;
+            /** Format: double */
+            resistanceLevel?: number | null;
+            /** Format: double */
+            inclinePercent?: number | null;
+            /** Format: int32 */
+            steps?: number | null;
+            /** Format: date-time */
+            completedAt?: string | null;
+            completed: boolean;
+        };
+        ExerciseStatsDto: {
+            /** Format: uuid */
+            exerciseId: string;
+            name: string;
+            points: components["schemas"]["ExercisePoint"][];
+        };
+        FeedCommentDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            userId: string;
+            displayName: string;
+            body: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        FeedItemDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            userId: string;
+            displayName: string;
+            avatarUrl?: string | null;
+            type: string;
+            caption?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            workout?: components["schemas"]["WorkoutFeedSummaryDto"];
+            reactions: components["schemas"]["FeedReactionDto"][];
+            comments: components["schemas"]["FeedCommentDto"][];
+        };
+        FeedReactionDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            userId: string;
+            emoji: string;
+        };
+        FollowDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            userId: string;
+            displayName: string;
+            avatarUrl?: string | null;
+            status: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            respondedAt?: string | null;
+        };
+        FollowResponse: {
+            accept: boolean;
         };
         FoodAnalysisResult: {
             foods: components["schemas"]["RecognizedFood"][];
@@ -3895,6 +5300,8 @@ export interface components {
             /** Format: date */
             lastActivityDate?: string | null;
             isActiveToday: boolean;
+            /** Format: int32 */
+            freezesAvailable: number;
         };
         GoalProgressEntryDto: {
             /** Format: uuid */
@@ -3931,6 +5338,15 @@ export interface components {
             totalDuration: number;
             system: components["schemas"]["SystemInfoDto"];
             entries: components["schemas"]["HealthCheckEntryDto"][];
+        };
+        HeaviestLiftDto: {
+            /** Format: uuid */
+            exerciseId: string;
+            name: string;
+            /** Format: double */
+            weightKg: number;
+            /** Format: date */
+            date: string;
         };
         HouseholdDto: {
             /** Format: uuid */
@@ -4049,6 +5465,14 @@ export interface components {
             name?: string | null;
             /** Format: date */
             workoutDate: string;
+            /** Format: uuid */
+            templateId?: string | null;
+            /** Format: double */
+            bodyweightKg?: number | null;
+            /** Format: date-time */
+            startedAt?: string | null;
+            /** Format: date-time */
+            completedAt?: string | null;
             /** Format: int32 */
             durationMinutes?: number | null;
             /** Format: int32 */
@@ -4188,6 +5612,11 @@ export interface components {
             /** Format: int32 */
             itemCount: number;
         };
+        MuscleGroupSetsDto: {
+            muscleGroup: string;
+            /** Format: int32 */
+            sets: number;
+        };
         MyHouseholdInvitationSummary: {
             /** Format: uuid */
             id: string;
@@ -4265,6 +5694,51 @@ export interface components {
             /** Format: int32 */
             readonly totalPages: number;
         };
+        NextSessionDto: {
+            /** Format: uuid */
+            templateId: string;
+            name: string;
+            programName?: string | null;
+            exercises: components["schemas"]["NextSessionExerciseDto"][];
+        };
+        NextSessionExerciseDto: {
+            /** Format: uuid */
+            exerciseId: string;
+            name: string;
+            category: string;
+            notes?: string | null;
+            supersetWithNext: boolean;
+            /** Format: int32 */
+            restSecondsMin?: number | null;
+            /** Format: int32 */
+            restSecondsMax?: number | null;
+            /** Format: int32 */
+            restSecondsFailure?: number | null;
+            sets: components["schemas"]["PlannedSetDto"][];
+        };
+        NotificationDto: {
+            /** Format: uuid */
+            id: string;
+            type: string;
+            title: string;
+            body?: string | null;
+            linkUrl?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            readAt?: string | null;
+        };
+        NotificationListResult: {
+            items: components["schemas"]["NotificationDto"][];
+            /** Format: int32 */
+            unreadCount: number;
+            /** Format: int32 */
+            totalCount: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+        };
         NutritionSummaryDto: {
             /** Format: double */
             totalCalories: number;
@@ -4274,6 +5748,31 @@ export interface components {
             totalCarbs: number;
             /** Format: double */
             totalFat: number;
+        };
+        PlannedSetDto: {
+            /** Format: int32 */
+            setNumber: number;
+            /** Format: int32 */
+            targetReps?: number | null;
+            /** Format: double */
+            weightKg: number;
+            /** Format: int32 */
+            targetSeconds?: number | null;
+            /** Format: double */
+            targetDistanceMeters?: number | null;
+        };
+        PublishFeedItemCommand: {
+            type: string;
+            /** Format: uuid */
+            workoutId?: string | null;
+            /** Format: uuid */
+            templateId?: string | null;
+            /** Format: uuid */
+            achievementId?: string | null;
+            caption?: string | null;
+        };
+        ReactionRequest: {
+            emoji: string;
         };
         RecipeDetailDto: {
             /** Format: uuid */
@@ -4401,6 +5900,19 @@ export interface components {
             success: boolean;
             message?: string | null;
         };
+        ReportContentCommand: {
+            targetType: string;
+            /** Format: uuid */
+            targetId: string;
+            reason: string;
+        };
+        RequestFollowCommand: {
+            shareToken: string;
+        };
+        ResolveReportRequest: {
+            action: string;
+            note?: string | null;
+        };
         RespondInvitationRequest: {
             action: string;
         };
@@ -4418,6 +5930,28 @@ export interface components {
             message?: string | null;
             /** Format: uuid */
             householdId?: string | null;
+        };
+        SaveSocialProfileCommand: {
+            displayName: string;
+            bio?: string | null;
+            avatarUrl?: string | null;
+            defaultPublishWorkouts: boolean;
+        };
+        SaveWorkoutDraftCommand: {
+            payload: string;
+        };
+        SaveWorkoutTemplateCommand: {
+            /** Format: uuid */
+            id?: string | null;
+            name: string;
+            programName?: string | null;
+            /** Format: int32 */
+            sessionOrder: number;
+            notes?: string | null;
+            /** Format: int32 */
+            sortOrder: number;
+            isBuiltIn: boolean;
+            exercises: components["schemas"]["WorkoutTemplateExerciseInput"][];
         };
         SendMessageRequest: {
             /** Format: uuid */
@@ -4482,6 +6016,38 @@ export interface components {
             /** Format: int32 */
             readonly totalPages: number;
         };
+        SocialAnalyticsDto: {
+            /** Format: int32 */
+            profiles: number;
+            /** Format: int32 */
+            pendingFollows: number;
+            /** Format: int32 */
+            acceptedFollows: number;
+            /** Format: int32 */
+            feedItems: number;
+            /** Format: int32 */
+            openReports: number;
+            /** Format: int32 */
+            actionedReports: number;
+        };
+        SocialFeedResult: {
+            items: components["schemas"]["FeedItemDto"][];
+            /** Format: int32 */
+            totalCount: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+        };
+        SocialProfileDto: {
+            /** Format: uuid */
+            userId: string;
+            displayName: string;
+            bio?: string | null;
+            avatarUrl?: string | null;
+            defaultPublishWorkouts: boolean;
+            shareToken?: string | null;
+        };
         StreakUpdate: {
             streakType: string;
             /** Format: int32 */
@@ -4492,6 +6058,9 @@ export interface components {
             extended: boolean;
             /** Format: date */
             lastActivityDate: string;
+            freezeConsumed: boolean;
+            /** Format: int32 */
+            freezesAvailable: number;
         };
         SystemInfoDto: {
             environment: string;
@@ -4620,6 +6189,17 @@ export interface components {
             /** Format: int32 */
             threshold: number;
         };
+        UpdateExerciseCommand: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            category: string;
+            muscleGroup?: string | null;
+            equipment?: string | null;
+            description?: string | null;
+            videoUrl?: string | null;
+            imageUrl?: string | null;
+        };
         UpdateFoodCommand: {
             /** Format: uuid */
             id: string;
@@ -4697,6 +6277,27 @@ export interface components {
             name?: string | null;
             image?: string | null;
         };
+        UpdateWorkoutCommand: {
+            /** Format: uuid */
+            id: string;
+            name?: string | null;
+            /** Format: date */
+            workoutDate: string;
+            /** Format: uuid */
+            templateId?: string | null;
+            /** Format: double */
+            bodyweightKg?: number | null;
+            /** Format: date-time */
+            startedAt?: string | null;
+            /** Format: date-time */
+            completedAt?: string | null;
+            /** Format: int32 */
+            durationMinutes?: number | null;
+            /** Format: int32 */
+            caloriesBurned?: number | null;
+            notes?: string | null;
+            exercises: components["schemas"]["WorkoutExerciseDto"][];
+        };
         UsageOverview: {
             /** Format: int32 */
             totalCalls: number;
@@ -4771,21 +6372,63 @@ export interface components {
             isValid: boolean;
             /** Format: uuid */
             tokenId?: string | null;
+            role: string;
+            plan: string;
+            /** Format: int32 */
+            monthlyLimit?: number | null;
+            /** Format: int32 */
+            usedThisMonth: number;
+            /** Format: int32 */
+            readonly remainingThisMonth?: number | null;
+            readonly quotaExceeded: boolean;
+        };
+        WorkoutDraftDto: {
+            payload: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         WorkoutExerciseDto: {
             /** Format: uuid */
             exerciseId: string;
+            notes?: string | null;
+            supersetWithNext: boolean;
             sets: components["schemas"]["ExerciseSetDto"][];
         };
         WorkoutExerciseSummaryDto: {
             /** Format: uuid */
             id: string;
+            /** Format: uuid */
+            exerciseId: string;
             exerciseName: string;
             category: string;
             muscleGroup?: string | null;
             /** Format: int32 */
             sortOrder: number;
+            notes?: string | null;
+            supersetWithNext: boolean;
             sets: components["schemas"]["WorkoutSetDto"][];
+        };
+        WorkoutFeedExerciseDto: {
+            name: string;
+            muscleGroup?: string | null;
+            /** Format: int32 */
+            sets: number;
+            /** Format: double */
+            topWeightKg: number;
+            /** Format: int32 */
+            topReps: number;
+        };
+        WorkoutFeedSummaryDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: date */
+            date: string;
+            /** Format: int32 */
+            durationMinutes?: number | null;
+            /** Format: double */
+            totalVolumeKg: number;
+            exercises: components["schemas"]["WorkoutFeedExerciseDto"][];
         };
         WorkoutSetDto: {
             /** Format: int32 */
@@ -4798,7 +6441,30 @@ export interface components {
             durationSeconds?: number | null;
             /** Format: double */
             distanceMeters?: number | null;
+            /** Format: double */
+            resistanceLevel?: number | null;
+            /** Format: double */
+            inclinePercent?: number | null;
+            /** Format: int32 */
+            steps?: number | null;
+            /** Format: date-time */
+            completedAt?: string | null;
             completed: boolean;
+        };
+        WorkoutStatsDto: {
+            /** Format: double */
+            workoutsPerWeek: number;
+            /** Format: double */
+            setsPerWeek: number;
+            /** Format: double */
+            averageSessionMinutes: number;
+            /** Format: double */
+            totalVolumeKg: number;
+            heaviestLift?: components["schemas"]["HeaviestLiftDto"];
+            /** Format: double */
+            maxSessionVolume: number;
+            perExercise: components["schemas"]["ExerciseStatsDto"][];
+            perMuscleGroup: components["schemas"]["MuscleGroupSetsDto"][];
         };
         WorkoutSummaryDto: {
             /** Format: uuid */
@@ -4806,6 +6472,14 @@ export interface components {
             name?: string | null;
             /** Format: date */
             workoutDate: string;
+            /** Format: uuid */
+            templateId?: string | null;
+            /** Format: double */
+            bodyweightKg?: number | null;
+            /** Format: date-time */
+            startedAt?: string | null;
+            /** Format: date-time */
+            completedAt?: string | null;
             /** Format: int32 */
             durationMinutes?: number | null;
             /** Format: int32 */
@@ -4825,6 +6499,84 @@ export interface components {
             pageSize: number;
             /** Format: int32 */
             readonly totalPages: number;
+        };
+        WorkoutTemplateDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            userId?: string | null;
+            name: string;
+            programName?: string | null;
+            /** Format: int32 */
+            sessionOrder: number;
+            notes?: string | null;
+            isBuiltIn: boolean;
+            /** Format: int32 */
+            sortOrder: number;
+            exercises: components["schemas"]["WorkoutTemplateExerciseDto"][];
+        };
+        WorkoutTemplateExerciseDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            exerciseId: string;
+            exerciseName: string;
+            category: string;
+            muscleGroup?: string | null;
+            /** Format: int32 */
+            sortOrder: number;
+            /** Format: int32 */
+            sets: number;
+            /** Format: int32 */
+            repsPerSet?: number | null;
+            /** Format: double */
+            targetWeightKg?: number | null;
+            /** Format: int32 */
+            restSecondsMin?: number | null;
+            /** Format: int32 */
+            restSecondsMax?: number | null;
+            /** Format: int32 */
+            restSecondsFailure?: number | null;
+            supersetWithNext: boolean;
+            notes?: string | null;
+            progressionType: string;
+            progressionStrategy: string;
+            /** Format: double */
+            progressionAmountKg?: number | null;
+            targetType: string;
+            /** Format: int32 */
+            targetSeconds?: number | null;
+            /** Format: double */
+            targetDistanceMeters?: number | null;
+        };
+        WorkoutTemplateExerciseInput: {
+            /** Format: uuid */
+            exerciseId: string;
+            /** Format: int32 */
+            sortOrder: number;
+            /** Format: int32 */
+            sets: number;
+            /** Format: int32 */
+            repsPerSet?: number | null;
+            /** Format: double */
+            targetWeightKg?: number | null;
+            /** Format: int32 */
+            restSecondsMin?: number | null;
+            /** Format: int32 */
+            restSecondsMax?: number | null;
+            /** Format: int32 */
+            restSecondsFailure?: number | null;
+            supersetWithNext: boolean;
+            notes?: string | null;
+            progressionType: string;
+            progressionStrategy: string;
+            /** Format: double */
+            progressionAmountKg?: number | null;
+            targetType: string;
+            /** Format: int32 */
+            targetSeconds?: number | null;
+            /** Format: double */
+            targetDistanceMeters?: number | null;
         };
     };
     responses: never;

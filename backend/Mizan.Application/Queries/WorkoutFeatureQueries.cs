@@ -16,8 +16,8 @@ public sealed class GetWorkoutByIdQueryHandler : IRequestHandler<GetWorkoutByIdQ
         return _context.Workouts.Where(w => w.Id == request.Id && w.UserId == userId).Select(w => new WorkoutSummaryDto(
             w.Id, w.Name, w.WorkoutDate, w.TemplateId, w.BodyweightKg, w.StartedAt, w.CompletedAt, w.DurationMinutes,
             w.CaloriesBurned, w.Notes, w.CreatedAt,
-            w.Exercises.OrderBy(e => e.SortOrder).Select(e => new WorkoutExerciseSummaryDto(e.Id, e.Exercise.Name, e.Exercise.Category,
-                e.Exercise.MuscleGroup, e.SortOrder, e.Notes, e.SupersetWithNext,
+            w.Exercises.OrderBy(e => e.SortOrder).Select(e => new WorkoutExerciseSummaryDto(e.Id, e.ExerciseId, e.Exercise.Name,
+                e.Exercise.Category, e.Exercise.MuscleGroup, e.SortOrder, e.Notes, e.SupersetWithNext,
                 e.Sets.OrderBy(s => s.SetNumber).Select(s => new WorkoutSetDto(s.SetNumber, s.Reps, s.WeightKg, s.DurationSeconds,
                     s.DistanceMeters, s.ResistanceLevel, s.InclinePercent, s.Steps, s.CompletedAt, s.Completed)).ToList())).ToList())).FirstOrDefaultAsync(ct);
     }

@@ -81,18 +81,19 @@ public sealed class GetSocialFeedQueryHandler : IRequestHandler<GetSocialFeedQue
 }
 
 public record ContentReportDto(Guid Id, Guid? ReporterUserId, string TargetType, Guid TargetId, string Reason, string Status, DateTime CreatedAt, DateTime? ResolvedAt, Guid? ResolvedByUserId, string? ResolutionNote);
-public record GetContentReportsQuery(string Status = "Open", int Page = 1, int PageSize = 20) : IRequest<(IReadOnlyList<ContentReportDto> Items, int TotalCount)>;
-public sealed class GetContentReportsQueryHandler : IRequestHandler<GetContentReportsQuery, (IReadOnlyList<ContentReportDto> Items, int TotalCount)>
+public record ContentReportListResult(IReadOnlyList<ContentReportDto> Items, int TotalCount, int Page, int PageSize);
+public record GetContentReportsQuery(string Status = "Open", int Page = 1, int PageSize = 20) : IRequest<ContentReportListResult>;
+public sealed class GetContentReportsQueryHandler : IRequestHandler<GetContentReportsQuery, ContentReportListResult>
 {
     private readonly IMizanDbContext _context; private readonly ICurrentUserService _currentUser;
     public GetContentReportsQueryHandler(IMizanDbContext context, ICurrentUserService currentUser) { _context = context; _currentUser = currentUser; }
-    public async Task<(IReadOnlyList<ContentReportDto>, int)> Handle(GetContentReportsQuery request, CancellationToken ct)
+    public async Task<ContentReportListResult> Handle(GetContentReportsQuery request, CancellationToken ct)
     {
         if (!_currentUser.IsInRole("admin")) throw new UnauthorizedAccessException();
         var query = _context.ContentReports.Where(r => r.Status == request.Status); var total = await query.CountAsync(ct);
         var items = await query.OrderBy(r => r.CreatedAt).Skip((Math.Max(1, request.Page) - 1) * Math.Clamp(request.PageSize, 1, 100)).Take(Math.Clamp(request.PageSize, 1, 100))
             .Select(r => new ContentReportDto(r.Id, r.ReporterUserId, r.TargetType, r.TargetId, r.Reason, r.Status, r.CreatedAt, r.ResolvedAt, r.ResolvedByUserId, r.ResolutionNote)).ToListAsync(ct);
-        return (items, total);
+        return new ContentReportListResult(items, total, Math.Max(1, request.Page), Math.Clamp(request.PageSize, 1, 100));
     }
 }
 
