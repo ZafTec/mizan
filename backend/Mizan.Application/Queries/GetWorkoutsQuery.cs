@@ -33,6 +33,7 @@ public record WorkoutSummaryDto(
 
 public record WorkoutExerciseSummaryDto(
     Guid Id,
+    Guid ExerciseId,
     string ExerciseName,
     string Category,
     string? MuscleGroup,
@@ -105,6 +106,7 @@ public class GetWorkoutsQueryHandler : IRequestHandler<GetWorkoutsQuery, PagedRe
                 w.CreatedAt,
                 w.Exercises.OrderBy(we => we.SortOrder).Select(we => new WorkoutExerciseSummaryDto(
                     we.Id,
+                    we.ExerciseId,
                     we.Exercise.Name,
                     we.Exercise.Category,
                     we.Exercise.MuscleGroup,

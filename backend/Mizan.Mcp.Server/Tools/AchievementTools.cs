@@ -45,4 +45,27 @@ public sealed class AchievementTools
             : $"?streakType={Uri.EscapeDataString(streakType)}";
         return await _api.GetAsync($"/api/Achievements/streak{qs}", ct);
     }
+
+    [McpServerTool(Name = "admin_get_achievement", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. Get an achievement definition by UUID.")]
+    public Task<string> AdminGet(string id, CancellationToken ct = default) => _api.GetAsync($"/api/Achievements/{id}", ct);
+
+    [McpServerTool(Name = "admin_create_achievement")]
+    [Description("Admin only. Create an achievement criterion.")]
+    public Task<string> AdminCreate(string name, string description, int points, string category, string criteriaType, int threshold, string? iconUrl = null, CancellationToken ct = default)
+        => _api.PostAsync("/api/Achievements", new { name, description, points, category, criteriaType, threshold, iconUrl }, ct);
+
+    [McpServerTool(Name = "admin_update_achievement", Idempotent = true)]
+    [Description("Admin only. Update an achievement criterion.")]
+    public Task<string> AdminUpdate(string id, string name, string description, int points, string category, string criteriaType, int threshold, string? iconUrl = null, CancellationToken ct = default)
+        => _api.PutAsync($"/api/Achievements/{id}", new { id, name, description, points, category, criteriaType, threshold, iconUrl }, ct);
+
+    [McpServerTool(Name = "admin_delete_achievement", Destructive = true)]
+    [Description("Admin only. Delete an achievement definition.")]
+    public Task<string> AdminDelete(string id, CancellationToken ct = default) => _api.DeleteAsync($"/api/Achievements/{id}", ct);
+
+    [McpServerTool(Name = "admin_get_achievement_analytics", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. Read achievement unlock analytics.")]
+    public Task<string> AdminAnalytics(int page = 1, int pageSize = 50, CancellationToken ct = default)
+        => _api.GetAsync($"/api/Achievements/analytics?page={page}&pageSize={pageSize}", ct);
 }

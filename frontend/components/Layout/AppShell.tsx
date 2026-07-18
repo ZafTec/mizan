@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { useSubscription } from "@/lib/hooks/useSubscription";
 import { ProBadge } from "@/components/billing/ProBadge";
 import logoTransparent from "@/public/logo_transparent.png";
+import { NotificationBell } from "@/components/NotificationBell";
 
 type NavItem = {
 	href: string;
@@ -64,7 +65,7 @@ const NAV_GROUPS: NavGroup[] = [
 			{ href: "/ai", label: "AI Coach", icon: "brain" },
 			{ href: "/messaging", label: "Messages", icon: "messageCircle" },
 			{ href: "/trainers", label: "Trainers", icon: "heart" },
-			{ href: "/community", label: "Feed", icon: "users" },
+			{ href: "/social", label: "Feed", icon: "users" }
 		],
 	},
 ];
@@ -439,13 +440,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 						</div>
 
 						<div className="ml-auto flex items-center gap-2">
-							<Link
-								href="/notifications"
-								className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-charcoal-blue-200 text-charcoal-blue-600 transition-colors hover:text-charcoal-blue-900 dark:border-white/10 dark:text-charcoal-blue-200 dark:hover:text-white"
-								aria-label="Notifications"
-							>
-								<AnimatedIcon name="bell" size={18} />
-							</Link>
+							<NotificationBell />
 							<div className="relative">
 								<button
 									ref={userTriggerRef}

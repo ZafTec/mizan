@@ -14,6 +14,9 @@ export interface Exercise {
     equipment?: string;
     videoUrl?: string;
     imageUrl?: string;
+    isCustom?: boolean;
+    isApproved?: boolean;
+    isOwner?: boolean;
 }
 
 export interface ExerciseListResult {
