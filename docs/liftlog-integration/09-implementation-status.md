@@ -105,6 +105,8 @@ Fresh Compose installs run the BetterAuth Drizzle migration as a one-shot servic
 - `ee382c1` Fix reviewed backend security gaps
 - `681d858` Improve workout and feed correctness
 - `8e35002` Add LiftLog implementation re-review
+- `29705d4` Polish workout and social flows
+- `ba35895` Close LiftLog review follow-ups
 
 ## Verification
 
