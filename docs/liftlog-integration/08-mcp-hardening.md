@@ -131,11 +131,13 @@ Doc 01 owns R1 (raw MCP tokens in audit log — CRITICAL, rotate all tokens afte
 - `get_food_diary` description doesn't say the date defaults to *UTC* today — the local-date bug family (audit D6/E5) applies to MCP too. When the backend `ClientDate` fix lands (doc 02 cross-cutting table), thread an optional `timezone`/local-date param through `get_food_diary`, `get_daily_nutrition`, `log_food`, `log_meal`.
 - Version string: bump `ServerInfo.Version`/health endpoint together (currently hardcoded "2.0.0" in three places in `Program.cs`) — single constant.
 
-## 3. Open decisions for the user (do not decide unilaterally)
+## 3. Product decisions resolved 2026-07-18
 
-1. **Expose AI tools via MCP?** `/api/Nutrition/ai/chat` and `ai/analyze-image` are Pro-gated and functional. An `ask_nutrition_ai` tool is trivially addable but doubles AI cost surface (agent calling an AI). Recommendation: skip; MCP clients are already LLMs.
-2. **Query-string token removal** (F8.2) — needs confirmation no deployed client uses it.
-3. **Backend `errorCode` extension** (F4.3) — coordinate with whoever owns the exception handler; it's a 5-line change but touches every API consumer's error contract.
+1. Nutrition AI is not exposed through MCP.
+2. Query-string token support remains enabled.
+3. Backend errors include stable `errorCode` values and MCP maps structured backend errors.
+4. Free users receive 15 successful MCP calls per calendar month, configured in `McpUsagePolicy` and described in pricing.
+5. Admin MCP calls use a separate admin service key and include achievement management.
 
 ## 4. Testing strategy
 

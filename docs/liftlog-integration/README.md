@@ -2,7 +2,7 @@
 
 Handoff package for rebuilding Mizan's workout/exercise features by sampling https://github.com/LiamMorrow/LiftLog, adding its social features, and integrating both with the existing achievement gamification and admin area. Produced 2026-07-07 from a combined re-verification of `docs/ANALYSIS_2026-06-10.md` and `docs/DEEP_DIVE_2026-06-12.md`, a LiftLog codebase analysis, and a live test/infra baseline.
 
-**No implementation has been done.** This folder is the input for the implementing agent.
+**Implementation completed on 2026-07-18.** See `09-implementation-status.md` for the delivered scope, resolved product decisions, commits, and verification results. The original handoff documents remain as the design and audit trail.
 
 ## Reading order
 
@@ -16,6 +16,7 @@ Handoff package for rebuilding Mizan's workout/exercise features by sampling htt
 | `06-test-baseline.md` | What was run on 2026-07-07 and the results the implementing agent starts from |
 | `07-svg-assets.md` | SVG asset pack guide: inventory of the illustrations, icon sprites, animated assets, and marketing/social media graphics in `SVGs/`, with per-feature placement and integration rules |
 | `08-mcp-hardening.md` | MCP server review (2026-07-09): duplicate/shadowed tools, meal-type collapse bug, pro/entitlement gating surface, error mapping, missing tools, testing strategy. Parallelizable with the feature work except where marked blocked on doc 04 phases |
+| `09-implementation-status.md` | Completed scope, product decisions, commit sequence, validation results, and deployment follow-up |
 
 ## One-paragraph summary
 

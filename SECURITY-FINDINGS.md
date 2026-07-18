@@ -2,6 +2,32 @@
 
 Persistent log of security review findings. Each entry records the finding, where it lives, and its status. Re-verified on the date shown; update status when fixed.
 
+## 2026-07-18 LiftLog integration remediation
+
+Re-verified on branch `feature/liftlog-integration`. The code findings from the June and July audits are closed. MCP bearer tokens and service keys still require operational rotation when this branch is deployed.
+
+| ID | Severity | Resolution | Status |
+|----|----------|------------|--------|
+| S1 | CRITICAL | `ISkipAudit` excludes token validation and chat content; the LiftLog migration redacts existing rows | FIXED (`2d481b3`, `65a8728`) |
+| S2 | HIGH | JWT is the default policy; MCP service access is explicit; key comparison is constant-time; regular service keys cannot impersonate admins; admin MCP uses a separate key | FIXED (`2d481b3`) |
+| S3 | HIGH | Compose secrets fail closed, database ports bind to loopback, and Redis requires authentication | FIXED (`2d481b3`) |
+| S4 | MEDIUM | Issuer, audience, and JWKS URL validate at startup; issuer and audience validation are mandatory | FIXED (`2d481b3`, `a467662`) |
+| S5 | MEDIUM | AI image requests are capped at 10 MB, files at 8 MB, with a JPEG/PNG/WebP allowlist | FIXED (`2d481b3`) |
+| S6 | LOW | Global and user-owned exercises are scoped; custom exercises require approval; media URLs require HTTPS | FIXED (`65a8728`, `9d3c3e6`) |
+| S7 | LOW | Token validation uses a configurable IP fixed-window limit with a 10/minute production default | FIXED (`2d481b3`, `a467662`) |
+| S8 | LOW | The claims-debug endpoint was removed | FIXED (`2d481b3`) |
+| S9 | LOW | Meal-plan recipe attachment requires public, owner, or household access | FIXED (`2d481b3`) |
+| S10 | LOW | Typing indicators re-check conversation membership before broadcasting | FIXED (`2d481b3`) |
+| S11 | HIGH | Backend and MCP dependencies were upgraded; `dotnet list package --vulnerable --include-transitive` reports no vulnerable packages | FIXED (`bbeba8f`) |
+| A1/A2 | HIGH availability | JWKS refresh keeps a last-known-good in-memory snapshot and signature validation reads synchronously from that snapshot | FIXED (`2d481b3`) |
+| A10 | Availability | Shared pagination clamps page and page size | FIXED (`2d481b3`) |
+
+### Deployment actions
+
+1. Rotate all existing MCP user tokens because historical audit rows may have contained plaintext tokens.
+2. Rotate `MCP_SERVICE_KEY` and `MCP_ADMIN_SERVICE_KEY` and deploy distinct values.
+3. Set `REDIS_PASSWORD`; Compose no longer starts Redis without it.
+
 ## 2026-07-07 re-verification of ANALYSIS_2026-06-10 security findings
 
 All findings below were re-checked against the working tree on 2026-07-07 (branch `master`, HEAD `d154eea`). None have been fixed since the June audit.
