@@ -82,6 +82,27 @@ public class MizanDbContext : DbContext, IMizanDbContext
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<PaddleWebhookEvent> PaddleWebhookEvents => Set<PaddleWebhookEvent>();
 
+    public async Task<T> ExecuteInTransactionAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken = default)
+    {
+        if (!Database.IsRelational() || Database.CurrentTransaction is not null)
+        {
+            return await operation(cancellationToken);
+        }
+
+        await using var transaction = await Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            var result = await operation(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return result;
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

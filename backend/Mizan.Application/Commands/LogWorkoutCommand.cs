@@ -42,6 +42,8 @@ public record ExerciseSetDto
     public bool Completed { get; init; } = true;
 }
 
+public record PersonalRecordResult(Guid ExerciseId, string ExerciseName, decimal WeightKg, decimal? PreviousBestKg);
+
 public record LogWorkoutResult
 {
     public Guid Id { get; init; }
@@ -50,6 +52,7 @@ public record LogWorkoutResult
     public int TotalSets { get; init; }
     public StreakUpdate? Streak { get; init; }
     public IReadOnlyList<UnlockedAchievement> UnlockedAchievements { get; init; } = [];
+    public IReadOnlyList<PersonalRecordResult> PersonalRecords { get; init; } = [];
 }
 
 public class LogWorkoutCommandValidator : AbstractValidator<LogWorkoutCommand>
@@ -106,14 +109,38 @@ public class LogWorkoutCommandHandler : IRequestHandler<LogWorkoutCommand, LogWo
         }
 
         var exerciseIds = request.Exercises.Select(e => e.ExerciseId).Distinct().ToList();
-        var existingExerciseIds = await _context.Exercises
+        var existingExercises = await _context.Exercises
             .Where(e => exerciseIds.Contains(e.Id) && (!e.IsCustom || e.CreatedByUserId == _currentUser.UserId))
-            .Select(e => e.Id)
+            .Select(e => new { e.Id, e.Name })
             .ToListAsync(cancellationToken);
-        if (existingExerciseIds.Count != exerciseIds.Count)
+        if (existingExercises.Count != exerciseIds.Count)
         {
             throw new DomainValidationException("One or more exercises are invalid or inaccessible");
         }
+
+        var previousBestWeights = await _context.ExerciseSets
+            .Where(set => set.WorkoutExercise.Workout.UserId == _currentUser.UserId.Value
+                && exerciseIds.Contains(set.WorkoutExercise.ExerciseId)
+                && set.Completed
+                && set.WeightKg > 0)
+            .GroupBy(set => set.WorkoutExercise.ExerciseId)
+            .Select(group => new { ExerciseId = group.Key, WeightKg = group.Max(set => set.WeightKg!.Value) })
+            .ToDictionaryAsync(item => item.ExerciseId, item => item.WeightKg, cancellationToken);
+        var exerciseNames = existingExercises.ToDictionary(exercise => exercise.Id, exercise => exercise.Name);
+        var personalRecords = request.Exercises
+            .Select(exercise => new
+            {
+                exercise.ExerciseId,
+                WeightKg = exercise.Sets.Where(set => set.Completed && set.WeightKg > 0).Max(set => set.WeightKg)
+            })
+            .Where(item => item.WeightKg.HasValue
+                && (!previousBestWeights.TryGetValue(item.ExerciseId, out var previousBest) || item.WeightKg.Value > previousBest))
+            .Select(item => new PersonalRecordResult(
+                item.ExerciseId,
+                exerciseNames[item.ExerciseId],
+                item.WeightKg!.Value,
+                previousBestWeights.TryGetValue(item.ExerciseId, out var previousBest) ? previousBest : null))
+            .ToList();
 
         var workout = new Workout
         {
@@ -169,32 +196,37 @@ public class LogWorkoutCommandHandler : IRequestHandler<LogWorkoutCommand, LogWo
             workout.Exercises.Add(workoutExercise);
         }
 
-        _context.Workouts.Add(workout);
-        if (request.BodyweightKg.HasValue)
+        return await _context.ExecuteInTransactionAsync(async ct =>
         {
-            _context.BodyMeasurements.Add(new BodyMeasurement
+            _context.Workouts.Add(workout);
+            if (request.BodyweightKg.HasValue)
             {
-                Id = Guid.NewGuid(),
-                UserId = _currentUser.UserId.Value,
-                MeasurementDate = request.WorkoutDate,
-                WeightKg = request.BodyweightKg,
-                Notes = "Workout bodyweight",
-                CreatedAt = DateTime.UtcNow
-            });
-        }
-        await _context.SaveChangesAsync(cancellationToken);
+                _context.BodyMeasurements.Add(new BodyMeasurement
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = _currentUser.UserId.Value,
+                    MeasurementDate = request.WorkoutDate,
+                    WeightKg = request.BodyweightKg,
+                    Notes = "Workout bodyweight",
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+            await _context.SaveChangesAsync(ct);
 
-        var streak = await _streakService.RecordActivityAsync("workout", request.WorkoutDate, cancellationToken);
-        var unlocked = await _achievements.EvaluateAsync(cancellationToken);
+            var streak = await _streakService.RecordActivityAsync("workout", request.WorkoutDate, ct);
+            var unlocked = await _achievements.EvaluateAsync(ct,
+                            ["workouts_logged", "total_volume_kg", "template_completed_count", "pr_count", "streak_workout"]);
 
-        return new LogWorkoutResult
-        {
-            Id = workout.Id,
-            Message = $"Logged workout: {workout.Name}",
-            TotalExercises = request.Exercises.Count,
-            TotalSets = totalSets,
-            Streak = streak,
-            UnlockedAchievements = unlocked
-        };
+            return new LogWorkoutResult
+            {
+                Id = workout.Id,
+                Message = $"Logged workout: {workout.Name}",
+                TotalExercises = request.Exercises.Count,
+                TotalSets = totalSets,
+                Streak = streak,
+                UnlockedAchievements = unlocked,
+                PersonalRecords = personalRecords
+            };
+        }, cancellationToken);
     }
 }
