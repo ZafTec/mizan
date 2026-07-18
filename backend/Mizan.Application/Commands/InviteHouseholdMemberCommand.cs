@@ -40,11 +40,13 @@ public class InviteHouseholdMemberCommandHandler : IRequestHandler<InviteHouseho
 
     private readonly IMizanDbContext _context;
     private readonly IEntitlementService _entitlements;
+    private readonly INotificationWriter? _notifications;
 
-    public InviteHouseholdMemberCommandHandler(IMizanDbContext context, IEntitlementService entitlements)
+    public InviteHouseholdMemberCommandHandler(IMizanDbContext context, IEntitlementService entitlements, INotificationWriter? notifications = null)
     {
         _context = context;
         _entitlements = entitlements;
+        _notifications = notifications;
     }
 
     public async Task<InviteHouseholdMemberResult> Handle(InviteHouseholdMemberCommand request, CancellationToken cancellationToken)
@@ -114,6 +116,10 @@ public class InviteHouseholdMemberCommandHandler : IRequestHandler<InviteHouseho
         };
 
         _context.HouseholdInvitations.Add(invitation);
+        if (_notifications is not null)
+        {
+            await _notifications.AddAsync(invitee.Id, "household_invite", "Household invitation", "You were invited to join a household.", "/profile/household", cancellationToken);
+        }
         await _context.SaveChangesAsync(cancellationToken);
 
         return new InviteHouseholdMemberResult { Success = true, InvitationId = invitation.Id };

@@ -11,10 +11,12 @@ public record SendTrainerRequestCommand(Guid ClientId, Guid TrainerId) : IReques
 public class SendTrainerRequestCommandHandler : IRequestHandler<SendTrainerRequestCommand, Guid>
 {
     private readonly IMizanDbContext _context;
+    private readonly INotificationWriter? _notifications;
 
-    public SendTrainerRequestCommandHandler(IMizanDbContext context)
+    public SendTrainerRequestCommandHandler(IMizanDbContext context, INotificationWriter? notifications = null)
     {
         _context = context;
+        _notifications = notifications;
     }
 
     public async Task<Guid> Handle(SendTrainerRequestCommand request, CancellationToken cancellationToken)
@@ -55,6 +57,10 @@ public class SendTrainerRequestCommandHandler : IRequestHandler<SendTrainerReque
         };
 
         _context.TrainerClientRelationships.Add(relationship);
+        if (_notifications is not null)
+        {
+            await _notifications.AddAsync(request.TrainerId, "trainer_request", "New trainer request", linkUrl: "/trainer", cancellationToken: cancellationToken);
+        }
         await _context.SaveChangesAsync(cancellationToken);
 
         return relationship.Id;

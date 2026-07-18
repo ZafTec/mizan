@@ -8,11 +8,13 @@ public class AchievementEvaluator : IAchievementEvaluator
 {
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly INotificationWriter? _notifications;
 
-    public AchievementEvaluator(IMizanDbContext context, ICurrentUserService currentUser)
+    public AchievementEvaluator(IMizanDbContext context, ICurrentUserService currentUser, INotificationWriter? notifications = null)
     {
         _context = context;
         _currentUser = currentUser;
+        _notifications = notifications;
     }
 
     public async Task<IReadOnlyList<UnlockedAchievement>> EvaluateAsync(CancellationToken cancellationToken = default)
@@ -93,6 +95,14 @@ public class AchievementEvaluator : IAchievementEvaluator
             });
         }
 
+        if (_notifications is not null)
+        {
+            foreach (var achievement in unlocks)
+            {
+                await _notifications.AddAsync(userId, "achievement_unlocked", $"Achievement unlocked: {achievement.Name}", achievement.Description, "/achievements", cancellationToken);
+            }
+        }
+
         await _context.SaveChangesAsync(cancellationToken);
 
         return unlocks
@@ -107,6 +117,15 @@ public class AchievementEvaluator : IAchievementEvaluator
         var workoutsLogged = await _context.Workouts.CountAsync(w => w.UserId == userId, ct);
         var measurementsLogged = await _context.BodyMeasurements.CountAsync(m => m.UserId == userId, ct);
         var goalProgressLogged = await _context.GoalProgress.CountAsync(g => g.UserId == userId, ct);
+        var totalVolumeKg = await _context.ExerciseSets.Where(s => s.WorkoutExercise.Workout.UserId == userId && s.Completed)
+            .SumAsync(s => (s.WeightKg ?? 0) * (s.Reps ?? 0), ct);
+        var templateCompleted = await _context.Workouts.CountAsync(w => w.UserId == userId && w.TemplateId != null, ct);
+        var followers = await _context.Follows.CountAsync(f => f.FolloweeUserId == userId && f.Status == "Accepted", ct);
+        var workoutsShared = await _context.FeedItems.CountAsync(f => f.UserId == userId && f.WorkoutId != null, ct);
+        var reactionsGiven = await _context.FeedReactions.Where(r => r.UserId == userId).Select(r => r.FeedItemId).Distinct().CountAsync(ct);
+        var commentsMade = await _context.FeedComments.Where(c => c.UserId == userId && c.DeletedAt == null).Select(c => c.FeedItemId).Distinct().CountAsync(ct);
+        var prCount = await _context.ExerciseSets.Where(s => s.WorkoutExercise.Workout.UserId == userId && s.Completed && s.WeightKg != null)
+            .Select(s => s.WorkoutExercise.ExerciseId).Distinct().CountAsync(ct);
 
         var nutritionStreak = await _context.Streaks
             .Where(s => s.UserId == userId && s.StreakType == "nutrition")
@@ -130,6 +149,13 @@ public class AchievementEvaluator : IAchievementEvaluator
             WorkoutsLogged = workoutsLogged,
             BodyMeasurementsLogged = measurementsLogged,
             GoalProgressLogged = goalProgressLogged,
+            TotalVolumeKg = totalVolumeKg,
+            TemplateCompletedCount = templateCompleted,
+            FollowersCount = followers,
+            WorkoutsShared = workoutsShared,
+            ReactionsGiven = reactionsGiven,
+            CommentsMade = commentsMade,
+            PrCount = prCount,
             StreakNutrition = nutritionStreak,
             StreakWorkout = workoutStreak,
             EarnedPoints = earnedPoints
@@ -146,6 +172,13 @@ public class AchievementEvaluator : IAchievementEvaluator
         "streak_nutrition" => s.StreakNutrition >= a.Threshold,
         "streak_workout" => s.StreakWorkout >= a.Threshold,
         "points_total" => s.EarnedPoints >= a.Threshold,
+        "total_volume_kg" => s.TotalVolumeKg >= a.Threshold,
+        "template_completed_count" => s.TemplateCompletedCount >= a.Threshold,
+        "followers_count" => s.FollowersCount >= a.Threshold,
+        "workouts_shared" => s.WorkoutsShared >= a.Threshold,
+        "reactions_given" => s.ReactionsGiven >= a.Threshold,
+        "comments_made" => s.CommentsMade >= a.Threshold,
+        "pr_count" => s.PrCount >= a.Threshold,
         _ => false
     };
 
@@ -156,6 +189,13 @@ public class AchievementEvaluator : IAchievementEvaluator
         public int WorkoutsLogged { get; set; }
         public int BodyMeasurementsLogged { get; set; }
         public int GoalProgressLogged { get; set; }
+        public decimal TotalVolumeKg { get; set; }
+        public int TemplateCompletedCount { get; set; }
+        public int FollowersCount { get; set; }
+        public int WorkoutsShared { get; set; }
+        public int ReactionsGiven { get; set; }
+        public int CommentsMade { get; set; }
+        public int PrCount { get; set; }
         public int StreakNutrition { get; set; }
         public int StreakWorkout { get; set; }
         public int EarnedPoints { get; set; }

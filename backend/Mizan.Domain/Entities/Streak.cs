@@ -8,6 +8,7 @@ public class Streak
     public int CurrentCount { get; set; }
     public int LongestCount { get; set; }
     public DateOnly? LastActivityDate { get; set; }
+    public int FreezesAvailable { get; set; }
 
     // Navigation property
     public virtual User User { get; set; } = null!;

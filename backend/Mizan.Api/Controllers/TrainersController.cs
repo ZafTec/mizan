@@ -10,7 +10,7 @@ namespace Mizan.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Policy = "UserOrMcp")]
 public class TrainersController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -132,9 +132,13 @@ public class TrainersController : ControllerBase
         var result = await _mediator.Send(query);
 
         _logger.LogInformation("Client {ClientId} retrieved {Count} trainer requests", _currentUser.UserId, result.Items.Count);
-
         return Ok(result);
     }
+
+    [HttpGet("clients/{clientId:guid}/workouts")]
+    [Authorize(Policy = "RequireTrainer")]
+    public async Task<ActionResult<PagedResult<WorkoutSummaryDto>>> GetClientWorkouts(Guid clientId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        => Ok(await _mediator.Send(new GetClientWorkoutsQuery(clientId, page, pageSize)));
 }
 
 public record SendTrainerRequestRequest(Guid TrainerId);

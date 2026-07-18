@@ -535,6 +535,66 @@ namespace Mizan.Infrastructure.Data.Migrations
                     b.ToTable("chat_messages", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.ContentReport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("reason");
+
+                    b.Property<Guid?>("ReporterUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reporter_user_id");
+
+                    b.Property<string>("ResolutionNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("resolution_note");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("resolved_at");
+
+                    b.Property<Guid?>("ResolvedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resolved_by_user_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("target_id");
+
+                    b.Property<string>("TargetType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("target_type");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status", "CreatedAt");
+
+                    b.ToTable("content_reports", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.Exercise", b =>
                 {
                     b.Property<Guid>("Id")
@@ -571,6 +631,12 @@ namespace Mizan.Infrastructure.Data.Migrations
                     b.Property<string>("ImageUrl")
                         .HasColumnType("text")
                         .HasColumnName("image_url");
+
+                    b.Property<bool>("IsApproved")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_approved");
 
                     b.Property<bool>("IsCustom")
                         .ValueGeneratedOnAdd()
@@ -614,6 +680,10 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("completed");
 
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
                     b.Property<decimal?>("DistanceMeters")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)")
@@ -623,13 +693,27 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("duration_seconds");
 
+                    b.Property<decimal?>("InclinePercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)")
+                        .HasColumnName("incline_percent");
+
                     b.Property<int?>("Reps")
                         .HasColumnType("integer")
                         .HasColumnName("reps");
 
+                    b.Property<decimal?>("ResistanceLevel")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)")
+                        .HasColumnName("resistance_level");
+
                     b.Property<int>("SetNumber")
                         .HasColumnType("integer")
                         .HasColumnName("set_number");
+
+                    b.Property<int?>("Steps")
+                        .HasColumnType("integer")
+                        .HasColumnName("steps");
 
                     b.Property<decimal?>("WeightKg")
                         .HasPrecision(6, 2)
@@ -668,6 +752,185 @@ namespace Mizan.Infrastructure.Data.Migrations
                     b.HasIndex("RecipeId");
 
                     b.ToTable("favorite_recipes", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.FeedComment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("body");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<Guid?>("DeletedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by_user_id");
+
+                    b.Property<Guid>("FeedItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("feed_item_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FeedItemId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("feed_comments", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.FeedItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<Guid?>("AchievementId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("achievement_id");
+
+                    b.Property<string>("Caption")
+                        .HasMaxLength(280)
+                        .HasColumnType("character varying(280)")
+                        .HasColumnName("caption");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid?>("TemplateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("template_id");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("type");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid?>("WorkoutId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("workout_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AchievementId");
+
+                    b.HasIndex("TemplateId");
+
+                    b.HasIndex("WorkoutId");
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.ToTable("feed_items", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.FeedReaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("Emoji")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasColumnName("emoji");
+
+                    b.Property<Guid>("FeedItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("feed_item_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("FeedItemId", "UserId", "Emoji")
+                        .IsUnique();
+
+                    b.ToTable("feed_reactions", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.Follow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid>("FolloweeUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("followee_user_id");
+
+                    b.Property<Guid>("FollowerUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("follower_user_id");
+
+                    b.Property<DateTime?>("RespondedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("responded_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FolloweeUserId");
+
+                    b.HasIndex("FollowerUserId", "FolloweeUserId")
+                        .IsUnique();
+
+                    b.ToTable("follows", (string)null);
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.Food", b =>
@@ -1274,6 +1537,57 @@ namespace Mizan.Infrastructure.Data.Migrations
                     b.ToTable("meal_plan_recipes", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("Body")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("body");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("LinkUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("link_url");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("read_at");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("title");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("type");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "ReadAt", "CreatedAt");
+
+                    b.ToTable("notifications", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.PaddleWebhookEvent", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1634,6 +1948,58 @@ namespace Mizan.Infrastructure.Data.Migrations
                     b.ToTable("shopping_list_items", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.SocialProfile", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("avatar_url");
+
+                    b.Property<string>("Bio")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("bio");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<bool>("DefaultPublishWorkouts")
+                        .HasColumnType("boolean")
+                        .HasColumnName("default_publish_workouts");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("display_name");
+
+                    b.Property<string>("ShareToken")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("share_token");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("UserId");
+
+                    b.HasIndex("ShareToken")
+                        .IsUnique();
+
+                    b.ToTable("social_profiles", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.Streak", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1647,6 +2013,12 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnType("integer")
                         .HasDefaultValue(0)
                         .HasColumnName("current_count");
+
+                    b.Property<int>("FreezesAvailable")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("freezes_available");
 
                     b.Property<DateOnly?>("LastActivityDate")
                         .HasColumnType("date")
@@ -2061,9 +2433,18 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
+                    b.Property<decimal?>("BodyweightKg")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)")
+                        .HasColumnName("bodyweight_kg");
+
                     b.Property<int?>("CaloriesBurned")
                         .HasColumnType("integer")
                         .HasColumnName("calories_burned");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -2084,6 +2465,14 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("notes");
 
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("started_at");
+
+                    b.Property<Guid?>("TemplateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("template_id");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
@@ -2094,9 +2483,33 @@ namespace Mizan.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("TemplateId");
+
                     b.HasIndex("UserId");
 
                     b.ToTable("workouts", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.WorkoutDraft", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("payload");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("workout_drafts", (string)null);
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.WorkoutExercise", b =>
@@ -2111,11 +2524,22 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("exercise_id");
 
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("notes");
+
                     b.Property<int>("SortOrder")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasDefaultValue(0)
                         .HasColumnName("sort_order");
+
+                    b.Property<bool>("SupersetWithNext")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("superset_with_next");
 
                     b.Property<Guid>("WorkoutId")
                         .HasColumnType("uuid")
@@ -2128,6 +2552,166 @@ namespace Mizan.Infrastructure.Data.Migrations
                     b.HasIndex("WorkoutId");
 
                     b.ToTable("workout_exercises", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.WorkoutTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<bool>("IsBuiltIn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_built_in");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("notes");
+
+                    b.Property<string>("ProgramName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("program_name");
+
+                    b.Property<int>("SessionOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("session_order");
+
+                    b.Property<int>("SortOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("sort_order");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Name");
+
+                    b.ToTable("workout_templates", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.WorkoutTemplateExercise", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<Guid>("ExerciseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("exercise_id");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("notes");
+
+                    b.Property<decimal?>("ProgressionAmountKg")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)")
+                        .HasColumnName("progression_amount_kg");
+
+                    b.Property<string>("ProgressionStrategy")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("progression_strategy");
+
+                    b.Property<string>("ProgressionType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("progression_type");
+
+                    b.Property<int?>("RepsPerSet")
+                        .HasColumnType("integer")
+                        .HasColumnName("reps_per_set");
+
+                    b.Property<int?>("RestSecondsFailure")
+                        .HasColumnType("integer")
+                        .HasColumnName("rest_seconds_failure");
+
+                    b.Property<int?>("RestSecondsMax")
+                        .HasColumnType("integer")
+                        .HasColumnName("rest_seconds_max");
+
+                    b.Property<int?>("RestSecondsMin")
+                        .HasColumnType("integer")
+                        .HasColumnName("rest_seconds_min");
+
+                    b.Property<int>("Sets")
+                        .HasColumnType("integer")
+                        .HasColumnName("sets");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.Property<bool>("SupersetWithNext")
+                        .HasColumnType("boolean")
+                        .HasColumnName("superset_with_next");
+
+                    b.Property<decimal?>("TargetDistanceMeters")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("target_distance_meters");
+
+                    b.Property<int?>("TargetSeconds")
+                        .HasColumnType("integer")
+                        .HasColumnName("target_seconds");
+
+                    b.Property<string>("TargetType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("target_type");
+
+                    b.Property<decimal?>("TargetWeightKg")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)")
+                        .HasColumnName("target_weight_kg");
+
+                    b.Property<Guid>("TemplateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("template_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExerciseId");
+
+                    b.HasIndex("TemplateId");
+
+                    b.ToTable("workout_template_exercises", (string)null);
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.AiChatThread", b =>
@@ -2230,6 +2814,95 @@ namespace Mizan.Infrastructure.Data.Migrations
                     b.Navigation("Recipe");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.FeedComment", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.FeedItem", "FeedItem")
+                        .WithMany("Comments")
+                        .HasForeignKey("FeedItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FeedItem");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.FeedItem", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.Achievement", "Achievement")
+                        .WithMany()
+                        .HasForeignKey("AchievementId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Mizan.Domain.Entities.WorkoutTemplate", "Template")
+                        .WithMany()
+                        .HasForeignKey("TemplateId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Mizan.Domain.Entities.Workout", "Workout")
+                        .WithMany()
+                        .HasForeignKey("WorkoutId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Achievement");
+
+                    b.Navigation("Template");
+
+                    b.Navigation("User");
+
+                    b.Navigation("Workout");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.FeedReaction", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.FeedItem", "FeedItem")
+                        .WithMany("Reactions")
+                        .HasForeignKey("FeedItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FeedItem");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.Follow", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", "Followee")
+                        .WithMany()
+                        .HasForeignKey("FolloweeUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Mizan.Domain.Entities.User", "Follower")
+                        .WithMany()
+                        .HasForeignKey("FollowerUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Followee");
+
+                    b.Navigation("Follower");
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.FoodDiaryEntry", b =>
@@ -2389,6 +3062,17 @@ namespace Mizan.Infrastructure.Data.Migrations
                     b.Navigation("Recipe");
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.Notification", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.Recipe", b =>
                 {
                     b.HasOne("Mizan.Domain.Entities.Household", "Household")
@@ -2500,6 +3184,17 @@ namespace Mizan.Infrastructure.Data.Migrations
                     b.Navigation("ShoppingList");
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.SocialProfile", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.Streak", b =>
                 {
                     b.HasOne("Mizan.Domain.Entities.User", "User")
@@ -2591,8 +3286,26 @@ namespace Mizan.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Mizan.Domain.Entities.Workout", b =>
                 {
+                    b.HasOne("Mizan.Domain.Entities.WorkoutTemplate", "Template")
+                        .WithMany("Workouts")
+                        .HasForeignKey("TemplateId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Mizan.Domain.Entities.User", "User")
                         .WithMany("Workouts")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Template");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.WorkoutDraft", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2619,6 +3332,35 @@ namespace Mizan.Infrastructure.Data.Migrations
                     b.Navigation("Workout");
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.WorkoutTemplate", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.WorkoutTemplateExercise", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.Exercise", "Exercise")
+                        .WithMany()
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Mizan.Domain.Entities.WorkoutTemplate", "Template")
+                        .WithMany("Exercises")
+                        .HasForeignKey("TemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Exercise");
+
+                    b.Navigation("Template");
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.Achievement", b =>
                 {
                     b.Navigation("UserAchievements");
@@ -2632,6 +3374,13 @@ namespace Mizan.Infrastructure.Data.Migrations
             modelBuilder.Entity("Mizan.Domain.Entities.Exercise", b =>
                 {
                     b.Navigation("WorkoutExercises");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.FeedItem", b =>
+                {
+                    b.Navigation("Comments");
+
+                    b.Navigation("Reactions");
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.Food", b =>
@@ -2704,6 +3453,13 @@ namespace Mizan.Infrastructure.Data.Migrations
             modelBuilder.Entity("Mizan.Domain.Entities.WorkoutExercise", b =>
                 {
                     b.Navigation("Sets");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.WorkoutTemplate", b =>
+                {
+                    b.Navigation("Exercises");
+
+                    b.Navigation("Workouts");
                 });
 #pragma warning restore 612, 618
         }

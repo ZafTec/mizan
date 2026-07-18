@@ -65,15 +65,18 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
     private readonly ILogger<CreateRecipeCommandHandler> _logger;
+    private readonly IAchievementEvaluator? _achievements;
 
     public CreateRecipeCommandHandler(
         IMizanDbContext context, 
         ICurrentUserService currentUser,
-        ILogger<CreateRecipeCommandHandler> logger)
+        ILogger<CreateRecipeCommandHandler> logger,
+        IAchievementEvaluator? achievements = null)
     {
         _context = context;
         _currentUser = currentUser;
         _logger = logger;
+        _achievements = achievements;
     }
 
     public async Task<CreateRecipeResult> Handle(CreateRecipeCommand request, CancellationToken cancellationToken)
@@ -310,6 +313,7 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
 
         _context.Recipes.Add(recipe);
         await _context.SaveChangesAsync(cancellationToken);
+        if (_achievements is not null) await _achievements.EvaluateAsync(cancellationToken);
 
         _logger.LogInformation("[CreateRecipe] Recipe saved successfully: Id={Id}, Title={Title}", recipe.Id, recipe.Title);
 

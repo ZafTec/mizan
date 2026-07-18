@@ -33,6 +33,9 @@ public interface IMizanDbContext
     DbSet<Workout> Workouts { get; }
     DbSet<WorkoutExercise> WorkoutExercises { get; }
     DbSet<ExerciseSet> ExerciseSets { get; }
+    DbSet<WorkoutTemplate> WorkoutTemplates { get; }
+    DbSet<WorkoutTemplateExercise> WorkoutTemplateExercises { get; }
+    DbSet<WorkoutDraft> WorkoutDrafts { get; }
     DbSet<BodyMeasurement> BodyMeasurements { get; }
     DbSet<TrainerClientRelationship> TrainerClientRelationships { get; }
     DbSet<ChatConversation> ChatConversations { get; }
@@ -40,6 +43,13 @@ public interface IMizanDbContext
     DbSet<Achievement> Achievements { get; }
     DbSet<UserAchievement> UserAchievements { get; }
     DbSet<Streak> Streaks { get; }
+    DbSet<Notification> Notifications { get; }
+    DbSet<SocialProfile> SocialProfiles { get; }
+    DbSet<Follow> Follows { get; }
+    DbSet<FeedItem> FeedItems { get; }
+    DbSet<FeedReaction> FeedReactions { get; }
+    DbSet<FeedComment> FeedComments { get; }
+    DbSet<ContentReport> ContentReports { get; }
     DbSet<AiChatThread> AiChatThreads { get; }
     DbSet<McpToken> McpTokens { get; }
     DbSet<McpUsageLog> McpUsageLogs { get; }

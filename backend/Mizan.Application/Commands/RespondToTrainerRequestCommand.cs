@@ -18,11 +18,13 @@ public class RespondToTrainerRequestCommandHandler : IRequestHandler<RespondToTr
 {
     private readonly IMizanDbContext _context;
     private readonly ITrainerAuthorizationService _trainerAuthorization;
+    private readonly INotificationWriter? _notifications;
 
-    public RespondToTrainerRequestCommandHandler(IMizanDbContext context, ITrainerAuthorizationService trainerAuthorization)
+    public RespondToTrainerRequestCommandHandler(IMizanDbContext context, ITrainerAuthorizationService trainerAuthorization, INotificationWriter? notifications = null)
     {
         _context = context;
         _trainerAuthorization = trainerAuthorization;
+        _notifications = notifications;
     }
 
     public async Task<bool> Handle(RespondToTrainerRequestCommand request, CancellationToken cancellationToken)
@@ -77,6 +79,10 @@ public class RespondToTrainerRequestCommandHandler : IRequestHandler<RespondToTr
             relationship.EndedAt = DateTime.UtcNow;
         }
 
+        if (_notifications is not null)
+        {
+            await _notifications.AddAsync(relationship.ClientId, "trainer_request_response", request.Accept ? "Trainer request accepted" : "Trainer request declined", linkUrl: "/trainers/my-trainer", cancellationToken: cancellationToken);
+        }
         await _context.SaveChangesAsync(cancellationToken);
         return true;
     }

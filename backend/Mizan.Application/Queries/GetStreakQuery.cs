@@ -16,6 +16,7 @@ public record GetStreakResult
     public int LongestStreak { get; init; }
     public DateOnly? LastActivityDate { get; init; }
     public bool IsActiveToday { get; init; }
+    public int FreezesAvailable { get; init; }
 }
 
 public class GetStreakQueryHandler : IRequestHandler<GetStreakQuery, GetStreakResult>
@@ -63,7 +64,7 @@ public class GetStreakQueryHandler : IRequestHandler<GetStreakQuery, GetStreakRe
         if (streak.LastActivityDate.HasValue)
         {
             var daysSinceLastActivity = today.DayNumber - streak.LastActivityDate.Value.DayNumber;
-            if (daysSinceLastActivity > 1)
+            if (daysSinceLastActivity > 2 || (daysSinceLastActivity == 2 && streak.FreezesAvailable == 0))
             {
                 currentStreak = 0;
             }
@@ -75,7 +76,8 @@ public class GetStreakQueryHandler : IRequestHandler<GetStreakQuery, GetStreakRe
             CurrentStreak = currentStreak,
             LongestStreak = streak.LongestCount,
             LastActivityDate = streak.LastActivityDate,
-            IsActiveToday = isActiveToday
+            IsActiveToday = isActiveToday,
+            FreezesAvailable = streak.FreezesAvailable
         };
     }
 }

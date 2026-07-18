@@ -123,7 +123,7 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
         _context.FoodDiaryEntries.Add(entry);
         await _context.SaveChangesAsync(cancellationToken);
 
-        var streak = await _streakService.RecordActivityAsync("nutrition", cancellationToken);
+        var streak = await _streakService.RecordActivityAsync("nutrition", request.EntryDate, cancellationToken);
         var unlocked = await _achievements.EvaluateAsync(cancellationToken);
 
         var warnings = NutritionHints.CheckConsistency(
