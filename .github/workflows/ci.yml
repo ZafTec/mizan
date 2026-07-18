@@ -54,6 +54,7 @@ jobs:
         Jwt__Audience: "mizan-api"
         Jwt__JwksUrl: "http://localhost:3000/api/auth/jwks"
         Mcp__ServiceApiKey: "test-api-key"
+        Mcp__AdminServiceApiKey: "test-admin-api-key"
       run: dotnet test backend/Mizan.sln --no-build --verbosity minimal --logger "console;verbosity=minimal" --nologo
 
   frontend-build:

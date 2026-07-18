@@ -627,7 +627,8 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 { "MizanApiUrl", "http://localhost:5000" },
-                { "ServiceApiKey", "test-api-key" }
+                { "ServiceApiKey", "test-api-key" },
+                { "AdminServiceApiKey", "test-admin-api-key" }
             })
             .Build());
         services.AddLogging();
@@ -673,7 +674,8 @@ public class McpAuthenticationTests : IClassFixture<WebApplicationFactory<McpSer
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 { "MizanApiUrl", "http://localhost:5000" },
-                { "ServiceApiKey", "test-api-key" }
+                { "ServiceApiKey", "test-api-key" },
+                { "AdminServiceApiKey", "test-admin-api-key" }
             })
             .Build());
         services.AddLogging();
