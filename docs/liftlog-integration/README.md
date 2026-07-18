@@ -17,6 +17,7 @@ Handoff package for rebuilding Mizan's workout/exercise features by sampling htt
 | `07-svg-assets.md` | SVG asset pack guide: inventory of the illustrations, icon sprites, animated assets, and marketing/social media graphics in `SVGs/`, with per-feature placement and integration rules |
 | `08-mcp-hardening.md` | MCP server review (2026-07-09): duplicate/shadowed tools, meal-type collapse bug, pro/entitlement gating surface, error mapping, missing tools, testing strategy. Parallelizable with the feature work except where marked blocked on doc 04 phases |
 | `09-implementation-status.md` | Completed scope, product decisions, commit sequence, validation results, and deployment follow-up |
+| `10-code-review.md` | Independent review (2026-07-18) of the implementation branch: security scorecard, findings by severity with file references, claims-vs-reality check against doc 09, and an ordered pre-merge checklist |
 
 ## One-paragraph summary
 
