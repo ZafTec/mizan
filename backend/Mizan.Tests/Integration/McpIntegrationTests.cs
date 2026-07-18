@@ -1323,6 +1323,32 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         logs.Should().OnlyContain(l => l.ToolName == "log_food");
     }
 
+    [Fact]
+    public async Task FreePlan_StopsAfterMonthlySuccessfulCallLimit()
+    {
+        var userId = Guid.NewGuid();
+        var email = $"quota-{userId:N}@example.com";
+        await _apiFixture.SeedUserAsync(userId, email, emailVerified: true);
+        using var apiClient = _apiFixture.CreateAuthenticatedClient(userId, email);
+        var createResponse = await apiClient.PostAsJsonAsync("/api/McpTokens", new { Name = "Quota Token" });
+        createResponse.EnsureSuccessStatusCode();
+        var token = await createResponse.Content.ReadFromJsonAsync<CreateMcpTokenResult>();
+        token.Should().NotBeNull();
+
+        for (var call = 0; call < 15; call++)
+        {
+            await _apiFixture.SeedMcpUsageLogAsync(token!.Id, userId, "search_foods", success: true, executionTimeMs: 1);
+        }
+
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token!.PlaintextToken);
+        var response = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "search_foods", new { search = "test" }));
+        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        ExtractErrorMessage(jsonResponse).Should().StartWith("[MONTHLY LIMIT REACHED]");
+        (await _apiFixture.GetMcpUsageLogsByUserId(userId)).Should().HaveCount(15);
+    }
+
     #endregion
 
     #region Helper Methods
