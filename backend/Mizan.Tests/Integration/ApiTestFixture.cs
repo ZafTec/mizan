@@ -58,7 +58,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     {
         // Check if we should use InMemory database (for local unit testing)
         var useInMemory = Environment.GetEnvironmentVariable("USE_INMEMORY_DATABASE")?.ToLower() == "true";
-        
+
         if (useInMemory)
         {
             // Use InMemory database for fast local testing
@@ -68,7 +68,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         else
         {
             // Try multiple environment variable formats for real database
-            var existingConnString = Environment.GetEnvironmentVariable("TEST_DB_CONNECTION") 
+            var existingConnString = Environment.GetEnvironmentVariable("TEST_DB_CONNECTION")
                 ?? Environment.GetEnvironmentVariable("ConnectionStrings__PostgreSQL")
                 ?? Environment.GetEnvironmentVariable("ConnectionStrings:PostgreSQL");
 
@@ -94,7 +94,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         _issuer = Environment.GetEnvironmentVariable("Jwt__Issuer") ?? "http://localhost:3000";
         _audience = Environment.GetEnvironmentVariable("Jwt__Audience") ?? "mizan-api";
         _jwtIssuer = TestJwtIssuer.Create();
-        
+
         _redisConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__Redis");
     }
 
@@ -108,8 +108,8 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
 
         builder.ConfigureAppConfiguration((context, config) =>
         {
-            var connString = !string.IsNullOrEmpty(_connectionString) 
-                ? _connectionString 
+            var connString = !string.IsNullOrEmpty(_connectionString)
+                ? _connectionString
                 : _dbContainer?.GetConnectionString() ?? throw new InvalidOperationException("No DB connection string available");
 
             var settings = new Dictionary<string, string?>
@@ -157,7 +157,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             }
 
             services.AddSingleton<IJwksProvider>(new TestJwksProvider(_jwtIssuer.Jwk));
-            
+
             // Configure minimal logging for tests
             services.AddLogging(logging =>
             {
@@ -187,7 +187,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             var field = typeof(ApiTestFixture).GetField("_connectionString", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             field?.SetValue(this, _dbContainer.GetConnectionString());
         }
-        
+
         await EnsureDatabaseAsync();
     }
 
@@ -218,7 +218,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     {
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
-        
+
         if (db.Database.IsInMemory())
         {
             // For InMemory database, delete all entities manually
@@ -249,7 +249,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         {
             // TRUNCATE is faster than deleting and recreating for real databases
             var tableList = string.Join(", ", TablesToTruncate.Select(t => $"\"{t}\""));
-            await db.Database.ExecuteSqlRawAsync($"TRUNCATE TABLE {tableList} RESTART IDENTITY CASCADE;");
+            await db.Database.ExecuteSqlAsync($"TRUNCATE TABLE {tableList} RESTART IDENTITY CASCADE;");
         }
     }
 
@@ -357,7 +357,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     {
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
-        
+
         var list = new ShoppingList
         {
             Id = Guid.NewGuid(),
@@ -443,7 +443,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         // 1. Manually create Better Auth tables required by backend foreign keys
         // These tables are managed by Frontend/Drizzle in production, so EF Core migrations exclude them.
         // But in tests, we start with an empty DB, so we must create them manually first.
-        
+
         var createUsersTable = @"
             CREATE TABLE IF NOT EXISTS ""users"" (
                 ""id"" uuid NOT NULL,
@@ -468,7 +468,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         await db.Database.ExecuteSqlRawAsync(createUsersTable);
 
         // 2. Apply EF Core migrations to create business logic tables (foods, recipes, etc.)
-        try 
+        try
         {
             await db.Database.MigrateAsync();
         }
@@ -484,14 +484,14 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     {
         // For Testcontainers, we don't rely on env vars for connection strings anymore
         if (name == "ConnectionStrings__PostgreSQL") return "ignored";
-        
+
         var value = Environment.GetEnvironmentVariable(name);
         if (string.IsNullOrWhiteSpace(value))
         {
             // Default fallbacks for tests if env not set
             if (name == "Jwt__Issuer") return "http://localhost:3000";
             if (name == "Jwt__Audience") return "mizan-api";
-            return string.Empty; 
+            return string.Empty;
         }
 
         return value;
@@ -509,7 +509,7 @@ public sealed class TestJwksProvider : IJwksProvider
 
     public IReadOnlyCollection<SecurityKey> GetSigningKeys() => _keys;
 
-       public Task RefreshAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    public Task RefreshAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 }
 
 public sealed class TestJwtIssuer : IDisposable

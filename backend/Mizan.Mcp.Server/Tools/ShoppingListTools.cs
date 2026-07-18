@@ -52,7 +52,10 @@ public sealed class ShoppingListTools
     {
         return await _api.PostAsync($"/api/ShoppingLists/{listId}/items", new
         {
-            itemName, amount, unit, category
+            itemName,
+            amount,
+            unit,
+            category
         }, ct);
     }
 

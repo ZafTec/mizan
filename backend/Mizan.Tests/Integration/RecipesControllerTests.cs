@@ -91,7 +91,7 @@ public class RecipesControllerTests
         };
 
         var updateResponse = await client.PutAsJsonAsync($"/api/Recipes/{created.Id}", updateCommand);
-        
+
         if (updateResponse.StatusCode != HttpStatusCode.OK)
         {
             var error = await updateResponse.Content.ReadAsStringAsync();

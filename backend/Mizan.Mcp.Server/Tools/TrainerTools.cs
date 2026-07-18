@@ -62,7 +62,12 @@ public sealed class TrainerTools
     {
         return await _api.PostAsync("/api/Trainers/respond", new
         {
-            relationshipId, accept, canViewNutrition, canViewWorkouts, canViewMeasurements, canMessage
+            relationshipId,
+            accept,
+            canViewNutrition,
+            canViewWorkouts,
+            canViewMeasurements,
+            canMessage
         }, ct);
     }
 

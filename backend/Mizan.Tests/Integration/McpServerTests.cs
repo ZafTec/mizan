@@ -23,7 +23,7 @@ public class McpServerTests : IClassFixture<WebApplicationFactory<McpServer::Pro
     public McpServerTests(WebApplicationFactory<McpServer::Program> factory)
     {
         _mockBackendClient = new Mock<IBackendApiClient>();
-        
+
         _factory = factory.WithWebHostBuilder(builder =>
         {
             builder.UseSetting("MizanApiUrl", "http://localhost:5000");
@@ -51,7 +51,7 @@ public class McpServerTests : IClassFixture<WebApplicationFactory<McpServer::Pro
     public async Task CallTool_ReturnsError_WhenTokenMissing()
     {
         var client = _factory.CreateClient();
-        
+
         var request = new JsonRpcRequest
         {
             Method = "tools/call",
@@ -64,7 +64,7 @@ public class McpServerTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         };
 
         var response = await client.PostMcpAsync(request);
-        
+
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
         jsonResponse.Should().NotBeNull();

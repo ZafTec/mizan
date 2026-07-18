@@ -57,9 +57,19 @@ public sealed class FoodTools
     {
         return await _api.PostAsync("/api/Foods", new
         {
-            name, brand, barcode, caloriesPer100g, proteinPer100g, carbsPer100g, fatPer100g,
-            fiberPer100g, sugarPer100g, sodiumPer100g,
-            servingSize = servingSize ?? 100m, servingUnit = servingUnit ?? "g", isVerified
+            name,
+            brand,
+            barcode,
+            caloriesPer100g,
+            proteinPer100g,
+            carbsPer100g,
+            fatPer100g,
+            fiberPer100g,
+            sugarPer100g,
+            sodiumPer100g,
+            servingSize = servingSize ?? 100m,
+            servingUnit = servingUnit ?? "g",
+            isVerified
         }, ct);
     }
 
@@ -84,9 +94,20 @@ public sealed class FoodTools
     {
         return await _api.PutAsync($"/api/Foods/{id}", new
         {
-            id, name, brand, barcode, caloriesPer100g, proteinPer100g, carbsPer100g, fatPer100g,
-            fiberPer100g, sugarPer100g, sodiumPer100g,
-            servingSize = servingSize ?? 100m, servingUnit = servingUnit ?? "g", isVerified
+            id,
+            name,
+            brand,
+            barcode,
+            caloriesPer100g,
+            proteinPer100g,
+            carbsPer100g,
+            fatPer100g,
+            fiberPer100g,
+            sugarPer100g,
+            sodiumPer100g,
+            servingSize = servingSize ?? 100m,
+            servingUnit = servingUnit ?? "g",
+            isVerified
         }, ct);
     }
 

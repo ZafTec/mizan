@@ -40,8 +40,14 @@ public sealed class GoalTools
     {
         return await _api.PostAsync("/api/Goals", new
         {
-            goalType, targetCalories, targetProteinGrams, targetCarbsGrams, targetFatGrams,
-            targetFiberGrams, targetWeightKg, targetDate
+            goalType,
+            targetCalories,
+            targetProteinGrams,
+            targetCarbsGrams,
+            targetFatGrams,
+            targetFiberGrams,
+            targetWeightKg,
+            targetDate
         }, ct);
     }
 

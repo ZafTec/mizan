@@ -34,7 +34,7 @@ public class McpSystemTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         var userId = Guid.NewGuid();
         var email = $"system-mcp-{userId:N}@example.com";
         await _apiFixture.SeedUserAsync(userId, email);
-        
+
         using var apiClient = _apiFixture.CreateAuthenticatedClient(userId, email);
 
         // 2. Create MCP Token via Main API
@@ -54,7 +54,7 @@ public class McpSystemTests : IClassFixture<WebApplicationFactory<McpServer::Pro
             {
                 config.AddInMemoryCollection(new Dictionary<string, string?>
                 {
-                    { "MizanApiUrl", "http://localhost:5000" }, 
+                    { "MizanApiUrl", "http://localhost:5000" },
                     { "ServiceApiKey", "test-api-key" } // Matches ApiTestFixture's key
                 });
             });
@@ -63,7 +63,7 @@ public class McpSystemTests : IClassFixture<WebApplicationFactory<McpServer::Pro
             {
                 // CRITICAL: Remove the default registration first
                 services.RemoveAll<IBackendApiClient>();
-                
+
                 // Manually register IBackendApiClient to bypass IHttpClientFactory and its default logging handlers.
                 // This prevents the NullReferenceException in LogRequestEnd because TestServer's handler
                 // returns responses with RequestMessage == null, which crashes the default logger.
@@ -71,10 +71,10 @@ public class McpSystemTests : IClassFixture<WebApplicationFactory<McpServer::Pro
                 {
                     var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<BackendApiClient>>();
                     var accessor = sp.GetRequiredService<IHttpContextAccessor>();
-                    
+
                     // Get the handler directly from the TestServer (Backend API)
                     var handler = _apiFixture.Server.CreateHandler();
-                    
+
                     var client = new HttpClient(handler)
                     {
                         BaseAddress = new Uri("http://localhost:5000")
@@ -111,7 +111,7 @@ public class McpSystemTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         // 5. Verify Response
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        
+
         jsonResponse.Should().NotBeNull();
         jsonResponse!.Error.Should().BeNull();
         jsonResponse.Result.Should().NotBeNull();

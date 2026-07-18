@@ -29,26 +29,26 @@ public record UpdateRecipeResult
     public string? Message { get; init; }
 }
 
-    public class UpdateRecipeCommandValidator : AbstractValidator<UpdateRecipeCommand>
+public class UpdateRecipeCommandValidator : AbstractValidator<UpdateRecipeCommand>
+{
+    public UpdateRecipeCommandValidator()
     {
-        public UpdateRecipeCommandValidator()
+        RuleFor(x => x.Id).NotEmpty();
+        RuleFor(x => x.Title).NotEmpty().MaximumLength(255);
+        RuleFor(x => x.Servings).GreaterThan(0);
+        RuleFor(x => x.Ingredients).NotEmpty().WithMessage("At least one ingredient is required");
+        RuleForEach(x => x.Ingredients).ChildRules(ingredient =>
         {
-            RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.Title).NotEmpty().MaximumLength(255);
-            RuleFor(x => x.Servings).GreaterThan(0);
-            RuleFor(x => x.Ingredients).NotEmpty().WithMessage("At least one ingredient is required");
-            RuleForEach(x => x.Ingredients).ChildRules(ingredient =>
-            {
-                ingredient.RuleFor(i => i.IngredientText).NotEmpty();
+            ingredient.RuleFor(i => i.IngredientText).NotEmpty();
 
-                ingredient.RuleFor(i => i)
-                    .Must(ing => !(ing.FoodId.HasValue && ing.SubRecipeId.HasValue))
-                    .WithMessage("Each ingredient must have either FoodId or SubRecipeId, not both")
-                    .Must(ing => !ing.SubRecipeId.HasValue || ing.Unit == null || ing.Unit == "serving" || ing.Unit == "servings")
-                    .WithMessage("When using a recipe as an ingredient, Unit should be 'serving' or 'servings'");
-            });
-        }
+            ingredient.RuleFor(i => i)
+                .Must(ing => !(ing.FoodId.HasValue && ing.SubRecipeId.HasValue))
+                .WithMessage("Each ingredient must have either FoodId or SubRecipeId, not both")
+                .Must(ing => !ing.SubRecipeId.HasValue || ing.Unit == null || ing.Unit == "serving" || ing.Unit == "servings")
+                .WithMessage("When using a recipe as an ingredient, Unit should be 'serving' or 'servings'");
+        });
     }
+}
 
 public class UpdateRecipeCommandHandler : IRequestHandler<UpdateRecipeCommand, UpdateRecipeResult>
 {
