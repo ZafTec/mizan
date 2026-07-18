@@ -88,7 +88,12 @@ builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.Authenticatio
 {
     options.Events = new JwtBearerEvents
     {
-        OnTokenValidated = JwtTokenValidatedHandler.HandleAsync
+        OnTokenValidated = JwtTokenValidatedHandler.HandleAsync,
+        OnAuthenticationFailed = context =>
+        {
+            Log.Warning(context.Exception, "JWT authentication failed for {Path}", context.HttpContext.Request.Path);
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -137,14 +142,18 @@ builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHand
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.AddPolicy("McpTokenValidation", context => RateLimitPartition.GetFixedWindowLimiter(
-        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-        _ => new FixedWindowRateLimiterOptions
-        {
-            PermitLimit = 10,
-            Window = TimeSpan.FromMinutes(1),
-            QueueLimit = 0
-        }));
+    options.AddPolicy("McpTokenValidation", context =>
+    {
+        var configuration = context.RequestServices.GetRequiredService<IConfiguration>();
+        return RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = configuration.GetValue("RateLimits:McpTokenValidation:PermitLimit", 10),
+                Window = TimeSpan.FromMinutes(configuration.GetValue("RateLimits:McpTokenValidation:WindowMinutes", 1)),
+                QueueLimit = 0
+            });
+    });
     options.AddPolicy("AnonymousSocial", context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions
