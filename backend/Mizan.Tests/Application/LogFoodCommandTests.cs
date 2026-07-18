@@ -38,7 +38,7 @@ public class LogFoodCommandTests
         var result = validator.Validate(command);
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.ErrorMessage.Contains("breakfast, lunch, dinner, or snack"));
+        result.Errors.Should().Contain(e => e.ErrorMessage.Contains("BREAKFAST, LUNCH, DINNER, SNACK, DRINK, MEAL"));
     }
 
     [Fact]
