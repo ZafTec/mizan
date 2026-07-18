@@ -6,7 +6,7 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     public statusText: string,
-    public body: unknown
+    public body: unknown,
   ) {
     super(`API error: ${status} ${statusText}`);
   }
@@ -25,7 +25,7 @@ export function convertKeysToCamelCase<T>(obj: unknown): T {
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
         const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
         converted[camelKey] = convertKeysToCamelCase(
-          (obj as Record<string, unknown>)[key]
+          (obj as Record<string, unknown>)[key],
         );
       }
     }
@@ -48,15 +48,22 @@ export interface ApiRequestOptions {
   body?: unknown;
   headers?: Record<string, string>;
   requireAuth?: boolean;
+  expectedStatuses?: number[];
 }
 
 export async function request<T>(
   baseUrl: string,
   path: string,
   token: string | null,
-  options: ApiRequestOptions = {}
+  options: ApiRequestOptions = {},
 ): Promise<T> {
-  const { method = "GET", body, headers: extraHeaders, requireAuth = true } = options;
+  const {
+    method = "GET",
+    body,
+    headers: extraHeaders,
+    requireAuth = true,
+    expectedStatuses = [],
+  } = options;
 
   if (requireAuth && !token) {
     throw new ApiError(401, "Unauthorized", { error: "Missing token" });
@@ -85,18 +92,23 @@ export async function request<T>(
 
     if (!response.ok) {
       const rawBody = await response.text().catch(() => "");
-      const parsed = rawBody ? safeJsonParse(rawBody) ?? { raw: rawBody } : {};
+      const parsed = rawBody
+        ? (safeJsonParse(rawBody) ?? { raw: rawBody })
+        : {};
 
-      apiLogger.error("Request failed", {
-        path,
-        status: response.status,
-        duration,
-      });
+      const details = { path, status: response.status, duration };
+      if (expectedStatuses.includes(response.status))
+        apiLogger.debug("Request returned expected status", details);
+      else apiLogger.error("Request failed", details);
 
       throw new ApiError(response.status, response.statusText, parsed);
     }
 
-    apiLogger.debug("Request successful", { path, status: response.status, duration });
+    apiLogger.debug("Request successful", {
+      path,
+      status: response.status,
+      duration,
+    });
 
     if (response.status === 204) return undefined as T;
 
