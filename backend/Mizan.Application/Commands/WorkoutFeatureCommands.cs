@@ -76,14 +76,25 @@ public sealed class UpdateWorkoutCommandHandler : IRequestHandler<UpdateWorkoutC
         workout.Notes = request.Notes;
         workout.Exercises = request.Exercises.Select((exercise, index) => new WorkoutExercise
         {
-            Id = Guid.NewGuid(), WorkoutId = workout.Id, ExerciseId = exercise.ExerciseId, SortOrder = index,
-            Notes = exercise.Notes, SupersetWithNext = exercise.SupersetWithNext,
+            Id = Guid.NewGuid(),
+            WorkoutId = workout.Id,
+            ExerciseId = exercise.ExerciseId,
+            SortOrder = index,
+            Notes = exercise.Notes,
+            SupersetWithNext = exercise.SupersetWithNext,
             Sets = exercise.Sets.Select((set, setIndex) => new ExerciseSet
             {
-                Id = Guid.NewGuid(), SetNumber = setIndex + 1, Reps = set.Reps, WeightKg = set.WeightKg,
-                DurationSeconds = set.DurationSeconds, DistanceMeters = set.DistanceMeters,
-                ResistanceLevel = set.ResistanceLevel, InclinePercent = set.InclinePercent, Steps = set.Steps,
-                Completed = set.Completed, CompletedAt = set.CompletedAt
+                Id = Guid.NewGuid(),
+                SetNumber = setIndex + 1,
+                Reps = set.Reps,
+                WeightKg = set.WeightKg,
+                DurationSeconds = set.DurationSeconds,
+                DistanceMeters = set.DistanceMeters,
+                ResistanceLevel = set.ResistanceLevel,
+                InclinePercent = set.InclinePercent,
+                Steps = set.Steps,
+                Completed = set.Completed,
+                CompletedAt = set.CompletedAt
             }).ToList()
         }).ToList();
         await _context.SaveChangesAsync(ct);
@@ -176,11 +187,23 @@ public sealed class SaveWorkoutTemplateCommandHandler : IRequestHandler<SaveWork
     }
     private static WorkoutTemplateExercise Map(Guid templateId, WorkoutTemplateExerciseInput e) => new()
     {
-        Id = Guid.NewGuid(), TemplateId = templateId, ExerciseId = e.ExerciseId, SortOrder = e.SortOrder, Sets = e.Sets,
-        RepsPerSet = e.RepsPerSet, TargetWeightKg = e.TargetWeightKg, RestSecondsMin = e.RestSecondsMin,
-        RestSecondsMax = e.RestSecondsMax, RestSecondsFailure = e.RestSecondsFailure, SupersetWithNext = e.SupersetWithNext,
-        Notes = e.Notes, ProgressionType = e.ProgressionType, ProgressionStrategy = e.ProgressionStrategy,
-        ProgressionAmountKg = e.ProgressionAmountKg, TargetType = e.TargetType, TargetSeconds = e.TargetSeconds,
+        Id = Guid.NewGuid(),
+        TemplateId = templateId,
+        ExerciseId = e.ExerciseId,
+        SortOrder = e.SortOrder,
+        Sets = e.Sets,
+        RepsPerSet = e.RepsPerSet,
+        TargetWeightKg = e.TargetWeightKg,
+        RestSecondsMin = e.RestSecondsMin,
+        RestSecondsMax = e.RestSecondsMax,
+        RestSecondsFailure = e.RestSecondsFailure,
+        SupersetWithNext = e.SupersetWithNext,
+        Notes = e.Notes,
+        ProgressionType = e.ProgressionType,
+        ProgressionStrategy = e.ProgressionStrategy,
+        ProgressionAmountKg = e.ProgressionAmountKg,
+        TargetType = e.TargetType,
+        TargetSeconds = e.TargetSeconds,
         TargetDistanceMeters = e.TargetDistanceMeters
     };
 }

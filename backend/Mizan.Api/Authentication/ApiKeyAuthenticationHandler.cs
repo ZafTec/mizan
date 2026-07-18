@@ -57,7 +57,7 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
         }
 
         // Check for impersonation header
-        if (Request.Headers.TryGetValue("X-Impersonate-User", out var userIdString) && 
+        if (Request.Headers.TryGetValue("X-Impersonate-User", out var userIdString) &&
             Guid.TryParse(userIdString, out var userId))
         {
             // Verify user exists and is active
@@ -81,8 +81,8 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
 
             var identity = new ClaimsIdentity(claims, Scheme.Name, ClaimTypes.NameIdentifier, ClaimTypes.Role);
             var principal = new ClaimsPrincipal(identity);
-            
-            _logger.LogInformation("ApiKey Impersonation Success. User: {UserId}, Role: {Role}, Claims: {Claims}", 
+
+            _logger.LogInformation("ApiKey Impersonation Success. User: {UserId}, Role: {Role}, Claims: {Claims}",
                 userId, status.Role, string.Join(", ", claims.Select(c => $"{c.Type}={c.Value}")));
 
             var ticket = new AuthenticationTicket(principal, Scheme.Name);

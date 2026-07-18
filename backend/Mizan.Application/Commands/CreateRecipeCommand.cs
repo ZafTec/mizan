@@ -32,31 +32,31 @@ public record CreateRecipeResult
     public string Title { get; init; } = string.Empty;
 }
 
-    public class CreateRecipeCommandValidator : AbstractValidator<CreateRecipeCommand>
+public class CreateRecipeCommandValidator : AbstractValidator<CreateRecipeCommand>
+{
+    public CreateRecipeCommandValidator()
     {
-        public CreateRecipeCommandValidator()
+        RuleFor(x => x.Title).NotEmpty().MaximumLength(255);
+        RuleFor(x => x.Servings).GreaterThan(0);
+        RuleFor(x => x.PrepTimeMinutes)
+            .GreaterThanOrEqualTo(0)
+            .When(x => x.PrepTimeMinutes.HasValue)
+            .WithMessage("Prep time must be positive");
+        RuleFor(x => x.CookTimeMinutes)
+            .GreaterThanOrEqualTo(0)
+            .When(x => x.CookTimeMinutes.HasValue)
+            .WithMessage("Cook time must be positive");
+        RuleFor(x => x.Ingredients).NotEmpty().WithMessage("At least one ingredient is required");
+        RuleForEach(x => x.Ingredients).ChildRules(ingredient =>
         {
-            RuleFor(x => x.Title).NotEmpty().MaximumLength(255);
-            RuleFor(x => x.Servings).GreaterThan(0);
-            RuleFor(x => x.PrepTimeMinutes)
-                .GreaterThanOrEqualTo(0)
-                .When(x => x.PrepTimeMinutes.HasValue)
-                .WithMessage("Prep time must be positive");
-            RuleFor(x => x.CookTimeMinutes)
-                .GreaterThanOrEqualTo(0)
-                .When(x => x.CookTimeMinutes.HasValue)
-                .WithMessage("Cook time must be positive");
-            RuleFor(x => x.Ingredients).NotEmpty().WithMessage("At least one ingredient is required");
-            RuleForEach(x => x.Ingredients).ChildRules(ingredient =>
-            {
-                ingredient.RuleFor(i => i.IngredientText).NotEmpty();
+            ingredient.RuleFor(i => i.IngredientText).NotEmpty();
 
-                ingredient.RuleFor(i => i)
-                    .Must(ing => !(ing.FoodId.HasValue && ing.SubRecipeId.HasValue))
-                    .WithMessage("Each ingredient must have either FoodId or SubRecipeId, not both")
-                    .Must(ing => !ing.SubRecipeId.HasValue || ing.Unit == null || ing.Unit == "serving" || ing.Unit == "servings")
-                    .WithMessage("When using a recipe as an ingredient, Unit should be 'serving' or 'servings'");
-            });
+            ingredient.RuleFor(i => i)
+                .Must(ing => !(ing.FoodId.HasValue && ing.SubRecipeId.HasValue))
+                .WithMessage("Each ingredient must have either FoodId or SubRecipeId, not both")
+                .Must(ing => !ing.SubRecipeId.HasValue || ing.Unit == null || ing.Unit == "serving" || ing.Unit == "servings")
+                .WithMessage("When using a recipe as an ingredient, Unit should be 'serving' or 'servings'");
+        });
     }
 }
 
@@ -68,7 +68,7 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
     private readonly IAchievementEvaluator? _achievements;
 
     public CreateRecipeCommandHandler(
-        IMizanDbContext context, 
+        IMizanDbContext context,
         ICurrentUserService currentUser,
         ILogger<CreateRecipeCommandHandler> logger,
         IAchievementEvaluator? achievements = null)
@@ -81,7 +81,7 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
 
     public async Task<CreateRecipeResult> Handle(CreateRecipeCommand request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("[CreateRecipe] Starting recipe creation: Title={Title}, Servings={Servings}, IngredientCount={Count}", 
+        _logger.LogInformation("[CreateRecipe] Starting recipe creation: Title={Title}, Servings={Servings}, IngredientCount={Count}",
             request.Title, request.Servings, request.Ingredients?.Count ?? 0);
 
         if (!_currentUser.UserId.HasValue)
@@ -130,18 +130,18 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
         {
             for (int i = 0; i < request.Ingredients.Count; i++)
             {
-            var ingredientDto = request.Ingredients[i];
-            recipe.Ingredients.Add(new RecipeIngredient
-            {
-                Id = Guid.NewGuid(),
-                RecipeId = recipe.Id,
-                FoodId = ingredientDto.FoodId,
-                SubRecipeId = ingredientDto.SubRecipeId,
-                IngredientText = ingredientDto.IngredientText,
-                Amount = ingredientDto.Amount,
-                Unit = ingredientDto.Unit,
-                SortOrder = i
-            });
+                var ingredientDto = request.Ingredients[i];
+                recipe.Ingredients.Add(new RecipeIngredient
+                {
+                    Id = Guid.NewGuid(),
+                    RecipeId = recipe.Id,
+                    FoodId = ingredientDto.FoodId,
+                    SubRecipeId = ingredientDto.SubRecipeId,
+                    IngredientText = ingredientDto.IngredientText,
+                    Amount = ingredientDto.Amount,
+                    Unit = ingredientDto.Unit,
+                    SortOrder = i
+                });
             }
         }
 
@@ -176,13 +176,13 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
             .Where(i => i.FoodId.HasValue)
             .Select(i => i.FoodId!.Value)
             .ToList();
-        
+
         var subRecipeIds = (request.Ingredients ?? new List<CreateRecipeIngredientDto>())
             .Where(i => i.SubRecipeId.HasValue)
             .Select(i => i.SubRecipeId!.Value)
             .ToList();
 
-        _logger.LogInformation("[CreateRecipe] Processing nutrition calculation. IngredientFoodIds count: {FoodCount}, SubRecipeIds count: {SubRecipeCount}", 
+        _logger.LogInformation("[CreateRecipe] Processing nutrition calculation. IngredientFoodIds count: {FoodCount}, SubRecipeIds count: {SubRecipeCount}",
             ingredientFoodIds.Count, subRecipeIds.Count);
 
         decimal totalCalories = 0;
@@ -198,7 +198,7 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
                 .Where(f => ingredientFoodIds.Contains(f.Id))
                 .ToDictionaryAsync(f => f.Id, cancellationToken);
 
-            _logger.LogInformation("[CreateRecipe] Found {FoodCount} foods in database for {RequestCount} ingredient IDs", 
+            _logger.LogInformation("[CreateRecipe] Found {FoodCount} foods in database for {RequestCount} ingredient IDs",
                 foods.Count, ingredientFoodIds.Count);
 
             foreach (var ingredientDto in (request.Ingredients ?? []).Where(i => i.FoodId.HasValue && i.Amount.HasValue))
@@ -206,10 +206,10 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
                 if (foods.TryGetValue(ingredientDto.FoodId!.Value, out var food))
                 {
                     var ratio = ingredientDto.Amount!.Value / 100m; // Ensure decimal division
-                    
-                    _logger.LogDebug("[CreateRecipe] Processing ingredient: Food={FoodName}, Amount={Amount}g, Ratio={Ratio}", 
+
+                    _logger.LogDebug("[CreateRecipe] Processing ingredient: Food={FoodName}, Amount={Amount}g, Ratio={Ratio}",
                         food.Name, ingredientDto.Amount, ratio);
-                    
+
                     // Use decimal for calories during calculation to avoid early truncation
                     totalCalories += food.CaloriesPer100g * ratio;
                     totalProtein += food.ProteinPer100g * ratio;
@@ -232,7 +232,7 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
                 .Where(r => subRecipeIds.Contains(r.Id))
                 .ToDictionaryAsync(r => r.Id, cancellationToken);
 
-            _logger.LogInformation("[CreateRecipe] Found {SubRecipeCount} sub-recipes in database for {RequestCount} sub-recipe IDs", 
+            _logger.LogInformation("[CreateRecipe] Found {SubRecipeCount} sub-recipes in database for {RequestCount} sub-recipe IDs",
                 subRecipes.Count, subRecipeIds.Count);
 
             foreach (var ingredientDto in (request.Ingredients ?? []).Where(i => i.SubRecipeId.HasValue && i.Amount.HasValue))
@@ -240,10 +240,10 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
                 if (subRecipes.TryGetValue(ingredientDto.SubRecipeId!.Value, out var subRecipe))
                 {
                     var servings = ingredientDto.Amount!.Value;
-                    
-                    _logger.LogDebug("[CreateRecipe] Processing sub-recipe ingredient: Recipe={RecipeName}, Servings={Servings}", 
+
+                    _logger.LogDebug("[CreateRecipe] Processing sub-recipe ingredient: Recipe={RecipeName}, Servings={Servings}",
                         subRecipe.Title, servings);
-                    
+
                     if (subRecipe.Nutrition != null)
                     {
                         totalCalories += (subRecipe.Nutrition.CaloriesPerServing ?? 0) * servings;
@@ -268,10 +268,10 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
         {
             // Calculate per serving values
             var servings = request.Servings > 0 ? request.Servings : 1;
-            
-            _logger.LogInformation("[CreateRecipe] Totals BEFORE division: Calories={Cal}, Protein={Prot}g, Carbs={Carbs}g, Fat={Fat}g, Fiber={Fiber}g, Servings={Servings}", 
+
+            _logger.LogInformation("[CreateRecipe] Totals BEFORE division: Calories={Cal}, Protein={Prot}g, Carbs={Carbs}g, Fat={Fat}g, Fiber={Fiber}g, Servings={Servings}",
                 totalCalories, totalProtein, totalCarbs, totalFat, totalFiber, servings);
-            
+
             var calPerServing = totalCalories / servings;
             var protPerServing = totalProtein / servings;
             recipe.Nutrition = new RecipeNutrition
@@ -285,8 +285,8 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
                 ProteinCalorieRatio = Food.ComputeProteinCalorieRatio(calPerServing, protPerServing)
             };
 
-            _logger.LogInformation("[CreateRecipe] Final nutrition PER SERVING: Calories={Cal}, Protein={Prot}g, Carbs={Carbs}g, Fat={Fat}g, Fiber={Fiber}g", 
-                recipe.Nutrition.CaloriesPerServing, recipe.Nutrition.ProteinGrams, recipe.Nutrition.CarbsGrams, 
+            _logger.LogInformation("[CreateRecipe] Final nutrition PER SERVING: Calories={Cal}, Protein={Prot}g, Carbs={Carbs}g, Fat={Fat}g, Fiber={Fiber}g",
+                recipe.Nutrition.CaloriesPerServing, recipe.Nutrition.ProteinGrams, recipe.Nutrition.CarbsGrams,
                 recipe.Nutrition.FatGrams, recipe.Nutrition.FiberGrams);
         }
         else if (request.Nutrition != null)

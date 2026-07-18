@@ -74,9 +74,18 @@ public sealed class RecipeTools
 
         return await _api.PostAsync("/api/Recipes", new
         {
-            title, description, servings, prepTimeMinutes, cookTimeMinutes,
-            imageUrl, isPublic, householdId,
-            ingredients, instructions, tags = tagList, nutrition
+            title,
+            description,
+            servings,
+            prepTimeMinutes,
+            cookTimeMinutes,
+            imageUrl,
+            isPublic,
+            householdId,
+            ingredients,
+            instructions,
+            tags = tagList,
+            nutrition
         }, ct);
     }
 
@@ -104,9 +113,18 @@ public sealed class RecipeTools
 
         return await _api.PutAsync($"/api/Recipes/{id}", new
         {
-            id, title, description, servings, prepTimeMinutes, cookTimeMinutes,
-            imageUrl, isPublic,
-            ingredients, instructions, tags = tagList, nutrition
+            id,
+            title,
+            description,
+            servings,
+            prepTimeMinutes,
+            cookTimeMinutes,
+            imageUrl,
+            isPublic,
+            ingredients,
+            instructions,
+            tags = tagList,
+            nutrition
         }, ct);
     }
 
