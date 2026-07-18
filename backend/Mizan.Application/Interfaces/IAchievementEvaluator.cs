@@ -7,7 +7,9 @@ public interface IAchievementEvaluator
     /// UserAchievement rows for any newly-met criteria, and returns the list of unlocks to surface in UI.
     /// Safe to call after any activity (meal, workout, measurement, goal progress, streak tick).
     /// </summary>
-    Task<IReadOnlyList<UnlockedAchievement>> EvaluateAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<UnlockedAchievement>> EvaluateAsync(
+        CancellationToken cancellationToken = default,
+        IReadOnlyCollection<string>? criteriaTypes = null);
 }
 
 public record UnlockedAchievement(

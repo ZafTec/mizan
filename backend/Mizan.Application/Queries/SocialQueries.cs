@@ -59,25 +59,99 @@ public sealed class GetSocialFeedQueryHandler : IRequestHandler<GetSocialFeedQue
     public async Task<SocialFeedResult> Handle(GetSocialFeedQuery request, CancellationToken ct)
     {
         var id = _currentUser.UserId ?? throw new UnauthorizedAccessException();
-        var hasProfile = await _context.SocialProfiles.AnyAsync(p => p.UserId == id, ct);
-        if (!hasProfile) return new SocialFeedResult([], 0, 1, Math.Clamp(request.PageSize, 1, 100));
-        var allowed = _context.Follows.Where(f => f.FollowerUserId == id && f.Status == "Accepted").Select(f => f.FolloweeUserId);
-        var query = _context.FeedItems.AsNoTracking().Where(item => item.UserId == id || allowed.Contains(item.UserId));
-        var total = await query.CountAsync(ct); var page = Math.Max(1, request.Page); var size = Math.Clamp(request.PageSize, 1, 100);
-        var items = await query.OrderByDescending(item => item.CreatedAt).Skip((page - 1) * size).Take(size)
-            .Include(item => item.User).Include(item => item.Workout)!.ThenInclude(workout => workout.Exercises).ThenInclude(exercise => exercise.Exercise)
-            .Include(item => item.Workout)!.ThenInclude(workout => workout.Exercises).ThenInclude(exercise => exercise.Sets)
-            .Include(item => item.Reactions).Include(item => item.Comments).ThenInclude(comment => comment.User)
+        var hasProfile = await _context.SocialProfiles.AnyAsync(profile => profile.UserId == id, ct);
+        var page = Math.Max(1, request.Page);
+        var size = Math.Clamp(request.PageSize, 1, 100);
+        if (!hasProfile) return new SocialFeedResult([], 0, page, size);
+
+        var allowedUserIds = _context.Follows
+            .Where(follow => follow.FollowerUserId == id && follow.Status == "Accepted")
+            .Select(follow => follow.FolloweeUserId);
+        var feedQuery = _context.FeedItems.AsNoTracking()
+            .Where(item => item.UserId == id || allowedUserIds.Contains(item.UserId));
+        var total = await feedQuery.CountAsync(ct);
+        var pageRows = await feedQuery
+            .OrderByDescending(item => item.CreatedAt)
+            .Skip((page - 1) * size)
+            .Take(size)
+            .Select(item => new
+            {
+                item.Id,
+                item.UserId,
+                DisplayName = item.User.Name ?? item.User.Email,
+                AvatarUrl = item.User.Image,
+                item.Type,
+                item.Caption,
+                item.CreatedAt,
+                item.WorkoutId,
+                WorkoutName = item.Workout == null ? null : item.Workout.Name,
+                WorkoutDate = item.Workout == null ? (DateOnly?)null : item.Workout.WorkoutDate,
+                WorkoutDurationMinutes = item.Workout == null ? null : item.Workout.DurationMinutes,
+                TotalVolumeKg = item.Workout == null
+                    ? 0
+                    : item.Workout.Exercises.SelectMany(exercise => exercise.Sets)
+                        .Where(set => set.Completed)
+                        .Sum(set => (set.WeightKg ?? 0) * (set.Reps ?? 0))
+            })
             .ToListAsync(ct);
-        return new SocialFeedResult(items.Select(item => new FeedItemDto(item.Id, item.UserId, item.User.Name ?? item.User.Email, item.User.Image,
-            item.Type, item.Caption, item.CreatedAt, item.Workout is null ? null : new WorkoutFeedSummaryDto(item.Workout.Id,
-                item.Workout.Name ?? "Workout", item.Workout.WorkoutDate, item.Workout.DurationMinutes,
-                item.Workout.Exercises.SelectMany(e => e.Sets).Sum(s => (s.WeightKg ?? 0) * (s.Reps ?? 0)),
-                item.Workout.Exercises.OrderBy(e => e.SortOrder).Select(e => new WorkoutFeedExerciseDto(e.Exercise.Name, e.Exercise.MuscleGroup,
-                    e.Sets.Count, e.Sets.Max(s => s.WeightKg ?? 0), e.Sets.Max(s => s.Reps ?? 0))).ToList()),
-            item.Reactions.Select(r => new FeedReactionDto(r.Id, r.UserId, r.Emoji)).ToList(),
-            item.Comments.Where(c => c.DeletedAt == null).OrderBy(c => c.CreatedAt).Select(c => new FeedCommentDto(c.Id, c.UserId,
-                c.User.Name ?? c.User.Email, c.Body, c.CreatedAt)).ToList())).ToList(), total, page, size);
+
+        var itemIds = pageRows.Select(item => item.Id).ToArray();
+        var workoutIds = pageRows.Where(item => item.WorkoutId.HasValue).Select(item => item.WorkoutId!.Value).ToArray();
+        var exerciseRows = await _context.WorkoutExercises.AsNoTracking()
+            .Where(exercise => workoutIds.Contains(exercise.WorkoutId))
+            .OrderBy(exercise => exercise.SortOrder)
+            .Select(exercise => new
+            {
+                exercise.WorkoutId,
+                Summary = new WorkoutFeedExerciseDto(
+                    exercise.Exercise.Name,
+                    exercise.Exercise.MuscleGroup,
+                    exercise.Sets.Count,
+                    exercise.Sets.Max(set => set.WeightKg ?? 0),
+                    exercise.Sets.Max(set => set.Reps ?? 0))
+            })
+            .ToListAsync(ct);
+        var exercisesByWorkout = exerciseRows
+            .GroupBy(row => row.WorkoutId)
+            .ToDictionary(group => group.Key, group => (IReadOnlyList<WorkoutFeedExerciseDto>)group.Select(row => row.Summary).ToList());
+        var reactionsByItem = (await _context.FeedReactions.AsNoTracking()
+            .Where(reaction => itemIds.Contains(reaction.FeedItemId))
+            .Select(reaction => new { reaction.FeedItemId, Dto = new FeedReactionDto(reaction.Id, reaction.UserId, reaction.Emoji) })
+            .ToListAsync(ct))
+            .GroupBy(row => row.FeedItemId)
+            .ToDictionary(group => group.Key, group => (IReadOnlyList<FeedReactionDto>)group.Select(row => row.Dto).ToList());
+        var commentsByItem = (await _context.FeedComments.AsNoTracking()
+            .Where(comment => itemIds.Contains(comment.FeedItemId) && comment.DeletedAt == null)
+            .OrderBy(comment => comment.CreatedAt)
+            .Select(comment => new
+            {
+                comment.FeedItemId,
+                Dto = new FeedCommentDto(comment.Id, comment.UserId, comment.User.Name ?? comment.User.Email, comment.Body, comment.CreatedAt)
+            })
+            .ToListAsync(ct))
+            .GroupBy(row => row.FeedItemId)
+            .ToDictionary(group => group.Key, group => (IReadOnlyList<FeedCommentDto>)group.Select(row => row.Dto).ToList());
+
+        var items = pageRows.Select(item => new FeedItemDto(
+            item.Id,
+            item.UserId,
+            item.DisplayName,
+            item.AvatarUrl,
+            item.Type,
+            item.Caption,
+            item.CreatedAt,
+            item.WorkoutId.HasValue && item.WorkoutDate.HasValue
+                ? new WorkoutFeedSummaryDto(
+                    item.WorkoutId.Value,
+                    item.WorkoutName ?? "Workout",
+                    item.WorkoutDate.Value,
+                    item.WorkoutDurationMinutes,
+                    item.TotalVolumeKg,
+                    exercisesByWorkout.GetValueOrDefault(item.WorkoutId.Value) ?? [])
+                : null,
+            reactionsByItem.GetValueOrDefault(item.Id) ?? [],
+            commentsByItem.GetValueOrDefault(item.Id) ?? [])).ToList();
+        return new SocialFeedResult(items, total, page, size);
     }
 }
 

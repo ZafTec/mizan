@@ -94,12 +94,12 @@ public sealed class GetNextTemplateSessionQueryHandler : IRequestHandler<GetNext
     }
 }
 
-public record ExercisePoint(DateOnly Date, decimal TopWeightKg, decimal EstimatedOneRepMax);
+public record ExercisePoint(DateOnly Date, decimal TopWeightKg, decimal EstimatedOneRepMax, bool IsPersonalRecord);
 public record ExerciseStatsDto(Guid ExerciseId, string Name, IReadOnlyList<ExercisePoint> Points);
 public record HeaviestLiftDto(Guid ExerciseId, string Name, decimal WeightKg, DateOnly Date);
 public record MuscleGroupSetsDto(string MuscleGroup, int Sets);
 public record WorkoutStatsDto(decimal WorkoutsPerWeek, decimal SetsPerWeek, decimal AverageSessionMinutes, decimal TotalVolumeKg,
-    HeaviestLiftDto? HeaviestLift, decimal MaxSessionVolume, IReadOnlyList<ExerciseStatsDto> PerExercise,
+    int PersonalRecordCount, HeaviestLiftDto? HeaviestLift, decimal MaxSessionVolume, IReadOnlyList<ExerciseStatsDto> PerExercise,
     IReadOnlyList<MuscleGroupSetsDto> PerMuscleGroup);
 public record GetWorkoutStatsQuery(DateOnly? From = null, DateOnly? To = null) : IRequest<WorkoutStatsDto>;
 public sealed class GetWorkoutStatsQueryHandler : IRequestHandler<GetWorkoutStatsQuery, WorkoutStatsDto>
@@ -116,11 +116,32 @@ public sealed class GetWorkoutStatsQueryHandler : IRequestHandler<GetWorkoutStat
         var allSets = workouts.SelectMany(w => w.Exercises.SelectMany(e => e.Sets.Select(s => (w, e, s)))).Where(x => x.s.Completed).ToList();
         var volume = allSets.Sum(x => (x.s.WeightKg ?? 0) * (x.s.Reps ?? 0));
         var heaviest = allSets.Where(x => x.s.WeightKg.HasValue).OrderByDescending(x => x.s.WeightKg).Select(x => new HeaviestLiftDto(x.e.ExerciseId, x.e.Exercise.Name, x.s.WeightKg!.Value, x.w.WorkoutDate)).FirstOrDefault();
-        var perExercise = allSets.GroupBy(x => new { x.e.ExerciseId, x.e.Exercise.Name }).Select(group => new ExerciseStatsDto(group.Key.ExerciseId, group.Key.Name,
-            group.GroupBy(x => x.w.WorkoutDate).OrderBy(x => x.Key).Select(day => { var top = day.Max(x => x.s.WeightKg ?? 0); var rep = day.OrderByDescending(x => x.s.WeightKg).First().s.Reps ?? 0; return new ExercisePoint(day.Key, top, top * (1 + rep / 30m)); }).ToList())).ToList();
+        var personalRecordCount = 0;
+        var perExercise = allSets.GroupBy(x => new { x.e.ExerciseId, x.e.Exercise.Name }).Select(group =>
+        {
+            decimal? priorBest = null;
+            var points = group
+                .GroupBy(x => new { x.w.Id, x.w.WorkoutDate, x.w.CreatedAt })
+                .OrderBy(workout => workout.Key.WorkoutDate)
+                .ThenBy(workout => workout.Key.CreatedAt)
+                .ThenBy(workout => workout.Key.Id)
+                .Select(workout =>
+            {
+                var top = workout.Max(x => x.s.WeightKg ?? 0);
+                var rep = workout.OrderByDescending(x => x.s.WeightKg).First().s.Reps ?? 0;
+                var isPersonalRecord = top > 0 && (!priorBest.HasValue || top > priorBest.Value);
+                if (isPersonalRecord)
+                {
+                    priorBest = top;
+                    personalRecordCount++;
+                }
+                return new ExercisePoint(workout.Key.WorkoutDate, top, top * (1 + rep / 30m), isPersonalRecord);
+            }).ToList();
+            return new ExerciseStatsDto(group.Key.ExerciseId, group.Key.Name, points);
+        }).ToList();
         var muscle = allSets.Where(x => !string.IsNullOrWhiteSpace(x.e.Exercise.MuscleGroup)).GroupBy(x => x.e.Exercise.MuscleGroup!).Select(g => new MuscleGroupSetsDto(g.Key, g.Count())).ToList();
         var maxSession = workouts.Select(w => w.Exercises.SelectMany(e => e.Sets).Sum(s => (s.WeightKg ?? 0) * (s.Reps ?? 0))).DefaultIfEmpty(0).Max();
-        return new WorkoutStatsDto(workouts.Count / weeks, allSets.Count / weeks, workouts.Count == 0 ? 0 : (decimal)workouts.Average(w => w.DurationMinutes ?? 0), volume, heaviest, maxSession, perExercise, muscle);
+        return new WorkoutStatsDto(workouts.Count / weeks, allSets.Count / weeks, workouts.Count == 0 ? 0 : (decimal)workouts.Average(w => w.DurationMinutes ?? 0), volume, personalRecordCount, heaviest, maxSession, perExercise, muscle);
     }
 }
 
