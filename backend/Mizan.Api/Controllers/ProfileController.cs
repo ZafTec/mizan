@@ -10,7 +10,7 @@ namespace Mizan.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Policy = "UserOrMcp")]
 public class ProfileController : ControllerBase
 {
     private readonly IMediator _mediator;

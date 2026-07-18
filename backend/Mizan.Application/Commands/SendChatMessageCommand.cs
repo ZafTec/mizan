@@ -6,7 +6,7 @@ using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Commands;
 
-public record SendChatMessageCommand(Guid ConversationId, Guid UserId, string Content, string MessageType = "text") : IRequest<SendChatMessageResult>;
+public record SendChatMessageCommand(Guid ConversationId, Guid UserId, string Content, string MessageType = "text") : IRequest<SendChatMessageResult>, ISkipAudit;
 
 public record SendChatMessageResult
 {

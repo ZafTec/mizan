@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
@@ -20,6 +21,7 @@ using Serilog.Exceptions;
 using Mizan.Application.Exceptions;
 using StackExchange.Redis;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -96,14 +98,23 @@ authBuilder.AddScheme<ApiKeyAuthenticationSchemeOptions, ApiKeyAuthenticationHan
     {
         options.ApiKey = builder.Configuration["Mcp:ServiceApiKey"]
             ?? throw new InvalidOperationException("Mcp:ServiceApiKey is not configured");
+        options.AdminApiKey = builder.Configuration["Mcp:AdminServiceApiKey"] ?? options.ApiKey;
     });
 
 builder.Services.AddAuthorization(options =>
 {
     options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
-        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
         .RequireAuthenticatedUser()
         .Build();
+
+    options.AddPolicy("McpService", policy => policy
+        .AddAuthenticationSchemes(ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .RequireAuthenticatedUser());
+
+    options.AddPolicy("UserOrMcp", policy => policy
+        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .RequireAuthenticatedUser());
 
     options.AddPolicy("RequireAdmin", policy => policy
         .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
@@ -111,7 +122,7 @@ builder.Services.AddAuthorization(options =>
         .RequireRole("admin"));
 
     options.AddPolicy("RequireTrainer", policy => policy
-        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
         .RequireAuthenticatedUser()
         .RequireRole("trainer"));
 
@@ -122,6 +133,35 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, Mizan.Api.Authorization.ProAuthorizationHandler>();
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("McpTokenValidation", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+    options.AddPolicy("AnonymousSocial", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 30,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+    options.AddPolicy("SocialWrites", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.FindFirst("sub")?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 60,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+});
 
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
 
@@ -256,6 +296,7 @@ app.UseSerilogRequestLogging(options =>
 });
 
 app.UseCors("AllowFrontend");
+app.UseRateLimiter();
 
 app.UseExceptionHandler(errorApp =>
 {
@@ -274,6 +315,7 @@ app.UseExceptionHandler(errorApp =>
             context.Response.StatusCode = 400;
             await context.Response.WriteAsJsonAsync(new
             {
+                errorCode = "validation_failed",
                 errors = validationEx.Errors.Select(e => new { e.PropertyName, e.ErrorMessage })
             });
         }
@@ -283,7 +325,7 @@ app.UseExceptionHandler(errorApp =>
                 context.Request.Path, domainValidationEx.Message);
 
             context.Response.StatusCode = 400;
-            await context.Response.WriteAsJsonAsync(new { error = domainValidationEx.Message });
+            await context.Response.WriteAsJsonAsync(new { errorCode = "domain_validation_failed", error = domainValidationEx.Message });
         }
         else if (exception is EntityNotFoundException notFoundEx)
         {
@@ -291,7 +333,7 @@ app.UseExceptionHandler(errorApp =>
                 context.Request.Path, notFoundEx.Message);
 
             context.Response.StatusCode = 404;
-            await context.Response.WriteAsJsonAsync(new { error = notFoundEx.Message });
+            await context.Response.WriteAsJsonAsync(new { errorCode = "not_found", error = notFoundEx.Message });
         }
         else if (exception is ForbiddenAccessException forbiddenEx)
         {
@@ -299,7 +341,11 @@ app.UseExceptionHandler(errorApp =>
                 context.Request.Path, forbiddenEx.Message);
 
             context.Response.StatusCode = 403;
-            await context.Response.WriteAsJsonAsync(new { error = forbiddenEx.Message });
+            var errorCode = forbiddenEx.Message.Contains("upgrade", StringComparison.OrdinalIgnoreCase)
+                || forbiddenEx.Message.Contains("free plan", StringComparison.OrdinalIgnoreCase)
+                ? "upgrade_required"
+                : "forbidden";
+            await context.Response.WriteAsJsonAsync(new { errorCode, error = forbiddenEx.Message });
         }
         else if (exception is UnauthorizedAccessException)
         {
@@ -308,7 +354,7 @@ app.UseExceptionHandler(errorApp =>
                 context.Request.Path);
 
             context.Response.StatusCode = 401;
-            await context.Response.WriteAsJsonAsync(new { error = "Unauthorized" });
+            await context.Response.WriteAsJsonAsync(new { errorCode = "unauthorized", error = "Unauthorized" });
         }
         else
         {
@@ -318,7 +364,7 @@ app.UseExceptionHandler(errorApp =>
                 context.Request.Path);
 
             context.Response.StatusCode = 500;
-            await context.Response.WriteAsJsonAsync(new { error = "Internal server error" });
+            await context.Response.WriteAsJsonAsync(new { errorCode = "internal_error", error = "Internal server error" });
         }
     });
 });
