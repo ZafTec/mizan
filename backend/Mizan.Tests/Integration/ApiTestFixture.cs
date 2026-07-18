@@ -119,7 +119,8 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
                 ["Jwt:Issuer"] = _issuer,
                 ["Jwt:Audience"] = _audience,
                 ["Jwt:JwksUrl"] = "http://jwks.test",
-                ["Mcp:ServiceApiKey"] = "test-api-key"
+                ["Mcp:ServiceApiKey"] = "test-api-key",
+                ["RateLimits:McpTokenValidation:PermitLimit"] = "10000"
             };
 
             config.AddInMemoryCollection(settings);

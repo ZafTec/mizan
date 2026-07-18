@@ -1220,7 +1220,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
     }
 
     [Fact]
-    public async Task BackendError_ReturnsJsonRpcError()
+    public async Task BackendValidationError_ReturnsActionableDetails()
     {
         var userId = Guid.NewGuid();
         await _apiFixture.SeedUserAsync(userId, "backend-error@example.com", emailVerified: true);
@@ -1242,7 +1242,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
 
         jsonResponse.Should().NotBeNull();
-        ExtractErrorMessage(jsonResponse).Should().Contain("API error");
+        var errorMessage = ExtractErrorMessage(jsonResponse);
+        errorMessage.Should().Contain("foodId");
+        errorMessage.Should().Contain("Guid");
     }
 
     #endregion
