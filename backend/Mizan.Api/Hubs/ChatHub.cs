@@ -233,6 +233,15 @@ public class ChatHub : Hub
         var userId = GetUserId();
         if (!userId.HasValue) return;
 
+        var isMember = await _context.ChatConversations
+            .AnyAsync(conversation => conversation.Id == conversationId &&
+                (conversation.Relationship.TrainerId == userId.Value ||
+                 conversation.Relationship.ClientId == userId.Value));
+        if (!isMember)
+        {
+            throw new HubException("Access denied to this conversation");
+        }
+
         _logger.LogDebug(
             "TypingIndicator - User {UserId}, ConversationId {ConversationId}, IsTyping {IsTyping}",
             userId,

@@ -9,7 +9,7 @@ namespace Mizan.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Policy = "UserOrMcp")]
 public class ChatController : ControllerBase
 {
     private readonly IMediator _mediator;

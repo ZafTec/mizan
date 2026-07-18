@@ -71,7 +71,7 @@ public sealed class MealTools
     public async Task<string> LogFood(
         [Description("Food UUID from search_foods")] string foodId,
         [Description("Date in YYYY-MM-DD format")] string date,
-        [Description("Meal category: MEAL, SNACK, or DRINK")] string mealType = "MEAL",
+        [Description("Meal category: BREAKFAST, LUNCH, DINNER, SNACK, or DRINK")] string mealType = "BREAKFAST",
         [Description("Number of servings (default 1)")] decimal servings = 1,
         [Description("Optional ISO 8601 timestamp (e.g. 2026-04-20T16:14:54Z) of when the meal was eaten; defaults to now")] string? loggedAt = null,
         CancellationToken ct = default)
@@ -91,7 +91,7 @@ public sealed class MealTools
     public async Task<string> LogMeal(
         [Description("Recipe UUID from search_recipes")] string recipeId,
         [Description("Date in YYYY-MM-DD format")] string date,
-        [Description("Meal category: MEAL, SNACK, or DRINK")] string mealType = "MEAL",
+        [Description("Meal category: BREAKFAST, LUNCH, DINNER, SNACK, or DRINK")] string mealType = "BREAKFAST",
         [Description("Number of servings (default 1)")] decimal servings = 1,
         [Description("Optional ISO 8601 timestamp of when the meal was eaten; defaults to now")] string? loggedAt = null,
         CancellationToken ct = default)
@@ -112,7 +112,7 @@ public sealed class MealTools
         [Description("Meal name (e.g. 'Homemade smoothie')")] string name,
         [Description("Date in YYYY-MM-DD format")] string date,
         [Description("Total calories")] decimal calories,
-        [Description("Meal category: MEAL, SNACK, or DRINK")] string mealType = "MEAL",
+        [Description("Meal category: BREAKFAST, LUNCH, DINNER, SNACK, or DRINK")] string mealType = "BREAKFAST",
         [Description("Number of servings (default 1)")] decimal servings = 1,
         [Description("Protein in grams")] decimal? proteinGrams = null,
         [Description("Carbs in grams")] decimal? carbsGrams = null,
@@ -149,10 +149,13 @@ public sealed class MealTools
     {
         return mealType.Trim().ToUpperInvariant() switch
         {
-            "MEAL" or "BREAKFAST" or "LUNCH" or "DINNER" => "MEAL",
+            "BREAKFAST" => "BREAKFAST",
+            "LUNCH" => "LUNCH",
+            "DINNER" => "DINNER",
             "SNACK" => "SNACK",
             "DRINK" or "BEVERAGE" => "DRINK",
-            var raw => throw new ArgumentException($"Meal type '{raw}' is invalid. Use MEAL, SNACK, or DRINK.")
+            "MEAL" => "MEAL",
+            var raw => throw new ArgumentException($"Meal type '{raw}' is invalid. Use BREAKFAST, LUNCH, DINNER, SNACK, or DRINK.")
         };
     }
 

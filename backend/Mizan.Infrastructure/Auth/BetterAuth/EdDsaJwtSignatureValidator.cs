@@ -24,7 +24,7 @@ public static class EdDsaJwtSignatureValidator
                 throw new SecurityTokenInvalidSignatureException($"Unsupported JWT algorithm '{alg}'.");
             }
 
-            var keys = provider.GetSigningKeysAsync(CancellationToken.None).GetAwaiter().GetResult();
+            var keys = provider.GetSigningKeys();
             var jwksKeys = keys.OfType<JsonWebKey>();
 
             if (!string.IsNullOrWhiteSpace(jwt.Header.Kid))

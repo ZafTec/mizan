@@ -9,7 +9,7 @@ namespace Mizan.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Policy = "UserOrMcp")]
 public class NutritionController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -60,11 +60,26 @@ public class NutritionController : ControllerBase
 
     [HttpPost("ai/analyze-image")]
     [Authorize(Policy = "RequirePro")]
+    [RequestSizeLimit(10_000_000)]
     public async Task<ActionResult<FoodAnalysisResult>> AnalyzeFoodImage(IFormFile image)
     {
         if (image.Length == 0)
         {
             return BadRequest("No image provided");
+        }
+
+        if (image.Length > 8_000_000)
+        {
+            return BadRequest("Image must be 8 MB or smaller");
+        }
+
+        var allowedTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "image/jpeg", "image/png", "image/webp"
+        };
+        if (!allowedTypes.Contains(image.ContentType))
+        {
+            return BadRequest("Image must be JPEG, PNG, or WebP");
         }
 
         using var memoryStream = new MemoryStream();

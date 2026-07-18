@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Mizan.Application.Commands;
 using Mizan.Application.Common;
 using Mizan.Application.Queries;
@@ -69,7 +70,8 @@ public class McpTokensController : ControllerBase
     }
 
     [HttpPost("validate")]
-    [AllowAnonymous] // MCP server calls this endpoint
+    [AllowAnonymous]
+    [EnableRateLimiting("McpTokenValidation")]
     public async Task<ActionResult<ValidateTokenResult>> ValidateToken([FromBody] ValidateTokenCommand command)
     {
         var result = await _mediator.Send(command);
@@ -83,7 +85,7 @@ public class McpTokensController : ControllerBase
     }
 
     [HttpPost("usage")]
-    [Authorize]
+    [Authorize(Policy = "McpService")]
     public async Task<ActionResult> LogUsage([FromBody] LogMcpUsageCommand command)
     {
         await _mediator.Send(command);

@@ -24,6 +24,7 @@ builder.Services.AddAuthentication(McpTokenAuthenticationOptions.DefaultScheme)
     .AddScheme<McpTokenAuthenticationOptions, McpTokenAuthenticationHandler>(
         McpTokenAuthenticationOptions.DefaultScheme, _ => { });
 builder.Services.AddAuthorization();
+builder.Services.AddMemoryCache();
 
 builder.Services.AddHttpContextAccessor();
 
@@ -32,14 +33,17 @@ var backendUrl = builder.Configuration["BACKEND_API_URL"]
                  ?? builder.Configuration["MizanApiUrl"]
                  ?? "http://mizan-backend:8080";
 
-var apiKey = builder.Configuration["Mcp:ServiceApiKey"]
-             ?? builder.Configuration["ServiceApiKey"]
-             ?? throw new InvalidOperationException("ServiceApiKey not configured");
+_ = builder.Configuration["Mcp:ServiceApiKey"]
+    ?? builder.Configuration["ServiceApiKey"]
+    ?? throw new InvalidOperationException("ServiceApiKey not configured");
+_ = builder.Configuration["Mcp:AdminServiceApiKey"]
+    ?? builder.Configuration["AdminServiceApiKey"]
+    ?? builder.Configuration["Mcp:ServiceApiKey"]
+    ?? builder.Configuration["ServiceApiKey"];
 
 builder.Services.AddHttpClient<IBackendApiClient, BackendApiClient>(client =>
 {
     client.BaseAddress = new Uri(backendUrl);
-    client.DefaultRequestHeaders.Add("X-Api-Key", apiKey);
     client.Timeout = TimeSpan.FromSeconds(30);
 })
 .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
@@ -130,7 +134,11 @@ builder.Services.AddMcpServer(options =>
 .WithTools<ShoppingListTools>()
 .WithTools<BodyMeasurementTools>()
 .WithTools<WorkoutTools>()
+.WithTools<WorkoutTemplateTools>()
 .WithTools<ExerciseTools>()
+.WithTools<SocialTools>()
+.WithTools<NotificationTools>()
+.WithTools<AdminTools>()
 .WithTools<AchievementTools>()
 .WithTools<ProfileTools>()
 .WithTools<HouseholdTools>()
@@ -151,6 +159,17 @@ builder.Services.AddMcpServer(options =>
             return new CallToolResult
             {
                 Content = [new TextContentBlock { Text = "Authentication required. Provide a valid MCP token." }],
+                IsError = true
+            };
+        }
+
+        if (int.TryParse(httpContext.User.FindFirst("mcp_usage_limit")?.Value, out var monthlyLimit) &&
+            int.TryParse(httpContext.User.FindFirst("mcp_usage_used")?.Value, out var usedThisMonth) &&
+            usedThisMonth >= monthlyLimit)
+        {
+            return new CallToolResult
+            {
+                Content = [new TextContentBlock { Text = $"[MONTHLY LIMIT REACHED] The free plan includes {monthlyLimit} MCP tool calls per month. Upgrade at https://mizan.euaell.me/billing." }],
                 IsError = true
             };
         }
