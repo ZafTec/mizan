@@ -30,11 +30,20 @@ export type WorkoutDraft = {
   restTimer?: { startedAt: string; seconds: number };
 };
 
+export type StoredWorkoutDraft = {
+  draft: WorkoutDraft;
+  updatedAt: string;
+};
+
 export type WeightScope = "set" | "uncompleted" | "all";
 
 export type WorkoutDraftAction =
   | { type: "replace"; draft: WorkoutDraft }
-  | { type: "set-field"; field: "name" | "workoutDate" | "bodyweightKg"; value: string | number | undefined }
+  | {
+      type: "set-field";
+      field: "name" | "workoutDate" | "bodyweightKg";
+      value: string | number | undefined;
+    }
   | { type: "add-exercise"; exercise: DraftExercise }
   | { type: "remove-exercise"; exerciseUid: string }
   | { type: "set-exercise-notes"; exerciseUid: string; notes: string }
@@ -42,8 +51,19 @@ export type WorkoutDraftAction =
   | { type: "add-set"; exerciseUid: string }
   | { type: "remove-set"; exerciseUid: string; setUid: string }
   | { type: "cycle-reps"; exerciseUid: string; setUid: string; now: string }
-  | { type: "edit-set"; exerciseUid: string; setUid: string; patch: Partial<DraftSet> }
-  | { type: "apply-weight"; exerciseUid: string; setUid: string; weightKg: number; scope: WeightScope }
+  | {
+      type: "edit-set";
+      exerciseUid: string;
+      setUid: string;
+      patch: Partial<DraftSet>;
+    }
+  | {
+      type: "apply-weight";
+      exerciseUid: string;
+      setUid: string;
+      weightKg: number;
+      scope: WeightScope;
+    }
   | { type: "clear-rest-timer" };
 
 export function createEmptyDraft(now = new Date()): WorkoutDraft {
@@ -55,29 +75,60 @@ export function createEmptyDraft(now = new Date()): WorkoutDraft {
   };
 }
 
-export function workoutDraftReducer(state: WorkoutDraft, action: WorkoutDraftAction): WorkoutDraft {
+export function workoutDraftReducer(
+  state: WorkoutDraft,
+  action: WorkoutDraftAction,
+): WorkoutDraft {
   if (action.type === "replace") return action.draft;
-  if (action.type === "set-field") return { ...state, [action.field]: action.value };
-  if (action.type === "add-exercise") return { ...state, exercises: [...state.exercises, action.exercise] };
-  if (action.type === "remove-exercise") return { ...state, exercises: state.exercises.filter((exercise) => exercise.uid !== action.exerciseUid) };
-  if (action.type === "clear-rest-timer") return { ...state, restTimer: undefined };
+  if (action.type === "set-field")
+    return { ...state, [action.field]: action.value };
+  if (action.type === "add-exercise")
+    return { ...state, exercises: [...state.exercises, action.exercise] };
+  if (action.type === "remove-exercise")
+    return {
+      ...state,
+      exercises: state.exercises.filter(
+        (exercise) => exercise.uid !== action.exerciseUid,
+      ),
+    };
+  if (action.type === "clear-rest-timer")
+    return { ...state, restTimer: undefined };
 
   return {
     ...state,
     exercises: state.exercises.map((exercise) => {
       if (exercise.uid !== action.exerciseUid) return exercise;
-      if (action.type === "set-exercise-notes") return { ...exercise, notes: action.notes };
-      if (action.type === "toggle-superset") return { ...exercise, supersetWithNext: !exercise.supersetWithNext };
+      if (action.type === "set-exercise-notes")
+        return { ...exercise, notes: action.notes };
+      if (action.type === "toggle-superset")
+        return { ...exercise, supersetWithNext: !exercise.supersetWithNext };
       if (action.type === "add-set") {
         const previous = exercise.sets.at(-1);
-        return { ...exercise, sets: [...exercise.sets, { uid: crypto.randomUUID(), targetReps: previous?.targetReps, weightKg: previous?.weightKg ?? 0 }] };
+        return {
+          ...exercise,
+          sets: [
+            ...exercise.sets,
+            {
+              uid: crypto.randomUUID(),
+              targetReps: previous?.targetReps,
+              weightKg: previous?.weightKg ?? 0,
+            },
+          ],
+        };
       }
-      if (action.type === "remove-set") return { ...exercise, sets: exercise.sets.filter((set) => set.uid !== action.setUid) };
+      if (action.type === "remove-set")
+        return {
+          ...exercise,
+          sets: exercise.sets.filter((set) => set.uid !== action.setUid),
+        };
       if (action.type === "apply-weight") {
         return {
           ...exercise,
           sets: exercise.sets.map((set) => {
-            const applies = action.scope === "all" || set.uid === action.setUid || (action.scope === "uncompleted" && !set.completedAt);
+            const applies =
+              action.scope === "all" ||
+              set.uid === action.setUid ||
+              (action.scope === "uncompleted" && !set.completedAt);
             return applies ? { ...set, weightKg: action.weightKg } : set;
           }),
         };
@@ -88,8 +139,18 @@ export function workoutDraftReducer(state: WorkoutDraft, action: WorkoutDraftAct
           if (set.uid !== action.setUid) return set;
           if (action.type === "edit-set") return { ...set, ...action.patch };
           if (action.type === "cycle-reps") {
-            if (set.repsCompleted === undefined) return { ...set, repsCompleted: set.targetReps ?? 0, completedAt: action.now };
-            if (set.repsCompleted > 0) return { ...set, repsCompleted: set.repsCompleted - 1, completedAt: action.now };
+            if (set.repsCompleted === undefined)
+              return {
+                ...set,
+                repsCompleted: set.targetReps ?? 0,
+                completedAt: action.now,
+              };
+            if (set.repsCompleted > 0)
+              return {
+                ...set,
+                repsCompleted: set.repsCompleted - 1,
+                completedAt: action.now,
+              };
             return { ...set, repsCompleted: undefined, completedAt: undefined };
           }
           return set;
@@ -102,10 +163,51 @@ export function workoutDraftReducer(state: WorkoutDraft, action: WorkoutDraftAct
 
 function restTimerForAction(state: WorkoutDraft, action: WorkoutDraftAction) {
   if (action.type !== "cycle-reps") return state.restTimer;
-  const exercise = state.exercises.find((item) => item.uid === action.exerciseUid);
+  const exercise = state.exercises.find(
+    (item) => item.uid === action.exerciseUid,
+  );
   const set = exercise?.sets.find((item) => item.uid === action.setUid);
   if (set?.repsCompleted === 0) return undefined;
-  return exercise?.restSecondsMax ? { startedAt: action.now, seconds: exercise.restSecondsMax } : state.restTimer;
+  if (set?.repsCompleted !== undefined) return state.restTimer;
+  return exercise?.restSecondsMax
+    ? { startedAt: action.now, seconds: exercise.restSecondsMax }
+    : state.restTimer;
+}
+
+export function serializeStoredDraft(
+  draft: WorkoutDraft,
+  updatedAt = new Date().toISOString(),
+) {
+  return JSON.stringify({ draft, updatedAt } satisfies StoredWorkoutDraft);
+}
+
+export function parseStoredDraft(
+  value: string,
+  fallbackUpdatedAt?: string,
+): StoredWorkoutDraft | null {
+  try {
+    const parsed = JSON.parse(value) as WorkoutDraft | StoredWorkoutDraft;
+    if ("draft" in parsed && "updatedAt" in parsed) return parsed;
+    if ("startedAt" in parsed)
+      return {
+        draft: parsed,
+        updatedAt: fallbackUpdatedAt ?? parsed.startedAt,
+      };
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function newerStoredDraft(
+  local: StoredWorkoutDraft | null,
+  server: StoredWorkoutDraft | null,
+) {
+  if (!local) return server;
+  if (!server) return local;
+  return Date.parse(local.updatedAt) >= Date.parse(server.updatedAt)
+    ? local
+    : server;
 }
 
 export function draftFromTemplate(template: {
@@ -119,7 +221,12 @@ export function draftFromTemplate(template: {
     supersetWithNext: boolean;
     restSecondsMin?: number | null;
     restSecondsMax?: number | null;
-    sets: Array<{ targetReps?: number | null; weightKg: number; targetSeconds?: number | null; targetDistanceMeters?: number | null }>;
+    sets: Array<{
+      targetReps?: number | null;
+      weightKg: number;
+      targetSeconds?: number | null;
+      targetDistanceMeters?: number | null;
+    }>;
   }>;
 }): WorkoutDraft {
   const draft = createEmptyDraft();
