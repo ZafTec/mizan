@@ -36,7 +36,11 @@ public sealed class BackendApiClient : IBackendApiClient
     {
         _http = http; _httpContextAccessor = httpContextAccessor; _logger = logger;
         _serviceApiKey = configuration is null ? "test-api-key" : configuration["Mcp:ServiceApiKey"] ?? configuration["ServiceApiKey"] ?? throw new InvalidOperationException("ServiceApiKey not configured");
-        _adminServiceApiKey = configuration is null ? _serviceApiKey : configuration["Mcp:AdminServiceApiKey"] ?? configuration["AdminServiceApiKey"] ?? _serviceApiKey;
+        _adminServiceApiKey = configuration is null ? "test-admin-api-key" : configuration["Mcp:AdminServiceApiKey"] ?? configuration["AdminServiceApiKey"] ?? throw new InvalidOperationException("AdminServiceApiKey not configured");
+        if (string.Equals(_serviceApiKey, _adminServiceApiKey, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("MCP service and admin API keys must be different");
+        }
     }
 
     private Guid GetUserId()

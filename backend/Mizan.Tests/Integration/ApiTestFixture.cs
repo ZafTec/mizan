@@ -105,6 +105,8 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
+        builder.UseSetting("Mcp:ServiceApiKey", "test-api-key");
+        builder.UseSetting("Mcp:AdminServiceApiKey", "test-admin-api-key");
 
         builder.ConfigureAppConfiguration((context, config) =>
         {
@@ -120,6 +122,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
                 ["Jwt:Audience"] = _audience,
                 ["Jwt:JwksUrl"] = "http://jwks.test",
                 ["Mcp:ServiceApiKey"] = "test-api-key",
+                ["Mcp:AdminServiceApiKey"] = "test-admin-api-key",
                 ["RateLimits:McpTokenValidation:PermitLimit"] = "10000"
             };
 
@@ -249,7 +252,9 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         {
             // TRUNCATE is faster than deleting and recreating for real databases
             var tableList = string.Join(", ", TablesToTruncate.Select(t => $"\"{t}\""));
-            await db.Database.ExecuteSqlAsync($"TRUNCATE TABLE {tableList} RESTART IDENTITY CASCADE;");
+#pragma warning disable EF1002
+            await db.Database.ExecuteSqlRawAsync($"TRUNCATE TABLE {tableList} RESTART IDENTITY CASCADE;");
+#pragma warning restore EF1002
         }
     }
 

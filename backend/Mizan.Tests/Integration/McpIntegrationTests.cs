@@ -33,6 +33,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
             builder.UseSetting("MizanApiUrl", "http://localhost:5000");
             builder.UseSetting("ServiceApiKey", "test-api-key");
             builder.UseSetting("Mcp:ServiceApiKey", "test-api-key");
+            builder.UseSetting("Mcp:AdminServiceApiKey", "test-admin-api-key");
 
             builder.ConfigureAppConfiguration((ctx, config) =>
             {

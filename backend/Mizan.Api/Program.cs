@@ -97,13 +97,21 @@ builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.Authenticatio
     };
 });
 
+var mcpServiceApiKey = builder.Configuration["Mcp:ServiceApiKey"]
+    ?? throw new InvalidOperationException("Mcp:ServiceApiKey is not configured");
+var mcpAdminServiceApiKey = builder.Configuration["Mcp:AdminServiceApiKey"]
+    ?? throw new InvalidOperationException("Mcp:AdminServiceApiKey is not configured");
+if (string.Equals(mcpServiceApiKey, mcpAdminServiceApiKey, StringComparison.Ordinal))
+{
+    throw new InvalidOperationException("MCP service and admin API keys must be different");
+}
+
 authBuilder.AddScheme<ApiKeyAuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
     ApiKeyAuthenticationSchemeOptions.DefaultScheme,
     options =>
     {
-        options.ApiKey = builder.Configuration["Mcp:ServiceApiKey"]
-            ?? throw new InvalidOperationException("Mcp:ServiceApiKey is not configured");
-        options.AdminApiKey = builder.Configuration["Mcp:AdminServiceApiKey"] ?? options.ApiKey;
+        options.ApiKey = mcpServiceApiKey;
+        options.AdminApiKey = mcpAdminServiceApiKey;
     });
 
 builder.Services.AddAuthorization(options =>
@@ -163,7 +171,10 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit = 0
         }));
     options.AddPolicy("SocialWrites", context => RateLimitPartition.GetFixedWindowLimiter(
-        context.User.FindFirst("sub")?.Value ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? context.User.FindFirst("sub")?.Value
+            ?? context.Connection.RemoteIpAddress?.ToString()
+            ?? "unknown",
         _ => new FixedWindowRateLimiterOptions
         {
             PermitLimit = 60,
@@ -344,17 +355,19 @@ app.UseExceptionHandler(errorApp =>
             context.Response.StatusCode = 404;
             await context.Response.WriteAsJsonAsync(new { errorCode = "not_found", error = notFoundEx.Message });
         }
+        else if (exception is UpgradeRequiredException upgradeEx)
+        {
+            Log.Warning("Upgrade required for {Path}: {Message}", context.Request.Path, upgradeEx.Message);
+            context.Response.StatusCode = 403;
+            await context.Response.WriteAsJsonAsync(new { errorCode = "upgrade_required", error = upgradeEx.Message });
+        }
         else if (exception is ForbiddenAccessException forbiddenEx)
         {
             Log.Warning("Forbidden access for {Path}: {Message}",
                 context.Request.Path, forbiddenEx.Message);
 
             context.Response.StatusCode = 403;
-            var errorCode = forbiddenEx.Message.Contains("upgrade", StringComparison.OrdinalIgnoreCase)
-                || forbiddenEx.Message.Contains("free plan", StringComparison.OrdinalIgnoreCase)
-                ? "upgrade_required"
-                : "forbidden";
-            await context.Response.WriteAsJsonAsync(new { errorCode, error = forbiddenEx.Message });
+            await context.Response.WriteAsJsonAsync(new { errorCode = "forbidden", error = forbiddenEx.Message });
         }
         else if (exception is UnauthorizedAccessException)
         {
