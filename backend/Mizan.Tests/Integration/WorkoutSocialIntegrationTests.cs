@@ -83,6 +83,23 @@ public sealed class WorkoutSocialIntegrationTests
     }
 
     [Fact]
+    public async Task LogWorkout_ReturnsOnlyNewPersonalRecords()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (userId, email) = await SeedUserAsync("pr-owner");
+        var exerciseId = await SeedExerciseAsync(userId);
+        using var client = _fixture.CreateAuthenticatedClient(userId, email);
+
+        var first = await LogWorkoutAsync(client, exerciseId, 100m);
+        var lower = await LogWorkoutAsync(client, exerciseId, 95m);
+        var improved = await LogWorkoutAsync(client, exerciseId, 102.5m);
+
+        first.PersonalRecords.Should().ContainSingle(record => record.WeightKg == 100m && record.PreviousBestKg == null);
+        lower.PersonalRecords.Should().BeEmpty();
+        improved.PersonalRecords.Should().ContainSingle(record => record.WeightKg == 102.5m && record.PreviousBestKg == 100m);
+    }
+
+    [Fact]
     public async Task SaveTemplate_RejectsAnotherUsersCustomExercise()
     {
         await _fixture.ResetDatabaseAsync();
@@ -232,6 +249,25 @@ public sealed class WorkoutSocialIntegrationTests
         return exercise.Id;
     }
 
+    private static async Task<LogWorkoutResponse> LogWorkoutAsync(HttpClient client, Guid exerciseId, decimal weightKg)
+    {
+        var response = await client.PostAsJsonAsync("/api/Workouts", new
+        {
+            name = "PR workout",
+            workoutDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            exercises = new[]
+            {
+                new
+                {
+                    exerciseId,
+                    sets = new[] { new { reps = 5, weightKg, completed = true } }
+                }
+            }
+        });
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<LogWorkoutResponse>())!;
+    }
+
     private static async Task<Guid> CreateWorkoutAsync(HttpClient client, Guid exerciseId)
     {
         var response = await client.PostAsJsonAsync("/api/Workouts", new
@@ -285,6 +321,8 @@ public sealed class WorkoutSocialIntegrationTests
     }
 
     private sealed record ApiError(string ErrorCode);
+    private sealed record LogWorkoutResponse(List<PersonalRecordResponse> PersonalRecords);
+    private sealed record PersonalRecordResponse(Guid ExerciseId, string ExerciseName, decimal WeightKg, decimal? PreviousBestKg);
     private sealed record IdResponse(Guid Id);
     private sealed record SocialProfileResponse(Guid UserId, string DisplayName, string? ShareToken);
     private sealed record FeedResponse(List<FeedItemResponse> Items);

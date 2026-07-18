@@ -19,6 +19,20 @@ public class WorkoutProgressionTests
         => WorkoutProgression.Apply([50m, 50m, 60m], "IncreaseLowestSet", 2.5m, strategy).Should().Equal(first, second, third);
 
     [Fact]
+    public void PersonalRecords_CountsOnlyWorkoutBestImprovements()
+    {
+        var exerciseId = Guid.NewGuid();
+        var records = new[]
+        {
+            new WorkoutBestWeight(exerciseId, Guid.NewGuid(), new DateOnly(2026, 1, 1), new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc), 100m),
+            new WorkoutBestWeight(exerciseId, Guid.NewGuid(), new DateOnly(2026, 1, 8), new DateTime(2026, 1, 8, 10, 0, 0, DateTimeKind.Utc), 95m),
+            new WorkoutBestWeight(exerciseId, Guid.NewGuid(), new DateOnly(2026, 1, 15), new DateTime(2026, 1, 15, 10, 0, 0, DateTimeKind.Utc), 102.5m)
+        };
+
+        PersonalRecords.Count(records).Should().Be(2);
+    }
+
+    [Fact]
     public void LogWorkoutValidator_RejectsEmptyWorkout()
     {
         var result = new LogWorkoutCommandValidator().Validate(new LogWorkoutCommand { WorkoutDate = DateOnly.FromDateTime(DateTime.UtcNow) });

@@ -68,7 +68,7 @@ public class RecordGoalProgressHandler : IRequestHandler<RecordGoalProgressComma
             existingProgress.Notes = request.Notes;
 
             await _context.SaveChangesAsync(cancellationToken);
-            if (_achievements is not null) await _achievements.EvaluateAsync(cancellationToken);
+            if (_achievements is not null) await _achievements.EvaluateAsync(cancellationToken, ["goal_progress_logged"]);
             return new RecordGoalProgressResult(true, "Progress updated successfully", existingProgress.Id);
         }
 
@@ -90,7 +90,7 @@ public class RecordGoalProgressHandler : IRequestHandler<RecordGoalProgressComma
 
         _context.GoalProgress.Add(progress);
         await _context.SaveChangesAsync(cancellationToken);
-        if (_achievements is not null) await _achievements.EvaluateAsync(cancellationToken);
+        if (_achievements is not null) await _achievements.EvaluateAsync(cancellationToken, ["goal_progress_logged"]);
 
         return new RecordGoalProgressResult(true, "Progress recorded successfully", progress.Id);
     }

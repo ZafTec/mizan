@@ -61,7 +61,7 @@ public class LogBodyMeasurementCommandHandler : IRequestHandler<LogBodyMeasureme
         _context.BodyMeasurements.Add(measurement);
         await _context.SaveChangesAsync(cancellationToken);
 
-        var unlocked = await _achievements.EvaluateAsync(cancellationToken);
+        var unlocked = await _achievements.EvaluateAsync(cancellationToken, ["body_measurements_logged"]);
 
         return new LogBodyMeasurementResult
         {

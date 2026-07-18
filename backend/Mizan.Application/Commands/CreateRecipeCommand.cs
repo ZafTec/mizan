@@ -313,7 +313,7 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
 
         _context.Recipes.Add(recipe);
         await _context.SaveChangesAsync(cancellationToken);
-        if (_achievements is not null) await _achievements.EvaluateAsync(cancellationToken);
+        if (_achievements is not null) await _achievements.EvaluateAsync(cancellationToken, ["recipes_created"]);
 
         _logger.LogInformation("[CreateRecipe] Recipe saved successfully: Id={Id}, Title={Title}", recipe.Id, recipe.Title);
 
