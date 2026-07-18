@@ -1,6 +1,7 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 
@@ -16,7 +17,7 @@ public sealed class DeleteWorkoutCommandHandler : IRequestHandler<DeleteWorkoutC
     {
         var userId = _currentUser.UserId ?? throw new UnauthorizedAccessException();
         var workout = await _context.Workouts.FirstOrDefaultAsync(w => w.Id == request.Id && w.UserId == userId, ct)
-            ?? throw new InvalidOperationException("Workout not found");
+            ?? throw new EntityNotFoundException("Workout not found");
         _context.Workouts.Remove(workout);
         await _context.SaveChangesAsync(ct);
     }
@@ -58,10 +59,10 @@ public sealed class UpdateWorkoutCommandHandler : IRequestHandler<UpdateWorkoutC
         var userId = _currentUser.UserId ?? throw new UnauthorizedAccessException();
         var workout = await _context.Workouts.Include(w => w.Exercises).ThenInclude(e => e.Sets)
             .FirstOrDefaultAsync(w => w.Id == request.Id && w.UserId == userId, ct)
-            ?? throw new InvalidOperationException("Workout not found");
+            ?? throw new EntityNotFoundException("Workout not found");
         var ids = request.Exercises.Select(e => e.ExerciseId).Distinct().ToArray();
         var valid = await _context.Exercises.CountAsync(e => ids.Contains(e.Id) && (!e.IsCustom || e.CreatedByUserId == userId), ct);
-        if (valid != ids.Length) throw new InvalidOperationException("One or more exercises are invalid");
+        if (valid != ids.Length) throw new DomainValidationException("One or more exercises are invalid");
 
         _context.WorkoutExercises.RemoveRange(workout.Exercises);
         workout.Name = request.Name;
@@ -159,7 +160,7 @@ public sealed class SaveWorkoutTemplateCommandHandler : IRequestHandler<SaveWork
         if (request.Id.HasValue)
         {
             template = await _context.WorkoutTemplates.Include(t => t.Exercises).FirstOrDefaultAsync(t => t.Id == request.Id && (t.UserId == userId || (_currentUser.IsInRole("admin") && t.IsBuiltIn)), ct)
-                ?? throw new InvalidOperationException("Template not found");
+                ?? throw new EntityNotFoundException("Template not found");
             _context.WorkoutTemplateExercises.RemoveRange(template.Exercises);
         }
         else
@@ -193,7 +194,7 @@ public sealed class DeleteWorkoutTemplateCommandHandler : IRequestHandler<Delete
     {
         var userId = _currentUser.UserId ?? throw new UnauthorizedAccessException();
         var template = await _context.WorkoutTemplates.FirstOrDefaultAsync(t => t.Id == request.Id && (t.UserId == userId || (_currentUser.IsInRole("admin") && t.IsBuiltIn)), ct)
-            ?? throw new InvalidOperationException("Template not found");
+            ?? throw new EntityNotFoundException("Template not found");
         _context.WorkoutTemplates.Remove(template); await _context.SaveChangesAsync(ct);
     }
 }
@@ -207,7 +208,7 @@ public sealed class DuplicateWorkoutTemplateCommandHandler : IRequestHandler<Dup
     {
         var userId = _currentUser.UserId ?? throw new UnauthorizedAccessException();
         var source = await _context.WorkoutTemplates.AsNoTracking().Include(t => t.Exercises).FirstOrDefaultAsync(t => t.Id == request.Id && (t.IsBuiltIn || t.UserId == userId), ct)
-            ?? throw new InvalidOperationException("Template not found");
+            ?? throw new EntityNotFoundException("Template not found");
         var copy = new WorkoutTemplate { Id = Guid.NewGuid(), UserId = userId, Name = $"{source.Name} Copy", ProgramName = source.ProgramName, SessionOrder = source.SessionOrder, Notes = source.Notes, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
         copy.Exercises = source.Exercises.Select(e => new WorkoutTemplateExercise { Id = Guid.NewGuid(), TemplateId = copy.Id, ExerciseId = e.ExerciseId, SortOrder = e.SortOrder, Sets = e.Sets, RepsPerSet = e.RepsPerSet, TargetWeightKg = e.TargetWeightKg, RestSecondsMin = e.RestSecondsMin, RestSecondsMax = e.RestSecondsMax, RestSecondsFailure = e.RestSecondsFailure, SupersetWithNext = e.SupersetWithNext, Notes = e.Notes, ProgressionType = e.ProgressionType, ProgressionStrategy = e.ProgressionStrategy, ProgressionAmountKg = e.ProgressionAmountKg, TargetType = e.TargetType, TargetSeconds = e.TargetSeconds, TargetDistanceMeters = e.TargetDistanceMeters }).ToList();
         _context.WorkoutTemplates.Add(copy); await _context.SaveChangesAsync(ct); return copy.Id;
