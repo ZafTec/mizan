@@ -58,9 +58,9 @@ export async function register() {
           }
 
           if (lokiEndpoint) {
-            sdkConfig.logRecordProcessor = new SimpleLogRecordProcessor(
-              new OTLPLogExporter({ url: lokiEndpoint }),
-            );
+            sdkConfig.logRecordProcessor = new SimpleLogRecordProcessor({
+              exporter: new OTLPLogExporter({ url: lokiEndpoint }),
+            });
           }
 
           const metricsPort = parseInt(
