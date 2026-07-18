@@ -2,9 +2,18 @@
 # This is a reference configuration for production deployment
 # Adjust environment variables and network names to match your infrastructure
 
-version: '3.8'
+
 
 services:
+  auth-migrate:
+    image: euaell/mizan-frontend:latest
+    env_file:
+      - .env
+    command: bun run db:migrate
+    restart: "no"
+    networks:
+      - postgresql-db-n8n
+
   backend:
     image: euaell/mizan-backend:latest
     container_name: mizan-backend
@@ -23,6 +32,10 @@ services:
       # OpenTelemetry
       - OTLP_ENDPOINT_URL=http://tempo:4317
       - LOKI_OTLP_ENDPOINT=http://loki:3100/otlp/v1/logs
+
+    depends_on:
+      auth-migrate:
+        condition: service_completed_successfully
 
     networks:
       - proxy-net
@@ -59,11 +72,7 @@ services:
       - OTLP_ENDPOINT_URL=http://tempo:4317
       - LOKI_OTLP_ENDPOINT=http://loki:3100/otlp/v1/logs
       - OTEL_METRICS_PORT=9464
-      # Database migrations - set to "true" to run migrations on startup
-      # NOTE: Frontend and backend share the same database. Drizzle only manages
-      # Better Auth tables (users, accounts, sessions, verification, jwks).
-      # EF Core (backend) manages all business logic tables.
-      - RUN_DB_MIGRATIONS=true
+      - RUN_DB_MIGRATIONS=false
 
     depends_on:
       backend:

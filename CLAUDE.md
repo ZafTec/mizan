@@ -312,14 +312,14 @@ Client-side API calls go directly to the backend via a separate API subdomain wi
 ## Authentication Flow
 
 1. User logs in → BetterAuth (Next.js)
-2. BetterAuth creates session + JWT (ES256, 15min expiry)
+2. BetterAuth creates session + JWT (EdDSA/Ed25519, 15min expiry)
 3. JWT stored in httpOnly cookie
 4. API requests include JWT in Authorization header
 5. Backend validates JWT using JWKS from BetterAuth endpoint
 6. JWKS cached in Redis (1-minute TTL) to reduce calls
 
 **Security Features:**
-- JWT Algorithm: ES256 (ECDSA P-256)
+- JWT Algorithm: EdDSA (Ed25519)
 - Token Expiry: 15 minutes (JWT), 7 days (session)
 - Cookie: httpOnly, sameSite: "lax", secure (production)
 - CSRF Protection: Double-submit cookie pattern via `csrf-csrf`

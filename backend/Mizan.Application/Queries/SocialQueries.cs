@@ -106,9 +106,9 @@ public sealed class GetSocialFeedQueryHandler : IRequestHandler<GetSocialFeedQue
                 Summary = new WorkoutFeedExerciseDto(
                     exercise.Exercise.Name,
                     exercise.Exercise.MuscleGroup,
-                    exercise.Sets.Count,
-                    exercise.Sets.Max(set => set.WeightKg ?? 0),
-                    exercise.Sets.Max(set => set.Reps ?? 0))
+                    exercise.Sets.Count(set => set.Completed),
+                    exercise.Sets.Any(set => set.Completed) ? exercise.Sets.Where(set => set.Completed).Max(set => set.WeightKg ?? 0) : 0,
+                    exercise.Sets.Any(set => set.Completed) ? exercise.Sets.Where(set => set.Completed).Max(set => set.Reps ?? 0) : 0)
             })
             .ToListAsync(ct);
         var exercisesByWorkout = exerciseRows

@@ -50,12 +50,14 @@
 - Public share-link route without handle discovery.
 - Social analytics and moderation queue.
 - Per-user social write rate limits.
+- Paginated feed loading, reaction removal, profile-correct optimistic comments, and completed-set summaries.
 
 ### Gamification and admin
 
 - Workout, volume, template, personal-record, follower, share, reaction, and comment criteria.
 - Local-date workout streaks and streak freezes.
-- Achievement evaluator triggers for workout and social actions.
+- Achievement evaluator triggers query only counters affected by each action.
+- Personal records count strict per-exercise workout-best improvements and surface in stats and finish summaries.
 - Admin moderation, exercise management, template management, social analytics, and achievement analytics.
 - MCP achievement get/create/update/delete/analytics controls.
 
@@ -69,6 +71,11 @@
 - Unlimited-plan token-validation cache, live quota checks for limited plans, and hashed token logging.
 - Duplicate nutrition tools removed and canonical meal types retained.
 - No nutrition AI tools.
+- Query-string credentials remain supported by product decision, but sensitive query values are redacted from request logs.
+
+## MCP trust boundary
+
+MCP intentionally exposes most user features. The regular service key can impersonate verified, non-admin users across `UserOrMcp` endpoints; it cannot impersonate admins or satisfy `RequireAdmin`. This is an accepted product tradeoff, not least privilege. Compromise of the regular static key therefore has broad non-admin impact. The admin key is mandatory, must be distinct, and is the only service key permitted to impersonate admins. A future design should bind backend impersonation to a validated MCP token identity instead of accepting a free-form user header.
 
 ## Central configuration
 
@@ -82,6 +89,8 @@
 - `20260718052538_LiftLogIntegration`
 - `20260718054855_AddStreakFreezes`
 
+Fresh Compose installs run the BetterAuth Drizzle migration as a one-shot service before backend EF migrations, because backend business tables reference the frontend-owned `users` table.
+
 ## Commit sequence
 
 - `cce7e96` Add frontend test infrastructure
@@ -91,27 +100,39 @@
 - `a467662` Stabilize MCP integration tests
 - `e537d53` Test workout and social access
 - `9d3c3e6` Complete workout and social UI
+- `52aafcf` Format backend code
+- `dade276` Add LiftLog integration code review
+- `ee382c1` Fix reviewed backend security gaps
+- `681d858` Improve workout and feed correctness
+- `8e35002` Add LiftLog implementation re-review
 
 ## Verification
 
 | Gate | Result |
 |---|---|
-| `dotnet build backend/Mizan.sln --no-restore` | Passed |
-| `dotnet test backend/Mizan.sln --no-restore` | 233 passed, 0 failed |
+| `dotnet build backend/Mizan.sln --no-restore` | Passed after final re-review fixes |
+| Focused final backend tests | 14 passed: API-key auth, progression, and query-log redaction |
+| `dotnet test backend/Mizan.sln --no-restore` | 233 passed, 0 failed before re-review follow-ups; final full rerun deferred due host memory instability |
 | MCP integration suite | 48 passed, 0 failed |
-| Workout/social access contracts | 6 passed, 0 failed |
-| `bun run --cwd frontend test` | 2 files, 4 tests passed |
-| `bun run --cwd frontend lint` | Passed with 11 existing `no-img-element` warnings and no errors |
+| Workout/social access contracts | 8 focused contracts passed before final formatting |
+| `bun run --cwd frontend test` | 3 files, 7 tests passed |
+| `bun run --cwd frontend lint` | Passed with no errors or warnings |
+| `bun run --cwd frontend format:check` | Passed for the LiftLog frontend surface |
+| `bun run --cwd frontend tsc --noEmit` | Passed |
 | `bun run --cwd frontend build` | Passed on Next.js 16.2.10 |
 | OpenAPI type generation | Passed |
 | NuGet vulnerability audit | No vulnerable direct or transitive packages |
-| Docker Compose test profile | Not completed: the SDK base-image pull timed out after 15 minutes before tests started |
+| Docker Compose build | Backend, frontend, and MCP images built successfully; final test-profile rerun deferred due host memory instability |
+| Development and production Compose config | Parsed successfully with auth migrations ordered before backend startup |
+| Chrome UI pass | Workout start/template/log/weight scopes/rest timer/finish/PR/share and social reaction/comment flows verified at desktop and 390px mobile widths |
+| Chrome CDP vitals | CLS 0, hydration 80ms, SocialFeed render 4.8ms; dev-mode FCP/TTFB were compile-bound and not production-representative |
 
-The successful backend suite used PostgreSQL 18 Testcontainers through Docker Desktop. This verifies migrations and database behavior even though the separate Compose image-build gate was blocked by registry throughput.
+The successful backend suite used PostgreSQL 18 Testcontainers through Docker Desktop. The later Compose build also succeeded once the SDK image was available locally.
 
 ## Validation limitations
 
-- Playwright infrastructure is installed and configured, but authenticated browser-flow tests were not added without a runnable full-stack Compose environment. API integration tests cover the workout and social authorization contracts.
+- Playwright infrastructure is installed and configured, but authenticated browser-flow specs remain absent. The equivalent critical flows were exercised manually through Chrome CDP, and API integration tests cover authorization contracts.
+- Chrome DevTools MCP itself shut down during the authenticated trace attempt, and the Next development process later exited under memory pressure. The lighter agent-browser CDP pass completed; no production performance claim is made from dev-mode timings.
 - `.env.example` is protected by the editor's private-file policy and could not be updated in this run. It must include `REDIS_PASSWORD` and `MCP_ADMIN_SERVICE_KEY`; `docker-compose.yml` already requires and consumes both.
 
 ## Deployment actions
