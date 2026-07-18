@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
@@ -11,6 +13,7 @@ public class ApiKeyAuthenticationSchemeOptions : AuthenticationSchemeOptions
     public const string DefaultScheme = "ApiKey";
     public string HeaderName { get; set; } = "X-Api-Key";
     public string ApiKey { get; set; } = string.Empty;
+    public string AdminApiKey { get; set; } = string.Empty;
 }
 
 public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthenticationSchemeOptions>
@@ -42,7 +45,12 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
             return AuthenticateResult.Fail("Server configuration error");
         }
 
-        if (!string.Equals(extractedApiKey, Options.ApiKey, StringComparison.Ordinal))
+        var providedBytes = Encoding.UTF8.GetBytes(extractedApiKey.ToString());
+        var regularBytes = Encoding.UTF8.GetBytes(Options.ApiKey);
+        var adminBytes = Encoding.UTF8.GetBytes(Options.AdminApiKey);
+        var isRegularKey = providedBytes.Length == regularBytes.Length && CryptographicOperations.FixedTimeEquals(providedBytes, regularBytes);
+        var isAdminKey = adminBytes.Length > 0 && providedBytes.Length == adminBytes.Length && CryptographicOperations.FixedTimeEquals(providedBytes, adminBytes);
+        if (!isRegularKey && !isAdminKey)
         {
             _logger.LogWarning("Invalid API Key provided.");
             return AuthenticateResult.Fail("Invalid API Key");
@@ -54,9 +62,9 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
         {
             // Verify user exists and is active
             var status = await _userStatusService.GetStatusAsync(userId, Context.RequestAborted);
-            if (!status.Exists || status.IsBanned)
+            if (!status.IsAllowed || (string.Equals(status.Role, "admin", StringComparison.OrdinalIgnoreCase) && !isAdminKey))
             {
-                _logger.LogWarning("Impersonation failed: User {UserId} not found or banned.", userId);
+                _logger.LogWarning("Impersonation failed for user {UserId}.", userId);
                 return AuthenticateResult.Fail("Impersonated user invalid");
             }
 

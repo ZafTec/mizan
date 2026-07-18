@@ -7,9 +7,12 @@ public static class QueryableExtensions
 {
     public static IQueryable<T> ApplyPaging<T>(this IQueryable<T> query, IPagedQuery paging)
     {
+        var page = Math.Max(1, paging.Page);
+        var pageSize = Math.Clamp(paging.PageSize, 1, 100);
+
         return query
-            .Skip((paging.Page - 1) * paging.PageSize)
-            .Take(paging.PageSize);
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize);
     }
 
     // Returns IOrderedQueryable so callers can append .ThenBy(x => x.Id) for stable

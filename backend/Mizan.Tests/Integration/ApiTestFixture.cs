@@ -506,10 +506,9 @@ public sealed class TestJwksProvider : IJwksProvider
         _keys = new[] { jwk };
     }
 
-    public Task<IReadOnlyCollection<SecurityKey>> GetSigningKeysAsync(CancellationToken cancellationToken = default)
-    {
-        return Task.FromResult(_keys);
-    }
+    public IReadOnlyCollection<SecurityKey> GetSigningKeys() => _keys;
+
+       public Task RefreshAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 }
 
 public sealed class TestJwtIssuer : IDisposable

@@ -35,14 +35,14 @@ public class RecipesController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize]
+    [Authorize(Policy = "UserOrMcp")]
     public async Task<ActionResult<CreateRecipeResult>> CreateRecipe([FromBody] CreateRecipeCommand command)
     {
         var result = await _mediator.Send(command);
         return CreatedAtAction(nameof(GetRecipeById), new { id = result.Id }, result);
     }
     [HttpPut("{id}")]
-    [Authorize]
+    [Authorize(Policy = "UserOrMcp")]
     public async Task<ActionResult<UpdateRecipeResult>> UpdateRecipe(Guid id, [FromBody] UpdateRecipeCommand command)
     {
         if (id != command.Id)
@@ -55,7 +55,7 @@ public class RecipesController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize]
+    [Authorize(Policy = "UserOrMcp")]
     public async Task<ActionResult<DeleteRecipeResult>> DeleteRecipe(Guid id)
     {
         var result = await _mediator.Send(new DeleteRecipeCommand { Id = id });
@@ -66,7 +66,7 @@ public class RecipesController : ControllerBase
 
 
     [HttpPost("{id}/favorite")]
-    [Authorize]
+    [Authorize(Policy = "UserOrMcp")]
     public async Task<ActionResult<ToggleFavoriteRecipeResult>> ToggleFavorite(Guid id)
     {
         var result = await _mediator.Send(new ToggleFavoriteRecipeCommand { RecipeId = id });

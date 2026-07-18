@@ -35,6 +35,11 @@ public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
 
         var response = await next();
 
+        if (request is ISkipAudit)
+        {
+            return response;
+        }
+
         try
         {
             var userId = _currentUserService.UserId;

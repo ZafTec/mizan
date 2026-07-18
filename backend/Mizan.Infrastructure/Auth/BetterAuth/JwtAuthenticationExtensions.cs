@@ -24,10 +24,14 @@ public static class JwtAuthenticationExtensions
     {
         builder.Services.AddOptions<JwtOptions>()
             .Bind(configuration.GetSection(JwtOptions.SectionName))
+            .Validate(options => !string.IsNullOrWhiteSpace(options.Issuer), "Jwt:Issuer is required")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.Audience), "Jwt:Audience is required")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.JwksUrl), "Jwt:JwksUrl is required")
             .ValidateOnStart();
 
         builder.Services.AddHttpClient(BetterAuthHttpClientName);
         builder.Services.AddSingleton<IJwksProvider, JwksProvider>();
+        builder.Services.AddHostedService<JwksRefreshService>();
         builder.Services.AddSingleton<IPostConfigureOptions<JwtBearerOptions>, JwtBearerOptionsSetup>();
 
         var jwt = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
@@ -38,9 +42,9 @@ public static class JwtAuthenticationExtensions
             options.RequireHttpsMetadata = !environment.IsDevelopment();
             options.TokenValidationParameters = new TokenValidationParameters
             {
-                ValidateIssuer = !string.IsNullOrWhiteSpace(jwt.Issuer),
+                ValidateIssuer = true,
                 ValidIssuer = jwt.Issuer,
-                ValidateAudience = !string.IsNullOrWhiteSpace(jwt.Audience),
+                ValidateAudience = true,
                 ValidAudience = jwt.Audience,
                 ValidateIssuerSigningKey = false,
                 RequireSignedTokens = true,

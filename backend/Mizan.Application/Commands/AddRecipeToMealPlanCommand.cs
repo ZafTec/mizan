@@ -67,6 +67,17 @@ public class AddRecipeToMealPlanCommandHandler : IRequestHandler<AddRecipeToMeal
             throw new InvalidOperationException("Meal plan not found or access denied");
         }
 
+        var canUseRecipe = await _context.Recipes.AnyAsync(recipe =>
+            recipe.Id == request.RecipeId &&
+            (recipe.IsPublic || recipe.UserId == _currentUser.UserId ||
+             (recipe.HouseholdId.HasValue && _context.HouseholdMembers.Any(member =>
+                 member.HouseholdId == recipe.HouseholdId && member.UserId == _currentUser.UserId))),
+            cancellationToken);
+        if (!canUseRecipe)
+        {
+            throw new InvalidOperationException("Recipe not found or access denied");
+        }
+
         var mealPlanRecipe = new MealPlanRecipe
         {
             Id = Guid.NewGuid(),
