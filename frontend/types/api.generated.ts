@@ -5066,6 +5066,7 @@ export interface components {
             topWeightKg: number;
             /** Format: double */
             estimatedOneRepMax: number;
+            isPersonalRecord: boolean;
         };
         ExerciseSetDto: {
             /** Format: int32 */
@@ -5490,6 +5491,7 @@ export interface components {
             totalSets: number;
             streak?: components["schemas"]["StreakUpdate"];
             unlockedAchievements: components["schemas"]["UnlockedAchievement"][];
+            personalRecords: components["schemas"]["PersonalRecordResult"][];
         };
         McpTokenDto: {
             /** Format: uuid */
@@ -5748,6 +5750,15 @@ export interface components {
             totalCarbs: number;
             /** Format: double */
             totalFat: number;
+        };
+        PersonalRecordResult: {
+            /** Format: uuid */
+            exerciseId: string;
+            exerciseName: string;
+            /** Format: double */
+            weightKg: number;
+            /** Format: double */
+            previousBestKg?: number | null;
         };
         PlannedSetDto: {
             /** Format: int32 */
@@ -6460,6 +6471,8 @@ export interface components {
             averageSessionMinutes: number;
             /** Format: double */
             totalVolumeKg: number;
+            /** Format: int32 */
+            personalRecordCount: number;
             heaviestLift?: components["schemas"]["HeaviestLiftDto"];
             /** Format: double */
             maxSessionVolume: number;
