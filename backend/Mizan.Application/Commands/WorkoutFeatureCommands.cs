@@ -157,7 +157,15 @@ public sealed class SaveWorkoutTemplateCommandValidator : AbstractValidator<Save
         RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Notes).MaximumLength(500);
         RuleFor(x => x.Exercises).NotEmpty().Must(x => x.Count <= 30);
-        RuleForEach(x => x.Exercises).ChildRules(e => { e.RuleFor(x => x.Sets).InclusiveBetween(1, 50); e.RuleFor(x => x.ProgressionType).Must(v => new[] { "None", "IncreaseAllEvenly", "IncreaseLowestSet" }.Contains(v)); });
+        RuleForEach(x => x.Exercises).ChildRules(exercise =>
+        {
+            exercise.RuleFor(x => x.ExerciseId).NotEmpty();
+            exercise.RuleFor(x => x.Sets).InclusiveBetween(1, 50);
+            exercise.RuleFor(x => x.ProgressionType)
+                .Must(value => new[] { "None", "IncreaseAllEvenly", "IncreaseLowestSet" }.Contains(value, StringComparer.OrdinalIgnoreCase));
+            exercise.RuleFor(x => x.ProgressionStrategy)
+                .Must(value => new[] { "first", "middle", "last", "all" }.Contains(value, StringComparer.OrdinalIgnoreCase));
+        });
     }
 }
 public sealed class SaveWorkoutTemplateCommandHandler : IRequestHandler<SaveWorkoutTemplateCommand, Guid>
@@ -167,6 +175,15 @@ public sealed class SaveWorkoutTemplateCommandHandler : IRequestHandler<SaveWork
     public async Task<Guid> Handle(SaveWorkoutTemplateCommand request, CancellationToken ct)
     {
         var userId = _currentUser.UserId ?? throw new UnauthorizedAccessException();
+        var exerciseIds = request.Exercises.Select(exercise => exercise.ExerciseId).Distinct().ToArray();
+        var accessibleExerciseCount = await _context.Exercises.CountAsync(
+            exercise => exerciseIds.Contains(exercise.Id) && (!exercise.IsCustom || exercise.CreatedByUserId == userId),
+            ct);
+        if (accessibleExerciseCount != exerciseIds.Length)
+        {
+            throw new DomainValidationException("One or more exercises are invalid or inaccessible");
+        }
+
         WorkoutTemplate template;
         if (request.Id.HasValue)
         {

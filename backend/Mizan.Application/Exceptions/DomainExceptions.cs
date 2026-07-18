@@ -20,6 +20,11 @@ public class ForbiddenAccessException : DomainException
     public ForbiddenAccessException() : base("You do not have permission to perform this action.") { }
 }
 
+public sealed class UpgradeRequiredException : ForbiddenAccessException
+{
+    public UpgradeRequiredException(string message) : base(message) { }
+}
+
 public class DomainValidationException : DomainException
 {
     public DomainValidationException(string message) : base(message) { }

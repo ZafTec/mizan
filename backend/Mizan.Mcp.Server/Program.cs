@@ -33,13 +33,16 @@ var backendUrl = builder.Configuration["BACKEND_API_URL"]
                  ?? builder.Configuration["MizanApiUrl"]
                  ?? "http://mizan-backend:8080";
 
-_ = builder.Configuration["Mcp:ServiceApiKey"]
+var serviceApiKey = builder.Configuration["Mcp:ServiceApiKey"]
     ?? builder.Configuration["ServiceApiKey"]
     ?? throw new InvalidOperationException("ServiceApiKey not configured");
-_ = builder.Configuration["Mcp:AdminServiceApiKey"]
+var adminServiceApiKey = builder.Configuration["Mcp:AdminServiceApiKey"]
     ?? builder.Configuration["AdminServiceApiKey"]
-    ?? builder.Configuration["Mcp:ServiceApiKey"]
-    ?? builder.Configuration["ServiceApiKey"];
+    ?? throw new InvalidOperationException("AdminServiceApiKey not configured");
+if (string.Equals(serviceApiKey, adminServiceApiKey, StringComparison.Ordinal))
+{
+    throw new InvalidOperationException("MCP service and admin API keys must be different");
+}
 
 builder.Services.AddHttpClient<IBackendApiClient, BackendApiClient>(client =>
 {

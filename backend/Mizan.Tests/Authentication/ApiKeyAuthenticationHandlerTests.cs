@@ -24,7 +24,8 @@ public class ApiKeyAuthenticationHandlerTests
         _options = new Mock<IOptionsMonitor<ApiKeyAuthenticationSchemeOptions>>();
         _options.Setup(x => x.Get(It.IsAny<string>())).Returns(new ApiKeyAuthenticationSchemeOptions
         {
-            ApiKey = "test-api-key"
+            ApiKey = "test-api-key",
+            AdminApiKey = "test-admin-api-key"
         });
 
         _loggerFactory = new Mock<ILoggerFactory>();
@@ -92,5 +93,38 @@ public class ApiKeyAuthenticationHandlerTests
         Assert.True(result.Succeeded);
         Assert.Equal(userId.ToString(), result.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value);
         Assert.Equal("service_impersonation", result.Principal?.FindFirst("type")?.Value);
+    }
+
+    [Fact]
+    public async Task HandleAuthenticateAsync_RejectsAdminImpersonationWithRegularKey()
+    {
+        var userId = Guid.NewGuid();
+        var context = new DefaultHttpContext();
+        context.Request.Headers["X-Api-Key"] = "test-api-key";
+        context.Request.Headers["X-Impersonate-User"] = userId.ToString();
+        _userStatusService.Setup(x => x.GetStatusAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new UserAccessStatus(true, true, false, "admin"));
+        await _handler.InitializeAsync(new AuthenticationScheme("ApiKey", null, typeof(ApiKeyAuthenticationHandler)), context);
+
+        var result = await _handler.AuthenticateAsync();
+
+        Assert.False(result.Succeeded);
+    }
+
+    [Fact]
+    public async Task HandleAuthenticateAsync_AllowsAdminImpersonationWithAdminKey()
+    {
+        var userId = Guid.NewGuid();
+        var context = new DefaultHttpContext();
+        context.Request.Headers["X-Api-Key"] = "test-admin-api-key";
+        context.Request.Headers["X-Impersonate-User"] = userId.ToString();
+        _userStatusService.Setup(x => x.GetStatusAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new UserAccessStatus(true, true, false, "admin"));
+        await _handler.InitializeAsync(new AuthenticationScheme("ApiKey", null, typeof(ApiKeyAuthenticationHandler)), context);
+
+        var result = await _handler.AuthenticateAsync();
+
+        Assert.True(result.Succeeded);
+        Assert.True(result.Principal?.IsInRole("admin"));
     }
 }

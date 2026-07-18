@@ -62,7 +62,7 @@ public class InviteHouseholdMemberCommandHandler : IRequestHandler<InviteHouseho
         var entitlement = await _entitlements.GetAsync(request.RequestingUserId, cancellationToken);
         if (!entitlement.IsPro)
         {
-            throw new ForbiddenAccessException("Household invitations are a Pro feature. Upgrade to invite members.");
+            throw new UpgradeRequiredException("Household invitations are a Pro feature. Upgrade to invite members.");
         }
 
         var memberCount = await _context.HouseholdMembers
