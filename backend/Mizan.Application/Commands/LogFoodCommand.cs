@@ -118,7 +118,7 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
         _context.FoodDiaryEntries.Add(entry);
         await _context.SaveChangesAsync(cancellationToken);
 
-        var streak = await _streakService.RecordActivityAsync("nutrition", cancellationToken);
+        var streak = await _streakService.RecordActivityAsync("nutrition", request.EntryDate, cancellationToken);
         var unlocked = await _achievements.EvaluateAsync(cancellationToken);
 
         return new LogFoodResult

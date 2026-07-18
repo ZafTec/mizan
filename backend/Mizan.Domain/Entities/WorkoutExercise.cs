@@ -6,6 +6,8 @@ public class WorkoutExercise
     public Guid WorkoutId { get; set; }
     public Guid ExerciseId { get; set; }
     public int SortOrder { get; set; }
+    public string? Notes { get; set; }
+    public bool SupersetWithNext { get; set; }
 
     // Navigation properties
     public virtual Workout Workout { get; set; } = null!;

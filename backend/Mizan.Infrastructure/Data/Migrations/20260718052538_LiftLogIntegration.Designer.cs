@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Mizan.Infrastructure.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Mizan.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(MizanDbContext))]
-    partial class MizanDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260718052538_LiftLogIntegration")]
+    partial class LiftLogIntegration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2013,12 +2016,6 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnType("integer")
                         .HasDefaultValue(0)
                         .HasColumnName("current_count");
-
-                    b.Property<int>("FreezesAvailable")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0)
-                        .HasColumnName("freezes_available");
 
                     b.Property<DateOnly?>("LastActivityDate")
                         .HasColumnType("date")

@@ -40,6 +40,7 @@ public static class DependencyInjection
         services.AddScoped<INutritionAiService, NutritionAiService>();
         services.AddScoped<IStreakService, StreakService>();
         services.AddScoped<IAchievementEvaluator, AchievementEvaluator>();
+        services.AddScoped<INotificationWriter, NotificationWriter>();
 
         // Billing
         services.Configure<PaddleOptions>(configuration.GetSection(PaddleOptions.SectionName));

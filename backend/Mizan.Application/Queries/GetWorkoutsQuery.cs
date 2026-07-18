@@ -20,6 +20,10 @@ public record WorkoutSummaryDto(
     Guid Id,
     string? Name,
     DateOnly WorkoutDate,
+    Guid? TemplateId,
+    decimal? BodyweightKg,
+    DateTime? StartedAt,
+    DateTime? CompletedAt,
     int? DurationMinutes,
     int? CaloriesBurned,
     string? Notes,
@@ -33,6 +37,8 @@ public record WorkoutExerciseSummaryDto(
     string Category,
     string? MuscleGroup,
     int SortOrder,
+    string? Notes,
+    bool SupersetWithNext,
     List<WorkoutSetDto> Sets
 );
 
@@ -42,6 +48,10 @@ public record WorkoutSetDto(
     decimal? WeightKg,
     int? DurationSeconds,
     decimal? DistanceMeters,
+    decimal? ResistanceLevel,
+    decimal? InclinePercent,
+    int? Steps,
+    DateTime? CompletedAt,
     bool Completed
 );
 
@@ -85,6 +95,10 @@ public class GetWorkoutsQueryHandler : IRequestHandler<GetWorkoutsQuery, PagedRe
                 w.Id,
                 w.Name,
                 w.WorkoutDate,
+                w.TemplateId,
+                w.BodyweightKg,
+                w.StartedAt,
+                w.CompletedAt,
                 w.DurationMinutes,
                 w.CaloriesBurned,
                 w.Notes,
@@ -95,12 +109,18 @@ public class GetWorkoutsQueryHandler : IRequestHandler<GetWorkoutsQuery, PagedRe
                     we.Exercise.Category,
                     we.Exercise.MuscleGroup,
                     we.SortOrder,
+                    we.Notes,
+                    we.SupersetWithNext,
                     we.Sets.OrderBy(s => s.SetNumber).Select(s => new WorkoutSetDto(
                         s.SetNumber,
                         s.Reps,
                         s.WeightKg,
                         s.DurationSeconds,
                         s.DistanceMeters,
+                        s.ResistanceLevel,
+                        s.InclinePercent,
+                        s.Steps,
+                        s.CompletedAt,
                         s.Completed
                     )).ToList()
                 )).ToList()
