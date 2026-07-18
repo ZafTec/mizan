@@ -40,6 +40,19 @@ services:
     networks:
       - mizan-network
 
+  auth-migrate:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgres://mizan:${DB_PASSWORD:?DB_PASSWORD is required}@postgres:5432/mizan
+    command: bun run db:migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mizan-network
+
   # Next.js Frontend with Bun (Development with hot reload)
   frontend:
     build:
@@ -147,6 +160,8 @@ services:
       - Paddle__GraceDays=${PADDLE_GRACE_DAYS:-3}
       - Paddle__LifetimePriceId=${NEXT_PUBLIC_PADDLE_PRICE_LIFETIME:-}
     depends_on:
+      auth-migrate:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:

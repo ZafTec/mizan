@@ -28,7 +28,7 @@ public class RequestResponseLoggingMiddleware
             var stopwatch = Stopwatch.StartNew();
             var method = context.Request.Method;
             var path = context.Request.Path;
-            var queryString = context.Request.QueryString.HasValue ? context.Request.QueryString.Value : string.Empty;
+            var queryString = GetSafeQueryString(context.Request.Query);
 
             _logger.LogInformation(
                 "HTTP {Method} {Path}{QueryString} - Request started",
@@ -72,4 +72,19 @@ public class RequestResponseLoggingMiddleware
             }
         }
     }
+
+    private static string GetSafeQueryString(IQueryCollection query)
+    {
+        if (query.Count == 0) return string.Empty;
+        var values = query.SelectMany(parameter => parameter.Value.Select(value =>
+            new KeyValuePair<string, string?>(
+                parameter.Key,
+                IsSensitiveQueryKey(parameter.Key) ? "[REDACTED]" : value)));
+        return QueryString.Create(values).Value ?? string.Empty;
+    }
+
+    private static bool IsSensitiveQueryKey(string key)
+        => key.Equals("token", StringComparison.OrdinalIgnoreCase)
+            || key.Equals("access_token", StringComparison.OrdinalIgnoreCase)
+            || key.Equals("api_key", StringComparison.OrdinalIgnoreCase);
 }

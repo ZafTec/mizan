@@ -173,6 +173,21 @@ public class AuthFlowTests
     }
 
     [Fact]
+    public async Task RegularMcpKey_CannotReachAdminEndpoint()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var adminId = Guid.NewGuid();
+        await _fixture.SeedUserAsync(adminId, $"admin-{adminId:N}@example.com", role: "admin");
+        using var client = _fixture.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Api-Key", "test-api-key");
+        client.DefaultRequestHeaders.Add("X-Impersonate-User", adminId.ToString());
+
+        var response = await client.GetAsync("/api/admin/social/analytics");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
     public async Task JwtBearerAuthentication_RejectsBannedUserToken()
     {
         await _fixture.ResetDatabaseAsync();
