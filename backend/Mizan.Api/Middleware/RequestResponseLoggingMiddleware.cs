@@ -21,14 +21,15 @@ public class RequestResponseLoggingMiddleware
         var userId = context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
             ?? context.User?.FindFirst("sub")?.Value;
 
+        var method = SanitizeForLog(context.Request.Method);
+        var path = SanitizeForLog(context.Request.Path.Value ?? string.Empty);
+        var queryString = GetSafeQueryString(context.Request.Query);
+
         using (LogContext.PushProperty("RequestId", requestId))
         using (LogContext.PushProperty("UserId", userId ?? "anonymous"))
         using (LogContext.PushProperty("UserRole", context.User?.FindFirst(ClaimTypes.Role)?.Value ?? "none"))
         {
             var stopwatch = Stopwatch.StartNew();
-            var method = context.Request.Method;
-            var path = context.Request.Path;
-            var queryString = GetSafeQueryString(context.Request.Query);
 
             _logger.LogInformation(
                 "HTTP {Method} {Path}{QueryString} - Request started",
@@ -73,13 +74,19 @@ public class RequestResponseLoggingMiddleware
         }
     }
 
+    private static string SanitizeForLog(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return value;
+        return value.ReplaceLineEndings(" ").Replace('\n', ' ').Replace('\r', ' ');
+    }
+
     private static string GetSafeQueryString(IQueryCollection query)
     {
         if (query.Count == 0) return string.Empty;
         var values = query.SelectMany(parameter => parameter.Value.Select(value =>
             new KeyValuePair<string, string?>(
                 parameter.Key,
-                IsSensitiveQueryKey(parameter.Key) ? "[REDACTED]" : value)));
+                IsSensitiveQueryKey(parameter.Key) ? "[REDACTED]" : SanitizeForLog(value ?? string.Empty))));
         return QueryString.Create(values).Value ?? string.Empty;
     }
 

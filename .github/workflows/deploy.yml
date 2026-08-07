@@ -8,6 +8,9 @@ on:
       - '.github/**'
       - '!.github/workflows/deploy.yml'
 
+permissions:
+  contents: read
+
 env:
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   FRONTEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/mizan-frontend
