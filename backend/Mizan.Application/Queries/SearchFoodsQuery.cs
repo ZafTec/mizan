@@ -54,16 +54,22 @@ public class SearchFoodsQueryHandler : IRequestHandler<SearchFoodsQuery, PagedRe
 
     private readonly IMizanDbContext _context;
     private readonly HybridCache _cache;
+    private readonly ICurrentUserService _currentUser;
 
-    public SearchFoodsQueryHandler(IMizanDbContext context, HybridCache cache)
+    public SearchFoodsQueryHandler(IMizanDbContext context, HybridCache cache, ICurrentUserService currentUser)
     {
         _context = context;
         _cache = cache;
+        _currentUser = currentUser;
     }
 
     public async Task<PagedResult<FoodDto>> Handle(SearchFoodsQuery request, CancellationToken cancellationToken)
     {
-        var cacheKey = $"foods:search:{request.SearchTerm?.ToLower() ?? ""}:{request.Barcode ?? ""}:{request.MinProteinCalorieRatio}:{request.Page}:{request.PageSize}:{request.SortBy ?? ""}:{request.SortOrder ?? ""}";
+        // The user id is part of the key because results now include that user's
+        // private foods. Without it, one user's cached page would be served to
+        // another - a leak introduced by scoping, not present before it.
+        var userId = _currentUser.UserId;
+        var cacheKey = $"foods:search:{userId?.ToString() ?? "anon"}:{request.SearchTerm?.ToLower() ?? ""}:{request.Barcode ?? ""}:{request.MinProteinCalorieRatio}:{request.Page}:{request.PageSize}:{request.SortBy ?? ""}:{request.SortOrder ?? ""}";
 
         return await _cache.GetOrCreateAsync(
             cacheKey,
@@ -76,7 +82,11 @@ public class SearchFoodsQueryHandler : IRequestHandler<SearchFoodsQuery, PagedRe
 
     private async ValueTask<PagedResult<FoodDto>> LoadAsync(SearchFoodsQuery request, CancellationToken cancellationToken)
     {
-        IQueryable<Domain.Entities.Food> query = _context.Foods;
+        // Public foods, plus the caller's own. See docs/REFOCUS.md §4 - before
+        // Food.UserId existed, every user-created food was visible to everyone.
+        var currentUserId = _currentUser.UserId;
+        IQueryable<Domain.Entities.Food> query = _context.Foods
+            .Where(f => f.UserId == null || f.UserId == currentUserId);
 
         if (!string.IsNullOrWhiteSpace(request.Barcode))
         {
