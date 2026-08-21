@@ -16,6 +16,7 @@ import { useSubscription } from "@/lib/hooks/useSubscription";
 import { ProBadge } from "@/components/billing/ProBadge";
 import logoTransparent from "@/public/logo_transparent.png";
 import { NotificationBell } from "@/components/NotificationBell";
+import HouseholdSwitcher from "./HouseholdSwitcher";
 import LogSheet from "./LogSheet";
 import { SPINE, USER_MENU, isActive, type NavItem } from "./nav";
 
@@ -325,6 +326,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 						</div>
 
 						<div className="ml-auto flex items-center gap-2">
+							<HouseholdSwitcher />
 							<NotificationBell />
 							<div className="relative">
 								<button
