@@ -877,7 +877,7 @@ A: Ensure CSRF token is fetched before form submission. Check cookie configurati
 ## Contacts & Resources
 
 - **Architecture & Design:** `docs/ARCHITECTURE.md`
-- **API Endpoints:** `docs/API_REFERENCE.md`
+- **API Endpoints:** Swagger UI (`http://localhost:5000/swagger`)
 - **Getting Started:** `docs/DEVELOPER_ONBOARDING.md`
 - **Development Philosophy:** `CLAUDE.md`
 - **Swagger UI (Live):** `http://localhost:5000/swagger` (when backend running)

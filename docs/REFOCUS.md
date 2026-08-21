@@ -1,11 +1,14 @@
 # Refocus Plan: Mizan is a Logging App
 
-**Status:** proposed (rev 2)
+**Status:** rev 3 — phases 0 and 1 executed
 **Branch:** `claude/cleanup-logging-refocus-rzfiv8`
 **Rule:** decide what the project is about, build around it. Everything else
 gets demoted, not deleted.
 
-> **rev 2 changes the thesis.** Rev 1 proposed deleting recipes, billing,
+> **rev 3 adds the AI platform (§10), pins households as kept (§9), and folds in
+> the phase 1 route audit — see `docs/ROUTE-AUDIT.md`. Phases 0 and 1 are done.
+>
+> **rev 2 changed the thesis.** Rev 1 proposed deleting recipes, billing,
 > trainers, social, achievements, notifications and the admin panel. That was
 > wrong. The features are not the problem — their *rank* is. This revision keeps
 > them and subordinates them to logging. See §2 for the diagnosis that forced
@@ -48,7 +51,7 @@ and it is a **hierarchy bug, not a scope bug**. You cannot fix it by deleting
 features; you fix it by ranking them. Deleting was the lazy read.
 
 Consequence: the deletion budget drops from ~75% of the repo to ~30%, and the
-center of gravity of this plan moves to two places — **navigation tiering (§4)**
+center of gravity of this plan moves to two places — **navigation tiering (§3)**
 and **the schema/auth unification (§6)**, which was always the highest-value
 structural work and is unaffected by any of this.
 
@@ -82,7 +85,7 @@ never a page navigation.
 
 | Surface | Trigger |
 |---|---|
-| "Save as recipe" chip | a logged meal contains ≥3 foods (§5) |
+| "Save as recipe" chip | a logged meal contains ≥3 foods (§4) |
 | "Resume workout" banner | an open `WorkoutDraft` exists |
 | Streak / achievement toast | unlock event, transient, never a permanent badge |
 | Trainer strip on `/today` | an active `TrainerClientRelationship` exists |
@@ -100,7 +103,7 @@ their own log**.
 Food      Recipes · Meal Plans · Shopping Lists · Foods
 Fitness   Exercises · Workout Templates
 People    Feed · Trainers · Messages · Household
-Account   Profile · Billing · Settings · MCP Tokens · Export
+Account   Profile · Billing · Usage · Settings · MCP Tokens · Export
 Admin     (role-gated)
 ```
 
@@ -112,6 +115,18 @@ Every tier-3 entry must be reachable in ≤2 taps and must work. Auditing all
 
 This is the "accessible" half: everything is two taps away and nothing costs a
 pixel until asked for.
+
+### What the phase 1 audit found
+
+`scripts/route-audit.mjs` (full report: `docs/ROUTE-AUDIT.md`) measured it:
+**73 routes, 21 reachable from the nav, 9 orphaned.** Six of those orphans are
+real bugs — including `/trainers/my-trainer` (245 LOC) and `/trainers/requests`
+(173 LOC), which are built, wired to live `Trainers` endpoints, and linked from
+nowhere.
+
+That pair settles the rev 1 vs rev 2 argument. The trainer feature is not
+unloved because it is bad; it is unloved because nothing links to it. Rev 1
+would have deleted working code to fix a missing `<Link>`.
 
 ---
 
@@ -287,7 +302,155 @@ UI).
 
 ---
 
-## 9. MCP server
+## 9. Households stay
+
+Households are not multi-tenancy overhead — they are the sharing boundary that
+makes meal prep and shopping lists work. Two people in a household cook from one
+plan and shop from one list. That is the feature working as designed.
+
+Kept as built: `Household`, `HouseholdMember`, `HouseholdInvitation`,
+`UserHouseholdPreference`, and the invite/switch flows. Meal plans, shopping
+lists and recipes stay household-scoped.
+
+What changes is only rank. The household switcher is tier 2 — it appears in the
+header only when you belong to more than one. `/profile/household` moves to
+tier 3. A solo user never sees the concept; a shared user finds it where they
+expect it.
+
+The AI in §10 is household-aware for the same reason: "what should we prep this
+week" is a household question, and the plan and list it writes to are shared.
+
+---
+
+## 10. AI platform
+
+An OpenAI-compatible endpoint and key get plugged into config. **The backend
+owns every part of this.** The frontend never sees the key, never calls the
+provider, and never decides whether a call is allowed.
+
+### Provider
+
+One interface, `IAiProvider`, over an OpenAI-compatible `/chat/completions`
+client. Configuration is the entire integration surface:
+
+```
+Ai__BaseUrl        provider endpoint
+Ai__ApiKey         secret, backend only, never in a frontend env var
+Ai__Model          e.g. gpt-5.6-luna
+Ai__MaxOutputTokens
+Ai__TimeoutSeconds
+```
+
+Model choice is config, not code. Swapping providers is an env change, and the
+model id never appears in a call site.
+
+### Structured output, not prose parsing
+
+Every non-chat AI feature returns **JSON against a declared schema**, requested
+via the provider's structured-output mode. Food analysis returns typed data the
+app can act on:
+
+```csharp
+record FoodAnalysis(
+    IReadOnlyList<AnalyzedItem> Items,   // name, quantity, unit, confidence
+    NutritionTotals Totals,              // kcal, protein, carbs, fat, fiber
+    string? Note);                       // caveats, never the payload
+```
+
+Rules: the schema is versioned and lives next to the DTO; a response failing
+schema validation is a failed call, retried once then surfaced as a typed
+error — never regex-scraped, never shown raw. Analysis results are **proposals**
+that land in the log-entry sheet pre-filled and require the user to confirm.
+The AI never writes to the food diary unattended.
+
+### Chat
+
+`AiChatThread` already exists in the domain — this builds on it rather than
+adding an entity. Threads are per-user, backend-persisted, with a trimmed
+context window and the user's recent log summary injected as system context so
+"how did I eat this week" works without the model guessing.
+
+### The onboarding agent does things
+
+Onboarding is where the AI earns its cost: instead of a six-screen form, a
+conversation that **performs setup via tool calls**.
+
+The model gets a fixed allowlist of tools, each mapping to an existing MediatR
+command with its existing validator:
+
+| Tool | Command |
+|---|---|
+| `set_targets` | `CreateUserGoalCommand` |
+| `log_measurement` | `LogBodyMeasurementCommand` |
+| `log_meal` | `LogFoodCommand` |
+| `create_household` | `CreateHouseholdCommand` |
+| `create_meal_plan` | `CreateMealPlanCommand` |
+
+Non-negotiables: the model never touches the database, only this allowlist.
+Every argument goes through the same FluentValidation the HTTP path uses. Every
+tool call is authorized as the calling user — the agent cannot act outside their
+scope. Mutations are echoed back in the UI as "I set X, undo?" Nothing
+destructive is exposed as a tool, ever.
+
+This is the same shape as the MCP server, which is the point — MCP already
+proved the pattern. `Mizan.Mcp.Server` and the onboarding agent should share the
+tool-to-command mapping rather than each defining their own.
+
+### Limits: per-user and global
+
+Two independent ceilings. Both must pass.
+
+**Per-user**, by entitlement tier — daily request cap plus a monthly token
+budget. Free gets enough to see the value; Pro gets a working allowance.
+
+**Global**, across all users — a daily token and estimated-cost ceiling that is
+a hard circuit breaker on the whole provider bill. This is the one that stops a
+loop or an abusive account from producing a surprise invoice. It is not
+optional and it ships in the same commit as the first AI call.
+
+Mechanics:
+
+- `AiUsageLog` (Postgres) — the durable ledger: user, feature, model, prompt and
+  completion tokens, estimated cost, latency, outcome, timestamp. This is the
+  source of truth for the usage tab and for billing reconciliation.
+- Redis counters keyed by user/day and global/day — the hot-path check, so a
+  quota test is not a table scan. Postgres is authoritative; Redis is the cache
+  and is rebuildable from the ledger.
+- Reserve-then-settle: estimate before the call, write actual usage after. A
+  crashed call still settles, so tokens cannot leak.
+- Exhaustion is a **typed 429 with which limit tripped and when it resets** —
+  never a 500, never a silent degradation. Global exhaustion tells the user the
+  service is at capacity, not that they are out of quota; those are different
+  messages and conflating them is a support ticket.
+
+### Usage tab
+
+`/more → Settings → Usage`. Requests and tokens used against your cap for the
+current period, a short history, and what resets when. Admins additionally see
+global spend against the ceiling — that view is the difference between noticing
+a cost problem and being told about it by the invoice.
+
+### Gating
+
+AI is where Pro gets something worth paying for. Current gating is three
+endpoints (§5), which is thin. Proposed split:
+
+| | Free | Pro |
+|---|---|---|
+| Chat | small daily cap | working allowance |
+| Food photo analysis | — | included |
+| Onboarding agent | included, once | included |
+| Weekly log insights | — | included |
+
+Enforced in one place: an `IAiQuotaService` check ahead of every provider call,
+reading `IEntitlementService` for the tier. Not per-controller attributes —
+those drift, and a missed attribute is an unmetered call.
+
+Widening Pro beyond AI is still a product decision and still out of scope.
+
+---
+
+## 11. MCP server
 
 Survives intact — it is the part of this codebase that works. ~120 tools stay
 roughly as-is now that their endpoints survive; the trim is limited to tools
@@ -305,32 +468,41 @@ setup, tool catalogue, example sessions.
 
 ---
 
-## 10. Execution order
+## 12. Execution order
 
 Each phase is one commit and leaves the build green.
 
-| # | Phase | Risk | Notes |
-|---|---|---|---|
-| 0 | Docs + scratch purge | none | §8, last block |
-| 1 | Route audit | none | walk all ~70 routes, record which dead-end. Input to phases 2 and 3 |
-| 2 | Nav tiering | low | `AppShell` rebuild: 5-slot spine, `( + )` sheet, `/more` drawer. **Highest value per hour in the whole plan** |
-| 3 | Small deletions | low | §8 routes, frontend OTel, admin halving |
-| 4 | Recipe inversion | medium | promotion chip, unified picker, sub-table collapse, migration |
-| 5 | Contextual surfaces | medium | tier 2: resume banner, trainer strip, household switcher, in-context Pro wall |
-| 6 | Auth → Identity | **high** | the only phase that can lock users out; scrypt-compat hasher; rehearse on a prod DB copy |
-| 7 | Schema unification | **high** | drop Drizzle, squash migrations, export/import **all** surviving tables, snapshot first |
-| 8 | Storage abstraction | low | `IStorageService`, Cloudinary impl, drop `next-cloudinary`. S3 in v2 |
-| 9 | UI rebuild on the new tiers | medium | `/today`, `/history`, `/progress`, sheet-based logging |
-| 10 | Docs rewrite | none | README, CLAUDE.md, ARCHITECTURE.md, MCP.md |
+| # | Phase | Risk | Status | Notes |
+|---|---|---|---|---|
+| 0 | Docs + scratch purge | none | **done** | 47 files → 4. `AGENTS.md` merged into `CLAUDE.md`; dead `.fpf/` pointers removed |
+| 1 | Route audit | none | **done** | `scripts/route-audit.mjs` + `docs/ROUTE-AUDIT.md`. 73 routes, 21 in nav, 9 orphaned |
+| 2 | Nav tiering | low | next | `AppShell` rebuild: 5-slot spine, `( + )` sheet, `/more` drawer. **Highest value per hour in the plan** |
+| 3 | Fix + delete per audit | low | | link the orphaned trainer and admin screens, delete `/community`, resolve the 5 `TODO` routes, drop frontend OTel, halve the admin panel |
+| 4 | Recipe inversion | medium | | promotion chip, unified picker, sub-table collapse, migration |
+| 5 | Contextual surfaces | medium | | tier 2: resume banner, trainer strip, household switcher, in-context Pro wall |
+| 6 | **Remove BetterAuth** → Identity | **high** | | delete `lib/auth.ts`, `lib/auth-client.ts`, `app/api/auth/[...all]`, the `better-auth` deps; stand up `AddIdentityApiEndpoints`; scrypt-compat hasher; rehearse on a prod DB copy |
+| 7 | Schema unification | **high** | | drop Drizzle and `frontend/db/`, squash migrations, export/import **all** surviving tables, snapshot first |
+| 8 | Storage abstraction | low | | `IStorageService`, Cloudinary impl, drop `next-cloudinary`. S3 lands in v2 |
+| 9 | AI platform | medium | | `IAiProvider`, `AiUsageLog`, `IAiQuotaService`, per-user + global ceilings, usage tab. **Limits ship with the first provider call, not after** |
+| 10 | AI surfaces | medium | | structured food analysis, chat on `AiChatThread`, onboarding agent over the allowlisted tool→command map shared with MCP |
+| 11 | UI rebuild on the new tiers | medium | | `/today`, `/history`, `/progress`, sheet-based logging |
+| 12 | Docs rewrite | none | | README, CLAUDE.md, ARCHITECTURE.md, MCP.md, AI.md |
 
-Phases 0–3 land in a day or two and fix the complaint that started this.
-Phases 6–7 are the real engineering. Phases 4–5 and 9 are the product work.
+Ordering constraints that actually bind:
 
-**If only one thing gets done: phase 2.** The nav is the bug.
+- **9 before 10.** Metering and the global ceiling exist before anything can
+  call the provider. Shipping a feature first and limiting it later is how you
+  find out about the bill from the invoice.
+- **8 before 10.** Food photo analysis needs storage behind an interface, or the
+  v2 S3 swap has to touch the AI code too.
+- **6 before 7.** Identity must own `users` before Drizzle can be removed.
+- **2 and 3 before 11.** Rebuild the screens against the tier structure, not
+  before it exists.
 
----
+Everything else can move. **If only one thing gets done: phase 2.** The audit in
+§2 makes the case — 73 routes, 21 reachable.
 
-## 11. What this costs
+## 13. What this costs
 
 - **Auth downtime risk.** Phase 6 is the one place a mistake locks users out.
   Snapshot, rehearse on a copy, keep a rollback.
@@ -343,6 +515,15 @@ Phases 6–7 are the real engineering. Phases 4–5 and 9 are the product work.
   two taps away is used less than one in the nav. That is the deliberate price
   of the spine being unmissable. If billing conversion drops, the in-context
   upsell in §5 is the lever, not a nav slot.
+- **A variable provider bill.** AI cost scales with use, and the global ceiling
+  in §10 caps the damage but also means the feature can be *off* for everyone
+  when it trips. That is the correct failure mode and it will still generate
+  support questions. Set the ceiling deliberately, not as a placeholder.
+- **AI is wrong sometimes.** Food photo analysis will misjudge portions. That is
+  why every result is a pre-filled proposal the user confirms, never a silent
+  write to the diary. Do not let a later "just log it automatically" convenience
+  request erode that — an unattended wrong entry corrupts the log the whole
+  product is built on.
 - **The name.** With recipes kept, "MacroChef" survives — but the product is now
   a logger that has recipes, not a recipe app that logs. Worth deciding which
   name leads before the UI rebuild in phase 9.
