@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 
@@ -166,21 +167,31 @@ Goals Progress:
         var remainingCalories = (goal?.TargetCalories ?? 2000) - consumedCalories;
         var targetMaxCal = maxCalories ?? Math.Min(remainingCalories, 800);
 
-        var recipes = await _context.Recipes
-            .Include(r => r.Nutrition)
+        // Nutrition is summed from ingredients rather than stored (§4), so the
+        // calorie ceiling is applied after the totals are computed. Take a
+        // bounded candidate set first so this stays a two-query lookup.
+        var candidates = await _context.Recipes
             .Where(r => r.IsPublic || r.UserId == _userId)
-            .Where(r => r.Nutrition != null && r.Nutrition.CaloriesPerServing <= targetMaxCal)
             .OrderBy(r => Guid.NewGuid()) // Random order
-            .Take(5)
+            .Take(50)
             .ToListAsync();
+
+        var totalsById = await RecipeNutritionLookup.ForRecipesAsync(
+            _context, candidates.Select(r => r.Id).ToList(), CancellationToken.None);
+
+        var recipes = candidates
+            .Select(r => (Recipe: r, Totals: totalsById.TryGetValue(r.Id, out var t) ? t : default))
+            .Where(x => x.Totals.Calories > 0 && x.Totals.Calories <= targetMaxCal)
+            .Take(5)
+            .ToList();
 
         if (!recipes.Any())
         {
             return "No recipes found matching your criteria.";
         }
 
-        var suggestions = "Recipe Suggestions:\n" + string.Join("\n", recipes.Select(r =>
-            $"- {r.Title}: {r.Nutrition!.CaloriesPerServing} kcal, {r.Nutrition.ProteinGrams}g protein ({r.Servings} servings)"));
+        var suggestions = "Recipe Suggestions:\n" + string.Join("\n", recipes.Select(x =>
+            $"- {x.Recipe.Title}: {x.Totals.Calories} kcal, {x.Totals.ProteinGrams}g protein ({x.Recipe.Servings} servings)"));
 
         return suggestions + $"\n\nRemaining calories for today: {remainingCalories} kcal";
     }
