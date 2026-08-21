@@ -80,3 +80,6 @@ redis_data/
 
 # Host notes
 vps_setup.txt
+
+# Redis snapshot, written by a locally-run redis-server
+dump.rdb
