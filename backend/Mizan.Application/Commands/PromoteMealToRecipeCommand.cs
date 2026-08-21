@@ -15,8 +15,10 @@ namespace Mizan.Application.Commands;
 /// from what was actually eaten, so a recipe is a byproduct of logging rather
 /// than a form somebody sits down to fill in.
 ///
-/// Recipes do not nest: an entry that was itself logged from a recipe is
-/// flattened to its name.
+/// A meal may mix foods and recipes. Recipe entries need a derived `Food` to
+/// carry their macros - see the preparations section of docs/REFOCUS.md §4 -
+/// which does not exist yet, so such a meal is refused for now rather than
+/// promoted with a text ingredient carrying no nutrition.
 /// </summary>
 public record PromoteMealToRecipeCommand(
     DateOnly EntryDate,
@@ -69,6 +71,18 @@ public class PromoteMealToRecipeCommandHandler : IRequestHandler<PromoteMealToRe
         {
             throw new DomainValidationException(
                 $"A recipe needs at least {MinimumEntries} logged items; this meal has {entries.Count}");
+        }
+
+        // Until preparations land, a recipe entry has no Food to point at. Emitting
+        // it as bare text would produce a recipe whose macros are quietly wrong,
+        // which is the one outcome a nutrition log must not produce.
+        var unresolved = entries.Where(e => e.RecipeId.HasValue).Select(e => e.Name).ToList();
+        if (unresolved.Count > 0)
+        {
+            throw new DomainValidationException(
+                "This meal contains recipes that are not yet saved as ingredients: "
+                + string.Join(", ", unresolved)
+                + ". Save them as preparations first so their nutrition carries over.");
         }
 
         var now = DateTime.UtcNow;

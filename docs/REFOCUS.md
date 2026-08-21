@@ -163,6 +163,31 @@ This is the **only** way a recipe is created. `/recipes/add` and
 `/recipes/[recipeId]/edit` as standalone form pages are deleted. Editing a
 recipe means logging it again and re-promoting, or adjusting quantities inline.
 
+### Mixed meals: recipes and ingredients together
+
+A logged meal is rarely all one kind of thing. Two eggs, a slice of bread, and
+a spoon of your own mayonnaise — two foods and a preparation. Promotion has to
+handle that, or the feature only works for the simplest case.
+
+`FoodDiaryEntry` already supports it: an entry carries either a `FoodId` or a
+`RecipeId`. Promotion maps each entry by what it is:
+
+| Logged entry | Becomes |
+|---|---|
+| a food | `RecipeIngredient.FoodId` |
+| a recipe already marked as a preparation | `RecipeIngredient.FoodId`, pointing at its derived `Food` |
+| a recipe that is **not** a preparation | derive one now, then reference it |
+
+The third row is the interesting one. Promoting a meal that contains a plain
+recipe turns that recipe into a preparation as a side effect, because there is
+no other way to keep the macros right. That needs `YieldGrams`, so when it is
+missing the promotion asks for it rather than guessing — a silent guess here
+produces a recipe with wrong calories, which is the failure this whole section
+exists to avoid.
+
+Nothing is flattened to text. Every ingredient in a promoted recipe resolves to
+something with real macros.
+
 ### Direction 2 — Recipe → Log (reuse)
 
 Recipes appear in the **same picker as foods** — one search field, foods and
@@ -208,9 +233,11 @@ entry instead of recomputing them later.
 
 #### What it needs
 
-`Food` is currently a single global table with **no owner column**, and
-`SearchFoodsQuery` returns all of it. So today any user-created food already
-pollutes everyone's search — a pre-existing hole this work has to close anyway:
+**Foods get an owner.** This is decided, and it is worth doing on its own
+merits regardless of preparations: `Food` is currently a single global table
+with no owner column, and `SearchFoodsQuery` returns all of it, so every
+user-created food today lands in everyone else's search results. `/admin/ingredients`
+is titled "Public Ingredients" for a set that has no private counterpart.
 
 | Field | Why |
 |---|---|
@@ -218,7 +245,14 @@ pollutes everyone's search — a pre-existing hole this work has to close anyway
 | `Food.SourceRecipeId` (nullable) | provenance, and lets re-promotion find the row to update instead of duplicating it |
 
 `IsVerified` keeps its current meaning — admin-curated — and is unrelated to
-ownership.
+ownership. A private food can be promoted to public by an admin, which is what
+`/admin/ingredients` becomes: a queue of user-created foods worth sharing,
+rather than a list of everything anyone ever typed.
+
+Migration note: every existing row becomes public (`UserId = null`), because
+there is no ownership information to recover and silently privatising foods
+that recipes already reference would break them. Ownership starts applying to
+new foods.
 
 `PromoteRecipeToIngredientCommand` does the derivation: sum the recipe's
 ingredient macros, divide by total yield weight, write per-100g values onto the
