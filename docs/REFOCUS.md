@@ -1,11 +1,15 @@
 # Refocus Plan: Mizan is a Logging App
 
-**Status:** rev 6 — phases 0-3 executed 
+**Status:** rev 7 — phases 0-3 done, 4 in progress 
 **Branch:** `claude/cleanup-logging-refocus-rzfiv8`
 **Rule:** decide what the project is about, build around it. Everything else
 gets demoted, not deleted.
 
-> **rev 6 adds §13, a Telegram bot service, and rewrites §5 after auditing the
+> **rev 7 replaces §4's "recipes do not nest" with preparations: marking a
+> recipe as a preparation derives a `Food`, so reuse works without a recipe
+> graph or a cycle validator.**
+>
+> **rev 6 added §13, a Telegram bot service, and rewrites §5 after auditing the
 > Paddle issue against the code: most of its backend scope is already built.**
 >
 > **rev 5 added §12: an admin AI console with draft/eval/publish, and the
@@ -167,6 +171,67 @@ its component entries under one collapsible group. Log-from-recipe marks it used
 which floats it up the picker. That is the "logs a meal from a recipe, it is
 saved" behavior.
 
+### Preparations: a recipe can become an ingredient
+
+Rev 6 said "recipes do not nest" and proposed dropping `SubRecipeId` outright.
+That was wrong, and the counter-example kills it: homemade low-fat mayonnaise.
+You make a batch, then use it in other recipes.
+
+Flattening leaves two options, both bad. Re-enter the mayo's ingredients into
+every recipe that uses it, or carry "mayonnaise" as free text with no macros.
+The second is fatal — a recipe with wrong calories in a calorie-logging app is
+a defect, not a simplification. Schema tidiness lost to the product's core job.
+
+**But the fix is not `SubRecipeId` either.** Raw recipe→recipe references are
+what forced the circular-dependency validator into existence. Narrow it
+instead:
+
+> Marking a recipe as a **preparation** derives a `Food` from it.
+
+Everything follows from that:
+
+- `RecipeIngredient.FoodId` already exists, so the mayo is referenced the same
+  way any other ingredient is. No `SubRecipeId`, no recipe graph, **no cycle
+  validator** — `RecipeCircularDependencyValidator` still goes.
+- Nutrition is correct, because `Food` already carries per-100g macros.
+- The mayo becomes loggable **on its own** — "a tablespoon of my mayo" — which
+  sub-recipes never gave you.
+- One primitive for "thing with macros that I consume an amount of", which is
+  the same primitive the picker in §4 already searches.
+
+**Macros are snapshotted at promotion, not computed live.** The derived `Food`
+stores fixed per-100g values calculated when you promote. Edit the mayo recipe
+and re-promote, and the `Food` updates from then on. No live recursion means
+cycles are not merely validated against, they are impossible. This also matches
+how `FoodDiaryEntry` already behaves: it copies calories and protein onto the
+entry instead of recomputing them later.
+
+#### What it needs
+
+`Food` is currently a single global table with **no owner column**, and
+`SearchFoodsQuery` returns all of it. So today any user-created food already
+pollutes everyone's search — a pre-existing hole this work has to close anyway:
+
+| Field | Why |
+|---|---|
+| `Food.UserId` (nullable) | null = public/global; set = private to that user. Scopes search to `UserId == null \|\| UserId == me` |
+| `Food.SourceRecipeId` (nullable) | provenance, and lets re-promotion find the row to update instead of duplicating it |
+
+`IsVerified` keeps its current meaning — admin-curated — and is unrelated to
+ownership.
+
+`PromoteRecipeToIngredientCommand` does the derivation: sum the recipe's
+ingredient macros, divide by total yield weight, write per-100g values onto the
+`Food`. Recipes gain a `YieldGrams` field, because "serves 4" cannot be
+converted into per-100g without it.
+
+#### Still not supported
+
+A preparation whose own recipe uses another preparation is fine — it is just a
+`Food` reference like any other. What is not supported is a preparation
+referencing itself transitively *and* expecting live recalculation, which the
+snapshot rules out by construction.
+
 ### Model simplification
 
 | Now | After |
@@ -174,11 +239,11 @@ saved" behavior.
 | `RecipeInstruction` table (ordered rows) | one nullable `Instructions` text column |
 | `RecipeNutrition` table | computed from ingredients on read, never stored |
 | `RecipeTag` | dropped — the picker sorts by recency and pins, not tags |
-| `RecipeIngredient.SubRecipeId` + `RecipeCircularDependencyValidator` | dropped; recipes do not nest |
+| `RecipeIngredient.SubRecipeId` + `RecipeCircularDependencyValidator` | dropped — replaced by preparations, which reference a derived `Food` and cannot cycle |
 | `FavoriteRecipe` | kept, reframed as a pin that boosts picker rank |
 
 Four tables and a graph-cycle validator collapse into a recipe plus its
-ingredients. `RecipeCircularDependencyValidatorTests` goes with it.
+ingredients, with reuse handled by preparations rather than a recipe graph. `RecipeCircularDependencyValidatorTests` goes with it.
 
 ---
 
@@ -905,7 +970,7 @@ Each phase is one commit and leaves the build green.
 | 1 | Route audit | none | **done** | `scripts/route-audit.mjs` + `docs/ROUTE-AUDIT.md`. 73 routes, 21 in nav, 9 orphaned |
 | 2 | Nav tiering | low | **done** | spine + `( + )` sheet + `/more`; nav model extracted to `components/Layout/nav.ts`; 21 flat entries → 4; orphans 9 → 4 |
 | 3 | Fix + delete per audit | low | **done** | delete `/community`, resolve the `TODO` routes, drop frontend OTel, halve the admin panel, **add the trainer grant-update endpoint and settle `HouseholdMember.CanViewNutrition`** (§11) |
-| 4 | Recipe inversion | medium | in progress — promotion path done | promotion chip, unified picker, sub-table collapse, migration |
+| 4 | Recipe inversion + preparations | medium | in progress — promotion path done | promotion chip, unified picker, sub-table collapse, migration |
 | 5 | Contextual surfaces | medium | | tier 2: resume banner, trainer strip, household switcher, in-context Pro wall |
 | 6 | **Remove BetterAuth** → Identity | **high** | | delete `lib/auth.ts`, `lib/auth-client.ts`, `app/api/auth/[...all]`, the `better-auth` deps; stand up `AddIdentityApiEndpoints`; scrypt-compat hasher; rehearse on a prod DB copy |
 | 7 | Schema unification | **high** | | drop Drizzle and `frontend/db/`, squash migrations, export/import **all** surviving tables, snapshot first |
@@ -944,8 +1009,12 @@ Everything else can move. **If only one thing gets done: phase 2.** The audit in
 - **OAuth and magic-link login go away** until deliberately re-added.
 - **Recipe authoring changes shape.** Existing recipes migrate fine
   (instructions collapse to text, nutrition becomes computed), but anyone who
-  wrote recipes by hand loses that form. Nested recipes, if any exist in prod,
-  must be flattened by the migration — check before running it.
+  wrote recipes by hand loses that form.
+- **Existing nested recipes need converting, not flattening.** Any recipe
+  currently used via `SubRecipeId` becomes a preparation with a derived `Food`,
+  and the referencing rows repoint to that `Food`. Count them before the
+  migration runs; a recipe with no `YieldGrams` cannot be converted
+  automatically and needs the user to supply one.
 - **Discoverability trade.** Tier 3 features get *less* prominent, and a feature
   two taps away is used less than one in the nav. That is the deliberate price
   of the spine being unmissable. If billing conversion drops, the in-context
