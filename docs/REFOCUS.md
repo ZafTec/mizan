@@ -95,7 +95,7 @@ never a page navigation.
 
 | Surface | Trigger |
 |---|---|
-| "Save as recipe" chip | a logged meal contains ≥3 foods (§4) |
+| "Save as recipe" chip | a logged meal contains ≥2 items (§4) |
 | "Resume workout" banner | an open `WorkoutDraft` exists |
 | Streak / achievement toast | unlock event, transient, never a permanent badge |
 | Trainer strip on `/today` | an active `TrainerClientRelationship` exists |
@@ -150,6 +150,10 @@ no longer something you sit down and write — **it is a byproduct of logging.**
 You log a meal from several foods. The day view groups them. A chip appears:
 **"Save as recipe."** Name it, done. Ingredients and quantities come from what
 you actually logged.
+
+The floor is **two items** — one food is not a recipe, it is that food, and two
+(chicken and rice) is the smallest combination worth naming. `PromoteMealToRecipeCommand`
+enforces it server-side so the MCP and Telegram paths cannot bypass the rule.
 
 This is the **only** way a recipe is created. `/recipes/add` and
 `/recipes/[recipeId]/edit` as standalone form pages are deleted. Editing a
@@ -901,7 +905,7 @@ Each phase is one commit and leaves the build green.
 | 1 | Route audit | none | **done** | `scripts/route-audit.mjs` + `docs/ROUTE-AUDIT.md`. 73 routes, 21 in nav, 9 orphaned |
 | 2 | Nav tiering | low | **done** | spine + `( + )` sheet + `/more`; nav model extracted to `components/Layout/nav.ts`; 21 flat entries → 4; orphans 9 → 4 |
 | 3 | Fix + delete per audit | low | **done** | delete `/community`, resolve the `TODO` routes, drop frontend OTel, halve the admin panel, **add the trainer grant-update endpoint and settle `HouseholdMember.CanViewNutrition`** (§11) |
-| 4 | Recipe inversion | medium | next | promotion chip, unified picker, sub-table collapse, migration |
+| 4 | Recipe inversion | medium | in progress — promotion path done | promotion chip, unified picker, sub-table collapse, migration |
 | 5 | Contextual surfaces | medium | | tier 2: resume banner, trainer strip, household switcher, in-context Pro wall |
 | 6 | **Remove BetterAuth** → Identity | **high** | | delete `lib/auth.ts`, `lib/auth-client.ts`, `app/api/auth/[...all]`, the `better-auth` deps; stand up `AddIdentityApiEndpoints`; scrypt-compat hasher; rehearse on a prod DB copy |
 | 7 | Schema unification | **high** | | drop Drizzle and `frontend/db/`, squash migrations, export/import **all** surviving tables, snapshot first |
