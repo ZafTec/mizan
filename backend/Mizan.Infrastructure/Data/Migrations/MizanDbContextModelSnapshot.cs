@@ -1019,6 +1019,10 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnType("numeric(8,2)")
                         .HasColumnName("sodium_per_100g");
 
+                    b.Property<Guid?>("SourceRecipeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_recipe_id");
+
                     b.Property<decimal?>("SugarPer100g")
                         .HasPrecision(8, 2)
                         .HasColumnType("numeric(8,2)")
@@ -1030,9 +1034,18 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnName("updated_at")
                         .HasDefaultValueSql("NOW()");
 
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Barcode");
+
+                    b.HasIndex("SourceRecipeId");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_foods_user_id");
 
                     b.ToTable("foods", (string)null);
                 });
@@ -1646,6 +1659,12 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("image_url");
 
+                    b.Property<bool>("IsPreparation")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_preparation");
+
                     b.Property<bool>("IsPublic")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -1681,6 +1700,11 @@ namespace Mizan.Infrastructure.Data.Migrations
                     b.Property<Guid?>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
+
+                    b.Property<decimal?>("YieldGrams")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("yield_grams");
 
                     b.HasKey("Id");
 
@@ -2897,6 +2921,23 @@ namespace Mizan.Infrastructure.Data.Migrations
                     b.Navigation("Followee");
 
                     b.Navigation("Follower");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.Food", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.Recipe", "SourceRecipe")
+                        .WithMany()
+                        .HasForeignKey("SourceRecipeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("SourceRecipe");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.FoodDiaryEntry", b =>

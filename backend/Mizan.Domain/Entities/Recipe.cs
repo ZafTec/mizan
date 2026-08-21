@@ -8,6 +8,20 @@ public class Recipe
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
     public int Servings { get; set; } = 1;
+
+    /// <summary>
+    /// A preparation is a recipe you make in batch and use as an ingredient -
+    /// homemade mayonnaise, a spice blend. Promoting one derives a Food whose
+    /// macros are snapshotted at that moment, which is why recipes never need
+    /// to reference each other and cycles are impossible. See §4.
+    /// </summary>
+    public bool IsPreparation { get; set; }
+
+    /// <summary>
+    /// Total finished weight in grams. Required to derive per-100g macros -
+    /// "serves 4" cannot be converted without it.
+    /// </summary>
+    public decimal? YieldGrams { get; set; }
     public int? PrepTimeMinutes { get; set; }
     public int? CookTimeMinutes { get; set; }
     public string? SourceUrl { get; set; }
