@@ -141,9 +141,9 @@ bun run dev
 Comprehensive documentation is available in the `docs/` directory:
 
 - **[Architecture](docs/ARCHITECTURE.md)** - System design, schema boundaries, and architectural principles
-- **[API Reference](docs/API_REFERENCE.md)** - Complete API endpoint documentation
+- **[API Reference](http://localhost:5000/swagger)** - Swagger UI, generated from the running backend
 - **[Developer Onboarding](docs/DEVELOPER_ONBOARDING.md)** - New contributor setup, workflows, and testing
-- **[DTO Contracts](docs/DTO_CONTRACTS.md)** - Contract rules between backend DTOs and generated frontend types
+- **[Refocus Plan](docs/REFOCUS.md)** - Product thesis and the reorganization roadmap
 
 ## Development
 

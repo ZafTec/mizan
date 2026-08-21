@@ -743,7 +743,7 @@ docker-compose up -d
 | Resource | Purpose | Location |
 |----------|---------|----------|
 | Architecture guide | System design, tech stack, layers, security | `docs/ARCHITECTURE.md` |
-| API reference | All endpoint documentation, examples | `docs/API_REFERENCE.md` |
+| API reference | All endpoint documentation, examples | Swagger UI (`http://localhost:5000/swagger`) |
 | CLAUDE.md | Development philosophy & best practices | `CLAUDE.md` |
 | Codebase | Real examples in source code | `backend/Mizan.Api/`, `frontend/app/` |
 
@@ -783,7 +783,7 @@ docker exec -it mizan-postgres psql -U mizan -l | grep test
 ### Who to Ask
 
 - **Architecture questions:** See `ARCHITECTURE.md` (system design, layers, security)
-- **API questions:** See `API_REFERENCE.md` or Swagger UI (`http://localhost:5000/swagger`)
+- **API questions:** See Swagger UI (`http://localhost:5000/swagger`)
 - **Testing questions:** See Testing Strategy section above
 - **Deployment & CI/CD questions:** See Continuous Integration & Deployment section above
 - **Security issues:** Email security@yourdomain.com (do NOT create public issues)
