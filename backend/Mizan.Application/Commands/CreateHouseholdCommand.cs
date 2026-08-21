@@ -35,7 +35,6 @@ public class CreateHouseholdCommandHandler : IRequestHandler<CreateHouseholdComm
             Role = "admin",
             CanEditRecipes = true,
             CanEditShoppingList = true,
-            CanViewNutrition = true,
             JoinedAt = DateTime.UtcNow
         };
 

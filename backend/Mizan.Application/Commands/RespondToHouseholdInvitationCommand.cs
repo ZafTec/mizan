@@ -103,7 +103,6 @@ public class RespondToHouseholdInvitationCommandHandler : IRequestHandler<Respon
                 Role = invitation.Role,
                 CanEditRecipes = true,
                 CanEditShoppingList = true,
-                CanViewNutrition = invitation.Role == "admin" || invitation.Role == "owner",
                 JoinedAt = DateTime.UtcNow
             });
         }
