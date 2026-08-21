@@ -1,12 +1,12 @@
 # Refocus Plan: Mizan is a Logging App
 
-**Status:** rev 3 — phases 0 and 1 executed
+**Status:** rev 3 — phases 0, 1 and 2 executed
 **Branch:** `claude/cleanup-logging-refocus-rzfiv8`
 **Rule:** decide what the project is about, build around it. Everything else
 gets demoted, not deleted.
 
 > **rev 3 adds the AI platform (§10), pins households as kept (§9), and folds in
-> the phase 1 route audit — see `docs/ROUTE-AUDIT.md`. Phases 0 and 1 are done.
+> the phase 1 route audit — see `docs/ROUTE-AUDIT.md`. Phases 0, 1 and 2 are done.
 >
 > **rev 2 changed the thesis.** Rev 1 proposed deleting recipes, billing,
 > trainers, social, achievements, notifications and the admin panel. That was
@@ -476,8 +476,8 @@ Each phase is one commit and leaves the build green.
 |---|---|---|---|---|
 | 0 | Docs + scratch purge | none | **done** | 47 files → 4. `AGENTS.md` merged into `CLAUDE.md`; dead `.fpf/` pointers removed |
 | 1 | Route audit | none | **done** | `scripts/route-audit.mjs` + `docs/ROUTE-AUDIT.md`. 73 routes, 21 in nav, 9 orphaned |
-| 2 | Nav tiering | low | next | `AppShell` rebuild: 5-slot spine, `( + )` sheet, `/more` drawer. **Highest value per hour in the plan** |
-| 3 | Fix + delete per audit | low | | link the orphaned trainer and admin screens, delete `/community`, resolve the 5 `TODO` routes, drop frontend OTel, halve the admin panel |
+| 2 | Nav tiering | low | **done** | spine + `( + )` sheet + `/more`; nav model extracted to `components/Layout/nav.ts`; 21 flat entries → 4; orphans 9 → 4 |
+| 3 | Fix + delete per audit | low | next | link the orphaned trainer and admin screens, delete `/community`, resolve the 5 `TODO` routes, drop frontend OTel, halve the admin panel |
 | 4 | Recipe inversion | medium | | promotion chip, unified picker, sub-table collapse, migration |
 | 5 | Contextual surfaces | medium | | tier 2: resume banner, trainer strip, household switcher, in-context Pro wall |
 | 6 | **Remove BetterAuth** → Identity | **high** | | delete `lib/auth.ts`, `lib/auth-client.ts`, `app/api/auth/[...all]`, the `better-auth` deps; stand up `AddIdentityApiEndpoints`; scrypt-compat hasher; rehearse on a prod DB copy |
