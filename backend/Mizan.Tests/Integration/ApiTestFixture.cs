@@ -343,12 +343,15 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     {
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
-        // Foods are global in this simplified model, but let's assume we filter by creation or just return all for now if no user ownership on foods
-        // Or if foods are global, just return a list.
-        // Wait, foods table usually doesn't have UserId unless it's custom food.
-        // Let's check Food entity.
-        // Assuming global foods for now or verifying creation.
-        return await db.Foods.ToListAsync();
+        return await db.Foods.Where(f => f.UserId == userId).ToListAsync();
+    }
+
+    /// <summary>Foods with no owner - the shared catalogue.</summary>
+    public async Task<List<Food>> GetPublicFoodsAsync()
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+        return await db.Foods.Where(f => f.UserId == null).ToListAsync();
     }
 
     public async Task<List<FoodDiaryEntry>> GetFoodDiaryEntriesByUserId(Guid userId)
