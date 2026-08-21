@@ -169,6 +169,24 @@ When reasoning through problems, apply these principles:
 - What's the cost of being wrong?
 - Are we painting ourselves into a corner?
 
+## Decision Framework
+
+For a single, reversible decision that doesn't need a persistent evidence
+trail, work through this with the user rather than picking silently:
+
+```
+DECISION:      what we're deciding
+CONTEXT:       why now, what triggered it
+
+OPTIONS:
+  1. [A]   + pros   - cons
+  2. [B]   + pros   - cons
+
+WEAKEST LINK:  what breaks first in each option
+REVERSIBILITY: can we undo in 2 weeks? 2 months? never?
+RECOMMENDATION: which + why, or "need your input on X"
+```
+
 ## Task Execution Workflow
 
 ### 1. Understand the Problem Deeply
@@ -177,9 +195,8 @@ When reasoning through problems, apply these principles:
 - For URLs provided: fetch immediately and follow relevant links
 
 ### 2. Investigate the Codebase
-- **Check `.fpf/context.md` first**, Project context, constraints, and tech stack
-- **Check `.fpf/knowledge/`**, Project knowledge base with verified claims
-- **Check `docs/` directory**, Architecture, API reference, onboarding, DTO contracts
+- **Check `docs/REFOCUS.md` first**, the product thesis and what is being cut
+- **Check `docs/ARCHITECTURE.md`**, structure and layer boundaries
 - Use Task tool for broader/multi-file exploration (preferred for context efficiency)
 - Explore relevant files and directories
 - Search for key functions, classes, variables
@@ -518,6 +535,11 @@ mcp__MCP_DOCKER__listRepositoryTags
 - Side effects (I/O, state, external APIs) → isolated shell modules
 - Clear separation: core never calls shell, shell orchestrates core
 
+### Functional Paradigm
+- **Immutability**: use immutable types, avoid implicit mutation, return new instances
+- **Pure functions**: deterministic, no hidden dependencies
+- **No exotic constructs**: stick to language idioms unless monads are native
+
 ### Error Handling: Explicit Over Hidden
 - Never swallow errors silently (empty catch blocks are bugs)
 - Handle exceptions at boundaries, not deep in call stack
@@ -636,10 +658,9 @@ mcp__MCP_DOCKER__listRepositoryTags
 
 - `README.md` - Getting started and deployment
 - `docs/ARCHITECTURE.md` - Comprehensive architecture documentation
-- `docs/API_REFERENCE.md` - Complete API endpoint documentation
+- Swagger UI (`http://localhost:5000/swagger`) - the API reference, generated from the backend
 - `docs/DEVELOPER_ONBOARDING.md` - New-contributor setup, workflows, and testing
-- `docs/DTO_CONTRACTS.md` - Contract rules between backend DTOs and generated frontend types
-- `.fpf/` - First Principles Framework knowledge base (if initialized)
+- `docs/REFOCUS.md` - Product thesis and reorganization roadmap
 
 ## Environment Variables
 
