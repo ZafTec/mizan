@@ -27,6 +27,42 @@ export default function MyTrainerPage() {
 	const { data: session, isPending } = useSession();
 	const [trainer, setTrainer] = useState<MyTrainerDto | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
+	const [saving, setSaving] = useState(false);
+
+	// The client owns these flags - the trainer cannot change what they see.
+	async function updateGrants(patch: Record<string, boolean>) {
+		if (!trainer) return;
+		setSaving(true);
+		const previous = trainer;
+		setTrainer({ ...trainer, ...patch });
+		try {
+			await clientApi(`/api/Trainers/relationships/${trainer.relationshipId}/grants`, {
+				method: "PATCH",
+				body: patch,
+			});
+		} catch (error) {
+			setTrainer(previous);
+			console.error("Failed to update sharing:", error);
+		} finally {
+			setSaving(false);
+		}
+	}
+
+	async function endRelationship() {
+		if (!trainer) return;
+		setSaving(true);
+		try {
+			await clientApi(`/api/Trainers/relationships/${trainer.relationshipId}/grants`, {
+				method: "PATCH",
+				body: { end: true },
+			});
+			setTrainer(null);
+		} catch (error) {
+			console.error("Failed to end relationship:", error);
+		} finally {
+			setSaving(false);
+		}
+	}
 
 	useEffect(() => {
 		const fetchMyTrainer = async () => {
@@ -219,6 +255,36 @@ export default function MyTrainerPage() {
 				</div>
 			</div>
 
+			{/* What this trainer can see. The client decides, and can change it
+				at any time - see docs/REFOCUS.md §11. */}
+			<div className="card p-6">
+				<h2 className="mb-1 text-lg font-semibold">What you share</h2>
+				<p className="mb-4 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+					Only you can change this. Turning something off takes effect immediately.
+				</p>
+				<div className="space-y-3">
+					{(
+						[
+							["canViewNutrition", "Meals and nutrition"],
+							["canViewWorkouts", "Workouts and training"],
+							["canViewMeasurements", "Body measurements"],
+							["canMessage", "Send you messages"],
+						] as const
+					).map(([key, label]) => (
+						<label key={key} className="flex items-center justify-between gap-4">
+							<span className="text-sm">{label}</span>
+							<input
+								type="checkbox"
+								className="h-5 w-5 accent-brand-600"
+								checked={trainer[key]}
+								disabled={saving}
+								onChange={(e) => updateGrants({ [key]: e.target.checked })}
+							/>
+						</label>
+					))}
+				</div>
+			</div>
+
 			{/* Actions */}
 			<div className="card p-6">
 				<div className="space-y-3">
@@ -233,9 +299,14 @@ export default function MyTrainerPage() {
 							</Link>
 						) : null
 					)}
-					<button className="btn-secondary w-full" disabled>
+					<button
+						type="button"
+						className="btn-secondary w-full"
+						disabled={saving}
+						onClick={endRelationship}
+					>
 						<i className="ri-close-circle-line" />
-						End Relationship (Coming Soon)
+						End Relationship
 					</button>
 				</div>
 			</div>

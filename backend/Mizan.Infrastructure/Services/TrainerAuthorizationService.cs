@@ -62,6 +62,31 @@ public class TrainerAuthorizationService : ITrainerAuthorizationService
         return relationship;
     }
 
+    public async Task<TrainerClientRelationship> GetRelationshipForCurrentClientAsync(Guid relationshipId, bool requireActive, CancellationToken cancellationToken = default)
+    {
+        var currentUserId = GetCurrentUserId();
+
+        var relationship = await _context.TrainerClientRelationships
+            .FirstOrDefaultAsync(r => r.Id == relationshipId, cancellationToken);
+
+        if (relationship == null)
+        {
+            throw new EntityNotFoundException("TrainerClientRelationship", relationshipId);
+        }
+
+        if (relationship.ClientId != currentUserId)
+        {
+            throw new ForbiddenAccessException("Relationship does not belong to the current user");
+        }
+
+        if (requireActive && !string.Equals(relationship.Status, "active", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ForbiddenAccessException("Trainer relationship is not active");
+        }
+
+        return relationship;
+    }
+
     public async Task<TrainerClientRelationship> GetRelationshipForCurrentTrainerAndClientAsync(Guid clientId, bool requireActive, CancellationToken cancellationToken = default)
     {
         var currentUserId = GetCurrentUserId();
