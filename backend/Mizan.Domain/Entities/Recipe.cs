@@ -7,6 +7,12 @@ public class Recipe
     public Guid? HouseholdId { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
+
+    /// <summary>
+    /// Free text. Replaced the recipe_instructions table: ordered rows bought
+    /// nothing a numbered list in one column does not - see docs/REFOCUS.md §4.
+    /// </summary>
+    public string? Instructions { get; set; }
     public int Servings { get; set; } = 1;
 
     /// <summary>
@@ -34,9 +40,6 @@ public class Recipe
     public virtual User? User { get; set; }
     public virtual Household? Household { get; set; }
     public virtual ICollection<RecipeIngredient> Ingredients { get; set; } = new List<RecipeIngredient>();
-    public virtual ICollection<RecipeInstruction> Instructions { get; set; } = new List<RecipeInstruction>();
-    public virtual RecipeNutrition? Nutrition { get; set; }
-    public virtual ICollection<RecipeTag> Tags { get; set; } = new List<RecipeTag>();
     public virtual ICollection<MealPlanRecipe> MealPlanRecipes { get; set; } = new List<MealPlanRecipe>();
     public virtual ICollection<FoodDiaryEntry> DiaryEntries { get; set; } = new List<FoodDiaryEntry>();
 }

@@ -235,10 +235,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             db.UserGoals.RemoveRange(db.UserGoals);
             db.FoodDiaryEntries.RemoveRange(db.FoodDiaryEntries);
             db.FavoriteRecipes.RemoveRange(db.FavoriteRecipes);
-            db.RecipeTags.RemoveRange(db.RecipeTags);
-            db.RecipeInstructions.RemoveRange(db.RecipeInstructions);
             db.RecipeIngredients.RemoveRange(db.RecipeIngredients);
-            db.RecipeNutritions.RemoveRange(db.RecipeNutritions);
             db.Recipes.RemoveRange(db.Recipes);
             db.Foods.RemoveRange(db.Foods);
             db.HouseholdMembers.RemoveRange(db.HouseholdMembers);

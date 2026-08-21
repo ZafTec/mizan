@@ -1011,8 +1011,8 @@ Each phase is one commit and leaves the build green.
 | 1 | Route audit | none | **done** | `scripts/route-audit.mjs` + `docs/ROUTE-AUDIT.md`. 73 routes, 21 in nav, 9 orphaned |
 | 2 | Nav tiering | low | **done** | spine + `( + )` sheet + `/more`; nav model extracted to `components/Layout/nav.ts`; 21 flat entries → 4; orphans 9 → 4 |
 | 3 | Fix + delete per audit | low | **done** | delete `/community`, resolve the `TODO` routes, drop frontend OTel, halve the admin panel, **add the trainer grant-update endpoint and settle `HouseholdMember.CanViewNutrition`** (§11) |
-| 4 | Recipe inversion + preparations | medium | in progress — promotion, preparations and food ownership done; destructive collapse pending | promotion chip, unified picker, sub-table collapse, migration |
-| 5 | Contextual surfaces | medium | | tier 2: resume banner, trainer strip, household switcher, in-context Pro wall |
+| 4 | Recipe inversion + preparations | medium | **done** — promotion, preparations, food ownership, sub-table collapse. Promotion chip lands with the UI rebuild in 12 | promotion chip, unified picker, sub-table collapse, migration |
+| 5 | Contextual surfaces | medium | next | tier 2: resume banner, trainer strip, household switcher, in-context Pro wall |
 | 6 | **Remove BetterAuth** → Identity | **high** | | delete `lib/auth.ts`, `lib/auth-client.ts`, `app/api/auth/[...all]`, the `better-auth` deps; stand up `AddIdentityApiEndpoints`; scrypt-compat hasher; rehearse on a prod DB copy |
 | 7 | Schema unification | **high** | | drop Drizzle and `frontend/db/`, squash migrations, export/import **all** surviving tables, snapshot first |
 | 8 | Storage + `Mizan.Contracts` | low | | `IStorageService`, Cloudinary impl, drop `next-cloudinary`, S3 in v2; extract shared DTOs so Api, Mcp.Server and Telegram cannot drift (§13) |

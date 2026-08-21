@@ -226,9 +226,10 @@ export default function Page() {
 				amount: ing.amount!,
 				unit: ing.type === "food" ? "gram" : "serving"
 			})),
-			instructions: instructions.split('\n').filter(line => line.trim()),
+			// Instructions are free text now, and tags are gone - see
+			// docs/REFOCUS.md §4.
+			instructions: instructions.trim() || undefined,
 			servings,
-			tags: Array.from(tags),
 			prepTimeMinutes: prepTime || undefined,
 			cookTimeMinutes: cookTime || undefined,
 			sourceUrl: sourceUrl || undefined,
