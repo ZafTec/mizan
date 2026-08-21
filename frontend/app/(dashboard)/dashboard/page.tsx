@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { getUserServer } from "@/helper/session";
 import { getCurrentGoal } from "@/data/goal";
@@ -7,8 +8,9 @@ import { getMySubscription } from "@/data/subscription";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 import MacroRing from "@/components/Dashboard/MacroRing";
 import QuickActions from "@/components/Dashboard/QuickActions";
-import { UpgradeBanner } from "@/components/billing/UpgradeBanner";
 import { ProBadge } from "@/components/billing/ProBadge";
+import ResumeWorkoutBanner from "@/components/context/ResumeWorkoutBanner";
+import TrainerStrip from "@/components/context/TrainerStrip";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -117,14 +119,16 @@ export default async function DashboardPage() {
 				</div>
 			</section>
 
-			{!subscription.isPro && (
-				<UpgradeBanner
-					id="dashboard-hero"
-					variant="hero"
-					title="Unlock the full Mizan experience"
-					message="Unlimited meal plans, AI coach with food-photo logging, trend charts, and household sharing for up to 6 people. 7-day free trial, cancel anytime."
-				/>
-			)}
+			{/* Tier 2 - docs/REFOCUS.md §3. Both render nothing when there is
+			    nothing to say, so a solo user with no open session sees only
+			    their own log. The standing Pro banner that used to sit here is
+			    gone; the wall now fires at the gated action itself. */}
+			<Suspense fallback={null}>
+				<ResumeWorkoutBanner />
+			</Suspense>
+			<Suspense fallback={null}>
+				<TrainerStrip />
+			</Suspense>
 
 			{/* Main grid */}
 			<div className="grid gap-6 lg:grid-cols-[1.65fr_1fr]">

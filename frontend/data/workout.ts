@@ -1,7 +1,9 @@
 "use server";
 
 import { serverApi } from "@/lib/api.server";
+import { ApiError } from "@/lib/api";
 import { logger } from "@/lib/logger";
+import { parseStoredDraft } from "@/lib/workouts/draft";
 
 const workoutLogger = logger.createModuleLogger("workout-data");
 
@@ -91,4 +93,45 @@ export async function logWorkout(data: LogWorkoutData): Promise<boolean> {
 		workoutLogger.error("Failed to log workout", { error });
 		return false;
 	}
+}
+
+export interface ActiveWorkoutDraft {
+	name: string;
+	exerciseCount: number;
+	completedSets: number;
+	totalSets: number;
+	startedAt: string;
+	updatedAt: string;
+}
+
+/**
+ * The open session, if there is one. Null is the normal answer - the API
+ * returns 404 when nothing is in progress - so callers render nothing rather
+ * than an empty state.
+ */
+export async function getActiveWorkoutDraft(): Promise<ActiveWorkoutDraft | null> {
+	let raw: { payload: string; updatedAt: string };
+	try {
+		raw = await serverApi<{ payload: string; updatedAt: string }>("/api/Workouts/draft");
+	} catch (error) {
+		if (error instanceof ApiError && error.status === 404) return null;
+		workoutLogger.error("Failed to load workout draft", { error });
+		return null;
+	}
+
+	const stored = parseStoredDraft(raw.payload, raw.updatedAt);
+	if (!stored) {
+		workoutLogger.warn("Discarding unparseable workout draft");
+		return null;
+	}
+
+	const sets = stored.draft.exercises.flatMap((e) => e.sets);
+	return {
+		name: stored.draft.name || "Workout",
+		exerciseCount: stored.draft.exercises.length,
+		completedSets: sets.filter((s) => s.completedAt).length,
+		totalSets: sets.length,
+		startedAt: stored.draft.startedAt,
+		updatedAt: stored.updatedAt,
+	};
 }

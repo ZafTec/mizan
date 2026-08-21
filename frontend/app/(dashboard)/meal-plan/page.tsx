@@ -6,7 +6,7 @@ import Pagination from "@/components/Pagination";
 import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
 import MealPlanListItem from "./MealPlanListItem";
 import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
-import { UpgradeBanner } from "@/components/billing/UpgradeBanner";
+import CreateMealPlanAction from "./CreateMealPlanAction";
 
 import { logger } from "@/lib/logger";
 const mealLogger = logger.createModuleLogger("meal-plan-page");
@@ -83,20 +83,9 @@ export default async function MealPlanPage({
 							<i className="ri-shopping-cart-line" />
 							Shopping List
 						</Link>
-						<Link href="/meal-plan/create" className="btn-primary">
-							<i className="ri-add-line" />
-							Create Meal Plan
-						</Link>
+						<CreateMealPlanAction atFreeCap={!subscription.isPro && totalCount >= 1} />
 					</div>
 				</header>
-
-				{!subscription.isPro && totalCount >= 1 && (
-					<UpgradeBanner
-						id="meal-plan-cap"
-						title="You've used your free meal plan"
-						message="Upgrade to Pro for unlimited meal plans and shopping lists."
-					/>
-				)}
 
 				{/* Quick Stats */}
 				<div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
