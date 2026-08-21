@@ -96,7 +96,22 @@ const rows = pages.map((file) => {
     (n, f) => n + (source.get(f)?.split("\n").length ?? 0),
     0
   );
-  const body = dirFiles.map((f) => source.get(f) ?? "").join("\n");
+  // Follow local component imports: a 20-line page that composes 1,000 lines of
+  // components is not a stub, and treating it as one nearly got a working
+  // trainer screen deleted.
+  const own = dirFiles.map((f) => source.get(f) ?? "").join("\n");
+  const imported = new Set();
+  for (const m of own.matchAll(/from\s+["'`]@\/(components|lib)\/([^"'`]+)["'`]/g)) {
+    const base = `frontend/${m[1]}/${m[2]}`;
+    for (const cand of [`${base}.tsx`, `${base}.ts`, `${base}/index.tsx`]) {
+      if (source.has(cand)) imported.add(cand);
+    }
+  }
+  const importedLoc = [...imported].reduce(
+    (n, f) => n + (source.get(f)?.split("\n").length ?? 0),
+    0
+  );
+  const body = own;
 
   const endpoints = [
     ...new Set(
@@ -107,7 +122,7 @@ const rows = pages.map((file) => {
   const flags = [];
   if (!isLinked(route)) flags.push("ORPHAN");
   if (navHrefs.has(route)) flags.push("spine");
-  if (loc <= STUB_LOC && featureLoc <= STUB_LOC) flags.push("STUB");
+  if (loc <= STUB_LOC && featureLoc + importedLoc <= STUB_LOC) flags.push("STUB");
   if (/coming soon|not implemented|\bTODO\b|\bFIXME\b/i.test(body))
     flags.push("TODO");
   if (endpoints.length === 0) flags.push("no-fetch");

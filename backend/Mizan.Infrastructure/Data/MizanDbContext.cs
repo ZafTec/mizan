@@ -156,7 +156,6 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.Role).HasColumnName("role").HasMaxLength(20).HasDefaultValue("member");
             entity.Property(e => e.CanEditRecipes).HasColumnName("can_edit_recipes").HasDefaultValue(true);
             entity.Property(e => e.CanEditShoppingList).HasColumnName("can_edit_shopping_list").HasDefaultValue(true);
-            entity.Property(e => e.CanViewNutrition).HasColumnName("can_view_nutrition").HasDefaultValue(false);
             entity.Property(e => e.JoinedAt).HasColumnName("joined_at").HasDefaultValueSql("NOW()");
             entity.HasOne(e => e.Household).WithMany(h => h.Members).HasForeignKey(e => e.HouseholdId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.User).WithMany(u => u.HouseholdMemberships).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);

@@ -7,7 +7,6 @@ public class HouseholdMember
     public string Role { get; set; } = "member"; // owner, admin, member
     public bool CanEditRecipes { get; set; } = true;
     public bool CanEditShoppingList { get; set; } = true;
-    public bool CanViewNutrition { get; set; } = false;
     public DateTime JoinedAt { get; set; }
 
     // Navigation properties

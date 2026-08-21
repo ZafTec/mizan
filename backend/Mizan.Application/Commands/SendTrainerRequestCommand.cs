@@ -6,7 +6,20 @@ using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Commands;
 
-public record SendTrainerRequestCommand(Guid ClientId, Guid TrainerId) : IRequest<Guid>;
+/// <summary>
+/// The client initiates, and states up front what the trainer may see. Grants
+/// are the client's to set - the trainer's accept decides whether the
+/// relationship exists, not what it exposes. Defaults are conservative: no
+/// axis is shared unless asked for.
+/// </summary>
+public record SendTrainerRequestCommand(
+    Guid ClientId,
+    Guid TrainerId,
+    bool CanViewNutrition = false,
+    bool CanViewWorkouts = false,
+    bool CanViewMeasurements = false,
+    bool CanMessage = true
+) : IRequest<Guid>;
 
 public class SendTrainerRequestCommandHandler : IRequestHandler<SendTrainerRequestCommand, Guid>
 {
@@ -53,6 +66,10 @@ public class SendTrainerRequestCommandHandler : IRequestHandler<SendTrainerReque
             ClientId = request.ClientId,
             TrainerId = request.TrainerId,
             Status = "pending",
+            CanViewNutrition = request.CanViewNutrition,
+            CanViewWorkouts = request.CanViewWorkouts,
+            CanViewMeasurements = request.CanViewMeasurements,
+            CanMessage = request.CanMessage,
             CreatedAt = DateTime.UtcNow
         };
 

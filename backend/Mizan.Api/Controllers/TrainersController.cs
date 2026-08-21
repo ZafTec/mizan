@@ -32,7 +32,13 @@ public class TrainersController : ControllerBase
             return Unauthorized("User not authenticated");
         }
 
-        var command = new SendTrainerRequestCommand(_currentUser.UserId.Value, request.TrainerId);
+        var command = new SendTrainerRequestCommand(
+            _currentUser.UserId.Value,
+            request.TrainerId,
+            request.CanViewNutrition,
+            request.CanViewWorkouts,
+            request.CanViewMeasurements,
+            request.CanMessage);
         var id = await _mediator.Send(command);
 
         _logger.LogInformation("Client {ClientId} sent trainer request to {TrainerId}", _currentUser.UserId.Value, request.TrainerId);
@@ -44,18 +50,33 @@ public class TrainersController : ControllerBase
     [Authorize(Policy = "RequireTrainer")]
     public async Task<IActionResult> Respond([FromBody] RespondRequest request)
     {
-        var command = new RespondToTrainerRequestCommand(
-            request.RelationshipId,
-            request.Accept,
-            request.CanViewNutrition,
-            request.CanViewWorkouts,
-            request.CanViewMeasurements,
-            request.CanMessage
-        );
+        var command = new RespondToTrainerRequestCommand(request.RelationshipId, request.Accept);
         await _mediator.Send(command);
 
         _logger.LogInformation("Trainer {TrainerId} responded to request {RelationshipId}: {Accepted}",
             _currentUser.UserId, request.RelationshipId, request.Accept);
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Client-side control over an existing relationship: change what the
+    /// trainer may see, or end it. Authorized as the client, not the trainer.
+    /// </summary>
+    [HttpPatch("relationships/{relationshipId:guid}/grants")]
+    public async Task<IActionResult> UpdateGrants(Guid relationshipId, [FromBody] UpdateGrantsRequest request)
+    {
+        await _mediator.Send(new UpdateTrainerGrantsCommand(
+            relationshipId,
+            request.CanViewNutrition,
+            request.CanViewWorkouts,
+            request.CanViewMeasurements,
+            request.CanMessage,
+            request.End));
+
+        _logger.LogInformation(
+            "Client {ClientId} updated grants on relationship {RelationshipId} (end: {End})",
+            _currentUser.UserId, relationshipId, request.End);
 
         return NoContent();
     }
@@ -141,12 +162,18 @@ public class TrainersController : ControllerBase
         => Ok(await _mediator.Send(new GetClientWorkoutsQuery(clientId, page, pageSize)));
 }
 
-public record SendTrainerRequestRequest(Guid TrainerId);
-public record RespondRequest(
-    Guid RelationshipId,
-    bool Accept,
+public record SendTrainerRequestRequest(
+    Guid TrainerId,
+    bool CanViewNutrition = false,
+    bool CanViewWorkouts = false,
+    bool CanViewMeasurements = false,
+    bool CanMessage = true
+);
+public record RespondRequest(Guid RelationshipId, bool Accept);
+public record UpdateGrantsRequest(
     bool? CanViewNutrition = null,
     bool? CanViewWorkouts = null,
     bool? CanViewMeasurements = null,
-    bool? CanMessage = null
+    bool? CanMessage = null,
+    bool End = false
 );
