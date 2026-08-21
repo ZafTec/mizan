@@ -17,7 +17,7 @@ namespace Mizan.Infrastructure.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.6")
+                .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -1307,12 +1307,6 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true)
                         .HasColumnName("can_edit_shopping_list");
-
-                    b.Property<bool>("CanViewNutrition")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("can_view_nutrition");
 
                     b.Property<DateTime>("JoinedAt")
                         .ValueGeneratedOnAdd()
