@@ -1,13 +1,16 @@
 # Refocus Plan: Mizan is a Logging App
 
-**Status:** rev 4 — phases 0, 1 and 2 executed
+**Status:** rev 5 — phases 0, 1 and 2 executed
 **Branch:** `claude/cleanup-logging-refocus-rzfiv8`
 **Rule:** decide what the project is about, build around it. Everything else
 gets demoted, not deleted.
 
-> **rev 4 adds §11: three principal types, per-axis consent, and the
-> trainer × AI intersection. It records three enforcement defects found while
-> checking the plan against the code.**
+> **rev 5 adds §12: an admin AI console with draft/eval/publish, and the
+> hard-vs-soft guardrail split that keeps it from becoming a way around §11.**
+>
+> **rev 4 added §11: three principal types, per-axis consent, and the
+> trainer × AI intersection, and recorded three enforcement defects found while
+> checking the plan against the code.
 >
 > **rev 3 added the AI platform (§10), pinned households as kept (§9), and folded
 > in the phase 1 route audit — see `docs/ROUTE-AUDIT.md`. Phases 0, 1 and 2 are done.
@@ -284,7 +287,8 @@ Short list now, and honest about it:
 
 **Admin panel — halved, not deleted.** 19 routes / 4,376 LOC. Keep the
 table-driven screens where a UI genuinely beats a tool call: users, ingredients,
-recipes, moderation. Drop the ones the MCP admin tools already do better:
+recipes, moderation — and later `/admin/ai` (§12), which is the strongest case
+of all for keeping a panel. Drop the ones the MCP admin tools already do better:
 achievements CRUD + analytics, audit-log browsing, households, relationships,
 sessions. Roughly 2,000 LOC out, and admin work moves toward the interface you
 already like.
@@ -595,7 +599,117 @@ need their own ceiling in §10's gating table.
 
 ---
 
-## 12. MCP server
+## 12. Admin AI console
+
+Prompts are configuration that changes product behaviour. Hardcoding them in C#
+means every wording change is a deploy, and nobody can tell you which version
+produced last Tuesday's bad answers. So: yes to an admin console with drafts,
+evals, publishing and rollback.
+
+One part of the usual design is wrong, though, and it is the part that would
+undo §11.
+
+### Guardrails split in two, and only one half is editable
+
+**If the consent rules live in the system prompt, and an admin can edit the
+system prompt, then the console is a supported path around the consent model.**
+An admin editing copy would be one careless paste away from "you may discuss any
+user's measurements." Prompts are not an enforcement mechanism — they are a
+request, and a request can be argued with.
+
+| Hard constraints — code, not editable | Soft policy — prompt, editable |
+|---|---|
+| axis filtering from `UserAiConsent` | tone and persona |
+| the trainer × client intersection | refusal topics (medical, diagnostic) |
+| the tool allowlist and its read-only rule for client data | how advice is framed and hedged |
+| per-user, trainer and global quota | output verbosity, formatting |
+| structured-output schema validation | how the onboarding agent introduces itself |
+
+Hard constraints are enforced **before** the provider call, in
+`IDataAccessPolicy` and the quota service. The context the model receives is
+already filtered; there is nothing for a prompt to leak. Changing a hard
+constraint is a code change and a deploy, deliberately.
+
+The console shows the hard constraints **read-only, alongside the editable
+prompt**, so an admin can see what is enforced without being able to edit it.
+Invisible constraints get worked around by people who do not know they exist.
+
+### Entities
+
+```
+AiPrompt          key ("chat.system", "food.analysis", "onboarding.agent"), description
+AiPromptVersion   promptId, version, body, softPolicy(json), status(draft|published|archived),
+                  authorId, notes, publishedAt
+AiEvalCase        promptKey, name, synthetic input fixture, assertions, isAdversarial
+AiEvalRun         versionId, caseId, outcome, schemaValid, tokens, cost, latencyMs
+```
+
+`AiUsageLog` (§10) gains `PromptVersionId`. Every answer traces to the exact
+version that produced it, so a quality regression is bisectable instead of
+mysterious.
+
+Publishing goes through MediatR, so the existing `AuditBehavior` records who
+published what, when, without new plumbing. One published version per key at a
+time; previous versions stay immutable and revertible.
+
+### Evals, or the draft flow is theatre
+
+A draft an admin eyeballed once is not tested. The console runs a draft against
+a fixed eval set and reports:
+
+- **Schema conformance rate** for structured outputs. Objective, and the number
+  that actually matters for food analysis.
+- **Draft vs. live, side by side** on identical inputs. Nobody can judge a
+  prompt change without seeing what it changed.
+- **Token and cost delta per case.** A rewrite that doubles token count is a
+  bill change, and it should be visible before publish rather than at
+  month-end.
+- **Adversarial cases, and they gate publish.** Prompt injection in a food
+  description, requests for another user's data, medical-advice bait, attempts
+  to talk the model past its framing. These are regression tests. A draft that
+  fails one does not get a publish button.
+
+### Two rules about test runs
+
+**Synthetic fixtures only — never real user data.** §11 defines admin as
+operational access, not super-user access over personal data. An admin reading
+real logs to tune a prompt violates that, and it is the kind of thing that
+happens by default unless the eval store is built to make it impossible.
+
+**Eval spend bills a separate admin budget inside the global ceiling.** Prompt
+iteration burns real tokens. If it draws from the shared pool, an afternoon of
+tuning can trip the global circuit breaker and take AI down for every user —
+the feature's own maintenance killing the feature. Give it its own line, and
+show it in the usage tab next to user spend.
+
+### What I would not build
+
+**Percentage rollouts and canaries.** Wrong tool at this scale. The value of a
+canary is catching a regression across a large population before it spreads;
+here, an eval set plus one-click rollback covers the same risk with a fraction
+of the machinery. Straight publish, instant revert. Revisit if the user base
+ever makes it worth it.
+
+### Where it lives
+
+`/admin/ai` — prompts, versions, evals, and the AI slice of usage. §8 argued for
+halving the admin panel by moving work to MCP tools; this is the counter-case
+and the reason the panel survives at all. A prompt editor with a version diff,
+an eval matrix and a cost delta is a genuine UI job — that is not a tool call.
+
+### Work this adds
+
+| Item | Phase |
+|---|---|
+| `AiPrompt` / `AiPromptVersion`, publish command, audit via `AuditBehavior` | 9 |
+| Hard/soft split enforced in the provider call path | 9 |
+| `AiEvalCase` / `AiEvalRun`, synthetic fixture store, adversarial set | 10 |
+| `/admin/ai` console: editor, diff, eval matrix, rollback | 10 |
+| `PromptVersionId` on `AiUsageLog`; admin eval budget line in the usage tab | 10 |
+
+---
+
+## 13. MCP server
 
 Survives intact — it is the part of this codebase that works. ~120 tools stay
 roughly as-is now that their endpoints survive; the trim is limited to tools
@@ -613,7 +727,7 @@ setup, tool catalogue, example sessions.
 
 ---
 
-## 13. Execution order
+## 14. Execution order
 
 Each phase is one commit and leaves the build green.
 
@@ -628,8 +742,8 @@ Each phase is one commit and leaves the build green.
 | 6 | **Remove BetterAuth** → Identity | **high** | | delete `lib/auth.ts`, `lib/auth-client.ts`, `app/api/auth/[...all]`, the `better-auth` deps; stand up `AddIdentityApiEndpoints`; scrypt-compat hasher; rehearse on a prod DB copy |
 | 7 | Schema unification | **high** | | drop Drizzle and `frontend/db/`, squash migrations, export/import **all** surviving tables, snapshot first |
 | 8 | Storage abstraction | low | | `IStorageService`, Cloudinary impl, drop `next-cloudinary`. S3 lands in v2 |
-| 9 | AI platform + consent | medium | | `IAiProvider`, `AiUsageLog`, `IAiQuotaService`, per-user + global ceilings, usage tab, `UserAiConsent`, `IDataAccessPolicy`. **Limits and consent ship with the first provider call, not after** |
-| 10 | AI surfaces | medium | | structured food analysis, chat on `AiChatThread`, onboarding agent over the allowlisted tool→command map shared with MCP; trainer intersection rule and read-only client tools (§11) |
+| 9 | AI platform + consent | medium | | `IAiProvider`, `AiUsageLog`, `IAiQuotaService`, per-user + global ceilings, usage tab, `UserAiConsent`, `IDataAccessPolicy`, `AiPromptVersion` + the hard/soft split. **Limits and consent ship with the first provider call, not after** |
+| 10 | AI surfaces + admin console | medium | | structured food analysis, chat on `AiChatThread`, onboarding agent over the allowlisted tool→command map shared with MCP; trainer intersection rule and read-only client tools (§11); `/admin/ai` with evals, diff and rollback (§12) |
 | 11 | UI rebuild on the new tiers | medium | | `/today`, `/history`, `/progress`, sheet-based logging |
 | 12 | Docs rewrite | none | | README, CLAUDE.md, ARCHITECTURE.md, MCP.md, AI.md |
 
@@ -648,7 +762,7 @@ Ordering constraints that actually bind:
 Everything else can move. **If only one thing gets done: phase 2.** The audit in
 §2 makes the case — 73 routes, 21 reachable.
 
-## 14. What this costs
+## 15. What this costs
 
 - **Auth downtime risk.** Phase 6 is the one place a mistake locks users out.
   Snapshot, rehearse on a copy, keep a rollback.
@@ -670,6 +784,10 @@ Everything else can move. **If only one thing gets done: phase 2.** The audit in
   write to the diary. Do not let a later "just log it automatically" convenience
   request erode that — an unattended wrong entry corrupts the log the whole
   product is built on.
+- **A prompt console is an ongoing responsibility, not a one-off build.** The
+  eval set only protects you if it grows every time something goes wrong in
+  production. An adversarial suite that is never added to decays into a
+  formality that passes everything.
 - **Consent defaults to off means the AI looks broken on day one.** A new user
   opens chat and it knows nothing about them until they opt in. That is the
   correct default and it will read as a bug. Onboarding has to ask for consent
