@@ -1,10 +1,15 @@
 # Refocus Plan: Mizan is a Logging App
 
-**Status:** rev 7 — phases 0-3 done, 4 in progress 
+**Status:** rev 8 — phases 0-5 done, 6 in progress 
 **Branch:** `claude/cleanup-logging-refocus-rzfiv8`
 **Rule:** decide what the project is about, build around it. Everything else
 gets demoted, not deleted.
 
+> **rev 8 rewrites §6 around a new database.** The owner dropped the
+> data-preservation constraint, which deletes the password-compat hasher, the
+> export/import scripts and the rehearsal, and merges old phases 6 and 7 into
+> one. It also drops browser JWTs for opaque session cookies.
+>
 > **rev 7 replaces §4's "recipes do not nest" with preparations: marking a
 > recipe as a preparation derives a `Food`, so reuse works without a recipe
 > graph or a cycle validator.**
@@ -360,7 +365,7 @@ slot.
 
 ---
 
-## 6. Kill the shared schema (unchanged from rev 1 — still the main event)
+## 6. Kill the shared schema — v2 is a fresh start
 
 Today: BetterAuth owns `users`/`accounts`/`sessions`/`jwks`/`verification` via
 Drizzle; EF Core owns everything else and treats `User` as read-only with a
@@ -369,43 +374,113 @@ database, and a `frontend/db/schema.ts` that documents tables it does not own.
 
 **Target: ASP.NET Core owns the entire schema. Next.js owns zero tables.**
 
-- **ASP.NET Core Identity** via `AddIdentityApiEndpoints<MizanUser>()` — ships
-  register/login/refresh/confirmEmail/manage. No hand-rolled auth.
-- **Cookie auth, not JWT.** `mizan.euaell.me` and `api.mizan.euaell.me` share a
-  parent domain, so `Domain=.euaell.me; HttpOnly; Secure; SameSite=Lax` covers
-  browser→frontend and browser→API. Deletes `EdDsaJwtSignatureValidator`,
-  `JwksProvider`, `JwksRefreshService`, `JwtAuthenticationExtensions`,
-  `JwtOptions`, the Redis JWKS cache and the whole `Jwt__*` config surface.
-- **MCP tokens untouched.** `ApiKeyAuthenticationHandler` already runs as a
-  separate scheme over `McpToken`.
-- **Password migration:** BetterAuth stores scrypt hashes in `accounts.password`.
-  A custom `IPasswordHasher<MizanUser>` verifies the BetterAuth format and
-  returns `SuccessRehashNeeded`, so Identity rehashes transparently on first
-  successful login. Nobody resets a password.
-- **Dropped auth features:** magic link, `haveIBeenPwned`, `lastLoginMethod`,
-  the BetterAuth `admin` plugin (impersonation/ban → Identity lockout + a role
-  claim). Google OAuth returns later via `AddGoogle()` if wanted.
-- **Next.js becomes a pure client.** `frontend/db/`, `drizzle.config.ts`,
-  `drizzle-orm`, `drizzle-kit`, `better-auth`, `@better-auth/infra`, `postgres`,
-  `nodemailer`, `lib/auth.ts`, `lib/auth-client.ts`, `app/api/auth/[...all]`,
-  `lib/email.ts` all go. `DATABASE_URL` leaves the frontend environment.
-- Email moves to the backend behind one `IEmailSender`.
+### The constraint that changed
 
-**Redis stays.** Rev 1 dropped it on the assumption SignalR was going. SignalR
-stays, so the backplane stays, and `HybridCache`'s L2 (used by
-`EntitlementService` and `UserStatusService`) stays with it.
+Rev 7 planned this as the high-risk pair: rehearse on a production copy, write a
+scrypt-compatible hasher so nobody resets a password, export and re-import every
+surviving table. All of that existed to protect data in the live database.
 
-### Migrations
+The owner removed the constraint: **v2 gets a new database.** History is not
+carried forward here; moving the old rows across is a separate exercise with its
+own migration step, outside this scope.
 
-13 migrations, 38,218 lines. Most of it describes tables that survive, so rev 1's
-squash argument is weaker now — but the history still encodes a two-ORM world
-and a `users` table this codebase was forbidden to touch.
+That deletes, in one stroke: the password-compat hasher, the rehash-on-login
+path, `scripts/export-data.mjs` / `scripts/import-data.mjs`, the rehearsal, the
+snapshot, and the "keep both schemas alive during the cutover" dance. What is
+left is a straight rewrite, which is why 6 and 7 are now one phase.
 
-**Squash anyway, at phase 7 only.** Delete `Data/Migrations/`, generate one
-`InitialSchema` against the unified model, and ship `scripts/export-data.mjs` /
-`scripts/import-data.mjs` covering **every surviving table**, not just the three
-logs — that list is now much longer than rev 1 assumed. Take a database snapshot
-before running it.
+### Migrations: one file
+
+Delete `Mizan.Infrastructure/Data/Migrations/` — 16 migrations, 38k lines,
+every one of them describing a two-ORM world — and generate a single
+`InitialCreate` from the unified model. The history has no value once the
+database it describes is gone.
+
+### Auth: opaque session cookies, not browser JWTs
+
+The JWT bearer scheme exists for exactly one client: the browser. The MCP server
+authenticates with a service API key plus an `X-Impersonate-User` header, and
+never presents a JWT. So the browser's move off JWTs removes the scheme
+entirely, and with it `EdDsaJwtSignatureValidator`, `JwksProvider`,
+`JwksRefreshService`, `JwtAuthenticationExtensions`, `JwtOptions`, the Redis
+JWKS cache, the whole `Jwt__*` config surface, `GET /api/auth/token`, the
+client-side token cache in `lib/api.client.ts`, and the 15-minute refresh dance
+that would otherwise need Next.js middleware to run on every request.
+
+What replaces it: one httpOnly cookie holding an opaque 256-bit session token.
+
+```
+mizan_session   HttpOnly; Secure; SameSite=Lax; Domain=.euaell.me; Path=/
+```
+
+`mizan.euaell.me` and `api.mizan.euaell.me` are the same site, so Lax sends the
+cookie on both browser→frontend and browser→API requests, including the SignalR
+WebSocket upgrade. Server components read the same cookie and forward it. The
+API resolves it against `user_sessions`, cached in `HybridCache` — the same
+lookup budget JWKS already spent, for a session that is now genuinely
+revocable, which a JWT never was.
+
+### Auth: what we build vs. what we take
+
+`AddIdentityApiEndpoints<T>()` was rev 7's answer. Checked against what this app
+actually needs, it covers about 60%: it has no external logins, no session list
+or revoke, no ban, no sign-in notification, and it forces `IdentityUser<Guid>`
+onto the `users` table along with eleven columns nothing reads and three store
+tables nothing writes. The other 40% would be ours anyway, on a different
+session model from the half Identity owns. Two session models in one app is the
+clanky outcome, so:
+
+**Take the primitives, own the endpoints.**
+
+| Concern | What we use |
+|---|---|
+| Password hashing | `PasswordHasher<User>` from `Microsoft.AspNetCore.Identity`, standalone — no stores, no `AspNet*` tables. PBKDF2-HMAC-SHA512, the exact code Identity itself calls |
+| Sessions | 32 random bytes, SHA-256 at rest, 7-day sliding expiry, revoke = delete |
+| One-time tokens | 32 random bytes, SHA-256 at rest, single use: 24h to confirm an email, 1h to reset a password |
+| Lockout | `access_failed_count` + `lockout_end` on `users`, 5 failures per 15 minutes |
+| External login | `AddGoogle` / `AddGitHub` (`AspNet.Security.OAuth.GitHub`), correlated through a short-lived external cookie scheme, exchanged for a session on callback |
+| Roles, ban | The `role`, `banned`, `ban_reason`, `ban_expires` columns that already exist and that the admin UI already reads |
+
+The only cryptography we write is "generate random bytes, store their hash".
+
+### Schema
+
+`users` keeps every column it has and gains `password_hash`,
+`access_failed_count`, `lockout_end`. Three tables arrive:
+
+| Table | Holds |
+|---|---|
+| `user_sessions` | one row per signed-in browser: token hash, expiry, IP, user agent, last-seen. Powers `/profile/sessions` and admin revocation |
+| `user_tokens` | pending email confirmations and password resets: purpose, token hash, expiry, consumed-at |
+| `external_logins` | provider + provider key → user, for Google and GitHub |
+
+Five tables leave: `accounts`, `sessions`, `verification`, `jwks`, `rateLimit`.
+
+### Auth surface, kept and dropped
+
+**Kept:** email + password, mandatory email verification, password reset,
+session list and revoke, roles, ban, delete account, theme preferences,
+per-endpoint credential rate limits, the sign-in notification email, and both
+social providers.
+
+**Dropped:** magic link — password reset is the same flow with an extra name,
+and the login page keeps one "forgot password" link instead of two paths to the
+same inbox. `haveIBeenPwned` — an outbound call on the signup path, replaced by
+a 10-character minimum. The BetterAuth `admin` plugin's impersonation; the MCP
+`X-Impersonate-User` path is unaffected and stays.
+
+### Next.js becomes a pure client
+
+`frontend/db/`, `drizzle.config.ts`, `drizzle-orm`, `drizzle-kit`, `postgres`,
+`better-auth`, `@better-auth/infra`, `nodemailer`, `lib/auth.ts`,
+`lib/auth-client.ts`, `lib/permissions.ts`, `lib/email.ts`, `lib/redis.ts`,
+`app/api/auth/[...all]`, `app/api/admin/revoke-sessions`,
+`app/api/test/verify-user` all go. `DATABASE_URL`, `BETTER_AUTH_*` and every
+SMTP variable leave the frontend environment. Email moves to the backend behind
+one `IEmailSender`.
+
+**Redis stays.** SignalR needs the backplane, and `HybridCache`'s L2 now backs
+session lookups as well as `EntitlementService` and `UserStatusService`.
 
 ---
 
@@ -1012,9 +1087,9 @@ Each phase is one commit and leaves the build green.
 | 2 | Nav tiering | low | **done** | spine + `( + )` sheet + `/more`; nav model extracted to `components/Layout/nav.ts`; 21 flat entries → 4; orphans 9 → 4 |
 | 3 | Fix + delete per audit | low | **done** | delete `/community`, resolve the `TODO` routes, drop frontend OTel, halve the admin panel, **add the trainer grant-update endpoint and settle `HouseholdMember.CanViewNutrition`** (§11) |
 | 4 | Recipe inversion + preparations | medium | **done** — promotion, preparations, food ownership, sub-table collapse. Promotion chip lands with the UI rebuild in 12 | promotion chip, unified picker, sub-table collapse, migration |
-| 5 | Contextual surfaces | medium | next | tier 2: resume banner, trainer strip, household switcher, in-context Pro wall |
-| 6 | **Remove BetterAuth** → Identity | **high** | | delete `lib/auth.ts`, `lib/auth-client.ts`, `app/api/auth/[...all]`, the `better-auth` deps; stand up `AddIdentityApiEndpoints`; scrypt-compat hasher; rehearse on a prod DB copy |
-| 7 | Schema unification | **high** | | drop Drizzle and `frontend/db/`, squash migrations, export/import **all** surviving tables, snapshot first |
+| 5 | Contextual surfaces | medium | **done** | tier 2: resume banner, trainer strip, household switcher, in-context Pro wall; standing upsell banners deleted |
+| 6 | **v2 identity + schema** (absorbs 7) | **high** | next | backend owns `users`; opaque session cookies replace the JWT scheme; Drizzle, BetterAuth and `frontend/db/` deleted; migration history collapsed to one `InitialCreate` against a new database |
+| 7 | *(folded into 6)* | | | rev 8 merged schema unification into the identity phase; later numbers are left alone so earlier commits still resolve |
 | 8 | Storage + `Mizan.Contracts` | low | | `IStorageService`, Cloudinary impl, drop `next-cloudinary`, S3 in v2; extract shared DTOs so Api, Mcp.Server and Telegram cannot drift (§13) |
 | 9 | AI platform + consent | medium | | `IAiProvider`, `AiUsageLog`, `IAiQuotaService`, per-user + global ceilings, usage tab, `UserAiConsent`, `IDataAccessPolicy`, `AiPromptVersion` + the hard/soft split. **Limits and consent ship with the first provider call, not after** |
 | 10 | AI surfaces + admin console | medium | | structured food analysis, chat on `AiChatThread`, onboarding agent over the allowlisted tool→command map shared with MCP; trainer intersection rule and read-only client tools (§11); `/admin/ai` with evals, diff and rollback (§12) |
@@ -1031,7 +1106,10 @@ Ordering constraints that actually bind:
   consent is how you learn about the leak from a user.
 - **8 before 10.** Food photo analysis needs storage behind an interface, or the
   v2 S3 swap has to touch the AI code too.
-- **6 before 7.** Identity must own `users` before Drizzle can be removed.
+- **6 is atomic.** Rev 7 split identity from schema so the two high-risk halves
+  could land separately against a live database. With a new database there is
+  nothing to protect between them, and splitting would mean running two auth
+  systems against one `users` table for the length of a phase.
 - **2 and 3 before 12.** Rebuild the screens against the tier structure, not
   before it exists.
 - **8 before 13.** `Mizan.Contracts` exists before a third .NET service starts
