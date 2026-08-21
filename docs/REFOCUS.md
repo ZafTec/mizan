@@ -1,12 +1,16 @@
 # Refocus Plan: Mizan is a Logging App
 
-**Status:** rev 3 — phases 0, 1 and 2 executed
+**Status:** rev 4 — phases 0, 1 and 2 executed
 **Branch:** `claude/cleanup-logging-refocus-rzfiv8`
 **Rule:** decide what the project is about, build around it. Everything else
 gets demoted, not deleted.
 
-> **rev 3 adds the AI platform (§10), pins households as kept (§9), and folds in
-> the phase 1 route audit — see `docs/ROUTE-AUDIT.md`. Phases 0, 1 and 2 are done.
+> **rev 4 adds §11: three principal types, per-axis consent, and the
+> trainer × AI intersection. It records three enforcement defects found while
+> checking the plan against the code.**
+>
+> **rev 3 added the AI platform (§10), pinned households as kept (§9), and folded
+> in the phase 1 route audit — see `docs/ROUTE-AUDIT.md`. Phases 0, 1 and 2 are done.
 >
 > **rev 2 changed the thesis.** Rev 1 proposed deleting recipes, billing,
 > trainers, social, achievements, notifications and the admin panel. That was
@@ -367,8 +371,13 @@ The AI never writes to the food diary unattended.
 
 `AiChatThread` already exists in the domain — this builds on it rather than
 adding an entity. Threads are per-user, backend-persisted, with a trimmed
-context window and the user's recent log summary injected as system context so
-"how did I eat this week" works without the model guessing.
+context window.
+
+The user's log summary is injected as system context **only for the axes they
+have consented to**, scoped to their active household. Consent defaults to off
+on every axis. See §11 — the context builder asks `IDataAccessPolicy` what it
+may include and receives nothing more; it does not receive the full log and
+filter it afterwards.
 
 ### The onboarding agent does things
 
@@ -388,8 +397,10 @@ command with its existing validator:
 
 Non-negotiables: the model never touches the database, only this allowlist.
 Every argument goes through the same FluentValidation the HTTP path uses. Every
-tool call is authorized as the calling user — the agent cannot act outside their
-scope. Mutations are echoed back in the UI as "I set X, undo?" Nothing
+tool call is authorized as the calling principal **against the grant, not just
+the identity** — a trainer is a legitimate user with partial access to a client,
+so identity alone is the wrong check (§11). Mutating tools act only on the
+caller's own records. Mutations are echoed back in the UI as "I set X, undo?" Nothing
 destructive is exposed as a tool, ever.
 
 This is the same shape as the MCP server, which is the point — MCP already
@@ -435,12 +446,13 @@ a cost problem and being told about it by the invoice.
 AI is where Pro gets something worth paying for. Current gating is three
 endpoints (§5), which is thin. Proposed split:
 
-| | Free | Pro |
-|---|---|---|
-| Chat | small daily cap | working allowance |
-| Food photo analysis | — | included |
-| Onboarding agent | included, once | included |
-| Weekly log insights | — | included |
+| | Free | Pro | Trainer |
+|---|---|---|---|
+| Chat | small daily cap | working allowance | own ceiling, scaled to client count |
+| Food photo analysis | — | included | included |
+| Onboarding agent | included, once | included | included |
+| Weekly log insights | — | included | included, per consenting client |
+| Client-context queries | — | — | read-only, bills the trainer (§11) |
 
 Enforced in one place: an `IAiQuotaService` check ahead of every provider call,
 reading `IEntitlementService` for the tier. Not per-controller attributes —
@@ -450,7 +462,140 @@ Widening Pro beyond AI is still a product decision and still out of scope.
 
 ---
 
-## 11. MCP server
+## 11. Principals, consent and what the AI is allowed to see
+
+Three principal types, and they are not variations of one another. Getting this
+wrong is the failure mode that matters most, because it leaks somebody's body
+weight to somebody else.
+
+| Principal | Scope |
+|---|---|
+| **Admin** | developers and product owners. Operational access, not a super-user over personal data |
+| **User** | belongs to *many* households, switches active one. Chooses, per axis, what the AI may see |
+| **Trainer** | linked to *many* users. Gets what each client grants, per axis. Chat. The AI assists them but is never authoritative |
+
+Three data axes, and they are already the right three in the schema:
+**nutrition** (meals), **training** (workouts), **body** (measurements).
+
+### What already exists and works
+
+`TrainerClientRelationship` carries `CanViewNutrition`, `CanViewWorkouts`,
+`CanViewMeasurements`, `CanMessage`, `CanAwardAchievements`. The client sets
+them when accepting the request. Three are enforced:
+
+- `GetClientNutritionQuery` checks `CanViewNutrition`
+- `WorkoutFeatureQueries` checks `CanViewWorkouts`
+- `SendChatMessageCommand` checks `CanMessage`
+
+That is a real consent model, correctly shaped, and it is a reason to keep
+trainers rather than cut them.
+
+### Three defects found while checking this plan against the code
+
+**1. `CanViewMeasurements` is never enforced.** It is declared, defaults to
+false, and is settable by the client — and no code path reads it. It is not
+currently exploitable, because no endpoint serves client measurements to a
+trainer at all. It is a trap: the first person to add `GetClientMeasurements`
+has no precedent to copy and will ship it ungated. Body data is the most
+sensitive of the three axes and it is the one axis with no check.
+
+**2. `HouseholdMember.CanViewNutrition` is never enforced either.** Same shape
+— written by `CreateHouseholdCommand` and `RespondToHouseholdInvitationCommand`,
+read by nothing. Household nutrition visibility is currently ungated.
+
+**3. Grants cannot be revoked.** They are set once, at
+`RespondToTrainerRequestCommand`. `TrainersController` exposes request, respond,
+and the read paths — there is no update. A user can decide once and never change
+their mind short of ending the relationship. "The user chooses to give their
+metrics data" has to mean they can also take it back.
+
+### AI consent does not exist yet, and §10 assumed it away
+
+There is no `AiConsent` anywhere in the codebase, and §10 as first written said
+to inject "the user's recent log summary as system context." Against this model
+that is wrong: it exposes all three axes to the provider with no opt-in. That
+was my error in the plan, not a defect in the code.
+
+Correcting it:
+
+- **`UserAiConsent`** — per user, one flag per axis plus a master off switch.
+  **Default off, all axes.** The AI sees nothing until the user says so.
+- Consent is **withholding, not instructing**. If `body` is off, the context
+  builder never receives weight data. Never "the model has it but was told not
+  to mention it" — that is not a control, it is a request.
+- Revocable at any time, from the same place it is granted.
+
+### One policy object, not scattered `if` statements
+
+`CanViewMeasurements` was missed because enforcement lives in three ad-hoc
+checks in three query handlers. Adding a fourth consumer — the AI — to that
+pattern guarantees a fourth miss.
+
+Introduce `IDataAccessPolicy` answering one question:
+
+```csharp
+// may `principal` read `axis` of `subject`, for this purpose?
+Task<bool> CanRead(Guid principal, Guid subject, DataAxis axis, AccessPurpose purpose);
+```
+
+Every reader goes through it: the trainer HTTP paths, the household views, the
+AI context builder, and the MCP tools. One place to audit, one place to fix.
+
+### The trainer × AI intersection
+
+A trainer asking the AI about a client is governed by the **intersection** of
+two independent grants:
+
+```
+trainer sees axis A of client C  ⟺  C granted A to that trainer
+                                AND C consented to A for AI
+```
+
+Neither alone is sufficient. A client who shares workouts with their coach but
+wants no AI involvement gets exactly that. The trainer's own AI consent governs
+the trainer's own data and nothing else.
+
+**"Not authoritative" becomes a technical constraint, not a disclaimer:**
+
+- The tool allowlist for a trainer principal is **read-only over client data**.
+  Mutating tools act on the caller's own records, never a client's.
+- AI output in trainer surfaces is labelled advisory and is never written into
+  a client's record as fact.
+- The AI never adjusts a client's targets, plan or log. A trainer acts; the AI
+  drafts.
+
+### Multi-household and the AI
+
+A user in several households has one active household
+(`UserHouseholdPreference`). The AI's context is scoped to the **active
+household only** — meal plans and shopping lists are household-scoped, so
+without this the model would blend two households' plans, and worse, could
+surface one household's data inside another. The active household is part of
+the context key, and the quota ledger records it.
+
+### Quota, when a trainer is involved
+
+A trainer's AI call bills the **trainer's** quota, never the client's.
+Otherwise one trainer with twenty clients drains twenty people's allowances and
+those clients get rate-limited by activity that is not theirs. Trainer tiers
+need their own ceiling in §10's gating table.
+
+### Work this adds
+
+| Fix | Phase |
+|---|---|
+| Grant-update endpoint so trainer grants are revocable | 3 |
+| Enforce or delete `HouseholdMember.CanViewNutrition` | 3 |
+| `IDataAccessPolicy`; move the three existing checks behind it | 9 |
+| Enforce `CanViewMeasurements` through the policy, before any client-measurement endpoint exists | 9 |
+| `UserAiConsent` entity, settings UI, default-off | 9 |
+| Intersection rule in the AI context builder | 10 |
+| Read-only trainer tool allowlist | 10 |
+| Trainer quota tier | 10 |
+
+---
+
+## 12. MCP server
 
 Survives intact — it is the part of this codebase that works. ~120 tools stay
 roughly as-is now that their endpoints survive; the trim is limited to tools
@@ -468,7 +613,7 @@ setup, tool catalogue, example sessions.
 
 ---
 
-## 12. Execution order
+## 13. Execution order
 
 Each phase is one commit and leaves the build green.
 
@@ -477,22 +622,23 @@ Each phase is one commit and leaves the build green.
 | 0 | Docs + scratch purge | none | **done** | 47 files → 4. `AGENTS.md` merged into `CLAUDE.md`; dead `.fpf/` pointers removed |
 | 1 | Route audit | none | **done** | `scripts/route-audit.mjs` + `docs/ROUTE-AUDIT.md`. 73 routes, 21 in nav, 9 orphaned |
 | 2 | Nav tiering | low | **done** | spine + `( + )` sheet + `/more`; nav model extracted to `components/Layout/nav.ts`; 21 flat entries → 4; orphans 9 → 4 |
-| 3 | Fix + delete per audit | low | next | link the orphaned trainer and admin screens, delete `/community`, resolve the 5 `TODO` routes, drop frontend OTel, halve the admin panel |
+| 3 | Fix + delete per audit | low | next | delete `/community`, resolve the `TODO` routes, drop frontend OTel, halve the admin panel, **add the trainer grant-update endpoint and settle `HouseholdMember.CanViewNutrition`** (§11) |
 | 4 | Recipe inversion | medium | | promotion chip, unified picker, sub-table collapse, migration |
 | 5 | Contextual surfaces | medium | | tier 2: resume banner, trainer strip, household switcher, in-context Pro wall |
 | 6 | **Remove BetterAuth** → Identity | **high** | | delete `lib/auth.ts`, `lib/auth-client.ts`, `app/api/auth/[...all]`, the `better-auth` deps; stand up `AddIdentityApiEndpoints`; scrypt-compat hasher; rehearse on a prod DB copy |
 | 7 | Schema unification | **high** | | drop Drizzle and `frontend/db/`, squash migrations, export/import **all** surviving tables, snapshot first |
 | 8 | Storage abstraction | low | | `IStorageService`, Cloudinary impl, drop `next-cloudinary`. S3 lands in v2 |
-| 9 | AI platform | medium | | `IAiProvider`, `AiUsageLog`, `IAiQuotaService`, per-user + global ceilings, usage tab. **Limits ship with the first provider call, not after** |
-| 10 | AI surfaces | medium | | structured food analysis, chat on `AiChatThread`, onboarding agent over the allowlisted tool→command map shared with MCP |
+| 9 | AI platform + consent | medium | | `IAiProvider`, `AiUsageLog`, `IAiQuotaService`, per-user + global ceilings, usage tab, `UserAiConsent`, `IDataAccessPolicy`. **Limits and consent ship with the first provider call, not after** |
+| 10 | AI surfaces | medium | | structured food analysis, chat on `AiChatThread`, onboarding agent over the allowlisted tool→command map shared with MCP; trainer intersection rule and read-only client tools (§11) |
 | 11 | UI rebuild on the new tiers | medium | | `/today`, `/history`, `/progress`, sheet-based logging |
 | 12 | Docs rewrite | none | | README, CLAUDE.md, ARCHITECTURE.md, MCP.md, AI.md |
 
 Ordering constraints that actually bind:
 
-- **9 before 10.** Metering and the global ceiling exist before anything can
-  call the provider. Shipping a feature first and limiting it later is how you
-  find out about the bill from the invoice.
+- **9 before 10.** Metering, the global ceiling and consent all exist before
+  anything can call the provider. Shipping the feature first and limiting it
+  later is how you learn about the bill from the invoice; shipping it before
+  consent is how you learn about the leak from a user.
 - **8 before 10.** Food photo analysis needs storage behind an interface, or the
   v2 S3 swap has to touch the AI code too.
 - **6 before 7.** Identity must own `users` before Drizzle can be removed.
@@ -502,7 +648,7 @@ Ordering constraints that actually bind:
 Everything else can move. **If only one thing gets done: phase 2.** The audit in
 §2 makes the case — 73 routes, 21 reachable.
 
-## 13. What this costs
+## 14. What this costs
 
 - **Auth downtime risk.** Phase 6 is the one place a mistake locks users out.
   Snapshot, rehearse on a copy, keep a rollback.
@@ -524,6 +670,11 @@ Everything else can move. **If only one thing gets done: phase 2.** The audit in
   write to the diary. Do not let a later "just log it automatically" convenience
   request erode that — an unattended wrong entry corrupts the log the whole
   product is built on.
+- **Consent defaults to off means the AI looks broken on day one.** A new user
+  opens chat and it knows nothing about them until they opt in. That is the
+  correct default and it will read as a bug. Onboarding has to ask for consent
+  in context, per axis, explaining what each unlocks — not a single "enable AI"
+  toggle buried in settings.
 - **The name.** With recipes kept, "MacroChef" survives — but the product is now
   a logger that has recipes, not a recipe app that logs. Worth deciding which
   name leads before the UI rebuild in phase 9.
