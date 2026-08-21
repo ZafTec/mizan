@@ -79,7 +79,7 @@ public class FoodsControllerTests
     }
 
     [Fact]
-    public async Task NonAdminCannotCreateFood()
+    public async Task NonAdminCreatesAPrivateFood()
     {
         await _fixture.ResetDatabaseAsync();
 
@@ -91,7 +91,7 @@ public class FoodsControllerTests
 
         var createCommand = new
         {
-            Name = "Blocked Food",
+            Name = "My Private Food",
             CaloriesPer100g = 80m,
             ProteinPer100g = 8m,
             CarbsPer100g = 12m,
@@ -99,7 +99,16 @@ public class FoodsControllerTests
         };
 
         var response = await client.PostAsJsonAsync("/api/Foods", createCommand);
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+
+        // Creation was admin-only until Food gained an owner - see
+        // docs/REFOCUS.md §4. A non-admin now gets a food private to them.
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var mine = await _fixture.GetFoodsByUserId(userId);
+        mine.Should().ContainSingle(f => f.Name == "My Private Food");
+
+        var publicFoods = await _fixture.GetPublicFoodsAsync();
+        publicFoods.Should().NotContain(f => f.Name == "My Private Food");
     }
 
     private sealed record CreateFoodResponse(Guid Id, bool Success);
