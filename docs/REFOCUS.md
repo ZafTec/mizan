@@ -249,6 +249,13 @@ ownership. A private food can be promoted to public by an admin, which is what
 `/admin/ingredients` becomes: a queue of user-created foods worth sharing,
 rather than a list of everything anyone ever typed.
 
+**This changes who may create a food.** `POST /api/Foods` was admin-only, and
+had to be, because every food went into everyone's search. With ownership it
+opens to any signed-in user, whose foods are private to them; admins still
+create public ones. `IsVerified` is ignored for non-admins, so nobody can mark
+their own entry as verified. Update and delete follow the same rule — you may
+maintain your own foods, the shared catalogue stays admin-only.
+
 Migration note: every existing row becomes public (`UserId = null`), because
 there is no ownership information to recover and silently privatising foods
 that recipes already reference would break them. Ownership starts applying to

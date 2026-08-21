@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Caching.Hybrid;
 using Mizan.Application.Common;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Commands;
@@ -30,10 +31,13 @@ public class DeleteFoodCommandHandler : IRequestHandler<DeleteFoodCommand, Delet
     private readonly IMizanDbContext _context;
     private readonly HybridCache _cache;
 
-    public DeleteFoodCommandHandler(IMizanDbContext context, HybridCache cache)
+    private readonly ICurrentUserService _currentUser;
+
+    public DeleteFoodCommandHandler(IMizanDbContext context, HybridCache cache, ICurrentUserService currentUser)
     {
         _context = context;
         _cache = cache;
+        _currentUser = currentUser;
     }
 
     public async Task<DeleteFoodResult> Handle(DeleteFoodCommand request, CancellationToken cancellationToken)
@@ -43,6 +47,13 @@ public class DeleteFoodCommandHandler : IRequestHandler<DeleteFoodCommand, Delet
         if (food == null)
         {
             return new DeleteFoodResult { Success = false, Message = "Food not found" };
+        }
+
+        // A user may maintain the foods they created; the shared catalogue stays
+        // admin-only. Without this an owned food would be uneditable by its owner.
+        if (!_currentUser.IsInRole("admin") && food.UserId != _currentUser.UserId)
+        {
+            throw new ForbiddenAccessException("This food belongs to someone else");
         }
 
         _context.Foods.Remove(food);
