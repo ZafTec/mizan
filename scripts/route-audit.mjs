@@ -69,10 +69,13 @@ const isLinked = (route) => {
   return false;
 };
 
-const NAV_FILE = "frontend/components/Layout/AppShell.tsx";
+// Tier 1 only. The spine is the permanent nav; MORE_GROUPS is tier 3 and is
+// deliberately not counted here - see docs/REFOCUS.md §3.
+const NAV_FILE = "frontend/components/Layout/nav.ts";
 const navText = source.get(NAV_FILE) ?? "";
+const spineBlock = navText.match(/export const SPINE[^=]*=\s*\[([\s\S]*?)\n\];/);
 const navHrefs = new Set(
-  [...navText.matchAll(/href:\s*["'`](\/[^"'`]*)/g)].map((m) => m[1])
+  [...(spineBlock?.[1] ?? "").matchAll(/href:\s*["'`](\/[^"'`]*)/g)].map((m) => m[1])
 );
 
 const rows = pages.map((file) => {
@@ -103,7 +106,7 @@ const rows = pages.map((file) => {
 
   const flags = [];
   if (!isLinked(route)) flags.push("ORPHAN");
-  if (navHrefs.has(route)) flags.push("in-nav");
+  if (navHrefs.has(route)) flags.push("spine");
   if (loc <= STUB_LOC && featureLoc <= STUB_LOC) flags.push("STUB");
   if (/coming soon|not implemented|\bTODO\b|\bFIXME\b/i.test(body))
     flags.push("TODO");
@@ -130,7 +133,7 @@ if (process.argv.includes("--json")) {
   }
   const orphans = rows.filter((r) => r.flags.includes("ORPHAN"));
   console.log(
-    `\n${rows.length} routes · ${navHrefs.size} in nav · ${orphans.length} orphaned · ` +
+    `\n${rows.length} routes · ${navHrefs.size} in spine · ${orphans.length} orphaned · ` +
       `${rows.filter((r) => r.flags.includes("STUB")).length} stubs`
   );
 }

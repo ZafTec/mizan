@@ -10,88 +10,14 @@ import type { User } from "@/lib/auth";
 import { signOut } from "@/lib/auth-client";
 import { appToast } from "@/lib/toast";
 import { clearAppearanceCookie } from "@/lib/appearance-cookie";
-import { AnimatedIcon, type AnimatedIconName } from "@/components/ui/animated-icon";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
 import { cn } from "@/lib/utils";
 import { useSubscription } from "@/lib/hooks/useSubscription";
 import { ProBadge } from "@/components/billing/ProBadge";
 import logoTransparent from "@/public/logo_transparent.png";
 import { NotificationBell } from "@/components/NotificationBell";
-
-type NavItem = {
-	href: string;
-	label: string;
-	icon: AnimatedIconName;
-	badge?: number;
-	adminOnly?: boolean;
-};
-
-type NavGroup = {
-	label: string;
-	items: NavItem[];
-};
-
-// Three compact groups instead of a flat 15-item list.
-// Workouts + Exercises live together, meal-planning cluster together, etc.
-const NAV_GROUPS: NavGroup[] = [
-	{
-		label: "Today",
-		items: [
-			{ href: "/dashboard", label: "Dashboard", icon: "home" },
-			{ href: "/meals", label: "Meals", icon: "flame" },
-			{ href: "/habits", label: "Habits", icon: "circleCheck" },
-		],
-	},
-	{
-		label: "Food",
-		items: [
-			{ href: "/recipes", label: "Recipes", icon: "cookingPot" },
-			{ href: "/meal-plan", label: "Meal Plan", icon: "calendarCheck" },
-			{ href: "/ingredients", label: "Foods", icon: "search" },
-		],
-	},
-	{
-		label: "Fitness",
-		items: [
-			{ href: "/workouts", label: "Workouts", icon: "activity" },
-			{ href: "/exercises", label: "Exercises", icon: "zap" },
-			{ href: "/body-measurements", label: "Body", icon: "chartLine" },
-			{ href: "/goal", label: "Goals", icon: "rocket" },
-			{ href: "/achievements", label: "Achievements", icon: "sparkles" },
-		],
-	},
-	{
-		label: "Community",
-		items: [
-			{ href: "/ai", label: "AI Coach", icon: "brain" },
-			{ href: "/messaging", label: "Messages", icon: "messageCircle" },
-			{ href: "/trainers", label: "Trainers", icon: "heart" },
-			{ href: "/social", label: "Feed", icon: "users" }
-		],
-	},
-];
-
-const SECONDARY_NAV: NavItem[] = [
-	{ href: "/notifications", label: "Notifications", icon: "bell" },
-	{ href: "/profile", label: "Profile", icon: "user" },
-	{ href: "/profile/household", label: "Household", icon: "home" },
-	{ href: "/billing", label: "Billing", icon: "sparkles" },
-	{ href: "/profile/settings", label: "Settings", icon: "settings" },
-	{ href: "/admin", label: "Admin", icon: "shieldCheck", adminOnly: true },
-];
-
-const BOTTOM_NAV: NavItem[] = [
-	{ href: "/dashboard", label: "Home", icon: "home" },
-	{ href: "/meals", label: "Meals", icon: "flame" },
-	{ href: "/workouts", label: "Train", icon: "activity" },
-	{ href: "/ai", label: "AI", icon: "brain" },
-	{ href: "/profile", label: "Me", icon: "user" },
-];
-
-function isActive(pathname: string | null, href: string) {
-	if (!pathname) return false;
-	if (href === "/dashboard") return pathname === "/dashboard";
-	return pathname === href || pathname.startsWith(`${href}/`);
-}
+import LogSheet from "./LogSheet";
+import { SPINE, USER_MENU, isActive, type NavItem } from "./nav";
 
 function UserAvatar({ user, size = 36, pro = false }: { user: User; size?: number; pro?: boolean }) {
 	const ringClass = pro
@@ -124,10 +50,9 @@ function UserAvatar({ user, size = 36, pro = false }: { user: User; size?: numbe
 	);
 }
 
-function SidebarLink({ item, collapsed, isPro }: { item: NavItem; collapsed: boolean; isPro?: boolean }) {
+function SidebarLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
 	const pathname = usePathname();
 	const active = isActive(pathname, item.href);
-	const isBilling = item.href === "/billing";
 	return (
 		<Link
 			href={item.href}
@@ -135,9 +60,7 @@ function SidebarLink({ item, collapsed, isPro }: { item: NavItem; collapsed: boo
 				"press-feedback group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-[background-color,color,box-shadow] duration-160 ease-out",
 				active
 					? "bg-brand-600 text-white shadow-lg shadow-brand-500/25 dark:bg-brand-500 dark:text-charcoal-blue-950"
-					: isBilling && !isPro
-						? "text-brand-700 hover:bg-brand-500/10 dark:text-brand-300 dark:hover:bg-brand-500/10"
-						: "text-charcoal-blue-600 hover:bg-white/70 hover:text-charcoal-blue-900 dark:text-charcoal-blue-200 dark:hover:bg-white/5 dark:hover:text-charcoal-blue-50",
+					: "text-charcoal-blue-600 hover:bg-white/70 hover:text-charcoal-blue-900 dark:text-charcoal-blue-200 dark:hover:bg-white/5 dark:hover:text-charcoal-blue-50",
 				collapsed && "justify-center px-2"
 			)}
 			title={collapsed ? item.label : undefined}
@@ -145,21 +68,14 @@ function SidebarLink({ item, collapsed, isPro }: { item: NavItem; collapsed: boo
 			<span
 				className={cn(
 					"relative flex h-5 w-5 shrink-0 items-center justify-center",
-					active ? "text-white dark:text-charcoal-blue-950" : isBilling && !isPro ? "text-brand-600 dark:text-brand-300" : "text-charcoal-blue-500 group-hover:text-current dark:text-charcoal-blue-300"
+					active
+						? "text-white dark:text-charcoal-blue-950"
+						: "text-charcoal-blue-500 group-hover:text-current dark:text-charcoal-blue-300"
 				)}
 			>
 				<AnimatedIcon name={item.icon} size={18} aria-hidden="true" />
-				{isBilling && !isPro && (
-					<span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 animate-pulse rounded-full bg-brand-500" aria-hidden="true" />
-				)}
 			</span>
 			{!collapsed && <span className="truncate">{item.label}</span>}
-			{!collapsed && isBilling && isPro && <ProBadge className="ml-auto" />}
-			{!collapsed && item.badge ? (
-				<span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-burnt-peach-500 px-1.5 text-[10px] font-semibold text-white">
-					{item.badge}
-				</span>
-			) : null}
 		</Link>
 	);
 }
@@ -203,11 +119,10 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 	const [collapsed, setCollapsed] = useState(false);
 	const [userMenuOpen, setUserMenuOpen] = useState(false);
 	const [userMenuPos, setUserMenuPos] = useState<{ top: number; right: number } | null>(null);
-	const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+	const [logSheetOpen, setLogSheetOpen] = useState(false);
 	const [showLogoutModal, setShowLogoutModal] = useState(false);
 	const userMenuRef = useRef<HTMLDivElement>(null);
 	const userTriggerRef = useRef<HTMLButtonElement>(null);
-	const mobileSheetRef = useRef<HTMLDivElement>(null);
 
 	// Anchor the portal'd user menu to the trigger's viewport rect. Refresh on
 	// scroll/resize while open so the menu tracks the button.
@@ -229,7 +144,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 	}, [userMenuOpen]);
 
 	const isAdmin = user.role === "admin";
-	const visibleSecondary = SECONDARY_NAV.filter((item) => !item.adminOnly || isAdmin);
+	const visibleSecondary = USER_MENU.filter((item) => !item.adminOnly || isAdmin);
 
 	// Menus close via their own onClick handlers, not via a pathname-tracking effect.
 
@@ -241,16 +156,10 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 					setUserMenuOpen(false);
 				}
 			}
-			if (mobileSheetOpen && mobileSheetRef.current && !mobileSheetRef.current.contains(target)) {
-				if (!target.closest("[data-app-shell-mobile-trigger]")) {
-					setMobileSheetOpen(false);
-				}
-			}
 		}
 		function onEscape(event: KeyboardEvent) {
 			if (event.key === "Escape") {
 				setUserMenuOpen(false);
-				setMobileSheetOpen(false);
 			}
 		}
 		document.addEventListener("mousedown", onClick);
@@ -259,14 +168,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 			document.removeEventListener("mousedown", onClick);
 			document.removeEventListener("keydown", onEscape);
 		};
-	}, [userMenuOpen, mobileSheetOpen]);
-
-	useEffect(() => {
-		document.body.style.overflow = mobileSheetOpen ? "hidden" : "";
-		return () => {
-			document.body.style.overflow = "";
-		};
-	}, [mobileSheetOpen]);
+	}, [userMenuOpen]);
 
 	async function handleLogout() {
 		try {
@@ -328,30 +230,25 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 					</button>
 				</div>
 
+				<div className={cn("shrink-0 px-3 pt-4", collapsed && "px-2")}>
+					<button
+						type="button"
+						onClick={() => setLogSheetOpen(true)}
+						className={cn(
+							"flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-600 py-3 font-semibold text-white shadow-lg shadow-brand-600/25 transition-colors hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-400",
+							collapsed && "px-0"
+						)}
+						aria-label="Log an entry"
+						title="Log an entry"
+					>
+						<span className="text-xl leading-none">+</span>
+						{!collapsed && <span>Log</span>}
+					</button>
+				</div>
+
 				<nav className={cn("custom-scrollbar flex-1 space-y-1 overflow-y-auto px-3 py-4", collapsed && "px-2")}>
-					{NAV_GROUPS.map((group, idx) => (
-						<div key={group.label} className={cn("space-y-1", idx > 0 && "pt-3")}>
-							{!collapsed && (
-								<p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-400 dark:text-charcoal-blue-400">
-									{group.label}
-								</p>
-							)}
-							{collapsed && idx > 0 && (
-								<div className="my-2 border-t border-charcoal-blue-200/50 dark:border-white/5" />
-							)}
-							{group.items.map((item) => (
-								<SidebarLink key={item.href} item={item} collapsed={collapsed} isPro={isPro} />
-							))}
-						</div>
-					))}
-					<div className="my-3 border-t border-charcoal-blue-200/60 dark:border-white/5" />
-					{!collapsed && (
-						<p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-400 dark:text-charcoal-blue-400">
-							Account
-						</p>
-					)}
-					{visibleSecondary.map((item) => (
-						<SidebarLink key={item.href} item={item} collapsed={collapsed} isPro={isPro} />
+					{SPINE.map((item) => (
+						<SidebarLink key={item.href} item={item} collapsed={collapsed} />
 					))}
 				</nav>
 
@@ -407,18 +304,6 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 				{/* Top bar, shrink-0 so it stays visible while main scrolls */}
 				<header className="shrink-0 border-b border-charcoal-blue-200/70 bg-white/80 backdrop-blur-xl dark:border-white/10 dark:bg-charcoal-blue-950/75">
 					<div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
-						{/* Mobile menu */}
-						<button
-							type="button"
-							data-app-shell-mobile-trigger
-							onClick={() => setMobileSheetOpen((o) => !o)}
-							className="flex h-10 w-10 items-center justify-center rounded-2xl border border-charcoal-blue-200 text-charcoal-blue-600 hover:text-charcoal-blue-900 dark:border-white/10 dark:text-charcoal-blue-200 dark:hover:text-white lg:hidden"
-							aria-label="Toggle menu"
-							aria-expanded={mobileSheetOpen}
-						>
-							<AnimatedIcon name={mobileSheetOpen ? "x" : "menu"} size={18} />
-						</button>
-
 						{/* Mobile logo */}
 						<Link href="/dashboard" className="flex items-center gap-2 lg:hidden">
 							<div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-xl ring-1 ring-brand-500/20">
@@ -525,76 +410,6 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 					</div>
 				</header>
 
-				{/* Mobile slide-out sheet */}
-				{mobileSheetOpen && (
-					<>
-						<div
-							className="fixed inset-0 z-40 bg-charcoal-blue-950/40 backdrop-blur-[2px] lg:hidden"
-							onClick={() => setMobileSheetOpen(false)}
-						/>
-						<aside
-							ref={mobileSheetRef}
-							className="mobile-sheet-enter fixed inset-y-0 left-0 z-50 flex w-80 max-w-[85vw] flex-col border-r border-charcoal-blue-200 bg-white shadow-2xl dark:border-white/10 dark:bg-charcoal-blue-950 lg:hidden"
-						>
-							<div className="flex shrink-0 items-center gap-3 border-b border-charcoal-blue-200/70 p-4 dark:border-white/10">
-								<div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-2xl ring-1 ring-brand-500/20">
-									<Image src={logoTransparent} alt="Mizan" fill sizes="44px" className="object-cover" />
-								</div>
-								<div>
-									<p className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Mizan</p>
-									<p className="text-[10px] uppercase tracking-[0.18em] text-charcoal-blue-500 dark:text-charcoal-blue-400">
-										ሚዛን • Balance
-									</p>
-								</div>
-								<button
-									type="button"
-									onClick={() => setMobileSheetOpen(false)}
-									className="ml-auto flex h-9 w-9 items-center justify-center rounded-xl text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:text-charcoal-blue-300 dark:hover:text-white"
-									aria-label="Close menu"
-								>
-									<AnimatedIcon name="x" size={16} />
-								</button>
-							</div>
-
-							<div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-4" onClick={() => setMobileSheetOpen(false)}>
-								{NAV_GROUPS.map((group, idx) => (
-									<div key={group.label} className={cn("space-y-1", idx > 0 && "pt-3")}>
-										<p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-400">
-											{group.label}
-										</p>
-										{group.items.map((item) => (
-											<SidebarLink key={item.href} item={item} collapsed={false} isPro={isPro} />
-										))}
-									</div>
-								))}
-								<div className="my-3 border-t border-charcoal-blue-200/60 dark:border-white/5" />
-								<p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-400">
-									Account
-								</p>
-								<nav className="space-y-1">
-									{visibleSecondary.map((item) => (
-										<SidebarLink key={item.href} item={item} collapsed={false} isPro={isPro} />
-									))}
-								</nav>
-							</div>
-
-							<div className="shrink-0 border-t border-charcoal-blue-200/70 p-4 dark:border-white/10">
-								<button
-									type="button"
-									onClick={() => {
-										setMobileSheetOpen(false);
-										setShowLogoutModal(true);
-									}}
-									className="btn-ghost w-full justify-center text-red-600 dark:text-red-400"
-								>
-									<AnimatedIcon name="logout" size={16} />
-									Sign out
-								</button>
-							</div>
-						</aside>
-					</>
-				)}
-
 				{/* Page content, flex-1 fills the column so long pages scroll inside
 					it and short pages don't leave unclaimed space. Scrolls internally so
 					the body stays viewport-sized. */}
@@ -607,11 +422,26 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 					aria-label="Primary"
 					className="fixed inset-x-0 bottom-0 z-30 flex items-stretch gap-1 border-t border-charcoal-blue-200 bg-white/95 px-2 pb-[calc(env(safe-area-inset-bottom,0)+0.25rem)] pt-1.5 backdrop-blur-xl dark:border-white/10 dark:bg-charcoal-blue-950/95 lg:hidden"
 				>
-					{BOTTOM_NAV.map((item) => (
+					{SPINE.slice(0, 2).map((item) => (
+						<BottomNavLink key={item.href} item={item} />
+					))}
+					<button
+						type="button"
+						onClick={() => setLogSheetOpen(true)}
+						className="flex flex-1 flex-col items-center justify-center gap-0.5 py-1"
+						aria-label="Log an entry"
+					>
+						<span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-600 text-2xl leading-none text-white shadow-lg shadow-brand-600/30 dark:bg-brand-500">
+							+
+						</span>
+					</button>
+					{SPINE.slice(2).map((item) => (
 						<BottomNavLink key={item.href} item={item} />
 					))}
 				</nav>
 			</div>
+
+			<LogSheet open={logSheetOpen} onClose={() => setLogSheetOpen(false)} />
 
 			{/* Logout modal */}
 			{showLogoutModal &&
