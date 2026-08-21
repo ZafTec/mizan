@@ -48,10 +48,6 @@ async function getAdminStats() {
     .orderBy(sql`${users.createdAt} DESC`)
     .limit(5);
 
-  // TODO: Replace with API call to backend for foods count
-  // const totalFoods = await fetch('/api/admin/foods/count').then(...);
-  const totalFoods = 0; // Placeholder
-
   const yesterday = new Date();
   yesterday.setHours(yesterday.getHours() - 24);
 
@@ -65,7 +61,6 @@ async function getAdminStats() {
     bannedUsers,
     activeSessions,
     recentUsers,
-    totalFoods,
     recentAuditLogs
   };
 }
@@ -114,16 +109,9 @@ export default async function AdminDashboard() {
           linkText="View banned"
         />
         <StatCard
-          title="Public Ingredients"
-          value={stats.totalFoods}
-          link="/admin/ingredients"
-          linkText="Manage foods"
-        />
-        <StatCard
           title="Recent Activity"
           value={stats.recentAuditLogs}
-          link="/admin/audit-logs"
-          linkText="View logs"
+          linkText="Last 24 hours"
         />
         <StatCard
           title="Active Sessions"
@@ -181,12 +169,6 @@ export default async function AdminDashboard() {
           icon="🔐"
         />
         <QuickActionCard
-          title="Relationships"
-          description="Trainer-client connections"
-          link="/admin/relationships"
-          icon="🤝"
-        />
-        <QuickActionCard
           title="Ingredients"
           description="Add and verify public food ingredients"
           link="/admin/ingredients"
@@ -203,18 +185,6 @@ export default async function AdminDashboard() {
           description="Moderate community recipes"
           link="/admin/recipes"
           icon="🍳"
-        />
-        <QuickActionCard
-          title="Audit logs"
-          description="System-wide activity and security logs"
-          link="/admin/audit-logs"
-          icon="📋"
-        />
-        <QuickActionCard
-          title="Achievements"
-          description="Create and edit gamification unlocks"
-          link="/admin/achievements"
-          icon="🏆"
         />
         <QuickActionCard
           title="Households"
@@ -235,7 +205,7 @@ function StatCard({
 }: {
   title: string;
   value: number;
-  link: string;
+  link?: string;
   linkText: string;
 }) {
   return (
@@ -244,9 +214,13 @@ function StatCard({
         {title}
       </h3>
       <p className="text-3xl font-bold mb-4">{value}</p>
-      <a href={link} className="text-sm text-primary hover:underline">
-        {linkText} →
-      </a>
+      {link ? (
+        <a href={link} className="text-sm text-primary hover:underline">
+          {linkText} →
+        </a>
+      ) : (
+        <span className="text-sm text-muted-foreground">{linkText}</span>
+      )}
     </div>
   );
 }

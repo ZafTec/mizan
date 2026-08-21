@@ -29,22 +29,22 @@ API. Flags are leads to verify, not verdicts. Two flags are especially noisy:
 
 ## Headline
 
-| | Phase 1 (before) | Phase 2 (now) |
+| | Phase 1 (before) | Phase 3 (now) |
 |---|---|---|
-| Routes | 73 | 74 (`/more` added) |
+| Routes | 73 | 67 |
 | Permanent nav entries | 21, flat | 4 + the log action |
-| Orphaned (no in-app link) | 9 — 6 real, 3 expected | 4 — 1 real, 3 expected |
-| Stubs (≤30 LOC of feature code) | 3 | 3 |
+| Orphaned (no in-app link) | 9 — 6 real, 3 expected | 3 — **0 real**, 3 expected |
+| Stubs (≤30 LOC of feature code) | 3 | 1 |
 
 **Before: 73 routes, 21 flat nav entries, 9 orphans.** That was the "features
 unavailable because of bad design" complaint, quantified — two thirds of the app
 reachable only by knowing the URL or finding a link buried in another feature,
 while 21 peer-level entries competed for attention and none of them won.
 
-**After phase 2: 4 permanent entries, 1 real orphan left.** The spine carries
+**After phases 2 and 3: 4 permanent entries, no real orphans left.** The spine carries
 Today / History / Progress / More plus the `( + )` log action; `/more` carries
-everything else at two taps. Five of the six real orphans below are linked from
-`/more`; the sixth is `/community`, which phase 3 deletes.
+everything else at two taps. Four of the six real orphans below are linked from
+`/more`; `/community` and `/admin/relationships` were deleted.
 
 Note the metric changed meaning. "21 in nav" counted a flat menu; "4 in spine"
 counts tier 1 only. Tier 3 is deliberately excluded — the point is not that
@@ -61,10 +61,12 @@ fewer things are reachable, it is that fewer things are permanent.
 | `/admin/relationships` | 192 | Unlinked, and carries a `TODO`. |
 | `/community` | 6 | A stub that was never finished or removed. |
 
-**Status after phase 2:** all of the above except `/community` are now linked
-from `/more`. `/trainers/my-trainer` and `/trainers/requests` also get a tier-2
-contextual entry point in phase 5, so a user with a trainer sees them without
-opening `/more` at all.
+**Status after phase 3:** `/trainers/my-trainer`, `/trainers/requests`,
+`/admin/moderation` and `/admin/recipes` are linked from `/more`.
+`/community` (a redirect alias) and `/admin/relationships` (which always
+returned an empty array) were deleted. `/trainers/my-trainer` and
+`/trainers/requests` also get a tier-2 contextual entry point in phase 5, so a
+user with a trainer sees them without opening `/more` at all.
 
 `/trainers/my-trainer` and `/trainers/requests` are the finding that justifies
 rev 2's thesis. Those screens are built, wired to `Trainers` endpoints, and
@@ -97,13 +99,41 @@ Done in phase 2:
 - ~~Link `/admin/moderation`, `/admin/recipes`, `/admin/relationships`~~ — all
   three in `/more` under Admin, role-gated.
 
-Remaining for phase 3:
+Done in phase 3:
 
-1. Delete `/community`.
-2. Finish or delete `/trainer/clients/[id]` (21 LOC stub).
-3. Resolve the routes carrying `TODO`/`FIXME`: `/admin`, `/admin/users/[id]`,
-   `/admin/relationships`, `/ai`, `/profile/settings`, `/trainers/my-trainer`.
-4. Halve the admin panel per REFOCUS §8, moving what MCP already does better.
+- ~~Delete `/community`~~ — it was a redirect alias to `/social`.
+- ~~`/trainer/clients/[id]`~~ — **not a stub.** It composes 1,214 LOC of
+  trainer components; the audit's heuristic was wrong and is now fixed.
+- ~~`/admin` foods count~~ — the card showed a hardcoded `0`. Removed rather
+  than left displaying a lie.
+- ~~`/admin/users/[id]` trainer role~~ — selecting "trainer" silently did
+  nothing and then showed a success toast. The option is gone until phase 6
+  makes the role assignable.
+- ~~`/admin/relationships`~~ — deleted; it always returned `[]`.
+- ~~Admin panel reduction~~ — see below.
+- ~~Frontend OpenTelemetry~~ — removed.
+
+`/ai` ("Coming soon") and `/profile/settings` ("Email changes are still not
+implemented") keep their labels. They are accurate descriptions of unbuilt
+features, not misleading ones, and phases 10 and 6 build them.
+
+## Admin panel: cut by evidence, not by the §8 list
+
+REFOCUS §8 proposed dropping achievements, audit logs, households,
+relationships and sessions, on the grounds that the MCP tools cover them.
+Checking each against the actual tool list, that was true for only three:
+
+| Screen | MCP coverage | Action |
+|---|---|---|
+| `/admin/achievements` (+ analytics, new, edit) | `admin_{create,update,delete,get}_achievement`, `admin_get_achievement_analytics` | **deleted** |
+| `/admin/audit-logs` | `admin_list_audit_logs` | **deleted** |
+| `/admin/relationships` | none — but it never worked | **deleted** |
+| `/admin/households` | none | **kept** |
+| `/admin/sessions` | none — and revocation is a real security operation | **kept** |
+
+Deleting the last two would have removed capability with no replacement. The
+§8 list was written without checking tool coverage; this table is what the
+check produced.
 
 ## Full table
 
@@ -112,12 +142,7 @@ ROUTE                                 LOC    FLAGS                     API
 --------------------------------------------------------------------------------------------------------------
 /                                     631    no-fetch                  -
 /achievements                         243    no-fetch                  -
-/admin                                511    TODO                      admin
-/admin/achievements                   424    no-fetch                  -
-/admin/achievements/[id]/edit         55     no-fetch                  -
-/admin/achievements/analytics         261    no-fetch                  -
-/admin/achievements/new               39     no-fetch                  -
-/admin/audit-logs                     146    no-fetch                  -
+/admin                                482    no-fetch                  -
 /admin/exercises                      146    -                         Exercises
 /admin/households                     182    no-fetch                  -
 /admin/households/[id]                132    no-fetch                  -
@@ -126,10 +151,9 @@ ROUTE                                 LOC    FLAGS                     API
 /admin/ingredients/add                30     STUB,no-fetch             -
 /admin/moderation                     108    -                         admin
 /admin/recipes                        136    no-fetch                  -
-/admin/relationships                  192    TODO,no-fetch             -
 /admin/sessions                       263    no-fetch                  -
 /admin/users                          292    no-fetch                  -
-/admin/users/[id]                     761    TODO,no-fetch             -
+/admin/users/[id]                     761    no-fetch                  -
 /admin/users/create                   261    no-fetch                  -
 /ai                                   117    TODO,no-fetch             -
 /billing                              205    no-fetch                  -
@@ -184,5 +208,5 @@ ROUTE                                 LOC    FLAGS                     API
 /verifyemail                          162    ORPHAN                    auth
 /workouts                             1491   -                         Exercises,Social,WorkoutTemplates,Workouts
 
-73 routes · 4 in spine · 3 orphaned · 1 stubs
+67 routes · 4 in spine · 3 orphaned · 1 stubs
 ```
