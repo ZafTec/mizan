@@ -104,22 +104,22 @@ public class PromoteMealToRecipeTests
     }
 
     [Fact]
-    public async Task FlattensAnEntryThatCameFromARecipe_BecauseRecipesDoNotNest()
+    public async Task RefusesAMealContainingARecipe_UntilPreparationsExist()
     {
-        var priorRecipeId = Guid.NewGuid();
         var fromRecipe = Entry("Grandma's stew", minute: 0);
-        fromRecipe.RecipeId = priorRecipeId;
+        fromRecipe.RecipeId = Guid.NewGuid();
 
-        var (db, handler) = Make(fromRecipe, Entry("Bread", Guid.NewGuid(), minute: 1));
+        var (_, handler) = Make(fromRecipe, Entry("Bread", Guid.NewGuid(), minute: 1));
 
-        await handler.Handle(
+        var act = () => handler.Handle(
             new PromoteMealToRecipeCommand(Day, "dinner", "Stew and bread"),
             CancellationToken.None);
 
-        var recipe = await db.Recipes.Include(r => r.Ingredients).SingleAsync();
-        var stew = recipe.Ingredients.Single(i => i.IngredientText == "Grandma's stew");
-        stew.FoodId.Should().BeNull();
-        stew.SubRecipeId.Should().BeNull("recipes do not nest; the entry is flattened to its name");
+        // Emitting the stew as a text ingredient would produce a recipe with
+        // quietly wrong macros. Refusing is the better failure until a recipe
+        // can be marked as a preparation and carry a derived Food.
+        await act.Should().ThrowAsync<DomainValidationException>()
+            .WithMessage("*Grandma's stew*");
     }
 
     [Fact]
