@@ -1,11 +1,14 @@
 # Refocus Plan: Mizan is a Logging App
 
-**Status:** rev 5 — phases 0, 1 and 2 executed
+**Status:** rev 6 — phases 0, 1 and 2 executed
 **Branch:** `claude/cleanup-logging-refocus-rzfiv8`
 **Rule:** decide what the project is about, build around it. Everything else
 gets demoted, not deleted.
 
-> **rev 5 adds §12: an admin AI console with draft/eval/publish, and the
+> **rev 6 adds §13, a Telegram bot service, and rewrites §5 after auditing the
+> Paddle issue against the code: most of its backend scope is already built.**
+>
+> **rev 5 added §12: an admin AI console with draft/eval/publish, and the
 > hard-vs-soft guardrail split that keeps it from becoming a way around §11.**
 >
 > **rev 4 added §11: three principal types, per-axis consent, and the
@@ -175,27 +178,75 @@ ingredients. `RecipeCircularDependencyValidatorTests` goes with it.
 
 ---
 
-## 5. Billing stays, and stays out of the way
+## 5. Billing: mostly built, and the open issue is stale
 
 Paddle, `Subscription`, `PaddleWebhooksController`, `EntitlementService` and the
 `RequirePro` policy all stay as built. The integration works; it is revenue.
 
-Today Pro gates exactly three endpoints:
+### The tracking issue asks for work that already exists
 
-- `POST /api/Nutrition/ai/chat`
-- `POST /api/Nutrition/ai/analyze-image`
-- `GET /api/Goals/progress`
+Audited against the code, most of the issue's backend scope is done:
 
-That is a thin tier for a paid plan, and `/billing` currently sits in the nav as
-a peer of Workouts — the worst of both worlds: prominent and unconvincing.
+| Issue item | Reality |
+|---|---|
+| `Subscription` entity with Paddle ids, period end, status | **built** — and richer: `Plan`, `IsLifetime`, `PaddlePriceId`, `TrialEndsAt`, `CanceledAt` |
+| Webhook verifies `Paddle-Signature`, 401 on invalid | **built** — `PaddleSignatureVerifier`, returns `Unauthorized()` |
+| Handle `subscription.{created,updated,canceled}` | **built** — `ProcessPaddleWebhookCommand` handles `subscription.*` |
+| `transaction.completed` for Lifetime | **built** — sets `IsLifetime` |
+| Tier lookup cached, invalidated on webhook | **built** — `EntitlementService` over `HybridCache`, tag `entitlement:{userId}`, `InvalidateAsync` on receipt |
+| Frontend checkout | **built** — `lib/paddle.ts`, billing page |
 
-**Change:** billing moves to tier 3 (`/more → Billing`). The Pro *upsell* moves
-to tier 2 — it appears at the moment a gated action is attempted, in context,
-with the specific thing being unlocked named. A standing "Upgrade" nav item
-converts worse than an in-context wall and costs a permanent slot.
+The issue also specifies webhook idempotency nowhere, and the code already has
+it: events are deduped by event id, with a note about Paddle delivering
+`subscription.created` and `subscription.trialing` concurrently.
 
-Widening what Pro gates is a product decision, out of scope here. Flagging it:
-three endpoints, two of which are AI features, is not a plan.
+Three specifics in the issue contradict what exists. The code is right in each
+case and the issue should be corrected, not the code:
+
+- **Route.** Issue says `/api/Paddle/webhook`; actual is `/api/webhooks/paddle`.
+  The endpoint is already registered in Paddle; changing it to match a ticket
+  would break live billing for nothing.
+- **`Tier` enum (Free/Pro/Lifetime).** Lifetime is not a third entitlement, it
+  is Pro that never expires — which is exactly what `IsLifetime` encodes. A
+  three-value enum invites `if (tier == Pro)` checks that silently exclude
+  Lifetime customers, who paid the most. Keep the binary entitlement.
+- **`[RequireTier(Tier.Pro)]` as a MediatR behaviour.** Gating already runs as
+  the `RequirePro` authorization policy. Two mechanisms is worse than either;
+  and §10 argues gating belongs in one service call, not in attributes that
+  drift.
+
+### What is actually left
+
+1. **The feature split.** This is the real gap. Three endpoints are gated today
+   (AI chat, AI image analysis, goal progress history) against the issue's much
+   wider list.
+2. **Customer portal link** from `/more → Billing`.
+3. **Upgrade chips** on gated UI — tier 2, in context, per §3.
+4. **Sandbox round-trip**, which needs live Paddle credentials.
+5. **Legal pages on zaftech.co** naming Paddle as Merchant of Record. Different
+   repo; out of scope here but a launch blocker.
+
+### One conflict worth deciding before implementing the split
+
+The issue puts **trainer-client chat and goals** behind Pro. That collides with
+§11. If a client's subscription lapses, does their trainer lose access to data
+the client explicitly granted? Two bad answers: revoke it, and billing silently
+overrides consent; keep it, and the gate does nothing.
+
+Recommendation: **gate the relationship's creation, not its contents.** A Free
+user may hold one active trainer relationship; Pro removes the cap. An existing
+relationship keeps working when a subscription lapses. Consent and billing stay
+independent, which is the only version where §11 still means anything.
+
+Same principle for households: gate invitations beyond two members, never
+retroactively eject people or hide data already shared.
+
+### Where billing sits in the UI
+
+Billing moves to tier 3 (`/more → Billing`). The Pro *upsell* is tier 2 — it
+appears when a gated action is attempted, naming the specific thing being
+unlocked. A standing "Upgrade" nav item converts worse and costs a permanent
+slot.
 
 ---
 
@@ -709,7 +760,118 @@ an eval matrix and a cost delta is a genuine UI job — that is not a tool call.
 
 ---
 
-## 13. MCP server
+## 13. Telegram bot
+
+A fourth service, `Mizan.Telegram`, alongside API, MCP and frontend. It puts
+the AI and the three logs in Telegram.
+
+This is a better fit for the spine than it first looks. §1 says logging should
+take under ten seconds. Telegram is already on the home screen, already
+authenticated, already the place people send themselves photos of dinner. For
+a lot of entries it beats opening the app.
+
+### Shape
+
+Follow the precedent that already works: `Mizan.Mcp.Server` is a separate
+ASP.NET service that talks to the API over the Docker network with a service
+API key against `ApiKeyAuthenticationHandler`. The bot is the same pattern, so
+none of it is new ground.
+
+```
+Telegram  ──webhook──▶  Mizan.Telegram  ──http──▶  mizan-backend:8080
+                                          service API key, internal only
+```
+
+- Never exposed publicly except the webhook endpoint, behind nginx with
+  Telegram's secret token header checked on every request.
+- Long polling in development, webhook in production. One switch.
+- No database of its own. It holds no logs, no nutrition data, no AI
+  configuration — it is a client, and the API stays the single source of truth.
+
+### Shared types
+
+The ask is a shared data type, and it exposes a gap: the frontend gets DTOs via
+OpenAPI codegen, but a second .NET consumer copying DTOs by hand is how the MCP
+server and the API drift apart.
+
+Add **`Mizan.Contracts`** — request/response records only, no behaviour, no EF,
+no MediatR. Referenced by `Mizan.Api`, `Mizan.Mcp.Server` and `Mizan.Telegram`.
+The API's DTOs move there; OpenAPI generation is unaffected, so the frontend
+pipeline does not change. A breaking contract change then fails the build
+instead of failing in production.
+
+That refactor is worth doing regardless of the bot, and it should land before
+the bot rather than after.
+
+### Account linking, which is the part to get right
+
+A Telegram chat id is not an identity. The bot must never be able to act as an
+arbitrary user.
+
+- In the app: `/more → Settings → Telegram` issues a short-lived, single-use
+  code and a `t.me/<bot>?start=<code>` deep link.
+- `/start <code>` binds that Telegram id to that user. The code is consumed
+  immediately and expires in minutes.
+- Binding is stored server-side as `TelegramLink` (userId, telegramUserId,
+  linkedAt), unlinkable from either side.
+- Every API call the bot makes carries the resolved user id. An unlinked chat
+  can do exactly one thing: link.
+- Group chats are refused outright in v1. Personal nutrition data in a group is
+  a leak with extra steps.
+
+### What it does
+
+**Logging, in one message:**
+
+- Photo of a meal → `IStorageService` → food analysis (§10) → inline card with
+  the parsed items and a Confirm / Edit / Discard keyboard. Same rule as
+  everywhere: **the result is a proposal, never a silent write.**
+- `/weight 82.4` → logged, replies with the trend delta.
+- Free text — "chicken and rice, about 200g" → the same confirm card.
+- `/today` → the day's totals against targets.
+
+**Interactivity is inline keyboards, not command syntax.** Nobody remembers
+`/log_meal --protein=40`. Confirm/edit buttons, portion steppers, a "same as
+yesterday" shortcut, quick-pick from recent foods and saved recipes (§4).
+
+**Chat** — the same `AiChatThread` as the web app, so a conversation started in
+Telegram continues in the browser. One thread per user, not per surface.
+
+### Everything in §10 and §11 still applies, unchanged
+
+This is the load-bearing constraint. The bot is another client of the AI
+platform, not a second AI path:
+
+- Consent is read from `UserAiConsent`. A user who has not consented for `body`
+  gets no weight context in Telegram either.
+- Quota is the same per-user and global ceiling, and `AiUsageLog` records the
+  surface so per-channel cost is visible in the usage tab.
+- Prompts come from the published `AiPromptVersion` (§12). No bot-specific
+  prompt file.
+- Tool calls go through the same allowlist, authorized as the linked user.
+
+If the bot ends up with its own consent check, its own quota, or its own
+prompt, that is the bug. There is one AI service and several front doors.
+
+### Deliberately not in v1
+
+Group chats. Voice notes — transcription is a second provider, a second cost
+line, and a second consent question. Trainer-client chat over Telegram, which
+would fork the SignalR conversation into a channel the web app cannot see.
+
+### Work
+
+| Item | Phase |
+|---|---|
+| `Mizan.Contracts`, referenced by Api, Mcp.Server, Telegram | 8 |
+| `Mizan.Telegram` service, Dockerfile, compose entry, webhook + secret token | 13 |
+| `TelegramLink` entity, deep-link issue/consume, settings UI, unlink | 13 |
+| Logging flows: photo, `/weight`, free text, `/today`, inline keyboards | 13 |
+| Chat over the shared `AiChatThread`, consent and quota via §10 and §11 | 13 |
+
+---
+
+## 14. MCP server
 
 Survives intact — it is the part of this codebase that works. ~120 tools stay
 roughly as-is now that their endpoints survive; the trim is limited to tools
@@ -727,7 +889,7 @@ setup, tool catalogue, example sessions.
 
 ---
 
-## 14. Execution order
+## 15. Execution order
 
 Each phase is one commit and leaves the build green.
 
@@ -741,11 +903,13 @@ Each phase is one commit and leaves the build green.
 | 5 | Contextual surfaces | medium | | tier 2: resume banner, trainer strip, household switcher, in-context Pro wall |
 | 6 | **Remove BetterAuth** → Identity | **high** | | delete `lib/auth.ts`, `lib/auth-client.ts`, `app/api/auth/[...all]`, the `better-auth` deps; stand up `AddIdentityApiEndpoints`; scrypt-compat hasher; rehearse on a prod DB copy |
 | 7 | Schema unification | **high** | | drop Drizzle and `frontend/db/`, squash migrations, export/import **all** surviving tables, snapshot first |
-| 8 | Storage abstraction | low | | `IStorageService`, Cloudinary impl, drop `next-cloudinary`. S3 lands in v2 |
+| 8 | Storage + `Mizan.Contracts` | low | | `IStorageService`, Cloudinary impl, drop `next-cloudinary`, S3 in v2; extract shared DTOs so Api, Mcp.Server and Telegram cannot drift (§13) |
 | 9 | AI platform + consent | medium | | `IAiProvider`, `AiUsageLog`, `IAiQuotaService`, per-user + global ceilings, usage tab, `UserAiConsent`, `IDataAccessPolicy`, `AiPromptVersion` + the hard/soft split. **Limits and consent ship with the first provider call, not after** |
 | 10 | AI surfaces + admin console | medium | | structured food analysis, chat on `AiChatThread`, onboarding agent over the allowlisted tool→command map shared with MCP; trainer intersection rule and read-only client tools (§11); `/admin/ai` with evals, diff and rollback (§12) |
-| 11 | UI rebuild on the new tiers | medium | | `/today`, `/history`, `/progress`, sheet-based logging |
-| 12 | Docs rewrite | none | | README, CLAUDE.md, ARCHITECTURE.md, MCP.md, AI.md |
+| 11 | Billing feature split | low | | widen gating past the three endpoints, customer portal link, in-context upgrade chips; gate relationship *creation*, never existing consent (§5) |
+| 12 | UI rebuild on the new tiers | medium | | `/today`, `/history`, `/progress`, sheet-based logging |
+| 13 | Telegram bot | medium | | `Mizan.Telegram`, account linking, logging flows, chat on the shared thread. **Consumes §10's AI service; never its own** |
+| 14 | Docs rewrite | none | | README, CLAUDE.md, ARCHITECTURE.md, MCP.md, AI.md, TELEGRAM.md |
 
 Ordering constraints that actually bind:
 
@@ -756,13 +920,18 @@ Ordering constraints that actually bind:
 - **8 before 10.** Food photo analysis needs storage behind an interface, or the
   v2 S3 swap has to touch the AI code too.
 - **6 before 7.** Identity must own `users` before Drizzle can be removed.
-- **2 and 3 before 11.** Rebuild the screens against the tier structure, not
+- **2 and 3 before 12.** Rebuild the screens against the tier structure, not
   before it exists.
+- **8 before 13.** `Mizan.Contracts` exists before a third .NET service starts
+  copying DTOs by hand.
+- **9 and 10 before 13.** The bot consumes the AI service. Building it first
+  means building a second AI path, with its own consent and quota, which is
+  precisely the thing §13 forbids.
 
 Everything else can move. **If only one thing gets done: phase 2.** The audit in
 §2 makes the case — 73 routes, 21 reachable.
 
-## 15. What this costs
+## 16. What this costs
 
 - **Auth downtime risk.** Phase 6 is the one place a mistake locks users out.
   Snapshot, rehearse on a copy, keep a rollback.
