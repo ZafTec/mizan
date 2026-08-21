@@ -63,8 +63,9 @@ export const LOG_ACTIONS: NavItem[] = [
  * Tier 3. Everything the product does that is not the spine.
  *
  * This list is also the fix for five of the six real orphans found in phase 1:
- * /trainers/my-trainer, /trainers/requests, /admin/moderation, /admin/recipes
- * and /admin/relationships had no inbound link anywhere in the app.
+ * /trainers/my-trainer, /trainers/requests, /admin/moderation and
+ * /admin/recipes had no inbound link anywhere in the app. The sixth,
+ * /admin/relationships, was deleted in phase 3 - it always returned [].
  */
 export const MORE_GROUPS: NavGroup[] = [
 	{
@@ -125,10 +126,7 @@ export const MORE_GROUPS: NavGroup[] = [
 			{ href: "/admin/recipes", label: "Recipes", icon: "cookingPot", adminOnly: true },
 			{ href: "/admin/exercises", label: "Exercises", icon: "zap", adminOnly: true },
 			{ href: "/admin/moderation", label: "Moderation", icon: "badgeAlert", adminOnly: true },
-			{ href: "/admin/relationships", label: "Relationships", icon: "heart", adminOnly: true },
-			{ href: "/admin/achievements", label: "Achievements", icon: "sparkles", adminOnly: true },
 			{ href: "/admin/households", label: "Households", icon: "home", adminOnly: true },
-			{ href: "/admin/audit-logs", label: "Audit Logs", icon: "lock", adminOnly: true },
 			{ href: "/admin/sessions", label: "Sessions", icon: "lock", adminOnly: true },
 		],
 	},

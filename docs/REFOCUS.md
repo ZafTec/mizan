@@ -1,6 +1,6 @@
 # Refocus Plan: Mizan is a Logging App
 
-**Status:** rev 6 — phases 0, 1 and 2 executed
+**Status:** rev 6 — phases 0-3 executed 
 **Branch:** `claude/cleanup-logging-refocus-rzfiv8`
 **Rule:** decide what the project is about, build around it. Everything else
 gets demoted, not deleted.
@@ -336,10 +336,12 @@ Short list now, and honest about it:
 **Recipe sub-tables** — `RecipeInstruction`, `RecipeNutrition`, `RecipeTag`,
 `SubRecipeId` + the cycle validator (§4)
 
-**Admin panel — halved, not deleted.** 19 routes / 4,376 LOC. Keep the
-table-driven screens where a UI genuinely beats a tool call: users, ingredients,
-recipes, moderation — and later `/admin/ai` (§12), which is the strongest case
-of all for keeping a panel. Drop the ones the MCP admin tools already do better:
+**Admin panel — reduced by evidence.** Phase 3 checked each screen against the
+MCP tool list rather than trusting this section's original list. Achievements,
+audit logs and relationships went; households and sessions stayed, because no
+MCP tool covers them and session revocation is a real security operation.
+`/admin/ai` (§12) later makes the strongest case of all for keeping a panel.
+See `docs/ROUTE-AUDIT.md` for the table. Drop the ones the MCP admin tools already do better:
 achievements CRUD + analytics, audit-log browsing, households, relationships,
 sessions. Roughly 2,000 LOC out, and admin work moves toward the interface you
 already like.
@@ -898,8 +900,8 @@ Each phase is one commit and leaves the build green.
 | 0 | Docs + scratch purge | none | **done** | 47 files → 4. `AGENTS.md` merged into `CLAUDE.md`; dead `.fpf/` pointers removed |
 | 1 | Route audit | none | **done** | `scripts/route-audit.mjs` + `docs/ROUTE-AUDIT.md`. 73 routes, 21 in nav, 9 orphaned |
 | 2 | Nav tiering | low | **done** | spine + `( + )` sheet + `/more`; nav model extracted to `components/Layout/nav.ts`; 21 flat entries → 4; orphans 9 → 4 |
-| 3 | Fix + delete per audit | low | next | delete `/community`, resolve the `TODO` routes, drop frontend OTel, halve the admin panel, **add the trainer grant-update endpoint and settle `HouseholdMember.CanViewNutrition`** (§11) |
-| 4 | Recipe inversion | medium | | promotion chip, unified picker, sub-table collapse, migration |
+| 3 | Fix + delete per audit | low | **done** | delete `/community`, resolve the `TODO` routes, drop frontend OTel, halve the admin panel, **add the trainer grant-update endpoint and settle `HouseholdMember.CanViewNutrition`** (§11) |
+| 4 | Recipe inversion | medium | next | promotion chip, unified picker, sub-table collapse, migration |
 | 5 | Contextual surfaces | medium | | tier 2: resume banner, trainer strip, household switcher, in-context Pro wall |
 | 6 | **Remove BetterAuth** → Identity | **high** | | delete `lib/auth.ts`, `lib/auth-client.ts`, `app/api/auth/[...all]`, the `better-auth` deps; stand up `AddIdentityApiEndpoints`; scrypt-compat hasher; rehearse on a prod DB copy |
 | 7 | Schema unification | **high** | | drop Drizzle and `frontend/db/`, squash migrations, export/import **all** surviving tables, snapshot first |

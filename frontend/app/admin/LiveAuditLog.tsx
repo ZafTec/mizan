@@ -145,9 +145,6 @@ export default function LiveAuditLog() {
                 <span className="text-[10px] text-muted-foreground">
                     Last updated: {lastUpdated.toLocaleTimeString()}
                 </span>
-                <a href="/admin/audit-logs" className="text-xs text-primary hover:underline font-medium">
-                    View full history →
-                </a>
             </div>
         </div>
     );
