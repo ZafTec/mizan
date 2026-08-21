@@ -19,6 +19,10 @@ API. Flags are leads to verify, not verdicts. Two flags are especially noisy:
 - `no-fetch` — no literal `/api/...` string in the route's own files. Server
   components, shared `lib/api` helpers and hooks all fetch without one, so this
   means "no *direct* call here", not "no data".
+- `STUB` — few lines of feature code. It follows `@/components` and `@/lib`
+  imports, because a 21-line page composing 1,200 lines of components is not a
+  stub. The first version of this script did not, and flagged
+  `/trainer/clients/[id]` for deletion when it is a working screen.
 - `ORPHAN` — no in-app link. Correct for dead features, wrong for routes entered
   from outside the app (email links, public shares). Both cases are below and
   they are labelled.
@@ -130,7 +134,6 @@ ROUTE                                 LOC    FLAGS                     API
 /ai                                   117    TODO,no-fetch             -
 /billing                              205    no-fetch                  -
 /body-measurements                    869    -                         BodyMeasurements
-/community                            6      ORPHAN,STUB,no-fetch      -
 /dashboard                            363    spine,no-fetch            -
 /exercises                            225    no-fetch                  -
 /forgot-password                      205    no-fetch                  -
@@ -172,14 +175,14 @@ ROUTE                                 LOC    FLAGS                     API
 /suggestions                          53     no-fetch                  -
 /suggestions/regenerate               57     no-fetch                  -
 /trainer                              81     no-fetch                  -
-/trainer/clients/[id]                 21     STUB,no-fetch             -
+/trainer/clients/[id]                 21     no-fetch                  -
 /trainers                             195    -                         Trainers
-/trainers/my-trainer                  245    TODO                      Trainers
+/trainers/my-trainer                  316    -                         Trainers
 /trainers/requests                    173    -                         Trainers
 /u/share                              68     ORPHAN                    Social
 /verify                               48     no-fetch                  -
 /verifyemail                          162    ORPHAN                    auth
 /workouts                             1491   -                         Exercises,Social,WorkoutTemplates,Workouts
 
-74 routes · 4 in spine · 4 orphaned · 3 stubs
+73 routes · 4 in spine · 3 orphaned · 1 stubs
 ```
