@@ -364,7 +364,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
     #region create_food Tool Tests
 
     [Fact]
-    public async Task AddIngredient_RejectsUnauthorized_ForNonAdmin()
+    public async Task AddIngredient_CreatesAPrivateFood_ForNonAdmin()
     {
         var userId = Guid.NewGuid();
         await _apiFixture.SeedUserAsync(userId, "user@example.com", emailVerified: true, role: "user");
@@ -390,9 +390,17 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var response = await _mcpClient.PostMcpAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var errorMessage = ExtractErrorMessage(jsonResponse);
-        errorMessage.Should().Match(m => m.Contains("403") || m.Contains("Unauthorized"));
+
+        // Food creation is no longer admin-only: a non-admin creates a food that
+        // is private to them. See docs/REFOCUS.md §4 - it had to be admin-only
+        // before Food.UserId existed, because every food was everyone's.
+        var mine = await _apiFixture.GetFoodsByUserId(userId);
+        mine.Should().ContainSingle(f => f.Name == "Test Ingredient");
+        mine.Single(f => f.Name == "Test Ingredient").IsVerified
+            .Should().BeFalse("verification is an admin judgement, not a self-assertion");
+
+        var publicFoods = await _apiFixture.GetPublicFoodsAsync();
+        publicFoods.Should().NotContain(f => f.Name == "Test Ingredient");
     }
 
     [Fact]
@@ -426,8 +434,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
         result.Should().ContainKey("content");
 
-        var foods = await _apiFixture.GetFoodsByUserId(userId);
-        foods.Should().Contain(f => f.Name == "New Admin Ingredient");
+        // An admin curates the shared catalogue, so their food has no owner.
+        var publicFoods = await _apiFixture.GetPublicFoodsAsync();
+        publicFoods.Should().Contain(f => f.Name == "New Admin Ingredient");
     }
 
     [Fact]
