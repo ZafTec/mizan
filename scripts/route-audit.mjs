@@ -53,12 +53,18 @@ for (const f of allFiles) {
   }
 }
 
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 // Dynamic routes match by prefix: /recipes/[id] is linked by /recipes/abc.
+// Literal parts are escaped in full; only [param] segments become wildcards.
+const routeToRegExp = (route) =>
+  new RegExp(
+    "^" + route.split(/\[[^\]]+\]/).map(escapeRe).join("[^/]+") + "$"
+  );
+
 const isLinked = (route) => {
   if (linkTargets.has(route)) return true;
-  const re = new RegExp(
-    "^" + route.replace(/\[[^\]]+\]/g, "[^/]+").replace(/\//g, "\\/") + "$"
-  );
+  const re = routeToRegExp(route);
   for (const t of linkTargets) if (re.test(t)) return true;
   return false;
 };
