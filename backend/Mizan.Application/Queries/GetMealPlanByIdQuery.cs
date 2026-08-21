@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Queries;
@@ -61,7 +62,6 @@ public class GetMealPlanByIdQueryHandler : IRequestHandler<GetMealPlanByIdQuery,
         var mealPlan = await _context.MealPlans
             .Include(mp => mp.MealPlanRecipes)
                 .ThenInclude(mpr => mpr.Recipe)
-                    .ThenInclude(r => r.Nutrition)
             .FirstOrDefaultAsync(mp => mp.Id == request.Id, cancellationToken);
 
         if (mealPlan == null)
@@ -75,6 +75,15 @@ public class GetMealPlanByIdQueryHandler : IRequestHandler<GetMealPlanByIdQuery,
             return null;
         }
 
+        // Summed from ingredients; recipe_nutrition no longer exists (§4).
+        var totalsById = await RecipeNutritionLookup.ForRecipesAsync(
+            _context,
+            mealPlan.MealPlanRecipes.Select(mpr => mpr.RecipeId).Distinct().ToList(),
+            cancellationToken);
+
+        decimal PerServing(Guid recipeId, Func<Domain.Recipes.RecipeNutritionTotals, decimal> pick)
+            => totalsById.TryGetValue(recipeId, out var t) ? pick(t) : 0m;
+
         var recipes = mealPlan.MealPlanRecipes.Select(mpr => new MealPlanRecipeDetailDto
         {
             Id = mpr.Id,
@@ -84,17 +93,17 @@ public class GetMealPlanByIdQueryHandler : IRequestHandler<GetMealPlanByIdQuery,
             Date = mpr.Date,
             MealType = mpr.MealType,
             Servings = mpr.Servings,
-            CaloriesPerServing = mpr.Recipe.Nutrition?.CaloriesPerServing
+            CaloriesPerServing = PerServing(mpr.RecipeId, t => t.Calories)
         }).OrderBy(r => r.Date).ThenBy(r => r.MealType).ToList();
 
         var totalCalories = mealPlan.MealPlanRecipes.Sum(mpr =>
-            (mpr.Recipe.Nutrition?.CaloriesPerServing ?? 0) * mpr.Servings);
+            PerServing(mpr.RecipeId, t => t.Calories) * mpr.Servings);
         var totalProtein = mealPlan.MealPlanRecipes.Sum(mpr =>
-            (mpr.Recipe.Nutrition?.ProteinGrams ?? 0) * mpr.Servings);
+            PerServing(mpr.RecipeId, t => t.ProteinGrams) * mpr.Servings);
         var totalCarbs = mealPlan.MealPlanRecipes.Sum(mpr =>
-            (mpr.Recipe.Nutrition?.CarbsGrams ?? 0) * mpr.Servings);
+            PerServing(mpr.RecipeId, t => t.CarbsGrams) * mpr.Servings);
         var totalFat = mealPlan.MealPlanRecipes.Sum(mpr =>
-            (mpr.Recipe.Nutrition?.FatGrams ?? 0) * mpr.Servings);
+            PerServing(mpr.RecipeId, t => t.FatGrams) * mpr.Servings);
 
         var daysCount = mealPlan.EndDate.DayNumber - mealPlan.StartDate.DayNumber + 1;
 

@@ -1659,6 +1659,10 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("image_url");
 
+                    b.Property<string>("Instructions")
+                        .HasColumnType("text")
+                        .HasColumnName("instructions");
+
                     b.Property<bool>("IsPreparation")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -1748,10 +1752,6 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .HasDefaultValue(0)
                         .HasColumnName("sort_order");
 
-                    b.Property<Guid?>("SubRecipeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("sub_recipe_id");
-
                     b.Property<string>("Unit")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
@@ -1763,113 +1763,7 @@ namespace Mizan.Infrastructure.Data.Migrations
 
                     b.HasIndex("RecipeId");
 
-                    b.HasIndex("SubRecipeId");
-
                     b.ToTable("recipe_ingredients", (string)null);
-                });
-
-            modelBuilder.Entity("Mizan.Domain.Entities.RecipeInstruction", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<string>("Instruction")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("instruction");
-
-                    b.Property<Guid>("RecipeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("recipe_id");
-
-                    b.Property<int>("StepNumber")
-                        .HasColumnType("integer")
-                        .HasColumnName("step_number");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RecipeId");
-
-                    b.ToTable("recipe_instructions", (string)null);
-                });
-
-            modelBuilder.Entity("Mizan.Domain.Entities.RecipeNutrition", b =>
-                {
-                    b.Property<Guid>("RecipeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("recipe_id");
-
-                    b.Property<decimal?>("CaloriesPerServing")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("numeric(8,2)")
-                        .HasColumnName("calories_per_serving");
-
-                    b.Property<decimal?>("CarbsGrams")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("numeric(8,2)")
-                        .HasColumnName("carbs_grams");
-
-                    b.Property<decimal?>("FatGrams")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("numeric(8,2)")
-                        .HasColumnName("fat_grams");
-
-                    b.Property<decimal?>("FiberGrams")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("numeric(8,2)")
-                        .HasColumnName("fiber_grams");
-
-                    b.Property<decimal?>("ProteinCalorieRatio")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("numeric(8,2)")
-                        .HasColumnName("protein_calorie_ratio");
-
-                    b.Property<decimal?>("ProteinGrams")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("numeric(8,2)")
-                        .HasColumnName("protein_grams");
-
-                    b.Property<decimal?>("SodiumMg")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("numeric(8,2)")
-                        .HasColumnName("sodium_mg");
-
-                    b.Property<decimal?>("SugarGrams")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("numeric(8,2)")
-                        .HasColumnName("sugar_grams");
-
-                    b.HasKey("RecipeId");
-
-                    b.ToTable("recipe_nutrition", (string)null);
-                });
-
-            modelBuilder.Entity("Mizan.Domain.Entities.RecipeTag", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<Guid>("RecipeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("recipe_id");
-
-                    b.Property<string>("Tag")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("tag");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RecipeId");
-
-                    b.ToTable("recipe_tags", (string)null);
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.ShoppingList", b =>
@@ -3138,47 +3032,7 @@ namespace Mizan.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Mizan.Domain.Entities.Recipe", "SubRecipe")
-                        .WithMany()
-                        .HasForeignKey("SubRecipeId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.Navigation("Food");
-
-                    b.Navigation("Recipe");
-
-                    b.Navigation("SubRecipe");
-                });
-
-            modelBuilder.Entity("Mizan.Domain.Entities.RecipeInstruction", b =>
-                {
-                    b.HasOne("Mizan.Domain.Entities.Recipe", "Recipe")
-                        .WithMany("Instructions")
-                        .HasForeignKey("RecipeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Recipe");
-                });
-
-            modelBuilder.Entity("Mizan.Domain.Entities.RecipeNutrition", b =>
-                {
-                    b.HasOne("Mizan.Domain.Entities.Recipe", "Recipe")
-                        .WithOne("Nutrition")
-                        .HasForeignKey("Mizan.Domain.Entities.RecipeNutrition", "RecipeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Recipe");
-                });
-
-            modelBuilder.Entity("Mizan.Domain.Entities.RecipeTag", b =>
-                {
-                    b.HasOne("Mizan.Domain.Entities.Recipe", "Recipe")
-                        .WithMany("Tags")
-                        .HasForeignKey("RecipeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("Recipe");
                 });
@@ -3445,13 +3299,7 @@ namespace Mizan.Infrastructure.Data.Migrations
 
                     b.Navigation("Ingredients");
 
-                    b.Navigation("Instructions");
-
                     b.Navigation("MealPlanRecipes");
-
-                    b.Navigation("Nutrition");
-
-                    b.Navigation("Tags");
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.ShoppingList", b =>

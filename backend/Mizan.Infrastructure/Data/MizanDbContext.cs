@@ -25,9 +25,6 @@ public class MizanDbContext : DbContext, IMizanDbContext
     public DbSet<Food> Foods => Set<Food>();
     public DbSet<Recipe> Recipes => Set<Recipe>();
     public DbSet<RecipeIngredient> RecipeIngredients => Set<RecipeIngredient>();
-    public DbSet<RecipeInstruction> RecipeInstructions => Set<RecipeInstruction>();
-    public DbSet<RecipeNutrition> RecipeNutritions => Set<RecipeNutrition>();
-    public DbSet<RecipeTag> RecipeTags => Set<RecipeTag>();
     public DbSet<FavoriteRecipe> FavoriteRecipes => Set<FavoriteRecipe>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<FoodDiaryEntry> FoodDiaryEntries => Set<FoodDiaryEntry>();
@@ -234,6 +231,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.HouseholdId).HasColumnName("household_id");
             entity.Property(e => e.Title).HasColumnName("title").HasMaxLength(255).IsRequired();
             entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.Instructions).HasColumnName("instructions");
             entity.Property(e => e.Servings).HasColumnName("servings").HasDefaultValue(1);
             entity.Property(e => e.IsPreparation).HasColumnName("is_preparation").HasDefaultValue(false);
             entity.Property(e => e.YieldGrams).HasColumnName("yield_grams").HasPrecision(10, 2);
@@ -256,54 +254,12 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
             entity.Property(e => e.RecipeId).HasColumnName("recipe_id");
             entity.Property(e => e.FoodId).HasColumnName("food_id");
-            entity.Property(e => e.SubRecipeId).HasColumnName("sub_recipe_id");
             entity.Property(e => e.IngredientText).HasColumnName("ingredient_text").HasMaxLength(255).IsRequired();
             entity.Property(e => e.Amount).HasColumnName("amount").HasPrecision(10, 2);
             entity.Property(e => e.Unit).HasColumnName("unit").HasMaxLength(50);
             entity.Property(e => e.SortOrder).HasColumnName("sort_order").HasDefaultValue(0);
             entity.HasOne(e => e.Recipe).WithMany(r => r.Ingredients).HasForeignKey(e => e.RecipeId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Food).WithMany(f => f.RecipeIngredients).HasForeignKey(e => e.FoodId).OnDelete(DeleteBehavior.SetNull);
-            entity.HasOne(e => e.SubRecipe).WithMany().HasForeignKey(e => e.SubRecipeId).OnDelete(DeleteBehavior.Restrict);
-        });
-
-        // RecipeInstruction configuration
-        modelBuilder.Entity<RecipeInstruction>(entity =>
-        {
-            entity.ToTable("recipe_instructions");
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
-            entity.Property(e => e.RecipeId).HasColumnName("recipe_id");
-            entity.Property(e => e.StepNumber).HasColumnName("step_number");
-            entity.Property(e => e.Instruction).HasColumnName("instruction").IsRequired();
-            entity.HasOne(e => e.Recipe).WithMany(r => r.Instructions).HasForeignKey(e => e.RecipeId).OnDelete(DeleteBehavior.Cascade);
-        });
-
-        // RecipeNutrition configuration
-        modelBuilder.Entity<RecipeNutrition>(entity =>
-        {
-            entity.ToTable("recipe_nutrition");
-            entity.HasKey(e => e.RecipeId);
-            entity.Property(e => e.RecipeId).HasColumnName("recipe_id");
-            entity.Property(e => e.CaloriesPerServing).HasColumnName("calories_per_serving").HasPrecision(8, 2);
-            entity.Property(e => e.ProteinGrams).HasColumnName("protein_grams").HasPrecision(8, 2);
-            entity.Property(e => e.CarbsGrams).HasColumnName("carbs_grams").HasPrecision(8, 2);
-            entity.Property(e => e.FatGrams).HasColumnName("fat_grams").HasPrecision(8, 2);
-            entity.Property(e => e.FiberGrams).HasColumnName("fiber_grams").HasPrecision(8, 2);
-            entity.Property(e => e.SugarGrams).HasColumnName("sugar_grams").HasPrecision(8, 2);
-            entity.Property(e => e.SodiumMg).HasColumnName("sodium_mg").HasPrecision(8, 2);
-            entity.Property(e => e.ProteinCalorieRatio).HasColumnName("protein_calorie_ratio").HasPrecision(8, 2);
-            entity.HasOne(e => e.Recipe).WithOne(r => r.Nutrition).HasForeignKey<RecipeNutrition>(e => e.RecipeId).OnDelete(DeleteBehavior.Cascade);
-        });
-
-        // RecipeTag configuration
-        modelBuilder.Entity<RecipeTag>(entity =>
-        {
-            entity.ToTable("recipe_tags");
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
-            entity.Property(e => e.RecipeId).HasColumnName("recipe_id");
-            entity.Property(e => e.Tag).HasColumnName("tag").HasMaxLength(50).IsRequired();
-            entity.HasOne(e => e.Recipe).WithMany(r => r.Tags).HasForeignKey(e => e.RecipeId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // FavoriteRecipe configuration

@@ -33,7 +33,17 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
     const [name, setName] = useState(recipe.title || "");
     const [images, setImages] = useState<string[]>(recipe.imageUrl ? [recipe.imageUrl] : []);
     const [description, setDescription] = useState(recipe.description || '');
-    const [instructions, setInstructions] = useState((recipe.instructions || []).map(i => i.instruction || "").join('\n'));
+    // Instructions are free text now, not ordered rows - see docs/REFOCUS.md §4.
+    // types/api.generated.ts still describes the old array shape; it is generated
+    // from a running backend, so `bun run codegen` has to be re-run against the
+    // updated API. Coerced here so the form is correct either way in the meantime.
+    const [instructions, setInstructions] = useState<string>(
+        typeof recipe.instructions === "string"
+            ? recipe.instructions
+            : ((recipe.instructions ?? []) as { instruction?: string }[])
+                  .map((i) => i.instruction ?? "")
+                  .join("\n")
+    );
     const [selectedIngredients, setSelectedIngredients] = useState<SelectedIngredient[]>(
         (recipe.ingredients || []).map(ing => {
             if (ing.subRecipeId) {
@@ -188,9 +198,8 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                 amount: ing.amount!,
                 unit: ing.type === "food" ? "gram" : "serving"
             })),
-            instructions: (instructions || '').split('\n').filter(line => line.trim()),
+            instructions: instructions.trim() || undefined,
             servings,
-            tags: Array.from(tags),
             imageUrl: images[0] || undefined,
             isPublic: true
         }
