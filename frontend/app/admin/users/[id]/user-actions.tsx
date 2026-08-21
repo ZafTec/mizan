@@ -72,20 +72,19 @@ export function UserActions({ user }: { user: User }) {
     }
   }
 
-  async function handleSetRole(role: string) {
+  async function handleSetRole(role: "user" | "admin") {
     setIsLoading(true);
     setError(null);
 
     try {
-      // BetterAuth only supports "user" and "admin" roles
-      // "trainer" is a separate business concept managed by the backend
-      if (role === "user" || role === "admin") {
-        await authClient.admin.setRole({
-          userId: user.id,
-          role: role as "user" | "admin",
-        });
-      }
-      // TODO: If role is "trainer", call backend API to set trainer status
+      // BetterAuth's admin plugin owns the users table and supports only
+      // "user" and "admin". Granting "trainer" means writing a table the
+      // backend treats as read-only, so it is not offered here until phase 6
+      // moves users to ASP.NET Identity. See docs/REFOCUS.md §6.
+      await authClient.admin.setRole({
+        userId: user.id,
+        role,
+      });
 
       setShowRoleDialog(false);
       appToast.success("User role updated");
@@ -361,10 +360,12 @@ function RoleDialog({
   onCancel,
 }: {
   currentRole: string;
-  onConfirm: (role: string) => void;
+  onConfirm: (role: "user" | "admin") => void;
   onCancel: () => void;
 }) {
-  const [role, setRole] = useState(currentRole);
+  const [role, setRole] = useState<"user" | "admin">(
+    currentRole === "admin" ? "admin" : "user"
+  );
 
   return (
     <ModalShell open onClose={onCancel}>
@@ -375,11 +376,10 @@ function RoleDialog({
             <label className="block text-sm font-medium mb-2">New Role</label>
             <select
               value={role}
-              onChange={(e) => setRole(e.target.value)}
+              onChange={(e) => setRole(e.target.value as "user" | "admin")}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="user">User</option>
-              <option value="trainer">Trainer</option>
               <option value="admin">Admin</option>
             </select>
           </div>
