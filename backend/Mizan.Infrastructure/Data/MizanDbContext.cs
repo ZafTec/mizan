@@ -200,6 +200,8 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.ToTable("foods");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.SourceRecipeId).HasColumnName("source_recipe_id");
             entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(255).IsRequired();
             entity.Property(e => e.Brand).HasColumnName("brand").HasMaxLength(255);
             entity.Property(e => e.Barcode).HasColumnName("barcode").HasMaxLength(100);
@@ -214,6 +216,9 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.SodiumPer100g).HasColumnName("sodium_per_100g").HasPrecision(8, 2);
             entity.Property(e => e.ProteinCalorieRatio).HasColumnName("protein_calorie_ratio").HasPrecision(8, 2);
             entity.Property(e => e.IsVerified).HasColumnName("is_verified").HasDefaultValue(false);
+            entity.HasIndex(e => e.UserId).HasDatabaseName("ix_foods_user_id");
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.SourceRecipe).WithMany().HasForeignKey(e => e.SourceRecipeId).OnDelete(DeleteBehavior.SetNull);
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
             entity.HasIndex(e => e.Barcode);
@@ -230,6 +235,8 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.Title).HasColumnName("title").HasMaxLength(255).IsRequired();
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.Servings).HasColumnName("servings").HasDefaultValue(1);
+            entity.Property(e => e.IsPreparation).HasColumnName("is_preparation").HasDefaultValue(false);
+            entity.Property(e => e.YieldGrams).HasColumnName("yield_grams").HasPrecision(10, 2);
             entity.Property(e => e.PrepTimeMinutes).HasColumnName("prep_time_minutes");
             entity.Property(e => e.CookTimeMinutes).HasColumnName("cook_time_minutes");
             entity.Property(e => e.SourceUrl).HasColumnName("source_url");
