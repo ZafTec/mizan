@@ -1,6 +1,6 @@
 # Refocus Plan: Mizan is a Logging App
 
-**Status:** rev 8 — phases 0-5 done, 6 in progress 
+**Status:** rev 8 — phases 0-6 done, 8 next 
 **Branch:** `claude/cleanup-logging-refocus-rzfiv8`
 **Rule:** decide what the project is about, build around it. Everything else
 gets demoted, not deleted.
@@ -1088,9 +1088,9 @@ Each phase is one commit and leaves the build green.
 | 3 | Fix + delete per audit | low | **done** | delete `/community`, resolve the `TODO` routes, drop frontend OTel, halve the admin panel, **add the trainer grant-update endpoint and settle `HouseholdMember.CanViewNutrition`** (§11) |
 | 4 | Recipe inversion + preparations | medium | **done** — promotion, preparations, food ownership, sub-table collapse. Promotion chip lands with the UI rebuild in 12 | promotion chip, unified picker, sub-table collapse, migration |
 | 5 | Contextual surfaces | medium | **done** | tier 2: resume banner, trainer strip, household switcher, in-context Pro wall; standing upsell banners deleted |
-| 6 | **v2 identity + schema** (absorbs 7) | **high** | next | backend owns `users`; opaque session cookies replace the JWT scheme; Drizzle, BetterAuth and `frontend/db/` deleted; migration history collapsed to one `InitialCreate` against a new database |
+| 6 | **v2 identity + schema** (absorbs 7) | **high** | **done** | backend owns `users`; opaque session cookies replace the JWT scheme; Drizzle, BetterAuth and `frontend/db/` deleted; migration history collapsed to one `InitialCreate` against a new database |
 | 7 | *(folded into 6)* | | | rev 8 merged schema unification into the identity phase; later numbers are left alone so earlier commits still resolve |
-| 8 | Storage + `Mizan.Contracts` | low | | `IStorageService`, Cloudinary impl, drop `next-cloudinary`, S3 in v2; extract shared DTOs so Api, Mcp.Server and Telegram cannot drift (§13) |
+| 8 | Storage + `Mizan.Contracts` | low | next | `IStorageService`, Cloudinary impl, drop `next-cloudinary`, S3 in v2; extract shared DTOs so Api, Mcp.Server and Telegram cannot drift (§13) |
 | 9 | AI platform + consent | medium | | `IAiProvider`, `AiUsageLog`, `IAiQuotaService`, per-user + global ceilings, usage tab, `UserAiConsent`, `IDataAccessPolicy`, `AiPromptVersion` + the hard/soft split. **Limits and consent ship with the first provider call, not after** |
 | 10 | AI surfaces + admin console | medium | | structured food analysis, chat on `AiChatThread`, onboarding agent over the allowlisted tool→command map shared with MCP; trainer intersection rule and read-only client tools (§11); `/admin/ai` with evals, diff and rollback (§12) |
 | 11 | Billing feature split | low | | widen gating past the three endpoints, customer portal link, in-context upgrade chips; gate relationship *creation*, never existing consent (§5) |
