@@ -106,8 +106,11 @@ Lifetime subscription to Mizan as a thank-you.
 - All production containers run as non-root users.
 - Secrets are injected via environment variables sourced from a locked-down
   `.env` on the VPS; none are checked into the repo.
-- JWTs are EdDSA-signed (`Ed25519`) and validated against a JWKS cached in
-  Redis via `HybridCache`.
+- Browser sessions are opaque 256-bit tokens in an httpOnly cookie. Only their
+  SHA-256 is stored, in `user_sessions`, cached in Redis via `HybridCache`.
+  Revoking a session takes effect on the next request.
+- Passwords are hashed with ASP.NET Core Identity's `PasswordHasher<T>`
+  (PBKDF2-HMAC-SHA512). Five failed sign-ins lock an account for 15 minutes.
 - Dependabot and GitHub's security advisories are enabled on this repo.
 - The Paddle checkout handles all payment data; we never store card
   details.

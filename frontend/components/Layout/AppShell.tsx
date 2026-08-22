@@ -174,14 +174,9 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 	async function handleLogout() {
 		try {
 			clearAppearanceCookie();
-			await signOut({
-				fetchOptions: {
-					onSuccess: () => {
-						router.push("/");
-						router.refresh();
-					},
-				},
-			});
+			await signOut();
+			router.push("/");
+			router.refresh();
 		} catch (error) {
 			appToast.error(error, "Failed to sign out");
 		}

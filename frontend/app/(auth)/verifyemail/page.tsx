@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Loading from "@/components/Loading";
+import { verifyEmail, type AuthError } from "@/lib/auth-client";
 
 export default function Page() {
 	const [token, setToken] = useState("");
@@ -19,23 +20,14 @@ export default function Page() {
 
 	async function verifyUserEmail() {
 		try {
-			const response = await fetch("/api/auth/verify-email", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ token }),
-			});
-
-			if (!response.ok) {
-				const errorData = await response.json();
-				throw new Error(errorData.message || "Verification failed");
-			}
-
+			await verifyEmail(token);
 			setVerified(true);
-		} catch (err: any) {
+		} catch (err) {
 			setError(true);
-			setErrorMessage(err.message || "Failed to verify email. The link may be invalid or expired.");
+			setErrorMessage(
+				(err as AuthError).message
+					|| "Failed to verify email. The link may be invalid or expired.",
+			);
 		} finally {
 			setLoading(false);
 		}

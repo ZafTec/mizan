@@ -8,20 +8,20 @@ import { CldUploadWidget } from "next-cloudinary";
 import Loading from "@/components/Loading";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 import ConfirmationModal from "@/components/ConfirmationModal";
-import { authClient, useSession } from "@/lib/auth-client";
+import {
+	changePassword,
+	deleteAccount,
+	listSessions,
+	revokeSession,
+	useSession,
+	type SessionSummary,
+} from "@/lib/auth-client";
 import { clientApi } from "@/lib/api.client";
 import { downloadProfileExport, getProfileObservations, type ProfileObservations } from "@/lib/api/profile";
 import { useTheme } from "@/lib/hooks/useTheme";
 import { appToast } from "@/lib/toast";
 
-type SessionItem = {
-	id: string;
-	token: string;
-	ipAddress?: string;
-	userAgent?: string;
-	createdAt: string;
-	expiresAt: string;
-};
+type SessionItem = SessionSummary;
 
 const DELETE_CONFIRMATION_TEXT = "DELETE";
 const CLOUDINARY_CONFIGURED = Boolean(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME);
@@ -96,23 +96,7 @@ export default function ProfileSettingsPage() {
 	async function fetchSessions() {
 		setLoadingSessions(true);
 		try {
-			const result = await authClient.listSessions();
-			setSessions(
-				(result.data ?? []).map((item: any) => ({
-					id: item.id,
-					token: item.token,
-					ipAddress: item.ipAddress || undefined,
-					userAgent: item.userAgent || undefined,
-					createdAt:
-						typeof item.createdAt === "string"
-							? item.createdAt
-							: new Date(item.createdAt).toISOString(),
-					expiresAt:
-						typeof item.expiresAt === "string"
-							? item.expiresAt
-							: new Date(item.expiresAt).toISOString(),
-				}))
-			);
+			setSessions(await listSessions());
 		} catch (error) {
 			console.error("Failed to fetch sessions:", error);
 			appToast.error(error, "Failed to load sessions");
@@ -145,19 +129,14 @@ export default function ProfileSettingsPage() {
 		const trimmedName = nextName?.trim() ?? "";
 		const trimmedImage = nextImage?.trim() ?? "";
 
-		await Promise.all([
-			authClient.updateUser({
-				...(includeName ? { name: trimmedName || undefined } : {}),
-				...(includeImage ? { image: trimmedImage || undefined } : {}),
-			} as never),
-			clientApi("/api/Users/me", {
-				method: "PUT",
-				body: {
-					...(includeName ? { name: trimmedName || null } : {}),
-					...(includeImage ? { image: trimmedImage || null } : {}),
-				},
-			}),
-		]);
+		// One write, not two: the users table has a single owner since v2.
+		await clientApi("/api/Users/me", {
+			method: "PUT",
+			body: {
+				...(includeName ? { name: trimmedName || null } : {}),
+				...(includeImage ? { image: trimmedImage || null } : {}),
+			},
+		});
 	}
 
 	async function handleUpdateProfile() {
@@ -218,18 +197,14 @@ export default function ProfileSettingsPage() {
 			return;
 		}
 
-		if (newPassword.length < 8) {
-			appToast.error("Password must be at least 8 characters");
+		if (newPassword.length < 10) {
+			appToast.error("Password must be at least 10 characters");
 			return;
 		}
 
 		setChangingPassword(true);
 		try {
-			await authClient.changePassword({
-				currentPassword,
-				newPassword,
-				revokeOtherSessions: true,
-			});
+			await changePassword(currentPassword, newPassword);
 
 			setCurrentPassword("");
 			setNewPassword("");
@@ -244,11 +219,11 @@ export default function ProfileSettingsPage() {
 		}
 	}
 
-	async function handleRevokeSession(sessionToken: string) {
-		setRevoking(sessionToken);
+	async function handleRevokeSession(sessionId: string) {
+		setRevoking(sessionId);
 		try {
-			await authClient.revokeSession({ token: sessionToken });
-			setSessions((current) => current.filter((item) => item.token !== sessionToken));
+			await revokeSession(sessionId);
+			setSessions((current) => current.filter((item) => item.id !== sessionId));
 			appToast.success("Session revoked");
 		} catch (error) {
 			console.error("Failed to revoke session:", error);
@@ -261,7 +236,9 @@ export default function ProfileSettingsPage() {
 	async function handleRevokeAllOtherSessions() {
 		setRevoking("all");
 		try {
-			await authClient.revokeSessions();
+			await Promise.all(
+				sessions.filter((item) => !item.isCurrent).map((item) => revokeSession(item.id)),
+			);
 			appToast.success("Other sessions revoked");
 			await fetchSessions();
 		} catch (error) {
@@ -305,11 +282,7 @@ export default function ProfileSettingsPage() {
 		setShowDeleteModal(false);
 		setDeletingAccount(true);
 		try {
-			await authClient.deleteUser(
-				deletePassword.trim()
-					? { password: deletePassword.trim(), callbackURL: "/" }
-					: { callbackURL: "/" }
-			);
+			await deleteAccount();
 			window.location.href = "/";
 		} catch (error) {
 			console.error("Failed to delete account:", error);
@@ -553,7 +526,7 @@ export default function ProfileSettingsPage() {
 
 								<div className="space-y-3">
 									{activeSessions.map((activeSession) => {
-										const isCurrent = activeSession.token === session.session?.token;
+										const isCurrent = activeSession.isCurrent;
 										return (
 											<div key={activeSession.id} className={`rounded-3xl border p-4 ${isCurrent ? "border-brand-300 bg-brand-50/80 dark:border-brand-500/30 dark:bg-brand-500/10" : "border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-charcoal-blue-950"}`}>
 												<div className="flex items-start justify-between gap-4">
@@ -566,8 +539,8 @@ export default function ProfileSettingsPage() {
 														<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">Expires {formatDateTime(activeSession.expiresAt)}</p>
 													</div>
 													{!isCurrent ? (
-														<button onClick={() => handleRevokeSession(activeSession.token)} disabled={revoking === activeSession.token} className="rounded-full border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-500/20 dark:hover:bg-red-500/10">
-															{revoking === activeSession.token ? "Revoking..." : "Revoke"}
+														<button onClick={() => handleRevokeSession(activeSession.id)} disabled={revoking === activeSession.id} className="rounded-full border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-500/20 dark:hover:bg-red-500/10">
+															{revoking === activeSession.id ? "Revoking..." : "Revoke"}
 														</button>
 													) : null}
 												</div>
@@ -758,7 +731,7 @@ function AvatarPreview({
 	);
 }
 
-function getDeviceInfo(userAgent?: string) {
+function getDeviceInfo(userAgent?: string | null) {
 	if (!userAgent) return "Unknown device";
 	const ua = userAgent.toLowerCase();
 	let browser = "Unknown browser";

@@ -49,7 +49,13 @@ public class UsersController : ControllerBase
             return Unauthorized("User not authenticated");
         }
 
-        var command = new UpdateUserCommand(_currentUser.UserId.Value, request.Name, request.Image);
+        var command = new UpdateUserCommand(
+            _currentUser.UserId.Value,
+            request.Name,
+            request.Image,
+            request.ThemePreference,
+            request.CompactMode,
+            request.ReduceAnimations);
         var success = await _mediator.Send(command);
 
         if (!success)
@@ -61,5 +67,10 @@ public class UsersController : ControllerBase
     }
 }
 
-public record UpdateUserRequest(string? Name, string? Image);
+public record UpdateUserRequest(
+    string? Name,
+    string? Image,
+    string? ThemePreference = null,
+    bool? CompactMode = null,
+    bool? ReduceAnimations = null);
 
