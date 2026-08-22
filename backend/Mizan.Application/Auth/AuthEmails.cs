@@ -61,5 +61,9 @@ public static class AuthEmails
         + "<p style=\"color:#94a3b8;font-size:12px\">Mizan</p></div>";
 
     private static string Escape(string value) =>
-        value.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;");
+        value.Replace("&", "&amp;")
+            .Replace("<", "&lt;")
+            .Replace(">", "&gt;")
+            .Replace("\"", "&quot;")
+            .Replace("'", "&#39;");
 }

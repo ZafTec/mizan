@@ -111,6 +111,16 @@ Lifetime subscription to Mizan as a thank-you.
   Revoking a session takes effect on the next request.
 - Passwords are hashed with ASP.NET Core Identity's `PasswordHasher<T>`
   (PBKDF2-HMAC-SHA512). Five failed sign-ins lock an account for 15 minutes.
+- Cross-site request forgery is blocked by three things together: the session
+  cookie is `SameSite=Lax`, so it is not attached to a cross-site write; the
+  API accepts JSON bodies only, so a cross-site HTML form cannot reach an
+  endpoint; and CORS names the allowed origins explicitly, so the preflight
+  those requests need is refused.
+- OAuth return targets are validated against an allowlist of same-origin paths
+  on both sides - `AppUrls.SafeReturnUrl` and `safeRedirectPath` - so a crafted
+  `?returnUrl=` cannot turn sign-in into an open redirect.
+- Verification and reset links never reach the application log. With no SMTP
+  host configured the message is written to a pickup directory instead.
 - Dependabot and GitHub's security advisories are enabled on this repo.
 - The Paddle checkout handles all payment data; we never store card
   details.
