@@ -18,13 +18,20 @@ public class SmtpOptions
     public string FromAddress { get; set; } = "noreply@mizan.local";
     public string FromName { get; set; } = "Mizan";
     public bool UseStartTls { get; set; } = true;
+
+    /// <summary>
+    /// Where to drop messages when no SMTP host is configured. A developer
+    /// still needs to open the verification link; the application log is the
+    /// wrong place for it, because that link is a credential.
+    /// </summary>
+    public string PickupDirectory { get; set; } = "logs/mail";
 }
 
 /// <summary>
-/// Email moved to the backend with identity in v2. When no SMTP host is
-/// configured the message is logged instead of dropped - a developer running
-/// locally still needs to see the verification link, and a silent no-op here
-/// would look exactly like a delivery failure.
+/// Email moved to the backend with identity in v2. With no SMTP host
+/// configured the message is written to a pickup directory rather than sent -
+/// a silent no-op would look exactly like a delivery failure, and logging the
+/// body would put password-reset links in the application log.
 /// </summary>
 public class SmtpEmailSender : IEmailSender
 {
@@ -41,9 +48,7 @@ public class SmtpEmailSender : IEmailSender
     {
         if (string.IsNullOrWhiteSpace(_options.Host))
         {
-            _logger.LogWarning(
-                "SMTP is not configured; email to {To} was not sent. Subject: {Subject}\n{Text}",
-                message.To, message.Subject, message.Text);
+            await WriteToPickupDirectoryAsync(message, cancellationToken);
             return;
         }
 
@@ -62,12 +67,34 @@ public class SmtpEmailSender : IEmailSender
 
         if (!string.IsNullOrWhiteSpace(_options.Username))
         {
-            await client.AuthenticateAsync(_options.Username, _options.Password, cancellationToken);
+            await client.AuthenticateAsync(_options.Username, _options.Password ?? string.Empty, cancellationToken);
         }
 
         await client.SendAsync(mime, cancellationToken);
         await client.DisconnectAsync(true, cancellationToken);
 
         _logger.LogInformation("Sent {Subject} to {To}", message.Subject, message.To);
+    }
+
+    private async Task WriteToPickupDirectoryAsync(EmailMessage message, CancellationToken cancellationToken)
+    {
+        try
+        {
+            Directory.CreateDirectory(_options.PickupDirectory);
+            var name = $"{DateTime.UtcNow:yyyyMMdd-HHmmssfff}-{Guid.NewGuid():N}.html";
+            var path = Path.Combine(_options.PickupDirectory, name);
+            await File.WriteAllTextAsync(
+                path,
+                $"<!-- To: {message.To} | Subject: {message.Subject} -->\n{message.Html}",
+                cancellationToken);
+
+            _logger.LogWarning(
+                "SMTP is not configured; wrote {Subject} for {To} to {Path} instead of sending",
+                message.Subject, message.To, path);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "SMTP is not configured and the pickup directory is not writable");
+        }
     }
 }
