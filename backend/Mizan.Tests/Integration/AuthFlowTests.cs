@@ -35,15 +35,26 @@ public class AuthFlowTests
         user.Email.Should().Be(email);
     }
 
+    /// <summary>
+    /// Replaces the old "session for a user that does not exist" case. Since
+    /// user_sessions is a real foreign key onto users, that row cannot be
+    /// written at all and deleting the user cascades the session away - the
+    /// scenario is now unreachable rather than merely rejected. Expiry is the
+    /// case that remains.
+    /// </summary>
     [Fact]
-    public async Task GetMe_ReturnsUnauthorized_WhenUserMissing()
+    public async Task GetMe_ReturnsUnauthorized_WhenSessionExpired()
     {
         await _fixture.ResetDatabaseAsync();
 
         var userId = Guid.NewGuid();
-        var email = $"missing-{userId:N}@example.com";
+        var email = $"expired-{userId:N}@example.com";
+        await _fixture.SeedUserAsync(userId, email, emailVerified: true);
 
-        using var client = _fixture.CreateAuthenticatedClient(userId, email);
+        var token = await _fixture.CreateSessionAsync(userId, DateTime.UtcNow.AddMinutes(-1));
+        using var client = _fixture.CreateClient();
+        client.DefaultRequestHeaders.Add("Cookie", $"{ApiTestFixture.SessionCookieName}={token}");
+
         var response = await client.GetAsync("/api/Users/me");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -80,18 +91,17 @@ public class AuthFlowTests
     }
 
     [Fact]
-    public async Task GetMe_ReturnsUnauthorized_WhenSignatureInvalid()
+    public async Task GetMe_ReturnsUnauthorized_WhenSessionTokenIsNotOurs()
     {
         await _fixture.ResetDatabaseAsync();
 
         var userId = Guid.NewGuid();
-        var email = $"invalidsig-{userId:N}@example.com";
+        var email = $"forged-{userId:N}@example.com";
         await _fixture.SeedUserAsync(userId, email, emailVerified: true);
 
-        using var issuer = TestJwtIssuer.Create();
-        var token = issuer.CreateToken(userId, email, "user", _fixture.Issuer, _fixture.Audience);
         using var client = _fixture.CreateClient();
-        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        client.DefaultRequestHeaders.Add(
+            "Cookie", $"{ApiTestFixture.SessionCookieName}=not-a-real-session-token");
 
         var response = await client.GetAsync("/api/Users/me");
 
@@ -187,21 +197,28 @@ public class AuthFlowTests
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>
+    /// The thing a JWT could not do. Signing out one session has to take effect
+    /// on the next request, not at the end of a token lifetime.
+    /// </summary>
     [Fact]
-    public async Task JwtBearerAuthentication_RejectsBannedUserToken()
+    public async Task RevokedSession_StopsWorkingImmediately()
     {
         await _fixture.ResetDatabaseAsync();
 
         var userId = Guid.NewGuid();
-        var email = $"token-banned-{userId:N}@example.com";
-        await _fixture.SeedUserAsync(userId, email, emailVerified: true, banned: true);
+        var email = $"revoked-{userId:N}@example.com";
+        await _fixture.SeedUserAsync(userId, email, emailVerified: true);
 
-        var validToken = _fixture.CreateToken(userId, email, "user");
+        var token = await _fixture.CreateSessionAsync(userId);
         using var client = _fixture.CreateClient();
-        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", validToken);
+        client.DefaultRequestHeaders.Add("Cookie", $"{ApiTestFixture.SessionCookieName}={token}");
 
-        var response = await client.GetAsync("/api/Users/me");
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        (await client.GetAsync("/api/Users/me")).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        (await client.PostAsync("/api/Auth/logout", null)).StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        (await client.GetAsync("/api/Users/me")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     private sealed record UserResponse(Guid Id, string Email);

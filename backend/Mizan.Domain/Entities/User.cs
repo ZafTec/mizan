@@ -1,10 +1,9 @@
 namespace Mizan.Domain.Entities;
 
 /// <summary>
-/// User entity - READ-ONLY for backend (managed by frontend Drizzle ORM)
-/// ⚠️ Frontend schema (frontend/db/schema.ts users table) is source of truth
-/// ⚠️ Backend CANNOT modify users table - it is excluded from EF Core migrations
-/// ⚠️ Backend can only READ user data for authorization and business logic
+/// The account. Owned by this backend end to end since v2 - see
+/// docs/REFOCUS.md §6. PasswordHash is null for accounts that only ever signed
+/// in through Google or GitHub.
 /// </summary>
 public class User
 {
@@ -13,6 +12,9 @@ public class User
     public bool EmailVerified { get; set; }
     public string? Name { get; set; }
     public string? Image { get; set; }
+    public string? PasswordHash { get; set; }
+    public int AccessFailedCount { get; set; }
+    public DateTime? LockoutEnd { get; set; }
     public string ThemePreference { get; set; } = "system";
     public bool CompactMode { get; set; }
     public bool ReduceAnimations { get; set; }
@@ -34,7 +36,7 @@ public class User
     public virtual ICollection<TrainerClientRelationship> TrainerRelationships { get; set; } = new List<TrainerClientRelationship>();
     public virtual ICollection<TrainerClientRelationship> ClientRelationships { get; set; } = new List<TrainerClientRelationship>();
 
-    // Auth navigation properties REMOVED (managed by frontend)
-    // public virtual ICollection<Account> Accounts { get; set; }
-    // public virtual ICollection<Session> Sessions { get; set; }
+    public virtual ICollection<UserSession> Sessions { get; set; } = new List<UserSession>();
+    public virtual ICollection<UserToken> Tokens { get; set; } = new List<UserToken>();
+    public virtual ICollection<ExternalLogin> ExternalLogins { get; set; } = new List<ExternalLogin>();
 }
