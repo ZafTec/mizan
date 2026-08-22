@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { authClient, useSession } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
+import { clientApi } from "@/lib/api.client";
 import {
 	applyAppearanceClasses,
 	type AppearanceSettings,
@@ -66,11 +67,14 @@ export function useTheme() {
 			setSettings(next);
 			applyAppearanceClasses(next);
 			writeAppearanceCookie(next);
-			await authClient.updateUser({
-				themePreference: next.theme,
-				compactMode: next.compactMode,
-				reduceAnimations: next.reduceAnimations,
-			} as never);
+			await clientApi("/api/Users/me", {
+				method: "PUT",
+				body: {
+					themePreference: next.theme,
+					compactMode: next.compactMode,
+					reduceAnimations: next.reduceAnimations,
+				},
+			});
 			return next;
 		},
 		[settings]

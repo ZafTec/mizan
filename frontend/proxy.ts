@@ -22,6 +22,8 @@ const PROTECTED_PATTERNS = [
   /^\/recipes\/[^/]+\/edit/,
 ];
 
+const SESSION_COOKIE = "mizan_session";
+
 function isProtectedRoute(pathname: string): boolean {
   if (PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return true;
@@ -36,9 +38,9 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const sessionCookie =
-    request.cookies.get("better-auth.session_token") ??
-    request.cookies.get("__Secure-better-auth.session_token");
+  // Presence only. Whether the session is still valid is the API's call, and
+  // this runs on every request - see docs/REFOCUS.md §6.
+  const sessionCookie = request.cookies.get(SESSION_COOKIE);
 
   if (!sessionCookie?.value) {
     const loginUrl = new URL("/login", request.url);

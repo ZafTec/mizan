@@ -1,6 +1,4 @@
-import { db } from "@/db/client";
 import { NextResponse } from "next/server";
-import { users } from "@/db/schema";
 import { logger } from "@/lib/logger";
 
 const healthLogger = logger.createModuleLogger("health-route");
@@ -10,10 +8,6 @@ export async function GET() {
         status: "Healthy",
         timestamp: new Date().toISOString(),
         services: {
-            database: {
-                status: "Unknown",
-                latencyMs: 0,
-            },
             backend: {
                 status: "Unknown",
                 latencyMs: 0,
@@ -26,21 +20,8 @@ export async function GET() {
         },
     };
 
-    // Check database
-    const dbStart = performance.now();
-    try {
-        await db.select({ id: users.id }).from(users).limit(1);
-        const dbEnd = performance.now();
-
-        healthStatus.services.database.status = "Healthy";
-        healthStatus.services.database.latencyMs = Math.round(dbEnd - dbStart);
-    } catch (error) {
-        healthLogger.error("Database health check failed", {error});
-        healthStatus.status = "Unhealthy";
-        healthStatus.services.database.status = "Unhealthy";
-    }
-
-    // Check backend API
+    // The frontend owns no database since v2; the backend's own health check
+    // covers Postgres and Redis.
     const backendStart = performance.now();
     try {
         const backendUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";

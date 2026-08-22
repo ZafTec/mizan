@@ -1,20 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
+import {
+  deleteAdminUser,
+  revokeAdminUserSessions,
+  updateAdminUser,
+} from "@/lib/api/admin-users";
 import { useRouter } from "next/navigation";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import { ModalShell } from "@/components/ModalShell";
 import { appToast } from "@/lib/toast";
 
+type Role = "user" | "trainer" | "admin";
+
 interface User {
   id: string;
-  name: string | null;
+  name?: string | null;
   email: string;
   role: string | null;
   banned: boolean | null;
-  banReason: string | null;
-  banExpires: Date | null;
+  banReason?: string | null;
+  banExpires?: string | Date | null;
 }
 
 export function UserActions({ user }: { user: User }) {
@@ -32,15 +38,11 @@ export function UserActions({ user }: { user: User }) {
     setError(null);
 
     try {
-      const expiresAt = expiresInDays
-        ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)
-        : undefined;
+      const banExpires = expiresInDays
+        ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString()
+        : null;
 
-      await authClient.admin.banUser({
-        userId: user.id,
-        banReason: reason,
-        banExpiresIn: expiresInDays ? expiresInDays * 24 * 60 * 60 : undefined,
-      });
+      await updateAdminUser(user.id, { banned: true, banReason: reason, banExpires });
 
       setShowBanDialog(false);
       appToast.success("User banned");
@@ -58,9 +60,7 @@ export function UserActions({ user }: { user: User }) {
     setError(null);
 
     try {
-      await authClient.admin.unbanUser({
-        userId: user.id,
-      });
+      await updateAdminUser(user.id, { banned: false });
 
       appToast.success("User unbanned");
       router.refresh();
@@ -72,19 +72,14 @@ export function UserActions({ user }: { user: User }) {
     }
   }
 
-  async function handleSetRole(role: "user" | "admin") {
+  async function handleSetRole(role: Role) {
     setIsLoading(true);
     setError(null);
 
     try {
-      // BetterAuth's admin plugin owns the users table and supports only
-      // "user" and "admin". Granting "trainer" means writing a table the
-      // backend treats as read-only, so it is not offered here until phase 6
-      // moves users to ASP.NET Identity. See docs/REFOCUS.md §6.
-      await authClient.admin.setRole({
-        userId: user.id,
-        role,
-      });
+      // Trainer is grantable again: the backend owns the users table since v2,
+      // so all three roles go through one endpoint.
+      await updateAdminUser(user.id, { role });
 
       setShowRoleDialog(false);
       appToast.success("User role updated");
@@ -102,10 +97,7 @@ export function UserActions({ user }: { user: User }) {
     setError(null);
 
     try {
-      await authClient.admin.setUserPassword({
-        userId: user.id,
-        newPassword: newPassword,
-      });
+      await updateAdminUser(user.id, { newPassword });
 
       setShowPasswordDialog(false);
       appToast.success("Password updated");
@@ -125,9 +117,7 @@ export function UserActions({ user }: { user: User }) {
     setError(null);
 
     try {
-      await authClient.admin.removeUser({
-        userId: user.id,
-      });
+      await deleteAdminUser(user.id);
 
       appToast.success("User deleted");
       router.push("/admin/users");
@@ -139,35 +129,12 @@ export function UserActions({ user }: { user: User }) {
     }
   }
 
-  async function handleImpersonateUser() {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      await authClient.admin.impersonateUser({
-        userId: user.id,
-      });
-
-      appToast.success("Impersonation started");
-      router.push("/");
-    } catch (err) {
-      appToast.error(err, "Failed to impersonate user");
-      setError(
-        err instanceof Error ? err.message : "Failed to impersonate user"
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
   async function handleRevokeAllSessions() {
     setIsLoading(true);
     setError(null);
 
     try {
-      await authClient.admin.revokeUserSessions({
-        userId: user.id,
-      });
+      await revokeAdminUserSessions(user.id);
 
       appToast.success("All sessions revoked");
       setShowRevokeSessionsConfirm(false);
@@ -232,13 +199,6 @@ export function UserActions({ user }: { user: User }) {
         Revoke All Sessions
       </button>
 
-      <button
-        onClick={handleImpersonateUser}
-        disabled={isLoading}
-        className="w-full px-4 py-2 border rounded-lg hover:bg-accent disabled:opacity-50"
-      >
-        Impersonate User
-      </button>
 
       <button
         onClick={() => setShowDeleteConfirm(true)}
@@ -360,11 +320,11 @@ function RoleDialog({
   onCancel,
 }: {
   currentRole: string;
-  onConfirm: (role: "user" | "admin") => void;
+  onConfirm: (role: Role) => void;
   onCancel: () => void;
 }) {
-  const [role, setRole] = useState<"user" | "admin">(
-    currentRole === "admin" ? "admin" : "user"
+  const [role, setRole] = useState<Role>(
+    currentRole === "admin" || currentRole === "trainer" ? currentRole : "user"
   );
 
   return (
@@ -376,10 +336,11 @@ function RoleDialog({
             <label className="block text-sm font-medium mb-2">New Role</label>
             <select
               value={role}
-              onChange={(e) => setRole(e.target.value as "user" | "admin")}
+              onChange={(e) => setRole(e.target.value as Role)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="user">User</option>
+              <option value="trainer">Trainer</option>
               <option value="admin">Admin</option>
             </select>
           </div>

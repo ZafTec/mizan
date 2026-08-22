@@ -5,7 +5,6 @@ import type {
   McpUsageAnalyticsResult,
   GetMcpTokensResult,
 } from "@/types/mcp";
-import { getApiToken } from "@/lib/api.client";
 import { resolvePublicApiOrigin } from "@/lib/api-base";
 import { logger } from "@/lib/logger";
 
@@ -30,12 +29,11 @@ async function fetchApi<T>(
   const startTime = Date.now();
 
   try {
-    const token = await getApiToken();
     const response = await fetch(`${API_BASE()}${path}`, {
       ...options,
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
       },
     });
