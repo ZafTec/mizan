@@ -5,9 +5,11 @@ namespace Mizan.Application.Interfaces;
 
 public interface IMizanDbContext
 {
-    // Auth tables - Users is read-only (managed by frontend)
+    // Identity, owned by this backend since v2 (docs/REFOCUS.md §6)
     DbSet<User> Users { get; }
-    // Accounts, Sessions - REMOVED (managed by frontend)
+    DbSet<UserSession> UserSessions { get; }
+    DbSet<UserToken> UserTokens { get; }
+    DbSet<ExternalLogin> ExternalLogins { get; }
 
     // Business tables (managed by backend)
     DbSet<Household> Households { get; }

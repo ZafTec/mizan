@@ -5,6 +5,8 @@ using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Infrastructure.AI;
 using Mizan.Infrastructure.Data;
+using Mizan.Infrastructure.Email;
+using Mizan.Infrastructure.Identity;
 using Mizan.Infrastructure.Services;
 
 namespace Mizan.Infrastructure;
@@ -41,6 +43,15 @@ public static class DependencyInjection
         services.AddScoped<IStreakService, StreakService>();
         services.AddScoped<IAchievementEvaluator, AchievementEvaluator>();
         services.AddScoped<INotificationWriter, NotificationWriter>();
+
+        // Identity - the backend owns auth end to end since v2 (docs/REFOCUS.md §6)
+        services.Configure<AppOptions>(configuration.GetSection(AppOptions.SectionName));
+        services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
+        services.AddSingleton<IPasswordHasher, PasswordHasherAdapter>();
+        services.AddSingleton<IAppUrls, AppUrls>();
+        services.AddScoped<ISessionService, SessionService>();
+        services.AddScoped<IUserCacheInvalidator, UserCacheInvalidator>();
+        services.AddScoped<IEmailSender, SmtpEmailSender>();
 
         // Billing
         services.Configure<PaddleOptions>(configuration.GetSection(PaddleOptions.SectionName));

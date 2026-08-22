@@ -29,3 +29,24 @@ public class DomainValidationException : DomainException
 {
     public DomainValidationException(string message) : base(message) { }
 }
+
+/// <summary>Bad email or password. Deliberately says nothing about which.</summary>
+public sealed class InvalidCredentialsException : DomainException
+{
+    public InvalidCredentialsException() : base("Email or password is incorrect.") { }
+}
+
+/// <summary>
+/// Correct credentials, unconfirmed address. Distinct from InvalidCredentials
+/// so the sign-in screen can offer to resend rather than blaming the password.
+/// </summary>
+public sealed class EmailNotVerifiedException : DomainException
+{
+    public EmailNotVerifiedException() : base("Confirm your email address before signing in.") { }
+}
+
+public sealed class AccountLockedException : DomainException
+{
+    public AccountLockedException(DateTime until)
+        : base($"Too many failed attempts. Try again after {until:HH:mm} UTC.") { }
+}
