@@ -2,6 +2,7 @@ using System.Security.Claims;
 using AspNet.Security.OAuth.GitHub;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
+using Mizan.Application.Interfaces;
 
 namespace Mizan.Api.Authentication;
 
@@ -15,6 +16,10 @@ public record ExternalIdentity(string Provider, string ProviderKey, string Email
 public static class ExternalProviders
 {
     public const string CookieScheme = "External";
+    public const string CallbackPath = "/api/Auth/external/callback";
+
+    /// <summary>Key under which the validated return path rides in the OAuth state.</summary>
+    public const string ReturnUrlKey = "mizan.returnUrl";
 
     public static string? Resolve(string provider) => provider?.ToLowerInvariant() switch
     {
@@ -22,6 +27,18 @@ public static class ExternalProviders
         "github" => GitHubAuthenticationDefaults.AuthenticationScheme,
         _ => null,
     };
+
+    /// <summary>
+    /// The return target we put into the state before the round trip. It is
+    /// re-validated on the way out: the encrypted cookie should be
+    /// untamperable, but a redirect is not the place to rely on "should".
+    /// </summary>
+    public static string ReturnUrl(AuthenticateResult result, IAppUrls urls)
+    {
+        string? stored = null;
+        result.Properties?.Items.TryGetValue(ReturnUrlKey, out stored);
+        return urls.SafeReturnUrl(stored);
+    }
 
     public static ExternalIdentity? Read(AuthenticateResult result)
     {

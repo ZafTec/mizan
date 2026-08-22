@@ -1,5 +1,6 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MimeKit;
@@ -18,29 +19,30 @@ public class SmtpOptions
     public string FromAddress { get; set; } = "noreply@mizan.local";
     public string FromName { get; set; } = "Mizan";
     public bool UseStartTls { get; set; } = true;
-
-    /// <summary>
-    /// Where to drop messages when no SMTP host is configured. A developer
-    /// still needs to open the verification link; the application log is the
-    /// wrong place for it, because that link is a credential.
-    /// </summary>
-    public string PickupDirectory { get; set; } = "logs/mail";
 }
 
 /// <summary>
-/// Email moved to the backend with identity in v2. With no SMTP host
-/// configured the message is written to a pickup directory rather than sent -
-/// a silent no-op would look exactly like a delivery failure, and logging the
-/// body would put password-reset links in the application log.
+/// Email moved to the backend with identity in v2.
+///
+/// Nothing here writes a message body anywhere durable. A verification or
+/// reset link is a credential: in the application log it outlives the token,
+/// travels to wherever logs are shipped, and is readable by anyone with log
+/// access. With no SMTP host configured, a development run prints the body to
+/// stdout and every other environment gets an error naming only the subject.
 /// </summary>
 public class SmtpEmailSender : IEmailSender
 {
     private readonly SmtpOptions _options;
+    private readonly IHostEnvironment _environment;
     private readonly ILogger<SmtpEmailSender> _logger;
 
-    public SmtpEmailSender(IOptions<SmtpOptions> options, ILogger<SmtpEmailSender> logger)
+    public SmtpEmailSender(
+        IOptions<SmtpOptions> options,
+        IHostEnvironment environment,
+        ILogger<SmtpEmailSender> logger)
     {
         _options = options.Value;
+        _environment = environment;
         _logger = logger;
     }
 
@@ -48,7 +50,7 @@ public class SmtpEmailSender : IEmailSender
     {
         if (string.IsNullOrWhiteSpace(_options.Host))
         {
-            await WriteToPickupDirectoryAsync(message, cancellationToken);
+            NotConfigured(message);
             return;
         }
 
@@ -73,28 +75,21 @@ public class SmtpEmailSender : IEmailSender
         await client.SendAsync(mime, cancellationToken);
         await client.DisconnectAsync(true, cancellationToken);
 
-        _logger.LogInformation("Sent {Subject} to {To}", message.Subject, message.To);
+        _logger.LogInformation("Sent {Subject}", message.Subject);
     }
 
-    private async Task WriteToPickupDirectoryAsync(EmailMessage message, CancellationToken cancellationToken)
+    private void NotConfigured(EmailMessage message)
     {
-        try
+        if (!_environment.IsDevelopment())
         {
-            Directory.CreateDirectory(_options.PickupDirectory);
-            var name = $"{DateTime.UtcNow:yyyyMMdd-HHmmssfff}-{Guid.NewGuid():N}.html";
-            var path = Path.Combine(_options.PickupDirectory, name);
-            await File.WriteAllTextAsync(
-                path,
-                $"<!-- To: {message.To} | Subject: {message.Subject} -->\n{message.Html}",
-                cancellationToken);
+            _logger.LogError("SMTP is not configured; {Subject} was not sent", message.Subject);
+            return;
+        }
 
-            _logger.LogWarning(
-                "SMTP is not configured; wrote {Subject} for {To} to {Path} instead of sending",
-                message.Subject, message.To, path);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "SMTP is not configured and the pickup directory is not writable");
-        }
+        // Deliberately Console and not the logger: Serilog also writes to
+        // logs/mizan-*.log, and this body must not land on disk. Container
+        // stdout is where a developer looks for the link anyway.
+        Console.WriteLine(
+            $"[dev-mail] SMTP not configured. Message follows.\n{message.Subject}\n{message.Text}");
     }
 }
