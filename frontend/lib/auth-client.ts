@@ -1,6 +1,7 @@
 "use client";
 
 import { resolvePublicApiOrigin } from "@/lib/api-base";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 import type { User } from "@/lib/auth";
 
 export type { User };
@@ -73,7 +74,9 @@ export const deleteAccount = () => call<void>("/account", undefined, "DELETE");
 /** Full-page navigation: the provider needs to see the browser, not a fetch. */
 export function startExternalSignIn(provider: "google" | "github", returnUrl = "/dashboard") {
 	const target = new URL(`${resolvePublicApiOrigin()}/api/Auth/external/${provider}`);
-	target.searchParams.set("returnUrl", returnUrl);
+	// The backend re-validates this before redirecting; sanitising here too
+	// keeps a hostile link from ever reaching it.
+	target.searchParams.set("returnUrl", safeRedirectPath(returnUrl));
 	window.location.href = target.toString();
 }
 

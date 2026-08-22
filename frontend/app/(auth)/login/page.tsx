@@ -8,6 +8,7 @@ import Loading from "@/components/Loading";
 import { PasswordInput } from "@/components/PasswordInput";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 import { resendVerification, signIn, startExternalSignIn, type AuthError } from "@/lib/auth-client";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 
 const LAST_METHOD_KEY = "mizan:last-login-method";
 
@@ -59,7 +60,7 @@ export default function Page() {
 		try {
 			await signIn(user.email, user.password);
 			rememberMethod("email");
-			router.push(searchParam.get("callbackUrl") || "/dashboard");
+			router.push(safeRedirectPath(searchParam.get("callbackUrl")));
 			router.refresh();
 		} catch (caught) {
 			const authError = caught as AuthError;
@@ -86,7 +87,7 @@ export default function Page() {
 		setSocialLoading(provider);
 		setError("");
 		rememberMethod(provider);
-		startExternalSignIn(provider, searchParam.get("callbackUrl") || "/dashboard");
+		startExternalSignIn(provider, safeRedirectPath(searchParam.get("callbackUrl")));
 	}
 
 	return (
