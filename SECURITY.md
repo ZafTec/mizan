@@ -119,8 +119,10 @@ Lifetime subscription to Mizan as a thank-you.
 - OAuth return targets are validated against an allowlist of same-origin paths
   on both sides - `AppUrls.SafeReturnUrl` and `safeRedirectPath` - so a crafted
   `?returnUrl=` cannot turn sign-in into an open redirect.
-- Verification and reset links never reach the application log. With no SMTP
-  host configured the message is written to a pickup directory instead.
+- Verification and reset links are never written anywhere durable. With no SMTP
+  host configured a development run prints the message to stdout; any other
+  environment logs an error naming only the subject.
+- Transactional mail is logged against the user id, never the address.
 - Dependabot and GitHub's security advisories are enabled on this repo.
 - The Paddle checkout handles all payment data; we never store card
   details.

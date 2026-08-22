@@ -143,6 +143,11 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Starts an OAuth sign-in. The provider redirects back to
     /// <see cref="ExternalCallback"/>, which is where the session is minted.
+    ///
+    /// The return target is validated here and then carried inside the OAuth
+    /// state, not on the callback's query string. It comes back out of a
+    /// cookie this server wrote and signed, so nothing the caller controls
+    /// reaches the redirect at the far end.
     /// </summary>
     [HttpGet("external/{provider}")]
     [AllowAnonymous]
@@ -151,15 +156,18 @@ public class AuthController : ControllerBase
         var scheme = ExternalProviders.Resolve(provider)
             ?? throw new DomainValidationException($"Unknown sign-in provider '{provider}'.");
 
-        var redirect = Url.Action(nameof(ExternalCallback), "Auth", new { returnUrl })
-            ?? "/api/Auth/external/callback";
+        var properties = new AuthenticationProperties
+        {
+            RedirectUri = Url.Action(nameof(ExternalCallback), "Auth") ?? ExternalProviders.CallbackPath,
+        };
+        properties.Items[ExternalProviders.ReturnUrlKey] = _urls.SafeReturnUrl(returnUrl);
 
-        return Challenge(new AuthenticationProperties { RedirectUri = redirect }, scheme);
+        return Challenge(properties, scheme);
     }
 
     [HttpGet("external/callback")]
     [AllowAnonymous]
-    public async Task<IActionResult> ExternalCallback([FromQuery] string? returnUrl)
+    public async Task<IActionResult> ExternalCallback()
     {
         var result = await HttpContext.AuthenticateAsync(ExternalProviders.CookieScheme);
         if (!result.Succeeded || result.Principal is null)
@@ -181,7 +189,7 @@ public class AuthController : ControllerBase
         await HttpContext.SignOutAsync(ExternalProviders.CookieScheme);
         _cookie.Write(Response, token, DateTimeOffset.UtcNow.Add(SessionService.Lifetime));
 
-        return Redirect(_urls.SafeReturnUrl(returnUrl));
+        return Redirect(ExternalProviders.ReturnUrl(result, _urls));
     }
 
     private string? ClientIp() => HttpContext.Connection.RemoteIpAddress?.ToString();
