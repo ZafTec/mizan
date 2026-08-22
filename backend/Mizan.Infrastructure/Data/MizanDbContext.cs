@@ -13,6 +13,9 @@ public class MizanDbContext : DbContext, IMizanDbContext
     // BetterAuth core tables (managed by frontend Drizzle)
     // User is read-only for backend (excluded from migrations via SetIsTableExcludedFromMigrations)
     public DbSet<User> Users => Set<User>();
+    public DbSet<UserSession> UserSessions => Set<UserSession>();
+    public DbSet<UserToken> UserTokens => Set<UserToken>();
+    public DbSet<ExternalLogin> ExternalLogins => Set<ExternalLogin>();
     // Account, Session, Jwk, Verification - REMOVED (managed entirely by frontend)
 
     // Household/Organization
@@ -121,16 +124,62 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.Banned).HasColumnName("banned");
             entity.Property(e => e.BanReason).HasColumnName("ban_reason");
             entity.Property(e => e.BanExpires).HasColumnName("ban_expires");
-            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
-            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-
-            // CRITICAL: Exclude from migrations - table managed by frontend
-            entity.Metadata.SetIsTableExcludedFromMigrations(true);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
+            entity.Property(e => e.AccessFailedCount).HasColumnName("access_failed_count").HasDefaultValue(0);
+            entity.Property(e => e.LockoutEnd).HasColumnName("lockout_end");
+            entity.HasIndex(e => e.Email).IsUnique();
         });
 
-        // AUTH TABLES (Account, Session, Jwk, Verification) - REMOVED
-        // These are managed entirely by frontend Drizzle ORM
-        // Backend does not configure or migrate these tables
+        modelBuilder.Entity<UserSession>(entity =>
+        {
+            entity.ToTable("user_sessions");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.TokenHash).HasColumnName("token_hash").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+            entity.Property(e => e.LastSeenAt).HasColumnName("last_seen_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.IpAddress).HasColumnName("ip_address").HasMaxLength(64);
+            entity.Property(e => e.UserAgent).HasColumnName("user_agent").HasMaxLength(512);
+            entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity.HasIndex(e => e.UserId);
+            entity.HasOne(e => e.User).WithMany(u => u.Sessions)
+                .HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<UserToken>(entity =>
+        {
+            entity.ToTable("user_tokens");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Purpose).HasColumnName("purpose").HasConversion<int>();
+            entity.Property(e => e.TokenHash).HasColumnName("token_hash").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+            entity.Property(e => e.ConsumedAt).HasColumnName("consumed_at");
+            entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity.HasIndex(e => new { e.UserId, e.Purpose });
+            entity.HasOne(e => e.User).WithMany(u => u.Tokens)
+                .HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ExternalLogin>(entity =>
+        {
+            entity.ToTable("external_logins");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Provider).HasColumnName("provider").HasMaxLength(32).IsRequired();
+            entity.Property(e => e.ProviderKey).HasColumnName("provider_key").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.Provider, e.ProviderKey }).IsUnique();
+            entity.HasOne(e => e.User).WithMany(u => u.ExternalLogins)
+                .HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
 
         // Household configuration
         modelBuilder.Entity<Household>(entity =>

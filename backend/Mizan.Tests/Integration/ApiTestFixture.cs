@@ -10,12 +10,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 using Mizan.Api.Authentication;
+using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
-using Mizan.Infrastructure.Auth.BetterAuth;
+using Mizan.Domain.Identity;
 using Mizan.Infrastructure.Data;
-using NSec.Cryptography;
 using Testcontainers.PostgreSql;
 using Xunit;
 
@@ -45,9 +44,6 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     };
 
     private readonly PostgreSqlContainer? _dbContainer;
-    private readonly TestJwtIssuer _jwtIssuer;
-    private readonly string _issuer;
-    private readonly string _audience;
     private readonly string _connectionString;
     private readonly string? _redisConnectionString;
 
@@ -88,16 +84,10 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             }
         }
 
-        _issuer = Environment.GetEnvironmentVariable("Jwt__Issuer") ?? "http://localhost:3000";
-        _audience = Environment.GetEnvironmentVariable("Jwt__Audience") ?? "mizan-api";
-        _jwtIssuer = TestJwtIssuer.Create();
 
         _redisConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__Redis");
     }
 
-    public string Issuer => _issuer;
-    public string Audience => _audience;
-    public TestJwtIssuer JwtIssuer => _jwtIssuer;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -115,12 +105,11 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             {
                 ["ConnectionStrings:PostgreSQL"] = connString,
                 ["ConnectionStrings:Redis"] = _redisConnectionString,
-                ["Jwt:Issuer"] = _issuer,
-                ["Jwt:Audience"] = _audience,
-                ["Jwt:JwksUrl"] = "http://jwks.test",
                 ["Mcp:ServiceApiKey"] = "test-api-key",
                 ["Mcp:AdminServiceApiKey"] = "test-admin-api-key",
-                ["RateLimits:McpTokenValidation:PermitLimit"] = "10000"
+                ["RateLimits:McpTokenValidation:PermitLimit"] = "10000",
+                ["RateLimits:AuthCredentials:PermitLimit"] = "10000",
+                ["RateLimits:AuthEmail:PermitLimit"] = "10000"
             };
 
             config.AddInMemoryCollection(settings);
@@ -150,13 +139,10 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
                     options.UseNpgsql(connString));
             }
 
-            var descriptors = services.Where(d => d.ServiceType == typeof(IJwksProvider)).ToList();
-            foreach (var descriptor in descriptors)
-            {
-                services.Remove(descriptor);
-            }
-
-            services.AddSingleton<IJwksProvider>(new TestJwksProvider(_jwtIssuer.Jwk));
+            // Identity mails verification and reset links; tests need to read
+            // them, and nothing here should ever open an SMTP connection.
+            services.RemoveAll<IEmailSender>();
+            services.AddSingleton<IEmailSender>(Email);
 
             // Configure minimal logging for tests
             services.AddLogging(logging =>
@@ -167,15 +153,6 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
                 logging.AddFilter("Mizan", LogLevel.Warning);
             });
         });
-    }
-
-    protected override IHost CreateHost(IHostBuilder builder)
-    {
-        // The SignatureValidator resolves IJwksProvider via
-        // IPostConfigureOptions<JwtBearerOptions> at options-build time, so no
-        // static accessor priming is needed, ConfigureTestServices swaps in
-        // the TestJwksProvider before the options post-configure runs.
-        return base.CreateHost(builder);
     }
 
     public async Task InitializeAsync()
@@ -197,21 +174,43 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         {
             await _dbContainer.StopAsync();
         }
-        _jwtIssuer.Dispose();
         await base.DisposeAsync();
     }
 
+    /// <summary>
+    /// v2 browsers authenticate with a session cookie, so the fixture issues a
+    /// real session row rather than forging a token. Same code path the app
+    /// uses, minus the login form.
+    /// </summary>
     public HttpClient CreateAuthenticatedClient(Guid userId, string email, string role = "user")
     {
-        var token = CreateToken(userId, email, role);
+        var token = CreateSessionAsync(userId).GetAwaiter().GetResult();
         var client = CreateClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        client.DefaultRequestHeaders.Add("Cookie", $"{SessionCookieName}={token}");
         return client;
     }
 
-    public string CreateToken(Guid userId, string email, string role = "user")
+    public const string SessionCookieName = "mizan_session";
+
+    public RecordingEmailSender Email { get; } = new();
+
+    public async Task<string> CreateSessionAsync(Guid userId, DateTime? expiresAt = null)
     {
-        return _jwtIssuer.CreateToken(userId, email, role, _issuer, _audience);
+        var token = SecureToken.Generate();
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+        var now = DateTime.UtcNow;
+        db.UserSessions.Add(new UserSession
+        {
+            Id = Guid.CreateVersion7(),
+            UserId = userId,
+            TokenHash = SecureToken.Hash(token),
+            CreatedAt = now,
+            LastSeenAt = now,
+            ExpiresAt = expiresAt ?? now.AddDays(7),
+        });
+        await db.SaveChangesAsync();
+        return token;
     }
 
     public async Task ResetDatabaseAsync()
@@ -442,34 +441,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             return;
         }
 
-        // 1. Manually create Better Auth tables required by backend foreign keys
-        // These tables are managed by Frontend/Drizzle in production, so EF Core migrations exclude them.
-        // But in tests, we start with an empty DB, so we must create them manually first.
-
-        var createUsersTable = @"
-            CREATE TABLE IF NOT EXISTS ""users"" (
-                ""id"" uuid NOT NULL,
-                ""email"" character varying(255) NOT NULL,
-                ""email_verified"" boolean NOT NULL DEFAULT FALSE,
-                ""name"" character varying(255),
-                ""image"" text,
-                ""theme_preference"" character varying(20) DEFAULT 'system',
-                ""compact_mode"" boolean DEFAULT FALSE,
-                ""reduce_animations"" boolean DEFAULT FALSE,
-                ""role"" character varying(50) DEFAULT 'user',
-                ""banned"" boolean DEFAULT FALSE,
-                ""ban_reason"" text,
-                ""ban_expires"" timestamp with time zone,
-                ""created_at"" timestamp with time zone DEFAULT (NOW()),
-                ""updated_at"" timestamp with time zone DEFAULT (NOW()),
-                CONSTRAINT ""PK_users"" PRIMARY KEY (""id"")
-            );
-            CREATE UNIQUE INDEX IF NOT EXISTS ""IX_users_email"" ON ""users"" (""email"");
-        ";
-
-        await db.Database.ExecuteSqlRawAsync(createUsersTable);
-
-        // 2. Apply EF Core migrations to create business logic tables (foods, recipes, etc.)
+        // EF Core owns every table now, users included.
         try
         {
             await db.Database.MigrateAsync();
@@ -500,91 +472,40 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     }
 }
 
-public sealed class TestJwksProvider : IJwksProvider
+/// <summary>
+/// Captures what identity would have mailed, so a test can follow the same
+/// link a user would click.
+/// </summary>
+public sealed class RecordingEmailSender : IEmailSender
 {
-    private readonly IReadOnlyCollection<SecurityKey> _keys;
+    private readonly List<EmailMessage> _sent = new();
 
-    public TestJwksProvider(JsonWebKey jwk)
+    public IReadOnlyList<EmailMessage> Sent
     {
-        _keys = new[] { jwk };
+        get { lock (_sent) return _sent.ToList(); }
     }
 
-    public IReadOnlyCollection<SecurityKey> GetSigningKeys() => _keys;
-
-    public Task RefreshAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
-}
-
-public sealed class TestJwtIssuer : IDisposable
-{
-    private readonly Key _key;
-    private readonly JsonWebKey _jwk;
-
-    private TestJwtIssuer(Key key, JsonWebKey jwk)
+    public void Clear()
     {
-        _key = key;
-        _jwk = jwk;
+        lock (_sent) _sent.Clear();
     }
 
-    public JsonWebKey Jwk => _jwk;
-
-    public static TestJwtIssuer Create()
+    public Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
     {
-        var key = Key.Create(SignatureAlgorithm.Ed25519, new KeyCreationParameters
-        {
-            ExportPolicy = KeyExportPolicies.AllowPlaintextExport
-        });
-
-        var publicKey = key.Export(KeyBlobFormat.RawPublicKey);
-        var jwk = new JsonWebKey
-        {
-            Kty = "OKP",
-            Crv = "Ed25519",
-            Alg = "EdDSA",
-            Use = "sig",
-            Kid = Guid.NewGuid().ToString("N"),
-            X = Base64UrlEncoder.Encode(publicKey)
-        };
-
-        return new TestJwtIssuer(key, jwk);
+        lock (_sent) _sent.Add(message);
+        return Task.CompletedTask;
     }
 
-    public string CreateToken(Guid userId, string email, string role, string issuer, string audience)
+    /// <summary>The token from the most recent link mailed to this address.</summary>
+    public string? LastTokenFor(string email, string pathSegment)
     {
-        var now = DateTimeOffset.UtcNow;
-        var header = new Dictionary<string, object>
-        {
-            ["alg"] = "EdDSA",
-            ["typ"] = "JWT",
-            ["kid"] = _jwk.Kid!
-        };
+        var message = Sent.LastOrDefault(m =>
+            string.Equals(m.To, email, StringComparison.OrdinalIgnoreCase)
+            && m.Text.Contains(pathSegment, StringComparison.Ordinal));
+        if (message is null) return null;
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["sub"] = userId.ToString(),
-            ["email"] = email,
-            ["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] = role,
-            ["role"] = role,
-            ["iss"] = issuer,
-            ["aud"] = audience,
-            ["iat"] = now.ToUnixTimeSeconds(),
-            ["exp"] = now.AddHours(1).ToUnixTimeSeconds()
-        };
-
-        var headerJson = JsonSerializer.Serialize(header);
-        var payloadJson = JsonSerializer.Serialize(payload);
-
-        var headerB64 = Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(headerJson));
-        var payloadB64 = Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(payloadJson));
-        var signingInput = $"{headerB64}.{payloadB64}";
-
-        var signature = SignatureAlgorithm.Ed25519.Sign(_key, Encoding.ASCII.GetBytes(signingInput));
-        var signatureB64 = Base64UrlEncoder.Encode(signature);
-
-        return $"{signingInput}.{signatureB64}";
-    }
-
-    public void Dispose()
-    {
-        _key.Dispose();
+        var match = System.Text.RegularExpressions.Regex.Match(
+            message.Text, pathSegment + @"\?token=([A-Za-z0-9_\-%]+)");
+        return match.Success ? Uri.UnescapeDataString(match.Groups[1].Value) : null;
     }
 }
