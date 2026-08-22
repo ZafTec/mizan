@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession, authClient } from "@/lib/auth-client";
+import { listSessions, revokeSession, useSession, type SessionSummary } from "@/lib/auth-client";
 import { useState, useEffect } from "react";
 import Loading from "@/components/Loading";
 import { useRouter } from "next/navigation";
@@ -8,14 +8,7 @@ import Link from "next/link";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import { appToast } from "@/lib/toast";
 
-interface Session {
-  id: string;
-  token: string;
-  ipAddress?: string;
-  userAgent?: string;
-  createdAt: string;
-  expiresAt: string;
-}
+type Session = SessionSummary;
 
 export default function ProfileSessionsPage() {
   const { data: currentSession, isPending } = useSession();
@@ -34,19 +27,7 @@ export default function ProfileSessionsPage() {
 
   async function fetchSessions() {
     try {
-      const result = await authClient.listSessions();
-      if (result.data) {
-        setSessions(
-          result.data.map((s: any) => ({
-            id: s.id,
-            token: s.token,
-            ipAddress: s.ipAddress || undefined,
-            userAgent: s.userAgent || undefined,
-            createdAt: typeof s.createdAt === "string" ? s.createdAt : new Date(s.createdAt).toISOString(),
-            expiresAt: typeof s.expiresAt === "string" ? s.expiresAt : new Date(s.expiresAt).toISOString(),
-          }))
-        );
-      }
+      setSessions(await listSessions());
     } catch (error) {
       console.error("Failed to fetch sessions:", error);
     } finally {
@@ -54,12 +35,12 @@ export default function ProfileSessionsPage() {
     }
   }
 
-  async function handleRevokeSession(sessionToken: string) {
-    setRevoking(sessionToken);
+  async function handleRevokeSession(sessionId: string) {
+    setRevoking(sessionId);
     try {
-      await authClient.revokeSession({ token: sessionToken });
+      await revokeSession(sessionId);
 	      appToast.success("Session revoked");
-      setSessions((prev) => prev.filter((s) => s.token !== sessionToken));
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
     } catch (error) {
       console.error("Failed to revoke session:", error);
 	      appToast.error(error, "Failed to revoke session");
@@ -72,7 +53,10 @@ export default function ProfileSessionsPage() {
   async function handleRevokeAllOther() {
     setRevoking("all");
     try {
-      await authClient.revokeSessions();
+      // No bulk endpoint: revoking each other session one by one keeps the
+      // caller signed in without a second code path for "all but me".
+      const others = sessions.filter((s) => !s.isCurrent);
+      await Promise.all(others.map((s) => revokeSession(s.id)));
 	      appToast.success("All other sessions revoked");
       await fetchSessions();
     } catch (error) {
@@ -84,7 +68,7 @@ export default function ProfileSessionsPage() {
     }
   }
 
-  function getDeviceIcon(userAgent?: string) {
+  function getDeviceIcon(userAgent?: string | null) {
     if (!userAgent) return "ri-computer-line";
     const ua = userAgent.toLowerCase();
     if (ua.includes("mobile") || ua.includes("android") || ua.includes("iphone")) {
@@ -96,7 +80,7 @@ export default function ProfileSessionsPage() {
     return "ri-computer-line";
   }
 
-  function getDeviceInfo(userAgent?: string) {
+  function getDeviceInfo(userAgent?: string | null) {
     if (!userAgent) return "Unknown device";
     const ua = userAgent.toLowerCase();
     let browser = "Unknown browser";
@@ -117,7 +101,7 @@ export default function ProfileSessionsPage() {
   }
 
   function isCurrentSession(session: Session) {
-    return session.token === currentSession?.session?.token;
+    return session.isCurrent;
   }
 
   if (isPending || isLoading) {
@@ -224,11 +208,11 @@ export default function ProfileSessionsPage() {
 
 	                  {!isCurrent && (
 	                    <button
-	                      onClick={() => setSessionToRevoke(session.token)}
-	                      disabled={revoking === session.token}
+	                      onClick={() => setSessionToRevoke(session.id)}
+	                      disabled={revoking === session.id}
 	                      className="shrink-0 rounded-xl border border-red-200 px-4 py-2 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-500/30 dark:text-red-300 dark:hover:bg-red-500/10"
 	                    >
-                      {revoking === session.token ? "Revoking..." : "Revoke"}
+                      {revoking === session.id ? "Revoking..." : "Revoke"}
                     </button>
                   )}
                 </div>

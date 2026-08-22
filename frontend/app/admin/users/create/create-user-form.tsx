@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
+import { createAdminUser } from "@/lib/api/admin-users";
 import { useRouter } from "next/navigation";
 
 export function CreateUserForm() {
@@ -27,36 +27,25 @@ export function CreateUserForm() {
       return;
     }
 
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long");
+    if (formData.password.length < 10) {
+      setError("Password must be at least 10 characters long");
       setIsLoading(false);
       return;
     }
 
     try {
-      const result = await authClient.admin.createUser({
+      // One call now: the backend owns the users table, so trainer is a role
+      // like any other rather than a second write.
+      await createAdminUser({
         email: formData.email,
         password: formData.password,
-        name: formData.name,
-        role: formData.role === "trainer" ? "user" : formData.role,
+        name: formData.name || null,
+        role: formData.role,
+        emailVerified: true,
       });
 
-      if (result.error) {
-        throw new Error(result.error.message || "Failed to create user");
-      }
-
-      if (formData.role === "trainer" && result.data?.user) {
-        const roleResult = await authClient.admin.setRole({
-          userId: result.data.user.id,
-          role: "trainer" as any,
-        });
-
-        if (roleResult.error) {
-          throw new Error(roleResult.error.message || "Failed to set trainer role");
-        }
-      }
-
       router.push("/admin/users");
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create user");
     } finally {
@@ -142,7 +131,7 @@ export function CreateUserForm() {
           type="password"
           id="password"
           required
-          minLength={8}
+          minLength={10}
           value={formData.password}
           onChange={(e) =>
             setFormData({ ...formData, password: e.target.value })
@@ -161,7 +150,7 @@ export function CreateUserForm() {
           type="password"
           id="confirmPassword"
           required
-          minLength={8}
+          minLength={10}
           value={formData.confirmPassword}
           onChange={(e) =>
             setFormData({ ...formData, confirmPassword: e.target.value })

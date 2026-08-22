@@ -1,9 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/db/client";
-import { sessions, users } from "@/db/schema";
-import { eq, sql, count, desc } from "drizzle-orm";
 import Link from "next/link";
+import { getCurrentUser } from "@/lib/auth";
+import { listAdminSessions } from "@/data/admin/users";
 
 export const metadata = {
   title: "Session Management | Admin",
@@ -19,43 +17,17 @@ const SESSIONS_PER_PAGE = 50;
 
 async function getSessions(searchParams: SearchParams) {
   const page = parseInt(searchParams.page || "1");
-  const activeOnly = searchParams.activeOnly === "true";
-
-  const conditions = activeOnly
-    ? sql`${sessions.expiresAt} > NOW()`
-    : undefined;
-
-  const [sessionList, totalCount] = await Promise.all([
-    db
-      .select({
-        id: sessions.id,
-        userId: sessions.userId,
-        userName: users.name,
-        userEmail: users.email,
-        ipAddress: sessions.ipAddress,
-        userAgent: sessions.userAgent,
-        createdAt: sessions.createdAt,
-        expiresAt: sessions.expiresAt,
-      })
-      .from(sessions)
-      .leftJoin(users, eq(sessions.userId, users.id))
-      .where(conditions)
-      .orderBy(desc(sessions.createdAt))
-      .limit(SESSIONS_PER_PAGE)
-      .offset((page - 1) * SESSIONS_PER_PAGE),
-
-    db
-      .select({ count: count() })
-      .from(sessions)
-      .where(conditions)
-      .then((res) => res[0]?.count || 0),
-  ]);
+  const result = await listAdminSessions({
+    page,
+    pageSize: SESSIONS_PER_PAGE,
+    activeOnly: searchParams.activeOnly === "true",
+  });
 
   return {
-    sessions: sessionList,
-    totalCount,
-    totalPages: Math.ceil(totalCount / SESSIONS_PER_PAGE),
-    currentPage: page,
+    sessions: result.items,
+    totalCount: result.totalCount,
+    totalPages: result.totalPages,
+    currentPage: result.page,
   };
 }
 
@@ -64,17 +36,9 @@ export default async function SessionsPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const session = await auth.api.getSession({
-    headers: await import("next/headers").then((mod) => mod.headers()),
-  });
-
-  if (!session?.user) {
-    redirect("/login");
-  }
-
-  if (session.user.role !== "admin") {
-    redirect("/");
-  }
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  if (user.role !== "admin") redirect("/");
 
   const {
     sessions: sessionList,

@@ -4,7 +4,18 @@ using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Commands;
 
-public record UpdateUserCommand(Guid UserId, string? Name, string? Image) : IRequest<bool>;
+/// <summary>
+/// Appearance preferences live on the user row and used to be written by
+/// BetterAuth's updateUser. Since v2 they come through here - null means
+/// "leave alone", so a name change cannot silently reset a theme.
+/// </summary>
+public record UpdateUserCommand(
+    Guid UserId,
+    string? Name,
+    string? Image,
+    string? ThemePreference = null,
+    bool? CompactMode = null,
+    bool? ReduceAnimations = null) : IRequest<bool>;
 
 public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, bool>
 {
@@ -25,6 +36,14 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, bool>
 
         user.Name = request.Name ?? user.Name;
         user.Image = request.Image ?? user.Image;
+
+        if (request.ThemePreference is "light" or "dark" or "system")
+        {
+            user.ThemePreference = request.ThemePreference;
+        }
+        if (request.CompactMode is { } compact) user.CompactMode = compact;
+        if (request.ReduceAnimations is { } reduce) user.ReduceAnimations = reduce;
+
         user.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);

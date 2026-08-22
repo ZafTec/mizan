@@ -1,11 +1,8 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/db/client";
-import { users, sessions } from "@/db/schema";
-import { eq, sql, count, gte } from "drizzle-orm";
+import { getCurrentUser } from "@/lib/auth";
+import { getAdminOverview } from "@/data/admin/users";
 import LiveAuditLog from "./LiveAuditLog";
 import { getAuditLogs } from "@/data/audit";
-
 
 export const metadata = {
   title: "Admin Dashboard | Mizan",
@@ -13,70 +10,18 @@ export const metadata = {
 };
 
 async function getAdminStats() {
-  const totalUsers = await db
-    .select({ count: count() })
-    .from(users)
-    .then((res) => res[0]?.count || 0);
+  const [overview, recentAuditLogs] = await Promise.all([
+    getAdminOverview(),
+    getAuditLogs({ pageSize: 1 }).then((res) => res.totalCount),
+  ]);
 
-  const activeTrainers = await db
-    .select({ count: count() })
-    .from(users)
-    .where(eq(users.role, "trainer"))
-    .then((res) => res[0]?.count || 0);
-
-  const bannedUsers = await db
-    .select({ count: count() })
-    .from(users)
-    .where(eq(users.banned, true))
-    .then((res) => res[0]?.count || 0);
-
-  const activeSessions = await db
-    .select({ count: count() })
-    .from(sessions)
-    .where(sql`${sessions.expiresAt} > NOW()`)
-    .then((res) => res[0]?.count || 0);
-
-  const recentUsers = await db
-    .select({
-      id: users.id,
-      name: users.name,
-      email: users.email,
-      role: users.role,
-      createdAt: users.createdAt,
-    })
-    .from(users)
-    .orderBy(sql`${users.createdAt} DESC`)
-    .limit(5);
-
-  const yesterday = new Date();
-  yesterday.setHours(yesterday.getHours() - 24);
-
-  const recentAuditLogs = await getAuditLogs({
-    pageSize: 1,
-  }).then(res => res.totalCount);
-
-  return {
-    totalUsers,
-    activeTrainers,
-    bannedUsers,
-    activeSessions,
-    recentUsers,
-    recentAuditLogs
-  };
+  return { ...overview, recentAuditLogs };
 }
 
 export default async function AdminDashboard() {
-  const session = await auth.api.getSession({
-    headers: await import("next/headers").then((mod) => mod.headers()),
-  });
-
-  if (!session?.user) {
-    redirect("/login");
-  }
-
-  if (session.user.role !== "admin") {
-    redirect("/");
-  }
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  if (user.role !== "admin") redirect("/");
 
   const stats = await getAdminStats();
 
