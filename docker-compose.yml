@@ -40,19 +40,6 @@ services:
     networks:
       - mizan-network
 
-  auth-migrate:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    environment:
-      - DATABASE_URL=postgres://mizan:${DB_PASSWORD:?DB_PASSWORD is required}@postgres:5432/mizan
-    command: bun run db:migrate
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - mizan-network
-
   # Next.js Frontend with Bun (Development with hot reload)
   frontend:
     build:
@@ -67,14 +54,7 @@ services:
       - /app/.next
     environment:
       - NODE_ENV=development
-      # Database (for BetterAuth)
-      - DATABASE_URL=postgres://mizan:${DB_PASSWORD:?DB_PASSWORD is required}@postgres:5432/mizan
-
-      # BetterAuth config
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
-      - BETTER_AUTH_URL=${PUBLIC_APP_URL:-http://localhost:3000}
-      - BETTER_AUTH_ISSUER=${PUBLIC_APP_URL:-http://localhost:3000}
-      - BETTER_AUTH_AUDIENCE=mizan-api
+      # No DATABASE_URL: the frontend owns no tables since v2.
 
       # Backend API (internal network - server-side)
       - API_URL=${SERVER_API_URL:-http://backend:8080}
@@ -88,16 +68,6 @@ services:
       - NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}
       - NEXT_PUBLIC_CLOUDINARY_API_KEY=${NEXT_PUBLIC_CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASS=${SMTP_PASS}
-      - SMTP_FROM=${SMTP_FROM}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
-      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
-      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
-      - REDIS_URL=redis://:${REDIS_PASSWORD:?REDIS_PASSWORD is required}@redis:6379
       # Paddle (sandbox)
       - NEXT_PUBLIC_PADDLE_ENV=${NEXT_PUBLIC_PADDLE_ENV:-sandbox}
       - NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=${NEXT_PUBLIC_PADDLE_CLIENT_TOKEN:-}
@@ -109,16 +79,12 @@ services:
       - LOKI_OTLP_ENDPOINT=${LOKI_OTLP_ENDPOINT:-}
       - OTEL_METRICS_PORT=9464
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
       backend:
         condition: service_started
     networks:
       - mizan-network
 
-  # .NET Backend API (JWT protected)
+  # .NET Backend API - owns identity and the schema
   backend:
     build:
       context: ./backend
@@ -139,10 +105,18 @@ services:
       # Redis
       - ConnectionStrings__Redis=redis:6379,password=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
 
-      # JWT/JWKS Authentication
-      - Jwt__Issuer=${PUBLIC_APP_URL:-http://localhost:3000}
-      - Jwt__Audience=mizan-api
-      - Jwt__JwksUrl=http://frontend:3000/api/auth/jwks
+      # Identity - session cookies, email, OAuth
+      - App__PublicUrl=${PUBLIC_APP_URL:-http://localhost:3000}
+      - App__CookieDomain=${COOKIE_DOMAIN:-}
+      - Smtp__Host=${SMTP_HOST:-}
+      - Smtp__Port=${SMTP_PORT:-587}
+      - Smtp__Username=${SMTP_USER:-}
+      - Smtp__Password=${SMTP_PASS:-}
+      - Smtp__FromAddress=${SMTP_FROM:-noreply@mizan.local}
+      - Authentication__Google__ClientId=${GOOGLE_CLIENT_ID:-}
+      - Authentication__Google__ClientSecret=${GOOGLE_CLIENT_SECRET:-}
+      - Authentication__GitHub__ClientId=${GITHUB_CLIENT_ID:-}
+      - Authentication__GitHub__ClientSecret=${GITHUB_CLIENT_SECRET:-}
       - Cors__Origins__0=http://frontend:3000
       - Cors__Origins__1=http://localhost:3000
       - Cors__Origins__2=${PUBLIC_APP_URL:-http://localhost:3000}
@@ -160,8 +134,6 @@ services:
       - Paddle__GraceDays=${PADDLE_GRACE_DAYS:-3}
       - Paddle__LifetimePriceId=${NEXT_PUBLIC_PADDLE_PRICE_LIFETIME:-}
     depends_on:
-      auth-migrate:
-        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:
@@ -211,9 +183,6 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__PostgreSQL=Host=postgres;Database=mizan_test;Username=mizan;Password=${DB_PASSWORD:?DB_PASSWORD is required}
       - ConnectionStrings__Redis=redis:6379,password=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
-      - Jwt__Issuer=http://localhost:3000
-      - Jwt__Audience=mizan-api
-      - Jwt__JwksUrl=http://frontend:3000/api/auth/jwks
     command: dotnet test --logger "console;verbosity=normal"
     depends_on:
       postgres:
