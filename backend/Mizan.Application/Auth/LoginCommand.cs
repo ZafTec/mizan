@@ -99,6 +99,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResult>
             _email,
             AuthEmails.SignInNotification(user.Email, user.Name, request.IpAddress, request.UserAgent),
             _logger,
+            user.Id,
             cancellationToken);
 
         return new LoginResult(token, AuthUserMapper.ToDto(user));

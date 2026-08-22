@@ -87,6 +87,7 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Unit>
             _email,
             AuthEmails.Verification(user.Email, user.Name, _urls.VerifyEmail(token)),
             _logger,
+            user.Id,
             cancellationToken);
 
         return Unit.Value;

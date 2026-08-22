@@ -54,6 +54,7 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
             _email,
             AuthEmails.PasswordReset(user.Email, user.Name, _urls.ResetPassword(token)),
             _logger,
+            user.Id,
             cancellationToken);
 
         return Unit.Value;
