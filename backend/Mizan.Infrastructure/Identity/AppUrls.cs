@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Options;
 using Mizan.Application.Interfaces;
 
@@ -17,8 +18,16 @@ public class AppOptions
     public string? CookieDomain { get; set; }
 }
 
-public class AppUrls : IAppUrls
+public partial class AppUrls : IAppUrls
 {
+    /// <summary>
+    /// An allowlist, not a denylist: a return target is a same-origin path or
+    /// it is discarded. Anything with a scheme, an authority or a backslash
+    /// fails to match and falls back to the app root.
+    /// </summary>
+    [GeneratedRegex(@"^/[A-Za-z0-9\-._~!$&'()*+,;=:@/]*(\?[A-Za-z0-9\-._~!$&'()*+,;=:@/%?]*)?$")]
+    private static partial Regex SafePath();
+
     private readonly Uri _base;
 
     public AppUrls(IOptions<AppOptions> options)
@@ -33,12 +42,8 @@ public class AppUrls : IAppUrls
     public string SafeReturnUrl(string? candidate)
     {
         if (string.IsNullOrWhiteSpace(candidate)) return _base.ToString();
-
-        // Only relative paths are honoured. An absolute URL in a query string
-        // is an open redirect waiting to happen, and we never need one.
-        if (!Uri.TryCreate(candidate, UriKind.Relative, out _)) return _base.ToString();
         if (candidate.StartsWith("//", StringComparison.Ordinal)) return _base.ToString();
-        if (!candidate.StartsWith('/')) return _base.ToString();
+        if (!SafePath().IsMatch(candidate)) return _base.ToString();
 
         return new Uri(_base, candidate.TrimStart('/')).ToString();
     }
