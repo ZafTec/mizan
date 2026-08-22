@@ -8,7 +8,7 @@ import type { SuggestedRecipe } from '@/data/suggestion';
 interface SuggestedRecipesProps {
   user?: {
     id: string;
-    name: string;
+    name?: string | null;
     email: string;
   } | null;
   suggestions?: SuggestedRecipe[];

@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 import { Toaster } from "@/components/ui/sonner";
 import { AppearanceSync } from "@/components/appearance/AppearanceSync";
+import { SessionProvider } from "@/components/SessionProvider";
 import { ConsentGate } from "@/components/consent/ConsentGate";
 import { getUserOptionalServer } from "@/helper/session";
 import { getAppearanceSettingsFromUser, getServerAppearanceClasses } from "@/lib/appearance";
@@ -50,6 +51,7 @@ async function LayoutContent({
 				<script dangerouslySetInnerHTML={{ __html: APPEARANCE_SCRIPT }} />
 			</head>
 			<body className="min-h-screen antialiased flex flex-col selection:bg-brand-500/15 selection:text-charcoal-blue-900 dark:selection:text-charcoal-blue-50">
+				<SessionProvider user={user}>
 				<AppearanceSync />
 				<Toaster position="top-right" />
 				<ConsentGate gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
@@ -130,6 +132,7 @@ async function LayoutContent({
 						</div>
 					</div>
 				</footer>
+				</SessionProvider>
 			</body>
 		</html>
 	);

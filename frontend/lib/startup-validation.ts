@@ -7,24 +7,10 @@ export function validateStartupConfig(): void {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  if (!process.env.DATABASE_URL) {
-    errors.push("DATABASE_URL environment variable is required");
-  }
-
-  if (!process.env.BETTER_AUTH_SECRET) {
-    errors.push("BETTER_AUTH_SECRET environment variable is required");
-  }
-
-  if (!process.env.BETTER_AUTH_URL) {
-    warnings.push("BETTER_AUTH_URL not set, using default: http://localhost:3000");
-  }
-
-  if (!process.env.BETTER_AUTH_ISSUER) {
-    warnings.push("BETTER_AUTH_ISSUER not set, using default: http://localhost:3000");
-  }
-
-  if (!process.env.BETTER_AUTH_AUDIENCE) {
-    warnings.push("BETTER_AUTH_AUDIENCE not set, using default: http://localhost:3000");
+  // The frontend holds no secrets since v2: no database, no signing key, no
+  // SMTP credentials. It needs to know where the API is and nothing else.
+  if (!process.env.NEXT_PUBLIC_API_URL) {
+    warnings.push("NEXT_PUBLIC_API_URL not set; browser calls will default to http://localhost:5000");
   }
 
   if (!process.env.API_URL) {

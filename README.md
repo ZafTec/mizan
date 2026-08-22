@@ -40,7 +40,6 @@ MacroChef (internally known as "Mizan") is a comprehensive web application desig
 - **Styling**: Tailwind CSS + shadcn/ui components
 - **Package Manager**: Bun
 - **Authentication**: BetterAuth (JWT with ES256)
-- **ORM**: Drizzle (auth schema only)
 - **Real-time**: SignalR client for chat and notifications
 
 ### Backend
@@ -191,12 +190,6 @@ bun run lint
 bun run test              # Unit/integration tests (Vitest)
 bun run test:e2e          # E2E tests (Playwright)
 
-# Database operations (Drizzle - auth schema only)
-bun run db:generate       # Generate migrations
-bun run db:migrate        # Apply migrations
-bun run db:push           # Push schema without migrations
-bun run db:studio         # Open Drizzle Studio
-
 # Code generation from OpenAPI
 bun run codegen           # Generate both types and Zod schemas
 bun run codegen:types     # Generate TypeScript types only
@@ -261,10 +254,7 @@ bun run test:e2e
 ### Frontend (.env)
 ```bash
 DATABASE_URL="postgresql://mizan:password@localhost:5432/mizan"
-BETTER_AUTH_SECRET="your-secret-key-min-32-chars"
-BETTER_AUTH_URL="http://localhost:3000"
-BETTER_AUTH_ISSUER="http://localhost:3000"
-BETTER_AUTH_AUDIENCE="mizan-api"
+NEXT_PUBLIC_API_URL="http://localhost:5000"
 API_URL="http://mizan-backend:8080"              # Server-side (Docker network)
 NEXT_PUBLIC_API_URL="http://localhost:5000"      # Client-side (direct backend)
 ```
@@ -275,7 +265,7 @@ ConnectionStrings__PostgreSQL="Host=postgres;Database=mizan;Username=mizan;Passw
 ConnectionStrings__Redis="redis:6379"
 Jwt__Issuer="http://localhost:3000"
 Jwt__Audience="mizan-api"
-Jwt__JwksUrl="http://localhost:3000/api/auth/jwks"
+App__PublicUrl="http://localhost:3000"
 ```
 
 See `.env.example` for complete list with descriptions.
@@ -284,10 +274,10 @@ See `.env.example` for complete list with descriptions.
 
 MacroChef uses a hybrid architecture with intentional schema separation:
 
-- **Frontend Schema (Drizzle)**: Manages authentication tables (`users`, `sessions`) required by BetterAuth
+- **One schema, owned by EF Core**: identity and business tables live together; the frontend has no database access
 - **Backend Schema (EF Core)**: Manages business logic tables (`foods`, `recipes`, `meal_plans`, `workouts`, etc.)
 - **API Gateway**: Next.js serves auth routes and the UI; backend is called directly from the browser
-- **Authentication**: BetterAuth issues JWTs and publishes JWKS for backend validation
+- **Authentication**: the backend issues an opaque `mizan_session` cookie and resolves it against `user_sessions`
 - **Real-time**: SignalR with Redis backplane for horizontal scaling
 
 ### Clean Architecture Layers (Backend)

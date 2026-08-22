@@ -1,126 +1,101 @@
 "use server";
 
 import { createErrorState, createSuccessState, FormState } from "@/helper/FormErrorHandler";
-import { auth } from "@/lib/auth";
+import { ApiError, request } from "@/lib/api";
+import { serverApiOrigin } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 
 const userLogger = logger.createModuleLogger("user-data");
 
+const MIN_PASSWORD_LENGTH = 10;
+
 /**
- * Register a new user with email and password via BetterAuth
+ * Registration and verification are backend endpoints since v2; these actions
+ * only validate the form and relay - see docs/REFOCUS.md §6.
  */
-export async function addUser(prevState: FormState, formData: FormData): Promise<FormState> {
-    try {
-        const email = formData.get("email") as string;
-        const password = formData.get("password") as string;
-        const confirmPassword = formData.get("confirmPassword") as string;
-        const name = formData.get("name") as string;
-        const userImage = (formData.get("userImage") as string | null)?.trim();
-
-        if (!email || !password) {
-            return createErrorState("Email and password are required", [
-                { field: "email", message: !email ? "Email is required" : "" },
-                { field: "password", message: !password ? "Password is required" : "" },
-            ]);
-        }
-
-        if (password !== confirmPassword) {
-            return createErrorState("Passwords do not match", [
-                { field: "confirmPassword", message: "Passwords do not match" },
-            ]);
-        }
-
-        if (password.length < 8) {
-            return createErrorState("Password must be at least 8 characters", [
-                { field: "password", message: "Password must be at least 8 characters" },
-            ]);
-        }
-
-        const result = await auth.api.signUpEmail({
-            body: {
-                email: email.toLowerCase(),
-                password,
-                name: name || email.split("@")[0],
-                image: userImage || undefined,
-            },
-        });
-
-        if (!result || !result.user) {
-            return createErrorState("Failed to create account");
-        }
-
-        return createSuccessState("Account created! Please check your email to verify your account.");
-    } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        userLogger.error("Failed to create user account", { error: message });
-
-        if (message.includes("already exists") || message.includes("duplicate") || message.includes("unique")) {
-            return createErrorState("An account with this email already exists. Please sign in instead.", [
-                { field: "email", message: "This email is already registered" },
-            ]);
-        }
-
-        if (message.includes("password") && message.includes("short")) {
-            return createErrorState("Password is too short", [
-                { field: "password", message: "Password must be at least 8 characters" },
-            ]);
-        }
-
-        if (message.includes("PASSWORD_COMPROMISED") || message.toLowerCase().includes("compromised")) {
-            return createErrorState("This password has been exposed in a data breach. Please choose a different password.", [
-                { field: "password", message: "Password has been compromised in a known data breach" },
-            ]);
-        }
-
-        return createErrorState("Failed to create account. Please try again.");
-    }
+async function postAnonymous(path: string, body: unknown): Promise<void> {
+	await request(serverApiOrigin(), path, { mode: "none" }, {
+		method: "POST",
+		body,
+		requireAuth: false,
+	});
 }
 
-/**
- * Resend verification email
- * Uses BetterAuth's verification API to send a new verification email
- */
+function apiMessage(error: unknown): string | null {
+	if (error instanceof ApiError && error.body && typeof error.body === "object") {
+		const message = (error.body as { error?: unknown }).error;
+		if (typeof message === "string" && message.trim()) return message;
+	}
+	return null;
+}
+
+export async function addUser(prevState: FormState, formData: FormData): Promise<FormState> {
+	const email = formData.get("email") as string;
+	const password = formData.get("password") as string;
+	const confirmPassword = formData.get("confirmPassword") as string;
+	const name = formData.get("name") as string;
+
+	if (!email || !password) {
+		return createErrorState("Email and password are required", [
+			{ field: "email", message: !email ? "Email is required" : "" },
+			{ field: "password", message: !password ? "Password is required" : "" },
+		]);
+	}
+
+	if (password !== confirmPassword) {
+		return createErrorState("Passwords do not match", [
+			{ field: "confirmPassword", message: "Passwords do not match" },
+		]);
+	}
+
+	if (password.length < MIN_PASSWORD_LENGTH) {
+		const message = `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;
+		return createErrorState(message, [{ field: "password", message }]);
+	}
+
+	try {
+		await postAnonymous("/api/Auth/register", {
+			email: email.toLowerCase(),
+			password,
+			name: name || email.split("@")[0],
+		});
+	} catch (error) {
+		const message = apiMessage(error);
+		userLogger.error("Failed to create user account", { error });
+
+		if (message?.includes("already exists")) {
+			return createErrorState(message, [
+				{ field: "email", message: "This email is already registered" },
+			]);
+		}
+
+		return createErrorState(message ?? "Failed to create account. Please try again.");
+	}
+
+	return createSuccessState("Account created. Check your email to confirm your address.");
+}
+
 export async function resendUserVerificationEmail(
-    prevState: FormState,
-    formData: FormData
+	prevState: FormState,
+	formData: FormData,
 ): Promise<FormState> {
-    try {
-        const email = formData.get("email") as string;
+	const email = formData.get("email") as string;
 
-        if (!email) {
-            return createErrorState("Email is required", [
-                { field: "email", message: "Please enter your email address" }
-            ]);
-        }
+	if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+		return createErrorState("Invalid email format", [
+			{ field: "email", message: "Please enter a valid email address" },
+		]);
+	}
 
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return createErrorState("Invalid email format", [
-                { field: "email", message: "Please enter a valid email address" }
-            ]);
-        }
+	try {
+		await postAnonymous("/api/Auth/resend-verification", { email: email.toLowerCase() });
+	} catch (error) {
+		// The endpoint says nothing about whether the address exists, and neither
+		// does this: a failure here is logged, not surfaced as enumeration.
+		userLogger.error("Failed to resend verification email", { error });
+	}
 
-        // Use BetterAuth's sendVerificationEmail API
-        await auth.api.sendVerificationEmail({
-            body: {
-                email: email.toLowerCase(),
-            },
-        });
-
-        userLogger.info("Verification email resent successfully", { email });
-
-        return createSuccessState(
-            "If an account exists with this email, a verification link has been sent. Please check your inbox and spam folder."
-        );
-    } catch (error) {
-        userLogger.error("Failed to resend verification email", {
-            error: error instanceof Error ? error.message : String(error),
-        });
-        
-        // Return generic success to prevent email enumeration
-        return createSuccessState(
-            "If an account exists with this email, a verification link has been sent. Please check your inbox and spam folder."
-        );
-    }
+	return createSuccessState(
+		"If an account exists with this email, a verification link has been sent. Check your inbox and spam folder.",
+	);
 }

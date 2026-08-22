@@ -51,10 +51,20 @@ export interface ApiRequestOptions {
   expectedStatuses?: number[];
 }
 
+/**
+ * How this call proves who is making it. Since v2 that is always the session
+ * cookie: the browser attaches it itself, and the Next server forwards the one
+ * it received. There is no bearer token any more - see docs/REFOCUS.md §6.
+ */
+export type RequestAuth =
+  | { mode: "none" }
+  | { mode: "browser" }
+  | { mode: "cookie"; cookie: string };
+
 export async function request<T>(
   baseUrl: string,
   path: string,
-  token: string | null,
+  auth: RequestAuth,
   options: ApiRequestOptions = {},
 ): Promise<T> {
   const {
@@ -65,8 +75,8 @@ export async function request<T>(
     expectedStatuses = [],
   } = options;
 
-  if (requireAuth && !token) {
-    throw new ApiError(401, "Unauthorized", { error: "Missing token" });
+  if (requireAuth && auth.mode === "none") {
+    throw new ApiError(401, "Unauthorized", { error: "Not authenticated" });
   }
 
   const url = `${baseUrl}${path}`;
@@ -75,7 +85,7 @@ export async function request<T>(
     // Harmless outside ngrok; bypasses ngrok's free-tier browser-warning
     // interstitial, which otherwise intercepts API calls made through a tunnel.
     "ngrok-skip-browser-warning": "true",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(auth.mode === "cookie" ? { Cookie: auth.cookie } : {}),
     ...extraHeaders,
   };
 
@@ -85,6 +95,8 @@ export async function request<T>(
     const response = await fetch(url, {
       method,
       headers,
+      // The browser holds the cookie; on the server it rides in the header above.
+      credentials: auth.mode === "browser" ? "include" : "omit",
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
 

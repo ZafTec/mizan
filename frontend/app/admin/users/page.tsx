@@ -1,9 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/db/client";
-import { users } from "@/db/schema";
-import { eq, ilike, and, sql, count, desc } from "drizzle-orm";
 import Link from "next/link";
+import { getCurrentUser } from "@/lib/auth";
+import { listAdminUsers } from "@/data/admin/users";
 
 export const metadata = {
   title: "User Management | Admin",
@@ -21,61 +19,19 @@ const USERS_PER_PAGE = 20;
 
 async function getUsers(searchParams: SearchParams) {
   const page = parseInt(searchParams.page || "1");
-  const search = searchParams.search || "";
-  const roleFilter = searchParams.role;
-  const bannedFilter = searchParams.banned === "true";
-
-  const conditions = [];
-
-  if (search) {
-    conditions.push(
-      sql`(${ilike(users.name, `%${search}%`)} OR ${ilike(
-        users.email,
-        `%${search}%`
-      )})`
-    );
-  }
-
-  if (roleFilter) {
-    conditions.push(eq(users.role, roleFilter));
-  }
-
-  if (bannedFilter) {
-    conditions.push(eq(users.banned, true));
-  }
-
-  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
-  const [userList, totalCount] = await Promise.all([
-    db
-      .select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        role: users.role,
-        banned: users.banned,
-        banReason: users.banReason,
-        emailVerified: users.emailVerified,
-        createdAt: users.createdAt,
-      })
-      .from(users)
-      .where(whereClause)
-      .orderBy(desc(users.createdAt))
-      .limit(USERS_PER_PAGE)
-      .offset((page - 1) * USERS_PER_PAGE),
-
-    db
-      .select({ count: count() })
-      .from(users)
-      .where(whereClause)
-      .then((res) => res[0]?.count || 0),
-  ]);
+  const result = await listAdminUsers({
+    page,
+    pageSize: USERS_PER_PAGE,
+    search: searchParams.search || undefined,
+    role: searchParams.role || undefined,
+    banned: searchParams.banned === "true" ? true : undefined,
+  });
 
   return {
-    users: userList,
-    totalCount,
-    totalPages: Math.ceil(totalCount / USERS_PER_PAGE),
-    currentPage: page,
+    users: result.items,
+    totalCount: result.totalCount,
+    totalPages: result.totalPages,
+    currentPage: result.page,
   };
 }
 
@@ -85,17 +41,9 @@ export default async function UsersPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
-  const session = await auth.api.getSession({
-    headers: await import("next/headers").then((mod) => mod.headers()),
-  });
-
-  if (!session?.user) {
-    redirect("/login");
-  }
-
-  if (session.user.role !== "admin") {
-    redirect("/");
-  }
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  if (user.role !== "admin") redirect("/");
 
   const { users: userList, totalCount, totalPages, currentPage } = await getUsers(params);
 

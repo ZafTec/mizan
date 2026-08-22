@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import Link from "next/link";
 import { CreateUserForm } from "./create-user-form";
 
@@ -9,17 +9,9 @@ export const metadata = {
 };
 
 export default async function CreateUserPage() {
-  const session = await auth.api.getSession({
-    headers: await import("next/headers").then((mod) => mod.headers()),
-  });
-
-  if (!session?.user) {
-    redirect("/login");
-  }
-
-  if (session.user.role !== "admin") {
-    redirect("/");
-  }
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  if (user.role !== "admin") redirect("/");
 
   return (
     <div className="space-y-6 lg:space-y-8">

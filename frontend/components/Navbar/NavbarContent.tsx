@@ -167,14 +167,9 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 	async function handleLogout() {
 		try {
 			clearAppearanceCookie();
-			await signOut({
-				fetchOptions: {
-					onSuccess: () => {
-						router.push("/");
-						router.refresh();
-					},
-				},
-		});
+			await signOut();
+			router.push("/");
+			router.refresh();
 		} catch (error) {
 			console.error("Logout failed:", error);
 			appToast.error(error, "Failed to sign out");

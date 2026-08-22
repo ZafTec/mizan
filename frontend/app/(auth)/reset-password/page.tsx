@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { resetPassword, type AuthError } from "@/lib/auth-client";
 import Loading from "@/components/Loading";
 import { PasswordInput } from "@/components/PasswordInput";
 
@@ -39,8 +39,8 @@ export default function ResetPasswordPage() {
 			return;
 		}
 
-		if (password.length < 8) {
-			setError("Password must be at least 8 characters long");
+		if (password.length < 10) {
+			setError("Password must be at least 10 characters long");
 			setLoading(false);
 			return;
 		}
@@ -52,22 +52,11 @@ export default function ResetPasswordPage() {
 		}
 
 		try {
-			const { data, error: resetError } = await authClient.resetPassword({
-				newPassword: password,
-				token,
-			});
-
-			if (resetError) {
-				const errorMessage = resetError.message || "Failed to reset password. Please try again.";
-				setError(errorMessage);
-			} else {
-				setSuccess(true);
-				setTimeout(() => {
-					router.push("/login");
-				}, 2000);
-			}
-		} catch (err) {
-			setError("An error occurred. Please try again.");
+			await resetPassword(token, password);
+			setSuccess(true);
+			setTimeout(() => router.push("/login"), 2000);
+		} catch (caught) {
+			setError((caught as AuthError).message || "Failed to reset password. Please try again.");
 		} finally {
 			setLoading(false);
 		}
@@ -145,11 +134,11 @@ export default function ResetPasswordPage() {
 									placeholder="••••••••"
 									value={password}
 									onChange={(e) => setPassword(e.target.value)}
-									minLength={8}
+									minLength={10}
 									showStrength
 								/>
 								<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1.5">
-									Must be at least 8 characters
+									Must be at least 10 characters
 								</p>
 							</div>
 
@@ -165,7 +154,7 @@ export default function ResetPasswordPage() {
 									placeholder="••••••••"
 									value={confirmPassword}
 									onChange={(e) => setConfirmPassword(e.target.value)}
-									minLength={8}
+									minLength={10}
 								/>
 							</div>
 

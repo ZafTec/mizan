@@ -2,8 +2,7 @@
 
 import { serverApi } from "@/lib/api.server";
 import { logger } from "@/lib/logger";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getCurrentUser } from "@/lib/auth";
 
 const auditLogger = logger.createModuleLogger("audit-client");
 
@@ -62,11 +61,9 @@ export async function getAuditLogs(params: {
 }
 
 export async function fetchLiveAuditLogs(page: number = 1, pageSize: number = 10): Promise<GetAuditLogsResult> {
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
+    const user = await getCurrentUser();
 
-    if (!session?.user || session.user.role !== "admin") {
+    if (user?.role !== "admin") {
         throw new Error("Unauthorized");
     }
 

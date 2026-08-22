@@ -1,34 +1,13 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { logger } from "@/lib/logger";
+import { getCurrentUser } from "@/lib/auth";
 
-const sessionLogger = logger.createModuleLogger("session-helper");
-
-/**
- * Get the current user session on the server side.
- * Returns null if not authenticated.
- */
+/** The signed-in user, or null. */
 export async function getUserOptionalServer() {
-    try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
-        return session?.user ?? null;
-    } catch (error) {
-        sessionLogger.error("Failed to get user session", { error });
-        return null;
-    }
+	return getCurrentUser();
 }
 
-/**
- * Get the current user session on the server side.
- * Throws an error if not authenticated.
- */
+/** The signed-in user. Throws when there isn't one - use in protected routes. */
 export async function getUserServer() {
-    const user = await getUserOptionalServer();
-    if (!user) {
-        sessionLogger.error("Attempted to get user server but not authenticated");
-        throw new Error("Not authenticated");
-    }
-    return user;
+	const user = await getCurrentUser();
+	if (!user) throw new Error("Not authenticated");
+	return user;
 }
