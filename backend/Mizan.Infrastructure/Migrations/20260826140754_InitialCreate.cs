@@ -99,6 +99,27 @@ namespace Mizan.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "outbox_jobs",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    type = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    payload = table.Column<string>(type: "jsonb", nullable: false),
+                    status = table.Column<int>(type: "integer", nullable: false),
+                    attempts = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    run_after = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    dedupe_key = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    last_error = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    started_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    completed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_outbox_jobs", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "paddle_webhook_events",
                 columns: table => new
                 {
@@ -1798,6 +1819,18 @@ namespace Mizan.Infrastructure.Migrations
                 columns: new[] { "user_id", "read_at", "created_at" });
 
             migrationBuilder.CreateIndex(
+                name: "ix_outbox_jobs_claim",
+                table: "outbox_jobs",
+                columns: new[] { "type", "status", "run_after" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_outbox_jobs_dedupe",
+                table: "outbox_jobs",
+                column: "dedupe_key",
+                unique: true,
+                filter: "dedupe_key IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_paddle_webhook_events_event_id",
                 table: "paddle_webhook_events",
                 column: "event_id",
@@ -2029,6 +2062,9 @@ namespace Mizan.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "notifications");
+
+            migrationBuilder.DropTable(
+                name: "outbox_jobs");
 
             migrationBuilder.DropTable(
                 name: "paddle_webhook_events");

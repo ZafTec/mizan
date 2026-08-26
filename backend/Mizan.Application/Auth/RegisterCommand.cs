@@ -1,7 +1,6 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
@@ -36,22 +35,19 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Unit>
 
     private readonly IMizanDbContext _context;
     private readonly IPasswordHasher _passwordHasher;
-    private readonly IEmailSender _email;
+    private readonly IOutbox _outbox;
     private readonly IAppUrls _urls;
-    private readonly ILogger<RegisterCommandHandler> _logger;
 
     public RegisterCommandHandler(
         IMizanDbContext context,
         IPasswordHasher passwordHasher,
-        IEmailSender email,
-        IAppUrls urls,
-        ILogger<RegisterCommandHandler> logger)
+        IOutbox outbox,
+        IAppUrls urls)
     {
         _context = context;
         _passwordHasher = passwordHasher;
-        _email = email;
+        _outbox = outbox;
         _urls = urls;
-        _logger = logger;
     }
 
     public async Task<Unit> Handle(RegisterCommand request, CancellationToken cancellationToken)
@@ -91,14 +87,15 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Unit>
             ExpiresAt = now.Add(VerificationLifetime),
         });
 
-        await _context.SaveChangesAsync(cancellationToken);
-
-        await AuthEmailDelivery.TrySendAsync(
-            _email,
+        await AuthEmailDelivery.QueueAsync(
+            _outbox,
             AuthEmails.Verification(user.Email, user.Name, _urls.VerifyEmail(token)),
-            _logger,
             user.Id,
+            "verify",
             cancellationToken);
+
+        // One save: the user, the token and the queued mail commit together.
+        await _context.SaveChangesAsync(cancellationToken);
 
         return Unit.Value;
     }

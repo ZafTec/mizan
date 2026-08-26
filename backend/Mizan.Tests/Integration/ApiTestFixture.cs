@@ -16,6 +16,8 @@ using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 using Mizan.Domain.Identity;
 using Mizan.Infrastructure.Data;
+using Mizan.Infrastructure.Data.Seed;
+using Mizan.Infrastructure.Outbox;
 using Testcontainers.PostgreSql;
 using Xunit;
 
@@ -48,6 +50,18 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         "households",
         "subscriptions",
         "audit_logs",
+        "outbox_jobs",
+        "user_activity_counters",
+
+        // The seeded catalogs. They are truncated deliberately and then put
+        // back from CatalogSeed below: leaving them alone did not work,
+        // because TRUNCATE users CASCADE reaches exercises through their
+        // owner column anyway. A test that ran second saw an empty catalog.
+        "workout_template_exercises",
+        "workout_templates",
+        "exercises",
+        "user_achievements",
+        "achievements",
         "users"
     };
 
@@ -129,7 +143,11 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
                 ["Ai:Onboarding:DailyRequests"] = "20",
                 ["Ai:Onboarding:DailyTokens"] = "20000",
                 ["Ai:GlobalDailyTokens"] = "4000",
-                ["Ai:GlobalDailyCostMicros"] = "1000000000"
+                ["Ai:GlobalDailyCostMicros"] = "1000000000",
+                // The dispatcher's own loop is off in tests. A background timer
+                // would make every assertion about queued work a race; the
+                // tests drive it themselves through DrainOutboxAsync.
+                ["Outbox:Enabled"] = "false"
             };
 
             config.AddInMemoryCollection(settings);
@@ -290,8 +308,32 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             var tableList = string.Join(", ", TablesToTruncate.Select(t => $"\"{t}\""));
 #pragma warning disable EF1002
             await db.Database.ExecuteSqlRawAsync($"TRUNCATE TABLE {tableList} RESTART IDENTITY CASCADE;");
+
+            // Back to the state the migration leaves behind, so every test
+            // starts from the same catalog rather than from whatever the
+            // previous one truncated or added. The seed is ON CONFLICT DO
+            // NOTHING, so this is safe to run repeatedly.
+            await db.Database.ExecuteSqlRawAsync(CatalogSeed.Sql);
 #pragma warning restore EF1002
         }
+    }
+
+    /// <summary>
+    /// Runs the queue to exhaustion, the way the background loop eventually
+    /// would. Bounded, because a handler that re-enqueues itself should fail a
+    /// test rather than hang one.
+    /// </summary>
+    public async Task DrainOutboxAsync(int maxPasses = 20)
+    {
+        var dispatcher = Services.GetServices<IHostedService>().OfType<OutboxDispatcher>().Single();
+
+        for (var pass = 0; pass < maxPasses; pass++)
+        {
+            if (!await dispatcher.RunOnceAsync(CancellationToken.None)) return;
+        }
+
+        throw new InvalidOperationException(
+            $"The outbox still had work after {maxPasses} passes.");
     }
 
     public async Task<User> SeedUserAsync(Guid id, string email, bool emailVerified = true, string role = "user", bool banned = false, DateTime? banExpires = null)
