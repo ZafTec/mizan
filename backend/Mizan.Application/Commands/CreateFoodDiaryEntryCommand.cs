@@ -1,5 +1,7 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.Extensions.Caching.Hybrid;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Application.Services;
 using Mizan.Domain.Constants;
@@ -68,17 +70,20 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
     private readonly ICurrentUserService _currentUser;
     private readonly IStreakService _streakService;
     private readonly IAchievementEvaluator _achievements;
+    private readonly HybridCache _cache;
 
     public CreateFoodDiaryEntryCommandHandler(
         IMizanDbContext context,
         ICurrentUserService currentUser,
         IStreakService streakService,
-        IAchievementEvaluator achievements)
+        IAchievementEvaluator achievements,
+        HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
         _streakService = streakService;
         _achievements = achievements;
+        _cache = cache;
     }
 
     public async Task<CreateFoodDiaryEntryResult> Handle(CreateFoodDiaryEntryCommand request, CancellationToken cancellationToken)
@@ -122,6 +127,8 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
 
         _context.FoodDiaryEntries.Add(entry);
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _cache.RemoveByTagAsync(CacheTags.Nutrition(_currentUser.UserId.Value), cancellationToken);
 
         var streak = await _streakService.RecordActivityAsync("nutrition", request.EntryDate, cancellationToken);
         var unlocked = await _achievements.EvaluateAsync(cancellationToken, ["meals_logged", "streak_nutrition"]);

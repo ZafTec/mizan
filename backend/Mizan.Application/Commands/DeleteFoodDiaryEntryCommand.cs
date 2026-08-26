@@ -1,5 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Commands;
@@ -19,11 +21,13 @@ public class DeleteFoodDiaryEntryCommandHandler : IRequestHandler<DeleteFoodDiar
 {
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly HybridCache _cache;
 
-    public DeleteFoodDiaryEntryCommandHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public DeleteFoodDiaryEntryCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
+        _cache = cache;
     }
 
     public async Task<DeleteFoodDiaryEntryResult> Handle(DeleteFoodDiaryEntryCommand request, CancellationToken cancellationToken)
@@ -51,6 +55,8 @@ public class DeleteFoodDiaryEntryCommandHandler : IRequestHandler<DeleteFoodDiar
 
         _context.FoodDiaryEntries.Remove(entry);
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _cache.RemoveByTagAsync(CacheTags.Nutrition(_currentUser.UserId.Value), cancellationToken);
 
         return new DeleteFoodDiaryEntryResult
         {
