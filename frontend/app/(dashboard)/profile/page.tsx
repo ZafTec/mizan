@@ -264,7 +264,7 @@ function StatCard({
 	helper: string;
 }) {
 	return (
-		<div className="rounded-3xl border border-charcoal-blue-200 bg-white/90 p-4 dark:border-white/10 dark:bg-charcoal-blue-950/70">
+		<div className="rounded-3xl border border-charcoal-blue-200 bg-white p-4 dark:border-white/10 dark:bg-charcoal-blue-900">
 			<p className="text-xs font-semibold uppercase tracking-[0.14em] text-charcoal-blue-500 dark:text-charcoal-blue-400">{label}</p>
 			<p className="mt-3 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{value}</p>
 			<p className="mt-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{helper}</p>

@@ -44,7 +44,7 @@ export default async function Page({ params }: { params: Promise<{ recipeId: str
 			</div>
 
 			{/* Recipe Info Card */}
-			<div className="card p-6 bg-white/70 dark:bg-charcoal-blue-950/60 border-none">
+			<div className="card p-6 border-none">
 				<div className="flex items-center gap-4 mb-6">
 					<div className="w-14 h-14 rounded-2xl bg-white dark:bg-charcoal-blue-950 shadow-sm flex items-center justify-center">
 						<i className="ri-restaurant-2-line text-2xl text-brand-600" />
@@ -55,23 +55,23 @@ export default async function Page({ params }: { params: Promise<{ recipeId: str
 					</div>
 				</div>
 				<div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-					<div className="text-center p-3 bg-white/80 dark:bg-charcoal-blue-950 rounded-xl shadow-sm">
+					<div className="text-center p-3 bg-white dark:bg-charcoal-blue-950 rounded-xl shadow-sm">
 						<p className="text-xl font-bold text-orange-600">{macros.calories.toFixed(0)}</p>
 						<p className="text-[10px] uppercase tracking-wider font-bold text-charcoal-blue-400 dark:text-charcoal-blue-500 mt-1">Calories</p>
 					</div>
-					<div className="text-center p-3 bg-white/80 dark:bg-charcoal-blue-950 rounded-xl shadow-sm">
+					<div className="text-center p-3 bg-white dark:bg-charcoal-blue-950 rounded-xl shadow-sm">
 						<p className="text-xl font-bold text-red-600">{macros.protein.toFixed(1)}g</p>
 						<p className="text-[10px] uppercase tracking-wider font-bold text-charcoal-blue-400 dark:text-charcoal-blue-500 mt-1">Protein</p>
 					</div>
-					<div className="text-center p-3 bg-white/80 dark:bg-charcoal-blue-950 rounded-xl shadow-sm">
+					<div className="text-center p-3 bg-white dark:bg-charcoal-blue-950 rounded-xl shadow-sm">
 						<p className="text-xl font-bold text-amber-600">{macros.carbs.toFixed(1)}g</p>
 						<p className="text-[10px] uppercase tracking-wider font-bold text-charcoal-blue-400 dark:text-charcoal-blue-500 mt-1">Carbs</p>
 					</div>
-					<div className="text-center p-3 bg-white/80 dark:bg-charcoal-blue-950 rounded-xl shadow-sm">
+					<div className="text-center p-3 bg-white dark:bg-charcoal-blue-950 rounded-xl shadow-sm">
 						<p className="text-xl font-bold text-yellow-600">{macros.fat.toFixed(1)}g</p>
 						<p className="text-[10px] uppercase tracking-wider font-bold text-charcoal-blue-400 dark:text-charcoal-blue-500 mt-1">Fat</p>
 					</div>
-					<div className="text-center p-3 bg-white/80 dark:bg-charcoal-blue-950 rounded-xl shadow-sm">
+					<div className="text-center p-3 bg-white dark:bg-charcoal-blue-950 rounded-xl shadow-sm">
 						<p className="text-xl font-bold text-green-600">{macros.fiber.toFixed(1)}g</p>
 						<p className="text-[10px] uppercase tracking-wider font-bold text-charcoal-blue-400 dark:text-charcoal-blue-500 mt-1">Fiber</p>
 					</div>

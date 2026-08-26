@@ -135,7 +135,7 @@ export default function TrainerRequestsPage() {
 			)}
 
 			{/* Info Card */}
-			<div className="card p-6 border border-blue-200 dark:border-blue-800 bg-white/70 dark:bg-charcoal-blue-950/60">
+			<div className="card p-6 border border-blue-200 dark:border-blue-800">
 				<div className="flex items-start gap-4">
 					<div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
 						<i className="ri-information-line text-2xl text-white" />

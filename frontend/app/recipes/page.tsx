@@ -246,10 +246,9 @@ export default async function RecipesPage({
 
 			{/* Create Recipe CTA */}
 			{user && (
-				<div className="card overflow-hidden">
-					<div className="relative p-8 bg-charcoal-blue-50/90 dark:bg-charcoal-blue-900/60">
-						<div className="absolute top-0 right-0 w-64 h-64 bg-charcoal-blue-200/40 dark:bg-charcoal-blue-800/40 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-						<div className="relative flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
+				<div className="card">
+					<div className="p-8 bg-charcoal-blue-50 dark:bg-charcoal-blue-900/60">
+						<div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
 							<div className="w-16 h-16 rounded-2xl bg-accent-600 flex items-center justify-center shadow-lg shadow-accent-500/30">
 								<i className="ri-restaurant-2-line text-3xl text-white" />
 							</div>
