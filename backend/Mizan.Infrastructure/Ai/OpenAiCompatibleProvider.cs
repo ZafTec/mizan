@@ -63,6 +63,17 @@ public class OpenAiCompatibleProvider : IAiProvider
                     },
                 }
                 : null,
+            Tools = request.Tools.Count == 0
+                ? null
+                : request.Tools.Select(tool => new WireTool
+                {
+                    Function = new WireFunction
+                    {
+                        Name = tool.Name,
+                        Description = tool.Description,
+                        Parameters = JsonDocument.Parse(tool.ParametersSchema).RootElement.Clone(),
+                    },
+                }).ToList(),
         };
 
         using var client = _clients.CreateClient(HttpClientName);
@@ -95,8 +106,17 @@ public class OpenAiCompatibleProvider : IAiProvider
         var body = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(Json, cancellationToken)
             ?? throw new AiUnavailableException("The assistant returned an empty response.");
 
-        var content = body.Choices?.FirstOrDefault()?.Message?.Content;
-        if (string.IsNullOrWhiteSpace(content))
+        var choice = body.Choices?.FirstOrDefault()?.Message;
+        var content = choice?.Content;
+        var toolCalls = choice?.ToolCalls?
+            .Where(call => call.Function is not null)
+            .Select(call => new AiToolCall(
+                call.Id ?? string.Empty, call.Function!.Name ?? string.Empty, call.Function.Arguments ?? "{}"))
+            .ToList() ?? [];
+
+        // A turn that only asks for tools has no prose, and that is a valid
+        // answer rather than an empty one.
+        if (string.IsNullOrWhiteSpace(content) && toolCalls.Count == 0)
         {
             throw new AiUnavailableException("The assistant returned an empty response.");
         }
@@ -105,7 +125,10 @@ public class OpenAiCompatibleProvider : IAiProvider
             ? AiTokenUsage.None
             : new AiTokenUsage(body.Usage.PromptTokens, body.Usage.CompletionTokens);
 
-        return new AiCompletionResponse(content, usage, body.Model ?? _options.Model);
+        return new AiCompletionResponse(content ?? string.Empty, usage, body.Model ?? _options.Model)
+        {
+            ToolCalls = toolCalls,
+        };
     }
 
     private static WireMessage ToWire(AiMessage message)
@@ -114,12 +137,32 @@ public class OpenAiCompatibleProvider : IAiProvider
         {
             AiRole.System => "system",
             AiRole.Assistant => "assistant",
+            AiRole.Tool => "tool",
             _ => "user",
         };
 
+        if (message.ToolCalls is { Count: > 0 })
+        {
+            return new WireMessage
+            {
+                Role = role,
+                Content = string.IsNullOrEmpty(message.Content) ? null : message.Content,
+                ToolCalls = message.ToolCalls.Select(call => new WireToolCall
+                {
+                    Id = call.Id,
+                    Function = new WireToolCallFunction { Name = call.Name, Arguments = call.Arguments },
+                }).ToList(),
+            };
+        }
+
         if (message.Image is null)
         {
-            return new WireMessage { Role = role, Content = message.Content };
+            return new WireMessage
+            {
+                Role = role,
+                Content = message.Content,
+                ToolCallId = message.ToolCallId,
+            };
         }
 
         var dataUrl = $"data:{message.Image.ContentType};base64,{Convert.ToBase64String(message.Image.Bytes)}";
@@ -141,12 +184,42 @@ public class OpenAiCompatibleProvider : IAiProvider
         [JsonPropertyName("max_completion_tokens")] public int MaxCompletionTokens { get; set; }
         [JsonPropertyName("temperature")] public double Temperature { get; set; }
         [JsonPropertyName("response_format")] public ResponseFormat? ResponseFormat { get; set; }
+        [JsonPropertyName("tools")] public List<WireTool>? Tools { get; set; }
+    }
+
+    private sealed class WireTool
+    {
+        [JsonPropertyName("type")] public string Type { get; set; } = "function";
+        [JsonPropertyName("function")] public WireFunction? Function { get; set; }
+    }
+
+    private sealed class WireFunction
+    {
+        [JsonPropertyName("name")] public string? Name { get; set; }
+        [JsonPropertyName("description")] public string? Description { get; set; }
+        [JsonPropertyName("parameters")] public JsonElement Parameters { get; set; }
+    }
+
+    private sealed class WireToolCall
+    {
+        [JsonPropertyName("id")] public string? Id { get; set; }
+        [JsonPropertyName("type")] public string Type { get; set; } = "function";
+        [JsonPropertyName("function")] public WireToolCallFunction? Function { get; set; }
+    }
+
+    private sealed class WireToolCallFunction
+    {
+        [JsonPropertyName("name")] public string? Name { get; set; }
+        [JsonPropertyName("arguments")] public string? Arguments { get; set; }
     }
 
     private sealed class WireMessage
     {
         [JsonPropertyName("role")] public string Role { get; set; } = "user";
         [JsonPropertyName("content")] public object? Content { get; set; }
+
+        [JsonPropertyName("tool_calls")] public List<WireToolCall>? ToolCalls { get; set; }
+        [JsonPropertyName("tool_call_id")] public string? ToolCallId { get; set; }
 
         [JsonIgnore]
         public List<ContentPart>? ContentParts
@@ -196,6 +269,7 @@ public class OpenAiCompatibleProvider : IAiProvider
     private sealed class ChoiceMessage
     {
         [JsonPropertyName("content")] public string? Content { get; set; }
+        [JsonPropertyName("tool_calls")] public List<WireToolCall>? ToolCalls { get; set; }
     }
 
     private sealed class Usage
