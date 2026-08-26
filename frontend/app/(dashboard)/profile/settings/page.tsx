@@ -4,10 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CldUploadWidget } from "next-cloudinary";
 import Loading from "@/components/Loading";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 import ConfirmationModal from "@/components/ConfirmationModal";
+import { useImageUpload } from "@/components/ImageUpload";
 import {
 	changePassword,
 	deleteAccount,
@@ -24,7 +24,6 @@ import { appToast } from "@/lib/toast";
 type SessionItem = SessionSummary;
 
 const DELETE_CONFIRMATION_TEXT = "DELETE";
-const CLOUDINARY_CONFIGURED = Boolean(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME);
 
 export default function ProfileSettingsPage() {
 	const { data: session, isPending } = useSession();
@@ -45,6 +44,11 @@ export default function ProfileSettingsPage() {
 	const [loadingObservations, setLoadingObservations] = useState(true);
 	const [savingProfile, setSavingProfile] = useState(false);
 	const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+	const avatarUpload = useImageUpload({
+		folder: "avatars",
+		onUploaded: (url) => void handleAvatarUpload(url),
+	});
 	const [savingAppearance, setSavingAppearance] = useState(false);
 	const [changingPassword, setChangingPassword] = useState(false);
 	const [exportingData, setExportingData] = useState(false);
@@ -153,13 +157,7 @@ export default function ProfileSettingsPage() {
 		}
 	}
 
-	async function handleAvatarUpload(result: any) {
-		const nextImage = typeof result?.info?.secure_url === "string" ? result.info.secure_url : "";
-		if (!nextImage) {
-			appToast.error("Avatar upload finished but no image URL was returned");
-			return;
-		}
-
+	async function handleAvatarUpload(nextImage: string) {
 		const previousImage = image;
 		setImage(nextImage);
 		setUploadingAvatar(true);
@@ -335,19 +333,16 @@ export default function ProfileSettingsPage() {
 						<div className="mt-6 grid gap-6 lg:grid-cols-[auto_1fr]">
 							<div className="space-y-3">
 								<AvatarPreview image={previewImage} email={user.email} name={name || user.name} size="lg" />
-								{CLOUDINARY_CONFIGURED && (
-									<CldUploadWidget
-										signatureEndpoint="/api/sign-cloudinary-params"
-										onSuccess={(result: any) => void handleAvatarUpload(result)}
-									>
-										{({ open }) => (
-											<button type="button" onClick={() => open()} disabled={uploadingAvatar} className="btn-secondary w-full justify-center">
-												<AnimatedIcon name="upload" size={16} aria-hidden="true" />
-												{uploadingAvatar ? "Saving avatar..." : "Upload avatar"}
-											</button>
-										)}
-									</CldUploadWidget>
-								)}
+								{avatarUpload.input}
+								<button
+									type="button"
+									onClick={avatarUpload.open}
+									disabled={uploadingAvatar || avatarUpload.uploading}
+									className="btn-secondary w-full justify-center"
+								>
+									<AnimatedIcon name="upload" size={16} aria-hidden="true" />
+									{uploadingAvatar || avatarUpload.uploading ? "Saving avatar..." : "Upload avatar"}
+								</button>
 							</div>
 
 							<div className="grid gap-4">

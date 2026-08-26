@@ -4,7 +4,6 @@ import { FieldError } from "@/components/FieldError";
 import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
 import { addUser } from "@/data/user";
 import { useActionState, useEffect, useState } from "react";
-import { CldUploadWidget } from "next-cloudinary";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,12 +11,9 @@ import Loading from "@/components/Loading";
 import { PasswordInput } from "@/components/PasswordInput";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 
-const hasCloudinary = !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-
 export default function Page() {
 	const router = useRouter();
 	const [formState, action, isPending] = useActionState(addUser, EMPTY_FORM_STATE);
-	const [image, setImage] = useState<string>("");
 	const [password, setPassword] = useState("");
 
 	useEffect(() => {
@@ -92,62 +88,6 @@ export default function Page() {
 								/>
 								<FieldError formState={formState} name="confirmPassword" />
 							</div>
-						</div>
-
-						<div>
-							<label className="label">
-								Profile Image <span className="text-charcoal-blue-400 dark:text-charcoal-blue-500 font-normal">(optional)</span>
-							</label>
-							{hasCloudinary ? (
-								<CldUploadWidget
-									onSuccess={(result) => {
-										if (result?.info && result.info instanceof Object) {
-											setImage(result.info.secure_url);
-										}
-									}}
-									signatureEndpoint="/api/sign-cloudinary-params"
-								>
-									{({ open }) => (
-										<div className="flex items-center gap-4">
-											{image ? (
-												<div className="relative">
-													<Image
-														src={image}
-														alt="Profile"
-														width={80}
-														height={80}
-														className="w-20 h-20 rounded-2xl object-cover border-2 border-charcoal-blue-200 dark:border-charcoal-blue-800"
-													/>
-													<button
-														type="button"
-														onClick={() => setImage("")}
-														className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-													>
-														<i className="ri-close-line text-sm" />
-													</button>
-												</div>
-											) : (
-												<button
-													type="button"
-													onClick={(e) => {
-														e.preventDefault();
-														open();
-													}}
-													className="w-20 h-20 rounded-2xl border-2 border-dashed border-charcoal-blue-300 dark:border-charcoal-blue-700 hover:border-brand-400 bg-charcoal-blue-50 dark:bg-charcoal-blue-900 hover:bg-brand-50 dark:hover:bg-brand-950 flex flex-col items-center justify-center transition-colors group"
-												>
-													<AnimatedIcon name="upload" size={22} className="text-charcoal-blue-400 dark:text-charcoal-blue-500 group-hover:text-brand-500" aria-hidden="true" />
-													<span className="text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500 group-hover:text-brand-500 mt-1">Upload</span>
-												</button>
-											)}
-											<div className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-												<p>Add a profile photo</p>
-												<p className="text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500">JPG, PNG up to 5MB</p>
-											</div>
-										</div>
-									)}
-								</CldUploadWidget>
-							) : null}
-							<input type="hidden" name="userImage" value={image} />
 						</div>
 
 						<label className="flex items-start gap-2 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 cursor-pointer">
