@@ -14,7 +14,10 @@ namespace Mizan.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+// UserOrMcp, so the assistant is reachable from an MCP client as well as the
+// website. The MCP token carries the user's own principal - same person, same
+// consent, same quota - so this widens the client, not the access.
+[Authorize(Policy = "UserOrMcp")]
 public class AiController : ControllerBase
 {
     private readonly IMediator _mediator;

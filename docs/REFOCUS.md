@@ -1435,6 +1435,43 @@ Two additions, both aimed at the spine:
 `docs/MCP.md` becomes the one piece of documentation worth writing well: token
 setup, tool catalogue, example sessions.
 
+### Parity (phase 15)
+
+"Expose everything that makes sense" meant four surfaces the website had and
+MCP did not:
+
+| Surface | Tools |
+|---|---|
+| AI consent | `get_ai_consent`, `set_ai_consent` |
+| AI usage | `get_ai_usage`, `admin_get_global_ai_usage` |
+| Chat threads | `ask_ai`, `list_ai_threads`, `get_ai_thread`, `delete_ai_thread`, `suggest_meals` |
+| Uploads | `upload_image`, `analyze_food_image` |
+| Prompt console | `admin_list_ai_prompts`, `admin_get_ai_prompt`, `admin_create_ai_prompt_draft`, `admin_update_ai_prompt_draft`, `admin_run_ai_prompt_evals`, `admin_get_ai_prompt_evals`, `admin_publish_ai_prompt_version` |
+| Background queue | `admin_list_jobs`, `admin_get_job_stats`, `admin_retry_job`, `admin_delete_job` |
+
+Three rules held while adding them.
+
+**Access control stays in one place.** `AiController` and `UploadsController`
+were on the bare `[Authorize]` default policy, which is cookie-only, so neither
+was reachable at all. Both moved to `UserOrMcp`, the policy the other twenty
+controllers already use. That widens the *client*, not the access: an MCP token
+carries the user's own principal, so it is the same person, the same consent
+and the same quota. The admin tools have no gate in the tool layer either -
+they are listed for everyone and refused by the backend, because a second copy
+of the rule is a second copy to get wrong.
+
+**Consent is still the user's.** `set_ai_consent` exists because the principal
+holding an MCP token *is* the user; there is deliberately no tool that sets
+somebody else's, and no admin tool that reads one (§11).
+
+**Files come as bytes.** This server runs server-side, so a local path would
+mean nothing - `upload_image` and `analyze_food_image` take base64 and post
+multipart. They cap at 4 MB decoded, below the API's own limit, because a tool
+argument that large is already a problem; and they sniff the format from the
+bytes rather than trusting the caller, the same rule the endpoint applies
+(§7), so a wrong file is a usable message instead of a 400 after the round
+trip.
+
 ---
 
 ## 15. Execution order
@@ -1459,7 +1496,7 @@ Each phase is one commit and leaves the build green.
 | 12 | **Table + skeleton primitive** | medium | **done** | one server-rendered `DataTable` - sort, filter and page are URL links, not client state; `TableToolbar` is the only client component in the stack. Eight table pages ported, two bespoke header components deleted, `loading.tsx` count 10 → 59 |
 | 13 | **Admin rebuild** | medium | **done** | audit log queryable and filterable (facets, date range, CSV export with formula neutralisation), relationships back with the grants read-only, achievements CRUD. 15 admin MCP tools, up from 6 |
 | 14 | **Background queue** | medium | **done** | transactional outbox for outbound email and eval runs, `FOR UPDATE SKIP LOCKED` claiming, per-type concurrency, dead-letter view at `/admin/jobs` and over MCP (§13b) |
-| 15 | MCP parity | medium | | AI consent + usage, prompt console, uploads, chat threads. "Expose everything that makes sense" |
+| 15 | **MCP parity** | medium | **done** | AI consent + usage, chat threads, uploads (base64 → multipart), prompt console, queue. `AiController` and `UploadsController` moved off the cookie-only default policy onto `UserOrMcp` (§14) |
 | 16 | Telegram bot | medium | | `Mizan.Telegram`, guided linking from web settings, cold `/start` → sign in first, chat on the shared thread. **Consumes §10's AI service; never its own** |
 | 17 | Redis pass + landing page | medium | | nutrition totals, dashboard aggregates, recipes, meal plans; landing page revamp |
 | 18 | Docs rewrite | none | | README, CLAUDE.md, ARCHITECTURE.md, MCP.md, AI.md, TELEGRAM.md |
