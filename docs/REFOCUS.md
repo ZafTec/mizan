@@ -942,7 +942,7 @@ need their own ceiling in §10's gating table.
 | Enforce `CanViewMeasurements` through the policy, before any client-measurement endpoint exists | 9 |
 | `UserAiConsent` entity, settings UI, default-off | 9 |
 | Intersection rule in the AI context builder | ~~10~~ 9 — it lives in `IDataAccessPolicy`, and building the policy without it would have meant writing the wrong rule first |
-| Read-only trainer tool allowlist | 10 |
+| Read-only trainer tool allowlist | 10 - shipped as *no* tools on that surface |
 | Trainer quota tier | 10 |
 
 ---
@@ -1096,10 +1096,43 @@ from the caller's personal allowance in `AiQuotaService` and still inside the
 global ceiling - so tuning cannot spend an admin's chat quota, and a runaway
 suite stops where a runaway user does.
 
-Still open in phase 10: chat persisted on `AiChatThread`, the onboarding agent
-over the allowlisted tool→command map, read-only client tools for trainers plus
-a trainer quota tier, and food analysis landing as a proposal in the log-entry
-sheet rather than a write.
+Phase 10 finished with four more pieces, and each one moved a line that was
+written here as prose into something a test can fail on.
+
+**Chat is rows, not a blob.** `AiChatThread` held one jsonb column called
+`ThreadData` that nothing wrote and nothing could query. Messages are rows now,
+each answer carrying the version that produced it.
+
+**Suggestions stopped scraping prose.** `data/suggestion.ts` asked the chat
+endpoint for "a JSON array" and pulled it back out with a regex - the exact
+failure §10 rules out. It is `nutrition.suggestions` with a declared schema, so
+a malformed response is a failed call.
+
+**Food analysis is a proposal.** Every recognised food is an editable row the
+user drops or confirms; the endpoint had no caller at all before.
+
+**The onboarding agent, and its allowlist.** `AiToolCatalogue` is five tools
+onto commands that already exist, so a tool call runs the same validation and
+lands in the same audit log as the HTTP path. The security property is
+structural: a tool's factory takes arguments and identity as separate
+parameters and no schema exposes a user id, so a model writing someone else's
+id into its arguments changes nothing. The loop stops after three rounds and
+the last round is offered no tools, so a runaway model runs out of the ability
+to ask rather than being trusted to stop.
+
+**Trainer surfaces are read-only by construction.** A coach asking about a
+client gets the intersection §11 describes, and no tools - not a tool set
+filtered to reads, but none at all, which is the version that cannot drift.
+
+One thing this section did not anticipate. §10's gating table has a Trainer
+column and §11 says a trainer's call bills the trainer; what neither says is
+that *onboarding* needs the same treatment for a different reason. One setup
+turn is up to four provider calls, so on the free tier a new user's first act
+would empty their whole daily allowance - the surface the assistant justifies
+itself on, priced so that using it costs you the rest of the day. Quota lines
+are now `AiQuotaLine` (personal, eval, onboarding, trainer) rather than an eval
+boolean. Every line lands in the same ledger under the same global ceiling;
+only the per-user cap differs.
 
 ---
 
@@ -1245,7 +1278,7 @@ Each phase is one commit and leaves the build green.
 | 7 | *(folded into 6)* | | | rev 8 merged schema unification into the identity phase; later numbers are left alone so earlier commits still resolve |
 | 8 | Storage + `Mizan.Contracts` | low | **done** | `IStorageService` over S3 - MinIO or R2, configuration only; `next-cloudinary` and the signing route deleted; `Mizan.Contracts` types the spine's writes so Api, Mcp.Server and Telegram cannot drift (§13) |
 | 9 | AI platform + consent | medium | **done** | `IAiProvider`, `AiUsageLog`, `IAiQuotaService` with per-user and global ceilings, usage tab, `UserAiConsent` default-off, `IDataAccessPolicy` including the intersection rule. The existing unmetered call was brought under all of it; Semantic Kernel and its auto-invoking write tool are gone |
-| 10 | AI surfaces + admin console | medium | in progress | `AiPromptVersion` + the hard/soft guardrail split, chat persisted on `AiChatThread`, onboarding agent over the allowlisted tool→command map shared with MCP; read-only client tools for trainers (§11); `/admin/ai` with evals, diff and rollback (§12) |
+| 10 | AI surfaces + admin console | medium | **done** | `AiPromptVersion` + the hard/soft guardrail split, chat persisted on `AiChatThread`, onboarding agent over the allowlisted tool→command map shared with MCP; read-only client tools for trainers (§11); `/admin/ai` with evals, diff and rollback (§12) |
 | 11 | Billing feature split | low | | widen gating past the three endpoints, customer portal link, in-context upgrade chips; gate relationship *creation*, never existing consent (§5) |
 | 12 | UI rebuild on the new tiers | medium | | `/today`, `/history`, `/progress`, sheet-based logging |
 | 13 | Telegram bot | medium | | `Mizan.Telegram`, account linking, logging flows, chat on the shared thread. **Consumes §10's AI service; never its own** |

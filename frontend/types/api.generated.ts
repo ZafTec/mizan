@@ -1068,6 +1068,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Ai/clients/{clientId}/ask": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    clientId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AskClientRequest"];
+                    "text/json": components["schemas"]["AskClientRequest"];
+                    "application/*+json": components["schemas"]["AskClientRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiTrainerAnswerDto"];
+                        "application/json": components["schemas"]["AiTrainerAnswerDto"];
+                        "text/json": components["schemas"]["AiTrainerAnswerDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Ai/threads": {
         parameters: {
             query?: never;
@@ -6453,6 +6498,12 @@ export interface components {
             name: string;
             description: string;
         };
+        AiTrainerAnswerDto: {
+            /** Format: uuid */
+            threadId: string;
+            reply: components["schemas"]["AiChatMessageDto"];
+            axesSeen: string[];
+        };
         AiUsageDayDto: {
             /** Format: date */
             date: string;
@@ -6467,6 +6518,11 @@ export interface components {
             requests: number;
             /** Format: int32 */
             tokens: number;
+        };
+        AskClientRequest: {
+            /** Format: uuid */
+            threadId?: string | null;
+            message: string;
         };
         AuditLogDto: {
             /** Format: uuid */

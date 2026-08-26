@@ -134,6 +134,7 @@ public class AiQuotaService : IAiQuotaService
     {
         if (line == AiQuotaLine.Eval) return _options.Eval;
         if (line == AiQuotaLine.Onboarding) return _options.Onboarding;
+        if (line == AiQuotaLine.TrainerClient) return _options.Trainer;
 
         var entitlement = await _entitlements.GetAsync(userId, cancellationToken);
         return entitlement.IsPro ? _options.Pro : _options.Free;
@@ -153,8 +154,11 @@ public class AiQuotaService : IAiQuotaService
         {
             AiQuotaLine.Eval => query.Where(log => log.Feature == AiFeatures.Eval),
             AiQuotaLine.Onboarding => query.Where(log => log.Feature == AiFeatures.Onboarding),
+            AiQuotaLine.TrainerClient => query.Where(log => log.Feature == AiFeatures.TrainerClient),
             _ => query.Where(log =>
-                log.Feature != AiFeatures.Eval && log.Feature != AiFeatures.Onboarding),
+                log.Feature != AiFeatures.Eval
+                && log.Feature != AiFeatures.Onboarding
+                && log.Feature != AiFeatures.TrainerClient),
         };
 
         var totals = await query
