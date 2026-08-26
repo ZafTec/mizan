@@ -200,7 +200,7 @@ export default function Page() {
 				</div>
 
 				{/* Quick Add from Recipe */}
-				<div className="card p-6 bg-white/70 dark:bg-charcoal-blue-950/60">
+				<div className="card p-6">
 					<div className="flex items-center gap-4">
 						<div className="w-12 h-12 rounded-xl bg-white dark:bg-charcoal-blue-950 flex items-center justify-center">
 							<i className="ri-book-open-line text-xl text-brand-600" />

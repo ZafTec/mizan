@@ -659,7 +659,7 @@ export default function Page() {
 
 				{/* Macro Summary */}
 				{selectedIngredients.some(ing => (ing.ingredient || ing.subRecipe) && ing.amount) && (
-					<div className="card p-6 bg-white/70 dark:bg-charcoal-blue-950/60">
+					<div className="card p-6">
 						<h2 className="mb-4 font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Nutrition Summary</h2>
 						<div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
 							<div className="rounded-xl bg-white p-3 text-center dark:bg-charcoal-blue-950/80">

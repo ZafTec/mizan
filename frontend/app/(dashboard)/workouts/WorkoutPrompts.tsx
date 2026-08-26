@@ -131,7 +131,7 @@ export function PostWorkout({
             {summary.personalRecords.map((record) => (
               <li
                 key={record.exerciseId}
-                className="flex items-center justify-between rounded-2xl bg-white/70 px-4 py-3 text-sm dark:bg-charcoal-blue-950/60"
+                className="flex items-center justify-between rounded-2xl bg-charcoal-blue-50 px-4 py-3 text-sm dark:bg-charcoal-blue-950"
               >
                 <strong>{record.exerciseName}</strong>
                 <span>
