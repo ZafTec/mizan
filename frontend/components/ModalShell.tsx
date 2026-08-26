@@ -51,10 +51,13 @@ export function ModalShell({
 
 	return createPortal(
 		<div
-			className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm"
+			className="modal-overlay-in fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm"
 			onClick={closeOnOverlayClick ? onClose : undefined}
 		>
-			<div className="my-auto w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+			<div
+				className="modal-pop-in my-auto w-full max-w-md"
+				onClick={(e) => e.stopPropagation()}
+			>
 				{children}
 			</div>
 		</div>,
