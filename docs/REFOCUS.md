@@ -1055,6 +1055,52 @@ an eval matrix and a cost delta is a genuine UI job — that is not a tool call.
 | `/admin/ai` console: editor, diff, eval matrix, rollback | 10 |
 | `PromptVersionId` on `AiUsageLog`; admin eval budget line in the usage tab | 10 |
 
+### What shipped, and where it differs from the sketch above
+
+Built as described: the four entities, `PromptVersionId` on `AiUsageLog`,
+`AiHardConstraints` rendered read-only next to the editor, one published
+version per key (a filtered unique index, so the database enforces it rather
+than the command hoping to be the only writer), and twelve synthetic cases
+seeded by the migration, six of them adversarial.
+
+Four decisions the sketch left open:
+
+**Rollback is not its own command.** It is a publish of an archived version.
+An archived version was published once, so it already cleared the gate;
+re-running the suite to move a pointer backwards is exactly the friction that
+stops people rolling back when production is misbehaving. A draft still has to
+earn it.
+
+**The gate lives in the handler, not only in the console.** A console is a
+suggestion; a handler is a rule. `AiPublishGate` is pure and shared, so the
+publish button and the refusal agree on why.
+
+**An errored case is not a passed case.** A provider outage must not publish an
+unproven prompt, so an unreachable provider blocks exactly like a failure does.
+Editing a draft deletes its runs for the same reason: what the old text proved
+says nothing about the new text.
+
+**Assertions are three primitives** - `mustContain`, `mustNotContain`,
+`requireSchema` - and nothing more. A richer assertion language is a second
+query syntax nobody remembers.
+
+Two things above are narrower than written. "Draft vs. live side by side on
+identical inputs" shipped as a **body diff plus per-case outcomes**, not a
+paired output comparison; running live again on every case to render the pair
+doubles the eval bill for a view a diff mostly covers. And the cost delta is
+the **whole-suite** figure against the published version's, not per case.
+Both are worth revisiting once anyone has tuned a prompt in anger.
+
+The eval budget line is `AiFeatures.Eval` with its own daily allowance, split
+from the caller's personal allowance in `AiQuotaService` and still inside the
+global ceiling - so tuning cannot spend an admin's chat quota, and a runaway
+suite stops where a runaway user does.
+
+Still open in phase 10: chat persisted on `AiChatThread`, the onboarding agent
+over the allowlisted tool→command map, read-only client tools for trainers plus
+a trainer quota tier, and food analysis landing as a proposal in the log-entry
+sheet rather than a write.
+
 ---
 
 ## 13. Telegram bot
@@ -1199,7 +1245,7 @@ Each phase is one commit and leaves the build green.
 | 7 | *(folded into 6)* | | | rev 8 merged schema unification into the identity phase; later numbers are left alone so earlier commits still resolve |
 | 8 | Storage + `Mizan.Contracts` | low | **done** | `IStorageService` over S3 - MinIO or R2, configuration only; `next-cloudinary` and the signing route deleted; `Mizan.Contracts` types the spine's writes so Api, Mcp.Server and Telegram cannot drift (§13) |
 | 9 | AI platform + consent | medium | **done** | `IAiProvider`, `AiUsageLog`, `IAiQuotaService` with per-user and global ceilings, usage tab, `UserAiConsent` default-off, `IDataAccessPolicy` including the intersection rule. The existing unmetered call was brought under all of it; Semantic Kernel and its auto-invoking write tool are gone |
-| 10 | AI surfaces + admin console | medium | next | `AiPromptVersion` + the hard/soft guardrail split, chat persisted on `AiChatThread`, onboarding agent over the allowlisted tool→command map shared with MCP; read-only client tools for trainers (§11); `/admin/ai` with evals, diff and rollback (§12) |
+| 10 | AI surfaces + admin console | medium | in progress | `AiPromptVersion` + the hard/soft guardrail split, chat persisted on `AiChatThread`, onboarding agent over the allowlisted tool→command map shared with MCP; read-only client tools for trainers (§11); `/admin/ai` with evals, diff and rollback (§12) |
 | 11 | Billing feature split | low | | widen gating past the three endpoints, customer portal link, in-context upgrade chips; gate relationship *creation*, never existing consent (§5) |
 | 12 | UI rebuild on the new tiers | medium | | `/today`, `/history`, `/progress`, sheet-based logging |
 | 13 | Telegram bot | medium | | `Mizan.Telegram`, account linking, logging flows, chat on the shared thread. **Consumes §10's AI service; never its own** |
