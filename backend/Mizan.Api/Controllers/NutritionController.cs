@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Mizan.Application.Commands;
 using Mizan.Application.Interfaces;
 using Mizan.Application.Queries;
+using Mizan.Domain.Media;
 
 namespace Mizan.Api.Controllers;
 
@@ -73,20 +74,25 @@ public class NutritionController : ControllerBase
             return BadRequest("Image must be 8 MB or smaller");
         }
 
-        var allowedTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        if (!_currentUser.UserId.HasValue)
         {
-            "image/jpeg", "image/png", "image/webp"
-        };
-        if (!allowedTypes.Contains(image.ContentType))
-        {
-            return BadRequest("Image must be JPEG, PNG, or WebP");
+            return Unauthorized();
         }
 
         using var memoryStream = new MemoryStream();
         await image.CopyToAsync(memoryStream);
         var imageBytes = memoryStream.ToArray();
 
-        var result = await _aiService.AnalyzeFoodImageAsync(imageBytes);
+        // The bytes decide, not the Content-Type header - same rule the upload
+        // endpoint applies (docs/REFOCUS.md §7).
+        var contentType = ImageFormat.Detect(imageBytes.AsSpan(0, Math.Min(ImageFormat.HeaderBytes, imageBytes.Length)));
+        if (contentType is null or "image/gif")
+        {
+            return BadRequest("Image must be JPEG, PNG or WebP");
+        }
+
+        var result = await _aiService.AnalyzeFoodImageAsync(
+            _currentUser.UserId.Value, imageBytes, contentType);
         return Ok(result);
     }
 }
