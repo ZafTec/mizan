@@ -8,6 +8,7 @@ import Loading from "@/components/Loading";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import { useImageUpload } from "@/components/ImageUpload";
+import { AiSettings } from "@/components/ai/AiSettings";
 import {
 	changePassword,
 	deleteAccount,
@@ -471,6 +472,15 @@ export default function ProfileSettingsPage() {
 				</div>
 
 				<div className="space-y-6">
+					<section className="card p-6">
+						<SectionHeading
+							icon="brain"
+							title="Assistant"
+							description="What the assistant may see about you, and what it has cost today."
+						/>
+						<AiSettings />
+					</section>
+
 					<section className="card p-6">
 						<SectionHeading
 							icon="activity"
