@@ -647,7 +647,7 @@ function SectionHeading({
 
 function SummaryBadge({ label, value }: { label: string; value: string }) {
 	return (
-		<div className="rounded-3xl border border-charcoal-blue-200 bg-white/90 px-4 py-3 dark:border-white/10 dark:bg-charcoal-blue-950/70">
+		<div className="rounded-3xl border border-charcoal-blue-200 bg-white px-4 py-3 dark:border-white/10 dark:bg-charcoal-blue-900">
 			<p className="text-xs font-semibold uppercase tracking-[0.14em] text-charcoal-blue-500 dark:text-charcoal-blue-400">{label}</p>
 			<p className="mt-2 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{value}</p>
 		</div>

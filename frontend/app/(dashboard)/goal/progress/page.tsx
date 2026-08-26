@@ -76,7 +76,7 @@ export default function LogProgress() {
       </header>
 
       {/* Quick Tips */}
-		<div className="card p-6 bg-white/70 dark:bg-charcoal-blue-950/60">
+		<div className="card p-6">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-xl bg-white dark:bg-charcoal-blue-900 flex items-center justify-center shrink-0">
             <i className="ri-lightbulb-line text-xl text-brand-600 dark:text-brand-400" />

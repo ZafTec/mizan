@@ -143,7 +143,7 @@ export default async function HabitsPage() {
 									className={`flex items-center gap-3 rounded-3xl border p-4 transition-all ${
 										habit.done
 											? "border-verdigris-300 bg-verdigris-500/10 dark:border-verdigris-500/30 dark:bg-verdigris-500/5"
-											: "border-charcoal-blue-200 bg-white/70 dark:border-white/10 dark:bg-charcoal-blue-950/60"
+											: "border-charcoal-blue-200 bg-charcoal-blue-50 dark:border-white/10 dark:bg-charcoal-blue-950"
 									}`}
 								>
 									<span

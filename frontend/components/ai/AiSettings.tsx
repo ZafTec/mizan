@@ -130,7 +130,7 @@ function UsagePanel({ usage }: { usage: MyAiUsage }) {
 	const resets = new Date(today.resetsAt);
 
 	return (
-		<div className="rounded-3xl border border-charcoal-blue-200 bg-white/70 p-4 dark:border-white/10 dark:bg-charcoal-blue-950/60">
+		<div className="rounded-3xl border border-charcoal-blue-200 bg-white p-4 dark:border-white/10 dark:bg-charcoal-blue-900">
 			<div className="flex items-center justify-between">
 				<p className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
 					Today&apos;s usage

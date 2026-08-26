@@ -192,7 +192,7 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 										key={qp.id}
 										type="button"
 										onClick={() => send(qp.prompt)}
-										className="group flex items-start gap-3 rounded-2xl border border-charcoal-blue-200 bg-white/80 p-3 text-left text-sm text-charcoal-blue-700 transition-all hover:-translate-y-0.5 hover:border-verdigris-400 hover:shadow-md dark:border-white/10 dark:bg-charcoal-blue-950/60 dark:text-charcoal-blue-200"
+										className="group flex items-start gap-3 rounded-2xl border border-charcoal-blue-200 bg-charcoal-blue-50 p-3 text-left text-sm text-charcoal-blue-700 transition-all hover:-translate-y-0.5 hover:border-verdigris-400 hover:shadow-md dark:border-white/10 dark:bg-charcoal-blue-950 dark:text-charcoal-blue-200"
 									>
 										<span className="icon-chip h-8 w-8 text-verdigris-700 dark:text-verdigris-300">
 											<AnimatedIcon name={qp.icon} size={14} />
