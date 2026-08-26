@@ -20,6 +20,13 @@ public class AiOptions : IAiCeilings
     public AiTierLimits Pro { get; set; } = new() { DailyRequests = 200, DailyTokens = 500_000 };
 
     /// <summary>
+    /// The eval budget line. An admin proving a draft is not doing it on their
+    /// personal allowance, but it is still a line inside the global ceiling -
+    /// a runaway suite stops in the same place a runaway user does.
+    /// </summary>
+    public AiTierLimits Eval { get; set; } = new() { DailyRequests = 400, DailyTokens = 400_000 };
+
+    /// <summary>
     /// The circuit breaker on the whole provider bill. Not optional: a loop or
     /// an abusive account stops here rather than at the invoice.
     /// </summary>

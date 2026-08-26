@@ -41,6 +41,7 @@ public interface IAiQuotaService
         Guid? householdId,
         string feature,
         int estimatedTokens,
+        Guid? promptVersionId = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>Records what the call actually cost. Safe to call more than once.</summary>

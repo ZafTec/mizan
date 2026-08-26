@@ -75,6 +75,10 @@ public class MizanDbContext : DbContext, IMizanDbContext
     public DbSet<AiChatThread> AiChatThreads => Set<AiChatThread>();
     public DbSet<UserAiConsent> UserAiConsents => Set<UserAiConsent>();
     public DbSet<AiUsageLog> AiUsageLogs => Set<AiUsageLog>();
+    public DbSet<AiPrompt> AiPrompts => Set<AiPrompt>();
+    public DbSet<AiPromptVersion> AiPromptVersions => Set<AiPromptVersion>();
+    public DbSet<AiEvalCase> AiEvalCases => Set<AiEvalCase>();
+    public DbSet<AiEvalRun> AiEvalRuns => Set<AiEvalRun>();
 
     // MCP Integration
     public DbSet<McpToken> McpTokens => Set<McpToken>();
@@ -160,6 +164,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.PromptTokens).HasColumnName("prompt_tokens");
             entity.Property(e => e.CompletionTokens).HasColumnName("completion_tokens");
             entity.Property(e => e.EstimatedCostMicros).HasColumnName("estimated_cost_micros");
+            entity.Property(e => e.PromptVersionId).HasColumnName("prompt_version_id");
             entity.Property(e => e.LatencyMs).HasColumnName("latency_ms");
             entity.Property(e => e.Outcome).HasColumnName("outcome").HasConversion<int>();
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
@@ -170,6 +175,80 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.HasIndex(e => e.CreatedAt);
             entity.HasOne(e => e.User).WithMany()
                 .HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AiPrompt>(entity =>
+        {
+            entity.ToTable("ai_prompts");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.Key).HasColumnName("key").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(512);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => e.Key).IsUnique();
+        });
+
+        modelBuilder.Entity<AiPromptVersion>(entity =>
+        {
+            entity.ToTable("ai_prompt_versions");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.PromptId).HasColumnName("prompt_id");
+            entity.Property(e => e.Version).HasColumnName("version");
+            entity.Property(e => e.Body).HasColumnName("body").IsRequired();
+            entity.Property(e => e.SoftPolicy).HasColumnName("soft_policy").HasColumnType("jsonb").HasDefaultValue("{}");
+            entity.Property(e => e.Status).HasColumnName("status").HasConversion<int>();
+            entity.Property(e => e.AuthorId).HasColumnName("author_id");
+            entity.Property(e => e.Notes).HasColumnName("notes").HasMaxLength(1024);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.PublishedAt).HasColumnName("published_at");
+            entity.HasIndex(e => new { e.PromptId, e.Version }).IsUnique();
+            // One published version per key at a time. The database enforces it
+            // rather than the command hoping to be the only writer.
+            entity.HasIndex(e => e.PromptId)
+                .IsUnique()
+                .HasFilter("status = 1")
+                .HasDatabaseName("ix_ai_prompt_versions_one_published");
+            entity.HasOne(e => e.Prompt).WithMany(p => p.Versions)
+                .HasForeignKey(e => e.PromptId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AiEvalCase>(entity =>
+        {
+            entity.ToTable("ai_eval_cases");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.PromptKey).HasColumnName("prompt_key").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Input).HasColumnName("input").IsRequired();
+            entity.Property(e => e.Context).HasColumnName("context");
+            entity.Property(e => e.Assertions).HasColumnName("assertions").HasColumnType("jsonb").HasDefaultValue("{}");
+            entity.Property(e => e.IsAdversarial).HasColumnName("is_adversarial").HasDefaultValue(false);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => e.PromptKey);
+        });
+
+        modelBuilder.Entity<AiEvalRun>(entity =>
+        {
+            entity.ToTable("ai_eval_runs");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.VersionId).HasColumnName("version_id");
+            entity.Property(e => e.CaseId).HasColumnName("case_id");
+            entity.Property(e => e.Outcome).HasColumnName("outcome").HasConversion<int>();
+            entity.Property(e => e.SchemaValid).HasColumnName("schema_valid");
+            entity.Property(e => e.Output).HasColumnName("output");
+            entity.Property(e => e.FailureReason).HasColumnName("failure_reason").HasMaxLength(1024);
+            entity.Property(e => e.PromptTokens).HasColumnName("prompt_tokens");
+            entity.Property(e => e.CompletionTokens).HasColumnName("completion_tokens");
+            entity.Property(e => e.CostMicros).HasColumnName("cost_micros");
+            entity.Property(e => e.LatencyMs).HasColumnName("latency_ms");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => e.VersionId);
+            entity.HasOne(e => e.Version).WithMany()
+                .HasForeignKey(e => e.VersionId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Case).WithMany()
+                .HasForeignKey(e => e.CaseId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<UserSession>(entity =>

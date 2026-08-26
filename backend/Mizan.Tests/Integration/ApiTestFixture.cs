@@ -24,6 +24,11 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
 {
     private static readonly string[] TablesToTruncate = new[]
     {
+        // ai_eval_cases is deliberately absent: the synthetic suite is seeded
+        // by the migration and the publish gate has nothing to check without it.
+        "ai_eval_runs",
+        "ai_prompt_versions",
+        "ai_prompts",
         "ai_usage_logs",
         "user_ai_consents",
         "chat_messages",
