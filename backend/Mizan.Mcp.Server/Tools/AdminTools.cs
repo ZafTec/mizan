@@ -5,14 +5,181 @@ using ModelContextProtocol.Server;
 
 namespace Mizan.Mcp.Server.Tools;
 
+/// <summary>
+/// The admin surface, as tools.
+///
+/// Everything here is behind the admin API key. The rule for what belongs is
+/// the same one the console follows: operational access, not super-user access
+/// over personal data (docs/REFOCUS.md §11). So an admin can end a
+/// trainer-client relationship but not edit which axes the client shares, and
+/// can read the audit log but not write to it.
+/// </summary>
 [McpServerToolType]
 public sealed class AdminTools
 {
-    private readonly IBackendApiClient _api; public AdminTools(IBackendApiClient api) => _api = api;
-    [McpServerTool(Name = "admin_get_social_analytics", ReadOnly = true, Idempotent = true)][Description("Admin only.")] public Task<string> SocialAnalytics(CancellationToken ct = default) => _api.GetAsync("/api/admin/social/analytics", ct);
-    [McpServerTool(Name = "admin_list_content_reports", ReadOnly = true, Idempotent = true)][Description("Admin only.")] public Task<string> Reports(string status = "Open", int page = 1, CancellationToken ct = default) => _api.GetAsync($"/api/admin/social/reports?status={status}&page={page}", ct);
-    [McpServerTool(Name = "admin_resolve_content_report", Destructive = true)][Description("Admin only. action is dismiss or delete.")] public Task<string> ResolveReport(string id, string action, string? note = null, CancellationToken ct = default) => _api.PostAsync($"/api/admin/social/reports/{id}/resolve", new { action, note }, ct);
-    [McpServerTool(Name = "admin_list_audit_logs", ReadOnly = true, Idempotent = true)][Description("Admin only.")] public Task<string> AuditLogs(int page = 1, int pageSize = 50, CancellationToken ct = default) => _api.GetAsync($"/api/AuditLogs?page={page}&pageSize={pageSize}", ct);
-    [McpServerTool(Name = "admin_promote_exercise", Destructive = true)][Description("Admin only. Promotes a user exercise into the global catalog.")] public Task<string> PromoteExercise(string id, CancellationToken ct = default) => _api.PostAsync($"/api/Exercises/{id}/promote", null, ct);
-    [McpServerTool(Name = "admin_save_builtin_workout_template")][Description("Admin only. Create or update a built-in template using the full JSON contract.")] public Task<string> SaveTemplate(string body, string? id = null, CancellationToken ct = default) => id is null ? _api.PostAsync("/api/WorkoutTemplates", JsonSerializer.Deserialize<object>(body), ct) : _api.PutAsync($"/api/WorkoutTemplates/{id}", JsonSerializer.Deserialize<object>(body)!, ct);
+    private readonly IBackendApiClient _api;
+
+    public AdminTools(IBackendApiClient api) => _api = api;
+
+    // ---- Moderation -------------------------------------------------------
+
+    [McpServerTool(Name = "admin_get_social_analytics", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. Feed, follow and report counts.")]
+    public Task<string> SocialAnalytics(CancellationToken ct = default) =>
+        _api.GetAsync("/api/admin/social/analytics", ct);
+
+    [McpServerTool(Name = "admin_list_content_reports", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. Reported feed content awaiting a decision.")]
+    public Task<string> Reports(string status = "Open", int page = 1, CancellationToken ct = default) =>
+        _api.GetAsync($"/api/admin/social/reports?status={Uri.EscapeDataString(status)}&page={page}", ct);
+
+    [McpServerTool(Name = "admin_resolve_content_report", Destructive = true)]
+    [Description("Admin only. action is dismiss or delete.")]
+    public Task<string> ResolveReport(string id, string action, string? note = null, CancellationToken ct = default) =>
+        _api.PostAsync($"/api/admin/social/reports/{ToolArguments.ParseId(id, "id")}/resolve", new { action, note }, ct);
+
+    [McpServerTool(Name = "admin_promote_exercise", Destructive = true)]
+    [Description("Admin only. Promotes a user exercise into the global catalog.")]
+    public Task<string> PromoteExercise(string id, CancellationToken ct = default) =>
+        _api.PostAsync($"/api/Exercises/{ToolArguments.ParseId(id, "id")}/promote", null, ct);
+
+    [McpServerTool(Name = "admin_save_builtin_workout_template")]
+    [Description("Admin only. Create or update a built-in template using the full JSON contract.")]
+    public Task<string> SaveTemplate(string body, string? id = null, CancellationToken ct = default) =>
+        id is null
+            ? _api.PostAsync("/api/WorkoutTemplates", JsonSerializer.Deserialize<object>(body), ct)
+            : _api.PutAsync($"/api/WorkoutTemplates/{ToolArguments.ParseId(id, "id")}", JsonSerializer.Deserialize<object>(body)!, ct);
+
+    // ---- Audit log --------------------------------------------------------
+
+    [McpServerTool(Name = "admin_list_audit_logs", ReadOnly = true, Idempotent = true)]
+    [Description(
+        "Admin only. Filterable audit log. All filters are optional: action and entityType "
+        + "narrow by kind, entityId and search find a specific record or actor, from/to are "
+        + "inclusive YYYY-MM-DD bounds.")]
+    public Task<string> AuditLogs(
+        string? action = null,
+        string? entityType = null,
+        string? entityId = null,
+        string? search = null,
+        [Description("Inclusive lower bound, YYYY-MM-DD")] string? from = null,
+        [Description("Inclusive upper bound, YYYY-MM-DD")] string? to = null,
+        int page = 1,
+        int pageSize = 50,
+        CancellationToken ct = default)
+    {
+        var query = new QueryString()
+            .Add("action", action)
+            .Add("entityType", entityType)
+            .Add("entityId", entityId)
+            .Add("search", search)
+            .Add("from", ToolArguments.ParseOptionalDate(from, "from")?.ToString("yyyy-MM-dd"))
+            .Add("to", ToolArguments.ParseOptionalDate(to, "to")?.ToString("yyyy-MM-dd"))
+            .Add("page", page)
+            .Add("pageSize", pageSize);
+
+        return _api.GetAsync($"/api/AuditLogs{query}", ct);
+    }
+
+    [McpServerTool(Name = "admin_get_audit_log_facets", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. The distinct actions and entity types present in the log, for filtering.")]
+    public Task<string> AuditFacets(CancellationToken ct = default) =>
+        _api.GetAsync("/api/AuditLogs/facets", ct);
+
+    // ---- Users ------------------------------------------------------------
+
+    [McpServerTool(Name = "admin_list_users", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. Accounts, with optional search, role and banned filters.")]
+    public Task<string> ListUsers(
+        string? search = null,
+        [Description("user, trainer or admin")] string? role = null,
+        bool? banned = null,
+        int page = 1,
+        int pageSize = 20,
+        CancellationToken ct = default)
+    {
+        var query = new QueryString()
+            .Add("search", search)
+            .Add("role", role)
+            .Add("banned", banned?.ToString().ToLowerInvariant())
+            .Add("page", page)
+            .Add("pageSize", pageSize);
+
+        return _api.GetAsync($"/api/admin/users{query}", ct);
+    }
+
+    [McpServerTool(Name = "admin_get_user", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. One account with its sessions and status.")]
+    public Task<string> GetUser(string id, CancellationToken ct = default) =>
+        _api.GetAsync($"/api/admin/users/{ToolArguments.ParseId(id, "id")}", ct);
+
+    [McpServerTool(Name = "admin_update_user", Destructive = true)]
+    [Description(
+        "Admin only. Partial update - only what you pass changes. role is user, trainer or "
+        + "admin. Set banned true with a reason to ban, false to lift it. banExpires is an "
+        + "optional ISO 8601 timestamp; omit it for an indefinite ban.")]
+    public Task<string> UpdateUser(
+        string id,
+        string? role = null,
+        bool? banned = null,
+        string? banReason = null,
+        string? banExpires = null,
+        bool? emailVerified = null,
+        CancellationToken ct = default) =>
+        _api.PatchAsync(
+            $"/api/admin/users/{ToolArguments.ParseId(id, "id")}",
+            new
+            {
+                role,
+                banned,
+                banReason,
+                banExpires = ToolArguments.ParseOptionalTimestamp(banExpires, "banExpires"),
+                emailVerified,
+                // Deliberately not exposed. Setting someone's password from a
+                // tool call is the kind of thing that wants a human, a browser
+                // and a second look (docs/REFOCUS.md §11).
+                newPassword = (string?)null,
+            },
+            ct);
+
+    [McpServerTool(Name = "admin_revoke_user_sessions", Destructive = true)]
+    [Description("Admin only. Signs an account out everywhere on its next request.")]
+    public Task<string> RevokeSessions(string id, CancellationToken ct = default) =>
+        _api.DeleteAsync($"/api/admin/users/{ToolArguments.ParseId(id, "id")}/sessions", ct);
+
+    [McpServerTool(Name = "admin_list_sessions", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. Active sign-ins across the system.")]
+    public Task<string> ListSessions(bool activeOnly = true, int page = 1, int pageSize = 50, CancellationToken ct = default) =>
+        _api.GetAsync(
+            $"/api/admin/sessions{new QueryString().Add("activeOnly", activeOnly.ToString().ToLowerInvariant()).Add("page", page).Add("pageSize", pageSize)}",
+            ct);
+
+    // ---- Trainer relationships -------------------------------------------
+
+    [McpServerTool(Name = "admin_list_relationships", ReadOnly = true, Idempotent = true)]
+    [Description(
+        "Admin only. Trainer-client links with the per-axis grants the client gave. "
+        + "search matches either side's name or email.")]
+    public Task<string> ListRelationships(
+        string? search = null,
+        [Description("pending, active, paused or ended")] string? status = null,
+        int page = 1,
+        int pageSize = 20,
+        CancellationToken ct = default)
+    {
+        var query = new QueryString()
+            .Add("search", search)
+            .Add("status", status)
+            .Add("page", page)
+            .Add("pageSize", pageSize);
+
+        return _api.GetAsync($"/api/Admin/Relationships{query}", ct);
+    }
+
+    [McpServerTool(Name = "admin_end_relationship", Destructive = true)]
+    [Description(
+        "Admin only. Ends a trainer-client relationship, revoking the trainer's access. "
+        + "There is deliberately no tool to edit the grants themselves - those belong to the client.")]
+    public Task<string> EndRelationship(string id, string? reason = null, CancellationToken ct = default) =>
+        _api.PostAsync($"/api/Admin/Relationships/{ToolArguments.ParseId(id, "id")}/end", new { reason }, ct);
 }

@@ -12,6 +12,15 @@ public record GetAuditLogsQuery : IRequest<PagedResult<AuditLogDto>>, IPagedQuer
     public string? EntityType { get; init; }
     public string? EntityId { get; init; }
     public Guid? UserId { get; init; }
+
+    /// <summary>Inclusive. Half the reason anyone opens an audit log is "what happened on Tuesday".</summary>
+    public DateOnly? From { get; init; }
+
+    public DateOnly? To { get; init; }
+
+    /// <summary>Matches an actor's email, so you can look someone up without knowing their id.</summary>
+    public string? Search { get; init; }
+
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;
     public string? SortBy { get; init; }
@@ -73,6 +82,28 @@ public class GetAuditLogsQueryHandler : IRequestHandler<GetAuditLogsQuery, Paged
             query = query.Where(a => a.UserId == request.UserId);
         }
 
+        if (!string.IsNullOrWhiteSpace(request.Search))
+        {
+            var term = request.Search.Trim().ToLower();
+            query = query.Where(a =>
+                (a.User != null && a.User.Email.ToLower().Contains(term))
+                || a.EntityId.ToLower().Contains(term));
+        }
+
+        if (request.From is { } from)
+        {
+            var start = from.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+            query = query.Where(a => a.Timestamp >= start);
+        }
+
+        if (request.To is { } to)
+        {
+            // Inclusive of the whole day: a range of 3rd-3rd should return the
+            // 3rd, not nothing.
+            var end = to.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+            query = query.Where(a => a.Timestamp < end);
+        }
+
         var totalCount = await query.CountAsync(cancellationToken);
 
         var sortedQuery = query.ApplySorting(
@@ -104,5 +135,35 @@ public class GetAuditLogsQueryHandler : IRequestHandler<GetAuditLogsQuery, Paged
             Page = request.Page,
             PageSize = request.PageSize
         };
+    }
+}
+
+
+public record AuditLogFacetsDto(IReadOnlyList<string> Actions, IReadOnlyList<string> EntityTypes);
+
+/// <summary>
+/// What is actually in the log, so the console can offer a dropdown instead of
+/// a free-text box you have to guess the spelling for.
+/// </summary>
+public record GetAuditLogFacetsQuery : IRequest<AuditLogFacetsDto>;
+
+public class GetAuditLogFacetsQueryHandler : IRequestHandler<GetAuditLogFacetsQuery, AuditLogFacetsDto>
+{
+    private readonly IMizanDbContext _context;
+
+    public GetAuditLogFacetsQueryHandler(IMizanDbContext context) => _context = context;
+
+    public async Task<AuditLogFacetsDto> Handle(
+        GetAuditLogFacetsQuery request, CancellationToken cancellationToken)
+    {
+        var actions = await _context.AuditLogs.AsNoTracking()
+            .Select(a => a.Action).Distinct().OrderBy(a => a).Take(200)
+            .ToListAsync(cancellationToken);
+
+        var entityTypes = await _context.AuditLogs.AsNoTracking()
+            .Select(a => a.EntityType).Distinct().OrderBy(a => a).Take(200)
+            .ToListAsync(cancellationToken);
+
+        return new AuditLogFacetsDto(actions, entityTypes);
     }
 }
