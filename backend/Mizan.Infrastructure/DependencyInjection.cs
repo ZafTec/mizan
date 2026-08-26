@@ -8,6 +8,7 @@ using Mizan.Infrastructure.Data;
 using Mizan.Infrastructure.Email;
 using Mizan.Infrastructure.Identity;
 using Mizan.Infrastructure.Services;
+using Mizan.Infrastructure.Storage;
 
 namespace Mizan.Infrastructure;
 
@@ -52,6 +53,19 @@ public static class DependencyInjection
         services.AddScoped<ISessionService, SessionService>();
         services.AddScoped<IUserCacheInvalidator, UserCacheInvalidator>();
         services.AddScoped<IEmailSender, SmtpEmailSender>();
+
+        // Object storage - one S3 client covers MinIO and Cloudflare R2
+        // (docs/REFOCUS.md §7). Unconfigured is a supported state: the API
+        // starts and only uploads refuse.
+        services.Configure<StorageOptions>(configuration.GetSection(StorageOptions.SectionName));
+        if (string.IsNullOrWhiteSpace(configuration[$"{StorageOptions.SectionName}:ServiceUrl"]))
+        {
+            services.AddSingleton<IStorageService, UnconfiguredStorageService>();
+        }
+        else
+        {
+            services.AddSingleton<IStorageService, S3StorageService>();
+        }
 
         // Billing
         services.Configure<PaddleOptions>(configuration.GetSection(PaddleOptions.SectionName));

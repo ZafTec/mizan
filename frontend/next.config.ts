@@ -1,5 +1,16 @@
 import type { NextConfig } from "next";
 
+function hostnameOf(url: string | undefined): string | undefined {
+	if (!url) return undefined;
+	try {
+		return new URL(url).hostname;
+	} catch {
+		return undefined;
+	}
+}
+
+const mediaHostname = hostnameOf(process.env.NEXT_PUBLIC_MEDIA_URL);
+
 const nextConfig: NextConfig = {
 	// Enable standalone output for Docker
 	output: "standalone",
@@ -13,12 +24,13 @@ const nextConfig: NextConfig = {
 	// bun is a runtime-only module: tell Next.js not to bundle it
 	serverExternalPackages: ["bun"],
 
-	// Image configuration
+	// Image configuration. Uploaded media lives in our own object store, whose
+	// public host is deployment-specific - MinIO behind a proxy, an R2 custom
+	// domain, r2.dev - so it comes from the environment rather than being
+	// hardcoded. See docs/REFOCUS.md §7.
 	images: {
 		remotePatterns: [
-			{
-				hostname: "res.cloudinary.com",
-			},
+			...(mediaHostname ? [{ hostname: mediaHostname }] : []),
 			{
 				hostname: "lh3.googleusercontent.com", // Google OAuth avatars
 			},

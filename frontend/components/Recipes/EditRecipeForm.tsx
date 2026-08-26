@@ -5,8 +5,8 @@ import Loading from "@/components/Loading";
 import { appToast } from "@/lib/toast";
 import { getAllIngredient } from "@/data/ingredient";
 import type { Ingredient } from "@/data/ingredient";
-import { CldUploadWidget } from 'next-cloudinary';
 import Image from 'next/image';
+import { useImageUpload } from "@/components/ImageUpload";
 import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
 import Modal from "@/components/Modal";
@@ -32,6 +32,11 @@ interface EditRecipeFormProps {
 export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
     const [name, setName] = useState(recipe.title || "");
     const [images, setImages] = useState<string[]>(recipe.imageUrl ? [recipe.imageUrl] : []);
+
+    const imageUpload = useImageUpload({
+        folder: "recipes",
+        onUploaded: (url) => setImages([url]),
+    });
     const [description, setDescription] = useState(recipe.description || '');
     // Instructions are free text now, not ordered rows - see docs/REFOCUS.md §4.
     // types/api.generated.ts still describes the old array shape; it is generated
@@ -232,23 +237,16 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                 {/* Image Upload */}
                 <div>
                     <label className="label">Recipe Images</label>
-                    <CldUploadWidget
-                        onSuccess={(result) => {
-                            if (result?.info && result.info instanceof Object) {
-                                setImages([result.info.secure_url]);
-                            }
-                        }}
-                        signatureEndpoint="/api/sign-cloudinary-params"
-                    >
-                        {({ open }) => (
-                            <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap gap-3">
+                                {imageUpload.input}
                                 <button
                                     type="button"
-                                    onClick={() => open()}
-                                    className="w-24 h-24 rounded-2xl border-2 border-dashed border-charcoal-blue-300 dark:border-charcoal-blue-700 hover:border-brand-400 bg-charcoal-blue-50 dark:bg-charcoal-blue-900 hover:bg-brand-50 flex flex-col items-center justify-center transition-colors group"
+                                    onClick={imageUpload.open}
+                                    disabled={imageUpload.uploading}
+                                    className="w-24 h-24 rounded-2xl border-2 border-dashed border-charcoal-blue-300 dark:border-charcoal-blue-700 hover:border-brand-400 bg-charcoal-blue-50 dark:bg-charcoal-blue-900 hover:bg-brand-50 disabled:opacity-60 flex flex-col items-center justify-center transition-colors group"
                                 >
                                     <i className="ri-image-add-line text-2xl text-charcoal-blue-400 group-hover:text-brand-500" />
-                                    <span className="text-xs text-charcoal-blue-400 group-hover:text-brand-500 mt-1">Change</span>
+                                    <span className="text-xs text-charcoal-blue-400 group-hover:text-brand-500 mt-1">{imageUpload.uploading ? "..." : "Change"}</span>
                                 </button>
                                 {images.map((image, index) => (
                                     <div key={index} className="relative w-24 h-24">
@@ -256,8 +254,6 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                                     </div>
                                 ))}
                             </div>
-                        )}
-                    </CldUploadWidget>
                 </div>
 
                 {/* Recipe Name */}
