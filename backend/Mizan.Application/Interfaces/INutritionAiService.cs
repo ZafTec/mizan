@@ -25,7 +25,23 @@ public interface INutritionAiService
         CancellationToken cancellationToken = default);
 
     Task<MealSuggestionResult> SuggestMealsAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// One turn of onboarding. The model may call allowlisted tools, which run
+    /// as this user and come back in <see cref="OnboardingTurn.Performed"/> so
+    /// the UI can say what it did (docs/REFOCUS.md §10).
+    /// </summary>
+    Task<OnboardingTurn> RunOnboardingTurnAsync(
+        Guid userId,
+        string userMessage,
+        IReadOnlyList<AiChatHistoryTurn> history,
+        CancellationToken cancellationToken = default);
 }
+
+public record OnboardingTurn(
+    string Content,
+    Guid? PromptVersionId,
+    IReadOnlyList<Ai.Tools.AiToolInvocation> Performed);
 
 /// <summary>
 /// Proposals, not records. There is deliberately no recipe id here: the model
