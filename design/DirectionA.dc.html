@@ -1,0 +1,196 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=Archivo:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #1F6F68; } a:hover { color: #164F4A; }
+    .num { font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="width: 1280px; height: 860px; background: #FBFAF7; color: #1A1815; font-family: Archivo, system-ui, sans-serif; display: grid; grid-template-columns: 216px minmax(0, 1fr); overflow: hidden;">
+
+  <!-- rail -->
+  <div style="border-right: 1px solid #E3DFD6; padding: 28px 20px; display: flex; flex-direction: column; gap: 28px;">
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <div style="font-family: Spectral, Georgia, serif; font-size: 21px; font-weight: 600; letter-spacing: -0.01em;">Mizan</div>
+      <div style="font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8C8779;">Administration</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 1px;">
+      <div style="font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #A19B8D; padding: 0 0 8px 2px;">Operate</div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; font-size: 13px; color: #55514A;">Users</div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; font-size: 13px; color: #55514A;">Sessions</div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; font-size: 13px; background: #1A1815; color: #FBFAF7; border-radius: 3px; font-weight: 500;">Jobs</div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; font-size: 13px; color: #55514A;">Audit log</div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; font-size: 13px; color: #55514A;">Relationships</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 1px;">
+      <div style="font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #A19B8D; padding: 0 0 8px 2px;">Catalogue</div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; font-size: 13px; color: #55514A;">Ingredients</div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; font-size: 13px; color: #55514A;">Exercises</div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; font-size: 13px; color: #55514A;">Achievements</div>
+    </div>
+
+    <div style="margin-top: auto; border-top: 1px solid #E3DFD6; padding-top: 14px; font-size: 11px; color: #8C8779; line-height: 1.5;">
+      Direction A<br><span style="font-family: Spectral, Georgia, serif; font-style: italic; font-size: 13px; color: #55514A;">Ledger</span>
+    </div>
+  </div>
+
+  <!-- main -->
+  <div style="display: flex; flex-direction: column; min-width: 0; overflow: hidden;">
+
+    <div style="padding: 30px 36px 22px; border-bottom: 1px solid #E3DFD6; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px;">
+      <div style="display: flex; flex-direction: column; gap: 7px; max-width: 620px;">
+        <h1 style="margin: 0; font-family: Spectral, Georgia, serif; font-size: 34px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.05;">Background jobs</h1>
+        <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #6E6A62;">A dead job is something a user asked for that never happened. Fix the cause, then retry it.</p>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button style="font: inherit; font-size: 12px; font-weight: 500; padding: 8px 14px; border: 1px solid #D6D1C6; background: transparent; color: #3A3730; border-radius: 3px; cursor: pointer;">Export CSV</button>
+        <button style="font: inherit; font-size: 12px; font-weight: 500; padding: 8px 14px; border: 1px solid #1A1815; background: #1A1815; color: #FBFAF7; border-radius: 3px; cursor: pointer;">Retry all dead</button>
+      </div>
+    </div>
+
+    <!-- counters as a ruled strip, not cards -->
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-bottom: 1px solid #E3DFD6;">
+      <div style="padding: 18px 36px; border-right: 1px solid #E3DFD6;">
+        <div style="font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #8C8779;">Dead</div>
+        <div class="num" style="font-family: Spectral, Georgia, serif; font-size: 30px; font-weight: 500; color: #A33A2A; line-height: 1.2;">1</div>
+      </div>
+      <div style="padding: 18px 24px; border-right: 1px solid #E3DFD6;">
+        <div style="font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #8C8779;">Retrying</div>
+        <div class="num" style="font-family: Spectral, Georgia, serif; font-size: 30px; font-weight: 500; color: #8A5E17; line-height: 1.2;">1</div>
+      </div>
+      <div style="padding: 18px 24px; border-right: 1px solid #E3DFD6;">
+        <div style="font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #8C8779;">Queued</div>
+        <div class="num" style="font-family: Spectral, Georgia, serif; font-size: 30px; font-weight: 500; line-height: 1.2;">2</div>
+      </div>
+      <div style="padding: 18px 24px;">
+        <div style="font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #8C8779;">Done</div>
+        <div class="num" style="font-family: Spectral, Georgia, serif; font-size: 30px; font-weight: 500; color: #6E6A62; line-height: 1.2;">214</div>
+      </div>
+    </div>
+
+    <!-- toolbar -->
+    <div style="padding: 16px 36px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #E3DFD6;">
+      <div style="display: flex; align-items: center; gap: 8px; border: 1px solid #D6D1C6; border-radius: 3px; padding: 7px 11px; width: 260px; background: #fff;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8C8779" stroke-width="1.8"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <span style="font-size: 12.5px; color: #A19B8D;">Search jobs</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px; border: 1px solid #1A1815; border-radius: 3px; padding: 7px 11px; font-size: 12.5px; font-weight: 500;">
+        Status: Dead
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px; border: 1px solid #D6D1C6; border-radius: 3px; padding: 7px 11px; font-size: 12.5px; color: #6E6A62;">
+        Any job
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg>
+      </div>
+      <div style="margin-left: auto; font-size: 11.5px; color: #8C8779;" class="num">218 rows</div>
+    </div>
+
+    <!-- table: ruled, no card, no zebra -->
+    <div style="flex: 1; overflow: hidden;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+        <thead>
+          <tr style="border-bottom: 1px solid #1A1815;">
+            <th style="text-align: left; padding: 10px 36px; font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #55514A;">Job</th>
+            <th style="text-align: left; padding: 10px 16px; font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #1A1815;">
+              <span style="display: inline-flex; align-items: center; gap: 5px;">Status
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 15 6-6 6 6"></path></svg>
+              </span>
+            </th>
+            <th style="text-align: right; padding: 10px 16px; font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #55514A;">Tries</th>
+            <th style="text-align: left; padding: 10px 16px; font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #55514A;">Last error</th>
+            <th style="text-align: left; padding: 10px 16px; font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #55514A;">Queued</th>
+            <th style="padding: 10px 36px 10px 16px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <tr style="border-bottom: 1px solid #EDE9E0; background: #FDF6F3;">
+            <td style="padding: 13px 36px;">
+              <div style="font-weight: 500;">Email</div>
+              <div class="num" style="font-size: 11px; color: #A19B8D; letter-spacing: 0.02em;">019839c1</div>
+            </td>
+            <td style="padding: 13px 16px;"><span style="display: inline-flex; align-items: center; gap: 6px; color: #A33A2A; font-weight: 500;"><span style="width: 5px; height: 5px; background: #A33A2A; border-radius: 50%;"></span>Dead</span></td>
+            <td class="num" style="padding: 13px 16px; text-align: right; color: #A33A2A;">5</td>
+            <td style="padding: 13px 16px; color: #7A5148; max-width: 300px;">550 5.1.1 [redacted]: recipient rejected</td>
+            <td class="num" style="padding: 13px 16px; color: #8C8779; white-space: nowrap;">26 Aug 14:12</td>
+            <td style="padding: 13px 36px 13px 16px; text-align: right; white-space: nowrap;">
+              <a href="#" style="font-size: 12px; text-decoration: none; border-bottom: 1px solid currentColor;">Retry</a>
+              <span style="color: #D6D1C6; margin: 0 8px;">·</span>
+              <a href="#" style="font-size: 12px; color: #A33A2A; text-decoration: none; border-bottom: 1px solid currentColor;">Discard</a>
+            </td>
+          </tr>
+
+          <tr style="border-bottom: 1px solid #EDE9E0;">
+            <td style="padding: 13px 36px;"><div style="font-weight: 500;">Eval suite</div><div class="num" style="font-size: 11px; color: #A19B8D;">019839bf</div></td>
+            <td style="padding: 13px 16px;"><span style="display: inline-flex; align-items: center; gap: 6px; color: #1F6F68; font-weight: 500;"><span style="width: 5px; height: 5px; background: #1F6F68; border-radius: 50%;"></span>Running</span></td>
+            <td class="num" style="padding: 13px 16px; text-align: right;">1</td>
+            <td style="padding: 13px 16px; color: #A19B8D;">—</td>
+            <td class="num" style="padding: 13px 16px; color: #8C8779; white-space: nowrap;">26 Aug 14:09</td>
+            <td style="padding: 13px 36px 13px 16px;"></td>
+          </tr>
+
+          <tr style="border-bottom: 1px solid #EDE9E0;">
+            <td style="padding: 13px 36px;"><div style="font-weight: 500;">Email</div><div class="num" style="font-size: 11px; color: #A19B8D;">019839bb</div></td>
+            <td style="padding: 13px 16px;"><span style="display: inline-flex; align-items: center; gap: 6px; color: #8A5E17; font-weight: 500;"><span style="width: 5px; height: 5px; background: #8A5E17; border-radius: 50%;"></span>Retrying</span></td>
+            <td class="num" style="padding: 13px 16px; text-align: right;">3</td>
+            <td style="padding: 13px 16px; color: #7A6A48;">Connection timed out after 30000ms</td>
+            <td class="num" style="padding: 13px 16px; color: #8C8779; white-space: nowrap;">26 Aug 14:04</td>
+            <td style="padding: 13px 36px 13px 16px; text-align: right;"><a href="#" style="font-size: 12px; text-decoration: none; border-bottom: 1px solid currentColor;">Retry</a></td>
+          </tr>
+
+          <tr style="border-bottom: 1px solid #EDE9E0;">
+            <td style="padding: 13px 36px;"><div style="font-weight: 500;">Email</div><div class="num" style="font-size: 11px; color: #A19B8D;">019839b7</div></td>
+            <td style="padding: 13px 16px;"><span style="display: inline-flex; align-items: center; gap: 6px; color: #6E6A62;"><span style="width: 5px; height: 5px; background: #B8B2A4; border-radius: 50%;"></span>Queued</span></td>
+            <td class="num" style="padding: 13px 16px; text-align: right;">0</td>
+            <td style="padding: 13px 16px; color: #A19B8D;">—</td>
+            <td class="num" style="padding: 13px 16px; color: #8C8779; white-space: nowrap;">26 Aug 14:03</td>
+            <td style="padding: 13px 36px 13px 16px;"></td>
+          </tr>
+
+          <tr style="border-bottom: 1px solid #EDE9E0;">
+            <td style="padding: 13px 36px;"><div style="font-weight: 500;">Email</div><div class="num" style="font-size: 11px; color: #A19B8D;">019839b2</div></td>
+            <td style="padding: 13px 16px;"><span style="display: inline-flex; align-items: center; gap: 6px; color: #6E6A62;"><span style="width: 5px; height: 5px; background: #B8B2A4; border-radius: 50%;"></span>Done</span></td>
+            <td class="num" style="padding: 13px 16px; text-align: right; color: #8C8779;">1</td>
+            <td style="padding: 13px 16px; color: #A19B8D;">—</td>
+            <td class="num" style="padding: 13px 16px; color: #8C8779; white-space: nowrap;">26 Aug 13:58</td>
+            <td style="padding: 13px 36px 13px 16px; text-align: right;"><a href="#" style="font-size: 12px; color: #8C8779; text-decoration: none; border-bottom: 1px solid #D6D1C6;">Discard</a></td>
+          </tr>
+
+          <tr style="border-bottom: 1px solid #EDE9E0;">
+            <td style="padding: 13px 36px;"><div style="font-weight: 500;">Eval suite</div><div class="num" style="font-size: 11px; color: #A19B8D;">019839a4</div></td>
+            <td style="padding: 13px 16px;"><span style="display: inline-flex; align-items: center; gap: 6px; color: #6E6A62;"><span style="width: 5px; height: 5px; background: #B8B2A4; border-radius: 50%;"></span>Done</span></td>
+            <td class="num" style="padding: 13px 16px; text-align: right; color: #8C8779;">1</td>
+            <td style="padding: 13px 16px; color: #A19B8D;">—</td>
+            <td class="num" style="padding: 13px 16px; color: #8C8779; white-space: nowrap;">26 Aug 13:41</td>
+            <td style="padding: 13px 36px 13px 16px;"></td>
+          </tr>
+
+        </tbody>
+      </table>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 36px;">
+        <span class="num" style="font-size: 11.5px; color: #8C8779;">1&ndash;20 of 218</span>
+        <div style="display: flex; align-items: center; gap: 4px;">
+          <span style="font-size: 12px; padding: 5px 11px; border: 1px solid #EDE9E0; border-radius: 3px; color: #C4BEB0;">Previous</span>
+          <span class="num" style="font-size: 12px; padding: 0 10px; color: #55514A;">1 / 11</span>
+          <span style="font-size: 12px; padding: 5px 11px; border: 1px solid #D6D1C6; border-radius: 3px;">Next</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
