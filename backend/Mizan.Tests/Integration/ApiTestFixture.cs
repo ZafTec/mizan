@@ -24,6 +24,8 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
 {
     private static readonly string[] TablesToTruncate = new[]
     {
+        "ai_usage_logs",
+        "user_ai_consents",
         "chat_messages",
         "chat_conversations",
         "trainer_client_relationships",
@@ -109,7 +111,15 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
                 ["Mcp:AdminServiceApiKey"] = "test-admin-api-key",
                 ["RateLimits:McpTokenValidation:PermitLimit"] = "10000",
                 ["RateLimits:AuthCredentials:PermitLimit"] = "10000",
-                ["RateLimits:AuthEmail:PermitLimit"] = "10000"
+                ["RateLimits:AuthEmail:PermitLimit"] = "10000",
+                // Small AI ceilings so quota tests exercise the limits in a
+                // handful of calls instead of hundreds.
+                ["Ai:Free:DailyRequests"] = "3",
+                ["Ai:Free:DailyTokens"] = "1000",
+                ["Ai:Pro:DailyRequests"] = "10",
+                ["Ai:Pro:DailyTokens"] = "5000",
+                ["Ai:GlobalDailyTokens"] = "4000",
+                ["Ai:GlobalDailyCostMicros"] = "1000000000"
             };
 
             config.AddInMemoryCollection(settings);

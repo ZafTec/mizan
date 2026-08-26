@@ -2,6 +2,8 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
 using Mizan.Domain;
+using Mizan.Domain.Ai;
+using Mizan.Application.Exceptions;
 
 namespace Mizan.Application.Queries;
 
@@ -148,12 +150,26 @@ public sealed class GetWorkoutStatsQueryHandler : IRequestHandler<GetWorkoutStat
 public record GetClientWorkoutsQuery(Guid ClientId, int Page = 1, int PageSize = 20) : IRequest<Common.PagedResult<WorkoutSummaryDto>>;
 public sealed class GetClientWorkoutsQueryHandler : IRequestHandler<GetClientWorkoutsQuery, Common.PagedResult<WorkoutSummaryDto>>
 {
-    private readonly ITrainerAuthorizationService _authorization; private readonly IMediator _mediator;
-    public GetClientWorkoutsQueryHandler(ITrainerAuthorizationService authorization, IMediator mediator) { _authorization = authorization; _mediator = mediator; }
+    private readonly ITrainerAuthorizationService _authorization;
+    private readonly IDataAccessPolicy _policy;
+    private readonly IMediator _mediator;
+
+    public GetClientWorkoutsQueryHandler(
+        ITrainerAuthorizationService authorization, IDataAccessPolicy policy, IMediator mediator)
+    {
+        _authorization = authorization;
+        _policy = policy;
+        _mediator = mediator;
+    }
+
     public async Task<Common.PagedResult<WorkoutSummaryDto>> Handle(GetClientWorkoutsQuery request, CancellationToken ct)
     {
         var relationship = await _authorization.GetRelationshipForCurrentTrainerAndClientAsync(request.ClientId, true, ct);
-        if (!relationship.CanViewWorkouts) throw new UnauthorizedAccessException("Workout access is disabled");
+        if (!await _policy.CanReadAsync(
+                relationship.TrainerId, request.ClientId, DataAxis.Training, AccessPurpose.Display, ct))
+        {
+            throw new ForbiddenAccessException("Workout access is disabled");
+        }
         return await _mediator.Send(new GetWorkoutsQuery { UserId = request.ClientId, Page = request.Page, PageSize = request.PageSize }, ct);
     }
 }
