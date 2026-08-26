@@ -126,6 +126,7 @@ export const MORE_GROUPS: NavGroup[] = [
 			{ href: "/admin/recipes", label: "Recipes", icon: "cookingPot", adminOnly: true },
 			{ href: "/admin/exercises", label: "Exercises", icon: "zap", adminOnly: true },
 			{ href: "/admin/moderation", label: "Moderation", icon: "badgeAlert", adminOnly: true },
+			{ href: "/admin/ai", label: "Assistant", icon: "bot", adminOnly: true },
 			{ href: "/admin/households", label: "Households", icon: "home", adminOnly: true },
 			{ href: "/admin/sessions", label: "Sessions", icon: "lock", adminOnly: true },
 		],
