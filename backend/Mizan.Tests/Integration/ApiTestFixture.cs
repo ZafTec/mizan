@@ -124,6 +124,10 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
                 ["Ai:Free:DailyTokens"] = "1000",
                 ["Ai:Pro:DailyRequests"] = "10",
                 ["Ai:Pro:DailyTokens"] = "5000",
+                // Its own line, so a setup conversation's several calls do not
+                // land against the tiny free allowance above.
+                ["Ai:Onboarding:DailyRequests"] = "20",
+                ["Ai:Onboarding:DailyTokens"] = "20000",
                 ["Ai:GlobalDailyTokens"] = "4000",
                 ["Ai:GlobalDailyCostMicros"] = "1000000000"
             };
@@ -536,6 +540,22 @@ public sealed class ScriptedAiProvider : IAiProvider
         lock (_calls) _scripted.Enqueue(_ => new AiCompletionResponse(content, new AiTokenUsage(40, 12), Model));
     }
 
+    /// <summary>The next call asks for these tools instead of answering.</summary>
+    public void CallTools(params (string Name, string Arguments)[] calls)
+    {
+        var toolCalls = calls
+            .Select((call, i) => new AiToolCall($"call-{i}", call.Name, call.Arguments))
+            .ToList();
+
+        lock (_calls)
+        {
+            _scripted.Enqueue(_ => new AiCompletionResponse(string.Empty, new AiTokenUsage(40, 12), Model)
+            {
+                ToolCalls = toolCalls,
+            });
+        }
+    }
+
     public void Fail(string message)
     {
         lock (_calls) _scripted.Enqueue(_ => throw new AiUnavailableException(message));
@@ -558,7 +578,23 @@ public sealed class ScriptedAiProvider : IAiProvider
                 : _ => new AiCompletionResponse("Noted.", new AiTokenUsage(40, 12), Model);
         }
 
-        return Task.FromResult(answer(request));
+        var response = answer(request);
+
+        // A real provider cannot ask for a tool it was not offered, and a fake
+        // that can would hide the bug where a caller forgets to stop the loop.
+        if (request.Tools.Count == 0 && response.ToolCalls.Count > 0)
+        {
+            response = response with { ToolCalls = [] };
+        }
+
+        // Same rule the real client applies: a turn with no prose and no tool
+        // calls is an empty response, not a valid answer.
+        if (string.IsNullOrWhiteSpace(response.Content) && response.ToolCalls.Count == 0)
+        {
+            throw new AiUnavailableException("The assistant returned an empty response.");
+        }
+
+        return Task.FromResult(response);
     }
 }
 

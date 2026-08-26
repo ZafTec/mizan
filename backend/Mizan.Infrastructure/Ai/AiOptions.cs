@@ -27,6 +27,14 @@ public class AiOptions : IAiCeilings
     public AiTierLimits Eval { get; set; } = new() { DailyRequests = 400, DailyTokens = 400_000 };
 
     /// <summary>
+    /// Setting a new user up. One turn can be several provider calls, so this
+    /// is generous by design: onboarding is the surface the assistant justifies
+    /// itself on, and it must not be the surface that exhausts a free
+    /// allowance before the user has seen anything.
+    /// </summary>
+    public AiTierLimits Onboarding { get; set; } = new() { DailyRequests = 60, DailyTokens = 60_000 };
+
+    /// <summary>
     /// The circuit breaker on the whole provider bill. Not optional: a loop or
     /// an abusive account stops here rather than at the invoice.
     /// </summary>

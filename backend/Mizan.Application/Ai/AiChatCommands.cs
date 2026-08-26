@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
+using Mizan.Application.Ai.Tools;
 using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Ai;
@@ -158,5 +159,122 @@ public class DeleteAiChatThreadCommandHandler : IRequestHandler<DeleteAiChatThre
             .ExecuteDeleteAsync(cancellationToken);
 
         if (deleted == 0) throw new EntityNotFoundException("Chat thread", request.Id);
+    }
+}
+
+
+public record AiOnboardingTurnDto(
+    Guid ThreadId,
+    AiChatMessageDto Reply,
+    IReadOnlyList<AiToolInvocation> Performed);
+
+/// <summary>
+/// One turn of onboarding. Same thread store as chat, because it is the same
+/// conversation from the user's point of view - what differs is that the model
+/// has tools (docs/REFOCUS.md §10).
+/// </summary>
+public record SendAiOnboardingMessageCommand(Guid? ThreadId, string Message)
+    : IRequest<AiOnboardingTurnDto>;
+
+public class SendAiOnboardingMessageCommandValidator : AbstractValidator<SendAiOnboardingMessageCommand>
+{
+    public SendAiOnboardingMessageCommandValidator()
+    {
+        RuleFor(c => c.Message).NotEmpty().MaximumLength(4000);
+    }
+}
+
+public class SendAiOnboardingMessageCommandHandler
+    : IRequestHandler<SendAiOnboardingMessageCommand, AiOnboardingTurnDto>
+{
+    private const int HistoryTurns = 12;
+    private const string ThreadTitle = "Getting set up";
+
+    private readonly IMizanDbContext _context;
+    private readonly ICurrentUserService _currentUser;
+    private readonly INutritionAiService _ai;
+
+    public SendAiOnboardingMessageCommandHandler(
+        IMizanDbContext context, ICurrentUserService currentUser, INutritionAiService ai)
+    {
+        _context = context;
+        _currentUser = currentUser;
+        _ai = ai;
+    }
+
+    public async Task<AiOnboardingTurnDto> Handle(
+        SendAiOnboardingMessageCommand request, CancellationToken cancellationToken)
+    {
+        var userId = _currentUser.UserId ?? throw new UnauthorizedAccessException();
+        var message = request.Message.Trim();
+
+        var thread = await ResolveThreadAsync(userId, request.ThreadId, cancellationToken);
+
+        var history = await _context.AiChatMessages.AsNoTracking()
+            .Where(m => m.ThreadId == thread.Id)
+            .OrderByDescending(m => m.CreatedAt)
+            .Take(HistoryTurns)
+            .Select(m => new { m.Role, m.Content, m.CreatedAt })
+            .ToListAsync(cancellationToken);
+
+        var turn = await _ai.RunOnboardingTurnAsync(
+            userId,
+            message,
+            history.OrderBy(m => m.CreatedAt)
+                .Select(m => new AiChatHistoryTurn(m.Role == AiChatRole.User, m.Content))
+                .ToList(),
+            cancellationToken);
+
+        var now = DateTime.UtcNow;
+        var reply = new AiChatMessage
+        {
+            Id = Guid.CreateVersion7(),
+            ThreadId = thread.Id,
+            Role = AiChatRole.Assistant,
+            Content = turn.Content,
+            PromptVersionId = turn.PromptVersionId,
+            CreatedAt = now.AddMilliseconds(1),
+        };
+
+        _context.AiChatMessages.Add(new AiChatMessage
+        {
+            Id = Guid.CreateVersion7(),
+            ThreadId = thread.Id,
+            Role = AiChatRole.User,
+            Content = message,
+            CreatedAt = now,
+        });
+        _context.AiChatMessages.Add(reply);
+        thread.UpdatedAt = now;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new AiOnboardingTurnDto(
+            thread.Id,
+            new AiChatMessageDto(reply.Id, false, reply.Content, reply.CreatedAt),
+            turn.Performed);
+    }
+
+    private async Task<AiChatThread> ResolveThreadAsync(
+        Guid userId, Guid? threadId, CancellationToken cancellationToken)
+    {
+        if (threadId is { } id)
+        {
+            return await _context.AiChatThreads
+                .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId, cancellationToken)
+                ?? throw new EntityNotFoundException("Chat thread", id);
+        }
+
+        var thread = new AiChatThread
+        {
+            Id = Guid.CreateVersion7(),
+            UserId = userId,
+            Title = ThreadTitle,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        };
+
+        _context.AiChatThreads.Add(thread);
+        return thread;
     }
 }

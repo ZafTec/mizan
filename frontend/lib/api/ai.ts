@@ -80,3 +80,30 @@ export const getAiChatThread = (id: string) =>
 
 export const deleteAiChatThread = (id: string) =>
 	clientApi<void>(`/api/Ai/threads/${id}`, { method: "DELETE" });
+
+export interface AiToolInvocation {
+	tool: string;
+	summary: string;
+	succeeded: boolean;
+	error?: string | null;
+}
+
+export interface AiOnboardingTurn {
+	threadId: string;
+	reply: AiChatMessage;
+	performed: AiToolInvocation[];
+}
+
+export interface AiToolSummary {
+	name: string;
+	description: string;
+}
+
+export const sendOnboardingMessage = (threadId: string | null, message: string) =>
+	clientApi<AiOnboardingTurn>("/api/Ai/onboarding", {
+		method: "POST",
+		body: { threadId, message },
+	});
+
+export const listOnboardingTools = () =>
+	clientApi<AiToolSummary[]>("/api/Ai/onboarding/tools");

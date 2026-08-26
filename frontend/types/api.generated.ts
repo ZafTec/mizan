@@ -988,6 +988,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Ai/onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SendAiOnboardingMessageCommand"];
+                    "text/json": components["schemas"]["SendAiOnboardingMessageCommand"];
+                    "application/*+json": components["schemas"]["SendAiOnboardingMessageCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiOnboardingTurnDto"];
+                        "application/json": components["schemas"]["AiOnboardingTurnDto"];
+                        "text/json": components["schemas"]["AiOnboardingTurnDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Ai/onboarding/tools": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiToolSummary"][];
+                        "application/json": components["schemas"]["AiToolSummary"][];
+                        "text/json": components["schemas"]["AiToolSummary"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Ai/threads": {
         parameters: {
             query?: never;
@@ -6304,6 +6384,12 @@ export interface components {
             /** Format: int32 */
             latencyMs: number;
         };
+        AiOnboardingTurnDto: {
+            /** Format: uuid */
+            threadId: string;
+            reply: components["schemas"]["AiChatMessageDto"];
+            performed: components["schemas"]["AiToolInvocation"][];
+        };
         AiPromptDetailDto: {
             key: string;
             description: string;
@@ -6356,6 +6442,16 @@ export interface components {
             /** Format: date-time */
             resetsAt: string;
             plan: string;
+        };
+        AiToolInvocation: {
+            tool: string;
+            summary: string;
+            succeeded: boolean;
+            error?: string | null;
+        };
+        AiToolSummary: {
+            name: string;
+            description: string;
         };
         AiUsageDayDto: {
             /** Format: date */
@@ -7793,6 +7889,11 @@ export interface components {
             exercises: components["schemas"]["WorkoutTemplateExerciseInput"][];
         };
         SendAiChatMessageCommand: {
+            /** Format: uuid */
+            threadId?: string | null;
+            message: string;
+        };
+        SendAiOnboardingMessageCommand: {
             /** Format: uuid */
             threadId?: string | null;
             message: string;
