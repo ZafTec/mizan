@@ -1,6 +1,8 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
+using Mizan.Application.Common;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
@@ -58,12 +60,15 @@ public class CreateMealPlanCommandHandler : IRequestHandler<CreateMealPlanComman
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
     private readonly IEntitlementService _entitlements;
+    private readonly HybridCache _cache;
 
-    public CreateMealPlanCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, IEntitlementService entitlements)
+    public CreateMealPlanCommandHandler(
+        IMizanDbContext context, ICurrentUserService currentUser, IEntitlementService entitlements, HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
         _entitlements = entitlements;
+        _cache = cache;
     }
 
     public async Task<CreateMealPlanResult> Handle(CreateMealPlanCommand request, CancellationToken cancellationToken)
@@ -112,6 +117,8 @@ public class CreateMealPlanCommandHandler : IRequestHandler<CreateMealPlanComman
 
         _context.MealPlans.Add(mealPlan);
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _cache.RemoveByTagAsync(CacheTags.MealPlansList(userId), cancellationToken);
 
         return new CreateMealPlanResult
         {

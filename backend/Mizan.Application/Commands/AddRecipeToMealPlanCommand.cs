@@ -1,6 +1,8 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 
@@ -39,11 +41,13 @@ public class AddRecipeToMealPlanCommandHandler : IRequestHandler<AddRecipeToMeal
 {
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly HybridCache _cache;
 
-    public AddRecipeToMealPlanCommandHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public AddRecipeToMealPlanCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
+        _cache = cache;
     }
 
     public async Task<AddRecipeToMealPlanResult> Handle(AddRecipeToMealPlanCommand request, CancellationToken cancellationToken)
@@ -91,6 +95,10 @@ public class AddRecipeToMealPlanCommandHandler : IRequestHandler<AddRecipeToMeal
         _context.MealPlanRecipes.Add(mealPlanRecipe);
         mealPlan.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
+
+        // RecipeCount in the owner's list changes too, not just the detail.
+        await _cache.RemoveByTagAsync(CacheTags.MealPlan(mealPlan.Id), cancellationToken);
+        await _cache.RemoveByTagAsync(CacheTags.MealPlansList(mealPlan.UserId), cancellationToken);
 
         return new AddRecipeToMealPlanResult
         {

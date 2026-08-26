@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
@@ -36,13 +37,21 @@ public class GetMealPlansQueryHandler : IRequestHandler<GetMealPlansQuery, Paged
         ["createdat"] = mp => mp.CreatedAt
     };
 
+    private static readonly HybridCacheEntryOptions CacheOptions = new()
+    {
+        Expiration = TimeSpan.FromHours(1),
+        LocalCacheExpiration = TimeSpan.FromMinutes(5)
+    };
+
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly HybridCache _cache;
 
-    public GetMealPlansQueryHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public GetMealPlansQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
+        _cache = cache;
     }
 
     public async Task<PagedResult<MealPlanDto>> Handle(GetMealPlansQuery request, CancellationToken cancellationToken)
@@ -52,6 +61,21 @@ public class GetMealPlansQueryHandler : IRequestHandler<GetMealPlansQuery, Paged
             throw new UnauthorizedAccessException("User must be authenticated");
         }
 
+        var userId = _currentUser.UserId.Value;
+        var cacheKey = $"mealplans:{userId}:{request.StartDate}:{request.EndDate}:{request.Page}:{request.PageSize}:{request.SortBy ?? ""}:{request.SortOrder ?? ""}";
+
+        return await _cache.GetOrCreateAsync(
+            cacheKey,
+            request,
+            (req, ct) => LoadAsync(req, userId, ct),
+            CacheOptions,
+            tags: [CacheTags.MealPlansList(userId)],
+            cancellationToken: cancellationToken);
+    }
+
+    private async ValueTask<PagedResult<MealPlanDto>> LoadAsync(
+        GetMealPlansQuery request, Guid userId, CancellationToken cancellationToken)
+    {
         var query = _context.MealPlans
             .Include(mp => mp.MealPlanRecipes)
             .Where(mp => mp.UserId == _currentUser.UserId);

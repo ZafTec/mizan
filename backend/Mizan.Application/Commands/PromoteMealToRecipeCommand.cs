@@ -1,6 +1,8 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
+using Mizan.Application.Common;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
@@ -44,11 +46,13 @@ public class PromoteMealToRecipeCommandHandler : IRequestHandler<PromoteMealToRe
 
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly HybridCache _cache;
 
-    public PromoteMealToRecipeCommandHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public PromoteMealToRecipeCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
+        _cache = cache;
     }
 
     public async Task<Guid> Handle(PromoteMealToRecipeCommand request, CancellationToken cancellationToken)
@@ -115,6 +119,8 @@ public class PromoteMealToRecipeCommandHandler : IRequestHandler<PromoteMealToRe
 
         _context.Recipes.Add(recipe);
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _cache.RemoveByTagAsync(CacheTags.Recipes, cancellationToken);
 
         return recipe.Id;
     }
