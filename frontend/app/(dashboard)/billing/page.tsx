@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSession } from "@/lib/auth-client";
 import { useSubscription } from "@/lib/hooks/useSubscription";
-import { openCheckout, PADDLE_PRICES, isPaddleConfigured } from "@/lib/paddle";
+import { openCheckout, getBillingPortal, PADDLE_PRICES, isPaddleConfigured } from "@/lib/paddle";
 import { appToast } from "@/lib/toast";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 import Loading from "@/components/Loading";
@@ -26,6 +26,33 @@ export default function BillingPage() {
   const { subscription, isPro, loading, refresh } = useSubscription();
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
   const [awaitingActivation, setAwaitingActivation] = useState(false);
+  const [portalAction, setPortalAction] = useState<"overview" | "payment" | "cancel" | null>(null);
+
+  // Every portal link is single-use, so it is minted right before opening and
+  // never held in state - only which button is mid-request, for the spinner.
+  const openPortal = useCallback(async (action: "overview" | "payment" | "cancel") => {
+    setPortalAction(action);
+    try {
+      const session = await getBillingPortal();
+      const url =
+        action === "payment"
+          ? session.updatePaymentMethodUrl
+          : action === "cancel"
+            ? session.cancelSubscriptionUrl
+            : session.overviewUrl;
+
+      if (!url) {
+        appToast.error("That option isn't available for a lifetime plan.");
+        return;
+      }
+
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      appToast.error(error, "Could not reach Paddle. Try again in a moment.");
+    } finally {
+      setPortalAction(null);
+    }
+  }, []);
 
   const startCheckout = useCallback(async (priceId: string, planId: string) => {
     if (!user?.id) {
@@ -77,7 +104,6 @@ export default function BillingPage() {
 
   useEffect(() => {
     if (isPro && awaitingActivation) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- reacting to the poll above flipping isPro, not derivable from props/state alone
       setAwaitingActivation(false);
       setCheckingOut(null);
       appToast.success("You're on Pro. Welcome aboard.");
@@ -97,7 +123,6 @@ export default function BillingPage() {
     const priceId = map[checkout];
     if (priceId) {
       window.history.replaceState({}, "", "/billing");
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- opening checkout on arrival from a pricing CTA's ?checkout= param, not derivable from render
       startCheckout(priceId, checkout);
     }
   }, [user, startCheckout]);
@@ -123,7 +148,7 @@ export default function BillingPage() {
       {loading ? (
         <div className="flex justify-center py-16"><Loading /></div>
       ) : isPro ? (
-        <div className="relative overflow-hidden rounded-[28px] border border-brand-500/25 bg-gradient-to-br from-brand-600 to-brand-800 p-6 text-white shadow-xl shadow-brand-500/25 sm:p-8">
+        <div className="relative overflow-hidden rounded-2xl border border-brand-500/25 bg-gradient-to-br from-brand-600 to-brand-800 p-6 text-white shadow-xl shadow-brand-500/25 sm:p-8">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute right-[-10%] top-[-20%] h-64 w-64 rounded-full bg-white/10 blur-3xl"
@@ -155,6 +180,11 @@ export default function BillingPage() {
               {!subscription?.isLifetime && subscription?.status !== "trialing" && !canceled && periodEnd && (
                 <p className="mt-2 text-sm text-white/85">Renews {periodEnd}.</p>
               )}
+              {!subscription?.isLifetime && !canceled && (
+                <p className="mt-2 text-xs text-white/60">
+                  Switching between Monthly and Yearly: cancel below, then subscribe to the other from the pricing page - your Pro access continues until the period you already paid for ends.
+                </p>
+              )}
               <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {["Unlimited meal plans & shopping lists", "AI coach + food-photo logging", "Trend charts & progress history", "Household sharing (up to 6)"].map((perk) => (
                   <li key={perk} className="flex items-center gap-2 text-sm text-white/90">
@@ -163,6 +193,37 @@ export default function BillingPage() {
                   </li>
                 ))}
               </ul>
+
+              <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-white/15 pt-5">
+                <button
+                  type="button"
+                  onClick={() => openPortal("overview")}
+                  disabled={portalAction !== null}
+                  className="btn-secondary btn-sm !border-white/25 !bg-white/10 !text-white hover:!bg-white/20"
+                >
+                  {portalAction === "overview" ? <Loading size="sm" /> : "Manage billing"}
+                </button>
+                {!subscription?.isLifetime && (
+                  <button
+                    type="button"
+                    onClick={() => openPortal("payment")}
+                    disabled={portalAction !== null}
+                    className="btn-secondary btn-sm !border-white/25 !bg-white/10 !text-white hover:!bg-white/20"
+                  >
+                    {portalAction === "payment" ? <Loading size="sm" /> : "Update payment method"}
+                  </button>
+                )}
+                {!subscription?.isLifetime && !canceled && (
+                  <button
+                    type="button"
+                    onClick={() => openPortal("cancel")}
+                    disabled={portalAction !== null}
+                    className="btn-ghost btn-sm !border-white/25 !text-white/80 hover:!text-white"
+                  >
+                    {portalAction === "cancel" ? <Loading size="sm" /> : "Cancel subscription"}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -171,7 +232,7 @@ export default function BillingPage() {
           {PLANS.map((plan) => (
             <article
               key={plan.id}
-              className={`relative flex flex-col rounded-[24px] border p-6 ${
+              className={`relative flex flex-col rounded-xl border p-6 ${
                 plan.highlight
                   ? "border-brand-500/30 bg-white shadow-xl shadow-brand-500/10 dark:bg-charcoal-blue-900"
                   : "border-charcoal-blue-100 bg-white dark:border-white/10 dark:bg-charcoal-blue-900/60"
