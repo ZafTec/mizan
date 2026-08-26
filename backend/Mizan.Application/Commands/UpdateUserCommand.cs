@@ -20,10 +20,12 @@ public record UpdateUserCommand(
 public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, bool>
 {
     private readonly IMizanDbContext _context;
+    private readonly IStorageService _storage;
 
-    public UpdateUserCommandHandler(IMizanDbContext context)
+    public UpdateUserCommandHandler(IMizanDbContext context, IStorageService storage)
     {
         _context = context;
+        _storage = storage;
     }
 
     public async Task<bool> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
@@ -35,6 +37,8 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, bool>
         }
 
         user.Name = request.Name ?? user.Name;
+
+        var replacedImage = request.Image is not null && request.Image != user.Image ? user.Image : null;
         user.Image = request.Image ?? user.Image;
 
         if (request.ThemePreference is "light" or "dark" or "system")
@@ -47,6 +51,15 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, bool>
         user.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        // A replaced avatar is otherwise an orphan nobody ever collects.
+        // TryGetKey returns null for anything we did not store - a Google
+        // avatar URL, say - so this only ever deletes our own objects.
+        if (_storage.TryGetKey(replacedImage) is { } key)
+        {
+            await _storage.DeleteAsync(key, cancellationToken);
+        }
+
         return true;
     }
 }
