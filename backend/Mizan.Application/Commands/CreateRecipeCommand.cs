@@ -1,6 +1,8 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 using Mizan.Contracts.Recipes;
@@ -43,16 +45,19 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
     private readonly ICurrentUserService _currentUser;
     private readonly ILogger<CreateRecipeCommandHandler> _logger;
     private readonly IAchievementEvaluator? _achievements;
+    private readonly HybridCache _cache;
 
     public CreateRecipeCommandHandler(
         IMizanDbContext context,
         ICurrentUserService currentUser,
         ILogger<CreateRecipeCommandHandler> logger,
+        HybridCache cache,
         IAchievementEvaluator? achievements = null)
     {
         _context = context;
         _currentUser = currentUser;
         _logger = logger;
+        _cache = cache;
         _achievements = achievements;
     }
 
@@ -101,6 +106,8 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
         // run: reuse goes through preparations, which reference a derived Food.
         _context.Recipes.Add(recipe);
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _cache.RemoveByTagAsync(CacheTags.Recipes, cancellationToken);
 
         if (_achievements is not null)
         {

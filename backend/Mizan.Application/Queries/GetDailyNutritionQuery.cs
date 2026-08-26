@@ -1,5 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Queries;
@@ -35,13 +37,21 @@ public record MealSummary
 
 public class GetDailyNutritionQueryHandler : IRequestHandler<GetDailyNutritionQuery, DailyNutritionResult>
 {
+    private static readonly HybridCacheEntryOptions CacheOptions = new()
+    {
+        Expiration = TimeSpan.FromHours(24),
+        LocalCacheExpiration = TimeSpan.FromMinutes(5)
+    };
+
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly HybridCache _cache;
 
-    public GetDailyNutritionQueryHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public GetDailyNutritionQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
+        _cache = cache;
     }
 
     public async Task<DailyNutritionResult> Handle(GetDailyNutritionQuery request, CancellationToken cancellationToken)
@@ -51,6 +61,19 @@ public class GetDailyNutritionQueryHandler : IRequestHandler<GetDailyNutritionQu
             throw new UnauthorizedAccessException("User must be authenticated");
         }
 
+        var userId = _currentUser.UserId.Value;
+
+        return await _cache.GetOrCreateAsync(
+            $"nutrition:daily:{userId}:{request.Date:yyyy-MM-dd}",
+            request,
+            LoadAsync,
+            CacheOptions,
+            tags: [CacheTags.Nutrition(userId)],
+            cancellationToken: cancellationToken);
+    }
+
+    private async ValueTask<DailyNutritionResult> LoadAsync(GetDailyNutritionQuery request, CancellationToken cancellationToken)
+    {
         var entries = await _context.FoodDiaryEntries
             .Where(e => e.UserId == _currentUser.UserId && e.EntryDate == request.Date)
             .ToListAsync(cancellationToken);

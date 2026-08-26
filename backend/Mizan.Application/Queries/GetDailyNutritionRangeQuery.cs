@@ -1,5 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Queries;
@@ -27,13 +29,21 @@ public record DailyNutritionSummaryDto
 
 public class GetDailyNutritionRangeQueryHandler : IRequestHandler<GetDailyNutritionRangeQuery, DailyNutritionRangeResult>
 {
+    private static readonly HybridCacheEntryOptions CacheOptions = new()
+    {
+        Expiration = TimeSpan.FromHours(24),
+        LocalCacheExpiration = TimeSpan.FromMinutes(5)
+    };
+
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly HybridCache _cache;
 
-    public GetDailyNutritionRangeQueryHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public GetDailyNutritionRangeQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
+        _cache = cache;
     }
 
     public async Task<DailyNutritionRangeResult> Handle(GetDailyNutritionRangeQuery request, CancellationToken cancellationToken)
@@ -43,11 +53,25 @@ public class GetDailyNutritionRangeQueryHandler : IRequestHandler<GetDailyNutrit
             return new DailyNutritionRangeResult();
         }
 
+        var userId = _currentUser.UserId.Value;
         var endDate = request.EndDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
-        var startDate = endDate.AddDays(-(request.Days - 1));
+
+        return await _cache.GetOrCreateAsync(
+            $"nutrition:range:{userId}:{request.Days}:{endDate:yyyy-MM-dd}",
+            (UserId: userId, request.Days, EndDate: endDate),
+            LoadAsync,
+            CacheOptions,
+            tags: [CacheTags.Nutrition(userId)],
+            cancellationToken: cancellationToken);
+    }
+
+    private async ValueTask<DailyNutritionRangeResult> LoadAsync(
+        (Guid UserId, int Days, DateOnly EndDate) state, CancellationToken cancellationToken)
+    {
+        var startDate = state.EndDate.AddDays(-(state.Days - 1));
 
         var days = await _context.FoodDiaryEntries
-            .Where(e => e.UserId == _currentUser.UserId && e.EntryDate >= startDate && e.EntryDate <= endDate)
+            .Where(e => e.UserId == state.UserId && e.EntryDate >= startDate && e.EntryDate <= state.EndDate)
             .GroupBy(e => e.EntryDate)
             .Select(g => new DailyNutritionSummaryDto
             {

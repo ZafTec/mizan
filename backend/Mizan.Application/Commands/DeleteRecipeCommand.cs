@@ -1,5 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Commands;
@@ -19,11 +21,13 @@ public class DeleteRecipeCommandHandler : IRequestHandler<DeleteRecipeCommand, D
 {
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly HybridCache _cache;
 
-    public DeleteRecipeCommandHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public DeleteRecipeCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
+        _cache = cache;
     }
 
     public async Task<DeleteRecipeResult> Handle(DeleteRecipeCommand request, CancellationToken cancellationToken)
@@ -63,6 +67,8 @@ public class DeleteRecipeCommandHandler : IRequestHandler<DeleteRecipeCommand, D
 
         _context.Recipes.Remove(recipe);
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _cache.RemoveByTagAsync(CacheTags.Recipes, cancellationToken);
 
         return new DeleteRecipeResult { Success = true, Message = "Recipe deleted successfully" };
     }

@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
@@ -43,13 +44,21 @@ public record MealPlanNutritionSummaryDto
 
 public class GetMealPlanByIdQueryHandler : IRequestHandler<GetMealPlanByIdQuery, MealPlanDetailDto?>
 {
+    private static readonly HybridCacheEntryOptions CacheOptions = new()
+    {
+        Expiration = TimeSpan.FromHours(1),
+        LocalCacheExpiration = TimeSpan.FromMinutes(5)
+    };
+
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly HybridCache _cache;
 
-    public GetMealPlanByIdQueryHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public GetMealPlanByIdQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
+        _cache = cache;
     }
 
     public async Task<MealPlanDetailDto?> Handle(GetMealPlanByIdQuery request, CancellationToken cancellationToken)
@@ -59,6 +68,22 @@ public class GetMealPlanByIdQueryHandler : IRequestHandler<GetMealPlanByIdQuery,
             throw new UnauthorizedAccessException("User must be authenticated");
         }
 
+        // A shared plan is visible to the owner and every household member,
+        // and each gets a plain "not found" if they are neither - so, like
+        // GetRecipeByIdQuery, the viewer's id is part of the key. The tag is
+        // the plan's own id rather than the viewer's, so one edit by anyone
+        // invalidates every viewer's cached copy, not just the editor's.
+        return await _cache.GetOrCreateAsync(
+            $"mealplan:{request.Id}:{_currentUser.UserId}",
+            request,
+            LoadAsync,
+            CacheOptions,
+            tags: [CacheTags.MealPlan(request.Id)],
+            cancellationToken: cancellationToken);
+    }
+
+    private async ValueTask<MealPlanDetailDto?> LoadAsync(GetMealPlanByIdQuery request, CancellationToken cancellationToken)
+    {
         var mealPlan = await _context.MealPlans
             .Include(mp => mp.MealPlanRecipes)
                 .ThenInclude(mpr => mpr.Recipe)

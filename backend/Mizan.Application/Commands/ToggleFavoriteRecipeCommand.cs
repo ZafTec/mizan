@@ -1,5 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 
@@ -20,11 +22,13 @@ public class ToggleFavoriteRecipeCommandHandler : IRequestHandler<ToggleFavorite
 {
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly HybridCache _cache;
 
-    public ToggleFavoriteRecipeCommandHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public ToggleFavoriteRecipeCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
+        _cache = cache;
     }
 
     public async Task<ToggleFavoriteRecipeResult> Handle(ToggleFavoriteRecipeCommand request, CancellationToken cancellationToken)
@@ -67,6 +71,10 @@ public class ToggleFavoriteRecipeCommandHandler : IRequestHandler<ToggleFavorite
                 .AnyAsync(f => f.UserId == userId && f.RecipeId == request.RecipeId, cancellationToken);
             isFavorited = state;
         }
+
+        // IsFavorited rides in the cached recipe DTOs, so a toggle has to
+        // clear them even though the recipe itself did not change.
+        await _cache.RemoveByTagAsync(CacheTags.Recipes, cancellationToken);
 
         return new ToggleFavoriteRecipeResult
         {

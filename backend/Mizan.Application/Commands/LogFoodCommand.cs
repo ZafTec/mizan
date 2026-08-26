@@ -1,6 +1,7 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Constants;
@@ -47,17 +48,20 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
     private readonly ICurrentUserService _currentUser;
     private readonly IStreakService _streakService;
     private readonly IAchievementEvaluator _achievements;
+    private readonly HybridCache _cache;
 
     public LogFoodCommandHandler(
         IMizanDbContext context,
         ICurrentUserService currentUser,
         IStreakService streakService,
-        IAchievementEvaluator achievements)
+        IAchievementEvaluator achievements,
+        HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
         _streakService = streakService;
         _achievements = achievements;
+        _cache = cache;
     }
 
     public async Task<LogFoodResult> Handle(LogFoodCommand request, CancellationToken cancellationToken)
@@ -124,6 +128,10 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
 
         _context.FoodDiaryEntries.Add(entry);
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Never a Postgres round trip, so it does not touch the logging budget
+        // (docs/REFOCUS.md §13a) - only the Redis-backed nutrition cache.
+        await _cache.RemoveByTagAsync(CacheTags.Nutrition(_currentUser.UserId.Value), cancellationToken);
 
         var streak = await _streakService.RecordActivityAsync("nutrition", request.EntryDate, cancellationToken);
         var unlocked = await _achievements.EvaluateAsync(cancellationToken, ["meals_logged", "streak_nutrition"]);

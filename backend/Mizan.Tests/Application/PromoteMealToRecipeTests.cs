@@ -1,5 +1,7 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.DependencyInjection;
 using Mizan.Application.Commands;
 using Mizan.Application.Exceptions;
 using Mizan.Domain.Entities;
@@ -30,7 +32,9 @@ public class PromoteMealToRecipeTests
         db.SaveChanges();
 
         var currentUser = new FakeCurrentUser { UserId = UserId };
-        return (db, new PromoteMealToRecipeCommandHandler(db, currentUser));
+        var cache = new ServiceCollection().AddHybridCache().Services
+            .BuildServiceProvider().GetRequiredService<HybridCache>();
+        return (db, new PromoteMealToRecipeCommandHandler(db, currentUser, cache));
     }
 
     private static FoodDiaryEntry Entry(string name, Guid? foodId = null, string mealType = "dinner", int minute = 0)
