@@ -4,10 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { getAllIngredient } from "@/data/ingredient";
 import type { Ingredient } from "@/data/ingredient";
 
-import { CldUploadWidget } from 'next-cloudinary';
 
-const hasCloudinary = !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 import Image from 'next/image';
+import { useImageUpload } from "@/components/ImageUpload";
 import Link from 'next/link';
 import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
@@ -32,6 +31,11 @@ const MAX_RECIPE_IMAGES_TO_PREVIEW = 3;
 export default function Page() {
 	const [name, setName] = useState('');
 	const [images, setImages] = useState<string[]>([]);
+
+	const imageUpload = useImageUpload({
+		folder: "recipes",
+		onUploaded: (url) => setImages((previous) => [...previous, url]),
+	});
 	const [description, setDescription] = useState('');
 	const [instructions, setInstructions] = useState('');
 	const [selectedIngredients, setSelectedIngredients] = useState<SelectedIngredient[]>([]);
@@ -349,34 +353,21 @@ export default function Page() {
 						Basic Information
 					</h2>
 
-					{hasCloudinary ? (
 					<div>
 						<label className="label">Recipe Images</label>
-						<CldUploadWidget
-							onSuccess={(result) => {
-								if (result?.info && result.info instanceof Object) {
-									setImages((prevImages) => {
-										if (result?.info && result.info instanceof Object) {
-											return [...prevImages, result.info.secure_url]
-										}
-										return prevImages;
-									});
-								}
-							}}
-							signatureEndpoint="/api/sign-cloudinary-params"
-						>
-							{({ open }) => (
-								<div className="flex flex-wrap gap-3">
+						<div className="flex flex-wrap gap-3">
+									{imageUpload.input}
 									<button
 										type="button"
 										onClick={(e) => {
 											e.preventDefault();
-											open();
+											imageUpload.open();
 										}}
-									className="group flex h-24 w-24 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-charcoal-blue-300 bg-charcoal-blue-50 transition-colors hover:border-brand-400 hover:bg-brand-50 dark:border-white/10 dark:bg-charcoal-blue-900/75 dark:hover:border-brand-400 dark:hover:bg-brand-950/50"
+										disabled={imageUpload.uploading}
+									className="group flex h-24 w-24 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-charcoal-blue-300 bg-charcoal-blue-50 transition-colors hover:border-brand-400 hover:bg-brand-50 disabled:opacity-60 dark:border-white/10 dark:bg-charcoal-blue-900/75 dark:hover:border-brand-400 dark:hover:bg-brand-950/50"
 								>
 										<i className="ri-image-add-line text-2xl text-charcoal-blue-400 group-hover:text-brand-500 dark:text-charcoal-blue-500 dark:group-hover:text-brand-300" />
-										<span className="mt-1 text-xs text-charcoal-blue-400 group-hover:text-brand-500 dark:text-charcoal-blue-500 dark:group-hover:text-brand-300">Add</span>
+										<span className="mt-1 text-xs text-charcoal-blue-400 group-hover:text-brand-500 dark:text-charcoal-blue-500 dark:group-hover:text-brand-300">{imageUpload.uploading ? "..." : "Add"}</span>
 									</button>
 									{images.map((image, index) => {
 										if (typeof image !== 'string' || index >= MAX_RECIPE_IMAGES_TO_PREVIEW) return null;
@@ -399,11 +390,8 @@ export default function Page() {
 										</div>
 									)}
 								</div>
-							)}
-						</CldUploadWidget>
 					</div>
 
-					) : null}
 					{/* Recipe Name */}
 					<div>
 						<label htmlFor="recipe_name" className="label">Recipe Name</label>

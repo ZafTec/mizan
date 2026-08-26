@@ -484,20 +484,68 @@ session lookups as well as `EntitlementService` and `UserStatusService`.
 
 ---
 
-## 7. Storage: Cloudinary → `IStorageService` now, S3 in v2
+## 7. Storage: S3 now, not v2
 
-Do not delete image handling — rev 1 had this wrong; it was only ever there for
-recipe images, and recipes stay.
+Do not delete image handling - rev 1 had this wrong; it was only ever there for
+recipe images and avatars, and both stay.
 
-Introduce `IStorageService` with `UploadAsync` / `DeleteAsync` / `GetUrl`, back
-it with the existing Cloudinary implementation in v1, and swap in an S3
-implementation in v2 with no call-site changes. Small, and it makes the v2 swap
-a one-file change instead of a grep.
+Rev 8 planned `IStorageService` over Cloudinary now and S3 later. The owner
+brought S3 forward: the deployment will be either a self-hosted MinIO or
+Cloudflare R2, undecided. That makes flexibility the requirement rather than a
+future nicety - and it is free, because both speak S3.
 
-Consumers to route through it: recipe images, profile avatars, and
-`POST /api/Nutrition/ai/analyze-image`. Drop `next-cloudinary` from the frontend
-— uploads go to the backend, which signs and stores; the frontend never talks to
-a storage provider directly. That also deletes `app/api/sign-cloudinary-params`.
+**One implementation, two backends, nothing but configuration between them.**
+
+| | MinIO | Cloudflare R2 |
+|---|---|---|
+| `Storage__ServiceUrl` | `https://minio.example` | `https://<account>.r2.cloudflarestorage.com` |
+| `Storage__Region` | `us-east-1` (ignored, but the SDK insists) | `auto` |
+| `Storage__PublicBaseUrl` | whatever fronts the public bucket | an R2 custom domain, or the r2.dev host |
+
+Two things make one client work against both, and neither is a workaround:
+
+- **Path-style addressing.** Both address buckets by path, not by subdomain.
+- **Checksums off unless required.** The v4 AWS SDK adds flexible-checksum
+  headers to every request; R2 rejects them and older MinIO builds do too.
+  `RequestChecksumCalculation = WHEN_REQUIRED` sends them only where the
+  protocol demands one.
+
+### The shape
+
+`IStorageService` is `UploadAsync` / `DeleteAsync` / `GetUrlAsync` /
+`TryGetKey`. The last one earns its place: it answers "did we store this URL?",
+which is what lets a replaced avatar be deleted without ever deleting a Google
+or GitHub avatar URL that happens to be sitting in the same column.
+
+Keys are built in one pure function - `{folder}/{yyyy}/{MM}/{uuidv7}{ext}` -
+where the folder comes from a closed enum and the extension from a fixed list.
+Nothing a caller sends can steer a write outside its folder, and
+`StorageKeyTests` holds that line with `../../etc/passwd` and friends.
+
+**Uploads go through the API, never the browser to the store.** That deletes
+`app/api/sign-cloudinary-params`, `next-cloudinary` and `cloudinary`, and means
+the browser never holds a storage credential. `POST /api/Uploads/image`
+authenticates, sniffs the first twelve bytes to decide what the file actually
+is - a `Content-Type` is the caller's claim, not evidence - and refuses
+anything that is not a JPEG, PNG, WebP or GIF.
+
+**Unconfigured is a supported state.** With no `Storage__ServiceUrl` the API
+starts and only uploads refuse, with a message that says storage is not
+configured rather than a connection error. Local development and the test suite
+both run in it.
+
+**AI food-photo analysis does not go through storage.**
+`POST /api/Nutrition/ai/analyze-image` reads the bytes, sends them to the model
+and forgets them. Keeping a user's food photos is a decision for §11 to make
+deliberately, not something storage should start doing by accident.
+
+**`next/image` needs the media host allowlisted**, and that host is
+deployment-specific, so `next.config.ts` reads it from `NEXT_PUBLIC_MEDIA_URL`
+rather than hardcoding one.
+
+**The signup avatar field is gone.** Uploads require a session and a signup has
+none; the field had already stopped being read when registration moved to the
+backend in §6. Avatars are set from Settings, after signing in.
 
 ---
 
