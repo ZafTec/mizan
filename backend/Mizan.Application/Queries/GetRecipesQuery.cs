@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
@@ -56,16 +57,41 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
         // sort keys fall back to the default below.
     };
 
+    private static readonly HybridCacheEntryOptions CacheOptions = new()
+    {
+        Expiration = TimeSpan.FromHours(1),
+        LocalCacheExpiration = TimeSpan.FromMinutes(5)
+    };
+
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly HybridCache _cache;
 
-    public GetRecipesQueryHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public GetRecipesQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
+        _cache = cache;
     }
 
     public async Task<PagedResult<RecipeDto>> Handle(GetRecipesQuery request, CancellationToken cancellationToken)
+    {
+        // Own-plus-public or favorites-only, both scoped to the viewer - the
+        // viewer's id has to be part of the key for the same reason
+        // SearchFoodsQuery keys on it.
+        var viewerId = _currentUser.UserId?.ToString() ?? "anon";
+        var cacheKey = $"recipes:search:{viewerId}:{request.SearchTerm?.ToLower() ?? ""}:{request.IncludePublic}:{request.FavoritesOnly}:{request.MinProteinCalorieRatio}:{request.Page}:{request.PageSize}:{request.SortBy ?? ""}:{request.SortOrder ?? ""}";
+
+        return await _cache.GetOrCreateAsync(
+            cacheKey,
+            request,
+            LoadAsync,
+            CacheOptions,
+            tags: [CacheTags.Recipes],
+            cancellationToken: cancellationToken);
+    }
+
+    private async ValueTask<PagedResult<RecipeDto>> LoadAsync(GetRecipesQuery request, CancellationToken cancellationToken)
     {
         var query = _context.Recipes.AsQueryable();
 

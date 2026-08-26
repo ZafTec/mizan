@@ -1,6 +1,8 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Commands;
@@ -28,11 +30,13 @@ public class UpdateMealPlanCommandHandler : IRequestHandler<UpdateMealPlanComman
 {
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly HybridCache _cache;
 
-    public UpdateMealPlanCommandHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public UpdateMealPlanCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
+        _cache = cache;
     }
 
     public async Task<UpdateMealPlanResult> Handle(UpdateMealPlanCommand request, CancellationToken cancellationToken)
@@ -69,6 +73,11 @@ public class UpdateMealPlanCommandHandler : IRequestHandler<UpdateMealPlanComman
         mealPlan.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Name/dates changed, so both the owner's list and every viewer's
+        // cached detail of this specific plan need to go.
+        await _cache.RemoveByTagAsync(CacheTags.MealPlansList(mealPlan.UserId), cancellationToken);
+        await _cache.RemoveByTagAsync(CacheTags.MealPlan(mealPlan.Id), cancellationToken);
 
         return new UpdateMealPlanResult
         {

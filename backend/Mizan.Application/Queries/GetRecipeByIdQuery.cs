@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
@@ -36,16 +37,40 @@ public record RecipeIngredientDto
 
 public class GetRecipeByIdQueryHandler : IRequestHandler<GetRecipeByIdQuery, RecipeDetailDto?>
 {
+    private static readonly HybridCacheEntryOptions CacheOptions = new()
+    {
+        Expiration = TimeSpan.FromHours(1),
+        LocalCacheExpiration = TimeSpan.FromMinutes(5)
+    };
+
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly HybridCache _cache;
 
-    public GetRecipeByIdQueryHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public GetRecipeByIdQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
+        _cache = cache;
     }
 
     public async Task<RecipeDetailDto?> Handle(GetRecipeByIdQuery request, CancellationToken cancellationToken)
+    {
+        // IsOwner/IsFavorited are per-viewer, and a private recipe returns null
+        // for anyone but its owner - so the viewer's id has to be part of the
+        // key, the same reason SearchFoodsQuery keys on it.
+        var viewerId = _currentUser.UserId?.ToString() ?? "anon";
+
+        return await _cache.GetOrCreateAsync(
+            $"recipe:{request.Id}:{viewerId}",
+            request,
+            LoadAsync,
+            CacheOptions,
+            tags: [CacheTags.Recipes],
+            cancellationToken: cancellationToken);
+    }
+
+    private async ValueTask<RecipeDetailDto?> LoadAsync(GetRecipeByIdQuery request, CancellationToken cancellationToken)
     {
         var recipe = await _context.Recipes
             .Include(r => r.Ingredients)

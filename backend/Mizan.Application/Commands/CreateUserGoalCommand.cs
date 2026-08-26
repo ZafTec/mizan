@@ -1,6 +1,8 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Application.Services;
 using Mizan.Domain.Entities;
@@ -59,11 +61,13 @@ public class CreateUserGoalCommandHandler : IRequestHandler<CreateUserGoalComman
 {
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly HybridCache _cache;
 
-    public CreateUserGoalCommandHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public CreateUserGoalCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
+        _cache = cache;
     }
 
     public async Task<CreateUserGoalResult> Handle(CreateUserGoalCommand request, CancellationToken cancellationToken)
@@ -112,6 +116,9 @@ public class CreateUserGoalCommandHandler : IRequestHandler<CreateUserGoalComman
 
         _context.UserGoals.Add(goal);
         await _context.SaveChangesAsync(cancellationToken);
+
+        // The new goal's targets feed GetDailyNutritionQuery's Target* fields.
+        await _cache.RemoveByTagAsync(CacheTags.Nutrition(_currentUser.UserId.Value), cancellationToken);
 
         var warnings = GoalHints.CheckGoalSanity(
             request.GoalType,

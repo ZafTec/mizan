@@ -1,6 +1,8 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Commands;
@@ -36,11 +38,13 @@ public class UpdateMealPlanRecipeCommandHandler : IRequestHandler<UpdateMealPlan
 {
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly HybridCache _cache;
 
-    public UpdateMealPlanRecipeCommandHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public UpdateMealPlanRecipeCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
+        _cache = cache;
     }
 
     public async Task<UpdateMealPlanRecipeResult> Handle(UpdateMealPlanRecipeCommand request, CancellationToken cancellationToken)
@@ -90,6 +94,10 @@ public class UpdateMealPlanRecipeCommandHandler : IRequestHandler<UpdateMealPlan
         mealPlan.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Only the detail view shows date/type/servings per entry - the list's
+        // RecipeCount is unaffected by editing one that is already there.
+        await _cache.RemoveByTagAsync(CacheTags.MealPlan(mealPlan.Id), cancellationToken);
 
         return new UpdateMealPlanRecipeResult
         {

@@ -1,6 +1,8 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 using Mizan.Contracts.Recipes;
@@ -34,11 +36,13 @@ public class UpdateRecipeCommandHandler : IRequestHandler<UpdateRecipeCommand, U
 {
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly HybridCache _cache;
 
-    public UpdateRecipeCommandHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public UpdateRecipeCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
+        _cache = cache;
     }
 
     public async Task<UpdateRecipeResult> Handle(UpdateRecipeCommand request, CancellationToken cancellationToken)
@@ -104,6 +108,8 @@ public class UpdateRecipeCommandHandler : IRequestHandler<UpdateRecipeCommand, U
         // A preparation derived from this recipe keeps its snapshot until it is
         // re-promoted, which is deliberate; see docs/REFOCUS.md §4.
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _cache.RemoveByTagAsync(CacheTags.Recipes, cancellationToken);
 
         return new UpdateRecipeResult { Success = true, Message = "Recipe updated successfully" };
     }
