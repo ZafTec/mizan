@@ -1,7 +1,6 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
@@ -23,20 +22,17 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
     public static readonly TimeSpan ResetLifetime = TimeSpan.FromHours(1);
 
     private readonly IMizanDbContext _context;
-    private readonly IEmailSender _email;
+    private readonly IOutbox _outbox;
     private readonly IAppUrls _urls;
-    private readonly ILogger<ForgotPasswordCommandHandler> _logger;
 
     public ForgotPasswordCommandHandler(
         IMizanDbContext context,
-        IEmailSender email,
-        IAppUrls urls,
-        ILogger<ForgotPasswordCommandHandler> logger)
+        IOutbox outbox,
+        IAppUrls urls)
     {
         _context = context;
-        _email = email;
+        _outbox = outbox;
         _urls = urls;
-        _logger = logger;
     }
 
     public async Task<Unit> Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
@@ -50,12 +46,14 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
         var token = await AuthTokens.IssueAsync(
             _context, user.Id, UserTokenPurpose.PasswordReset, ResetLifetime, cancellationToken);
 
-        await AuthEmailDelivery.TrySendAsync(
-            _email,
+        await AuthEmailDelivery.QueueAsync(
+            _outbox,
             AuthEmails.PasswordReset(user.Email, user.Name, _urls.ResetPassword(token)),
-            _logger,
             user.Id,
+            "reset",
             cancellationToken);
+
+        await _context.SaveChangesAsync(cancellationToken);
 
         return Unit.Value;
     }

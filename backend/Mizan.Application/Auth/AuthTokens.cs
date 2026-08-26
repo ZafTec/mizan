@@ -11,6 +11,10 @@ internal static class AuthTokens
     /// <summary>
     /// Issues a fresh one-time token and invalidates any earlier one for the
     /// same purpose, so a second "resend" cannot leave two live links.
+    ///
+    /// Staged, not saved: the caller commits it together with the queued email
+    /// that carries it, so a link can never exist without a mail on its way or
+    /// the other way round.
     /// </summary>
     public static async Task<string> IssueAsync(
         IMizanDbContext context,
@@ -35,7 +39,6 @@ internal static class AuthTokens
             ExpiresAt = now.Add(lifetime),
         });
 
-        await context.SaveChangesAsync(cancellationToken);
         return token;
     }
 

@@ -456,9 +456,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["EvalSummary"];
-                        "application/json": components["schemas"]["EvalSummary"];
-                        "text/json": components["schemas"]["EvalSummary"];
+                        "text/plain": components["schemas"]["EvalRunQueued"];
+                        "application/json": components["schemas"]["EvalRunQueued"];
+                        "text/json": components["schemas"]["EvalRunQueued"];
                     };
                 };
             };
@@ -499,6 +499,242 @@ export interface paths {
                         "application/json": components["schemas"]["AiPromptVersionDto"];
                         "text/json": components["schemas"]["AiPromptVersionDto"];
                     };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Admin/Jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Page?: number;
+                    PageSize?: number;
+                    Type?: string;
+                    Status?: string;
+                    SortBy?: string;
+                    SortOrder?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AdminJobDtoPagedResult"];
+                        "application/json": components["schemas"]["AdminJobDtoPagedResult"];
+                        "text/json": components["schemas"]["AdminJobDtoPagedResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Admin/Jobs/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AdminJobStats"];
+                        "application/json": components["schemas"]["AdminJobStats"];
+                        "text/json": components["schemas"]["AdminJobStats"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Admin/Jobs/{id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Admin/Jobs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Admin/Relationships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Page?: number;
+                    PageSize?: number;
+                    Search?: string;
+                    Status?: string;
+                    SortBy?: string;
+                    SortOrder?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AdminRelationshipDtoPagedResult"];
+                        "application/json": components["schemas"]["AdminRelationshipDtoPagedResult"];
+                        "text/json": components["schemas"]["AdminRelationshipDtoPagedResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Admin/Relationships/{id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["EndRelationshipRequest"];
+                    "text/json": components["schemas"]["EndRelationshipRequest"];
+                    "application/*+json": components["schemas"]["EndRelationshipRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -560,6 +796,8 @@ export interface paths {
                     Search?: string;
                     Role?: string;
                     Banned?: boolean;
+                    SortBy?: string;
+                    SortOrder?: string;
                 };
                 header?: never;
                 path?: never;
@@ -1261,6 +1499,9 @@ export interface paths {
                     EntityType?: string;
                     EntityId?: string;
                     UserId?: string;
+                    From?: string;
+                    To?: string;
+                    Search?: string;
                     Page?: number;
                     PageSize?: number;
                     SortBy?: string;
@@ -1282,6 +1523,88 @@ export interface paths {
                         "application/json": components["schemas"]["AuditLogDtoPagedResult"];
                         "text/json": components["schemas"]["AuditLogDtoPagedResult"];
                     };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/AuditLogs/facets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AuditLogFacetsDto"];
+                        "application/json": components["schemas"]["AuditLogFacetsDto"];
+                        "text/json": components["schemas"]["AuditLogFacetsDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/AuditLogs/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Action?: string;
+                    EntityType?: string;
+                    EntityId?: string;
+                    UserId?: string;
+                    From?: string;
+                    To?: string;
+                    Search?: string;
+                    Page?: number;
+                    PageSize?: number;
+                    SortBy?: string;
+                    SortOrder?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -6280,6 +6603,47 @@ export interface components {
             /** Format: int32 */
             readonly totalPages: number;
         };
+        AdminJobDto: {
+            /** Format: uuid */
+            id: string;
+            type: string;
+            status: string;
+            /** Format: int32 */
+            attempts: number;
+            /** Format: date-time */
+            runAfter: string;
+            lastError?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            startedAt?: string | null;
+            /** Format: date-time */
+            completedAt?: string | null;
+        };
+        AdminJobDtoPagedResult: {
+            items: components["schemas"]["AdminJobDto"][];
+            /** Format: int32 */
+            totalCount: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            readonly totalPages: number;
+        };
+        AdminJobStats: {
+            /** Format: int32 */
+            pending: number;
+            /** Format: int32 */
+            running: number;
+            /** Format: int32 */
+            failed: number;
+            /** Format: int32 */
+            deadLettered: number;
+            /** Format: int32 */
+            succeeded: number;
+            types: string[];
+        };
         AdminOverviewDto: {
             /** Format: int32 */
             totalUsers: number;
@@ -6290,6 +6654,40 @@ export interface components {
             /** Format: int32 */
             activeSessions: number;
             recentUsers: components["schemas"]["AdminUserDto"][];
+        };
+        AdminRelationshipDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            trainerId: string;
+            trainerName?: string | null;
+            trainerEmail: string;
+            /** Format: uuid */
+            clientId: string;
+            clientName?: string | null;
+            clientEmail: string;
+            status: string;
+            canViewNutrition: boolean;
+            canViewWorkouts: boolean;
+            canViewMeasurements: boolean;
+            canMessage: boolean;
+            /** Format: date-time */
+            startedAt?: string | null;
+            /** Format: date-time */
+            endedAt?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        AdminRelationshipDtoPagedResult: {
+            items: components["schemas"]["AdminRelationshipDto"][];
+            /** Format: int32 */
+            totalCount: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            readonly totalPages: number;
         };
         AdminSessionDto: {
             /** Format: uuid */
@@ -6409,6 +6807,8 @@ export interface components {
             costMicros: number;
             /** Format: int64 */
             publishedCostMicros?: number | null;
+            runStatus?: string | null;
+            runError?: string | null;
         };
         /**
          * Format: int32
@@ -6549,6 +6949,10 @@ export interface components {
             /** Format: int32 */
             readonly totalPages: number;
         };
+        AuditLogFacetsDto: {
+            actions: string[];
+            entityTypes: string[];
+        };
         AuthUserDto: {
             /** Format: uuid */
             id: string;
@@ -6561,6 +6965,7 @@ export interface components {
             compactMode: boolean;
             reduceAnimations: boolean;
             hasPassword: boolean;
+            timeZoneId?: string | null;
         };
         BodyMeasurementDto: {
             /** Format: uuid */
@@ -6951,23 +7356,14 @@ export interface components {
         EmailRequest: {
             email: string;
         };
-        EvalSummary: {
+        EndRelationshipRequest: {
+            reason?: string | null;
+        };
+        EvalRunQueued: {
+            /** Format: uuid */
+            jobId: string;
             /** Format: uuid */
             versionId: string;
-            /** Format: int32 */
-            total: number;
-            /** Format: int32 */
-            passed: number;
-            /** Format: int32 */
-            failed: number;
-            /** Format: int32 */
-            errored: number;
-            /** Format: int32 */
-            adversarialFailures: number;
-            /** Format: int32 */
-            tokens: number;
-            /** Format: int64 */
-            costMicros: number;
         };
         ExerciseDto: {
             /** Format: uuid */

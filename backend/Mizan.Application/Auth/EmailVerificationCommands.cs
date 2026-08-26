@@ -1,7 +1,6 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
@@ -50,20 +49,17 @@ public class ResendVerificationCommandValidator : AbstractValidator<ResendVerifi
 public class ResendVerificationCommandHandler : IRequestHandler<ResendVerificationCommand, Unit>
 {
     private readonly IMizanDbContext _context;
-    private readonly IEmailSender _email;
+    private readonly IOutbox _outbox;
     private readonly IAppUrls _urls;
-    private readonly ILogger<ResendVerificationCommandHandler> _logger;
 
     public ResendVerificationCommandHandler(
         IMizanDbContext context,
-        IEmailSender email,
-        IAppUrls urls,
-        ILogger<ResendVerificationCommandHandler> logger)
+        IOutbox outbox,
+        IAppUrls urls)
     {
         _context = context;
-        _email = email;
+        _outbox = outbox;
         _urls = urls;
-        _logger = logger;
     }
 
     public async Task<Unit> Handle(ResendVerificationCommand request, CancellationToken cancellationToken)
@@ -82,12 +78,14 @@ public class ResendVerificationCommandHandler : IRequestHandler<ResendVerificati
             RegisterCommandHandler.VerificationLifetime,
             cancellationToken);
 
-        await AuthEmailDelivery.TrySendAsync(
-            _email,
+        await AuthEmailDelivery.QueueAsync(
+            _outbox,
             AuthEmails.Verification(user.Email, user.Name, _urls.VerifyEmail(token)),
-            _logger,
             user.Id,
+            "verify",
             cancellationToken);
+
+        await _context.SaveChangesAsync(cancellationToken);
 
         return Unit.Value;
     }

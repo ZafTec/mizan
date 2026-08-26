@@ -1325,6 +1325,100 @@ counters bought, and the one worth defending.
 
 ---
 
+## 13b. The background queue
+
+Two pieces of work do not belong inside the request that asks for them, and
+they are the only two.
+
+**Outbound email.** What was there: a call inside a `try`/`catch` that logged
+the failure and returned success anyway. A verification mail that never arrived
+left a warning line nobody reads and nothing to retry. The user saw "check your
+inbox" and waited.
+
+**Eval runs.** Twenty-odd sequential provider calls. An HTTP request times out
+long before the suite finishes, and the admin who clicked the button gets a
+gateway error while the run keeps going invisibly.
+
+Everything else stays synchronous. A queue is a second place for state to be
+wrong, and the logging path in particular must not go through one - the
+"🔥 5 days" chip and the achievement toast are the whole point of logging
+being fast (§13a).
+
+### It is an outbox, not a queue
+
+`IOutbox.EnqueueAsync` **stages** the job on the caller's own `DbContext`. The
+caller's `SaveChangesAsync` commits it, with the rest of that request's writes.
+That is the property worth having:
+
+- a registration that rolls back does not leave a verification mail queued for
+  a user who does not exist;
+- a registration that commits cannot lose the mail.
+
+A separate queue server gives you neither without a distributed transaction.
+One table in the database the request is already writing to gives you both for
+free.
+
+### Claiming
+
+```sql
+UPDATE outbox_jobs SET status = 1, started_at = NOW(), attempts = attempts + 1
+WHERE id IN (
+    SELECT id FROM outbox_jobs
+    WHERE type = {0} AND status IN (0, 3) AND run_after <= NOW()
+    ORDER BY run_after, created_at
+    LIMIT {1}
+    FOR UPDATE SKIP LOCKED
+)
+RETURNING id;
+```
+
+`FOR UPDATE SKIP LOCKED` means two API containers can share the table without
+handing the same job to both. There is one container today; this costs nothing
+and removes the question.
+
+One dispatcher, not two workers - two would mean two polling loops, two retry
+policies and two things to watch. But the loop claims **per type, up to that
+type's concurrency**, because a single sequential loop would put a minutes-long
+eval run in front of somebody's password reset. Email runs four at a time; an
+eval suite runs one, since each case is a metered provider call against a shared
+global ceiling.
+
+### Failure, made visible
+
+- Throwing means retry. Backoff doubles from 30s, capped at 15 minutes, and
+  lives on the row rather than in a `sleep` - a restart does not lose it and a
+  second worker does not pick the job up early.
+- `OutboxPermanentException` dead-letters immediately. A payload that will not
+  parse now will not parse on the fifth attempt; neither will an email with no
+  recipient.
+- Five attempts, then dead-lettered.
+- A row left `Running` past 30 minutes is a worker that died mid-job. Nothing
+  else would ever claim it, so the dispatcher returns it to the queue on each
+  pass - that silent-never-happens case is the exact failure this table exists
+  to remove.
+- `/admin/jobs` shows all of it, with retry and discard, and the same tools
+  exist over MCP. **A queue whose failures are invisible is worse than the
+  fire-and-forget call it replaced**, because now the failure is durable and
+  still unseen.
+
+Error text is redacted before it reaches the admin view: an SMTP rejection
+quotes the recipient back at you, and an operator reading the queue has no
+business seeing who was mailed (§11).
+
+### What changed at the call sites
+
+`POST /api/Admin/Ai/Prompts/versions/{id}/evals` returns **202** with a job id
+instead of a summary. The console polls the matrix and watches results land;
+publishing is blocked while a run is outstanding, so a stale pass cannot be
+mistaken for a fresh one.
+
+The dedupe key is stable per version, so a double-click cannot spend the eval
+budget twice. That also means a *finished* run occupies the key, and re-running
+after a fix is a normal thing to want - so the spent row is cleared first, and
+only a job that could still run is honoured.
+
+---
+
 ## 14. MCP server
 
 Survives intact — it is the part of this codebase that works. ~120 tools stay
@@ -1362,9 +1456,13 @@ Each phase is one commit and leaves the build green.
 | 10 | AI surfaces + admin console | medium | **done** | `AiPromptVersion` + the hard/soft guardrail split, chat persisted on `AiChatThread`, onboarding agent over the allowlisted tool→command map shared with MCP; read-only client tools for trainers (§11); `/admin/ai` with evals, diff and rollback (§12) |
 | 11 | **Streak + achievement correctness** | medium | **done** | `StreakClock` as the one decay rule, `User.TimeZoneId`, `user_activity_counters` replacing the `COUNT(*)`s, catalogue cached, a round-trip budget test on the logging path (§13a) |
 | 11b | Billing feature split | low | | widen gating past the three endpoints, customer portal link, in-context upgrade chips; gate relationship *creation*, never existing consent (§5) |
-| 12 | UI rebuild on the new tiers | medium | | `/today`, `/history`, `/progress`, sheet-based logging |
-| 13 | Telegram bot | medium | | `Mizan.Telegram`, account linking, logging flows, chat on the shared thread. **Consumes §10's AI service; never its own** |
-| 14 | Docs rewrite | none | | README, CLAUDE.md, ARCHITECTURE.md, MCP.md, AI.md, TELEGRAM.md |
+| 12 | **Table + skeleton primitive** | medium | **done** | one server-rendered `DataTable` - sort, filter and page are URL links, not client state; `TableToolbar` is the only client component in the stack. Eight table pages ported, two bespoke header components deleted, `loading.tsx` count 10 → 59 |
+| 13 | **Admin rebuild** | medium | **done** | audit log queryable and filterable (facets, date range, CSV export with formula neutralisation), relationships back with the grants read-only, achievements CRUD. 15 admin MCP tools, up from 6 |
+| 14 | **Background queue** | medium | **done** | transactional outbox for outbound email and eval runs, `FOR UPDATE SKIP LOCKED` claiming, per-type concurrency, dead-letter view at `/admin/jobs` and over MCP (§13b) |
+| 15 | MCP parity | medium | | AI consent + usage, prompt console, uploads, chat threads. "Expose everything that makes sense" |
+| 16 | Telegram bot | medium | | `Mizan.Telegram`, guided linking from web settings, cold `/start` → sign in first, chat on the shared thread. **Consumes §10's AI service; never its own** |
+| 17 | Redis pass + landing page | medium | | nutrition totals, dashboard aggregates, recipes, meal plans; landing page revamp |
+| 18 | Docs rewrite | none | | README, CLAUDE.md, ARCHITECTURE.md, MCP.md, AI.md, TELEGRAM.md |
 
 Ordering constraints that actually bind:
 

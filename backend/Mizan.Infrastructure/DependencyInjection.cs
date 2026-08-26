@@ -8,6 +8,7 @@ using Mizan.Infrastructure.Ai;
 using Mizan.Infrastructure.Data;
 using Mizan.Infrastructure.Email;
 using Mizan.Infrastructure.Identity;
+using Mizan.Infrastructure.Outbox;
 using Mizan.Infrastructure.Services;
 using Mizan.Infrastructure.Storage;
 
@@ -90,6 +91,14 @@ public static class DependencyInjection
         services.AddScoped<IAiPromptResolver, AiPromptResolver>();
         services.AddScoped<IAiEvalRunner, AiEvalRunner>();
         services.AddScoped<IAiToolRunner, AiToolRunner>();
+
+        // Outbox: reliable work that must not run inside the request that
+        // asked for it (docs/REFOCUS.md §13b).
+        services.Configure<OutboxOptions>(configuration.GetSection(OutboxOptions.SectionName));
+        services.AddScoped<IOutbox, Outbox.Outbox>();
+        services.AddScoped<IOutboxHandler, EmailJobHandler>();
+        services.AddScoped<IOutboxHandler, EvalRunJobHandler>();
+        services.AddHostedService<OutboxDispatcher>();
 
         // Billing
         services.Configure<PaddleOptions>(configuration.GetSection(PaddleOptions.SectionName));
