@@ -241,14 +241,14 @@ function ProfileAvatar({
 }) {
 	if (image) {
 		return (
-			<div className="relative h-20 w-20 overflow-hidden rounded-[28px] ring-1 ring-brand-500/20 sm:h-24 sm:w-24">
+			<div className="relative h-20 w-20 overflow-hidden rounded-2xl ring-1 ring-brand-500/20 sm:h-24 sm:w-24">
 				<Image src={image} alt={name || email || "User"} fill sizes="(max-width: 640px) 80px, 96px" className="object-cover" />
 			</div>
 		);
 	}
 
 	return (
-		<div className="flex h-20 w-20 items-center justify-center rounded-[28px] bg-brand-600 text-2xl font-semibold text-white ring-1 ring-brand-500/20 dark:bg-brand-500 sm:h-24 sm:w-24">
+		<div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-600 text-2xl font-semibold text-white ring-1 ring-brand-500/20 dark:bg-brand-500 sm:h-24 sm:w-24">
 			{(email || "U").charAt(0).toUpperCase()}
 		</div>
 	);
