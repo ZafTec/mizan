@@ -72,6 +72,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
     public DbSet<ContentReport> ContentReports => Set<ContentReport>();
 
     // AI
+    public DbSet<UserActivityCounters> UserActivityCounters => Set<UserActivityCounters>();
     public DbSet<AiChatThread> AiChatThreads => Set<AiChatThread>();
     public DbSet<AiChatMessage> AiChatMessages => Set<AiChatMessage>();
     public DbSet<UserAiConsent> UserAiConsents => Set<UserAiConsent>();
@@ -124,6 +125,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.EmailVerified).HasColumnName("email_verified");
             entity.Property(e => e.Name).HasColumnName("name");
             entity.Property(e => e.Image).HasColumnName("image");
+            entity.Property(e => e.TimeZoneId).HasColumnName("time_zone_id").HasMaxLength(64);
             entity.Property(e => e.ThemePreference).HasColumnName("theme_preference");
             entity.Property(e => e.CompactMode).HasColumnName("compact_mode");
             entity.Property(e => e.ReduceAnimations).HasColumnName("reduce_animations");
@@ -938,6 +940,21 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.ResolvedByUserId).HasColumnName("resolved_by_user_id");
             entity.Property(e => e.ResolutionNote).HasColumnName("resolution_note").HasMaxLength(500);
             entity.HasIndex(e => new { e.Status, e.CreatedAt });
+        });
+
+        modelBuilder.Entity<UserActivityCounters>(entity =>
+        {
+            entity.ToTable("user_activity_counters");
+            entity.HasKey(e => e.UserId);
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.MealsLogged).HasColumnName("meals_logged").HasDefaultValue(0);
+            entity.Property(e => e.RecipesCreated).HasColumnName("recipes_created").HasDefaultValue(0);
+            entity.Property(e => e.WorkoutsLogged).HasColumnName("workouts_logged").HasDefaultValue(0);
+            entity.Property(e => e.BodyMeasurementsLogged).HasColumnName("body_measurements_logged").HasDefaultValue(0);
+            entity.Property(e => e.GoalProgressLogged).HasColumnName("goal_progress_logged").HasDefaultValue(0);
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.HasOne(e => e.User).WithOne()
+                .HasForeignKey<UserActivityCounters>(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<AiChatThread>(entity =>

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 using Mizan.Infrastructure.Data;
+using Mizan.Domain.Streaks;
 using Mizan.Infrastructure.Services;
 using Xunit;
 
@@ -18,8 +19,29 @@ public class StreakServiceTests
             .Options;
         var db = new MizanDbContext(options);
         user ??= new FakeCurrentUser { UserId = Guid.NewGuid() };
-        var svc = new StreakService(db, user);
+        var svc = new StreakService(db, user, new FixedZoneClock());
         return (db, svc, user.UserId ?? Guid.Empty);
+    }
+
+    /// <summary>
+    /// These tests are about the persistence path, not about zones - the zone
+    /// rules have their own suite in StreakClockTests. UTC keeps the
+    /// DateTime.UtcNow assertions below meaningful.
+    /// </summary>
+    private sealed class FixedZoneClock : IUserClock
+    {
+        public Task<string> TimeZoneIdAsync(Guid userId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(StreakClock.DefaultTimeZone);
+
+        public Task<DateOnly> TodayAsync(Guid userId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(DateOnly.FromDateTime(DateTime.UtcNow));
+
+        public Task<StreakState> EvaluateAsync(
+            Guid userId, int currentCount, int longestCount, DateOnly? lastActivityDate,
+            int freezesAvailable, CancellationToken cancellationToken = default) =>
+            Task.FromResult(StreakClock.Evaluate(
+                currentCount, longestCount, lastActivityDate, freezesAvailable,
+                StreakClock.DefaultTimeZone, DateTimeOffset.UtcNow));
     }
 
     [Fact]

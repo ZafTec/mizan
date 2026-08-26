@@ -20,6 +20,7 @@ import {
 import { clientApi } from "@/lib/api.client";
 import { downloadProfileExport, getProfileObservations, type ProfileObservations } from "@/lib/api/profile";
 import { useTheme } from "@/lib/hooks/useTheme";
+import TimeZoneField from "@/components/appearance/TimeZoneField";
 import { appToast } from "@/lib/toast";
 
 type SessionItem = SessionSummary;
@@ -380,6 +381,18 @@ export default function ProfileSettingsPage() {
 									</Link>
 								</div>
 							</div>
+						</div>
+					</section>
+
+					<section className="card p-6">
+						<SectionHeading
+							icon="calendarCheck"
+							title="Your day"
+							description="When your day starts and ends. Streaks and daily totals roll over at midnight here."
+						/>
+
+						<div className="mt-6">
+							<TimeZoneField current={session?.user?.timeZoneId ?? null} />
 						</div>
 					</section>
 

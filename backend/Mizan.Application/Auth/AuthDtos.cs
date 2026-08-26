@@ -11,7 +11,12 @@ public record AuthUserDto(
     string ThemePreference,
     bool CompactMode,
     bool ReduceAnimations,
-    bool HasPassword);
+    bool HasPassword,
+    /// <summary>
+    /// Null until the user has told us. Every screen that shows a day boundary
+    /// needs it, so it rides the session rather than costing a request.
+    /// </summary>
+    string? TimeZoneId);
 
 public record SessionSummaryDto(
     Guid Id,

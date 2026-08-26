@@ -23,6 +23,9 @@ export interface User {
 	compactMode: boolean;
 	reduceAnimations: boolean;
 	hasPassword: boolean;
+
+	/** IANA zone. Null until the user has told us; treated as UTC until then. */
+	timeZoneId?: string | null;
 }
 
 export function serverApiOrigin(): string {
