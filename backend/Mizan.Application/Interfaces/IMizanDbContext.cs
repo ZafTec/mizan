@@ -52,6 +52,10 @@ public interface IMizanDbContext
     DbSet<AiChatThread> AiChatThreads { get; }
     DbSet<UserAiConsent> UserAiConsents { get; }
     DbSet<AiUsageLog> AiUsageLogs { get; }
+    DbSet<AiPrompt> AiPrompts { get; }
+    DbSet<AiPromptVersion> AiPromptVersions { get; }
+    DbSet<AiEvalCase> AiEvalCases { get; }
+    DbSet<AiEvalRun> AiEvalRuns { get; }
     DbSet<McpToken> McpTokens { get; }
     DbSet<McpUsageLog> McpUsageLogs { get; }
 

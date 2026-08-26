@@ -22,24 +22,6 @@ namespace Mizan.Infrastructure.AI;
 /// </summary>
 public class NutritionAiService : INutritionAiService
 {
-    private const string CoachPrompt = """
-        You are Mizan, a nutrition and training assistant. Mizan is Amharic for balance.
-
-        Answer from the user's own log when it is given to you below. When it is
-        not, say what you would need rather than guessing at their numbers - the
-        user controls what you can see, and an absent section means they chose
-        not to share it, not that there is nothing there.
-
-        Be concise and concrete. Prefer one specific suggestion to three vague
-        ones. You are not a doctor and you do not diagnose.
-        """;
-
-    private const string AnalysisPrompt = """
-        Identify the foods in this photo and estimate the portion and macros of
-        each. Estimate honestly: a low confidence with a sensible guess is more
-        useful than false precision. Return only the declared JSON.
-        """;
-
     /// <summary>
     /// Versioned with the DTO it fills. A response that does not match is a
     /// failed call, not something to scrape with a regex.
@@ -78,17 +60,20 @@ public class NutritionAiService : INutritionAiService
     private readonly IAiProvider _provider;
     private readonly IAiQuotaService _quota;
     private readonly IAiContextBuilder _contextBuilder;
+    private readonly IAiPromptResolver _prompts;
     private readonly ILogger<NutritionAiService> _logger;
 
     public NutritionAiService(
         IAiProvider provider,
         IAiQuotaService quota,
         IAiContextBuilder contextBuilder,
+        IAiPromptResolver prompts,
         ILogger<NutritionAiService> logger)
     {
         _provider = provider;
         _quota = quota;
         _contextBuilder = contextBuilder;
+        _prompts = prompts;
         _logger = logger;
     }
 
@@ -98,8 +83,9 @@ public class NutritionAiService : INutritionAiService
         CancellationToken cancellationToken = default)
     {
         var context = await _contextBuilder.BuildAsync(userId, userId, cancellationToken);
+        var prompt = await _prompts.ResolveAsync(AiPromptKeys.Chat, cancellationToken);
 
-        var messages = new List<AiMessage> { new(AiRole.System, CoachPrompt) };
+        var messages = new List<AiMessage> { new(AiRole.System, prompt.SystemPrompt) };
         if (!context.IsEmpty)
         {
             messages.Add(new AiMessage(AiRole.System, context.Summary));
@@ -112,6 +98,7 @@ public class NutritionAiService : INutritionAiService
             AiFeatures.Chat,
             new AiCompletionRequest { Messages = messages },
             EstimateTokens(userMessage.Length + context.Summary.Length),
+            prompt.VersionId,
             cancellationToken);
 
         return response.Content;
@@ -123,11 +110,14 @@ public class NutritionAiService : INutritionAiService
         string contentType,
         CancellationToken cancellationToken = default)
     {
+        var prompt = await _prompts.ResolveAsync(AiPromptKeys.FoodAnalysis, cancellationToken);
+
         var request = new AiCompletionRequest
         {
             Messages =
             [
-                new AiMessage(AiRole.User, AnalysisPrompt, new AiImage(imageBytes, contentType)),
+                new AiMessage(AiRole.System, prompt.SystemPrompt),
+                new AiMessage(AiRole.User, "Analyse this meal photo.", new AiImage(imageBytes, contentType)),
             ],
             ResponseSchema = new AiJsonSchema("food_analysis_v1", AnalysisSchemaV1),
             Temperature = 0.2,
@@ -137,7 +127,7 @@ public class NutritionAiService : INutritionAiService
         // reservation that errs high is better than a clever estimate that
         // errs low, because the settle corrects it either way.
         var response = await CallAsync(
-            userId, householdId: null, AiFeatures.FoodAnalysis, request, 2_000, cancellationToken);
+            userId, householdId: null, AiFeatures.FoodAnalysis, request, 2_000, prompt.VersionId, cancellationToken);
 
         try
         {
@@ -161,6 +151,7 @@ public class NutritionAiService : INutritionAiService
         string feature,
         AiCompletionRequest request,
         int estimatedTokens,
+        Guid? promptVersionId,
         CancellationToken cancellationToken)
     {
         if (!_provider.IsConfigured)
@@ -169,7 +160,7 @@ public class NutritionAiService : INutritionAiService
         }
 
         var lease = await _quota.ReserveAsync(
-            userId, householdId, feature, estimatedTokens, cancellationToken);
+            userId, householdId, feature, estimatedTokens, promptVersionId, cancellationToken);
 
         var stopwatch = Stopwatch.StartNew();
         var usage = AiTokenUsage.None;

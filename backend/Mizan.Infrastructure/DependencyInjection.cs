@@ -79,6 +79,8 @@ public static class DependencyInjection
         services.AddScoped<IAiQuotaService, AiQuotaService>();
         services.AddScoped<IDataAccessPolicy, DataAccessPolicy>();
         services.AddScoped<IAiContextBuilder, AiContextBuilder>();
+        services.AddScoped<IAiPromptResolver, AiPromptResolver>();
+        services.AddScoped<IAiEvalRunner, AiEvalRunner>();
 
         // Billing
         services.Configure<PaddleOptions>(configuration.GetSection(PaddleOptions.SectionName));

@@ -1,0 +1,18 @@
+namespace Mizan.Application.Ai;
+
+/// <summary>
+/// The programmable surfaces. Code asks for a key; which version answers is an
+/// admin decision (docs/REFOCUS.md §12).
+/// </summary>
+public static class AiPromptKeys
+{
+    public const string Chat = "chat.system";
+    public const string FoodAnalysis = "food.analysis";
+
+    public static readonly IReadOnlyDictionary<string, string> Descriptions =
+        new Dictionary<string, string>
+        {
+            [Chat] = "How the assistant answers questions about a user's own log.",
+            [FoodAnalysis] = "How a food photo is turned into structured nutrition data.",
+        };
+}

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Mizan.Application.Ai;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
@@ -40,12 +41,13 @@ public class AiQuotaService : IAiQuotaService
         Guid? householdId,
         string feature,
         int estimatedTokens,
+        Guid? promptVersionId = null,
         CancellationToken cancellationToken = default)
     {
         var (windowStart, windowEnd) = Today();
-        var limits = await LimitsForAsync(userId, cancellationToken);
+        var limits = await LimitsForAsync(userId, feature, cancellationToken);
 
-        var mine = await UsageSinceAsync(userId, windowStart, cancellationToken);
+        var mine = await UsageSinceAsync(userId, windowStart, feature == AiFeatures.Eval, cancellationToken);
         if (mine.Requests >= limits.DailyRequests || mine.Tokens + estimatedTokens > limits.DailyTokens)
         {
             throw new AiQuotaExceededException(AiQuotaScope.User, windowEnd);
@@ -68,6 +70,7 @@ public class AiQuotaService : IAiQuotaService
             PromptTokens = estimatedTokens,
             CompletionTokens = 0,
             EstimatedCostMicros = CostMicros(estimatedTokens, 0),
+            PromptVersionId = promptVersionId,
             Outcome = AiCallOutcome.Pending,
             CreatedAt = DateTime.UtcNow,
         };
@@ -107,7 +110,7 @@ public class AiQuotaService : IAiQuotaService
         var (windowStart, windowEnd) = Today();
         var entitlement = await _entitlements.GetAsync(userId, cancellationToken);
         var limits = entitlement.IsPro ? _options.Pro : _options.Free;
-        var mine = await UsageSinceAsync(userId, windowStart, cancellationToken);
+        var mine = await UsageSinceAsync(userId, windowStart, evalLine: false, cancellationToken);
 
         return new AiQuotaSnapshot(
             mine.Requests,
@@ -125,17 +128,30 @@ public class AiQuotaService : IAiQuotaService
         return (start, start.AddDays(1));
     }
 
-    private async Task<AiTierLimits> LimitsForAsync(Guid userId, CancellationToken cancellationToken)
+    /// <summary>
+    /// Evals get their own line rather than eating the admin's personal
+    /// allowance: proving a draft is operational work, and three chat requests
+    /// is not a suite. The global ceiling still applies to both.
+    /// </summary>
+    private async Task<AiTierLimits> LimitsForAsync(Guid userId, string feature, CancellationToken cancellationToken)
     {
+        if (feature == AiFeatures.Eval) return _options.Eval;
+
         var entitlement = await _entitlements.GetAsync(userId, cancellationToken);
         return entitlement.IsPro ? _options.Pro : _options.Free;
     }
 
+    /// <summary>
+    /// Usage on the same line the limit came from, so an eval run cannot spend
+    /// the admin's chat allowance or the other way round.
+    /// </summary>
     private async Task<(int Requests, int Tokens)> UsageSinceAsync(
-        Guid userId, DateTime since, CancellationToken cancellationToken)
+        Guid userId, DateTime since, bool evalLine, CancellationToken cancellationToken)
     {
         var totals = await _context.AiUsageLogs.AsNoTracking()
-            .Where(log => log.UserId == userId && log.CreatedAt >= since)
+            .Where(log => log.UserId == userId
+                && log.CreatedAt >= since
+                && (log.Feature == AiFeatures.Eval) == evalLine)
             .GroupBy(_ => 1)
             .Select(g => new
             {
