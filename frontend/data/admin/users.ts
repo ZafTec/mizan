@@ -76,6 +76,8 @@ export async function listAdminUsers(params: {
 	search?: string;
 	role?: string;
 	banned?: boolean;
+	sortBy?: string;
+	sortOrder?: string;
 }): Promise<Paged<AdminUser>> {
 	const query = new URLSearchParams();
 	query.set("page", String(params.page ?? 1));
@@ -83,6 +85,10 @@ export async function listAdminUsers(params: {
 	if (params.search) query.set("search", params.search);
 	if (params.role) query.set("role", params.role);
 	if (params.banned !== undefined) query.set("banned", String(params.banned));
+	if (params.sortBy) {
+		query.set("sortBy", params.sortBy);
+		query.set("sortOrder", params.sortOrder ?? "asc");
+	}
 
 	try {
 		return await serverApi<Paged<AdminUser>>(`/api/admin/users?${query}`);
