@@ -148,58 +148,54 @@ export default function BillingPage() {
       {loading ? (
         <div className="flex justify-center py-16"><Loading /></div>
       ) : isPro ? (
-        <div className="relative overflow-hidden rounded-2xl border border-brand-500/25 bg-gradient-to-br from-brand-600 to-brand-800 p-6 text-white shadow-xl shadow-brand-500/25 sm:p-8">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute right-[-10%] top-[-20%] h-64 w-64 rounded-full bg-white/10 blur-3xl"
-          />
-          <div className="relative flex items-start gap-4">
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white ring-1 ring-white/20">
+        <div className="card p-6 sm:p-8">
+          <div className="flex items-start gap-4">
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-600 ring-1 ring-brand-500/20 dark:bg-brand-500/15 dark:text-brand-300">
               <AnimatedIcon name="sparkles" size={24} aria-hidden="true" />
             </span>
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
+                <h2 className="text-xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-2xl">
                   {subscription?.isLifetime ? "Lifetime Pro, forever" : "You're on Pro"}
                 </h2>
-                <span className="inline-flex items-center rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.1em]">
+                <span className="inline-flex items-center rounded-full bg-brand-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-brand-700 dark:text-brand-300">
                   {subscription?.status}
                 </span>
               </div>
-              <p className="mt-1 text-sm text-white/85">
+              <p className="mt-1 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
                 {subscription?.isLifetime
                   ? "Thanks for being a founding member. Every feature we ship next is already yours."
                   : "Thanks for supporting Mizan. Every Pro feature is unlocked on your account."}
               </p>
               {!subscription?.isLifetime && subscription?.status === "trialing" && trialEnd && (
-                <p className="mt-2 text-sm text-white/85">Trial ends {trialEnd}, then billing starts automatically.</p>
+                <p className="mt-2 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">Trial ends {trialEnd}, then billing starts automatically.</p>
               )}
               {!subscription?.isLifetime && subscription?.status !== "trialing" && canceled && periodEnd && (
-                <p className="mt-2 text-sm text-tuscan-sun-200">Cancels {periodEnd}. You keep Pro until then.</p>
+                <p className="mt-2 text-sm text-tuscan-sun-700 dark:text-tuscan-sun-300">Cancels {periodEnd}. You keep Pro until then.</p>
               )}
               {!subscription?.isLifetime && subscription?.status !== "trialing" && !canceled && periodEnd && (
-                <p className="mt-2 text-sm text-white/85">Renews {periodEnd}.</p>
+                <p className="mt-2 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">Renews {periodEnd}.</p>
               )}
               {!subscription?.isLifetime && !canceled && (
-                <p className="mt-2 text-xs text-white/60">
+                <p className="mt-2 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-500">
                   Switching between Monthly and Yearly: cancel below, then subscribe to the other from the pricing page - your Pro access continues until the period you already paid for ends.
                 </p>
               )}
               <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {["Unlimited meal plans & shopping lists", "AI coach + food-photo logging", "Trend charts & progress history", "Household sharing (up to 6)"].map((perk) => (
-                  <li key={perk} className="flex items-center gap-2 text-sm text-white/90">
-                    <AnimatedIcon name="circleCheck" size={14} aria-hidden="true" />
+                  <li key={perk} className="flex items-center gap-2 text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300">
+                    <AnimatedIcon name="circleCheck" size={14} className="text-brand-600 dark:text-brand-400" aria-hidden="true" />
                     {perk}
                   </li>
                 ))}
               </ul>
 
-              <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-white/15 pt-5">
+              <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-charcoal-blue-100 pt-5 dark:border-white/10">
                 <button
                   type="button"
                   onClick={() => openPortal("overview")}
                   disabled={portalAction !== null}
-                  className="btn-secondary btn-sm !border-white/25 !bg-white/10 !text-white hover:!bg-white/20"
+                  className="btn-secondary btn-sm"
                 >
                   {portalAction === "overview" ? <Loading size="sm" /> : "Manage billing"}
                 </button>
@@ -208,7 +204,7 @@ export default function BillingPage() {
                     type="button"
                     onClick={() => openPortal("payment")}
                     disabled={portalAction !== null}
-                    className="btn-secondary btn-sm !border-white/25 !bg-white/10 !text-white hover:!bg-white/20"
+                    className="btn-secondary btn-sm"
                   >
                     {portalAction === "payment" ? <Loading size="sm" /> : "Update payment method"}
                   </button>
@@ -218,7 +214,7 @@ export default function BillingPage() {
                     type="button"
                     onClick={() => openPortal("cancel")}
                     disabled={portalAction !== null}
-                    className="btn-ghost btn-sm !border-white/25 !text-white/80 hover:!text-white"
+                    className="btn-ghost btn-sm"
                   >
                     {portalAction === "cancel" ? <Loading size="sm" /> : "Cancel subscription"}
                   </button>

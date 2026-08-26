@@ -81,7 +81,7 @@ export default function HouseholdSwitcher() {
 				disabled={switching}
 				aria-expanded={open}
 				aria-haspopup="menu"
-				className="flex items-center gap-2 rounded-2xl border border-charcoal-blue-200 bg-white/80 px-3 py-1.5 text-sm text-charcoal-blue-700 transition-colors hover:border-charcoal-blue-300 disabled:opacity-60 dark:border-white/10 dark:bg-charcoal-blue-950/60 dark:text-charcoal-blue-200"
+				className="flex items-center gap-2 rounded-2xl border border-charcoal-blue-200 bg-white px-3 py-1.5 text-sm text-charcoal-blue-700 transition-colors hover:border-charcoal-blue-300 disabled:opacity-60 dark:border-white/10 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-200"
 			>
 				<AnimatedIcon name="home" size={14} />
 				<span className="max-w-32 truncate font-medium">{active.name}</span>

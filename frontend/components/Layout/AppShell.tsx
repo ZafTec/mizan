@@ -265,7 +265,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 								"flex items-center gap-3 rounded-2xl border p-2.5",
 								isPro
 									? "border-brand-500/30 bg-gradient-to-r from-brand-500/10 to-transparent dark:border-brand-500/25"
-									: "border-charcoal-blue-200 bg-white/80 dark:border-white/10 dark:bg-charcoal-blue-950/60"
+									: "border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-charcoal-blue-900"
 							)}
 						>
 							<UserAvatar user={user} size={36} pro={isPro} />
@@ -329,7 +329,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 									type="button"
 									data-app-shell-user-trigger
 									onClick={() => setUserMenuOpen((o) => !o)}
-									className="flex items-center gap-2 rounded-full border border-charcoal-blue-200 bg-white/80 px-2 py-1.5 text-sm text-charcoal-blue-700 transition-colors hover:border-charcoal-blue-300 dark:border-white/10 dark:bg-charcoal-blue-950/60 dark:text-charcoal-blue-200"
+									className="flex items-center gap-2 rounded-full border border-charcoal-blue-200 bg-white px-2 py-1.5 text-sm text-charcoal-blue-700 transition-colors hover:border-charcoal-blue-300 dark:border-white/10 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-200"
 									aria-expanded={userMenuOpen}
 									aria-haspopup="menu"
 								>

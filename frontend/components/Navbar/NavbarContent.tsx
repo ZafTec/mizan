@@ -298,7 +298,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 
 				<button
 					type="button"
-					className="inline-flex items-center justify-center rounded-2xl border border-white/70 bg-white/80 dark:border-white/10 dark:bg-charcoal-blue-950/75 h-11 w-11 text-charcoal-blue-600 hover:text-charcoal-blue-900 dark:text-charcoal-blue-300 dark:hover:text-white md:hidden relative z-100"
+					className="inline-flex items-center justify-center rounded-2xl border border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-charcoal-blue-900 h-11 w-11 text-charcoal-blue-600 hover:text-charcoal-blue-900 dark:text-charcoal-blue-300 dark:hover:text-white md:hidden relative z-100"
 					onClick={toggleMobileMenu}
 					aria-label="Toggle navigation menu"
 					aria-expanded={menuOpen}

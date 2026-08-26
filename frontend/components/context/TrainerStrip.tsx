@@ -22,7 +22,7 @@ export default async function TrainerStrip() {
 	const name = trainer.trainerName || trainer.trainerEmail || "Your trainer";
 
 	return (
-		<section className="flex flex-wrap items-center gap-3 rounded-3xl border border-charcoal-blue-200 bg-white/70 p-4 dark:border-white/10 dark:bg-charcoal-blue-950/60">
+		<section className="flex flex-wrap items-center gap-3 rounded-3xl border border-charcoal-blue-200 bg-white p-4 dark:border-white/10 dark:bg-charcoal-blue-900">
 			{trainer.trainerImage ? (
 				<div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-2xl ring-1 ring-brand-500/20">
 					<Image src={trainer.trainerImage} alt={name} fill sizes="40px" className="object-cover" />

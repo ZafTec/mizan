@@ -206,7 +206,7 @@ export default async function DashboardPage() {
 					</header>
 
 					<div className="grid grid-cols-2 gap-3">
-						<div className="rounded-3xl border border-charcoal-blue-200 bg-white/70 p-4 dark:border-white/10 dark:bg-charcoal-blue-950/60">
+						<div className="rounded-3xl border border-charcoal-blue-200 bg-charcoal-blue-50 p-4 dark:border-white/10 dark:bg-charcoal-blue-950">
 							<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-500 dark:text-charcoal-blue-400">
 								Current
 							</p>
@@ -226,7 +226,7 @@ export default async function DashboardPage() {
 								{isActiveToday ? "Logged today" : "Not logged yet"}
 							</p>
 						</div>
-						<div className="rounded-3xl border border-charcoal-blue-200 bg-white/70 p-4 dark:border-white/10 dark:bg-charcoal-blue-950/60">
+						<div className="rounded-3xl border border-charcoal-blue-200 bg-charcoal-blue-50 p-4 dark:border-white/10 dark:bg-charcoal-blue-950">
 							<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-500 dark:text-charcoal-blue-400">
 								Longest
 							</p>
@@ -240,7 +240,7 @@ export default async function DashboardPage() {
 						</div>
 					</div>
 
-					<div className="space-y-3 rounded-3xl border border-charcoal-blue-200 bg-white/70 p-4 dark:border-white/10 dark:bg-charcoal-blue-950/60">
+					<div className="space-y-3 rounded-3xl border border-charcoal-blue-200 bg-charcoal-blue-50 p-4 dark:border-white/10 dark:bg-charcoal-blue-950">
 						<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-500 dark:text-charcoal-blue-400">
 							Quick jump
 						</p>
@@ -298,7 +298,7 @@ export default async function DashboardPage() {
 				</header>
 
 				{shownMeals.length === 0 ? (
-					<div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-charcoal-blue-300 bg-white/40 py-10 text-center dark:border-white/10 dark:bg-charcoal-blue-950/30">
+					<div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-charcoal-blue-300 bg-charcoal-blue-50 py-10 text-center dark:border-white/10 dark:bg-charcoal-blue-950">
 						<span className="icon-chip h-12 w-12 text-charcoal-blue-400">
 							<AnimatedIcon name="cookingPot" size={20} />
 						</span>
@@ -315,7 +315,7 @@ export default async function DashboardPage() {
 						{shownMeals.map((meal) => (
 							<li
 								key={meal.id}
-								className="flex items-center gap-4 rounded-3xl border border-charcoal-blue-200 bg-white/80 p-4 transition-colors hover:border-charcoal-blue-300 dark:border-white/10 dark:bg-charcoal-blue-950/60 dark:hover:border-white/15"
+								className="flex items-center gap-4 rounded-3xl border border-charcoal-blue-200 bg-charcoal-blue-50 p-4 transition-colors hover:border-charcoal-blue-300 dark:border-white/10 dark:bg-charcoal-blue-950 dark:hover:border-white/15"
 							>
 								<span
 									className={cn(

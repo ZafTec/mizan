@@ -71,19 +71,19 @@ export default async function AchievementsPage() {
                 </div>
 
                 <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                    <div className="rounded-xl bg-white/60 p-4 dark:bg-charcoal-blue-950/40">
+                    <div className="rounded-xl bg-charcoal-blue-50 p-4 dark:bg-charcoal-blue-900">
                         <p className="eyebrow mb-1">Level</p>
                         <p className="text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
                             {level}. {levelName}
                         </p>
                     </div>
-                    <div className="rounded-xl bg-white/60 p-4 dark:bg-charcoal-blue-950/40">
+                    <div className="rounded-xl bg-charcoal-blue-50 p-4 dark:bg-charcoal-blue-900">
                         <p className="eyebrow mb-1">Total points</p>
                         <p className="text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
                             {totalPoints}
                         </p>
                     </div>
-                    <div className="rounded-xl bg-white/60 p-4 dark:bg-charcoal-blue-950/40">
+                    <div className="rounded-xl bg-charcoal-blue-50 p-4 dark:bg-charcoal-blue-900">
                         <p className="eyebrow mb-1">Next level</p>
                         <p className="text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
                             {nextLevelAt != null ? `${nextLevelAt - totalPoints} pts` : "Maxed"}
@@ -113,7 +113,7 @@ export default async function AchievementsPage() {
                         {earned.map((achievement) => (
                             <div
                                 key={achievement.id}
-                                className="card-hover p-5 border border-brand-200 bg-white/70 dark:bg-charcoal-blue-950/60"
+                                className="card-hover p-5 border border-brand-200"
                             >
                                 <div className="flex items-start gap-4">
                                     <div className="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center shadow-lg shrink-0 dark:bg-brand-500">
