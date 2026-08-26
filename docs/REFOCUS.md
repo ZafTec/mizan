@@ -1,10 +1,16 @@
 # Refocus Plan: Mizan is a Logging App
 
-**Status:** rev 8 — phases 0-6 and 8 done, 9 next 
+**Status:** rev 9 — phases 0-6, 8 and 9 done, 10 next 
 **Branch:** `claude/cleanup-logging-refocus-rzfiv8`
 **Rule:** decide what the project is about, build around it. Everything else
 gets demoted, not deleted.
 
+> **rev 9 records three departures made while building phase 9**, all in §10
+> and §11: reserve-then-settle is one ledger row rather than Redis counters,
+> the intersection rule landed in phase 9 with the policy rather than waiting
+> for 10, and chat is not Pro-gated because the quota tiers already say what
+> free gets.
+>
 > **rev 8 rewrites §6 around a new database.** The owner dropped the
 > data-preservation constraint, which deletes the password-compat hasher, the
 > export/import scripts and the rehearsal, and merges old phases 6 and 7 into
@@ -753,11 +759,18 @@ Mechanics:
 - `AiUsageLog` (Postgres) — the durable ledger: user, feature, model, prompt and
   completion tokens, estimated cost, latency, outcome, timestamp. This is the
   source of truth for the usage tab and for billing reconciliation.
-- Redis counters keyed by user/day and global/day — the hot-path check, so a
-  quota test is not a table scan. Postgres is authoritative; Redis is the cache
-  and is rebuildable from the ledger.
-- Reserve-then-settle: estimate before the call, write actual usage after. A
-  crashed call still settles, so tokens cannot leak.
+- **Reserve-then-settle is one ledger row, not a Redis counter beside one.**
+  *(Departure, taken while building phase 9.)* This section originally called
+  for Redis counters keyed by user/day and global/day, on the grounds that a
+  quota test should not be a table scan. It is not a table scan — it is one
+  indexed aggregate over a day, in front of a call that takes seconds. Against
+  that, two stores means skew, a rebuild path, and two places to be wrong. So
+  the reservation *is* a row: written with the estimate and `Pending`, updated
+  with the truth. A process that dies mid-call leaves the estimate standing,
+  which over-counts, and over-counting is the safe direction for a spend
+  ceiling. Revisit if the aggregate ever shows up in a slow query log.
+- Settling runs in a `finally`, so a failed, timed-out or cancelled call still
+  costs what it cost. A failing loop is not free.
 - Exhaustion is a **typed 429 with which limit tripped and when it resets** —
   never a 500, never a silent degradation. Global exhaustion tells the user the
   service is at capacity, not that they are out of quota; those are different
@@ -771,6 +784,12 @@ global spend against the ceiling — that view is the difference between noticin
 a cost problem and being told about it by the invoice.
 
 ### Gating
+
+**Chat is not Pro-gated at the endpoint.** *(Departure.)* The table below gives
+free users a small daily chat allowance, and `IAiQuotaService` already enforces
+it by tier. A `RequirePro` attribute on the chat endpoint would be a second
+copy of this table, in a different place, drifting. Food photo analysis stays
+Pro-gated, because the table gives free users none of it.
 
 AI is where Pro gets something worth paying for. Current gating is three
 endpoints (§5), which is thin. Proposed split:
@@ -870,6 +889,10 @@ Task<bool> CanRead(Guid principal, Guid subject, DataAxis axis, AccessPurpose pu
 Every reader goes through it: the trainer HTTP paths, the household views, the
 AI context builder, and the MCP tools. One place to audit, one place to fix.
 
+It is **deliberately uncached**. Caching a permission means a revoked grant
+keeps working for the length of the TTL, and the thing being saved is a single
+indexed point lookup.
+
 ### The trainer × AI intersection
 
 A trainer asking the AI about a client is governed by the **intersection** of
@@ -915,10 +938,10 @@ need their own ceiling in §10's gating table.
 |---|---|
 | Grant-update endpoint so trainer grants are revocable | 3 |
 | Enforce or delete `HouseholdMember.CanViewNutrition` | 3 |
-| `IDataAccessPolicy`; move the three existing checks behind it | 9 |
+| `IDataAccessPolicy`; move the two axis checks behind it (`CanMessage` is a capability, not an axis, and stays in `ITrainerAuthorizationService`) | 9 |
 | Enforce `CanViewMeasurements` through the policy, before any client-measurement endpoint exists | 9 |
 | `UserAiConsent` entity, settings UI, default-off | 9 |
-| Intersection rule in the AI context builder | 10 |
+| Intersection rule in the AI context builder | ~~10~~ 9 — it lives in `IDataAccessPolicy`, and building the policy without it would have meant writing the wrong rule first |
 | Read-only trainer tool allowlist | 10 |
 | Trainer quota tier | 10 |
 
@@ -1175,8 +1198,8 @@ Each phase is one commit and leaves the build green.
 | 6 | **v2 identity + schema** (absorbs 7) | **high** | **done** | backend owns `users`; opaque session cookies replace the JWT scheme; Drizzle, BetterAuth and `frontend/db/` deleted; migration history collapsed to one `InitialCreate` against a new database |
 | 7 | *(folded into 6)* | | | rev 8 merged schema unification into the identity phase; later numbers are left alone so earlier commits still resolve |
 | 8 | Storage + `Mizan.Contracts` | low | **done** | `IStorageService` over S3 - MinIO or R2, configuration only; `next-cloudinary` and the signing route deleted; `Mizan.Contracts` types the spine's writes so Api, Mcp.Server and Telegram cannot drift (§13) |
-| 9 | AI platform + consent | medium | next | `IAiProvider`, `AiUsageLog`, `IAiQuotaService`, per-user + global ceilings, usage tab, `UserAiConsent`, `IDataAccessPolicy`, `AiPromptVersion` + the hard/soft split. **Limits and consent ship with the first provider call, not after** |
-| 10 | AI surfaces + admin console | medium | | structured food analysis, chat on `AiChatThread`, onboarding agent over the allowlisted tool→command map shared with MCP; trainer intersection rule and read-only client tools (§11); `/admin/ai` with evals, diff and rollback (§12) |
+| 9 | AI platform + consent | medium | **done** | `IAiProvider`, `AiUsageLog`, `IAiQuotaService` with per-user and global ceilings, usage tab, `UserAiConsent` default-off, `IDataAccessPolicy` including the intersection rule. The existing unmetered call was brought under all of it; Semantic Kernel and its auto-invoking write tool are gone |
+| 10 | AI surfaces + admin console | medium | next | `AiPromptVersion` + the hard/soft guardrail split, chat persisted on `AiChatThread`, onboarding agent over the allowlisted tool→command map shared with MCP; read-only client tools for trainers (§11); `/admin/ai` with evals, diff and rollback (§12) |
 | 11 | Billing feature split | low | | widen gating past the three endpoints, customer portal link, in-context upgrade chips; gate relationship *creation*, never existing consent (§5) |
 | 12 | UI rebuild on the new tiers | medium | | `/today`, `/history`, `/progress`, sheet-based logging |
 | 13 | Telegram bot | medium | | `Mizan.Telegram`, account linking, logging flows, chat on the shared thread. **Consumes §10's AI service; never its own** |

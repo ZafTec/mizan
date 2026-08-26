@@ -673,6 +673,11 @@ See `.env.example` for complete list. Key variables:
 - `App__PublicUrl` - where the web app lives; mailed links point here
 - `App__CookieDomain` - parent domain shared by app and API (empty on localhost)
 - `Smtp__*` - outbound email
+- `Ai__BaseUrl`, `Ai__ApiKey`, `Ai__Model` - any OpenAI-compatible endpoint;
+  empty disables the assistant and the API still starts
+- `Ai__GlobalDailyTokens`, `Ai__GlobalDailyCostMicros` - the circuit breaker on
+  the provider bill. Never raise these without looking at `/api/Ai/usage/global`
+- `Storage__*` - S3-compatible object storage (MinIO or Cloudflare R2)
 - `Authentication__Google__*`, `Authentication__GitHub__*` - OAuth
 
 ## Critical Reminders
@@ -688,4 +693,8 @@ See `.env.example` for complete list. Key variables:
 9. **Use Docker Compose** for testing to ensure proper isolation
 10. **One schema, owned by EF Core** - the frontend has no database access
 11. **Case conversion is automatic** - don't manually convert PascalCase/camelCase
+12. **Never call an AI provider outside `IAiQuotaService`** - reserve, call,
+    settle in a `finally`. An unmetered call is a bill nobody sees coming
+13. **Never read personal data for the AI without `IDataAccessPolicy`** - ask it
+    which axes you may use and take only those; do not fetch everything and filter
 12. **Use MCP tools** - Microsoft Docs for .NET, Context7 for npm packages, Next.js DevTools for debugging
