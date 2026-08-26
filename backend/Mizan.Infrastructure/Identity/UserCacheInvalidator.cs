@@ -11,5 +11,7 @@ public class UserCacheInvalidator : IUserCacheInvalidator
     public UserCacheInvalidator(HybridCache cache) => _cache = cache;
 
     public Task InvalidateAsync(Guid userId, CancellationToken cancellationToken = default) =>
-        _cache.RemoveByTagAsync(CacheTags.UserStatus(userId), cancellationToken).AsTask();
+        _cache.RemoveByTagAsync(
+            [CacheTags.UserStatus(userId), CacheTags.UserZone(userId)],
+            cancellationToken).AsTask();
 }

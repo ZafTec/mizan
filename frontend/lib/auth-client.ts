@@ -39,8 +39,26 @@ async function call<T>(path: string, body?: unknown, method = "POST"): Promise<T
 	return (await response.json()) as T;
 }
 
+/**
+ * The browser knows the user's zone; nothing else does. Sending it at signup
+ * is what makes their first week of streaks land on the right days - the
+ * server treats it as a hint and drops anything it cannot resolve.
+ */
+export function browserTimeZone(): string | null {
+	try {
+		return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+	} catch {
+		return null;
+	}
+}
+
 export const signUp = (email: string, password: string, name?: string) =>
-	call<{ message: string }>("/register", { email, password, name: name || null });
+	call<{ message: string }>("/register", {
+		email,
+		password,
+		name: name || null,
+		timeZoneId: browserTimeZone(),
+	});
 
 export const signIn = (email: string, password: string) =>
 	call<User>("/login", { email, password });

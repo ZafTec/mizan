@@ -54,10 +54,12 @@ public class UpdateAchievementCommandValidator : AbstractValidator<UpdateAchieve
 public class UpdateAchievementCommandHandler : IRequestHandler<UpdateAchievementCommand, Unit>
 {
     private readonly IMizanDbContext _context;
+    private readonly IAchievementCatalogue _catalogue;
 
-    public UpdateAchievementCommandHandler(IMizanDbContext context)
+    public UpdateAchievementCommandHandler(IMizanDbContext context, IAchievementCatalogue catalogue)
     {
         _context = context;
+        _catalogue = catalogue;
     }
 
     public async Task<Unit> Handle(UpdateAchievementCommand request, CancellationToken cancellationToken)
@@ -75,6 +77,10 @@ public class UpdateAchievementCommandHandler : IRequestHandler<UpdateAchievement
         achievement.Threshold = request.Threshold;
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        // The catalogue is cached for the logging path; without this an edit
+        // takes a cache lifetime to start unlocking.
+        await _catalogue.InvalidateAsync(cancellationToken);
         return Unit.Value;
     }
 }

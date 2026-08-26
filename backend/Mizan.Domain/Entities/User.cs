@@ -12,6 +12,16 @@ public class User
     public bool EmailVerified { get; set; }
     public string? Name { get; set; }
     public string? Image { get; set; }
+
+    /// <summary>
+    /// IANA zone id, e.g. "Africa/Addis_Ababa". Null means we have never been
+    /// told, and the user is treated as UTC until they say otherwise.
+    ///
+    /// This is what a "day" means for streaks and daily totals. Without it a
+    /// user three hours east of UTC has their late-night logs recorded against
+    /// the previous day, and their streak never advances.
+    /// </summary>
+    public string? TimeZoneId { get; set; }
     public string? PasswordHash { get; set; }
     public int AccessFailedCount { get; set; }
     public DateTime? LockoutEnd { get; set; }

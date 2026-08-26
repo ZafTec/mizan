@@ -2550,6 +2550,11 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("theme_preference");
 
+                    b.Property<string>("TimeZoneId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("time_zone_id");
+
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -2585,6 +2590,53 @@ namespace Mizan.Infrastructure.Migrations
                     b.HasIndex("AchievementId");
 
                     b.ToTable("user_achievements", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.UserActivityCounters", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<int>("BodyMeasurementsLogged")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("body_measurements_logged");
+
+                    b.Property<int>("GoalProgressLogged")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("goal_progress_logged");
+
+                    b.Property<int>("MealsLogged")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("meals_logged");
+
+                    b.Property<int>("RecipesCreated")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("recipes_created");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<int>("WorkoutsLogged")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("workouts_logged");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("user_activity_counters", (string)null);
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.UserAiConsent", b =>
@@ -3715,6 +3767,17 @@ namespace Mizan.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Achievement");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.UserActivityCounters", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithOne()
+                        .HasForeignKey("Mizan.Domain.Entities.UserActivityCounters", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
