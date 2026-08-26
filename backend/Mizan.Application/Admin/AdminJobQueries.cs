@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using System.Text.RegularExpressions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Common;
@@ -108,7 +107,7 @@ public class ListAdminJobsQueryHandler : IRequestHandler<ListAdminJobsQuery, Pag
                 Status = j.Status.ToString(),
                 Attempts = j.Attempts,
                 RunAfter = j.RunAfter,
-                LastError = AdminJobStatus.Redact(j.LastError),
+                LastError = OutboxError.Redact(j.LastError),
                 CreatedAt = j.CreatedAt,
                 StartedAt = j.StartedAt,
                 CompletedAt = j.CompletedAt,
@@ -216,19 +215,8 @@ public class DeleteAdminJobCommandHandler : IRequestHandler<DeleteAdminJobComman
     }
 }
 
-public static partial class AdminJobStatus
+public static class AdminJobStatus
 {
     public static bool TryParse(string? value, out OutboxJobStatus status) =>
         Enum.TryParse(value, ignoreCase: true, out status) && !string.IsNullOrWhiteSpace(value);
-
-    /// <summary>
-    /// An SMTP rejection quotes the recipient back at you, and this view is
-    /// read by operators who have no business seeing who was mailed. The
-    /// diagnostic value is in the rest of the message, so the address goes.
-    /// </summary>
-    public static string? Redact(string? error) =>
-        string.IsNullOrEmpty(error) ? error : EmailPattern().Replace(error, "[redacted]");
-
-    [GeneratedRegex(@"[\w.+-]+@[\w-]+\.[\w.-]+")]
-    private static partial Regex EmailPattern();
 }

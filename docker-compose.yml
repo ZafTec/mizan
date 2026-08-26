@@ -106,6 +106,9 @@ services:
 
       # Identity - session cookies, email, OAuth
       - App__PublicUrl=${PUBLIC_APP_URL:-http://localhost:3000}
+      # The bot's @name, so the API can build a working t.me deep link. Empty
+      # hides the Telegram settings page entirely.
+      - Telegram__BotUsername=${TELEGRAM_BOT_USERNAME:-}
       - App__CookieDomain=${COOKIE_DOMAIN:-}
       - Smtp__Host=${SMTP_HOST:-}
       - Smtp__Port=${SMTP_PORT:-587}
@@ -177,6 +180,34 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      backend:
+        condition: service_started
+    networks:
+      - mizan-network
+
+  # Telegram bot. Long polling by default, so no public hostname is needed in
+  # development; production sets TELEGRAM_USE_WEBHOOK and puts nginx in front
+  # of /telegram/webhook. Starts and idles when no token is configured.
+  telegram:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.telegram
+    container_name: mizan-telegram
+    ports:
+      - "5002:5002"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5002
+      - TelegramBot__BotToken=${TELEGRAM_BOT_TOKEN:-}
+      - TelegramBot__UseWebhook=${TELEGRAM_USE_WEBHOOK:-false}
+      - TelegramBot__WebhookSecret=${TELEGRAM_WEBHOOK_SECRET:-}
+      - TelegramBot__ApiUrl=http://backend:8080
+      # The same non-admin service key the MCP server uses. It is an internal
+      # credential on an internal network; the bot needs impersonation for the
+      # linked user and nothing beyond it.
+      - TelegramBot__ServiceApiKey=${MCP_SERVICE_KEY:?MCP_SERVICE_KEY is required}
+      - TelegramBot__PublicUrl=${PUBLIC_APP_URL:-http://localhost:3000}
+    depends_on:
       backend:
         condition: service_started
     networks:

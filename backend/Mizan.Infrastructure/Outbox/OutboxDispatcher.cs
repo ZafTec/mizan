@@ -175,31 +175,53 @@ public class OutboxDispatcher : BackgroundService
         {
             // Retrying cannot fix it, so do not spend four more attempts
             // proving that.
-            _logger.LogError(ex, "Outbox job {JobId} ({Type}) failed permanently", jobId, type);
             job.Status = OutboxJobStatus.DeadLettered;
-            job.LastError = ex.Message;
+            job.LastError = OutboxError.Redact(ex.Message);
             job.CompletedAt = DateTime.UtcNow;
+
+            LogFailure(LogLevel.Error, job, ex, "failed permanently");
         }
         catch (Exception ex)
         {
             var exhausted = job.Attempts >= _options.MaxAttempts;
 
             job.Status = exhausted ? OutboxJobStatus.DeadLettered : OutboxJobStatus.Failed;
-            job.LastError = ex.Message;
+            job.LastError = OutboxError.Redact(ex.Message);
             job.RunAfter = DateTime.UtcNow.AddSeconds(Backoff(job.Attempts));
             if (exhausted) job.CompletedAt = DateTime.UtcNow;
 
-            _logger.Log(
+            LogFailure(
                 exhausted ? LogLevel.Error : LogLevel.Warning,
+                job,
                 ex,
-                "Outbox job {JobId} ({Type}) failed on attempt {Attempt}{Fate}",
-                jobId,
-                type,
-                job.Attempts,
-                exhausted ? "; dead-lettered" : "");
+                exhausted
+                    ? $"failed on attempt {job.Attempts}; dead-lettered"
+                    : $"failed on attempt {job.Attempts}");
         }
 
         await db.SaveChangesAsync(CancellationToken.None);
+    }
+
+    /// <summary>
+    /// The exception object is deliberately not passed to the logger.
+    ///
+    /// Serilog renders it with <c>ToString()</c>, message included, and an
+    /// SMTP rejection's message is an address. What is left - the exception
+    /// type, the redacted message, and the job id - is enough to diagnose one,
+    /// and the row carries the same redacted text for the admin view. The
+    /// stack trace is the price; for a queue whose handlers are three frames
+    /// deep it was never what told you anything.
+    /// </summary>
+    private void LogFailure(LogLevel level, OutboxJob job, Exception ex, string fate)
+    {
+        _logger.Log(
+            level,
+            "Outbox job {JobId} ({Type}) {Fate}: {Exception}: {Reason}",
+            job.Id,
+            job.Type,
+            fate,
+            ex.GetType().Name,
+            OutboxError.Redact(ex.Message));
     }
 
     /// <summary>Doubles per attempt, capped so a dead-lettering job does not take a day to get there.</summary>

@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Mizan.Infrastructure.Migrations
 {
     [DbContext(typeof(MizanDbContext))]
-    [Migration("20260826140754_InitialCreate")]
+    [Migration("20260826144547_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -2473,6 +2473,48 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("subscriptions", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.TelegramLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime?>("LastSeenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_seen_at");
+
+                    b.Property<DateTime>("LinkedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("linked_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<long>("TelegramUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("telegram_user_id");
+
+                    b.Property<string>("TelegramUsername")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("telegram_username");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TelegramUserId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("telegram_links", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.TrainerClientRelationship", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3798,6 +3840,17 @@ namespace Mizan.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.Subscription", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.TelegramLink", b =>
                 {
                     b.HasOne("Mizan.Domain.Entities.User", "User")
                         .WithMany()
