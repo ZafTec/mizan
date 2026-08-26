@@ -4,6 +4,12 @@ public enum UserTokenPurpose
 {
     EmailVerification = 0,
     PasswordReset = 1,
+
+    /// <summary>
+    /// The code behind a t.me deep link. Not mailed - it is shown on screen and
+    /// lives minutes, because the user is holding both devices.
+    /// </summary>
+    TelegramLink = 2,
 }
 
 /// <summary>
