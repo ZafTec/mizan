@@ -1,0 +1,249 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=Archivo:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #1F6F68; } a:hover { color: #164F4A; }
+
+    .sheet { font-family: Archivo, system-ui, sans-serif; }
+    .num { font-variant-numeric: tabular-nums; }
+
+    /* One theme contract. Every surface below reads these; nothing hard-codes
+       a light or dark value, so the dark toggle is a single class swap. */
+    .sheet.light {
+      --paper:  #FBFAF7;
+      --raised: #FFFFFF;
+      --ink:    #1A1815;
+      --body:   #55514A;
+      --muted:  #8C8779;
+      --faint:  #A19B8D;
+      --rule:   #E3DFD6;
+      --hair:   #EDE9E0;
+      --brand:  #1F6F68;
+      --danger: #A33A2A;
+      --warn:   #8A5E17;
+      --dangerwash: #FDF6F3;
+      --skeleton: #EDE9E0;
+    }
+    .sheet.dark {
+      --paper:  #14161A;
+      --raised: #1A1D22;
+      --ink:    #F2F0EB;
+      --body:   #C0BCB4;
+      --muted:  #8B867C;
+      --faint:  #6E6A62;
+      --rule:   #2A2E34;
+      --hair:   #23262B;
+      --brand:  #63C9BE;
+      --danger: #E88171;
+      --warn:   #D6A254;
+      --dangerwash: #221A19;
+      --skeleton: #23262B;
+    }
+
+    .th {
+      text-align: left; padding: 10px 16px; font-size: 10px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--body);
+    }
+    .td { padding: 13px 16px; color: var(--body); }
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px;
+      border: 1px solid var(--rule); border-radius: 3px; padding: 7px 11px; color: var(--body);
+    }
+    .lede { font-size: 12.5px; line-height: 1.6; color: var(--muted); margin: 0; max-width: 62ch; }
+    .capt { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
+  </style>
+</helmet>
+
+<div class="sheet {{theme}}" style="width: 1280px; background: var(--paper); color: var(--ink); padding: 44px 48px 52px; display: flex; flex-direction: column; gap: 40px;">
+
+  <!-- masthead -->
+  <div style="display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--rule); padding-bottom: 26px;">
+    <div class="capt">Mizan &middot; Design language &middot; Phase 18</div>
+    <h1 style="margin: 0; font-family: Spectral, Georgia, serif; font-size: 42px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.05;">The table</h1>
+    <p class="lede">One component behind every list in the product. It is server-paginated &mdash; the page holds twenty rows out of thousands &mdash; so sort, filter and page are links that change the query string, never client state. Everything below is a state it has to render, not a decoration.</p>
+  </div>
+
+  <!-- 1. anatomy -->
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <span class="capt">01</span>
+      <h2 style="margin: 0; font-family: Spectral, Georgia, serif; font-size: 22px; font-weight: 500;">Anatomy</h2>
+      <p class="lede" style="margin-left: auto; text-align: right;">Toolbar, ruled header, rows, footer. No card, no zebra, no shadow.</p>
+    </div>
+
+    <!-- toolbar -->
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div class="chip" style="width: 260px; background: var(--raised); color: var(--faint);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        Search jobs
+      </div>
+      <div class="chip" style="border-color: var(--ink); color: var(--ink); font-weight: 500;">
+        Status: Dead
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+      </div>
+      <div class="chip">
+        Any job
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg>
+      </div>
+      <div class="num" style="margin-left: auto; font-size: 11.5px; color: var(--muted);">218 rows</div>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr style="border-bottom: 1px solid var(--ink);">
+          <th class="th" style="padding-left: 0;">Job</th>
+          <th class="th" style="color: var(--ink);">
+            <span style="display: inline-flex; align-items: center; gap: 5px;">Status
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 15 6-6 6 6"></path></svg>
+            </span>
+          </th>
+          <th class="th" style="text-align: right;">Tries</th>
+          <th class="th">Last error</th>
+          <th class="th">Queued</th>
+          <th class="th" style="padding-right: 0;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom: 1px solid var(--hair); background: var(--dangerwash);">
+          <td class="td" style="padding-left: 0;">
+            <div style="font-weight: 500; color: var(--ink);">Email</div>
+            <div class="num" style="font-size: 11px; color: var(--faint);">019839c1</div>
+          </td>
+          <td class="td"><span style="display: inline-flex; align-items: center; gap: 6px; color: var(--danger); font-weight: 500;"><span style="width: 5px; height: 5px; background: var(--danger); border-radius: 50%;"></span>Dead</span></td>
+          <td class="td num" style="text-align: right; color: var(--danger);">5</td>
+          <td class="td" style="max-width: 300px;">550 5.1.1 [redacted]: recipient rejected</td>
+          <td class="td num" style="white-space: nowrap; color: var(--muted);">26 Aug 14:12</td>
+          <td class="td" style="text-align: right; padding-right: 0; white-space: nowrap;">
+            <a href="#" style="font-size: 12px; text-decoration: none; border-bottom: 1px solid currentColor;">Retry</a>
+            <span style="color: var(--rule); margin: 0 8px;">&middot;</span>
+            <a href="#" style="font-size: 12px; color: var(--danger); text-decoration: none; border-bottom: 1px solid currentColor;">Discard</a>
+          </td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--hair);">
+          <td class="td" style="padding-left: 0;"><div style="font-weight: 500; color: var(--ink);">Eval suite</div><div class="num" style="font-size: 11px; color: var(--faint);">019839bf</div></td>
+          <td class="td"><span style="display: inline-flex; align-items: center; gap: 6px; color: var(--brand); font-weight: 500;"><span style="width: 5px; height: 5px; background: var(--brand); border-radius: 50%;"></span>Running</span></td>
+          <td class="td num" style="text-align: right;">1</td>
+          <td class="td" style="color: var(--faint);">&mdash;</td>
+          <td class="td num" style="white-space: nowrap; color: var(--muted);">26 Aug 14:09</td>
+          <td class="td" style="padding-right: 0;"></td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--hair);">
+          <td class="td" style="padding-left: 0;"><div style="font-weight: 500; color: var(--ink);">Email</div><div class="num" style="font-size: 11px; color: var(--faint);">019839bb</div></td>
+          <td class="td"><span style="display: inline-flex; align-items: center; gap: 6px; color: var(--warn); font-weight: 500;"><span style="width: 5px; height: 5px; background: var(--warn); border-radius: 50%;"></span>Retrying</span></td>
+          <td class="td num" style="text-align: right;">3</td>
+          <td class="td">Connection timed out after 30000ms</td>
+          <td class="td num" style="white-space: nowrap; color: var(--muted);">26 Aug 14:04</td>
+          <td class="td" style="text-align: right; padding-right: 0;"><a href="#" style="font-size: 12px; text-decoration: none; border-bottom: 1px solid currentColor;">Retry</a></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <span class="num" style="font-size: 11.5px; color: var(--muted);">1&ndash;20 of 218</span>
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <span style="font-size: 12px; padding: 5px 11px; border: 1px solid var(--hair); border-radius: 3px; color: var(--faint);">Previous</span>
+        <span class="num" style="font-size: 12px; padding: 0 10px; color: var(--body);">1 / 11</span>
+        <span style="font-size: 12px; padding: 5px 11px; border: 1px solid var(--rule); border-radius: 3px; color: var(--ink);">Next</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. rules -->
+  <div style="display: flex; flex-direction: column; gap: 18px; border-top: 1px solid var(--rule); padding-top: 32px;">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <span class="capt">02</span>
+      <h2 style="margin: 0; font-family: Spectral, Georgia, serif; font-size: 22px; font-weight: 500;">The five rules</h2>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px;">
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-size: 13px; font-weight: 600; color: var(--ink);">Numbers right, tabular</div>
+        <p class="lede" style="font-size: 12px;">Counts and dates align on the decimal so a column scans vertically. Everything else is left.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-size: 13px; font-weight: 600; color: var(--ink);">Status is a dot plus a word</div>
+        <p class="lede" style="font-size: 12px;">Never colour alone. The dot carries the hue, the word carries the meaning in grayscale.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-size: 13px; font-weight: 600; color: var(--ink);">One rule under the header</div>
+        <p class="lede" style="font-size: 12px;">Full-ink. Rows are separated by a hairline. Zebra striping and vertical rules are noise.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-size: 13px; font-weight: 600; color: var(--ink);">Wash, not badge, for urgency</div>
+        <p class="lede" style="font-size: 12px;">A dead row tints its background. It reads at a glance without a second coloured object per row.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-size: 13px; font-weight: 600; color: var(--ink);">Actions only where legal</div>
+        <p class="lede" style="font-size: 12px;">A running job shows no buttons. Discovering the rule from a 400 is not a design.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. states -->
+  <div style="display: flex; flex-direction: column; gap: 18px; border-top: 1px solid var(--rule); padding-top: 32px;">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <span class="capt">03</span>
+      <h2 style="margin: 0; font-family: Spectral, Georgia, serif; font-size: 22px; font-weight: 500;">The states that are not &ldquo;rows&rdquo;</h2>
+      <p class="lede" style="margin-left: auto; text-align: right;">Loading and empty are designed, not defaulted.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px;">
+
+      <!-- skeleton -->
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="capt">Loading &mdash; same rhythm as the real rows</div>
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--ink);">
+              <th class="th" style="padding-left: 0;">Job</th>
+              <th class="th">Status</th>
+              <th class="th" style="text-align: right;">Tries</th>
+              <th class="th">Queued</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid var(--hair);"><td class="td" style="padding-left: 0;"><div style="height: 9px; width: 88px; background: var(--skeleton); border-radius: 2px;"></div><div style="height: 7px; width: 54px; background: var(--skeleton); border-radius: 2px; margin-top: 6px; opacity: 0.6;"></div></td><td class="td"><div style="height: 9px; width: 64px; background: var(--skeleton); border-radius: 2px;"></div></td><td class="td"><div style="height: 9px; width: 18px; background: var(--skeleton); border-radius: 2px; margin-left: auto;"></div></td><td class="td"><div style="height: 9px; width: 82px; background: var(--skeleton); border-radius: 2px;"></div></td></tr>
+            <tr style="border-bottom: 1px solid var(--hair);"><td class="td" style="padding-left: 0;"><div style="height: 9px; width: 72px; background: var(--skeleton); border-radius: 2px;"></div><div style="height: 7px; width: 54px; background: var(--skeleton); border-radius: 2px; margin-top: 6px; opacity: 0.6;"></div></td><td class="td"><div style="height: 9px; width: 76px; background: var(--skeleton); border-radius: 2px;"></div></td><td class="td"><div style="height: 9px; width: 18px; background: var(--skeleton); border-radius: 2px; margin-left: auto;"></div></td><td class="td"><div style="height: 9px; width: 82px; background: var(--skeleton); border-radius: 2px;"></div></td></tr>
+            <tr style="border-bottom: 1px solid var(--hair);"><td class="td" style="padding-left: 0;"><div style="height: 9px; width: 94px; background: var(--skeleton); border-radius: 2px;"></div><div style="height: 7px; width: 54px; background: var(--skeleton); border-radius: 2px; margin-top: 6px; opacity: 0.6;"></div></td><td class="td"><div style="height: 9px; width: 58px; background: var(--skeleton); border-radius: 2px;"></div></td><td class="td"><div style="height: 9px; width: 18px; background: var(--skeleton); border-radius: 2px; margin-left: auto;"></div></td><td class="td"><div style="height: 9px; width: 82px; background: var(--skeleton); border-radius: 2px;"></div></td></tr>
+          </tbody>
+        </table>
+        <p class="lede" style="font-size: 12px;">The skeleton keeps the header and the row height, so nothing shifts when the data lands.</p>
+      </div>
+
+      <!-- empty -->
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="capt">Empty &mdash; a sentence, not a shrug</div>
+        <div style="border: 1px dashed var(--rule); padding: 42px 32px; text-align: center; display: flex; flex-direction: column; gap: 8px; align-items: center;">
+          <div style="font-family: Spectral, Georgia, serif; font-size: 20px; font-weight: 500; color: var(--ink);">Nothing in the queue</div>
+          <p class="lede" style="font-size: 12.5px; max-width: 34ch;">Jobs appear here as they are enqueued. Nothing is wrong.</p>
+        </div>
+        <p class="lede" style="font-size: 12px;">Two variants: nothing yet (above), and nothing matched &mdash; which offers to clear the filters rather than leaving a dead end.</p>
+        <div style="border: 1px dashed var(--rule); padding: 26px 32px; text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center;">
+          <div style="font-family: Spectral, Georgia, serif; font-size: 18px; font-weight: 500; color: var(--ink);">No jobs match</div>
+          <a href="#" style="font-size: 12.5px; text-decoration: none; border-bottom: 1px solid currentColor;">Clear the filters</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light","section":"Theme"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

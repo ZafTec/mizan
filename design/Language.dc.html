@@ -1,0 +1,197 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=Archivo:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #1F6F68; } a:hover { color: #164F4A; }
+    .sheet { font-family: Archivo, system-ui, sans-serif; }
+    .num { font-variant-numeric: tabular-nums; }
+    .sheet.light {
+      --paper: #FBFAF7; --raised: #FFFFFF; --ink: #1A1815; --body: #55514A;
+      --muted: #8C8779; --faint: #A19B8D; --rule: #E3DFD6; --hair: #EDE9E0;
+      --brand: #1F6F68; --danger: #A33A2A; --warn: #8A5E17;
+    }
+    .sheet.dark {
+      --paper: #14161A; --raised: #1A1D22; --ink: #F2F0EB; --body: #C0BCB4;
+      --muted: #8B867C; --faint: #6E6A62; --rule: #2A2E34; --hair: #23262B;
+      --brand: #63C9BE; --danger: #E88171; --warn: #D6A254;
+    }
+    .capt { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
+    .h2 { margin: 0; font-family: Spectral, Georgia, serif; font-size: 22px; font-weight: 500; }
+    .lede { font-size: 12.5px; line-height: 1.6; color: var(--muted); margin: 0; max-width: 62ch; }
+    .sw { display: flex; flex-direction: column; gap: 6px; }
+    .swatch { height: 56px; border-radius: 3px; }
+    .swname { font-size: 11.5px; font-weight: 500; color: var(--ink); }
+    .swval { font-size: 10.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
+    .sec { border-top: 1px solid var(--rule); padding-top: 32px; display: flex; flex-direction: column; gap: 20px; }
+  </style>
+</helmet>
+
+<div class="sheet {{theme}}" style="width: 1280px; background: var(--paper); color: var(--ink); padding: 44px 48px 52px; display: flex; flex-direction: column; gap: 38px;">
+
+  <div style="display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--rule); padding-bottom: 26px;">
+    <div class="capt">Mizan &middot; Design language &middot; Phase 18</div>
+    <h1 style="margin: 0; font-family: Spectral, Georgia, serif; font-size: 42px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.05;">Ledger</h1>
+    <p class="lede">The product is a log. So the interface is a ruled sheet: hairlines instead of cards, a serif for anything a person reads and a grotesque for anything a person scans, and colour reserved for the four things that mean something. Nothing floats, nothing glows, nothing is frosted.</p>
+  </div>
+
+  <!-- type -->
+  <div class="sec">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <span class="capt">01</span><h2 class="h2">Type</h2>
+      <p class="lede" style="margin-left: auto; text-align: right;">Two faces. Spectral reads, Archivo counts.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 12px 32px; align-items: baseline;">
+      <div class="capt" style="padding-top: 12px;">Display / 42 / 500</div>
+      <div style="font-family: Spectral, Georgia, serif; font-size: 42px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.05;">Background jobs</div>
+
+      <div class="capt" style="padding-top: 8px;">Section / 22 / 500</div>
+      <div style="font-family: Spectral, Georgia, serif; font-size: 22px; font-weight: 500;">The five rules</div>
+
+      <div class="capt" style="padding-top: 4px;">Body / 13 / 400</div>
+      <div style="font-size: 13px; line-height: 1.6; max-width: 62ch;">A dead job is something a user asked for that never happened. Fix the cause, then retry it.</div>
+
+      <div class="capt" style="padding-top: 3px;">Data / 13 / 400 tnum</div>
+      <div class="num" style="font-size: 13px;">019839c1 &nbsp;&middot;&nbsp; 26 Aug 14:12 &nbsp;&middot;&nbsp; 1&ndash;20 of 218</div>
+
+      <div class="capt" style="padding-top: 2px;">Caption / 10 / 600</div>
+      <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--body);">Last error</div>
+    </div>
+
+    <p class="lede">Five sizes, and that is the whole ramp. Weight does the work the missing sizes would have done &mdash; 500 for anything structural, 600 only for the uppercase captions where letterspacing needs the extra mass.</p>
+  </div>
+
+  <!-- colour -->
+  <div class="sec">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <span class="capt">02</span><h2 class="h2">Colour</h2>
+      <p class="lede" style="margin-left: auto; text-align: right;">Paper, ink, four meanings. No decorative hue.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px;">
+      <div class="sw"><div class="swatch" style="background: var(--paper); border: 1px solid var(--rule);"></div><div class="swname">Paper</div><div class="swval">Every page ground</div></div>
+      <div class="sw"><div class="swatch" style="background: var(--raised); border: 1px solid var(--rule);"></div><div class="swval swname">Raised</div><div class="swval">Inputs only</div></div>
+      <div class="sw"><div class="swatch" style="background: var(--ink);"></div><div class="swname">Ink</div><div class="swval">Headings, header rule</div></div>
+      <div class="sw"><div class="swatch" style="background: var(--body);"></div><div class="swname">Body</div><div class="swval">Cell text</div></div>
+      <div class="sw"><div class="swatch" style="background: var(--muted);"></div><div class="swname">Muted</div><div class="swval">Timestamps, counts</div></div>
+      <div class="sw"><div class="swatch" style="background: var(--rule); border: 1px solid var(--hair);"></div><div class="swname">Rule</div><div class="swval">Borders, dividers</div></div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px;">
+      <div class="sw"><div class="swatch" style="background: var(--brand);"></div><div class="swname">Brand</div><div class="swval">Live, links, primary</div></div>
+      <div class="sw"><div class="swatch" style="background: var(--warn);"></div><div class="swname">Warn</div><div class="swval">Retrying, at risk</div></div>
+      <div class="sw"><div class="swatch" style="background: var(--danger);"></div><div class="swname">Danger</div><div class="swval">Dead, destructive</div></div>
+      <div style="grid-column: span 3;">
+        <p class="lede">Verdigris survives from the old palette because it is the brand; sandy-brown and burnt-peach do not, because a fourth and fifth accent is how a status column becomes unreadable. Warn and danger are the only two hues left, and both are desaturated far enough to sit next to body text without vibrating.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- controls -->
+  <div class="sec">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <span class="capt">03</span><h2 class="h2">Controls</h2>
+      <p class="lede" style="margin-left: auto; text-align: right;">3px radius everywhere. 28px rounded panels are gone.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px;">
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="capt">Buttons</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <span style="font-size: 12px; font-weight: 500; padding: 8px 14px; background: var(--ink); color: var(--paper); border-radius: 3px;">Retry all dead</span>
+          <span style="font-size: 12px; font-weight: 500; padding: 8px 14px; border: 1px solid var(--rule); color: var(--body); border-radius: 3px;">Export CSV</span>
+          <span style="font-size: 12px; font-weight: 500; padding: 8px 14px; border: 1px solid var(--danger); color: var(--danger); border-radius: 3px;">Discard</span>
+          <span style="font-size: 12px; font-weight: 500; padding: 8px 14px; border: 1px solid var(--hair); color: var(--faint); border-radius: 3px;">Disabled</span>
+        </div>
+        <p class="lede" style="font-size: 12px;">One filled button per screen. Ink, not brand &mdash; brand means live.</p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="capt">Input &amp; filter</div>
+        <div style="display: flex; align-items: center; gap: 8px; border: 1px solid var(--rule); background: var(--raised); border-radius: 3px; padding: 8px 11px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color: var(--faint);"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <span style="font-size: 12.5px; color: var(--faint);">Search jobs</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; border: 1px solid var(--brand); border-radius: 3px; padding: 8px 11px; box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand) 14%, transparent);">
+          <span style="font-size: 12.5px; color: var(--ink);">euaelesh</span>
+        </div>
+        <p class="lede" style="font-size: 12px;">Focus is a brand hairline and a 3px halo. No blur, no glow.</p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="capt">Status</div>
+        <div style="display: flex; flex-direction: column; gap: 7px;">
+          <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--danger); font-weight: 500;"><span style="width: 5px; height: 5px; background: var(--danger); border-radius: 50%;"></span>Dead</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--warn); font-weight: 500;"><span style="width: 5px; height: 5px; background: var(--warn); border-radius: 50%;"></span>Retrying</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--brand); font-weight: 500;"><span style="width: 5px; height: 5px; background: var(--brand); border-radius: 50%;"></span>Running</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--body);"><span style="width: 5px; height: 5px; background: var(--muted); border-radius: 50%;"></span>Queued</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted);"><span style="width: 5px; height: 5px; background: var(--rule); border-radius: 50%;"></span>Done</span>
+        </div>
+        <p class="lede" style="font-size: 12px;">Dot plus word. Legible printed in grayscale.</p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="capt">Spacing &amp; rules</div>
+        <div style="display: flex; flex-direction: column; gap: 9px;">
+          <div style="display: flex; align-items: center; gap: 10px;"><div style="height: 1px; width: 42px; background: var(--ink);"></div><span style="font-size: 11.5px; color: var(--body);">1px ink &mdash; under a header</span></div>
+          <div style="display: flex; align-items: center; gap: 10px;"><div style="height: 1px; width: 42px; background: var(--rule);"></div><span style="font-size: 11.5px; color: var(--body);">1px rule &mdash; sections, borders</span></div>
+          <div style="display: flex; align-items: center; gap: 10px;"><div style="height: 1px; width: 42px; background: var(--hair);"></div><span style="font-size: 11.5px; color: var(--body);">1px hair &mdash; between rows</span></div>
+        </div>
+        <p class="lede" style="font-size: 12px;">Steps of 4: 4, 8, 12, 16, 24, 32, 44. Page gutter 48, section gap 32.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- what goes -->
+  <div class="sec">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <span class="capt">04</span><h2 class="h2">What this replaces</h2>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px;">
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="capt" style="color: var(--danger);">Removed</div>
+        <div style="display: flex; flex-direction: column; gap: 9px; font-size: 12.5px; line-height: 1.5;">
+          <div style="display: flex; gap: 10px;"><span style="color: var(--danger); flex-shrink: 0;">&times;</span><span><b style="font-weight: 600;">backdrop-filter on nine classes.</b> <span style="color: var(--muted);">Frosted glass over a flat background is a texture nobody asked for and a repaint every scroll.</span></span></div>
+          <div style="display: flex; gap: 10px;"><span style="color: var(--danger); flex-shrink: 0;">&times;</span><span><b style="font-weight: 600;">28&ndash;32px radii.</b> <span style="color: var(--muted);">A pill-shaped data table is a costume.</span></span></div>
+          <div style="display: flex; gap: 10px;"><span style="color: var(--danger); flex-shrink: 0;">&times;</span><span><b style="font-weight: 600;">shadow-panel on every surface.</b> <span style="color: var(--muted);">Nine floating planes means no hierarchy at all.</span></span></div>
+          <div style="display: flex; gap: 10px;"><span style="color: var(--danger); flex-shrink: 0;">&times;</span><span><b style="font-weight: 600;">Three accent ramps.</b> <span style="color: var(--muted);">Sandy-brown and burnt-peach never earned their 22 tokens.</span></span></div>
+          <div style="display: flex; gap: 10px;"><span style="color: var(--danger); flex-shrink: 0;">&times;</span><span><b style="font-weight: 600;">Inter.</b> <span style="color: var(--muted);">Correct and anonymous. This product has a thesis; the type can carry some of it.</span></span></div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="capt" style="color: var(--brand);">Kept</div>
+        <div style="display: flex; flex-direction: column; gap: 9px; font-size: 12.5px; line-height: 1.5;">
+          <div style="display: flex; gap: 10px;"><span style="color: var(--brand); flex-shrink: 0;">&check;</span><span><b style="font-weight: 600;">Verdigris.</b> <span style="color: var(--muted);">It is the brand, and it now means exactly one thing: live.</span></span></div>
+          <div style="display: flex; gap: 10px;"><span style="color: var(--brand); flex-shrink: 0;">&check;</span><span><b style="font-weight: 600;">The oklch ramps.</b> <span style="color: var(--muted);">Same generation method, three ramps instead of five.</span></span></div>
+          <div style="display: flex; gap: 10px;"><span style="color: var(--brand); flex-shrink: 0;">&check;</span><span><b style="font-weight: 600;">The easing curves and durations.</b> <span style="color: var(--muted);">120&ndash;300ms, never ease-in. Already right.</span></span></div>
+          <div style="display: flex; gap: 10px;"><span style="color: var(--brand); flex-shrink: 0;">&check;</span><span><b style="font-weight: 600;">Dark mode as a token swap.</b> <span style="color: var(--muted);">One class, one set of variables &mdash; not a second stylesheet.</span></span></div>
+          <div style="display: flex; gap: 10px;"><span style="color: var(--brand); flex-shrink: 0;">&check;</span><span><b style="font-weight: 600;">The compact density class.</b> <span style="color: var(--muted);">It survives; it just has less radius to shave off.</span></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light","section":"Theme"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

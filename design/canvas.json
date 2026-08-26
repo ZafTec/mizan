@@ -1,0 +1,42 @@
+{
+  "artboards": [
+    { "file": "DirectionA.dc.html", "x": 0,    "y": 0,    "w": 1280, "h": 860,  "title": "A — Ledger" },
+    { "file": "DirectionB.dc.html", "x": 1400, "y": 0,    "w": 1280, "h": 860,  "title": "B — Signal" },
+    { "file": "DirectionC.dc.html", "x": 2800, "y": 0,    "w": 1280, "h": 860,  "title": "C — Daylight" },
+
+    { "file": "Main.dc.html",       "x": 0,    "y": 1080, "w": 1280, "h": 1420, "title": "The table" },
+    { "file": "Language.dc.html",   "x": 1400, "y": 1080, "w": 1280, "h": 1560, "title": "Design language" },
+    { "file": "Landing.dc.html",    "x": 2800, "y": 1080, "w": 1280, "h": 2420, "title": "Landing page", "print": "flow" }
+  ],
+  "annotations": [
+    {
+      "id": "how-to-read",
+      "x": 0,
+      "y": -200,
+      "w": 520,
+      "text": "Pick a direction from the top row — same screen, three aesthetics.\n\nThe bottom row builds out the leading candidate (A — Ledger): the table spec, the design language, and the landing page.\n\nIf you pick B or C instead, the bottom row gets rebuilt in it."
+    },
+    {
+      "id": "directions-axis",
+      "x": 1400,
+      "y": -200,
+      "w": 520,
+      "text": "The axis these vary on is DENSITY OF VOICE, not shade of teal.\n\nA is an editorial ruled sheet. B is an instrument panel. C is the current app with the glass taken off.\n\nAll three drop backdrop-filter, the 28px radii and three of the five colour ramps."
+    },
+    {
+      "id": "table-note",
+      "x": 0,
+      "y": 2560,
+      "w": 520,
+      "text": "The table carries every list in the product — jobs, audit log, users, sessions, ingredients, measurements.\n\nSo loading and empty are designed here, not defaulted per page. Both themes ship from one token swap; use the Theme chip above the artboard."
+    },
+    {
+      "id": "landing-note",
+      "x": 2800,
+      "y": 3560,
+      "w": 520,
+      "text": "Copy is grounded in what the product actually does — consent axes, timezone-correct streaks, the three logging doors, self-hosting.\n\n[YOUR PRICE] in the Pro column is the one number I do not have. Everything else is real."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

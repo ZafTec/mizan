@@ -1,0 +1,268 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Archivo:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #1F6F68; } a:hover { color: #164F4A; }
+    .num { font-variant-numeric: tabular-nums; }
+    .capt { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #A19B8D; }
+    .cta {
+      display: inline-flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 600;
+      padding: 14px 22px; background: #1A1815; color: #FBFAF7; border-radius: 3px; text-decoration: none;
+    }
+    .cta-quiet {
+      display: inline-flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 500;
+      padding: 14px 20px; border: 1px solid #D6D1C6; color: #3A3730; border-radius: 3px; text-decoration: none;
+    }
+  </style>
+</helmet>
+
+<div style="width: 1280px; background: #FBFAF7; color: #1A1815; font-family: Archivo, system-ui, sans-serif;">
+
+  <!-- nav -->
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 22px 64px; border-bottom: 1px solid #E3DFD6;">
+    <div style="font-family: Spectral, Georgia, serif; font-size: 21px; font-weight: 600; letter-spacing: -0.01em;">Mizan</div>
+    <div style="display: flex; align-items: center; gap: 30px; font-size: 13px; color: #55514A;">
+      <span>How it works</span><span>Coaching</span><span>Self-hosting</span><span>Pricing</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <a href="#" style="font-size: 13px; color: #55514A; text-decoration: none;">Sign in</a>
+      <a href="#" style="font-size: 13px; font-weight: 600; padding: 9px 16px; background: #1A1815; color: #FBFAF7; border-radius: 3px; text-decoration: none;">Start logging</a>
+    </div>
+  </div>
+
+  <!-- hero -->
+  <div style="padding: 92px 64px 76px; border-bottom: 1px solid #E3DFD6; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 64px; align-items: center;">
+    <div style="display: flex; flex-direction: column; gap: 26px;">
+      <div class="capt">Meals &middot; Workouts &middot; Measurements</div>
+      <h1 style="margin: 0; font-family: Spectral, Georgia, serif; font-size: 62px; font-weight: 500; letter-spacing: -0.028em; line-height: 1.03; text-wrap: pretty;">
+        The tracker you<br>actually keep using.
+      </h1>
+      <p style="margin: 0; font-size: 17px; line-height: 1.6; color: #55514A; max-width: 46ch;">
+        Every food tracker dies the week logging becomes a chore. Mizan is built around one number: a meal, a set or a weigh-in goes in under ten seconds &mdash; from the web, from Telegram, or by telling your AI assistant.
+      </p>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <a href="#" class="cta">Start logging free
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </a>
+        <a href="#" class="cta-quiet">Read the thesis</a>
+      </div>
+      <p style="margin: 0; font-size: 12.5px; color: #8C8779;">Free tier, no card. Self-host it instead if you would rather own the database.</p>
+    </div>
+
+    <!-- product proof: the log itself -->
+    <div style="border: 1px solid #E3DFD6; background: #FFFFFF;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #E3DFD6;">
+        <span style="font-family: Spectral, Georgia, serif; font-size: 17px; font-weight: 500;">Tuesday, 26 August</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #A33A2A;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c1 4 5 5 5 9a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 2 2 2 0 0-2-1-3 1-5Z"></path></svg>
+          12 days &middot; resets 09:41
+        </span>
+      </div>
+
+      <div style="padding: 16px 18px; border-bottom: 1px solid #EDE9E0; display: flex; flex-direction: column; gap: 11px;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between;">
+          <span class="capt">Calories</span>
+          <span class="num" style="font-size: 13px; color: #55514A;"><b style="font-weight: 600; color: #1A1815;">1,840</b> / 2,200 kcal</span>
+        </div>
+        <div style="height: 5px; background: #EDE9E0; border-radius: 2px; overflow: hidden;"><div style="height: 100%; width: 84%; background: #1F6F68;"></div></div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding-top: 3px;">
+          <div><div class="capt">Protein</div><div class="num" style="font-size: 13px; margin-top: 2px;"><b style="font-weight: 600;">142</b> <span style="color: #8C8779;">/ 160 g</span></div></div>
+          <div><div class="capt">Carbs</div><div class="num" style="font-size: 13px; margin-top: 2px;"><b style="font-weight: 600;">188</b> <span style="color: #8C8779;">/ 220 g</span></div></div>
+          <div><div class="capt">Fat</div><div class="num" style="font-size: 13px; margin-top: 2px;"><b style="font-weight: 600;">61</b> <span style="color: #8C8779;">/ 73 g</span></div></div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column;">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid #EDE9E0;">
+          <div style="flex: 1; min-width: 0;"><div style="font-size: 13.5px; font-weight: 500;">Shiro wat &amp; injera</div><div style="font-size: 11.5px; color: #8C8779;">Lunch &middot; 1 serving</div></div>
+          <div class="num" style="font-size: 13px; color: #55514A;">612 kcal</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid #EDE9E0;">
+          <div style="flex: 1; min-width: 0;"><div style="font-size: 13.5px; font-weight: 500;">Greek yoghurt, honey</div><div style="font-size: 11.5px; color: #8C8779;">Breakfast &middot; 200 g</div></div>
+          <div class="num" style="font-size: 13px; color: #55514A;">248 kcal</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px 18px; background: #F7F9F8;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1F6F68" stroke-width="2" style="flex-shrink: 0;"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 9 9 5 9-5"></path></svg>
+          <div style="flex: 1; min-width: 0; font-size: 13px; color: #1F6F68;">From Telegram &mdash; photo of dinner, confirmed</div>
+          <div class="num" style="font-size: 12px; color: #1F6F68;">7s ago</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- three doors -->
+  <div style="padding: 76px 64px; border-bottom: 1px solid #E3DFD6;">
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; margin-bottom: 40px;">
+      <h2 style="margin: 0; font-family: Spectral, Georgia, serif; font-size: 38px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.1; max-width: 18ch;">Three ways in. One log.</h2>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #55514A; max-width: 44ch;">The reason people stop logging is friction at the moment they eat. So Mizan meets you wherever that moment happens, and it is the same database underneath &mdash; a conversation you start on your phone continues in the browser.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: #E3DFD6; border: 1px solid #E3DFD6;">
+      <div style="background: #FBFAF7; padding: 30px 28px; display: flex; flex-direction: column; gap: 12px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A1815" stroke-width="1.7"><rect x="2" y="4" width="20" height="15" rx="2"></rect><path d="M8 21h8M12 19v2"></path></svg>
+        <div style="font-family: Spectral, Georgia, serif; font-size: 21px; font-weight: 500;">The web app</div>
+        <p style="margin: 0; font-size: 13.5px; line-height: 1.6; color: #55514A;">Search, log, done &mdash; three keystrokes from anywhere in the app. Meal plans, recipes with preparations, a shopping list that adds itself up, and a workout log with real templates.</p>
+      </div>
+      <div style="background: #FBFAF7; padding: 30px 28px; display: flex; flex-direction: column; gap: 12px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A1815" stroke-width="1.7"><path d="m21 4-3 16-6-4-3 4-1-6L3 11Z"></path><path d="m8 14 9-8"></path></svg>
+        <div style="font-family: Spectral, Georgia, serif; font-size: 21px; font-weight: 500;">Telegram</div>
+        <p style="margin: 0; font-size: 13.5px; line-height: 1.6; color: #55514A;">Send a photo of what you are eating. It comes back as an estimate with a Confirm button &mdash; never a silent write. Or just talk to it; it is the same assistant as the website.</p>
+      </div>
+      <div style="background: #FBFAF7; padding: 30px 28px; display: flex; flex-direction: column; gap: 12px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A1815" stroke-width="1.7"><path d="M4 17V7l4 6 4-6 4 6 4-6v10"></path></svg>
+        <div style="font-family: Spectral, Georgia, serif; font-size: 21px; font-weight: 500;">Your AI assistant</div>
+        <p style="margin: 0; font-size: 13.5px; line-height: 1.6; color: #55514A;">An MCP server with the whole product behind it, so Claude or any MCP client can log your day, pull your week, or plan your meals &mdash; authorised as you, never as a service account.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- the doubts -->
+  <div style="padding: 76px 64px; border-bottom: 1px solid #E3DFD6; display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 64px;">
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      <div class="capt">The parts people actually ask about</div>
+      <h2 style="margin: 0; font-family: Spectral, Georgia, serif; font-size: 38px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.1;">The awkward questions, answered first.</h2>
+      <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: #55514A;">Every one of these is a rule in the code, not a policy page.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column;">
+      <div style="border-top: 1px solid #E3DFD6; padding: 22px 0; display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 28px;">
+        <div style="font-family: Spectral, Georgia, serif; font-size: 18px; font-weight: 500; font-style: italic;">Does the AI read my log?</div>
+        <p style="margin: 0; font-size: 14px; line-height: 1.65; color: #55514A;">Only what you switch on, per axis. Nutrition, training and body are three separate consents, all off by default. Turn one off and the next question is answered without it &mdash; nothing is retained from the last one.</p>
+      </div>
+      <div style="border-top: 1px solid #E3DFD6; padding: 22px 0; display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 28px;">
+        <div style="font-family: Spectral, Georgia, serif; font-size: 18px; font-weight: 500; font-style: italic;">What can my coach see?</div>
+        <p style="margin: 0; font-size: 14px; line-height: 1.65; color: #55514A;">Exactly the axes you granted, and you can end it in one click. Not even an administrator can widen a coach&rsquo;s access &mdash; those switches belong to you, and there is no endpoint that lets anyone else touch them.</p>
+      </div>
+      <div style="border-top: 1px solid #E3DFD6; padding: 22px 0; display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 28px;">
+        <div style="font-family: Spectral, Georgia, serif; font-size: 18px; font-weight: 500; font-style: italic;">Will my streak lie to me?</div>
+        <p style="margin: 0; font-size: 14px; line-height: 1.65; color: #55514A;">It runs on your timezone, not the server&rsquo;s, and the app tells you the exact hour it resets. Miss a day and a earned freeze covers you &mdash; you get one a week, up to two. No silent resets at midnight UTC.</p>
+      </div>
+      <div style="border-top: 1px solid #E3DFD6; border-bottom: 1px solid #E3DFD6; padding: 22px 0; display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 28px;">
+        <div style="font-family: Spectral, Georgia, serif; font-size: 18px; font-weight: 500; font-style: italic;">Can I take it with me?</div>
+        <p style="margin: 0; font-size: 14px; line-height: 1.65; color: #55514A;">Export everything you have logged, any time, as one file. Or skip the hosted version entirely: it is a Docker Compose up on your own machine, with the same database schema.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- coaching -->
+  <div style="padding: 76px 64px; border-bottom: 1px solid #E3DFD6;">
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 56px; align-items: center;">
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div class="capt">For coaches</div>
+        <h2 style="margin: 0; font-family: Spectral, Georgia, serif; font-size: 34px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.12;">Your clients&rsquo; real week, not a screenshot they remembered to send.</h2>
+        <p style="margin: 0; font-size: 15px; line-height: 1.65; color: #55514A;">Invite a client, they choose what to share, and you get the log as it happens &mdash; plus a chat thread that lives in the same place. Ask the assistant about one client and it answers from their data, billed to you, inside the same consent rules.</p>
+        <a href="#" class="cta" style="align-self: flex-start; margin-top: 4px;">See the coach view
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </a>
+      </div>
+
+      <div style="border: 1px solid #E3DFD6; background: #FFFFFF;">
+        <div style="padding: 13px 18px; border-bottom: 1px solid #E3DFD6; display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 13px; font-weight: 600;">Clients</span>
+          <span class="num" style="font-size: 11.5px; color: #8C8779;">4 active</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid #EDE9E0;">
+          <div style="flex: 1;"><div style="font-size: 13.5px; font-weight: 500;">Selam T.</div><div style="font-size: 11.5px; color: #8C8779;">Logged today &middot; 6-day streak</div></div>
+          <div style="display: flex; gap: 4px;">
+            <span title="Nutrition" style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; background: #E3EEEB; color: #1F6F68; font-size: 10.5px; font-weight: 600; border-radius: 2px;">N</span>
+            <span title="Workouts" style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; background: #E3EEEB; color: #1F6F68; font-size: 10.5px; font-weight: 600; border-radius: 2px;">W</span>
+            <span title="Measurements not shared" style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; background: #F0EDE7; color: #B8B2A4; font-size: 10.5px; font-weight: 600; border-radius: 2px;">M</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid #EDE9E0;">
+          <div style="flex: 1;"><div style="font-size: 13.5px; font-weight: 500;">Dawit M.</div><div style="font-size: 11.5px; color: #A33A2A;">Nothing logged in 4 days</div></div>
+          <div style="display: flex; gap: 4px;">
+            <span style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; background: #E3EEEB; color: #1F6F68; font-size: 10.5px; font-weight: 600; border-radius: 2px;">N</span>
+            <span style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; background: #F0EDE7; color: #B8B2A4; font-size: 10.5px; font-weight: 600; border-radius: 2px;">W</span>
+            <span style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; background: #E3EEEB; color: #1F6F68; font-size: 10.5px; font-weight: 600; border-radius: 2px;">M</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px; padding: 14px 18px;">
+          <div style="flex: 1;"><div style="font-size: 13.5px; font-weight: 500;">Hanna G.</div><div style="font-size: 11.5px; color: #8C8779;">Logged today &middot; 31-day streak</div></div>
+          <div style="display: flex; gap: 4px;">
+            <span style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; background: #E3EEEB; color: #1F6F68; font-size: 10.5px; font-weight: 600; border-radius: 2px;">N</span>
+            <span style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; background: #E3EEEB; color: #1F6F68; font-size: 10.5px; font-weight: 600; border-radius: 2px;">W</span>
+            <span style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; background: #E3EEEB; color: #1F6F68; font-size: 10.5px; font-weight: 600; border-radius: 2px;">M</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- pricing -->
+  <div style="padding: 76px 64px; border-bottom: 1px solid #E3DFD6;">
+    <div style="text-align: center; display: flex; flex-direction: column; gap: 12px; align-items: center; margin-bottom: 42px;">
+      <div class="capt">Pricing</div>
+      <h2 style="margin: 0; font-family: Spectral, Georgia, serif; font-size: 38px; font-weight: 500; letter-spacing: -0.02em;">Logging is free. Forever.</h2>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #55514A; max-width: 52ch;">A tracker that paywalls the thing it exists to do is a tracker you stop opening. Pro pays for what actually costs money: the AI, and photo analysis.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: #E3DFD6; border: 1px solid #E3DFD6; max-width: 1000px; margin: 0 auto;">
+      <div style="background: #FBFAF7; padding: 30px 28px; display: flex; flex-direction: column; gap: 16px;">
+        <div><div style="font-family: Spectral, Georgia, serif; font-size: 22px; font-weight: 500;">Free</div><div class="num" style="font-size: 30px; font-weight: 600; letter-spacing: -0.02em; margin-top: 6px;">$0</div></div>
+        <div style="display: flex; flex-direction: column; gap: 7px; font-size: 13px; color: #55514A; line-height: 1.5;">
+          <div>Unlimited meals, workouts, measurements</div>
+          <div>Recipes, meal plans, shopping lists</div>
+          <div>Streaks and achievements</div>
+          <div>A small daily assistant allowance</div>
+        </div>
+        <a href="#" class="cta-quiet" style="margin-top: auto; justify-content: center;">Start logging</a>
+      </div>
+
+      <div style="background: #FFFFFF; padding: 30px 28px; display: flex; flex-direction: column; gap: 16px; border-top: 3px solid #1A1815;">
+        <div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-family: Spectral, Georgia, serif; font-size: 22px; font-weight: 500;">Pro</span>
+            <span class="capt" style="color: #1F6F68;">Most people</span>
+          </div>
+          <div class="num" style="font-size: 30px; font-weight: 600; letter-spacing: -0.02em; margin-top: 6px;">[YOUR PRICE]<span style="font-size: 14px; font-weight: 400; color: #8C8779;">/mo</span></div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 7px; font-size: 13px; color: #55514A; line-height: 1.5;">
+          <div>Everything in Free</div>
+          <div>Photo analysis &mdash; snap a plate, confirm the estimate</div>
+          <div>A working daily assistant allowance</div>
+          <div>Telegram bot</div>
+          <div>Coach relationships</div>
+        </div>
+        <a href="#" class="cta" style="margin-top: auto; justify-content: center;">Go Pro</a>
+      </div>
+
+      <div style="background: #FBFAF7; padding: 30px 28px; display: flex; flex-direction: column; gap: 16px;">
+        <div><div style="font-family: Spectral, Georgia, serif; font-size: 22px; font-weight: 500;">Self-hosted</div><div class="num" style="font-size: 30px; font-weight: 600; letter-spacing: -0.02em; margin-top: 6px;">$0</div></div>
+        <div style="display: flex; flex-direction: column; gap: 7px; font-size: 13px; color: #55514A; line-height: 1.5;">
+          <div>The whole thing, your machine</div>
+          <div>Docker Compose, PostgreSQL, Redis</div>
+          <div>Bring your own AI provider key</div>
+          <div>Your database, your backups</div>
+        </div>
+        <a href="#" class="cta-quiet" style="margin-top: auto; justify-content: center;">Read the setup guide</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- closing -->
+  <div style="padding: 84px 64px; text-align: center; display: flex; flex-direction: column; gap: 22px; align-items: center;">
+    <h2 style="margin: 0; font-family: Spectral, Georgia, serif; font-size: 44px; font-weight: 500; letter-spacing: -0.025em; line-height: 1.08; max-width: 20ch;">Log tonight&rsquo;s dinner in ten seconds.</h2>
+    <p style="margin: 0; font-size: 15.5px; line-height: 1.6; color: #55514A; max-width: 48ch;">Then do it again tomorrow. That is the whole product, and everything else here exists to make that second day easier than the first.</p>
+    <a href="#" class="cta" style="font-size: 15px; padding: 16px 26px;">Start logging free
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+    </a>
+  </div>
+
+  <div style="border-top: 1px solid #E3DFD6; padding: 26px 64px; display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; color: #8C8779;">
+    <span style="font-family: Spectral, Georgia, serif; font-size: 16px; font-weight: 600; color: #1A1815;">Mizan</span>
+    <div style="display: flex; gap: 26px;"><span>Privacy</span><span>Terms</span><span>Source</span><span>Status</span></div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
