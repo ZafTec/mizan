@@ -23,9 +23,20 @@ public static class AiPromptDefaults
         note rather than inventing detail.
         """;
 
+    public const string Suggestions = """
+        Propose meals that fit what the user has left for today. Work from the
+        remaining macros you are given; when you were not given any, say so
+        instead of proposing against numbers you invented.
+
+        Every suggestion needs a reason that refers to the actual gap it fills.
+        "High in protein" is not a reason; "covers most of the 60 g of protein
+        left" is. Keep them ordinary - food someone will actually cook tonight.
+        """;
+
     public static string Body(string key) => key switch
     {
         AiPromptKeys.FoodAnalysis => FoodAnalysis,
+        AiPromptKeys.Suggestions => Suggestions,
         _ => Chat,
     };
 }

@@ -42,3 +42,41 @@ export const updateAiConsent = (consent: Omit<AiConsent, "updatedAt">) =>
 
 export const getMyAiUsage = (days = 14) =>
 	clientApi<MyAiUsage>(`/api/Ai/usage?days=${days}`);
+
+export interface AiChatMessage {
+	id: string;
+	fromUser: boolean;
+	content: string;
+	createdAt: string;
+}
+
+export interface AiChatThread {
+	id: string;
+	title: string;
+	updatedAt: string;
+}
+
+export interface AiChatThreadDetail extends AiChatThread {
+	messages: AiChatMessage[];
+}
+
+export interface AiChatTurn {
+	threadId: string;
+	title: string;
+	reply: AiChatMessage;
+}
+
+export const sendAiChatMessage = (threadId: string | null, message: string) =>
+	clientApi<AiChatTurn>("/api/Ai/chat", {
+		method: "POST",
+		body: { threadId, message },
+	});
+
+export const listAiChatThreads = () =>
+	clientApi<AiChatThread[]>("/api/Ai/threads");
+
+export const getAiChatThread = (id: string) =>
+	clientApi<AiChatThreadDetail>(`/api/Ai/threads/${id}`);
+
+export const deleteAiChatThread = (id: string) =>
+	clientApi<void>(`/api/Ai/threads/${id}`, { method: "DELETE" });

@@ -7,14 +7,60 @@ namespace Mizan.Application.Interfaces;
 /// </summary>
 public interface INutritionAiService
 {
-    Task<string> GetNutritionAdviceAsync(Guid userId, string userMessage, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// One turn. <paramref name="history"/> is the earlier turns of the same
+    /// thread, oldest first; the caller decides how far back to go, because it
+    /// is the caller that pays for the tokens.
+    /// </summary>
+    Task<AiChatTurn> GetNutritionAdviceAsync(
+        Guid userId,
+        string userMessage,
+        IReadOnlyList<AiChatHistoryTurn> history,
+        CancellationToken cancellationToken = default);
 
     Task<FoodAnalysisResult> AnalyzeFoodImageAsync(
         Guid userId,
         byte[] imageBytes,
         string contentType,
         CancellationToken cancellationToken = default);
+
+    Task<MealSuggestionResult> SuggestMealsAsync(Guid userId, CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Proposals, not records. There is deliberately no recipe id here: the model
+/// cannot know one, and a fabricated id that renders as a link is worse than
+/// no link at all.
+/// </summary>
+public record MealSuggestionResult
+{
+    public List<MealSuggestion> Suggestions { get; init; } = new();
+
+    /// <summary>Why the list is short or empty - usually "nothing was shared".</summary>
+    public string? Note { get; init; }
+}
+
+public record MealSuggestion
+{
+    public string Title { get; init; } = string.Empty;
+    public string Description { get; init; } = string.Empty;
+    public decimal Calories { get; init; }
+    public decimal Protein { get; init; }
+    public decimal Carbs { get; init; }
+    public decimal Fat { get; init; }
+
+    /// <summary>The gap this fills, in the user's own numbers.</summary>
+    public string Reason { get; init; } = string.Empty;
+}
+
+/// <summary>An earlier turn, replayed into the next call.</summary>
+public record AiChatHistoryTurn(bool FromUser, string Content);
+
+/// <summary>
+/// The reply plus which published version produced it, so a bad answer is
+/// traceable to the exact text that caused it.
+/// </summary>
+public record AiChatTurn(string Content, Guid? PromptVersionId);
 
 public record FoodAnalysisResult
 {

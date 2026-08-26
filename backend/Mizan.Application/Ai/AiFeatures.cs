@@ -8,6 +8,7 @@ public static class AiFeatures
 {
     public const string Chat = "chat";
     public const string FoodAnalysis = "food-analysis";
+    public const string Suggestions = "suggestions";
 
     /// <summary>An admin running the eval suite. Billed like any other call, and visible in the same tab.</summary>
     public const string Eval = "eval";

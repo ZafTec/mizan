@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Mizan.Api.Authentication;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 using Mizan.Domain.Identity;
@@ -159,6 +160,12 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             services.RemoveAll<IEmailSender>();
             services.AddSingleton<IEmailSender>(Email);
 
+            // Nothing in a test run may reach a real provider. The fake also
+            // lets a test decide what came back, which is the only way to
+            // exercise the schema-validation path.
+            services.RemoveAll<IAiProvider>();
+            services.AddSingleton<IAiProvider>(Ai);
+
             // Configure minimal logging for tests
             services.AddLogging(logging =>
             {
@@ -208,6 +215,8 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     public const string SessionCookieName = "mizan_session";
 
     public RecordingEmailSender Email { get; } = new();
+
+    public ScriptedAiProvider Ai { get; } = new();
 
     public async Task<string> CreateSessionAsync(Guid userId, DateTime? expiresAt = null)
     {
@@ -484,6 +493,72 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         }
 
         return value;
+    }
+}
+
+/// <summary>
+/// A provider that answers with whatever the test told it to, and records
+/// what it was asked. Every message it receives is available, so a test can
+/// assert on what actually reached the model rather than on what was meant to.
+/// </summary>
+public sealed class ScriptedAiProvider : IAiProvider
+{
+    private readonly List<AiCompletionRequest> _calls = new();
+    private readonly Queue<Func<AiCompletionRequest, AiCompletionResponse>> _scripted = new();
+
+    public string Model => "test-model";
+
+    public bool IsConfigured { get; set; } = true;
+
+    public IReadOnlyList<AiCompletionRequest> Calls
+    {
+        get { lock (_calls) return _calls.ToList(); }
+    }
+
+    public AiCompletionRequest LastCall
+    {
+        get { lock (_calls) return _calls[^1]; }
+    }
+
+    public void Reset()
+    {
+        lock (_calls)
+        {
+            _calls.Clear();
+            _scripted.Clear();
+            IsConfigured = true;
+        }
+    }
+
+    /// <summary>The next call answers with this. Unscripted calls echo a default.</summary>
+    public void Reply(string content)
+    {
+        lock (_calls) _scripted.Enqueue(_ => new AiCompletionResponse(content, new AiTokenUsage(40, 12), Model));
+    }
+
+    public void Fail(string message)
+    {
+        lock (_calls) _scripted.Enqueue(_ => throw new AiUnavailableException(message));
+    }
+
+    public Task<AiCompletionResponse> CompleteAsync(
+        AiCompletionRequest request, CancellationToken cancellationToken = default)
+    {
+        if (!IsConfigured)
+        {
+            throw new AiUnavailableException("The assistant is not configured on this server.");
+        }
+
+        Func<AiCompletionRequest, AiCompletionResponse> answer;
+        lock (_calls)
+        {
+            _calls.Add(request);
+            answer = _scripted.Count > 0
+                ? _scripted.Dequeue()
+                : _ => new AiCompletionResponse("Noted.", new AiTokenUsage(40, 12), Model);
+        }
+
+        return Task.FromResult(answer(request));
     }
 }
 
