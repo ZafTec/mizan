@@ -146,7 +146,9 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             {
                 // Use InMemory database for fast local unit testing
                 services.AddDbContext<MizanDbContext>(options =>
-                    options.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+                    options
+                        .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                        .AddInterceptors(new ActivityCounterInterceptor()));
             }
             else
             {
@@ -154,9 +156,13 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
                     ? _connectionString
                     : _dbContainer?.GetConnectionString() ?? throw new InvalidOperationException("No DB connection string available");
 
-                // Add DbContext using real PostgreSQL connection
+                // Rebuilding the options here drops the interceptors the real
+                // DI wires up, so they are re-added rather than silently lost -
+                // without the counter interceptor no test would exercise it.
                 services.AddDbContext<MizanDbContext>(options =>
-                    options.UseNpgsql(connString));
+                    options
+                        .UseNpgsql(connString)
+                        .AddInterceptors(new ActivityCounterInterceptor(), Commands));
             }
 
             // Identity mails verification and reset links; tests need to read
@@ -221,6 +227,15 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     public RecordingEmailSender Email { get; } = new();
 
     public ScriptedAiProvider Ai { get; } = new();
+
+    /// <summary>
+    /// Counts database round trips. Idle until a test arms it, so it costs
+    /// nothing for the runs that do not care.
+    /// </summary>
+    public CommandCounter Commands { get; } = new() { Enabled = false };
+
+    /// <summary>Arms the counter from zero; disposing the result disarms it.</summary>
+    public CommandCounterScope CountCommands() => new(Commands);
 
     public async Task<string> CreateSessionAsync(Guid userId, DateTime? expiresAt = null)
     {
@@ -634,4 +649,21 @@ public sealed class RecordingEmailSender : IEmailSender
             message.Text, pathSegment + @"\?token=([A-Za-z0-9_\-%]+)");
         return match.Success ? Uri.UnescapeDataString(match.Groups[1].Value) : null;
     }
+}
+
+/// <summary>A window during which database round trips are counted.</summary>
+public sealed class CommandCounterScope : IDisposable
+{
+    private readonly CommandCounter _counter;
+
+    public CommandCounterScope(CommandCounter counter)
+    {
+        _counter = counter;
+        _counter.Reset();
+        _counter.Enabled = true;
+    }
+
+    public int Count => _counter.Count;
+
+    public void Dispose() => _counter.Enabled = false;
 }

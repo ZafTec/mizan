@@ -14,5 +14,6 @@ public static class AuthUserMapper
         user.ThemePreference,
         user.CompactMode,
         user.ReduceAnimations,
-        user.PasswordHash is not null);
+        user.PasswordHash is not null,
+        user.TimeZoneId);
 }

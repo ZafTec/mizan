@@ -27,10 +27,12 @@ public record UserGoalSummaryDto(
 public class GetUserQueryHandler : IRequestHandler<GetUserQuery, UserDto?>
 {
     private readonly IMizanDbContext _context;
+    private readonly IUserClock _clock;
 
-    public GetUserQueryHandler(IMizanDbContext context)
+    public GetUserQueryHandler(IMizanDbContext context, IUserClock clock)
     {
         _context = context;
+        _clock = clock;
     }
 
     public async Task<UserDto?> Handle(GetUserQuery request, CancellationToken cancellationToken)
@@ -47,9 +49,22 @@ public class GetUserQueryHandler : IRequestHandler<GetUserQuery, UserDto?>
 
         var currentGoal = user.Goals.FirstOrDefault(g => g.IsActive);
 
-        var currentStreak = user.Streaks
+        // This used to return CurrentCount raw, so a lapsed streak kept
+        // showing its old length in the header indefinitely. StreakClock is
+        // now the only thing that answers "how long is it".
+        var stored = user.Streaks
             .OrderByDescending(s => s.LastActivityDate)
             .FirstOrDefault();
+
+        var currentStreak = stored is null
+            ? 0
+            : (await _clock.EvaluateAsync(
+                user.Id,
+                stored.CurrentCount,
+                stored.LongestCount,
+                stored.LastActivityDate,
+                stored.FreezesAvailable,
+                cancellationToken)).CurrentCount;
 
         return new UserDto(
             user.Id,
@@ -63,7 +78,7 @@ public class GetUserQueryHandler : IRequestHandler<GetUserQuery, UserDto?>
                 currentGoal.TargetCarbsGrams,
                 currentGoal.TargetFatGrams
             ) : null,
-            currentStreak?.CurrentCount ?? 0
+            currentStreak
         );
     }
 }

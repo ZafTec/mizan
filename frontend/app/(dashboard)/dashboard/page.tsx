@@ -11,6 +11,7 @@ import QuickActions from "@/components/Dashboard/QuickActions";
 import { ProBadge } from "@/components/billing/ProBadge";
 import ResumeWorkoutBanner from "@/components/context/ResumeWorkoutBanner";
 import SetupPrompt from "@/components/context/SetupPrompt";
+import StreakChip from "@/components/gamification/StreakChip";
 import TrainerStrip from "@/components/context/TrainerStrip";
 import { cn } from "@/lib/utils";
 
@@ -104,12 +105,12 @@ export default async function DashboardPage() {
 					</p>
 				</div>
 				<div className="flex items-center gap-2">
-					{currentStreak > 0 && (
-						<div className="streak-gradient inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white">
-							<AnimatedIcon name="flame" size={16} />
-							<span>{currentStreak}-day streak</span>
-						</div>
-					)}
+					<StreakChip
+						count={currentStreak}
+						resetsAt={streak?.resetsAt}
+						isActiveToday={isActiveToday}
+						atRisk={streak?.atRisk ?? false}
+					/>
 					<Link
 						href="/goal"
 						className="btn-secondary !rounded-2xl !py-2 text-sm"

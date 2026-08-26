@@ -6,10 +6,17 @@ using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 using Mizan.Domain.Identity;
+using Mizan.Domain.Streaks;
 
 namespace Mizan.Application.Auth;
 
-public record RegisterCommand(string Email, string Password, string? Name) : IRequest<Unit>;
+/// <summary>
+/// <paramref name="TimeZoneId"/> comes from the browser, so it is a hint rather
+/// than a claim: an unrecognised value is dropped and the user is treated as
+/// UTC until they set one in settings.
+/// </summary>
+public record RegisterCommand(string Email, string Password, string? Name, string? TimeZoneId = null)
+    : IRequest<Unit>;
 
 public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
 {
@@ -65,6 +72,9 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Unit>
             EmailVerified = false,
             PasswordHash = _passwordHasher.Hash(request.Password),
             Role = "user",
+            // Getting this at signup is what stops a new user's first week of
+            // streaks being computed against the wrong midnight.
+            TimeZoneId = StreakClock.IsKnownZone(request.TimeZoneId) ? request.TimeZoneId : null,
             CreatedAt = now,
             UpdatedAt = now,
         };

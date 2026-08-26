@@ -18,10 +18,14 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         // Database
+        // Singleton, and stateless by design - see the note in the class.
+        services.AddSingleton<ActivityCounterInterceptor>();
         services.AddDbContext<MizanDbContext>(options =>
-            options.UseNpgsql(
-                configuration.GetConnectionString("PostgreSQL"),
-                b => b.MigrationsAssembly(typeof(MizanDbContext).Assembly.FullName)));
+            options
+                .UseNpgsql(
+                    configuration.GetConnectionString("PostgreSQL"),
+                    b => b.MigrationsAssembly(typeof(MizanDbContext).Assembly.FullName))
+                .AddInterceptors(new ActivityCounterInterceptor()));
 
         services.AddScoped<IMizanDbContext>(provider => provider.GetRequiredService<MizanDbContext>());
 
@@ -41,6 +45,10 @@ public static class DependencyInjection
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<ITrainerAuthorizationService, TrainerAuthorizationService>();
         services.AddScoped<IUserStatusService, UserStatusService>();
+        services.AddScoped<IUserClock, UserClock>();
+        services.AddScoped<IActivityCounters, ActivityCounters>();
+        services.AddScoped<IUserStatsProvider, UserStatsProvider>();
+        services.AddScoped<IAchievementCatalogue, AchievementCatalogue>();
         services.AddScoped<INutritionAiService, NutritionAiService>();
         services.AddScoped<IStreakService, StreakService>();
         services.AddScoped<IAchievementEvaluator, AchievementEvaluator>();
