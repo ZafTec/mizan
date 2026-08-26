@@ -395,12 +395,22 @@ path, `scripts/export-data.mjs` / `scripts/import-data.mjs`, the rehearsal, the
 snapshot, and the "keep both schemas alive during the cutover" dance. What is
 left is a straight rewrite, which is why 6 and 7 are now one phase.
 
-### Migrations: one file
+### Migrations: one file, and it stays one file
 
 Delete `Mizan.Infrastructure/Data/Migrations/` — 16 migrations, 38k lines,
 every one of them describing a two-ORM world — and generate a single
 `InitialCreate` from the unified model. The history has no value once the
 database it describes is gone.
+
+**This is a standing rule, not a one-off cleanup.** A schema change deletes
+`Migrations/` and regenerates `InitialCreate`; it never stacks a second file on
+top. v2 has no deployed database to preserve, so a migration history buys
+nothing and costs a growing pile of files nobody reads. The seeds live at the
+end of `Up()` and every one of them is `ON CONFLICT DO NOTHING`, so
+regenerating is safe to repeat.
+
+When there is a database worth preserving, this rule ends and normal
+incremental migrations begin. Until then, one file.
 
 ### Auth: opaque session cookies, not browser JWTs
 
@@ -1244,6 +1254,77 @@ would fork the SignalR conversation into a channel the web app cannot see.
 
 ---
 
+## 13a. Streaks, achievements, and the cost of logging
+
+*Added after the phase 10 review, because three of the six "must never break"
+properties turned out to be broken or unwatched.*
+
+### One decay rule, not three
+
+`Streak.CurrentCount` is a record of the last write, not of what is true now.
+Three readers read it, and **only one applied the decay**:
+
+| Reader | Applied "has it lapsed?" |
+|---|---|
+| `GetStreakQuery` | yes |
+| `GetUserQuery` | no — the header showed a dead streak at its old length |
+| `GetAchievementsQuery` | no — **and it awards badges**, so a streak that died in March could still unlock a 30-day badge |
+
+`StreakClock` is now the only thing that answers it, and it answers for the
+writer too. Pure, in Domain, twenty tests. `UserActivityStats` replaces the two
+separate stats builders — one in the evaluator, one in the query — that were
+the reason the two could disagree in the first place.
+
+### Days are the user's, not the server's
+
+`DateOnly.FromDateTime(DateTime.UtcNow)`, and `User` had no timezone at all. On
+UTC+3 a 01:00 snack is 22:00 UTC the previous day: it lands on yesterday, the
+row already says yesterday, so nothing increments. Someone logging faithfully
+every night watches their streak sit at one forever.
+
+`User.TimeZoneId` is an IANA id, taken from the browser at signup and editable
+in settings. An unknown zone falls back to UTC rather than throwing — a
+restored database on a host with different tzdata must not take the logging
+path down. The reset instant is computed from the zone's offset *at the
+boundary*, so a day that crosses a DST change still ends at midnight.
+
+The UI shows the deadline. A flame with no "resets in 6h 12m" beside it is a
+number the user cannot act on.
+
+### The cost of logging stopped growing
+
+Achievement thresholds were checked with `COUNT(*)` over the user's entire
+diary, on every single log. That is a cost that rises forever, on the one path
+that must stay fast.
+
+`user_activity_counters` is one row per user, adjusted by an upsert that does
+the arithmetic in Postgres — so no read, and no lost update when two logs land
+together. It is maintained by a `SaveChanges` interceptor reading the change
+tracker rather than a line in each of the ten write handlers, because the
+per-handler version fails silently the first time someone adds an eleventh.
+Deletes decrement, because the `COUNT(*)` they replace did.
+
+*Departure, taken while building it.* The interceptor was first written to
+inject `IActivityCounters`. That is a DI cycle — the service needs
+`MizanDbContext`, whose options need the interceptor — and EF resolves
+interceptors while building options, so it deadlocks rather than throwing. It
+is a stateless singleton now, keyed by context through a
+`ConditionalWeakTable`, executing on `eventData.Context` directly.
+
+### Something is watching it now
+
+`LoggingBudgetTests` counts **database round trips**, not milliseconds. A
+wall-clock assertion in CI is a flake generator that tells you nothing about
+why it got slower; a round-trip count is deterministic and fails on the exact
+commit that adds a query.
+
+Logging a meal costs **8** round trips. The budget is exactly 8, with no slack,
+because slack absorbs the first regression silently. A second test logs forty
+more meals and asserts the cost is *unchanged* — that is the property the
+counters bought, and the one worth defending.
+
+---
+
 ## 14. MCP server
 
 Survives intact — it is the part of this codebase that works. ~120 tools stay
@@ -1279,7 +1360,8 @@ Each phase is one commit and leaves the build green.
 | 8 | Storage + `Mizan.Contracts` | low | **done** | `IStorageService` over S3 - MinIO or R2, configuration only; `next-cloudinary` and the signing route deleted; `Mizan.Contracts` types the spine's writes so Api, Mcp.Server and Telegram cannot drift (§13) |
 | 9 | AI platform + consent | medium | **done** | `IAiProvider`, `AiUsageLog`, `IAiQuotaService` with per-user and global ceilings, usage tab, `UserAiConsent` default-off, `IDataAccessPolicy` including the intersection rule. The existing unmetered call was brought under all of it; Semantic Kernel and its auto-invoking write tool are gone |
 | 10 | AI surfaces + admin console | medium | **done** | `AiPromptVersion` + the hard/soft guardrail split, chat persisted on `AiChatThread`, onboarding agent over the allowlisted tool→command map shared with MCP; read-only client tools for trainers (§11); `/admin/ai` with evals, diff and rollback (§12) |
-| 11 | Billing feature split | low | | widen gating past the three endpoints, customer portal link, in-context upgrade chips; gate relationship *creation*, never existing consent (§5) |
+| 11 | **Streak + achievement correctness** | medium | **done** | `StreakClock` as the one decay rule, `User.TimeZoneId`, `user_activity_counters` replacing the `COUNT(*)`s, catalogue cached, a round-trip budget test on the logging path (§13a) |
+| 11b | Billing feature split | low | | widen gating past the three endpoints, customer portal link, in-context upgrade chips; gate relationship *creation*, never existing consent (§5) |
 | 12 | UI rebuild on the new tiers | medium | | `/today`, `/history`, `/progress`, sheet-based logging |
 | 13 | Telegram bot | medium | | `Mizan.Telegram`, account linking, logging flows, chat on the shared thread. **Consumes §10's AI service; never its own** |
 | 14 | Docs rewrite | none | | README, CLAUDE.md, ARCHITECTURE.md, MCP.md, AI.md, TELEGRAM.md |

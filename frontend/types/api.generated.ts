@@ -7228,6 +7228,10 @@ export interface components {
             isActiveToday: boolean;
             /** Format: int32 */
             freezesAvailable: number;
+            /** Format: date-time */
+            resetsAt: string;
+            timeZoneId: string;
+            atRisk: boolean;
         };
         GlobalAiUsageDto: {
             /** Format: int64 */
@@ -7882,6 +7886,7 @@ export interface components {
             email: string;
             password: string;
             name?: string | null;
+            timeZoneId?: string | null;
         };
         RemoveHouseholdMemberResult: {
             success: boolean;

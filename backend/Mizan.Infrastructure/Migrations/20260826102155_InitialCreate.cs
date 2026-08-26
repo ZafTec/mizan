@@ -33,6 +33,38 @@ namespace Mizan.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ai_eval_cases",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    prompt_key = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    input = table.Column<string>(type: "text", nullable: false),
+                    context = table.Column<string>(type: "text", nullable: true),
+                    assertions = table.Column<string>(type: "jsonb", nullable: false, defaultValue: "{}"),
+                    is_adversarial = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ai_eval_cases", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ai_prompts",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    key = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    description = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ai_prompts", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "content_reports",
                 columns: table => new
                 {
@@ -89,6 +121,7 @@ namespace Mizan.Infrastructure.Migrations
                     email_verified = table.Column<bool>(type: "boolean", nullable: false),
                     name = table.Column<string>(type: "text", nullable: true),
                     image = table.Column<string>(type: "text", nullable: true),
+                    time_zone_id = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     password_hash = table.Column<string>(type: "text", nullable: true),
                     access_failed_count = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
                     lockout_end = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -108,13 +141,38 @@ namespace Mizan.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ai_prompt_versions",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    prompt_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    version = table.Column<int>(type: "integer", nullable: false),
+                    body = table.Column<string>(type: "text", nullable: false),
+                    soft_policy = table.Column<string>(type: "jsonb", nullable: false, defaultValue: "{}"),
+                    status = table.Column<int>(type: "integer", nullable: false),
+                    author_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    notes = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    published_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ai_prompt_versions", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_ai_prompt_versions_ai_prompts_prompt_id",
+                        column: x => x.prompt_id,
+                        principalTable: "ai_prompts",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ai_chat_threads",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     user_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    thread_type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false, defaultValue: "nutrition"),
-                    thread_data = table.Column<string>(type: "jsonb", nullable: false, defaultValue: "{}"),
+                    title = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
                     updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
@@ -123,6 +181,34 @@ namespace Mizan.Infrastructure.Migrations
                     table.PrimaryKey("PK_ai_chat_threads", x => x.id);
                     table.ForeignKey(
                         name: "FK_ai_chat_threads_users_user_id",
+                        column: x => x.user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ai_usage_logs",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    household_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    feature = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    model = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    prompt_tokens = table.Column<int>(type: "integer", nullable: false),
+                    completion_tokens = table.Column<int>(type: "integer", nullable: false),
+                    estimated_cost_micros = table.Column<long>(type: "bigint", nullable: false),
+                    prompt_version_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    latency_ms = table.Column<int>(type: "integer", nullable: false),
+                    outcome = table.Column<int>(type: "integer", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ai_usage_logs", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_ai_usage_logs_users_user_id",
                         column: x => x.user_id,
                         principalTable: "users",
                         principalColumn: "id",
@@ -606,6 +692,51 @@ namespace Mizan.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "user_activity_counters",
+                columns: table => new
+                {
+                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    meals_logged = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    recipes_created = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    workouts_logged = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    body_measurements_logged = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    goal_progress_logged = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_user_activity_counters", x => x.user_id);
+                    table.ForeignKey(
+                        name: "FK_user_activity_counters_users_user_id",
+                        column: x => x.user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "user_ai_consents",
+                columns: table => new
+                {
+                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    enabled = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    share_nutrition = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    share_training = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    share_body = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_user_ai_consents", x => x.user_id);
+                    table.ForeignKey(
+                        name: "FK_user_ai_consents_users_user_id",
+                        column: x => x.user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "user_goals",
                 columns: table => new
                 {
@@ -751,6 +882,62 @@ namespace Mizan.Infrastructure.Migrations
                         name: "FK_workout_templates_users_user_id",
                         column: x => x.user_id,
                         principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ai_eval_runs",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    version_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    case_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    outcome = table.Column<int>(type: "integer", nullable: false),
+                    schema_valid = table.Column<bool>(type: "boolean", nullable: false),
+                    output = table.Column<string>(type: "text", nullable: true),
+                    failure_reason = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true),
+                    prompt_tokens = table.Column<int>(type: "integer", nullable: false),
+                    completion_tokens = table.Column<int>(type: "integer", nullable: false),
+                    cost_micros = table.Column<long>(type: "bigint", nullable: false),
+                    latency_ms = table.Column<int>(type: "integer", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ai_eval_runs", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_ai_eval_runs_ai_eval_cases_case_id",
+                        column: x => x.case_id,
+                        principalTable: "ai_eval_cases",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ai_eval_runs_ai_prompt_versions_version_id",
+                        column: x => x.version_id,
+                        principalTable: "ai_prompt_versions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ai_chat_messages",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    thread_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    role = table.Column<int>(type: "integer", nullable: false),
+                    content = table.Column<string>(type: "text", nullable: false),
+                    prompt_version_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ai_chat_messages", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_ai_chat_messages_ai_chat_threads_thread_id",
+                        column: x => x.thread_id,
+                        principalTable: "ai_chat_threads",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -1332,9 +1519,58 @@ namespace Mizan.Infrastructure.Migrations
                 columns: new[] { "criteria_type", "threshold" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_ai_chat_threads_user_id",
+                name: "IX_ai_chat_messages_thread_id_created_at",
+                table: "ai_chat_messages",
+                columns: new[] { "thread_id", "created_at" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ai_chat_threads_user_id_updated_at",
                 table: "ai_chat_threads",
-                column: "user_id");
+                columns: new[] { "user_id", "updated_at" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ai_eval_cases_prompt_key",
+                table: "ai_eval_cases",
+                column: "prompt_key");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ai_eval_runs_case_id",
+                table: "ai_eval_runs",
+                column: "case_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ai_eval_runs_version_id",
+                table: "ai_eval_runs",
+                column: "version_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_ai_prompt_versions_one_published",
+                table: "ai_prompt_versions",
+                column: "prompt_id",
+                unique: true,
+                filter: "status = 1");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ai_prompt_versions_prompt_id_version",
+                table: "ai_prompt_versions",
+                columns: new[] { "prompt_id", "version" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ai_prompts_key",
+                table: "ai_prompts",
+                column: "key",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ai_usage_logs_created_at",
+                table: "ai_usage_logs",
+                column: "created_at");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ai_usage_logs_user_id_created_at",
+                table: "ai_usage_logs",
+                columns: new[] { "user_id", "created_at" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_audit_logs_user_id",
@@ -1724,17 +1960,24 @@ namespace Mizan.Infrastructure.Migrations
                 table: "workouts",
                 column: "user_id");
 
-            // The exercise library, built-in programs and achievement
-            // catalogue. Lived in the LiftLogIntegration migration before the
-            // history collapsed; see Data/Seed/CatalogSeed.cs.
+            // One migration, always. A schema change replaces this file rather
+            // than stacking on it (docs/REFOCUS.md §6), so the seeds live here
+            // and every one of them is ON CONFLICT DO NOTHING.
             migrationBuilder.Sql(CatalogSeed.Sql);
+            migrationBuilder.Sql(AiEvalSeed.Sql);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "ai_chat_threads");
+                name: "ai_chat_messages");
+
+            migrationBuilder.DropTable(
+                name: "ai_eval_runs");
+
+            migrationBuilder.DropTable(
+                name: "ai_usage_logs");
 
             migrationBuilder.DropTable(
                 name: "audit_logs");
@@ -1809,6 +2052,12 @@ namespace Mizan.Infrastructure.Migrations
                 name: "user_achievements");
 
             migrationBuilder.DropTable(
+                name: "user_activity_counters");
+
+            migrationBuilder.DropTable(
+                name: "user_ai_consents");
+
+            migrationBuilder.DropTable(
                 name: "user_household_preferences");
 
             migrationBuilder.DropTable(
@@ -1822,6 +2071,15 @@ namespace Mizan.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "workout_template_exercises");
+
+            migrationBuilder.DropTable(
+                name: "ai_chat_threads");
+
+            migrationBuilder.DropTable(
+                name: "ai_eval_cases");
+
+            migrationBuilder.DropTable(
+                name: "ai_prompt_versions");
 
             migrationBuilder.DropTable(
                 name: "chat_conversations");
@@ -1846,6 +2104,9 @@ namespace Mizan.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "shopping_lists");
+
+            migrationBuilder.DropTable(
+                name: "ai_prompts");
 
             migrationBuilder.DropTable(
                 name: "trainer_client_relationships");

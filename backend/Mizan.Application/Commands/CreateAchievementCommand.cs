@@ -53,10 +53,12 @@ public class CreateAchievementCommandValidator : AbstractValidator<CreateAchieve
 public class CreateAchievementCommandHandler : IRequestHandler<CreateAchievementCommand, CreateAchievementResult>
 {
     private readonly IMizanDbContext _context;
+    private readonly IAchievementCatalogue _catalogue;
 
-    public CreateAchievementCommandHandler(IMizanDbContext context)
+    public CreateAchievementCommandHandler(IMizanDbContext context, IAchievementCatalogue catalogue)
     {
         _context = context;
+        _catalogue = catalogue;
     }
 
     public async Task<CreateAchievementResult> Handle(CreateAchievementCommand request, CancellationToken cancellationToken)
@@ -75,6 +77,10 @@ public class CreateAchievementCommandHandler : IRequestHandler<CreateAchievement
 
         _context.Achievements.Add(achievement);
         await _context.SaveChangesAsync(cancellationToken);
+
+        // The catalogue is cached for the logging path; without this an edit
+        // takes a cache lifetime to start unlocking.
+        await _catalogue.InvalidateAsync(cancellationToken);
 
         return new CreateAchievementResult(achievement.Id);
     }

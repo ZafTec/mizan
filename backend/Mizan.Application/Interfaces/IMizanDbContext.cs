@@ -49,6 +49,7 @@ public interface IMizanDbContext
     DbSet<FeedReaction> FeedReactions { get; }
     DbSet<FeedComment> FeedComments { get; }
     DbSet<ContentReport> ContentReports { get; }
+    DbSet<UserActivityCounters> UserActivityCounters { get; }
     DbSet<AiChatThread> AiChatThreads { get; }
     DbSet<AiChatMessage> AiChatMessages { get; }
     DbSet<UserAiConsent> UserAiConsents { get; }

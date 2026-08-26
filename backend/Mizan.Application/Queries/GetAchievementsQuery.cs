@@ -60,11 +60,14 @@ public class GetAchievementsQueryHandler : IRequestHandler<GetAchievementsQuery,
 
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly IUserStatsProvider _stats;
 
-    public GetAchievementsQueryHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public GetAchievementsQueryHandler(
+        IMizanDbContext context, ICurrentUserService currentUser, IUserStatsProvider stats)
     {
         _context = context;
         _currentUser = currentUser;
+        _stats = stats;
     }
 
     public async Task<GetAchievementsResult> Handle(GetAchievementsQuery request, CancellationToken cancellationToken)
@@ -114,7 +117,13 @@ public class GetAchievementsQueryHandler : IRequestHandler<GetAchievementsQuery,
             .ApplyPaging(request)
             .ToListAsync(cancellationToken);
 
-        var stats = await BuildStatsAsync(userId, cancellationToken);
+        // The same provider the evaluator uses. These were two separate
+        // methods that disagreed, so a bar could sit at 30/30 without the
+        // badge unlocking, or the reverse.
+        var stats = await _stats.BuildAsync(
+            userId,
+            pageAchievements.Where(a => a.CriteriaType is not null).Select(a => a.CriteriaType!).ToHashSet(),
+            cancellationToken);
 
         var items = pageAchievements.Select(a => new AchievementDto
         {
@@ -126,7 +135,7 @@ public class GetAchievementsQueryHandler : IRequestHandler<GetAchievementsQuery,
             Category = a.Category,
             CriteriaType = a.CriteriaType,
             Threshold = a.Threshold,
-            Progress = ComputeProgress(a.CriteriaType, stats),
+            Progress = (int)stats.Value(a.CriteriaType),
             IsEarned = userAchievementDict.ContainsKey(a.Id),
             EarnedAt = userAchievementDict.TryGetValue(a.Id, out var earnedAt) ? earnedAt : null
         }).ToList();
@@ -147,48 +156,6 @@ public class GetAchievementsQueryHandler : IRequestHandler<GetAchievementsQuery,
             LevelFloor = levelFloor,
             NextLevelAt = nextLevelAt
         };
-    }
-
-    private async Task<Dictionary<string, int>> BuildStatsAsync(Guid userId, CancellationToken ct)
-    {
-        var mealsLogged = await _context.FoodDiaryEntries.CountAsync(e => e.UserId == userId, ct);
-        var recipesCreated = await _context.Recipes.CountAsync(r => r.UserId == userId, ct);
-        var workoutsLogged = await _context.Workouts.CountAsync(w => w.UserId == userId, ct);
-        var measurementsLogged = await _context.BodyMeasurements.CountAsync(m => m.UserId == userId, ct);
-        var goalProgressLogged = await _context.GoalProgress.CountAsync(g => g.UserId == userId, ct);
-
-        var streakNutrition = await _context.Streaks
-            .Where(s => s.UserId == userId && s.StreakType == "nutrition")
-            .Select(s => s.CurrentCount)
-            .FirstOrDefaultAsync(ct);
-
-        var streakWorkout = await _context.Streaks
-            .Where(s => s.UserId == userId && s.StreakType == "workout")
-            .Select(s => s.CurrentCount)
-            .FirstOrDefaultAsync(ct);
-
-        var earnedPoints = await _context.UserAchievements
-            .Where(ua => ua.UserId == userId)
-            .Join(_context.Achievements, ua => ua.AchievementId, a => a.Id, (ua, a) => a.Points)
-            .SumAsync(ct);
-
-        return new Dictionary<string, int>
-        {
-            ["meals_logged"] = mealsLogged,
-            ["recipes_created"] = recipesCreated,
-            ["workouts_logged"] = workoutsLogged,
-            ["body_measurements_logged"] = measurementsLogged,
-            ["goal_progress_logged"] = goalProgressLogged,
-            ["streak_nutrition"] = streakNutrition,
-            ["streak_workout"] = streakWorkout,
-            ["points_total"] = earnedPoints
-        };
-    }
-
-    private static int ComputeProgress(string? criteriaType, Dictionary<string, int> stats)
-    {
-        if (string.IsNullOrEmpty(criteriaType)) return 0;
-        return stats.TryGetValue(criteriaType, out var value) ? value : 0;
     }
 
     private static (int Level, string Name, int Floor, int? NextAt) ComputeLevel(int points) => points switch
