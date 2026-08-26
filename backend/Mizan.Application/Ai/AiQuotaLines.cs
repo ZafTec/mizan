@@ -27,6 +27,13 @@ public enum AiQuotaLine
 
     /// <summary>Setting a new user up.</summary>
     Onboarding = 2,
+
+    /// <summary>
+    /// A trainer reading a client. On the trainer's own line, because one coach
+    /// with twenty clients must not drain twenty people's allowances and leave
+    /// them rate-limited by activity that is not theirs (docs/REFOCUS.md §11).
+    /// </summary>
+    TrainerClient = 3,
 }
 
 public static class AiQuotaLines
@@ -35,6 +42,7 @@ public static class AiQuotaLines
     {
         AiFeatures.Eval => AiQuotaLine.Eval,
         AiFeatures.Onboarding => AiQuotaLine.Onboarding,
+        AiFeatures.TrainerClient => AiQuotaLine.TrainerClient,
         _ => AiQuotaLine.Personal,
     };
 

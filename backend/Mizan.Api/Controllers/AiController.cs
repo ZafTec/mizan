@@ -78,6 +78,16 @@ public class AiController : ControllerBase
             .Select(tool => new AiToolSummary(tool.Name, tool.Description))
             .ToList());
 
+    /// <summary>
+    /// A coach asking about one client. Read-only over the client's log, and
+    /// billed to the coach (docs/REFOCUS.md §11).
+    /// </summary>
+    [HttpPost("clients/{clientId:guid}/ask")]
+    [Authorize(Policy = "RequireTrainer")]
+    public async Task<ActionResult<AiTrainerAnswerDto>> AskAboutClient(
+        Guid clientId, [FromBody] AskClientRequest body)
+        => Ok(await _mediator.Send(new AskAboutClientCommand(clientId, body.ThreadId, body.Message)));
+
     [HttpGet("threads")]
     public async Task<ActionResult<IReadOnlyList<AiChatThreadDto>>> ListThreads([FromQuery] int take = 30)
         => Ok(await _mediator.Send(new ListAiChatThreadsQuery(take)));
@@ -100,3 +110,5 @@ public class AiController : ControllerBase
 }
 
 public record AiToolSummary(string Name, string Description);
+
+public record AskClientRequest(Guid? ThreadId, string Message);

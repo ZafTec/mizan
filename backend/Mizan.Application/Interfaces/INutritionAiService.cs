@@ -36,7 +36,30 @@ public interface INutritionAiService
         string userMessage,
         IReadOnlyList<AiChatHistoryTurn> history,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// A coach asking about one client. Read-only by construction - no tools
+    /// are offered, so there is nothing to enforce at call time. The context is
+    /// the intersection of what the client granted the coach and what they
+    /// consented to for AI (docs/REFOCUS.md §11).
+    /// </summary>
+    Task<TrainerAnswer> AskAboutClientAsync(
+        Guid trainerId,
+        Guid clientId,
+        string question,
+        IReadOnlyList<AiChatHistoryTurn> history,
+        CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// The answer plus what it was allowed to see, so the coach can tell the
+/// difference between "your client is doing fine on protein" and "your client
+/// has not shared their nutrition".
+/// </summary>
+public record TrainerAnswer(
+    string Content,
+    Guid? PromptVersionId,
+    IReadOnlyList<string> AxesSeen);
 
 public record OnboardingTurn(
     string Content,

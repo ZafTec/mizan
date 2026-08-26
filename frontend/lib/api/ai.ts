@@ -107,3 +107,19 @@ export const sendOnboardingMessage = (threadId: string | null, message: string) 
 
 export const listOnboardingTools = () =>
 	clientApi<AiToolSummary[]>("/api/Ai/onboarding/tools");
+
+export interface AiTrainerAnswer {
+	threadId: string;
+	reply: AiChatMessage;
+	axesSeen: string[];
+}
+
+export const askAboutClient = (
+	clientId: string,
+	threadId: string | null,
+	message: string,
+) =>
+	clientApi<AiTrainerAnswer>(`/api/Ai/clients/${clientId}/ask`, {
+		method: "POST",
+		body: { threadId, message },
+	});

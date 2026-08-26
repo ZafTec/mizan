@@ -306,6 +306,51 @@ public class NutritionAiService : INutritionAiService
         throw new AiUnavailableException("The assistant could not finish that. Try again.");
     }
 
+    public async Task<TrainerAnswer> AskAboutClientAsync(
+        Guid trainerId,
+        Guid clientId,
+        string question,
+        IReadOnlyList<AiChatHistoryTurn> history,
+        CancellationToken cancellationToken = default)
+    {
+        // Principal and subject differ here, which is the whole point: the
+        // builder asks IDataAccessPolicy what this coach may see of this
+        // client and receives nothing more.
+        var context = await _contextBuilder.BuildAsync(trainerId, clientId, cancellationToken);
+        var prompt = await _prompts.ResolveAsync(AiPromptKeys.TrainerClient, cancellationToken);
+
+        var messages = new List<AiMessage> { new(AiRole.System, prompt.SystemPrompt) };
+        messages.Add(new AiMessage(
+            AiRole.System,
+            context.IsEmpty
+                ? "This client has shared nothing with you for AI use. Say so and stop."
+                : context.Summary));
+
+        var historyLength = 0;
+        foreach (var turn in history)
+        {
+            messages.Add(new AiMessage(turn.FromUser ? AiRole.User : AiRole.Assistant, turn.Content));
+            historyLength += turn.Content.Length;
+        }
+
+        messages.Add(new AiMessage(AiRole.User, question));
+
+        var response = await CallAsync(
+            // Billed to the coach. A client must never be rate-limited by
+            // their coach's questions about them (docs/REFOCUS.md §11).
+            trainerId,
+            householdId: null,
+            AiFeatures.TrainerClient,
+            // No Tools. A trainer surface is read-only over client data, and
+            // the way to guarantee that is to offer nothing to call.
+            new AiCompletionRequest { Messages = messages },
+            EstimateTokens(question.Length + context.Summary.Length + historyLength),
+            prompt.VersionId,
+            cancellationToken);
+
+        return new TrainerAnswer(response.Content, prompt.VersionId, context.IncludedAxes);
+    }
+
     /// <summary>
     /// The one path to the provider: reserve, call, settle. Settling happens in
     /// a finally, so a failed or cancelled call still costs what it cost.
