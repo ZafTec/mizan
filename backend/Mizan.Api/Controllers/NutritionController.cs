@@ -43,25 +43,6 @@ public class NutritionController : ControllerBase
         return Ok(result);
     }
 
-    // Not Pro-gated. Free gets a small daily allowance and Pro a working one,
-    // and IAiQuotaService is what decides - a policy attribute here would be a
-    // second, drifting copy of the gating table (docs/REFOCUS.md §10).
-    [HttpPost("ai/chat")]
-    [Authorize]
-    public async Task<ActionResult<AiChatResponse>> ChatWithAi([FromBody] AiChatRequest request)
-    {
-        if (!_currentUser.UserId.HasValue)
-        {
-            return Unauthorized();
-        }
-
-        var response = await _aiService.GetNutritionAdviceAsync(
-            _currentUser.UserId.Value,
-            request.Message);
-
-        return Ok(new AiChatResponse { Response = response });
-    }
-
     [HttpPost("ai/analyze-image")]
     [Authorize(Policy = "RequirePro")]
     [RequestSizeLimit(10_000_000)]
@@ -98,14 +79,4 @@ public class NutritionController : ControllerBase
             _currentUser.UserId.Value, imageBytes, contentType);
         return Ok(result);
     }
-}
-
-public record AiChatRequest
-{
-    public string Message { get; init; } = string.Empty;
-}
-
-public record AiChatResponse
-{
-    public string Response { get; init; } = string.Empty;
 }

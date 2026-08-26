@@ -1,8 +1,6 @@
 "use client";
 
 import Link from 'next/link';
-import Image from 'next/image';
-import placeHolderImage from '@/public/placeholder-recipe.jpg';
 import type { SuggestedRecipe } from '@/data/suggestion';
 
 interface SuggestedRecipesProps {
@@ -58,48 +56,47 @@ export default function SuggestedRecipes({ user, suggestions, serverError }: Sug
 			) : (
 				<div className="space-y-4">
 					{suggestions.map((recipe) => (
-						<Link
-							key={recipe.id}
-							href={`/recipes/${recipe.id}`}
-							className="card-hover flex flex-col sm:flex-row overflow-hidden group"
-						>
-							<div className="sm:w-48 h-48 sm:h-auto bg-charcoal-blue-200 dark:bg-charcoal-blue-700 relative">
-								<Image
-									src={recipe.imageUrl || placeHolderImage}
-									alt={recipe.title}
-									fill
-									className="object-cover group-hover:scale-105 transition-transform duration-300"
-								/>
-							</div>
-							<div className="flex-1 p-6">
-								<div className="mb-4">
-									<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors mb-2">
-										{recipe.title}
-									</h3>
-									<p className="text-charcoal-blue-600 dark:text-charcoal-blue-400 text-sm line-clamp-2">
-										{recipe.description || recipe.reason}
+						<article key={recipe.title} className="card overflow-hidden p-6">
+							<div className="mb-4">
+								<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
+									{recipe.title}
+								</h3>
+								<p className="text-charcoal-blue-600 dark:text-charcoal-blue-400 text-sm">
+									{recipe.description}
+								</p>
+								{recipe.reason && (
+									<p className="mt-2 text-sm text-verdigris-700 dark:text-verdigris-300">
+										{recipe.reason}
 									</p>
-								</div>
-								<div className="flex flex-wrap gap-2">
-									<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-sm font-medium">
-										<i className="ri-fire-line" />
-										{recipe.calories} kcal
-									</span>
-									<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm font-medium">
-										<i className="ri-heart-pulse-line" />
-										{recipe.protein}g protein
-									</span>
-									<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-medium">
-										<i className="ri-bread-line" />
-										{recipe.carbs}g carbs
-									</span>
-									<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-sm font-medium">
-										<i className="ri-drop-line" />
-										{recipe.fat}g fat
-									</span>
-								</div>
+								)}
 							</div>
-						</Link>
+							<div className="flex flex-wrap gap-2">
+								<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-sm font-medium">
+									<i className="ri-fire-line" />
+									{recipe.calories} kcal
+								</span>
+								<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm font-medium">
+									<i className="ri-heart-pulse-line" />
+									{recipe.protein}g protein
+								</span>
+								<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-medium">
+									<i className="ri-bread-line" />
+									{recipe.carbs}g carbs
+								</span>
+								<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-sm font-medium">
+									<i className="ri-drop-line" />
+									{recipe.fat}g fat
+								</span>
+							</div>
+							{/* A proposal, not a recipe. There is no id to link to, and
+							    inventing one would render a link that 404s. */}
+							<Link
+								href={`/recipes?search=${encodeURIComponent(recipe.title)}`}
+								className="btn-ghost btn-sm mt-4 inline-flex"
+							>
+								Find a recipe for this
+							</Link>
+						</article>
 					))}
 				</div>
 			)}

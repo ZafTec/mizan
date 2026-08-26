@@ -73,6 +73,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
 
     // AI
     public DbSet<AiChatThread> AiChatThreads => Set<AiChatThread>();
+    public DbSet<AiChatMessage> AiChatMessages => Set<AiChatMessage>();
     public DbSet<UserAiConsent> UserAiConsents => Set<UserAiConsent>();
     public DbSet<AiUsageLog> AiUsageLogs => Set<AiUsageLog>();
     public DbSet<AiPrompt> AiPrompts => Set<AiPrompt>();
@@ -939,18 +940,33 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.HasIndex(e => new { e.Status, e.CreatedAt });
         });
 
-        // AiChatThread configuration
         modelBuilder.Entity<AiChatThread>(entity =>
         {
             entity.ToTable("ai_chat_threads");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
             entity.Property(e => e.UserId).HasColumnName("user_id");
-            entity.Property(e => e.ThreadType).HasColumnName("thread_type").HasMaxLength(50).HasDefaultValue("nutrition");
-            entity.Property(e => e.ThreadData).HasColumnName("thread_data").HasColumnType("jsonb").HasDefaultValue("{}");
+            entity.Property(e => e.Title).HasColumnName("title").HasMaxLength(120);
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
-            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.UserId, e.UpdatedAt });
+            entity.HasOne(e => e.User).WithMany()
+                .HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AiChatMessage>(entity =>
+        {
+            entity.ToTable("ai_chat_messages");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.ThreadId).HasColumnName("thread_id");
+            entity.Property(e => e.Role).HasColumnName("role").HasConversion<int>();
+            entity.Property(e => e.Content).HasColumnName("content").IsRequired();
+            entity.Property(e => e.PromptVersionId).HasColumnName("prompt_version_id");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.ThreadId, e.CreatedAt });
+            entity.HasOne(e => e.Thread).WithMany(t => t.Messages)
+                .HasForeignKey(e => e.ThreadId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // AuditLog configuration

@@ -241,6 +241,887 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Admin/Ai/Prompts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiPromptSummaryDto"][];
+                        "application/json": components["schemas"]["AiPromptSummaryDto"][];
+                        "text/json": components["schemas"]["AiPromptSummaryDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Admin/Ai/Prompts/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    key: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiPromptDetailDto"];
+                        "application/json": components["schemas"]["AiPromptDetailDto"];
+                        "text/json": components["schemas"]["AiPromptDetailDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Admin/Ai/Prompts/{key}/drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    key: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateDraftRequest"];
+                    "text/json": components["schemas"]["CreateDraftRequest"];
+                    "application/*+json": components["schemas"]["CreateDraftRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiPromptVersionDto"];
+                        "application/json": components["schemas"]["AiPromptVersionDto"];
+                        "text/json": components["schemas"]["AiPromptVersionDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Admin/Ai/Prompts/versions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateDraftRequest"];
+                    "text/json": components["schemas"]["UpdateDraftRequest"];
+                    "application/*+json": components["schemas"]["UpdateDraftRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiPromptVersionDto"];
+                        "application/json": components["schemas"]["AiPromptVersionDto"];
+                        "text/json": components["schemas"]["AiPromptVersionDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Admin/Ai/Prompts/versions/{id}/evals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiEvalMatrixDto"];
+                        "application/json": components["schemas"]["AiEvalMatrixDto"];
+                        "text/json": components["schemas"]["AiEvalMatrixDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EvalSummary"];
+                        "application/json": components["schemas"]["EvalSummary"];
+                        "text/json": components["schemas"]["EvalSummary"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Admin/Ai/Prompts/versions/{id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiPromptVersionDto"];
+                        "application/json": components["schemas"]["AiPromptVersionDto"];
+                        "text/json": components["schemas"]["AiPromptVersionDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AdminOverviewDto"];
+                        "application/json": components["schemas"]["AdminOverviewDto"];
+                        "text/json": components["schemas"]["AdminOverviewDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Page?: number;
+                    PageSize?: number;
+                    Search?: string;
+                    Role?: string;
+                    Banned?: boolean;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AdminUserDtoPagedResult"];
+                        "application/json": components["schemas"]["AdminUserDtoPagedResult"];
+                        "text/json": components["schemas"]["AdminUserDtoPagedResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateAdminUserCommand"];
+                    "text/json": components["schemas"]["CreateAdminUserCommand"];
+                    "application/*+json": components["schemas"]["CreateAdminUserCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AdminUserDetailDto"];
+                        "application/json": components["schemas"]["AdminUserDetailDto"];
+                        "text/json": components["schemas"]["AdminUserDetailDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateAdminUserRequest"];
+                    "text/json": components["schemas"]["UpdateAdminUserRequest"];
+                    "application/*+json": components["schemas"]["UpdateAdminUserRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/admin/users/{userId}/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Page?: number;
+                    PageSize?: number;
+                    ActiveOnly?: boolean;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AdminSessionDtoPagedResult"];
+                        "application/json": components["schemas"]["AdminSessionDtoPagedResult"];
+                        "text/json": components["schemas"]["AdminSessionDtoPagedResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/sessions/{sessionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    sessionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Ai/consent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiConsentDto"];
+                        "application/json": components["schemas"]["AiConsentDto"];
+                        "text/json": components["schemas"]["AiConsentDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateAiConsentCommand"];
+                    "text/json": components["schemas"]["UpdateAiConsentCommand"];
+                    "application/*+json": components["schemas"]["UpdateAiConsentCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiConsentDto"];
+                        "application/json": components["schemas"]["AiConsentDto"];
+                        "text/json": components["schemas"]["AiConsentDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Ai/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    days?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MyAiUsageDto"];
+                        "application/json": components["schemas"]["MyAiUsageDto"];
+                        "text/json": components["schemas"]["MyAiUsageDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Ai/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SendAiChatMessageCommand"];
+                    "text/json": components["schemas"]["SendAiChatMessageCommand"];
+                    "application/*+json": components["schemas"]["SendAiChatMessageCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiChatTurnDto"];
+                        "application/json": components["schemas"]["AiChatTurnDto"];
+                        "text/json": components["schemas"]["AiChatTurnDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Ai/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MealSuggestionResult"];
+                        "application/json": components["schemas"]["MealSuggestionResult"];
+                        "text/json": components["schemas"]["MealSuggestionResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Ai/threads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    take?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiChatThreadDto"][];
+                        "application/json": components["schemas"]["AiChatThreadDto"][];
+                        "text/json": components["schemas"]["AiChatThreadDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Ai/threads/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiChatThreadDetailDto"];
+                        "application/json": components["schemas"]["AiChatThreadDetailDto"];
+                        "text/json": components["schemas"]["AiChatThreadDetailDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Ai/usage/global": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GlobalAiUsageDto"];
+                        "application/json": components["schemas"]["GlobalAiUsageDto"];
+                        "text/json": components["schemas"]["GlobalAiUsageDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/AuditLogs": {
         parameters: {
             query?: never;
@@ -276,6 +1157,528 @@ export interface paths {
                         "application/json": components["schemas"]["AuditLogDtoPagedResult"];
                         "text/json": components["schemas"]["AuditLogDtoPagedResult"];
                     };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RegisterCommand"];
+                    "text/json": components["schemas"]["RegisterCommand"];
+                    "application/*+json": components["schemas"]["RegisterCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["LoginRequest"];
+                    "text/json": components["schemas"]["LoginRequest"];
+                    "application/*+json": components["schemas"]["LoginRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AuthUserDto"];
+                        "application/json": components["schemas"]["AuthUserDto"];
+                        "text/json": components["schemas"]["AuthUserDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AuthUserDto"];
+                        "application/json": components["schemas"]["AuthUserDto"];
+                        "text/json": components["schemas"]["AuthUserDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Auth/verify-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["TokenRequest"];
+                    "text/json": components["schemas"]["TokenRequest"];
+                    "application/*+json": components["schemas"]["TokenRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Auth/resend-verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["EmailRequest"];
+                    "text/json": components["schemas"]["EmailRequest"];
+                    "application/*+json": components["schemas"]["EmailRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Auth/forgot-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["EmailRequest"];
+                    "text/json": components["schemas"]["EmailRequest"];
+                    "application/*+json": components["schemas"]["EmailRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Auth/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ResetPasswordCommand"];
+                    "text/json": components["schemas"]["ResetPasswordCommand"];
+                    "application/*+json": components["schemas"]["ResetPasswordCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Auth/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ChangePasswordRequest"];
+                    "text/json": components["schemas"]["ChangePasswordRequest"];
+                    "application/*+json": components["schemas"]["ChangePasswordRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Auth/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SessionSummaryDto"][];
+                        "application/json": components["schemas"]["SessionSummaryDto"][];
+                        "text/json": components["schemas"]["SessionSummaryDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Auth/sessions/{sessionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    sessionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Auth/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Auth/external/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    returnUrl?: string;
+                };
+                header?: never;
+                path: {
+                    provider: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Auth/external/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -2379,49 +3782,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/Nutrition/ai/chat": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["AiChatRequest"];
-                    "text/json": components["schemas"]["AiChatRequest"];
-                    "application/*+json": components["schemas"]["AiChatRequest"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["AiChatResponse"];
-                        "application/json": components["schemas"]["AiChatResponse"];
-                        "text/json": components["schemas"]["AiChatResponse"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/Nutrition/ai/analyze-image": {
         parameters: {
             query?: never;
@@ -2543,7 +3903,6 @@ export interface paths {
             parameters: {
                 query?: {
                     SearchTerm?: string;
-                    Tags?: string[];
                     IncludePublic?: boolean;
                     FavoritesOnly?: boolean;
                     MinProteinCalorieRatio?: number;
@@ -2692,6 +4051,86 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Recipes/promote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PromoteMealToRecipeCommand"];
+                    "text/json": components["schemas"]["PromoteMealToRecipeCommand"];
+                    "application/*+json": components["schemas"]["PromoteMealToRecipeCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Recipes/{id}/preparation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PromoteToPreparationRequest"];
+                    "text/json": components["schemas"]["PromoteToPreparationRequest"];
+                    "application/*+json": components["schemas"]["PromoteToPreparationRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -3727,6 +5166,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Trainers/relationships/{relationshipId}/grants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    relationshipId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateGrantsRequest"];
+                    "text/json": components["schemas"]["UpdateGrantsRequest"];
+                    "application/*+json": components["schemas"]["UpdateGrantsRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
     "/api/Trainers/clients": {
         parameters: {
             query?: never;
@@ -4010,6 +5490,52 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Uploads/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: {
+                    folder?: components["schemas"]["StorageFolder"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        file?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UploadedImageDto"];
+                        "application/json": components["schemas"]["UploadedImageDto"];
+                        "text/json": components["schemas"]["UploadedImageDto"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -4629,11 +6155,222 @@ export interface components {
             /** Format: int32 */
             readonly totalPages: number;
         };
-        AiChatRequest: {
-            message: string;
+        AdminOverviewDto: {
+            /** Format: int32 */
+            totalUsers: number;
+            /** Format: int32 */
+            activeTrainers: number;
+            /** Format: int32 */
+            bannedUsers: number;
+            /** Format: int32 */
+            activeSessions: number;
+            recentUsers: components["schemas"]["AdminUserDto"][];
         };
-        AiChatResponse: {
-            response: string;
+        AdminSessionDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            userId: string;
+            userName?: string | null;
+            userEmail?: string | null;
+            ipAddress?: string | null;
+            userAgent?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            lastSeenAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+        };
+        AdminSessionDtoPagedResult: {
+            items: components["schemas"]["AdminSessionDto"][];
+            /** Format: int32 */
+            totalCount: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            readonly totalPages: number;
+        };
+        AdminUserDetailDto: {
+            user: components["schemas"]["AdminUserDto"];
+            /** Format: int32 */
+            activeSessionCount: number;
+            recentSessions: components["schemas"]["AdminSessionDto"][];
+        };
+        AdminUserDto: {
+            /** Format: uuid */
+            id: string;
+            email: string;
+            name?: string | null;
+            image?: string | null;
+            role: string;
+            emailVerified: boolean;
+            banned: boolean;
+            banReason?: string | null;
+            /** Format: date-time */
+            banExpires?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        AdminUserDtoPagedResult: {
+            items: components["schemas"]["AdminUserDto"][];
+            /** Format: int32 */
+            totalCount: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            readonly totalPages: number;
+        };
+        AiChatMessageDto: {
+            /** Format: uuid */
+            id: string;
+            fromUser: boolean;
+            content: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        AiChatThreadDetailDto: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /** Format: date-time */
+            updatedAt: string;
+            messages: components["schemas"]["AiChatMessageDto"][];
+        };
+        AiChatThreadDto: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        AiChatTurnDto: {
+            /** Format: uuid */
+            threadId: string;
+            title: string;
+            reply: components["schemas"]["AiChatMessageDto"];
+        };
+        AiConsentDto: {
+            enabled: boolean;
+            shareNutrition: boolean;
+            shareTraining: boolean;
+            shareBody: boolean;
+            /** Format: date-time */
+            updatedAt?: string | null;
+        };
+        AiEvalCaseDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            isAdversarial: boolean;
+            input: string;
+            context?: string | null;
+            assertions: string;
+        };
+        AiEvalMatrixDto: {
+            /** Format: uuid */
+            versionId: string;
+            cases: components["schemas"]["AiEvalCaseDto"][];
+            runs: components["schemas"]["AiEvalRunDto"][];
+            publishable: boolean;
+            blockedReason?: string | null;
+            /** Format: int64 */
+            costMicros: number;
+            /** Format: int64 */
+            publishedCostMicros?: number | null;
+        };
+        /**
+         * Format: int32
+         * @enum {integer}
+         */
+        AiEvalOutcome: 0 | 1 | 2;
+        AiEvalRunDto: {
+            /** Format: uuid */
+            caseId: string;
+            outcome: components["schemas"]["AiEvalOutcome"];
+            schemaValid: boolean;
+            output?: string | null;
+            failureReason?: string | null;
+            /** Format: int32 */
+            tokens: number;
+            /** Format: int64 */
+            costMicros: number;
+            /** Format: int32 */
+            latencyMs: number;
+        };
+        AiPromptDetailDto: {
+            key: string;
+            description: string;
+            defaultBody: string;
+            preamble: string;
+            hardConstraints: components["schemas"]["HardConstraint"][];
+            versions: components["schemas"]["AiPromptVersionDto"][];
+        };
+        /**
+         * Format: int32
+         * @enum {integer}
+         */
+        AiPromptStatus: 0 | 1 | 2;
+        AiPromptSummaryDto: {
+            key: string;
+            description: string;
+            /** Format: int32 */
+            publishedVersion?: number | null;
+            /** Format: date-time */
+            publishedAt?: string | null;
+            /** Format: int32 */
+            draftCount: number;
+            /** Format: int32 */
+            versionCount: number;
+        };
+        AiPromptVersionDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            version: number;
+            body: string;
+            softPolicy: string;
+            status: components["schemas"]["AiPromptStatus"];
+            notes?: string | null;
+            authorName?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            publishedAt?: string | null;
+        };
+        AiQuotaSnapshot: {
+            /** Format: int32 */
+            requestsUsed: number;
+            /** Format: int32 */
+            requestLimit: number;
+            /** Format: int32 */
+            tokensUsed: number;
+            /** Format: int32 */
+            tokenLimit: number;
+            /** Format: date-time */
+            resetsAt: string;
+            plan: string;
+        };
+        AiUsageDayDto: {
+            /** Format: date */
+            date: string;
+            /** Format: int32 */
+            requests: number;
+            /** Format: int32 */
+            tokens: number;
+        };
+        AiUsageFeatureDto: {
+            feature: string;
+            /** Format: int32 */
+            requests: number;
+            /** Format: int32 */
+            tokens: number;
         };
         AuditLogDto: {
             /** Format: uuid */
@@ -4659,6 +6396,19 @@ export interface components {
             pageSize: number;
             /** Format: int32 */
             readonly totalPages: number;
+        };
+        AuthUserDto: {
+            /** Format: uuid */
+            id: string;
+            email: string;
+            name?: string | null;
+            image?: string | null;
+            role: string;
+            emailVerified: boolean;
+            themePreference: string;
+            compactMode: boolean;
+            reduceAnimations: boolean;
+            hasPassword: boolean;
         };
         BodyMeasurementDto: {
             /** Format: uuid */
@@ -4706,6 +6456,10 @@ export interface components {
             totalUnlocks: number;
             /** Format: int32 */
             totalPointsEarned: number;
+        };
+        ChangePasswordRequest: {
+            currentPassword?: string | null;
+            newPassword: string;
         };
         ChatConversationDto: {
             /** Format: uuid */
@@ -4775,6 +6529,19 @@ export interface components {
         CreateAchievementResult: {
             /** Format: uuid */
             id: string;
+        };
+        CreateAdminUserCommand: {
+            /** Format: email */
+            email: string;
+            password: string;
+            name?: string | null;
+            role: string;
+            emailVerified: boolean;
+        };
+        CreateDraftRequest: {
+            body?: string | null;
+            softPolicy?: string | null;
+            notes?: string | null;
         };
         CreateExerciseCommand: {
             name: string;
@@ -4891,6 +6658,7 @@ export interface components {
         CreateRecipeCommand: {
             title: string;
             description?: string | null;
+            instructions?: string | null;
             /** Format: int32 */
             servings: number;
             /** Format: int32 */
@@ -4902,31 +6670,14 @@ export interface components {
             /** Format: uuid */
             householdId?: string | null;
             ingredients: components["schemas"]["CreateRecipeIngredientDto"][];
-            instructions: string[];
-            tags: string[];
-            nutrition?: components["schemas"]["CreateRecipeNutritionDto"];
         };
         CreateRecipeIngredientDto: {
             /** Format: uuid */
             foodId?: string | null;
-            /** Format: uuid */
-            subRecipeId?: string | null;
             ingredientText: string;
             /** Format: double */
             amount?: number | null;
             unit?: string | null;
-        };
-        CreateRecipeNutritionDto: {
-            /** Format: double */
-            caloriesPerServing?: number | null;
-            /** Format: double */
-            proteinGrams?: number | null;
-            /** Format: double */
-            carbsGrams?: number | null;
-            /** Format: double */
-            fatGrams?: number | null;
-            /** Format: double */
-            fiberGrams?: number | null;
         };
         CreateRecipeResult: {
             /** Format: uuid */
@@ -5045,6 +6796,27 @@ export interface components {
             success: boolean;
             message?: string | null;
         };
+        EmailRequest: {
+            email: string;
+        };
+        EvalSummary: {
+            /** Format: uuid */
+            versionId: string;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            passed: number;
+            /** Format: int32 */
+            failed: number;
+            /** Format: int32 */
+            errored: number;
+            /** Format: int32 */
+            adversarialFailures: number;
+            /** Format: int32 */
+            tokens: number;
+            /** Format: int64 */
+            costMicros: number;
+        };
         ExerciseDto: {
             /** Format: uuid */
             id: string;
@@ -5147,6 +6919,7 @@ export interface components {
             totalCalories: number;
             /** Format: double */
             confidence: number;
+            note?: string | null;
         };
         FoodDiaryEntryDto: {
             /** Format: uuid */
@@ -5304,6 +7077,23 @@ export interface components {
             /** Format: int32 */
             freezesAvailable: number;
         };
+        GlobalAiUsageDto: {
+            /** Format: int64 */
+            tokensToday: number;
+            /** Format: int64 */
+            tokenCeiling: number;
+            /** Format: int64 */
+            costMicrosToday: number;
+            /** Format: int64 */
+            costCeilingMicros: number;
+            /** Format: int32 */
+            requestsToday: number;
+            /** Format: int32 */
+            failuresToday: number;
+            /** Format: int32 */
+            activeUsersToday: number;
+            byFeature: components["schemas"]["AiUsageFeatureDto"][];
+        };
         GoalProgressEntryDto: {
             /** Format: uuid */
             id: string;
@@ -5324,6 +7114,11 @@ export interface components {
         GoalProgressHistoryDto: {
             goal?: components["schemas"]["UserGoalSummaryDto"];
             progressEntries: components["schemas"]["GoalProgressEntryDto"][];
+        };
+        HardConstraint: {
+            title: string;
+            detail: string;
+            enforcedBy: string;
         };
         HealthCheckEntryDto: {
             name: string;
@@ -5493,6 +7288,10 @@ export interface components {
             unlockedAchievements: components["schemas"]["UnlockedAchievement"][];
             personalRecords: components["schemas"]["PersonalRecordResult"][];
         };
+        LoginRequest: {
+            email: string;
+            password: string;
+        };
         McpTokenDto: {
             /** Format: uuid */
             id: string;
@@ -5601,6 +7400,23 @@ export interface components {
             /** Format: double */
             servings: number;
         };
+        MealSuggestion: {
+            title: string;
+            description: string;
+            /** Format: double */
+            calories: number;
+            /** Format: double */
+            protein: number;
+            /** Format: double */
+            carbs: number;
+            /** Format: double */
+            fat: number;
+            reason: string;
+        };
+        MealSuggestionResult: {
+            suggestions: components["schemas"]["MealSuggestion"][];
+            note?: string | null;
+        };
         MealSummary: {
             mealType: string;
             /** Format: double */
@@ -5618,6 +7434,11 @@ export interface components {
             muscleGroup: string;
             /** Format: int32 */
             sets: number;
+        };
+        MyAiUsageDto: {
+            today: components["schemas"]["AiQuotaSnapshot"];
+            history: components["schemas"]["AiUsageDayDto"][];
+            byFeature: components["schemas"]["AiUsageFeatureDto"][];
         };
         MyHouseholdInvitationSummary: {
             /** Format: uuid */
@@ -5772,6 +7593,18 @@ export interface components {
             /** Format: double */
             targetDistanceMeters?: number | null;
         };
+        PromoteMealToRecipeCommand: {
+            /** Format: date */
+            entryDate: string;
+            mealType: string;
+            title: string;
+            /** Format: uuid */
+            householdId?: string | null;
+        };
+        PromoteToPreparationRequest: {
+            /** Format: double */
+            yieldGrams?: number | null;
+        };
         PublishFeedItemCommand: {
             type: string;
             /** Format: uuid */
@@ -5802,8 +7635,7 @@ export interface components {
             isFavorited: boolean;
             nutrition?: components["schemas"]["RecipeNutritionDto"];
             ingredients: components["schemas"]["RecipeIngredientDto"][];
-            instructions: components["schemas"]["RecipeInstructionDto"][];
-            tags: string[];
+            instructions?: string | null;
             /** Format: date-time */
             createdAt: string;
         };
@@ -5822,7 +7654,6 @@ export interface components {
             isPublic: boolean;
             isOwner: boolean;
             nutrition?: components["schemas"]["RecipeNutritionDto"];
-            tags: string[];
             /** Format: date-time */
             createdAt: string;
         };
@@ -5840,20 +7671,11 @@ export interface components {
         RecipeIngredientDto: {
             /** Format: uuid */
             foodId?: string | null;
-            /** Format: uuid */
-            subRecipeId?: string | null;
             foodName: string;
-            subRecipeName: string;
             /** Format: double */
             amount?: number | null;
             unit: string;
             ingredientText: string;
-            subRecipeNutrition?: components["schemas"]["RecipeNutritionDto"];
-        };
-        RecipeInstructionDto: {
-            /** Format: int32 */
-            stepNumber: number;
-            instruction: string;
         };
         RecipeNutritionDto: {
             /** Format: double */
@@ -5903,6 +7725,12 @@ export interface components {
             /** Format: uuid */
             id?: string | null;
         };
+        RegisterCommand: {
+            /** Format: email */
+            email: string;
+            password: string;
+            name?: string | null;
+        };
         RemoveHouseholdMemberResult: {
             success: boolean;
             message?: string | null;
@@ -5920,6 +7748,10 @@ export interface components {
         RequestFollowCommand: {
             shareToken: string;
         };
+        ResetPasswordCommand: {
+            token: string;
+            password: string;
+        };
         ResolveReportRequest: {
             action: string;
             note?: string | null;
@@ -5931,10 +7763,6 @@ export interface components {
             /** Format: uuid */
             relationshipId: string;
             accept: boolean;
-            canViewNutrition?: boolean | null;
-            canViewWorkouts?: boolean | null;
-            canViewMeasurements?: boolean | null;
-            canMessage?: boolean | null;
         };
         RespondToHouseholdInvitationResult: {
             success: boolean;
@@ -5964,6 +7792,11 @@ export interface components {
             isBuiltIn: boolean;
             exercises: components["schemas"]["WorkoutTemplateExerciseInput"][];
         };
+        SendAiChatMessageCommand: {
+            /** Format: uuid */
+            threadId?: string | null;
+            message: string;
+        };
         SendMessageRequest: {
             /** Format: uuid */
             conversationId: string;
@@ -5972,6 +7805,23 @@ export interface components {
         SendTrainerRequestRequest: {
             /** Format: uuid */
             trainerId: string;
+            canViewNutrition: boolean;
+            canViewWorkouts: boolean;
+            canViewMeasurements: boolean;
+            canMessage: boolean;
+        };
+        SessionSummaryDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            lastSeenAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+            ipAddress?: string | null;
+            userAgent?: string | null;
+            isCurrent: boolean;
         };
         SetActiveHouseholdRequest: {
             /** Format: uuid */
@@ -6059,6 +7909,11 @@ export interface components {
             defaultPublishWorkouts: boolean;
             shareToken?: string | null;
         };
+        /**
+         * Format: int32
+         * @enum {integer}
+         */
+        StorageFolder: 0 | 1;
         StreakUpdate: {
             streakType: string;
             /** Format: int32 */
@@ -6086,6 +7941,9 @@ export interface components {
         };
         ToggleItemRequest: {
             isChecked: boolean;
+        };
+        TokenRequest: {
+            token: string;
         };
         TokenUsageDto: {
             /** Format: uuid */
@@ -6200,6 +8058,26 @@ export interface components {
             /** Format: int32 */
             threshold: number;
         };
+        UpdateAdminUserRequest: {
+            role?: string | null;
+            banned?: boolean | null;
+            banReason?: string | null;
+            /** Format: date-time */
+            banExpires?: string | null;
+            emailVerified?: boolean | null;
+            newPassword?: string | null;
+        };
+        UpdateAiConsentCommand: {
+            enabled: boolean;
+            shareNutrition: boolean;
+            shareTraining: boolean;
+            shareBody: boolean;
+        };
+        UpdateDraftRequest: {
+            body: string;
+            softPolicy: string;
+            notes?: string | null;
+        };
         UpdateExerciseCommand: {
             /** Format: uuid */
             id: string;
@@ -6212,8 +8090,6 @@ export interface components {
             imageUrl?: string | null;
         };
         UpdateFoodCommand: {
-            /** Format: uuid */
-            id: string;
             name: string;
             brand?: string | null;
             barcode?: string | null;
@@ -6235,10 +8111,19 @@ export interface components {
             servingSize: number;
             servingUnit: string;
             isVerified: boolean;
+            /** Format: uuid */
+            id: string;
         };
         UpdateFoodResult: {
             success: boolean;
             message?: string | null;
+        };
+        UpdateGrantsRequest: {
+            canViewNutrition?: boolean | null;
+            canViewWorkouts?: boolean | null;
+            canViewMeasurements?: boolean | null;
+            canMessage?: boolean | null;
+            end: boolean;
         };
         UpdateMealPlanRecipeRequest: {
             /** Format: date */
@@ -6267,6 +8152,7 @@ export interface components {
             id: string;
             title: string;
             description?: string | null;
+            instructions?: string | null;
             /** Format: int32 */
             servings: number;
             /** Format: int32 */
@@ -6276,9 +8162,6 @@ export interface components {
             imageUrl?: string | null;
             isPublic: boolean;
             ingredients: components["schemas"]["CreateRecipeIngredientDto"][];
-            instructions: string[];
-            tags: string[];
-            nutrition?: components["schemas"]["CreateRecipeNutritionDto"];
         };
         UpdateRecipeResult: {
             success: boolean;
@@ -6287,6 +8170,9 @@ export interface components {
         UpdateUserRequest: {
             name?: string | null;
             image?: string | null;
+            themePreference?: string | null;
+            compactMode?: boolean | null;
+            reduceAnimations?: boolean | null;
         };
         UpdateWorkoutCommand: {
             /** Format: uuid */
@@ -6308,6 +8194,10 @@ export interface components {
             caloriesBurned?: number | null;
             notes?: string | null;
             exercises: components["schemas"]["WorkoutExerciseDto"][];
+        };
+        UploadedImageDto: {
+            key: string;
+            url: string;
         };
         UsageOverview: {
             /** Format: int32 */

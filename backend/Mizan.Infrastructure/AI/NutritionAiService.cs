@@ -55,6 +55,34 @@ public class NutritionAiService : INutritionAiService
         }
         """;
 
+    private const string SuggestionSchemaV1 = """
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["suggestions", "note"],
+          "properties": {
+            "suggestions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["title", "description", "calories", "protein", "carbs", "fat", "reason"],
+                "properties": {
+                  "title": { "type": "string" },
+                  "description": { "type": "string" },
+                  "calories": { "type": "number" },
+                  "protein": { "type": "number" },
+                  "carbs": { "type": "number" },
+                  "fat": { "type": "number" },
+                  "reason": { "type": "string" }
+                }
+              }
+            },
+            "note": { "type": ["string", "null"] }
+          }
+        }
+        """;
+
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
 
     private readonly IAiProvider _provider;
@@ -77,9 +105,10 @@ public class NutritionAiService : INutritionAiService
         _logger = logger;
     }
 
-    public async Task<string> GetNutritionAdviceAsync(
+    public async Task<AiChatTurn> GetNutritionAdviceAsync(
         Guid userId,
         string userMessage,
+        IReadOnlyList<AiChatHistoryTurn> history,
         CancellationToken cancellationToken = default)
     {
         var context = await _contextBuilder.BuildAsync(userId, userId, cancellationToken);
@@ -88,8 +117,19 @@ public class NutritionAiService : INutritionAiService
         var messages = new List<AiMessage> { new(AiRole.System, prompt.SystemPrompt) };
         if (!context.IsEmpty)
         {
+            // After the system prompt and before the history, so the freshest
+            // numbers are what the model reasons from rather than whatever it
+            // said about them three turns ago.
             messages.Add(new AiMessage(AiRole.System, context.Summary));
         }
+
+        var historyLength = 0;
+        foreach (var turn in history)
+        {
+            messages.Add(new AiMessage(turn.FromUser ? AiRole.User : AiRole.Assistant, turn.Content));
+            historyLength += turn.Content.Length;
+        }
+
         messages.Add(new AiMessage(AiRole.User, userMessage));
 
         var response = await CallAsync(
@@ -97,11 +137,11 @@ public class NutritionAiService : INutritionAiService
             context.HouseholdId,
             AiFeatures.Chat,
             new AiCompletionRequest { Messages = messages },
-            EstimateTokens(userMessage.Length + context.Summary.Length),
+            EstimateTokens(userMessage.Length + context.Summary.Length + historyLength),
             prompt.VersionId,
             cancellationToken);
 
-        return response.Content;
+        return new AiChatTurn(response.Content, prompt.VersionId);
     }
 
     public async Task<FoodAnalysisResult> AnalyzeFoodImageAsync(
@@ -129,16 +169,58 @@ public class NutritionAiService : INutritionAiService
         var response = await CallAsync(
             userId, householdId: null, AiFeatures.FoodAnalysis, request, 2_000, prompt.VersionId, cancellationToken);
 
+        return Parse<FoodAnalysisResult>(
+            response.Content, "food analysis", "The assistant could not read that photo. Try another.");
+    }
+
+    /// <summary>
+    /// A response that does not match its declared schema is a failed call.
+    /// There is no regex fallback: scraping a shape out of prose is how a
+    /// half-parsed answer ends up looking like a real one (docs/REFOCUS.md §10).
+    /// </summary>
+    private T Parse<T>(string content, string what, string failure)
+    {
         try
         {
-            return JsonSerializer.Deserialize<FoodAnalysisResult>(response.Content, Json)
-                ?? throw new AiUnavailableException("The assistant could not read that photo. Try another.");
+            return JsonSerializer.Deserialize<T>(content, Json)
+                ?? throw new AiUnavailableException(failure);
         }
         catch (JsonException ex)
         {
-            _logger.LogWarning(ex, "Food analysis response did not match the declared schema");
-            throw new AiUnavailableException("The assistant could not read that photo. Try another.");
+            _logger.LogWarning(ex, "The {What} response did not match the declared schema", what);
+            throw new AiUnavailableException(failure);
         }
+    }
+
+    public async Task<MealSuggestionResult> SuggestMealsAsync(
+        Guid userId, CancellationToken cancellationToken = default)
+    {
+        var context = await _contextBuilder.BuildAsync(userId, userId, cancellationToken);
+        var prompt = await _prompts.ResolveAsync(AiPromptKeys.Suggestions, cancellationToken);
+
+        var messages = new List<AiMessage> { new(AiRole.System, prompt.SystemPrompt) };
+        if (!context.IsEmpty)
+        {
+            messages.Add(new AiMessage(AiRole.System, context.Summary));
+        }
+        messages.Add(new AiMessage(AiRole.User, "Propose meals for the rest of today."));
+
+        var response = await CallAsync(
+            userId,
+            context.HouseholdId,
+            AiFeatures.Suggestions,
+            new AiCompletionRequest
+            {
+                Messages = messages,
+                ResponseSchema = new AiJsonSchema("meal_suggestions_v1", SuggestionSchemaV1),
+                Temperature = 0.4,
+            },
+            EstimateTokens(context.Summary.Length),
+            prompt.VersionId,
+            cancellationToken);
+
+        return Parse<MealSuggestionResult>(
+            response.Content, "meal suggestions", "The assistant could not put a list together. Try again.");
     }
 
     /// <summary>

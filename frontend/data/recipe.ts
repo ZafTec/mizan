@@ -9,7 +9,6 @@ const recipeLogger = logger.createModuleLogger("recipe-data");
 
 // Base generated types
 export type RecipeIngredient = components["schemas"]["RecipeIngredientDto"];
-export type RecipeInstruction = components["schemas"]["RecipeInstructionDto"];
 
 // Extended nutrition type with fiber support
 export interface RecipeNutrition {

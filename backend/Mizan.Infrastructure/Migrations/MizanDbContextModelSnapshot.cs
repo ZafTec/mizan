@@ -275,6 +275,44 @@ namespace Mizan.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.AiChatMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("content");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid?>("PromptVersionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("prompt_version_id");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer")
+                        .HasColumnName("role");
+
+                    b.Property<Guid>("ThreadId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("thread_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ThreadId", "CreatedAt");
+
+                    b.ToTable("ai_chat_messages", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.AiChatThread", b =>
                 {
                     b.Property<Guid>("Id")
@@ -289,20 +327,11 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("NOW()");
 
-                    b.Property<string>("ThreadData")
+                    b.Property<string>("Title")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("jsonb")
-                        .HasDefaultValue("{}")
-                        .HasColumnName("thread_data");
-
-                    b.Property<string>("ThreadType")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasDefaultValue("nutrition")
-                        .HasColumnName("thread_type");
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("title");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
@@ -316,7 +345,7 @@ namespace Mizan.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "UpdatedAt");
 
                     b.ToTable("ai_chat_threads", (string)null);
                 });
@@ -3109,6 +3138,17 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("workout_template_exercises", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.AiChatMessage", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.AiChatThread", "Thread")
+                        .WithMany("Messages")
+                        .HasForeignKey("ThreadId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Thread");
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.AiChatThread", b =>
                 {
                     b.HasOne("Mizan.Domain.Entities.User", "User")
@@ -3821,6 +3861,11 @@ namespace Mizan.Infrastructure.Migrations
             modelBuilder.Entity("Mizan.Domain.Entities.Achievement", b =>
                 {
                     b.Navigation("UserAchievements");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.AiChatThread", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.AiPrompt", b =>
