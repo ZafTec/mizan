@@ -654,6 +654,28 @@ namespace Mizan.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "telegram_links",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    telegram_user_id = table.Column<long>(type: "bigint", nullable: false),
+                    telegram_username = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    linked_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    last_seen_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_telegram_links", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_telegram_links_users_user_id",
+                        column: x => x.user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "trainer_client_relationships",
                 columns: table => new
                 {
@@ -1905,6 +1927,18 @@ namespace Mizan.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_telegram_links_telegram_user_id",
+                table: "telegram_links",
+                column: "telegram_user_id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_telegram_links_user_id",
+                table: "telegram_links",
+                column: "user_id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_trainer_client_relationships_client_id",
                 table: "trainer_client_relationships",
                 column: "client_id");
@@ -2083,6 +2117,9 @@ namespace Mizan.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "subscriptions");
+
+            migrationBuilder.DropTable(
+                name: "telegram_links");
 
             migrationBuilder.DropTable(
                 name: "user_achievements");

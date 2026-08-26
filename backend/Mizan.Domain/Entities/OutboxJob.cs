@@ -63,3 +63,22 @@ public static class OutboxJobTypes
     public const string Email = "email";
     public const string EvalRun = "eval-run";
 }
+
+/// <summary>
+/// Scrubs an address out of a failure message before it is stored or logged.
+///
+/// An SMTP rejection quotes the recipient back at you - "550 5.1.1
+/// &lt;someone@example.com&gt;: recipient rejected" - and that string lands in
+/// two places an address has no business being: the log, and a row an
+/// operator reads in the admin console. Redacting at the point of capture
+/// rather than at the point of display means the database never holds it
+/// either.
+/// </summary>
+public static partial class OutboxError
+{
+    public static string? Redact(string? message) =>
+        string.IsNullOrEmpty(message) ? message : EmailPattern().Replace(message, "[redacted]");
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"[\w.+-]+@[\w-]+\.[\w.-]+")]
+    private static partial System.Text.RegularExpressions.Regex EmailPattern();
+}

@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mizan.Mcp.Server", "Mizan.M
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mizan.Contracts", "Mizan.Contracts\Mizan.Contracts.csproj", "{691DAEAE-D9CA-4F0D-9CDC-6710E910F7BD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mizan.Telegram", "Mizan.Telegram\Mizan.Telegram.csproj", "{7C3E1A94-2D5B-4F80-9E61-B8A0C4D2F511}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +113,10 @@ Global
 		{691DAEAE-D9CA-4F0D-9CDC-6710E910F7BD}.Release|x64.Build.0 = Release|Any CPU
 		{691DAEAE-D9CA-4F0D-9CDC-6710E910F7BD}.Release|x86.ActiveCfg = Release|Any CPU
 		{691DAEAE-D9CA-4F0D-9CDC-6710E910F7BD}.Release|x86.Build.0 = Release|Any CPU
+		{7C3E1A94-2D5B-4F80-9E61-B8A0C4D2F511}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C3E1A94-2D5B-4F80-9E61-B8A0C4D2F511}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C3E1A94-2D5B-4F80-9E61-B8A0C4D2F511}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C3E1A94-2D5B-4F80-9E61-B8A0C4D2F511}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -9,6 +9,7 @@ public interface IMizanDbContext
     DbSet<User> Users { get; }
     DbSet<UserSession> UserSessions { get; }
     DbSet<UserToken> UserTokens { get; }
+    DbSet<TelegramLink> TelegramLinks { get; }
     DbSet<ExternalLogin> ExternalLogins { get; }
 
     // Business tables (managed by backend)
