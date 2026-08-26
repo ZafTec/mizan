@@ -226,16 +226,20 @@ export default async function Page({
 						<i className="ri-file-list-3-line text-brand-500" />
 						Instructions
 					</h2>
-					{recipe.instructions && recipe.instructions.length > 0 ? (
+					{recipe.instructions ? (
 						<ol className="space-y-4">
-							{recipe.instructions.map((instruction, index) => (
-								<li key={index} className="flex gap-3">
-									<div className="w-8 h-8 rounded-lg bg-accent-100 text-accent-600 flex items-center justify-center text-sm font-bold shrink-0">
-										{instruction.stepNumber || index + 1}
-									</div>
-									<p className="text-charcoal-blue-700 dark:text-charcoal-blue-300 pt-1">{instruction.instruction}</p>
-								</li>
-							))}
+							{recipe.instructions
+								.split("\n")
+								.map((step) => step.trim())
+								.filter(Boolean)
+								.map((step, index) => (
+									<li key={step} className="flex gap-3">
+										<div className="w-8 h-8 rounded-lg bg-accent-100 text-accent-600 flex items-center justify-center text-sm font-bold shrink-0">
+											{index + 1}
+										</div>
+										<p className="text-charcoal-blue-700 dark:text-charcoal-blue-300 pt-1">{step}</p>
+									</li>
+								))}
 						</ol>
 					) : (
 						<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-center py-4">
@@ -245,25 +249,6 @@ export default async function Page({
 				</div>
 			</div>
 
-			{/* Tags */}
-			{recipe.tags && recipe.tags.length > 0 && (
-				<div className="card p-6">
-					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2 mb-4">
-						<i className="ri-price-tag-3-line text-brand-500" />
-						Tags
-					</h2>
-					<div className="flex flex-wrap gap-2">
-						{recipe.tags.map((tag, index) => (
-							<span
-								key={index}
-							className="inline-flex items-center px-4 py-2 rounded-full bg-brand-100 text-brand-700 text-sm font-medium dark:bg-brand-900/30 dark:text-brand-300"
-							>
-								{tag}
-							</span>
-						))}
-					</div>
-				</div>
-			)}
 
 			{/* Actions: only shown to authenticated users */}
 			{user && (

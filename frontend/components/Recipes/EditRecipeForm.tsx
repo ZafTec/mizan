@@ -38,39 +38,13 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
         onUploaded: (url) => setImages([url]),
     });
     const [description, setDescription] = useState(recipe.description || '');
-    // Instructions are free text now, not ordered rows - see docs/REFOCUS.md §4.
-    // types/api.generated.ts still describes the old array shape; it is generated
-    // from a running backend, so `bun run codegen` has to be re-run against the
-    // updated API. Coerced here so the form is correct either way in the meantime.
-    const [instructions, setInstructions] = useState<string>(
-        typeof recipe.instructions === "string"
-            ? recipe.instructions
-            : ((recipe.instructions ?? []) as { instruction?: string }[])
-                  .map((i) => i.instruction ?? "")
-                  .join("\n")
-    );
+    // Instructions are free text, not ordered rows - see docs/REFOCUS.md §4.
+    const [instructions, setInstructions] = useState<string>(recipe.instructions ?? "");
     const [selectedIngredients, setSelectedIngredients] = useState<SelectedIngredient[]>(
+        // Every ingredient the API returns is a food. The editor still offers
+        // sub-recipes, but RecipeIngredientDto has no field to carry one back,
+        // so a saved sub-recipe reloads as its text - see the note in the PR.
         (recipe.ingredients || []).map(ing => {
-            if (ing.subRecipeId) {
-                return {
-                    type: "recipe" as const,
-                    ingredient: null,
-                    subRecipe: {
-                        id: ing.subRecipeId,
-                        title: ing.subRecipeName || ing.ingredientText || "",
-                        nutrition: ing.subRecipeNutrition ? {
-                            caloriesPerServing: ing.subRecipeNutrition.caloriesPerServing,
-                            proteinGrams: ing.subRecipeNutrition.proteinGrams,
-                            carbsGrams: ing.subRecipeNutrition.carbsGrams,
-                            fatGrams: ing.subRecipeNutrition.fatGrams,
-                            fiberGrams: ing.subRecipeNutrition.fiberGrams,
-                        } : undefined,
-                    },
-                    name: ing.subRecipeName || ing.ingredientText || "",
-                    amount: ing.amount ?? null,
-                    unit: "serving",
-                };
-            }
             return {
                 type: "food" as const,
                 ingredient: {
@@ -96,7 +70,8 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
     const [servings, setServings] = useState(recipe.servings || 1);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const [tags, setTags] = useState<Set<string>>(new Set<string>(recipe.tags || []));
+    // The API has never returned tags, so an edit always starts from none.
+    const [tags, setTags] = useState<Set<string>>(new Set<string>());
     const [currentTag, setCurrentTag] = useState('');
 
     const [ingredientSearch, setIngredientSearch] = useState<Ingredient[]>([]);
