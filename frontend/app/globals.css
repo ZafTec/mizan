@@ -1,21 +1,32 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap');
 
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Phase 18 — "Daylight": the current layout, restyled around one warm
+ * neutral instead of a blue-gray, with the frosted-glass surfaces removed.
+ *
+ * `charcoal-blue` keeps its name (166 files reference it) but its hue moves
+ * from ~225° (blue-gray) to a warm ~75° (stone). Every semantic token below -
+ * background, border, muted text - resolves through this ramp, so the whole
+ * app repaints from these eleven lines without touching a component.
+ * verdigris, tuscan-sun, sandy-brown and burnt-peach are unchanged: they were
+ * already warm-toned (teal, amber, terracotta, coral) and did not need it.
+ */
 @theme {
-  --color-charcoal-blue-50: oklch(96.35% 0.008 228.85);
-  --color-charcoal-blue-100: oklch(92.8% 0.016 221.08);
-  --color-charcoal-blue-200: oklch(85.34% 0.033 224.29);
-  --color-charcoal-blue-300: oklch(78.04% 0.049 223.72);
-  --color-charcoal-blue-400: oklch(70.51% 0.065 225.45);
-  --color-charcoal-blue-500: oklch(63.25% 0.08 226.07);
-  --color-charcoal-blue-600: oklch(53.76% 0.067 226.59);
-  --color-charcoal-blue-700: oklch(44.09% 0.053 225.4);
-  --color-charcoal-blue-800: oklch(33.58% 0.038 226.15);
-  --color-charcoal-blue-900: oklch(22.47% 0.022 222.52);
-  --color-charcoal-blue-950: oklch(18.75% 0.016 218.52);
+  --color-charcoal-blue-50: oklch(96.35% 0.006 75);
+  --color-charcoal-blue-100: oklch(92.8% 0.010 75);
+  --color-charcoal-blue-200: oklch(85.34% 0.016 75);
+  --color-charcoal-blue-300: oklch(78.04% 0.022 75);
+  --color-charcoal-blue-400: oklch(70.51% 0.028 75);
+  --color-charcoal-blue-500: oklch(63.25% 0.032 75);
+  --color-charcoal-blue-600: oklch(53.76% 0.028 75);
+  --color-charcoal-blue-700: oklch(44.09% 0.022 75);
+  --color-charcoal-blue-800: oklch(33.58% 0.016 75);
+  --color-charcoal-blue-900: oklch(22.47% 0.010 75);
+  --color-charcoal-blue-950: oklch(18.75% 0.008 75);
 
   --color-verdigris-50: oklch(97.35% 0.016 187.34);
   --color-verdigris-100: oklch(94.54% 0.03 189.08);
@@ -89,10 +100,15 @@
   --color-accent-900: var(--color-sandy-brown-900);
   --color-accent-950: var(--color-sandy-brown-950);
 
-  --shadow-soft: 0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04);
-  --shadow-panel: 0 24px 60px -36px rgba(15, 23, 42, 0.28);
+  /* Warmed to match the stone ramp - the old values were tuned for a blue cast. */
+  --shadow-soft: 0 2px 15px -3px rgba(38, 32, 24, 0.06), 0 10px 20px -2px rgba(38, 32, 24, 0.04);
+  --shadow-panel: 0 20px 48px -32px rgba(38, 32, 24, 0.22);
   --shadow-glow: 0 0 24px color-mix(in oklab, var(--color-verdigris-500) 30%, transparent);
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-sans: 'Instrument Sans', system-ui, sans-serif;
+
+  /* Headings only (see the h1/h2 rule in @layer base). Everything else - body
+     copy, labels, data, controls - stays on the sans face. */
+  --font-serif: 'Instrument Serif', Georgia, serif;
 
   /* Emil-style strong easing curves: default easings are too weak */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -150,15 +166,18 @@
 }
 
 :root {
-  --radius: 0.625rem;
+  /* Was 0.625rem (10px), which put the panel radii (rounded-2xl/3xl/4xl,
+     derived from this below) at 18-26px - the "pill-shaped data table" the
+     rebuild exists to fix. 0.5rem puts them at 12/16/20/24px. */
+  --radius: 0.5rem;
   --background: var(--color-charcoal-blue-50);
   --foreground: var(--color-charcoal-blue-900);
-  --card: oklch(99% 0.004 220);
+  --card: oklch(99.2% 0.003 75);
   --card-foreground: var(--color-charcoal-blue-900);
-  --popover: oklch(99% 0.004 220);
+  --popover: oklch(99.2% 0.003 75);
   --popover-foreground: var(--color-charcoal-blue-900);
   --primary: var(--color-verdigris-700);
-  --primary-foreground: oklch(99% 0.004 220);
+  --primary-foreground: oklch(99% 0.004 75);
   --secondary: var(--color-charcoal-blue-100);
   --secondary-foreground: var(--color-charcoal-blue-800);
   --muted: var(--color-charcoal-blue-100);
@@ -177,7 +196,7 @@
   --sidebar: var(--color-charcoal-blue-50);
   --sidebar-foreground: var(--color-charcoal-blue-900);
   --sidebar-primary: var(--color-verdigris-700);
-  --sidebar-primary-foreground: oklch(99% 0.004 220);
+  --sidebar-primary-foreground: oklch(99% 0.004 75);
   --sidebar-accent: var(--color-charcoal-blue-100);
   --sidebar-accent-foreground: var(--color-charcoal-blue-800);
   --sidebar-border: color-mix(in oklab, var(--color-charcoal-blue-200) 72%, white);
@@ -230,56 +249,32 @@ html {
 
   html {
     @apply scroll-smooth;
-    /* `overflow-x: clip` on the html element kills horizontal overflow from
-       decorative fixed blobs + animated blur filters without creating a new
-       vertical scroll context. Keep it OFF the body, body owns vertical scroll. */
+    /* A stray wide element (an unbounded flex row, a table) should not open a
+       horizontal scrollbar on the page. `overflow-x: clip` on html rather than
+       body, since body owns vertical scroll. */
     overflow-x: clip;
   }
 
+  /* Display type gets the serif; everything else - body copy, labels, data,
+     controls - stays on the sans face. No component touches font-family
+     directly, so this is the one place the split is enforced. h3 stays sans:
+     it is usually a card sub-header in dense UI, where a second voice reads
+     as noise rather than hierarchy. */
+  h1, h2 {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  /* A flat page background - no dot-grid, no floating blur blob. Both
+     existed only as ambient texture, and "nothing floats, nothing glows"
+     is the rule the rest of this file follows; the body background was
+     the one place still breaking it. */
   body {
     @apply min-h-screen antialiased;
     color: var(--foreground);
-    background: color-mix(in oklab, var(--color-charcoal-blue-50) 92%, white);
+    background: var(--background);
     font-family: var(--font-sans);
-    position: relative;
-    isolation: isolate;
-  }
-
-  html.dark body {
-    background: color-mix(in oklab, var(--color-charcoal-blue-950) 92%, black);
-  }
-
-  body::before,
-  body::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-  }
-
-  body::before {
-    background-image:
-      linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
-    background-size: 72px 72px;
-    mask-image: radial-gradient(circle at center, black 24%, transparent 78%);
-    opacity: 0.5;
-    z-index: -2;
-  }
-
-  body::after {
-    inset: auto auto -10rem -8rem;
-    width: 26rem;
-    height: 26rem;
-    border-radius: 9999px;
-    background: color-mix(in oklab, var(--color-verdigris-300) 18%, transparent);
-    filter: blur(10px);
-    animation: float-field 18s var(--ease-emphasized) infinite alternate;
-    z-index: -1;
-  }
-
-  html.dark body::before {
-    opacity: 0.18;
   }
 
   a,
@@ -331,8 +326,7 @@ html {
 }
 
 .btn-secondary {
-  @apply border border-charcoal-blue-300 bg-white text-charcoal-blue-700 focus:ring-charcoal-blue-400 hover:bg-charcoal-blue-50 hover:border-charcoal-blue-400 dark:border-white/10 dark:bg-charcoal-blue-950/75 dark:text-charcoal-blue-200 dark:hover:bg-white/5 dark:hover:border-white/15;
-  backdrop-filter: blur(18px);
+  @apply border border-charcoal-blue-300 bg-white text-charcoal-blue-700 focus:ring-charcoal-blue-400 hover:bg-charcoal-blue-50 hover:border-charcoal-blue-400 dark:border-white/10 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-200 dark:hover:bg-white/5 dark:hover:border-white/15;
 }
 
 .btn-accent {
@@ -357,8 +351,7 @@ html {
 
 .card,
 .card-hover {
-  @apply overflow-hidden rounded-[28px] border border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-charcoal-blue-950/75;
-  backdrop-filter: blur(20px);
+  @apply overflow-hidden rounded-2xl border border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-charcoal-blue-900;
   box-shadow: var(--shadow-panel);
   transition-property: transform, box-shadow, border-color, background-color;
   transition-duration: var(--duration-medium);
@@ -372,7 +365,7 @@ html {
 @media (hover: hover) and (pointer: fine) {
   .card-hover:hover {
     transform: translateY(-3px);
-    box-shadow: 0 30px 80px -42px rgba(15, 23, 42, 0.4);
+    box-shadow: 0 30px 80px -42px rgba(38, 32, 24, 0.32);
   }
 }
 
@@ -382,8 +375,7 @@ html {
    `.input`'s `w-full` always wins over `sm:w-40`, no matter the source order. */
 @layer components {
   .input {
-    @apply w-full rounded-2xl border border-charcoal-blue-300 bg-white px-4 py-3 text-charcoal-blue-900 placeholder-charcoal-blue-400 focus:outline-none focus:ring-2 focus:ring-brand-500/15 dark:border-white/10 dark:bg-charcoal-blue-950/75 dark:text-charcoal-blue-100 dark:placeholder-charcoal-blue-500;
-    backdrop-filter: blur(14px);
+    @apply w-full rounded-xl border border-charcoal-blue-300 bg-white px-4 py-3 text-charcoal-blue-900 placeholder-charcoal-blue-400 focus:outline-none focus:ring-2 focus:ring-brand-500/15 dark:border-white/10 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-100 dark:placeholder-charcoal-blue-500;
     transition-property: border-color, box-shadow, background-color, color;
     transition-duration: var(--duration-fast);
     transition-timing-function: var(--ease-out);
@@ -408,26 +400,21 @@ html {
 }
 
 .eyebrow {
-  @apply inline-flex items-center gap-2 rounded-full border border-charcoal-blue-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal-blue-600 dark:border-white/10 dark:bg-charcoal-blue-950/70 dark:text-charcoal-blue-300;
-  backdrop-filter: blur(14px);
+  @apply inline-flex items-center gap-2 rounded-full border border-charcoal-blue-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal-blue-600 dark:border-white/10 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-300;
 }
 
 .icon-chip {
-  @apply inline-flex items-center justify-center rounded-2xl border border-charcoal-blue-200 bg-white text-charcoal-blue-700 dark:border-white/10 dark:bg-charcoal-blue-950/75 dark:text-charcoal-blue-100;
-  backdrop-filter: blur(16px);
+  @apply inline-flex items-center justify-center rounded-xl border border-charcoal-blue-200 bg-white text-charcoal-blue-700 dark:border-white/10 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-100;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .surface-panel {
-  @apply overflow-hidden rounded-[32px] border border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-charcoal-blue-950/75;
-  backdrop-filter: blur(22px);
+  @apply overflow-hidden rounded-2xl border border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-charcoal-blue-900;
   box-shadow: var(--shadow-panel);
 }
 
 .nav-glass {
-  @apply border border-charcoal-blue-200 bg-white/98 dark:border-white/10 dark:bg-charcoal-blue-950/75;
-  backdrop-filter: blur(20px);
-  box-shadow: var(--shadow-panel);
+  @apply border border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-charcoal-blue-950;
 }
 
 .text-gradient {
@@ -478,6 +465,119 @@ html {
   }
 }
 
+/*
+ * Radix Popover/Dialog content, animated for real.
+ *
+ * The shadcn boilerplate these were adapted from assumes the
+ * `tailwindcss-animate` plugin - not installed here - so `animate-in`,
+ * `fade-in-0`, `zoom-in-95` etc. on Popover/Dialog/ConfirmationModal were
+ * never real utilities. They compiled to nothing, and every one of those
+ * surfaces was appearing and disappearing with zero transition - the exact
+ * "feels broken" case animation exists to prevent. These four classes read
+ * the `data-state` Radix already sets and animate for real.
+ */
+.radix-pop {
+  animation: menu-pop-in 160ms var(--ease-out) both;
+}
+.radix-pop[data-state="closed"] {
+  animation: menu-pop-out 120ms var(--ease-out) both;
+}
+@keyframes menu-pop-out {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+}
+
+/* Modals stay centered - no trigger to scale from, per Emil's exception. */
+.dialog-overlay {
+  animation: overlay-fade-in 180ms var(--ease-out) both;
+}
+.dialog-overlay[data-state="closed"] {
+  animation: overlay-fade-out 150ms var(--ease-out) both;
+}
+@keyframes overlay-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes overlay-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.dialog-content {
+  animation: dialog-pop-in 200ms var(--ease-out) both;
+}
+.dialog-content[data-state="closed"] {
+  animation: dialog-pop-out 150ms var(--ease-out) both;
+}
+@keyframes dialog-pop-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+@keyframes dialog-pop-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+}
+
+/* Non-Radix modals (ConfirmationModal, ModalShell): the same centered
+   entrance, run once on mount since these unmount entirely rather than
+   toggling a data-state. */
+.modal-overlay-in {
+  animation: overlay-fade-in 180ms var(--ease-out) both;
+}
+.modal-pop-in {
+  animation: modal-pop 200ms var(--ease-out) both;
+}
+@keyframes modal-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* LogSheet: a bottom sheet below `sm`, a centered dialog above it. Percentage
+   translateY means the slide-up works regardless of the sheet's real height
+   (Emil: prefer % over px for exactly this reason). */
+.sheet-pop-in {
+  animation: sheet-slide-up var(--duration-medium) var(--ease-drawer) both;
+}
+@keyframes sheet-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (min-width: 640px) {
+  .sheet-pop-in {
+    animation: modal-pop var(--duration-fast) var(--ease-out) both;
+  }
+}
+
 /* Mobile drawer: iOS-style curve, starts off-screen (translateX(-100%)) */
 .mobile-sheet-enter {
   animation: mobile-sheet-slide 280ms var(--ease-drawer) both;
@@ -510,7 +610,7 @@ html {
   width: 2.75rem;
   height: 1.5rem;
   border-radius: 9999px;
-  background: rgba(148, 163, 184, 0.45);
+  background: rgba(168, 158, 140, 0.45);
   position: relative;
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--ease-out);
@@ -525,7 +625,7 @@ html {
   height: 1.25rem;
   border-radius: 9999px;
   background: white;
-  box-shadow: 0 8px 18px -12px rgba(15, 23, 42, 0.8);
+  box-shadow: 0 8px 18px -12px rgba(38, 32, 24, 0.55);
   transition: transform var(--duration-fast) var(--ease-out);
 }
 
@@ -538,7 +638,7 @@ html {
 }
 
 html.dark .toggle {
-  background: rgba(148, 163, 184, 0.22);
+  background: rgba(168, 158, 140, 0.24);
 }
 
 html.compact .btn,
@@ -553,7 +653,9 @@ html.compact .btn-ghost {
 html.compact .card,
 html.compact .card-hover,
 html.compact .surface-panel {
-  border-radius: 1.5rem;
+  /* Tighter than the 16px default, not looser - compact means less padding
+     and less roundness together, not one or the other. */
+  border-radius: 0.75rem;
 }
 
 html.compact .input {
@@ -605,15 +707,6 @@ html.reduce-motion *::after {
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes float-field {
-  from {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  to {
-    transform: translate3d(4rem, -2rem, 0) scale(1.08);
   }
 }
 
@@ -700,238 +793,41 @@ html.dark .macro-chip-fat      { color: var(--color-sandy-brown-300); background
   box-shadow: 0 8px 24px -12px color-mix(in oklab, var(--color-sandy-brown-500) 55%, transparent);
 }
 
+/* The name is kept - 18 components use it - but the glass is gone: a solid
+   surface, same border and shadow language as .surface-panel. */
 .glass-panel {
-  background: color-mix(in oklab, white 78%, transparent);
-  backdrop-filter: blur(18px);
-  border: 1px solid color-mix(in oklab, var(--color-charcoal-blue-200) 60%, transparent);
+  background: white;
+  border: 1px solid var(--color-charcoal-blue-200);
   box-shadow: var(--shadow-panel);
-  border-radius: 28px;
+  border-radius: 16px;
 }
 html.dark .glass-panel {
-  background: color-mix(in oklab, var(--color-charcoal-blue-950) 72%, transparent);
+  background: var(--color-charcoal-blue-900);
   border-color: color-mix(in oklab, var(--color-charcoal-blue-700) 40%, transparent);
 }
 
 .ring-track { stroke: color-mix(in oklab, var(--color-charcoal-blue-200) 75%, transparent); }
+html.dark .ring-track { stroke: color-mix(in oklab, var(--color-charcoal-blue-700) 55%, transparent); }
 
-/* ============================================================================
- * The Ethereal Lab, landing page scoped design system.
+/*
+ * The landing page's old dark "Ethereal Lab" system lived here - an
+ * `.eth-lab` scope with its own dark surfaces, glass buttons and 28px cards,
+ * meant to keep the marketing page dark while the app went light/dark by
+ * theme. Nothing in the codebase used it (grep for every `.eth-*` selector
+ * turned up zero matches outside this file): the landing page had already
+ * been rebuilt on the shared token system before phase 18, and this was
+ * dead weight left behind. Removed rather than retuned.
  *
- * Scoped via `.eth-lab` so it doesn't leak into the dashboard. The landing is
- * always dark. No borders, no drop shadows, no pure black. Depth by tone +
- * ambient glow, never by lines.
- * ========================================================================= */
-.eth-lab {
-  --eth-surface: #0D1322;
-  --eth-surface-lowest: #0A0F1C;
-  --eth-surface-low: #141B2F;
-  --eth-surface-container: #1B2338;
-  --eth-surface-high: #222B44;
-  --eth-surface-highest: #2A3451;
-
-  --eth-primary: #6EEBE0;
-  --eth-primary-container: #4DCFC4;
-  --eth-secondary: #FFB4A2;
-  --eth-tertiary: #FFD26F;
-  --eth-accent-brown: #B89968;
-
-  --eth-on-surface: #E8EFF8;
-  --eth-on-surface-variant: #B5C4D9;
-  --eth-on-surface-muted: #8496B0;
-  --eth-outline-variant: rgba(181, 196, 217, 0.12);
-
-  --eth-ease: cubic-bezier(0.23, 1, 0.32, 1);
-  --eth-duration: 420ms;
-
-  color: var(--eth-on-surface);
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-}
-
-/* Primary CTA: luminous 135deg gradient, 28px radius, no shadow, ambient glow. */
-.eth-btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.9rem 1.5rem;
-  border-radius: 28px;
-  border: 0;
-  background: linear-gradient(135deg, var(--eth-primary) 0%, var(--eth-primary-container) 100%);
-  color: #0A0F1C;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  cursor: pointer;
-  position: relative;
-  isolation: isolate;
-  transition: transform 160ms var(--eth-ease), filter 180ms var(--eth-ease);
-}
-.eth-btn-primary::after {
-  content: "";
-  position: absolute;
-  inset: -8px;
-  border-radius: 36px;
-  background: radial-gradient(closest-side, rgba(90, 218, 207, 0.45), transparent 70%);
-  z-index: -1;
-  opacity: 0.65;
-  filter: blur(22px);
-  transition: opacity 200ms var(--eth-ease);
-}
-.eth-btn-primary:hover { filter: brightness(1.05); }
-.eth-btn-primary:hover::after { opacity: 0.9; }
-.eth-btn-primary:active { transform: scale(0.97); }
-
-/* Secondary CTA: glassmorphism with ghost border. */
-.eth-btn-glass {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.9rem 1.5rem;
-  border-radius: 28px;
-  background: color-mix(in oklab, var(--eth-surface-high) 40%, transparent);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--eth-outline-variant);
-  color: var(--eth-on-surface);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  cursor: pointer;
-  transition: transform 160ms var(--eth-ease), background-color 180ms var(--eth-ease);
-}
-.eth-btn-glass:hover { background: color-mix(in oklab, var(--eth-surface-high) 55%, transparent); }
-.eth-btn-glass:active { transform: scale(0.97); }
-
-.eth-btn-ghost {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.85rem 1.25rem;
-  border-radius: 28px;
-  background: transparent;
-  border: 0;
-  color: var(--eth-on-surface-variant);
-  font-weight: 500;
-  cursor: pointer;
-  transition: color 160ms var(--eth-ease), transform 160ms var(--eth-ease);
-}
-.eth-btn-ghost:hover { color: var(--eth-primary); }
-.eth-btn-ghost:active { transform: scale(0.97); }
-
-/* Cards: tone separation + 28px radius. Glass uses ghost border, not 1px line. */
-.eth-card {
-  background: var(--eth-surface-low);
-  border-radius: 28px;
-  padding: 1.75rem;
-  position: relative;
-  isolation: isolate;
-}
-.eth-card-high { background: var(--eth-surface-high); }
-.eth-card-glass {
-  background: color-mix(in oklab, var(--eth-surface-high) 45%, transparent);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-radius: 28px;
-  border: 1px solid var(--eth-outline-variant);
-  padding: 1.75rem;
-  position: relative;
-  isolation: isolate;
-}
-
-/* Ambient teal glow that replaces drop shadows. Apply as ::after on any layer. */
-.eth-ambient-glow {
-  position: relative;
-  isolation: isolate;
-}
-.eth-ambient-glow::after {
-  content: "";
-  position: absolute;
-  inset: -40px;
-  border-radius: inherit;
-  background: radial-gradient(ellipse at center, rgba(110, 235, 224, 0.10), transparent 70%);
-  filter: blur(40px);
-  z-index: -1;
-  pointer-events: none;
-}
-
-/* Typography scale (0.8x of the original spec to give pages more air). */
-.eth-display-lg {
-  font-size: clamp(2.5rem, 6.5vw, 4.75rem);
-  font-weight: 700;
-  letter-spacing: -0.035em;
-  line-height: 1;
-}
-.eth-display-md {
-  font-size: clamp(1.875rem, 4vw, 3rem);
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  line-height: 1.08;
-}
-.eth-headline-lg {
-  font-size: clamp(1.375rem, 2.4vw, 1.875rem);
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  line-height: 1.2;
-}
-.eth-headline-md {
-  font-size: 1.1875rem;
-  font-weight: 600;
-  letter-spacing: -0.005em;
-  line-height: 1.3;
-}
-.eth-body-lg { font-size: 1rem; font-weight: 400; line-height: 1.6; }
-.eth-body-md { font-size: 0.9375rem; font-weight: 400; line-height: 1.55; }
-.eth-label { font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; }
-
-.eth-text-primary { color: var(--eth-primary); }
-.eth-text-muted { color: var(--eth-on-surface-variant); }
-.eth-text-dim { color: var(--eth-on-surface-muted); }
-
-/* Pill macro chips, desaturated bg, vibrant text/icon. */
-.eth-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.375rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-}
-.eth-chip-protein { background: rgba(255, 180, 162, 0.12); color: var(--eth-secondary); }
-.eth-chip-carbs { background: rgba(255, 210, 111, 0.12); color: var(--eth-tertiary); }
-.eth-chip-fat { background: rgba(184, 153, 104, 0.18); color: #D8B889; }
-.eth-chip-primary { background: rgba(110, 235, 224, 0.12); color: var(--eth-primary); }
-
-/* Separators, an 8px block of the lowest surface, NOT a 1px line. */
-.eth-divider {
-  height: 8px;
-  border-radius: 4px;
-  background: var(--eth-surface-lowest);
-}
-
-/* Entrance animation, 420ms, translateY(16px) → 0, opacity 0 → 1, stagger. */
-@keyframes eth-enter {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.eth-reveal { animation: eth-enter 420ms var(--eth-ease) both; }
-
-/* Marquee ticker, project-compatible variant used by the landing ticker. */
+ * `.eth-drift` is a real exception - the testimonial cards' idle "grab me"
+ * hint - and survives below, along with the two marquee keyframes the
+ * metrics ticker actually uses.
+ */
 @keyframes marquee-loop {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
 .animate-marquee { animation: marquee-loop 32s linear infinite; }
 .marquee-hover:hover .animate-marquee { animation-play-state: paused; }
-
-/* Legacy aliases kept for the eth-lab scope (unused since theme compliance). */
-@keyframes eth-marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-.eth-marquee { animation: eth-marquee 32s linear infinite; }
-.eth-marquee-track:hover .eth-marquee { animation-play-state: paused; }
 
 /* Circular drift, a subtle "this is alive, grab me" hint for draggable cards.
  * 8 keyframes for a smooth circle (not a diamond). Radius is intentionally tiny
@@ -952,14 +848,5 @@ html.dark .glass-panel {
 [data-dragging="true"] .eth-drift { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) {
   .eth-drift { animation: none; }
+  .animate-marquee { animation-duration: 0ms; }
 }
-
-/* Hide scrollbar for horizontal scrollers inside the landing. */
-.eth-lab ::-webkit-scrollbar { display: none; }
-.eth-lab { scrollbar-width: none; }
-
-@media (prefers-reduced-motion: reduce) {
-  .eth-reveal { animation-duration: 0ms; }
-  .eth-marquee { animation-duration: 0ms; }
-}
-html.dark .ring-track { stroke: color-mix(in oklab, var(--color-charcoal-blue-700) 55%, transparent); }

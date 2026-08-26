@@ -1,47 +1,33 @@
 import Link from "next/link";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 
+/**
+ * A ruled band, not a dark spotlight - it closes the page instead of
+ * interrupting it. Same border/background language as the metrics ticker.
+ */
 export function CTASection() {
 	return (
 		<section
 			data-testid="cta-section"
 			aria-labelledby="final-cta-heading"
-			className="relative overflow-hidden rounded-[28px] py-10 text-white sm:py-14"
-			style={{ background: "var(--color-charcoal-blue-950)" }}
+			className="flex flex-col items-center gap-5 border-t border-charcoal-blue-200 py-10 text-center sm:flex-row sm:justify-between sm:py-14 sm:text-left dark:border-white/10"
 		>
-			<div
-				aria-hidden="true"
-				className="pointer-events-none absolute inset-0"
-				style={{
-					background:
-						"radial-gradient(ellipse at center, color-mix(in oklab, var(--color-brand-500) 18%, transparent), transparent 65%)",
-					filter: "blur(60px)",
-				}}
-			/>
-			<div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center gap-5 px-6 text-center sm:flex-row sm:justify-between sm:text-left">
-				<div className="max-w-xl">
-					<h2 id="final-cta-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
-						Start free. Upgrade the day you need <span className="text-brand-300">more</span>.
-					</h2>
-					<p className="mt-2 text-sm text-white/70">
-						No credit card · Pro from $1.99 / month · cancel anytime
-					</p>
-				</div>
-				<div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-					<Link
-						href="/register"
-						className="btn-secondary btn-lg border-white/20 bg-white/95 text-brand-700 hover:bg-white dark:bg-white/95 dark:text-brand-700 dark:hover:bg-white"
-					>
-						Create account
-						<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" />
-					</Link>
-					<Link
-						href="#pricing"
-						className="btn-lg inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur-sm transition-colors duration-200 ease-out hover:bg-white/20 active:scale-[0.97]"
-					>
-						Compare plans
-					</Link>
-				</div>
+			<div className="max-w-xl">
+				<h2 id="final-cta-heading" className="text-2xl font-medium tracking-tight text-charcoal-blue-900 sm:text-3xl dark:text-charcoal-blue-50">
+					Start free. Upgrade the day you need <span className="text-brand-600 dark:text-brand-400">more</span>.
+				</h2>
+				<p className="mt-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+					No credit card &middot; Pro from $1.99 / month &middot; cancel anytime
+				</p>
+			</div>
+			<div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+				<Link href="/register" className="btn-primary btn-lg">
+					Create account
+					<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" />
+				</Link>
+				<Link href="#pricing" className="btn-ghost btn-lg">
+					Compare plans
+				</Link>
 			</div>
 		</section>
 	);

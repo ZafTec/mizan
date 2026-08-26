@@ -44,7 +44,7 @@ export function CookieConsentBanner({
 						? "transform 200ms var(--ease-out), opacity 200ms var(--ease-out)"
 						: "transform 420ms var(--ease-out), opacity 420ms var(--ease-out)",
 				}}
-				className="pointer-events-auto mx-auto flex max-w-3xl flex-col gap-4 rounded-[22px] border border-charcoal-blue-200 bg-white/95 p-5 shadow-2xl shadow-charcoal-blue-950/15 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between sm:p-6 dark:border-white/10 dark:bg-charcoal-blue-900/95"
+				className="pointer-events-auto mx-auto flex max-w-3xl flex-col gap-4 rounded-xl border border-charcoal-blue-200 bg-white p-5 shadow-2xl shadow-charcoal-blue-950/15 sm:flex-row sm:items-center sm:justify-between sm:p-6 dark:border-white/10 dark:bg-charcoal-blue-900"
 			>
 				<div className="flex items-start gap-3 sm:items-center">
 					<span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-brand-500/15 text-brand-700 sm:mt-0 dark:text-brand-300">

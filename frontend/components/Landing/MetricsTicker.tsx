@@ -7,22 +7,25 @@ const METRICS = [
 	"Multi-household sharing",
 ];
 
-// Horizontal ticker using the eth-marquee keyframe (confirmed working pair).
-// Edge fades pick up the page background so the loop appears to melt into it.
+// A ruled strip, not a floating pill row - hairline top/bottom borders match
+// the rest of the Daylight language instead of melting into the page.
 export function MetricsTicker() {
 	return (
-		<section aria-label="Platform metrics" className="eth-marquee-track relative overflow-hidden py-5">
+		<section
+			aria-label="Platform metrics"
+			className="marquee-hover relative overflow-hidden border-y border-charcoal-blue-200 bg-white py-4 dark:border-white/10 dark:bg-charcoal-blue-950"
+		>
 			<div
 				aria-hidden="true"
 				className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24"
-				style={{ background: "linear-gradient(to right, var(--background, var(--color-charcoal-blue-50)), transparent)" }}
+				style={{ background: "linear-gradient(to right, var(--color-card), transparent)" }}
 			/>
 			<div
 				aria-hidden="true"
 				className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24"
-				style={{ background: "linear-gradient(to left, var(--background, var(--color-charcoal-blue-50)), transparent)" }}
+				style={{ background: "linear-gradient(to left, var(--color-card), transparent)" }}
 			/>
-			<div className="eth-marquee flex w-max">
+			<div className="animate-marquee flex w-max">
 				{[...METRICS, ...METRICS].map((metric, i) => (
 					<div
 						key={`${metric}-${i}`}

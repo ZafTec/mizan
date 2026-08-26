@@ -32,14 +32,14 @@ export default function LogSheet({ open, onClose }: { open: boolean; onClose: ()
 
 	return createPortal(
 		<div
-			className="fixed inset-0 z-100 flex items-end justify-center bg-charcoal-blue-950/40 backdrop-blur-sm sm:items-center"
+			className="modal-overlay-in fixed inset-0 z-100 flex items-end justify-center bg-charcoal-blue-950/40 backdrop-blur-sm sm:items-center"
 			onClick={onClose}
 			role="dialog"
 			aria-modal="true"
 			aria-label="Log an entry"
 		>
 			<div
-				className="surface-panel w-full max-w-md rounded-b-none p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0))] sm:rounded-b-3xl sm:pb-5"
+				className="sheet-pop-in surface-panel w-full max-w-md rounded-b-none p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0))] sm:rounded-b-2xl sm:pb-5"
 				onClick={(e) => e.stopPropagation()}
 			>
 				<div className="mb-4 flex items-center justify-between">

@@ -63,7 +63,7 @@ export function ProWallDialog({
 }: ProWallConfig & { open: boolean; onClose: () => void }) {
 	return (
 		<ModalShell open={open} onClose={onClose}>
-			<div className="rounded-[28px] border border-charcoal-blue-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-charcoal-blue-950 sm:p-8">
+			<div className="rounded-2xl border border-charcoal-blue-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-charcoal-blue-950 sm:p-8">
 				<span className="icon-chip h-12 w-12 text-brand-700 dark:text-brand-300">
 					<AnimatedIcon name="lock" size={20} />
 				</span>

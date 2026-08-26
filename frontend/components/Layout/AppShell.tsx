@@ -194,7 +194,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 			{/* Desktop Sidebar, fills shell height; inner nav scrolls via custom-scrollbar */}
 			<aside
 				className={cn(
-					"hidden h-full shrink-0 flex-col border-r border-charcoal-blue-200/70 bg-white/85 backdrop-blur-xl dark:border-white/10 dark:bg-charcoal-blue-950/80 lg:flex",
+					"hidden h-full shrink-0 flex-col border-r border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-charcoal-blue-950 lg:flex",
 					collapsed ? "w-20" : "w-72"
 				)}
 			>
@@ -298,7 +298,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 			{/* Main column, full shell height; only <main> scrolls internally */}
 			<div className="flex h-full min-w-0 flex-1 flex-col">
 				{/* Top bar, shrink-0 so it stays visible while main scrolls */}
-				<header className="shrink-0 border-b border-charcoal-blue-200/70 bg-white/80 backdrop-blur-xl dark:border-white/10 dark:bg-charcoal-blue-950/75">
+				<header className="shrink-0 border-b border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-charcoal-blue-950">
 					<div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
 						{/* Mobile logo */}
 						<Link href="/dashboard" className="flex items-center gap-2 lg:hidden">
@@ -313,7 +313,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 							<input
 								type="search"
 								placeholder="Search foods, recipes, workouts…"
-								className="h-10 w-full rounded-2xl border border-charcoal-blue-200 bg-white/80 pl-10 pr-4 text-sm text-charcoal-blue-900 placeholder-charcoal-blue-400 outline-none backdrop-blur-xl transition-colors focus:border-verdigris-500 focus:ring-4 focus:ring-verdigris-300/20 dark:border-white/10 dark:bg-charcoal-blue-950/60 dark:text-charcoal-blue-50 dark:placeholder-charcoal-blue-400"
+								className="h-10 w-full rounded-xl border border-charcoal-blue-200 bg-white pl-10 pr-4 text-sm text-charcoal-blue-900 placeholder-charcoal-blue-400 outline-none transition-colors focus:border-verdigris-500 focus:ring-4 focus:ring-verdigris-300/20 dark:border-white/10 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-50 dark:placeholder-charcoal-blue-400"
 							/>
 							<span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-blue-400">
 								<AnimatedIcon name="search" size={16} />
@@ -354,7 +354,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 										<div
 											ref={userMenuRef}
 											role="menu"
-											className="menu-pop fixed w-60 overflow-hidden rounded-[24px] border border-charcoal-blue-200 bg-white p-1.5 shadow-2xl shadow-charcoal-blue-950/15 dark:border-white/10 dark:bg-charcoal-blue-950"
+											className="menu-pop fixed w-60 overflow-hidden rounded-xl border border-charcoal-blue-200 bg-white p-1.5 shadow-2xl shadow-charcoal-blue-950/15 dark:border-white/10 dark:bg-charcoal-blue-950"
 											style={{ top: userMenuPos.top, right: userMenuPos.right, zIndex: 1000 }}
 										>
 											<div className="mb-1 rounded-2xl px-3 py-2.5">
@@ -417,7 +417,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 				{/* Mobile bottom nav */}
 				<nav
 					aria-label="Primary"
-					className="fixed inset-x-0 bottom-0 z-30 flex items-stretch gap-1 border-t border-charcoal-blue-200 bg-white/95 px-2 pb-[calc(env(safe-area-inset-bottom,0)+0.25rem)] pt-1.5 backdrop-blur-xl dark:border-white/10 dark:bg-charcoal-blue-950/95 lg:hidden"
+					className="fixed inset-x-0 bottom-0 z-30 flex items-stretch gap-1 border-t border-charcoal-blue-200 bg-white px-2 pb-[calc(env(safe-area-inset-bottom,0)+0.25rem)] pt-1.5 dark:border-white/10 dark:bg-charcoal-blue-950 lg:hidden"
 				>
 					{SPINE.slice(0, 2).map((item) => (
 						<BottomNavLink key={item.href} item={item} />
@@ -445,11 +445,11 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 				typeof document !== "undefined" &&
 				createPortal(
 					<div
-						className="fixed inset-0 z-100 flex items-center justify-center bg-charcoal-blue-950/40 p-4 backdrop-blur-sm"
+						className="modal-overlay-in fixed inset-0 z-100 flex items-center justify-center bg-charcoal-blue-950/40 p-4 backdrop-blur-sm"
 						onClick={() => setShowLogoutModal(false)}
 					>
 						<div
-							className="surface-panel w-full max-w-sm p-6"
+							className="modal-pop-in surface-panel w-full max-w-sm p-6"
 							onClick={(event) => event.stopPropagation()}
 						>
 							<div className="mb-5 flex items-start gap-4">

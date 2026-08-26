@@ -733,7 +733,7 @@ function AvatarPreview({
 
 	if (image) {
 		return (
-			<div className="relative overflow-hidden rounded-[28px] ring-1 ring-brand-500/20" style={{ width: dimension, height: dimension }}>
+			<div className="relative overflow-hidden rounded-2xl ring-1 ring-brand-500/20" style={{ width: dimension, height: dimension }}>
 				<Image src={image} alt={name || email || "User"} fill sizes={`${dimension}px`} className="object-cover" />
 			</div>
 		);
@@ -741,7 +741,7 @@ function AvatarPreview({
 
 	return (
 		<div
-			className="flex items-center justify-center rounded-[28px] bg-brand-600 font-semibold text-white ring-1 ring-brand-500/20 dark:bg-brand-500"
+			className="flex items-center justify-center rounded-2xl bg-brand-600 font-semibold text-white ring-1 ring-brand-500/20 dark:bg-brand-500"
 			style={{ width: dimension, height: dimension }}
 		>
 			{(email || "U").charAt(0).toUpperCase()}

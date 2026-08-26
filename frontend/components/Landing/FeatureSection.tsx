@@ -48,16 +48,8 @@ function FeatureCard({ feature, large = false }: { feature: Feature; large?: boo
 
 function AiCoachSpotlight() {
 	return (
-		<article className="card relative overflow-hidden p-7 sm:p-8 md:col-span-2">
-			<div
-				aria-hidden="true"
-				className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full"
-				style={{
-					background: "radial-gradient(closest-side, color-mix(in oklab, var(--color-brand-500) 22%, transparent), transparent 70%)",
-					filter: "blur(50px)",
-				}}
-			/>
-			<div className="relative grid grid-cols-1 gap-6 md:grid-cols-[1fr_1.1fr] md:items-center">
+		<article className="card p-7 sm:p-8 md:col-span-2">
+			<div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_1.1fr] md:items-center">
 				<div>
 					<span className="mb-4 inline-block h-1 w-10 rounded-full bg-brand-500 opacity-80" aria-hidden="true" />
 					<h3 className="mb-2 text-xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-2xl">
@@ -67,7 +59,7 @@ function AiCoachSpotlight() {
 						Ask anything in plain English. It knows your last week of meals, your goal, and your training, and answers like a trainer, not a search engine.
 					</p>
 				</div>
-				<div className="space-y-3 rounded-[22px] bg-charcoal-blue-50 p-4 dark:bg-charcoal-blue-900/60">
+				<div className="space-y-3 rounded-xl bg-charcoal-blue-50 p-4 dark:bg-charcoal-blue-900/60">
 					<div className="flex items-start gap-2">
 						<div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-charcoal-blue-200 text-xs font-semibold text-charcoal-blue-700 dark:bg-charcoal-blue-800 dark:text-charcoal-blue-200">
 							E
