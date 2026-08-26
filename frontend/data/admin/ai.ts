@@ -70,6 +70,10 @@ export interface AiEvalMatrix {
 	blockedReason: string | null;
 	costMicros: number;
 	publishedCostMicros: number | null;
+
+	/** Pending, Running, Succeeded, Failed or DeadLettered. Null if never run. */
+	runStatus: string | null;
+	runError: string | null;
 }
 
 export interface GlobalAiUsage {

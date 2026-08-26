@@ -1,7 +1,6 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 
@@ -30,21 +29,18 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResult>
     private readonly IMizanDbContext _context;
     private readonly IPasswordHasher _passwordHasher;
     private readonly ISessionService _sessions;
-    private readonly IEmailSender _email;
-    private readonly ILogger<LoginCommandHandler> _logger;
+    private readonly IOutbox _outbox;
 
     public LoginCommandHandler(
         IMizanDbContext context,
         IPasswordHasher passwordHasher,
         ISessionService sessions,
-        IEmailSender email,
-        ILogger<LoginCommandHandler> logger)
+        IOutbox outbox)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _sessions = sessions;
-        _email = email;
-        _logger = logger;
+        _outbox = outbox;
     }
 
     public async Task<LoginResult> Handle(LoginCommand request, CancellationToken cancellationToken)
@@ -95,12 +91,16 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResult>
 
         var token = await _sessions.CreateAsync(user.Id, request.IpAddress, request.UserAgent, cancellationToken);
 
-        await AuthEmailDelivery.TrySendAsync(
-            _email,
+        await AuthEmailDelivery.QueueAsync(
+            _outbox,
             AuthEmails.SignInNotification(user.Email, user.Name, request.IpAddress, request.UserAgent),
-            _logger,
             user.Id,
+            // The IP is part of the key: a sign-in from a new place is worth
+            // telling someone about, a refresh from the same one is not.
+            $"signin:{request.IpAddress}",
             cancellationToken);
+
+        await _context.SaveChangesAsync(cancellationToken);
 
         return new LoginResult(token, AuthUserMapper.ToDto(user));
     }

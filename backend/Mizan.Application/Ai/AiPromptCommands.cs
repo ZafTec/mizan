@@ -153,24 +153,66 @@ public class UpdateAiPromptDraftCommandHandler
     }
 }
 
-/// <summary>Runs the suite against a draft. The only way to earn a publish button.</summary>
-public record RunAiPromptEvalsCommand(Guid Id) : IRequest<EvalSummary>;
+public record EvalRunQueued(Guid JobId, Guid VersionId);
 
-public class RunAiPromptEvalsCommandHandler : IRequestHandler<RunAiPromptEvalsCommand, EvalSummary>
+/// <summary>
+/// Queues the suite against a draft. The only way to earn a publish button.
+///
+/// Queued rather than run inline: a suite is twenty-odd sequential provider
+/// calls and would time out an HTTP request long before finishing. The console
+/// polls the matrix and watches results land (docs/REFOCUS.md §13b).
+/// </summary>
+public record RunAiPromptEvalsCommand(Guid Id) : IRequest<EvalRunQueued>;
+
+public class RunAiPromptEvalsCommandHandler : IRequestHandler<RunAiPromptEvalsCommand, EvalRunQueued>
 {
-    private readonly IAiEvalRunner _runner;
+    private readonly IMizanDbContext _context;
+    private readonly IOutbox _outbox;
     private readonly ICurrentUserService _currentUser;
 
-    public RunAiPromptEvalsCommandHandler(IAiEvalRunner runner, ICurrentUserService currentUser)
+    public RunAiPromptEvalsCommandHandler(
+        IMizanDbContext context, IOutbox outbox, ICurrentUserService currentUser)
     {
-        _runner = runner;
+        _context = context;
+        _outbox = outbox;
         _currentUser = currentUser;
     }
 
-    public Task<EvalSummary> Handle(RunAiPromptEvalsCommand request, CancellationToken cancellationToken)
+    public async Task<EvalRunQueued> Handle(
+        RunAiPromptEvalsCommand request, CancellationToken cancellationToken)
     {
         var adminId = _currentUser.UserId ?? throw new UnauthorizedAccessException();
-        return _runner.RunAsync(request.Id, adminId, cancellationToken);
+
+        var exists = await _context.AiPromptVersions
+            .AnyAsync(v => v.Id == request.Id, cancellationToken);
+        if (!exists) throw new EntityNotFoundException("Prompt version", request.Id);
+
+        var dedupeKey = EvalRunJobKey.For(request.Id);
+
+        // The key is stable per version so a double-click cannot spend the
+        // eval budget twice, which also means a finished run still occupies
+        // it. Re-running after a fix is a normal thing to want, so the spent
+        // row is cleared first; only a job that could still run is honoured.
+        var existing = await _context.OutboxJobs
+            .Where(j => j.DedupeKey == dedupeKey)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (existing is { Status: OutboxJobStatus.Pending or OutboxJobStatus.Running or OutboxJobStatus.Failed })
+        {
+            return new EvalRunQueued(existing.Id, request.Id);
+        }
+
+        if (existing is not null) _context.OutboxJobs.Remove(existing);
+
+        var jobId = await _outbox.EnqueueAsync(
+            OutboxJobTypes.EvalRun,
+            new { VersionId = request.Id, AdminUserId = adminId },
+            dedupeKey,
+            cancellationToken);
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new EvalRunQueued(jobId, request.Id);
     }
 }
 

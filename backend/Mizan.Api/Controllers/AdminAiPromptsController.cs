@@ -47,9 +47,13 @@ public class AdminAiPromptsController : ControllerBase
     public async Task<ActionResult<AiEvalMatrixDto>> GetEvals(Guid id)
         => Ok(await _mediator.Send(new GetAiEvalMatrixQuery(id)));
 
+    /// <summary>
+    /// Queues the suite. Returns immediately with a job id; the matrix fills
+    /// in as cases complete.
+    /// </summary>
     [HttpPost("versions/{id:guid}/evals")]
-    public async Task<ActionResult<EvalSummary>> RunEvals(Guid id)
-        => Ok(await _mediator.Send(new RunAiPromptEvalsCommand(id)));
+    public async Task<ActionResult<EvalRunQueued>> RunEvals(Guid id)
+        => Accepted(await _mediator.Send(new RunAiPromptEvalsCommand(id)));
 
     /// <summary>Also the rollback: publishing an archived version moves the pointer back.</summary>
     [HttpPost("versions/{id:guid}/publish")]

@@ -133,6 +133,7 @@ export const MORE_GROUPS: NavGroup[] = [
 			{ href: "/admin/ai", label: "Assistant", icon: "bot", adminOnly: true },
 			{ href: "/admin/households", label: "Households", icon: "home", adminOnly: true },
 			{ href: "/admin/sessions", label: "Sessions", icon: "lock", adminOnly: true },
+			{ href: "/admin/jobs", label: "Jobs", icon: "activity", adminOnly: true },
 		],
 	},
 ];

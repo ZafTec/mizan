@@ -39,6 +39,7 @@ public class AuthEndpointTests
         var early = await client.PostAsJsonAsync("/api/Auth/login", new { Email = email, Password });
         early.StatusCode.Should().Be(HttpStatusCode.Forbidden);
 
+        await _fixture.DrainOutboxAsync();
         var token = _fixture.Email.LastTokenFor(email, "verifyemail");
         token.Should().NotBeNullOrWhiteSpace();
 
@@ -63,6 +64,7 @@ public class AuthEndpointTests
         using var client = _fixture.CreateClient();
 
         await client.PostAsJsonAsync("/api/Auth/register", new { Email = email, Password, Name = (string?)null });
+        await _fixture.DrainOutboxAsync();
         var token = _fixture.Email.LastTokenFor(email, "verifyemail");
 
         (await client.PostAsJsonAsync("/api/Auth/verify-email", new { Token = token }))
@@ -117,6 +119,7 @@ public class AuthEndpointTests
         (await client.PostAsJsonAsync("/api/Auth/forgot-password", new { Email = email }))
             .StatusCode.Should().Be(HttpStatusCode.Accepted);
 
+        await _fixture.DrainOutboxAsync();
         var token = _fixture.Email.LastTokenFor(email, "reset-password");
         token.Should().NotBeNullOrWhiteSpace();
 
@@ -142,6 +145,10 @@ public class AuthEndpointTests
             new { Email = "nobody-at-all@example.com" });
 
         response.StatusCode.Should().Be(HttpStatusCode.Accepted);
+
+        // Nothing was queued either: an unknown address must not become a job
+        // somebody can see in the admin console.
+        await _fixture.DrainOutboxAsync();
         _fixture.Email.Sent.Should().BeEmpty();
     }
 

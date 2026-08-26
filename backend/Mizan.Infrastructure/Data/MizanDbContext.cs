@@ -73,6 +73,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
 
     // AI
     public DbSet<UserActivityCounters> UserActivityCounters => Set<UserActivityCounters>();
+    public DbSet<OutboxJob> OutboxJobs => Set<OutboxJob>();
     public DbSet<AiChatThread> AiChatThreads => Set<AiChatThread>();
     public DbSet<AiChatMessage> AiChatMessages => Set<AiChatMessage>();
     public DbSet<UserAiConsent> UserAiConsents => Set<UserAiConsent>();
@@ -940,6 +941,34 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.ResolvedByUserId).HasColumnName("resolved_by_user_id");
             entity.Property(e => e.ResolutionNote).HasColumnName("resolution_note").HasMaxLength(500);
             entity.HasIndex(e => new { e.Status, e.CreatedAt });
+        });
+
+        modelBuilder.Entity<OutboxJob>(entity =>
+        {
+            entity.ToTable("outbox_jobs");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.Type).HasColumnName("type").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Payload).HasColumnName("payload").HasColumnType("jsonb").IsRequired();
+            entity.Property(e => e.Status).HasColumnName("status").HasConversion<int>();
+            entity.Property(e => e.Attempts).HasColumnName("attempts").HasDefaultValue(0);
+            entity.Property(e => e.RunAfter).HasColumnName("run_after").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.DedupeKey).HasColumnName("dedupe_key").HasMaxLength(200);
+            entity.Property(e => e.LastError).HasColumnName("last_error").HasMaxLength(2000);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.StartedAt).HasColumnName("started_at");
+            entity.Property(e => e.CompletedAt).HasColumnName("completed_at");
+
+            // The claim query's index: one type's runnable work, oldest first.
+            entity.HasIndex(e => new { e.Type, e.Status, e.RunAfter })
+                .HasDatabaseName("ix_outbox_jobs_claim");
+
+            // Enqueueing the same key twice keeps the first job. This is what
+            // makes at-least-once delivery safe to retry.
+            entity.HasIndex(e => e.DedupeKey)
+                .IsUnique()
+                .HasFilter("dedupe_key IS NOT NULL")
+                .HasDatabaseName("ix_outbox_jobs_dedupe");
         });
 
         modelBuilder.Entity<UserActivityCounters>(entity =>

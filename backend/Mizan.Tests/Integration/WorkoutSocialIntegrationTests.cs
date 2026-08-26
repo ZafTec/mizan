@@ -330,7 +330,13 @@ public sealed class WorkoutSocialIntegrationTests
     private sealed record FeedCommentResponse(Guid Id, string Body);
 }
 
-public sealed class LiftLogSeedCatalogTests : IClassFixture<ApiTestFixture>
+/// <summary>
+/// In the shared collection, not on its own fixture: it reads the catalogs
+/// straight out of the database, and a second factory running in parallel
+/// against the same one would see whatever another test had just truncated.
+/// </summary>
+[Collection("ApiIntegration")]
+public sealed class LiftLogSeedCatalogTests
 {
     private readonly ApiTestFixture _fixture;
 
@@ -342,6 +348,10 @@ public sealed class LiftLogSeedCatalogTests : IClassFixture<ApiTestFixture>
     [Fact]
     public async Task Migration_SeedsExerciseTemplateAndAchievementCatalogs()
     {
+        // A reset restores the migration's baseline, which is the thing under
+        // test here.
+        await _fixture.ResetDatabaseAsync();
+
         using var scope = _fixture.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
 

@@ -182,4 +182,44 @@ public sealed class AdminTools
         + "There is deliberately no tool to edit the grants themselves - those belong to the client.")]
     public Task<string> EndRelationship(string id, string? reason = null, CancellationToken ct = default) =>
         _api.PostAsync($"/api/Admin/Relationships/{ToolArguments.ParseId(id, "id")}/end", new { reason }, ct);
+
+    // ---- Background jobs --------------------------------------------------
+
+    [McpServerTool(Name = "admin_list_jobs", ReadOnly = true, Idempotent = true)]
+    [Description(
+        "Admin only. The background queue. type is email or eval-run; status is Pending, "
+        + "Running, Succeeded, Failed or DeadLettered. Dead-lettered rows are the ones worth "
+        + "looking at: each is something a user asked for that never happened.")]
+    public Task<string> ListJobs(
+        string? type = null,
+        [Description("Pending, Running, Succeeded, Failed or DeadLettered")] string? status = null,
+        int page = 1,
+        int pageSize = 20,
+        CancellationToken ct = default)
+    {
+        var query = new QueryString()
+            .Add("type", type)
+            .Add("status", status)
+            .Add("page", page)
+            .Add("pageSize", pageSize);
+
+        return _api.GetAsync($"/api/Admin/Jobs{query}", ct);
+    }
+
+    [McpServerTool(Name = "admin_get_job_stats", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. Queue depth by status, and the job types present.")]
+    public Task<string> JobStats(CancellationToken ct = default) =>
+        _api.GetAsync("/api/Admin/Jobs/stats", ct);
+
+    [McpServerTool(Name = "admin_retry_job")]
+    [Description(
+        "Admin only. Requeues a failed or dead-lettered job and resets its attempt count. "
+        + "Retry after fixing the cause, not instead of finding it.")]
+    public Task<string> RetryJob(string id, CancellationToken ct = default) =>
+        _api.PostAsync($"/api/Admin/Jobs/{ToolArguments.ParseId(id, "id")}/retry", null, ct);
+
+    [McpServerTool(Name = "admin_delete_job", Destructive = true)]
+    [Description("Admin only. Discards a dead-lettered or succeeded job. Pending work cannot be deleted.")]
+    public Task<string> DeleteJob(string id, CancellationToken ct = default) =>
+        _api.DeleteAsync($"/api/Admin/Jobs/{ToolArguments.ParseId(id, "id")}", ct);
 }
