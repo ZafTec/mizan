@@ -321,6 +321,69 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("ai_chat_threads", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.AiUsageLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<int>("CompletionTokens")
+                        .HasColumnType("integer")
+                        .HasColumnName("completion_tokens");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<long>("EstimatedCostMicros")
+                        .HasColumnType("bigint")
+                        .HasColumnName("estimated_cost_micros");
+
+                    b.Property<string>("Feature")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("feature");
+
+                    b.Property<Guid?>("HouseholdId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("household_id");
+
+                    b.Property<int>("LatencyMs")
+                        .HasColumnType("integer")
+                        .HasColumnName("latency_ms");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("model");
+
+                    b.Property<int>("Outcome")
+                        .HasColumnType("integer")
+                        .HasColumnName("outcome");
+
+                    b.Property<int>("PromptTokens")
+                        .HasColumnType("integer")
+                        .HasColumnName("prompt_tokens");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.ToTable("ai_usage_logs", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.AuditLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2274,6 +2337,47 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("user_achievements", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.UserAiConsent", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<bool>("Enabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("enabled");
+
+                    b.Property<bool>("ShareBody")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("share_body");
+
+                    b.Property<bool>("ShareNutrition")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("share_nutrition");
+
+                    b.Property<bool>("ShareTraining")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("share_training");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("user_ai_consents", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.UserGoal", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2785,6 +2889,17 @@ namespace Mizan.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.AiChatThread", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.AiUsageLog", b =>
                 {
                     b.HasOne("Mizan.Domain.Entities.User", "User")
                         .WithMany()
@@ -3309,6 +3424,17 @@ namespace Mizan.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Achievement");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.UserAiConsent", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithOne()
+                        .HasForeignKey("Mizan.Domain.Entities.UserAiConsent", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });

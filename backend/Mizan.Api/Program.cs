@@ -18,6 +18,7 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
 using Mizan.Application.Exceptions;
+using Mizan.Application.Interfaces;
 using StackExchange.Redis;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Threading.RateLimiting;
@@ -402,6 +403,28 @@ app.UseExceptionHandler(errorApp =>
                 errorCode = "validation_failed",
                 errors = validationEx.Errors.Select(e => new { e.PropertyName, e.ErrorMessage })
             });
+        }
+        else if (exception is AiQuotaExceededException quotaEx)
+        {
+            // Which ceiling tripped and when it resets. "You are out of quota"
+            // and "the service is at capacity" are different problems and the
+            // caller has to be able to tell them apart (docs/REFOCUS.md §10).
+            context.Response.StatusCode = 429;
+            context.Response.Headers.RetryAfter =
+                ((int)Math.Max(1, (quotaEx.ResetsAt - DateTime.UtcNow).TotalSeconds)).ToString();
+            await context.Response.WriteAsJsonAsync(new
+            {
+                errorCode = "ai_quota_exceeded",
+                error = quotaEx.Message,
+                scope = quotaEx.Scope.ToString().ToLowerInvariant(),
+                resetsAt = quotaEx.ResetsAt,
+            });
+        }
+        else if (exception is AiUnavailableException aiUnavailableEx)
+        {
+            Log.Warning(exception, "AI provider unavailable for {Path}", context.Request.Path);
+            context.Response.StatusCode = 503;
+            await context.Response.WriteAsJsonAsync(new { errorCode = "ai_unavailable", error = aiUnavailableEx.Message });
         }
         else if (exception is InvalidCredentialsException)
         {

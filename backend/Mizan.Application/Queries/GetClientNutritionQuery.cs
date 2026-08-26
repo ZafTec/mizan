@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
+using Mizan.Domain.Ai;
 
 namespace Mizan.Application.Queries;
 
@@ -37,11 +38,16 @@ public class GetClientNutritionQueryHandler : IRequestHandler<GetClientNutrition
 {
     private readonly IMizanDbContext _context;
     private readonly ITrainerAuthorizationService _trainerAuthorization;
+    private readonly IDataAccessPolicy _policy;
 
-    public GetClientNutritionQueryHandler(IMizanDbContext context, ITrainerAuthorizationService trainerAuthorization)
+    public GetClientNutritionQueryHandler(
+        IMizanDbContext context,
+        ITrainerAuthorizationService trainerAuthorization,
+        IDataAccessPolicy policy)
     {
         _context = context;
         _trainerAuthorization = trainerAuthorization;
+        _policy = policy;
     }
 
     public async Task<ClientNutritionDto?> Handle(GetClientNutritionQuery request, CancellationToken cancellationToken)
@@ -51,7 +57,11 @@ public class GetClientNutritionQueryHandler : IRequestHandler<GetClientNutrition
             requireActive: true,
             cancellationToken);
 
-        if (!relationship.CanViewNutrition)
+        // Through the policy rather than reading the flag here: one place to
+        // audit, and the reason CanViewMeasurements was missed for so long
+        // (docs/REFOCUS.md §11).
+        if (!await _policy.CanReadAsync(
+                relationship.TrainerId, request.ClientId, DataAxis.Nutrition, AccessPurpose.Display, cancellationToken))
         {
             throw new ForbiddenAccessException("No permission to view client nutrition data");
         }
