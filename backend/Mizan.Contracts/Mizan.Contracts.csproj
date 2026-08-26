@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!--
+    Deliberately dependency-free. Every service that talks to the API - the MCP
+    server today, the Telegram bot in phase 13 - references this and nothing
+    else, so a wire shape cannot change in one place and drift in another.
+    See docs/REFOCUS.md §7.
+  -->
+
+</Project>

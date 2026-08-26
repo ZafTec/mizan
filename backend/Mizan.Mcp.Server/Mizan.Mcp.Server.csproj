@@ -23,4 +23,8 @@
     <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.15.2-beta.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Mizan.Contracts\Mizan.Contracts.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -3,25 +3,11 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
+using Mizan.Contracts.Recipes;
 
 namespace Mizan.Application.Commands;
 
-public record CreateRecipeCommand : IRequest<CreateRecipeResult>
-{
-    public string Title { get; init; } = string.Empty;
-    public string? Description { get; init; }
-
-    /// <summary>Free text. Was an ordered table; see docs/REFOCUS.md §4.</summary>
-    public string? Instructions { get; init; }
-
-    public int Servings { get; init; } = 1;
-    public int? PrepTimeMinutes { get; init; }
-    public int? CookTimeMinutes { get; init; }
-    public string? ImageUrl { get; init; }
-    public bool IsPublic { get; init; }
-    public Guid? HouseholdId { get; init; }
-    public List<CreateRecipeIngredientDto> Ingredients { get; init; } = new();
-}
+public record CreateRecipeCommand : CreateRecipeRequest, IRequest<CreateRecipeResult>;
 
 public record CreateRecipeResult
 {
