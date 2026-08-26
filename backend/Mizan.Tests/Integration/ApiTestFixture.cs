@@ -16,6 +16,7 @@ using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 using Mizan.Domain.Identity;
 using Mizan.Infrastructure.Data;
+using Mizan.Infrastructure.Billing;
 using Mizan.Infrastructure.Data.Seed;
 using Mizan.Infrastructure.Outbox;
 using Testcontainers.PostgreSql;
@@ -197,6 +198,10 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             services.RemoveAll<IAiProvider>();
             services.AddSingleton<IAiProvider>(Ai);
 
+            // Nothing in a test run may reach Paddle either.
+            services.RemoveAll<IPaddleApiClient>();
+            services.AddSingleton<IPaddleApiClient>(Paddle);
+
             // Configure minimal logging for tests
             services.AddLogging(logging =>
             {
@@ -248,6 +253,8 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     public RecordingEmailSender Email { get; } = new();
 
     public ScriptedAiProvider Ai { get; } = new();
+
+    public FakePaddleApiClient Paddle { get; } = new();
 
     /// <summary>
     /// Counts database round trips. Idle until a test arms it, so it costs
@@ -381,6 +388,28 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             Plan = "pro",
             Status = "active",
             IsLifetime = false,
+            CurrentPeriodEnd = now.AddDays(30),
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+        await db.SaveChangesAsync();
+    }
+
+    public async Task GrantProWithPaddleAsync(Guid userId, string paddleCustomerId, string? paddleSubscriptionId)
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+
+        var now = DateTime.UtcNow;
+        db.Subscriptions.Add(new Subscription
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Plan = "pro",
+            Status = "active",
+            IsLifetime = paddleSubscriptionId is null,
+            PaddleCustomerId = paddleCustomerId,
+            PaddleSubscriptionId = paddleSubscriptionId,
             CurrentPeriodEnd = now.AddDays(30),
             CreatedAt = now,
             UpdatedAt = now
@@ -655,6 +684,63 @@ public sealed class ScriptedAiProvider : IAiProvider
         }
 
         return Task.FromResult(response);
+    }
+}
+
+/// <summary>
+/// Answers portal-session requests without ever calling Paddle. Defaults to a
+/// successful session with placeholder URLs; a test can script a failure to
+/// exercise the 502 path, or read <see cref="LastCustomerId"/> to assert on
+/// what the handler actually sent.
+/// </summary>
+public sealed class FakePaddleApiClient : IPaddleApiClient
+{
+    private readonly object _lock = new();
+    private bool _fail;
+
+    public string? LastCustomerId { get; private set; }
+    public string? LastSubscriptionId { get; private set; }
+
+    public void Reset()
+    {
+        lock (_lock)
+        {
+            _fail = false;
+            LastCustomerId = null;
+            LastSubscriptionId = null;
+        }
+    }
+
+    /// <summary>The next call (and every call after, until Reset) returns null.</summary>
+    public void FailNext()
+    {
+        lock (_lock) _fail = true;
+    }
+
+    public Task<PaddlePortalSession?> CreatePortalSessionAsync(
+        string customerId, string? subscriptionId, CancellationToken cancellationToken)
+    {
+        lock (_lock)
+        {
+            LastCustomerId = customerId;
+            LastSubscriptionId = subscriptionId;
+
+            if (_fail)
+            {
+                return Task.FromResult<PaddlePortalSession?>(null);
+            }
+        }
+
+        var session = new PaddlePortalSession(
+            OverviewUrl: $"https://sandbox-customer-portal.paddle.com/{customerId}/overview",
+            CancelSubscriptionUrl: subscriptionId is null
+                ? null
+                : $"https://sandbox-customer-portal.paddle.com/{customerId}/subscriptions/{subscriptionId}/cancel",
+            UpdatePaymentMethodUrl: subscriptionId is null
+                ? null
+                : $"https://sandbox-customer-portal.paddle.com/{customerId}/subscriptions/{subscriptionId}/payment-method");
+
+        return Task.FromResult<PaddlePortalSession?>(session);
     }
 }
 
