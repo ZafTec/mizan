@@ -129,7 +129,24 @@ public record AiEvalMatrixDto(
     bool Publishable,
     string? BlockedReason,
     long CostMicros,
-    long? PublishedCostMicros);
+    long? PublishedCostMicros,
+
+    /// <summary>
+    /// The queued suite's state, or null if this version has never been run.
+    /// The console polls on this rather than guessing from the run count: a
+    /// suite that dies halfway would otherwise look like one still going.
+    /// </summary>
+    string? RunStatus,
+    string? RunError);
+
+/// <summary>
+/// The outbox dedupe key for a version's eval suite. One place, because the
+/// command writes it and the matrix reads it.
+/// </summary>
+public static class EvalRunJobKey
+{
+    public static string For(Guid versionId) => $"eval:{versionId}";
+}
 
 public record GetAiEvalMatrixQuery(Guid VersionId) : IRequest<AiEvalMatrixDto>;
 
@@ -173,6 +190,11 @@ public class GetAiEvalMatrixQueryHandler : IRequestHandler<GetAiEvalMatrixQuery,
                 && r.Version.Status == AiPromptStatus.Published)
             .SumAsync(r => (long?)r.CostMicros, cancellationToken);
 
+        var job = await _context.OutboxJobs.AsNoTracking()
+            .Where(j => j.DedupeKey == EvalRunJobKey.For(request.VersionId))
+            .Select(j => new { j.Status, j.LastError })
+            .FirstOrDefaultAsync(cancellationToken);
+
         var gate = AiPublishGate.Evaluate(cases, runs);
 
         return new AiEvalMatrixDto(
@@ -182,6 +204,8 @@ public class GetAiEvalMatrixQueryHandler : IRequestHandler<GetAiEvalMatrixQuery,
             gate.Publishable,
             gate.Reason,
             runs.Sum(r => r.CostMicros),
-            publishedCost);
+            publishedCost,
+            job?.Status.ToString(),
+            job?.LastError);
     }
 }

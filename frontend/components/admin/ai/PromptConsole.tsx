@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { appToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -28,6 +28,11 @@ function statusLabel(status: number) {
 	return status === DRAFT ? "draft" : "archived";
 }
 
+/** Pending and Running are the two states worth polling through. */
+function isRunning(runStatus: string | null | undefined) {
+	return runStatus === "Pending" || runStatus === "Running";
+}
+
 interface Props {
 	prompt: AiPromptDetail;
 	initialMatrix: AiEvalMatrix | null;
@@ -38,6 +43,14 @@ export default function PromptConsole({ prompt, initialMatrix }: Props) {
 	const [pending, startTransition] = useTransition();
 	const [selectedId, setSelectedId] = useState(prompt.versions[0]?.id ?? null);
 	const [matrix, setMatrix] = useState(initialMatrix);
+
+	// The suite runs on the queue now, so the console watches instead of
+	// waiting. Polling stops the moment the job leaves a running state - a
+	// timer that outlives the page is how you get a request every two seconds
+	// on an idle admin tab.
+	const [running, setRunning] = useState(
+		initialMatrix?.runStatus === "Pending" || initialMatrix?.runStatus === "Running",
+	);
 	const [draft, setDraft] = useState<{ body: string; softPolicy: string } | null>(
 		null,
 	);
@@ -60,9 +73,12 @@ export default function PromptConsole({ prompt, initialMatrix }: Props) {
 		setSelectedId(version.id);
 		setDraft(null);
 		setMatrix(null);
+		setRunning(false);
 		startTransition(async () => {
 			try {
-				setMatrix(await getEvalMatrix(version.id));
+				const next = await getEvalMatrix(version.id);
+				setMatrix(next);
+				setRunning(isRunning(next.runStatus));
 			} catch (error) {
 				appToast.error(error, "Could not load evals");
 			}
@@ -78,6 +94,44 @@ export default function PromptConsole({ prompt, initialMatrix }: Props) {
 			}
 		});
 	}
+
+	const announce = useCallback((next: AiEvalMatrix) => {
+		if (next.runStatus === "DeadLettered" || next.runStatus === "Failed") {
+			appToast.error(next.runError ?? "The suite did not finish.");
+			return;
+		}
+		appToast.success(
+			next.publishable
+				? "Suite passed. Ready to publish."
+				: (next.blockedReason ?? "Suite finished with failures."),
+		);
+	}, []);
+
+	useEffect(() => {
+		if (!running || !selectedId) return;
+
+		let cancelled = false;
+		const timer = setInterval(async () => {
+			try {
+				const next = await getEvalMatrix(selectedId);
+				if (cancelled) return;
+
+				setMatrix(next);
+				if (isRunning(next.runStatus)) return;
+
+				setRunning(false);
+				announce(next);
+			} catch {
+				// A single failed poll is not worth a toast; the next one either
+				// works or the interval is torn down with the page.
+			}
+		}, 3000);
+
+		return () => {
+			cancelled = true;
+			clearInterval(timer);
+		};
+	}, [running, selectedId, announce]);
 
 	function onBranch() {
 		run(
@@ -101,6 +155,7 @@ export default function PromptConsole({ prompt, initialMatrix }: Props) {
 				setDraft(null);
 				// Saving discards what the old text proved, so the matrix goes with it.
 				setMatrix(null);
+				setRunning(false);
 				appToast.success("Draft saved. Evals cleared.");
 				router.refresh();
 			},
@@ -117,13 +172,10 @@ export default function PromptConsole({ prompt, initialMatrix }: Props) {
 			},
 			(next) => {
 				setMatrix(next);
-				appToast.success(
-					next.publishable
-						? "Suite passed. Ready to publish."
-						: (next.blockedReason ?? "Suite finished with failures."),
-				);
+				setRunning(true);
+				appToast.success("Suite queued. Results land here as it runs.");
 			},
-			"Could not run the suite",
+			"Could not queue the suite",
 		);
 	}
 
@@ -147,6 +199,7 @@ export default function PromptConsole({ prompt, initialMatrix }: Props) {
 		selected !== null &&
 		selected.status !== PUBLISHED &&
 		!dirty &&
+		!running &&
 		(selected.status !== DRAFT || matrix?.publishable === true);
 
 	return (
@@ -247,10 +300,10 @@ export default function PromptConsole({ prompt, initialMatrix }: Props) {
 									<button
 										type="button"
 										onClick={onRunEvals}
-										disabled={pending || dirty}
+										disabled={pending || dirty || running}
 										className="btn-secondary btn-sm"
 									>
-										Run evals
+										{running ? "Running…" : "Run evals"}
 									</button>
 								</>
 							)}
@@ -308,6 +361,25 @@ export default function PromptConsole({ prompt, initialMatrix }: Props) {
 						live={live.body}
 						draft={body}
 					/>
+				)}
+
+				{running && (
+					<div
+						role="status"
+						className="flex items-center gap-3 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+					>
+						<span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-amber-500" />
+						<span>
+							The suite is running on the queue. Anything below is from the
+							previous run until it finishes; publishing is blocked meanwhile.
+						</span>
+					</div>
+				)}
+
+				{!running && matrix?.runError && (
+					<div className="rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
+						The last run did not finish: {matrix.runError}
+					</div>
 				)}
 
 				{selected && (

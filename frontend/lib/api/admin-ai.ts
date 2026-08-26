@@ -1,15 +1,13 @@
 import { clientApi } from "@/lib/api.client";
 import type { AiEvalMatrix, AiPromptVersion } from "@/data/admin/ai";
 
-export interface EvalSummary {
+/**
+ * What POSTing the suite returns now: a job id, not a result. The suite is
+ * twenty-odd provider calls and runs on the queue.
+ */
+export interface EvalRunQueued {
+	jobId: string;
 	versionId: string;
-	total: number;
-	passed: number;
-	failed: number;
-	errored: number;
-	adversarialFailures: number;
-	tokens: number;
-	costMicros: number;
 }
 
 export const createDraft = (
@@ -31,7 +29,7 @@ export const updateDraft = (
 	});
 
 export const runEvals = (versionId: string) =>
-	clientApi<EvalSummary>(`/api/Admin/Ai/Prompts/versions/${versionId}/evals`, {
+	clientApi<EvalRunQueued>(`/api/Admin/Ai/Prompts/versions/${versionId}/evals`, {
 		method: "POST",
 	});
 
