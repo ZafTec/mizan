@@ -34,6 +34,7 @@ public class FoodPhotoTests
     [Fact]
     public async Task APhotoComesBackAsStructuredFoods()
     {
+        await _fixture.ResetDatabaseAsync();
         var (client, _) = await ProUserAsync();
         _fixture.Ai.Reply(GoodAnalysis);
 
@@ -49,6 +50,7 @@ public class FoodPhotoTests
     [Fact]
     public async Task NothingIsWrittenToTheDiary()
     {
+        await _fixture.ResetDatabaseAsync();
         var (client, userId) = await ProUserAsync();
         _fixture.Ai.Reply(GoodAnalysis);
 
@@ -64,6 +66,7 @@ public class FoodPhotoTests
     [Fact]
     public async Task ProseInsteadOfJsonIsAFailedCall()
     {
+        await _fixture.ResetDatabaseAsync();
         var (client, userId) = await ProUserAsync();
         _fixture.Ai.Reply("Looks like chicken and rice, maybe 600 calories?");
 
@@ -77,6 +80,7 @@ public class FoodPhotoTests
     [Fact]
     public async Task AFailedAnalysisStillLandsInTheLedger()
     {
+        await _fixture.ResetDatabaseAsync();
         var (client, userId) = await ProUserAsync();
         _fixture.Ai.Reply("Not JSON.");
 
@@ -89,6 +93,7 @@ public class FoodPhotoTests
     [Fact]
     public async Task ANonImageIsRejectedBeforeItCostsAnything()
     {
+        await _fixture.ResetDatabaseAsync();
         var (client, _) = await ProUserAsync();
         var before = _fixture.Ai.Calls.Count;
 
@@ -101,6 +106,7 @@ public class FoodPhotoTests
     [Fact]
     public async Task FreeUsersAreWalled()
     {
+        await _fixture.ResetDatabaseAsync();
         var id = Guid.NewGuid();
         var email = $"photo-free-{id:N}@example.com";
         await _fixture.SeedUserAsync(id, email);

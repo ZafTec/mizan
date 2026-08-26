@@ -45,9 +45,10 @@ public class AiQuotaService : IAiQuotaService
         CancellationToken cancellationToken = default)
     {
         var (windowStart, windowEnd) = Today();
-        var limits = await LimitsForAsync(userId, feature, cancellationToken);
+        var line = AiQuotaLines.For(feature);
+        var limits = await LimitsForAsync(userId, line, cancellationToken);
 
-        var mine = await UsageSinceAsync(userId, windowStart, feature == AiFeatures.Eval, cancellationToken);
+        var mine = await UsageSinceAsync(userId, windowStart, line, cancellationToken);
         if (mine.Requests >= limits.DailyRequests || mine.Tokens + estimatedTokens > limits.DailyTokens)
         {
             throw new AiQuotaExceededException(AiQuotaScope.User, windowEnd);
@@ -110,7 +111,7 @@ public class AiQuotaService : IAiQuotaService
         var (windowStart, windowEnd) = Today();
         var entitlement = await _entitlements.GetAsync(userId, cancellationToken);
         var limits = entitlement.IsPro ? _options.Pro : _options.Free;
-        var mine = await UsageSinceAsync(userId, windowStart, evalLine: false, cancellationToken);
+        var mine = await UsageSinceAsync(userId, windowStart, AiQuotaLine.Personal, cancellationToken);
 
         return new AiQuotaSnapshot(
             mine.Requests,
@@ -128,30 +129,35 @@ public class AiQuotaService : IAiQuotaService
         return (start, start.AddDays(1));
     }
 
-    /// <summary>
-    /// Evals get their own line rather than eating the admin's personal
-    /// allowance: proving a draft is operational work, and three chat requests
-    /// is not a suite. The global ceiling still applies to both.
-    /// </summary>
-    private async Task<AiTierLimits> LimitsForAsync(Guid userId, string feature, CancellationToken cancellationToken)
+    private async Task<AiTierLimits> LimitsForAsync(
+        Guid userId, AiQuotaLine line, CancellationToken cancellationToken)
     {
-        if (feature == AiFeatures.Eval) return _options.Eval;
+        if (line == AiQuotaLine.Eval) return _options.Eval;
+        if (line == AiQuotaLine.Onboarding) return _options.Onboarding;
 
         var entitlement = await _entitlements.GetAsync(userId, cancellationToken);
         return entitlement.IsPro ? _options.Pro : _options.Free;
     }
 
     /// <summary>
-    /// Usage on the same line the limit came from, so an eval run cannot spend
-    /// the admin's chat allowance or the other way round.
+    /// Usage on the same line the limit came from, so an eval run or a setup
+    /// conversation cannot spend the caller's chat allowance, or the reverse.
     /// </summary>
     private async Task<(int Requests, int Tokens)> UsageSinceAsync(
-        Guid userId, DateTime since, bool evalLine, CancellationToken cancellationToken)
+        Guid userId, DateTime since, AiQuotaLine line, CancellationToken cancellationToken)
     {
-        var totals = await _context.AiUsageLogs.AsNoTracking()
-            .Where(log => log.UserId == userId
-                && log.CreatedAt >= since
-                && (log.Feature == AiFeatures.Eval) == evalLine)
+        var query = _context.AiUsageLogs.AsNoTracking()
+            .Where(log => log.UserId == userId && log.CreatedAt >= since);
+
+        query = line switch
+        {
+            AiQuotaLine.Eval => query.Where(log => log.Feature == AiFeatures.Eval),
+            AiQuotaLine.Onboarding => query.Where(log => log.Feature == AiFeatures.Onboarding),
+            _ => query.Where(log =>
+                log.Feature != AiFeatures.Eval && log.Feature != AiFeatures.Onboarding),
+        };
+
+        var totals = await query
             .GroupBy(_ => 1)
             .Select(g => new
             {

@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mizan.Application.Ai;
+using Mizan.Application.Ai.Tools;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Api.Controllers;
@@ -61,6 +62,22 @@ public class AiController : ControllerBase
         return Ok(await _ai.SuggestMealsAsync(userId));
     }
 
+    /// <summary>
+    /// One turn of onboarding. Unlike chat, the model here has tools, so the
+    /// response says what it actually did.
+    /// </summary>
+    [HttpPost("onboarding")]
+    public async Task<ActionResult<AiOnboardingTurnDto>> Onboarding(
+        [FromBody] SendAiOnboardingMessageCommand command)
+        => Ok(await _mediator.Send(command));
+
+    /// <summary>The allowlist, so the UI can say what onboarding is able to do before it starts.</summary>
+    [HttpGet("onboarding/tools")]
+    public ActionResult<IReadOnlyList<AiToolSummary>> OnboardingTools()
+        => Ok(AiToolCatalogue.Onboarding
+            .Select(tool => new AiToolSummary(tool.Name, tool.Description))
+            .ToList());
+
     [HttpGet("threads")]
     public async Task<ActionResult<IReadOnlyList<AiChatThreadDto>>> ListThreads([FromQuery] int take = 30)
         => Ok(await _mediator.Send(new ListAiChatThreadsQuery(take)));
@@ -81,3 +98,5 @@ public class AiController : ControllerBase
     public async Task<ActionResult<GlobalAiUsageDto>> GetGlobalUsage()
         => Ok(await _mediator.Send(new GetGlobalAiUsageQuery()));
 }
+
+public record AiToolSummary(string Name, string Description);

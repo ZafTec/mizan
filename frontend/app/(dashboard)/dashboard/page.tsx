@@ -10,6 +10,7 @@ import MacroRing from "@/components/Dashboard/MacroRing";
 import QuickActions from "@/components/Dashboard/QuickActions";
 import { ProBadge } from "@/components/billing/ProBadge";
 import ResumeWorkoutBanner from "@/components/context/ResumeWorkoutBanner";
+import SetupPrompt from "@/components/context/SetupPrompt";
 import TrainerStrip from "@/components/context/TrainerStrip";
 import { cn } from "@/lib/utils";
 
@@ -123,6 +124,9 @@ export default async function DashboardPage() {
 			    nothing to say, so a solo user with no open session sees only
 			    their own log. The standing Pro banner that used to sit here is
 			    gone; the wall now fires at the gated action itself. */}
+			<Suspense fallback={null}>
+				<SetupPrompt />
+			</Suspense>
 			<Suspense fallback={null}>
 				<ResumeWorkoutBanner />
 			</Suspense>

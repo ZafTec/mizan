@@ -27,6 +27,7 @@ public class AiChatTests
     [Fact]
     public async Task AFirstMessageOpensAThreadTitledAfterIt()
     {
+        await _fixture.ResetDatabaseAsync();
         var (client, _) = await UserAsync();
         _fixture.Ai.Reply("About 96 g so far.");
 
@@ -41,6 +42,7 @@ public class AiChatTests
     [Fact]
     public async Task ALongOpeningQuestionIsTrimmedToATitleThatFitsAList()
     {
+        await _fixture.ResetDatabaseAsync();
         var (client, _) = await UserAsync();
         var question = string.Join(" ", Enumerable.Repeat("protein", 30));
 
@@ -53,6 +55,7 @@ public class AiChatTests
     [Fact]
     public async Task BothSidesOfTheTurnArePersistedInOrder()
     {
+        await _fixture.ResetDatabaseAsync();
         var (client, _) = await UserAsync();
         _fixture.Ai.Reply("First answer.");
         var turn = await SendAsync(client, null, "First question?");
@@ -76,6 +79,7 @@ public class AiChatTests
     [Fact]
     public async Task TheSecondTurnReplaysTheFirst()
     {
+        await _fixture.ResetDatabaseAsync();
         var (client, _) = await UserAsync();
         _fixture.Ai.Reply("Chicken and rice.");
         var turn = await SendAsync(client, null, "What did I eat?");
@@ -92,6 +96,7 @@ public class AiChatTests
     [Fact]
     public async Task TheAnswerRecordsWhichPromptVersionProducedIt()
     {
+        await _fixture.ResetDatabaseAsync();
         var (client, _) = await UserAsync();
         var turn = await SendAsync(client, null, "Anything?");
 
@@ -110,6 +115,7 @@ public class AiChatTests
     [Fact]
     public async Task AFailedCallPersistsNothing()
     {
+        await _fixture.ResetDatabaseAsync();
         var (client, _) = await UserAsync();
         _fixture.Ai.Reply("Fine.");
         var turn = await SendAsync(client, null, "First question?");
@@ -128,6 +134,7 @@ public class AiChatTests
     [Fact]
     public async Task AnotherPersonsThreadIsNotFound()
     {
+        await _fixture.ResetDatabaseAsync();
         var (mine, _) = await UserAsync();
         var turn = await SendAsync(mine, null, "Private question?");
 
@@ -142,6 +149,7 @@ public class AiChatTests
     [Fact]
     public async Task ContinuingSomeoneElsesThreadIsNotFound()
     {
+        await _fixture.ResetDatabaseAsync();
         var (mine, _) = await UserAsync();
         var turn = await SendAsync(mine, null, "Private question?");
 
@@ -155,6 +163,7 @@ public class AiChatTests
     [Fact]
     public async Task DeletingAThreadTakesItsMessagesWithIt()
     {
+        await _fixture.ResetDatabaseAsync();
         var (client, _) = await UserAsync();
         var turn = await SendAsync(client, null, "Forget this.");
 
@@ -167,6 +176,7 @@ public class AiChatTests
     [Fact]
     public async Task ThreadsAreListedMostRecentlyUsedFirst()
     {
+        await _fixture.ResetDatabaseAsync();
         var (client, _) = await UserAsync();
         var first = await SendAsync(client, null, "Older question?");
         var second = await SendAsync(client, null, "Newer question?");
@@ -180,6 +190,7 @@ public class AiChatTests
     [Fact]
     public async Task AnEmptyMessageIsRejectedBeforeItCostsAnything()
     {
+        await _fixture.ResetDatabaseAsync();
         var (client, _) = await UserAsync();
         var before = _fixture.Ai.Calls.Count;
 

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Mizan.Application.Ai;
+using Mizan.Application.Ai.Tools;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
@@ -89,6 +90,7 @@ public class NutritionAiService : INutritionAiService
     private readonly IAiQuotaService _quota;
     private readonly IAiContextBuilder _contextBuilder;
     private readonly IAiPromptResolver _prompts;
+    private readonly IAiToolRunner _tools;
     private readonly ILogger<NutritionAiService> _logger;
 
     public NutritionAiService(
@@ -96,12 +98,14 @@ public class NutritionAiService : INutritionAiService
         IAiQuotaService quota,
         IAiContextBuilder contextBuilder,
         IAiPromptResolver prompts,
+        IAiToolRunner tools,
         ILogger<NutritionAiService> logger)
     {
         _provider = provider;
         _quota = quota;
         _contextBuilder = contextBuilder;
         _prompts = prompts;
+        _tools = tools;
         _logger = logger;
     }
 
@@ -221,6 +225,85 @@ public class NutritionAiService : INutritionAiService
 
         return Parse<MealSuggestionResult>(
             response.Content, "meal suggestions", "The assistant could not put a list together. Try again.");
+    }
+
+    /// <summary>
+    /// Each round is a metered call, so the ceiling is low. Three is enough for
+    /// "record the goal, record the weight, then answer"; a model still looping
+    /// after that is stuck, and letting it keep going is how one conversation
+    /// spends a day's allowance.
+    /// </summary>
+    private const int MaxToolRounds = 3;
+
+    public async Task<OnboardingTurn> RunOnboardingTurnAsync(
+        Guid userId,
+        string userMessage,
+        IReadOnlyList<AiChatHistoryTurn> history,
+        CancellationToken cancellationToken = default)
+    {
+        var prompt = await _prompts.ResolveAsync(AiPromptKeys.Onboarding, cancellationToken);
+        var specs = AiToolCatalogue.Onboarding
+            .Select(tool => new AiToolSpec(tool.Name, tool.Description, tool.ParametersSchema))
+            .ToList();
+
+        // No log context here on purpose. Onboarding is where the log gets
+        // created; there is nothing to read yet, and asking would mean asking
+        // for consent before the user has seen what they are consenting to.
+        var messages = new List<AiMessage> { new(AiRole.System, prompt.SystemPrompt) };
+        foreach (var turn in history)
+        {
+            messages.Add(new AiMessage(turn.FromUser ? AiRole.User : AiRole.Assistant, turn.Content));
+        }
+        messages.Add(new AiMessage(AiRole.User, userMessage));
+
+        var performed = new List<AiToolInvocation>();
+        var context = new AiToolContext(userId);
+
+        for (var round = 0; round <= MaxToolRounds; round++)
+        {
+            var last = round == MaxToolRounds;
+            var response = await CallAsync(
+                userId,
+                householdId: null,
+                AiFeatures.Onboarding,
+                new AiCompletionRequest
+                {
+                    Messages = messages,
+                    // The final round offers no tools, so the model has to
+                    // produce prose rather than asking for one more call.
+                    Tools = last ? [] : specs,
+                    Temperature = 0.5,
+                },
+                EstimateTokens(messages.Sum(m => m.Content.Length)),
+                prompt.VersionId,
+                cancellationToken);
+
+            if (response.ToolCalls.Count == 0)
+            {
+                return new OnboardingTurn(response.Content, prompt.VersionId, performed);
+            }
+
+            messages.Add(new AiMessage(AiRole.Assistant, response.Content)
+            {
+                ToolCalls = response.ToolCalls,
+            });
+
+            foreach (var call in response.ToolCalls)
+            {
+                var invocation = await _tools.RunAsync(call, context, cancellationToken);
+                performed.Add(invocation);
+
+                messages.Add(new AiMessage(
+                    AiRole.Tool,
+                    invocation.Succeeded ? invocation.Summary : $"Failed: {invocation.Error}")
+                {
+                    ToolCallId = call.Id,
+                });
+            }
+        }
+
+        // Unreachable: the last round has no tools, so it cannot ask for one.
+        throw new AiUnavailableException("The assistant could not finish that. Try again.");
     }
 
     /// <summary>
