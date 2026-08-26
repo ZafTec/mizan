@@ -7,6 +7,7 @@ import {
   type Environments,
   type CheckoutOpenOptions,
 } from "@paddle/paddle-js";
+import { clientApi } from "@/lib/api.client";
 
 const TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
 const ENVIRONMENT = (process.env.NEXT_PUBLIC_PADDLE_ENV as Environments) ?? "sandbox";
@@ -58,4 +59,19 @@ export async function openCheckout(params: {
 
   paddle.Checkout.open(options);
   return true;
+}
+
+export interface BillingPortalSession {
+  overviewUrl: string;
+  cancelSubscriptionUrl: string | null;
+  updatePaymentMethodUrl: string | null;
+}
+
+/**
+ * Cancelling, changing plan, and updating a card all happen on a page Paddle
+ * hosts and secures - never on ours. This mints a fresh link to it; the link
+ * is single-use, so it is fetched right before opening, never stored.
+ */
+export async function getBillingPortal(): Promise<BillingPortalSession> {
+  return clientApi<BillingPortalSession>("/api/Subscriptions/portal", { method: "POST" });
 }

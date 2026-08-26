@@ -105,6 +105,8 @@ public static class DependencyInjection
         // Billing
         services.Configure<PaddleOptions>(configuration.GetSection(PaddleOptions.SectionName));
         services.AddScoped<IEntitlementService, EntitlementService>();
+        services.AddHttpClient(Billing.PaddleApiClient.HttpClientName);
+        services.AddScoped<IPaddleApiClient, Billing.PaddleApiClient>();
 
         return services;
     }

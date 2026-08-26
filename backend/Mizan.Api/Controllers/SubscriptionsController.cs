@@ -23,4 +23,20 @@ public class SubscriptionsController : ControllerBase
         var result = await _mediator.Send(new GetMySubscriptionQuery());
         return Ok(result);
     }
+
+    /// <summary>
+    /// A fresh link to Paddle's hosted portal - cancel, change plan, update a
+    /// card. Minted per request, never cached: the links are single-use.
+    /// </summary>
+    [HttpPost("portal")]
+    public async Task<ActionResult<BillingPortalSessionDto>> GetBillingPortal()
+    {
+        var result = await _mediator.Send(new GetBillingPortalSessionQuery());
+        if (result is null)
+        {
+            return StatusCode(502, new { errorCode = "paddle_unavailable", error = "Could not reach Paddle. Try again in a moment." });
+        }
+
+        return Ok(result);
+    }
 }
