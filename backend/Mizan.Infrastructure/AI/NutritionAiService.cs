@@ -1,165 +1,204 @@
+using System.Diagnostics;
 using System.Text.Json;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Mizan.Application.Ai;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
+using Mizan.Domain.Entities;
 
 namespace Mizan.Infrastructure.AI;
 
+/// <summary>
+/// Chat and food-photo analysis, both over the v2 platform.
+///
+/// What changed in phase 9: this used to build a Semantic Kernel with a plugin
+/// whose tools auto-invoked, so the model could write to the food diary
+/// unattended. It also called a hardcoded model with no meter and no consent.
+/// All three are corrected here - the context is whatever the user has
+/// consented to and nothing more, every call is reserved and settled against a
+/// quota, and the model no longer writes anything. Tool calling returns in
+/// phase 10 behind an allowlist and an explicit confirmation
+/// (docs/REFOCUS.md §10).
+/// </summary>
 public class NutritionAiService : INutritionAiService
 {
-    private readonly IMizanDbContext _context;
-    private readonly IConfiguration _configuration;
+    private const string CoachPrompt = """
+        You are Mizan, a nutrition and training assistant. Mizan is Amharic for balance.
+
+        Answer from the user's own log when it is given to you below. When it is
+        not, say what you would need rather than guessing at their numbers - the
+        user controls what you can see, and an absent section means they chose
+        not to share it, not that there is nothing there.
+
+        Be concise and concrete. Prefer one specific suggestion to three vague
+        ones. You are not a doctor and you do not diagnose.
+        """;
+
+    private const string AnalysisPrompt = """
+        Identify the foods in this photo and estimate the portion and macros of
+        each. Estimate honestly: a low confidence with a sensible guess is more
+        useful than false precision. Return only the declared JSON.
+        """;
+
+    /// <summary>
+    /// Versioned with the DTO it fills. A response that does not match is a
+    /// failed call, not something to scrape with a regex.
+    /// </summary>
+    private const string AnalysisSchemaV1 = """
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["foods", "totalCalories", "confidence", "note"],
+          "properties": {
+            "foods": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "portionGrams", "calories", "protein", "carbs", "fat"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "portionGrams": { "type": "number" },
+                  "calories": { "type": "number" },
+                  "protein": { "type": "number" },
+                  "carbs": { "type": "number" },
+                  "fat": { "type": "number" }
+                }
+              }
+            },
+            "totalCalories": { "type": "number" },
+            "confidence": { "type": "number" },
+            "note": { "type": ["string", "null"] }
+          }
+        }
+        """;
+
+    private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
+
+    private readonly IAiProvider _provider;
+    private readonly IAiQuotaService _quota;
+    private readonly IAiContextBuilder _contextBuilder;
     private readonly ILogger<NutritionAiService> _logger;
 
-    private const string SystemPrompt = @"You are Mizan AI, a helpful nutrition and fitness coach.
-Your name comes from the Amharic word for 'balance' (ሚዛን), representing the balance between nutrition and fitness.
-
-You help users:
-- Track their daily food intake
-- Understand nutritional information
-- Reach their health and fitness goals
-- Suggest recipes that fit their remaining macros
-- Provide personalized nutrition advice
-
-Be encouraging, knowledgeable, and culturally aware. When users mention Ethiopian foods,
-show familiarity with traditional dishes like injera, doro wat, kitfo, and others.
-
-Always use the available tools to log food, get nutrition info, and provide accurate daily summaries.
-If a user mentions eating something, offer to log it for them.";
-
-    public NutritionAiService(IMizanDbContext context, IConfiguration configuration, ILogger<NutritionAiService> logger)
+    public NutritionAiService(
+        IAiProvider provider,
+        IAiQuotaService quota,
+        IAiContextBuilder contextBuilder,
+        ILogger<NutritionAiService> logger)
     {
-        _context = context;
-        _configuration = configuration;
+        _provider = provider;
+        _quota = quota;
+        _contextBuilder = contextBuilder;
         _logger = logger;
     }
 
-    public async Task<string> GetNutritionAdviceAsync(Guid userId, string userMessage, CancellationToken cancellationToken = default)
+    public async Task<string> GetNutritionAdviceAsync(
+        Guid userId,
+        string userMessage,
+        CancellationToken cancellationToken = default)
     {
+        var context = await _contextBuilder.BuildAsync(userId, userId, cancellationToken);
+
+        var messages = new List<AiMessage> { new(AiRole.System, CoachPrompt) };
+        if (!context.IsEmpty)
+        {
+            messages.Add(new AiMessage(AiRole.System, context.Summary));
+        }
+        messages.Add(new AiMessage(AiRole.User, userMessage));
+
+        var response = await CallAsync(
+            userId,
+            context.HouseholdId,
+            AiFeatures.Chat,
+            new AiCompletionRequest { Messages = messages },
+            EstimateTokens(userMessage.Length + context.Summary.Length),
+            cancellationToken);
+
+        return response.Content;
+    }
+
+    public async Task<FoodAnalysisResult> AnalyzeFoodImageAsync(
+        Guid userId,
+        byte[] imageBytes,
+        string contentType,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new AiCompletionRequest
+        {
+            Messages =
+            [
+                new AiMessage(AiRole.User, AnalysisPrompt, new AiImage(imageBytes, contentType)),
+            ],
+            ResponseSchema = new AiJsonSchema("food_analysis_v1", AnalysisSchemaV1),
+            Temperature = 0.2,
+        };
+
+        // An image costs far more prompt tokens than its bytes suggest; a flat
+        // reservation that errs high is better than a clever estimate that
+        // errs low, because the settle corrects it either way.
+        var response = await CallAsync(
+            userId, householdId: null, AiFeatures.FoodAnalysis, request, 2_000, cancellationToken);
+
         try
         {
-            var kernel = CreateKernel(userId);
-
-            var chatService = kernel.GetRequiredService<IChatCompletionService>();
-
-            var chatHistory = new ChatHistory();
-            chatHistory.AddSystemMessage(SystemPrompt);
-            chatHistory.AddUserMessage(userMessage);
-
-            var settings = new OpenAIPromptExecutionSettings
-            {
-                ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
-                MaxTokens = 1000,
-                Temperature = 0.7
-            };
-
-            var response = await chatService.GetChatMessageContentAsync(
-                chatHistory,
-                settings,
-                kernel,
-                cancellationToken);
-
-            return response.Content ?? "I apologize, but I couldn't generate a response. Please try again.";
+            return JsonSerializer.Deserialize<FoodAnalysisResult>(response.Content, Json)
+                ?? throw new AiUnavailableException("The assistant could not read that photo. Try another.");
         }
-        catch (Exception ex)
+        catch (JsonException ex)
         {
-            _logger.LogError(ex, "Error getting nutrition advice for user {UserId}", userId);
-            return "I'm sorry, I encountered an error while processing your request. Please try again later.";
+            _logger.LogWarning(ex, "Food analysis response did not match the declared schema");
+            throw new AiUnavailableException("The assistant could not read that photo. Try another.");
         }
     }
 
-    public async Task<FoodAnalysisResult> AnalyzeFoodImageAsync(byte[] imageBytes, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// The one path to the provider: reserve, call, settle. Settling happens in
+    /// a finally, so a failed or cancelled call still costs what it cost.
+    /// </summary>
+    private async Task<AiCompletionResponse> CallAsync(
+        Guid userId,
+        Guid? householdId,
+        string feature,
+        AiCompletionRequest request,
+        int estimatedTokens,
+        CancellationToken cancellationToken)
     {
+        if (!_provider.IsConfigured)
+        {
+            throw new AiUnavailableException("The assistant is not configured on this server.");
+        }
+
+        var lease = await _quota.ReserveAsync(
+            userId, householdId, feature, estimatedTokens, cancellationToken);
+
+        var stopwatch = Stopwatch.StartNew();
+        var usage = AiTokenUsage.None;
+        var model = _provider.Model;
+        var outcome = AiCallOutcome.ProviderError;
+
         try
         {
-            var builder = Kernel.CreateBuilder();
-
-            var apiKey = _configuration["OpenAI:ApiKey"]
-                ?? throw new InvalidOperationException("OpenAI API key not configured");
-
-            builder.AddOpenAIChatCompletion(
-                modelId: "gpt-4o",
-                apiKey: apiKey);
-
-            var kernel = builder.Build();
-            var chatService = kernel.GetRequiredService<IChatCompletionService>();
-
-            var history = new ChatHistory();
-            history.AddSystemMessage(@"Analyze food images and return a JSON response with this exact structure:
-{
-  ""foods"": [
-    {
-      ""name"": ""food name"",
-      ""portionGrams"": estimated_weight_in_grams,
-      ""calories"": estimated_calories,
-      ""protein"": estimated_protein_grams,
-      ""carbs"": estimated_carbs_grams,
-      ""fat"": estimated_fat_grams
-    }
-  ],
-  ""totalCalories"": sum_of_all_calories,
-  ""confidence"": confidence_score_0_to_1
-}
-
-Be as accurate as possible with portion estimates. If you cannot identify a food, use your best guess based on appearance.");
-
-            var imageContent = new ImageContent(imageBytes, "image/jpeg");
-            var messageContent = new ChatMessageContentItemCollection
-            {
-                new TextContent("Please analyze this meal image and estimate the nutritional content:"),
-                imageContent
-            };
-
-            history.AddUserMessage(messageContent);
-
-            var response = await chatService.GetChatMessageContentAsync(history, cancellationToken: cancellationToken);
-            var content = response.Content ?? "{}";
-
-            // Try to parse JSON from the response
-            var jsonStart = content.IndexOf('{');
-            var jsonEnd = content.LastIndexOf('}');
-
-            if (jsonStart >= 0 && jsonEnd > jsonStart)
-            {
-                var json = content.Substring(jsonStart, jsonEnd - jsonStart + 1);
-                var result = JsonSerializer.Deserialize<FoodAnalysisResult>(json, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                return result ?? new FoodAnalysisResult();
-            }
-
-            _logger.LogWarning("Could not parse food analysis response: {Content}", content);
-            return new FoodAnalysisResult();
+            var response = await _provider.CompleteAsync(request, cancellationToken);
+            usage = response.Usage;
+            model = response.Model;
+            outcome = AiCallOutcome.Succeeded;
+            return response;
         }
-        catch (Exception ex)
+        catch (OperationCanceledException)
         {
-            _logger.LogError(ex, "Error analyzing food image");
-            return new FoodAnalysisResult();
+            outcome = AiCallOutcome.Timeout;
+            throw;
+        }
+        finally
+        {
+            stopwatch.Stop();
+            // The reservation must be settled even when the caller is gone, so
+            // this deliberately does not observe the request's cancellation.
+            await _quota.SettleAsync(
+                lease, usage, model, (int)stopwatch.ElapsedMilliseconds, outcome, CancellationToken.None);
         }
     }
 
-    private Kernel CreateKernel(Guid userId)
-    {
-        var builder = Kernel.CreateBuilder();
-
-        var apiKey = _configuration["OpenAI:ApiKey"]
-            ?? throw new InvalidOperationException("OpenAI API key not configured");
-
-        builder.AddOpenAIChatCompletion(
-            modelId: _configuration["OpenAI:ModelId"] ?? "gpt-4o",
-            apiKey: apiKey);
-
-        var kernel = builder.Build();
-
-        // Add the nutrition plugin
-        var nutritionPlugin = new NutritionPlugin(_context, userId);
-        kernel.ImportPluginFromObject(nutritionPlugin, "Nutrition");
-
-        return kernel;
-    }
+    /// <summary>Four characters to a token is close enough for a reservation the settle corrects.</summary>
+    private static int EstimateTokens(int characters) => Math.Max(256, characters / 4);
 }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Infrastructure.AI;
+using Mizan.Infrastructure.Ai;
 using Mizan.Infrastructure.Data;
 using Mizan.Infrastructure.Email;
 using Mizan.Infrastructure.Identity;
@@ -66,6 +67,18 @@ public static class DependencyInjection
         {
             services.AddSingleton<IStorageService, S3StorageService>();
         }
+
+        // AI platform. Quota and consent are registered with the provider, not
+        // after it: an unmetered or unconsented call must not be constructible
+        // (docs/REFOCUS.md §10).
+        services.Configure<AiOptions>(configuration.GetSection(AiOptions.SectionName));
+        services.AddHttpClient(OpenAiCompatibleProvider.HttpClientName);
+        services.AddSingleton<IAiProvider, OpenAiCompatibleProvider>();
+        services.AddSingleton<IAiCeilings>(sp =>
+            sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<AiOptions>>().Value);
+        services.AddScoped<IAiQuotaService, AiQuotaService>();
+        services.AddScoped<IDataAccessPolicy, DataAccessPolicy>();
+        services.AddScoped<IAiContextBuilder, AiContextBuilder>();
 
         // Billing
         services.Configure<PaddleOptions>(configuration.GetSection(PaddleOptions.SectionName));

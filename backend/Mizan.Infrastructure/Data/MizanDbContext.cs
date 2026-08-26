@@ -73,6 +73,8 @@ public class MizanDbContext : DbContext, IMizanDbContext
 
     // AI
     public DbSet<AiChatThread> AiChatThreads => Set<AiChatThread>();
+    public DbSet<UserAiConsent> UserAiConsents => Set<UserAiConsent>();
+    public DbSet<AiUsageLog> AiUsageLogs => Set<AiUsageLog>();
 
     // MCP Integration
     public DbSet<McpToken> McpTokens => Set<McpToken>();
@@ -130,6 +132,44 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.AccessFailedCount).HasColumnName("access_failed_count").HasDefaultValue(0);
             entity.Property(e => e.LockoutEnd).HasColumnName("lockout_end");
             entity.HasIndex(e => e.Email).IsUnique();
+        });
+
+        modelBuilder.Entity<UserAiConsent>(entity =>
+        {
+            entity.ToTable("user_ai_consents");
+            entity.HasKey(e => e.UserId);
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Enabled).HasColumnName("enabled").HasDefaultValue(false);
+            entity.Property(e => e.ShareNutrition).HasColumnName("share_nutrition").HasDefaultValue(false);
+            entity.Property(e => e.ShareTraining).HasColumnName("share_training").HasDefaultValue(false);
+            entity.Property(e => e.ShareBody).HasColumnName("share_body").HasDefaultValue(false);
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.HasOne(e => e.User).WithOne()
+                .HasForeignKey<UserAiConsent>(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AiUsageLog>(entity =>
+        {
+            entity.ToTable("ai_usage_logs");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.HouseholdId).HasColumnName("household_id");
+            entity.Property(e => e.Feature).HasColumnName("feature").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Model).HasColumnName("model").HasMaxLength(128).IsRequired();
+            entity.Property(e => e.PromptTokens).HasColumnName("prompt_tokens");
+            entity.Property(e => e.CompletionTokens).HasColumnName("completion_tokens");
+            entity.Property(e => e.EstimatedCostMicros).HasColumnName("estimated_cost_micros");
+            entity.Property(e => e.LatencyMs).HasColumnName("latency_ms");
+            entity.Property(e => e.Outcome).HasColumnName("outcome").HasConversion<int>();
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Ignore(e => e.TotalTokens);
+            // The two questions this table is asked: what has one user spent
+            // this period, and what has everyone spent today.
+            entity.HasIndex(e => new { e.UserId, e.CreatedAt });
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasOne(e => e.User).WithMany()
+                .HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<UserSession>(entity =>

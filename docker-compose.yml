@@ -126,7 +126,12 @@ services:
       - Cors__Origins__0=http://frontend:3000
       - Cors__Origins__1=http://localhost:3000
       - Cors__Origins__2=${PUBLIC_APP_URL:-http://localhost:3000}
-      - OpenAI__ApiKey=${OPENAI_API_KEY:-}
+      # AI platform. One OpenAI-compatible endpoint; the model is config.
+      - Ai__BaseUrl=${AI_BASE_URL:-}
+      - Ai__ApiKey=${AI_API_KEY:-}
+      - Ai__Model=${AI_MODEL:-gpt-5.6-luna}
+      - Ai__GlobalDailyTokens=${AI_GLOBAL_DAILY_TOKENS:-5000000}
+      - Ai__GlobalDailyCostMicros=${AI_GLOBAL_DAILY_COST_MICROS:-20000000}
       # MCP service-to-service API keys
       - Mcp__ServiceApiKey=${MCP_SERVICE_KEY:?MCP_SERVICE_KEY is required}
       - Mcp__AdminServiceApiKey=${MCP_ADMIN_SERVICE_KEY:?MCP_ADMIN_SERVICE_KEY is required}
