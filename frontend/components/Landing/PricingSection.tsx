@@ -71,21 +71,13 @@ export function PricingSection() {
 				</p>
 			</div>
 
-			<div className="relative grid grid-cols-1 items-stretch gap-4 md:grid-cols-3">
-				<div
-					aria-hidden="true"
-					className="pointer-events-none absolute left-1/2 top-1/2 -z-10 hidden h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 rounded-full md:block"
-					style={{
-						background: "radial-gradient(closest-side, color-mix(in oklab, var(--color-brand-500) 18%, transparent), transparent 70%)",
-						filter: "blur(55px)",
-					}}
-				/>
+			<div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-3">
 				{TIERS.map((tier) => {
 					const highlight = tier.highlight;
 					return (
 						<article
 							key={tier.id}
-							className={`relative flex flex-col overflow-hidden rounded-[28px] p-6 ${
+							className={`relative flex flex-col overflow-hidden rounded-2xl p-6 ${
 								highlight
 									? "border border-brand-500/30 bg-white shadow-xl shadow-brand-500/10 dark:border-brand-500/30 dark:bg-charcoal-blue-900"
 									: "border border-charcoal-blue-100 bg-white dark:border-white/10 dark:bg-charcoal-blue-900/60"

@@ -56,11 +56,11 @@ export default function ConfirmationModal({
 
     const modal = (
         <div
-            className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm"
+            className="modal-overlay-in fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm"
             onClick={onClose}
         >
             <div
-                className="card my-auto w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in duration-200"
+                className="modal-pop-in card my-auto w-full max-w-md p-6 shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex items-start gap-4 mb-4">
