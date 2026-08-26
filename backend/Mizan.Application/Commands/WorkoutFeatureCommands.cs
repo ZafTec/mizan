@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
+using Mizan.Contracts.Workouts;
 
 namespace Mizan.Application.Commands;
 

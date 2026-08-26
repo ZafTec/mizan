@@ -639,6 +639,9 @@ mcp__MCP_DOCKER__listRepositoryTags
 - **Entities:** `backend/Mizan.Domain/Entities/`
 - **DbContext:** `backend/Mizan.Infrastructure/Data/MizanDbContext.cs`
 - **Migrations:** `backend/Mizan.Infrastructure/Migrations/`
+- **Shared wire types:** `backend/Mizan.Contracts/` - dependency-free records the
+  API binds and the MCP server (and later the Telegram bot) constructs. Add a
+  request shape here, not in a controller, when more than one service sends it.
 
 ### Frontend
 - **Pages:** `frontend/app/`

@@ -3,26 +3,12 @@ using MediatR;
 using Microsoft.Extensions.Caching.Hybrid;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Foods;
 using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Commands;
 
-public record CreateFoodCommand : IRequest<CreateFoodResult>
-{
-    public string Name { get; init; } = string.Empty;
-    public string? Brand { get; init; }
-    public string? Barcode { get; init; }
-    public decimal CaloriesPer100g { get; init; }
-    public decimal ProteinPer100g { get; init; }
-    public decimal CarbsPer100g { get; init; }
-    public decimal FatPer100g { get; init; }
-    public decimal? FiberPer100g { get; init; }
-    public decimal? SugarPer100g { get; init; }
-    public decimal? SodiumPer100g { get; init; }
-    public decimal ServingSize { get; init; } = 100;
-    public string ServingUnit { get; init; } = "g";
-    public bool IsVerified { get; init; } = false;
-}
+public record CreateFoodCommand : CreateFoodRequest, IRequest<CreateFoodResult>;
 
 public record CreateFoodResult
 {

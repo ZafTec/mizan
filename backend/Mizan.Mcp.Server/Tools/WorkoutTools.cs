@@ -1,5 +1,7 @@
 using System.ComponentModel;
+using System.Globalization;
 using System.Text.Json;
+using Mizan.Contracts.Workouts;
 using Mizan.Mcp.Server.Services;
 using ModelContextProtocol.Server;
 
@@ -24,7 +26,16 @@ public sealed class WorkoutTools
     [Description("Log a workout. exercisesJson must be an array of {exerciseId,notes?,supersetWithNext?,sets:[{reps?,weightKg?,durationSeconds?,distanceMeters?,completedAt?,completed?}]}.")]
     public Task<string> LogWorkout(string name, string workoutDate, string exercisesJson, int? durationMinutes = null,
         decimal? bodyweightKg = null, string? notes = null, string? templateId = null, CancellationToken ct = default)
-        => _api.PostAsync("/api/Workouts", new { name, workoutDate, durationMinutes, bodyweightKg, notes, templateId, exercises = Parse(exercisesJson) }, ct);
+        => _api.PostAsync("/api/Workouts", new LogWorkoutRequest
+        {
+            Name = name,
+            WorkoutDate = ToolArguments.ParseDate(workoutDate, "workoutDate"),
+            DurationMinutes = durationMinutes,
+            BodyweightKg = bodyweightKg,
+            Notes = notes,
+            TemplateId = ToolArguments.ParseOptionalId(templateId, "templateId"),
+            Exercises = ParseExercises(exercisesJson),
+        }, ct);
 
     [McpServerTool(Name = "update_workout", Idempotent = true)]
     [Description("Update a workout using its full JSON contract.")]
@@ -49,9 +60,25 @@ public sealed class WorkoutTools
     [McpServerTool(Name = "delete_workout_draft", Destructive = true)]
     public Task<string> DeleteDraft(CancellationToken ct = default) => _api.DeleteAsync("/api/Workouts/draft", ct);
 
-    private static JsonElement Parse(string json)
+
+    /// <summary>
+    /// Deserialising into the shared contract rather than a JsonElement is the
+    /// point of Mizan.Contracts: a caller that sends the wrong shape is told
+    /// so here, instead of the API returning 400 and the tool reporting
+    /// success. Case-insensitive because agents write camelCase and
+    /// PascalCase interchangeably.
+    /// </summary>
+    private static List<WorkoutExerciseDto> ParseExercises(string json)
     {
-        try { return JsonSerializer.Deserialize<JsonElement>(json); }
-        catch (JsonException ex) { throw new ArgumentException($"Invalid exercisesJson: {ex.Message}"); }
+        try
+        {
+            return JsonSerializer.Deserialize<List<WorkoutExerciseDto>>(
+                json,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException($"Invalid exercisesJson: {ex.Message}");
+        }
     }
 }

@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Mizan.Application.Commands;
 using Xunit;
+using Mizan.Contracts.Recipes;
 
 namespace Mizan.Tests.Application;
 

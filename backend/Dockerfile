@@ -12,6 +12,7 @@ ENV DOTNET_WATCH_SUPPRESS_LAUNCH_BROWSER=true
 COPY ["Mizan.sln", "./"]
 COPY ["Mizan.Api/Mizan.Api.csproj", "Mizan.Api/"]
 COPY ["Mizan.Application/Mizan.Application.csproj", "Mizan.Application/"]
+COPY ["Mizan.Contracts/Mizan.Contracts.csproj", "Mizan.Contracts/"]
 COPY ["Mizan.Domain/Mizan.Domain.csproj", "Mizan.Domain/"]
 COPY ["Mizan.Infrastructure/Mizan.Infrastructure.csproj", "Mizan.Infrastructure/"]
 

@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Mizan.Contracts.Foods;
 using Mizan.Mcp.Server.Services;
 using ModelContextProtocol.Server;
 
@@ -55,21 +56,21 @@ public sealed class FoodTools
         [Description("Mark as verified (default false)")] bool isVerified = false,
         CancellationToken ct = default)
     {
-        return await _api.PostAsync("/api/Foods", new
+        return await _api.PostAsync("/api/Foods", new CreateFoodRequest
         {
-            name,
-            brand,
-            barcode,
-            caloriesPer100g,
-            proteinPer100g,
-            carbsPer100g,
-            fatPer100g,
-            fiberPer100g,
-            sugarPer100g,
-            sodiumPer100g,
-            servingSize = servingSize ?? 100m,
-            servingUnit = servingUnit ?? "g",
-            isVerified
+            Name = name,
+            Brand = brand,
+            Barcode = barcode,
+            CaloriesPer100g = caloriesPer100g,
+            ProteinPer100g = proteinPer100g,
+            CarbsPer100g = carbsPer100g,
+            FatPer100g = fatPer100g,
+            FiberPer100g = fiberPer100g,
+            SugarPer100g = sugarPer100g,
+            SodiumPer100g = sodiumPer100g,
+            ServingSize = servingSize ?? 100m,
+            ServingUnit = servingUnit ?? "g",
+            IsVerified = isVerified,
         }, ct);
     }
 
@@ -92,22 +93,22 @@ public sealed class FoodTools
         [Description("Mark as verified (default false)")] bool isVerified = false,
         CancellationToken ct = default)
     {
-        return await _api.PutAsync($"/api/Foods/{id}", new
+        return await _api.PutAsync($"/api/Foods/{id}", new UpdateFoodRequest
         {
-            id,
-            name,
-            brand,
-            barcode,
-            caloriesPer100g,
-            proteinPer100g,
-            carbsPer100g,
-            fatPer100g,
-            fiberPer100g,
-            sugarPer100g,
-            sodiumPer100g,
-            servingSize = servingSize ?? 100m,
-            servingUnit = servingUnit ?? "g",
-            isVerified
+            Id = ToolArguments.ParseId(id, "id"),
+            Name = name,
+            Brand = brand,
+            Barcode = barcode,
+            CaloriesPer100g = caloriesPer100g,
+            ProteinPer100g = proteinPer100g,
+            CarbsPer100g = carbsPer100g,
+            FatPer100g = fatPer100g,
+            FiberPer100g = fiberPer100g,
+            SugarPer100g = sugarPer100g,
+            SodiumPer100g = sodiumPer100g,
+            ServingSize = servingSize ?? 100m,
+            ServingUnit = servingUnit ?? "g",
+            IsVerified = isVerified,
         }, ct);
     }
 

@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Globalization;
 using System.Text.Json;
+using Mizan.Contracts.Meals;
 using Mizan.Mcp.Server.Services;
 using ModelContextProtocol.Server;
 
@@ -76,13 +77,13 @@ public sealed class MealTools
         [Description("Optional ISO 8601 timestamp (e.g. 2026-04-20T16:14:54Z) of when the meal was eaten; defaults to now")] string? loggedAt = null,
         CancellationToken ct = default)
     {
-        return await _api.PostAsync("/api/Meals", new
+        return await _api.PostAsync("/api/Meals", new LogMealRequest
         {
-            entryDate = date,
-            mealType = NormalizeMealType(mealType),
-            servings,
-            foodId,
-            loggedAt = ParseLoggedAt(loggedAt)
+            EntryDate = ToolArguments.ParseOptionalDate(date, "date"),
+            MealType = NormalizeMealType(mealType),
+            Servings = servings,
+            FoodId = ToolArguments.ParseId(foodId, "foodId"),
+            LoggedAt = ToolArguments.ParseOptionalTimestamp(loggedAt, "loggedAt"),
         }, ct);
     }
 
@@ -96,13 +97,13 @@ public sealed class MealTools
         [Description("Optional ISO 8601 timestamp of when the meal was eaten; defaults to now")] string? loggedAt = null,
         CancellationToken ct = default)
     {
-        return await _api.PostAsync("/api/Meals", new
+        return await _api.PostAsync("/api/Meals", new LogMealRequest
         {
-            entryDate = date,
-            mealType = NormalizeMealType(mealType),
-            servings,
-            recipeId,
-            loggedAt = ParseLoggedAt(loggedAt)
+            EntryDate = ToolArguments.ParseOptionalDate(date, "date"),
+            MealType = NormalizeMealType(mealType),
+            Servings = servings,
+            RecipeId = ToolArguments.ParseId(recipeId, "recipeId"),
+            LoggedAt = ToolArguments.ParseOptionalTimestamp(loggedAt, "loggedAt"),
         }, ct);
     }
 
@@ -121,18 +122,18 @@ public sealed class MealTools
         [Description("Optional ISO 8601 timestamp of when the meal was eaten; defaults to now")] string? loggedAt = null,
         CancellationToken ct = default)
     {
-        return await _api.PostAsync("/api/Meals", new
+        return await _api.PostAsync("/api/Meals", new LogMealRequest
         {
-            entryDate = date,
-            mealType = NormalizeMealType(mealType),
-            servings,
-            name,
-            calories,
-            proteinGrams,
-            carbsGrams,
-            fatGrams,
-            fiberGrams,
-            loggedAt = ParseLoggedAt(loggedAt)
+            EntryDate = ToolArguments.ParseOptionalDate(date, "date"),
+            MealType = NormalizeMealType(mealType),
+            Servings = servings,
+            Name = name,
+            Calories = calories,
+            ProteinGrams = proteinGrams,
+            CarbsGrams = carbsGrams,
+            FatGrams = fatGrams,
+            FiberGrams = fiberGrams,
+            LoggedAt = ToolArguments.ParseOptionalTimestamp(loggedAt, "loggedAt"),
         }, ct);
     }
 
@@ -159,14 +160,5 @@ public sealed class MealTools
         };
     }
 
-    private static DateTime? ParseLoggedAt(string? raw)
-    {
-        if (string.IsNullOrWhiteSpace(raw)) return null;
-        if (!DateTime.TryParse(raw, CultureInfo.InvariantCulture,
-                DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var parsed))
-        {
-            throw new ArgumentException($"Invalid loggedAt '{raw}'. Expected ISO 8601 (e.g. 2026-04-20T16:14:54Z).");
-        }
-        return parsed.ToUniversalTime();
-    }
+
 }
