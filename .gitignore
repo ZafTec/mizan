@@ -83,3 +83,9 @@ vps_setup.txt
 
 # Redis snapshot, written by a locally-run redis-server
 dump.rdb
+
+# Seeded design canvas. A 2.6 MB build artifact - the editor payload with the
+# artboards baked in. The .dc.html sources beside it are the real input;
+# re-seed from those rather than committing the output.
+design/*.html
+!design/*.dc.html

@@ -1474,6 +1474,55 @@ trip.
 
 ---
 
+## 17. Theme rebuild (phase 18)
+
+The visual layer was never designed; it accumulated. `globals.css` carries five
+colour ramps, nine classes with a `backdrop-filter`, `shadow-panel` on every
+surface, and radii from 28 to 32 px. Nothing there is wrong on its own. The
+sum is a UI with no hierarchy - when every surface floats and every panel is
+frosted, none of them means anything - and a data table shaped like a pill.
+
+So this phase is a rewrite of the design layer, not a tidy-up, and it starts
+with a decision rather than a diff. Three directions are drawn on the same
+screen (the admin jobs table, because a dense list is the honest test of a
+theme):
+
+| | Voice | Type | The tradeoff |
+|---|---|---|---|
+| **A — Ledger** | An editorial ruled sheet. Hairlines, 3 px radii, colour on four meanings only. | Spectral + Archivo | Furthest from what ships; most opinionated. |
+| **B — Signal** | A dark instrument panel. Status as an indicator, not a badge. | Space Grotesk + JetBrains Mono | Excellent for ops, hard to warm up for marketing. |
+| **C — Daylight** | The current app with the glass taken off. | Instrument Sans + Instrument Serif | Cheapest migration, least distinctive. |
+
+All three drop `backdrop-filter`, the 28-32 px radii, and three of the five
+ramps. **Verdigris survives** - it is the brand, and it now means exactly one
+thing: live. Sandy-brown and burnt-peach never earned their 22 tokens.
+
+### The table is the deliverable
+
+One component renders every list in the product: jobs, audit log, users,
+sessions, ingredients, measurements. Its rules, so a page does not get to
+invent its own:
+
+- **Numbers right, tabular.** A column of counts scans vertically or it is decoration.
+- **Status is a dot plus a word.** Never colour alone - it has to survive grayscale.
+- **One rule under the header, hairlines between rows.** No zebra, no vertical rules.
+- **Wash, not badge, for urgency.** A dead row tints; it does not grow a second coloured object.
+- **Actions only where legal.** A running job shows no buttons; discovering the rule from a 400 is not a design.
+
+Loading and empty are designed here rather than defaulted per page, and both
+themes come from one token swap rather than a second stylesheet.
+
+### Absorbs the landing page
+
+Phase 17's landing-page item moves here, because a landing page in the old
+visual language and an app in the new one is worse than either. The copy is
+grounded in what the product actually does - the three logging doors, the
+per-axis consent, timezone-correct streaks, self-hosting - not in adjectives.
+
+Sources live in `design/`; the published canvas is seeded from them.
+
+---
+
 ## 15. Execution order
 
 Each phase is one commit and leaves the build green.
@@ -1497,9 +1546,10 @@ Each phase is one commit and leaves the build green.
 | 13 | **Admin rebuild** | medium | **done** | audit log queryable and filterable (facets, date range, CSV export with formula neutralisation), relationships back with the grants read-only, achievements CRUD. 15 admin MCP tools, up from 6 |
 | 14 | **Background queue** | medium | **done** | transactional outbox for outbound email and eval runs, `FOR UPDATE SKIP LOCKED` claiming, per-type concurrency, dead-letter view at `/admin/jobs` and over MCP (§13b) |
 | 15 | **MCP parity** | medium | **done** | AI consent + usage, chat threads, uploads (base64 → multipart), prompt console, queue. `AiController` and `UploadsController` moved off the cookie-only default policy onto `UserOrMcp` (§14) |
-| 16 | Telegram bot | medium | | `Mizan.Telegram`, guided linking from web settings, cold `/start` → sign in first, chat on the shared thread. **Consumes §10's AI service; never its own** |
-| 17 | Redis pass + landing page | medium | | nutrition totals, dashboard aggregates, recipes, meal plans; landing page revamp |
-| 18 | Docs rewrite | none | | README, CLAUDE.md, ARCHITECTURE.md, MCP.md, AI.md, TELEGRAM.md |
+| 16 | **Telegram bot** | medium | **done** | `Mizan.Telegram` on the MCP server's pattern, single-use link codes, guided linking from web settings, cold `/start` → sign in first, photo → confirm card, chat on the shared thread. **Consumes §10's AI service; never its own** |
+| 17 | Redis pass | medium | | nutrition totals, dashboard aggregates, recipes, meal plans |
+| 18 | **Theme rebuild + landing page** | high | *design canvas published; build not started* | one visual language across the app, the table primitive restyled, the landing page revamped. Absorbs 17's landing-page item (§17) |
+| 19 | Docs rewrite | none | | README, CLAUDE.md, ARCHITECTURE.md, MCP.md, AI.md, TELEGRAM.md |
 
 Ordering constraints that actually bind:
 
