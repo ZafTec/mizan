@@ -146,6 +146,8 @@ builder.Services.AddMcpServer(options =>
 .WithTools<ProfileTools>()
 .WithTools<HouseholdTools>()
 .WithTools<TrainerTools>()
+.WithTools<AiTools>()
+.WithTools<UploadTools>()
 .AddAuthorizationFilters()
 .WithRequestFilters(filters =>
 {

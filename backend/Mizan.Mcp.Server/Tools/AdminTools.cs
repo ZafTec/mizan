@@ -222,4 +222,80 @@ public sealed class AdminTools
     [Description("Admin only. Discards a dead-lettered or succeeded job. Pending work cannot be deleted.")]
     public Task<string> DeleteJob(string id, CancellationToken ct = default) =>
         _api.DeleteAsync($"/api/Admin/Jobs/{ToolArguments.ParseId(id, "id")}", ct);
+
+    // ---- Prompt console ---------------------------------------------------
+
+    [McpServerTool(Name = "admin_list_ai_prompts", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. The assistant's prompts and which version of each is live.")]
+    public Task<string> ListPrompts(CancellationToken ct = default) =>
+        _api.GetAsync("/api/Admin/Ai/Prompts", ct);
+
+    [McpServerTool(Name = "admin_get_ai_prompt", ReadOnly = true, Idempotent = true)]
+    [Description(
+        "Admin only. One prompt: its hard constraints, its version history, and the "
+        + "built-in default. The hard constraints are code and cannot be edited from here "
+        + "or anywhere else - a draft only supplies the soft half.")]
+    public Task<string> GetPrompt(string key, CancellationToken ct = default) =>
+        _api.GetAsync($"/api/Admin/Ai/Prompts/{Uri.EscapeDataString(key)}", ct);
+
+    [McpServerTool(Name = "admin_create_ai_prompt_draft")]
+    [Description(
+        "Admin only. Branches a new draft. Omit body and softPolicy to start from whatever "
+        + "is live, or from the built-in default when nothing is published.")]
+    public Task<string> CreateDraft(
+        string key,
+        string? body = null,
+        [Description("JSON object of soft guardrails")] string? softPolicy = null,
+        string? notes = null,
+        CancellationToken ct = default) =>
+        _api.PostAsync(
+            $"/api/Admin/Ai/Prompts/{Uri.EscapeDataString(key)}/drafts",
+            new { body, softPolicy, notes },
+            ct);
+
+    [McpServerTool(Name = "admin_update_ai_prompt_draft")]
+    [Description(
+        "Admin only. Rewrites a draft. Saving discards whatever the old text proved, so the "
+        + "suite has to be run again before it can be published.")]
+    public Task<string> UpdateDraft(
+        string id,
+        string body,
+        [Description("JSON object of soft guardrails")] string softPolicy = "{}",
+        string? notes = null,
+        CancellationToken ct = default) =>
+        _api.PutAsync(
+            $"/api/Admin/Ai/Prompts/versions/{ToolArguments.ParseId(id, "id")}",
+            new { body, softPolicy, notes },
+            ct);
+
+    [McpServerTool(Name = "admin_run_ai_prompt_evals")]
+    [Description(
+        "Admin only. Queues the eval suite against a draft and returns a job id. The suite "
+        + "is twenty-odd provider calls and runs in the background - poll "
+        + "admin_get_ai_prompt_evals for results.")]
+    public Task<string> RunEvals(string id, CancellationToken ct = default) =>
+        _api.PostAsync($"/api/Admin/Ai/Prompts/versions/{ToolArguments.ParseId(id, "id")}/evals", null, ct);
+
+    [McpServerTool(Name = "admin_get_ai_prompt_evals", ReadOnly = true, Idempotent = true)]
+    [Description(
+        "Admin only. The eval matrix for a version: every case, its outcome, the cost, and "
+        + "whether the draft is publishable. runStatus says whether a suite is still going - "
+        + "results below it are from the previous run until it finishes.")]
+    public Task<string> GetEvals(string id, CancellationToken ct = default) =>
+        _api.GetAsync($"/api/Admin/Ai/Prompts/versions/{ToolArguments.ParseId(id, "id")}/evals", ct);
+
+    [McpServerTool(Name = "admin_publish_ai_prompt_version", Destructive = true)]
+    [Description(
+        "Admin only. Makes a version live, archiving whatever it replaces. Publishing an "
+        + "archived version is the rollback. Refused while the adversarial cases are unbeaten - "
+        + "that gate is in the handler, not only in the console.")]
+    public Task<string> PublishVersion(string id, CancellationToken ct = default) =>
+        _api.PostAsync($"/api/Admin/Ai/Prompts/versions/{ToolArguments.ParseId(id, "id")}/publish", null, ct);
+
+    [McpServerTool(Name = "admin_get_global_ai_usage", ReadOnly = true, Idempotent = true)]
+    [Description(
+        "Admin only. Today's provider spend against the global ceilings, by feature. "
+        + "This is the number to look at before anyone raises Ai__GlobalDailyTokens.")]
+    public Task<string> GlobalAiUsage(CancellationToken ct = default) =>
+        _api.GetAsync("/api/Ai/usage/global", ct);
 }

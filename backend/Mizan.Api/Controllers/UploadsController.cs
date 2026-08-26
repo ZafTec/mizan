@@ -12,7 +12,7 @@ namespace Mizan.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Policy = "UserOrMcp")]
 public class UploadsController : ControllerBase
 {
     private const long MaxRequestBytes = 6 * 1024 * 1024;
