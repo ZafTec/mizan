@@ -1,8 +1,10 @@
+using System.Linq.Expressions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Common;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
+using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Admin;
 
@@ -67,18 +69,29 @@ public class GetAdminOverviewQueryHandler : IRequestHandler<GetAdminOverviewQuer
     }
 }
 
-public record ListAdminUsersQuery : IRequest<PagedResult<AdminUserDto>>, IPagedQuery
+public record ListAdminUsersQuery : IRequest<PagedResult<AdminUserDto>>, IPagedQuery, ISortableQuery
 {
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;
     public string? Search { get; init; }
     public string? Role { get; init; }
     public bool? Banned { get; init; }
+    public string? SortBy { get; init; }
+    public string? SortOrder { get; init; }
 }
 
 public class ListAdminUsersQueryHandler : IRequestHandler<ListAdminUsersQuery, PagedResult<AdminUserDto>>
 {
     private readonly IMizanDbContext _context;
+
+    private static readonly Dictionary<string, Expression<Func<User, object>>> SortMappings =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["name"] = u => u.Name ?? u.Email,
+            ["email"] = u => u.Email,
+            ["role"] = u => u.Role,
+            ["createdat"] = u => u.CreatedAt,
+        };
 
     public ListAdminUsersQueryHandler(IMizanDbContext context) => _context = context;
 
@@ -108,7 +121,10 @@ public class ListAdminUsersQueryHandler : IRequestHandler<ListAdminUsersQuery, P
 
         var total = await query.CountAsync(cancellationToken);
         var items = await query
-            .OrderByDescending(u => u.CreatedAt)
+            .ApplySorting(request, SortMappings, u => u.CreatedAt, defaultDescending: true)
+            // Ties on a low-cardinality column - role, say - would otherwise
+            // let rows drift between pages.
+            .ThenBy(u => u.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(AdminUserProjection.Expression)

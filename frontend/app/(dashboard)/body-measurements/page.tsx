@@ -4,11 +4,56 @@ import { getUserServer } from "@/helper/session";
 import AddMeasurementForm from "./AddMeasurementForm";
 import DeleteMeasurementButton from "./DeleteMeasurementButton";
 import MeasurementChart from "./MeasurementChart";
-import SortableHeader from "@/components/SortableHeader";
-import Pagination from "@/components/Pagination";
-import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
+import {
+    DataTable,
+    readPage,
+    readSort,
+    type Column,
+} from "@/components/ui/data-table";
 
 export const dynamic = 'force-dynamic';
+
+type Measurement = Awaited<ReturnType<typeof getBodyMeasurements>>["bodyMeasurements"][number];
+
+/** Every measurement is optional, and an em dash reads better than a zero. */
+const unit = (value: number | null | undefined, suffix: string) =>
+    value ? `${value} ${suffix}` : "—";
+
+const MEASUREMENT_COLUMNS: Column<Measurement>[] = [
+    {
+        id: "date",
+        header: "Date",
+        sortKey: "Date",
+        cell: (m) => (
+            <span className="whitespace-nowrap tabular-nums">
+                {new Date(m.date).toLocaleDateString()}
+            </span>
+        ),
+    },
+    { id: "weight", header: "Weight", sortKey: "WeightKg", cell: (m) => unit(m.weightKg, "kg") },
+    { id: "fat", header: "Body fat", cell: (m) => (m.bodyFatPercentage ? `${m.bodyFatPercentage}%` : "—") },
+    { id: "muscle", header: "Muscle", secondary: true, cell: (m) => unit(m.muscleMassKg, "kg") },
+    { id: "waist", header: "Waist", secondary: true, cell: (m) => unit(m.waistCm, "cm") },
+    { id: "hips", header: "Hips", secondary: true, cell: (m) => unit(m.hipsCm, "cm") },
+    { id: "chest", header: "Chest", secondary: true, cell: (m) => unit(m.chestCm, "cm") },
+    { id: "larm", header: "L arm", secondary: true, cell: (m) => unit(m.leftArmCm, "cm") },
+    { id: "rarm", header: "R arm", secondary: true, cell: (m) => unit(m.rightArmCm, "cm") },
+    { id: "lthigh", header: "L thigh", secondary: true, cell: (m) => unit(m.leftThighCm, "cm") },
+    { id: "rthigh", header: "R thigh", secondary: true, cell: (m) => unit(m.rightThighCm, "cm") },
+    {
+        id: "notes",
+        header: "Notes",
+        secondary: true,
+        cell: (m) => <span className="line-clamp-1 max-w-[16rem]">{m.notes || "—"}</span>,
+    },
+    {
+        id: "actions",
+        header: "",
+        align: "right",
+        width: "1%",
+        cell: (m) => <DeleteMeasurementButton id={m.id} />,
+    },
+];
 
 function getDelta(latest: number | null | undefined, previous: number | null | undefined): { value: string; positive: boolean } | null {
     if (!latest || !previous) return null;
@@ -19,20 +64,22 @@ function getDelta(latest: number | null | undefined, previous: number | null | u
 export default async function BodyMeasurementsPage({
     searchParams,
 }: {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+    searchParams: Promise<Record<string, string | undefined>>;
 }) {
     await getUserServer();
     const params = await searchParams;
-    const { page, sortBy, sortOrder } = parseListParams(params, { sortBy: 'Date', sortOrder: 'desc' });
+    const page = readPage(params);
+    const sort = readSort(params);
+    const sortBy = sort.sortBy ?? 'Date';
+    const sortOrder = sort.sortBy ? sort.sortOrder : 'desc';
     const [tableResult, chartResult, goal, goalHist] = await Promise.all([
-        getBodyMeasurements(page, 20, sortBy ?? undefined, sortOrder),
+        getBodyMeasurements(page, 20, sortBy, sortOrder),
         getBodyMeasurements(1, 200, "Date", "desc"),
         getCurrentGoal(),
         getGoalHistory(),
     ]);
     const { bodyMeasurements: measurements, totalCount, totalPages } = tableResult;
     const allMeasurements = chartResult.bodyMeasurements;
-    const baseUrl = buildListUrl('/body-measurements', { sortBy, sortOrder });
 
     const latest = allMeasurements.length > 0 ? allMeasurements[0] : null;
     const previous = allMeasurements.length > 1 ? allMeasurements[1] : null;
@@ -121,95 +168,23 @@ export default async function BodyMeasurementsPage({
 
             <MeasurementChart measurements={allMeasurements} goalHistory={goalHist} />
 
-            <div className="card p-6">
-                <h2 className="section-title mb-6">Measurement History</h2>
-                {measurements.length > 0 ? (
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="border-b border-charcoal-blue-200 dark:border-charcoal-blue-800">
-                                <tr>
-                                    <SortableHeader sortKey="Date" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">Date</SortableHeader>
-                                    <SortableHeader sortKey="WeightKg" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">Weight</SortableHeader>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">Body Fat</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">Muscle</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">Waist</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">Hips</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">Chest</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">L Arm</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">R Arm</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">L Thigh</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">R Thigh</th>
-                                    <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-300">Notes</th>
-                                    <th className="w-10"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {measurements.map((m) => (
-                                    <tr key={m.id} className="border-b border-charcoal-blue-100 dark:border-white/10 hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-800">
-                                        <td className="py-3 px-4 text-sm text-charcoal-blue-900 dark:text-charcoal-blue-100">
-                                            {new Date(m.date).toLocaleDateString()}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
-                                            {m.weightKg ? `${m.weightKg} kg` : "-"}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
-                                            {m.bodyFatPercentage ? `${m.bodyFatPercentage}%` : "-"}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
-                                            {m.muscleMassKg ? `${m.muscleMassKg} kg` : "-"}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
-                                            {m.waistCm ? `${m.waistCm} cm` : "-"}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
-                                            {m.hipsCm ? `${m.hipsCm} cm` : "-"}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
-                                            {m.chestCm ? `${m.chestCm} cm` : "-"}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
-                                            {m.leftArmCm ? `${m.leftArmCm} cm` : "-"}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
-                                            {m.rightArmCm ? `${m.rightArmCm} cm` : "-"}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
-                                            {m.leftThighCm ? `${m.leftThighCm} cm` : "-"}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
-                                            {m.rightThighCm ? `${m.rightThighCm} cm` : "-"}
-                                        </td>
-                                        <td className="py-3 px-4 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 max-w-xs truncate">
-                                            {m.notes || "-"}
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            <DeleteMeasurementButton id={m.id} />
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                ) : (
-                    <div className="text-center py-16">
-                        <div className="w-16 h-16 rounded-2xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 flex items-center justify-center mx-auto mb-4">
-                            <i className="ri-body-scan-line text-3xl text-charcoal-blue-400 dark:text-charcoal-blue-500" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No measurements yet</h3>
-                        <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">No measurements yet.</p>
-                    </div>
-                )}
-            </div>
+            <section className="card space-y-4 p-6">
+                <h2 className="section-title">Measurement history</h2>
 
-            {totalPages > 1 && (
-                <Pagination
-                    currentPage={page}
-                    totalPages={totalPages}
-                    totalCount={totalCount}
-                    pageSize={20}
-                    baseUrl={baseUrl}
+                <DataTable
+                    columns={MEASUREMENT_COLUMNS}
+                    rows={measurements}
+                    rowKey={(m) => m.id}
+                    pathname="/body-measurements"
+                    searchParams={params}
+                    sort={sort}
+                    page={{ page, pageSize: 20, totalCount, totalPages }}
+                    empty={{
+                        title: "No measurements yet",
+                        description: "Record one above and the chart will start filling in.",
+                    }}
                 />
-            )}
+            </section>
         </div>
     );
 }
