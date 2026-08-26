@@ -39,6 +39,12 @@ public class AiUsageLog
     /// <summary>Millionths of a currency unit. Integers, because money and doubles do not mix.</summary>
     public long EstimatedCostMicros { get; set; }
 
+    /// <summary>
+    /// The exact prompt version that produced this answer, so a quality
+    /// regression is bisectable instead of mysterious (docs/REFOCUS.md §12).
+    /// </summary>
+    public Guid? PromptVersionId { get; set; }
+
     public int LatencyMs { get; set; }
     public AiCallOutcome Outcome { get; set; }
     public DateTime CreatedAt { get; set; }

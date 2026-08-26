@@ -321,6 +321,223 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("ai_chat_threads", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.AiEvalCase", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("Assertions")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasDefaultValue("{}")
+                        .HasColumnName("assertions");
+
+                    b.Property<string>("Context")
+                        .HasColumnType("text")
+                        .HasColumnName("context");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("Input")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("input");
+
+                    b.Property<bool>("IsAdversarial")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_adversarial");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("PromptKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("prompt_key");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PromptKey");
+
+                    b.ToTable("ai_eval_cases", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.AiEvalRun", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<Guid>("CaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("case_id");
+
+                    b.Property<int>("CompletionTokens")
+                        .HasColumnType("integer")
+                        .HasColumnName("completion_tokens");
+
+                    b.Property<long>("CostMicros")
+                        .HasColumnType("bigint")
+                        .HasColumnName("cost_micros");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("failure_reason");
+
+                    b.Property<int>("LatencyMs")
+                        .HasColumnType("integer")
+                        .HasColumnName("latency_ms");
+
+                    b.Property<int>("Outcome")
+                        .HasColumnType("integer")
+                        .HasColumnName("outcome");
+
+                    b.Property<string>("Output")
+                        .HasColumnType("text")
+                        .HasColumnName("output");
+
+                    b.Property<int>("PromptTokens")
+                        .HasColumnType("integer")
+                        .HasColumnName("prompt_tokens");
+
+                    b.Property<bool>("SchemaValid")
+                        .HasColumnType("boolean")
+                        .HasColumnName("schema_valid");
+
+                    b.Property<Guid>("VersionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("version_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CaseId");
+
+                    b.HasIndex("VersionId");
+
+                    b.ToTable("ai_eval_runs", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.AiPrompt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("key");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("ai_prompts", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.AiPromptVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<Guid?>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("body");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("notes");
+
+                    b.Property<Guid>("PromptId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("prompt_id");
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<string>("SoftPolicy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasDefaultValue("{}")
+                        .HasColumnName("soft_policy");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PromptId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_ai_prompt_versions_one_published")
+                        .HasFilter("status = 1");
+
+                    b.HasIndex("PromptId", "Version")
+                        .IsUnique();
+
+                    b.ToTable("ai_prompt_versions", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.AiUsageLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -370,6 +587,10 @@ namespace Mizan.Infrastructure.Migrations
                     b.Property<int>("PromptTokens")
                         .HasColumnType("integer")
                         .HasColumnName("prompt_tokens");
+
+                    b.Property<Guid?>("PromptVersionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("prompt_version_id");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
@@ -2899,6 +3120,36 @@ namespace Mizan.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.AiEvalRun", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.AiEvalCase", "Case")
+                        .WithMany()
+                        .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Mizan.Domain.Entities.AiPromptVersion", "Version")
+                        .WithMany()
+                        .HasForeignKey("VersionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Case");
+
+                    b.Navigation("Version");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.AiPromptVersion", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.AiPrompt", "Prompt")
+                        .WithMany("Versions")
+                        .HasForeignKey("PromptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Prompt");
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.AiUsageLog", b =>
                 {
                     b.HasOne("Mizan.Domain.Entities.User", "User")
@@ -3570,6 +3821,11 @@ namespace Mizan.Infrastructure.Migrations
             modelBuilder.Entity("Mizan.Domain.Entities.Achievement", b =>
                 {
                     b.Navigation("UserAchievements");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.AiPrompt", b =>
+                {
+                    b.Navigation("Versions");
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.ChatConversation", b =>
