@@ -2,9 +2,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
+COPY ["Mizan.Contracts/Mizan.Contracts.csproj", "Mizan.Contracts/"]
 COPY ["Mizan.Mcp.Server/Mizan.Mcp.Server.csproj", "Mizan.Mcp.Server/"]
 RUN dotnet restore "Mizan.Mcp.Server/Mizan.Mcp.Server.csproj"
 
+COPY Mizan.Contracts/ Mizan.Contracts/
 COPY Mizan.Mcp.Server/ Mizan.Mcp.Server/
 RUN dotnet publish "Mizan.Mcp.Server/Mizan.Mcp.Server.csproj" -c Release -o /app/publish
 

@@ -1,6 +1,6 @@
 # Refocus Plan: Mizan is a Logging App
 
-**Status:** rev 8 — phases 0-6 done, 8 next 
+**Status:** rev 8 — phases 0-6 and 8 done, 9 next 
 **Branch:** `claude/cleanup-logging-refocus-rzfiv8`
 **Rule:** decide what the project is about, build around it. Everything else
 gets demoted, not deleted.
@@ -547,6 +547,45 @@ rather than hardcoding one.
 none; the field had already stopped being read when registration moved to the
 backend in §6. Avatars are set from Settings, after signing in.
 
+### `Mizan.Contracts`
+
+The MCP server built every request body as an anonymous object. That is exactly
+how the phase 4 recipe bug happened: `instructions` changed from an array to a
+string, the tool kept sending an array, the API answered 400, and the tool
+reported success while creating nothing. The compiler could not have known.
+
+`Mizan.Contracts` is a dependency-free library holding the wire shapes. The
+Application's commands inherit them:
+
+```csharp
+// Mizan.Contracts
+public record CreateFoodRequest { /* the wire shape */ }
+
+// Mizan.Application
+public record CreateFoodCommand : CreateFoodRequest, IRequest<CreateFoodResult>;
+```
+
+No mapping layer, no controller churn, and the MCP server constructs the same
+type the API binds. A renamed field, a removed field or a changed type now
+fails the build. An *added* optional field still defaults silently, which is
+the correct behaviour anyway.
+
+**Scope: the spine's writes** - foods, recipes, meals, workouts, body
+measurements. That is §1's three things plus what they are made of, and it is
+where the one real drift bug landed. The remaining tools convert as they are
+touched; reads pass JSON straight through and gain little from typing.
+
+**Why not generate a client from the OpenAPI document**, the way the frontend
+does? Because it needs a running API at build time. The frontend already lives
+with that (`bun run codegen`), and a committed generated client that nobody
+re-runs is not much better than an anonymous object.
+
+One thing had to move with the types: converting a string argument to a `Guid`
+or a `DateOnly` now happens in the MCP server rather than at the API boundary,
+so `ToolArguments` does it with messages that name the argument. "Invalid
+foodId 'abc'. Expected a Guid" is what an agent can act on;
+"Unrecognized Guid format." is not.
+
 ---
 
 ## 8. What actually gets deleted
@@ -1029,14 +1068,11 @@ The ask is a shared data type, and it exposes a gap: the frontend gets DTOs via
 OpenAPI codegen, but a second .NET consumer copying DTOs by hand is how the MCP
 server and the API drift apart.
 
-Add **`Mizan.Contracts`** — request/response records only, no behaviour, no EF,
-no MediatR. Referenced by `Mizan.Api`, `Mizan.Mcp.Server` and `Mizan.Telegram`.
-The API's DTOs move there; OpenAPI generation is unaffected, so the frontend
-pipeline does not change. A breaking contract change then fails the build
-instead of failing in production.
-
-That refactor is worth doing regardless of the bot, and it should land before
-the bot rather than after.
+**`Mizan.Contracts` landed in phase 8** — see §7 for what it holds and why the
+Application's commands inherit from it rather than mapping to it. The bot
+references it and nothing else, so a wire shape it sends is the one the API
+binds. Whatever the bot needs beyond the spine's writes gets typed when the bot
+is built.
 
 ### Account linking, which is the part to get right
 
@@ -1138,8 +1174,8 @@ Each phase is one commit and leaves the build green.
 | 5 | Contextual surfaces | medium | **done** | tier 2: resume banner, trainer strip, household switcher, in-context Pro wall; standing upsell banners deleted |
 | 6 | **v2 identity + schema** (absorbs 7) | **high** | **done** | backend owns `users`; opaque session cookies replace the JWT scheme; Drizzle, BetterAuth and `frontend/db/` deleted; migration history collapsed to one `InitialCreate` against a new database |
 | 7 | *(folded into 6)* | | | rev 8 merged schema unification into the identity phase; later numbers are left alone so earlier commits still resolve |
-| 8 | Storage + `Mizan.Contracts` | low | next | `IStorageService`, Cloudinary impl, drop `next-cloudinary`, S3 in v2; extract shared DTOs so Api, Mcp.Server and Telegram cannot drift (§13) |
-| 9 | AI platform + consent | medium | | `IAiProvider`, `AiUsageLog`, `IAiQuotaService`, per-user + global ceilings, usage tab, `UserAiConsent`, `IDataAccessPolicy`, `AiPromptVersion` + the hard/soft split. **Limits and consent ship with the first provider call, not after** |
+| 8 | Storage + `Mizan.Contracts` | low | **done** | `IStorageService` over S3 - MinIO or R2, configuration only; `next-cloudinary` and the signing route deleted; `Mizan.Contracts` types the spine's writes so Api, Mcp.Server and Telegram cannot drift (§13) |
+| 9 | AI platform + consent | medium | next | `IAiProvider`, `AiUsageLog`, `IAiQuotaService`, per-user + global ceilings, usage tab, `UserAiConsent`, `IDataAccessPolicy`, `AiPromptVersion` + the hard/soft split. **Limits and consent ship with the first provider call, not after** |
 | 10 | AI surfaces + admin console | medium | | structured food analysis, chat on `AiChatThread`, onboarding agent over the allowlisted tool→command map shared with MCP; trainer intersection rule and read-only client tools (§11); `/admin/ai` with evals, diff and rollback (§12) |
 | 11 | Billing feature split | low | | widen gating past the three endpoints, customer portal link, in-context upgrade chips; gate relationship *creation*, never existing consent (§5) |
 | 12 | UI rebuild on the new tiers | medium | | `/today`, `/history`, `/progress`, sheet-based logging |

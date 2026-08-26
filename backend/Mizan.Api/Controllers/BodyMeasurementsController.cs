@@ -5,6 +5,7 @@ using Mizan.Application.Commands;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Application.Queries;
+using Mizan.Contracts.Measurements;
 
 namespace Mizan.Api.Controllers;
 
@@ -85,17 +86,3 @@ public class BodyMeasurementsController : ControllerBase
     }
 }
 
-public record LogMeasurementRequest(
-    DateTime? Date,
-    decimal? WeightKg,
-    decimal? BodyFatPercentage,
-    decimal? MuscleMassKg,
-    decimal? WaistCm,
-    decimal? HipsCm,
-    decimal? ChestCm,
-    decimal? LeftArmCm,
-    decimal? RightArmCm,
-    decimal? LeftThighCm,
-    decimal? RightThighCm,
-    string? Notes
-);

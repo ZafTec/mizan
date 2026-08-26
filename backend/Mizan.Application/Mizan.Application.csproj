@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Mizan.Domain\Mizan.Domain.csproj" />
+    <ProjectReference Include="..\Mizan.Contracts\Mizan.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

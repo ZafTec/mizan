@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using System.Globalization;
+using Mizan.Contracts.Measurements;
 using Mizan.Mcp.Server.Services;
 using ModelContextProtocol.Server;
 
@@ -43,21 +45,19 @@ public sealed class BodyMeasurementTools
         [Description("Notes (optional)")] string? notes = null,
         CancellationToken ct = default)
     {
-        return await _api.PostAsync("/api/BodyMeasurements", new
-        {
-            date,
-            weightKg,
-            bodyFatPercentage,
-            muscleMassKg,
-            waistCm,
-            hipsCm,
-            chestCm,
-            leftArmCm,
-            rightArmCm,
-            leftThighCm,
-            rightThighCm,
-            notes
-        }, ct);
+        return await _api.PostAsync("/api/BodyMeasurements", new LogMeasurementRequest(
+            Date: string.IsNullOrWhiteSpace(date) ? null : DateTime.Parse(date, CultureInfo.InvariantCulture),
+            WeightKg: weightKg,
+            BodyFatPercentage: bodyFatPercentage,
+            MuscleMassKg: muscleMassKg,
+            WaistCm: waistCm,
+            HipsCm: hipsCm,
+            ChestCm: chestCm,
+            LeftArmCm: leftArmCm,
+            RightArmCm: rightArmCm,
+            LeftThighCm: leftThighCm,
+            RightThighCm: rightThighCm,
+            Notes: notes), ct);
     }
 
     [McpServerTool(Name = "delete_body_measurement", Destructive = true)]

@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Text.Json;
+using Mizan.Contracts.Recipes;
 using Mizan.Mcp.Server.Services;
 using ModelContextProtocol.Server;
 
@@ -63,18 +64,18 @@ public sealed class RecipeTools
 
         // Nutrition is summed from the ingredients server-side and tags are gone
         // - see docs/REFOCUS.md §4. Sending either would be silently ignored.
-        return await _api.PostAsync("/api/Recipes", new
+        return await _api.PostAsync("/api/Recipes", new CreateRecipeRequest
         {
-            title,
-            description,
-            servings,
-            prepTimeMinutes,
-            cookTimeMinutes,
-            imageUrl,
-            isPublic,
-            householdId,
-            ingredients,
-            instructions
+            Title = title,
+            Description = description,
+            Servings = servings ?? 1,
+            PrepTimeMinutes = prepTimeMinutes,
+            CookTimeMinutes = cookTimeMinutes,
+            ImageUrl = imageUrl,
+            IsPublic = isPublic,
+            HouseholdId = ToolArguments.ParseOptionalId(householdId, "householdId"),
+            Ingredients = ingredients,
+            Instructions = instructions,
         }, ct);
     }
 
@@ -95,18 +96,18 @@ public sealed class RecipeTools
     {
         var ingredients = ParseIngredients(ingredientsJson);
 
-        return await _api.PutAsync($"/api/Recipes/{id}", new
+        return await _api.PutAsync($"/api/Recipes/{id}", new UpdateRecipeRequest
         {
-            id,
-            title,
-            description,
-            servings,
-            prepTimeMinutes,
-            cookTimeMinutes,
-            imageUrl,
-            isPublic,
-            ingredients,
-            instructions
+            Id = ToolArguments.ParseId(id, "id"),
+            Title = title,
+            Description = description,
+            Servings = servings ?? 1,
+            PrepTimeMinutes = prepTimeMinutes,
+            CookTimeMinutes = cookTimeMinutes,
+            ImageUrl = imageUrl,
+            IsPublic = isPublic ?? false,
+            Ingredients = ingredients,
+            Instructions = instructions,
         }, ct);
     }
 
@@ -132,10 +133,10 @@ public sealed class RecipeTools
     /// Parse the LLM's ingredient JSON into strongly-typed objects.
     /// Handles various property naming conventions and auto-fills missing ingredientText.
     /// </summary>
-    private static List<object> ParseIngredients(string json)
+    private static List<CreateRecipeIngredientDto> ParseIngredients(string json)
     {
         using var doc = JsonDocument.Parse(json);
-        var results = new List<object>();
+        var results = new List<CreateRecipeIngredientDto>();
         var index = 0;
 
         foreach (var el in doc.RootElement.EnumerateArray())
@@ -145,7 +146,10 @@ public sealed class RecipeTools
             // Handle plain strings: ["chicken breast", "rice"]
             if (el.ValueKind == JsonValueKind.String)
             {
-                results.Add(new { ingredientText = el.GetString() ?? $"Ingredient {index}" });
+                results.Add(new CreateRecipeIngredientDto
+                {
+                    IngredientText = el.GetString() ?? $"Ingredient {index}",
+                });
                 continue;
             }
 
@@ -161,7 +165,13 @@ public sealed class RecipeTools
                 text = BuildIngredientText(amount, unit, index);
             }
 
-            results.Add(new { ingredientText = text, foodId, amount, unit });
+            results.Add(new CreateRecipeIngredientDto
+            {
+                IngredientText = text,
+                FoodId = ToolArguments.ParseOptionalId(foodId, "foodId"),
+                Amount = amount,
+                Unit = unit,
+            });
         }
 
         return results;
