@@ -1,0 +1,22 @@
+# Telegram bot Dockerfile
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+COPY ["Mizan.Contracts/Mizan.Contracts.csproj", "Mizan.Contracts/"]
+COPY ["Mizan.Telegram/Mizan.Telegram.csproj", "Mizan.Telegram/"]
+RUN dotnet restore "Mizan.Telegram/Mizan.Telegram.csproj"
+
+COPY Mizan.Contracts/ Mizan.Contracts/
+COPY Mizan.Telegram/ Mizan.Telegram/
+RUN dotnet publish "Mizan.Telegram/Mizan.Telegram.csproj" -c Release -o /app/publish
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+WORKDIR /app
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=build /app/publish .
+
+EXPOSE 5002
+ENV ASPNETCORE_URLS=http://+:5002
+ENTRYPOINT ["dotnet", "Mizan.Telegram.dll"]

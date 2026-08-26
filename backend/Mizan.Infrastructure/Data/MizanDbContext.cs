@@ -15,6 +15,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<UserSession> UserSessions => Set<UserSession>();
     public DbSet<UserToken> UserTokens => Set<UserToken>();
+    public DbSet<TelegramLink> TelegramLinks => Set<TelegramLink>();
     public DbSet<ExternalLogin> ExternalLogins => Set<ExternalLogin>();
     // Account, Session, Jwk, Verification - REMOVED (managed entirely by frontend)
 
@@ -287,6 +288,26 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.HasIndex(e => e.TokenHash).IsUnique();
             entity.HasIndex(e => new { e.UserId, e.Purpose });
             entity.HasOne(e => e.User).WithMany(u => u.Tokens)
+                .HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TelegramLink>(entity =>
+        {
+            entity.ToTable("telegram_links");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.TelegramUserId).HasColumnName("telegram_user_id");
+            entity.Property(e => e.TelegramUsername).HasColumnName("telegram_username").HasMaxLength(64);
+            entity.Property(e => e.LinkedAt).HasColumnName("linked_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.LastSeenAt).HasColumnName("last_seen_at");
+
+            // Unique on both sides. One Mizan account cannot have two chats
+            // logging into it, and one chat cannot be attached to two accounts.
+            entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasIndex(e => e.TelegramUserId).IsUnique();
+
+            entity.HasOne(e => e.User).WithMany()
                 .HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 

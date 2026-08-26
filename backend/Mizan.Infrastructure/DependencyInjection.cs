@@ -57,6 +57,8 @@ public static class DependencyInjection
 
         // Identity - the backend owns auth end to end since v2 (docs/REFOCUS.md §6)
         services.Configure<AppOptions>(configuration.GetSection(AppOptions.SectionName));
+        services.Configure<TelegramOptions>(configuration.GetSection(TelegramOptions.SectionName));
+        services.AddSingleton<ITelegramSettings, TelegramSettings>();
         services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
         services.AddSingleton<IPasswordHasher, PasswordHasherAdapter>();
         services.AddSingleton<IAppUrls, AppUrls>();

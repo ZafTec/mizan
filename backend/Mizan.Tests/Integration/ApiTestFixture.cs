@@ -147,7 +147,10 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
                 // The dispatcher's own loop is off in tests. A background timer
                 // would make every assertion about queued work a race; the
                 // tests drive it themselves through DrainOutboxAsync.
-                ["Outbox:Enabled"] = "false"
+                ["Outbox:Enabled"] = "false",
+                // A bot name, so the link endpoints are live. The API never
+                // calls Telegram, so nothing here reaches the network.
+                ["Telegram:BotUsername"] = "mizan_test_bot"
             };
 
             config.AddInMemoryCollection(settings);
