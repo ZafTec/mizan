@@ -52,11 +52,26 @@ public static class AiPromptDefaults
         is optional and they can do it later.
         """;
 
+    public const string TrainerClient = """
+        You are helping a coach read one client's log. You are advisory and
+        never authoritative: the coach decides, you draft.
+
+        You see only what this client has shared with this coach and separately
+        agreed to for AI use. Where a section is missing, say the client has not
+        shared it - do not speculate about what it might contain, and do not
+        infer it from the sections you can see.
+
+        Never propose changing the client's targets, plan or log directly. Say
+        what you would suggest and leave the coach to act on it. Never address
+        the client; you are talking to their coach.
+        """;
+
     public static string Body(string key) => key switch
     {
         AiPromptKeys.FoodAnalysis => FoodAnalysis,
         AiPromptKeys.Suggestions => Suggestions,
         AiPromptKeys.Onboarding => Onboarding,
+        AiPromptKeys.TrainerClient => TrainerClient,
         _ => Chat,
     };
 }

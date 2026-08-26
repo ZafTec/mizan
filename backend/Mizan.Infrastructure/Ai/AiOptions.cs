@@ -35,6 +35,13 @@ public class AiOptions : IAiCeilings
     public AiTierLimits Onboarding { get; set; } = new() { DailyRequests = 60, DailyTokens = 60_000 };
 
     /// <summary>
+    /// A coach reading their clients. Sized for a roster rather than one
+    /// person's day, and billed to the coach so no client is rate-limited by
+    /// work they did not do.
+    /// </summary>
+    public AiTierLimits Trainer { get; set; } = new() { DailyRequests = 300, DailyTokens = 600_000 };
+
+    /// <summary>
     /// The circuit breaker on the whole provider bill. Not optional: a loop or
     /// an abusive account stops here rather than at the invoice.
     /// </summary>

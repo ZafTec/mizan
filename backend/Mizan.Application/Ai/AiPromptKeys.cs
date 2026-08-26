@@ -10,6 +10,7 @@ public static class AiPromptKeys
     public const string FoodAnalysis = "food.analysis";
     public const string Suggestions = "nutrition.suggestions";
     public const string Onboarding = "onboarding.agent";
+    public const string TrainerClient = "trainer.client";
 
     public static readonly IReadOnlyDictionary<string, string> Descriptions =
         new Dictionary<string, string>
@@ -18,5 +19,6 @@ public static class AiPromptKeys
             [FoodAnalysis] = "How a food photo is turned into structured nutrition data.",
             [Suggestions] = "How meal ideas are proposed against the macros a user has left today.",
             [Onboarding] = "How a new user is set up through conversation instead of a six-screen form.",
+            [TrainerClient] = "How a trainer is helped to read a client's shared log. Advisory, never authoritative.",
         };
 }
