@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
+import FoodPhotoSheet from "@/components/ai/FoodPhotoSheet";
 import { LOG_ACTIONS } from "./nav";
 
 /**
@@ -78,6 +79,8 @@ export default function LogSheet({ open, onClose }: { open: boolean; onClose: ()
 							</span>
 						</Link>
 					))}
+
+					<FoodPhotoSheet onLogged={onClose} />
 				</div>
 			</div>
 		</div>,
