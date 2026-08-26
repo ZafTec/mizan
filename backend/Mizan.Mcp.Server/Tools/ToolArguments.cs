@@ -46,3 +46,29 @@ internal static class ToolArguments
         return parsed.ToUniversalTime();
     }
 }
+
+/// <summary>
+/// Builds a query string that skips what was not supplied.
+///
+/// The alternative is interpolation with a pile of ternaries, which is where
+/// `?page=1&amp;search=` and double ampersands come from - and where an
+/// unescaped value gets through.
+/// </summary>
+public sealed class QueryString
+{
+    private readonly List<string> _parts = [];
+
+    public QueryString Add(string name, string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            _parts.Add($"{Uri.EscapeDataString(name)}={Uri.EscapeDataString(value)}");
+        }
+
+        return this;
+    }
+
+    public QueryString Add(string name, int value) => Add(name, value.ToString());
+
+    public override string ToString() => _parts.Count == 0 ? string.Empty : "?" + string.Join("&", _parts);
+}
