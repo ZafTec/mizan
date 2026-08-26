@@ -1521,6 +1521,40 @@ per-axis consent, timezone-correct streaks, self-hosting - not in adjectives.
 
 Sources live in `design/`; the published canvas is seeded from them.
 
+### What shipped: C, then a correction
+
+**Direction C — Daylight** was the pick: the current app, glass taken off.
+`globals.css` carries the whole diff — the `charcoal-blue` ramp recolours from
+blue-gray to warm stone (same lightness steps, same class names, so every
+consumer of `bg-charcoal-blue-*` picks it up for free), `--radius` drops
+0.625rem → 0.5rem and cascades through the existing `calc()` derivations, and
+every `backdrop-filter` is gone — cards, inputs, the nav, the mobile sheet, all
+solid now. The dead "Ethereal Lab" landing-page system (~150 lines, zero
+callers outside its own definition) came out with it.
+
+One thing surfaced only by auditing against Emil Kowalski's animation notes,
+not by anything failing a test: `Popover`, `Dialog` and the confirmation
+modals were built on `tailwindcss-animate` utility classes
+(`animate-in`, `zoom-in-95`, `data-[state=open]:...`) and the plugin
+was never installed. They had been rendering with **zero** entrance or exit
+animation the whole time. Fixed with real CSS keyed off Radix's `data-state`.
+
+The first pass over-shot — blur orbs, glass macro cards, dark hero/CTA bands —
+which is exactly the ornamentation this phase exists to remove. Correction:
+strip it to flat cards and ruled sections, verified at 1280px and 390px with
+Playwright screenshots rather than assumed.
+
+### Billing self-service (§11b)
+
+Checkout existed; cancel, plan-change and payment-method update did not - the
+only outbound call to Paddle was a configured, unused `ApiKey`. Added
+`IPaddleApiClient` (`Mizan.Infrastructure/Billing`) minting a Paddle Customer
+Portal session per request (`POST /customers/{id}/portal-sessions`, never
+cached — the links are single-use), exposed at `POST /api/Subscriptions/portal`,
+and three buttons on `/billing` that fetch a fresh link and open it. A
+lifetime purchase has no subscription to cancel or repoint, so those two
+buttons don't render for it; "manage billing" always does.
+
 ---
 
 ## 15. Execution order
@@ -1541,14 +1575,14 @@ Each phase is one commit and leaves the build green.
 | 9 | AI platform + consent | medium | **done** | `IAiProvider`, `AiUsageLog`, `IAiQuotaService` with per-user and global ceilings, usage tab, `UserAiConsent` default-off, `IDataAccessPolicy` including the intersection rule. The existing unmetered call was brought under all of it; Semantic Kernel and its auto-invoking write tool are gone |
 | 10 | AI surfaces + admin console | medium | **done** | `AiPromptVersion` + the hard/soft guardrail split, chat persisted on `AiChatThread`, onboarding agent over the allowlisted tool→command map shared with MCP; read-only client tools for trainers (§11); `/admin/ai` with evals, diff and rollback (§12) |
 | 11 | **Streak + achievement correctness** | medium | **done** | `StreakClock` as the one decay rule, `User.TimeZoneId`, `user_activity_counters` replacing the `COUNT(*)`s, catalogue cached, a round-trip budget test on the logging path (§13a) |
-| 11b | Billing feature split | low | | widen gating past the three endpoints, customer portal link, in-context upgrade chips; gate relationship *creation*, never existing consent (§5) |
+| 11b | Billing feature split | low | *portal link done* | widen gating past the three endpoints, ~~customer portal link~~ (done — `IPaddleApiClient` + `POST /api/Subscriptions/portal`, §17), in-context upgrade chips; gate relationship *creation*, never existing consent (§5) |
 | 12 | **Table + skeleton primitive** | medium | **done** | one server-rendered `DataTable` - sort, filter and page are URL links, not client state; `TableToolbar` is the only client component in the stack. Eight table pages ported, two bespoke header components deleted, `loading.tsx` count 10 → 59 |
 | 13 | **Admin rebuild** | medium | **done** | audit log queryable and filterable (facets, date range, CSV export with formula neutralisation), relationships back with the grants read-only, achievements CRUD. 15 admin MCP tools, up from 6 |
 | 14 | **Background queue** | medium | **done** | transactional outbox for outbound email and eval runs, `FOR UPDATE SKIP LOCKED` claiming, per-type concurrency, dead-letter view at `/admin/jobs` and over MCP (§13b) |
 | 15 | **MCP parity** | medium | **done** | AI consent + usage, chat threads, uploads (base64 → multipart), prompt console, queue. `AiController` and `UploadsController` moved off the cookie-only default policy onto `UserOrMcp` (§14) |
 | 16 | **Telegram bot** | medium | **done** | `Mizan.Telegram` on the MCP server's pattern, single-use link codes, guided linking from web settings, cold `/start` → sign in first, photo → confirm card, chat on the shared thread. **Consumes §10's AI service; never its own** |
-| 17 | Redis pass | medium | | nutrition totals, dashboard aggregates, recipes, meal plans |
-| 18 | **Theme rebuild + landing page** | high | *design canvas published; build not started* | one visual language across the app, the table primitive restyled, the landing page revamped. Absorbs 17's landing-page item (§17) |
+| 17 | Redis pass | medium | **done** | `HybridCache`, tag-based invalidation: daily nutrition + range, recipes (list/detail), meal plans (list/detail). 15 write-side commands invalidate on save; per-viewer fields (`IsOwner`, `IsFavorited`, household access gates) baked into the cache key, never just the tag |
+| 18 | **Theme rebuild + landing page** | high | **done** | Direction C (Daylight) shipped app-wide: warm stone `charcoal-blue` ramp, `--radius` 0.625→0.5rem, `backdrop-filter` removed from every surface, dead "Ethereal Lab" dark system deleted, real `data-state` keyframes replacing no-op `tailwindcss-animate` classes (the plugin was never installed). First pass over-decorated (blur orbs, glass cards, dark hero/CTA bands) and was stripped back to flat/ruled sections per review — minimal over ornamental. Landing page rebuilt on the same tokens. Absorbs 17's landing-page item (§17) |
 | 19 | Docs rewrite | none | | README, CLAUDE.md, ARCHITECTURE.md, MCP.md, AI.md, TELEGRAM.md |
 
 Ordering constraints that actually bind:
