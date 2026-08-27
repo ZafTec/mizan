@@ -24,11 +24,33 @@ const AXES = [
 	},
 ] as const;
 
+const WRITE_AXES = [
+	{
+		key: "writeNutrition",
+		label: "Log meals and set targets",
+		description: "Record what you ate, save goals, build shopping lists.",
+	},
+	{
+		key: "writeTraining",
+		label: "Log workouts",
+		description: "Record sessions, exercises and sets.",
+	},
+	{
+		key: "writeBody",
+		label: "Log measurements",
+		description: "Record weigh-ins and body measurements.",
+	},
+] as const;
+
 const NOTHING: AiConsent = {
 	enabled: false,
 	shareNutrition: false,
 	shareTraining: false,
 	shareBody: false,
+	allowWrites: false,
+	writeNutrition: false,
+	writeTraining: false,
+	writeBody: false,
 };
 
 /**
@@ -68,6 +90,10 @@ export function AiSettings() {
 				shareNutrition: next.shareNutrition,
 				shareTraining: next.shareTraining,
 				shareBody: next.shareBody,
+				allowWrites: next.allowWrites,
+				writeNutrition: next.writeNutrition,
+				writeTraining: next.writeTraining,
+				writeBody: next.writeBody,
 			}));
 		} catch (error) {
 			setConsent(previous);
@@ -86,6 +112,7 @@ export function AiSettings() {
 	}
 
 	const sharedCount = AXES.filter((axis) => consent[axis.key]).length;
+	const writeCount = WRITE_AXES.filter((axis) => consent[axis.key]).length;
 
 	return (
 		<div className="mt-6 space-y-6">
@@ -119,6 +146,40 @@ export function AiSettings() {
 				the request, not included with an instruction to ignore it. Trainers see
 				what you granted them separately, and only where both allow it.
 			</p>
+
+			<div className="space-y-6 border-t border-charcoal-blue-200/70 pt-6 dark:border-white/10">
+				<Toggle
+					label="Let the assistant act on my log"
+					description={
+						consent.allowWrites
+							? `Writing ${writeCount} of ${WRITE_AXES.length}. It always says what it did, and nothing it does is destructive.`
+							: "Off. It can suggest things, but you do the logging."
+					}
+					checked={consent.allowWrites}
+					disabled={saving}
+					onChange={(allowWrites) => save({ ...consent, allowWrites })}
+				/>
+
+				<div className={consent.allowWrites ? "space-y-3" : "space-y-3 opacity-50"}>
+					{WRITE_AXES.map((axis) => (
+						<Toggle
+							key={axis.key}
+							label={axis.label}
+							description={axis.description}
+							checked={consent[axis.key]}
+							disabled={saving || !consent.allowWrites}
+							onChange={(checked) => save({ ...consent, [axis.key]: checked })}
+						/>
+					))}
+				</div>
+
+				<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+					Reading and acting are separate grants: the assistant can record a meal you
+					dictate without ever seeing your history. It can only create and record -
+					no tool deletes anything, and every write appears in your log where you can
+					change it.
+				</p>
+			</div>
 
 			{usage && <UsagePanel usage={usage} />}
 		</div>

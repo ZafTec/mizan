@@ -5,6 +5,11 @@ export interface AiConsent {
 	shareNutrition: boolean;
 	shareTraining: boolean;
 	shareBody: boolean;
+	/** Whether the assistant may act, not just answer. Separate from reading. */
+	allowWrites: boolean;
+	writeNutrition: boolean;
+	writeTraining: boolean;
+	writeBody: boolean;
 	updatedAt?: string | null;
 }
 
@@ -64,6 +69,8 @@ export interface AiChatTurn {
 	threadId: string;
 	title: string;
 	reply: AiChatMessage;
+	/** What the turn wrote, if anything. Shown, never silent. */
+	performed: AiToolInvocation[];
 }
 
 export const sendAiChatMessage = (threadId: string | null, message: string) =>
@@ -107,6 +114,14 @@ export const sendOnboardingMessage = (threadId: string | null, message: string) 
 
 export const listOnboardingTools = () =>
 	clientApi<AiToolSummary[]>("/api/Ai/onboarding/tools");
+
+/**
+ * The setup conversation so far. Null when the user has never started one -
+ * the endpoint answers 204 rather than 404, since not having begun is the
+ * normal first case.
+ */
+export const getOnboardingThread = () =>
+	clientApi<AiChatThreadDetail | null>("/api/Ai/onboarding");
 
 export interface AiTrainerAnswer {
 	threadId: string;
