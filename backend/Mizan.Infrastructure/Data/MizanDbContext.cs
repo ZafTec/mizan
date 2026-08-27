@@ -1019,6 +1019,8 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.Title).HasColumnName("title").HasMaxLength(120);
             entity.Property(e => e.Kind).HasColumnName("kind").HasConversion<int>().HasDefaultValue(AiChatThreadKind.Chat);
+            entity.Property(e => e.Summary).HasColumnName("summary");
+            entity.Property(e => e.SummarisedThrough).HasColumnName("summarised_through").HasDefaultValue(0);
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
             entity.HasIndex(e => new { e.UserId, e.UpdatedAt });
@@ -1037,6 +1039,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.Role).HasColumnName("role").HasConversion<int>();
             entity.Property(e => e.Content).HasColumnName("content").IsRequired();
             entity.Property(e => e.PromptVersionId).HasColumnName("prompt_version_id");
+            entity.Property(e => e.ImageUrl).HasColumnName("image_url");
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
             entity.HasIndex(e => new { e.ThreadId, e.CreatedAt });
             entity.HasOne(e => e.Thread).WithMany(t => t.Messages)

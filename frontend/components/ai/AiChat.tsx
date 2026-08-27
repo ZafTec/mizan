@@ -8,6 +8,7 @@ import {
 	deleteAiChatThread,
 	getAiChatThread,
 	listAiChatThreads,
+	sendAiChatImage,
 	sendAiChatMessage,
 	type AiChatMessage,
 	type AiChatThread,
@@ -34,6 +35,8 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 	// What each reply did, keyed by message id. Only for the current session:
 	// tool invocations are echoes of a turn, not part of the transcript.
 	const [performed, setPerformed] = useState<Record<string, AiToolInvocation[]>>({});
+	const [attachment, setAttachment] = useState<File | null>(null);
+	const fileRef = useRef<HTMLInputElement>(null);
 	const [input, setInput] = useState("");
 	const [pending, startTransition] = useTransition();
 	const [error, setError] = useState<string | null>(null);
@@ -90,20 +93,33 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 
 	async function send(prompt: string) {
 		const trimmed = prompt.trim();
-		if (!trimmed || pending) return;
+		const file = attachment;
+		// A photo on its own is a turn; text on its own is a turn; nothing is not.
+		if ((!trimmed && !file) || pending) return;
 
 		const optimisticId = `pending-${crypto.randomUUID()}`;
 		setMessages((m) => [
 			...m,
-			{ id: optimisticId, fromUser: true, content: trimmed, createdAt: new Date().toISOString() },
+			{
+				id: optimisticId,
+				fromUser: true,
+				content: trimmed,
+				createdAt: new Date().toISOString(),
+				// Shown from the local file until the server comes back with the
+				// stored URL, so the photo appears the moment it is sent.
+				imageUrl: file ? URL.createObjectURL(file) : null,
+			},
 		]);
 		setInput("");
+		setAttachment(null);
 		setError(null);
 		scrollToBottom();
 
 		startTransition(async () => {
 			try {
-				const turn = await sendAiChatMessage(threadId, trimmed);
+				const turn = file
+					? await sendAiChatImage(threadId, trimmed, file)
+					: await sendAiChatMessage(threadId, trimmed);
 				setThreadId(turn.threadId);
 				setMessages((m) => [...m, turn.reply]);
 				if (turn.performed?.length) {
@@ -128,6 +144,7 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 				// The turn was never recorded, so the screen must not keep it.
 				setMessages((m) => m.filter((message) => message.id !== optimisticId));
 				setInput(trimmed);
+				setAttachment(file);
 			}
 		});
 	}
@@ -245,6 +262,16 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 											: "bg-white text-charcoal-blue-900 ring-1 ring-charcoal-blue-200 dark:bg-charcoal-blue-950/80 dark:text-charcoal-blue-100 dark:ring-white/10",
 									)}
 								>
+									{m.imageUrl && (
+										/* eslint-disable-next-line @next/next/no-img-element --
+										   the object store is configured per deployment, so it is
+										   not in next/image's host allowlist. */
+										<img
+											src={m.imageUrl}
+											alt="Attached"
+											className="mb-2 max-h-56 w-auto rounded-2xl"
+										/>
+									)}
 									{/* Only the assistant writes markdown. A user's asterisks
 									    are asterisks. */}
 									{m.fromUser ? m.content : <AiMarkdown content={m.content} />}
@@ -305,24 +332,64 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 
 				<form
 					onSubmit={onSubmit}
-					className="flex items-center gap-2 border-t border-charcoal-blue-200/70 p-4 dark:border-white/10"
+					className="space-y-2 border-t border-charcoal-blue-200/70 p-4 dark:border-white/10"
 				>
-					<input
-						value={input}
-						onChange={(e) => setInput(e.target.value)}
-						disabled={pending}
-						placeholder="Ask the coach…"
-						className="input flex-1 !rounded-2xl !py-3"
-						autoComplete="off"
-					/>
-					<button
-						type="submit"
-						disabled={pending || !input.trim()}
-						className="btn-primary !rounded-2xl !py-3"
-						aria-label="Send"
-					>
-						<Icon name="arrowRight" size={16} />
-					</button>
+					{attachment && (
+						<div className="flex items-center gap-2 rounded-2xl bg-charcoal-blue-100 px-3 py-2 text-xs dark:bg-white/5">
+							<Icon name="sparkles" size={14} className="shrink-0 text-verdigris-600" />
+							<span className="min-w-0 flex-1 truncate text-charcoal-blue-600 dark:text-charcoal-blue-300">
+								{attachment.name}
+							</span>
+							<button
+								type="button"
+								onClick={() => setAttachment(null)}
+								aria-label="Remove photo"
+								className="shrink-0 rounded-lg p-1 text-charcoal-blue-400 transition-colors hover:text-red-600"
+							>
+								<Icon name="x" size={13} />
+							</button>
+						</div>
+					)}
+
+					<div className="flex items-center gap-2">
+						<input
+							ref={fileRef}
+							type="file"
+							accept="image/jpeg,image/png,image/webp"
+							className="hidden"
+							onChange={(e) => {
+								const picked = e.target.files?.[0] ?? null;
+								e.target.value = "";
+								setAttachment(picked);
+							}}
+						/>
+						<button
+							type="button"
+							onClick={() => fileRef.current?.click()}
+							disabled={pending}
+							aria-label="Attach a photo"
+							title="Attach a photo"
+							className="btn-secondary !rounded-2xl !px-3 !py-3 disabled:opacity-60"
+						>
+							<Icon name="cookingPot" size={16} />
+						</button>
+						<input
+							value={input}
+							onChange={(e) => setInput(e.target.value)}
+							disabled={pending}
+							placeholder={attachment ? "Say something about it (optional)…" : "Ask the coach…"}
+							className="input flex-1 !rounded-2xl !py-3"
+							autoComplete="off"
+						/>
+						<button
+							type="submit"
+							disabled={pending || (!input.trim() && !attachment)}
+							className="btn-primary !rounded-2xl !py-3"
+							aria-label="Send"
+						>
+							<Icon name="arrowRight" size={16} />
+						</button>
+					</div>
 				</form>
 			</section>
 		</div>

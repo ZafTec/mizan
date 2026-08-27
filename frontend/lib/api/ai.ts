@@ -1,4 +1,5 @@
 import { clientApi } from "@/lib/api.client";
+import { resolvePublicApiOrigin } from "@/lib/api-base";
 
 export interface AiConsent {
 	enabled: boolean;
@@ -53,6 +54,8 @@ export interface AiChatMessage {
 	fromUser: boolean;
 	content: string;
 	createdAt: string;
+	/** A photo sent with this turn, kept so the transcript still makes sense later. */
+	imageUrl?: string | null;
 }
 
 export interface AiChatThread {
@@ -78,6 +81,34 @@ export const sendAiChatMessage = (threadId: string | null, message: string) =>
 		method: "POST",
 		body: { threadId, message },
 	});
+
+/**
+ * A turn with a photo. Multipart, so it goes through fetch rather than the
+ * JSON client - the same shape the food-photo upload uses.
+ */
+export async function sendAiChatImage(
+	threadId: string | null,
+	message: string,
+	file: File,
+): Promise<AiChatTurn> {
+	const body = new FormData();
+	body.append("image", file);
+	body.append("message", message);
+	if (threadId) body.append("threadId", threadId);
+
+	const response = await fetch(`${resolvePublicApiOrigin()}/api/Ai/chat/image`, {
+		method: "POST",
+		credentials: "include",
+		body,
+	});
+
+	if (!response.ok) {
+		const payload = await response.json().catch(() => null);
+		throw new Error(payload?.error ?? payload?.detail ?? "That photo could not be sent.");
+	}
+
+	return (await response.json()) as AiChatTurn;
+}
 
 export const listAiChatThreads = () =>
 	clientApi<AiChatThread[]>("/api/Ai/threads");

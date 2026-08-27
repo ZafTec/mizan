@@ -42,6 +42,20 @@ public class AiChatThread
     /// </summary>
     public AiChatThreadKind Kind { get; set; } = AiChatThreadKind.Chat;
 
+    /// <summary>
+    /// What the conversation established before the turns still being sent
+    /// verbatim. Only the most recent turns fit in a request, so without this
+    /// a long conversation silently forgets its own beginning - the user says
+    /// they are vegetarian on turn two and is offered chicken on turn twelve.
+    /// </summary>
+    public string? Summary { get; set; }
+
+    /// <summary>
+    /// How many messages the summary already accounts for, so re-summarising
+    /// only reads what has happened since.
+    /// </summary>
+    public int SummarisedThrough { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
@@ -58,6 +72,13 @@ public class AiChatMessage
 
     /// <summary>Which published prompt answered. Null on a user turn, and null when the built-in default answered.</summary>
     public Guid? PromptVersionId { get; set; }
+
+    /// <summary>
+    /// A photo the user sent with this turn, stored rather than discarded. The
+    /// model's reply is about a picture; a transcript that kept only the words
+    /// leaves the reply unreadable a week later.
+    /// </summary>
+    public string? ImageUrl { get; set; }
 
     public DateTime CreatedAt { get; set; }
 

@@ -16,6 +16,19 @@ public interface INutritionAiService
         Guid userId,
         string userMessage,
         IReadOnlyList<AiChatHistoryTurn> history,
+        CancellationToken cancellationToken = default,
+        string? summary = null,
+        AiImageRef? image = null);
+
+    /// <summary>
+    /// Folds the turns that have fallen out of the window into the running
+    /// summary. Returns null when the model could not produce one, which is a
+    /// reason to keep the old summary rather than to fail the conversation.
+    /// </summary>
+    Task<string?> SummariseAsync(
+        Guid userId,
+        string? existingSummary,
+        IReadOnlyList<AiChatHistoryTurn> turns,
         CancellationToken cancellationToken = default);
 
     Task<FoodAnalysisResult> AnalyzeFoodImageAsync(
@@ -104,6 +117,9 @@ public record AiChatTurn(
     Guid? PromptVersionId,
     IReadOnlyList<Ai.Tools.AiToolInvocation> Performed);
 
+/// <summary>An image already read into memory, on its way to the model.</summary>
+public record AiImageRef(byte[] Bytes, string ContentType);
+
 public record FoodAnalysisResult
 {
     public List<RecognizedFood> Foods { get; init; } = new();
@@ -112,6 +128,13 @@ public record FoodAnalysisResult
 
     /// <summary>Caveats from the model. Never the payload - the numbers are.</summary>
     public string? Note { get; init; }
+
+    /// <summary>
+    /// Where the photo was stored, if storage is configured. The model's
+    /// numbers are a guess at a portion size; keeping the picture is what lets
+    /// someone check the guess later instead of taking it on trust.
+    /// </summary>
+    public string? ImageUrl { get; init; }
 }
 
 public record RecognizedFood
