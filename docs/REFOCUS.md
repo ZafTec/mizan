@@ -426,12 +426,14 @@ that would otherwise need Next.js middleware to run on every request.
 What replaces it: one httpOnly cookie holding an opaque 256-bit session token.
 
 ```
-mizan_session   HttpOnly; Secure; SameSite=Lax; Domain=.mizan.zaftech.co; Path=/
+mizan_session   HttpOnly; Secure; SameSite=Lax; Path=/
 ```
 
-`mizan.zaftech.co` and `api.mizan.zaftech.co` are the same site, so Lax sends the
-cookie on both browser→frontend and browser→API requests, including the SignalR
-WebSocket upgrade. Server components read the same cookie and forward it. The
+No `Domain` attribute - the app, its API (`/api`) and the MCP server (`/mcp`)
+all live on `mizan.zaftech.co` itself, path-routed rather than split across
+subdomains, so the cookie is host-only and rides along on every request,
+including the SignalR WebSocket upgrade. Server components read the same
+cookie and forward it. The
 API resolves it against `user_sessions`, cached in `HybridCache` — the same
 lookup budget JWKS already spent, for a session that is now genuinely
 revocable, which a JWT never was.

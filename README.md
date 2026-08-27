@@ -71,7 +71,7 @@ Mizan is a comprehensive web application designed to help users plan meals, trac
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/mizan.git
+   git clone https://github.com/zaftec/mizan.git
    cd mizan
    ```
 

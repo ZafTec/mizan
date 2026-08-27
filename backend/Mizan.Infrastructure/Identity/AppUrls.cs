@@ -12,8 +12,9 @@ public class AppOptions
     public string PublicUrl { get; set; } = "http://localhost:3000";
 
     /// <summary>
-    /// Cookie domain shared by the web app and the API. Empty means host-only,
-    /// which is what localhost wants; production sets ".mizan.zaftech.co".
+    /// Cookie domain override. Empty means host-only, which is correct in
+    /// every environment now - the app, API (/api) and MCP server (/mcp) all
+    /// live on the same host, so there is no other subdomain to share with.
     /// </summary>
     public string? CookieDomain { get; set; }
 }
