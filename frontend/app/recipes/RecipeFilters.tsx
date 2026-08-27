@@ -16,9 +16,9 @@ const TAG_SUGGESTIONS = [
 const TAG_ICONS: Record<string, string> = {
 	"HIGH-PROTEIN": "ri-heart-pulse-line",
 	"LOW-CARB": "ri-leaf-line",
-	"QUICK": "ri-timer-flash-line",
-	"VEGAN": "ri-plant-line",
-	"VEGETARIAN": "ri-seedling-line",
+	QUICK: "ri-timer-flash-line",
+	VEGAN: "ri-plant-line",
+	VEGETARIAN: "ri-seedling-line",
 	"GLUTEN-FREE": "ri-forbid-line",
 };
 
@@ -125,12 +125,15 @@ export default function RecipeFilters({
 							onClick={() => toggleTag(tag)}
 							className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
 								active
-									? "bg-brand-500 text-white border-brand-500 shadow-sm shadow-brand-500/25"
+									? "bg-brand-500 text-white border-brand-500 "
 									: "bg-white dark:bg-charcoal-blue-900 text-charcoal-blue-600 dark:text-charcoal-blue-400 border-charcoal-blue-200 dark:border-charcoal-blue-800 hover:border-brand-300 hover:text-brand-600"
 							}`}
 						>
 							{icon && <i className={`${icon} text-base`} />}
-							{tag.replace("-", " ").toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
+							{tag
+								.replace("-", " ")
+								.toLowerCase()
+								.replace(/\b\w/g, (c) => c.toUpperCase())}
 							{active && <i className="ri-close-line text-sm ml-0.5 opacity-70" />}
 						</button>
 					);
@@ -139,7 +142,9 @@ export default function RecipeFilters({
 
 			{/* Sort row */}
 			<div className="flex flex-wrap items-center gap-1.5">
-				<span className="text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500 font-medium mr-1">Sort:</span>
+				<span className="text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500 font-medium mr-1">
+					Sort:
+				</span>
 				{SORT_OPTIONS.map((opt, i) => (
 					<button
 						key={opt.label}
@@ -160,13 +165,16 @@ export default function RecipeFilters({
 			{hasActiveFilters && (
 				<div className="flex items-center justify-between">
 					<p className="text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500">
-						{currentTags.length > 0 && `${currentTags.length} tag${currentTags.length > 1 ? "s" : ""} selected`}
+						{currentTags.length > 0 &&
+							`${currentTags.length} tag${currentTags.length > 1 ? "s" : ""} selected`}
 						{currentTags.length > 0 && currentSortIndex >= 0 && " · "}
 						{currentSortIndex >= 0 && `Sorted by ${SORT_OPTIONS[currentSortIndex].label}`}
 					</p>
 					<button
 						type="button"
-						onClick={() => router.push(search ? `/recipes?search=${encodeURIComponent(search)}` : "/recipes")}
+						onClick={() =>
+							router.push(search ? `/recipes?search=${encodeURIComponent(search)}` : "/recipes")
+						}
 						className="text-xs text-brand-500 hover:text-brand-600 font-medium transition-colors"
 					>
 						Clear filters

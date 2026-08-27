@@ -127,14 +127,15 @@ export default function TrainersPage() {
 					<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 						No trainers found
 					</h3>
-					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						No trainers found.
-					</p>
+					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">No trainers found.</p>
 				</div>
 			) : (
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 					{filteredTrainers.map((trainer) => (
-						<div key={trainer.id || trainer.email || "trainer-card"} className="card p-6 hover:shadow-lg transition-shadow">
+						<div
+							key={trainer.id || trainer.email || "trainer-card"}
+							className="card p-6 transition-shadow"
+						>
 							<div className="flex flex-col items-center text-center mb-4">
 								{trainer.image ? (
 									<Image
@@ -142,10 +143,10 @@ export default function TrainersPage() {
 										alt={trainer.name || trainer.email || "Trainer"}
 										width={80}
 										height={80}
-										className="w-20 h-20 rounded-2xl object-cover border-4 border-white dark:border-charcoal-blue-900 shadow-lg mb-3"
+										className="w-20 h-20 rounded-2xl object-cover border-4 border-white dark:border-charcoal-blue-900 mb-3"
 									/>
 								) : (
-									<div className="w-20 h-20 rounded-2xl bg-emerald-600 flex items-center justify-center border-4 border-white dark:border-charcoal-blue-900 shadow-lg mb-3">
+									<div className="w-20 h-20 rounded-2xl bg-emerald-600 flex items-center justify-center border-4 border-white dark:border-charcoal-blue-900 mb-3">
 										<span className="text-2xl font-bold text-white">
 											{(trainer.email || "?").charAt(0).toUpperCase()}
 										</span>
@@ -154,7 +155,9 @@ export default function TrainersPage() {
 								<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-1">
 									{trainer.name || trainer.email?.split("@")[0] || "Unknown trainer"}
 								</h3>
-								<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-2">{trainer.email}</p>
+								<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-2">
+									{trainer.email}
+								</p>
 								<div className="flex items-center gap-2 text-xs text-charcoal-blue-600 dark:text-charcoal-blue-400">
 									<i className="ri-group-line" />
 									<span>{trainer.clientCount || 0} clients</span>
@@ -163,7 +166,9 @@ export default function TrainersPage() {
 
 							{trainer.specialties && (
 								<div className="mb-4">
-									<p className="text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300">{trainer.specialties}</p>
+									<p className="text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300">
+										{trainer.specialties}
+									</p>
 								</div>
 							)}
 
@@ -188,7 +193,6 @@ export default function TrainersPage() {
 					))}
 				</div>
 			)}
-
 		</div>
 	);
 }

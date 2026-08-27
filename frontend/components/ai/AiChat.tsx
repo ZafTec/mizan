@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { AnimatedIcon, type AnimatedIconName } from "@/components/ui/animated-icon";
+import { Icon, type IconName } from "@/components/ui/icon";
 import {
 	deleteAiChatThread,
 	getAiChatThread,
@@ -16,7 +16,7 @@ interface QuickPrompt {
 	id: string;
 	label: string;
 	prompt: string;
-	icon: AnimatedIconName;
+	icon: IconName;
 }
 
 interface AiChatProps {
@@ -154,7 +154,7 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 									title="Delete conversation"
 									className="rounded-lg p-1.5 text-charcoal-blue-400 opacity-0 transition-opacity hover:text-red-600 focus-visible:opacity-100 group-hover:opacity-100"
 								>
-									<AnimatedIcon name="x" size={14} />
+									<Icon name="x" size={14} />
 								</button>
 							</li>
 						))}
@@ -165,7 +165,7 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 			<section className="glass-panel flex min-h-[620px] flex-col p-0">
 				<header className="flex items-center gap-3 border-b border-charcoal-blue-200/70 p-5 dark:border-white/10">
 					<span className="icon-chip h-11 w-11 text-verdigris-700 dark:text-verdigris-300">
-						<AnimatedIcon name="bot" size={18} />
+						<Icon name="bot" size={18} />
 					</span>
 					<div>
 						<h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -181,7 +181,7 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 					{messages.length === 0 ? (
 						<div className="flex flex-col items-center justify-center gap-4 py-10 text-center">
 							<span className="icon-chip h-14 w-14 text-verdigris-700 dark:text-verdigris-300">
-								<AnimatedIcon name="sparkles" size={22} />
+								<Icon name="sparkles" size={22} />
 							</span>
 							<p className="max-w-md text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 								Start with a question, or tap a suggested prompt below.
@@ -192,10 +192,10 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 										key={qp.id}
 										type="button"
 										onClick={() => send(qp.prompt)}
-										className="group flex items-start gap-3 rounded-2xl border border-charcoal-blue-200 bg-charcoal-blue-50 p-3 text-left text-sm text-charcoal-blue-700 transition-all hover:-translate-y-0.5 hover:border-verdigris-400 hover:shadow-md dark:border-white/10 dark:bg-charcoal-blue-950 dark:text-charcoal-blue-200"
+										className="group flex items-start gap-3 rounded-2xl border border-charcoal-blue-200 bg-charcoal-blue-50 p-3 text-left text-sm text-charcoal-blue-700 transition-all hover:-translate-y-0.5 hover:border-verdigris-400 dark:border-white/10 dark:bg-charcoal-blue-950 dark:text-charcoal-blue-200"
 									>
 										<span className="icon-chip h-8 w-8 text-verdigris-700 dark:text-verdigris-300">
-											<AnimatedIcon name={qp.icon} size={14} />
+											<Icon name={qp.icon} size={14} />
 										</span>
 										<span className="flex-1">{qp.label}</span>
 									</button>
@@ -216,14 +216,14 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 											: "bg-white text-verdigris-700 ring-1 ring-charcoal-blue-200 dark:bg-charcoal-blue-950 dark:text-verdigris-300 dark:ring-white/10",
 									)}
 								>
-									<AnimatedIcon name={m.fromUser ? "user" : "bot"} size={14} />
+									<Icon name={m.fromUser ? "user" : "bot"} size={14} />
 								</span>
 								<div
 									className={cn(
 										"max-w-[78%] whitespace-pre-wrap rounded-3xl px-4 py-3 text-sm leading-relaxed",
 										m.fromUser
-											? "bg-verdigris-600 text-white shadow-md shadow-verdigris-500/20"
-											: "bg-white text-charcoal-blue-900 shadow-sm ring-1 ring-charcoal-blue-200 dark:bg-charcoal-blue-950/80 dark:text-charcoal-blue-100 dark:ring-white/10",
+											? "bg-verdigris-600 text-white "
+											: "bg-white text-charcoal-blue-900 ring-1 ring-charcoal-blue-200 dark:bg-charcoal-blue-950/80 dark:text-charcoal-blue-100 dark:ring-white/10",
 									)}
 								>
 									{m.content}
@@ -235,7 +235,7 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 					{pending && (
 						<div className="flex gap-3">
 							<span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white text-verdigris-700 ring-1 ring-charcoal-blue-200 dark:bg-charcoal-blue-950 dark:text-verdigris-300 dark:ring-white/10">
-								<AnimatedIcon name="bot" size={14} />
+								<Icon name="bot" size={14} />
 							</span>
 							<div className="flex items-center gap-1.5 rounded-3xl bg-white px-4 py-3 text-sm ring-1 ring-charcoal-blue-200 dark:bg-charcoal-blue-950/80 dark:ring-white/10">
 								<span className="h-2 w-2 animate-pulse rounded-full bg-verdigris-500" />
@@ -276,7 +276,7 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 						className="btn-primary !rounded-2xl !py-3"
 						aria-label="Send"
 					>
-						<AnimatedIcon name="arrowRight" size={16} />
+						<Icon name="arrowRight" size={16} />
 					</button>
 				</form>
 			</section>

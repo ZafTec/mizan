@@ -27,14 +27,14 @@ export default function TableSkeleton({
 				</div>
 			)}
 
-			<div className="overflow-hidden rounded-3xl border border-charcoal-blue-200 dark:border-white/10">
-				<div className="flex gap-4 bg-charcoal-blue-50/80 px-4 py-3 dark:bg-white/[0.03]">
+			<div className="overflow-hidden border border-charcoal-blue-200 dark:border-charcoal-blue-700">
+				<div className="flex gap-4 border-b border-charcoal-blue-900 px-4 py-3 dark:border-charcoal-blue-50">
 					{Array.from({ length: columns }).map((_, i) => (
 						<Skeleton key={i} className="h-3 flex-1 rounded" />
 					))}
 				</div>
 
-				<div className="divide-y divide-charcoal-blue-200 dark:divide-white/10">
+				<div className="divide-y divide-charcoal-blue-100 dark:divide-charcoal-blue-800">
 					{Array.from({ length: rows }).map((_, row) => (
 						<div key={row} className="flex gap-4 px-4 py-3.5">
 							{Array.from({ length: columns }).map((_, col) => (

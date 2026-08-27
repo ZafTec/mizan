@@ -1,104 +1,109 @@
 import Link from "next/link";
-import { ProducerBadge } from "./ProducerBadge";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 
 /**
- * Text and one flat stat readout - no dark band, no blur glow, no glass
- * cards floating over it. The page background carries straight through, and
- * the two-column layout collapses to one on mobile rather than hiding the
- * proof entirely (the old version dropped the whole right side below `lg`).
+ * The proof card is the product, not an illustration of it: same flat
+ * card, same tabular numbers, same macro tones used on /dashboard. Copy
+ * matches design/Landing.dc.html exactly.
  */
 export function HeroSection() {
-	const kcal = 1842;
-	const kcalTarget = 2200;
-	const pct = Math.round((kcal / kcalTarget) * 100);
-
 	return (
 		<section
 			data-testid="hero-section"
 			aria-labelledby="hero-heading"
-			className="grid grid-cols-1 items-center gap-10 py-8 sm:py-12 lg:grid-cols-[1.15fr_1fr] lg:gap-14"
+			className="grid grid-cols-1 items-center gap-10 py-10 sm:py-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16"
 		>
-			<div className="max-w-2xl">
-				<div className="mb-5">
-					<ProducerBadge />
-				</div>
+			<div className="flex max-w-2xl flex-col gap-6">
+				<p className="eyebrow">Meals · Workouts · Measurements</p>
 				<h1
 					id="hero-heading"
-					className="text-4xl font-medium tracking-tight text-charcoal-blue-900 sm:text-5xl lg:text-6xl dark:text-charcoal-blue-50"
+					className="text-[2.75rem] leading-[1.03] font-medium tracking-tight text-charcoal-blue-900 sm:text-6xl dark:text-charcoal-blue-50"
 				>
-					Your macros. <span className="text-brand-600 dark:text-brand-400">Surgical.</span>
+					The tracker you
+					<br />
+					actually keep using.
 				</h1>
-				<p className="mt-5 max-w-xl text-lg leading-relaxed text-charcoal-blue-600 dark:text-charcoal-blue-400">
-					The nutrition app built like a HUD, not a spreadsheet. Track, plan, and ship goals in a workspace that actually feels alive.
+				<p className="max-w-md text-[17px] leading-relaxed text-charcoal-blue-600 dark:text-charcoal-blue-400">
+					Every food tracker dies the week logging becomes a chore. Mizan is built around one number: a meal, a set or a weigh-in goes in under ten seconds — from the web, from Telegram, or by telling your AI assistant.
 				</p>
-				<div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-					<Link href="/register" className="btn-primary btn-lg">
-						Start tracking for free
-						<AnimatedIcon name="arrowRight" size={18} aria-hidden="true" />
+				<div className="flex items-center gap-3">
+					<Link href="/register" className="btn-primary">
+						Start logging free
+						<Icon name="arrowRight" size={15} aria-hidden="true" />
 					</Link>
-					<Link href="#pricing" className="btn-ghost btn-lg">
-						See what&apos;s inside
+					<Link href="#thesis" className="btn-secondary">
+						Read the thesis
 					</Link>
 				</div>
-				<div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-medium uppercase tracking-[0.14em] text-charcoal-blue-500 dark:text-charcoal-blue-400">
-					<span>No credit card</span>
-					<span className="h-1 w-1 rounded-full bg-current opacity-50" aria-hidden="true" />
-					<span>14-day refund</span>
-					<span className="h-1 w-1 rounded-full bg-current opacity-50" aria-hidden="true" />
-					<span>Cancel anytime</span>
-				</div>
+				<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-500">
+					Free tier, no card. Self-host it instead if you would rather own the database.
+				</p>
 			</div>
 
-			{/* One flat card, not three floating ones. Same DataTable-adjacent
-			    surface as the rest of the app, so the proof looks like the
-			    product rather than a marketing illustration of it. */}
-			<div className="card p-5 sm:p-6">
-				<div className="flex items-baseline justify-between">
-					<span className="text-xs font-medium uppercase tracking-[0.14em] text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						Today
+			<div className="card">
+				<div className="flex items-center justify-between border-b border-charcoal-blue-200 px-5 py-4 dark:border-charcoal-blue-700">
+					<span className="text-lg font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50" style={{ fontFamily: "var(--font-serif)" }}>
+						Tuesday, 26 August
 					</span>
-					<span className="text-xs font-medium text-charcoal-blue-500 dark:text-charcoal-blue-400">{pct}%</span>
-				</div>
-				<div className="mt-2 flex items-baseline gap-2">
-					<span className="text-4xl font-semibold tabular-nums tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">
-						{kcal.toLocaleString()}
+					<span className="flex items-center gap-1.5 text-xs font-semibold text-burnt-peach-700 dark:text-burnt-peach-400">
+						<Icon name="flame" size={13} aria-hidden="true" />
+						12 days · resets 09:41
 					</span>
-					<span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">of {kcalTarget.toLocaleString()} kcal</span>
-				</div>
-				<div className="mt-3 h-1.5 overflow-hidden rounded-full bg-charcoal-blue-100 dark:bg-charcoal-blue-800">
-					<div className="h-full rounded-full bg-brand-600 dark:bg-brand-400" style={{ width: `${pct}%` }} />
 				</div>
 
-				<div className="mt-5 grid grid-cols-3 gap-3 border-t border-charcoal-blue-100 pt-4 dark:border-white/10">
-					<MacroReadout label="Protein" value="148g" tone="peach" />
-					<MacroReadout label="Carbs" value="210g" tone="sun" />
-					<MacroReadout label="Fat" value="62g" tone="sand" />
+				<div className="flex flex-col gap-3 border-b border-charcoal-blue-100 px-5 py-4 dark:border-charcoal-blue-800">
+					<div className="flex items-baseline justify-between">
+						<span className="eyebrow">Calories</span>
+						<span className="num text-[13px] text-charcoal-blue-600 dark:text-charcoal-blue-400">
+							<b className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">1,840</b> / 2,200 kcal
+						</span>
+					</div>
+					<div className="h-1 overflow-hidden rounded-full bg-charcoal-blue-100 dark:bg-charcoal-blue-800">
+						<div className="h-full rounded-full bg-verdigris-700 dark:bg-verdigris-400" style={{ width: "84%" }} />
+					</div>
+					<div className="grid grid-cols-3 gap-3 pt-0.5">
+						<MacroReadout label="Protein" value="142" target="/ 160 g" />
+						<MacroReadout label="Carbs" value="188" target="/ 220 g" />
+						<MacroReadout label="Fat" value="61" target="/ 73 g" />
+					</div>
 				</div>
 
-				<div className="mt-5 flex items-center gap-2 border-t border-charcoal-blue-100 pt-4 text-xs text-charcoal-blue-500 dark:border-white/10 dark:text-charcoal-blue-400">
-					<AnimatedIcon name="messageCircle" size={14} aria-hidden="true" />
-					Logged from Telegram, 4 minutes ago
+				<div className="flex flex-col">
+					<MealRow name="Shiro wat & injera" meta="Lunch · 1 serving" kcal="612 kcal" />
+					<MealRow name="Greek yoghurt, honey" meta="Breakfast · 200 g" kcal="248 kcal" />
+					<div className="flex items-center gap-3 px-5 py-3 bg-charcoal-blue-50 dark:bg-charcoal-blue-900">
+						<Icon name="messageCircle" size={15} className="shrink-0 text-verdigris-700 dark:text-verdigris-400" aria-hidden="true" />
+						<div className="min-w-0 flex-1 text-[13px] text-verdigris-700 dark:text-verdigris-400">
+							From Telegram — photo of dinner, confirmed
+						</div>
+						<div className="num text-xs text-verdigris-700 dark:text-verdigris-400">7s ago</div>
+					</div>
 				</div>
 			</div>
 		</section>
 	);
 }
 
-function MacroReadout({ label, value, tone }: { label: string; value: string; tone: "peach" | "sun" | "sand" }) {
-	const toneClass =
-		tone === "peach"
-			? "text-burnt-peach-600 dark:text-burnt-peach-400"
-			: tone === "sun"
-				? "text-tuscan-sun-600 dark:text-tuscan-sun-400"
-				: "text-sandy-brown-600 dark:text-sandy-brown-400";
-
+function MacroReadout({ label, value, target }: { label: string; value: string; target: string }) {
 	return (
 		<div>
-			<div className="text-[11px] font-medium uppercase tracking-[0.1em] text-charcoal-blue-500 dark:text-charcoal-blue-400">
-				{label}
+			<div className="eyebrow">{label}</div>
+			<div className="num mt-0.5 text-[13px]">
+				<b className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{value}</b>{" "}
+				<span className="text-charcoal-blue-500 dark:text-charcoal-blue-500">{target}</span>
 			</div>
-			<div className={`mt-0.5 text-sm font-semibold tabular-nums ${toneClass}`}>{value}</div>
+		</div>
+	);
+}
+
+function MealRow({ name, meta, kcal }: { name: string; meta: string; kcal: string }) {
+	return (
+		<div className="flex items-center gap-3 border-b border-charcoal-blue-100 px-5 py-3 last:border-b-0 dark:border-charcoal-blue-800">
+			<div className="min-w-0 flex-1">
+				<div className="text-[13.5px] font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">{name}</div>
+				<div className="text-[11.5px] text-charcoal-blue-500 dark:text-charcoal-blue-500">{meta}</div>
+			</div>
+			<div className="num text-[13px] text-charcoal-blue-600 dark:text-charcoal-blue-400">{kcal}</div>
 		</div>
 	);
 }

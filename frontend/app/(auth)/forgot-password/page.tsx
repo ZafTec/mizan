@@ -42,7 +42,11 @@ export default function ForgotPasswordPage() {
 									Check your email
 								</h3>
 								<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-sm">
-									If <span className="font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300">{email}</span> has an account, a reset link is on its way.
+									If{" "}
+									<span className="font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300">
+										{email}
+									</span>{" "}
+									has an account, a reset link is on its way.
 								</p>
 							</div>
 							<div className="pt-4">
@@ -54,7 +58,10 @@ export default function ForgotPasswordPage() {
 							<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 								Didn&apos;t receive the email?{" "}
 								<button
-									onClick={() => { setState("idle"); setEmail(""); }}
+									onClick={() => {
+										setState("idle");
+										setEmail("");
+									}}
 									className="text-brand-600 dark:text-brand-400 hover:text-brand-700 font-medium"
 								>
 									Try again
@@ -72,10 +79,12 @@ export default function ForgotPasswordPage() {
 			<div className="w-full max-w-md">
 				{/* Header */}
 				<div className="text-center mb-8">
-					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 shadow-lg shadow-brand-500/30 dark:bg-brand-500 dark:shadow-brand-500/15 mb-4">
+					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 dark:bg-brand-500 mb-4">
 						<i className="ri-lock-password-line text-3xl text-white" />
 					</div>
-					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Forgot password?</h1>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+						Forgot password?
+					</h1>
 					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
 						We&apos;ll email you a link to set a new one
 					</p>
@@ -101,17 +110,16 @@ export default function ForgotPasswordPage() {
 						</div>
 
 						{error && (
-							<div data-testid="error-message" className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
+							<div
+								data-testid="error-message"
+								className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm"
+							>
 								<i className="ri-error-warning-line text-lg" />
 								<span>{error}</span>
 							</div>
 						)}
 
-						<button
-							type="submit"
-							disabled={loading}
-							className="btn-primary w-full py-3"
-						>
+						<button type="submit" disabled={loading} className="btn-primary w-full py-3">
 							{loading ? (
 								<>
 									<Loading size="sm" />

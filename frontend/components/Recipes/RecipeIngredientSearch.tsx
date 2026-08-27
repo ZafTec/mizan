@@ -33,7 +33,7 @@ export default function RecipeIngredientSearch({
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	const results = useMemo(
-		() => (!debouncedQuery || debouncedQuery.length < 2) ? [] : fetchedResults,
+		() => (!debouncedQuery || debouncedQuery.length < 2 ? [] : fetchedResults),
 		[debouncedQuery, fetchedResults],
 	);
 
@@ -84,7 +84,7 @@ export default function RecipeIngredientSearch({
 				className="input w-full"
 			/>
 			{isOpen && results.length > 0 && (
-				<div className="absolute z-50 w-full mt-1 bg-white dark:bg-charcoal-blue-900 border border-charcoal-blue-200 dark:border-charcoal-blue-800 rounded-xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+				<div className="absolute z-50 w-full mt-1 bg-white dark:bg-charcoal-blue-900 border border-charcoal-blue-200 dark:border-charcoal-blue-800 rounded-xl overflow-hidden max-h-60 overflow-y-auto">
 					{results.map((recipe) => (
 						<button
 							key={recipe.id}

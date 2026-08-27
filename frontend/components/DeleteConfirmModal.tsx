@@ -54,7 +54,7 @@ export function DeleteConfirmModal({
 			onClick={onClose}
 		>
 			<div
-				className="modal-pop-in my-auto w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-charcoal-blue-900"
+				className="modal-pop-in my-auto w-full max-w-md rounded-xl bg-white p-6 dark:bg-charcoal-blue-900"
 				onClick={(e) => e.stopPropagation()}
 			>
 				<div className="flex items-center gap-3 mb-4">
@@ -72,18 +72,10 @@ export function DeleteConfirmModal({
 				</p>
 
 				<div className="flex gap-3 justify-end">
-					<button
-						onClick={onClose}
-						disabled={isDeleting}
-						className="btn-secondary"
-					>
+					<button onClick={onClose} disabled={isDeleting} className="btn-secondary">
 						Cancel
 					</button>
-					<button
-						onClick={handleConfirm}
-						disabled={isDeleting}
-						className="btn-danger"
-					>
+					<button onClick={handleConfirm} disabled={isDeleting} className="btn-danger">
 						{isDeleting && <Loading size="sm" />}
 						Delete
 					</button>

@@ -71,8 +71,6 @@ services:
       - NEXT_PUBLIC_PADDLE_ENV=${NEXT_PUBLIC_PADDLE_ENV:-sandbox}
       - NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=${NEXT_PUBLIC_PADDLE_CLIENT_TOKEN:-}
       - NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY=${NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY:-}
-      - NEXT_PUBLIC_PADDLE_PRICE_PRO_YEARLY=${NEXT_PUBLIC_PADDLE_PRICE_PRO_YEARLY:-}
-      - NEXT_PUBLIC_PADDLE_PRICE_LIFETIME=${NEXT_PUBLIC_PADDLE_PRICE_LIFETIME:-}
       # OpenTelemetry (optional, no-op if endpoints not set)
       - OTLP_ENDPOINT_URL=${OTLP_ENDPOINT_URL:-}
       - LOKI_OTLP_ENDPOINT=${LOKI_OTLP_ENDPOINT:-}
@@ -146,7 +144,9 @@ services:
       - Paddle__ApiKey=${PADDLE_API_KEY:-}
       - Paddle__WebhookSecret=${PADDLE_WEBHOOK_SECRET:-}
       - Paddle__GraceDays=${PADDLE_GRACE_DAYS:-3}
-      - Paddle__LifetimePriceId=${NEXT_PUBLIC_PADDLE_PRICE_LIFETIME:-}
+      # No longer sold - kept only so a webhook replay for an existing
+      # lifetime customer still resolves correctly. Set by hand if ever needed.
+      - Paddle__LifetimePriceId=${PADDLE_PRICE_LIFETIME_LEGACY:-}
     depends_on:
       postgres:
         condition: service_healthy

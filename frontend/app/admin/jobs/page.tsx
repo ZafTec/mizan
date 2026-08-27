@@ -224,6 +224,7 @@ export default async function AdminJobsPage({
 				columns={columns}
 				rows={result.items}
 				rowKey={(j) => j.id}
+				rowClassName={(j) => (j.status === "DeadLettered" ? "wash-danger" : undefined)}
 				pathname="/admin/jobs"
 				searchParams={params}
 				sort={sort}

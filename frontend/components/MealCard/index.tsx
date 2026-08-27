@@ -8,7 +8,7 @@ import { createPortal } from "react-dom";
 import Loading from "@/components/Loading";
 
 interface MealCardProps {
-  meal: Meal;
+	meal: Meal;
 }
 
 export default function MealCard({ meal }: MealCardProps) {
@@ -58,7 +58,7 @@ export default function MealCard({ meal }: MealCardProps) {
 	}
 
 	return (
-		<div className="bg-white dark:bg-charcoal-blue-900 rounded-lg shadow-md p-4 min-w-fit relative">
+		<div className="bg-white dark:bg-charcoal-blue-900 rounded-lg p-4 min-w-fit relative">
 			<div className="flex flex-row justify-between items-center">
 				<h2 className="text-lg font-semibold">{meal.name}</h2>
 				<button
@@ -91,37 +91,42 @@ export default function MealCard({ meal }: MealCardProps) {
 				</div>
 			</div>
 
-		{/* Confirmation popup */}
-		{showConfirm && typeof document !== "undefined" && createPortal(
-			<div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4">
-				<div ref={popupRef} className="my-auto w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-charcoal-blue-900">
-					<p className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
-						Confirm Deletion
-					</p>
-					<p className="mt-2 text-charcoal-blue-600 dark:text-charcoal-blue-400">
-						Are you sure you want to delete this meal?
-					</p>
-					<div className="mt-4 flex justify-end space-x-2 text-sm">
-						<button
-							className="btn-secondary"
-							onClick={() => setShowConfirm(false)}
-							disabled={isLoading}
+			{/* Confirmation popup */}
+			{showConfirm &&
+				typeof document !== "undefined" &&
+				createPortal(
+					<div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4">
+						<div
+							ref={popupRef}
+							className="my-auto w-full max-w-sm rounded-2xl bg-white p-6 dark:bg-charcoal-blue-900"
 						>
-							Cancel
-						</button>
-						<button
-							className="btn-danger flex items-center"
-							onClick={handleDelete}
-							disabled={isLoading}
-						>
-							{isLoading && <Loading size="sm" />}
-							{isLoading ? "Deleting..." : "Delete"}
-						</button>
-					</div>
-				</div>
-			</div>,
-			document.body
-		)}
+							<p className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+								Confirm Deletion
+							</p>
+							<p className="mt-2 text-charcoal-blue-600 dark:text-charcoal-blue-400">
+								Are you sure you want to delete this meal?
+							</p>
+							<div className="mt-4 flex justify-end space-x-2 text-sm">
+								<button
+									className="btn-secondary"
+									onClick={() => setShowConfirm(false)}
+									disabled={isLoading}
+								>
+									Cancel
+								</button>
+								<button
+									className="btn-danger flex items-center"
+									onClick={handleDelete}
+									disabled={isLoading}
+								>
+									{isLoading && <Loading size="sm" />}
+									{isLoading ? "Deleting..." : "Delete"}
+								</button>
+							</div>
+						</div>
+					</div>,
+					document.body,
+				)}
 		</div>
-	)
+	);
 }

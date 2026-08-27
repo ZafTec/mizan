@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { clientApi } from '@/lib/api.client';
-import { AnimatedIcon } from '@/components/ui/animated-icon';
+import { Icon } from '@/components/ui/icon';
 
 interface Goal {
 	targetCalories: number | null;
@@ -181,7 +181,7 @@ export default function DailyOverviewChart() {
 					</div>
 					<Link href="/meals" className="btn-secondary w-full justify-center sm:w-auto">
 						Log meal
-						<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" />
+						<Icon name="arrowRight" size={16} aria-hidden="true" />
 					</Link>
 				</div>
 
@@ -219,7 +219,7 @@ export default function DailyOverviewChart() {
 							</p>
 						</div>
 						<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
-							<AnimatedIcon name="flame" size={18} aria-hidden="true" />
+							<Icon name="flame" size={18} aria-hidden="true" />
 						</span>
 					</div>
 					<div className="mt-4 flex flex-wrap gap-2">
@@ -237,7 +237,7 @@ export default function DailyOverviewChart() {
 			<div className="card p-6 sm:p-7">
 				<div className="flex items-center gap-3">
 					<span className="icon-chip h-10 w-10 text-brand-600 dark:text-brand-300">
-						<AnimatedIcon name="chartLine" size={18} aria-hidden="true" />
+						<Icon name="chartLine" size={18} aria-hidden="true" />
 					</span>
 					<div>
 						<p className="text-xs font-semibold uppercase tracking-[0.18em] text-charcoal-blue-500 dark:text-charcoal-blue-400">Breakdown</p>
@@ -274,7 +274,7 @@ export default function DailyOverviewChart() {
 					</p>
 					<Link href="/goal" className="btn-primary mt-4 w-full justify-center">
 						{hasGoals ? 'Review goals' : 'Set goals'}
-						<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" />
+						<Icon name="arrowRight" size={16} aria-hidden="true" />
 					</Link>
 				</div>
 			</div>

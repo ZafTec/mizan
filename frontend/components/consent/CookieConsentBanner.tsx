@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 
 // Slides up from the bottom with a strong ease-out on enter (400ms) and a
 // fast exit (200ms) once the user decides. The banner only mounts when GA
@@ -44,18 +44,19 @@ export function CookieConsentBanner({
 						? "transform 200ms var(--ease-out), opacity 200ms var(--ease-out)"
 						: "transform 420ms var(--ease-out), opacity 420ms var(--ease-out)",
 				}}
-				className="pointer-events-auto mx-auto flex max-w-3xl flex-col gap-4 rounded-xl border border-charcoal-blue-200 bg-white p-5 shadow-2xl shadow-charcoal-blue-950/15 sm:flex-row sm:items-center sm:justify-between sm:p-6 dark:border-white/10 dark:bg-charcoal-blue-900"
+				className="pointer-events-auto mx-auto flex max-w-3xl flex-col gap-4 rounded-xl border border-charcoal-blue-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6 dark:border-white/10 dark:bg-charcoal-blue-900"
 			>
 				<div className="flex items-start gap-3 sm:items-center">
 					<span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-brand-500/15 text-brand-700 sm:mt-0 dark:text-brand-300">
-						<AnimatedIcon name="shieldCheck" size={18} aria-hidden="true" />
+						<Icon name="shieldCheck" size={18} aria-hidden="true" />
 					</span>
 					<div className="text-sm leading-relaxed text-charcoal-blue-700 dark:text-charcoal-blue-200">
 						<p className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
 							Mind if we count visits?
 						</p>
 						<p className="mt-1 text-charcoal-blue-600 dark:text-charcoal-blue-400">
-							We use Google Analytics to see which pages help and which don&apos;t. No ads, no selling data. See our{" "}
+							We use Google Analytics to see which pages help and which don&apos;t. No ads, no
+							selling data. See our{" "}
 							<a
 								href="https://zaftech.co/cookies"
 								target="_blank"
@@ -63,8 +64,8 @@ export function CookieConsentBanner({
 								className="font-medium text-brand-700 underline-offset-2 hover:underline dark:text-brand-300"
 							>
 								cookie policy
-							</a>
-							{" "}and{" "}
+							</a>{" "}
+							and{" "}
 							<a
 								href="https://zaftech.co/privacy"
 								target="_blank"

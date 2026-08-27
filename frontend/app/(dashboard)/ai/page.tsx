@@ -1,9 +1,9 @@
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import AiChat from "@/components/ai/AiChat";
 
 export const dynamic = "force-dynamic";
 
-const QUICK_PROMPTS: Array<{ id: string; label: string; prompt: string; icon: Parameters<typeof AnimatedIcon>[0]["name"] }> = [
+const QUICK_PROMPTS: Array<{ id: string; label: string; prompt: string; icon: Parameters<typeof Icon>[0]["name"] }> = [
 	{
 		id: "fit-remaining",
 		label: "Ideas for my remaining macros today",
@@ -52,7 +52,7 @@ export default async function AiHubPage() {
 					<section className="glass-panel p-6">
 						<div className="mb-4 flex items-center gap-3">
 							<span className="icon-chip h-10 w-10 text-verdigris-700 dark:text-verdigris-300">
-								<AnimatedIcon name="brain" size={18} />
+								<Icon name="brain" size={18} />
 							</span>
 							<div>
 								<h2 className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -73,7 +73,7 @@ export default async function AiHubPage() {
 					<section className="glass-panel p-6">
 						<div className="mb-4 flex items-center gap-3">
 							<span className="icon-chip h-10 w-10 text-sandy-brown-700 dark:text-sandy-brown-300">
-								<AnimatedIcon name="sparkles" size={18} />
+								<Icon name="sparkles" size={18} />
 							</span>
 							<div>
 								<h2 className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -92,7 +92,7 @@ export default async function AiHubPage() {
 					<section className="glass-panel p-6">
 						<div className="mb-4 flex items-center gap-3">
 							<span className="icon-chip h-10 w-10 text-burnt-peach-700 dark:text-burnt-peach-300">
-								<AnimatedIcon name="badgeAlert" size={18} />
+								<Icon name="badgeAlert" size={18} />
 							</span>
 							<div>
 								<h2 className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">

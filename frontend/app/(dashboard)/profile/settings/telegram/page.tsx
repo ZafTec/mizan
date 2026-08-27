@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import { appToast } from "@/lib/toast";
@@ -376,7 +376,7 @@ function CopyRow({ value }: { value: string }) {
 				{value}
 			</code>
 			<button type="button" onClick={copy} className="btn-ghost btn-sm shrink-0" aria-label="Copy link">
-				{copied ? <AnimatedIcon name="circleCheck" size={14} /> : "Copy"}
+				{copied ? <Icon name="circleCheck" size={14} /> : "Copy"}
 			</button>
 		</div>
 	);

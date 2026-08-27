@@ -3,7 +3,7 @@
 import { useCallback, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ModalShell } from "@/components/ModalShell";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import { useSubscription } from "@/lib/hooks/useSubscription";
 
 export type CheckoutPlan = "pro" | "pro-yearly" | "lifetime";
@@ -22,9 +22,9 @@ export interface ProWallConfig {
  * Gating happens at the moment of the attempt, never as a standing banner. Wrap
  * the handler, render the dialog:
  *
- *   const { guard, wall } = useProWall({ title: "...", message: "..." });
- *   <button onClick={guard(createPlan)}>New plan</button>
- *   {wall}
+ * const { guard, wall } = useProWall({ title: "...", message: "..." });
+ * <button onClick={guard(createPlan)}>New plan</button>
+ * {wall}
  *
  * While the subscription is still loading the action runs. The server is the
  * authority on entitlement; a wall that guesses "not Pro" would block paying
@@ -63,20 +63,22 @@ export function ProWallDialog({
 }: ProWallConfig & { open: boolean; onClose: () => void }) {
 	return (
 		<ModalShell open={open} onClose={onClose}>
-			<div className="rounded-2xl border border-charcoal-blue-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-charcoal-blue-950 sm:p-8">
+			<div className="rounded-2xl border border-charcoal-blue-200 bg-white p-6 dark:border-white/10 dark:bg-charcoal-blue-950 sm:p-8">
 				<span className="icon-chip h-12 w-12 text-brand-700 dark:text-brand-300">
-					<AnimatedIcon name="lock" size={20} />
+					<Icon name="lock" size={20} />
 				</span>
 				<h2 className="mt-4 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
 					{title}
 				</h2>
-				<p className="mt-1.5 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{message}</p>
+				<p className="mt-1.5 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+					{message}
+				</p>
 				<div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
 					<button type="button" onClick={onClose} className="btn-ghost !rounded-2xl">
 						Not now
 					</button>
 					<Link href={`/billing?checkout=${plan}`} className="btn-primary !rounded-2xl">
-						<AnimatedIcon name="sparkles" size={16} />
+						<Icon name="sparkles" size={16} />
 						See Pro
 					</Link>
 				</div>
@@ -102,7 +104,7 @@ export function ProWall({
 	return (
 		<>
 			<button type="button" onClick={openWall} className="btn-secondary !rounded-2xl text-sm">
-				<AnimatedIcon name="lock" size={14} />
+				<Icon name="lock" size={14} />
 				{lockedLabel}
 			</button>
 			{wall}

@@ -3,7 +3,7 @@ import Image from "next/image";
 import { cookies } from "next/headers";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import { Toaster } from "@/components/ui/sonner";
 import { AppearanceSync } from "@/components/appearance/AppearanceSync";
 import { SessionProvider } from "@/components/SessionProvider";
@@ -98,6 +98,10 @@ async function LayoutContent({
 								<a href="https://zaftech.co/terms" target="_blank" rel="noopener noreferrer" className="footer-link">
 									Terms
 								</a>
+								<span className="hidden text-charcoal-blue-300 dark:text-charcoal-blue-600 sm:inline">|</span>
+								<a href="https://github.com/ZafTec/mizan" target="_blank" rel="noopener noreferrer" className="footer-link">
+									Source
+								</a>
 							</div>
 
 							<div className="flex items-center justify-center gap-3 sm:justify-end">
@@ -117,7 +121,7 @@ async function LayoutContent({
 									className="icon-chip h-11 w-11 text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:text-charcoal-blue-400 dark:hover:text-white"
 									aria-label="Zaftech on X"
 								>
-									<AnimatedIcon name="twitter" size={18} aria-hidden="true" />
+									<Icon name="twitter" size={18} aria-hidden="true" />
 								</a>
 								<a
 									href="https://zaftech.co"
