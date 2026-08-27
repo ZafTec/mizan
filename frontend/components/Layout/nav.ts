@@ -105,6 +105,8 @@ export const MORE_GROUPS: NavGroup[] = [
 		label: "Assistant",
 		items: [
 			{ href: "/ai", label: "AI Coach", icon: "brain", description: "Ask about your log" },
+			{ href: "/onboarding", label: "Guided setup", icon: "sparkles", description: "Set your targets by conversation" },
+			{ href: "/profile/settings/telegram", label: "Telegram", icon: "messageCircle", description: "Log from a photo without opening the app" },
 			{ href: "/profile/mcp", label: "MCP Tokens", icon: "bot", description: "Connect an agent to your log" },
 		],
 	},
