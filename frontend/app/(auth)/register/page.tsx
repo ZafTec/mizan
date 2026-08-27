@@ -20,9 +20,7 @@ export default function Page() {
 	useEffect(() => {
 		if (formState.status === "success") {
 			const plan = new URLSearchParams(window.location.search).get("plan");
-			const dest = plan
-				? `/login?callbackUrl=${encodeURIComponent(`/billing?checkout=${plan}`)}`
-				: `/verify?email=${encodeURIComponent(email)}`;
+			const dest = `/verify?email=${encodeURIComponent(email)}${plan ? `&plan=${encodeURIComponent(plan)}` : ""}`;
 			router.push(dest);
 		}
 	}, [formState.status, router, email]);
