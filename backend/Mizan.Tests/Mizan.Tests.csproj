@@ -26,6 +26,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Mizan.Api\Mizan.Api.csproj" />
+    <!--
+      Aliased: Mizan.Telegram has its own top-level Program, which would
+      otherwise collide with the API's and break WebApplicationFactory<Program>
+      in the integration fixture.
+    -->
+    <ProjectReference Include="..\Mizan.Telegram\Mizan.Telegram.csproj" Aliases="telegram" />
     <ProjectReference Include="..\Mizan.Mcp.Server\Mizan.Mcp.Server.csproj">
         <Aliases>McpServer</Aliases>
     </ProjectReference>
