@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Icon, type IconName } from "@/components/ui/icon";
+import AiMarkdown from "@/components/ai/AiMarkdown";
 import {
 	deleteAiChatThread,
 	getAiChatThread,
@@ -9,6 +11,7 @@ import {
 	sendAiChatMessage,
 	type AiChatMessage,
 	type AiChatThread,
+	type AiToolInvocation,
 } from "@/lib/api/ai";
 import { cn } from "@/lib/utils";
 
@@ -24,9 +27,13 @@ interface AiChatProps {
 }
 
 export default function AiChat({ quickPrompts }: AiChatProps) {
+	const router = useRouter();
 	const [threads, setThreads] = useState<AiChatThread[]>([]);
 	const [threadId, setThreadId] = useState<string | null>(null);
 	const [messages, setMessages] = useState<AiChatMessage[]>([]);
+	// What each reply did, keyed by message id. Only for the current session:
+	// tool invocations are echoes of a turn, not part of the transcript.
+	const [performed, setPerformed] = useState<Record<string, AiToolInvocation[]>>({});
 	const [input, setInput] = useState("");
 	const [pending, startTransition] = useTransition();
 	const [error, setError] = useState<string | null>(null);
@@ -99,6 +106,12 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 				const turn = await sendAiChatMessage(threadId, trimmed);
 				setThreadId(turn.threadId);
 				setMessages((m) => [...m, turn.reply]);
+				if (turn.performed?.length) {
+					setPerformed((current) => ({ ...current, [turn.reply.id]: turn.performed }));
+					// Something was written, so anything on screen behind this
+					// is stale.
+					router.refresh();
+				}
 				setThreads((current) => {
 					const rest = current.filter((t) => t.id !== turn.threadId);
 					return [
@@ -162,7 +175,13 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 				)}
 			</aside>
 
-			<section className="glass-panel flex min-h-[620px] flex-col p-0">
+			{/*
+			  * Bounded height, not min-height: the message list below is the
+			  * scroller, and it can only scroll if something above it stops
+			  * growing. With min-h alone the panel stretched to fit every
+			  * message and the whole page scrolled instead.
+			  */}
+			<section className="glass-panel flex h-[70dvh] min-h-[480px] flex-col p-0">
 				<header className="flex items-center gap-3 border-b border-charcoal-blue-200/70 p-5 dark:border-white/10">
 					<span className="icon-chip h-11 w-11 text-verdigris-700 dark:text-verdigris-300">
 						<Icon name="bot" size={18} />
@@ -204,8 +223,8 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 						</div>
 					) : (
 						messages.map((m) => (
+							<div key={m.id} className="space-y-2">
 							<div
-								key={m.id}
 								className={cn("flex gap-3", m.fromUser ? "flex-row-reverse" : "flex-row")}
 							>
 								<span
@@ -220,14 +239,40 @@ export default function AiChat({ quickPrompts }: AiChatProps) {
 								</span>
 								<div
 									className={cn(
-										"max-w-[78%] whitespace-pre-wrap rounded-3xl px-4 py-3 text-sm leading-relaxed",
+										"max-w-[78%] rounded-3xl px-4 py-3 text-sm leading-relaxed",
 										m.fromUser
-											? "bg-verdigris-600 text-white "
+											? "whitespace-pre-wrap bg-verdigris-600 text-white "
 											: "bg-white text-charcoal-blue-900 ring-1 ring-charcoal-blue-200 dark:bg-charcoal-blue-950/80 dark:text-charcoal-blue-100 dark:ring-white/10",
 									)}
 								>
-									{m.content}
+									{/* Only the assistant writes markdown. A user's asterisks
+									    are asterisks. */}
+									{m.fromUser ? m.content : <AiMarkdown content={m.content} />}
 								</div>
+								</div>
+
+								{performed[m.id]?.length > 0 && (
+									<ul className="ml-12 space-y-1">
+										{performed[m.id].map((action, i) => (
+											<li
+												key={`${action.tool}-${i}`}
+												className={cn(
+													"flex items-start gap-2 text-xs",
+													action.succeeded
+														? "text-verdigris-700 dark:text-verdigris-300"
+														: "text-amber-700 dark:text-amber-300",
+												)}
+											>
+												<Icon
+													name={action.succeeded ? "circleCheck" : "badgeAlert"}
+													size={13}
+													className="mt-0.5 shrink-0"
+												/>
+												<span>{action.succeeded ? action.summary : action.error}</span>
+											</li>
+										))}
+									</ul>
+								)}
 							</div>
 						))
 					)}
