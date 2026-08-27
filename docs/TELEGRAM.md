@@ -91,3 +91,39 @@ set is sufficient; a redeploy re-registers the same webhook idempotently.
 `mode` is `"webhook"` or `"long-poll"` reflecting the resolved
 `UseWebhook` setting - useful for confirming which mode actually started
 without reading logs.
+
+## Conversation memory
+
+Free-text messages go to `api/Ai/chat`, the same endpoint and the same thread
+the website uses, so everything below is shared rather than a Telegram-specific
+implementation.
+
+**Today: a rolling summary.** Only the last ten turns are replayed to the model
+verbatim. Anything older is folded into a running summary stored on the thread
+(`ai_chat_threads.summary`), refreshed after a turn once messages fall out of
+that window. Without it a long conversation forgets its own beginning - someone
+says they are vegetarian early on and gets offered chicken twenty turns later.
+The refresh runs after the reply is saved and never fails the turn: a summary
+that could not be rewritten leaves the previous one in place.
+
+**Planned: retrieval instead.** A summary is lossy by construction, and the
+loss is worst exactly where Telegram is used most - months of short, factual
+messages, where any single detail matters but none of them is important enough
+to survive summarising. The intended replacement is retrieval over the message
+history: embed each turn, and select the handful genuinely relevant to the
+current question rather than compressing everything that came before.
+
+That needs three things this codebase does not have yet: an embedding model
+behind `IAiProvider`, vector storage (pgvector on the existing PostgreSQL, not
+a second datastore), and a retrieval step in the chat handler that replaces the
+summary block. It is deliberately not built yet - the rolling summary is enough
+while conversations are short, and retrieval is worth doing once rather than
+twice.
+
+## Photos are kept
+
+A photo sent to the bot is analysed by `api/Nutrition/ai/analyze-image` and
+stored in object storage under `meals/`, the same path the website's food-photo
+upload uses. The analysis is a guess at a portion size; keeping the picture is
+what lets someone check that guess later. Storage failing costs the picture,
+never the answer.

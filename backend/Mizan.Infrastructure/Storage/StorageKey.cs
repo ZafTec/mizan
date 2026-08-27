@@ -13,6 +13,7 @@ public static class StorageKey
         {
             [StorageFolder.Avatars] = "avatars",
             [StorageFolder.Recipes] = "recipes",
+            [StorageFolder.Meals] = "meals",
         };
 
     public static string Build(StorageFolder folder, string fileName, DateTime? nowUtc = null)

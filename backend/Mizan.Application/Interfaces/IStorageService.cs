@@ -8,6 +8,13 @@ public enum StorageFolder
 {
     Avatars = 0,
     Recipes = 1,
+
+    /// <summary>
+    /// Photos sent to the assistant - a plate from the website or from
+    /// Telegram. Kept rather than discarded after analysis so the entry it
+    /// produced can be checked against the picture it came from.
+    /// </summary>
+    Meals = 2,
 }
 
 public record StorageUpload(

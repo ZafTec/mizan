@@ -71,7 +71,7 @@ public class GetAiChatThreadQueryHandler : IRequestHandler<GetAiChatThreadQuery,
         var messages = await _context.AiChatMessages.AsNoTracking()
             .Where(m => m.ThreadId == thread.Id)
             .OrderBy(m => m.CreatedAt)
-            .Select(m => new AiChatMessageDto(m.Id, m.Role == AiChatRole.User, m.Content, m.CreatedAt))
+            .Select(m => new AiChatMessageDto(m.Id, m.Role == AiChatRole.User, m.Content, m.CreatedAt, m.ImageUrl))
             .ToListAsync(cancellationToken);
 
         return new AiChatThreadDetailDto(thread.Id, thread.Title, thread.UpdatedAt, messages);
@@ -112,7 +112,7 @@ public class GetAiOnboardingThreadQueryHandler
         var messages = await _context.AiChatMessages.AsNoTracking()
             .Where(m => m.ThreadId == thread.Id)
             .OrderBy(m => m.CreatedAt)
-            .Select(m => new AiChatMessageDto(m.Id, m.Role == AiChatRole.User, m.Content, m.CreatedAt))
+            .Select(m => new AiChatMessageDto(m.Id, m.Role == AiChatRole.User, m.Content, m.CreatedAt, m.ImageUrl))
             .ToListAsync(cancellationToken);
 
         return new AiChatThreadDetailDto(thread.Id, thread.Title, thread.UpdatedAt, messages);
