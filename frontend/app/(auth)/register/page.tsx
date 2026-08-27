@@ -31,9 +31,6 @@ export default function Page() {
 		<div className="min-h-[70vh] flex items-center justify-center py-8">
 			<div className="w-full max-w-md">
 				<div className="text-center mb-8">
-					<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-600 text-white dark:bg-brand-500">
-						<Icon name="rocket" size={26} aria-hidden="true" />
-					</div>
 					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 						Create your account
 					</h1>
