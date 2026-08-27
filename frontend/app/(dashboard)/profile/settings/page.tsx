@@ -496,6 +496,33 @@ export default function ProfileSettingsPage() {
 
 					<section className="card p-6">
 						<SectionHeading
+							icon="messageCircle"
+							title="Telegram"
+							description="Log meals from a photo and ask the assistant without opening the app."
+						/>
+						<Link
+							href="/profile/settings/telegram"
+							className="group mt-6 flex items-center gap-3 rounded-2xl border border-charcoal-blue-200 p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-brand-500/40 hover:bg-brand-50/40 active:translate-y-0 dark:border-white/10 dark:hover:bg-white/5"
+						>
+							<span className="icon-chip h-10 w-10 shrink-0 text-brand-600 transition-colors group-hover:bg-brand-500/15 dark:text-brand-400">
+								<Icon name="messageCircle" size={18} />
+							</span>
+							<span className="min-w-0 flex-1">
+								<span className="block font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
+									Connect Telegram
+								</span>
+								<span className="block text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+									Link your account to the bot
+								</span>
+							</span>
+							<span className="shrink-0 text-charcoal-blue-300 transition-transform duration-150 group-hover:translate-x-0.5 dark:text-charcoal-blue-600">
+								<Icon name="arrowRight" size={16} aria-hidden="true" />
+							</span>
+						</Link>
+					</section>
+
+					<section className="card p-6">
+						<SectionHeading
 							icon="activity"
 							title="Usage observations"
 							description="Computed signals from your nutrition, progress, and tool activity."
