@@ -28,3 +28,18 @@ query string would exfiltrate it silently - no click, nothing visible.
 
 Fixed by rendering images as links instead of loading them. Raw HTML was
 already disabled (no `rehype-raw`), so script execution was never reachable.
+
+## 2026-08-27 - S3 uploads failed against any http:// endpoint
+
+Not a vulnerability, but found the same way and worth recording.
+
+`S3StorageService` hardcoded `DisablePayloadSigning = true` on every
+`PutObjectRequest`, which R2 needs. The AWS SDK refuses that combination over
+plain HTTP - an unsigned body on an unencrypted connection is tamperable in
+transit - so every upload against an `http://` endpoint threw
+`AmazonClientException: When DisablePayloadSigning is true, the request must be
+sent over HTTPS` and surfaced as a 500.
+
+Production endpoints are HTTPS, so this only ever showed on a local MinIO,
+which is why it went unnoticed. Now decided from the endpoint scheme: HTTPS
+keeps the R2-friendly behaviour, HTTP signs the payload.
