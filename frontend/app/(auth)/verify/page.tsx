@@ -1,5 +1,8 @@
-export default async function Page({ searchParams }: { searchParams: Promise<{ email?: string }> }) {
-	const { email } = await searchParams;
+export default async function Page({ searchParams }: { searchParams: Promise<{ email?: string; plan?: string }> }) {
+	const { email, plan } = await searchParams;
+	const loginHref = plan
+		? `/login?callbackUrl=${encodeURIComponent(`/billing?checkout=${plan}`)}`
+		: "/login";
 
 	if (!email || typeof email !== 'string') {
 		return (
@@ -31,13 +34,20 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
 				<p className="text-charcoal-blue-600 dark:text-charcoal-blue-400 mb-6">
 					Please check your inbox and click on the verification link to activate your account.
 				</p>
-				<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+				<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-4">
 					Didn&apos;t receive the email? Check your spam folder or{' '}
 					<a
-						href={`/verify?email=${encodeURIComponent(email)}`}
+						href={`/verify?email=${encodeURIComponent(email)}${plan ? `&plan=${encodeURIComponent(plan)}` : ''}`}
 						className="text-brand-600 dark:text-brand-400 hover:underline"
 					>
 						click here to resend
+					</a>
+					.
+				</p>
+				<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+					Already verified?{' '}
+					<a href={loginHref} className="text-brand-600 dark:text-brand-400 hover:underline">
+						{plan ? 'Sign in to finish checkout' : 'Sign in'}
 					</a>
 					.
 				</p>
