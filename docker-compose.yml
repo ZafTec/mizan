@@ -131,6 +131,7 @@ services:
       - Ai__BaseUrl=${AI_BASE_URL:-}
       - Ai__ApiKey=${AI_API_KEY:-}
       - Ai__Model=${AI_MODEL:-gpt-5.6-luna}
+      - Ai__SupportsTemperature=${AI_SUPPORTS_TEMPERATURE:-true}
       - Ai__GlobalDailyTokens=${AI_GLOBAL_DAILY_TOKENS:-5000000}
       - Ai__GlobalDailyCostMicros=${AI_GLOBAL_DAILY_COST_MICROS:-20000000}
       # MCP service-to-service API keys
