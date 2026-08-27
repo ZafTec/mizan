@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { UserInput } from "@/types/user";
 import Loading from "@/components/Loading";
 import { PasswordInput } from "@/components/PasswordInput";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import { resendVerification, signIn, startExternalSignIn, type AuthError } from "@/lib/auth-client";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 
@@ -94,11 +94,15 @@ export default function Page() {
 		<div className="min-h-[70vh] flex items-center justify-center">
 			<div className="w-full max-w-md">
 				<div className="text-center mb-8">
-					<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-600 text-white shadow-lg shadow-brand-500/25 dark:bg-brand-500">
-						<AnimatedIcon name="lock" size={26} aria-hidden="true" />
+					<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-600 text-white dark:bg-brand-500">
+						<Icon name="lock" size={26} aria-hidden="true" />
 					</div>
-					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Welcome back</h1>
-					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">Sign in to continue to Mizan</p>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+						Welcome back
+					</h1>
+					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
+						Sign in to continue to Mizan
+					</p>
 				</div>
 
 				<div className="card p-6 sm:p-8">
@@ -147,7 +151,9 @@ export default function Page() {
 							<div className="w-full border-t border-charcoal-blue-200 dark:border-charcoal-blue-800" />
 						</div>
 						<div className="relative flex justify-center text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500">
-							<span className="bg-white dark:bg-charcoal-blue-900 px-3">or continue with email</span>
+							<span className="bg-white dark:bg-charcoal-blue-900 px-3">
+								or continue with email
+							</span>
 						</div>
 					</div>
 
@@ -173,7 +179,10 @@ export default function Page() {
 								<label htmlFor="password" className="label mb-0">
 									Password
 								</label>
-								<Link href="/forgot-password" className="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-400">
+								<Link
+									href="/forgot-password"
+									className="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-400"
+								>
 									Forgot password?
 								</Link>
 							</div>
@@ -197,10 +206,13 @@ export default function Page() {
 							</p>
 						)}
 
-					{error && (
-						<div data-testid="error-message" className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
-							<AnimatedIcon name="badgeAlert" size={18} aria-hidden="true" />
-							<span>{error}</span>
+						{error && (
+							<div
+								data-testid="error-message"
+								className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm"
+							>
+								<Icon name="badgeAlert" size={18} aria-hidden="true" />
+								<span>{error}</span>
 								{unverified && user.email && !resent && (
 									<button
 										type="button"
@@ -230,7 +242,7 @@ export default function Page() {
 							) : (
 								<>
 									Sign in
-									<AnimatedIcon name="arrowRight" size={18} aria-hidden="true" />
+									<Icon name="arrowRight" size={18} aria-hidden="true" />
 								</>
 							)}
 						</button>
@@ -239,7 +251,10 @@ export default function Page() {
 
 				<p className="text-center text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-6">
 					Don&apos;t have an account?{" "}
-					<Link href="/register" className="text-brand-600 dark:text-brand-400 font-medium hover:text-brand-700 dark:hover:text-brand-400">
+					<Link
+						href="/register"
+						className="text-brand-600 dark:text-brand-400 font-medium hover:text-brand-700 dark:hover:text-brand-400"
+					>
 						Create one
 					</Link>
 				</p>

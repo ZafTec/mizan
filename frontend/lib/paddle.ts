@@ -14,8 +14,6 @@ const ENVIRONMENT = (process.env.NEXT_PUBLIC_PADDLE_ENV as Environments) ?? "san
 
 export const PADDLE_PRICES = {
   proMonthly: process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY ?? "",
-  proYearly: process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO_YEARLY ?? "",
-  lifetime: process.env.NEXT_PUBLIC_PADDLE_PRICE_LIFETIME ?? "",
 } as const;
 
 export type PaddlePlan = keyof typeof PADDLE_PRICES;

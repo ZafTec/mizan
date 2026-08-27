@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Loading from "@/components/Loading";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import { useImageUpload } from "@/components/ImageUpload";
 import { AiSettings } from "@/components/ai/AiSettings";
@@ -300,7 +300,7 @@ export default function ProfileSettingsPage() {
 						<AvatarPreview image={previewImage} email={user.email} name={displayName} />
 						<div>
 							<p className="eyebrow mb-3">
-								<AnimatedIcon name="user" size={14} aria-hidden="true" />
+								<Icon name="user" size={14} aria-hidden="true" />
 								Settings center
 							</p>
 							<h1 className="text-3xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -342,7 +342,7 @@ export default function ProfileSettingsPage() {
 									disabled={uploadingAvatar || avatarUpload.uploading}
 									className="btn-secondary w-full justify-center"
 								>
-									<AnimatedIcon name="upload" size={16} aria-hidden="true" />
+									<Icon name="upload" size={16} aria-hidden="true" />
 									{uploadingAvatar || avatarUpload.uploading ? "Saving avatar..." : "Upload avatar"}
 								</button>
 							</div>
@@ -451,7 +451,7 @@ export default function ProfileSettingsPage() {
 									>
 										<div className="flex items-center gap-3">
 											<span className="icon-chip h-10 w-10 text-current">
-												<AnimatedIcon name={option.icon} size={18} aria-hidden="true" />
+												<Icon name={option.icon} size={18} aria-hidden="true" />
 											</span>
 											<div>
 												<p className="font-medium">{option.label}</p>
@@ -628,14 +628,14 @@ function SectionHeading({
 	title,
 	description,
 }: {
-	icon: Parameters<typeof AnimatedIcon>[0]["name"];
+	icon: Parameters<typeof Icon>[0]["name"];
 	title: string;
 	description: string;
 }) {
 	return (
 		<div className="flex items-start gap-3">
 			<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
-				<AnimatedIcon name={icon} size={18} aria-hidden="true" />
+				<Icon name={icon} size={18} aria-hidden="true" />
 			</span>
 			<div>
 				<h2 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{title}</h2>

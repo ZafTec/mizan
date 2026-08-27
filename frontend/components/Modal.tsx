@@ -38,7 +38,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
 			onClick={onClose}
 		>
 			<div
-				className="relative my-auto w-full min-w-[320px] max-w-xl rounded-lg bg-white p-6 shadow-lg dark:bg-charcoal-blue-900"
+				className="relative my-auto w-full min-w-[320px] max-w-xl rounded-lg bg-white p-6 dark:bg-charcoal-blue-900"
 				onClick={(e) => e.stopPropagation()}
 			>
 				<button

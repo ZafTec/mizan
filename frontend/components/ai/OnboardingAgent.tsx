@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import {
 	listOnboardingTools,
 	sendOnboardingMessage,
@@ -78,10 +78,7 @@ export default function OnboardingAgent() {
 			try {
 				const turn = await sendOnboardingMessage(threadId, trimmed);
 				setThreadId(turn.threadId);
-				setEntries((current) => [
-					...current,
-					{ message: turn.reply, performed: turn.performed },
-				]);
+				setEntries((current) => [...current, { message: turn.reply, performed: turn.performed }]);
 				if (turn.performed.some((p) => p.succeeded)) {
 					setAnythingDone(true);
 					// Something was written, so anything already on screen
@@ -91,9 +88,7 @@ export default function OnboardingAgent() {
 				scrollToBottom();
 			} catch (err) {
 				setError(err instanceof Error ? err.message : "That did not go through.");
-				setEntries((current) =>
-					current.filter((entry) => entry.message.id !== optimisticId),
-				);
+				setEntries((current) => current.filter((entry) => entry.message.id !== optimisticId));
 				setInput(trimmed);
 			}
 		});
@@ -119,10 +114,7 @@ export default function OnboardingAgent() {
 												: "text-amber-700 dark:text-amber-300",
 										)}
 									>
-										<AnimatedIcon
-											name={action.succeeded ? "circleCheck" : "badgeAlert"}
-											size={13}
-										/>
+										<Icon name={action.succeeded ? "circleCheck" : "badgeAlert"} size={13} />
 										<span>{action.succeeded ? action.summary : action.error}</span>
 									</li>
 								))}
@@ -175,7 +167,7 @@ export default function OnboardingAgent() {
 					className="btn-primary !rounded-2xl !py-3"
 					aria-label="Send"
 				>
-					<AnimatedIcon name="arrowRight" size={16} />
+					<Icon name="arrowRight" size={16} />
 				</button>
 			</form>
 
@@ -195,8 +187,8 @@ export default function OnboardingAgent() {
 						))}
 					</ul>
 					<p className="mt-2 text-charcoal-blue-400 dark:text-charcoal-blue-500">
-						That is the whole list. It cannot delete anything, and it only ever
-						acts on your own records.
+						That is the whole list. It cannot delete anything, and it only ever acts on your own
+						records.
 					</p>
 				</details>
 			)}
@@ -204,7 +196,10 @@ export default function OnboardingAgent() {
 			{anythingDone && (
 				<p className="text-center text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 					Done for now?{" "}
-					<a href="/dashboard" className="text-verdigris-600 hover:underline dark:text-verdigris-400">
+					<a
+						href="/dashboard"
+						className="text-verdigris-600 hover:underline dark:text-verdigris-400"
+					>
 						Go to your dashboard
 					</a>
 				</p>
@@ -213,13 +208,7 @@ export default function OnboardingAgent() {
 	);
 }
 
-function Bubble({
-	fromUser,
-	children,
-}: {
-	fromUser: boolean;
-	children: React.ReactNode;
-}) {
+function Bubble({ fromUser, children }: { fromUser: boolean; children: React.ReactNode }) {
 	return (
 		<div className={cn("flex gap-3", fromUser ? "flex-row-reverse" : "flex-row")}>
 			<span
@@ -230,14 +219,14 @@ function Bubble({
 						: "bg-white text-verdigris-700 ring-1 ring-charcoal-blue-200 dark:bg-charcoal-blue-950 dark:text-verdigris-300 dark:ring-white/10",
 				)}
 			>
-				<AnimatedIcon name={fromUser ? "user" : "bot"} size={14} />
+				<Icon name={fromUser ? "user" : "bot"} size={14} />
 			</span>
 			<div
 				className={cn(
 					"max-w-[78%] whitespace-pre-wrap rounded-3xl px-4 py-3 text-sm leading-relaxed",
 					fromUser
-						? "bg-verdigris-600 text-white shadow-md shadow-verdigris-500/20"
-						: "bg-white text-charcoal-blue-900 shadow-sm ring-1 ring-charcoal-blue-200 dark:bg-charcoal-blue-950/80 dark:text-charcoal-blue-100 dark:ring-white/10",
+						? "bg-verdigris-600 text-white "
+						: "bg-white text-charcoal-blue-900 ring-1 ring-charcoal-blue-200 dark:bg-charcoal-blue-950/80 dark:text-charcoal-blue-100 dark:ring-white/10",
 				)}
 			>
 				{children}

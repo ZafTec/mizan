@@ -10,7 +10,7 @@ import type { User } from "@/lib/auth";
 import { signOut } from "@/lib/auth-client";
 import { appToast } from "@/lib/toast";
 import { clearAppearanceCookie } from "@/lib/appearance-cookie";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
 import { useSubscription } from "@/lib/hooks/useSubscription";
 import { ProBadge } from "@/components/billing/ProBadge";
@@ -20,10 +20,16 @@ import HouseholdSwitcher from "./HouseholdSwitcher";
 import LogSheet from "./LogSheet";
 import { SPINE, USER_MENU, isActive, type NavItem } from "./nav";
 
-function UserAvatar({ user, size = 36, pro = false }: { user: User; size?: number; pro?: boolean }) {
-	const ringClass = pro
-		? "ring-2 ring-brand-500 shadow-md shadow-brand-500/30"
-		: "ring-1 ring-brand-500/15";
+function UserAvatar({
+	user,
+	size = 36,
+	pro = false,
+}: {
+	user: User;
+	size?: number;
+	pro?: boolean;
+}) {
+	const ringClass = pro ? "ring-2 ring-brand-500 " : "ring-1 ring-brand-500/15";
 
 	if (user.image) {
 		return (
@@ -43,7 +49,10 @@ function UserAvatar({ user, size = 36, pro = false }: { user: User; size?: numbe
 	}
 	return (
 		<div
-			className={cn("flex items-center justify-center rounded-2xl bg-brand-600 font-semibold text-white dark:bg-brand-500", ringClass)}
+			className={cn(
+				"flex items-center justify-center rounded-2xl bg-brand-600 font-semibold text-white dark:bg-brand-500",
+				ringClass,
+			)}
 			style={{ width: size, height: size, fontSize: size * 0.38 }}
 		>
 			{user.email?.charAt(0).toUpperCase() || "U"}
@@ -60,9 +69,9 @@ function SidebarLink({ item, collapsed }: { item: NavItem; collapsed: boolean })
 			className={cn(
 				"press-feedback group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-[background-color,color,box-shadow] duration-160 ease-out",
 				active
-					? "bg-brand-600 text-white shadow-lg shadow-brand-500/25 dark:bg-brand-500 dark:text-charcoal-blue-950"
+					? "bg-brand-600 text-white dark:bg-brand-500 dark:text-charcoal-blue-950"
 					: "text-charcoal-blue-600 hover:bg-white/70 hover:text-charcoal-blue-900 dark:text-charcoal-blue-200 dark:hover:bg-white/5 dark:hover:text-charcoal-blue-50",
-				collapsed && "justify-center px-2"
+				collapsed && "justify-center px-2",
 			)}
 			title={collapsed ? item.label : undefined}
 		>
@@ -71,10 +80,10 @@ function SidebarLink({ item, collapsed }: { item: NavItem; collapsed: boolean })
 					"relative flex h-5 w-5 shrink-0 items-center justify-center",
 					active
 						? "text-white dark:text-charcoal-blue-950"
-						: "text-charcoal-blue-500 group-hover:text-current dark:text-charcoal-blue-300"
+						: "text-charcoal-blue-500 group-hover:text-current dark:text-charcoal-blue-300",
 				)}
 			>
-				<AnimatedIcon name={item.icon} size={18} aria-hidden="true" />
+				<Icon name={item.icon} size={18} aria-hidden="true" />
 			</span>
 			{!collapsed && <span className="truncate">{item.label}</span>}
 		</Link>
@@ -91,16 +100,16 @@ function BottomNavLink({ item }: { item: NavItem }) {
 				"flex flex-1 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium transition-colors",
 				active
 					? "text-brand-700 dark:text-brand-300"
-					: "text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:text-charcoal-blue-400 dark:hover:text-white"
+					: "text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:text-charcoal-blue-400 dark:hover:text-white",
 			)}
 		>
 			<span
 				className={cn(
 					"flex h-7 w-7 items-center justify-center rounded-2xl transition-all",
-					active && "bg-brand-600 text-white shadow-md shadow-brand-500/30 dark:bg-brand-500 dark:text-charcoal-blue-950"
+					active && "bg-brand-600 text-white dark:bg-brand-500 dark:text-charcoal-blue-950",
 				)}
 			>
-				<AnimatedIcon name={item.icon} size={16} aria-hidden="true" />
+				<Icon name={item.icon} size={16} aria-hidden="true" />
 			</span>
 			<span className="truncate">{item.label}</span>
 		</Link>
@@ -188,24 +197,47 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 		<div className="shell-fullbleed relative flex h-dvh overflow-x-clip bg-[color-mix(in_oklab,var(--color-charcoal-blue-50)_92%,white)] dark:bg-[color-mix(in_oklab,var(--color-charcoal-blue-950)_92%,black)]">
 			{/* Soft decorative blobs (v2 aesthetic). Kept inside the shell so the body
 				never scrolls to reveal them; html/body overflow-x: clip is the backstop. */}
-			<div aria-hidden="true" className="pointer-events-none absolute right-[-5%] top-[-10%] h-125 w-125 rounded-full bg-verdigris-200/30 blur-[120px] -z-10" />
-			<div aria-hidden="true" className="pointer-events-none absolute bottom-[-10%] left-[-5%] h-100 w-100 rounded-full bg-sandy-brown-200/25 blur-[100px] -z-10" />
+			<div
+				aria-hidden="true"
+				className="pointer-events-none absolute right-[-5%] top-[-10%] h-125 w-125 rounded-full bg-verdigris-200/30 blur-[120px] -z-10"
+			/>
+			<div
+				aria-hidden="true"
+				className="pointer-events-none absolute bottom-[-10%] left-[-5%] h-100 w-100 rounded-full bg-sandy-brown-200/25 blur-[100px] -z-10"
+			/>
 
 			{/* Desktop Sidebar, fills shell height; inner nav scrolls via custom-scrollbar */}
 			<aside
 				className={cn(
 					"hidden h-full shrink-0 flex-col border-r border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-charcoal-blue-950 lg:flex",
-					collapsed ? "w-20" : "w-72"
+					collapsed ? "w-20" : "w-72",
 				)}
 			>
-				<div className={cn("flex shrink-0 items-center gap-3 border-b border-charcoal-blue-200/70 px-4 py-5 dark:border-white/10", collapsed && "flex-col gap-2 px-2")}>
-					<Link href="/dashboard" className={cn("flex items-center gap-3", collapsed && "flex-col gap-1")}>
+				<div
+					className={cn(
+						"flex shrink-0 items-center gap-3 border-b border-charcoal-blue-200/70 px-4 py-5 dark:border-white/10",
+						collapsed && "flex-col gap-2 px-2",
+					)}
+				>
+					<Link
+						href="/dashboard"
+						className={cn("flex items-center gap-3", collapsed && "flex-col gap-1")}
+					>
 						<div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-2xl ring-1 ring-brand-500/20">
-							<Image src={logoTransparent} alt="Mizan" fill sizes="44px" className="object-cover" priority />
+							<Image
+								src={logoTransparent}
+								alt="Mizan"
+								fill
+								sizes="44px"
+								className="object-cover"
+								priority
+							/>
 						</div>
 						{!collapsed && (
 							<div className="flex flex-col leading-tight">
-								<span className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Mizan</span>
+								<span className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+									Mizan
+								</span>
 								<span className="text-[10px] uppercase tracking-[0.18em] text-charcoal-blue-500 dark:text-charcoal-blue-400">
 									{variant === "admin" ? "Admin" : "Balance"}
 								</span>
@@ -217,12 +249,14 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 						onClick={() => setCollapsed((c) => !c)}
 						className={cn(
 							"flex h-8 w-8 items-center justify-center rounded-xl border border-charcoal-blue-200 text-charcoal-blue-500 transition-colors hover:bg-charcoal-blue-50 hover:text-charcoal-blue-900 dark:border-white/10 dark:text-charcoal-blue-300 dark:hover:bg-white/5 dark:hover:text-white",
-							collapsed ? "mx-auto" : "ml-auto"
+							collapsed ? "mx-auto" : "ml-auto",
 						)}
 						aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
 						title={collapsed ? "Expand" : "Collapse"}
 					>
-						<ChevronDown className={cn("h-4 w-4 transition-transform", collapsed ? "rotate-90" : "-rotate-90")} />
+						<ChevronDown
+							className={cn("h-4 w-4 transition-transform", collapsed ? "rotate-90" : "-rotate-90")}
+						/>
 					</button>
 				</div>
 
@@ -231,8 +265,8 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 						type="button"
 						onClick={() => setLogSheetOpen(true)}
 						className={cn(
-							"flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-600 py-3 font-semibold text-white shadow-lg shadow-brand-600/25 transition-colors hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-400",
-							collapsed && "px-0"
+							"flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-600 py-3 font-semibold text-white transition-colors hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-400",
+							collapsed && "px-0",
 						)}
 						aria-label="Log an entry"
 						title="Log an entry"
@@ -242,13 +276,23 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 					</button>
 				</div>
 
-				<nav className={cn("custom-scrollbar flex-1 space-y-1 overflow-y-auto px-3 py-4", collapsed && "px-2")}>
+				<nav
+					className={cn(
+						"custom-scrollbar flex-1 space-y-1 overflow-y-auto px-3 py-4",
+						collapsed && "px-2",
+					)}
+				>
 					{SPINE.map((item) => (
 						<SidebarLink key={item.href} item={item} collapsed={collapsed} />
 					))}
 				</nav>
 
-				<div className={cn("shrink-0 border-t border-charcoal-blue-200/70 p-3 dark:border-white/10", collapsed && "px-2")}>
+				<div
+					className={cn(
+						"shrink-0 border-t border-charcoal-blue-200/70 p-3 dark:border-white/10",
+						collapsed && "px-2",
+					)}
+				>
 					{collapsed ? (
 						<button
 							type="button"
@@ -257,7 +301,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 							aria-label="Sign out"
 							title="Sign out"
 						>
-							<AnimatedIcon name="logout" size={16} />
+							<Icon name="logout" size={16} />
 						</button>
 					) : (
 						<div
@@ -265,7 +309,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 								"flex items-center gap-3 rounded-2xl border p-2.5",
 								isPro
 									? "border-brand-500/30 bg-gradient-to-r from-brand-500/10 to-transparent dark:border-brand-500/25"
-									: "border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-charcoal-blue-900"
+									: "border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-charcoal-blue-900",
 							)}
 						>
 							<UserAvatar user={user} size={36} pro={isPro} />
@@ -288,7 +332,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 								className="flex h-8 w-8 items-center justify-center rounded-xl text-charcoal-blue-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10"
 								aria-label="Sign out"
 							>
-								<AnimatedIcon name="logout" size={16} />
+								<Icon name="logout" size={16} />
 							</button>
 						</div>
 					)}
@@ -303,9 +347,17 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 						{/* Mobile logo */}
 						<Link href="/dashboard" className="flex items-center gap-2 lg:hidden">
 							<div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-xl ring-1 ring-brand-500/20">
-								<Image src={logoTransparent} alt="Mizan" fill sizes="36px" className="object-cover" />
+								<Image
+									src={logoTransparent}
+									alt="Mizan"
+									fill
+									sizes="36px"
+									className="object-cover"
+								/>
 							</div>
-							<span className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Mizan</span>
+							<span className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+								Mizan
+							</span>
 						</Link>
 
 						{/* Desktop search */}
@@ -316,7 +368,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 								className="h-10 w-full rounded-xl border border-charcoal-blue-200 bg-white pl-10 pr-4 text-sm text-charcoal-blue-900 placeholder-charcoal-blue-400 outline-none transition-colors focus:border-verdigris-500 focus:ring-4 focus:ring-verdigris-300/20 dark:border-white/10 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-50 dark:placeholder-charcoal-blue-400"
 							/>
 							<span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-blue-400">
-								<AnimatedIcon name="search" size={16} />
+								<Icon name="search" size={16} />
 							</span>
 						</div>
 
@@ -343,18 +395,19 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 									<ChevronDown
 										className={cn(
 											"h-4 w-4 text-charcoal-blue-400 transition-transform",
-											userMenuOpen && "rotate-180"
+											userMenuOpen && "rotate-180",
 										)}
 									/>
 								</button>
 								{/* User menu is portalled to document.body so any overflow/isolate
-								    ancestor (sticky header, scroll containers) can't clip it. */}
-								{userMenuOpen && userMenuPos &&
+								 ancestor (sticky header, scroll containers) can't clip it. */}
+								{userMenuOpen &&
+									userMenuPos &&
 									createPortal(
 										<div
 											ref={userMenuRef}
 											role="menu"
-											className="menu-pop fixed w-60 overflow-hidden rounded-xl border border-charcoal-blue-200 bg-white p-1.5 shadow-2xl shadow-charcoal-blue-950/15 dark:border-white/10 dark:bg-charcoal-blue-950"
+											className="menu-pop fixed w-60 overflow-hidden rounded-xl border border-charcoal-blue-200 bg-white p-1.5 dark:border-white/10 dark:bg-charcoal-blue-950"
 											style={{ top: userMenuPos.top, right: userMenuPos.right, zIndex: 1000 }}
 										>
 											<div className="mb-1 rounded-2xl px-3 py-2.5">
@@ -377,7 +430,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 														className="flex items-center gap-3 rounded-2xl px-3 py-2 text-sm text-charcoal-blue-700 hover:bg-charcoal-blue-50 dark:text-charcoal-blue-200 dark:hover:bg-white/5"
 													>
 														<span className="icon-chip h-8 w-8">
-															<AnimatedIcon name={item.icon} size={14} />
+															<Icon name={item.icon} size={14} />
 														</span>
 														{item.label}
 														{item.href === "/billing" && isPro && <ProBadge className="ml-auto" />}
@@ -394,7 +447,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 													className="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
 												>
 													<span className="flex h-8 w-8 items-center justify-center rounded-2xl border border-red-200 text-red-500 dark:border-red-500/20 dark:text-red-400">
-														<AnimatedIcon name="logout" size={14} />
+														<Icon name="logout" size={14} />
 													</span>
 													Sign out
 												</button>
@@ -428,7 +481,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 						className="flex flex-1 flex-col items-center justify-center gap-0.5 py-1"
 						aria-label="Log an entry"
 					>
-						<span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-600 text-2xl leading-none text-white shadow-lg shadow-brand-600/30 dark:bg-brand-500">
+						<span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-600 text-2xl leading-none text-white dark:bg-brand-500">
 							+
 						</span>
 					</button>
@@ -454,10 +507,12 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 						>
 							<div className="mb-5 flex items-start gap-4">
 								<span className="icon-chip h-12 w-12 text-red-500 dark:text-red-400">
-									<AnimatedIcon name="logout" size={20} />
+									<Icon name="logout" size={20} />
 								</span>
 								<div className="space-y-1">
-									<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Sign out</h3>
+									<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+										Sign out
+									</h3>
 									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 										Your session will end on this device immediately.
 									</p>
@@ -484,7 +539,7 @@ export default function AppShell({ user, children, variant = "dashboard" }: AppS
 							</div>
 						</div>
 					</div>,
-					document.body
+					document.body,
 				)}
 		</div>
 	);

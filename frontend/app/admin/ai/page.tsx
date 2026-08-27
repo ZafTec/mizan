@@ -23,10 +23,7 @@ function Meter({ used, ceiling }: { used: number; ceiling: number }) {
 }
 
 export default async function AdminAiPage() {
-	const [prompts, usage] = await Promise.all([
-		listAiPrompts(),
-		getGlobalAiUsage(),
-	]);
+	const [prompts, usage] = await Promise.all([listAiPrompts(), getGlobalAiUsage()]);
 
 	return (
 		<div className="space-y-8">
@@ -36,8 +33,8 @@ export default async function AdminAiPage() {
 					Assistant
 				</h1>
 				<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-					What the assistant says is a product surface, not a constant. Edit a
-					prompt, prove it against the adversarial suite, publish it.
+					What the assistant says is a product surface, not a constant. Edit a prompt, prove it
+					against the adversarial suite, publish it.
 				</p>
 			</header>
 
@@ -47,20 +44,17 @@ export default async function AdminAiPage() {
 						Today
 					</h2>
 					<span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						{usage.requestsToday} calls · {usage.activeUsersToday} people ·{" "}
-						{usage.failuresToday} failed
+						{usage.requestsToday} calls · {usage.activeUsersToday} people · {usage.failuresToday}{" "}
+						failed
 					</span>
 				</div>
 
 				<div className="grid gap-4 sm:grid-cols-2">
 					<div className="space-y-2">
 						<div className="flex items-baseline justify-between text-sm">
-							<span className="text-charcoal-blue-600 dark:text-charcoal-blue-300">
-								Tokens
-							</span>
+							<span className="text-charcoal-blue-600 dark:text-charcoal-blue-300">Tokens</span>
 							<span className="tabular-nums text-charcoal-blue-900 dark:text-charcoal-blue-50">
-								{usage.tokensToday.toLocaleString()} /{" "}
-								{usage.tokenCeiling.toLocaleString()}
+								{usage.tokensToday.toLocaleString()} / {usage.tokenCeiling.toLocaleString()}
 							</span>
 						</div>
 						<Meter used={usage.tokensToday} ceiling={usage.tokenCeiling} />
@@ -68,18 +62,12 @@ export default async function AdminAiPage() {
 
 					<div className="space-y-2">
 						<div className="flex items-baseline justify-between text-sm">
-							<span className="text-charcoal-blue-600 dark:text-charcoal-blue-300">
-								Spend
-							</span>
+							<span className="text-charcoal-blue-600 dark:text-charcoal-blue-300">Spend</span>
 							<span className="tabular-nums text-charcoal-blue-900 dark:text-charcoal-blue-50">
-								{currency(usage.costMicrosToday)} /{" "}
-								{currency(usage.costCeilingMicros)}
+								{currency(usage.costMicrosToday)} / {currency(usage.costCeilingMicros)}
 							</span>
 						</div>
-						<Meter
-							used={usage.costMicrosToday}
-							ceiling={usage.costCeilingMicros}
-						/>
+						<Meter used={usage.costMicrosToday} ceiling={usage.costCeilingMicros} />
 					</div>
 				</div>
 
@@ -107,7 +95,7 @@ export default async function AdminAiPage() {
 						<li key={prompt.key}>
 							<Link
 								href={`/admin/ai/${encodeURIComponent(prompt.key)}`}
-								className="glass-panel block h-full space-y-2 p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
+								className="glass-panel block h-full space-y-2 p-5 transition-all hover:-translate-y-0.5 "
 							>
 								<div className="flex items-center justify-between gap-3">
 									<code className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">

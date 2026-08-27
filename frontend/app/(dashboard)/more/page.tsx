@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getUserOptionalServer } from "@/helper/session";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import { visibleGroups } from "@/components/Layout/nav";
 
 export const metadata: Metadata = {
@@ -42,7 +42,7 @@ export default async function MorePage() {
 								className="surface-panel flex items-start gap-3 p-4 transition-colors hover:border-brand-500/40 hover:bg-brand-50/40 dark:hover:bg-white/5"
 							>
 								<span className="icon-chip h-10 w-10 shrink-0 text-brand-600 dark:text-brand-400">
-									<AnimatedIcon name={item.icon} size={18} />
+									<Icon name={item.icon} size={18} />
 								</span>
 								<span className="min-w-0">
 									<span className="block font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
