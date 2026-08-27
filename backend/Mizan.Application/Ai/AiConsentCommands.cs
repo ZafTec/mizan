@@ -5,7 +5,16 @@ using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Ai;
 
-public record AiConsentDto(bool Enabled, bool ShareNutrition, bool ShareTraining, bool ShareBody, DateTime? UpdatedAt);
+public record AiConsentDto(
+    bool Enabled,
+    bool ShareNutrition,
+    bool ShareTraining,
+    bool ShareBody,
+    bool AllowWrites,
+    bool WriteNutrition,
+    bool WriteTraining,
+    bool WriteBody,
+    DateTime? UpdatedAt);
 
 public record GetAiConsentQuery : IRequest<AiConsentDto>;
 
@@ -30,8 +39,11 @@ public class GetAiConsentQueryHandler : IRequestHandler<GetAiConsentQuery, AiCon
         // No row is the same answer as every flag off, and the screen should
         // show it that way rather than as "not configured".
         return stored is null
-            ? new AiConsentDto(false, false, false, false, null)
-            : new AiConsentDto(stored.Enabled, stored.ShareNutrition, stored.ShareTraining, stored.ShareBody, stored.UpdatedAt);
+            ? new AiConsentDto(false, false, false, false, false, false, false, false, null)
+            : new AiConsentDto(
+                stored.Enabled, stored.ShareNutrition, stored.ShareTraining, stored.ShareBody,
+                stored.AllowWrites, stored.WriteNutrition, stored.WriteTraining, stored.WriteBody,
+                stored.UpdatedAt);
     }
 }
 
@@ -40,8 +52,15 @@ public class GetAiConsentQueryHandler : IRequestHandler<GetAiConsentQuery, AiCon
 /// switches should send four switches, and a partial update is how one gets
 /// left on by accident.
 /// </summary>
-public record UpdateAiConsentCommand(bool Enabled, bool ShareNutrition, bool ShareTraining, bool ShareBody)
-    : IRequest<AiConsentDto>;
+public record UpdateAiConsentCommand(
+    bool Enabled,
+    bool ShareNutrition,
+    bool ShareTraining,
+    bool ShareBody,
+    bool AllowWrites,
+    bool WriteNutrition,
+    bool WriteTraining,
+    bool WriteBody) : IRequest<AiConsentDto>;
 
 public class UpdateAiConsentCommandHandler : IRequestHandler<UpdateAiConsentCommand, AiConsentDto>
 {
@@ -71,11 +90,17 @@ public class UpdateAiConsentCommandHandler : IRequestHandler<UpdateAiConsentComm
         consent.ShareNutrition = request.ShareNutrition;
         consent.ShareTraining = request.ShareTraining;
         consent.ShareBody = request.ShareBody;
+        consent.AllowWrites = request.AllowWrites;
+        consent.WriteNutrition = request.WriteNutrition;
+        consent.WriteTraining = request.WriteTraining;
+        consent.WriteBody = request.WriteBody;
         consent.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
 
         return new AiConsentDto(
-            consent.Enabled, consent.ShareNutrition, consent.ShareTraining, consent.ShareBody, consent.UpdatedAt);
+            consent.Enabled, consent.ShareNutrition, consent.ShareTraining, consent.ShareBody,
+            consent.AllowWrites, consent.WriteNutrition, consent.WriteTraining, consent.WriteBody,
+            consent.UpdatedAt);
     }
 }

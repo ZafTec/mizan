@@ -74,6 +74,17 @@ public class AiController : ControllerBase
         [FromBody] SendAiOnboardingMessageCommand command)
         => Ok(await _mediator.Send(command));
 
+    /// <summary>
+    /// The setup conversation so far, so a half-finished setup resumes instead
+    /// of starting over. 204 when the user has never begun one.
+    /// </summary>
+    [HttpGet("onboarding")]
+    public async Task<ActionResult<AiChatThreadDetailDto>> GetOnboarding()
+    {
+        var thread = await _mediator.Send(new GetAiOnboardingThreadQuery());
+        return thread is null ? NoContent() : Ok(thread);
+    }
+
     /// <summary>The allowlist, so the UI can say what onboarding is able to do before it starts.</summary>
     [HttpGet("onboarding/tools")]
     public ActionResult<IReadOnlyList<AiToolSummary>> OnboardingTools()

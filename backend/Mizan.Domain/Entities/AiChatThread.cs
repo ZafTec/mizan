@@ -7,6 +7,18 @@ public enum AiChatRole
 }
 
 /// <summary>
+/// Which surface owns a thread. Onboarding is a different conversation with a
+/// different model setup - it has tools and the chat page does not - so the
+/// two cannot be told apart by title alone, and a thread the chat page cannot
+/// actually continue has no business being listed there.
+/// </summary>
+public enum AiChatThreadKind
+{
+    Chat = 0,
+    Onboarding = 1,
+}
+
+/// <summary>
 /// A conversation with the assistant.
 ///
 /// This used to be a single jsonb blob called ThreadData holding "thread
@@ -22,6 +34,13 @@ public class AiChatThread
 
     /// <summary>Taken from the opening question. A conversation nobody can identify is a conversation nobody returns to.</summary>
     public string Title { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Which surface owns this. Onboarding keeps one long-running thread per
+    /// user so setup resumes where it stopped; chat starts as many as the user
+    /// likes.
+    /// </summary>
+    public AiChatThreadKind Kind { get; set; } = AiChatThreadKind.Chat;
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
