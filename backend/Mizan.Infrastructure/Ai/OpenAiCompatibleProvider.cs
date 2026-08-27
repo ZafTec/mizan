@@ -80,6 +80,10 @@ public class OpenAiCompatibleProvider : IAiProvider
         client.BaseAddress = new Uri(_options.BaseUrl.TrimEnd('/') + "/");
         client.Timeout = TimeSpan.FromSeconds(_options.TimeoutSeconds);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
+        // Azure OpenAI's key-based auth ignores Bearer (that slot is reserved for
+        // Entra ID tokens) and reads this header instead; every other
+        // OpenAI-compatible provider just ignores it.
+        client.DefaultRequestHeaders.Add("api-key", _options.ApiKey);
 
         HttpResponseMessage response;
         try
