@@ -15,16 +15,17 @@ export default function Page() {
 	const router = useRouter();
 	const [formState, action, isPending] = useActionState(addUser, EMPTY_FORM_STATE);
 	const [password, setPassword] = useState("");
+	const [email, setEmail] = useState("");
 
 	useEffect(() => {
 		if (formState.status === "success") {
 			const plan = new URLSearchParams(window.location.search).get("plan");
 			const dest = plan
 				? `/login?callbackUrl=${encodeURIComponent(`/billing?checkout=${plan}`)}`
-				: "/login";
+				: `/verify?email=${encodeURIComponent(email)}`;
 			router.push(dest);
 		}
-	}, [formState.status, router]);
+	}, [formState.status, router, email]);
 
 	return (
 		<div className="min-h-[70vh] flex items-center justify-center py-8">
@@ -55,7 +56,8 @@ export default function Page() {
 								data-testid="register-email"
 								className="input"
 								placeholder="you@example.com"
-								defaultValue=""
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
 							/>
 							<FieldError formState={formState} name="email" />
 						</div>
@@ -125,7 +127,7 @@ export default function Page() {
 						{formState.status === "success" && (
 							<div className="flex items-center gap-2 p-3 rounded-xl bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400 text-sm">
 								<Icon name="circleCheck" size={18} aria-hidden="true" />
-								<span>Account created! Redirecting to login...</span>
+								<span>Account created! Redirecting...</span>
 							</div>
 						)}
 
