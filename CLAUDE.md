@@ -301,26 +301,31 @@ test with it.
 - `/api/health` - Frontend health check
 - `/api/csrf` - CSRF token management
 
-### Direct Backend Calls (via `api.mizan.zaftech.co` subdomain)
-Client-side API calls go directly to the backend via a separate API subdomain with CORS:
+### Direct Backend Calls (path-routed, same domain - no subdomains)
+One public domain for everything. Client-side API calls go directly to the
+backend, and the MCP server has its own path, both reverse-proxied off the
+app's own host - no `api.*` or `mcp.*` subdomain:
 - `/api/Users/*`, `/api/Foods/*`, `/api/Recipes/*`, `/api/MealPlans/*`
 - `/api/Workouts/*`, `/api/Exercises/*`, `/api/BodyMeasurements/*`
 - `/api/Achievements/*`, `/api/Households/*`, `/api/Trainers/*`, `/api/Chat/*`
 - `/hubs/*` - SignalR hubs
+- `/mcp` - MCP server (external MCP clients, `X-Api-Key` auth, not browser traffic)
 
 **Network Topology:**
 - **Browser → Frontend:** `https://mizan.zaftech.co` (pages, auth, SSR)
-- **Browser → Backend:** `https://api.mizan.zaftech.co` (client-side API calls, CORS-enabled)
+- **Browser → Backend:** `https://mizan.zaftech.co/api/*` and `/hubs/*` (same origin, no CORS needed in production)
+- **External MCP clients → MCP server:** `https://mizan.zaftech.co/mcp`
 - **Frontend → Backend (server-side):** `http://mizan-backend:8080` (Docker network, no CORS needed)
-- **Nginx** terminates SSL and routes `mizan.zaftech.co` → frontend, `api.mizan.zaftech.co` → backend
+- **Nginx** terminates SSL and routes by path on one host: `/api` and `/hubs` → backend, `/mcp` → MCP server, everything else → frontend
 
 ## Authentication Flow
 
 1. User signs in at `POST /api/Auth/login` (backend).
 2. The backend verifies the password, creates a row in `user_sessions`, and sets
-   `mizan_session` - httpOnly, SameSite=Lax, `Domain=.mizan.zaftech.co` in production.
-3. Every later request carries the cookie: the browser sends it to both origins
-   because they are same-site, and Next.js server components forward it.
+   `mizan_session` - httpOnly, SameSite=Lax, host-only (no `Domain` attribute -
+   app, API and MCP are all the same origin, so there's nothing to share it with).
+3. Every later request carries the cookie automatically since it's the same
+   origin, and Next.js server components forward it.
 4. `SessionCookieAuthenticationHandler` resolves the token against
    `user_sessions` (HybridCache in front) and then checks `IUserStatusService`
    for deleted, unverified and banned.
