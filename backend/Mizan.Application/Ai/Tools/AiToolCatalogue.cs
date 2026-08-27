@@ -325,7 +325,8 @@ public static class AiToolCatalogue
 
         new AiToolDefinition(
             "record_goal_progress",
-            "Record a day's actuals against the user's goal, for the progress chart.",
+            "Record a day's nutrition actuals against the user's goal, for the progress chart. "
+            + "Weight is not recorded here - use log_measurement for that.",
             """
             {
               "type": "object",
@@ -335,7 +336,6 @@ public static class AiToolCatalogue
                 "actualProteinGrams": { "type": "number" },
                 "actualCarbsGrams": { "type": "number" },
                 "actualFatGrams": { "type": "number" },
-                "actualWeight": { "type": "number" },
                 "date": { "type": "string", "description": "YYYY-MM-DD, defaults to today" },
                 "notes": { "type": "string" }
               },
@@ -348,7 +348,10 @@ public static class AiToolCatalogue
                 ActualProteinGrams = AiToolArgs.OptionalDecimal(args, "actualProteinGrams") ?? 0,
                 ActualCarbsGrams = AiToolArgs.OptionalDecimal(args, "actualCarbsGrams") ?? 0,
                 ActualFatGrams = AiToolArgs.OptionalDecimal(args, "actualFatGrams") ?? 0,
-                ActualWeight = AiToolArgs.OptionalDecimal(args, "actualWeight"),
+                // Deliberately not taken from the arguments. This tool is gated
+                // on nutrition consent, and a weight is body data: accepting it
+                // here would let a nutrition-only grant write the body axis.
+                ActualWeight = null,
                 Date = AiToolArgs.OptionalDate(args, "date"),
                 Notes = AiToolArgs.OptionalString(args, "notes"),
             },
