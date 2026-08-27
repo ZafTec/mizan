@@ -1,9 +1,9 @@
-# CLAUDE.md - MacroChef Developer Guidance
+# CLAUDE.md - Mizan Developer Guidance
 
-This file provides guidance to Claude Code and other LLM tools when working with the MacroChef codebase.
+This file provides guidance to Claude Code and other LLM tools when working with the Mizan codebase.
 
 **Last Updated:** 2025-12-27
-**Project:** MacroChef (Mizan) - Full-stack meal planning + nutrition tracking application
+**Project:** Mizan - Full-stack meal planning + nutrition tracking application
 
 ---
 
@@ -43,7 +43,7 @@ This file provides guidance to Claude Code and other LLM tools when working with
 
 ## Project Overview
 
-MacroChef (also referred to as "Mizan" internally) is a full-stack meal planning, nutrition tracking, and fitness application. **ASP.NET Core owns the entire database schema, identity included.** Next.js is a pure client: no ORM, no tables, no auth library. See `docs/REFOCUS.md` §6 for why the old Drizzle/BetterAuth split was removed.
+Mizan is a full-stack meal planning, nutrition tracking, and fitness application. **ASP.NET Core owns the entire database schema, identity included.** Next.js is a pure client: no ORM, no tables, no auth library. See `docs/REFOCUS.md` §6 for why the old Drizzle/BetterAuth split was removed.
 
 **Tech Stack:**
 - **Frontend:** Next.js 16 (App Router) + React 19 + TypeScript + Tailwind CSS + Bun
@@ -301,7 +301,7 @@ test with it.
 - `/api/health` - Frontend health check
 - `/api/csrf` - CSRF token management
 
-### Direct Backend Calls (via `api.mizan.euaell.me` subdomain)
+### Direct Backend Calls (via `api.mizan.zaftech.co` subdomain)
 Client-side API calls go directly to the backend via a separate API subdomain with CORS:
 - `/api/Users/*`, `/api/Foods/*`, `/api/Recipes/*`, `/api/MealPlans/*`
 - `/api/Workouts/*`, `/api/Exercises/*`, `/api/BodyMeasurements/*`
@@ -309,16 +309,16 @@ Client-side API calls go directly to the backend via a separate API subdomain wi
 - `/hubs/*` - SignalR hubs
 
 **Network Topology:**
-- **Browser → Frontend:** `https://mizan.euaell.me` (pages, auth, SSR)
-- **Browser → Backend:** `https://api.mizan.euaell.me` (client-side API calls, CORS-enabled)
+- **Browser → Frontend:** `https://mizan.zaftech.co` (pages, auth, SSR)
+- **Browser → Backend:** `https://api.mizan.zaftech.co` (client-side API calls, CORS-enabled)
 - **Frontend → Backend (server-side):** `http://mizan-backend:8080` (Docker network, no CORS needed)
-- **Nginx** terminates SSL and routes `mizan.euaell.me` → frontend, `api.mizan.euaell.me` → backend
+- **Nginx** terminates SSL and routes `mizan.zaftech.co` → frontend, `api.mizan.zaftech.co` → backend
 
 ## Authentication Flow
 
 1. User signs in at `POST /api/Auth/login` (backend).
 2. The backend verifies the password, creates a row in `user_sessions`, and sets
-   `mizan_session` - httpOnly, SameSite=Lax, `Domain=.euaell.me` in production.
+   `mizan_session` - httpOnly, SameSite=Lax, `Domain=.mizan.zaftech.co` in production.
 3. Every later request carries the cookie: the browser sends it to both origins
    because they are same-site, and Next.js server components forward it.
 4. `SessionCookieAuthenticationHandler` resolves the token against

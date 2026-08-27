@@ -8,12 +8,12 @@ public class AppOptions
 {
     public const string SectionName = "App";
 
-    /// <summary>Origin of the web app, e.g. https://mizan.euaell.me.</summary>
+    /// <summary>Origin of the web app, e.g. https://mizan.zaftech.co.</summary>
     public string PublicUrl { get; set; } = "http://localhost:3000";
 
     /// <summary>
     /// Cookie domain shared by the web app and the API. Empty means host-only,
-    /// which is what localhost wants; production sets ".euaell.me".
+    /// which is what localhost wants; production sets ".mizan.zaftech.co".
     /// </summary>
     public string? CookieDomain { get; set; }
 }

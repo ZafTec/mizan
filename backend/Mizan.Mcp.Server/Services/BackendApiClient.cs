@@ -117,7 +117,7 @@ public sealed class BackendApiClient : IBackendApiClient
     private static string FormatMessage(HttpStatusCode status, string? code, string message) => status switch
     {
         HttpStatusCode.Unauthorized => "MCP token is no longer valid. Create a new token in Profile → MCP.",
-        HttpStatusCode.Forbidden when code == "upgrade_required" => $"[UPGRADE REQUIRED] {message} Manage plan: https://mizan.euaell.me/billing",
+        HttpStatusCode.Forbidden when code == "upgrade_required" => $"[UPGRADE REQUIRED] {message} Manage plan: https://mizan.zaftech.co/billing",
         HttpStatusCode.Forbidden => message,
         HttpStatusCode.NotFound => $"Not found: {message}",
         HttpStatusCode.TooManyRequests => $"Rate limited: {message}. Wait before retrying.",

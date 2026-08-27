@@ -174,7 +174,7 @@ builder.Services.AddMcpServer(options =>
         {
             return new CallToolResult
             {
-                Content = [new TextContentBlock { Text = $"[MONTHLY LIMIT REACHED] The free plan includes {monthlyLimit} MCP tool calls per month. Upgrade at https://mizan.euaell.me/billing." }],
+                Content = [new TextContentBlock { Text = $"[MONTHLY LIMIT REACHED] The free plan includes {monthlyLimit} MCP tool calls per month. Upgrade at https://mizan.zaftech.co/billing." }],
                 IsError = true
             };
         }
