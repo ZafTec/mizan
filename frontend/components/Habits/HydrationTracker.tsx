@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 
 const TARGET_GLASSES = 8;
 const GLASS_ML = 250;
@@ -62,7 +62,7 @@ export default function HydrationTracker() {
 					aria-hidden="true"
 				/>
 				<div className="relative flex h-full flex-col items-center justify-center gap-1">
-					<p className="text-3xl font-bold text-charcoal-blue-900 drop-shadow-sm dark:text-charcoal-blue-50">
+					<p className="text-3xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-50">
 						{mounted ? glasses : "–"}
 					</p>
 					<p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-charcoal-blue-700 dark:text-charcoal-blue-100">
@@ -87,8 +87,7 @@ export default function HydrationTracker() {
 					disabled={!mounted}
 					className="btn-primary rounded-2xl! py-2! text-sm"
 				>
-					<AnimatedIcon name="sparkles" size={14} />
-					+ Glass
+					<Icon name="sparkles" size={14} />+ Glass
 				</button>
 				<button
 					type="button"

@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import Loading from "@/components/Loading";
 import { appToast } from "@/lib/toast";
 import { getAllIngredient } from "@/data/ingredient";
 import type { Ingredient } from "@/data/ingredient";
-import Image from 'next/image';
+import Image from "next/image";
 import { useImageUpload } from "@/components/ImageUpload";
 import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
@@ -15,444 +15,496 @@ import RecipeIngredientSearch from "@/components/Recipes/RecipeIngredientSearch"
 import type { RecipeSearchResult } from "@/components/Recipes/RecipeIngredientSearch";
 
 type SelectedIngredient = {
-    type: "food" | "recipe";
-    ingredient: Ingredient | null;
-    subRecipe: RecipeSearchResult | null;
-    name: string;
-    amount: number | null;
-    unit: string;
-}
+	type: "food" | "recipe";
+	ingredient: Ingredient | null;
+	subRecipe: RecipeSearchResult | null;
+	name: string;
+	amount: number | null;
+	unit: string;
+};
 
 const MAX_RECIPE_IMAGES_TO_PREVIEW = 3;
 
 interface EditRecipeFormProps {
-    recipe: Recipe;
+	recipe: Recipe;
 }
 
 export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
-    const [name, setName] = useState(recipe.title || "");
-    const [images, setImages] = useState<string[]>(recipe.imageUrl ? [recipe.imageUrl] : []);
+	const [name, setName] = useState(recipe.title || "");
+	const [images, setImages] = useState<string[]>(recipe.imageUrl ? [recipe.imageUrl] : []);
 
-    const imageUpload = useImageUpload({
-        folder: "recipes",
-        onUploaded: (url) => setImages([url]),
-    });
-    const [description, setDescription] = useState(recipe.description || '');
-    // Instructions are free text, not ordered rows - see docs/REFOCUS.md §4.
-    const [instructions, setInstructions] = useState<string>(recipe.instructions ?? "");
-    const [selectedIngredients, setSelectedIngredients] = useState<SelectedIngredient[]>(
-        // Every ingredient the API returns is a food. The editor still offers
-        // sub-recipes, but RecipeIngredientDto has no field to carry one back,
-        // so a saved sub-recipe reloads as its text - see the note in the PR.
-        (recipe.ingredients || []).map(ing => {
-            return {
-                type: "food" as const,
-                ingredient: {
-                    id: ing.foodId!,
-                    name: ing.foodName || ing.ingredientText || "",
-                    caloriesPer100g: 0,
-                    proteinPer100g: 0,
-                    carbsPer100g: 0,
-                    fatPer100g: 0,
-                    fiberPer100g: 0,
-                    proteinCalorieRatio: 0,
-                    servingSize: 0,
-                    servingUnit: 'g',
-                    isVerified: false
-                },
-                subRecipe: null,
-                name: ing.foodName || ing.ingredientText || "",
-                amount: ing.amount ?? null,
-                unit: 'gram',
-            };
-        })
-    );
-    const [servings, setServings] = useState(recipe.servings || 1);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+	const imageUpload = useImageUpload({
+		folder: "recipes",
+		onUploaded: (url) => setImages([url]),
+	});
+	const [description, setDescription] = useState(recipe.description || "");
+	// Instructions are free text, not ordered rows - see docs/REFOCUS.md §4.
+	const [instructions, setInstructions] = useState<string>(recipe.instructions ?? "");
+	const [selectedIngredients, setSelectedIngredients] = useState<SelectedIngredient[]>(
+		// Every ingredient the API returns is a food. The editor still offers
+		// sub-recipes, but RecipeIngredientDto has no field to carry one back,
+		// so a saved sub-recipe reloads as its text - see the note in the PR.
+		(recipe.ingredients || []).map((ing) => {
+			return {
+				type: "food" as const,
+				ingredient: {
+					id: ing.foodId!,
+					name: ing.foodName || ing.ingredientText || "",
+					caloriesPer100g: 0,
+					proteinPer100g: 0,
+					carbsPer100g: 0,
+					fatPer100g: 0,
+					fiberPer100g: 0,
+					proteinCalorieRatio: 0,
+					servingSize: 0,
+					servingUnit: "g",
+					isVerified: false,
+				},
+				subRecipe: null,
+				name: ing.foodName || ing.ingredientText || "",
+				amount: ing.amount ?? null,
+				unit: "gram",
+			};
+		}),
+	);
+	const [servings, setServings] = useState(recipe.servings || 1);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // The API has never returned tags, so an edit always starts from none.
-    const [tags, setTags] = useState<Set<string>>(new Set<string>());
-    const [currentTag, setCurrentTag] = useState('');
+	// The API has never returned tags, so an edit always starts from none.
+	const [tags, setTags] = useState<Set<string>>(new Set<string>());
+	const [currentTag, setCurrentTag] = useState("");
 
-    const [ingredientSearch, setIngredientSearch] = useState<Ingredient[]>([]);
-    const [activeDropdownIndex, setActiveDropdownIndex] = useState<number | null>(null);
+	const [ingredientSearch, setIngredientSearch] = useState<Ingredient[]>([]);
+	const [activeDropdownIndex, setActiveDropdownIndex] = useState<number | null>(null);
 
-    const dropdownRef = useRef<HTMLDivElement>(null);
-    const router = useRouter();
-    const [isModalOpen, setIsModalOpen] = useState(false);
+	const dropdownRef = useRef<HTMLDivElement>(null);
+	const router = useRouter();
+	const [isModalOpen, setIsModalOpen] = useState(false);
 
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setActiveDropdownIndex(null);
-            }
-        }
+	useEffect(() => {
+		function handleClickOutside(event: MouseEvent) {
+			if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+				setActiveDropdownIndex(null);
+			}
+		}
 
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        }
-    }, []);
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+		};
+	}, []);
 
-    function handleAddIngredient() {
-        setSelectedIngredients([...selectedIngredients, { type: "food", ingredient: null, subRecipe: null, name: '', amount: null, unit: 'gram' }]);
-    }
+	function handleAddIngredient() {
+		setSelectedIngredients([
+			...selectedIngredients,
+			{ type: "food", ingredient: null, subRecipe: null, name: "", amount: null, unit: "gram" },
+		]);
+	}
 
-    function handleIngredientTypeToggle(index: number, type: "food" | "recipe") {
-        const newIngredients = [...selectedIngredients];
-        newIngredients[index] = { type, ingredient: null, subRecipe: null, name: '', amount: null, unit: type === "food" ? "gram" : "serving" };
-        setSelectedIngredients(newIngredients);
-    }
+	function handleIngredientTypeToggle(index: number, type: "food" | "recipe") {
+		const newIngredients = [...selectedIngredients];
+		newIngredients[index] = {
+			type,
+			ingredient: null,
+			subRecipe: null,
+			name: "",
+			amount: null,
+			unit: type === "food" ? "gram" : "serving",
+		};
+		setSelectedIngredients(newIngredients);
+	}
 
-    function handleSubRecipeSelect(index: number, recipe: RecipeSearchResult) {
-        const newIngredients = [...selectedIngredients];
-        newIngredients[index] = { ...newIngredients[index], subRecipe: recipe, name: recipe.title, amount: 1 };
-        setSelectedIngredients(newIngredients);
-        setActiveDropdownIndex(null);
-    }
+	function handleSubRecipeSelect(index: number, recipe: RecipeSearchResult) {
+		const newIngredients = [...selectedIngredients];
+		newIngredients[index] = {
+			...newIngredients[index],
+			subRecipe: recipe,
+			name: recipe.title,
+			amount: 1,
+		};
+		setSelectedIngredients(newIngredients);
+		setActiveDropdownIndex(null);
+	}
 
-    function handleRemoveIngredient(index: number) {
-        const newIngredients = selectedIngredients.filter((_, i) => i !== index);
-        setSelectedIngredients(newIngredients);
-    }
+	function handleRemoveIngredient(index: number) {
+		const newIngredients = selectedIngredients.filter((_, i) => i !== index);
+		setSelectedIngredients(newIngredients);
+	}
 
-    async function handleIngredientNameChange(index: number, value: string) {
-        const newIngredients = [...selectedIngredients];
-        newIngredients[index] = { ...newIngredients[index], name: value };
-        setSelectedIngredients(newIngredients);
-        setActiveDropdownIndex(index);
+	async function handleIngredientNameChange(index: number, value: string) {
+		const newIngredients = [...selectedIngredients];
+		newIngredients[index] = { ...newIngredients[index], name: value };
+		setSelectedIngredients(newIngredients);
+		setActiveDropdownIndex(index);
 
-        if (!value) {
-            setIngredientSearch([]);
-            return;
-        }
+		if (!value) {
+			setIngredientSearch([]);
+			return;
+		}
 
-        const result = await getAllIngredient(value, undefined, undefined, 1, 4);
-        setIngredientSearch(result.ingredients);
-    }
+		const result = await getAllIngredient(value, undefined, undefined, 1, 4);
+		setIngredientSearch(result.ingredients);
+	}
 
-    function handleAddTag(e: React.KeyboardEvent<HTMLInputElement>) {
-        if (e.key === 'Enter' && currentTag.trim()) {
-            e.preventDefault();
-            setTags(new Set([...tags, currentTag.trim().toUpperCase()]));
-            setCurrentTag('');
-        }
-    }
+	function handleAddTag(e: React.KeyboardEvent<HTMLInputElement>) {
+		if (e.key === "Enter" && currentTag.trim()) {
+			e.preventDefault();
+			setTags(new Set([...tags, currentTag.trim().toUpperCase()]));
+			setCurrentTag("");
+		}
+	}
 
-    function handleRemoveTag(tagToRemove: string) {
-        const newTags = new Set(tags);
-        newTags.delete(tagToRemove);
-        setTags(newTags);
-    }
+	function handleRemoveTag(tagToRemove: string) {
+		const newTags = new Set(tags);
+		newTags.delete(tagToRemove);
+		setTags(newTags);
+	}
 
-    function handleIngredientSelect(ingredientIndex: number, selectedIngredient: Ingredient) {
-        const newIngredients = [...selectedIngredients];
-        newIngredients[ingredientIndex] = {
-            ...newIngredients[ingredientIndex],
-            ingredient: selectedIngredient,
-            name: selectedIngredient.name,
-            amount: null,
-        }
-        setSelectedIngredients(newIngredients);
-        setActiveDropdownIndex(null);
-    }
+	function handleIngredientSelect(ingredientIndex: number, selectedIngredient: Ingredient) {
+		const newIngredients = [...selectedIngredients];
+		newIngredients[ingredientIndex] = {
+			...newIngredients[ingredientIndex],
+			ingredient: selectedIngredient,
+			name: selectedIngredient.name,
+			amount: null,
+		};
+		setSelectedIngredients(newIngredients);
+		setActiveDropdownIndex(null);
+	}
 
-    function handleIngredientAmountChange(index: number, value: number) {
-        const newIngredients = [...selectedIngredients];
-        newIngredients[index] = { ...newIngredients[index], amount: value };
-        setSelectedIngredients(newIngredients);
-    }
+	function handleIngredientAmountChange(index: number, value: number) {
+		const newIngredients = [...selectedIngredients];
+		newIngredients[index] = { ...newIngredients[index], amount: value };
+		setSelectedIngredients(newIngredients);
+	}
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSubmitting(true);
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setIsSubmitting(true);
 
-        const recipeData = {
-            id: recipe.id,
-            title: name,
-            description,
-            ingredients: selectedIngredients.map(ing => ({
-                foodId: ing.type === "food" ? ing.ingredient?.id : undefined,
-                subRecipeId: ing.type === "recipe" ? ing.subRecipe?.id : undefined,
-                ingredientText: ing.name,
-                amount: ing.amount!,
-                unit: ing.type === "food" ? "gram" : "serving"
-            })),
-            instructions: instructions.trim() || undefined,
-            servings,
-            imageUrl: images[0] || undefined,
-            isPublic: true
-        }
+		const recipeData = {
+			id: recipe.id,
+			title: name,
+			description,
+			ingredients: selectedIngredients.map((ing) => ({
+				foodId: ing.type === "food" ? ing.ingredient?.id : undefined,
+				subRecipeId: ing.type === "recipe" ? ing.subRecipe?.id : undefined,
+				ingredientText: ing.name,
+				amount: ing.amount!,
+				unit: ing.type === "food" ? "gram" : "serving",
+			})),
+			instructions: instructions.trim() || undefined,
+			servings,
+			imageUrl: images[0] || undefined,
+			isPublic: true,
+		};
 
-        try {
-            await clientApi(`/api/Recipes/${recipe.id}`, {
-                method: "PUT",
-                body: recipeData,
-            });
-            appToast.success("Recipe updated");
-            router.push(`/recipes/${recipe.id}`);
-            router.refresh();
-        } catch (err) {
-            console.error('[Recipe Update] Failed:', err);
-            appToast.error(err, 'Failed to update recipe. Please try again.');
-        } finally {
-            setIsSubmitting(false);
-        }
-    }
+		try {
+			await clientApi(`/api/Recipes/${recipe.id}`, {
+				method: "PUT",
+				body: recipeData,
+			});
+			appToast.success("Recipe updated");
+			router.push(`/recipes/${recipe.id}`);
+			router.refresh();
+		} catch (err) {
+			console.error("[Recipe Update] Failed:", err);
+			appToast.error(err, "Failed to update recipe. Please try again.");
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
 
-    return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Basic Information Card */}
-            <div className="card p-6 space-y-5">
-                <h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
-                    <i className="ri-image-line text-brand-500" />
-                    Basic Information
-                </h2>
+	return (
+		<form onSubmit={handleSubmit} className="space-y-6">
+			{/* Basic Information Card */}
+			<div className="card p-6 space-y-5">
+				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
+					<i className="ri-image-line text-brand-500" />
+					Basic Information
+				</h2>
 
-                {/* Image Upload */}
-                <div>
-                    <label className="label">Recipe Images</label>
-                    <div className="flex flex-wrap gap-3">
-                                {imageUpload.input}
-                                <button
-                                    type="button"
-                                    onClick={imageUpload.open}
-                                    disabled={imageUpload.uploading}
-                                    className="w-24 h-24 rounded-2xl border-2 border-dashed border-charcoal-blue-300 dark:border-charcoal-blue-700 hover:border-brand-400 bg-charcoal-blue-50 dark:bg-charcoal-blue-900 hover:bg-brand-50 disabled:opacity-60 flex flex-col items-center justify-center transition-colors group"
-                                >
-                                    <i className="ri-image-add-line text-2xl text-charcoal-blue-400 group-hover:text-brand-500" />
-                                    <span className="text-xs text-charcoal-blue-400 group-hover:text-brand-500 mt-1">{imageUpload.uploading ? "..." : "Change"}</span>
-                                </button>
-                                {images.map((image, index) => (
-                                    <div key={index} className="relative w-24 h-24">
-                                        <Image src={image} alt="Recipe" fill sizes="96px" className="rounded-2xl object-cover border-2 border-charcoal-blue-200 dark:border-charcoal-blue-800" />
-                                    </div>
-                                ))}
-                            </div>
-                </div>
+				{/* Image Upload */}
+				<div>
+					<label className="label">Recipe Images</label>
+					<div className="flex flex-wrap gap-3">
+						{imageUpload.input}
+						<button
+							type="button"
+							onClick={imageUpload.open}
+							disabled={imageUpload.uploading}
+							className="w-24 h-24 rounded-2xl border-2 border-dashed border-charcoal-blue-300 dark:border-charcoal-blue-700 hover:border-brand-400 bg-charcoal-blue-50 dark:bg-charcoal-blue-900 hover:bg-brand-50 disabled:opacity-60 flex flex-col items-center justify-center transition-colors group"
+						>
+							<i className="ri-image-add-line text-2xl text-charcoal-blue-400 group-hover:text-brand-500" />
+							<span className="text-xs text-charcoal-blue-400 group-hover:text-brand-500 mt-1">
+								{imageUpload.uploading ? "..." : "Change"}
+							</span>
+						</button>
+						{images.map((image, index) => (
+							<div key={index} className="relative w-24 h-24">
+								<Image
+									src={image}
+									alt="Recipe"
+									fill
+									sizes="96px"
+									className="rounded-2xl object-cover border-2 border-charcoal-blue-200 dark:border-charcoal-blue-800"
+								/>
+							</div>
+						))}
+					</div>
+				</div>
 
-                {/* Recipe Name */}
-                <div>
-                    <label htmlFor="recipe_name" className="label">Recipe Name</label>
-                    <input
-                        id="recipe_name"
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="input"
-                        placeholder="e.g., Grilled Chicken Salad"
-                        required
-                    />
-                </div>
+				{/* Recipe Name */}
+				<div>
+					<label htmlFor="recipe_name" className="label">
+						Recipe Name
+					</label>
+					<input
+						id="recipe_name"
+						type="text"
+						value={name}
+						onChange={(e) => setName(e.target.value)}
+						className="input"
+						placeholder="e.g., Grilled Chicken Salad"
+						required
+					/>
+				</div>
 
-                {/* Description */}
-                <div>
-                    <label htmlFor="description" className="label">Description</label>
-                    <textarea
-                        id="description"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        className="input min-h-25 resize-none"
-                        placeholder="Describe your recipe..."
-                        rows={3}
-                        required
-                    />
-                </div>
-            </div>
+				{/* Description */}
+				<div>
+					<label htmlFor="description" className="label">
+						Description
+					</label>
+					<textarea
+						id="description"
+						value={description}
+						onChange={(e) => setDescription(e.target.value)}
+						className="input min-h-25 resize-none"
+						placeholder="Describe your recipe..."
+						rows={3}
+						required
+					/>
+				</div>
+			</div>
 
-            {/* Ingredients Card */}
-            <div className="card p-6 space-y-4 relative overflow-visible z-20">
-                <h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
-                    <i className="ri-list-check-2 text-brand-500" />
-                    Ingredients
-                </h2>
+			{/* Ingredients Card */}
+			<div className="card p-6 space-y-4 relative overflow-visible z-20">
+				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
+					<i className="ri-list-check-2 text-brand-500" />
+					Ingredients
+				</h2>
 
-                <div className="space-y-3">
-                    {selectedIngredients.map((ing, index) => (
-                        <div key={index} className="space-y-2">
-                            <div className="flex gap-1">
-                                <button type="button" onClick={() => handleIngredientTypeToggle(index, "food")}
-                                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${ing.type === "food" ? "bg-brand-500 text-white" : "bg-charcoal-blue-100 text-charcoal-blue-600 hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-400"}`}>
-                                    Food
-                                </button>
-                                <button type="button" onClick={() => handleIngredientTypeToggle(index, "recipe")}
-                                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${ing.type === "recipe" ? "bg-brand-500 text-white" : "bg-charcoal-blue-100 text-charcoal-blue-600 hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-400"}`}>
-                                    Recipe
-                                </button>
-                            </div>
-                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-start">
-                                {ing.type === "food" ? (
-                                    <div ref={dropdownRef} className="relative flex-1 min-w-0">
-                                        <input
-                                            type="text"
-                                            placeholder="Search ingredient..."
-                                            value={ing.name}
-                                            onChange={(e) => handleIngredientNameChange(index, e.target.value)}
-                                            className="input w-full"
-                                        />
-                                        {activeDropdownIndex === index && (
-                                            <div className="absolute z-50 w-full mt-1 bg-white dark:bg-charcoal-blue-900 border border-charcoal-blue-200 dark:border-charcoal-blue-800 rounded-xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
-                                                {ingredientSearch.length > 0 ? (
-                                                    ingredientSearch.map((ingredient) => (
-                                                        <button
-                                                            key={ingredient.id}
-                                                            type="button"
-                                                            onClick={() => handleIngredientSelect(index, ingredient)}
-                                                            className="w-full p-3 text-left hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-800 flex items-center justify-between border-b border-charcoal-blue-100 dark:border-white/10 last:border-0"
-                                                        >
-                                                            <span className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{ingredient.name}</span>
-                                                            <span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{ingredient.caloriesPer100g} kcal/100g</span>
-                                                        </button>
-                                                    ))
-                                                ) : (
-                                                    <div className="p-3 text-charcoal-blue-500 dark:text-charcoal-blue-400 text-center">No ingredients found</div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="flex-1 min-w-0">
-                                        <RecipeIngredientSearch
-                                            value={ing.name}
-                                            onChange={(v) => { const n = [...selectedIngredients]; n[index] = { ...n[index], name: v }; setSelectedIngredients(n); }}
-                                            onSelect={(r) => handleSubRecipeSelect(index, r)}
-                                        />
-                                    </div>
-                                )}
-                                <div className="flex gap-2 sm:gap-3 items-center">
-                                    <input
-                                        type="number"
-                                        placeholder="Amount"
-                                        value={ing.amount?.toString() || ''}
-                                        onChange={(e) => handleIngredientAmountChange(index, parseFloat(e.target.value))}
-                                        className="input w-24 sm:w-28"
-                                        min="0"
-                                        step={ing.type === "recipe" ? "0.25" : "0.1"}
-                                    />
-                                    <span className="px-3 py-2.5 bg-charcoal-blue-100 dark:bg-charcoal-blue-900 rounded-xl text-charcoal-blue-600 dark:text-charcoal-blue-400 text-sm font-medium whitespace-nowrap">
-                                        {ing.type === "food" ? "grams" : "servings"}
-                                    </span>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleRemoveIngredient(index)}
-                                        className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 flex items-center justify-center transition-colors shrink-0"
-                                        aria-label="Remove ingredient"
-                                    >
-                                        <i className="ri-delete-bin-line" />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+				<div className="space-y-3">
+					{selectedIngredients.map((ing, index) => (
+						<div key={index} className="space-y-2">
+							<div className="flex gap-1">
+								<button
+									type="button"
+									onClick={() => handleIngredientTypeToggle(index, "food")}
+									className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${ing.type === "food" ? "bg-brand-500 text-white" : "bg-charcoal-blue-100 text-charcoal-blue-600 hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-400"}`}
+								>
+									Food
+								</button>
+								<button
+									type="button"
+									onClick={() => handleIngredientTypeToggle(index, "recipe")}
+									className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${ing.type === "recipe" ? "bg-brand-500 text-white" : "bg-charcoal-blue-100 text-charcoal-blue-600 hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-400"}`}
+								>
+									Recipe
+								</button>
+							</div>
+							<div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-start">
+								{ing.type === "food" ? (
+									<div ref={dropdownRef} className="relative flex-1 min-w-0">
+										<input
+											type="text"
+											placeholder="Search ingredient..."
+											value={ing.name}
+											onChange={(e) => handleIngredientNameChange(index, e.target.value)}
+											className="input w-full"
+										/>
+										{activeDropdownIndex === index && (
+											<div className="absolute z-50 w-full mt-1 bg-white dark:bg-charcoal-blue-900 border border-charcoal-blue-200 dark:border-charcoal-blue-800 rounded-xl overflow-hidden max-h-60 overflow-y-auto">
+												{ingredientSearch.length > 0 ? (
+													ingredientSearch.map((ingredient) => (
+														<button
+															key={ingredient.id}
+															type="button"
+															onClick={() => handleIngredientSelect(index, ingredient)}
+															className="w-full p-3 text-left hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-800 flex items-center justify-between border-b border-charcoal-blue-100 dark:border-white/10 last:border-0"
+														>
+															<span className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
+																{ingredient.name}
+															</span>
+															<span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+																{ingredient.caloriesPer100g} kcal/100g
+															</span>
+														</button>
+													))
+												) : (
+													<div className="p-3 text-charcoal-blue-500 dark:text-charcoal-blue-400 text-center">
+														No ingredients found
+													</div>
+												)}
+											</div>
+										)}
+									</div>
+								) : (
+									<div className="flex-1 min-w-0">
+										<RecipeIngredientSearch
+											value={ing.name}
+											onChange={(v) => {
+												const n = [...selectedIngredients];
+												n[index] = { ...n[index], name: v };
+												setSelectedIngredients(n);
+											}}
+											onSelect={(r) => handleSubRecipeSelect(index, r)}
+										/>
+									</div>
+								)}
+								<div className="flex gap-2 sm:gap-3 items-center">
+									<input
+										type="number"
+										placeholder="Amount"
+										value={ing.amount?.toString() || ""}
+										onChange={(e) =>
+											handleIngredientAmountChange(index, parseFloat(e.target.value))
+										}
+										className="input w-24 sm:w-28"
+										min="0"
+										step={ing.type === "recipe" ? "0.25" : "0.1"}
+									/>
+									<span className="px-3 py-2.5 bg-charcoal-blue-100 dark:bg-charcoal-blue-900 rounded-xl text-charcoal-blue-600 dark:text-charcoal-blue-400 text-sm font-medium whitespace-nowrap">
+										{ing.type === "food" ? "grams" : "servings"}
+									</span>
+									<button
+										type="button"
+										onClick={() => handleRemoveIngredient(index)}
+										className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 flex items-center justify-center transition-colors shrink-0"
+										aria-label="Remove ingredient"
+									>
+										<i className="ri-delete-bin-line" />
+									</button>
+								</div>
+							</div>
+						</div>
+					))}
+				</div>
 
-                <button
-                    type="button"
-                    onClick={handleAddIngredient}
-                    className="flex items-center gap-2 text-brand-600 dark:text-brand-400 hover:text-brand-700 font-medium transition-colors"
-                >
-                    <i className="ri-add-circle-line text-lg" />
-                    Add Ingredient
-                </button>
-            </div>
+				<button
+					type="button"
+					onClick={handleAddIngredient}
+					className="flex items-center gap-2 text-brand-600 dark:text-brand-400 hover:text-brand-700 font-medium transition-colors"
+				>
+					<i className="ri-add-circle-line text-lg" />
+					Add Ingredient
+				</button>
+			</div>
 
-            {/* Instructions Card */}
-            <div className="card p-6 space-y-4">
-                <h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
-                    <i className="ri-file-list-3-line text-brand-500" />
-                    Instructions
-                </h2>
-                <textarea
-                    id="instructions"
-                    value={instructions}
-                    onChange={(e) => setInstructions(e.target.value)}
-                    className="input min-h-45 resize-none"
-                    rows={6}
-                    placeholder="Enter each instruction on a new line..."
-                />
-            </div>
+			{/* Instructions Card */}
+			<div className="card p-6 space-y-4">
+				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
+					<i className="ri-file-list-3-line text-brand-500" />
+					Instructions
+				</h2>
+				<textarea
+					id="instructions"
+					value={instructions}
+					onChange={(e) => setInstructions(e.target.value)}
+					className="input min-h-45 resize-none"
+					rows={6}
+					placeholder="Enter each instruction on a new line..."
+				/>
+			</div>
 
-            {/* Additional Details Card */}
-            <div className="card p-6 space-y-5">
-                <h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
-                    <i className="ri-settings-3-line text-brand-500" />
-                    Additional Details
-                </h2>
+			{/* Additional Details Card */}
+			<div className="card p-6 space-y-5">
+				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
+					<i className="ri-settings-3-line text-brand-500" />
+					Additional Details
+				</h2>
 
-                {/* Servings */}
-                <div>
-                    <label htmlFor="servings" className="label">Servings</label>
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setServings(Math.max(1, servings - 1))}
-                            className="w-10 h-10 rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900 hover:bg-charcoal-blue-200 dark:hover:bg-charcoal-blue-700 flex items-center justify-center transition-colors"
-                        >
-                            <i className="ri-subtract-line text-charcoal-blue-600 dark:text-charcoal-blue-400" />
-                        </button>
-                        <input
-                            id="servings"
-                            type="number"
-                            value={servings}
-                            onChange={(e) => setServings(parseInt(e.target.value) || 1)}
-                            className="input w-20 text-center"
-                            min="1"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setServings(servings + 1)}
-                            className="w-10 h-10 rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900 hover:bg-charcoal-blue-200 dark:hover:bg-charcoal-blue-700 flex items-center justify-center transition-colors"
-                        >
-                            <i className="ri-add-line text-charcoal-blue-600 dark:text-charcoal-blue-400" />
-                        </button>
-                    </div>
-                </div>
+				{/* Servings */}
+				<div>
+					<label htmlFor="servings" className="label">
+						Servings
+					</label>
+					<div className="flex items-center gap-3">
+						<button
+							type="button"
+							onClick={() => setServings(Math.max(1, servings - 1))}
+							className="w-10 h-10 rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900 hover:bg-charcoal-blue-200 dark:hover:bg-charcoal-blue-700 flex items-center justify-center transition-colors"
+						>
+							<i className="ri-subtract-line text-charcoal-blue-600 dark:text-charcoal-blue-400" />
+						</button>
+						<input
+							id="servings"
+							type="number"
+							value={servings}
+							onChange={(e) => setServings(parseInt(e.target.value) || 1)}
+							className="input w-20 text-center"
+							min="1"
+						/>
+						<button
+							type="button"
+							onClick={() => setServings(servings + 1)}
+							className="w-10 h-10 rounded-xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900 hover:bg-charcoal-blue-200 dark:hover:bg-charcoal-blue-700 flex items-center justify-center transition-colors"
+						>
+							<i className="ri-add-line text-charcoal-blue-600 dark:text-charcoal-blue-400" />
+						</button>
+					</div>
+				</div>
 
-                {/* Tags */}
-                <div>
-                    <label htmlFor="tag" className="label">Tags</label>
-                    {tags.size > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-3">
-                            {Array.from(tags).map((tag, index) => (
-                                <span key={index} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 text-sm font-medium">
-                                    {tag}
-                                    <button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-brand-900">
-                                        <i className="ri-close-line" />
-                                    </button>
-                                </span>
-                            ))}
-                        </div>
-                    )}
-                    <input
-                        id="tag"
-                        type="text"
-                        value={currentTag}
-                        onChange={(e) => setCurrentTag(e.target.value)}
-                        onKeyDown={handleAddTag}
-                        className="input"
-                        placeholder="Type a tag and press Enter"
-                    />
-                </div>
-            </div>
+				{/* Tags */}
+				<div>
+					<label htmlFor="tag" className="label">
+						Tags
+					</label>
+					{tags.size > 0 && (
+						<div className="flex flex-wrap gap-2 mb-3">
+							{Array.from(tags).map((tag, index) => (
+								<span
+									key={index}
+									className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 text-sm font-medium"
+								>
+									{tag}
+									<button
+										type="button"
+										onClick={() => handleRemoveTag(tag)}
+										className="hover:text-brand-900"
+									>
+										<i className="ri-close-line" />
+									</button>
+								</span>
+							))}
+						</div>
+					)}
+					<input
+						id="tag"
+						type="text"
+						value={currentTag}
+						onChange={(e) => setCurrentTag(e.target.value)}
+						onKeyDown={handleAddTag}
+						className="input"
+						placeholder="Type a tag and press Enter"
+					/>
+				</div>
+			</div>
 
-            {/* Submit Button */}
-            <button
-                type="submit"
-                disabled={isSubmitting}
-                className="btn-primary w-full py-4 text-lg"
-            >
-                {isSubmitting ? (
-                    <>
-                        <Loading size="sm" />
-                        Updating Recipe...
-                    </>
-                ) : (
-                    <>
-                        <i className="ri-check-line text-xl" />
-                        Save Changes
-                    </>
-                )}
-            </button>
-        </form>
-    );
+			{/* Submit Button */}
+			<button type="submit" disabled={isSubmitting} className="btn-primary w-full py-4 text-lg">
+				{isSubmitting ? (
+					<>
+						<Loading size="sm" />
+						Updating Recipe...
+					</>
+				) : (
+					<>
+						<i className="ri-check-line text-xl" />
+						Save Changes
+					</>
+				)}
+			</button>
+		</form>
+	);
 }

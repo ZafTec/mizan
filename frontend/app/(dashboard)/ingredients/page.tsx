@@ -1,12 +1,7 @@
 import Link from "next/link";
 import { getAllIngredient } from "@/data/ingredient";
 import { getUserOptionalServer } from "@/helper/session";
-import {
-	DataTable,
-	readPage,
-	readSort,
-	type Column,
-} from "@/components/ui/data-table";
+import { DataTable, readPage, readSort, type Column } from "@/components/ui/data-table";
 import SearchBar from "@/components/IngredientTable/SearchInputField";
 import IngredientFilters from "./IngredientFilters";
 import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
@@ -39,10 +34,28 @@ const columns: Column<Ingredient>[] = [
 		align: "center",
 		cell: (i) => <span className="tabular-nums">{i.caloriesPer100g}</span>,
 	},
-	{ id: "protein", header: "Protein", sortKey: "protein", align: "center", cell: (i) => macro(i.proteinPer100g) },
+	{
+		id: "protein",
+		header: "Protein",
+		sortKey: "protein",
+		align: "center",
+		cell: (i) => macro(i.proteinPer100g),
+	},
 	{ id: "fat", header: "Fat", align: "center", secondary: true, cell: (i) => macro(i.fatPer100g) },
-	{ id: "carbs", header: "Carbs", align: "center", secondary: true, cell: (i) => macro(i.carbsPer100g) },
-	{ id: "fiber", header: "Fiber", align: "center", secondary: true, cell: (i) => macro(i.fiberPer100g) },
+	{
+		id: "carbs",
+		header: "Carbs",
+		align: "center",
+		secondary: true,
+		cell: (i) => macro(i.carbsPer100g),
+	},
+	{
+		id: "fiber",
+		header: "Fiber",
+		align: "center",
+		secondary: true,
+		cell: (i) => macro(i.fiberPer100g),
+	},
 	{
 		id: "pcal",
 		header: "P/Cal",
@@ -80,7 +93,7 @@ export default async function IngredientsPage({
 		<div className="space-y-6 lg:space-y-8" data-testid="ingredient-list">
 			<header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
 				<div className="flex items-start gap-6">
-					<div className="hidden w-28 shrink-0 drop-shadow-md sm:block">
+					<div className="hidden w-28 shrink-0 sm:block">
 						<AppFeatureIllustration variant="recipes" />
 					</div>
 					<div className="space-y-2">

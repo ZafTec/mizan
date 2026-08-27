@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import { withParamsResettingPage } from "./url";
 
 export interface SelectFilter {
@@ -76,7 +76,7 @@ export default function TableToolbar({
 			{searchPlaceholder && (
 				<div className="relative min-w-0 flex-1 sm:max-w-xs">
 					<span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-blue-400">
-						<AnimatedIcon name="search" size={14} />
+						<Icon name="search" size={14} />
 					</span>
 					<input
 						type="search"

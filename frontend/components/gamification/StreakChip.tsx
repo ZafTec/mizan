@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
 
 interface StreakChipProps {
@@ -46,8 +46,8 @@ export default function StreakChip({ count, resetsAt, isActiveToday, atRisk }: S
 	return (
 		<div
 			className={cn(
-				"inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white",
-				atRisk ? "bg-amber-500" : "streak-gradient",
+				"inline-flex items-center gap-2 text-sm font-semibold",
+				atRisk ? "text-tuscan-sun-700 dark:text-tuscan-sun-400" : "streak-gradient",
 			)}
 			title={
 				isActiveToday
@@ -55,13 +55,9 @@ export default function StreakChip({ count, resetsAt, isActiveToday, atRisk }: S
 					: "Log something before the day ends to keep it."
 			}
 		>
-			<AnimatedIcon name="flame" size={16} />
+			<Icon name="flame" size={16} />
 			<span>{count}-day streak</span>
-			{atRisk && left && (
-				<span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium tabular-nums">
-					{left} left
-				</span>
-			)}
+			{atRisk && left && <span className="num text-xs font-medium opacity-80">{left} left</span>}
 		</div>
 	);
 }

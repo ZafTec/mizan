@@ -1,4 +1,4 @@
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import { ClientList } from "@/components/trainer/ClientList";
 import { TrainerStats } from "@/components/trainer/TrainerStats";
 import { RecentMessages } from "@/components/trainer/RecentMessages";
@@ -21,7 +21,7 @@ export default function TrainerDashboard() {
 			<section className="glass-panel p-6 sm:p-8">
 				<header className="mb-4 flex items-center gap-3">
 					<span className="icon-chip h-10 w-10 text-verdigris-700 dark:text-verdigris-300">
-						<AnimatedIcon name="chartLine" size={18} />
+						<Icon name="chartLine" size={18} />
 					</span>
 					<div>
 						<h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -36,7 +36,7 @@ export default function TrainerDashboard() {
 				<section className="glass-panel p-6 sm:p-8">
 					<header className="mb-4 flex items-center gap-3">
 						<span className="icon-chip h-10 w-10 text-sandy-brown-700 dark:text-sandy-brown-300">
-							<AnimatedIcon name="badgeAlert" size={18} />
+							<Icon name="badgeAlert" size={18} />
 						</span>
 						<div>
 							<h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -50,7 +50,7 @@ export default function TrainerDashboard() {
 				<section className="glass-panel p-6 sm:p-8">
 					<header className="mb-4 flex items-center gap-3">
 						<span className="icon-chip h-10 w-10 text-tuscan-sun-700 dark:text-tuscan-sun-300">
-							<AnimatedIcon name="messageCircle" size={18} />
+							<Icon name="messageCircle" size={18} />
 						</span>
 						<div>
 							<h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -65,7 +65,7 @@ export default function TrainerDashboard() {
 			<section className="glass-panel p-6 sm:p-8">
 				<header className="mb-4 flex items-center gap-3">
 					<span className="icon-chip h-10 w-10 text-verdigris-700 dark:text-verdigris-300">
-						<AnimatedIcon name="users" size={18} />
+						<Icon name="users" size={18} />
 					</span>
 					<div>
 						<h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">

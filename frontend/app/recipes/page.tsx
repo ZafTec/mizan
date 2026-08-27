@@ -26,11 +26,7 @@ export default async function RecipesPage({
 	const { page, sortBy, sortOrder } = parseListParams(params);
 	const searchTerm = typeof params.search === "string" ? params.search : undefined;
 	const rawTags = params.tags;
-	const tags: string[] = rawTags
-		? Array.isArray(rawTags)
-			? rawTags
-			: [rawTags]
-		: [];
+	const tags: string[] = rawTags ? (Array.isArray(rawTags) ? rawTags : [rawTags]) : [];
 	const { recipes, totalPages, totalCount } = await getAllRecipes(
 		searchTerm,
 		page,
@@ -58,7 +54,9 @@ export default async function RecipesPage({
 		<div className="space-y-8" data-testid="recipe-list">
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
-					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Recipes</h1>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+						Recipes
+					</h1>
 				</div>
 				{user && (
 					<Link href="/recipes/add" className="btn-primary">
@@ -74,35 +72,47 @@ export default async function RecipesPage({
 					<>
 						<Link href="/recipes/favorites" className="card-hover p-5 group">
 							<div className="flex items-center gap-4">
-								<div className="w-12 h-12 rounded-2xl bg-rose-600 flex items-center justify-center shadow-lg text-white">
+								<div className="w-12 h-12 rounded-2xl bg-rose-600 flex items-center justify-center text-white">
 									<i className="ri-heart-3-line text-xl" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Favorites</h3>
-									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{favoriteCount} saved</p>
+									<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+										Favorites
+									</h3>
+									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+										{favoriteCount} saved
+									</p>
 								</div>
 								<i className="ri-arrow-right-s-line text-xl text-charcoal-blue-400 dark:text-charcoal-blue-500 group-hover:text-brand-500 transition-colors" />
 							</div>
 						</Link>
 						<div className="card p-5">
 							<div className="flex items-center gap-4">
-								<div className="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center shadow-lg text-white">
+								<div className="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center text-white">
 									<i className="ri-restaurant-line text-xl" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Community</h3>
-									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{totalCount} recipes</p>
+									<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+										Community
+									</h3>
+									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+										{totalCount} recipes
+									</p>
 								</div>
 							</div>
 						</div>
 						<div className="card p-5">
 							<div className="flex items-center gap-4">
-								<div className="w-12 h-12 rounded-2xl bg-accent-600 flex items-center justify-center shadow-lg text-white">
+								<div className="w-12 h-12 rounded-2xl bg-accent-600 flex items-center justify-center text-white">
 									<i className="ri-line-chart-line text-xl" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">This Page</h3>
-									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{recipes.length} shown</p>
+									<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+										This Page
+									</h3>
+									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+										{recipes.length} shown
+									</p>
 								</div>
 							</div>
 						</div>
@@ -111,34 +121,46 @@ export default async function RecipesPage({
 					<>
 						<div className="card p-5">
 							<div className="flex items-center gap-4">
-								<div className="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center shadow-lg text-white">
+								<div className="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center text-white">
 									<i className="ri-restaurant-line text-xl" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Recipes</h3>
-									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{totalCount} available</p>
+									<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+										Recipes
+									</h3>
+									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+										{totalCount} available
+									</p>
 								</div>
 							</div>
 						</div>
 						<div className="card p-5">
 							<div className="flex items-center gap-4">
-								<div className="w-12 h-12 rounded-2xl bg-accent-600 flex items-center justify-center shadow-lg text-white">
+								<div className="w-12 h-12 rounded-2xl bg-accent-600 flex items-center justify-center text-white">
 									<i className="ri-fire-line text-xl" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Nutrition Tracked</h3>
-									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">Calories &amp; macros</p>
+									<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+										Nutrition Tracked
+									</h3>
+									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+										Calories &amp; macros
+									</p>
 								</div>
 							</div>
 						</div>
 						<Link href="/register" className="card-hover p-5 group">
 							<div className="flex items-center gap-4">
-								<div className="w-12 h-12 rounded-2xl bg-rose-600 flex items-center justify-center shadow-lg text-white">
+								<div className="w-12 h-12 rounded-2xl bg-rose-600 flex items-center justify-center text-white">
 									<i className="ri-heart-3-line text-xl" />
 								</div>
 								<div className="flex-1">
-									<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Sign Up</h3>
-									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">Save favorites &amp; create</p>
+									<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+										Sign Up
+									</h3>
+									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+										Save favorites &amp; create
+									</p>
 								</div>
 								<i className="ri-arrow-right-s-line text-xl text-charcoal-blue-400 dark:text-charcoal-blue-500 group-hover:text-brand-500 transition-colors" />
 							</div>
@@ -207,11 +229,12 @@ export default async function RecipesPage({
 											<i className="ri-drop-line" />
 											{recipe.nutrition?.fatGrams?.toFixed(0) || 0}g fat
 										</span>
-										{recipe.nutrition?.proteinCalorieRatio != null && recipe.nutrition.proteinCalorieRatio > 0 && (
-											<span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold dark:bg-indigo-500/15 dark:text-indigo-300">
-												{recipe.nutrition.proteinCalorieRatio.toFixed(0)}% P/Cal
-											</span>
-										)}
+										{recipe.nutrition?.proteinCalorieRatio != null &&
+											recipe.nutrition.proteinCalorieRatio > 0 && (
+												<span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold dark:bg-indigo-500/15 dark:text-indigo-300">
+													{recipe.nutrition.proteinCalorieRatio.toFixed(0)}% P/Cal
+												</span>
+											)}
 									</div>
 								</div>
 							</Link>
@@ -219,13 +242,15 @@ export default async function RecipesPage({
 					</div>
 				) : (
 					<div className="text-center py-16 flex flex-col items-center">
-						<div className="mb-6 w-full max-w-[18rem] opacity-95 drop-shadow-md">
+						<div className="mb-6 w-full max-w-[18rem] opacity-95">
 							<AppFeatureIllustration variant="recipes" className="h-auto w-full" />
 						</div>
 						<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 							No recipes yet
 						</h3>
-						<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-6">Be the first to add a delicious recipe!</p>
+						<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-6">
+							Be the first to add a delicious recipe!
+						</p>
 						{user && (
 							<Link href="/recipes/add" className="btn-primary">
 								<i className="ri-add-line" />
@@ -249,7 +274,7 @@ export default async function RecipesPage({
 				<div className="card">
 					<div className="p-8 bg-charcoal-blue-50 dark:bg-charcoal-blue-900/60">
 						<div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
-							<div className="w-16 h-16 rounded-2xl bg-accent-600 flex items-center justify-center shadow-lg shadow-accent-500/30">
+							<div className="w-16 h-16 rounded-2xl bg-accent-600 flex items-center justify-center ">
 								<i className="ri-restaurant-2-line text-3xl text-white" />
 							</div>
 							<div className="flex-1">
