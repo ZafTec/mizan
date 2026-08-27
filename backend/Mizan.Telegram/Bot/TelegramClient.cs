@@ -55,16 +55,51 @@ public sealed class TelegramClient
         return body?.Result ?? [];
     }
 
-    public Task SendMessageAsync(
-        long chatId, string text, object? replyMarkup = null, CancellationToken ct = default) =>
-        PostAsync("sendMessage", new
+    public async Task SendMessageAsync(
+        long chatId, string text, object? replyMarkup = null, CancellationToken ct = default)
+    {
+        var sent = await TrySendAsync(chatId, text, "HTML", replyMarkup, ct);
+        if (sent) return;
+
+        // Telegram rejects the whole message when the markup does not parse,
+        // and PostAsync only logs that. Falling back to plain text means a
+        // reply the converter mangled still reaches the user rather than
+        // vanishing into a warning nobody reads.
+        _logger.LogWarning("Telegram rejected an HTML message for chat {ChatId}; resending as plain text", chatId);
+        await TrySendAsync(chatId, StripTags(text), parseMode: null, replyMarkup, ct);
+    }
+
+    private async Task<bool> TrySendAsync(
+        long chatId, string text, string? parseMode, object? replyMarkup, CancellationToken ct)
+    {
+        try
         {
-            chat_id = chatId,
-            text,
-            parse_mode = "HTML",
-            link_preview_options = new { is_disabled = true },
-            reply_markup = replyMarkup,
-        }, ct);
+            var response = await _http.PostAsJsonAsync($"{_base}/sendMessage", new
+            {
+                chat_id = chatId,
+                text,
+                parse_mode = parseMode,
+                link_preview_options = new { is_disabled = true },
+                reply_markup = replyMarkup,
+            }, Json, ct);
+
+            if (response.IsSuccessStatusCode) return true;
+
+            // Never the payload: a sendMessage body is the user's own data.
+            _logger.LogWarning("Telegram sendMessage returned {Status}", (int)response.StatusCode);
+            return false;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Telegram sendMessage failed");
+            return false;
+        }
+    }
+
+    /// <summary>Last resort: readable text beats a message that never arrives.</summary>
+    private static string StripTags(string text) =>
+        System.Text.RegularExpressions.Regex.Replace(text, "<[^>]+>", string.Empty)
+            .Replace("&lt;", "<").Replace("&gt;", ">").Replace("&quot;", "\"").Replace("&amp;", "&");
 
     /// <summary>The "typing…" indicator. Worth it: an AI turn takes seconds.</summary>
     public Task SendTypingAsync(long chatId, CancellationToken ct = default) =>

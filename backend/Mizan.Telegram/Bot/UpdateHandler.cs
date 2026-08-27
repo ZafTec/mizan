@@ -207,7 +207,9 @@ public sealed class UpdateHandler
 
         if (result is { Ok: true, Value.Reply.Content: { Length: > 0 } reply })
         {
-            await _telegram.SendMessageAsync(chatId, Escape(reply), ct: ct);
+            // The model answers in markdown, same as it does on the website.
+            // Escaping it raw showed people literal asterisks.
+            await _telegram.SendMessageAsync(chatId, TelegramMarkdown.ToHtml(reply), ct: ct);
             return;
         }
 
