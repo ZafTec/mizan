@@ -14,6 +14,14 @@ public class AiOptions : IAiCeilings
     public int MaxOutputTokens { get; set; } = 1024;
     public int TimeoutSeconds { get; set; } = 60;
 
+    /// <summary>
+    /// Reasoning-tier deployments (o1/o3-class, some GPT-5-reasoning
+    /// deployments) fix temperature at 1 and reject any other value outright.
+    /// Set to false for those; every call site keeps asking for its own
+    /// temperature; the provider just stops forwarding it.
+    /// </summary>
+    public bool SupportsTemperature { get; set; } = true;
+
     /// <summary>Per-day allowances by tier. Free gets enough to see the value.</summary>
     public AiTierLimits Free { get; set; } = new() { DailyRequests = 5, DailyTokens = 20_000 };
 
