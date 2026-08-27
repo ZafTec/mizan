@@ -50,6 +50,7 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 !.env.example
+docker-compose.override.yml
 
 # Local dev config
 backend/Mizan.Api/appsettings.Development.json
