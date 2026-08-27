@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import FoodPhotoSheet from "@/components/ai/FoodPhotoSheet";
 import { LOG_ACTIONS } from "./nav";
 
@@ -52,7 +52,7 @@ export default function LogSheet({ open, onClose }: { open: boolean; onClose: ()
 						className="flex h-9 w-9 items-center justify-center rounded-xl text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:text-charcoal-blue-300 dark:hover:text-white"
 						aria-label="Close"
 					>
-						<AnimatedIcon name="x" size={16} />
+						<Icon name="x" size={16} />
 					</button>
 				</div>
 
@@ -65,7 +65,7 @@ export default function LogSheet({ open, onClose }: { open: boolean; onClose: ()
 							className="flex items-center gap-4 rounded-2xl border border-charcoal-blue-200/70 p-4 transition-colors hover:border-brand-500/40 hover:bg-brand-50/60 dark:border-white/10 dark:hover:border-brand-400/40 dark:hover:bg-white/5"
 						>
 							<span className="icon-chip h-11 w-11 shrink-0 text-brand-600 dark:text-brand-400">
-								<AnimatedIcon name={action.icon} size={20} />
+								<Icon name={action.icon} size={20} />
 							</span>
 							<span className="min-w-0">
 								<span className="block font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">

@@ -1,9 +1,9 @@
-import type { AnimatedIconName } from "@/components/ui/animated-icon";
+import type { IconName } from "@/components/ui/icon";
 
 export type NavItem = {
 	href: string;
 	label: string;
-	icon: AnimatedIconName;
+	icon: IconName;
 	description?: string;
 	adminOnly?: boolean;
 };

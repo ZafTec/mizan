@@ -1,9 +1,9 @@
 "use client";
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { appToast } from "@/lib/toast";
 
 interface RecipeOptionsProps {
@@ -28,13 +28,13 @@ export default function RecipeOptions({ recipeId, isCreator }: RecipeOptionsProp
 		};
 
 		if (showDropdown) {
-			document.addEventListener('mousedown', handleClickOutsideDropdown);
+			document.addEventListener("mousedown", handleClickOutsideDropdown);
 		} else {
-			document.removeEventListener('mousedown', handleClickOutsideDropdown);
+			document.removeEventListener("mousedown", handleClickOutsideDropdown);
 		}
 
 		return () => {
-			document.removeEventListener('mousedown', handleClickOutsideDropdown);
+			document.removeEventListener("mousedown", handleClickOutsideDropdown);
 		};
 	}, [showDropdown]);
 
@@ -47,26 +47,26 @@ export default function RecipeOptions({ recipeId, isCreator }: RecipeOptionsProp
 		};
 
 		if (showConfirm) {
-			document.addEventListener('mousedown', handleClickOutsidePopup);
+			document.addEventListener("mousedown", handleClickOutsidePopup);
 		} else {
-			document.removeEventListener('mousedown', handleClickOutsidePopup);
+			document.removeEventListener("mousedown", handleClickOutsidePopup);
 		}
 
 		return () => {
-			document.removeEventListener('mousedown', handleClickOutsidePopup);
+			document.removeEventListener("mousedown", handleClickOutsidePopup);
 		};
 	}, [showConfirm]);
 
 	const handleDelete = async () => {
 		const res = await fetch(`/api/recipes/${recipeId}`, {
-			method: 'DELETE',
+			method: "DELETE",
 		});
 
 		if (res.ok) {
-			appToast.success('Recipe deleted');
-			router.push('/recipes');
+			appToast.success("Recipe deleted");
+			router.push("/recipes");
 		} else {
-			appToast.error('Failed to delete the recipe');
+			appToast.error("Failed to delete the recipe");
 		}
 	};
 
@@ -82,13 +82,13 @@ export default function RecipeOptions({ recipeId, isCreator }: RecipeOptionsProp
 		<div className="relative inline-block text-left">
 			<button
 				type="button"
-				className="px-4 py-2 inline-flex items-center bg-red-600 text-white font-semibold rounded-full shadow-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+				className="px-4 py-2 inline-flex items-center bg-red-600 text-white font-semibold rounded-full hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
 				onClick={() => setShowDropdown(!showDropdown)}
 			>
 				Options
 				<span
 					className={`ml-2 transform transition-transform duration-200 ${
-						showDropdown ? 'rotate-180' : 'rotate-0'
+						showDropdown ? "rotate-180" : "rotate-0"
 					}`}
 				>
 					<svg className="w-4 h-4 inline-block" fill="currentColor" viewBox="0 0 20 20">
@@ -105,7 +105,7 @@ export default function RecipeOptions({ recipeId, isCreator }: RecipeOptionsProp
 			{showDropdown && (
 				<div
 					ref={dropdownRef}
-					className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-charcoal-blue-900 z-10"
+					className="absolute right-0 mt-2 w-56 rounded-md bg-white dark:bg-charcoal-blue-900 z-10"
 				>
 					<div className="py-1">
 						<Link
@@ -137,23 +137,32 @@ export default function RecipeOptions({ recipeId, isCreator }: RecipeOptionsProp
 			)}
 
 			{/* Confirmation popup */}
-			{showConfirm && typeof document !== "undefined" && createPortal(
-				<div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4">
-					<div ref={popupRef} className="my-auto w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-charcoal-blue-900 dark:text-charcoal-blue-100">
-						<p className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Delete recipe?</p>
-						<p className="mt-2 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">Are you sure? This cannot be undone.</p>
-						<div className="mt-4 flex justify-end gap-2 text-sm">
-							<button className="btn-secondary" onClick={cancelDelete}>
-								Cancel
-							</button>
-							<button className="btn-danger" onClick={handleDelete}>
-								Delete
-							</button>
+			{showConfirm &&
+				typeof document !== "undefined" &&
+				createPortal(
+					<div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4">
+						<div
+							ref={popupRef}
+							className="my-auto w-full max-w-sm rounded-2xl bg-white p-6 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-100"
+						>
+							<p className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+								Delete recipe?
+							</p>
+							<p className="mt-2 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
+								Are you sure? This cannot be undone.
+							</p>
+							<div className="mt-4 flex justify-end gap-2 text-sm">
+								<button className="btn-secondary" onClick={cancelDelete}>
+									Cancel
+								</button>
+								<button className="btn-danger" onClick={handleDelete}>
+									Delete
+								</button>
+							</div>
 						</div>
-					</div>
-				</div>,
-				document.body
-			)}
+					</div>,
+					document.body,
+				)}
 		</div>
-	)
+	);
 }

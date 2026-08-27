@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import Loading from "@/components/Loading";
 import { getAiConsent, getMyAiUsage, updateAiConsent, type AiConsent, type MyAiUsage } from "@/lib/api/ai";
 import { appToast } from "@/lib/toast";
@@ -232,5 +232,5 @@ function Toggle({
 }
 
 export function AiSettingsIcon() {
-	return <AnimatedIcon name="brain" size={18} aria-hidden="true" />;
+	return <Icon name="brain" size={18} aria-hidden="true" />;
 }

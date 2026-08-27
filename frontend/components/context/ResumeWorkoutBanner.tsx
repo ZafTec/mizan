@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getActiveWorkoutDraft } from "@/data/workout";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 
 function relativeTime(iso: string): string {
 	const minutes = Math.round((Date.now() - Date.parse(iso)) / 60000);
@@ -31,7 +31,7 @@ export default async function ResumeWorkoutBanner() {
 			className="flex items-center gap-3 rounded-3xl border border-verdigris-500/30 bg-verdigris-500/10 p-4 transition-colors hover:border-verdigris-500/50 dark:bg-verdigris-500/10"
 		>
 			<span className="icon-chip h-10 w-10 shrink-0 text-verdigris-700 dark:text-verdigris-300">
-				<AnimatedIcon name="activity" size={18} />
+				<Icon name="activity" size={18} />
 			</span>
 			<div className="min-w-0 flex-1">
 				<p className="truncate text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -43,7 +43,7 @@ export default async function ResumeWorkoutBanner() {
 			</div>
 			<span className="btn-primary shrink-0 !rounded-2xl !py-2 text-xs">
 				Resume
-				<AnimatedIcon name="arrowRight" size={14} />
+				<Icon name="arrowRight" size={14} />
 			</span>
 		</Link>
 	);

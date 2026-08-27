@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import { leaveHousehold } from "@/data/household";
 import { appToast } from "@/lib/toast";
 
@@ -37,7 +37,7 @@ export function LeaveHouseholdButton({
 			disabled={disabled || pending}
 			className="btn-ghost h-9 text-sm"
 		>
-			<AnimatedIcon name="logout" size={14} aria-hidden="true" />
+			<Icon name="logout" size={14} aria-hidden="true" />
 			Leave
 		</button>
 	);

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getCurrentGoal } from "@/data/goal";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 
 /**
  * Tier 2 - docs/REFOCUS.md §3. Renders nothing once a goal exists, so it is a
@@ -17,7 +17,7 @@ export default async function SetupPrompt() {
 			className="flex items-center gap-3 rounded-3xl border border-brand-500/30 bg-brand-500/10 p-4 transition-colors hover:border-brand-500/50"
 		>
 			<span className="icon-chip h-10 w-10 shrink-0 text-brand-600 dark:text-brand-400">
-				<AnimatedIcon name="sparkles" size={18} />
+				<Icon name="sparkles" size={18} />
 			</span>
 			<div className="min-w-0 flex-1">
 				<p className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -30,7 +30,7 @@ export default async function SetupPrompt() {
 			</div>
 			<span className="btn-primary shrink-0 !rounded-2xl !py-2 text-xs">
 				Set up
-				<AnimatedIcon name="arrowRight" size={14} />
+				<Icon name="arrowRight" size={14} />
 			</span>
 		</Link>
 	);

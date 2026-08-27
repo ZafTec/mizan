@@ -5,14 +5,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
 import Loading from "@/components/Loading";
-import { AnimatedIcon, type AnimatedIconName } from "@/components/ui/animated-icon";
+import { Icon, type IconName } from "@/components/ui/icon";
 import { getProfileObservations, type ProfileObservations } from "@/lib/api/profile";
 
 type QuickLink = {
 	href: string;
 	title: string;
 	description: string;
-	icon: AnimatedIconName;
+	icon: IconName;
 };
 
 export default function ProfilePage() {
@@ -127,7 +127,7 @@ export default function ProfilePage() {
 						<ProfileAvatar image={user.image} email={user.email} name={user.name} />
 						<div>
 							<p className="eyebrow mb-3">
-								<AnimatedIcon name="user" size={14} aria-hidden="true" />
+								<Icon name="user" size={14} aria-hidden="true" />
 								Profile hub
 							</p>
 							<h1 className="text-3xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -172,7 +172,7 @@ export default function ProfilePage() {
 						</div>
 						<Link href="/profile/settings" className="btn-secondary btn-sm">
 							Open settings
-							<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" />
+							<Icon name="arrowRight" size={16} aria-hidden="true" />
 						</Link>
 					</div>
 
@@ -185,12 +185,12 @@ export default function ProfilePage() {
 							>
 								<div className="flex items-start gap-3">
 									<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
-										<AnimatedIcon name={link.icon} size={18} aria-hidden="true" />
+										<Icon name={link.icon} size={18} aria-hidden="true" />
 									</span>
 									<div className="min-w-0">
 										<div className="flex items-center justify-between gap-3">
 											<p className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">{link.title}</p>
-											<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" className="text-charcoal-blue-400 group-hover:text-charcoal-blue-900 dark:group-hover:text-white" />
+											<Icon name="arrowRight" size={16} aria-hidden="true" className="text-charcoal-blue-400 group-hover:text-charcoal-blue-900 dark:group-hover:text-white" />
 										</div>
 										<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{link.description}</p>
 									</div>
@@ -204,7 +204,7 @@ export default function ProfilePage() {
 					<div className="card p-6">
 						<div className="flex items-start gap-3">
 							<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
-								<AnimatedIcon name="activity" size={18} aria-hidden="true" />
+								<Icon name="activity" size={18} aria-hidden="true" />
 							</span>
 						<div>
 							<h2 className="text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Current read</h2>

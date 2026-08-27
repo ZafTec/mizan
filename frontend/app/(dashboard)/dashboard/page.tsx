@@ -5,7 +5,7 @@ import { getCurrentGoal } from "@/data/goal";
 import { getTodayMeal, getDailyTotals, type MealEntry } from "@/data/meal";
 import { getStreak } from "@/data/achievement";
 import { getMySubscription } from "@/data/subscription";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import MacroRing from "@/components/Dashboard/MacroRing";
 import QuickActions from "@/components/Dashboard/QuickActions";
 import { ProBadge } from "@/components/billing/ProBadge";
@@ -116,7 +116,7 @@ export default async function DashboardPage() {
 						className="btn-secondary !rounded-2xl !py-2 text-sm"
 					>
 						{goal ? "Edit goal" : "Set goal"}
-						<AnimatedIcon name="arrowRight" size={14} />
+						<Icon name="arrowRight" size={14} />
 					</Link>
 				</div>
 			</section>
@@ -153,7 +153,7 @@ export default async function DashboardPage() {
 							className="btn-ghost !rounded-2xl !py-2 text-sm"
 						>
 							View diary
-							<AnimatedIcon name="arrowRight" size={14} />
+							<Icon name="arrowRight" size={14} />
 						</Link>
 					</header>
 
@@ -222,7 +222,7 @@ export default async function DashboardPage() {
 										: "text-charcoal-blue-500 dark:text-charcoal-blue-400"
 								)}
 							>
-								<AnimatedIcon name={isActiveToday ? "circleCheck" : "calendarCheck"} size={12} />
+								<Icon name={isActiveToday ? "circleCheck" : "calendarCheck"} size={12} />
 								{isActiveToday ? "Logged today" : "Not logged yet"}
 							</p>
 						</div>
@@ -246,19 +246,19 @@ export default async function DashboardPage() {
 						</p>
 						<div className="grid grid-cols-2 gap-2">
 							<Link href="/achievements" className="btn-ghost !rounded-2xl !py-2 text-xs">
-								<AnimatedIcon name="sparkles" size={14} />
+								<Icon name="sparkles" size={14} />
 								Achievements
 							</Link>
 							<Link href="/goal/dashboard" className="btn-ghost !rounded-2xl !py-2 text-xs">
-								<AnimatedIcon name="trendingUp" size={14} />
+								<Icon name="trendingUp" size={14} />
 								Progress
 							</Link>
 							<Link href="/meal-plan" className="btn-ghost !rounded-2xl !py-2 text-xs">
-								<AnimatedIcon name="calendarCheck" size={14} />
+								<Icon name="calendarCheck" size={14} />
 								Meal plan
 							</Link>
 							<Link href="/habits" className="btn-ghost !rounded-2xl !py-2 text-xs">
-								<AnimatedIcon name="circleCheck" size={14} />
+								<Icon name="circleCheck" size={14} />
 								Habits
 							</Link>
 						</div>
@@ -292,7 +292,7 @@ export default async function DashboardPage() {
 						</p>
 					</div>
 					<Link href="/meals/add" className="btn-primary !rounded-2xl !py-2 text-sm">
-						<AnimatedIcon name="flame" size={14} />
+						<Icon name="flame" size={14} />
 						Log meal
 					</Link>
 				</header>
@@ -300,14 +300,14 @@ export default async function DashboardPage() {
 				{shownMeals.length === 0 ? (
 					<div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-charcoal-blue-300 bg-charcoal-blue-50 py-10 text-center dark:border-white/10 dark:bg-charcoal-blue-950">
 						<span className="icon-chip h-12 w-12 text-charcoal-blue-400">
-							<AnimatedIcon name="cookingPot" size={20} />
+							<Icon name="cookingPot" size={20} />
 						</span>
 						<p className="text-sm font-medium text-charcoal-blue-700 dark:text-charcoal-blue-200">
 							Nothing logged today
 						</p>
 						<Link href="/meals/add" className="btn-primary !rounded-2xl !py-2 text-sm">
 							Log a meal
-							<AnimatedIcon name="arrowRight" size={14} />
+							<Icon name="arrowRight" size={14} />
 						</Link>
 					</div>
 				) : (
@@ -361,7 +361,7 @@ export default async function DashboardPage() {
 					<div className="mt-4 text-center">
 						<Link href="/meals" className="btn-ghost !rounded-2xl !py-2 text-sm">
 							View full diary
-							<AnimatedIcon name="arrowRight" size={14} />
+							<Icon name="arrowRight" size={14} />
 						</Link>
 					</div>
 				)}

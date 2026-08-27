@@ -1,13 +1,12 @@
-'use client';
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { getAllIngredient } from "@/data/ingredient";
 import type { Ingredient } from "@/data/ingredient";
 
-
-import Image from 'next/image';
+import Image from "next/image";
 import { useImageUpload } from "@/components/ImageUpload";
-import Link from 'next/link';
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
 import Modal from "@/components/Modal";
@@ -24,30 +23,30 @@ type SelectedIngredient = {
 	name: string;
 	amount: number | null;
 	unit: string;
-}
+};
 
 const MAX_RECIPE_IMAGES_TO_PREVIEW = 3;
 
 export default function Page() {
-	const [name, setName] = useState('');
+	const [name, setName] = useState("");
 	const [images, setImages] = useState<string[]>([]);
 
 	const imageUpload = useImageUpload({
 		folder: "recipes",
 		onUploaded: (url) => setImages((previous) => [...previous, url]),
 	});
-	const [description, setDescription] = useState('');
-	const [instructions, setInstructions] = useState('');
+	const [description, setDescription] = useState("");
+	const [instructions, setInstructions] = useState("");
 	const [selectedIngredients, setSelectedIngredients] = useState<SelectedIngredient[]>([]);
 	const [servings, setServings] = useState(1);
 	const [prepTime, setPrepTime] = useState<number | null>(null);
 	const [cookTime, setCookTime] = useState<number | null>(null);
-	const [sourceUrl, setSourceUrl] = useState('');
+	const [sourceUrl, setSourceUrl] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [visibility, setVisibility] = useState<'public' | 'private' | 'household'>('private');
+	const [visibility, setVisibility] = useState<"public" | "private" | "household">("private");
 
 	const [tags, setTags] = useState<Set<string>>(new Set<string>());
-	const [currentTag, setCurrentTag] = useState('');
+	const [currentTag, setCurrentTag] = useState("");
 
 	const [ingredientSearch, setIngredientSearch] = useState<Ingredient[]>([]);
 	const [activeDropdownIndex, setActiveDropdownIndex] = useState<number | null>(null);
@@ -79,7 +78,7 @@ export default function Page() {
 			}
 			return acc;
 		},
-		{ calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
+		{ calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
 	);
 
 	useEffect(() => {
@@ -89,25 +88,40 @@ export default function Page() {
 			}
 		}
 
-		document.addEventListener('mousedown', handleClickOutside);
+		document.addEventListener("mousedown", handleClickOutside);
 		return () => {
-			document.removeEventListener('mousedown', handleClickOutside);
-		}
+			document.removeEventListener("mousedown", handleClickOutside);
+		};
 	}, []);
 
 	function handleAddIngredient() {
-		setSelectedIngredients([...selectedIngredients, { type: "food", ingredient: null, subRecipe: null, name: '', amount: null, unit: 'gram' }]);
+		setSelectedIngredients([
+			...selectedIngredients,
+			{ type: "food", ingredient: null, subRecipe: null, name: "", amount: null, unit: "gram" },
+		]);
 	}
 
 	function handleIngredientTypeToggle(index: number, type: "food" | "recipe") {
 		const newIngredients = [...selectedIngredients];
-		newIngredients[index] = { type, ingredient: null, subRecipe: null, name: '', amount: null, unit: type === "food" ? "gram" : "serving" };
+		newIngredients[index] = {
+			type,
+			ingredient: null,
+			subRecipe: null,
+			name: "",
+			amount: null,
+			unit: type === "food" ? "gram" : "serving",
+		};
 		setSelectedIngredients(newIngredients);
 	}
 
 	function handleSubRecipeSelect(index: number, recipe: RecipeSearchResult) {
 		const newIngredients = [...selectedIngredients];
-		newIngredients[index] = { ...newIngredients[index], subRecipe: recipe, name: recipe.title, amount: 1 };
+		newIngredients[index] = {
+			...newIngredients[index],
+			subRecipe: recipe,
+			name: recipe.title,
+			amount: 1,
+		};
 		setSelectedIngredients(newIngredients);
 		setActiveDropdownIndex(null);
 	}
@@ -135,14 +149,16 @@ export default function Page() {
 		getAllIngredient(debouncedQuery, undefined, undefined, 1, 4).then((result) => {
 			if (!cancelled) setIngredientSearch(result.ingredients);
 		});
-		return () => { cancelled = true; };
+		return () => {
+			cancelled = true;
+		};
 	}, [debouncedQuery]);
 
 	function handleAddTag(e: React.KeyboardEvent<HTMLInputElement>) {
-		if (e.key === 'Enter' && currentTag.trim()) {
+		if (e.key === "Enter" && currentTag.trim()) {
 			e.preventDefault();
 			setTags(new Set([...tags, currentTag.trim().toUpperCase()]));
-			setCurrentTag('');
+			setCurrentTag("");
 		}
 	}
 
@@ -159,7 +175,7 @@ export default function Page() {
 			ingredient: selectedIngredient,
 			name: selectedIngredient.name,
 			amount: null,
-		}
+		};
 		setSelectedIngredients(newIngredients);
 		setActiveDropdownIndex(null);
 	}
@@ -175,20 +191,20 @@ export default function Page() {
 	const handleLogMealDirectly = async (e: React.MouseEvent) => {
 		e.preventDefault();
 		if (!name) {
-			appToast.error('Please enter a recipe name before logging');
+			appToast.error("Please enter a recipe name before logging");
 			return;
 		}
 
 		if (selectedIngredients.length === 0 || totalMacros.calories === 0) {
-			appToast.error('Please add ingredients before logging');
+			appToast.error("Please add ingredients before logging");
 			return;
 		}
 
 		setIsLoggingMeal(true);
-		
+
 		// Divide by servings to get 1 serving of the recipe
 		const ratio = 1 / Math.max(1, servings);
-		
+
 		const mealData = {
 			name: `${name} (1 serving)`,
 			mealType: "MEAL",
@@ -198,23 +214,23 @@ export default function Page() {
 			proteinGrams: Number((totalMacros.protein * ratio).toFixed(1)),
 			carbsGrams: Number((totalMacros.carbs * ratio).toFixed(1)),
 			fatGrams: Number((totalMacros.fat * ratio).toFixed(1)),
-			fiberGrams: Number((totalMacros.fiber * ratio).toFixed(1))
+			fiberGrams: Number((totalMacros.fiber * ratio).toFixed(1)),
 		};
 
 		try {
-			await clientApi('/api/Meals', {
-				method: 'POST',
+			await clientApi("/api/Meals", {
+				method: "POST",
 				body: mealData,
 			});
-			appToast.success('Meal logged successfully!');
-			router.push('/meals');
+			appToast.success("Meal logged successfully!");
+			router.push("/meals");
 		} catch (err) {
-			console.error('[Recipe Create] Failed to log meal:', err);
-			appToast.error(err, 'Failed to log meal. Please try again.');
+			console.error("[Recipe Create] Failed to log meal:", err);
+			appToast.error(err, "Failed to log meal. Please try again.");
 		} finally {
 			setIsLoggingMeal(false);
 		}
-	}
+	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -223,12 +239,12 @@ export default function Page() {
 		const recipeData = {
 			title: name,
 			description,
-			ingredients: selectedIngredients.map(ing => ({
+			ingredients: selectedIngredients.map((ing) => ({
 				foodId: ing.type === "food" ? ing.ingredient?.id : undefined,
 				subRecipeId: ing.type === "recipe" ? ing.subRecipe?.id : undefined,
 				ingredientText: ing.name,
 				amount: ing.amount!,
-				unit: ing.type === "food" ? "gram" : "serving"
+				unit: ing.type === "food" ? "gram" : "serving",
 			})),
 			// Instructions are free text now, and tags are gone - see
 			// docs/REFOCUS.md §4.
@@ -238,44 +254,46 @@ export default function Page() {
 			cookTimeMinutes: cookTime || undefined,
 			sourceUrl: sourceUrl || undefined,
 			imageUrl: images[0] || undefined,
-			isPublic: visibility === 'public',
-			householdId: visibility === 'household' ? null : undefined
-		}
-
+			isPublic: visibility === "public",
+			householdId: visibility === "household" ? null : undefined,
+		};
 
 		try {
-			await clientApi('/api/Recipes', {
-				method: 'POST',
+			await clientApi("/api/Recipes", {
+				method: "POST",
 				body: recipeData,
 			});
-			appToast.success('Recipe created');
-			router.push('/recipes');
+			appToast.success("Recipe created");
+			router.push("/recipes");
 		} catch (err) {
-			console.error('[Recipe Create] Failed:', err);
-			appToast.error(err, 'Failed to create recipe. Please try again.');
+			console.error("[Recipe Create] Failed:", err);
+			appToast.error(err, "Failed to create recipe. Please try again.");
 		} finally {
 			setIsSubmitting(false);
 		}
-	}
+	};
 
 	return (
 		<div className="max-w-4xl mx-auto space-y-6">
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-4">
-					<Link href="/recipes" className="flex h-10 w-10 items-center justify-center rounded-xl bg-charcoal-blue-100 transition-colors hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900/75 dark:hover:bg-charcoal-blue-900">
+					<Link
+						href="/recipes"
+						className="flex h-10 w-10 items-center justify-center rounded-xl bg-charcoal-blue-100 transition-colors hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900/75 dark:hover:bg-charcoal-blue-900"
+					>
 						<i className="ri-arrow-left-line text-xl text-charcoal-blue-600 dark:text-charcoal-blue-300" />
 					</Link>
 					<div>
-						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Create Recipe</h1>
-						<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">Add a new recipe to your collection</p>
+						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+							Create Recipe
+						</h1>
+						<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">
+							Add a new recipe to your collection
+						</p>
 					</div>
 				</div>
-				<button
-					type="button"
-					onClick={() => setIsModalOpen(true)}
-					className="btn-secondary"
-				>
+				<button type="button" onClick={() => setIsModalOpen(true)} className="btn-secondary">
 					<i className="ri-pie-chart-2-line" />
 					View Macros
 				</button>
@@ -283,18 +301,34 @@ export default function Page() {
 
 			{/* Macros Modal */}
 			<Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-				<h2 className="mb-4 text-xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">Recipe Macros Overview</h2>
+				<h2 className="mb-4 text-xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+					Recipe Macros Overview
+				</h2>
 				<div className="overflow-x-auto">
 					<table className="w-full text-sm">
 						<thead>
 							<tr className="bg-charcoal-blue-50 dark:bg-charcoal-blue-900/60">
-								<th className="rounded-tl-xl p-3 text-left font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300">Ingredient</th>
-								<th className="p-3 text-right font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300">Amount</th>
-								<th className="p-3 text-right font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300">Calories</th>
-								<th className="p-3 text-right font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300">Protein</th>
-								<th className="p-3 text-right font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300">Carbs</th>
-								<th className="p-3 text-right font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300">Fat</th>
-								<th className="rounded-tr-xl p-3 text-right font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300">Fiber</th>
+								<th className="rounded-tl-xl p-3 text-left font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300">
+									Ingredient
+								</th>
+								<th className="p-3 text-right font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300">
+									Amount
+								</th>
+								<th className="p-3 text-right font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300">
+									Calories
+								</th>
+								<th className="p-3 text-right font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300">
+									Protein
+								</th>
+								<th className="p-3 text-right font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300">
+									Carbs
+								</th>
+								<th className="p-3 text-right font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300">
+									Fat
+								</th>
+								<th className="rounded-tr-xl p-3 text-right font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300">
+									Fiber
+								</th>
 							</tr>
 						</thead>
 						<tbody className="divide-y divide-charcoal-blue-100 dark:divide-white/10">
@@ -304,28 +338,63 @@ export default function Page() {
 									const s = ing.amount;
 									const n = ing.subRecipe.nutrition;
 									return (
-										<tr key={idx} className="hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-900/60">
-											<td className="p-3 text-charcoal-blue-900 dark:text-charcoal-blue-100">{ing.subRecipe.title} <span className="text-xs text-brand-500 dark:text-brand-300">(recipe)</span></td>
-											<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">{ing.amount} srv</td>
-											<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">{((n.caloriesPerServing || 0) * s).toFixed(0)}</td>
-											<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">{((n.proteinGrams || 0) * s).toFixed(1)}g</td>
-											<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">{((n.carbsGrams || 0) * s).toFixed(1)}g</td>
-											<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">{((n.fatGrams || 0) * s).toFixed(1)}g</td>
-											<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">{((n.fiberGrams || 0) * s).toFixed(1)}g</td>
+										<tr
+											key={idx}
+											className="hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-900/60"
+										>
+											<td className="p-3 text-charcoal-blue-900 dark:text-charcoal-blue-100">
+												{ing.subRecipe.title}{" "}
+												<span className="text-xs text-brand-500 dark:text-brand-300">(recipe)</span>
+											</td>
+											<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">
+												{ing.amount} srv
+											</td>
+											<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">
+												{((n.caloriesPerServing || 0) * s).toFixed(0)}
+											</td>
+											<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">
+												{((n.proteinGrams || 0) * s).toFixed(1)}g
+											</td>
+											<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">
+												{((n.carbsGrams || 0) * s).toFixed(1)}g
+											</td>
+											<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">
+												{((n.fatGrams || 0) * s).toFixed(1)}g
+											</td>
+											<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">
+												{((n.fiberGrams || 0) * s).toFixed(1)}g
+											</td>
 										</tr>
 									);
 								}
 								if (!ing.ingredient) return null;
 								const ratio = ing.amount / 100;
 								return (
-									<tr key={idx} className="hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-900/60">
-										<td className="p-3 text-charcoal-blue-900 dark:text-charcoal-blue-100">{ing.ingredient.name}</td>
-										<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">{ing.amount}g</td>
-										<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">{((ing.ingredient.caloriesPer100g || 0) * ratio).toFixed(0)}</td>
-										<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">{((ing.ingredient.proteinPer100g || 0) * ratio).toFixed(1)}g</td>
-										<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">{((ing.ingredient.carbsPer100g || 0) * ratio).toFixed(1)}g</td>
-										<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">{((ing.ingredient.fatPer100g || 0) * ratio).toFixed(1)}g</td>
-										<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">{((ing.ingredient.fiberPer100g || 0) * ratio).toFixed(1)}g</td>
+									<tr
+										key={idx}
+										className="hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-900/60"
+									>
+										<td className="p-3 text-charcoal-blue-900 dark:text-charcoal-blue-100">
+											{ing.ingredient.name}
+										</td>
+										<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">
+											{ing.amount}g
+										</td>
+										<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">
+											{((ing.ingredient.caloriesPer100g || 0) * ratio).toFixed(0)}
+										</td>
+										<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">
+											{((ing.ingredient.proteinPer100g || 0) * ratio).toFixed(1)}g
+										</td>
+										<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">
+											{((ing.ingredient.carbsPer100g || 0) * ratio).toFixed(1)}g
+										</td>
+										<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">
+											{((ing.ingredient.fatPer100g || 0) * ratio).toFixed(1)}g
+										</td>
+										<td className="p-3 text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">
+											{((ing.ingredient.fiberPer100g || 0) * ratio).toFixed(1)}g
+										</td>
 									</tr>
 								);
 							})}
@@ -334,11 +403,21 @@ export default function Page() {
 							<tr className="bg-brand-50 font-semibold dark:bg-brand-950/50">
 								<td className="rounded-bl-xl p-3 text-brand-900 dark:text-brand-100">Total</td>
 								<td className="p-3 text-right text-brand-600 dark:text-brand-300"></td>
-								<td className="p-3 text-right text-brand-600 dark:text-brand-300">{totalMacros.calories.toFixed(0)}</td>
-								<td className="p-3 text-right text-brand-600 dark:text-brand-300">{totalMacros.protein.toFixed(1)}g</td>
-								<td className="p-3 text-right text-brand-600 dark:text-brand-300">{totalMacros.carbs.toFixed(1)}g</td>
-								<td className="p-3 text-right text-brand-600 dark:text-brand-300">{totalMacros.fat.toFixed(1)}g</td>
-								<td className="rounded-br-xl p-3 text-right text-brand-600 dark:text-brand-300">{totalMacros.fiber.toFixed(1)}g</td>
+								<td className="p-3 text-right text-brand-600 dark:text-brand-300">
+									{totalMacros.calories.toFixed(0)}
+								</td>
+								<td className="p-3 text-right text-brand-600 dark:text-brand-300">
+									{totalMacros.protein.toFixed(1)}g
+								</td>
+								<td className="p-3 text-right text-brand-600 dark:text-brand-300">
+									{totalMacros.carbs.toFixed(1)}g
+								</td>
+								<td className="p-3 text-right text-brand-600 dark:text-brand-300">
+									{totalMacros.fat.toFixed(1)}g
+								</td>
+								<td className="rounded-br-xl p-3 text-right text-brand-600 dark:text-brand-300">
+									{totalMacros.fiber.toFixed(1)}g
+								</td>
 							</tr>
 						</tfoot>
 					</table>
@@ -356,45 +435,57 @@ export default function Page() {
 					<div>
 						<label className="label">Recipe Images</label>
 						<div className="flex flex-wrap gap-3">
-									{imageUpload.input}
-									<button
-										type="button"
-										onClick={(e) => {
-											e.preventDefault();
-											imageUpload.open();
-										}}
-										disabled={imageUpload.uploading}
-									className="group flex h-24 w-24 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-charcoal-blue-300 bg-charcoal-blue-50 transition-colors hover:border-brand-400 hover:bg-brand-50 disabled:opacity-60 dark:border-white/10 dark:bg-charcoal-blue-900/75 dark:hover:border-brand-400 dark:hover:bg-brand-950/50"
-								>
-										<i className="ri-image-add-line text-2xl text-charcoal-blue-400 group-hover:text-brand-500 dark:text-charcoal-blue-500 dark:group-hover:text-brand-300" />
-										<span className="mt-1 text-xs text-charcoal-blue-400 group-hover:text-brand-500 dark:text-charcoal-blue-500 dark:group-hover:text-brand-300">{imageUpload.uploading ? "..." : "Add"}</span>
-									</button>
-									{images.map((image, index) => {
-										if (typeof image !== 'string' || index >= MAX_RECIPE_IMAGES_TO_PREVIEW) return null;
-										return (
-											<div key={index} className="relative h-24 w-24">
-												<Image src={image} alt="Recipe" fill sizes="96px" className="rounded-2xl border-2 border-charcoal-blue-200 object-cover dark:border-white/10" />
-												<button
-													type="button"
-													onClick={() => setImages(images.filter((_, i) => i !== index))}
-													className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-												>
-													<i className="ri-close-line text-sm" />
-												</button>
-											</div>
-										);
-									})}
-									{images.length > MAX_RECIPE_IMAGES_TO_PREVIEW && (
-										<div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60">
-											<span className="font-medium text-charcoal-blue-500 dark:text-charcoal-blue-400">+{images.length - MAX_RECIPE_IMAGES_TO_PREVIEW}</span>
-										</div>
-									)}
+							{imageUpload.input}
+							<button
+								type="button"
+								onClick={(e) => {
+									e.preventDefault();
+									imageUpload.open();
+								}}
+								disabled={imageUpload.uploading}
+								className="group flex h-24 w-24 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-charcoal-blue-300 bg-charcoal-blue-50 transition-colors hover:border-brand-400 hover:bg-brand-50 disabled:opacity-60 dark:border-white/10 dark:bg-charcoal-blue-900/75 dark:hover:border-brand-400 dark:hover:bg-brand-950/50"
+							>
+								<i className="ri-image-add-line text-2xl text-charcoal-blue-400 group-hover:text-brand-500 dark:text-charcoal-blue-500 dark:group-hover:text-brand-300" />
+								<span className="mt-1 text-xs text-charcoal-blue-400 group-hover:text-brand-500 dark:text-charcoal-blue-500 dark:group-hover:text-brand-300">
+									{imageUpload.uploading ? "..." : "Add"}
+								</span>
+							</button>
+							{images.map((image, index) => {
+								if (typeof image !== "string" || index >= MAX_RECIPE_IMAGES_TO_PREVIEW) return null;
+								return (
+									<div key={index} className="relative h-24 w-24">
+										<Image
+											src={image}
+											alt="Recipe"
+											fill
+											sizes="96px"
+											className="rounded-2xl border-2 border-charcoal-blue-200 object-cover dark:border-white/10"
+										/>
+										<button
+											type="button"
+											onClick={() => setImages(images.filter((_, i) => i !== index))}
+											className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+										>
+											<i className="ri-close-line text-sm" />
+										</button>
+									</div>
+								);
+							})}
+							{images.length > MAX_RECIPE_IMAGES_TO_PREVIEW && (
+								<div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60">
+									<span className="font-medium text-charcoal-blue-500 dark:text-charcoal-blue-400">
+										+{images.length - MAX_RECIPE_IMAGES_TO_PREVIEW}
+									</span>
 								</div>
+							)}
+						</div>
 					</div>
 
 					{/* Recipe Name */}
 					<div>
-						<label htmlFor="recipe_name" className="label">Recipe Name</label>
+						<label htmlFor="recipe_name" className="label">
+							Recipe Name
+						</label>
 						<input
 							id="recipe_name"
 							type="text"
@@ -408,7 +499,9 @@ export default function Page() {
 
 					{/* Description */}
 					<div>
-						<label htmlFor="description" className="label">Description</label>
+						<label htmlFor="description" className="label">
+							Description
+						</label>
 						<textarea
 							id="description"
 							value={description}
@@ -432,12 +525,18 @@ export default function Page() {
 						{selectedIngredients.map((ing, index) => (
 							<div key={index} className="space-y-2">
 								<div className="flex gap-1">
-									<button type="button" onClick={() => handleIngredientTypeToggle(index, "food")}
-										className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${ing.type === "food" ? "bg-brand-500 text-white" : "bg-charcoal-blue-100 text-charcoal-blue-600 hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900/60 dark:text-charcoal-blue-300 dark:hover:bg-charcoal-blue-900"}`}>
+									<button
+										type="button"
+										onClick={() => handleIngredientTypeToggle(index, "food")}
+										className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${ing.type === "food" ? "bg-brand-500 text-white" : "bg-charcoal-blue-100 text-charcoal-blue-600 hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900/60 dark:text-charcoal-blue-300 dark:hover:bg-charcoal-blue-900"}`}
+									>
 										Food
 									</button>
-									<button type="button" onClick={() => handleIngredientTypeToggle(index, "recipe")}
-										className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${ing.type === "recipe" ? "bg-brand-500 text-white" : "bg-charcoal-blue-100 text-charcoal-blue-600 hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900/60 dark:text-charcoal-blue-300 dark:hover:bg-charcoal-blue-900"}`}>
+									<button
+										type="button"
+										onClick={() => handleIngredientTypeToggle(index, "recipe")}
+										className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${ing.type === "recipe" ? "bg-brand-500 text-white" : "bg-charcoal-blue-100 text-charcoal-blue-600 hover:bg-charcoal-blue-200 dark:bg-charcoal-blue-900/60 dark:text-charcoal-blue-300 dark:hover:bg-charcoal-blue-900"}`}
+									>
 										Recipe
 									</button>
 								</div>
@@ -452,7 +551,7 @@ export default function Page() {
 												className="input w-full"
 											/>
 											{activeDropdownIndex === index && (
-												<div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-charcoal-blue-200 bg-white shadow-lg dark:border-white/10 dark:bg-charcoal-blue-950">
+												<div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-charcoal-blue-950">
 													{ingredientSearch.length > 0 ? (
 														ingredientSearch.map((ingredient) => (
 															<button
@@ -461,12 +560,18 @@ export default function Page() {
 																onClick={() => handleIngredientSelect(index, ingredient)}
 																className="flex w-full items-center justify-between border-b border-charcoal-blue-100 p-3 text-left hover:bg-charcoal-blue-50 last:border-0 dark:border-white/10 dark:hover:bg-charcoal-blue-900/80"
 															>
-																<span className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{ingredient.name}</span>
-																<span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{ingredient.caloriesPer100g} kcal/100g</span>
+																<span className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
+																	{ingredient.name}
+																</span>
+																<span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+																	{ingredient.caloriesPer100g} kcal/100g
+																</span>
 															</button>
 														))
 													) : (
-														<div className="p-3 text-center text-charcoal-blue-500 dark:text-charcoal-blue-400">No ingredients found</div>
+														<div className="p-3 text-center text-charcoal-blue-500 dark:text-charcoal-blue-400">
+															No ingredients found
+														</div>
 													)}
 												</div>
 											)}
@@ -475,7 +580,11 @@ export default function Page() {
 										<div className="flex-1 min-w-0">
 											<RecipeIngredientSearch
 												value={ing.name}
-												onChange={(v) => { const n = [...selectedIngredients]; n[index] = { ...n[index], name: v }; setSelectedIngredients(n); }}
+												onChange={(v) => {
+													const n = [...selectedIngredients];
+													n[index] = { ...n[index], name: v };
+													setSelectedIngredients(n);
+												}}
 												onSelect={(r) => handleSubRecipeSelect(index, r)}
 											/>
 										</div>
@@ -484,8 +593,10 @@ export default function Page() {
 										<input
 											type="number"
 											placeholder="Amount"
-											value={ing.amount?.toString() || ''}
-											onChange={(e) => handleIngredientAmountChange(index, parseFloat(e.target.value))}
+											value={ing.amount?.toString() || ""}
+											onChange={(e) =>
+												handleIngredientAmountChange(index, parseFloat(e.target.value))
+											}
 											className="input w-24 sm:w-28"
 											min="0"
 											step={ing.type === "recipe" ? "0.25" : "0.1"}
@@ -542,11 +653,13 @@ export default function Page() {
 
 					{/* Visibility */}
 					<div>
-						<label htmlFor="visibility" className="label">Visibility</label>
+						<label htmlFor="visibility" className="label">
+							Visibility
+						</label>
 						<select
 							id="visibility"
 							value={visibility}
-							onChange={(e) => setVisibility(e.target.value as 'public' | 'private' | 'household')}
+							onChange={(e) => setVisibility(e.target.value as "public" | "private" | "household")}
 							className="input"
 						>
 							<option value="private">Private (Only me)</option>
@@ -554,16 +667,18 @@ export default function Page() {
 							<option value="public">Public (Visible to everyone)</option>
 						</select>
 						<p className="mt-1.5 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-							{visibility === 'private' && 'Only you can view and edit this recipe'}
-							{visibility === 'household' && 'All members of your household can view this recipe'}
-							{visibility === 'public' && 'Anyone can view this recipe'}
+							{visibility === "private" && "Only you can view and edit this recipe"}
+							{visibility === "household" && "All members of your household can view this recipe"}
+							{visibility === "public" && "Anyone can view this recipe"}
 						</p>
 					</div>
 
 					{/* Servings + Times */}
 					<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 						<div>
-							<label htmlFor="servings" className="label">Servings</label>
+							<label htmlFor="servings" className="label">
+								Servings
+							</label>
 							<div className="flex items-center gap-3">
 								<button
 									type="button"
@@ -590,11 +705,13 @@ export default function Page() {
 							</div>
 						</div>
 						<div>
-							<label htmlFor="prepTime" className="label">Prep Time (min)</label>
+							<label htmlFor="prepTime" className="label">
+								Prep Time (min)
+							</label>
 							<input
 								id="prepTime"
 								type="number"
-								value={prepTime ?? ''}
+								value={prepTime ?? ""}
 								onChange={(e) => setPrepTime(e.target.value ? parseInt(e.target.value) : null)}
 								className="input"
 								min="0"
@@ -603,11 +720,13 @@ export default function Page() {
 							/>
 						</div>
 						<div>
-							<label htmlFor="cookTime" className="label">Cook Time (min)</label>
+							<label htmlFor="cookTime" className="label">
+								Cook Time (min)
+							</label>
 							<input
 								id="cookTime"
 								type="number"
-								value={cookTime ?? ''}
+								value={cookTime ?? ""}
 								onChange={(e) => setCookTime(e.target.value ? parseInt(e.target.value) : null)}
 								className="input"
 								min="0"
@@ -619,7 +738,9 @@ export default function Page() {
 
 					{/* Source URL */}
 					<div>
-						<label htmlFor="sourceUrl" className="label">Source URL (optional)</label>
+						<label htmlFor="sourceUrl" className="label">
+							Source URL (optional)
+						</label>
 						<input
 							id="sourceUrl"
 							type="url"
@@ -632,13 +753,22 @@ export default function Page() {
 
 					{/* Tags */}
 					<div>
-						<label htmlFor="tag" className="label">Tags</label>
+						<label htmlFor="tag" className="label">
+							Tags
+						</label>
 						{tags.size > 0 && (
 							<div className="flex flex-wrap gap-2 mb-3">
 								{Array.from(tags).map((tag, index) => (
-									<span key={index} className="inline-flex items-center gap-1.5 rounded-full bg-brand-100 px-3 py-1.5 text-sm font-medium text-brand-700 dark:bg-brand-950/60 dark:text-brand-200">
+									<span
+										key={index}
+										className="inline-flex items-center gap-1.5 rounded-full bg-brand-100 px-3 py-1.5 text-sm font-medium text-brand-700 dark:bg-brand-950/60 dark:text-brand-200"
+									>
 										{tag}
-										<button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-brand-900 dark:hover:text-brand-50">
+										<button
+											type="button"
+											onClick={() => handleRemoveTag(tag)}
+											className="hover:text-brand-900 dark:hover:text-brand-50"
+										>
 											<i className="ri-close-line" />
 										</button>
 									</span>
@@ -658,17 +788,25 @@ export default function Page() {
 				</div>
 
 				{/* Macro Summary */}
-				{selectedIngredients.some(ing => (ing.ingredient || ing.subRecipe) && ing.amount) && (
+				{selectedIngredients.some((ing) => (ing.ingredient || ing.subRecipe) && ing.amount) && (
 					<div className="card p-6">
-						<h2 className="mb-4 font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Nutrition Summary</h2>
+						<h2 className="mb-4 font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+							Nutrition Summary
+						</h2>
 						<div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
 							<div className="rounded-xl bg-white p-3 text-center dark:bg-charcoal-blue-950/80">
-								<p className="text-2xl font-bold text-orange-600">{totalMacros.calories.toFixed(0)}</p>
-								<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Calories</p>
+								<p className="text-2xl font-bold text-orange-600">
+									{totalMacros.calories.toFixed(0)}
+								</p>
+								<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+									Calories
+								</p>
 							</div>
 							<div className="rounded-xl bg-white p-3 text-center dark:bg-charcoal-blue-950/80">
 								<p className="text-2xl font-bold text-red-600">{totalMacros.protein.toFixed(1)}g</p>
-								<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Protein</p>
+								<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+									Protein
+								</p>
 							</div>
 							<div className="rounded-xl bg-white p-3 text-center dark:bg-charcoal-blue-950/80">
 								<p className="text-2xl font-bold text-amber-600">{totalMacros.carbs.toFixed(1)}g</p>

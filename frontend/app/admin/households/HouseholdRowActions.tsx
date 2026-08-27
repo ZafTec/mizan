@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import { adminDeleteHousehold } from "@/data/admin/household";
 import { appToast } from "@/lib/toast";
 
@@ -27,7 +27,7 @@ export default function HouseholdRowActions({ id, name }: { id: string; name: st
 	return (
 		<div className="flex items-center justify-end gap-2">
 			<Link href={`/admin/households/${id}`} className="btn-ghost h-8 text-xs">
-				<AnimatedIcon name="search" size={14} aria-hidden="true" />
+				<Icon name="search" size={14} aria-hidden="true" />
 				Inspect
 			</Link>
 			<button
@@ -36,7 +36,7 @@ export default function HouseholdRowActions({ id, name }: { id: string; name: st
 				disabled={pending}
 				className="btn-ghost h-8 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
 			>
-				<AnimatedIcon name="logout" size={14} aria-hidden="true" />
+				<Icon name="logout" size={14} aria-hidden="true" />
 				Delete
 			</button>
 		</div>

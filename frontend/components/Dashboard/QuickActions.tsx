@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { AnimatedIcon, type AnimatedIconName } from "@/components/ui/animated-icon";
+import { Icon, type IconName } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
 
 type Action = {
 	href: string;
 	label: string;
-	icon: AnimatedIconName;
+	icon: IconName;
 	tone: "brand" | "accent" | "peach" | "sun";
 };
 
@@ -43,7 +43,7 @@ export default function QuickActions() {
 				>
 					<span className="text-sm font-semibold">{a.label}</span>
 					<span className="qa-icon flex h-10 w-10 items-center justify-center rounded-2xl transition-transform duration-[220ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:scale-110">
-						<AnimatedIcon name={a.icon} size={18} />
+						<Icon name={a.icon} size={18} />
 					</span>
 				</Link>
 			))}

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import { appToast } from "@/lib/toast";
 import {
 	analyzeFoodPhoto,
@@ -116,7 +116,7 @@ export default function FoodPhotoSheet({ onLogged }: { onLogged?: () => void }) 
 					className="flex w-full items-center gap-4 rounded-2xl border border-charcoal-blue-200/70 p-4 text-left transition-colors hover:border-brand-500/40 hover:bg-brand-50/60 disabled:opacity-60 dark:border-white/10 dark:hover:border-brand-400/40 dark:hover:bg-white/5"
 				>
 					<span className="icon-chip h-11 w-11 shrink-0 text-brand-600 dark:text-brand-400">
-						<AnimatedIcon name="sparkles" size={20} />
+						<Icon name="sparkles" size={20} />
 					</span>
 					<span className="min-w-0">
 						<span className="block font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import type { User } from "@/lib/auth";
 import Link from "next/link";
@@ -10,7 +10,7 @@ import { ChevronDown } from "lucide-react";
 import { signOut } from "@/lib/auth-client";
 import { appToast } from "@/lib/toast";
 import { clearAppearanceCookie } from "@/lib/appearance-cookie";
-import { AnimatedIcon, type AnimatedIconName } from "@/components/ui/animated-icon";
+import { Icon, type IconName } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
 
 interface NavbarContentProps {
@@ -20,7 +20,7 @@ interface NavbarContentProps {
 interface NavItem {
 	href: string;
 	label: string;
-	icon: AnimatedIconName;
+	icon: IconName;
 }
 
 function UserAvatar({ user }: { user: User }) {
@@ -29,7 +29,7 @@ function UserAvatar({ user }: { user: User }) {
 			<div className="relative h-9 w-9 overflow-hidden rounded-2xl ring-1 ring-brand-500/15">
 				<Image
 					src={user.image}
-					alt={user.name || user.email || 'User'}
+					alt={user.name || user.email || "User"}
 					fill
 					sizes="36px"
 					className="object-cover"
@@ -40,7 +40,7 @@ function UserAvatar({ user }: { user: User }) {
 
 	return (
 		<div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-brand-600 text-sm font-semibold text-white ring-1 ring-brand-500/15 dark:bg-brand-500">
-			{user.email?.charAt(0).toUpperCase() || 'U'}
+			{user.email?.charAt(0).toUpperCase() || "U"}
 		</div>
 	);
 }
@@ -66,7 +66,9 @@ function NavLink({
 				isActive
 					? "text-charcoal-blue-900 dark:text-charcoal-blue-50"
 					: "text-charcoal-blue-600 hover:text-charcoal-blue-900 dark:text-charcoal-blue-300 dark:hover:text-white",
-				mobile ? "w-full rounded-2xl hover:bg-charcoal-blue-900/5 dark:hover:bg-white/5" : "rounded-full"
+				mobile
+					? "w-full rounded-2xl hover:bg-charcoal-blue-900/5 dark:hover:bg-white/5"
+					: "rounded-full",
 			)}
 		>
 			<span
@@ -74,10 +76,12 @@ function NavLink({
 					mobile
 						? "icon-chip h-9 w-9 text-charcoal-blue-500 dark:text-charcoal-blue-300"
 						: "flex h-5 w-5 items-center justify-center text-charcoal-blue-400 dark:text-charcoal-blue-500",
-					isActive ? "text-brand-600 dark:text-brand-300" : "group-hover:text-charcoal-blue-900 dark:group-hover:text-white"
+					isActive
+						? "text-brand-600 dark:text-brand-300"
+						: "group-hover:text-charcoal-blue-900 dark:group-hover:text-white",
 				)}
 			>
-				<AnimatedIcon name={item.icon} size={16} aria-hidden="true" />
+				<Icon name={item.icon} size={16} aria-hidden="true" />
 			</span>
 			<span>{item.label}</span>
 		</Link>
@@ -96,7 +100,9 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 		{ href: "/ingredients", label: "Foods", icon: "search" },
 		{ href: "/recipes", label: "Recipes", icon: "cookingPot" },
 		...(user ? [{ href: "/meals", label: "Meals", icon: "flame" as const }] : []),
-		...(user?.role === 'admin' ? [{ href: "/admin", label: "Admin", icon: "shieldCheck" as const }] : []),
+		...(user?.role === "admin"
+			? [{ href: "/admin", label: "Admin", icon: "shieldCheck" as const }]
+			: []),
 	];
 
 	const accountItems: NavItem[] = user
@@ -105,16 +111,16 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 				{ href: "/profile/settings", label: "Settings", icon: "user" },
 				{ href: "/profile/mcp", label: "MCP", icon: "bot" },
 				{ href: "/profile/sessions", label: "Sessions", icon: "lock" },
-		  ]
+			]
 		: [];
 
 	const roleLabel = user?.role && user.role !== "user" ? user.role : null;
 
 	useEffect(() => {
-		document.body.style.overflow = menuOpen ? 'hidden' : '';
+		document.body.style.overflow = menuOpen ? "hidden" : "";
 
 		return () => {
-			document.body.style.overflow = '';
+			document.body.style.overflow = "";
 		};
 	}, [menuOpen]);
 
@@ -199,15 +205,25 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 		<>
 			{showLogoutModal &&
 				createPortal(
-					<div className="modal-overlay-in fixed inset-0 z-100 flex items-center justify-center bg-charcoal-blue-950/35 p-4 backdrop-blur-sm" onClick={() => setShowLogoutModal(false)}>
-						<div className="modal-pop-in surface-panel w-full max-w-sm p-6" onClick={(event) => event.stopPropagation()}>
+					<div
+						className="modal-overlay-in fixed inset-0 z-100 flex items-center justify-center bg-charcoal-blue-950/35 p-4 backdrop-blur-sm"
+						onClick={() => setShowLogoutModal(false)}
+					>
+						<div
+							className="modal-pop-in surface-panel w-full max-w-sm p-6"
+							onClick={(event) => event.stopPropagation()}
+						>
 							<div className="mb-5 flex items-start gap-4">
 								<span className="icon-chip h-12 w-12 text-red-500 dark:text-red-400">
-									<AnimatedIcon name="logout" size={20} aria-hidden="true" />
+									<Icon name="logout" size={20} aria-hidden="true" />
 								</span>
 								<div className="space-y-1">
-									<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Sign out</h3>
-									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">Your session will end on this device immediately.</p>
+									<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+										Sign out
+									</h3>
+									<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+										Your session will end on this device immediately.
+									</p>
 								</div>
 							</div>
 							<div className="flex gap-3">
@@ -226,7 +242,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 							</div>
 						</div>
 					</div>,
-					document.body
+					document.body,
 				)}
 
 			<div className="flex items-center gap-2" data-testid="navbar">
@@ -245,21 +261,41 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 								onClick={toggleUserMenu}
 								aria-expanded={userMenuOpen}
 								aria-haspopup="menu"
-								className="group flex items-center gap-2 rounded-full border border-charcoal-blue-200 bg-white px-2 py-1.5 text-sm text-charcoal-blue-700 shadow-sm transition-colors hover:border-charcoal-blue-300 hover:bg-white dark:border-white/10 dark:bg-charcoal-blue-950 dark:text-charcoal-blue-200 dark:hover:border-white/15 dark:hover:bg-charcoal-blue-950"
+								className="group flex items-center gap-2 rounded-full border border-charcoal-blue-200 bg-white px-2 py-1.5 text-sm text-charcoal-blue-700 transition-colors hover:border-charcoal-blue-300 hover:bg-white dark:border-white/10 dark:bg-charcoal-blue-950 dark:text-charcoal-blue-200 dark:hover:border-white/15 dark:hover:bg-charcoal-blue-950"
 							>
 								<UserAvatar user={user} />
 								<div className="hidden text-left sm:block">
-									<p className="max-w-28 truncate font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">{user.name || user.email}</p>
-									{roleLabel ? <p className="max-w-28 truncate text-[11px] text-charcoal-blue-500 dark:text-charcoal-blue-400">{roleLabel}</p> : null}
+									<p className="max-w-28 truncate font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
+										{user.name || user.email}
+									</p>
+									{roleLabel ? (
+										<p className="max-w-28 truncate text-[11px] text-charcoal-blue-500 dark:text-charcoal-blue-400">
+											{roleLabel}
+										</p>
+									) : null}
 								</div>
-								<ChevronDown className={cn("h-4 w-4 text-charcoal-blue-400 transition-transform duration-200 dark:text-charcoal-blue-500", userMenuOpen && "rotate-180")} aria-hidden="true" />
+								<ChevronDown
+									className={cn(
+										"h-4 w-4 text-charcoal-blue-400 transition-transform duration-200 dark:text-charcoal-blue-500",
+										userMenuOpen && "rotate-180",
+									)}
+									aria-hidden="true"
+								/>
 							</button>
 
 							{userMenuOpen && (
-								<div ref={userMenuRef} data-testid="nav-user-menu" className="absolute right-0 top-[calc(100%+0.5rem)] z-70 mt-0 w-60 overflow-hidden rounded-2xl border border-charcoal-blue-200 bg-white p-1.5 shadow-2xl shadow-charcoal-blue-950/10 animate-fade-in dark:border-white/10 dark:bg-charcoal-blue-950">
+								<div
+									ref={userMenuRef}
+									data-testid="nav-user-menu"
+									className="absolute right-0 top-[calc(100%+0.5rem)] z-70 mt-0 w-60 overflow-hidden rounded-2xl border border-charcoal-blue-200 bg-white p-1.5 animate-fade-in dark:border-white/10 dark:bg-charcoal-blue-950"
+								>
 									<div className="mb-1 rounded-2xl px-3 py-2.5">
-										<p className="truncate text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{user.name || user.email}</p>
-										<p className="truncate text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{user.email}</p>
+										<p className="truncate text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+											{user.name || user.email}
+										</p>
+										<p className="truncate text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+											{user.email}
+										</p>
 									</div>
 									<div className="space-y-1">
 										{accountItems.map((item) => (
@@ -275,7 +311,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 											className="group flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
 										>
 											<span className="flex h-5 w-5 items-center justify-center text-red-500 dark:text-red-400">
-												<AnimatedIcon name="logout" size={16} aria-hidden="true" />
+												<Icon name="logout" size={16} aria-hidden="true" />
 											</span>
 											<span>Sign out</span>
 										</button>
@@ -285,12 +321,15 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 						</div>
 					) : (
 						<>
-							<Link href="/login" className="px-4 py-2 text-sm font-medium text-charcoal-blue-600 transition-colors hover:text-charcoal-blue-900 dark:text-charcoal-blue-300 dark:hover:text-white">
+							<Link
+								href="/login"
+								className="px-4 py-2 text-sm font-medium text-charcoal-blue-600 transition-colors hover:text-charcoal-blue-900 dark:text-charcoal-blue-300 dark:hover:text-white"
+							>
 								Sign In
 							</Link>
 							<Link href="/register" className="btn-primary">
 								Get Started
-								<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" />
+								<Icon name="arrowRight" size={16} aria-hidden="true" />
 							</Link>
 						</>
 					)}
@@ -305,13 +344,21 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 					aria-controls="mobile-nav-menu"
 					data-testid="nav-mobile-toggle"
 				>
-					<AnimatedIcon name={menuOpen ? "x" : "menu"} size={18} aria-hidden="true" />
+					<Icon name={menuOpen ? "x" : "menu"} size={18} aria-hidden="true" />
 				</button>
 
 				{menuOpen && (
 					<>
-						<div className="modal-overlay-in fixed inset-0 z-80 bg-charcoal-blue-950/30 backdrop-blur-[2px] md:hidden" onClick={closeMenu} />
-						<div ref={menuRef} id="mobile-nav-menu" data-testid="nav-mobile-menu" className="fixed inset-x-3 top-24 z-90 overflow-hidden rounded-2xl border border-charcoal-blue-200 bg-white p-4 shadow-2xl shadow-charcoal-blue-950/15 animate-fade-in md:hidden dark:border-white/10 dark:bg-charcoal-blue-950">
+						<div
+							className="modal-overlay-in fixed inset-0 z-80 bg-charcoal-blue-950/30 backdrop-blur-[2px] md:hidden"
+							onClick={closeMenu}
+						/>
+						<div
+							ref={menuRef}
+							id="mobile-nav-menu"
+							data-testid="nav-mobile-menu"
+							className="fixed inset-x-3 top-24 z-90 overflow-hidden rounded-2xl border border-charcoal-blue-200 bg-white p-4 animate-fade-in md:hidden dark:border-white/10 dark:bg-charcoal-blue-950"
+						>
 							<nav className="space-y-1">
 								{primaryItems.map((item) => (
 									<NavLink key={item.href} item={item} onClick={closeAllMenus} mobile />
@@ -327,8 +374,12 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 										<div className="flex items-center gap-3">
 											<UserAvatar user={user} />
 											<div>
-												<p className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{user.name || user.email}</p>
-												<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Signed in</p>
+												<p className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+													{user.name || user.email}
+												</p>
+												<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+													Signed in
+												</p>
 											</div>
 										</div>
 										<button
@@ -338,18 +389,26 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 											}}
 											className="btn-ghost text-red-600 dark:text-red-400"
 										>
-											<AnimatedIcon name="logout" size={16} aria-hidden="true" />
+											<Icon name="logout" size={16} aria-hidden="true" />
 											Sign out
 										</button>
 									</div>
 								) : (
 									<div className="flex gap-2">
-										<Link href="/login" onClick={closeAllMenus} className="btn-secondary flex-1 justify-center">
+										<Link
+											href="/login"
+											onClick={closeAllMenus}
+											className="btn-secondary flex-1 justify-center"
+										>
 											Sign In
 										</Link>
-										<Link href="/register" onClick={closeAllMenus} className="btn-primary flex-1 justify-center">
+										<Link
+											href="/register"
+											onClick={closeAllMenus}
+											className="btn-primary flex-1 justify-center"
+										>
 											Get Started
-											<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" />
+											<Icon name="arrowRight" size={16} aria-hidden="true" />
 										</Link>
 									</div>
 								)}

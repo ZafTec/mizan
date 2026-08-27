@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { HeroSection } from "@/components/Landing/HeroSection";
-import { MetricsTicker } from "@/components/Landing/MetricsTicker";
-import { FeatureSection } from "@/components/Landing/FeatureSection";
-import { HowItWorksSection } from "@/components/Landing/HowItWorksSection";
+import { ThreeDoorsSection } from "@/components/Landing/ThreeDoorsSection";
+import { FaqSection } from "@/components/Landing/FaqSection";
+import { CoachingSection } from "@/components/Landing/CoachingSection";
 import { PricingSection } from "@/components/Landing/PricingSection";
-import { TestimonialSection } from "@/components/Landing/TestimonialCard";
 import { CTASection } from "@/components/Landing/CTASection";
 import { getUserOptionalServer } from "@/helper/session";
 
@@ -17,23 +16,23 @@ export const dynamic = "force-dynamic";
 const siteUrl = "https://mizan.zaftech.co";
 
 export const metadata: Metadata = {
-	title: "Mizan | Your macros. Surgical.",
+	title: "Mizan | The tracker you actually keep using.",
 	description:
-		"Mizan by Zaftech is the nutrition app built like a HUD, not a spreadsheet. Track, plan, and ship goals. Free plan, or Pro from $1.99 / month.",
+		"Mizan by Zaftech logs meals, workouts and measurements from the web, Telegram, or your AI assistant. Free forever, Pro from $2.99/mo, or self-host it yourself.",
 	alternates: { canonical: siteUrl },
 	openGraph: {
 		type: "website",
 		siteName: "Mizan",
-		title: "Mizan | Your macros. Surgical.",
-		description: "One workspace for meals, workouts, and coaching. Free plan or Pro from $1.99 / month.",
+		title: "Mizan | The tracker you actually keep using.",
+		description: "One log, three doors in: the web app, Telegram, or your AI assistant. Free forever, Pro from $2.99/mo, or self-host it.",
 		url: siteUrl,
 	},
 	twitter: {
 		card: "summary_large_image",
 		site: "@ZaftechS",
 		creator: "@ZaftechS",
-		title: "Mizan | Your macros. Surgical.",
-		description: "One workspace for meals, workouts, and coaching.",
+		title: "Mizan | The tracker you actually keep using.",
+		description: "One log, three doors in: the web app, Telegram, or your AI assistant.",
 	},
 };
 
@@ -59,16 +58,16 @@ const structuredData = {
 				{
 					"@type": "Offer",
 					name: "Pro",
-					price: "1.99",
+					price: "2.99",
 					priceCurrency: "USD",
 					priceSpecification: {
 						"@type": "UnitPriceSpecification",
-						price: "1.99",
+						price: "2.99",
 						priceCurrency: "USD",
 						billingDuration: "P1M",
 					},
 				},
-				{ "@type": "Offer", name: "Lifetime", price: "48", priceCurrency: "USD" },
+				{ "@type": "Offer", name: "Self-hosted", price: "0", priceCurrency: "USD" },
 			],
 		},
 	],
@@ -84,12 +83,11 @@ export default async function Home() {
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
 			/>
-			<div className="space-y-4">
+			<div>
 				<HeroSection />
-				<MetricsTicker />
-				<FeatureSection />
-				<HowItWorksSection />
-				<TestimonialSection />
+				<ThreeDoorsSection />
+				<FaqSection />
+				<CoachingSection />
 				<PricingSection />
 				<CTASection />
 			</div>

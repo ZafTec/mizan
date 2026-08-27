@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import { askAboutClient, type AiChatMessage } from "@/lib/api/ai";
 import { cn } from "@/lib/utils";
 
@@ -125,7 +125,7 @@ export default function ClientAiPanel({ clientId }: { clientId: string }) {
 					className="btn-primary !rounded-2xl !py-2.5"
 					aria-label="Ask"
 				>
-					<AnimatedIcon name="arrowRight" size={16} />
+					<Icon name="arrowRight" size={16} />
 				</button>
 			</form>
 		</section>

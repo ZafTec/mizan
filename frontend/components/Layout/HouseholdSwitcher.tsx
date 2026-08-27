@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { clientApi } from "@/lib/api.client";
 import { appToast } from "@/lib/toast";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
 
 type Household = { id: string; name: string; memberCount: number; isActive: boolean };
@@ -30,9 +30,7 @@ export default function HouseholdSwitcher() {
 			.then((data) => {
 				if (cancelled) return;
 				setHouseholds(data.households ?? []);
-				setActiveId(
-					data.activeHouseholdId ?? data.households?.find((h) => h.isActive)?.id ?? null,
-				);
+				setActiveId(data.activeHouseholdId ?? data.households?.find((h) => h.isActive)?.id ?? null);
 			})
 			.catch(() => {
 				// A switcher that cannot load its list simply does not appear.
@@ -83,15 +81,20 @@ export default function HouseholdSwitcher() {
 				aria-haspopup="menu"
 				className="flex items-center gap-2 rounded-2xl border border-charcoal-blue-200 bg-white px-3 py-1.5 text-sm text-charcoal-blue-700 transition-colors hover:border-charcoal-blue-300 disabled:opacity-60 dark:border-white/10 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-200"
 			>
-				<AnimatedIcon name="home" size={14} />
+				<Icon name="home" size={14} />
 				<span className="max-w-32 truncate font-medium">{active.name}</span>
-				<ChevronDown className={cn("h-4 w-4 text-charcoal-blue-400 transition-transform", open && "rotate-180")} />
+				<ChevronDown
+					className={cn(
+						"h-4 w-4 text-charcoal-blue-400 transition-transform",
+						open && "rotate-180",
+					)}
+				/>
 			</button>
 
 			{open && (
 				<div
 					role="menu"
-					className="menu-pop absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-charcoal-blue-200 bg-white p-1.5 shadow-2xl shadow-charcoal-blue-950/15 dark:border-white/10 dark:bg-charcoal-blue-950"
+					className="menu-pop absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-charcoal-blue-200 bg-white p-1.5 dark:border-white/10 dark:bg-charcoal-blue-950"
 				>
 					{households.map((household) => (
 						<button
@@ -108,7 +111,7 @@ export default function HouseholdSwitcher() {
 								</span>
 							</span>
 							{household.id === active.id && (
-								<AnimatedIcon name="circleCheck" size={14} aria-label="Active" />
+								<Icon name="circleCheck" size={14} aria-label="Active" />
 							)}
 						</button>
 					))}

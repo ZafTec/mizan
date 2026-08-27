@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Loading from "@/components/Loading";
 import { PasswordInput } from "@/components/PasswordInput";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 
 export default function Page() {
 	const router = useRouter();
@@ -30,11 +30,15 @@ export default function Page() {
 		<div className="min-h-[70vh] flex items-center justify-center py-8">
 			<div className="w-full max-w-md">
 				<div className="text-center mb-8">
-					<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-600 text-white shadow-lg shadow-brand-500/25 dark:bg-brand-500">
-						<AnimatedIcon name="rocket" size={26} aria-hidden="true" />
+					<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-600 text-white dark:bg-brand-500">
+						<Icon name="rocket" size={26} aria-hidden="true" />
 					</div>
-					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Create your account</h1>
-					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">Start your nutrition journey with Mizan</p>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+						Create your account
+					</h1>
+					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
+						Start your nutrition journey with Mizan
+					</p>
 				</div>
 
 				<div className="card p-6 sm:p-8">
@@ -91,7 +95,11 @@ export default function Page() {
 						</div>
 
 						<label className="flex items-start gap-2 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 cursor-pointer">
-							<input type="checkbox" required className="mt-0.5 rounded border-charcoal-blue-300 dark:border-charcoal-blue-700 text-brand-600 focus:ring-brand-500" />
+							<input
+								type="checkbox"
+								required
+								className="mt-0.5 rounded border-charcoal-blue-300 dark:border-charcoal-blue-700 text-brand-600 focus:ring-brand-500"
+							/>
 							<span>
 								I agree to the{" "}
 								<a
@@ -101,8 +109,8 @@ export default function Page() {
 									className="text-brand-600 dark:text-brand-400 font-medium underline-offset-2 hover:underline"
 								>
 									Terms of Service
-								</a>
-								{" "}and{" "}
+								</a>{" "}
+								and{" "}
 								<a
 									href="https://zaftech.co/privacy"
 									target="_blank"
@@ -116,14 +124,17 @@ export default function Page() {
 
 						{formState.status === "success" && (
 							<div className="flex items-center gap-2 p-3 rounded-xl bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400 text-sm">
-								<AnimatedIcon name="circleCheck" size={18} aria-hidden="true" />
+								<Icon name="circleCheck" size={18} aria-hidden="true" />
 								<span>Account created! Redirecting to login...</span>
 							</div>
 						)}
 
 						{formState.status === "error" && formState.message && (
-							<div data-testid="error-message" className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
-								<AnimatedIcon name="badgeAlert" size={18} className="shrink-0" aria-hidden="true" />
+							<div
+								data-testid="error-message"
+								className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm"
+							>
+								<Icon name="badgeAlert" size={18} className="shrink-0" aria-hidden="true" />
 								<span>
 									{formState.message}
 									{formState.message.includes("already exists") && (
@@ -152,7 +163,7 @@ export default function Page() {
 							) : (
 								<>
 									Create Account
-									<AnimatedIcon name="arrowRight" size={18} aria-hidden="true" />
+									<Icon name="arrowRight" size={18} aria-hidden="true" />
 								</>
 							)}
 						</button>
@@ -161,7 +172,10 @@ export default function Page() {
 
 				<p className="text-center text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-6">
 					Already have an account?{" "}
-					<Link href="/login" className="text-brand-600 dark:text-brand-400 font-medium hover:text-brand-700 dark:hover:text-brand-400">
+					<Link
+						href="/login"
+						className="text-brand-600 dark:text-brand-400 font-medium hover:text-brand-700 dark:hover:text-brand-400"
+					>
 						Sign in
 					</Link>
 				</p>
