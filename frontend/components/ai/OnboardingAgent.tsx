@@ -3,13 +3,18 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
+import AiMarkdown from "@/components/ai/AiMarkdown";
 import {
+	getAiConsent,
+	getOnboardingThread,
 	listOnboardingTools,
 	sendOnboardingMessage,
 	type AiChatMessage,
+	type AiConsent,
 	type AiToolInvocation,
 	type AiToolSummary,
 } from "@/lib/api/ai";
+import AiPermissionGate from "@/components/ai/AiPermissionGate";
 import { cn } from "@/lib/utils";
 
 const OPENER =
@@ -37,12 +42,50 @@ export default function OnboardingAgent() {
 	const [error, setError] = useState<string | null>(null);
 	const [pending, startTransition] = useTransition();
 	const [anythingDone, setAnythingDone] = useState(false);
+	const [resuming, setResuming] = useState(true);
+	// Undefined until we know. Setup writes to the log, so it has to ask before
+	// it can begin rather than failing on the first tool call.
+	const [consent, setConsent] = useState<AiConsent | null>(null);
 	const scroller = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		getAiConsent()
+			.then(setConsent)
+			.catch(() => setConsent(null));
+	}, []);
 
 	useEffect(() => {
 		listOnboardingTools()
 			.then(setTools)
 			.catch(() => setTools([]));
+	}, []);
+
+	// Setup is one conversation, not one per visit. Without this the page came
+	// back blank and the next turn started a fresh thread, so the model asked
+	// again for everything it had already been told.
+	useEffect(() => {
+		let cancelled = false;
+
+		getOnboardingThread()
+			.then((thread) => {
+				if (cancelled || !thread) return;
+				setThreadId(thread.id);
+				// What each turn *did* is not persisted, only what was said, so a
+				// resumed conversation shows the words without the action echoes.
+				setEntries(thread.messages.map((message) => ({ message })));
+				scrollToBottom();
+			})
+			.catch(() => {
+				// A failed resume is not a failed setup - the conversation still
+				// works, it just starts from the greeting.
+			})
+			.finally(() => {
+				if (!cancelled) setResuming(false);
+			});
+
+		return () => {
+			cancelled = true;
+		};
 	}, []);
 
 	function scrollToBottom() {
@@ -94,6 +137,15 @@ export default function OnboardingAgent() {
 		});
 	}
 
+	// Never asked, and never granted anything: ask before the first turn rather
+	// than letting every tool call come back refused.
+	const needsPermission =
+		consent !== null && !consent.allowWrites && !consent.enabled && entries.length === 0;
+
+	if (needsPermission) {
+		return <AiPermissionGate consent={consent} onGranted={setConsent} />;
+	}
+
 	return (
 		<div className="space-y-4">
 			<div ref={scroller} className="glass-panel max-h-[60vh] space-y-4 overflow-y-auto p-5">
@@ -101,7 +153,13 @@ export default function OnboardingAgent() {
 
 				{entries.map((entry) => (
 					<div key={entry.message.id} className="space-y-2">
-						<Bubble fromUser={entry.message.fromUser}>{entry.message.content}</Bubble>
+						<Bubble fromUser={entry.message.fromUser}>
+							{entry.message.fromUser ? (
+								entry.message.content
+							) : (
+								<AiMarkdown content={entry.message.content} />
+							)}
+						</Bubble>
 						{entry.performed && entry.performed.length > 0 && (
 							<ul className="ml-12 space-y-1">
 								{entry.performed.map((action, i) => (
@@ -156,14 +214,14 @@ export default function OnboardingAgent() {
 				<input
 					value={input}
 					onChange={(e) => setInput(e.target.value)}
-					disabled={pending}
-					placeholder="Tell it what you're after…"
+					disabled={pending || resuming}
+					placeholder={resuming ? "Picking up where you left off…" : "Tell it what you're after…"}
 					className="input flex-1 !rounded-2xl !py-3"
 					autoComplete="off"
 				/>
 				<button
 					type="submit"
-					disabled={pending || !input.trim()}
+					disabled={pending || resuming || !input.trim()}
 					className="btn-primary !rounded-2xl !py-3"
 					aria-label="Send"
 				>
@@ -223,9 +281,9 @@ function Bubble({ fromUser, children }: { fromUser: boolean; children: React.Rea
 			</span>
 			<div
 				className={cn(
-					"max-w-[78%] whitespace-pre-wrap rounded-3xl px-4 py-3 text-sm leading-relaxed",
+					"max-w-[78%] rounded-3xl px-4 py-3 text-sm leading-relaxed",
 					fromUser
-						? "bg-verdigris-600 text-white "
+						? "whitespace-pre-wrap bg-verdigris-600 text-white "
 						: "bg-white text-charcoal-blue-900 ring-1 ring-charcoal-blue-200 dark:bg-charcoal-blue-950/80 dark:text-charcoal-blue-100 dark:ring-white/10",
 				)}
 			>
