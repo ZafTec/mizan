@@ -49,7 +49,7 @@ public class OpenAiCompatibleProvider : IAiProvider
         {
             Model = _options.Model,
             MaxCompletionTokens = request.MaxOutputTokens ?? _options.MaxOutputTokens,
-            Temperature = request.Temperature,
+            Temperature = _options.SupportsTemperature ? request.Temperature : null,
             Messages = request.Messages.Select(ToWire).ToList(),
             ResponseFormat = request.ResponseSchema is { } schema
                 ? new ResponseFormat
@@ -186,7 +186,7 @@ public class OpenAiCompatibleProvider : IAiProvider
         [JsonPropertyName("model")] public string Model { get; set; } = string.Empty;
         [JsonPropertyName("messages")] public List<WireMessage> Messages { get; set; } = new();
         [JsonPropertyName("max_completion_tokens")] public int MaxCompletionTokens { get; set; }
-        [JsonPropertyName("temperature")] public double Temperature { get; set; }
+        [JsonPropertyName("temperature")] public double? Temperature { get; set; }
         [JsonPropertyName("response_format")] public ResponseFormat? ResponseFormat { get; set; }
         [JsonPropertyName("tools")] public List<WireTool>? Tools { get; set; }
     }
