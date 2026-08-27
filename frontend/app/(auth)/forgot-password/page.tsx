@@ -79,9 +79,6 @@ export default function ForgotPasswordPage() {
 			<div className="w-full max-w-md">
 				{/* Header */}
 				<div className="text-center mb-8">
-					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 dark:bg-brand-500 mb-4">
-						<i className="ri-lock-password-line text-3xl text-white" />
-					</div>
 					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
 						Forgot password?
 					</h1>
