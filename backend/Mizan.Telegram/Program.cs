@@ -41,6 +41,36 @@ if (!options.IsConfigured)
     // its health check with it.
     Log.Warning("Telegram bot is not configured; the service is running but idle");
 }
+else
+{
+    // Telegram, not LongPollWorker, decides which mode is live: it will not
+    // deliver getUpdates while a webhook is registered, so switching modes
+    // has to touch Telegram's side too, not just this app's config.
+    var telegram = app.Services.GetRequiredService<TelegramClient>();
+
+    if (options.UseWebhook)
+    {
+        if (string.IsNullOrWhiteSpace(options.WebhookSecret))
+        {
+            // Every request would 404 out of the handler above with no secret
+            // to check against - registering the webhook anyway would just
+            // point Telegram at a dead end.
+            Log.Error("TelegramBot:UseWebhook is true but WebhookSecret is empty; not registering a webhook");
+        }
+        else
+        {
+            var webhookUrl = $"{options.PublicUrl.TrimEnd('/')}/telegram/webhook";
+            await telegram.SetWebhookAsync(webhookUrl, options.WebhookSecret, CancellationToken.None);
+            Log.Information("Telegram webhook registered at {Url}", webhookUrl);
+        }
+    }
+    else
+    {
+        await telegram.DeleteWebhookAsync(CancellationToken.None);
+    }
+
+    await telegram.SetCommandsAsync(CancellationToken.None);
+}
 
 app.MapGet("/health", () => Results.Ok(new
 {

@@ -38,12 +38,6 @@ public sealed class LongPollWorker : BackgroundService
             return;
         }
 
-        using (var scope = _scopes.CreateScope())
-        {
-            await scope.ServiceProvider.GetRequiredService<TelegramClient>()
-                .SetCommandsAsync(stoppingToken);
-        }
-
         _logger.LogInformation("Telegram long polling started");
 
         long offset = 0;
