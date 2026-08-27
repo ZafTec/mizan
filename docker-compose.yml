@@ -40,6 +40,48 @@ services:
     networks:
       - mizan-network
 
+  # S3-compatible object storage for local development. Production points at
+  # the MinIO already running on the VPS, so this service exists only so that
+  # uploads can be exercised locally rather than silently falling back to the
+  # unconfigured storage service.
+  minio:
+    image: minio/minio:latest
+    container_name: mizan-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY_ID:?STORAGE_ACCESS_KEY_ID is required}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_ACCESS_KEY:?STORAGE_SECRET_ACCESS_KEY is required}
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "mc ready local || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - mizan-network
+
+  # Creates the bucket and opens it for reads, then exits. Without a public
+  # read policy every image would come back as an expiring presigned URL.
+  minio-init:
+    image: minio/mc:latest
+    container_name: mizan-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      sh -c "
+      mc alias set local http://minio:9000 '${STORAGE_ACCESS_KEY_ID}' '${STORAGE_SECRET_ACCESS_KEY}' &&
+      mc mb --ignore-existing local/${STORAGE_BUCKET:-mizan} &&
+      mc anonymous set download local/${STORAGE_BUCKET:-mizan} &&
+      echo 'bucket ready'
+      "
+    networks:
+      - mizan-network
+
   # Next.js Frontend with Bun (Development with hot reload)
   frontend:
     build:
@@ -92,6 +134,13 @@ services:
       - "5000:8080"
     volumes:
       - ./backend:/src
+      # The Dockerfile's restore cache is a build-time mount, so a recreated
+      # container starts with an empty package folder and `dotnet run` restores
+      # the whole graph over the network again - slow, and dead in the water
+      # whenever nuget.org is unreachable, which it repeatedly has been.
+      # Sharing the host's cache means a restart reuses whatever `dotnet build`
+      # on the host already downloaded, and needs no network at all.
+      - ${NUGET_PACKAGES_DIR:-nuget_packages}:/root/.nuget/packages
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
@@ -152,6 +201,8 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      minio:
         condition: service_healthy
     networks:
       - mizan-network
@@ -244,3 +295,5 @@ networks:
 volumes:
   postgres_data:
   redis_data:
+  minio_data:
+  nuget_packages:

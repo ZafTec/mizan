@@ -20,6 +20,15 @@ public class S3StorageService : IStorageService, IDisposable
     private readonly ILogger<S3StorageService> _logger;
     private readonly Uri? _publicBase;
 
+    /// <summary>
+    /// R2 rejects the streaming payload signature, so it is normally turned
+    /// off - but the SDK refuses to skip it over plain HTTP, since an unsigned
+    /// body on an unencrypted connection is tamperable in transit. Production
+    /// endpoints are HTTPS and keep the R2-friendly behaviour; a local MinIO on
+    /// http:// signs the payload instead of failing every upload.
+    /// </summary>
+    private readonly bool _disablePayloadSigning;
+
     public S3StorageService(IOptions<StorageOptions> options, ILogger<S3StorageService> logger)
     {
         _options = options.Value;
@@ -51,6 +60,10 @@ public class S3StorageService : IStorageService, IDisposable
         _publicBase = string.IsNullOrWhiteSpace(_options.PublicBaseUrl)
             ? null
             : new Uri(_options.PublicBaseUrl.TrimEnd('/') + "/");
+
+        _disablePayloadSigning =
+            Uri.TryCreate(_options.ServiceUrl, UriKind.Absolute, out var endpoint)
+            && endpoint.Scheme == Uri.UriSchemeHttps;
     }
 
     public async Task<StoredObject> UploadAsync(StorageUpload upload, CancellationToken cancellationToken = default)
@@ -80,7 +93,7 @@ public class S3StorageService : IStorageService, IDisposable
                     // Immutable by construction: every upload gets a fresh key,
                     // so anything holding an old URL keeps seeing the old image.
                     Headers = { CacheControl = "public, max-age=31536000, immutable" },
-                    DisablePayloadSigning = true,
+                    DisablePayloadSigning = _disablePayloadSigning,
                 },
                 cancellationToken);
         }
