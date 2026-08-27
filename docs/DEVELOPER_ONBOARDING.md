@@ -101,7 +101,7 @@ brew install docker
 curl -fsSL https://bun.sh/install | bash
 
 # 3. Clone repository
-git clone https://github.com/yourusername/mizan.git
+git clone https://github.com/zaftec/mizan.git
 cd mizan
 ```
 
@@ -128,7 +128,7 @@ dotnet --version         # Should be 10.0+
 
 ```bash
 # 1. Clone and navigate
-git clone https://github.com/yourusername/mizan.git
+git clone https://github.com/zaftec/mizan.git
 cd mizan
 
 # 2. Start all services
