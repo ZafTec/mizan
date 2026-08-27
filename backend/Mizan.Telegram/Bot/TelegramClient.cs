@@ -81,6 +81,22 @@ public sealed class TelegramClient
     public Task ClearKeyboardAsync(long chatId, long messageId, CancellationToken ct = default) =>
         PostAsync("editMessageReplyMarkup", new { chat_id = chatId, message_id = messageId }, ct);
 
+    /// <summary>Tells Telegram where to POST updates. Idempotent - safe to call on every startup.</summary>
+    public Task SetWebhookAsync(string url, string secretToken, CancellationToken ct = default) =>
+        PostAsync("setWebhook", new
+        {
+            url,
+            secret_token = secretToken,
+            allowed_updates = new[] { "message", "callback_query" },
+        }, ct);
+
+    /// <summary>
+    /// Telegram refuses <c>getUpdates</c> with a 409 while a webhook is registered,
+    /// so long polling needs this cleared first. Harmless if none was set.
+    /// </summary>
+    public Task DeleteWebhookAsync(CancellationToken ct = default) =>
+        PostAsync("deleteWebhook", new { }, ct);
+
     public Task SetCommandsAsync(CancellationToken ct = default) =>
         PostAsync("setMyCommands", new
         {
