@@ -426,10 +426,10 @@ that would otherwise need Next.js middleware to run on every request.
 What replaces it: one httpOnly cookie holding an opaque 256-bit session token.
 
 ```
-mizan_session   HttpOnly; Secure; SameSite=Lax; Domain=.euaell.me; Path=/
+mizan_session   HttpOnly; Secure; SameSite=Lax; Domain=.mizan.zaftech.co; Path=/
 ```
 
-`mizan.euaell.me` and `api.mizan.euaell.me` are the same site, so Lax sends the
+`mizan.zaftech.co` and `api.mizan.zaftech.co` are the same site, so Lax sends the
 cookie on both browser→frontend and browser→API requests, including the SignalR
 WebSocket upgrade. Server components read the same cookie and forward it. The
 API resolves it against `user_sessions`, cached in `HybridCache` — the same
@@ -1688,6 +1688,5 @@ Everything else can move. **If only one thing gets done: phase 2.** The audit in
   correct default and it will read as a bug. Onboarding has to ask for consent
   in context, per axis, explaining what each unlocks — not a single "enable AI"
   toggle buried in settings.
-- **The name.** With recipes kept, "MacroChef" survives — but the product is now
-  a logger that has recipes, not a recipe app that logs. Worth deciding which
-  name leads before the UI rebuild in phase 9.
+- **The name.** Decided: Mizan. "MacroChef" is retired everywhere - code,
+  docs, and the `mizan.zaftech.co` domain all agree now.

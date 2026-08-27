@@ -23,7 +23,7 @@ older images should update before reporting issues.
 Use one of these private channels instead:
 
 1. **Preferred, GitHub private advisory:**
-   [https://github.com/Euaell/macro_chef/security/advisories/new](https://github.com/Euaell/macro_chef/security/advisories/new).
+   [https://github.com/ZafTec/mizan/security/advisories/new](https://github.com/ZafTec/mizan/security/advisories/new).
    This is end-to-end private, lets us coordinate a fix with you, and
    auto-assigns a CVE if we publish.
 2. **Email:** [contact@zaftech.co](mailto:contact@zaftech.co). If you want
@@ -55,7 +55,7 @@ the issue affects production data, notify affected users.
 - This repository (backend `Mizan.Api`, `Mizan.Application`,
   `Mizan.Infrastructure`, `Mizan.Mcp.Server`; frontend under `frontend/`).
 - The hosted product at `https://mizan.zaftech.co` and its API at
-  `https://api.mizan.euaell.me`.
+  `https://api.mizan.zaftech.co`.
 - Published Docker images under `euaell/mizan-*`.
 - The MCP server surface and its tool catalog.
 - Authentication and authorization (BetterAuth JWT issuance, backend JWT

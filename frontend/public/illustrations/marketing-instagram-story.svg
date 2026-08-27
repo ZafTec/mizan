@@ -68,7 +68,7 @@
   <!-- CTA -->
   <rect x="240" y="1580" width="600" height="110" rx="55" fill="url(#igst-teal)"/>
   <text x="540" y="1650" text-anchor="middle" font-family="ui-sans-serif, system-ui, 'Segoe UI', sans-serif" font-size="44" font-weight="800" fill="#0F171C">Start your first workout</text>
-  <text x="540" y="1790" text-anchor="middle" font-family="ui-sans-serif, system-ui, 'Segoe UI', sans-serif" font-size="34" font-weight="600" fill="#9FB8C2">mizan.euaell.me</text>
+  <text x="540" y="1790" text-anchor="middle" font-family="ui-sans-serif, system-ui, 'Segoe UI', sans-serif" font-size="34" font-weight="600" fill="#9FB8C2">mizan.zaftech.co</text>
   <!-- confetti -->
   <rect x="180" y="260" width="24" height="24" rx="6" fill="#D4654A" transform="rotate(20 192 272)"/>
   <rect x="880" y="300" width="22" height="22" rx="5" fill="#E8B849" transform="rotate(-24 891 311)"/>
