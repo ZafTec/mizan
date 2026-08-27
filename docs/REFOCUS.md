@@ -1544,6 +1544,51 @@ which is exactly the ornamentation this phase exists to remove. Correction:
 strip it to flat cards and ruled sections, verified at 1280px and 390px with
 Playwright screenshots rather than assumed.
 
+### Then superseded: the exact Ledger reference
+
+Daylight was a recolor of the existing app. The next round of feedback asked
+for more than that — a specific, fully-worked reference (`design/Landing.dc.html`,
+plus the `Main.dc.html`/`Language.dc.html` table and language specs already in
+the repo) implemented exactly, not approximated: Archivo + Spectral instead of
+Instrument Sans/Serif, a 3px radius instead of 12-24px, hairline rules instead
+of any elevation at all (`--shadow-panel`/`soft`/`glow` now resolve to `none`),
+and a solid-ink `.btn-primary` instead of a brand-teal one — teal narrowed to
+links and "live" status only. Same trick as Daylight made it tractable: the
+ramps kept their names, so recomputing their OKLCH anchors from the reference's
+actual hex values repainted ~280 existing usages without touching a component.
+
+Three things rode along with the token rewrite, each requested explicitly
+rather than inferred:
+
+- **Icons.** `AnimatedIcon` wrapped every icon in `lucide-animated`, looping on
+  hover or mount everywhere it appeared. Replaced with a plain static `Icon`
+  on stock `lucide-react`; 189 call sites across 53 files.
+- **Landing page**, rewritten section-by-section to the reference's own copy
+  and layout — hero, three doors in (web/Telegram/AI), an FAQ, a coaching
+  section, pricing, closing CTA — rather than restyled in place.
+- **Pricing.** Yearly and Lifetime dropped from sale (Pro alone, at $2.99/mo,
+  plus Free and Self-hosted) per an explicit decision to match the reference's
+  three-tier marketing. Deliberately not destructive: the backend's
+  `IsLifetime` entitlement check and the webhook's legacy-lifetime detection
+  are untouched, so an existing lifetime customer keeps what they already
+  have — only the ability to sell a *new* one is gone.
+
+The table (§ below, "The table is the deliverable") got the same treatment
+against its own spec: tabular right-aligned numbers, status as a dot plus a
+word rather than a colored badge (`Pill.tsx` rewritten), one full-ink rule
+under the header instead of a tinted band, and a `rowClassName` prop so a row
+can wash its background for urgency instead of growing a second colored
+object — wired into `/admin/jobs` for dead-lettered jobs, the spec's own
+worked example.
+
+One process note: a mechanical script stripping ~94 leftover
+`shadow-{sm,md,lg,xl,2xl,inner}` utility classes (elevation this design
+doesn't have) carried a whitespace-collapse bug that briefly flattened
+indentation in the 50 files it touched. Caught before commit, fixed by
+reformatting each file with its own original indentation style (tabs for
+`app/`/`components/`, 2-space for the shadcn-derived `components/ui/`
+primitives) rather than patching the collapse by hand.
+
 ### Billing self-service (§11b)
 
 Checkout existed; cancel, plan-change and payment-method update did not - the
@@ -1582,7 +1627,7 @@ Each phase is one commit and leaves the build green.
 | 15 | **MCP parity** | medium | **done** | AI consent + usage, chat threads, uploads (base64 → multipart), prompt console, queue. `AiController` and `UploadsController` moved off the cookie-only default policy onto `UserOrMcp` (§14) |
 | 16 | **Telegram bot** | medium | **done** | `Mizan.Telegram` on the MCP server's pattern, single-use link codes, guided linking from web settings, cold `/start` → sign in first, photo → confirm card, chat on the shared thread. **Consumes §10's AI service; never its own** |
 | 17 | Redis pass | medium | **done** | `HybridCache`, tag-based invalidation: daily nutrition + range, recipes (list/detail), meal plans (list/detail). 15 write-side commands invalidate on save; per-viewer fields (`IsOwner`, `IsFavorited`, household access gates) baked into the cache key, never just the tag |
-| 18 | **Theme rebuild + landing page** | high | **done** | Direction C (Daylight) shipped app-wide: warm stone `charcoal-blue` ramp, `--radius` 0.625→0.5rem, `backdrop-filter` removed from every surface, dead "Ethereal Lab" dark system deleted, real `data-state` keyframes replacing no-op `tailwindcss-animate` classes (the plugin was never installed). First pass over-decorated (blur orbs, glass cards, dark hero/CTA bands) and was stripped back to flat/ruled sections per review — minimal over ornamental. Landing page rebuilt on the same tokens. Absorbs 17's landing-page item (§17) |
+| 18 | **Theme rebuild + landing page** | high | **done** | Shipped in two rounds: Direction C (Daylight, a recolor) first, then superseded by an exact implementation of the reference in `design/Landing.dc.html` + `Main.dc.html`/`Language.dc.html` — Archivo + Spectral, 3px radius, zero elevation, solid-ink buttons. `AnimatedIcon`/`lucide-animated` replaced with a static `Icon`; landing page rewritten to the reference's copy; pricing narrowed to Free/Pro ($2.99/mo)/Self-hosted; the table redesigned per its own spec. Absorbs 17's landing-page item (§17) |
 | 19 | Docs rewrite | none | | README, CLAUDE.md, ARCHITECTURE.md, MCP.md, AI.md, TELEGRAM.md |
 
 Ordering constraints that actually bind:
