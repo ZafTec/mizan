@@ -39,7 +39,7 @@ export async function connectToChat(): Promise<signalR.HubConnection> {
 
 	connection = new signalR.HubConnectionBuilder()
 		// The session cookie authenticates the negotiate request and the socket;
-		// mizan.* and api.mizan.* are same-site, so it rides along.
+		// the API lives at /api on this same origin, so it rides along.
 		.withUrl(`${apiUrl}/hubs/chat`, { withCredentials: true })
 		.withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
 		.withServerTimeout(validateTimeout(60000))

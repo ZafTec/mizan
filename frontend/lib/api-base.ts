@@ -42,5 +42,6 @@ export function resolvePublicApiOrigin(): string {
     return LOCAL_API_ORIGIN;
   }
 
-  return `${window.location.protocol}//api.${window.location.hostname}`;
+  // The API lives at /api on the app's own domain now - no api.* subdomain.
+  return window.location.origin;
 }
