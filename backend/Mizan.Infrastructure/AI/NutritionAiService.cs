@@ -136,16 +136,61 @@ public class NutritionAiService : INutritionAiService
 
         messages.Add(new AiMessage(AiRole.User, userMessage));
 
-        var response = await CallAsync(
-            userId,
-            context.HouseholdId,
-            AiFeatures.Chat,
-            new AiCompletionRequest { Messages = messages },
-            EstimateTokens(userMessage.Length + context.Summary.Length + historyLength),
-            prompt.VersionId,
-            cancellationToken);
+        // The assistant acts as well as answers now. Every tool is refused by
+        // the runner unless this user granted that axis, so offering the whole
+        // catalogue here widens what the model may *ask* for, not what it may
+        // do (docs/REFOCUS.md §11).
+        var specs = AiToolCatalogue.Chat
+            .Select(tool => new AiToolSpec(tool.Name, tool.Description, tool.ParametersSchema))
+            .ToList();
 
-        return new AiChatTurn(response.Content, prompt.VersionId);
+        var performed = new List<AiToolInvocation>();
+        var toolContext = new AiToolContext(userId);
+
+        for (var round = 0; round <= MaxToolRounds; round++)
+        {
+            var last = round == MaxToolRounds;
+            var response = await CallAsync(
+                userId,
+                context.HouseholdId,
+                AiFeatures.Chat,
+                new AiCompletionRequest
+                {
+                    Messages = messages,
+                    // The final round offers nothing, so the model has to
+                    // answer rather than ask for one more call.
+                    Tools = last ? [] : specs,
+                },
+                EstimateTokens(userMessage.Length + context.Summary.Length + historyLength),
+                prompt.VersionId,
+                cancellationToken);
+
+            if (response.ToolCalls.Count == 0)
+            {
+                return new AiChatTurn(response.Content, prompt.VersionId, performed);
+            }
+
+            messages.Add(new AiMessage(AiRole.Assistant, response.Content)
+            {
+                ToolCalls = response.ToolCalls,
+            });
+
+            foreach (var call in response.ToolCalls)
+            {
+                var invocation = await _tools.RunAsync(call, toolContext, cancellationToken);
+                performed.Add(invocation);
+
+                messages.Add(new AiMessage(
+                    AiRole.Tool,
+                    invocation.Succeeded ? invocation.Summary : $"Failed: {invocation.Error}")
+                {
+                    ToolCallId = call.Id,
+                });
+            }
+        }
+
+        // Unreachable: the last round has no tools, so it cannot ask for one.
+        throw new AiUnavailableException("The assistant could not finish that. Try again.");
     }
 
     public async Task<FoodAnalysisResult> AnalyzeFoodImageAsync(

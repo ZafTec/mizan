@@ -1,10 +1,13 @@
 using System.Text.Json;
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Mizan.Application.Ai.Tools;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
+using Mizan.Domain.Ai;
+using Mizan.Domain.Entities;
 
 namespace Mizan.Infrastructure.Ai;
 
@@ -20,11 +23,13 @@ namespace Mizan.Infrastructure.Ai;
 public class AiToolRunner : IAiToolRunner
 {
     private readonly IMediator _mediator;
+    private readonly IMizanDbContext _context;
     private readonly ILogger<AiToolRunner> _logger;
 
-    public AiToolRunner(IMediator mediator, ILogger<AiToolRunner> logger)
+    public AiToolRunner(IMediator mediator, IMizanDbContext context, ILogger<AiToolRunner> logger)
     {
         _mediator = mediator;
+        _context = context;
         _logger = logger;
     }
 
@@ -39,6 +44,23 @@ public class AiToolRunner : IAiToolRunner
             // working.
             return new AiToolInvocation(
                 call.Name, string.Empty, false, $"There is no tool called '{call.Name}'.");
+        }
+
+        // Consent is checked per call rather than by filtering the list the
+        // model is offered, because a grant can be withdrawn mid-conversation
+        // and the tool specs were chosen a turn ago.
+        var consent = await ConsentAsync(context.UserId, cancellationToken);
+        var permitted = tool.Access == AiToolAccess.Write
+            ? consent.AllowsWrite(tool.Axis)
+            : consent.Allows(tool.Axis);
+
+        if (!permitted)
+        {
+            var verb = tool.Access == AiToolAccess.Write ? "change" : "read";
+            return new AiToolInvocation(
+                call.Name, string.Empty, false,
+                $"The user has not given permission to {verb} their {Describe(tool.Axis)}. "
+                + "Tell them, and say they can grant it in Settings.");
         }
 
         JsonElement args;
@@ -77,4 +99,21 @@ public class AiToolRunner : IAiToolRunner
             return new AiToolInvocation(call.Name, string.Empty, false, "That could not be completed.");
         }
     }
+
+    private async Task<UserAiConsent> ConsentAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var stored = await _context.UserAiConsents.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+
+        // No row means never asked, which means no.
+        return stored ?? UserAiConsent.None(userId);
+    }
+
+    private static string Describe(DataAxis axis) => axis switch
+    {
+        DataAxis.Nutrition => "food and goals",
+        DataAxis.Training => "training",
+        DataAxis.Body => "body measurements",
+        _ => "log",
+    };
 }

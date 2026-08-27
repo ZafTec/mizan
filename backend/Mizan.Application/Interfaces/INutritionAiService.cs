@@ -99,7 +99,10 @@ public record AiChatHistoryTurn(bool FromUser, string Content);
 /// The reply plus which published version produced it, so a bad answer is
 /// traceable to the exact text that caused it.
 /// </summary>
-public record AiChatTurn(string Content, Guid? PromptVersionId);
+public record AiChatTurn(
+    string Content,
+    Guid? PromptVersionId,
+    IReadOnlyList<Ai.Tools.AiToolInvocation> Performed);
 
 public record FoodAnalysisResult
 {
