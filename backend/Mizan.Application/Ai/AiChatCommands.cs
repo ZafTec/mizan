@@ -10,7 +10,16 @@ namespace Mizan.Application.Ai;
 
 public record AiChatMessageDto(Guid Id, bool FromUser, string Content, DateTime CreatedAt);
 
-public record AiChatTurnDto(Guid ThreadId, string Title, AiChatMessageDto Reply);
+public record AiChatTurnDto(
+    Guid ThreadId,
+    string Title,
+    AiChatMessageDto Reply,
+    /// <summary>
+    /// What the turn actually did. Echoed for the same reason onboarding
+    /// echoes it: an assistant that writes to someone's log without saying so
+    /// is indistinguishable from one making things up.
+    /// </summary>
+    IReadOnlyList<Tools.AiToolInvocation> Performed);
 
 /// <summary>
 /// One turn. A null thread starts a new one, which is what the first message
@@ -87,7 +96,8 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
         return new AiChatTurnDto(
             thread.Id,
             thread.Title,
-            new AiChatMessageDto(reply.Id, false, reply.Content, reply.CreatedAt));
+            new AiChatMessageDto(reply.Id, false, reply.Content, reply.CreatedAt),
+            turn.Performed);
     }
 
     private async Task<AiChatThread> ResolveThreadAsync(
@@ -265,11 +275,23 @@ public class SendAiOnboardingMessageCommandHandler
                 ?? throw new EntityNotFoundException("Chat thread", id);
         }
 
+        // Setup is one conversation per user, not one per visit. Starting a
+        // fresh thread here is what used to strand a half-finished setup: the
+        // rows were still in the database, but the next turn began with no
+        // history and the model asked everything again.
+        var existing = await _context.AiChatThreads
+            .Where(t => t.UserId == userId && t.Kind == AiChatThreadKind.Onboarding)
+            .OrderByDescending(t => t.UpdatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (existing is not null) return existing;
+
         var thread = new AiChatThread
         {
             Id = Guid.CreateVersion7(),
             UserId = userId,
             Title = ThreadTitle,
+            Kind = AiChatThreadKind.Onboarding,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
         };

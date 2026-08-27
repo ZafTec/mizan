@@ -61,4 +61,59 @@ public static class AiToolArgs
     public static decimal RequiredDecimal(JsonElement args, string field) =>
         OptionalDecimal(args, field)
         ?? throw new DomainValidationException($"'{field}' is required.");
+
+    public static Guid RequiredGuid(JsonElement args, string field)
+    {
+        var raw = RequiredString(args, field);
+        return Guid.TryParse(raw, out var id)
+            ? id
+            // A model that invents an id is told so plainly; the alternative is
+            // a lookup failure it cannot interpret.
+            : throw new DomainValidationException($"'{field}' must be an id returned by a search tool.");
+    }
+
+    /// <summary>
+    /// The one nested shape in the catalogue. Workouts are exercises of sets,
+    /// and flattening that into scalars would make the model's job harder than
+    /// reading it back out here.
+    /// </summary>
+    public static class Workouts
+    {
+        public static List<Contracts.Workouts.WorkoutExerciseDto> Exercises(JsonElement args)
+        {
+            if (args.ValueKind != JsonValueKind.Object
+                || !args.TryGetProperty("exercises", out var list)
+                || list.ValueKind != JsonValueKind.Array)
+            {
+                throw new DomainValidationException("'exercises' is required and must be a list.");
+            }
+
+            var exercises = list.EnumerateArray().Select(element => new Contracts.Workouts.WorkoutExerciseDto
+            {
+                ExerciseId = RequiredGuid(element, "exerciseId"),
+                Notes = OptionalString(element, "notes"),
+                Sets = Sets(element),
+            }).ToList();
+
+            return exercises.Count > 0
+                ? exercises
+                : throw new DomainValidationException("'exercises' must contain at least one exercise.");
+        }
+
+        private static List<Contracts.Workouts.ExerciseSetDto> Sets(JsonElement exercise)
+        {
+            if (!exercise.TryGetProperty("sets", out var sets) || sets.ValueKind != JsonValueKind.Array)
+            {
+                throw new DomainValidationException("Each exercise needs a 'sets' list.");
+            }
+
+            return sets.EnumerateArray().Select(set => new Contracts.Workouts.ExerciseSetDto
+            {
+                Reps = OptionalInt(set, "reps"),
+                WeightKg = OptionalDecimal(set, "weightKg"),
+                DurationSeconds = OptionalInt(set, "durationSeconds"),
+                DistanceMeters = OptionalDecimal(set, "distanceMeters"),
+            }).ToList();
+        }
+    }
 }

@@ -152,6 +152,10 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.ShareNutrition).HasColumnName("share_nutrition").HasDefaultValue(false);
             entity.Property(e => e.ShareTraining).HasColumnName("share_training").HasDefaultValue(false);
             entity.Property(e => e.ShareBody).HasColumnName("share_body").HasDefaultValue(false);
+            entity.Property(e => e.AllowWrites).HasColumnName("allow_writes").HasDefaultValue(false);
+            entity.Property(e => e.WriteNutrition).HasColumnName("write_nutrition").HasDefaultValue(false);
+            entity.Property(e => e.WriteTraining).HasColumnName("write_training").HasDefaultValue(false);
+            entity.Property(e => e.WriteBody).HasColumnName("write_body").HasDefaultValue(false);
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
             entity.HasOne(e => e.User).WithOne()
                 .HasForeignKey<UserAiConsent>(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
@@ -1014,9 +1018,12 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.Title).HasColumnName("title").HasMaxLength(120);
+            entity.Property(e => e.Kind).HasColumnName("kind").HasConversion<int>().HasDefaultValue(AiChatThreadKind.Chat);
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
             entity.HasIndex(e => new { e.UserId, e.UpdatedAt });
+            // The onboarding resume looks up one thread per user by kind.
+            entity.HasIndex(e => new { e.UserId, e.Kind });
             entity.HasOne(e => e.User).WithMany()
                 .HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
         });

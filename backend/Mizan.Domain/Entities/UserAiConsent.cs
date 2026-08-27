@@ -20,6 +20,18 @@ public class UserAiConsent
     public bool ShareNutrition { get; set; }
     public bool ShareTraining { get; set; }
     public bool ShareBody { get; set; }
+
+    /// <summary>
+    /// Master switch for the assistant acting rather than answering. Reading
+    /// and writing are separate decisions: someone may happily let it see the
+    /// log and still want to be the only one who writes to it.
+    /// </summary>
+    public bool AllowWrites { get; set; }
+
+    public bool WriteNutrition { get; set; }
+    public bool WriteTraining { get; set; }
+    public bool WriteBody { get; set; }
+
     public DateTime UpdatedAt { get; set; }
 
     public virtual User? User { get; set; }
@@ -32,6 +44,20 @@ public class UserAiConsent
         DataAxis.Nutrition => ShareNutrition,
         DataAxis.Training => ShareTraining,
         DataAxis.Body => ShareBody,
+        _ => false,
+    };
+
+    /// <summary>
+    /// Whether the assistant may write this axis on the user's behalf. Not
+    /// gated on <see cref="Enabled"/>: that switch governs what the model is
+    /// shown, and recording a meal someone dictated needs no sight of their
+    /// history. The two grants stand on their own.
+    /// </summary>
+    public bool AllowsWrite(DataAxis axis) => AllowWrites && axis switch
+    {
+        DataAxis.Nutrition => WriteNutrition,
+        DataAxis.Training => WriteTraining,
+        DataAxis.Body => WriteBody,
         _ => false,
     };
 }
