@@ -113,12 +113,24 @@ public class NutritionAiService : INutritionAiService
         Guid userId,
         string userMessage,
         IReadOnlyList<AiChatHistoryTurn> history,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? summary = null,
+        AiImageRef? image = null)
     {
         var context = await _contextBuilder.BuildAsync(userId, userId, cancellationToken);
         var prompt = await _prompts.ResolveAsync(AiPromptKeys.Chat, cancellationToken);
 
         var messages = new List<AiMessage> { new(AiRole.System, prompt.SystemPrompt) };
+
+        // Before the log context and the recent turns: this is what the
+        // conversation established earlier, and the model should read it as
+        // settled background rather than as something just said.
+        if (!string.IsNullOrWhiteSpace(summary))
+        {
+            messages.Add(new AiMessage(
+                AiRole.System, "Earlier in this conversation: " + summary));
+        }
+
         if (!context.IsEmpty)
         {
             // After the system prompt and before the history, so the freshest
@@ -134,7 +146,9 @@ public class NutritionAiService : INutritionAiService
             historyLength += turn.Content.Length;
         }
 
-        messages.Add(new AiMessage(AiRole.User, userMessage));
+        messages.Add(image is null
+            ? new AiMessage(AiRole.User, userMessage)
+            : new AiMessage(AiRole.User, userMessage, new AiImage(image.Bytes, image.ContentType)));
 
         // The assistant acts as well as answers now. Every tool is refused by
         // the runner unless this user granted that axis, so offering the whole
@@ -191,6 +205,56 @@ public class NutritionAiService : INutritionAiService
 
         // Unreachable: the last round has no tools, so it cannot ask for one.
         throw new AiUnavailableException("The assistant could not finish that. Try again.");
+    }
+
+    public async Task<string?> SummariseAsync(
+        Guid userId,
+        string? existingSummary,
+        IReadOnlyList<AiChatHistoryTurn> turns,
+        CancellationToken cancellationToken = default)
+    {
+        if (turns.Count == 0) return existingSummary;
+
+        var transcript = string.Join("\n", turns.Select(
+            turn => $"{(turn.FromUser ? "User" : "Assistant")}: {turn.Content}"));
+
+        var instruction =
+            "Rewrite the running summary of this conversation so it still holds after the new turns. "
+            + "Keep anything durable about the person - preferences, constraints, injuries, what they are "
+            + "working towards, decisions already made. Drop small talk and anything superseded. "
+            + "Write it as plain notes in under 200 words, no preamble.";
+
+        var messages = new List<AiMessage>
+        {
+            new(AiRole.System, instruction),
+            new(AiRole.User,
+                string.IsNullOrWhiteSpace(existingSummary)
+                    ? $"New turns:\n{transcript}"
+                    : $"Current summary:\n{existingSummary}\n\nNew turns:\n{transcript}"),
+        };
+
+        try
+        {
+            var response = await CallAsync(
+                userId,
+                householdId: null,
+                AiFeatures.Chat,
+                new AiCompletionRequest { Messages = messages, MaxOutputTokens = 400 },
+                EstimateTokens(transcript.Length + (existingSummary?.Length ?? 0)),
+                promptVersionId: null,
+                cancellationToken);
+
+            return string.IsNullOrWhiteSpace(response.Content) ? existingSummary : response.Content.Trim();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // A summary that could not be refreshed is worse than the old one
+            // only slightly; failing the user's turn over it would be worse
+            // than both. The quota ceiling reaching this path is the common
+            // case and is not an error.
+            _logger.LogWarning(ex, "Could not refresh the conversation summary for {UserId}", userId);
+            return existingSummary;
+        }
     }
 
     public async Task<FoodAnalysisResult> AnalyzeFoodImageAsync(

@@ -294,6 +294,10 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("NOW()");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("image_url");
+
                     b.Property<Guid?>("PromptVersionId")
                         .HasColumnType("uuid")
                         .HasColumnName("prompt_version_id");
@@ -332,6 +336,16 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasDefaultValue(0)
                         .HasColumnName("kind");
+
+                    b.Property<int>("SummarisedThrough")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("summarised_through");
+
+                    b.Property<string>("Summary")
+                        .HasColumnType("text")
+                        .HasColumnName("summary");
 
                     b.Property<string>("Title")
                         .IsRequired()

@@ -16,12 +16,21 @@ public class NutritionController : ControllerBase
     private readonly IMediator _mediator;
     private readonly INutritionAiService _aiService;
     private readonly ICurrentUserService _currentUser;
+    private readonly IStorageService _storage;
+    private readonly ILogger<NutritionController> _logger;
 
-    public NutritionController(IMediator mediator, INutritionAiService aiService, ICurrentUserService currentUser)
+    public NutritionController(
+        IMediator mediator,
+        INutritionAiService aiService,
+        ICurrentUserService currentUser,
+        IStorageService storage,
+        ILogger<NutritionController> logger)
     {
         _mediator = mediator;
         _aiService = aiService;
         _currentUser = currentUser;
+        _storage = storage;
+        _logger = logger;
     }
 
     [HttpPost("log")]
@@ -77,6 +86,33 @@ public class NutritionController : ControllerBase
 
         var result = await _aiService.AnalyzeFoodImageAsync(
             _currentUser.UserId.Value, imageBytes, contentType);
-        return Ok(result);
+
+        // Stored after the analysis, not before: a photo the model could not
+        // read is not worth keeping, and this way a storage outage costs the
+        // picture rather than the whole request.
+        return Ok(result with { ImageUrl = await StoreAsync(imageBytes, contentType) });
+    }
+
+    private async Task<string?> StoreAsync(byte[] bytes, string contentType)
+    {
+        try
+        {
+            await using var stream = new MemoryStream(bytes);
+            var stored = await _storage.UploadAsync(new StorageUpload(
+                StorageFolder.Meals,
+                $"meal{ImageFormat.Extension(contentType)}",
+                contentType,
+                stream,
+                bytes.Length));
+
+            return stored.Url;
+        }
+        catch (Exception ex)
+        {
+            // The analysis is the answer; the photo is a record of it. Losing
+            // the second must not fail the first.
+            _logger.LogWarning(ex, "Could not store an analysed meal photo");
+            return null;
+        }
     }
 }

@@ -29,6 +29,20 @@ public static class ImageFormat
         return null;
     }
 
+    /// <summary>
+    /// The file extension for a media type this class detected. Cosmetic - the
+    /// store records the content type - but a key ending in .bin is a nuisance
+    /// to anyone browsing the bucket.
+    /// </summary>
+    public static string Extension(string? contentType) => contentType switch
+    {
+        "image/jpeg" => ".jpg",
+        "image/png" => ".png",
+        "image/gif" => ".gif",
+        "image/webp" => ".webp",
+        _ => ".bin",
+    };
+
     private static bool StartsWith(ReadOnlySpan<byte> header, ReadOnlySpan<byte> signature) =>
         header.Length >= signature.Length && header[..signature.Length].SequenceEqual(signature);
 

@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mizan.Application.Ai;
 using Mizan.Application.Ai.Tools;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
+using Mizan.Domain.Media;
 
 namespace Mizan.Api.Controllers;
 
@@ -23,12 +25,21 @@ public class AiController : ControllerBase
     private readonly IMediator _mediator;
     private readonly INutritionAiService _ai;
     private readonly ICurrentUserService _currentUser;
+    private readonly IStorageService _storage;
+    private readonly ILogger<AiController> _logger;
 
-    public AiController(IMediator mediator, INutritionAiService ai, ICurrentUserService currentUser)
+    public AiController(
+        IMediator mediator,
+        INutritionAiService ai,
+        ICurrentUserService currentUser,
+        IStorageService storage,
+        ILogger<AiController> logger)
     {
         _mediator = mediator;
         _ai = ai;
         _currentUser = currentUser;
+        _storage = storage;
+        _logger = logger;
     }
 
     [HttpGet("consent")]
@@ -52,6 +63,73 @@ public class AiController : ControllerBase
     [HttpPost("chat")]
     public async Task<ActionResult<AiChatTurnDto>> Chat([FromBody] SendAiChatMessageCommand command)
         => Ok(await _mediator.Send(command));
+
+    /// <summary>
+    /// A turn with a photo attached. Separate from the JSON endpoint because
+    /// it is multipart, not because it is a different conversation - the reply
+    /// lands in the same thread.
+    /// </summary>
+    [HttpPost("chat/image")]
+    [RequestSizeLimit(10_000_000)]
+    public async Task<ActionResult<AiChatTurnDto>> ChatWithImage(
+        IFormFile image,
+        [FromForm] string? message,
+        [FromForm] Guid? threadId,
+        CancellationToken cancellationToken)
+    {
+        if (image is null || image.Length == 0)
+        {
+            throw new DomainValidationException("No image was uploaded.");
+        }
+
+        if (image.Length > 8_000_000)
+        {
+            throw new DomainValidationException("Image must be 8 MB or smaller.");
+        }
+
+        using var buffer = new MemoryStream();
+        await image.CopyToAsync(buffer, cancellationToken);
+        var bytes = buffer.ToArray();
+
+        // The bytes decide, not the Content-Type header (docs/REFOCUS.md §7).
+        var contentType = ImageFormat.Detect(
+            bytes.AsSpan(0, Math.Min(ImageFormat.HeaderBytes, bytes.Length)));
+
+        if (contentType is null or "image/gif")
+        {
+            throw new DomainValidationException("That file is not a JPEG, PNG or WebP image.");
+        }
+
+        string? storedUrl = null;
+        try
+        {
+            await using var content = new MemoryStream(bytes);
+            var stored = await _storage.UploadAsync(
+                new StorageUpload(
+                    StorageFolder.Meals,
+                    $"chat{ImageFormat.Extension(contentType)}",
+                    contentType,
+                    content,
+                    bytes.Length),
+                cancellationToken);
+
+            storedUrl = stored.Url;
+        }
+        catch (Exception ex)
+        {
+            // Answering about the photo matters more than keeping it. The turn
+            // goes ahead without a stored copy rather than failing outright.
+            _logger.LogWarning(ex, "Could not store a chat photo");
+        }
+
+        return Ok(await _mediator.Send(
+            new SendAiChatMessageCommand(
+                threadId,
+                string.IsNullOrWhiteSpace(message) ? "What is in this photo?" : message.Trim(),
+                new AiImageRef(bytes, contentType),
+                storedUrl),
+            cancellationToken));
+    }
 
     /// <summary>
     /// Proposals for the rest of today. A POST because it costs money and

@@ -8,7 +8,8 @@ using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Ai;
 
-public record AiChatMessageDto(Guid Id, bool FromUser, string Content, DateTime CreatedAt);
+public record AiChatMessageDto(
+    Guid Id, bool FromUser, string Content, DateTime CreatedAt, string? ImageUrl = null);
 
 public record AiChatTurnDto(
     Guid ThreadId,
@@ -25,13 +26,22 @@ public record AiChatTurnDto(
 /// One turn. A null thread starts a new one, which is what the first message
 /// on an empty screen does.
 /// </summary>
-public record SendAiChatMessageCommand(Guid? ThreadId, string Message) : IRequest<AiChatTurnDto>;
+public record SendAiChatMessageCommand(
+    Guid? ThreadId,
+    string Message,
+    /// <summary>An attached photo, already read and type-checked by the controller.</summary>
+    AiImageRef? Image = null,
+    /// <summary>Where that photo was stored, so the transcript can show it again.</summary>
+    string? ImageUrl = null) : IRequest<AiChatTurnDto>;
 
 public class SendAiChatMessageCommandValidator : AbstractValidator<SendAiChatMessageCommand>
 {
     public SendAiChatMessageCommandValidator()
     {
-        RuleFor(c => c.Message).NotEmpty().MaximumLength(4000);
+        // A photo on its own is a perfectly good turn, so the message may be
+        // empty when one is attached.
+        RuleFor(c => c.Message).NotEmpty().When(c => c.Image is null);
+        RuleFor(c => c.Message).MaximumLength(4000);
     }
 }
 
@@ -67,7 +77,8 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
 
         // The provider call happens before either message is written: a call
         // that fails on quota or an outage must not leave a half turn behind.
-        var turn = await _ai.GetNutritionAdviceAsync(userId, message, history, cancellationToken);
+        var turn = await _ai.GetNutritionAdviceAsync(
+            userId, message, history, cancellationToken, thread.Summary, request.Image);
 
         var now = DateTime.UtcNow;
         var reply = new AiChatMessage
@@ -86,18 +97,61 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
             ThreadId = thread.Id,
             Role = AiChatRole.User,
             Content = message,
+            ImageUrl = request.ImageUrl,
             CreatedAt = now,
         });
         _context.AiChatMessages.Add(reply);
         thread.UpdatedAt = now;
 
         await _context.SaveChangesAsync(cancellationToken);
+        await RefreshSummaryAsync(userId, thread, cancellationToken);
 
         return new AiChatTurnDto(
             thread.Id,
             thread.Title,
             new AiChatMessageDto(reply.Id, false, reply.Content, reply.CreatedAt),
             turn.Performed);
+    }
+
+    /// <summary>
+    /// Folds anything that has scrolled out of the replay window into the
+    /// thread's summary.
+    ///
+    /// Runs after the turn is saved and never throws: the user has already had
+    /// their answer, and losing a summary refresh is not worth failing a
+    /// request that has otherwise succeeded.
+    /// </summary>
+    private async Task RefreshSummaryAsync(
+        Guid userId, AiChatThread thread, CancellationToken cancellationToken)
+    {
+        var total = await _context.AiChatMessages
+            .CountAsync(m => m.ThreadId == thread.Id, cancellationToken);
+
+        // Everything still replayed verbatim needs no summarising.
+        var fallenOut = total - HistoryTurns;
+        if (fallenOut <= thread.SummarisedThrough) return;
+
+        var pending = await _context.AiChatMessages.AsNoTracking()
+            .Where(m => m.ThreadId == thread.Id)
+            .OrderBy(m => m.CreatedAt)
+            .Skip(thread.SummarisedThrough)
+            .Take(fallenOut - thread.SummarisedThrough)
+            .Select(m => new { m.Role, m.Content })
+            .ToListAsync(cancellationToken);
+
+        if (pending.Count == 0) return;
+
+        var summary = await _ai.SummariseAsync(
+            userId,
+            thread.Summary,
+            pending.Select(m => new AiChatHistoryTurn(m.Role == AiChatRole.User, m.Content)).ToList(),
+            cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(summary)) return;
+
+        thread.Summary = summary;
+        thread.SummarisedThrough = fallenOut;
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     private async Task<AiChatThread> ResolveThreadAsync(
