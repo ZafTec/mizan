@@ -338,9 +338,12 @@ case and the issue should be corrected, not the code:
 
 ### What is actually left
 
-1. **The feature split.** This is the real gap. Three endpoints are gated today
-   (AI chat, AI image analysis, goal progress history) against the issue's much
-   wider list.
+1. **The feature split.** This is the real gap. AI image analysis is the only
+   endpoint gated today, against the issue's much wider list. AI chat was
+   deliberately left ungated (§10 below - the quota tiers already say what
+   free gets). Goal progress history was gated at first but `/goal/dashboard`
+   is a spine nav destination (§3), not a secondary feature, so it was
+   de-gated rather than kept as a fourth exception.
 2. **Customer portal link** from `/more → Billing`.
 3. **Upgrade chips** on gated UI — tier 2, in context, per §3.
 4. **Sandbox round-trip**, which needs live Paddle credentials.
@@ -1622,7 +1625,7 @@ Each phase is one commit and leaves the build green.
 | 9 | AI platform + consent | medium | **done** | `IAiProvider`, `AiUsageLog`, `IAiQuotaService` with per-user and global ceilings, usage tab, `UserAiConsent` default-off, `IDataAccessPolicy` including the intersection rule. The existing unmetered call was brought under all of it; Semantic Kernel and its auto-invoking write tool are gone |
 | 10 | AI surfaces + admin console | medium | **done** | `AiPromptVersion` + the hard/soft guardrail split, chat persisted on `AiChatThread`, onboarding agent over the allowlisted tool→command map shared with MCP; read-only client tools for trainers (§11); `/admin/ai` with evals, diff and rollback (§12) |
 | 11 | **Streak + achievement correctness** | medium | **done** | `StreakClock` as the one decay rule, `User.TimeZoneId`, `user_activity_counters` replacing the `COUNT(*)`s, catalogue cached, a round-trip budget test on the logging path (§13a) |
-| 11b | Billing feature split | low | *portal link done* | widen gating past the three endpoints, ~~customer portal link~~ (done — `IPaddleApiClient` + `POST /api/Subscriptions/portal`, §17), in-context upgrade chips; gate relationship *creation*, never existing consent (§5) |
+| 11b | Billing feature split | low | *portal link done* | widen gating past the one remaining endpoint (AI image analysis), ~~customer portal link~~ (done — `IPaddleApiClient` + `POST /api/Subscriptions/portal`, §17), in-context upgrade chips; gate relationship *creation*, never existing consent (§5); goal progress history de-gated - it's the `/goal/dashboard` spine destination, not a Pro feature |
 | 12 | **Table + skeleton primitive** | medium | **done** | one server-rendered `DataTable` - sort, filter and page are URL links, not client state; `TableToolbar` is the only client component in the stack. Eight table pages ported, two bespoke header components deleted, `loading.tsx` count 10 → 59 |
 | 13 | **Admin rebuild** | medium | **done** | audit log queryable and filterable (facets, date range, CSV export with formula neutralisation), relationships back with the grants read-only, achievements CRUD. 15 admin MCP tools, up from 6 |
 | 14 | **Background queue** | medium | **done** | transactional outbox for outbound email and eval runs, `FOR UPDATE SKIP LOCKED` claiming, per-type concurrency, dead-letter view at `/admin/jobs` and over MCP (§13b) |

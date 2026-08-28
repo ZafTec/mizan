@@ -52,8 +52,9 @@ public class GoalsController : ControllerBase
         return Ok(result);
     }
 
+    // Not Pro-gated: /goal/dashboard is a spine nav destination (Progress),
+    // not a secondary feature - paywalling it would paywall the nav itself.
     [HttpGet("progress")]
-    [Authorize(Policy = "RequirePro")]
     public async Task<ActionResult<GoalProgressHistoryDto>> GetProgressHistory([FromQuery] int days = 30)
     {
         var result = await _mediator.Send(new GetGoalProgressHistoryQuery { Days = days });
