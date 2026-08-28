@@ -42,7 +42,7 @@ export function HeroSection() {
 
 			<div className="card">
 				<div className="flex items-center justify-between border-b border-charcoal-blue-200 px-5 py-4 dark:border-charcoal-blue-700">
-					<span className="text-lg font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50" style={{ fontFamily: "var(--font-serif)" }}>
+					<span className="text-lg font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
 						Tuesday, 26 August
 					</span>
 					<span className="flex items-center gap-1.5 text-xs font-semibold text-burnt-peach-700 dark:text-burnt-peach-400">

@@ -70,7 +70,7 @@ export function PricingSection() {
 					>
 						<div>
 							<div className="flex items-center gap-2.5">
-								<h3 className="text-lg font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50" style={{ fontFamily: "var(--font-serif)" }}>
+								<h3 className="text-lg font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
 									{tier.name}
 								</h3>
 								{tier.highlight && <span className="eyebrow text-verdigris-700 dark:text-verdigris-400">Most people</span>}
