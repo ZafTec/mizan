@@ -34,7 +34,7 @@ export function ThreeDoorsSection() {
 				{DOORS.map((door) => (
 					<div key={door.title} className="flex flex-col gap-3 bg-white p-7 dark:bg-charcoal-blue-950">
 						<Icon name={door.icon} size={22} strokeWidth={1.6} className="text-charcoal-blue-900 dark:text-charcoal-blue-50" aria-hidden="true" />
-						<h3 className="text-xl font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50" style={{ fontFamily: "var(--font-serif)" }}>
+						<h3 className="text-xl font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
 							{door.title}
 						</h3>
 						<p className="text-[13.5px] leading-relaxed text-charcoal-blue-600 dark:text-charcoal-blue-400">{door.body}</p>

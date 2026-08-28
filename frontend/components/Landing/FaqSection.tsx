@@ -33,7 +33,7 @@ export function FaqSection() {
 			<dl className="flex flex-col">
 				{QUESTIONS.map((item) => (
 					<div key={item.q} className="grid grid-cols-1 gap-2 border-t border-charcoal-blue-200 py-6 last:border-b sm:grid-cols-[200px_1fr] sm:gap-7 dark:border-charcoal-blue-700">
-						<dt className="text-lg font-medium italic text-charcoal-blue-900 dark:text-charcoal-blue-50" style={{ fontFamily: "var(--font-serif)" }}>
+						<dt className="text-lg font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
 							{item.q}
 						</dt>
 						<dd className="text-sm leading-relaxed text-charcoal-blue-600 dark:text-charcoal-blue-400">{item.a}</dd>
