@@ -90,6 +90,23 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
 
             if (!string.IsNullOrWhiteSpace(existingConnString))
             {
+                // This suite TRUNCATEs users, foods, households, subscriptions
+                // and most of the schema on every test via ResetDatabaseAsync.
+                // An ambient ConnectionStrings__PostgreSQL - the one the real
+                // backend container runs on - pointed here once and wiped the
+                // dev database. Refuse anything whose database name does not
+                // say "test": run `docker-compose --profile test up test`,
+                // which does not inherit that variable, instead.
+                var dbName = new Npgsql.NpgsqlConnectionStringBuilder(existingConnString).Database;
+                if (dbName is null || !dbName.Contains("test", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(
+                        $"Refusing to run the integration suite against database '{dbName}' - " +
+                        "it does not look like a test database and this suite truncates its schema. " +
+                        "Use `docker-compose --profile test up test`, or set TEST_DB_CONNECTION to a " +
+                        "database whose name contains \"test\".");
+                }
+
                 // Using existing DB connection (CI/CD pipeline)
                 _connectionString = existingConnString;
                 _dbContainer = null;
