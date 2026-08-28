@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Archivo:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap');
 
 @import "tailwindcss";
 
@@ -124,7 +124,6 @@
   --shadow-glow: none;
 
   --font-sans: Archivo, system-ui, sans-serif;
-  --font-serif: Spectral, Georgia, serif;
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
@@ -279,12 +278,11 @@ html {
     overflow-x: clip;
   }
 
-  /* Display type is the serif. Everything else - body copy, labels, data,
-     controls - is the sans. h3 stays sans: it is usually a card sub-header in
-     dense UI, where a second voice reads as noise rather than hierarchy. */
+  /* One sans family for the whole app, display type included - see
+     docs/REFOCUS.md. Weight and tracking carry the display/body distinction
+     instead of a second typeface. */
   h1,
   h2 {
-    font-family: var(--font-serif);
     font-weight: 500;
     letter-spacing: -0.022em;
     line-height: 1.1;
@@ -426,7 +424,6 @@ html {
 
 .section-title {
   @apply text-2xl font-medium tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50;
-  font-family: var(--font-serif);
 }
 
 /*

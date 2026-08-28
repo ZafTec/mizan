@@ -289,7 +289,7 @@ export function EmptyState({
 }) {
 	return (
 		<div className="border border-dashed border-charcoal-blue-300 p-10 text-center dark:border-charcoal-blue-700">
-			<h3 className="text-base font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50" style={{ fontFamily: "var(--font-serif)" }}>
+			<h3 className="text-base font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
 				{title}
 			</h3>
 			{description && (
