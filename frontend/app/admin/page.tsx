@@ -99,45 +99,6 @@ export default async function AdminDashboard() {
           <LiveAuditLog />
         </div>
       </div>
-
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <QuickActionCard
-          title="Users"
-          description="Manage users, roles, and permissions"
-          link="/admin/users"
-          icon="👥"
-        />
-        <QuickActionCard
-          title="Sessions"
-          description="View and revoke active sessions"
-          link="/admin/sessions"
-          icon="🔐"
-        />
-        <QuickActionCard
-          title="Ingredients"
-          description="Add and verify public food ingredients"
-          link="/admin/ingredients"
-          icon="🍎"
-        />
-        <QuickActionCard
-          title="Exercises"
-          description="Manage the exercise database"
-          link="/admin/exercises"
-          icon="🏋️"
-        />
-        <QuickActionCard
-          title="Recipes"
-          description="Moderate community recipes"
-          link="/admin/recipes"
-          icon="🍳"
-        />
-        <QuickActionCard
-          title="Households"
-          description="Inspect and remove households"
-          link="/admin/households"
-          icon="🏠"
-        />
-      </div>
     </div>
   );
 }
@@ -167,28 +128,5 @@ function StatCard({
         <span className="text-sm text-muted-foreground">{linkText}</span>
       )}
     </div>
-  );
-}
-
-function QuickActionCard({
-  title,
-  description,
-  link,
-  icon,
-}: {
-  title: string;
-  description: string;
-  link: string;
-  icon: string;
-}) {
-  return (
-    <a
-      href={link}
-      className="bg-card rounded-lg border p-6 hover:border-primary transition-colors"
-    >
-      <div className="text-4xl mb-4">{icon}</div>
-      <h3 className="text-lg font-semibold mb-2">{title}</h3>
-      <p className="text-sm text-muted-foreground">{description}</p>
-    </a>
   );
 }

@@ -1,6 +1,7 @@
 import { getUserOptionalServer } from "@/helper/session";
 import { redirect } from "next/navigation";
 import AppShell from "@/components/Layout/AppShell";
+import AdminTabs from "@/components/admin/AdminTabs";
 
 export default async function AdminLayout({
 	children,
@@ -19,7 +20,10 @@ export default async function AdminLayout({
 
 	return (
 		<AppShell user={user} variant="admin">
-			{children}
+			<div className="space-y-6 lg:space-y-8">
+				<AdminTabs />
+				{children}
+			</div>
 		</AppShell>
 	);
 }
