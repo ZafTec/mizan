@@ -153,7 +153,7 @@ export default function BillingPage() {
             </span>
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-xl font-medium tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-2xl" style={{ fontFamily: "var(--font-serif)" }}>
+                <h2 className="text-xl font-medium tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-2xl">
                   {subscription?.isLifetime ? "Lifetime Pro, forever" : "You're on Pro"}
                 </h2>
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-verdigris-700 dark:text-verdigris-400">
@@ -176,7 +176,7 @@ export default function BillingPage() {
                 <p className="mt-2 text-sm text-charcoal-blue-700 dark:text-charcoal-blue-400">Renews {periodEnd}.</p>
               )}
               <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {["Unlimited meal plans & shopping lists", "AI coach + food-photo logging", "Trend charts & progress history", "Household sharing (up to 6)"].map((perk) => (
+                {["Unlimited meal plans & shopping lists", "AI coach + food-photo logging", "Household sharing (up to 6)"].map((perk) => (
                   <li key={perk} className="flex items-center gap-2 text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300">
                     <Icon name="circleCheck" size={14} className="text-verdigris-700 dark:text-verdigris-400" aria-hidden="true" />
                     {perk}
@@ -219,7 +219,7 @@ export default function BillingPage() {
         </div>
       ) : (
         <div className="card mx-auto max-w-sm p-6 sm:p-8">
-          <h3 className="text-lg font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50" style={{ fontFamily: "var(--font-serif)" }}>
+          <h3 className="text-lg font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
             {PRO_PLAN.name}
           </h3>
           <div className="mt-2 flex items-baseline gap-2">
