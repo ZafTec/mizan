@@ -48,6 +48,15 @@ export default function OnboardingAgent() {
 	const [consent, setConsent] = useState<AiConsent | null>(null);
 	const scroller = useRef<HTMLDivElement>(null);
 
+	function scrollToBottom() {
+		requestAnimationFrame(() => {
+			scroller.current?.scrollTo({
+				top: scroller.current.scrollHeight,
+				behavior: "smooth",
+			});
+		});
+	}
+
 	useEffect(() => {
 		getAiConsent()
 			.then(setConsent)
@@ -87,15 +96,6 @@ export default function OnboardingAgent() {
 			cancelled = true;
 		};
 	}, []);
-
-	function scrollToBottom() {
-		requestAnimationFrame(() => {
-			scroller.current?.scrollTo({
-				top: scroller.current.scrollHeight,
-				behavior: "smooth",
-			});
-		});
-	}
 
 	function send(text: string) {
 		const trimmed = text.trim();

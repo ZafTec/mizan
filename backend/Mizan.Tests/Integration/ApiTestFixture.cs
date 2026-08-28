@@ -373,6 +373,33 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         return user;
     }
 
+    /// <summary>
+    /// Tool calls are refused unless the user granted that axis, so any test
+    /// exercising a tool needs a consent row. Absence means "never asked",
+    /// which means no - see <see cref="Domain.Entities.UserAiConsent"/>.
+    /// </summary>
+    public async Task GrantAiConsentAsync(Guid userId, bool read = true, bool write = true)
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+
+        db.UserAiConsents.Add(new Domain.Entities.UserAiConsent
+        {
+            UserId = userId,
+            Enabled = read,
+            ShareNutrition = read,
+            ShareTraining = read,
+            ShareBody = read,
+            AllowWrites = write,
+            WriteNutrition = write,
+            WriteTraining = write,
+            WriteBody = write,
+            UpdatedAt = DateTime.UtcNow,
+        });
+
+        await db.SaveChangesAsync();
+    }
+
     // Entitlement is resolved from the subscriptions table (see EntitlementService),
     // not a user flag, so tests hitting Pro-gated endpoints need a row here.
     public async Task GrantProAsync(Guid userId)

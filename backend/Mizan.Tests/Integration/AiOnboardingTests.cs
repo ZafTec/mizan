@@ -213,12 +213,46 @@ public class AiOnboardingTests
             !name.Contains("delete") && !name.Contains("remove") && !name.Contains("revoke"));
     }
 
+    /// <summary>
+    /// The consent gate, from the outside. A user who has not granted writes
+    /// must have the call refused rather than performed, and be told why - a
+    /// silent no is indistinguishable from a model that chose not to act.
+    /// </summary>
+    [Fact]
+    public async Task AToolIsRefusedWhenTheUserHasNotGrantedWrites()
+    {
+        await _fixture.ResetDatabaseAsync();
+
+        _fixture.Ai.Reset();
+        var id = Guid.NewGuid();
+        var email = $"onboard-{id:N}@example.com";
+        await _fixture.SeedUserAsync(id, email);
+        // Deliberately no consent row: never asked means no.
+        var client = _fixture.CreateAuthenticatedClient(id, email);
+
+        _fixture.Ai.CallTools(("log_measurement", """{"weightKg":82}"""));
+        _fixture.Ai.Reply("Noted.");
+
+        var turn = await SendAsync(client, null, "I weigh 82kg.");
+
+        turn.Performed.Should().ContainSingle();
+        turn.Performed[0].Succeeded.Should().BeFalse();
+        turn.Performed[0].Error.Should().Contain("permission");
+
+        (await MeasurementCountAsync(id)).Should().Be(0, "a refused tool must not write");
+    }
+
     private async Task<(HttpClient Client, Guid UserId)> UserAsync()
     {
         _fixture.Ai.Reset();
         var id = Guid.NewGuid();
         var email = $"onboard-{id:N}@example.com";
         await _fixture.SeedUserAsync(id, email);
+
+        // Writes only: onboarding records things but deliberately reads no log,
+        // and granting reads here would hide it if that ever changed.
+        await _fixture.GrantAiConsentAsync(id, read: false, write: true);
+
         return (_fixture.CreateAuthenticatedClient(id, email), id);
     }
 
