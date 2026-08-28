@@ -1,262 +1,168 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/db/client";
-import { sessions, users } from "@/db/schema";
-import { eq, sql, count, desc } from "drizzle-orm";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
+import { listAdminSessions, type AdminSession } from "@/data/admin/users";
+import {
+	DataTable,
+	Pill,
+	TableToolbar,
+	readPage,
+	type Column,
+} from "@/components/ui/data-table";
 
 export const metadata = {
-  title: "Session Management | Admin",
-  description: "Manage active user sessions",
+	title: "Sessions | Admin",
+	description: "Active sign-ins across the system",
 };
 
-interface SearchParams {
-  page?: string;
-  activeOnly?: string;
+const PAGE_SIZE = 50;
+
+function relative(iso: string): string {
+	const minutes = Math.round((Date.now() - Date.parse(iso)) / 60000);
+	if (!Number.isFinite(minutes)) return "—";
+	if (minutes < 1) return "just now";
+	if (minutes < 60) return `${minutes}m ago`;
+	const hours = Math.round(minutes / 60);
+	if (hours < 24) return `${hours}h ago`;
+	return `${Math.round(hours / 24)}d ago`;
 }
 
-const SESSIONS_PER_PAGE = 50;
-
-async function getSessions(searchParams: SearchParams) {
-  const page = parseInt(searchParams.page || "1");
-  const activeOnly = searchParams.activeOnly === "true";
-
-  const conditions = activeOnly
-    ? sql`${sessions.expiresAt} > NOW()`
-    : undefined;
-
-  const [sessionList, totalCount] = await Promise.all([
-    db
-      .select({
-        id: sessions.id,
-        userId: sessions.userId,
-        userName: users.name,
-        userEmail: users.email,
-        ipAddress: sessions.ipAddress,
-        userAgent: sessions.userAgent,
-        createdAt: sessions.createdAt,
-        expiresAt: sessions.expiresAt,
-      })
-      .from(sessions)
-      .leftJoin(users, eq(sessions.userId, users.id))
-      .where(conditions)
-      .orderBy(desc(sessions.createdAt))
-      .limit(SESSIONS_PER_PAGE)
-      .offset((page - 1) * SESSIONS_PER_PAGE),
-
-    db
-      .select({ count: count() })
-      .from(sessions)
-      .where(conditions)
-      .then((res) => res[0]?.count || 0),
-  ]);
-
-  return {
-    sessions: sessionList,
-    totalCount,
-    totalPages: Math.ceil(totalCount / SESSIONS_PER_PAGE),
-    currentPage: page,
-  };
+/** A user agent is unreadable at table width; the family is the useful part. */
+function device(agent?: string | null): string {
+	if (!agent) return "Unknown";
+	if (/iPhone|iPad|Android/i.test(agent)) return "Mobile";
+	if (/Edg\//i.test(agent)) return "Edge";
+	if (/Chrome\//i.test(agent)) return "Chrome";
+	if (/Safari\//i.test(agent)) return "Safari";
+	if (/Firefox\//i.test(agent)) return "Firefox";
+	return "Other";
 }
 
-export default async function SessionsPage({
-  searchParams,
+const columns: Column<AdminSession>[] = [
+	{
+		id: "user",
+		header: "User",
+		cell: (s) => (
+			<div className="min-w-0">
+				<p className="truncate font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
+					{s.userName || "Unnamed"}
+				</p>
+				<p className="truncate text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+					{s.userEmail}
+				</p>
+			</div>
+		),
+	},
+	{
+		id: "status",
+		header: "Status",
+		cell: (s) =>
+			Date.parse(s.expiresAt) > Date.now() ? (
+				<Pill tone="good">Active</Pill>
+			) : (
+				<Pill>Expired</Pill>
+			),
+	},
+	{ id: "device", header: "Device", secondary: true, cell: (s) => device(s.userAgent) },
+	{
+		id: "ip",
+		header: "IP",
+		secondary: true,
+		cell: (s) => (
+			<span className="font-mono text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+				{s.ipAddress || "—"}
+			</span>
+		),
+	},
+	{
+		id: "seen",
+		header: "Last seen",
+		cell: (s) => (
+			<span className="whitespace-nowrap text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+				{relative(s.lastSeenAt)}
+			</span>
+		),
+	},
+	{
+		id: "expires",
+		header: "Expires",
+		secondary: true,
+		cell: (s) => (
+			<span className="whitespace-nowrap text-xs tabular-nums text-charcoal-blue-500 dark:text-charcoal-blue-400">
+				{new Date(s.expiresAt).toLocaleDateString()}
+			</span>
+		),
+	},
+	{
+		id: "actions",
+		header: "",
+		align: "right",
+		width: "1%",
+		cell: (s) => (
+			<Link
+				href={`/admin/users/${s.userId}`}
+				className="whitespace-nowrap text-xs text-verdigris-700 hover:underline dark:text-verdigris-300"
+			>
+				User
+			</Link>
+		),
+	},
+];
+
+export default async function AdminSessionsPage({
+	searchParams,
 }: {
-  searchParams: SearchParams;
+	searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  const session = await auth.api.getSession({
-    headers: await import("next/headers").then((mod) => mod.headers()),
-  });
+	const params = await searchParams;
+	const user = await getCurrentUser();
+	if (!user) redirect("/login");
+	if (user.role !== "admin") redirect("/");
 
-  if (!session?.user) {
-    redirect("/login");
-  }
+	const page = readPage(params);
+	const result = await listAdminSessions({
+		page,
+		pageSize: PAGE_SIZE,
+		activeOnly: params.activeOnly === "true",
+	});
 
-  if (session.user.role !== "admin") {
-    redirect("/");
-  }
+	return (
+		<div className="space-y-6 lg:space-y-8">
+			<header className="space-y-2">
+				<p className="eyebrow">Security</p>
+				<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+					Sessions
+				</h1>
+				<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+					Every sign-in the system is holding. Revoking one signs that device out
+					on its next request.
+				</p>
+			</header>
 
-  const {
-    sessions: sessionList,
-    totalCount,
-    totalPages,
-    currentPage,
-  } = await getSessions(searchParams);
+			<TableToolbar
+				filters={[
+					{
+						name: "activeOnly",
+						label: "All sessions",
+						options: [{ value: "true", label: "Active only" }],
+					},
+				]}
+			/>
 
-  const activeSessions = sessionList.filter(
-    (s) => new Date(s.expiresAt) > new Date()
-  ).length;
-
-  return (
-    <div className="space-y-6 lg:space-y-8">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-2">
-          <p className="eyebrow">Security</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-            Session management
-          </h1>
-          <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-            {totalCount} total sessions · {activeSessions} active
-          </p>
-        </div>
-        <Link
-          href="/admin"
-          className="btn-ghost !rounded-2xl !py-2 text-sm"
-        >
-          ← Back to Dashboard
-        </Link>
-      </header>
-
-      <div className="mb-6 bg-card rounded-lg border p-4">
-        <form className="flex gap-4">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="activeOnly"
-              value="true"
-              defaultChecked={searchParams.activeOnly === "true"}
-              className="rounded border-gray-300 text-primary focus:ring-primary"
-            />
-            <span className="text-sm">Show active sessions only</span>
-          </label>
-          <button
-            type="submit"
-            className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-          >
-            Apply Filter
-          </button>
-          <Link
-            href="/admin/sessions"
-            className="px-6 py-2 border rounded-lg hover:bg-accent text-center"
-          >
-            Clear
-          </Link>
-        </form>
-      </div>
-
-      <div className="bg-card rounded-lg border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-muted">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                  User
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                  IP Address
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                  User Agent
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                  Created
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                  Expires
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {sessionList.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
-                    No sessions found
-                  </td>
-                </tr>
-              ) : (
-                sessionList.map((sess) => {
-                  const isActive = new Date(sess.expiresAt) > new Date();
-                  return (
-                    <tr key={sess.id} className="hover:bg-muted/50">
-                      <td className="px-6 py-4">
-                        <div>
-                          <p className="font-medium">
-                            {sess.userName || "Unknown"}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {sess.userEmail || "No email"}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        {sess.ipAddress || "Unknown"}
-                      </td>
-                      <td className="px-6 py-4 text-sm max-w-xs truncate">
-                        {sess.userAgent || "Unknown"}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-muted-foreground">
-                        {new Date(sess.createdAt).toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-muted-foreground">
-                        {new Date(sess.expiresAt).toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            isActive
-                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                              : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
-                          }`}
-                        >
-                          {isActive ? "Active" : "Expired"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        {sess.userId && (
-                          <Link
-                            href={`/admin/users/${sess.userId}`}
-                            className="text-primary hover:underline text-sm"
-                          >
-                            View User →
-                          </Link>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Page {currentPage} of {totalPages}
-          </p>
-          <div className="flex gap-2">
-            {currentPage > 1 && (
-              <Link
-                href={`/admin/sessions?${new URLSearchParams({
-                  ...searchParams,
-                  page: (currentPage - 1).toString(),
-                }).toString()}`}
-                className="px-4 py-2 border rounded-lg hover:bg-accent"
-              >
-                ← Previous
-              </Link>
-            )}
-            {currentPage < totalPages && (
-              <Link
-                href={`/admin/sessions?${new URLSearchParams({
-                  ...searchParams,
-                  page: (currentPage + 1).toString(),
-                }).toString()}`}
-                className="px-4 py-2 border rounded-lg hover:bg-accent"
-              >
-                Next →
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+			<DataTable
+				columns={columns}
+				rows={result.items}
+				rowKey={(s) => s.id}
+				pathname="/admin/sessions"
+				searchParams={params}
+				page={{
+					page: result.page,
+					pageSize: result.pageSize,
+					totalCount: result.totalCount,
+					totalPages: result.totalPages,
+				}}
+				empty={{ title: "No sessions", description: "Nobody is signed in right now." }}
+			/>
+		</div>
+	);
 }

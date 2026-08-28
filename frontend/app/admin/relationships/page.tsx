@@ -1,191 +1,203 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import Link from "next/link";
+import {
+	listAdminRelationships,
+	type AdminRelationship,
+} from "@/data/admin/relationships";
+import {
+	DataTable,
+	Pill,
+	TableToolbar,
+	readPage,
+	readSort,
+	type Column,
+} from "@/components/ui/data-table";
+import EndRelationshipButton from "./EndRelationshipButton";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Trainer-Client Relationships | Admin",
-  description: "Manage trainer-client relationships",
+	title: "Trainer relationships | Mizan admin",
+	description: "Who coaches whom, and what they can see",
 };
 
-interface Relationship {
-  id: string;
-  trainerId: string;
-  clientId: string;
-  status: string;
-  canViewNutrition: boolean;
-  canViewWorkouts: boolean;
-  canViewMeasurements: boolean;
-  canMessage: boolean;
-  startedAt: string | null;
-  endedAt: string | null;
-  createdAt: string;
+const PAGE_SIZE = 20;
+
+const STATUS_TONE: Record<string, "good" | "warn" | "neutral"> = {
+	active: "good",
+	pending: "warn",
+	paused: "warn",
+};
+
+/**
+ * The grants, as three letters. The full words do not fit and the question an
+ * admin is answering is usually "can this coach see their weight", which a
+ * lit or unlit N/W/M answers at a glance.
+ */
+function Grants({ r }: { r: AdminRelationship }) {
+	const axes: [string, boolean, string][] = [
+		["N", r.canViewNutrition, "Nutrition"],
+		["W", r.canViewWorkouts, "Workouts"],
+		["M", r.canViewMeasurements, "Measurements"],
+	];
+
+	return (
+		<span className="inline-flex gap-1">
+			{axes.map(([letter, granted, label]) => (
+				<span
+					key={letter}
+					title={`${label}: ${granted ? "shared" : "not shared"}`}
+					className={
+						granted
+							? "flex h-5 w-5 items-center justify-center rounded bg-verdigris-100 text-[11px] font-semibold text-verdigris-800 dark:bg-verdigris-500/20 dark:text-verdigris-300"
+							: "flex h-5 w-5 items-center justify-center rounded bg-charcoal-blue-100 text-[11px] text-charcoal-blue-400 dark:bg-white/5 dark:text-charcoal-blue-600"
+					}
+				>
+					{letter}
+				</span>
+			))}
+		</span>
+	);
 }
 
-async function getRelationships(): Promise<
-  Array<Relationship & { trainerEmail: string; clientEmail: string }>
-> {
-  // For now, return empty array since we need backend API endpoint
-  // TODO: Implement backend API endpoint /api/TrainerClientRelationships
-  return [];
-}
+const columns: Column<AdminRelationship>[] = [
+	{
+		id: "trainer",
+		header: "Trainer",
+		sortKey: "trainer",
+		cell: (r) => (
+			<div className="min-w-0">
+				<Link
+					href={`/admin/users/${r.trainerId}`}
+					className="truncate font-medium text-charcoal-blue-900 hover:underline dark:text-charcoal-blue-50"
+				>
+					{r.trainerName || "Unnamed"}
+				</Link>
+				<p className="truncate text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+					{r.trainerEmail}
+				</p>
+			</div>
+		),
+	},
+	{
+		id: "client",
+		header: "Client",
+		sortKey: "client",
+		cell: (r) => (
+			<div className="min-w-0">
+				<Link
+					href={`/admin/users/${r.clientId}`}
+					className="truncate font-medium text-charcoal-blue-900 hover:underline dark:text-charcoal-blue-50"
+				>
+					{r.clientName || "Unnamed"}
+				</Link>
+				<p className="truncate text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+					{r.clientEmail}
+				</p>
+			</div>
+		),
+	},
+	{
+		id: "status",
+		header: "Status",
+		sortKey: "status",
+		cell: (r) => <Pill tone={STATUS_TONE[r.status] ?? "neutral"}>{r.status}</Pill>,
+	},
+	{
+		id: "grants",
+		header: "Shares",
+		align: "center",
+		cell: (r) => <Grants r={r} />,
+	},
+	{
+		id: "since",
+		header: "Since",
+		sortKey: "createdAt",
+		secondary: true,
+		cell: (r) => (
+			<span className="whitespace-nowrap text-xs tabular-nums text-charcoal-blue-500 dark:text-charcoal-blue-400">
+				{new Date(r.startedAt ?? r.createdAt).toLocaleDateString()}
+			</span>
+		),
+	},
+	{
+		id: "actions",
+		header: "",
+		align: "right",
+		width: "1%",
+		cell: (r) =>
+			r.status === "ended" ? null : (
+				<EndRelationshipButton
+					id={r.id}
+					trainer={r.trainerName || r.trainerEmail}
+					client={r.clientName || r.clientEmail}
+				/>
+			),
+	},
+];
 
-export default async function RelationshipsPage() {
-  const session = await auth.api.getSession({
-    headers: await import("next/headers").then((mod) => mod.headers()),
-  });
+export default async function AdminRelationshipsPage({
+	searchParams,
+}: {
+	searchParams: Promise<Record<string, string | undefined>>;
+}) {
+	const params = await searchParams;
+	const page = readPage(params);
+	const sort = readSort(params);
 
-  if (!session?.user) {
-    redirect("/login");
-  }
+	const result = await listAdminRelationships({
+		page,
+		pageSize: PAGE_SIZE,
+		search: params.search,
+		status: params.status,
+		sortBy: sort.sortBy ?? undefined,
+		sortOrder: sort.sortBy ? sort.sortOrder : undefined,
+	});
 
-  if (session.user.role !== "admin") {
-    redirect("/");
-  }
+	return (
+		<div className="space-y-6 lg:space-y-8">
+			<header className="space-y-2">
+				<p className="eyebrow">Administration</p>
+				<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+					Trainer relationships
+				</h1>
+				<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+					Which axes a client shares is the client&apos;s decision and is read-only
+					here. Ending a relationship revokes the coach&apos;s access immediately.
+				</p>
+			</header>
 
-  const relationships = await getRelationships();
+			<TableToolbar
+				searchPlaceholder="Trainer or client…"
+				filters={[
+					{
+						name: "status",
+						label: "Any status",
+						options: ["pending", "active", "paused", "ended"].map((v) => ({
+							value: v,
+							label: v,
+						})),
+					},
+				]}
+			/>
 
-  return (
-    <div className="space-y-6 lg:space-y-8">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-2">
-          <p className="eyebrow">Coaching</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-            Trainer-client relationships
-          </h1>
-          <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-            {relationships.length} total relationships
-          </p>
-        </div>
-        <Link
-          href="/admin"
-          className="btn-ghost !rounded-2xl !py-2 text-sm"
-        >
-          ← Back to Dashboard
-        </Link>
-      </header>
-
-      <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 mb-6">
-        <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
-          Feature In Development
-        </h3>
-        <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-4">
-          Trainer-client relationship management requires a backend API endpoint
-          that hasn't been implemented yet.
-        </p>
-        <p className="text-sm text-yellow-700 dark:text-yellow-300">
-          <strong>Backend TODO:</strong>
-        </p>
-        <ul className="list-disc list-inside text-sm text-yellow-700 dark:text-yellow-300 mt-2 space-y-1">
-          <li>
-            Create GET /api/TrainerClientRelationships endpoint with admin
-            authorization
-          </li>
-          <li>Include user details (email, name) for trainers and clients</li>
-          <li>Add filtering by status (pending, active, paused, ended)</li>
-          <li>Implement pagination (50 per page)</li>
-        </ul>
-      </div>
-
-      <div className="bg-card rounded-lg border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-muted">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                  Trainer
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                  Client
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                  Permissions
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                  Started
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {relationships.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-8 text-center text-muted-foreground"
-                  >
-                    No relationships to display. Backend API endpoint required.
-                  </td>
-                </tr>
-              ) : (
-                relationships.map((rel) => (
-                  <tr key={rel.id} className="hover:bg-muted/50">
-                    <td className="px-6 py-4">
-                      <p className="font-medium">{rel.trainerEmail}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="font-medium">{rel.clientEmail}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          rel.status === "active"
-                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                            : rel.status === "pending"
-                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                            : rel.status === "paused"
-                            ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                            : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
-                        }`}
-                      >
-                        {rel.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <div className="flex gap-2 flex-wrap">
-                        {rel.canViewNutrition && (
-                          <span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
-                            Nutrition
-                          </span>
-                        )}
-                        {rel.canViewWorkouts && (
-                          <span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
-                            Workouts
-                          </span>
-                        )}
-                        {rel.canViewMeasurements && (
-                          <span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
-                            Measurements
-                          </span>
-                        )}
-                        {rel.canMessage && (
-                          <span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
-                            Messaging
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">
-                      {rel.startedAt
-                        ? new Date(rel.startedAt).toLocaleDateString()
-                        : "-"}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button className="text-primary hover:underline text-sm">
-                        Manage →
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
+			<DataTable
+				columns={columns}
+				rows={result.items}
+				rowKey={(r) => r.id}
+				pathname="/admin/relationships"
+				searchParams={params}
+				sort={sort}
+				page={{
+					page: result.page,
+					pageSize: result.pageSize,
+					totalCount: result.totalCount,
+					totalPages: result.totalPages,
+				}}
+				empty={{
+					title: "No relationships match",
+					description: "Try a different search or clear the filters.",
+				}}
+			/>
+		</div>
+	);
 }

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import { adminRemoveHouseholdMember } from "@/data/admin/household";
 import type { HouseholdMemberDto } from "@/data/household";
 import { appToast } from "@/lib/toast";
@@ -46,7 +46,7 @@ export default function AdminMemberRow({
 				disabled={pending}
 				className="btn-ghost h-8 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
 			>
-				<AnimatedIcon name="logout" size={14} aria-hidden="true" />
+				<Icon name="logout" size={14} aria-hidden="true" />
 				Remove
 			</button>
 		</li>

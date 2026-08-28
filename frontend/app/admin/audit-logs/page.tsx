@@ -1,145 +1,162 @@
-import { getAuditLogs } from "@/data/audit";
-import Link from "next/link";
-import { format } from "date-fns";
-import Pagination from "@/components/Pagination";
-import SortableHeader from "@/components/SortableHeader";
-import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
+import {
+	getAuditFacets,
+	listAuditLogs,
+	type AuditLogRow,
+} from "@/data/admin/audit";
+import {
+	DataTable,
+	Pill,
+	readPage,
+	readSort,
+	type Column,
+} from "@/components/ui/data-table";
+import AuditToolbar from "./AuditToolbar";
+import AuditDetails from "./AuditDetails";
 
-export default async function AuditLogsPage({
-    searchParams,
+export const dynamic = "force-dynamic";
+
+export const metadata = {
+	title: "Audit log | Mizan admin",
+	description: "Who did what, and when",
+};
+
+const PAGE_SIZE = 50;
+
+/** Writes are the interesting ones; reads are noise you scroll past. */
+function tone(action: string) {
+	const a = action.toLowerCase();
+	if (a.includes("delete") || a.includes("ban") || a.includes("revoke")) return "bad" as const;
+	if (a.includes("create") || a.includes("publish")) return "good" as const;
+	if (a.includes("update") || a.includes("patch")) return "warn" as const;
+	return "neutral" as const;
+}
+
+const columns: Column<AuditLogRow>[] = [
+	{
+		id: "timestamp",
+		header: "When",
+		sortKey: "timestamp",
+		cell: (r) => (
+			<span className="whitespace-nowrap text-xs tabular-nums text-charcoal-blue-600 dark:text-charcoal-blue-300">
+				{new Date(r.timestamp).toLocaleString()}
+			</span>
+		),
+	},
+	{
+		id: "actor",
+		header: "Actor",
+		cell: (r) => (
+			<span className="truncate text-sm">{r.userEmail ?? "system"}</span>
+		),
+	},
+	{
+		id: "action",
+		header: "Action",
+		sortKey: "action",
+		cell: (r) => <Pill tone={tone(r.action)}>{r.action}</Pill>,
+	},
+	{
+		id: "entity",
+		header: "Entity",
+		sortKey: "entityType",
+		secondary: true,
+		cell: (r) => (
+			<div className="min-w-0">
+				<p className="truncate text-sm">{r.entityType}</p>
+				{r.entityId && (
+					<p className="truncate font-mono text-[11px] text-charcoal-blue-400 dark:text-charcoal-blue-500">
+						{r.entityId}
+					</p>
+				)}
+			</div>
+		),
+	},
+	{
+		id: "ip",
+		header: "IP",
+		secondary: true,
+		cell: (r) => (
+			<span className="font-mono text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+				{r.ipAddress || "—"}
+			</span>
+		),
+	},
+	{
+		id: "details",
+		header: "",
+		align: "right",
+		width: "1%",
+		cell: (r) => (r.details ? <AuditDetails details={r.details} /> : null),
+	},
+];
+
+export default async function AdminAuditLogsPage({
+	searchParams,
 }: {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+	searchParams: Promise<Record<string, string | undefined>>;
 }) {
-    const params = await searchParams;
-    const { page, sortBy, sortOrder } = parseListParams(params, { sortBy: 'Timestamp', sortOrder: 'desc' });
-    const action = params.action as string | undefined;
-    const entityType = params.entityType as string | undefined;
+	const params = await searchParams;
+	const page = readPage(params);
+	const sort = readSort(params);
 
-    const { logs, totalCount, totalPages } = await getAuditLogs({
-        page,
-        pageSize: 20,
-        action,
-        entityType,
-        sortBy: sortBy ?? undefined,
-        sortOrder,
-    });
+	const filters = {
+		page,
+		pageSize: PAGE_SIZE,
+		action: params.action,
+		entityType: params.entityType,
+		search: params.search,
+		from: params.from,
+		to: params.to,
+		sortBy: sort.sortBy ?? undefined,
+		sortOrder: sort.sortBy ? sort.sortOrder : undefined,
+	};
 
-    const baseUrl = buildListUrl('/admin/audit-logs', { action, entityType });
+	const [result, facets] = await Promise.all([listAuditLogs(filters), getAuditFacets()]);
 
-    return (
-        <div className="space-y-6 lg:space-y-8">
-            <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div className="space-y-2">
-                    <p className="eyebrow">Security</p>
-                    <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-                        Audit logs
-                    </h1>
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-charcoal-blue-500 dark:text-charcoal-blue-400">Total:</span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-charcoal-blue-100 dark:bg-charcoal-blue-900 text-charcoal-blue-700 dark:text-charcoal-blue-200 text-sm font-bold">{totalCount}</span>
-                </div>
-            </header>
+	const exportQuery = new URLSearchParams();
+	for (const [key, value] of Object.entries(filters)) {
+		if (value !== undefined && value !== "" && key !== "page" && key !== "pageSize") {
+			exportQuery.set(key, String(value));
+		}
+	}
 
-            {/* Filters */}
-            <div className="card p-4">
-                <form className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label className="label text-xs uppercase tracking-wider font-bold text-charcoal-blue-400 dark:text-charcoal-blue-500">Action Name</label>
-                        <input
-                            name="action"
-                            type="text"
-                            placeholder="Filter by action..."
-                            defaultValue={action}
-                            className="input text-sm"
-                        />
-                    </div>
-                    <div>
-                        <label className="label text-xs uppercase tracking-wider font-bold text-charcoal-blue-400 dark:text-charcoal-blue-500">Entity Type</label>
-                        <input
-                            name="entityType"
-                            type="text"
-                            placeholder="Filter by entity..."
-                            defaultValue={entityType}
-                            className="input text-sm"
-                        />
-                    </div>
-                    <div className="flex items-end">
-                        <button type="submit" className="btn-primary w-full h-10">
-                            Apply Filters
-                        </button>
-                    </div>
-                </form>
-            </div>
+	return (
+		<div className="space-y-6 lg:space-y-8">
+			<header className="space-y-2">
+				<p className="eyebrow">Administration</p>
+				<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+					Audit log
+				</h1>
+				<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+					Every command that changed something, with who ran it. Append-only —
+					nothing here can be edited or removed.
+				</p>
+			</header>
 
-            {/* Table */}
-            <div className="card overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-charcoal-blue-50/50 dark:bg-charcoal-blue-800/50 border-b border-charcoal-blue-100 dark:border-white/10">
-                                <SortableHeader sortKey="timestamp" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-charcoal-blue-500 dark:text-charcoal-blue-400">Timestamp</SortableHeader>
-                                <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-charcoal-blue-500 dark:text-charcoal-blue-400">User</th>
-                                <SortableHeader sortKey="action" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-charcoal-blue-500 dark:text-charcoal-blue-400">Action</SortableHeader>
-                                <SortableHeader sortKey="entityType" currentSort={sortBy} currentOrder={sortOrder} baseUrl={baseUrl} className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-charcoal-blue-500 dark:text-charcoal-blue-400">Entity</SortableHeader>
-                                <th className="px-6 py-4 text-xs uppercase tracking-wider font-bold text-charcoal-blue-500 dark:text-charcoal-blue-400">IP Address</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-charcoal-blue-100 dark:divide-white/10">
-                            {logs.length === 0 ? (
-                                <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-charcoal-blue-500 dark:text-charcoal-blue-400">
-                                        No audit logs found.
-                                    </td>
-                                </tr>
-                            ) : (
-                                logs.map((log) => (
-                                    <tr key={log.id} className="hover:bg-charcoal-blue-50/50 dark:hover:bg-charcoal-blue-800/50 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
-                                                {format(new Date(log.timestamp), "MMM d, yyyy")}
-                                            </div>
-                                            <div className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 font-mono">
-                                                {format(new Date(log.timestamp), "HH:mm:ss")}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm text-charcoal-blue-900 dark:text-charcoal-blue-100 font-medium">{log.userEmail || "System"}</div>
-                                            <div className="text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500 font-mono">{log.userId || ""}</div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="px-2 py-1 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-xs font-bold border border-blue-100 dark:border-blue-800">
-                                                {log.action}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300 font-medium">
-                                                {log.entityType}
-                                            </div>
-                                            <div className="text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500 font-mono">
-                                                {log.entityId}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 font-mono">
-                                            {log.ipAddress || "-"}
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+			<AuditToolbar
+				actions={facets.actions}
+				entityTypes={facets.entityTypes}
+				exportQuery={exportQuery.toString()}
+			/>
 
-            {totalPages > 1 && (
-                <Pagination
-                    currentPage={page}
-                    totalPages={totalPages}
-                    totalCount={totalCount}
-                    pageSize={20}
-                    baseUrl={baseUrl}
-                />
-            )}
-        </div>
-    );
+			<DataTable
+				columns={columns}
+				rows={result.items}
+				rowKey={(r) => r.id}
+				pathname="/admin/audit-logs"
+				searchParams={params}
+				sort={sort}
+				page={{
+					page: result.page,
+					pageSize: result.pageSize,
+					totalCount: result.totalCount,
+					totalPages: result.totalPages,
+				}}
+				empty={{
+					title: "Nothing matches",
+					description: "Widen the date range or clear the filters.",
+				}}
+			/>
+		</div>
+	);
 }

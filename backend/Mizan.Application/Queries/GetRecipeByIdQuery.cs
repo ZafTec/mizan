@@ -1,5 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Queries;
@@ -20,51 +22,59 @@ public record RecipeDetailDto
     public bool IsFavorited { get; init; }
     public RecipeNutritionDto? Nutrition { get; init; }
     public List<RecipeIngredientDto> Ingredients { get; init; } = new();
-    public List<RecipeInstructionDto> Instructions { get; init; } = new();
-    public List<string> Tags { get; init; } = new();
+    public string? Instructions { get; init; }
     public DateTime CreatedAt { get; init; }
 }
 
 public record RecipeIngredientDto
 {
     public Guid? FoodId { get; init; }
-    public Guid? SubRecipeId { get; init; }
     public string FoodName { get; init; } = string.Empty;
-    public string SubRecipeName { get; init; } = string.Empty;
     public decimal? Amount { get; init; }
     public string Unit { get; init; } = string.Empty;
     public string IngredientText { get; init; } = string.Empty;
-    public RecipeNutritionDto? SubRecipeNutrition { get; init; }
-}
-
-public record RecipeInstructionDto
-{
-    public int StepNumber { get; init; }
-    public string Instruction { get; init; } = string.Empty;
 }
 
 public class GetRecipeByIdQueryHandler : IRequestHandler<GetRecipeByIdQuery, RecipeDetailDto?>
 {
+    private static readonly HybridCacheEntryOptions CacheOptions = new()
+    {
+        Expiration = TimeSpan.FromHours(1),
+        LocalCacheExpiration = TimeSpan.FromMinutes(5)
+    };
+
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly HybridCache _cache;
 
-    public GetRecipeByIdQueryHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public GetRecipeByIdQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
+        _cache = cache;
     }
 
     public async Task<RecipeDetailDto?> Handle(GetRecipeByIdQuery request, CancellationToken cancellationToken)
     {
+        // IsOwner/IsFavorited are per-viewer, and a private recipe returns null
+        // for anyone but its owner - so the viewer's id has to be part of the
+        // key, the same reason SearchFoodsQuery keys on it.
+        var viewerId = _currentUser.UserId?.ToString() ?? "anon";
+
+        return await _cache.GetOrCreateAsync(
+            $"recipe:{request.Id}:{viewerId}",
+            request,
+            LoadAsync,
+            CacheOptions,
+            tags: [CacheTags.Recipes],
+            cancellationToken: cancellationToken);
+    }
+
+    private async ValueTask<RecipeDetailDto?> LoadAsync(GetRecipeByIdQuery request, CancellationToken cancellationToken)
+    {
         var recipe = await _context.Recipes
-            .Include(r => r.Nutrition)
             .Include(r => r.Ingredients)
                 .ThenInclude(i => i.Food)
-            .Include(r => r.Ingredients)
-                .ThenInclude(i => i.SubRecipe)
-                    .ThenInclude(sr => sr.Nutrition)
-            .Include(r => r.Instructions)
-            .Include(r => r.Tags)
             .FirstOrDefaultAsync(r => r.Id == request.Id, cancellationToken);
 
         if (recipe == null)
@@ -73,6 +83,9 @@ public class GetRecipeByIdQueryHandler : IRequestHandler<GetRecipeByIdQuery, Rec
         // Check access: must be owner or recipe must be public
         if (!recipe.IsPublic && recipe.UserId != _currentUser.UserId)
             return null;
+
+        // Summed from the ingredients; recipe_nutrition no longer exists.
+        var totals = await RecipeNutritionLookup.ForRecipeAsync(_context, recipe.Id, cancellationToken);
 
         return new RecipeDetailDto
         {
@@ -86,42 +99,24 @@ public class GetRecipeByIdQueryHandler : IRequestHandler<GetRecipeByIdQuery, Rec
             IsPublic = recipe.IsPublic,
             IsOwner = recipe.UserId == _currentUser.UserId,
             IsFavorited = _currentUser.UserId.HasValue && await _context.FavoriteRecipes.AnyAsync(f => f.UserId == _currentUser.UserId.Value && f.RecipeId == recipe.Id, cancellationToken),
-            Nutrition = recipe.Nutrition != null ? new RecipeNutritionDto
+            Nutrition = new RecipeNutritionDto
             {
-                CaloriesPerServing = recipe.Nutrition.CaloriesPerServing,
-                ProteinGrams = recipe.Nutrition.ProteinGrams,
-                CarbsGrams = recipe.Nutrition.CarbsGrams,
-                FatGrams = recipe.Nutrition.FatGrams,
-                FiberGrams = recipe.Nutrition.FiberGrams,
-                ProteinCalorieRatio = recipe.Nutrition.ProteinCalorieRatio
-            } : null,
-            Ingredients = recipe.Ingredients.Select(i => new RecipeIngredientDto
+                CaloriesPerServing = totals.Calories,
+                ProteinGrams = totals.ProteinGrams,
+                CarbsGrams = totals.CarbsGrams,
+                FatGrams = totals.FatGrams,
+                FiberGrams = totals.FiberGrams,
+                ProteinCalorieRatio = totals.ProteinCalorieRatio
+            },
+            Ingredients = recipe.Ingredients.OrderBy(i => i.SortOrder).Select(i => new RecipeIngredientDto
             {
                 FoodId = i.FoodId,
-                SubRecipeId = i.SubRecipeId,
                 FoodName = i.Food?.Name ?? "",
-                SubRecipeName = i.SubRecipe?.Title ?? "",
                 Amount = i.Amount,
                 Unit = i.Unit ?? "",
-                IngredientText = i.IngredientText,
-                SubRecipeNutrition = i.SubRecipe?.Nutrition != null ? new RecipeNutritionDto
-                {
-                    CaloriesPerServing = i.SubRecipe.Nutrition.CaloriesPerServing,
-                    ProteinGrams = i.SubRecipe.Nutrition.ProteinGrams,
-                    CarbsGrams = i.SubRecipe.Nutrition.CarbsGrams,
-                    FatGrams = i.SubRecipe.Nutrition.FatGrams,
-                    FiberGrams = i.SubRecipe.Nutrition.FiberGrams,
-                    ProteinCalorieRatio = i.SubRecipe.Nutrition.ProteinCalorieRatio
-                } : null
+                IngredientText = i.IngredientText
             }).ToList(),
-            Instructions = recipe.Instructions
-                .OrderBy(i => i.StepNumber)
-                .Select(i => new RecipeInstructionDto
-                {
-                    StepNumber = i.StepNumber,
-                    Instruction = i.Instruction
-                }).ToList(),
-            Tags = recipe.Tags.Select(t => t.Tag).ToList(),
+            Instructions = recipe.Instructions,
             CreatedAt = recipe.CreatedAt
         };
     }

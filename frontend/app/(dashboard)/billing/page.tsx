@@ -3,16 +3,19 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSession } from "@/lib/auth-client";
 import { useSubscription } from "@/lib/hooks/useSubscription";
-import { openCheckout, PADDLE_PRICES, isPaddleConfigured } from "@/lib/paddle";
+import { openCheckout, getBillingPortal, PADDLE_PRICES, isPaddleConfigured } from "@/lib/paddle";
 import { appToast } from "@/lib/toast";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import Loading from "@/components/Loading";
 
-const PLANS = [
-  { id: "pro", name: "Pro Monthly", price: "$1.99", cadence: "per month", priceId: () => PADDLE_PRICES.proMonthly, blurb: "7-day free trial. Cancel anytime." },
-  { id: "pro-yearly", name: "Pro Yearly", price: "$15", cadence: "per year", priceId: () => PADDLE_PRICES.proYearly, blurb: "Two months free vs monthly.", highlight: true },
-  { id: "lifetime", name: "Lifetime", price: "$48", cadence: "one-time", priceId: () => PADDLE_PRICES.lifetime, blurb: "Pay once. Pro forever, plus every future feature." },
-];
+const PRO_PLAN = {
+  id: "pro",
+  name: "Pro",
+  price: "$2.99",
+  cadence: "per month",
+  priceId: () => PADDLE_PRICES.proMonthly,
+  blurb: "7-day free trial. Cancel anytime.",
+};
 
 function formatDate(value: string | null): string | null {
   if (!value) return null;
@@ -26,6 +29,33 @@ export default function BillingPage() {
   const { subscription, isPro, loading, refresh } = useSubscription();
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
   const [awaitingActivation, setAwaitingActivation] = useState(false);
+  const [portalAction, setPortalAction] = useState<"overview" | "payment" | "cancel" | null>(null);
+
+  // Every portal link is single-use, so it is minted right before opening and
+  // never held in state - only which button is mid-request, for the spinner.
+  const openPortal = useCallback(async (action: "overview" | "payment" | "cancel") => {
+    setPortalAction(action);
+    try {
+      const session = await getBillingPortal();
+      const url =
+        action === "payment"
+          ? session.updatePaymentMethodUrl
+          : action === "cancel"
+            ? session.cancelSubscriptionUrl
+            : session.overviewUrl;
+
+      if (!url) {
+        appToast.error("That option isn't available for a lifetime plan.");
+        return;
+      }
+
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      appToast.error(error, "Could not reach Paddle. Try again in a moment.");
+    } finally {
+      setPortalAction(null);
+    }
+  }, []);
 
   const startCheckout = useCallback(async (priceId: string, planId: string) => {
     if (!user?.id) {
@@ -77,7 +107,6 @@ export default function BillingPage() {
 
   useEffect(() => {
     if (isPro && awaitingActivation) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- reacting to the poll above flipping isPro, not derivable from props/state alone
       setAwaitingActivation(false);
       setCheckingOut(null);
       appToast.success("You're on Pro. Welcome aboard.");
@@ -89,15 +118,9 @@ export default function BillingPage() {
     if (!user?.id) return;
     const checkout = new URLSearchParams(window.location.search).get("checkout");
     if (!checkout) return;
-    const map: Record<string, string> = {
-      pro: PADDLE_PRICES.proMonthly,
-      "pro-yearly": PADDLE_PRICES.proYearly,
-      lifetime: PADDLE_PRICES.lifetime,
-    };
-    const priceId = map[checkout];
+    const priceId = checkout === "pro" ? PADDLE_PRICES.proMonthly : undefined;
     if (priceId) {
       window.history.replaceState({}, "", "/billing");
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- opening checkout on arrival from a pricing CTA's ?checkout= param, not derivable from render
       startCheckout(priceId, checkout);
     }
   }, [user, startCheckout]);
@@ -123,81 +146,103 @@ export default function BillingPage() {
       {loading ? (
         <div className="flex justify-center py-16"><Loading /></div>
       ) : isPro ? (
-        <div className="relative overflow-hidden rounded-[28px] border border-brand-500/25 bg-gradient-to-br from-brand-600 to-brand-800 p-6 text-white shadow-xl shadow-brand-500/25 sm:p-8">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute right-[-10%] top-[-20%] h-64 w-64 rounded-full bg-white/10 blur-3xl"
-          />
-          <div className="relative flex items-start gap-4">
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white ring-1 ring-white/20">
-              <AnimatedIcon name="sparkles" size={24} aria-hidden="true" />
+        <div className="card p-6 sm:p-8">
+          <div className="flex items-start gap-4">
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center border border-charcoal-blue-200 text-verdigris-700 dark:border-charcoal-blue-700 dark:text-verdigris-400">
+              <Icon name="sparkles" size={24} aria-hidden="true" />
             </span>
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
+                <h2 className="text-xl font-medium tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-2xl">
                   {subscription?.isLifetime ? "Lifetime Pro, forever" : "You're on Pro"}
                 </h2>
-                <span className="inline-flex items-center rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.1em]">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-verdigris-700 dark:text-verdigris-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
                   {subscription?.status}
                 </span>
               </div>
-              <p className="mt-1 text-sm text-white/85">
+              <p className="mt-1 text-sm text-charcoal-blue-700 dark:text-charcoal-blue-400">
                 {subscription?.isLifetime
                   ? "Thanks for being a founding member. Every feature we ship next is already yours."
                   : "Thanks for supporting Mizan. Every Pro feature is unlocked on your account."}
               </p>
               {!subscription?.isLifetime && subscription?.status === "trialing" && trialEnd && (
-                <p className="mt-2 text-sm text-white/85">Trial ends {trialEnd}, then billing starts automatically.</p>
+                <p className="mt-2 text-sm text-charcoal-blue-700 dark:text-charcoal-blue-400">Trial ends {trialEnd}, then billing starts automatically.</p>
               )}
               {!subscription?.isLifetime && subscription?.status !== "trialing" && canceled && periodEnd && (
-                <p className="mt-2 text-sm text-tuscan-sun-200">Cancels {periodEnd}. You keep Pro until then.</p>
+                <p className="mt-2 text-sm text-tuscan-sun-700 dark:text-tuscan-sun-400">Cancels {periodEnd}. You keep Pro until then.</p>
               )}
               {!subscription?.isLifetime && subscription?.status !== "trialing" && !canceled && periodEnd && (
-                <p className="mt-2 text-sm text-white/85">Renews {periodEnd}.</p>
+                <p className="mt-2 text-sm text-charcoal-blue-700 dark:text-charcoal-blue-400">Renews {periodEnd}.</p>
               )}
               <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {["Unlimited meal plans & shopping lists", "AI coach + food-photo logging", "Trend charts & progress history", "Household sharing (up to 6)"].map((perk) => (
-                  <li key={perk} className="flex items-center gap-2 text-sm text-white/90">
-                    <AnimatedIcon name="circleCheck" size={14} aria-hidden="true" />
+                {["Unlimited meal plans & shopping lists", "AI coach + food-photo logging", "Household sharing (up to 6)"].map((perk) => (
+                  <li key={perk} className="flex items-center gap-2 text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300">
+                    <Icon name="circleCheck" size={14} className="text-verdigris-700 dark:text-verdigris-400" aria-hidden="true" />
                     {perk}
                   </li>
                 ))}
               </ul>
+
+              <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-charcoal-blue-200 pt-5 dark:border-charcoal-blue-700">
+                <button
+                  type="button"
+                  onClick={() => openPortal("overview")}
+                  disabled={portalAction !== null}
+                  className="btn-secondary btn-sm"
+                >
+                  {portalAction === "overview" ? <Loading size="sm" /> : "Manage billing"}
+                </button>
+                {!subscription?.isLifetime && (
+                  <button
+                    type="button"
+                    onClick={() => openPortal("payment")}
+                    disabled={portalAction !== null}
+                    className="btn-secondary btn-sm"
+                  >
+                    {portalAction === "payment" ? <Loading size="sm" /> : "Update payment method"}
+                  </button>
+                )}
+                {!subscription?.isLifetime && !canceled && (
+                  <button
+                    type="button"
+                    onClick={() => openPortal("cancel")}
+                    disabled={portalAction !== null}
+                    className="btn-ghost btn-sm"
+                  >
+                    {portalAction === "cancel" ? <Loading size="sm" /> : "Cancel subscription"}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {PLANS.map((plan) => (
-            <article
-              key={plan.id}
-              className={`relative flex flex-col rounded-[24px] border p-6 ${
-                plan.highlight
-                  ? "border-brand-500/30 bg-white shadow-xl shadow-brand-500/10 dark:bg-charcoal-blue-900"
-                  : "border-charcoal-blue-100 bg-white dark:border-white/10 dark:bg-charcoal-blue-900/60"
-              }`}
-            >
-              <h3 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{plan.name}</h3>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-3xl font-bold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">{plan.price}</span>
-                <span className="text-xs uppercase tracking-[0.14em] text-charcoal-blue-500 dark:text-charcoal-blue-400">{plan.cadence}</span>
-              </div>
-              <p className="mt-3 flex-1 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">{plan.blurb}</p>
-              <button
-                type="button"
-                disabled={checkingOut !== null}
-                onClick={() => startCheckout(plan.priceId(), plan.id)}
-                className={`mt-5 w-full ${plan.highlight ? "btn-primary" : "btn-secondary"}`}
-              >
-                {checkingOut === plan.id ? <Loading size="sm" /> : "Choose"}
-              </button>
-            </article>
-          ))}
+        <div className="card mx-auto max-w-sm p-6 sm:p-8">
+          <h3 className="text-lg font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
+            {PRO_PLAN.name}
+          </h3>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="num text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">{PRO_PLAN.price}</span>
+            <span className="text-xs uppercase tracking-[0.14em] text-charcoal-blue-500 dark:text-charcoal-blue-400">{PRO_PLAN.cadence}</span>
+          </div>
+          <p className="mt-3 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">{PRO_PLAN.blurb}</p>
+          <button
+            type="button"
+            disabled={checkingOut !== null}
+            onClick={() => startCheckout(PRO_PLAN.priceId(), PRO_PLAN.id)}
+            className="btn-primary mt-5 w-full"
+          >
+            {checkingOut === PRO_PLAN.id ? <Loading size="sm" /> : "Go Pro"}
+          </button>
+          <p className="mt-4 text-center text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+            Would rather run it yourself? <a href="https://github.com/ZafTec/mizan#self-hosting" className="footer-link underline">Read the setup guide</a>.
+          </p>
         </div>
       )}
 
       <p className="text-center text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-        14-day refund on every paid plan. Prices in USD.
+        14-day refund. Cancel from your account in two clicks. Prices in USD.
       </p>
     </div>
   );

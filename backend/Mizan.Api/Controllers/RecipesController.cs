@@ -65,6 +65,29 @@ public class RecipesController : ControllerBase
     }
 
 
+    /// <summary>
+    /// Promote an already-logged meal into a saved recipe - the only way a
+    /// recipe is authored. See docs/REFOCUS.md §4.
+    /// </summary>
+    [HttpPost("promote")]
+    public async Task<ActionResult<object>> PromoteMeal([FromBody] PromoteMealToRecipeCommand command)
+    {
+        var id = await _mediator.Send(command);
+        return CreatedAtAction(nameof(GetRecipeById), new { id }, new { RecipeId = id });
+    }
+
+    /// <summary>
+    /// Mark a recipe as a preparation and derive a food from it, so it can be
+    /// used as an ingredient elsewhere and logged on its own. See §4.
+    /// </summary>
+    [HttpPost("{id:guid}/preparation")]
+    public async Task<ActionResult<object>> PromoteToPreparation(Guid id, [FromBody] PromoteToPreparationRequest? request)
+    {
+        var foodId = await _mediator.Send(
+            new PromoteRecipeToPreparationCommand(id, request?.YieldGrams));
+        return Ok(new { FoodId = foodId });
+    }
+
     [HttpPost("{id}/favorite")]
     [Authorize(Policy = "UserOrMcp")]
     public async Task<ActionResult<ToggleFavoriteRecipeResult>> ToggleFavorite(Guid id)
@@ -73,3 +96,5 @@ public class RecipesController : ControllerBase
         return Ok(result);
     }
 }
+
+public record PromoteToPreparationRequest(decimal? YieldGrams);

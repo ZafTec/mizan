@@ -5,14 +5,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
 import Loading from "@/components/Loading";
-import { AnimatedIcon, type AnimatedIconName } from "@/components/ui/animated-icon";
+import { Icon, type IconName } from "@/components/ui/icon";
 import { getProfileObservations, type ProfileObservations } from "@/lib/api/profile";
 
 type QuickLink = {
 	href: string;
 	title: string;
 	description: string;
-	icon: AnimatedIconName;
+	icon: IconName;
 };
 
 export default function ProfilePage() {
@@ -127,7 +127,7 @@ export default function ProfilePage() {
 						<ProfileAvatar image={user.image} email={user.email} name={user.name} />
 						<div>
 							<p className="eyebrow mb-3">
-								<AnimatedIcon name="user" size={14} aria-hidden="true" />
+								<Icon name="user" size={14} aria-hidden="true" />
 								Profile hub
 							</p>
 							<h1 className="text-3xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -172,7 +172,7 @@ export default function ProfilePage() {
 						</div>
 						<Link href="/profile/settings" className="btn-secondary btn-sm">
 							Open settings
-							<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" />
+							<Icon name="arrowRight" size={16} aria-hidden="true" />
 						</Link>
 					</div>
 
@@ -185,12 +185,12 @@ export default function ProfilePage() {
 							>
 								<div className="flex items-start gap-3">
 									<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
-										<AnimatedIcon name={link.icon} size={18} aria-hidden="true" />
+										<Icon name={link.icon} size={18} aria-hidden="true" />
 									</span>
 									<div className="min-w-0">
 										<div className="flex items-center justify-between gap-3">
 											<p className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">{link.title}</p>
-											<AnimatedIcon name="arrowRight" size={16} aria-hidden="true" className="text-charcoal-blue-400 group-hover:text-charcoal-blue-900 dark:group-hover:text-white" />
+											<Icon name="arrowRight" size={16} aria-hidden="true" className="text-charcoal-blue-400 group-hover:text-charcoal-blue-900 dark:group-hover:text-white" />
 										</div>
 										<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{link.description}</p>
 									</div>
@@ -204,7 +204,7 @@ export default function ProfilePage() {
 					<div className="card p-6">
 						<div className="flex items-start gap-3">
 							<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
-								<AnimatedIcon name="activity" size={18} aria-hidden="true" />
+								<Icon name="activity" size={18} aria-hidden="true" />
 							</span>
 						<div>
 							<h2 className="text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Current read</h2>
@@ -241,14 +241,14 @@ function ProfileAvatar({
 }) {
 	if (image) {
 		return (
-			<div className="relative h-20 w-20 overflow-hidden rounded-[28px] ring-1 ring-brand-500/20 sm:h-24 sm:w-24">
+			<div className="relative h-20 w-20 overflow-hidden rounded-2xl ring-1 ring-brand-500/20 sm:h-24 sm:w-24">
 				<Image src={image} alt={name || email || "User"} fill sizes="(max-width: 640px) 80px, 96px" className="object-cover" />
 			</div>
 		);
 	}
 
 	return (
-		<div className="flex h-20 w-20 items-center justify-center rounded-[28px] bg-brand-600 text-2xl font-semibold text-white ring-1 ring-brand-500/20 dark:bg-brand-500 sm:h-24 sm:w-24">
+		<div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-600 text-2xl font-semibold text-white ring-1 ring-brand-500/20 dark:bg-brand-500 sm:h-24 sm:w-24">
 			{(email || "U").charAt(0).toUpperCase()}
 		</div>
 	);
@@ -264,7 +264,7 @@ function StatCard({
 	helper: string;
 }) {
 	return (
-		<div className="rounded-3xl border border-charcoal-blue-200 bg-white/90 p-4 dark:border-white/10 dark:bg-charcoal-blue-950/70">
+		<div className="rounded-3xl border border-charcoal-blue-200 bg-white p-4 dark:border-white/10 dark:bg-charcoal-blue-900">
 			<p className="text-xs font-semibold uppercase tracking-[0.14em] text-charcoal-blue-500 dark:text-charcoal-blue-400">{label}</p>
 			<p className="mt-3 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{value}</p>
 			<p className="mt-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{helper}</p>

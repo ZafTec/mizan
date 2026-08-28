@@ -1,13 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { UserInput } from "@/types/user";
 import Loading from "@/components/Loading";
 import { PasswordInput } from "@/components/PasswordInput";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
-import { authClient } from "@/lib/auth-client";
+import { Icon } from "@/components/ui/icon";
+import { resendVerification, signIn, startExternalSignIn, type AuthError } from "@/lib/auth-client";
+import { safeRedirectPath } from "@/lib/safe-redirect";
+
+const LAST_METHOD_KEY = "mizan:last-login-method";
+
+function rememberMethod(method: string) {
+	try {
+		localStorage.setItem(LAST_METHOD_KEY, method);
+	} catch {
+		// Nothing to remember with. The hint is a nicety.
+	}
+}
 
 export default function Page() {
 	const router = useRouter();
@@ -19,8 +30,19 @@ export default function Page() {
 	const [loading, setLoading] = useState(false);
 	const [socialLoading, setSocialLoading] = useState<string | null>(null);
 	const [error, setError] = useState("");
+	const [unverified, setUnverified] = useState(false);
+	const [resent, setResent] = useState(false);
+	const [lastMethod, setLastMethod] = useState<string | null>(null);
 
-	const lastMethod = authClient.getLastUsedLoginMethod();
+	// BetterAuth's lastLoginMethod plugin went with the rest of it; the hint is
+	// worth one localStorage key. Read after mount so the markup matches SSR.
+	useEffect(() => {
+		try {
+			setLastMethod(localStorage.getItem(LAST_METHOD_KEY));
+		} catch {
+			// Private mode or blocked storage: no hint, no problem.
+		}
+	}, []);
 
 	function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
 		setUser({
@@ -29,83 +51,55 @@ export default function Page() {
 		});
 	}
 
-	function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+	async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 		setLoading(true);
-		const callbackUrl = searchParam.get("callbackUrl") || "/";
-		fetch("/api/auth/sign-in/email", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				email: user.email,
-				password: user.password,
-				callbackURL: callbackUrl,
-			}),
-		})
-		.then(async (res) => {
-			if (!res.ok) {
-				const text = await res.text();
-				try {
-					const json = JSON.parse(text);
-					const errorCode = json.code;
-					let errorMessage = "Sign in failed. Please try again.";
+		setError("");
+		setUnverified(false);
 
-					if (errorCode === "INVALID_EMAIL_OR_PASSWORD") {
-						errorMessage = "Invalid email or password";
-					} else if (errorCode === "USER_NOT_VERIFIED") {
-						errorMessage = "Please verify your email address before signing in";
-					} else if (json.message) {
-						errorMessage = json.message;
-					}
-
-					throw new Error(errorMessage);
-				} catch (e) {
-					if (e instanceof Error && e.message !== text) {
-						throw e;
-					}
-					throw new Error("Sign in failed. Please try again.");
-				}
-			}
-			return res.json();
-		})
-		.then((data) => {
-			if (data.user || data.session) {
-				router.push(callbackUrl);
-				router.refresh();
-			} else {
-				setError("Sign in failed. Please try again.");
-			}
-		})
-		.catch((error) => {
-			setError(error.message || "An error occurred during sign in");
-		})
-		.finally(() => {
+		try {
+			await signIn(user.email, user.password);
+			rememberMethod("email");
+			router.push(safeRedirectPath(searchParam.get("callbackUrl")));
+			router.refresh();
+		} catch (caught) {
+			const authError = caught as AuthError;
+			// The backend distinguishes an unconfirmed address from a bad
+			// password, so the screen can offer the fix instead of blaming the
+			// password.
+			if (authError.code === "email_not_verified") setUnverified(true);
+			setError(authError.message || "Sign in failed. Please try again.");
+		} finally {
 			setLoading(false);
-		});
+		}
 	}
 
-	async function handleSocialSignIn(provider: "google" | "github") {
+	async function handleResend() {
+		try {
+			await resendVerification(user.email);
+			setResent(true);
+		} catch {
+			setError("Could not send the confirmation email. Try again shortly.");
+		}
+	}
+
+	function handleSocialSignIn(provider: "google" | "github") {
 		setSocialLoading(provider);
 		setError("");
-		const callbackUrl = searchParam.get("callbackUrl") || "/";
-		await authClient.signIn.social({
-			provider,
-			callbackURL: callbackUrl,
-		});
-		setSocialLoading(null);
+		rememberMethod(provider);
+		startExternalSignIn(provider, safeRedirectPath(searchParam.get("callbackUrl")));
 	}
 
 	return (
 		<div className="min-h-[70vh] flex items-center justify-center">
 			<div className="w-full max-w-md">
 				<div className="text-center mb-8">
-					<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-600 text-white shadow-lg shadow-brand-500/25 dark:bg-brand-500">
-						<AnimatedIcon name="lock" size={26} aria-hidden="true" />
-					</div>
-					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Welcome back</h1>
-					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">Sign in to continue to Mizan</p>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+						Welcome back
+					</h1>
+					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
+						Sign in to continue to Mizan
+					</p>
 				</div>
 
 				<div className="card p-6 sm:p-8">
@@ -154,7 +148,9 @@ export default function Page() {
 							<div className="w-full border-t border-charcoal-blue-200 dark:border-charcoal-blue-800" />
 						</div>
 						<div className="relative flex justify-center text-xs text-charcoal-blue-400 dark:text-charcoal-blue-500">
-							<span className="bg-white dark:bg-charcoal-blue-900 px-3">or continue with email</span>
+							<span className="bg-white dark:bg-charcoal-blue-900 px-3">
+								or continue with email
+							</span>
 						</div>
 					</div>
 
@@ -180,7 +176,10 @@ export default function Page() {
 								<label htmlFor="password" className="label mb-0">
 									Password
 								</label>
-								<Link href="/forgot-password" className="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-400">
+								<Link
+									href="/forgot-password"
+									className="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-400"
+								>
 									Forgot password?
 								</Link>
 							</div>
@@ -204,14 +203,24 @@ export default function Page() {
 							</p>
 						)}
 
-					{error && (
-						<div data-testid="error-message" className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
-							<AnimatedIcon name="badgeAlert" size={18} aria-hidden="true" />
-							<span>{error}</span>
-								{error === "User is not verified" && user.email && (
-									<Link className="ml-auto text-brand-600 dark:text-brand-400 hover:underline" href={`/verify?email=${user.email}`}>
-										Resend verification
-									</Link>
+						{error && (
+							<div
+								data-testid="error-message"
+								className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm"
+							>
+								<Icon name="badgeAlert" size={18} aria-hidden="true" />
+								<span>{error}</span>
+								{unverified && user.email && !resent && (
+									<button
+										type="button"
+										onClick={handleResend}
+										className="ml-auto shrink-0 text-brand-600 dark:text-brand-400 hover:underline"
+									>
+										Resend link
+									</button>
+								)}
+								{resent && (
+									<span className="ml-auto shrink-0 text-xs text-charcoal-blue-500">Link sent</span>
 								)}
 							</div>
 						)}
@@ -230,7 +239,7 @@ export default function Page() {
 							) : (
 								<>
 									Sign in
-									<AnimatedIcon name="arrowRight" size={18} aria-hidden="true" />
+									<Icon name="arrowRight" size={18} aria-hidden="true" />
 								</>
 							)}
 						</button>
@@ -239,7 +248,10 @@ export default function Page() {
 
 				<p className="text-center text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-6">
 					Don&apos;t have an account?{" "}
-					<Link href="/register" className="text-brand-600 dark:text-brand-400 font-medium hover:text-brand-700 dark:hover:text-brand-400">
+					<Link
+						href="/register"
+						className="text-brand-600 dark:text-brand-400 font-medium hover:text-brand-700 dark:hover:text-brand-400"
+					>
 						Create one
 					</Link>
 				</p>

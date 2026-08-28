@@ -4,27 +4,28 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CldUploadWidget } from "next-cloudinary";
 import Loading from "@/components/Loading";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import ConfirmationModal from "@/components/ConfirmationModal";
-import { authClient, useSession } from "@/lib/auth-client";
+import { useImageUpload } from "@/components/ImageUpload";
+import { AiSettings } from "@/components/ai/AiSettings";
+import {
+	changePassword,
+	deleteAccount,
+	listSessions,
+	revokeSession,
+	useSession,
+	type SessionSummary,
+} from "@/lib/auth-client";
 import { clientApi } from "@/lib/api.client";
 import { downloadProfileExport, getProfileObservations, type ProfileObservations } from "@/lib/api/profile";
 import { useTheme } from "@/lib/hooks/useTheme";
+import TimeZoneField from "@/components/appearance/TimeZoneField";
 import { appToast } from "@/lib/toast";
 
-type SessionItem = {
-	id: string;
-	token: string;
-	ipAddress?: string;
-	userAgent?: string;
-	createdAt: string;
-	expiresAt: string;
-};
+type SessionItem = SessionSummary;
 
 const DELETE_CONFIRMATION_TEXT = "DELETE";
-const CLOUDINARY_CONFIGURED = Boolean(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME);
 
 export default function ProfileSettingsPage() {
 	const { data: session, isPending } = useSession();
@@ -45,6 +46,11 @@ export default function ProfileSettingsPage() {
 	const [loadingObservations, setLoadingObservations] = useState(true);
 	const [savingProfile, setSavingProfile] = useState(false);
 	const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+	const avatarUpload = useImageUpload({
+		folder: "avatars",
+		onUploaded: (url) => void handleAvatarUpload(url),
+	});
 	const [savingAppearance, setSavingAppearance] = useState(false);
 	const [changingPassword, setChangingPassword] = useState(false);
 	const [exportingData, setExportingData] = useState(false);
@@ -96,23 +102,7 @@ export default function ProfileSettingsPage() {
 	async function fetchSessions() {
 		setLoadingSessions(true);
 		try {
-			const result = await authClient.listSessions();
-			setSessions(
-				(result.data ?? []).map((item: any) => ({
-					id: item.id,
-					token: item.token,
-					ipAddress: item.ipAddress || undefined,
-					userAgent: item.userAgent || undefined,
-					createdAt:
-						typeof item.createdAt === "string"
-							? item.createdAt
-							: new Date(item.createdAt).toISOString(),
-					expiresAt:
-						typeof item.expiresAt === "string"
-							? item.expiresAt
-							: new Date(item.expiresAt).toISOString(),
-				}))
-			);
+			setSessions(await listSessions());
 		} catch (error) {
 			console.error("Failed to fetch sessions:", error);
 			appToast.error(error, "Failed to load sessions");
@@ -145,19 +135,14 @@ export default function ProfileSettingsPage() {
 		const trimmedName = nextName?.trim() ?? "";
 		const trimmedImage = nextImage?.trim() ?? "";
 
-		await Promise.all([
-			authClient.updateUser({
-				...(includeName ? { name: trimmedName || undefined } : {}),
-				...(includeImage ? { image: trimmedImage || undefined } : {}),
-			} as never),
-			clientApi("/api/Users/me", {
-				method: "PUT",
-				body: {
-					...(includeName ? { name: trimmedName || null } : {}),
-					...(includeImage ? { image: trimmedImage || null } : {}),
-				},
-			}),
-		]);
+		// One write, not two: the users table has a single owner since v2.
+		await clientApi("/api/Users/me", {
+			method: "PUT",
+			body: {
+				...(includeName ? { name: trimmedName || null } : {}),
+				...(includeImage ? { image: trimmedImage || null } : {}),
+			},
+		});
 	}
 
 	async function handleUpdateProfile() {
@@ -174,13 +159,7 @@ export default function ProfileSettingsPage() {
 		}
 	}
 
-	async function handleAvatarUpload(result: any) {
-		const nextImage = typeof result?.info?.secure_url === "string" ? result.info.secure_url : "";
-		if (!nextImage) {
-			appToast.error("Avatar upload finished but no image URL was returned");
-			return;
-		}
-
+	async function handleAvatarUpload(nextImage: string) {
 		const previousImage = image;
 		setImage(nextImage);
 		setUploadingAvatar(true);
@@ -218,18 +197,14 @@ export default function ProfileSettingsPage() {
 			return;
 		}
 
-		if (newPassword.length < 8) {
-			appToast.error("Password must be at least 8 characters");
+		if (newPassword.length < 10) {
+			appToast.error("Password must be at least 10 characters");
 			return;
 		}
 
 		setChangingPassword(true);
 		try {
-			await authClient.changePassword({
-				currentPassword,
-				newPassword,
-				revokeOtherSessions: true,
-			});
+			await changePassword(currentPassword, newPassword);
 
 			setCurrentPassword("");
 			setNewPassword("");
@@ -244,11 +219,11 @@ export default function ProfileSettingsPage() {
 		}
 	}
 
-	async function handleRevokeSession(sessionToken: string) {
-		setRevoking(sessionToken);
+	async function handleRevokeSession(sessionId: string) {
+		setRevoking(sessionId);
 		try {
-			await authClient.revokeSession({ token: sessionToken });
-			setSessions((current) => current.filter((item) => item.token !== sessionToken));
+			await revokeSession(sessionId);
+			setSessions((current) => current.filter((item) => item.id !== sessionId));
 			appToast.success("Session revoked");
 		} catch (error) {
 			console.error("Failed to revoke session:", error);
@@ -261,7 +236,9 @@ export default function ProfileSettingsPage() {
 	async function handleRevokeAllOtherSessions() {
 		setRevoking("all");
 		try {
-			await authClient.revokeSessions();
+			await Promise.all(
+				sessions.filter((item) => !item.isCurrent).map((item) => revokeSession(item.id)),
+			);
 			appToast.success("Other sessions revoked");
 			await fetchSessions();
 		} catch (error) {
@@ -305,11 +282,7 @@ export default function ProfileSettingsPage() {
 		setShowDeleteModal(false);
 		setDeletingAccount(true);
 		try {
-			await authClient.deleteUser(
-				deletePassword.trim()
-					? { password: deletePassword.trim(), callbackURL: "/" }
-					: { callbackURL: "/" }
-			);
+			await deleteAccount();
 			window.location.href = "/";
 		} catch (error) {
 			console.error("Failed to delete account:", error);
@@ -327,7 +300,7 @@ export default function ProfileSettingsPage() {
 						<AvatarPreview image={previewImage} email={user.email} name={displayName} />
 						<div>
 							<p className="eyebrow mb-3">
-								<AnimatedIcon name="user" size={14} aria-hidden="true" />
+								<Icon name="user" size={14} aria-hidden="true" />
 								Settings center
 							</p>
 							<h1 className="text-3xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -362,19 +335,16 @@ export default function ProfileSettingsPage() {
 						<div className="mt-6 grid gap-6 lg:grid-cols-[auto_1fr]">
 							<div className="space-y-3">
 								<AvatarPreview image={previewImage} email={user.email} name={name || user.name} size="lg" />
-								{CLOUDINARY_CONFIGURED && (
-									<CldUploadWidget
-										signatureEndpoint="/api/sign-cloudinary-params"
-										onSuccess={(result: any) => void handleAvatarUpload(result)}
-									>
-										{({ open }) => (
-											<button type="button" onClick={() => open()} disabled={uploadingAvatar} className="btn-secondary w-full justify-center">
-												<AnimatedIcon name="upload" size={16} aria-hidden="true" />
-												{uploadingAvatar ? "Saving avatar..." : "Upload avatar"}
-											</button>
-										)}
-									</CldUploadWidget>
-								)}
+								{avatarUpload.input}
+								<button
+									type="button"
+									onClick={avatarUpload.open}
+									disabled={uploadingAvatar || avatarUpload.uploading}
+									className="btn-secondary w-full justify-center"
+								>
+									<Icon name="upload" size={16} aria-hidden="true" />
+									{uploadingAvatar || avatarUpload.uploading ? "Saving avatar..." : "Upload avatar"}
+								</button>
 							</div>
 
 							<div className="grid gap-4">
@@ -411,6 +381,18 @@ export default function ProfileSettingsPage() {
 									</Link>
 								</div>
 							</div>
+						</div>
+					</section>
+
+					<section className="card p-6">
+						<SectionHeading
+							icon="calendarCheck"
+							title="Your day"
+							description="When your day starts and ends. Streaks and daily totals roll over at midnight here."
+						/>
+
+						<div className="mt-6">
+							<TimeZoneField current={session?.user?.timeZoneId ?? null} />
 						</div>
 					</section>
 
@@ -469,7 +451,7 @@ export default function ProfileSettingsPage() {
 									>
 										<div className="flex items-center gap-3">
 											<span className="icon-chip h-10 w-10 text-current">
-												<AnimatedIcon name={option.icon} size={18} aria-hidden="true" />
+												<Icon name={option.icon} size={18} aria-hidden="true" />
 											</span>
 											<div>
 												<p className="font-medium">{option.label}</p>
@@ -503,6 +485,42 @@ export default function ProfileSettingsPage() {
 				</div>
 
 				<div className="space-y-6">
+					<section className="card p-6">
+						<SectionHeading
+							icon="brain"
+							title="Assistant"
+							description="What the assistant may see about you, and what it has cost today."
+						/>
+						<AiSettings />
+					</section>
+
+					<section className="card p-6">
+						<SectionHeading
+							icon="messageCircle"
+							title="Telegram"
+							description="Log meals from a photo and ask the assistant without opening the app."
+						/>
+						<Link
+							href="/profile/settings/telegram"
+							className="group mt-6 flex items-center gap-3 rounded-2xl border border-charcoal-blue-200 p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-brand-500/40 hover:bg-brand-50/40 active:translate-y-0 dark:border-white/10 dark:hover:bg-white/5"
+						>
+							<span className="icon-chip h-10 w-10 shrink-0 text-brand-600 transition-colors group-hover:bg-brand-500/15 dark:text-brand-400">
+								<Icon name="messageCircle" size={18} />
+							</span>
+							<span className="min-w-0 flex-1">
+								<span className="block font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
+									Connect Telegram
+								</span>
+								<span className="block text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+									Link your account to the bot
+								</span>
+							</span>
+							<span className="shrink-0 text-charcoal-blue-300 transition-transform duration-150 group-hover:translate-x-0.5 dark:text-charcoal-blue-600">
+								<Icon name="arrowRight" size={16} aria-hidden="true" />
+							</span>
+						</Link>
+					</section>
+
 					<section className="card p-6">
 						<SectionHeading
 							icon="activity"
@@ -553,7 +571,7 @@ export default function ProfileSettingsPage() {
 
 								<div className="space-y-3">
 									{activeSessions.map((activeSession) => {
-										const isCurrent = activeSession.token === session.session?.token;
+										const isCurrent = activeSession.isCurrent;
 										return (
 											<div key={activeSession.id} className={`rounded-3xl border p-4 ${isCurrent ? "border-brand-300 bg-brand-50/80 dark:border-brand-500/30 dark:bg-brand-500/10" : "border-charcoal-blue-200 bg-white dark:border-white/10 dark:bg-charcoal-blue-950"}`}>
 												<div className="flex items-start justify-between gap-4">
@@ -566,8 +584,8 @@ export default function ProfileSettingsPage() {
 														<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">Expires {formatDateTime(activeSession.expiresAt)}</p>
 													</div>
 													{!isCurrent ? (
-														<button onClick={() => handleRevokeSession(activeSession.token)} disabled={revoking === activeSession.token} className="rounded-full border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-500/20 dark:hover:bg-red-500/10">
-															{revoking === activeSession.token ? "Revoking..." : "Revoke"}
+														<button onClick={() => handleRevokeSession(activeSession.id)} disabled={revoking === activeSession.id} className="rounded-full border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-500/20 dark:hover:bg-red-500/10">
+															{revoking === activeSession.id ? "Revoking..." : "Revoke"}
 														</button>
 													) : null}
 												</div>
@@ -637,14 +655,14 @@ function SectionHeading({
 	title,
 	description,
 }: {
-	icon: Parameters<typeof AnimatedIcon>[0]["name"];
+	icon: Parameters<typeof Icon>[0]["name"];
 	title: string;
 	description: string;
 }) {
 	return (
 		<div className="flex items-start gap-3">
 			<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
-				<AnimatedIcon name={icon} size={18} aria-hidden="true" />
+				<Icon name={icon} size={18} aria-hidden="true" />
 			</span>
 			<div>
 				<h2 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{title}</h2>
@@ -656,7 +674,7 @@ function SectionHeading({
 
 function SummaryBadge({ label, value }: { label: string; value: string }) {
 	return (
-		<div className="rounded-3xl border border-charcoal-blue-200 bg-white/90 px-4 py-3 dark:border-white/10 dark:bg-charcoal-blue-950/70">
+		<div className="rounded-3xl border border-charcoal-blue-200 bg-white px-4 py-3 dark:border-white/10 dark:bg-charcoal-blue-900">
 			<p className="text-xs font-semibold uppercase tracking-[0.14em] text-charcoal-blue-500 dark:text-charcoal-blue-400">{label}</p>
 			<p className="mt-2 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{value}</p>
 		</div>
@@ -742,7 +760,7 @@ function AvatarPreview({
 
 	if (image) {
 		return (
-			<div className="relative overflow-hidden rounded-[28px] ring-1 ring-brand-500/20" style={{ width: dimension, height: dimension }}>
+			<div className="relative overflow-hidden rounded-2xl ring-1 ring-brand-500/20" style={{ width: dimension, height: dimension }}>
 				<Image src={image} alt={name || email || "User"} fill sizes={`${dimension}px`} className="object-cover" />
 			</div>
 		);
@@ -750,7 +768,7 @@ function AvatarPreview({
 
 	return (
 		<div
-			className="flex items-center justify-center rounded-[28px] bg-brand-600 font-semibold text-white ring-1 ring-brand-500/20 dark:bg-brand-500"
+			className="flex items-center justify-center rounded-2xl bg-brand-600 font-semibold text-white ring-1 ring-brand-500/20 dark:bg-brand-500"
 			style={{ width: dimension, height: dimension }}
 		>
 			{(email || "U").charAt(0).toUpperCase()}
@@ -758,7 +776,7 @@ function AvatarPreview({
 	);
 }
 
-function getDeviceInfo(userAgent?: string) {
+function getDeviceInfo(userAgent?: string | null) {
 	if (!userAgent) return "Unknown device";
 	const ua = userAgent.toLowerCase();
 	let browser = "Unknown browser";

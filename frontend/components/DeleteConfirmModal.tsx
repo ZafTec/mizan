@@ -49,12 +49,12 @@ export function DeleteConfirmModal({
 
 	const modal = (
 		<div
-			className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4"
+			className="modal-overlay-in fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4"
 			data-testid="delete-confirm-modal"
 			onClick={onClose}
 		>
 			<div
-				className="my-auto w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-charcoal-blue-900"
+				className="modal-pop-in my-auto w-full max-w-md rounded-xl bg-white p-6 dark:bg-charcoal-blue-900"
 				onClick={(e) => e.stopPropagation()}
 			>
 				<div className="flex items-center gap-3 mb-4">
@@ -72,18 +72,10 @@ export function DeleteConfirmModal({
 				</p>
 
 				<div className="flex gap-3 justify-end">
-					<button
-						onClick={onClose}
-						disabled={isDeleting}
-						className="btn-secondary"
-					>
+					<button onClick={onClose} disabled={isDeleting} className="btn-secondary">
 						Cancel
 					</button>
-					<button
-						onClick={handleConfirm}
-						disabled={isDeleting}
-						className="btn-danger"
-					>
+					<button onClick={handleConfirm} disabled={isDeleting} className="btn-danger">
 						{isDeleting && <Loading size="sm" />}
 						Delete
 					</button>

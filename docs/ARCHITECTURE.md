@@ -1,8 +1,8 @@
-# MacroChef Architecture
+# Mizan Architecture
 
 ## Overview
 
-MacroChef is a full-stack meal planning and nutrition tracking application built with a modern, scalable architecture.
+Mizan is a full-stack meal planning and nutrition tracking application built with a modern, scalable architecture.
 
 **Tech Stack:**
 - **Frontend:** Next.js 16 (App Router) + React 19 + TypeScript + Tailwind CSS
@@ -131,7 +131,7 @@ Frontend Components  Form Validation
 
 ### JWT (JWKS) Authentication Pattern
 
-MacroChef uses **direct JWT validation**: the backend validates BetterAuth JWTs using JWKS and checks user status in the database.
+Mizan uses **direct JWT validation**: the backend validates BetterAuth JWTs using JWKS and checks user status in the database.
 
 **Flow:**
 ```
@@ -877,7 +877,7 @@ A: Ensure CSRF token is fetched before form submission. Check cookie configurati
 ## Contacts & Resources
 
 - **Architecture & Design:** `docs/ARCHITECTURE.md`
-- **API Endpoints:** `docs/API_REFERENCE.md`
+- **API Endpoints:** Swagger UI (`http://localhost:5000/swagger`)
 - **Getting Started:** `docs/DEVELOPER_ONBOARDING.md`
 - **Development Philosophy:** `CLAUDE.md`
 - **Swagger UI (Live):** `http://localhost:5000/swagger` (when backend running)

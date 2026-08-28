@@ -11,6 +11,19 @@ public interface IBackendApiClient
     Task<string> PutAsync(string endpoint, object body, CancellationToken ct = default);
     Task<string> PatchAsync(string endpoint, object body, CancellationToken ct = default);
     Task<string> DeleteAsync(string endpoint, CancellationToken ct = default);
+
+    /// <summary>
+    /// A multipart POST, for the two endpoints that take a file. The MCP
+    /// server runs server-side, so a local path would mean nothing here -
+    /// callers hand over bytes.
+    /// </summary>
+    Task<string> PostFileAsync(
+        string endpoint,
+        string fieldName,
+        byte[] content,
+        string fileName,
+        string contentType,
+        CancellationToken ct = default);
     Task<TokenValidation?> ValidateTokenAsync(string token, CancellationToken ct = default);
     Task LogUsageAsync(Guid tokenId, Guid userId, string toolName, string? parameters, bool success, string? error, int elapsedMs);
 }
@@ -104,7 +117,7 @@ public sealed class BackendApiClient : IBackendApiClient
     private static string FormatMessage(HttpStatusCode status, string? code, string message) => status switch
     {
         HttpStatusCode.Unauthorized => "MCP token is no longer valid. Create a new token in Profile → MCP.",
-        HttpStatusCode.Forbidden when code == "upgrade_required" => $"[UPGRADE REQUIRED] {message} Manage plan: https://mizan.euaell.me/billing",
+        HttpStatusCode.Forbidden when code == "upgrade_required" => $"[UPGRADE REQUIRED] {message} Manage plan: https://mizan.zaftech.co/billing",
         HttpStatusCode.Forbidden => message,
         HttpStatusCode.NotFound => $"Not found: {message}",
         HttpStatusCode.TooManyRequests => $"Rate limited: {message}. Wait before retrying.",
@@ -117,6 +130,25 @@ public sealed class BackendApiClient : IBackendApiClient
     public Task<string> PutAsync(string endpoint, object body, CancellationToken ct = default) => SendAsync(CreateRequest(HttpMethod.Put, endpoint, body), ct);
     public Task<string> PatchAsync(string endpoint, object body, CancellationToken ct = default) => SendAsync(CreateRequest(HttpMethod.Patch, endpoint, body), ct);
     public Task<string> DeleteAsync(string endpoint, CancellationToken ct = default) => SendAsync(CreateRequest(HttpMethod.Delete, endpoint), ct);
+
+    public Task<string> PostFileAsync(
+        string endpoint,
+        string fieldName,
+        byte[] content,
+        string fileName,
+        string contentType,
+        CancellationToken ct = default)
+    {
+        var request = CreateRequest(HttpMethod.Post, endpoint);
+
+        var form = new MultipartFormDataContent();
+        var file = new ByteArrayContent(content);
+        file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+        form.Add(file, fieldName, fileName);
+        request.Content = form;
+
+        return SendAsync(request, ct);
+    }
 
     public async Task<TokenValidation?> ValidateTokenAsync(string token, CancellationToken ct = default)
     {

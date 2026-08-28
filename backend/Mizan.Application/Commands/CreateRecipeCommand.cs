@@ -1,30 +1,15 @@
 using FluentValidation;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
-using Mizan.Application.Validators;
 using Mizan.Domain.Entities;
+using Mizan.Contracts.Recipes;
 
 namespace Mizan.Application.Commands;
 
-public record CreateRecipeCommand : IRequest<CreateRecipeResult>
-{
-    public string Title { get; init; } = string.Empty;
-    public string? Description { get; init; }
-    public int Servings { get; init; } = 1;
-    public int? PrepTimeMinutes { get; init; }
-    public int? CookTimeMinutes { get; init; }
-    public string? ImageUrl { get; init; }
-    public bool IsPublic { get; init; }
-    public Guid? HouseholdId { get; init; }
-    public List<CreateRecipeIngredientDto> Ingredients { get; init; } = new();
-    public List<string> Instructions { get; init; } = new();
-    public List<string> Tags { get; init; } = new();
-    public CreateRecipeNutritionDto? Nutrition { get; init; }
-}
-
-
+public record CreateRecipeCommand : CreateRecipeRequest, IRequest<CreateRecipeResult>;
 
 public record CreateRecipeResult
 {
@@ -50,12 +35,6 @@ public class CreateRecipeCommandValidator : AbstractValidator<CreateRecipeComman
         RuleForEach(x => x.Ingredients).ChildRules(ingredient =>
         {
             ingredient.RuleFor(i => i.IngredientText).NotEmpty();
-
-            ingredient.RuleFor(i => i)
-                .Must(ing => !(ing.FoodId.HasValue && ing.SubRecipeId.HasValue))
-                .WithMessage("Each ingredient must have either FoodId or SubRecipeId, not both")
-                .Must(ing => !ing.SubRecipeId.HasValue || ing.Unit == null || ing.Unit == "serving" || ing.Unit == "servings")
-                .WithMessage("When using a recipe as an ingredient, Unit should be 'serving' or 'servings'");
         });
     }
 }
@@ -66,27 +45,26 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
     private readonly ICurrentUserService _currentUser;
     private readonly ILogger<CreateRecipeCommandHandler> _logger;
     private readonly IAchievementEvaluator? _achievements;
+    private readonly HybridCache _cache;
 
     public CreateRecipeCommandHandler(
         IMizanDbContext context,
         ICurrentUserService currentUser,
         ILogger<CreateRecipeCommandHandler> logger,
+        HybridCache cache,
         IAchievementEvaluator? achievements = null)
     {
         _context = context;
         _currentUser = currentUser;
         _logger = logger;
+        _cache = cache;
         _achievements = achievements;
     }
 
     public async Task<CreateRecipeResult> Handle(CreateRecipeCommand request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("[CreateRecipe] Starting recipe creation: Title={Title}, Servings={Servings}, IngredientCount={Count}",
-            request.Title, request.Servings, request.Ingredients?.Count ?? 0);
-
         if (!_currentUser.UserId.HasValue)
         {
-            _logger.LogWarning("[CreateRecipe] Unauthorized attempt - no user ID");
             throw new UnauthorizedAccessException("User must be authenticated");
         }
 
@@ -97,6 +75,7 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
             HouseholdId = request.HouseholdId,
             Title = request.Title,
             Description = request.Description,
+            Instructions = request.Instructions,
             Servings = request.Servings,
             PrepTimeMinutes = request.PrepTimeMinutes,
             CookTimeMinutes = request.CookTimeMinutes,
@@ -106,221 +85,38 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
             UpdatedAt = DateTime.UtcNow
         };
 
-        _logger.LogDebug("[CreateRecipe] Created recipe entity: Id={Id}, UserId={UserId}", recipe.Id, recipe.UserId);
-
-        // Validate circular dependencies
-        var circularDependencyValidator = new RecipeCircularDependencyValidator(_context);
-        foreach (var ingredient in request.Ingredients.Where(i => i.SubRecipeId.HasValue))
+        for (var i = 0; i < request.Ingredients.Count; i++)
         {
-            if (await circularDependencyValidator.WouldCreateCircularDependency(recipe.Id, ingredient.SubRecipeId!.Value))
-            {
-                _logger.LogWarning("[CreateRecipe] Circular dependency detected: RecipeId={RecipeId}, SubRecipeId={SubRecipeId}",
-                    recipe.Id, ingredient.SubRecipeId.Value);
-
-                var subRecipe = await _context.Recipes.FindAsync(new object[] { ingredient.SubRecipeId.Value }, cancellationToken);
-                var subRecipeName = subRecipe?.Title ?? ingredient.SubRecipeId.Value.ToString();
-
-                throw new FluentValidation.ValidationException(
-                    $"Cannot add recipe '{subRecipeName}' (ID: {ingredient.SubRecipeId.Value}) as ingredient: would create circular dependency");
-            }
-        }
-
-        // Add ingredients
-        if (request.Ingredients != null)
-        {
-            for (int i = 0; i < request.Ingredients.Count; i++)
-            {
-                var ingredientDto = request.Ingredients[i];
-                recipe.Ingredients.Add(new RecipeIngredient
-                {
-                    Id = Guid.NewGuid(),
-                    RecipeId = recipe.Id,
-                    FoodId = ingredientDto.FoodId,
-                    SubRecipeId = ingredientDto.SubRecipeId,
-                    IngredientText = ingredientDto.IngredientText,
-                    Amount = ingredientDto.Amount,
-                    Unit = ingredientDto.Unit,
-                    SortOrder = i
-                });
-            }
-        }
-
-        // Add instructions
-        if (request.Instructions != null)
-        {
-            for (int i = 0; i < request.Instructions.Count; i++)
-            {
-                recipe.Instructions.Add(new RecipeInstruction
-                {
-                    Id = Guid.NewGuid(),
-                    RecipeId = recipe.Id,
-                    StepNumber = i + 1,
-                    Instruction = request.Instructions[i]
-                });
-            }
-        }
-
-        // Add tags
-        foreach (var tag in request.Tags)
-        {
-            recipe.Tags.Add(new RecipeTag
+            var dto = request.Ingredients[i];
+            recipe.Ingredients.Add(new RecipeIngredient
             {
                 Id = Guid.NewGuid(),
                 RecipeId = recipe.Id,
-                Tag = tag
+                FoodId = dto.FoodId,
+                IngredientText = dto.IngredientText,
+                Amount = dto.Amount,
+                Unit = dto.Unit,
+                SortOrder = i
             });
         }
 
-        // Calculate nutrition from ingredients
-        var ingredientFoodIds = (request.Ingredients ?? new List<CreateRecipeIngredientDto>())
-            .Where(i => i.FoodId.HasValue)
-            .Select(i => i.FoodId!.Value)
-            .ToList();
-
-        var subRecipeIds = (request.Ingredients ?? new List<CreateRecipeIngredientDto>())
-            .Where(i => i.SubRecipeId.HasValue)
-            .Select(i => i.SubRecipeId!.Value)
-            .ToList();
-
-        _logger.LogInformation("[CreateRecipe] Processing nutrition calculation. IngredientFoodIds count: {FoodCount}, SubRecipeIds count: {SubRecipeCount}",
-            ingredientFoodIds.Count, subRecipeIds.Count);
-
-        decimal totalCalories = 0;
-        decimal totalProtein = 0;
-        decimal totalCarbs = 0;
-        decimal totalFat = 0;
-        decimal totalFiber = 0;
-
-        // Calculate from Food ingredients
-        if (ingredientFoodIds.Any())
-        {
-            var foods = await _context.Foods
-                .Where(f => ingredientFoodIds.Contains(f.Id))
-                .ToDictionaryAsync(f => f.Id, cancellationToken);
-
-            _logger.LogInformation("[CreateRecipe] Found {FoodCount} foods in database for {RequestCount} ingredient IDs",
-                foods.Count, ingredientFoodIds.Count);
-
-            foreach (var ingredientDto in (request.Ingredients ?? []).Where(i => i.FoodId.HasValue && i.Amount.HasValue))
-            {
-                if (foods.TryGetValue(ingredientDto.FoodId!.Value, out var food))
-                {
-                    var ratio = ingredientDto.Amount!.Value / 100m; // Ensure decimal division
-
-                    _logger.LogDebug("[CreateRecipe] Processing ingredient: Food={FoodName}, Amount={Amount}g, Ratio={Ratio}",
-                        food.Name, ingredientDto.Amount, ratio);
-
-                    // Use decimal for calories during calculation to avoid early truncation
-                    totalCalories += food.CaloriesPer100g * ratio;
-                    totalProtein += food.ProteinPer100g * ratio;
-                    totalCarbs += food.CarbsPer100g * ratio;
-                    totalFat += food.FatPer100g * ratio;
-                    totalFiber += (food.FiberPer100g ?? 0) * ratio;
-                }
-                else
-                {
-                    _logger.LogWarning("[CreateRecipe] Food not found for ingredient: FoodId={FoodId}", ingredientDto.FoodId);
-                }
-            }
-        }
-
-        // Calculate from Sub-Recipe ingredients
-        if (subRecipeIds.Any())
-        {
-            var subRecipes = await _context.Recipes
-                .Include(r => r.Nutrition)
-                .Where(r => subRecipeIds.Contains(r.Id))
-                .ToDictionaryAsync(r => r.Id, cancellationToken);
-
-            _logger.LogInformation("[CreateRecipe] Found {SubRecipeCount} sub-recipes in database for {RequestCount} sub-recipe IDs",
-                subRecipes.Count, subRecipeIds.Count);
-
-            foreach (var ingredientDto in (request.Ingredients ?? []).Where(i => i.SubRecipeId.HasValue && i.Amount.HasValue))
-            {
-                if (subRecipes.TryGetValue(ingredientDto.SubRecipeId!.Value, out var subRecipe))
-                {
-                    var servings = ingredientDto.Amount!.Value;
-
-                    _logger.LogDebug("[CreateRecipe] Processing sub-recipe ingredient: Recipe={RecipeName}, Servings={Servings}",
-                        subRecipe.Title, servings);
-
-                    if (subRecipe.Nutrition != null)
-                    {
-                        totalCalories += (subRecipe.Nutrition.CaloriesPerServing ?? 0) * servings;
-                        totalProtein += (subRecipe.Nutrition.ProteinGrams ?? 0) * servings;
-                        totalCarbs += (subRecipe.Nutrition.CarbsGrams ?? 0) * servings;
-                        totalFat += (subRecipe.Nutrition.FatGrams ?? 0) * servings;
-                        totalFiber += (subRecipe.Nutrition.FiberGrams ?? 0) * servings;
-                    }
-                    else
-                    {
-                        _logger.LogWarning("[CreateRecipe] Sub-recipe has no nutrition data: RecipeId={RecipeId}", ingredientDto.SubRecipeId);
-                    }
-                }
-                else
-                {
-                    _logger.LogWarning("[CreateRecipe] Sub-recipe not found for ingredient: SubRecipeId={SubRecipeId}", ingredientDto.SubRecipeId);
-                }
-            }
-        }
-
-        if (totalCalories > 0 || totalProtein > 0 || totalCarbs > 0 || totalFat > 0)
-        {
-            // Calculate per serving values
-            var servings = request.Servings > 0 ? request.Servings : 1;
-
-            _logger.LogInformation("[CreateRecipe] Totals BEFORE division: Calories={Cal}, Protein={Prot}g, Carbs={Carbs}g, Fat={Fat}g, Fiber={Fiber}g, Servings={Servings}",
-                totalCalories, totalProtein, totalCarbs, totalFat, totalFiber, servings);
-
-            var calPerServing = totalCalories / servings;
-            var protPerServing = totalProtein / servings;
-            recipe.Nutrition = new RecipeNutrition
-            {
-                RecipeId = recipe.Id,
-                CaloriesPerServing = calPerServing,
-                ProteinGrams = protPerServing,
-                CarbsGrams = totalCarbs / servings,
-                FatGrams = totalFat / servings,
-                FiberGrams = totalFiber / servings,
-                ProteinCalorieRatio = Food.ComputeProteinCalorieRatio(calPerServing, protPerServing)
-            };
-
-            _logger.LogInformation("[CreateRecipe] Final nutrition PER SERVING: Calories={Cal}, Protein={Prot}g, Carbs={Carbs}g, Fat={Fat}g, Fiber={Fiber}g",
-                recipe.Nutrition.CaloriesPerServing, recipe.Nutrition.ProteinGrams, recipe.Nutrition.CarbsGrams,
-                recipe.Nutrition.FatGrams, recipe.Nutrition.FiberGrams);
-        }
-        else if (request.Nutrition != null)
-        {
-            _logger.LogInformation("[CreateRecipe] No ingredients with FoodId, using provided nutrition data");
-            // Fallback to provided nutrition only if no ingredients are linked
-            recipe.Nutrition = new RecipeNutrition
-            {
-                RecipeId = recipe.Id,
-                CaloriesPerServing = request.Nutrition.CaloriesPerServing,
-                ProteinGrams = request.Nutrition.ProteinGrams,
-                CarbsGrams = request.Nutrition.CarbsGrams,
-                FatGrams = request.Nutrition.FatGrams,
-                FiberGrams = request.Nutrition.FiberGrams,
-                ProteinCalorieRatio = Food.ComputeProteinCalorieRatio(
-                    request.Nutrition.CaloriesPerServing ?? 0,
-                    request.Nutrition.ProteinGrams ?? 0)
-            };
-        }
-        else
-        {
-            _logger.LogWarning("[CreateRecipe] No ingredients with FoodId and no nutrition data provided");
-        }
-
+        // No nutrition is stored. It is summed from the ingredients on read by
+        // RecipeNutritionCalculator, so it cannot drift when a food changes -
+        // see docs/REFOCUS.md §4. Nor is there a circular-dependency check to
+        // run: reuse goes through preparations, which reference a derived Food.
         _context.Recipes.Add(recipe);
         await _context.SaveChangesAsync(cancellationToken);
-        if (_achievements is not null) await _achievements.EvaluateAsync(cancellationToken, ["recipes_created"]);
 
-        _logger.LogInformation("[CreateRecipe] Recipe saved successfully: Id={Id}, Title={Title}", recipe.Id, recipe.Title);
+        await _cache.RemoveByTagAsync(CacheTags.Recipes, cancellationToken);
 
-        return new CreateRecipeResult
+        if (_achievements is not null)
         {
-            Id = recipe.Id,
-            Title = recipe.Title
-        };
+            await _achievements.EvaluateAsync(cancellationToken, ["recipes_created"]);
+        }
+
+        _logger.LogInformation("[CreateRecipe] Created {RecipeId} with {Count} ingredients",
+            recipe.Id, recipe.Ingredients.Count);
+
+        return new CreateRecipeResult { Id = recipe.Id, Title = recipe.Title };
     }
 }

@@ -1,6 +1,8 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
+using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Constants;
 using Mizan.Domain.Entities;
@@ -46,17 +48,20 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
     private readonly ICurrentUserService _currentUser;
     private readonly IStreakService _streakService;
     private readonly IAchievementEvaluator _achievements;
+    private readonly HybridCache _cache;
 
     public LogFoodCommandHandler(
         IMizanDbContext context,
         ICurrentUserService currentUser,
         IStreakService streakService,
-        IAchievementEvaluator achievements)
+        IAchievementEvaluator achievements,
+        HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
         _streakService = streakService;
         _achievements = achievements;
+        _cache = cache;
     }
 
     public async Task<LogFoodResult> Handle(LogFoodCommand request, CancellationToken cancellationToken)
@@ -85,15 +90,21 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
         else if (request.RecipeId.HasValue)
         {
             var recipe = await _context.Recipes
-                .Include(r => r.Nutrition)
                 .FirstOrDefaultAsync(r => r.Id == request.RecipeId.Value, cancellationToken);
 
-            if (recipe?.Nutrition != null)
+            if (recipe != null)
             {
-                calories = (recipe.Nutrition.CaloriesPerServing ?? 0) * request.Servings;
-                protein = (recipe.Nutrition.ProteinGrams ?? 0) * request.Servings;
-                carbs = (recipe.Nutrition.CarbsGrams ?? 0) * request.Servings;
-                fat = (recipe.Nutrition.FatGrams ?? 0) * request.Servings;
+                // Summed from the ingredients rather than read from a stored
+                // table - see docs/REFOCUS.md §4. The result is copied onto the
+                // entry below, so the log keeps the macros it was written with
+                // even if the recipe later changes.
+                var totals = await RecipeNutritionLookup.ForRecipeAsync(
+                    _context, recipe.Id, cancellationToken);
+
+                calories = totals.Calories * request.Servings;
+                protein = totals.ProteinGrams * request.Servings;
+                carbs = totals.CarbsGrams * request.Servings;
+                fat = totals.FatGrams * request.Servings;
                 itemName = recipe.Title;
             }
         }
@@ -117,6 +128,10 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
 
         _context.FoodDiaryEntries.Add(entry);
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Never a Postgres round trip, so it does not touch the logging budget
+        // (docs/REFOCUS.md §13a) - only the Redis-backed nutrition cache.
+        await _cache.RemoveByTagAsync(CacheTags.Nutrition(_currentUser.UserId.Value), cancellationToken);
 
         var streak = await _streakService.RecordActivityAsync("nutrition", request.EntryDate, cancellationToken);
         var unlocked = await _achievements.EvaluateAsync(cancellationToken, ["meals_logged", "streak_nutrition"]);

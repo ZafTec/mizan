@@ -1,11 +1,8 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/db/client";
-import { users, sessions } from "@/db/schema";
-import { eq, sql, count, gte } from "drizzle-orm";
+import { getCurrentUser } from "@/lib/auth";
+import { getAdminOverview } from "@/data/admin/users";
 import LiveAuditLog from "./LiveAuditLog";
 import { getAuditLogs } from "@/data/audit";
-
 
 export const metadata = {
   title: "Admin Dashboard | Mizan",
@@ -13,75 +10,18 @@ export const metadata = {
 };
 
 async function getAdminStats() {
-  const totalUsers = await db
-    .select({ count: count() })
-    .from(users)
-    .then((res) => res[0]?.count || 0);
+  const [overview, recentAuditLogs] = await Promise.all([
+    getAdminOverview(),
+    getAuditLogs({ pageSize: 1 }).then((res) => res.totalCount),
+  ]);
 
-  const activeTrainers = await db
-    .select({ count: count() })
-    .from(users)
-    .where(eq(users.role, "trainer"))
-    .then((res) => res[0]?.count || 0);
-
-  const bannedUsers = await db
-    .select({ count: count() })
-    .from(users)
-    .where(eq(users.banned, true))
-    .then((res) => res[0]?.count || 0);
-
-  const activeSessions = await db
-    .select({ count: count() })
-    .from(sessions)
-    .where(sql`${sessions.expiresAt} > NOW()`)
-    .then((res) => res[0]?.count || 0);
-
-  const recentUsers = await db
-    .select({
-      id: users.id,
-      name: users.name,
-      email: users.email,
-      role: users.role,
-      createdAt: users.createdAt,
-    })
-    .from(users)
-    .orderBy(sql`${users.createdAt} DESC`)
-    .limit(5);
-
-  // TODO: Replace with API call to backend for foods count
-  // const totalFoods = await fetch('/api/admin/foods/count').then(...);
-  const totalFoods = 0; // Placeholder
-
-  const yesterday = new Date();
-  yesterday.setHours(yesterday.getHours() - 24);
-
-  const recentAuditLogs = await getAuditLogs({
-    pageSize: 1,
-  }).then(res => res.totalCount);
-
-  return {
-    totalUsers,
-    activeTrainers,
-    bannedUsers,
-    activeSessions,
-    recentUsers,
-    totalFoods,
-    recentAuditLogs
-  };
+  return { ...overview, recentAuditLogs };
 }
 
 export default async function AdminDashboard() {
-  const session = await auth.api.getSession({
-    headers: await import("next/headers").then((mod) => mod.headers()),
-  });
-
-  if (!session?.user) {
-    redirect("/login");
-  }
-
-  if (session.user.role !== "admin") {
-    redirect("/");
-  }
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  if (user.role !== "admin") redirect("/");
 
   const stats = await getAdminStats();
 
@@ -114,16 +54,9 @@ export default async function AdminDashboard() {
           linkText="View banned"
         />
         <StatCard
-          title="Public Ingredients"
-          value={stats.totalFoods}
-          link="/admin/ingredients"
-          linkText="Manage foods"
-        />
-        <StatCard
           title="Recent Activity"
           value={stats.recentAuditLogs}
-          link="/admin/audit-logs"
-          linkText="View logs"
+          linkText="Last 24 hours"
         />
         <StatCard
           title="Active Sessions"
@@ -166,63 +99,6 @@ export default async function AdminDashboard() {
           <LiveAuditLog />
         </div>
       </div>
-
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <QuickActionCard
-          title="Users"
-          description="Manage users, roles, and permissions"
-          link="/admin/users"
-          icon="👥"
-        />
-        <QuickActionCard
-          title="Sessions"
-          description="View and revoke active sessions"
-          link="/admin/sessions"
-          icon="🔐"
-        />
-        <QuickActionCard
-          title="Relationships"
-          description="Trainer-client connections"
-          link="/admin/relationships"
-          icon="🤝"
-        />
-        <QuickActionCard
-          title="Ingredients"
-          description="Add and verify public food ingredients"
-          link="/admin/ingredients"
-          icon="🍎"
-        />
-        <QuickActionCard
-          title="Exercises"
-          description="Manage the exercise database"
-          link="/admin/exercises"
-          icon="🏋️"
-        />
-        <QuickActionCard
-          title="Recipes"
-          description="Moderate community recipes"
-          link="/admin/recipes"
-          icon="🍳"
-        />
-        <QuickActionCard
-          title="Audit logs"
-          description="System-wide activity and security logs"
-          link="/admin/audit-logs"
-          icon="📋"
-        />
-        <QuickActionCard
-          title="Achievements"
-          description="Create and edit gamification unlocks"
-          link="/admin/achievements"
-          icon="🏆"
-        />
-        <QuickActionCard
-          title="Households"
-          description="Inspect and remove households"
-          link="/admin/households"
-          icon="🏠"
-        />
-      </div>
     </div>
   );
 }
@@ -235,7 +111,7 @@ function StatCard({
 }: {
   title: string;
   value: number;
-  link: string;
+  link?: string;
   linkText: string;
 }) {
   return (
@@ -244,32 +120,13 @@ function StatCard({
         {title}
       </h3>
       <p className="text-3xl font-bold mb-4">{value}</p>
-      <a href={link} className="text-sm text-primary hover:underline">
-        {linkText} →
-      </a>
+      {link ? (
+        <a href={link} className="text-sm text-primary hover:underline">
+          {linkText} →
+        </a>
+      ) : (
+        <span className="text-sm text-muted-foreground">{linkText}</span>
+      )}
     </div>
-  );
-}
-
-function QuickActionCard({
-  title,
-  description,
-  link,
-  icon,
-}: {
-  title: string;
-  description: string;
-  link: string;
-  icon: string;
-}) {
-  return (
-    <a
-      href={link}
-      className="bg-card rounded-lg border p-6 hover:border-primary transition-colors"
-    >
-      <div className="text-4xl mb-4">{icon}</div>
-      <h3 className="text-lg font-semibold mb-2">{title}</h3>
-      <p className="text-sm text-muted-foreground">{description}</p>
-    </a>
   );
 }

@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
@@ -9,7 +10,6 @@ namespace Mizan.Application.Queries;
 public record GetRecipesQuery : IRequest<PagedResult<RecipeDto>>, IPagedQuery, ISortableQuery
 {
     public string? SearchTerm { get; init; }
-    public List<string>? Tags { get; init; }
     public bool IncludePublic { get; init; } = true;
     public bool FavoritesOnly { get; init; } = false;
     public decimal? MinProteinCalorieRatio { get; init; }
@@ -31,7 +31,6 @@ public record RecipeDto
     public bool IsPublic { get; init; }
     public bool IsOwner { get; init; }
     public RecipeNutritionDto? Nutrition { get; init; }
-    public List<string> Tags { get; init; } = new();
     public DateTime CreatedAt { get; init; }
 }
 
@@ -50,25 +49,51 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
     private static readonly Dictionary<string, Expression<Func<Domain.Entities.Recipe, object>>> SortMappings = new(StringComparer.OrdinalIgnoreCase)
     {
         ["title"] = r => r.Title,
-        ["createdat"] = r => r.CreatedAt,
-        ["proteinCalorieRatio"] = r => r.Nutrition != null ? r.Nutrition.ProteinCalorieRatio ?? 0m : 0m
+        ["createdat"] = r => r.CreatedAt
+        // "proteinCalorieRatio" is gone: it sorted on the stored recipe_nutrition
+        // column, which no longer exists. Nutrition is summed from ingredients on
+        // read (docs/REFOCUS.md §4), and sorting a page by a value computed after
+        // paging would order only that page - worse than not offering it. Unknown
+        // sort keys fall back to the default below.
+    };
+
+    private static readonly HybridCacheEntryOptions CacheOptions = new()
+    {
+        Expiration = TimeSpan.FromHours(1),
+        LocalCacheExpiration = TimeSpan.FromMinutes(5)
     };
 
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly HybridCache _cache;
 
-    public GetRecipesQueryHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public GetRecipesQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
+        _cache = cache;
     }
 
     public async Task<PagedResult<RecipeDto>> Handle(GetRecipesQuery request, CancellationToken cancellationToken)
     {
-        var query = _context.Recipes
-            .Include(r => r.Nutrition)
-            .Include(r => r.Tags)
-            .AsQueryable();
+        // Own-plus-public or favorites-only, both scoped to the viewer - the
+        // viewer's id has to be part of the key for the same reason
+        // SearchFoodsQuery keys on it.
+        var viewerId = _currentUser.UserId?.ToString() ?? "anon";
+        var cacheKey = $"recipes:search:{viewerId}:{request.SearchTerm?.ToLower() ?? ""}:{request.IncludePublic}:{request.FavoritesOnly}:{request.MinProteinCalorieRatio}:{request.Page}:{request.PageSize}:{request.SortBy ?? ""}:{request.SortOrder ?? ""}";
+
+        return await _cache.GetOrCreateAsync(
+            cacheKey,
+            request,
+            LoadAsync,
+            CacheOptions,
+            tags: [CacheTags.Recipes],
+            cancellationToken: cancellationToken);
+    }
+
+    private async ValueTask<PagedResult<RecipeDto>> LoadAsync(GetRecipesQuery request, CancellationToken cancellationToken)
+    {
+        var query = _context.Recipes.AsQueryable();
 
         if (_currentUser.UserId.HasValue)
         {
@@ -103,18 +128,20 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
             var searchTerm = request.SearchTerm.ToLower();
             query = query.Where(r =>
                 r.Title.ToLower().Contains(searchTerm) ||
-                (r.Description != null && r.Description.ToLower().Contains(searchTerm)) ||
-                r.Tags.Any(t => t.Tag.ToLower().Contains(searchTerm)));
+                (r.Description != null && r.Description.ToLower().Contains(searchTerm)));
         }
 
-        if (request.Tags?.Any() == true)
-        {
-            query = query.Where(r => r.Tags.Any(t => request.Tags.Contains(t.Tag)));
-        }
-
+        // MinProteinCalorieRatio filtered on the stored recipe_nutrition column.
+        // Nutrition is now summed on read, and filtering after paging would drop
+        // rows from a page rather than from the result - a silently wrong count.
+        // Filter by protein density directly from the ingredients instead.
         if (request.MinProteinCalorieRatio.HasValue)
         {
-            query = query.Where(r => r.Nutrition != null && r.Nutrition.ProteinCalorieRatio >= request.MinProteinCalorieRatio.Value);
+            var minRatio = request.MinProteinCalorieRatio.Value;
+            query = query.Where(r =>
+                r.Ingredients.Sum(i => i.Food!.CaloriesPer100g * (i.Amount ?? 0m)) > 0
+                && r.Ingredients.Sum(i => i.Food!.ProteinPer100g * (i.Amount ?? 0m)) * 400m
+                   / r.Ingredients.Sum(i => i.Food!.CaloriesPer100g * (i.Amount ?? 0m)) >= minRatio);
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -138,23 +165,33 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
                 ImageUrl = r.ImageUrl,
                 IsPublic = r.IsPublic,
                 IsOwner = r.UserId == _currentUser.UserId,
-                Nutrition = r.Nutrition != null ? new RecipeNutritionDto
-                {
-                    CaloriesPerServing = r.Nutrition.CaloriesPerServing,
-                    ProteinGrams = r.Nutrition.ProteinGrams,
-                    CarbsGrams = r.Nutrition.CarbsGrams,
-                    FatGrams = r.Nutrition.FatGrams,
-                    FiberGrams = r.Nutrition.FiberGrams,
-                    ProteinCalorieRatio = r.Nutrition.ProteinCalorieRatio
-                } : null,
-                Tags = r.Tags.Select(t => t.Tag).ToList(),
                 CreatedAt = r.CreatedAt
             })
             .ToListAsync(cancellationToken);
 
+        // Nutrition is summed from ingredients for the current page only - two
+        // extra queries, rather than a stored column that drifts.
+        var totalsById = await RecipeNutritionLookup.ForRecipesAsync(
+            _context, recipes.Select(r => r.Id).ToList(), cancellationToken);
+
+        var withNutrition = recipes.Select(r => totalsById.TryGetValue(r.Id, out var t)
+            ? r with
+            {
+                Nutrition = new RecipeNutritionDto
+                {
+                    CaloriesPerServing = t.Calories,
+                    ProteinGrams = t.ProteinGrams,
+                    CarbsGrams = t.CarbsGrams,
+                    FatGrams = t.FatGrams,
+                    FiberGrams = t.FiberGrams,
+                    ProteinCalorieRatio = t.ProteinCalorieRatio
+                }
+            }
+            : r).ToList();
+
         return new PagedResult<RecipeDto>
         {
-            Items = recipes,
+            Items = withNutrition,
             TotalCount = totalCount,
             Page = request.Page,
             PageSize = request.PageSize

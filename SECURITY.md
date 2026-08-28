@@ -23,7 +23,7 @@ older images should update before reporting issues.
 Use one of these private channels instead:
 
 1. **Preferred, GitHub private advisory:**
-   [https://github.com/Euaell/macro_chef/security/advisories/new](https://github.com/Euaell/macro_chef/security/advisories/new).
+   [https://github.com/zaftec/mizan/security/advisories/new](https://github.com/zaftec/mizan/security/advisories/new).
    This is end-to-end private, lets us coordinate a fix with you, and
    auto-assigns a CVE if we publish.
 2. **Email:** [contact@zaftech.co](mailto:contact@zaftech.co). If you want
@@ -54,8 +54,8 @@ the issue affects production data, notify affected users.
 
 - This repository (backend `Mizan.Api`, `Mizan.Application`,
   `Mizan.Infrastructure`, `Mizan.Mcp.Server`; frontend under `frontend/`).
-- The hosted product at `https://mizan.zaftech.co` and its API at
-  `https://api.mizan.euaell.me`.
+- The hosted product at `https://mizan.zaftech.co`, including its API under
+  `/api` and the MCP server under `/mcp` - no separate subdomains.
 - Published Docker images under `euaell/mizan-*`.
 - The MCP server surface and its tool catalog.
 - Authentication and authorization (BetterAuth JWT issuance, backend JWT
@@ -106,8 +106,23 @@ Lifetime subscription to Mizan as a thank-you.
 - All production containers run as non-root users.
 - Secrets are injected via environment variables sourced from a locked-down
   `.env` on the VPS; none are checked into the repo.
-- JWTs are EdDSA-signed (`Ed25519`) and validated against a JWKS cached in
-  Redis via `HybridCache`.
+- Browser sessions are opaque 256-bit tokens in an httpOnly cookie. Only their
+  SHA-256 is stored, in `user_sessions`, cached in Redis via `HybridCache`.
+  Revoking a session takes effect on the next request.
+- Passwords are hashed with ASP.NET Core Identity's `PasswordHasher<T>`
+  (PBKDF2-HMAC-SHA512). Five failed sign-ins lock an account for 15 minutes.
+- Cross-site request forgery is blocked by three things together: the session
+  cookie is `SameSite=Lax`, so it is not attached to a cross-site write; the
+  API accepts JSON bodies only, so a cross-site HTML form cannot reach an
+  endpoint; and CORS names the allowed origins explicitly, so the preflight
+  those requests need is refused.
+- OAuth return targets are validated against an allowlist of same-origin paths
+  on both sides - `AppUrls.SafeReturnUrl` and `safeRedirectPath` - so a crafted
+  `?returnUrl=` cannot turn sign-in into an open redirect.
+- Verification and reset links are never written anywhere durable. With no SMTP
+  host configured a development run prints the message to stdout; any other
+  environment logs an error naming only the subject.
+- Transactional mail is logged against the user id, never the address.
 - Dependabot and GitHub's security advisories are enabled on this repo.
 - The Paddle checkout handles all payment data; we never store card
   details.

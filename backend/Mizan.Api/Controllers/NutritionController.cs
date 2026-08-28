@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Mizan.Application.Commands;
 using Mizan.Application.Interfaces;
 using Mizan.Application.Queries;
+using Mizan.Domain.Media;
 
 namespace Mizan.Api.Controllers;
 
@@ -15,12 +16,21 @@ public class NutritionController : ControllerBase
     private readonly IMediator _mediator;
     private readonly INutritionAiService _aiService;
     private readonly ICurrentUserService _currentUser;
+    private readonly IStorageService _storage;
+    private readonly ILogger<NutritionController> _logger;
 
-    public NutritionController(IMediator mediator, INutritionAiService aiService, ICurrentUserService currentUser)
+    public NutritionController(
+        IMediator mediator,
+        INutritionAiService aiService,
+        ICurrentUserService currentUser,
+        IStorageService storage,
+        ILogger<NutritionController> logger)
     {
         _mediator = mediator;
         _aiService = aiService;
         _currentUser = currentUser;
+        _storage = storage;
+        _logger = logger;
     }
 
     [HttpPost("log")]
@@ -42,22 +52,6 @@ public class NutritionController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("ai/chat")]
-    [Authorize(Policy = "RequirePro")]
-    public async Task<ActionResult<AiChatResponse>> ChatWithAi([FromBody] AiChatRequest request)
-    {
-        if (!_currentUser.UserId.HasValue)
-        {
-            return Unauthorized();
-        }
-
-        var response = await _aiService.GetNutritionAdviceAsync(
-            _currentUser.UserId.Value,
-            request.Message);
-
-        return Ok(new AiChatResponse { Response = response });
-    }
-
     [HttpPost("ai/analyze-image")]
     [Authorize(Policy = "RequirePro")]
     [RequestSizeLimit(10_000_000)]
@@ -73,30 +67,52 @@ public class NutritionController : ControllerBase
             return BadRequest("Image must be 8 MB or smaller");
         }
 
-        var allowedTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        if (!_currentUser.UserId.HasValue)
         {
-            "image/jpeg", "image/png", "image/webp"
-        };
-        if (!allowedTypes.Contains(image.ContentType))
-        {
-            return BadRequest("Image must be JPEG, PNG, or WebP");
+            return Unauthorized();
         }
 
         using var memoryStream = new MemoryStream();
         await image.CopyToAsync(memoryStream);
         var imageBytes = memoryStream.ToArray();
 
-        var result = await _aiService.AnalyzeFoodImageAsync(imageBytes);
-        return Ok(result);
+        // The bytes decide, not the Content-Type header - same rule the upload
+        // endpoint applies (docs/REFOCUS.md §7).
+        var contentType = ImageFormat.Detect(imageBytes.AsSpan(0, Math.Min(ImageFormat.HeaderBytes, imageBytes.Length)));
+        if (contentType is null or "image/gif")
+        {
+            return BadRequest("Image must be JPEG, PNG or WebP");
+        }
+
+        var result = await _aiService.AnalyzeFoodImageAsync(
+            _currentUser.UserId.Value, imageBytes, contentType);
+
+        // Stored after the analysis, not before: a photo the model could not
+        // read is not worth keeping, and this way a storage outage costs the
+        // picture rather than the whole request.
+        return Ok(result with { ImageUrl = await StoreAsync(imageBytes, contentType) });
     }
-}
 
-public record AiChatRequest
-{
-    public string Message { get; init; } = string.Empty;
-}
+    private async Task<string?> StoreAsync(byte[] bytes, string contentType)
+    {
+        try
+        {
+            await using var stream = new MemoryStream(bytes);
+            var stored = await _storage.UploadAsync(new StorageUpload(
+                StorageFolder.Meals,
+                $"meal{ImageFormat.Extension(contentType)}",
+                contentType,
+                stream,
+                bytes.Length));
 
-public record AiChatResponse
-{
-    public string Response { get; init; } = string.Empty;
+            return stored.Url;
+        }
+        catch (Exception ex)
+        {
+            // The analysis is the answer; the photo is a record of it. Losing
+            // the second must not fail the first.
+            _logger.LogWarning(ex, "Could not store an analysed meal photo");
+            return null;
+        }
+    }
 }

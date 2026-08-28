@@ -12,7 +12,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast:
-            "group toast rounded-2xl border border-border bg-card text-card-foreground shadow-[var(--shadow-panel)] backdrop-blur-xl",
+            "group toast rounded-xl border border-border bg-card text-card-foreground shadow-[var(--shadow-panel)]",
           title: "text-sm font-semibold text-card-foreground",
           description: "group-[.toast]:text-muted-foreground",
           actionButton:

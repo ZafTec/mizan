@@ -1,14 +1,18 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { getUserServer } from "@/helper/session";
 import { getCurrentGoal } from "@/data/goal";
 import { getTodayMeal, getDailyTotals, type MealEntry } from "@/data/meal";
 import { getStreak } from "@/data/achievement";
 import { getMySubscription } from "@/data/subscription";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import MacroRing from "@/components/Dashboard/MacroRing";
 import QuickActions from "@/components/Dashboard/QuickActions";
-import { UpgradeBanner } from "@/components/billing/UpgradeBanner";
 import { ProBadge } from "@/components/billing/ProBadge";
+import ResumeWorkoutBanner from "@/components/context/ResumeWorkoutBanner";
+import SetupPrompt from "@/components/context/SetupPrompt";
+import StreakChip from "@/components/gamification/StreakChip";
+import TrainerStrip from "@/components/context/TrainerStrip";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -101,30 +105,35 @@ export default async function DashboardPage() {
 					</p>
 				</div>
 				<div className="flex items-center gap-2">
-					{currentStreak > 0 && (
-						<div className="streak-gradient inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white">
-							<AnimatedIcon name="flame" size={16} />
-							<span>{currentStreak}-day streak</span>
-						</div>
-					)}
+					<StreakChip
+						count={currentStreak}
+						resetsAt={streak?.resetsAt}
+						isActiveToday={isActiveToday}
+						atRisk={streak?.atRisk ?? false}
+					/>
 					<Link
 						href="/goal"
 						className="btn-secondary !rounded-2xl !py-2 text-sm"
 					>
 						{goal ? "Edit goal" : "Set goal"}
-						<AnimatedIcon name="arrowRight" size={14} />
+						<Icon name="arrowRight" size={14} />
 					</Link>
 				</div>
 			</section>
 
-			{!subscription.isPro && (
-				<UpgradeBanner
-					id="dashboard-hero"
-					variant="hero"
-					title="Unlock the full Mizan experience"
-					message="Unlimited meal plans, AI coach with food-photo logging, trend charts, and household sharing for up to 6 people. 7-day free trial, cancel anytime."
-				/>
-			)}
+			{/* Tier 2 - docs/REFOCUS.md §3. Both render nothing when there is
+			    nothing to say, so a solo user with no open session sees only
+			    their own log. The standing Pro banner that used to sit here is
+			    gone; the wall now fires at the gated action itself. */}
+			<Suspense fallback={null}>
+				<SetupPrompt />
+			</Suspense>
+			<Suspense fallback={null}>
+				<ResumeWorkoutBanner />
+			</Suspense>
+			<Suspense fallback={null}>
+				<TrainerStrip />
+			</Suspense>
 
 			{/* Main grid */}
 			<div className="grid gap-6 lg:grid-cols-[1.65fr_1fr]">
@@ -144,7 +153,7 @@ export default async function DashboardPage() {
 							className="btn-ghost !rounded-2xl !py-2 text-sm"
 						>
 							View diary
-							<AnimatedIcon name="arrowRight" size={14} />
+							<Icon name="arrowRight" size={14} />
 						</Link>
 					</header>
 
@@ -197,7 +206,7 @@ export default async function DashboardPage() {
 					</header>
 
 					<div className="grid grid-cols-2 gap-3">
-						<div className="rounded-3xl border border-charcoal-blue-200 bg-white/70 p-4 dark:border-white/10 dark:bg-charcoal-blue-950/60">
+						<div className="rounded-3xl border border-charcoal-blue-200 bg-charcoal-blue-50 p-4 dark:border-white/10 dark:bg-charcoal-blue-950">
 							<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-500 dark:text-charcoal-blue-400">
 								Current
 							</p>
@@ -213,11 +222,11 @@ export default async function DashboardPage() {
 										: "text-charcoal-blue-500 dark:text-charcoal-blue-400"
 								)}
 							>
-								<AnimatedIcon name={isActiveToday ? "circleCheck" : "calendarCheck"} size={12} />
+								<Icon name={isActiveToday ? "circleCheck" : "calendarCheck"} size={12} />
 								{isActiveToday ? "Logged today" : "Not logged yet"}
 							</p>
 						</div>
-						<div className="rounded-3xl border border-charcoal-blue-200 bg-white/70 p-4 dark:border-white/10 dark:bg-charcoal-blue-950/60">
+						<div className="rounded-3xl border border-charcoal-blue-200 bg-charcoal-blue-50 p-4 dark:border-white/10 dark:bg-charcoal-blue-950">
 							<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-500 dark:text-charcoal-blue-400">
 								Longest
 							</p>
@@ -231,25 +240,25 @@ export default async function DashboardPage() {
 						</div>
 					</div>
 
-					<div className="space-y-3 rounded-3xl border border-charcoal-blue-200 bg-white/70 p-4 dark:border-white/10 dark:bg-charcoal-blue-950/60">
+					<div className="space-y-3 rounded-3xl border border-charcoal-blue-200 bg-charcoal-blue-50 p-4 dark:border-white/10 dark:bg-charcoal-blue-950">
 						<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-blue-500 dark:text-charcoal-blue-400">
 							Quick jump
 						</p>
 						<div className="grid grid-cols-2 gap-2">
 							<Link href="/achievements" className="btn-ghost !rounded-2xl !py-2 text-xs">
-								<AnimatedIcon name="sparkles" size={14} />
+								<Icon name="sparkles" size={14} />
 								Achievements
 							</Link>
 							<Link href="/goal/dashboard" className="btn-ghost !rounded-2xl !py-2 text-xs">
-								<AnimatedIcon name="trendingUp" size={14} />
+								<Icon name="trendingUp" size={14} />
 								Progress
 							</Link>
 							<Link href="/meal-plan" className="btn-ghost !rounded-2xl !py-2 text-xs">
-								<AnimatedIcon name="calendarCheck" size={14} />
+								<Icon name="calendarCheck" size={14} />
 								Meal plan
 							</Link>
 							<Link href="/habits" className="btn-ghost !rounded-2xl !py-2 text-xs">
-								<AnimatedIcon name="circleCheck" size={14} />
+								<Icon name="circleCheck" size={14} />
 								Habits
 							</Link>
 						</div>
@@ -283,22 +292,22 @@ export default async function DashboardPage() {
 						</p>
 					</div>
 					<Link href="/meals/add" className="btn-primary !rounded-2xl !py-2 text-sm">
-						<AnimatedIcon name="flame" size={14} />
+						<Icon name="flame" size={14} />
 						Log meal
 					</Link>
 				</header>
 
 				{shownMeals.length === 0 ? (
-					<div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-charcoal-blue-300 bg-white/40 py-10 text-center dark:border-white/10 dark:bg-charcoal-blue-950/30">
+					<div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-charcoal-blue-300 bg-charcoal-blue-50 py-10 text-center dark:border-white/10 dark:bg-charcoal-blue-950">
 						<span className="icon-chip h-12 w-12 text-charcoal-blue-400">
-							<AnimatedIcon name="cookingPot" size={20} />
+							<Icon name="cookingPot" size={20} />
 						</span>
 						<p className="text-sm font-medium text-charcoal-blue-700 dark:text-charcoal-blue-200">
 							Nothing logged today
 						</p>
 						<Link href="/meals/add" className="btn-primary !rounded-2xl !py-2 text-sm">
 							Log a meal
-							<AnimatedIcon name="arrowRight" size={14} />
+							<Icon name="arrowRight" size={14} />
 						</Link>
 					</div>
 				) : (
@@ -306,7 +315,7 @@ export default async function DashboardPage() {
 						{shownMeals.map((meal) => (
 							<li
 								key={meal.id}
-								className="flex items-center gap-4 rounded-3xl border border-charcoal-blue-200 bg-white/80 p-4 transition-colors hover:border-charcoal-blue-300 dark:border-white/10 dark:bg-charcoal-blue-950/60 dark:hover:border-white/15"
+								className="flex items-center gap-4 rounded-3xl border border-charcoal-blue-200 bg-charcoal-blue-50 p-4 transition-colors hover:border-charcoal-blue-300 dark:border-white/10 dark:bg-charcoal-blue-950 dark:hover:border-white/15"
 							>
 								<span
 									className={cn(
@@ -352,7 +361,7 @@ export default async function DashboardPage() {
 					<div className="mt-4 text-center">
 						<Link href="/meals" className="btn-ghost !rounded-2xl !py-2 text-sm">
 							View full diary
-							<AnimatedIcon name="arrowRight" size={14} />
+							<Icon name="arrowRight" size={14} />
 						</Link>
 					</div>
 				)}

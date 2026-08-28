@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { resetPassword, type AuthError } from "@/lib/auth-client";
 import Loading from "@/components/Loading";
 import { PasswordInput } from "@/components/PasswordInput";
 
@@ -39,8 +39,8 @@ export default function ResetPasswordPage() {
 			return;
 		}
 
-		if (password.length < 8) {
-			setError("Password must be at least 8 characters long");
+		if (password.length < 10) {
+			setError("Password must be at least 10 characters long");
 			setLoading(false);
 			return;
 		}
@@ -52,22 +52,11 @@ export default function ResetPasswordPage() {
 		}
 
 		try {
-			const { data, error: resetError } = await authClient.resetPassword({
-				newPassword: password,
-				token,
-			});
-
-			if (resetError) {
-				const errorMessage = resetError.message || "Failed to reset password. Please try again.";
-				setError(errorMessage);
-			} else {
-				setSuccess(true);
-				setTimeout(() => {
-					router.push("/login");
-				}, 2000);
-			}
-		} catch (err) {
-			setError("An error occurred. Please try again.");
+			await resetPassword(token, password);
+			setSuccess(true);
+			setTimeout(() => router.push("/login"), 2000);
+		} catch (caught) {
+			setError((caught as AuthError).message || "Failed to reset password. Please try again.");
 		} finally {
 			setLoading(false);
 		}
@@ -78,10 +67,9 @@ export default function ResetPasswordPage() {
 			<div className="w-full max-w-md">
 				{/* Header */}
 				<div className="text-center mb-8">
-					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 shadow-lg shadow-brand-500/30 dark:bg-brand-500 dark:shadow-brand-500/15 mb-4">
-						<i className="ri-lock-unlock-line text-3xl text-white" />
-					</div>
-					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Set new password</h1>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+						Set new password
+					</h1>
 					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
 						Your new password must be different from previous passwords
 					</p>
@@ -145,11 +133,11 @@ export default function ResetPasswordPage() {
 									placeholder="••••••••"
 									value={password}
 									onChange={(e) => setPassword(e.target.value)}
-									minLength={8}
+									minLength={10}
 									showStrength
 								/>
 								<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1.5">
-									Must be at least 8 characters
+									Must be at least 10 characters
 								</p>
 							</div>
 
@@ -165,22 +153,21 @@ export default function ResetPasswordPage() {
 									placeholder="••••••••"
 									value={confirmPassword}
 									onChange={(e) => setConfirmPassword(e.target.value)}
-									minLength={8}
+									minLength={10}
 								/>
 							</div>
 
 							{error && (
-								<div data-testid="error-message" className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
+								<div
+									data-testid="error-message"
+									className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm"
+								>
 									<i className="ri-error-warning-line text-lg" />
 									<span>{error}</span>
 								</div>
 							)}
 
-							<button
-								type="submit"
-								disabled={loading}
-								className="btn-primary w-full py-3"
-							>
+							<button type="submit" disabled={loading} className="btn-primary w-full py-3">
 								{loading ? (
 									<>
 										<Loading size="sm" />

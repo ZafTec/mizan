@@ -1,8 +1,8 @@
-# MacroChef Developer Onboarding Guide
+# Mizan Developer Onboarding Guide
 
 **Version:** 1.0
 **Last Updated:** 2025-12-27
-**Target Audience:** New developers joining MacroChef project
+**Target Audience:** New developers joining Mizan project
 
 ---
 
@@ -22,7 +22,7 @@
 
 ## Welcome
 
-MacroChef (internally "Mizan") is a full-stack meal planning and nutrition tracking application. This guide gets you productive within the first 30 minutes.
+Mizan is a full-stack meal planning and nutrition tracking application. This guide gets you productive within the first 30 minutes.
 
 **Key facts:**
 - Hybrid architecture: Next.js frontend + ASP.NET Core backend
@@ -34,7 +34,7 @@ MacroChef (internally "Mizan") is a full-stack meal planning and nutrition track
 
 ## Project Overview
 
-### What MacroChef Does
+### What Mizan Does
 
 - Users create meal plans and track nutrition
 - Trainers manage clients and provide coaching
@@ -101,8 +101,8 @@ brew install docker
 curl -fsSL https://bun.sh/install | bash
 
 # 3. Clone repository
-git clone https://github.com/yourusername/macrochef.git
-cd macrochef
+git clone https://github.com/zaftec/mizan.git
+cd mizan
 ```
 
 ### Verify Installation
@@ -128,8 +128,8 @@ dotnet --version         # Should be 10.0+
 
 ```bash
 # 1. Clone and navigate
-git clone https://github.com/yourusername/macrochef.git
-cd macrochef
+git clone https://github.com/zaftec/mizan.git
+cd mizan
 
 # 2. Start all services
 docker-compose up -d
@@ -743,7 +743,7 @@ docker-compose up -d
 | Resource | Purpose | Location |
 |----------|---------|----------|
 | Architecture guide | System design, tech stack, layers, security | `docs/ARCHITECTURE.md` |
-| API reference | All endpoint documentation, examples | `docs/API_REFERENCE.md` |
+| API reference | All endpoint documentation, examples | Swagger UI (`http://localhost:5000/swagger`) |
 | CLAUDE.md | Development philosophy & best practices | `CLAUDE.md` |
 | Codebase | Real examples in source code | `backend/Mizan.Api/`, `frontend/app/` |
 
@@ -783,7 +783,7 @@ docker exec -it mizan-postgres psql -U mizan -l | grep test
 ### Who to Ask
 
 - **Architecture questions:** See `ARCHITECTURE.md` (system design, layers, security)
-- **API questions:** See `API_REFERENCE.md` or Swagger UI (`http://localhost:5000/swagger`)
+- **API questions:** See Swagger UI (`http://localhost:5000/swagger`)
 - **Testing questions:** See Testing Strategy section above
 - **Deployment & CI/CD questions:** See Continuous Integration & Deployment section above
 - **Security issues:** Email security@yourdomain.com (do NOT create public issues)
@@ -820,6 +820,6 @@ docker exec -it mizan-postgres psql -U mizan -l | grep test
 
 ## Welcome to the Team
 
-You're now set up to contribute to MacroChef. Check `CLAUDE.md` for development philosophy and best practices.
+You're now set up to contribute to Mizan. Check `CLAUDE.md` for development philosophy and best practices.
 
 **Questions?** Check the docs first, then ask. We're here to help!

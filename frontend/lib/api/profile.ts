@@ -1,5 +1,4 @@
 import { ApiError, convertKeysToCamelCase } from "@/lib/api";
-import { getApiToken } from "@/lib/api.client";
 import { resolvePublicApiOrigin } from "@/lib/api-base";
 import { clientApi } from "@/lib/api.client";
 import type { McpUsageAnalyticsResult } from "@/types/mcp";
@@ -117,15 +116,8 @@ export async function getProfileObservations(): Promise<ProfileObservations> {
 }
 
 export async function downloadProfileExport(): Promise<{ blob: Blob; filename: string }> {
-	const token = await getApiToken();
-	if (!token) {
-		throw new ApiError(401, "Unauthorized", { error: "Missing token" });
-	}
-
 	const response = await fetch(`${resolvePublicApiOrigin()}/api/Profile/export`, {
-		headers: {
-			Authorization: `Bearer ${token}`,
-		},
+		credentials: "include",
 	});
 
 	if (!response.ok) {

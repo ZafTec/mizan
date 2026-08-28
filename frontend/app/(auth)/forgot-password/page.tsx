@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
+import { forgotPassword } from "@/lib/auth-client";
 import Loading from "@/components/Loading";
 
-type Mode = "reset" | "magic";
 type State = "idle" | "success";
 
 export default function ForgotPasswordPage() {
@@ -13,7 +12,6 @@ export default function ForgotPasswordPage() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 	const [state, setState] = useState<State>("idle");
-	const [mode, setMode] = useState<Mode>("reset");
 
 	async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
@@ -21,25 +19,7 @@ export default function ForgotPasswordPage() {
 		setError("");
 
 		try {
-			if (mode === "reset") {
-				const { error: resetError } = await authClient.requestPasswordReset({
-					email,
-					redirectTo: `${window.location.origin}/reset-password`,
-				});
-				if (resetError) {
-					setError(resetError.message || "Failed to send reset email. Please try again.");
-					return;
-				}
-			} else {
-				const { error: magicError } = await authClient.signIn.magicLink({
-					email,
-					callbackURL: "/dashboard",
-				});
-				if (magicError) {
-					setError(magicError.message || "Failed to send sign-in link. Please try again.");
-					return;
-				}
-			}
+			await forgotPassword(email);
 			setState("success");
 		} catch {
 			setError("An error occurred. Please try again.");
@@ -62,10 +42,11 @@ export default function ForgotPasswordPage() {
 									Check your email
 								</h3>
 								<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-sm">
-									{mode === "reset"
-										? <>We sent a password reset link to <span className="font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300">{email}</span></>
-										: <>We sent a sign-in link to <span className="font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300">{email}</span>. Click it to sign in instantly. No password needed.</>
-									}
+									If{" "}
+									<span className="font-medium text-charcoal-blue-700 dark:text-charcoal-blue-300">
+										{email}
+									</span>{" "}
+									has an account, a reset link is on its way.
 								</p>
 							</div>
 							<div className="pt-4">
@@ -77,7 +58,10 @@ export default function ForgotPasswordPage() {
 							<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 								Didn&apos;t receive the email?{" "}
 								<button
-									onClick={() => { setState("idle"); setEmail(""); }}
+									onClick={() => {
+										setState("idle");
+										setEmail("");
+									}}
 									className="text-brand-600 dark:text-brand-400 hover:text-brand-700 font-medium"
 								>
 									Try again
@@ -95,52 +79,16 @@ export default function ForgotPasswordPage() {
 			<div className="w-full max-w-md">
 				{/* Header */}
 				<div className="text-center mb-8">
-					<div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 shadow-lg shadow-brand-500/30 dark:bg-brand-500 dark:shadow-brand-500/15 mb-4">
-						<i className="ri-lock-password-line text-3xl text-white" />
-					</div>
-					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Forgot password?</h1>
+					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+						Forgot password?
+					</h1>
 					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
-						No worries, choose how you want to recover access
+						We&apos;ll email you a link to set a new one
 					</p>
 				</div>
 
 				{/* Form Card */}
 				<div className="card p-6 sm:p-8 space-y-5">
-					{/* Mode toggle */}
-					<div className="grid grid-cols-2 gap-1 p-1 bg-charcoal-blue-100 dark:bg-charcoal-blue-900 rounded-xl">
-						<button
-							type="button"
-							onClick={() => { setMode("reset"); setError(""); }}
-							className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-								mode === "reset"
-									? "bg-white dark:bg-charcoal-blue-700 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
-									: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-charcoal-blue-700 dark:hover:text-charcoal-blue-200"
-							}`}
-						>
-							<i className="ri-lock-2-line mr-1.5" />
-							Reset Password
-						</button>
-						<button
-							type="button"
-							onClick={() => { setMode("magic"); setError(""); }}
-							className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-								mode === "magic"
-									? "bg-white dark:bg-charcoal-blue-700 text-charcoal-blue-900 dark:text-charcoal-blue-100 shadow-sm"
-									: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-charcoal-blue-700 dark:hover:text-charcoal-blue-200"
-							}`}
-						>
-							<i className="ri-magic-line mr-1.5" />
-							Magic Link
-						</button>
-					</div>
-
-					{/* Mode description */}
-					<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 text-center">
-						{mode === "reset"
-							? "We'll email you a link to set a new password."
-							: "We'll email you a one-click sign-in link. No password required."}
-					</p>
-
 					<form data-testid="forgot-password-form" onSubmit={handleSubmit} className="space-y-5">
 						<div>
 							<label htmlFor="email" className="label">
@@ -159,29 +107,24 @@ export default function ForgotPasswordPage() {
 						</div>
 
 						{error && (
-							<div data-testid="error-message" className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm">
+							<div
+								data-testid="error-message"
+								className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm"
+							>
 								<i className="ri-error-warning-line text-lg" />
 								<span>{error}</span>
 							</div>
 						)}
 
-						<button
-							type="submit"
-							disabled={loading}
-							className="btn-primary w-full py-3"
-						>
+						<button type="submit" disabled={loading} className="btn-primary w-full py-3">
 							{loading ? (
 								<>
 									<Loading size="sm" />
-									{mode === "reset" ? "Sending reset link..." : "Sending sign-in link..."}
+									Sending reset link...
 								</>
 							) : (
 								<>
-									{mode === "reset" ? (
-										<><i className="ri-mail-send-line" /> Send reset link</>
-									) : (
-										<><i className="ri-magic-line" /> Send magic link</>
-									)}
+									<i className="ri-mail-send-line" /> Send reset link
 									<i className="ri-arrow-right-line" />
 								</>
 							)}

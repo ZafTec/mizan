@@ -5,9 +5,12 @@ namespace Mizan.Application.Interfaces;
 
 public interface IMizanDbContext
 {
-    // Auth tables - Users is read-only (managed by frontend)
+    // Identity, owned by this backend since v2 (docs/REFOCUS.md §6)
     DbSet<User> Users { get; }
-    // Accounts, Sessions - REMOVED (managed by frontend)
+    DbSet<UserSession> UserSessions { get; }
+    DbSet<UserToken> UserTokens { get; }
+    DbSet<TelegramLink> TelegramLinks { get; }
+    DbSet<ExternalLogin> ExternalLogins { get; }
 
     // Business tables (managed by backend)
     DbSet<Household> Households { get; }
@@ -17,9 +20,6 @@ public interface IMizanDbContext
     DbSet<Food> Foods { get; }
     DbSet<Recipe> Recipes { get; }
     DbSet<RecipeIngredient> RecipeIngredients { get; }
-    DbSet<RecipeInstruction> RecipeInstructions { get; }
-    DbSet<RecipeNutrition> RecipeNutritions { get; }
-    DbSet<RecipeTag> RecipeTags { get; }
     DbSet<FavoriteRecipe> FavoriteRecipes { get; }
     DbSet<AuditLog> AuditLogs { get; }
     DbSet<FoodDiaryEntry> FoodDiaryEntries { get; }
@@ -50,7 +50,16 @@ public interface IMizanDbContext
     DbSet<FeedReaction> FeedReactions { get; }
     DbSet<FeedComment> FeedComments { get; }
     DbSet<ContentReport> ContentReports { get; }
+    DbSet<UserActivityCounters> UserActivityCounters { get; }
+    DbSet<OutboxJob> OutboxJobs { get; }
     DbSet<AiChatThread> AiChatThreads { get; }
+    DbSet<AiChatMessage> AiChatMessages { get; }
+    DbSet<UserAiConsent> UserAiConsents { get; }
+    DbSet<AiUsageLog> AiUsageLogs { get; }
+    DbSet<AiPrompt> AiPrompts { get; }
+    DbSet<AiPromptVersion> AiPromptVersions { get; }
+    DbSet<AiEvalCase> AiEvalCases { get; }
+    DbSet<AiEvalRun> AiEvalRuns { get; }
     DbSet<McpToken> McpTokens { get; }
     DbSet<McpUsageLog> McpUsageLogs { get; }
 

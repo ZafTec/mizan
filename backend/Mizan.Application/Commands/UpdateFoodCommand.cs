@@ -2,28 +2,14 @@ using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Caching.Hybrid;
 using Mizan.Application.Common;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Foods;
 using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Commands;
 
-public record UpdateFoodCommand : IRequest<UpdateFoodResult>
-{
-    public Guid Id { get; init; }
-    public string Name { get; init; } = string.Empty;
-    public string? Brand { get; init; }
-    public string? Barcode { get; init; }
-    public decimal CaloriesPer100g { get; init; }
-    public decimal ProteinPer100g { get; init; }
-    public decimal CarbsPer100g { get; init; }
-    public decimal FatPer100g { get; init; }
-    public decimal? FiberPer100g { get; init; }
-    public decimal? SugarPer100g { get; init; }
-    public decimal? SodiumPer100g { get; init; }
-    public decimal ServingSize { get; init; } = 100;
-    public string ServingUnit { get; init; } = "g";
-    public bool IsVerified { get; init; } = false;
-}
+public record UpdateFoodCommand : UpdateFoodRequest, IRequest<UpdateFoodResult>;
 
 public record UpdateFoodResult
 {
@@ -51,10 +37,13 @@ public class UpdateFoodCommandHandler : IRequestHandler<UpdateFoodCommand, Updat
     private readonly IMizanDbContext _context;
     private readonly HybridCache _cache;
 
-    public UpdateFoodCommandHandler(IMizanDbContext context, HybridCache cache)
+    private readonly ICurrentUserService _currentUser;
+
+    public UpdateFoodCommandHandler(IMizanDbContext context, HybridCache cache, ICurrentUserService currentUser)
     {
         _context = context;
         _cache = cache;
+        _currentUser = currentUser;
     }
 
     public async Task<UpdateFoodResult> Handle(UpdateFoodCommand request, CancellationToken cancellationToken)
@@ -64,6 +53,13 @@ public class UpdateFoodCommandHandler : IRequestHandler<UpdateFoodCommand, Updat
         if (food == null)
         {
             return new UpdateFoodResult { Success = false, Message = "Food not found" };
+        }
+
+        // A user may maintain the foods they created; the shared catalogue stays
+        // admin-only. Without this an owned food would be uneditable by its owner.
+        if (!_currentUser.IsInRole("admin") && food.UserId != _currentUser.UserId)
+        {
+            throw new ForbiddenAccessException("This food belongs to someone else");
         }
 
         food.Name = request.Name;

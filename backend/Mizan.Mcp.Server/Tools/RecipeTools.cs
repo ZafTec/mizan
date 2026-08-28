@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Text.Json;
+using Mizan.Contracts.Recipes;
 using Mizan.Mcp.Server.Services;
 using ModelContextProtocol.Server;
 
@@ -13,14 +14,13 @@ public sealed class RecipeTools
     public RecipeTools(IBackendApiClient api) => _api = api;
 
     [McpServerTool(Name = "search_recipes", ReadOnly = true, Idempotent = true)]
-    [Description("Search for recipes. Returns paginated list with title, macros, prep/cook time, tags.")]
+    [Description("Search for recipes. Returns paginated list with title, macros and prep/cook time.")]
     public async Task<string> SearchRecipes(
         [Description("Search term")] string? search = null,
         [Description("Page number (default 1)")] int page = 1,
         [Description("Results per page (default 20)")] int pageSize = 20,
         [Description("Sort by: title, createdat")] string? sortBy = null,
         [Description("Sort direction: asc or desc")] string? sortOrder = null,
-        [Description("Comma-separated tags to filter by")] string? tags = null,
         [Description("Only return user's favorite recipes")] bool favoritesOnly = false,
         CancellationToken ct = default)
     {
@@ -28,16 +28,11 @@ public sealed class RecipeTools
         if (!string.IsNullOrWhiteSpace(search)) qs += $"&searchTerm={Uri.EscapeDataString(search)}";
         if (!string.IsNullOrEmpty(sortBy)) qs += $"&sortBy={sortBy}";
         if (!string.IsNullOrEmpty(sortOrder)) qs += $"&sortOrder={sortOrder}";
-        if (!string.IsNullOrEmpty(tags))
-        {
-            foreach (var tag in tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-                qs += $"&tags={Uri.EscapeDataString(tag)}";
-        }
         return await _api.GetAsync(qs, ct);
     }
 
     [McpServerTool(Name = "get_recipe", ReadOnly = true, Idempotent = true)]
-    [Description("Get full recipe details including ingredients, instructions, and nutritional breakdown.")]
+    [Description("Get full recipe details including ingredients, method and computed nutrition.")]
     public async Task<string> GetRecipe(
         [Description("Recipe UUID")] string id,
         CancellationToken ct = default)
@@ -49,17 +44,15 @@ public sealed class RecipeTools
     [Description("Create a new recipe with ingredients. Use search_foods first to get foodId UUIDs for accurate nutrition calculation.")]
     public async Task<string> CreateRecipe(
         [Description("Recipe title")] string title,
-        [Description("JSON array of ingredients. Each object MUST have 'ingredientText' (human-readable, e.g. '200g chicken breast'). Optional: 'foodId' (UUID from search_foods for nutrition calc), 'subRecipeId' (UUID of another recipe to nest), 'amount' (grams, or servings for sub-recipes), 'unit'. Example: [{\"ingredientText\":\"200g chicken breast\",\"foodId\":\"uuid\",\"amount\":200,\"unit\":\"g\"},{\"ingredientText\":\"1 cup rice\"}]")] string ingredientsJson,
+        [Description("JSON array of ingredients. Each object MUST have 'ingredientText' (human-readable, e.g. '200g chicken breast'). Optional: 'foodId' (UUID from search_foods, required for nutrition), 'amount' (grams), 'unit'. To reuse another recipe as an ingredient, mark it a preparation with promote_recipe_to_preparation and pass the food id it returns. Example: [{\"ingredientText\":\"200g chicken breast\",\"foodId\":\"uuid\",\"amount\":200,\"unit\":\"g\"}]")] string ingredientsJson,
         [Description("Recipe description")] string? description = null,
         [Description("Number of servings (default 1)")] int? servings = null,
         [Description("Prep time in minutes")] int? prepTimeMinutes = null,
         [Description("Cook time in minutes")] int? cookTimeMinutes = null,
-        [Description("JSON array of instruction step strings, e.g. [\"Preheat oven\",\"Mix ingredients\"]")] string? instructionsJson = null,
-        [Description("Comma-separated tags, e.g. 'breakfast,healthy,quick'")] string? tags = null,
+        [Description("Method as free text; newlines separate steps")] string? instructions = null,
         [Description("Make recipe public (default true)")] bool isPublic = true,
         [Description("Image URL for the recipe")] string? imageUrl = null,
         [Description("Household UUID to share recipe with a household")] string? householdId = null,
-        [Description("Manual nutrition JSON (only used when no ingredients have foodId). Object with: caloriesPerServing, proteinGrams, carbsGrams, fatGrams, fiberGrams")] string? nutritionJson = null,
         CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(title))
@@ -68,63 +61,53 @@ public sealed class RecipeTools
             throw new ArgumentException("'ingredientsJson' is required.");
 
         var ingredients = ParseIngredients(ingredientsJson);
-        var instructions = ParseStringArray(instructionsJson);
-        var tagList = ParseTags(tags);
-        var nutrition = nutritionJson != null ? JsonSerializer.Deserialize<object>(nutritionJson) : null;
 
-        return await _api.PostAsync("/api/Recipes", new
+        // Nutrition is summed from the ingredients server-side and tags are gone
+        // - see docs/REFOCUS.md §4. Sending either would be silently ignored.
+        return await _api.PostAsync("/api/Recipes", new CreateRecipeRequest
         {
-            title,
-            description,
-            servings,
-            prepTimeMinutes,
-            cookTimeMinutes,
-            imageUrl,
-            isPublic,
-            householdId,
-            ingredients,
-            instructions,
-            tags = tagList,
-            nutrition
+            Title = title,
+            Description = description,
+            Servings = servings ?? 1,
+            PrepTimeMinutes = prepTimeMinutes,
+            CookTimeMinutes = cookTimeMinutes,
+            ImageUrl = imageUrl,
+            IsPublic = isPublic,
+            HouseholdId = ToolArguments.ParseOptionalId(householdId, "householdId"),
+            Ingredients = ingredients,
+            Instructions = instructions,
         }, ct);
     }
 
     [McpServerTool(Name = "update_recipe")]
-    [Description("Update an existing recipe. Only the recipe owner can update. All ingredients/instructions/tags are fully replaced.")]
+    [Description("Update an existing recipe. Only the recipe owner can update. Ingredients are fully replaced.")]
     public async Task<string> UpdateRecipe(
         [Description("Recipe UUID")] string id,
         [Description("Recipe title")] string title,
-        [Description("JSON array of ingredients. Each object MUST have 'ingredientText' (human-readable). Optional: 'foodId', 'subRecipeId', 'amount', 'unit'.")] string ingredientsJson,
+        [Description("JSON array of ingredients. Each object MUST have 'ingredientText' (human-readable). Optional: 'foodId', 'amount' (grams), 'unit'.")] string ingredientsJson,
         [Description("Recipe description")] string? description = null,
         [Description("Number of servings")] int? servings = null,
         [Description("Prep time in minutes")] int? prepTimeMinutes = null,
         [Description("Cook time in minutes")] int? cookTimeMinutes = null,
-        [Description("JSON array of instruction step strings")] string? instructionsJson = null,
-        [Description("Comma-separated tags")] string? tags = null,
+        [Description("Method as free text; newlines separate steps")] string? instructions = null,
         [Description("Make recipe public")] bool? isPublic = null,
         [Description("Image URL for the recipe")] string? imageUrl = null,
-        [Description("Manual nutrition JSON. Object with: caloriesPerServing, proteinGrams, carbsGrams, fatGrams, fiberGrams")] string? nutritionJson = null,
         CancellationToken ct = default)
     {
         var ingredients = ParseIngredients(ingredientsJson);
-        var instructions = ParseStringArray(instructionsJson);
-        var tagList = ParseTags(tags);
-        var nutrition = nutritionJson != null ? JsonSerializer.Deserialize<object>(nutritionJson) : null;
 
-        return await _api.PutAsync($"/api/Recipes/{id}", new
+        return await _api.PutAsync($"/api/Recipes/{id}", new UpdateRecipeRequest
         {
-            id,
-            title,
-            description,
-            servings,
-            prepTimeMinutes,
-            cookTimeMinutes,
-            imageUrl,
-            isPublic,
-            ingredients,
-            instructions,
-            tags = tagList,
-            nutrition
+            Id = ToolArguments.ParseId(id, "id"),
+            Title = title,
+            Description = description,
+            Servings = servings ?? 1,
+            PrepTimeMinutes = prepTimeMinutes,
+            CookTimeMinutes = cookTimeMinutes,
+            ImageUrl = imageUrl,
+            IsPublic = isPublic ?? false,
+            Ingredients = ingredients,
+            Instructions = instructions,
         }, ct);
     }
 
@@ -150,10 +133,10 @@ public sealed class RecipeTools
     /// Parse the LLM's ingredient JSON into strongly-typed objects.
     /// Handles various property naming conventions and auto-fills missing ingredientText.
     /// </summary>
-    private static List<object> ParseIngredients(string json)
+    private static List<CreateRecipeIngredientDto> ParseIngredients(string json)
     {
         using var doc = JsonDocument.Parse(json);
-        var results = new List<object>();
+        var results = new List<CreateRecipeIngredientDto>();
         var index = 0;
 
         foreach (var el in doc.RootElement.EnumerateArray())
@@ -163,14 +146,16 @@ public sealed class RecipeTools
             // Handle plain strings: ["chicken breast", "rice"]
             if (el.ValueKind == JsonValueKind.String)
             {
-                results.Add(new { ingredientText = el.GetString() ?? $"Ingredient {index}" });
+                results.Add(new CreateRecipeIngredientDto
+                {
+                    IngredientText = el.GetString() ?? $"Ingredient {index}",
+                });
                 continue;
             }
 
             // Handle objects: [{"ingredientText": "chicken", "amount": 200}]
             var text = GetString(el, "ingredientText", "ingredient_text", "text", "name", "description", "ingredient");
             var foodId = GetString(el, "foodId", "food_id", "foodid");
-            var subRecipeId = GetString(el, "subRecipeId", "sub_recipe_id", "subrecipeid");
             var amount = GetDecimal(el, "amount", "quantity", "grams", "weight");
             var unit = GetString(el, "unit", "units", "measurement");
 
@@ -180,7 +165,13 @@ public sealed class RecipeTools
                 text = BuildIngredientText(amount, unit, index);
             }
 
-            results.Add(new { ingredientText = text, foodId, subRecipeId, amount, unit });
+            results.Add(new CreateRecipeIngredientDto
+            {
+                IngredientText = text,
+                FoodId = ToolArguments.ParseOptionalId(foodId, "foodId"),
+                Amount = amount,
+                Unit = unit,
+            });
         }
 
         return results;
@@ -227,15 +218,5 @@ public sealed class RecipeTools
         return null;
     }
 
-    private static List<string> ParseStringArray(string? json)
-    {
-        if (string.IsNullOrEmpty(json)) return [];
-        return JsonSerializer.Deserialize<List<string>>(json) ?? [];
-    }
 
-    private static List<string> ParseTags(string? tags)
-    {
-        if (string.IsNullOrEmpty(tags)) return [];
-        return tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
-    }
 }

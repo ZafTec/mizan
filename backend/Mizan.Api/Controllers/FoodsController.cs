@@ -36,8 +36,12 @@ public class FoodsController : ControllerBase
         return Ok(result);
     }
 
+    // Any signed-in user may add a food; it is private to them unless they are an
+    // admin curating the shared catalogue. Ownership is enforced in the handler.
+    // UserOrMcp, not bare [Authorize]: the default policy accepts JWT only, and
+    // these endpoints must stay reachable by the MCP server's API key.
     [HttpPost]
-    [Authorize(Policy = "RequireAdmin")]
+    [Authorize(Policy = "UserOrMcp")]
     public async Task<ActionResult<CreateFoodResult>> CreateFood([FromBody] CreateFoodCommand command)
     {
         var result = await _mediator.Send(command);
@@ -45,7 +49,7 @@ public class FoodsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Policy = "RequireAdmin")]
+    [Authorize(Policy = "UserOrMcp")]
     public async Task<ActionResult<UpdateFoodResult>> UpdateFood(Guid id, [FromBody] UpdateFoodCommand command)
     {
         if (id != command.Id)
@@ -60,7 +64,7 @@ public class FoodsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Policy = "RequireAdmin")]
+    [Authorize(Policy = "UserOrMcp")]
     public async Task<ActionResult<DeleteFoodResult>> DeleteFood(Guid id)
     {
         var result = await _mediator.Send(new DeleteFoodCommand { Id = id });

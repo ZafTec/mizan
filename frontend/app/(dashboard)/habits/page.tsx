@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Icon } from "@/components/ui/icon";
 import { getUserServer } from "@/helper/session";
 import { getStreak } from "@/data/achievement";
 import { getDailyTotals, getTodayMeal } from "@/data/meal";
@@ -13,7 +13,7 @@ interface HabitRow {
 	label: string;
 	description: string;
 	done: boolean;
-	icon: Parameters<typeof AnimatedIcon>[0]["name"];
+	icon: Parameters<typeof Icon>[0]["name"];
 	href?: string;
 }
 
@@ -96,7 +96,7 @@ export default async function HabitsPage() {
 				<div className="flex items-center gap-2">
 					{streak && streak.currentStreak > 0 && (
 						<div className="streak-gradient inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white">
-							<AnimatedIcon name="flame" size={16} />
+							<Icon name="flame" size={16} />
 							<span>{streak.currentStreak}-day streak</span>
 						</div>
 					)}
@@ -143,7 +143,7 @@ export default async function HabitsPage() {
 									className={`flex items-center gap-3 rounded-3xl border p-4 transition-all ${
 										habit.done
 											? "border-verdigris-300 bg-verdigris-500/10 dark:border-verdigris-500/30 dark:bg-verdigris-500/5"
-											: "border-charcoal-blue-200 bg-white/70 dark:border-white/10 dark:bg-charcoal-blue-950/60"
+											: "border-charcoal-blue-200 bg-charcoal-blue-50 dark:border-white/10 dark:bg-charcoal-blue-950"
 									}`}
 								>
 									<span
@@ -153,7 +153,7 @@ export default async function HabitsPage() {
 												: "border border-charcoal-blue-200 text-charcoal-blue-500 dark:border-white/10 dark:text-charcoal-blue-300"
 										}`}
 									>
-										<AnimatedIcon name={habit.done ? "circleCheck" : habit.icon} size={16} />
+										<Icon name={habit.done ? "circleCheck" : habit.icon} size={16} />
 									</span>
 									<div className="min-w-0 flex-1">
 										<p className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -168,7 +168,7 @@ export default async function HabitsPage() {
 											Done
 										</span>
 									) : habit.href ? (
-										<AnimatedIcon name="arrowRight" size={14} />
+										<Icon name="arrowRight" size={14} />
 									) : null}
 								</div>
 							);

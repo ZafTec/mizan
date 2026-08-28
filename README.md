@@ -1,10 +1,10 @@
-# MacroChef
+# Mizan
 
 [![zread](https://img.shields.io/badge/Ask_Zread-_.svg?style=flat-square&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff)](https://zread.ai/Euaell/macro_chef)
 
 > **A modern, full-stack meal planning, nutrition tracking, and fitness application with trainer-client collaboration features**
 
-MacroChef (internally known as "Mizan") is a comprehensive web application designed to help users plan meals, track nutrition, log workouts, and collaborate with fitness trainers. Built with a hybrid architecture separating frontend authentication from backend business logic, it offers a scalable, secure, and feature-rich platform for health and fitness management.
+Mizan is a comprehensive web application designed to help users plan meals, track nutrition, log workouts, and collaborate with fitness trainers. Built with a hybrid architecture separating frontend authentication from backend business logic, it offers a scalable, secure, and feature-rich platform for health and fitness management.
 
 ## Features
 
@@ -40,7 +40,6 @@ MacroChef (internally known as "Mizan") is a comprehensive web application desig
 - **Styling**: Tailwind CSS + shadcn/ui components
 - **Package Manager**: Bun
 - **Authentication**: BetterAuth (JWT with ES256)
-- **ORM**: Drizzle (auth schema only)
 - **Real-time**: SignalR client for chat and notifications
 
 ### Backend
@@ -72,8 +71,8 @@ MacroChef (internally known as "Mizan") is a comprehensive web application desig
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/macro_chef.git
-   cd macro_chef
+   git clone https://github.com/zaftec/mizan.git
+   cd mizan
    ```
 
 2. **Create environment file** (optional - uses defaults if not provided)
@@ -141,9 +140,9 @@ bun run dev
 Comprehensive documentation is available in the `docs/` directory:
 
 - **[Architecture](docs/ARCHITECTURE.md)** - System design, schema boundaries, and architectural principles
-- **[API Reference](docs/API_REFERENCE.md)** - Complete API endpoint documentation
+- **[API Reference](http://localhost:5000/swagger)** - Swagger UI, generated from the running backend
 - **[Developer Onboarding](docs/DEVELOPER_ONBOARDING.md)** - New contributor setup, workflows, and testing
-- **[DTO Contracts](docs/DTO_CONTRACTS.md)** - Contract rules between backend DTOs and generated frontend types
+- **[Refocus Plan](docs/REFOCUS.md)** - Product thesis and the reorganization roadmap
 
 ## Development
 
@@ -190,12 +189,6 @@ bun run lint
 # Run tests
 bun run test              # Unit/integration tests (Vitest)
 bun run test:e2e          # E2E tests (Playwright)
-
-# Database operations (Drizzle - auth schema only)
-bun run db:generate       # Generate migrations
-bun run db:migrate        # Apply migrations
-bun run db:push           # Push schema without migrations
-bun run db:studio         # Open Drizzle Studio
 
 # Code generation from OpenAPI
 bun run codegen           # Generate both types and Zod schemas
@@ -261,10 +254,7 @@ bun run test:e2e
 ### Frontend (.env)
 ```bash
 DATABASE_URL="postgresql://mizan:password@localhost:5432/mizan"
-BETTER_AUTH_SECRET="your-secret-key-min-32-chars"
-BETTER_AUTH_URL="http://localhost:3000"
-BETTER_AUTH_ISSUER="http://localhost:3000"
-BETTER_AUTH_AUDIENCE="mizan-api"
+NEXT_PUBLIC_API_URL="http://localhost:5000"
 API_URL="http://mizan-backend:8080"              # Server-side (Docker network)
 NEXT_PUBLIC_API_URL="http://localhost:5000"      # Client-side (direct backend)
 ```
@@ -275,19 +265,19 @@ ConnectionStrings__PostgreSQL="Host=postgres;Database=mizan;Username=mizan;Passw
 ConnectionStrings__Redis="redis:6379"
 Jwt__Issuer="http://localhost:3000"
 Jwt__Audience="mizan-api"
-Jwt__JwksUrl="http://localhost:3000/api/auth/jwks"
+App__PublicUrl="http://localhost:3000"
 ```
 
 See `.env.example` for complete list with descriptions.
 
 ## Architecture Overview
 
-MacroChef uses a hybrid architecture with intentional schema separation:
+Mizan uses a hybrid architecture with intentional schema separation:
 
-- **Frontend Schema (Drizzle)**: Manages authentication tables (`users`, `sessions`) required by BetterAuth
+- **One schema, owned by EF Core**: identity and business tables live together; the frontend has no database access
 - **Backend Schema (EF Core)**: Manages business logic tables (`foods`, `recipes`, `meal_plans`, `workouts`, etc.)
 - **API Gateway**: Next.js serves auth routes and the UI; backend is called directly from the browser
-- **Authentication**: BetterAuth issues JWTs and publishes JWKS for backend validation
+- **Authentication**: the backend issues an opaque `mizan_session` cookie and resolves it against `user_sessions`
 - **Real-time**: SignalR with Redis backplane for horizontal scaling
 
 ### Clean Architecture Layers (Backend)

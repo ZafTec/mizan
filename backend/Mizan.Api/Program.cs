@@ -1,6 +1,5 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
@@ -10,7 +9,7 @@ using Mizan.Api.Hubs;
 using Mizan.Api.Middleware;
 using Mizan.Application;
 using Mizan.Infrastructure;
-using Mizan.Infrastructure.Auth.BetterAuth;
+using Mizan.Infrastructure.Identity;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -19,6 +18,7 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
 using Mizan.Application.Exceptions;
+using Mizan.Application.Interfaces;
 using StackExchange.Redis;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Threading.RateLimiting;
@@ -80,22 +80,66 @@ builder.Services.AddFluentValidationRulesToSwagger();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-var authBuilder = builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
+// Browsers authenticate with an opaque session cookie; the JWT bearer scheme
+// and everything that validated BetterAuth's EdDSA tokens is gone. See
+// docs/REFOCUS.md §6.
+builder.Services.AddScoped<SessionCookie>();
 
-authBuilder.AddBetterAuthJwtBearer(builder.Configuration, builder.Environment);
+var authBuilder = builder.Services.AddAuthentication(SessionCookieAuthenticationSchemeOptions.DefaultScheme);
 
-builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+authBuilder.AddScheme<SessionCookieAuthenticationSchemeOptions, SessionCookieAuthenticationHandler>(
+    SessionCookieAuthenticationSchemeOptions.DefaultScheme,
+    _ => { });
+
+// Holds the provider's assertion for the one hop between its redirect and our
+// callback, and nothing else.
+authBuilder.AddCookie(ExternalProviders.CookieScheme, options =>
 {
-    options.Events = new JwtBearerEvents
-    {
-        OnTokenValidated = JwtTokenValidatedHandler.HandleAsync,
-        OnAuthenticationFailed = context =>
-        {
-            Log.Warning(context.Exception, "JWT authentication failed for {Path}", context.HttpContext.Request.Path);
-            return Task.CompletedTask;
-        }
-    };
+    options.Cookie.Name = "mizan_external";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.None
+        : CookieSecurePolicy.Always;
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
 });
+
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+{
+    authBuilder.AddGoogle(options =>
+    {
+        options.ClientId = googleClientId;
+        options.ClientSecret = googleClientSecret;
+        options.SignInScheme = ExternalProviders.CookieScheme;
+        options.CallbackPath = "/api/Auth/external/google/callback";
+    });
+}
+else
+{
+    Log.Information("Google sign-in is not configured");
+}
+
+var githubClientId = builder.Configuration["Authentication:GitHub:ClientId"];
+var githubClientSecret = builder.Configuration["Authentication:GitHub:ClientSecret"];
+if (!string.IsNullOrWhiteSpace(githubClientId) && !string.IsNullOrWhiteSpace(githubClientSecret))
+{
+    authBuilder.AddGitHub(options =>
+    {
+        options.ClientId = githubClientId;
+        options.ClientSecret = githubClientSecret;
+        options.SignInScheme = ExternalProviders.CookieScheme;
+        options.CallbackPath = "/api/Auth/external/github/callback";
+        // GitHub hides the address unless asked, and we cannot create an
+        // account without one.
+        options.Scope.Add("user:email");
+    });
+}
+else
+{
+    Log.Information("GitHub sign-in is not configured");
+}
 
 var mcpServiceApiKey = builder.Configuration["Mcp:ServiceApiKey"]
     ?? throw new InvalidOperationException("Mcp:ServiceApiKey is not configured");
@@ -117,7 +161,7 @@ authBuilder.AddScheme<ApiKeyAuthenticationSchemeOptions, ApiKeyAuthenticationHan
 builder.Services.AddAuthorization(options =>
 {
     options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
-        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser()
         .Build();
 
@@ -126,21 +170,21 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser());
 
     options.AddPolicy("UserOrMcp", policy => policy
-        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser());
 
     options.AddPolicy("RequireAdmin", policy => policy
-        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser()
         .RequireRole("admin"));
 
     options.AddPolicy("RequireTrainer", policy => policy
-        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser()
         .RequireRole("trainer"));
 
     options.AddPolicy("RequirePro", policy => policy
-        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser()
         .AddRequirements(new Mizan.Api.Authorization.ProRequirement()));
 });
@@ -162,6 +206,27 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0
             });
     });
+    // Credential endpoints, per IP. The BetterAuth rate limiter went with it.
+    options.AddPolicy("AuthCredentials", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = context.RequestServices.GetRequiredService<IConfiguration>()
+                .GetValue("RateLimits:AuthCredentials:PermitLimit", 10),
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+    // Anything that costs an outbound email, so a bored caller cannot flood an
+    // inbox that is not theirs.
+    options.AddPolicy("AuthEmail", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = context.RequestServices.GetRequiredService<IConfiguration>()
+                .GetValue("RateLimits:AuthEmail:PermitLimit", 3),
+            Window = TimeSpan.FromMinutes(5),
+            QueueLimit = 0
+        }));
     options.AddPolicy("AnonymousSocial", context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions
@@ -338,6 +403,45 @@ app.UseExceptionHandler(errorApp =>
                 errorCode = "validation_failed",
                 errors = validationEx.Errors.Select(e => new { e.PropertyName, e.ErrorMessage })
             });
+        }
+        else if (exception is AiQuotaExceededException quotaEx)
+        {
+            // Which ceiling tripped and when it resets. "You are out of quota"
+            // and "the service is at capacity" are different problems and the
+            // caller has to be able to tell them apart (docs/REFOCUS.md §10).
+            context.Response.StatusCode = 429;
+            context.Response.Headers.RetryAfter =
+                ((int)Math.Max(1, (quotaEx.ResetsAt - DateTime.UtcNow).TotalSeconds)).ToString();
+            await context.Response.WriteAsJsonAsync(new
+            {
+                errorCode = "ai_quota_exceeded",
+                error = quotaEx.Message,
+                scope = quotaEx.Scope.ToString().ToLowerInvariant(),
+                resetsAt = quotaEx.ResetsAt,
+            });
+        }
+        else if (exception is AiUnavailableException aiUnavailableEx)
+        {
+            Log.Warning(exception, "AI provider unavailable for {Path}", context.Request.Path);
+            context.Response.StatusCode = 503;
+            await context.Response.WriteAsJsonAsync(new { errorCode = "ai_unavailable", error = aiUnavailableEx.Message });
+        }
+        else if (exception is InvalidCredentialsException)
+        {
+            Log.Warning("Failed sign-in attempt at {Path}", context.Request.Path);
+            context.Response.StatusCode = 401;
+            await context.Response.WriteAsJsonAsync(new { errorCode = "invalid_credentials", error = "Email or password is incorrect." });
+        }
+        else if (exception is EmailNotVerifiedException emailNotVerifiedEx)
+        {
+            context.Response.StatusCode = 403;
+            await context.Response.WriteAsJsonAsync(new { errorCode = "email_not_verified", error = emailNotVerifiedEx.Message });
+        }
+        else if (exception is AccountLockedException lockedEx)
+        {
+            Log.Warning("Locked account attempted sign-in at {Path}", context.Request.Path);
+            context.Response.StatusCode = 429;
+            await context.Response.WriteAsJsonAsync(new { errorCode = "account_locked", error = lockedEx.Message });
         }
         else if (exception is DomainValidationException domainValidationEx)
         {

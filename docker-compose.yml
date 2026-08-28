@@ -40,16 +40,45 @@ services:
     networks:
       - mizan-network
 
-  auth-migrate:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+  # S3-compatible object storage for local development. Production points at
+  # the MinIO already running on the VPS, so this service exists only so that
+  # uploads can be exercised locally rather than silently falling back to the
+  # unconfigured storage service.
+  minio:
+    image: minio/minio:latest
+    container_name: mizan-minio
+    command: server /data --console-address ":9001"
     environment:
-      - DATABASE_URL=postgres://mizan:${DB_PASSWORD:?DB_PASSWORD is required}@postgres:5432/mizan
-    command: bun run db:migrate
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY_ID:?STORAGE_ACCESS_KEY_ID is required}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_ACCESS_KEY:?STORAGE_SECRET_ACCESS_KEY is required}
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "mc ready local || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - mizan-network
+
+  # Creates the bucket and opens it for reads, then exits. Without a public
+  # read policy every image would come back as an expiring presigned URL.
+  minio-init:
+    image: minio/mc:latest
+    container_name: mizan-minio-init
     depends_on:
-      postgres:
+      minio:
         condition: service_healthy
+    entrypoint: >
+      sh -c "
+      mc alias set local http://minio:9000 '${STORAGE_ACCESS_KEY_ID}' '${STORAGE_SECRET_ACCESS_KEY}' &&
+      mc mb --ignore-existing local/${STORAGE_BUCKET:-mizan} &&
+      mc anonymous set download local/${STORAGE_BUCKET:-mizan} &&
+      echo 'bucket ready'
+      "
     networks:
       - mizan-network
 
@@ -67,14 +96,7 @@ services:
       - /app/.next
     environment:
       - NODE_ENV=development
-      # Database (for BetterAuth)
-      - DATABASE_URL=postgres://mizan:${DB_PASSWORD:?DB_PASSWORD is required}@postgres:5432/mizan
-
-      # BetterAuth config
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
-      - BETTER_AUTH_URL=${PUBLIC_APP_URL:-http://localhost:3000}
-      - BETTER_AUTH_ISSUER=${PUBLIC_APP_URL:-http://localhost:3000}
-      - BETTER_AUTH_AUDIENCE=mizan-api
+      # No DATABASE_URL: the frontend owns no tables since v2.
 
       # Backend API (internal network - server-side)
       - API_URL=${SERVER_API_URL:-http://backend:8080}
@@ -85,40 +107,23 @@ services:
       - ALLOWED_DEV_ORIGINS=${ALLOWED_DEV_ORIGINS:-}
 
       # External services
-      - NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}
-      - NEXT_PUBLIC_CLOUDINARY_API_KEY=${NEXT_PUBLIC_CLOUDINARY_API_KEY}
-      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASS=${SMTP_PASS}
-      - SMTP_FROM=${SMTP_FROM}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
-      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
-      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
-      - REDIS_URL=redis://:${REDIS_PASSWORD:?REDIS_PASSWORD is required}@redis:6379
+      # Public origin of the object store, for next/image's host allowlist.
+      - NEXT_PUBLIC_MEDIA_URL=${STORAGE_PUBLIC_BASE_URL:-}
       # Paddle (sandbox)
       - NEXT_PUBLIC_PADDLE_ENV=${NEXT_PUBLIC_PADDLE_ENV:-sandbox}
       - NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=${NEXT_PUBLIC_PADDLE_CLIENT_TOKEN:-}
       - NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY=${NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY:-}
-      - NEXT_PUBLIC_PADDLE_PRICE_PRO_YEARLY=${NEXT_PUBLIC_PADDLE_PRICE_PRO_YEARLY:-}
-      - NEXT_PUBLIC_PADDLE_PRICE_LIFETIME=${NEXT_PUBLIC_PADDLE_PRICE_LIFETIME:-}
       # OpenTelemetry (optional, no-op if endpoints not set)
       - OTLP_ENDPOINT_URL=${OTLP_ENDPOINT_URL:-}
       - LOKI_OTLP_ENDPOINT=${LOKI_OTLP_ENDPOINT:-}
       - OTEL_METRICS_PORT=9464
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
       backend:
         condition: service_started
     networks:
       - mizan-network
 
-  # .NET Backend API (JWT protected)
+  # .NET Backend API - owns identity and the schema
   backend:
     build:
       context: ./backend
@@ -129,6 +134,13 @@ services:
       - "5000:8080"
     volumes:
       - ./backend:/src
+      # The Dockerfile's restore cache is a build-time mount, so a recreated
+      # container starts with an empty package folder and `dotnet run` restores
+      # the whole graph over the network again - slow, and dead in the water
+      # whenever nuget.org is unreachable, which it repeatedly has been.
+      # Sharing the host's cache means a restart reuses whatever `dotnet build`
+      # on the host already downloaded, and needs no network at all.
+      - ${NUGET_PACKAGES_DIR:-nuget_packages}:/root/.nuget/packages
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
@@ -139,14 +151,38 @@ services:
       # Redis
       - ConnectionStrings__Redis=redis:6379,password=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
 
-      # JWT/JWKS Authentication
-      - Jwt__Issuer=${PUBLIC_APP_URL:-http://localhost:3000}
-      - Jwt__Audience=mizan-api
-      - Jwt__JwksUrl=http://frontend:3000/api/auth/jwks
+      # Identity - session cookies, email, OAuth
+      - App__PublicUrl=${PUBLIC_APP_URL:-http://localhost:3000}
+      # The bot's @name, so the API can build a working t.me deep link. Empty
+      # hides the Telegram settings page entirely.
+      - Telegram__BotUsername=${TELEGRAM_BOT_USERNAME:-}
+      - App__CookieDomain=${COOKIE_DOMAIN:-}
+      - Smtp__Host=${SMTP_HOST:-}
+      - Smtp__Port=${SMTP_PORT:-587}
+      - Smtp__Username=${SMTP_USER:-}
+      - Smtp__Password=${SMTP_PASS:-}
+      - Smtp__FromAddress=${SMTP_FROM:-noreply@mizan.local}
+      - Authentication__Google__ClientId=${GOOGLE_CLIENT_ID:-}
+      - Authentication__Google__ClientSecret=${GOOGLE_CLIENT_SECRET:-}
+      - Authentication__GitHub__ClientId=${GITHUB_CLIENT_ID:-}
+      - Authentication__GitHub__ClientSecret=${GITHUB_CLIENT_SECRET:-}
+      # Object storage - any S3-compatible endpoint (MinIO, Cloudflare R2)
+      - Storage__ServiceUrl=${STORAGE_SERVICE_URL:-}
+      - Storage__Region=${STORAGE_REGION:-auto}
+      - Storage__AccessKeyId=${STORAGE_ACCESS_KEY_ID:-}
+      - Storage__SecretAccessKey=${STORAGE_SECRET_ACCESS_KEY:-}
+      - Storage__Bucket=${STORAGE_BUCKET:-mizan}
+      - Storage__PublicBaseUrl=${STORAGE_PUBLIC_BASE_URL:-}
       - Cors__Origins__0=http://frontend:3000
       - Cors__Origins__1=http://localhost:3000
       - Cors__Origins__2=${PUBLIC_APP_URL:-http://localhost:3000}
-      - OpenAI__ApiKey=${OPENAI_API_KEY:-}
+      # AI platform. One OpenAI-compatible endpoint; the model is config.
+      - Ai__BaseUrl=${AI_BASE_URL:-}
+      - Ai__ApiKey=${AI_API_KEY:-}
+      - Ai__Model=${AI_MODEL:-gpt-5.6-luna}
+      - Ai__SupportsTemperature=${AI_SUPPORTS_TEMPERATURE:-true}
+      - Ai__GlobalDailyTokens=${AI_GLOBAL_DAILY_TOKENS:-5000000}
+      - Ai__GlobalDailyCostMicros=${AI_GLOBAL_DAILY_COST_MICROS:-20000000}
       # MCP service-to-service API keys
       - Mcp__ServiceApiKey=${MCP_SERVICE_KEY:?MCP_SERVICE_KEY is required}
       - Mcp__AdminServiceApiKey=${MCP_ADMIN_SERVICE_KEY:?MCP_ADMIN_SERVICE_KEY is required}
@@ -158,13 +194,15 @@ services:
       - Paddle__ApiKey=${PADDLE_API_KEY:-}
       - Paddle__WebhookSecret=${PADDLE_WEBHOOK_SECRET:-}
       - Paddle__GraceDays=${PADDLE_GRACE_DAYS:-3}
-      - Paddle__LifetimePriceId=${NEXT_PUBLIC_PADDLE_PRICE_LIFETIME:-}
+      # No longer sold - kept only so a webhook replay for an existing
+      # lifetime customer still resolves correctly. Set by hand if ever needed.
+      - Paddle__LifetimePriceId=${PADDLE_PRICE_LIFETIME_LEGACY:-}
     depends_on:
-      auth-migrate:
-        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      minio:
         condition: service_healthy
     networks:
       - mizan-network
@@ -199,6 +237,34 @@ services:
     networks:
       - mizan-network
 
+  # Telegram bot. Long polling by default, so no public hostname is needed in
+  # development; production sets TELEGRAM_USE_WEBHOOK and puts nginx in front
+  # of /telegram/webhook. Starts and idles when no token is configured.
+  telegram:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.telegram
+    container_name: mizan-telegram
+    ports:
+      - "5002:5002"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5002
+      - TelegramBot__BotToken=${TELEGRAM_BOT_TOKEN:-}
+      - TelegramBot__UseWebhook=${TELEGRAM_USE_WEBHOOK:-false}
+      - TelegramBot__WebhookSecret=${TELEGRAM_WEBHOOK_SECRET:-}
+      - TelegramBot__ApiUrl=http://backend:8080
+      # The same non-admin service key the MCP server uses. It is an internal
+      # credential on an internal network; the bot needs impersonation for the
+      # linked user and nothing beyond it.
+      - TelegramBot__ServiceApiKey=${MCP_SERVICE_KEY:?MCP_SERVICE_KEY is required}
+      - TelegramBot__PublicUrl=${PUBLIC_APP_URL:-http://localhost:3000}
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - mizan-network
+
   # Test runner service
   test:
     build:
@@ -211,9 +277,6 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__PostgreSQL=Host=postgres;Database=mizan_test;Username=mizan;Password=${DB_PASSWORD:?DB_PASSWORD is required}
       - ConnectionStrings__Redis=redis:6379,password=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
-      - Jwt__Issuer=http://localhost:3000
-      - Jwt__Audience=mizan-api
-      - Jwt__JwksUrl=http://frontend:3000/api/auth/jwks
     command: dotnet test --logger "console;verbosity=normal"
     depends_on:
       postgres:
@@ -232,3 +295,5 @@ networks:
 volumes:
   postgres_data:
   redis_data:
+  minio_data:
+  nuget_packages:

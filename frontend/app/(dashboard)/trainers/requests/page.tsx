@@ -81,7 +81,15 @@ export default function TrainerRequestsPage() {
 			) : (
 				<div className="space-y-4">
 					{requests.map((request) => (
-						<div key={request.relationshipId || request.trainerId || request.trainerEmail || "trainer-request"} className="card p-6">
+						<div
+							key={
+								request.relationshipId ||
+								request.trainerId ||
+								request.trainerEmail ||
+								"trainer-request"
+							}
+							className="card p-6"
+						>
 							<div className="flex flex-col sm:flex-row items-center gap-6">
 								<div className="relative shrink-0">
 									{request.trainerImage ? (
@@ -90,10 +98,10 @@ export default function TrainerRequestsPage() {
 											alt={request.trainerName || request.trainerEmail || "Trainer"}
 											width={80}
 											height={80}
-											className="w-20 h-20 rounded-2xl object-cover border-4 border-white dark:border-white/10 shadow-lg"
+											className="w-20 h-20 rounded-2xl object-cover border-4 border-white dark:border-white/10 "
 										/>
 									) : (
-									<div className="w-20 h-20 rounded-2xl bg-emerald-600 flex items-center justify-center border-4 border-white dark:border-white/10 shadow-lg">
+										<div className="w-20 h-20 rounded-2xl bg-emerald-600 flex items-center justify-center border-4 border-white dark:border-white/10 ">
 											<span className="text-2xl font-bold text-white">
 												{(request.trainerEmail || "?").charAt(0).toUpperCase()}
 											</span>
@@ -105,25 +113,30 @@ export default function TrainerRequestsPage() {
 									<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 										{request.trainerName || request.trainerEmail?.split("@")[0]}
 									</h3>
-									<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">{request.trainerEmail}</p>
+									<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">
+										{request.trainerEmail}
+									</p>
 									<div className="flex items-center gap-2 mt-2 justify-center sm:justify-start">
 										<span className="inline-flex items-center gap-1 px-3 py-1 rounded-2xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-medium">
 											<i className="ri-time-line" />
 											Pending
 										</span>
 										<span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-											Sent {request.requestedAt ? new Date(request.requestedAt).toLocaleDateString() : "Unknown date"}
+											Sent{" "}
+											{request.requestedAt
+												? new Date(request.requestedAt).toLocaleDateString()
+												: "Unknown date"}
 										</span>
 									</div>
 								</div>
 
 								<div className="flex gap-2 shrink-0">
-								<button
-									className="btn-secondary"
-									onClick={() => {
-										appToast.info("Cancel request is not available yet");
-									}}
-								>
+									<button
+										className="btn-secondary"
+										onClick={() => {
+											appToast.info("Cancel request is not available yet");
+										}}
+									>
 										<i className="ri-close-line" />
 										Cancel
 									</button>
@@ -135,7 +148,7 @@ export default function TrainerRequestsPage() {
 			)}
 
 			{/* Info Card */}
-			<div className="card p-6 border border-blue-200 dark:border-blue-800 bg-white/70 dark:bg-charcoal-blue-950/60">
+			<div className="card p-6 border border-blue-200 dark:border-blue-800">
 				<div className="flex items-start gap-4">
 					<div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
 						<i className="ri-information-line text-2xl text-white" />
@@ -147,9 +160,7 @@ export default function TrainerRequestsPage() {
 						<ul className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 space-y-2">
 							<li className="flex items-start gap-2">
 								<i className="ri-arrow-right-s-line text-blue-500 mt-0.5" />
-								<span>
-									The trainer will review your request and decide whether to accept
-								</span>
+								<span>The trainer will review your request and decide whether to accept</span>
 							</li>
 							<li className="flex items-start gap-2">
 								<i className="ri-arrow-right-s-line text-blue-500 mt-0.5" />
@@ -159,9 +170,7 @@ export default function TrainerRequestsPage() {
 							</li>
 							<li className="flex items-start gap-2">
 								<i className="ri-arrow-right-s-line text-blue-500 mt-0.5" />
-								<span>
-									You'll be notified when the trainer responds to your request
-								</span>
+								<span>You'll be notified when the trainer responds to your request</span>
 							</li>
 						</ul>
 					</div>

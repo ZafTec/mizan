@@ -5,13 +5,15 @@ using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Commands;
 
+/// <summary>
+/// The trainer accepts or declines. They do NOT set the grant flags - those are
+/// the client's, set on the request and changeable afterwards via
+/// <see cref="UpdateTrainerGrantsCommand"/>. A trainer choosing their own
+/// access to someone else's body data is the wrong way round.
+/// </summary>
 public record RespondToTrainerRequestCommand(
     Guid RelationshipId,
-    bool Accept,
-    bool? CanViewNutrition = null,
-    bool? CanViewWorkouts = null,
-    bool? CanViewMeasurements = null,
-    bool? CanMessage = null
+    bool Accept
 ) : IRequest<bool>;
 
 public class RespondToTrainerRequestCommandHandler : IRequestHandler<RespondToTrainerRequestCommand, bool>
@@ -38,26 +40,6 @@ public class RespondToTrainerRequestCommandHandler : IRequestHandler<RespondToTr
         {
             relationship.Status = "active";
             relationship.StartedAt = DateTime.UtcNow;
-
-            if (request.CanViewNutrition.HasValue)
-            {
-                relationship.CanViewNutrition = request.CanViewNutrition.Value;
-            }
-
-            if (request.CanViewWorkouts.HasValue)
-            {
-                relationship.CanViewWorkouts = request.CanViewWorkouts.Value;
-            }
-
-            if (request.CanViewMeasurements.HasValue)
-            {
-                relationship.CanViewMeasurements = request.CanViewMeasurements.Value;
-            }
-
-            if (request.CanMessage.HasValue)
-            {
-                relationship.CanMessage = request.CanMessage.Value;
-            }
 
             var existingConv = await _context.ChatConversations
                 .FirstOrDefaultAsync(c => c.TrainerClientRelationshipId == relationship.Id, cancellationToken);

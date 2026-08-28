@@ -1,9 +1,9 @@
-# CLAUDE.md - MacroChef Developer Guidance
+# CLAUDE.md - Mizan Developer Guidance
 
-This file provides guidance to Claude Code and other LLM tools when working with the MacroChef codebase.
+This file provides guidance to Claude Code and other LLM tools when working with the Mizan codebase.
 
 **Last Updated:** 2025-12-27
-**Project:** MacroChef (Mizan) - Full-stack meal planning + nutrition tracking application
+**Project:** Mizan - Full-stack meal planning + nutrition tracking application
 
 ---
 
@@ -43,14 +43,14 @@ This file provides guidance to Claude Code and other LLM tools when working with
 
 ## Project Overview
 
-MacroChef (also referred to as "Mizan" internally) is a full-stack meal planning, nutrition tracking, and fitness application. The codebase uses a hybrid architecture with intentional schema separation between frontend authentication (BetterAuth + Drizzle) and backend business logic (Clean Architecture + EF Core).
+Mizan is a full-stack meal planning, nutrition tracking, and fitness application. **ASP.NET Core owns the entire database schema, identity included.** Next.js is a pure client: no ORM, no tables, no auth library. See `docs/REFOCUS.md` §6 for why the old Drizzle/BetterAuth split was removed.
 
 **Tech Stack:**
 - **Frontend:** Next.js 16 (App Router) + React 19 + TypeScript + Tailwind CSS + Bun
 - **Backend:** ASP.NET Core 10 (Web API) + Clean Architecture + C#
 - **Database:** PostgreSQL 18
 - **Cache:** Redis 7 (SignalR backplane + application caching)
-- **Authentication:** BetterAuth (JWT-based, EdDSA/Ed25519)
+- **Authentication:** backend-issued opaque session cookies (`mizan_session`), password hashing via `PasswordHasher<T>`, Google + GitHub OAuth
 - **Real-time:** SignalR (for trainer-client chat and notifications)
 - **Deployment:** Docker Compose (self-hosted)
 
@@ -133,12 +133,6 @@ bun run test
 # Run E2E tests (Playwright)
 bun run test:e2e
 
-# Database operations (Drizzle - auth schema only)
-bun run db:generate   # Generate migrations
-bun run db:migrate    # Apply migrations
-bun run db:push       # Push schema without migrations
-bun run db:studio     # Open Drizzle Studio
-
 # Code generation from OpenAPI
 bun run codegen              # Generate TypeScript API types
 ```
@@ -169,6 +163,24 @@ When reasoning through problems, apply these principles:
 - What's the cost of being wrong?
 - Are we painting ourselves into a corner?
 
+## Decision Framework
+
+For a single, reversible decision that doesn't need a persistent evidence
+trail, work through this with the user rather than picking silently:
+
+```
+DECISION:      what we're deciding
+CONTEXT:       why now, what triggered it
+
+OPTIONS:
+  1. [A]   + pros   - cons
+  2. [B]   + pros   - cons
+
+WEAKEST LINK:  what breaks first in each option
+REVERSIBILITY: can we undo in 2 weeks? 2 months? never?
+RECOMMENDATION: which + why, or "need your input on X"
+```
+
 ## Task Execution Workflow
 
 ### 1. Understand the Problem Deeply
@@ -177,9 +189,8 @@ When reasoning through problems, apply these principles:
 - For URLs provided: fetch immediately and follow relevant links
 
 ### 2. Investigate the Codebase
-- **Check `.fpf/context.md` first**, Project context, constraints, and tech stack
-- **Check `.fpf/knowledge/`**, Project knowledge base with verified claims
-- **Check `docs/` directory**, Architecture, API reference, onboarding, DTO contracts
+- **Check `docs/REFOCUS.md` first**, the product thesis and what is being cut
+- **Check `docs/ARCHITECTURE.md`**, structure and layer boundaries
 - Use Task tool for broader/multi-file exploration (preferred for context efficiency)
 - Explore relevant files and directories
 - Search for key functions, classes, variables
@@ -253,16 +264,12 @@ frontend/
 │   ├── (dashboard)/         # Protected dashboard routes
 │   ├── admin/               # Admin-only routes
 │   └── api/                 # Next.js API routes
-│       ├── auth/            # BetterAuth endpoints
 │       ├── csrf/            # CSRF token management
 │       └── health/          # Health check
 ├── components/              # Reusable UI components (shadcn/ui)
-├── db/                      # Drizzle schema (auth tables only)
-│   ├── schema.ts
-│   └── client.ts
 ├── lib/                     # Services and utilities
-│   ├── auth.ts              # BetterAuth server config
-│   ├── auth-client.ts       # Client-side auth + apiClient
+│   ├── auth.ts              # Server-side session read (getCurrentUser)
+│   ├── auth-client.ts       # Client-side auth calls against /api/Auth
 │   ├── hooks/               # React hooks
 │   ├── services/            # SignalR, etc.
 │   └── utils/               # Utility functions
@@ -273,56 +280,66 @@ frontend/
 
 ### Schema Boundaries (Critical Concept)
 
-**Frontend Schema (Drizzle ORM):**
-- **Owner:** BetterAuth
-- **Tables:** `users`, `accounts`, `sessions`, `jwks`, `verification`
-- **Why:** BetterAuth requires Drizzle for auth flows
-- **Migrations:** `bun run db:generate` → `bun run db:migrate`
+**One schema, one owner: EF Core.**
 
-**Backend Schema (EF Core):**
-- **Owner:** Business logic
-- **Tables:** `foods`, `recipes`, `meal_plans`, `workouts`, `achievements`, `trainers`, etc.
-- **Why:** Complex domain logic best expressed in C# with EF Core
-- **Migrations:** `dotnet ef migrations add` → `dotnet ef database update`
+`users`, `user_sessions`, `user_tokens` and `external_logins` sit alongside
+`foods`, `recipes`, `workouts` and the rest, in a single `InitialCreate`
+migration. There is no second ORM and no shared-table coordination problem.
 
-**Shared Table:** `households` - Backend is source of truth, frontend references via user associations.
+**Migrations:** `dotnet ef migrations add <Name> --project Mizan.Infrastructure --startup-project Mizan.Api`
 
-**CRITICAL:** Changes to shared tables must be coordinated between both ORMs. This separation is intentional - don't try to unify them.
+**CRITICAL:** run `dotnet ef migrations has-pending-model-changes` before any
+push that touches an entity or `MizanDbContext` - a divergence between the model
+and the migrations fails `MigrateAsync` at startup and takes every integration
+test with it.
+
+---
 
 ## API Routing and Proxying
 
 ### Next.js Handles Directly
-- `/api/auth/*` - BetterAuth endpoints
 - `/api/health` - Frontend health check
 - `/api/csrf` - CSRF token management
 
-### Direct Backend Calls (via `api.mizan.euaell.me` subdomain)
-Client-side API calls go directly to the backend via a separate API subdomain with CORS:
+### Direct Backend Calls (path-routed, same domain - no subdomains)
+One public domain for everything. Client-side API calls go directly to the
+backend, and the MCP server has its own path, both reverse-proxied off the
+app's own host - no `api.*` or `mcp.*` subdomain:
 - `/api/Users/*`, `/api/Foods/*`, `/api/Recipes/*`, `/api/MealPlans/*`
 - `/api/Workouts/*`, `/api/Exercises/*`, `/api/BodyMeasurements/*`
 - `/api/Achievements/*`, `/api/Households/*`, `/api/Trainers/*`, `/api/Chat/*`
 - `/hubs/*` - SignalR hubs
+- `/mcp` - MCP server (external MCP clients, `X-Api-Key` auth, not browser traffic)
 
 **Network Topology:**
-- **Browser → Frontend:** `https://mizan.euaell.me` (pages, auth, SSR)
-- **Browser → Backend:** `https://api.mizan.euaell.me` (client-side API calls, CORS-enabled)
+- **Browser → Frontend:** `https://mizan.zaftech.co` (pages, auth, SSR)
+- **Browser → Backend:** `https://mizan.zaftech.co/api/*` and `/hubs/*` (same origin, no CORS needed in production)
+- **External MCP clients → MCP server:** `https://mizan.zaftech.co/mcp`
 - **Frontend → Backend (server-side):** `http://mizan-backend:8080` (Docker network, no CORS needed)
-- **Nginx** terminates SSL and routes `mizan.euaell.me` → frontend, `api.mizan.euaell.me` → backend
+- **Nginx** terminates SSL and routes by path on one host: `/api` and `/hubs` → backend, `/mcp` → MCP server, everything else → frontend
 
 ## Authentication Flow
 
-1. User logs in → BetterAuth (Next.js)
-2. BetterAuth creates session + JWT (EdDSA/Ed25519, 15min expiry)
-3. JWT stored in httpOnly cookie
-4. API requests include JWT in Authorization header
-5. Backend validates JWT using JWKS from BetterAuth endpoint
-6. JWKS cached in Redis (1-minute TTL) to reduce calls
+1. User signs in at `POST /api/Auth/login` (backend).
+2. The backend verifies the password, creates a row in `user_sessions`, and sets
+   `mizan_session` - httpOnly, SameSite=Lax, host-only (no `Domain` attribute -
+   app, API and MCP are all the same origin, so there's nothing to share it with).
+3. Every later request carries the cookie automatically since it's the same
+   origin, and Next.js server components forward it.
+4. `SessionCookieAuthenticationHandler` resolves the token against
+   `user_sessions` (HybridCache in front) and then checks `IUserStatusService`
+   for deleted, unverified and banned.
 
-**Security Features:**
-- JWT Algorithm: EdDSA (Ed25519)
-- Token Expiry: 15 minutes (JWT), 7 days (session)
-- Cookie: httpOnly, sameSite: "lax", secure (production)
-- CSRF Protection: Double-submit cookie pattern via `csrf-csrf`
+**Security notes:**
+- Sessions: 7-day sliding expiry, revoke = delete, effective on the next request.
+- Passwords: `PasswordHasher<T>` (PBKDF2-HMAC-SHA512), 10-character minimum,
+  lockout after 5 failures for 15 minutes.
+- Mailed links: 32 random bytes, stored as SHA-256, single use. 24h to confirm
+  an email, 1h to reset a password.
+- The MCP server is unaffected: it authenticates with `X-Api-Key` plus
+  `X-Impersonate-User`, and never held a JWT.
+
+---
 
 ## Type Safety and Validation
 
@@ -436,7 +453,7 @@ mcp__microsoft_docs_mcp__microsoft_code_sample_search
 **When to use:** Researching .NET 10, EF Core 10, or ASP.NET Core 10 features.
 
 ### Context7 MCP
-Use for library/framework documentation (Next.js, React, Drizzle, etc.):
+Use for library/framework documentation (Next.js, React, etc.):
 
 ```typescript
 // Resolve library ID
@@ -517,6 +534,11 @@ mcp__MCP_DOCKER__listRepositoryTags
 - Pure functions (no side effects) → core business logic
 - Side effects (I/O, state, external APIs) → isolated shell modules
 - Clear separation: core never calls shell, shell orchestrates core
+
+### Functional Paradigm
+- **Immutability**: use immutable types, avoid implicit mutation, return new instances
+- **Pure functions**: deterministic, no hidden dependencies
+- **No exotic constructs**: stick to language idioms unless monads are native
 
 ### Error Handling: Explicit Over Hidden
 - Never swallow errors silently (empty catch blocks are bugs)
@@ -622,11 +644,13 @@ mcp__MCP_DOCKER__listRepositoryTags
 - **Entities:** `backend/Mizan.Domain/Entities/`
 - **DbContext:** `backend/Mizan.Infrastructure/Data/MizanDbContext.cs`
 - **Migrations:** `backend/Mizan.Infrastructure/Migrations/`
+- **Shared wire types:** `backend/Mizan.Contracts/` - dependency-free records the
+  API binds and the MCP server (and later the Telegram bot) constructs. Add a
+  request shape here, not in a controller, when more than one service sends it.
 
 ### Frontend
 - **Pages:** `frontend/app/`
 - **Components:** `frontend/components/` (shadcn/ui)
-- **Auth Schema:** `frontend/db/schema.ts`
 - **Auth Client:** `frontend/lib/auth-client.ts`
 - **Generated Types:** `frontend/types/api.generated.ts`
 - **Generated Schemas:** `frontend/lib/validations/api.generated.ts`
@@ -636,27 +660,30 @@ mcp__MCP_DOCKER__listRepositoryTags
 
 - `README.md` - Getting started and deployment
 - `docs/ARCHITECTURE.md` - Comprehensive architecture documentation
-- `docs/API_REFERENCE.md` - Complete API endpoint documentation
+- Swagger UI (`http://localhost:5000/swagger`) - the API reference, generated from the backend
 - `docs/DEVELOPER_ONBOARDING.md` - New-contributor setup, workflows, and testing
-- `docs/DTO_CONTRACTS.md` - Contract rules between backend DTOs and generated frontend types
-- `.fpf/` - First Principles Framework knowledge base (if initialized)
+- `docs/REFOCUS.md` - Product thesis and reorganization roadmap
 
 ## Environment Variables
 
 See `.env.example` for complete list. Key variables:
 
 **Frontend:**
-- `DATABASE_URL` - PostgreSQL (for BetterAuth)
-- `BETTER_AUTH_SECRET` - JWT signing secret
 - `API_URL` - Backend URL (server-side, use Docker network name)
 - `NEXT_PUBLIC_API_URL` - Backend URL (client-side, use localhost)
 
 **Backend:**
 - `ConnectionStrings__PostgreSQL` - PostgreSQL connection
 - `ConnectionStrings__Redis` - Redis connection
-- `Jwt__JwksUrl` - JWKS endpoint from frontend
-- `Jwt__Issuer` - JWT issuer
-- `Jwt__Audience` - JWT audience
+- `App__PublicUrl` - where the web app lives; mailed links point here
+- `App__CookieDomain` - parent domain shared by app and API (empty on localhost)
+- `Smtp__*` - outbound email
+- `Ai__BaseUrl`, `Ai__ApiKey`, `Ai__Model` - any OpenAI-compatible endpoint;
+  empty disables the assistant and the API still starts
+- `Ai__GlobalDailyTokens`, `Ai__GlobalDailyCostMicros` - the circuit breaker on
+  the provider bill. Never raise these without looking at `/api/Ai/usage/global`
+- `Storage__*` - S3-compatible object storage (MinIO or Cloudflare R2)
+- `Authentication__Google__*`, `Authentication__GitHub__*` - OAuth
 
 ## Critical Reminders
 
@@ -669,6 +696,10 @@ See `.env.example` for complete list. Key variables:
 7. **Be Direct** - "No" is a complete sentence. Disagree when you should.
 8. **Always run `bun run codegen`** after backend API/DTO changes
 9. **Use Docker Compose** for testing to ensure proper isolation
-10. **Schema separation is intentional** - don't try to unify Drizzle and EF Core
+10. **One schema, owned by EF Core** - the frontend has no database access
 11. **Case conversion is automatic** - don't manually convert PascalCase/camelCase
+12. **Never call an AI provider outside `IAiQuotaService`** - reserve, call,
+    settle in a `finally`. An unmetered call is a bill nobody sees coming
+13. **Never read personal data for the AI without `IDataAccessPolicy`** - ask it
+    which axes you may use and take only those; do not fetch everything and filter
 12. **Use MCP tools** - Microsoft Docs for .NET, Context7 for npm packages, Next.js DevTools for debugging
