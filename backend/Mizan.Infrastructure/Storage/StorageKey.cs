@@ -1,3 +1,4 @@
+using System.Globalization;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Infrastructure.Storage;
@@ -19,7 +20,14 @@ public static class StorageKey
     public static string Build(StorageFolder folder, string fileName, DateTime? nowUtc = null)
     {
         var now = nowUtc ?? DateTime.UtcNow;
-        return $"{Prefixes[folder]}/{now:yyyy/MM}/{Guid.CreateVersion7():N}{Extension(fileName)}";
+
+        // The slashes are quoted and the culture is fixed: in a format string
+        // "/" means "the current culture's date separator", so an unquoted
+        // yyyy/MM silently becomes 2026-03 on a host whose locale says so, and
+        // the key layout would then depend on where the server happens to run.
+        var month = now.ToString("yyyy'/'MM", CultureInfo.InvariantCulture);
+
+        return $"{Prefixes[folder]}/{month}/{Guid.CreateVersion7():N}{Extension(fileName)}";
     }
 
     /// <summary>True for a key this application could have written.</summary>
