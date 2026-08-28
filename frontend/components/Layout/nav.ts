@@ -60,6 +60,29 @@ export const LOG_ACTIONS: NavItem[] = [
 ];
 
 /**
+ * Every section under /admin. Single source of truth: the persistent tab
+ * strip (AdminTabs) renders these directly, and the Admin group below reuses
+ * the same list for /more. Six of these - moderation, achievements,
+ * relationships, audit-logs, ai and jobs - had no link into them anywhere
+ * before the tab strip existed, reachable only by typing the URL.
+ */
+export const ADMIN_TABS: NavItem[] = [
+	{ href: "/admin", label: "Overview", icon: "shieldCheck" },
+	{ href: "/admin/users", label: "Users", icon: "users" },
+	{ href: "/admin/ingredients", label: "Ingredients", icon: "search" },
+	{ href: "/admin/recipes", label: "Recipes", icon: "cookingPot" },
+	{ href: "/admin/exercises", label: "Exercises", icon: "zap" },
+	{ href: "/admin/moderation", label: "Moderation", icon: "badgeAlert" },
+	{ href: "/admin/achievements", label: "Achievements", icon: "trendingUp" },
+	{ href: "/admin/relationships", label: "Relationships", icon: "users" },
+	{ href: "/admin/audit-logs", label: "Audit log", icon: "shieldCheck" },
+	{ href: "/admin/ai", label: "Assistant", icon: "bot" },
+	{ href: "/admin/households", label: "Households", icon: "home" },
+	{ href: "/admin/sessions", label: "Sessions", icon: "lock" },
+	{ href: "/admin/jobs", label: "Jobs", icon: "activity" },
+];
+
+/**
  * Tier 3. Everything the product does that is not the spine.
  *
  * This list is also the fix for the six real orphans found in phase 1:
@@ -122,21 +145,7 @@ export const MORE_GROUPS: NavGroup[] = [
 	},
 	{
 		label: "Admin",
-		items: [
-			{ href: "/admin", label: "Overview", icon: "shieldCheck", adminOnly: true },
-			{ href: "/admin/users", label: "Users", icon: "users", adminOnly: true },
-			{ href: "/admin/ingredients", label: "Ingredients", icon: "search", adminOnly: true },
-			{ href: "/admin/recipes", label: "Recipes", icon: "cookingPot", adminOnly: true },
-			{ href: "/admin/exercises", label: "Exercises", icon: "zap", adminOnly: true },
-			{ href: "/admin/moderation", label: "Moderation", icon: "badgeAlert", adminOnly: true },
-			{ href: "/admin/achievements", label: "Achievements", icon: "trendingUp", adminOnly: true },
-			{ href: "/admin/relationships", label: "Relationships", icon: "users", adminOnly: true },
-			{ href: "/admin/audit-logs", label: "Audit log", icon: "shieldCheck", adminOnly: true },
-			{ href: "/admin/ai", label: "Assistant", icon: "bot", adminOnly: true },
-			{ href: "/admin/households", label: "Households", icon: "home", adminOnly: true },
-			{ href: "/admin/sessions", label: "Sessions", icon: "lock", adminOnly: true },
-			{ href: "/admin/jobs", label: "Jobs", icon: "activity", adminOnly: true },
-		],
+		items: ADMIN_TABS.map((item) => ({ ...item, adminOnly: true })),
 	},
 ];
 
