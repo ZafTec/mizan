@@ -21,8 +21,6 @@ import {
 } from "recharts";
 import { GoalData } from "@/types/goal";
 import Loading from "@/components/Loading";
-import { useSubscription } from "@/lib/hooks/useSubscription";
-import { ProUpsell } from "@/components/billing/ProUpsell";
 
 const MACRO_COLORS = {
 	calories: "#D4654A", // burnt peach
@@ -47,15 +45,8 @@ export default function GoalDashboard() {
 	const [data, setData] = useState<GoalData | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [days, setDays] = useState(7);
-	const { isPro, loading: subLoading } = useSubscription();
 
 	useEffect(() => {
-		if (subLoading) return;
-		if (!isPro) {
-			setLoading(false);
-			return;
-		}
-
 		async function fetchData() {
 			try {
 				const result = await clientApi<GoalData>(`/api/Goals/progress?days=${days}`);
@@ -67,24 +58,12 @@ export default function GoalDashboard() {
 			}
 		}
 		fetchData();
-	}, [days, isPro, subLoading]);
+	}, [days]);
 
-	if (loading || subLoading) {
+	if (loading) {
 		return (
 			<div className="flex items-center justify-center min-h-[60vh]">
 				<Loading />
-			</div>
-		);
-	}
-
-	if (!isPro) {
-		return (
-			<div className="mx-auto max-w-2xl">
-				<ProUpsell
-					icon="chartLine"
-					title="Trend charts are a Pro feature"
-					message="Log progress for free, then upgrade to Pro to see calorie trends, macro breakdowns, and your progress history over time."
-				/>
 			</div>
 		);
 	}
