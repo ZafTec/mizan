@@ -27,6 +27,8 @@ Photo confirmation logs the combined nutrition totals; the Telegram card has no 
 
 Set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `MCP_SERVICE_KEY`, and `PUBLIC_APP_URL` in the Compose environment. Keep the bot username consistent with the main API's `Telegram:BotUsername`, which builds account-link URLs.
 
+The production Compose file enables the optional bot with `COMPOSE_PROFILES=telegram`. It uses `Mcp__ServiceApiKey` for internal API authentication and `App__PublicUrl` (falling back to `PUBLIC_APP_URL`) for public links. The backend receives only the bot username through its Telegram configuration; the bot service receives the token and webhook secret. The image build workflow includes Telegram, and a manual run builds only that image from the default branch.
+
 `TELEGRAM_USE_WEBHOOK=false` selects local long polling without a public hostname or TLS. Startup removes any previous webhook before polling. Commands are registered automatically in either mode.
 
 For production webhooks:
@@ -35,7 +37,7 @@ For production webhooks:
 - Make `PUBLIC_APP_URL` publicly reachable over HTTPS.
 - Route `/telegram/webhook` to the Telegram container on the app's public host. See [request boundaries](ARCHITECTURE.md#request-boundaries).
 
-Startup registers `{PublicUrl}/telegram/webhook` and disables polling. A missing webhook secret prevents registration. Requests must present the matching `X-Telegram-Bot-Api-Secret-Token`; comparison is constant-time and invalid requests receive 404. Updates are acknowledged immediately and processed in the background. Redeployment re-registers the webhook; no manual Telegram API call is needed.
+Startup requests registration of `{PublicUrl}/telegram/webhook` and disables polling. A missing webhook secret prevents registration. Verify Telegram's `getWebhookInfo` after setup; the service health check alone does not prove successful registration. Requests must present the matching `X-Telegram-Bot-Api-Secret-Token`; comparison is constant-time and invalid requests receive 404. Updates are acknowledged immediately and processed in the background. Redeployment requests webhook registration again.
 
 `GET /health` on the service returns `{ status, configured, mode }`, with mode `webhook` or `long-poll`.
 

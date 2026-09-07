@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text.Json;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 
@@ -24,12 +26,15 @@ internal static class AuthEmailDelivery
         EmailMessage message,
         Guid userId,
         string purpose,
-        CancellationToken cancellationToken) =>
-        outbox.EnqueueAsync(
+        CancellationToken cancellationToken)
+    {
+        // Deduplicate the same delivery, not every email with the same subject.
+        // A newly issued token changes the message and must always be queued.
+        var messageHash = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(message)));
+        return outbox.EnqueueAsync(
             OutboxJobTypes.Email,
             message,
-            // One live token per purpose per user, so a double-submitted
-            // "resend" does not send two.
-            dedupeKey: $"auth:{purpose}:{userId}:{message.Subject.GetHashCode():X}",
+            dedupeKey: $"auth:{purpose}:{userId}:{messageHash}",
             cancellationToken);
+    }
 }

@@ -63,6 +63,9 @@ services:
       Smtp__Password: ${SMTP_PASS:-}
       Smtp__FromAddress: ${SMTP_FROM_ADDRESS:-${SMTP_FROM:-noreply@mizan.local}}
       Smtp__FromName: ${SMTP_FROM_NAME:-Mizan}
+      Smtp__Security: ${Smtp__Security:-Auto}
+      Smtp__LocalDomain: ${Smtp__LocalDomain:-}
+      Telegram__BotUsername: ${TELEGRAM_BOT_USERNAME:-}
       Authentication__Google__ClientId: ${GOOGLE_CLIENT_ID:-}
       Authentication__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
       Authentication__GitHub__ClientId: ${GITHUB_CLIENT_ID:-}
@@ -160,6 +163,39 @@ services:
           memory: 384M
         reservations:
           memory: 256M
+
+  mizan-telegram:
+    image: zaftec/mizan-telegram:latest
+    container_name: mizan-telegram
+    profiles: [telegram]
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:5002
+      TelegramBot__BotToken: ${TELEGRAM_BOT_TOKEN:-}
+      TelegramBot__UseWebhook: ${TELEGRAM_USE_WEBHOOK:-false}
+      TelegramBot__WebhookSecret: ${TELEGRAM_WEBHOOK_SECRET:-}
+      TelegramBot__ApiUrl: http://mizan-backend:8080
+      TelegramBot__ServiceApiKey: ${Mcp__ServiceApiKey:?Mcp__ServiceApiKey is required}
+      TelegramBot__PublicUrl: ${App__PublicUrl:-${PUBLIC_APP_URL:-http://localhost:3000}}
+    depends_on:
+      mizan-backend:
+        condition: service_healthy
+    networks:
+      - proxy-net
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://127.0.0.1:5002/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          memory: 64M
 
 networks:
   proxy-net:

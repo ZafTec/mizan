@@ -1,6 +1,7 @@
 name: Deploy to Docker Hub
 
 on:
+  workflow_dispatch:
   push:
     branches: [master]
     paths-ignore:
@@ -12,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: docker-release-${{ github.ref }}
+  group: docker-release-${{ github.event_name == 'workflow_dispatch' && format('refs/heads/{0}', github.event.repository.default_branch) || github.ref }}
   cancel-in-progress: false
 
 env:
@@ -21,10 +22,12 @@ env:
   FRONTEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/mizan-frontend
   BACKEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/mizan-backend
   MCP_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/mizan-mcp
+  TELEGRAM_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/mizan-telegram
 
 jobs:
   build-and-push-frontend:
     name: Build & Push Frontend
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
       digest: ${{ steps.build.outputs.digest }}
@@ -87,6 +90,7 @@ jobs:
 
   build-and-push-backend:
     name: Build & Push Backend
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
       digest: ${{ steps.build.outputs.digest }}
@@ -126,6 +130,7 @@ jobs:
 
   build-and-push-mcp:
     name: Build & Push MCP
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
       digest: ${{ steps.build.outputs.digest }}
@@ -163,16 +168,70 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  build-and-push-telegram:
+    name: Build & Push Telegram
+    runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout application code
+        uses: actions/checkout@v4
+        with:
+          # Manual runs only publish application code from the default branch.
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.repository.default_branch || github.sha }}
+
+      - name: Resolve build revision
+        id: revision
+        shell: bash
+        run: |
+          SHA=$(git rev-parse HEAD)
+          echo "sha=${SHA}" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${SHA::8}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.TELEGRAM_IMAGE }}
+          tags: |
+            type=raw,value=${{ steps.revision.outputs.short_sha }}
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.revision=${{ steps.revision.outputs.sha }}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile.telegram
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=telegram
+          cache-to: type=gha,mode=max,scope=telegram
+
   create-release:
     name: Release Please
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    needs: [build-and-push-frontend, build-and-push-backend, build-and-push-mcp]
+    needs: [build-and-push-frontend, build-and-push-backend, build-and-push-mcp, build-and-push-telegram]
     permissions:
       contents: read
     env:
       FRONTEND_DIGEST: ${{ needs.build-and-push-frontend.outputs.digest }}
       BACKEND_DIGEST: ${{ needs.build-and-push-backend.outputs.digest }}
       MCP_DIGEST: ${{ needs.build-and-push-mcp.outputs.digest }}
+      TELEGRAM_DIGEST: ${{ needs.build-and-push-telegram.outputs.digest }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -281,6 +340,7 @@ jobs:
           check_image "$FRONTEND_IMAGE" "$FRONTEND_DIGEST"
           check_image "$BACKEND_IMAGE" "$BACKEND_DIGEST"
           check_image "$MCP_IMAGE" "$MCP_DIGEST"
+          check_image "$TELEGRAM_IMAGE" "$TELEGRAM_DIGEST"
 
           docker buildx imagetools create --prefer-index=false \
             --tag "${FRONTEND_IMAGE}:${RELEASE_TAG}" --tag "${FRONTEND_IMAGE}:${RELEASE_VERSION}" \
@@ -291,6 +351,9 @@ jobs:
           docker buildx imagetools create --prefer-index=false \
             --tag "${MCP_IMAGE}:${RELEASE_TAG}" --tag "${MCP_IMAGE}:${RELEASE_VERSION}" \
             "${MCP_IMAGE}@${MCP_DIGEST}"
+          docker buildx imagetools create --prefer-index=false \
+            --tag "${TELEGRAM_IMAGE}:${RELEASE_TAG}" --tag "${TELEGRAM_IMAGE}:${RELEASE_VERSION}" \
+            "${TELEGRAM_IMAGE}@${TELEGRAM_DIGEST}"
 
       - name: Append deployment instructions to release notes
         if: steps.version.outputs.publish == 'true'
@@ -298,6 +361,7 @@ jobs:
           FRONTEND_IMAGE: ${{ env.FRONTEND_IMAGE }}
           BACKEND_IMAGE: ${{ env.BACKEND_IMAGE }}
           MCP_IMAGE: ${{ env.MCP_IMAGE }}
+          TELEGRAM_IMAGE: ${{ env.TELEGRAM_IMAGE }}
           ACTOR: ${{ github.actor }}
           SHA: ${{ github.sha }}
           REF: ${{ github.ref_name }}
@@ -315,7 +379,7 @@ jobs:
 
           ## Deployment Summary
 
-          All three services built and pushed to Docker Hub successfully. Their exact build digests are published as ${RELEASE_TAG} and ${RELEASE_VERSION}.
+          All four services built and pushed to Docker Hub successfully. Their exact build digests are published as ${RELEASE_TAG} and ${RELEASE_VERSION}.
 
           | Field       | Value |
           |-------------|-------|
@@ -335,6 +399,7 @@ jobs:
           docker pull ${FRONTEND_IMAGE}:${RELEASE_TAG}
           docker pull ${BACKEND_IMAGE}:${RELEASE_TAG}
           docker pull ${MCP_IMAGE}:${RELEASE_TAG}
+          docker pull ${TELEGRAM_IMAGE}:${RELEASE_TAG}
           \`\`\`
 
           The \`${SHORT_SHA}\` commit tag and \`latest\` are also available. Versioned tags are preserved on workflow reruns.
@@ -344,6 +409,7 @@ jobs:
           | Frontend | \`${FRONTEND_IMAGE}\` | \`${FRONTEND_DIGEST}\` |
           | Backend  | \`${BACKEND_IMAGE}\`  | \`${BACKEND_DIGEST}\` |
           | MCP      | \`${MCP_IMAGE}\`      | \`${MCP_DIGEST}\` |
+          | Telegram | \`${TELEGRAM_IMAGE}\` | \`${TELEGRAM_DIGEST}\` |
 
           ---
 
@@ -354,7 +420,7 @@ jobs:
           SSH into your server and run:
 
           \`\`\`bash
-          cd /opt/mizan
+          cd /path/to/your/deployment
           deploy
           \`\`\`
 
