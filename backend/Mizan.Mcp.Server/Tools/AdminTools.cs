@@ -10,7 +10,7 @@ namespace Mizan.Mcp.Server.Tools;
 ///
 /// Everything here is behind the admin API key. The rule for what belongs is
 /// the same one the console follows: operational access, not super-user access
-/// over personal data (docs/REFOCUS.md §11). So an admin can end a
+/// over personal data (docs/AI.md#consent). So an admin can end a
 /// trainer-client relationship but not edit which axes the client shares, and
 /// can read the audit log but not write to it.
 /// </summary>
@@ -137,7 +137,7 @@ public sealed class AdminTools
                 emailVerified,
                 // Deliberately not exposed. Setting someone's password from a
                 // tool call is the kind of thing that wants a human, a browser
-                // and a second look (docs/REFOCUS.md §11).
+                // and a second look (docs/AI.md#consent).
                 newPassword = (string?)null,
             },
             ct);

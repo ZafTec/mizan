@@ -64,7 +64,7 @@ public sealed class UpdateHandler
         if (message.From is null || message.From.IsBot) return;
 
         // Personal nutrition data in a group is a leak with extra steps
-        // (docs/REFOCUS.md §13). Refused outright, and said out loud so it
+        // (docs/TELEGRAM.md). Refused outright, and said out loud so it
         // does not look broken.
         if (message.Chat.Type != "private")
         {

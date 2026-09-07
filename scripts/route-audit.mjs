@@ -16,9 +16,29 @@ const APP = "frontend/app";
 const SCAN = ["frontend/app", "frontend/components", "frontend/lib"];
 const STUB_LOC = 30;
 
+// Reviewed entry points, not discoveries made by the text scan. Keep aliases
+// visible in the inventory without mistaking an intentionally unlinked old URL
+// or an email/share destination for an abandoned feature.
+const COMPATIBILITY_ROUTES = new Set([
+  "/dashboard",
+  "/goal/dashboard",
+  "/goal/progress",
+  "/meals",
+  "/meals/add",
+  "/meals/add/[recipeId]",
+  "/recipes/add",
+  "/recipes/[recipeId]/edit",
+  "/recipes/favorites",
+]);
+const EXTERNAL_ENTRY_ROUTES = new Set([
+  "/reset-password",
+  "/verifyemail",
+  "/u/share",
+]);
+
 const walk = (dir, out = []) => {
   for (const e of readdirSync(dir)) {
-    const p = join(dir, e);
+    const p = join(dir, e).replaceAll("\\", "/");
     if (statSync(p).isDirectory()) walk(p, out);
     else out.push(p);
   }
@@ -28,12 +48,15 @@ const walk = (dir, out = []) => {
 const routeOf = (file) =>
   "/" +
   relative(APP, file)
+    .replaceAll("\\", "/")
     .replace(/\/?page\.tsx$/, "")
     .split("/")
     .filter((s) => s && !/^\(.+\)$/.test(s))
     .join("/");
 
-const allFiles = SCAN.flatMap((d) => walk(d));
+const allFiles = SCAN.flatMap((d) => walk(d)).filter(
+  (file) => !/(?:^|\/)__tests__\/|\.(?:test|spec)\.[cm]?[jt]sx?$/.test(file)
+);
 const pages = walk(APP).filter((f) => f.endsWith("page.tsx"));
 
 // Every href/router target mentioned anywhere in the frontend source.
@@ -70,7 +93,7 @@ const isLinked = (route) => {
 };
 
 // Tier 1 only. The spine is the permanent nav; MORE_GROUPS is tier 3 and is
-// deliberately not counted here - see docs/REFOCUS.md §3.
+// deliberately not counted here - see docs/ARCHITECTURE.md#navigation-and-logging.
 const NAV_FILE = "frontend/components/Layout/nav.ts";
 const navText = source.get(NAV_FILE) ?? "";
 const spineBlock = navText.match(/export const SPINE[^=]*=\s*\[([\s\S]*?)\n\];/);
@@ -120,14 +143,19 @@ const rows = pages.map((file) => {
   ].sort();
 
   const flags = [];
-  if (!isLinked(route)) flags.push("ORPHAN");
+  const linked = isLinked(route);
+  const compatibility = COMPATIBILITY_ROUTES.has(route);
+  const external = EXTERNAL_ENTRY_ROUTES.has(route);
+  if (compatibility) flags.push("redirect");
+  if (external) flags.push("external-entry");
+  if (!linked && !compatibility && !external) flags.push("ORPHAN");
   if (navHrefs.has(route)) flags.push("spine");
   if (loc <= STUB_LOC && featureLoc + importedLoc <= STUB_LOC) flags.push("STUB");
   if (/coming soon|not implemented|\bTODO\b|\bFIXME\b/i.test(body))
     flags.push("TODO");
   if (endpoints.length === 0) flags.push("no-fetch");
 
-  return { route, file, loc, featureLoc, endpoints, flags };
+  return { route, file, loc, featureLoc, linked, endpoints, flags };
 });
 
 rows.sort((a, b) => a.route.localeCompare(b.route));
@@ -148,7 +176,10 @@ if (process.argv.includes("--json")) {
   }
   const orphans = rows.filter((r) => r.flags.includes("ORPHAN"));
   console.log(
-    `\n${rows.length} routes · ${navHrefs.size} in spine · ${orphans.length} orphaned · ` +
+    `\n${rows.length} routes · ${navHrefs.size} in spine · ` +
+      `${rows.filter((r) => r.flags.includes("redirect")).length} compatibility redirects · ` +
+      `${rows.filter((r) => r.flags.includes("external-entry")).length} external entries · ` +
+      `${rows.filter((r) => !r.linked).length} without a static inbound target · ${orphans.length} orphan candidates · ` +
       `${rows.filter((r) => r.flags.includes("STUB")).length} stubs`
   );
 }

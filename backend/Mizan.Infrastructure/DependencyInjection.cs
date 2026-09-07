@@ -55,7 +55,7 @@ public static class DependencyInjection
         services.AddScoped<IAchievementEvaluator, AchievementEvaluator>();
         services.AddScoped<INotificationWriter, NotificationWriter>();
 
-        // Identity - the backend owns auth end to end since v2 (docs/REFOCUS.md §6)
+        // Identity - the backend owns auth end to end since v2 (docs/ARCHITECTURE.md#identity)
         services.Configure<AppOptions>(configuration.GetSection(AppOptions.SectionName));
         services.Configure<TelegramOptions>(configuration.GetSection(TelegramOptions.SectionName));
         services.AddSingleton<ITelegramSettings, TelegramSettings>();
@@ -67,7 +67,7 @@ public static class DependencyInjection
         services.AddScoped<IEmailSender, SmtpEmailSender>();
 
         // Object storage - one S3 client covers MinIO and Cloudflare R2
-        // (docs/REFOCUS.md §7). Unconfigured is a supported state: the API
+        // (docs/ARCHITECTURE.md#storage-caching-and-jobs). Unconfigured is a supported state: the API
         // starts and only uploads refuse.
         services.Configure<StorageOptions>(configuration.GetSection(StorageOptions.SectionName));
         if (string.IsNullOrWhiteSpace(configuration[$"{StorageOptions.SectionName}:ServiceUrl"]))
@@ -81,7 +81,7 @@ public static class DependencyInjection
 
         // AI platform. Quota and consent are registered with the provider, not
         // after it: an unmetered or unconsented call must not be constructible
-        // (docs/REFOCUS.md §10).
+        // (docs/AI.md).
         services.Configure<AiOptions>(configuration.GetSection(AiOptions.SectionName));
         services.AddHttpClient(OpenAiCompatibleProvider.HttpClientName);
         services.AddSingleton<IAiProvider, OpenAiCompatibleProvider>();
@@ -95,7 +95,7 @@ public static class DependencyInjection
         services.AddScoped<IAiToolRunner, AiToolRunner>();
 
         // Outbox: reliable work that must not run inside the request that
-        // asked for it (docs/REFOCUS.md §13b).
+        // asked for it (docs/ARCHITECTURE.md#storage-caching-and-jobs).
         services.Configure<OutboxOptions>(configuration.GetSection(OutboxOptions.SectionName));
         services.AddScoped<IOutbox, Outbox.Outbox>();
         services.AddScoped<IOutboxHandler, EmailJobHandler>();

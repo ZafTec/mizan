@@ -6,7 +6,7 @@ import { ProWall } from "@/components/billing/ProWall";
 /**
  * The free plan allows one meal plan; the backend enforces it in
  * CreateMealPlanCommand. This puts the same rule in front of the button so the
- * user meets it before planning a week of meals, not after - docs/REFOCUS.md §5.
+ * user meets it before planning a week of meals, not after - docs/ARCHITECTURE.md#billing.
  */
 export default function CreateMealPlanAction({ atFreeCap }: { atFreeCap: boolean }) {
 	const create = (

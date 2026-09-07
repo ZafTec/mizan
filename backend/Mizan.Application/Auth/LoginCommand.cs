@@ -58,7 +58,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResult>
             throw new AccountLockedException(until);
         }
 
-        if (!_passwordHasher.Verify(user.PasswordHash, request.Password))
+        if (!_passwordHasher.Verify(user.PasswordHash, request.Password, out var needsRehash))
         {
             user.AccessFailedCount++;
             if (user.AccessFailedCount >= MaxFailedAttempts)
@@ -81,7 +81,12 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResult>
             throw new EmailNotVerifiedException();
         }
 
-        if (user.AccessFailedCount != 0 || user.LockoutEnd is not null)
+        if (needsRehash)
+        {
+            user.PasswordHash = _passwordHasher.Hash(request.Password);
+        }
+
+        if (needsRehash || user.AccessFailedCount != 0 || user.LockoutEnd is not null)
         {
             user.AccessFailedCount = 0;
             user.LockoutEnd = null;

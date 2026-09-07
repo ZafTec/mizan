@@ -480,6 +480,9 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.FoodId).HasColumnName("food_id");
             entity.Property(e => e.RecipeId).HasColumnName("recipe_id");
+            entity.Property(e => e.GroupId).HasColumnName("group_id");
+            entity.Property(e => e.GroupName).HasColumnName("group_name").HasMaxLength(255);
+            entity.Property(e => e.AmountGrams).HasColumnName("amount_grams").HasPrecision(10, 4);
             entity.Property(e => e.EntryDate).HasColumnName("entry_date").IsRequired();
             entity.Property(e => e.MealType).HasColumnName("meal_type").HasMaxLength(20);
             entity.Property(e => e.Servings).HasColumnName("servings").HasPrecision(6, 2).HasDefaultValue(1m);

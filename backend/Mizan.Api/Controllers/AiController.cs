@@ -12,7 +12,7 @@ namespace Mizan.Api.Controllers;
 /// <summary>
 /// What the user controls about the assistant: what it may see, and what they
 /// have spent. Both live here rather than under Nutrition, because neither is
-/// about food - see docs/REFOCUS.md §10 and §11.
+/// about food - see docs/AI.md.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -58,7 +58,7 @@ public class AiController : ControllerBase
     /// One turn. Not Pro-gated: free gets a small daily allowance and Pro a
     /// working one, and IAiQuotaService is what decides - a policy attribute
     /// here would be a second, drifting copy of the gating table
-    /// (docs/REFOCUS.md §10).
+    /// (docs/AI.md).
     /// </summary>
     [HttpPost("chat")]
     public async Task<ActionResult<AiChatTurnDto>> Chat([FromBody] SendAiChatMessageCommand command)
@@ -91,7 +91,7 @@ public class AiController : ControllerBase
         await image.CopyToAsync(buffer, cancellationToken);
         var bytes = buffer.ToArray();
 
-        // The bytes decide, not the Content-Type header (docs/REFOCUS.md §7).
+        // The bytes decide, not the Content-Type header (docs/ARCHITECTURE.md#storage-caching-and-jobs).
         var contentType = ImageFormat.Detect(
             bytes.AsSpan(0, Math.Min(ImageFormat.HeaderBytes, bytes.Length)));
 
@@ -172,7 +172,7 @@ public class AiController : ControllerBase
 
     /// <summary>
     /// A coach asking about one client. Read-only over the client's log, and
-    /// billed to the coach (docs/REFOCUS.md §11).
+    /// billed to the coach (docs/AI.md#consent).
     /// </summary>
     [HttpPost("clients/{clientId:guid}/ask")]
     [Authorize(Policy = "RequireTrainer")]

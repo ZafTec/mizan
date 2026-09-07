@@ -28,7 +28,9 @@ public class BodyMeasurementsController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] string? sortBy = null,
-        [FromQuery] string? sortOrder = null)
+        [FromQuery] string? sortOrder = null,
+        [FromQuery] DateOnly? from = null,
+        [FromQuery] DateOnly? to = null)
     {
         if (!_currentUser.UserId.HasValue)
         {
@@ -41,7 +43,9 @@ public class BodyMeasurementsController : ControllerBase
             Page = page,
             PageSize = pageSize,
             SortBy = sortBy,
-            SortOrder = sortOrder
+            SortOrder = sortOrder,
+            From = from,
+            To = to
         });
         return Ok(result);
     }

@@ -2,7 +2,7 @@ namespace Mizan.Infrastructure.Data.Seed;
 
 /// <summary>
 /// The synthetic eval suite, shipped with the schema so a fresh database can
-/// gate a publish on day one (docs/REFOCUS.md §12).
+/// gate a publish on day one (docs/AI.md).
 ///
 /// Every input here is invented. Tuning a prompt against real logs is how an
 /// admin's operational access quietly turns into read access over a user's

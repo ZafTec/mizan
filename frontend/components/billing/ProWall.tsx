@@ -17,7 +17,7 @@ export interface ProWallConfig {
 }
 
 /**
- * The in-context Pro wall - docs/REFOCUS.md §3 tier 2 and §5.
+ * The in-context Pro wall - docs/ARCHITECTURE.md#billing.
  *
  * Gating happens at the moment of the attempt, never as a standing banner. Wrap
  * the handler, render the dialog:

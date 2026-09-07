@@ -81,11 +81,12 @@ public class GetRecipeByIdQueryHandler : IRequestHandler<GetRecipeByIdQuery, Rec
             return null;
 
         // Check access: must be owner or recipe must be public
-        if (!recipe.IsPublic && recipe.UserId != _currentUser.UserId)
+        if (!recipe.IsPublic && (!_currentUser.UserId.HasValue || recipe.UserId != _currentUser.UserId))
             return null;
 
         // Summed from the ingredients; recipe_nutrition no longer exists.
-        var totals = await RecipeNutritionLookup.ForRecipeAsync(_context, recipe.Id, cancellationToken);
+        var totalsById = await RecipeNutritionLookup.ForRecipesAsync(_context, [recipe.Id], cancellationToken);
+        var hasNutrition = totalsById.TryGetValue(recipe.Id, out var totals);
 
         return new RecipeDetailDto
         {
@@ -97,9 +98,9 @@ public class GetRecipeByIdQueryHandler : IRequestHandler<GetRecipeByIdQuery, Rec
             CookTimeMinutes = recipe.CookTimeMinutes,
             ImageUrl = recipe.ImageUrl,
             IsPublic = recipe.IsPublic,
-            IsOwner = recipe.UserId == _currentUser.UserId,
+            IsOwner = _currentUser.UserId.HasValue && recipe.UserId == _currentUser.UserId,
             IsFavorited = _currentUser.UserId.HasValue && await _context.FavoriteRecipes.AnyAsync(f => f.UserId == _currentUser.UserId.Value && f.RecipeId == recipe.Id, cancellationToken),
-            Nutrition = new RecipeNutritionDto
+            Nutrition = hasNutrition ? new RecipeNutritionDto
             {
                 CaloriesPerServing = totals.Calories,
                 ProteinGrams = totals.ProteinGrams,
@@ -107,7 +108,7 @@ public class GetRecipeByIdQueryHandler : IRequestHandler<GetRecipeByIdQuery, Rec
                 FatGrams = totals.FatGrams,
                 FiberGrams = totals.FiberGrams,
                 ProteinCalorieRatio = totals.ProteinCalorieRatio
-            },
+            } : null,
             Ingredients = recipe.Ingredients.OrderBy(i => i.SortOrder).Select(i => new RecipeIngredientDto
             {
                 FoodId = i.FoodId,

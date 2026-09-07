@@ -8,7 +8,7 @@ namespace Mizan.Domain.Entities;
 ///
 /// Consent here is withholding, not instructing - a disabled axis is never
 /// given to the context builder, rather than given and accompanied by a
-/// request not to mention it. See docs/REFOCUS.md §11.
+/// request not to mention it. See docs/AI.md#consent.
 /// </summary>
 public class UserAiConsent
 {

@@ -120,7 +120,7 @@ public class GetExercisesQueryHandler : IRequestHandler<GetExercisesQuery, GetEx
                 ImageUrl = e.ImageUrl,
                 IsCustom = e.IsCustom,
                 IsApproved = e.IsApproved,
-                IsOwner = e.CreatedByUserId == _currentUser.UserId
+                IsOwner = _currentUser.UserId.HasValue && e.CreatedByUserId == _currentUser.UserId
             })
             .ToListAsync(cancellationToken);
 

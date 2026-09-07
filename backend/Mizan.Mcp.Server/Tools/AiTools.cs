@@ -10,7 +10,7 @@ namespace Mizan.Mcp.Server.Tools;
 /// Every one of these goes through the same API the website does, so the same
 /// two rules apply without being restated here: no provider call outside
 /// <c>IAiQuotaService</c>, and no personal data without
-/// <c>IDataAccessPolicy</c> (docs/REFOCUS.md §10, §11). Consent is default-off
+/// <c>IDataAccessPolicy</c> (docs/AI.md). Consent is default-off
 /// and the user owns it - <c>set_ai_consent</c> is the user acting on their own
 /// account, which is the only principal an MCP token has.
 /// </summary>

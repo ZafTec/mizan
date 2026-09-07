@@ -4,7 +4,7 @@ import { getMyTrainer } from "@/data/trainer";
 import { Icon } from "@/components/ui/icon";
 
 /**
- * Tier 2 - docs/REFOCUS.md §3. Absent until a coaching relationship exists.
+ * Tier 2 - docs/ARCHITECTURE.md#navigation-and-logging. Absent until a coaching relationship exists.
  *
  * It states what the trainer can see, because the client controls those grants
  * (§11) and a consent decision the user cannot see is not a consent decision.

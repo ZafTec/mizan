@@ -11,7 +11,7 @@ public enum AiEvalOutcome
 /// A fixture a draft is run against before it can be published.
 ///
 /// Inputs are synthetic, always. An admin has operational access, not
-/// super-user access over personal data (docs/REFOCUS.md §11), and tuning a
+/// super-user access over personal data (docs/AI.md#consent), and tuning a
 /// prompt against real logs is exactly how that line gets crossed by accident.
 /// There is no code path here that reads a user's data.
 /// </summary>

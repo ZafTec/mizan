@@ -11,7 +11,12 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: docker-release-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
+  DOCKER_METADATA_SHORT_SHA_LENGTH: 8
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   FRONTEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/mizan-frontend
   BACKEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/mizan-backend
@@ -50,8 +55,7 @@ jobs:
           echo "Checking build-time inputs..."
           echo "NEXT_PUBLIC_APP_URL is set: ${{ vars.NEXT_PUBLIC_APP_URL != '' }}"
           echo "NEXT_PUBLIC_API_URL is set: ${{ vars.NEXT_PUBLIC_API_URL != '' }}"
-          echo "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME is set: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME != '' }}"
-          echo "NEXT_PUBLIC_CLOUDINARY_API_KEY is set: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_API_KEY != '' }}"
+          echo "NEXT_PUBLIC_MEDIA_URL is set: ${{ vars.NEXT_PUBLIC_MEDIA_URL != '' }}"
           echo "NEXT_PUBLIC_PADDLE_ENV is set: ${{ vars.NEXT_PUBLIC_PADDLE_ENV != '' }}"
           echo "NEXT_PUBLIC_PADDLE_CLIENT_TOKEN is set: ${{ secrets.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN != '' }}"
           echo "NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY is set: ${{ vars.NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY != '' }}"
@@ -71,8 +75,8 @@ jobs:
           build-args: |
             NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL }}
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
-            NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
-            NEXT_PUBLIC_CLOUDINARY_API_KEY=${{ secrets.NEXT_PUBLIC_CLOUDINARY_API_KEY }}
+            NEXT_PUBLIC_MCP_URL=${{ vars.NEXT_PUBLIC_MCP_URL }}
+            NEXT_PUBLIC_MEDIA_URL=${{ vars.NEXT_PUBLIC_MEDIA_URL }}
             NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
             NEXT_PUBLIC_PADDLE_ENV=${{ vars.NEXT_PUBLIC_PADDLE_ENV }}
             NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=${{ secrets.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN }}
@@ -227,15 +231,14 @@ jobs:
 
           ## Deploying to Production
 
+          The prepared production Compose upgrade service takes a PostgreSQL backup and applies the database and media cutover before the app starts. Wait for all three image builds to finish successfully.
+
           SSH into your server and run:
 
           \`\`\`bash
-          docker-compose pull
-          docker-compose up -d --remove-orphans
-          docker image prune -f
+          cd /opt/mizan
+          deploy
           \`\`\`
-
-          > The backend applies any pending EF Core database migrations automatically on startup.
 
           ---
 

@@ -14,7 +14,7 @@ public record HardConstraint(string Title, string Detail, string EnforcedBy);
 ///
 /// The console renders this list read-only next to the editable prompt.
 /// Invisible constraints get worked around by people who do not know they
-/// exist (docs/REFOCUS.md §12).
+/// exist (docs/AI.md).
 /// </summary>
 public static class AiHardConstraints
 {

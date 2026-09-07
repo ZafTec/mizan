@@ -70,7 +70,7 @@ public record GlobalAiUsageDto(
 
 /// <summary>
 /// What the admin sees. The point of this view is noticing a cost problem
-/// before the invoice does (docs/REFOCUS.md §10).
+/// before the invoice does (docs/AI.md).
 /// </summary>
 public record GetGlobalAiUsageQuery : IRequest<GlobalAiUsageDto>;
 

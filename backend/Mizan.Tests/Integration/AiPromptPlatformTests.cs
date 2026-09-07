@@ -14,7 +14,7 @@ namespace Mizan.Tests.Integration;
 /// <summary>
 /// The publish path, end to end. The interesting property is the refusal: a
 /// draft nobody has proven must not reach production however the request is
-/// made (docs/REFOCUS.md §12).
+/// made (docs/AI.md).
 /// </summary>
 [Collection("ApiIntegration")]
 public class AiPromptPlatformTests

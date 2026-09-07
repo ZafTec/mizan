@@ -235,7 +235,7 @@ public record AiOnboardingTurnDto(
 /// <summary>
 /// One turn of onboarding. Same thread store as chat, because it is the same
 /// conversation from the user's point of view - what differs is that the model
-/// has tools (docs/REFOCUS.md §10).
+/// has tools (docs/AI.md).
 /// </summary>
 public record SendAiOnboardingMessageCommand(Guid? ThreadId, string Message)
     : IRequest<AiOnboardingTurnDto>;

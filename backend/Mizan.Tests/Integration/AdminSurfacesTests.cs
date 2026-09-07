@@ -189,7 +189,7 @@ public class AdminSurfacesTests
         var id = listed!.Items[0].Id;
 
         // Admin is operational access, not super-user access over what a client
-        // shares (docs/REFOCUS.md §11). No route exists, and that is the point.
+        // shares (docs/AI.md#consent). No route exists, and that is the point.
         var response = await client.PutAsJsonAsync(
             $"/api/Admin/Relationships/{id}", new { canViewMeasurements = true });
 

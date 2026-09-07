@@ -1,5 +1,7 @@
 using System.Text;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Media;
 using Mizan.Infrastructure.Storage;
@@ -89,5 +91,79 @@ public class StorageKeyTests
     public void IsOurs_OnlyAcceptsKnownFolders(string? key, bool expected)
     {
         StorageKey.IsOurs(key).Should().Be(expected);
+    }
+}
+
+public class StorageUrlTests
+{
+    private static S3StorageService Create(string? publicBase = "https://media.example.test/assets/mizan", bool forcePathStyle = true)
+        => new(Options.Create(new StorageOptions
+        {
+            ServiceUrl = "https://s3.example.test/storage",
+            PublicBaseUrl = publicBase,
+            Bucket = "mizan",
+            AccessKeyId = "test-access-key",
+            SecretAccessKey = "test-secret-key",
+            Region = "us-east-1",
+            ForcePathStyle = forcePathStyle,
+        }), NullLogger<S3StorageService>.Instance);
+
+    [Theory]
+    [InlineData("https://media.example.test")]
+    [InlineData("https://media.example.test/mizan/")]
+    [InlineData("https://media.example.test/public/images/current")]
+    public async Task TryGetKey_RoundTripsTheCompletePublicBasePath(string publicBase)
+    {
+        using var storage = Create(publicBase);
+        const string key = "avatars/2026/09/avatar.png";
+
+        storage.TryGetKey(await storage.GetUrlAsync(key)).Should().Be(key);
+    }
+
+    [Theory]
+    [InlineData("https://media.example.test/assets/mizan/recipes/2026/09/photo.png")]
+    [InlineData("https://MEDIA.example.test:443/assets/mizan/recipes/2026/09/photo.png")]
+    [InlineData("https://s3.example.test/storage/mizan/recipes/2026/09/photo.png?X-Amz-Signature=test&X-Amz-Expires=3600")]
+    public void TryGetKey_AcceptsPublicAndSignedServiceUrls(string url)
+    {
+        using var storage = Create();
+
+        storage.TryGetKey(url).Should().Be("recipes/2026/09/photo.png");
+    }
+
+    [Theory]
+    [InlineData("https://foreign.example.test/assets/mizan/avatars/photo.png")]
+    [InlineData("https://media.example.test.foreign.example/assets/mizan/avatars/photo.png")]
+    [InlineData("http://media.example.test/assets/mizan/avatars/photo.png")]
+    [InlineData("https://media.example.test:8443/assets/mizan/avatars/photo.png")]
+    [InlineData("https://user@media.example.test/assets/mizan/avatars/photo.png")]
+    [InlineData("https://media.example.test/assets/mizan-other/avatars/photo.png")]
+    [InlineData("https://media.example.test/avatars/photo.png")]
+    [InlineData("https://s3.example.test/storage/another-bucket/avatars/photo.png")]
+    [InlineData("https://s3.example.test/storage/mizan-other/avatars/photo.png")]
+    [InlineData("https://s3.example.test/storage/avatars/photo.png")]
+    [InlineData("https://s3.example.test/mizan/avatars/photo.png")]
+    [InlineData("https://media.example.test/assets/mizan/legacy-media/shared.png")]
+    [InlineData("https://media.example.test/assets/mizan/avatars/%2e%2e%2fprivate.png")]
+    [InlineData("https://media.example.test/assets/mizan/avatars/photo%5cname.png")]
+    [InlineData("https://media.example.test/assets/mizan/avatars/photo%00.png")]
+    [InlineData("avatars/photo.png")]
+    [InlineData(null)]
+    public void TryGetKey_RejectsForeignOriginsAndObjectsOutsideConfiguredBoundaries(string? url)
+    {
+        using var storage = Create();
+
+        storage.TryGetKey(url).Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData("https://mizan.s3.example.test/storage/meals/2026/09/photo.png?X-Amz-Signature=test", "meals/2026/09/photo.png")]
+    [InlineData("https://another.s3.example.test/storage/meals/2026/09/photo.png", null)]
+    [InlineData("https://s3.example.test/storage/mizan/meals/2026/09/photo.png", null)]
+    public void TryGetKey_UsesTheBucketHostForVirtualHostedServiceUrls(string url, string? expected)
+    {
+        using var storage = Create(publicBase: null, forcePathStyle: false);
+
+        storage.TryGetKey(url).Should().Be(expected);
     }
 }

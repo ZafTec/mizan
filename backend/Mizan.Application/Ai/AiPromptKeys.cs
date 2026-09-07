@@ -2,7 +2,7 @@ namespace Mizan.Application.Ai;
 
 /// <summary>
 /// The programmable surfaces. Code asks for a key; which version answers is an
-/// admin decision (docs/REFOCUS.md §12).
+/// admin decision (docs/AI.md).
 /// </summary>
 public static class AiPromptKeys
 {

@@ -3,6 +3,7 @@ using System.Text.Json;
 using Mizan.Contracts.Recipes;
 using Mizan.Mcp.Server.Services;
 using ModelContextProtocol.Server;
+using ModelContextProtocol.Protocol;
 
 namespace Mizan.Mcp.Server.Tools;
 
@@ -40,43 +41,63 @@ public sealed class RecipeTools
         return await _api.GetAsync($"/api/Recipes/{id}", ct);
     }
 
-    [McpServerTool(Name = "create_recipe")]
-    [Description("Create a new recipe with ingredients. Use search_foods first to get foodId UUIDs for accurate nutrition calculation.")]
-    public async Task<string> CreateRecipe(
-        [Description("Recipe title")] string title,
-        [Description("JSON array of ingredients. Each object MUST have 'ingredientText' (human-readable, e.g. '200g chicken breast'). Optional: 'foodId' (UUID from search_foods, required for nutrition), 'amount' (grams), 'unit'. To reuse another recipe as an ingredient, mark it a preparation with promote_recipe_to_preparation and pass the food id it returns. Example: [{\"ingredientText\":\"200g chicken breast\",\"foodId\":\"uuid\",\"amount\":200,\"unit\":\"g\"}]")] string ingredientsJson,
-        [Description("Recipe description")] string? description = null,
-        [Description("Number of servings (default 1)")] int? servings = null,
-        [Description("Prep time in minutes")] int? prepTimeMinutes = null,
-        [Description("Cook time in minutes")] int? cookTimeMinutes = null,
-        [Description("Method as free text; newlines separate steps")] string? instructions = null,
-        [Description("Make recipe public (default true)")] bool isPublic = true,
-        [Description("Image URL for the recipe")] string? imageUrl = null,
-        [Description("Household UUID to share recipe with a household")] string? householdId = null,
+    [McpServerTool(Name = "promote_to_recipe", Idempotent = false)]
+    [Description("Save a logged meal as a private recipe. The date and mealType must contain at least two logged items. Ingredients and amounts come from the log. If the response asks for missing weights, ask the user and retry with recipeYieldsJson or entryWeightsGramsJson; never guess weights.")]
+    public async Task<CallToolResult> PromoteToRecipe(
+        [Description("Date of the logged meal, YYYY-MM-DD")] string date,
+        [Description("Meal category: BREAKFAST, LUNCH, DINNER, SNACK, or DRINK")] string mealType,
+        [Description("Name for the saved recipe")] string title,
+        [Description("Optional household UUID to share the recipe with")] string? householdId = null,
+        [Description("JSON object mapping recipe UUIDs to total finished recipe weights in grams, only when requested")] string? recipeYieldsJson = null,
+        [Description("JSON object mapping manual diary entry UUIDs to the weight eaten in grams, only when requested")] string? entryWeightsGramsJson = null,
         CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException("'title' is required.");
-        if (string.IsNullOrWhiteSpace(ingredientsJson))
-            throw new ArgumentException("'ingredientsJson' is required.");
-
-        var ingredients = ParseIngredients(ingredientsJson);
-
-        // Nutrition is summed from the ingredients server-side and tags are gone
-        // - see docs/REFOCUS.md §4. Sending either would be silently ignored.
-        return await _api.PostAsync("/api/Recipes", new CreateRecipeRequest
+        if (string.IsNullOrWhiteSpace(title) || title.Trim().Length > 200)
+            throw new ArgumentException("Recipe title must contain 1 to 200 characters.", nameof(title));
+        var request = new PromoteMealToRecipeRequest(
+            ToolArguments.ParseDate(date, "date"), mealType.Trim().ToUpperInvariant(), title.Trim(),
+            ToolArguments.ParseOptionalId(householdId, "householdId"),
+            ParseWeights(recipeYieldsJson, "recipeYieldsJson"),
+            ParseWeights(entryWeightsGramsJson, "entryWeightsGramsJson"));
+        try
         {
-            Title = title,
-            Description = description,
-            Servings = servings ?? 1,
-            PrepTimeMinutes = prepTimeMinutes,
-            CookTimeMinutes = cookTimeMinutes,
-            ImageUrl = imageUrl,
-            IsPublic = isPublic,
-            HouseholdId = ToolArguments.ParseOptionalId(householdId, "householdId"),
-            Ingredients = ingredients,
-            Instructions = instructions,
-        }, ct);
+            var result = await _api.PostAsync("/api/Recipes/promote", request, ct);
+            return new CallToolResult { Content = [new TextContentBlock { Text = result }] };
+        }
+        catch (BackendApiException error) when (error.ErrorCode == "promotion_weights_required")
+        {
+            return new CallToolResult
+            {
+                IsError = true,
+                Content = [new TextContentBlock { Text = error.ResponseBody ?? error.Message }]
+            };
+        }
+    }
+
+    [McpServerTool(Name = "promote_recipe_to_preparation", Idempotent = true)]
+    [Description("Derive a reusable ingredient from an owned recipe. Supply the finished weight of the entire batch in grams so per-100g nutrition stays correct; never guess it.")]
+    public Task<string> PromoteRecipeToPreparation(
+        [Description("Recipe UUID")] string id,
+        [Description("Finished weight of the whole recipe in grams")] decimal yieldGrams,
+        CancellationToken ct = default)
+    {
+        if (yieldGrams <= 0) throw new ArgumentException("yieldGrams must be positive.", nameof(yieldGrams));
+        var recipeId = ToolArguments.ParseId(id, "id");
+        return _api.PostAsync($"/api/Recipes/{recipeId}/preparation", new { YieldGrams = yieldGrams }, ct);
+    }
+
+    private static Dictionary<Guid, decimal>? ParseWeights(string? json, string name)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return null;
+        try
+        {
+            var weights = JsonSerializer.Deserialize<Dictionary<Guid, decimal>>(json)
+                ?? throw new ArgumentException($"{name} must be an object of UUIDs and positive gram values.", name);
+            if (weights.Any(item => item.Key == Guid.Empty || item.Value <= 0))
+                throw new ArgumentException($"{name} must contain UUIDs and positive gram values.", name);
+            return weights;
+        }
+        catch (JsonException error) { throw new ArgumentException($"Invalid {name}: {error.Message}", name); }
     }
 
     [McpServerTool(Name = "update_recipe")]

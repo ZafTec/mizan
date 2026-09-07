@@ -112,7 +112,7 @@ export interface ActiveWorkoutDraft {
 export async function getActiveWorkoutDraft(): Promise<ActiveWorkoutDraft | null> {
 	let raw: { payload: string; updatedAt: string };
 	try {
-		raw = await serverApi<{ payload: string; updatedAt: string }>("/api/Workouts/draft");
+		raw = await serverApi<{ payload: string; updatedAt: string }>("/api/Workouts/draft", { expectedStatuses: [404] });
 	} catch (error) {
 		if (error instanceof ApiError && error.status === 404) return null;
 		workoutLogger.error("Failed to load workout draft", { error });

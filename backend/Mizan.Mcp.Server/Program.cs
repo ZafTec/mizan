@@ -125,7 +125,7 @@ builder.Services.AddMcpServer(options =>
 })
 .WithHttpTransport(http =>
 {
-    http.Stateless = false;
+    http.Stateless = builder.Configuration.GetValue<bool>("Mcp:Stateless", false);
     http.IdleTimeout = TimeSpan.FromMinutes(30);
 })
 .WithTools<FoodTools>()

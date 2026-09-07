@@ -12,7 +12,7 @@ public enum AiQuotaScope
 /// <summary>
 /// A reservation taken before a call and settled after it. Holding one is what
 /// makes a crashed call still count: <see cref="IAiQuotaService.SettleAsync"/>
-/// runs in a finally, so tokens cannot leak (docs/REFOCUS.md §10).
+/// runs in a finally, so tokens cannot leak (docs/AI.md).
 /// </summary>
 public record AiQuotaLease(Guid Id, Guid UserId, Guid? HouseholdId, string Feature, int EstimatedTokens);
 

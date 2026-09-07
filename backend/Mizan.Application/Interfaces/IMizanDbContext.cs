@@ -5,7 +5,7 @@ namespace Mizan.Application.Interfaces;
 
 public interface IMizanDbContext
 {
-    // Identity, owned by this backend since v2 (docs/REFOCUS.md §6)
+    // Identity, owned by this backend since v2 (docs/ARCHITECTURE.md#identity)
     DbSet<User> Users { get; }
     DbSet<UserSession> UserSessions { get; }
     DbSet<UserToken> UserTokens { get; }

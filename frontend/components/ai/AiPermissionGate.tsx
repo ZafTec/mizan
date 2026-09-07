@@ -11,7 +11,7 @@ import { appToast } from "@/lib/toast";
  * Two grants, not one, and they are genuinely independent: recording a meal
  * someone dictates needs no sight of their history, and answering questions
  * about last week needs no ability to write. The default for both is off, and
- * this is the screen that changes that - see docs/REFOCUS.md §11.
+ * this is the screen that changes that - see docs/AI.md#consent.
  */
 export default function AiPermissionGate({
 	consent,

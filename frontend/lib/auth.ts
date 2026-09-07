@@ -10,7 +10,7 @@ export const SESSION_COOKIE = "mizan_session";
 
 /**
  * The shape the backend returns from GET /api/Auth/me. Since v2 the app has no
- * auth library and no auth tables of its own - see docs/REFOCUS.md §6.
+ * auth library and no auth tables of its own - see docs/ARCHITECTURE.md#identity.
  */
 export interface User {
 	id: string;

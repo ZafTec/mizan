@@ -28,7 +28,7 @@ public record StorageUpload(
 public record StoredObject(string Key, string Url);
 
 /// <summary>
-/// Object storage behind one interface - docs/REFOCUS.md §7. The v2
+/// Object storage behind one interface - docs/ARCHITECTURE.md#storage-caching-and-jobs. The v2
 /// implementation speaks S3, which covers self-hosted MinIO and Cloudflare R2
 /// with nothing but configuration between them.
 /// </summary>
