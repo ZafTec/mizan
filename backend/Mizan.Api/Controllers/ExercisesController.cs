@@ -18,6 +18,7 @@ public class ExercisesController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = "OptionalUserOrMcp")]
     public async Task<ActionResult<GetExercisesResult>> GetExercises([FromQuery] GetExercisesQuery query)
     {
         var result = await _mediator.Send(query);

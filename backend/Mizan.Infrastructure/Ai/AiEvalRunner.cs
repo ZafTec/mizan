@@ -11,7 +11,7 @@ namespace Mizan.Infrastructure.Ai;
 
 /// <summary>
 /// Runs a draft against the synthetic suite for its key. This is what stops
-/// the draft flow from being theatre (docs/REFOCUS.md §12): a version with no
+/// the draft flow from being theatre (docs/AI.md): a version with no
 /// passing adversarial run does not get a publish button.
 ///
 /// Every case is a real provider call, reserved and settled like any other, so

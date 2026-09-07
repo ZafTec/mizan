@@ -1189,6 +1189,53 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Ai/chat/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        image?: string;
+                        message?: string;
+                        /** Format: uuid */
+                        threadId?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiChatTurnDto"];
+                        "application/json": components["schemas"]["AiChatTurnDto"];
+                        "text/json": components["schemas"]["AiChatTurnDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Ai/suggestions": {
         parameters: {
             query?: never;
@@ -1233,7 +1280,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiChatThreadDetailDto"];
+                        "application/json": components["schemas"]["AiChatThreadDetailDto"];
+                        "text/json": components["schemas"]["AiChatThreadDetailDto"];
+                    };
+                };
+            };
+        };
         put?: never;
         post: {
             parameters: {
@@ -2152,6 +2220,8 @@ export interface paths {
                     pageSize?: number;
                     sortBy?: string;
                     sortOrder?: string;
+                    from?: string;
+                    to?: string;
                 };
                 header?: never;
                 path?: never;
@@ -4386,24 +4456,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["CreateRecipeCommand"];
-                    "text/json": components["schemas"]["CreateRecipeCommand"];
-                    "application/*+json": components["schemas"]["CreateRecipeCommand"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "text/plain": components["schemas"]["CreateRecipeResult"];
-                        "application/json": components["schemas"]["CreateRecipeResult"];
-                        "text/json": components["schemas"]["CreateRecipeResult"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -5536,6 +5596,219 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Subscriptions/portal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BillingPortalSessionDto"];
+                        "application/json": components["schemas"]["BillingPortalSessionDto"];
+                        "text/json": components["schemas"]["BillingPortalSessionDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Telegram/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TelegramLinkDto"];
+                        "application/json": components["schemas"]["TelegramLinkDto"];
+                        "text/json": components["schemas"]["TelegramLinkDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TelegramLinkCodeDto"];
+                        "application/json": components["schemas"]["TelegramLinkCodeDto"];
+                        "text/json": components["schemas"]["TelegramLinkCodeDto"];
+                    };
+                };
+            };
+        };
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Telegram/resolve/{telegramUserId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    telegramUserId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ResolvedTelegramUser"];
+                        "application/json": components["schemas"]["ResolvedTelegramUser"];
+                        "text/json": components["schemas"]["ResolvedTelegramUser"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    telegramUserId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Telegram/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ConsumeTelegramLinkCommand"];
+                    "text/json": components["schemas"]["ConsumeTelegramLinkCommand"];
+                    "application/*+json": components["schemas"]["ConsumeTelegramLinkCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TelegramLinkResult"];
+                        "application/json": components["schemas"]["TelegramLinkResult"];
+                        "text/json": components["schemas"]["TelegramLinkResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Trainers/request": {
         parameters: {
             query?: never;
@@ -6064,6 +6337,8 @@ export interface paths {
                     pageSize?: number;
                     sortBy?: string;
                     sortOrder?: string;
+                    from?: string;
+                    to?: string;
                 };
                 header?: never;
                 path?: never;
@@ -6757,6 +7032,7 @@ export interface components {
             content: string;
             /** Format: date-time */
             createdAt: string;
+            imageUrl?: string | null;
         };
         AiChatThreadDetailDto: {
             /** Format: uuid */
@@ -6778,12 +7054,17 @@ export interface components {
             threadId: string;
             title: string;
             reply: components["schemas"]["AiChatMessageDto"];
+            performed: components["schemas"]["AiToolInvocation"][];
         };
         AiConsentDto: {
             enabled: boolean;
             shareNutrition: boolean;
             shareTraining: boolean;
             shareBody: boolean;
+            allowWrites: boolean;
+            writeNutrition: boolean;
+            writeTraining: boolean;
+            writeBody: boolean;
             /** Format: date-time */
             updatedAt?: string | null;
         };
@@ -6828,6 +7109,11 @@ export interface components {
             costMicros: number;
             /** Format: int32 */
             latencyMs: number;
+        };
+        AiImageRef: {
+            /** Format: byte */
+            bytes: string;
+            contentType: string;
         };
         AiOnboardingTurnDto: {
             /** Format: uuid */
@@ -6967,6 +7253,11 @@ export interface components {
             hasPassword: boolean;
             timeZoneId?: string | null;
         };
+        BillingPortalSessionDto: {
+            overviewUrl: string;
+            cancelSubscriptionUrl?: string | null;
+            updatePaymentMethodUrl?: string | null;
+        };
         BodyMeasurementDto: {
             /** Format: uuid */
             id: string;
@@ -7044,6 +7335,12 @@ export interface components {
         };
         CommentRequest: {
             body: string;
+        };
+        ConsumeTelegramLinkCommand: {
+            code: string;
+            /** Format: int64 */
+            telegramUserId: number;
+            telegramUsername?: string | null;
         };
         ContentReportDto: {
             /** Format: uuid */
@@ -7151,6 +7448,8 @@ export interface components {
             /** Format: double */
             servings: number;
             /** Format: double */
+            amountGrams?: number | null;
+            /** Format: double */
             calories?: number | null;
             /** Format: double */
             proteinGrams?: number | null;
@@ -7212,22 +7511,6 @@ export interface components {
             /** Format: int32 */
             recipeCount: number;
         };
-        CreateRecipeCommand: {
-            title: string;
-            description?: string | null;
-            instructions?: string | null;
-            /** Format: int32 */
-            servings: number;
-            /** Format: int32 */
-            prepTimeMinutes?: number | null;
-            /** Format: int32 */
-            cookTimeMinutes?: number | null;
-            imageUrl?: string | null;
-            isPublic: boolean;
-            /** Format: uuid */
-            householdId?: string | null;
-            ingredients: components["schemas"]["CreateRecipeIngredientDto"][];
-        };
         CreateRecipeIngredientDto: {
             /** Format: uuid */
             foodId?: string | null;
@@ -7235,11 +7518,6 @@ export interface components {
             /** Format: double */
             amount?: number | null;
             unit?: string | null;
-        };
-        CreateRecipeResult: {
-            /** Format: uuid */
-            id: string;
-            title: string;
         };
         CreateShoppingListRequest: {
             name: string;
@@ -7468,10 +7746,20 @@ export interface components {
             /** Format: double */
             confidence: number;
             note?: string | null;
+            imageUrl?: string | null;
         };
         FoodDiaryEntryDto: {
             /** Format: uuid */
             id: string;
+            /** Format: uuid */
+            foodId?: string | null;
+            /** Format: uuid */
+            recipeId?: string | null;
+            /** Format: uuid */
+            groupId?: string | null;
+            groupName?: string | null;
+            /** Format: double */
+            amountGrams?: number | null;
             mealType: string;
             name: string;
             /** Format: double */
@@ -7519,6 +7807,8 @@ export interface components {
             /** Format: double */
             proteinCalorieRatio: number;
             isVerified: boolean;
+            /** Format: date-time */
+            lastUsedAt?: string | null;
         };
         FoodDtoPagedResult: {
             items: components["schemas"]["FoodDto"][];
@@ -7882,7 +8172,7 @@ export interface components {
             /** Format: date */
             endDate: string;
             recipes: components["schemas"]["MealPlanRecipeDetailDto"][];
-            nutritionSummary: components["schemas"]["MealPlanNutritionSummaryDto"];
+            nutritionSummary?: components["schemas"]["MealPlanNutritionSummaryDto"];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -8152,6 +8442,12 @@ export interface components {
             title: string;
             /** Format: uuid */
             householdId?: string | null;
+            recipeYields?: {
+                [key: string]: number;
+            } | null;
+            entryWeightsGrams?: {
+                [key: string]: number;
+            } | null;
         };
         PromoteToPreparationRequest: {
             /** Format: double */
@@ -8205,6 +8501,9 @@ export interface components {
             imageUrl?: string | null;
             isPublic: boolean;
             isOwner: boolean;
+            isFavorited: boolean;
+            /** Format: date-time */
+            lastUsedAt?: string | null;
             nutrition?: components["schemas"]["RecipeNutritionDto"];
             /** Format: date-time */
             createdAt: string;
@@ -8309,6 +8608,13 @@ export interface components {
             action: string;
             note?: string | null;
         };
+        ResolvedTelegramUser: {
+            /** Format: uuid */
+            userId: string;
+            name?: string | null;
+            /** Format: date-time */
+            linkedAt: string;
+        };
         RespondInvitationRequest: {
             action: string;
         };
@@ -8349,6 +8655,8 @@ export interface components {
             /** Format: uuid */
             threadId?: string | null;
             message: string;
+            image?: components["schemas"]["AiImageRef"];
+            imageUrl?: string | null;
         };
         SendAiOnboardingMessageCommand: {
             /** Format: uuid */
@@ -8471,7 +8779,7 @@ export interface components {
          * Format: int32
          * @enum {integer}
          */
-        StorageFolder: 0 | 1;
+        StorageFolder: 0 | 1 | 2;
         StreakUpdate: {
             streakType: string;
             /** Format: int32 */
@@ -8492,6 +8800,27 @@ export interface components {
             memoryUsageBytes: number;
             /** Format: double */
             uptimeSeconds: number;
+        };
+        TelegramLinkCodeDto: {
+            code: string;
+            deepLink: string;
+            /** Format: date-time */
+            expiresAt: string;
+        };
+        TelegramLinkDto: {
+            linked: boolean;
+            telegramUsername?: string | null;
+            /** Format: date-time */
+            linkedAt?: string | null;
+            /** Format: date-time */
+            lastSeenAt?: string | null;
+            botUsername?: string | null;
+            botConfigured: boolean;
+        };
+        TelegramLinkResult: {
+            /** Format: uuid */
+            userId: string;
+            name?: string | null;
         };
         ToggleFavoriteRecipeResult: {
             isFavorited: boolean;
@@ -8630,6 +8959,10 @@ export interface components {
             shareNutrition: boolean;
             shareTraining: boolean;
             shareBody: boolean;
+            allowWrites: boolean;
+            writeNutrition: boolean;
+            writeTraining: boolean;
+            writeBody: boolean;
         };
         UpdateDraftRequest: {
             body: string;
@@ -8733,8 +9066,6 @@ export interface components {
             reduceAnimations?: boolean | null;
         };
         UpdateWorkoutCommand: {
-            /** Format: uuid */
-            id: string;
             name?: string | null;
             /** Format: date */
             workoutDate: string;
@@ -8752,6 +9083,8 @@ export interface components {
             caloriesBurned?: number | null;
             notes?: string | null;
             exercises: components["schemas"]["WorkoutExerciseDto"][];
+            /** Format: uuid */
+            id: string;
         };
         UploadedImageDto: {
             key: string;

@@ -15,7 +15,7 @@ export interface AuthError extends Error {
 /**
  * Every auth call is a plain fetch at the API with credentials included; the
  * backend sets and clears the session cookie. There is no client-side auth
- * library since v2 - see docs/REFOCUS.md §6.
+ * library since v2 - see docs/ARCHITECTURE.md#identity.
  */
 async function call<T>(path: string, body?: unknown, method = "POST"): Promise<T> {
 	const response = await fetch(`${resolvePublicApiOrigin()}/api/Auth${path}`, {

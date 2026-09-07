@@ -18,7 +18,7 @@ async function handleSessionExpired(): Promise<void> {
 /**
  * Browser calls carry the session cookie and nothing else. The token cache,
  * the /api/auth/token round trip and the refresh dance are all gone with
- * BetterAuth - see docs/REFOCUS.md §6.
+ * BetterAuth - see docs/ARCHITECTURE.md#identity.
  */
 export async function clientApi<T>(
   path: string,

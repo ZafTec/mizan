@@ -12,7 +12,7 @@ namespace Mizan.Api.Controllers;
 /// Read plus one write. An admin can see who is linked to whom and with which
 /// grants, and can end a relationship when a client asks and cannot do it
 /// themselves. Editing the grants is deliberately absent: those switches
-/// belong to the client (docs/REFOCUS.md §11).
+/// belong to the client (docs/AI.md#consent).
 /// </summary>
 [ApiController]
 [Route("api/Admin/Relationships")]

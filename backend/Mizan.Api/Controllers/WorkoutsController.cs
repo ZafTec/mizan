@@ -27,7 +27,9 @@ public class WorkoutsController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] string? sortBy = null,
-        [FromQuery] string? sortOrder = null)
+        [FromQuery] string? sortOrder = null,
+        [FromQuery] DateOnly? from = null,
+        [FromQuery] DateOnly? to = null)
     {
         if (!_currentUser.UserId.HasValue)
             return Unauthorized();
@@ -39,6 +41,8 @@ public class WorkoutsController : ControllerBase
             PageSize = pageSize,
             SortBy = sortBy,
             SortOrder = sortOrder,
+            From = from,
+            To = to,
         });
 
         return Ok(result);

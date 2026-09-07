@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using Mizan.Application.Common;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 
@@ -51,6 +52,8 @@ public class ToggleFavoriteRecipeCommandHandler : IRequestHandler<ToggleFavorite
         }
         else
         {
+            if (!await _context.Recipes.AnyAsync(r => r.Id == request.RecipeId && (r.IsPublic || r.UserId == userId), cancellationToken))
+                throw new EntityNotFoundException("Recipe", request.RecipeId);
             var favorite = new FavoriteRecipe
             {
                 UserId = userId,

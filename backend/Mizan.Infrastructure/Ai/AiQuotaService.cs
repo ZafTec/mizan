@@ -10,7 +10,7 @@ namespace Mizan.Infrastructure.Ai;
 /// <summary>
 /// Two ceilings, both enforced before any provider call: the caller's daily
 /// allowance by tier, and a global daily ceiling that is a circuit breaker on
-/// the whole bill (docs/REFOCUS.md §10).
+/// the whole bill (docs/AI.md).
 ///
 /// Reserve-then-settle is one ledger row rather than a Redis counter beside
 /// one. §10 sketched Redis counters for the hot path; a single indexed

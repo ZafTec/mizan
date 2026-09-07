@@ -16,7 +16,7 @@ public record AiToolContext(Guid UserId);
 ///
 /// The factory is the whole security boundary. It receives the parsed
 /// arguments and the caller's identity separately, so a model cannot supply a
-/// user id by writing one into its arguments (docs/REFOCUS.md §10).
+/// user id by writing one into its arguments (docs/AI.md).
 /// </summary>
 /// <summary>
 /// Whether a tool looks or acts. The two are consented to separately, so the

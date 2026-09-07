@@ -38,7 +38,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
 		onUploaded: (url) => setImages([url]),
 	});
 	const [description, setDescription] = useState(recipe.description || "");
-	// Instructions are free text, not ordered rows - see docs/REFOCUS.md §4.
+	// Instructions are free text, not ordered rows - see docs/ARCHITECTURE.md#navigation-and-logging.
 	const [instructions, setInstructions] = useState<string>(recipe.instructions ?? "");
 	const [selectedIngredients, setSelectedIngredients] = useState<SelectedIngredient[]>(
 		// Every ingredient the API returns is a food. The editor still offers

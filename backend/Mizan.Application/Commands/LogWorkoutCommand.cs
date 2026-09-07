@@ -23,10 +23,13 @@ public record LogWorkoutResult
     public IReadOnlyList<PersonalRecordResult> PersonalRecords { get; init; } = [];
 }
 
-public class LogWorkoutCommandValidator : AbstractValidator<LogWorkoutCommand>
+public sealed class LogWorkoutCommandValidator : LogWorkoutRequestValidator<LogWorkoutCommand> { }
+
+public abstract class LogWorkoutRequestValidator<T> : AbstractValidator<T> where T : LogWorkoutRequest
 {
-    public LogWorkoutCommandValidator()
+    protected LogWorkoutRequestValidator()
     {
+        RuleFor(x => x.WorkoutDate).NotEmpty();
         RuleFor(x => x.Name).MaximumLength(100);
         RuleFor(x => x.Notes).MaximumLength(500);
         RuleFor(x => x.DurationMinutes).InclusiveBetween(1, 1_440).When(x => x.DurationMinutes.HasValue);
@@ -75,6 +78,10 @@ public class LogWorkoutCommandHandler : IRequestHandler<LogWorkoutCommand, LogWo
         {
             throw new UnauthorizedAccessException("User must be authenticated");
         }
+
+        if (request.TemplateId.HasValue && !await _context.WorkoutTemplates.AnyAsync(
+                t => t.Id == request.TemplateId && (t.IsBuiltIn || t.UserId == _currentUser.UserId), cancellationToken))
+            throw new DomainValidationException("Workout template is invalid or inaccessible");
 
         var exerciseIds = request.Exercises.Select(e => e.ExerciseId).Distinct().ToList();
         var existingExercises = await _context.Exercises

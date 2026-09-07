@@ -21,7 +21,7 @@ public record AdminRelationshipDto
     /// <summary>
     /// The per-axis grants, surfaced because they are the thing an admin is
     /// usually here to check: a support ticket that says "my coach can see my
-    /// weight and shouldn't" is answered by this row (docs/REFOCUS.md §11).
+    /// weight and shouldn't" is answered by this row (docs/AI.md#consent).
     /// </summary>
     public bool CanViewNutrition { get; init; }
 

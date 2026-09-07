@@ -13,7 +13,7 @@ namespace Mizan.Telegram.Backend;
 /// <c>X-Impersonate-User</c>, over the internal network, never exposed. The
 /// bot holds no data of its own - no logs, no nutrition, no AI configuration.
 /// If it looks like it is deciding something the website also decides, that is
-/// the bug (docs/REFOCUS.md §13).
+/// the bug (docs/TELEGRAM.md).
 /// </summary>
 public sealed class MizanApiClient
 {

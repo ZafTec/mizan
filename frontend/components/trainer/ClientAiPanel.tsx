@@ -12,7 +12,7 @@ const AXIS_LABELS: Record<string, string> = {
 };
 
 /**
- * Advisory, and said so rather than implied (docs/REFOCUS.md §11).
+ * Advisory, and said so rather than implied (docs/AI.md#consent).
  *
  * Two things are load-bearing here and neither is decoration. The panel names
  * what the client actually shared, because "your client's protein is low" and

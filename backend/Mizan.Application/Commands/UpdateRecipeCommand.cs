@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using Mizan.Application.Common;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 using Mizan.Contracts.Recipes;
@@ -69,6 +70,12 @@ public class UpdateRecipeCommandHandler : IRequestHandler<UpdateRecipeCommand, U
             return new UpdateRecipeResult { Success = false, Message = "You do not have permission to edit this recipe" };
         }
 
+        var foodIds = request.Ingredients.Where(i => i.FoodId.HasValue).Select(i => i.FoodId!.Value).Distinct().ToList();
+        var accessible = await _context.Foods.CountAsync(
+            f => foodIds.Contains(f.Id) && (f.UserId == null || f.UserId == recipe.UserId), cancellationToken);
+        if (accessible != foodIds.Count)
+            throw new ForbiddenAccessException("One or more ingredients are unavailable to this recipe's owner");
+
         recipe.Title = request.Title;
         recipe.Description = request.Description;
         recipe.Instructions = request.Instructions;
@@ -106,7 +113,7 @@ public class UpdateRecipeCommandHandler : IRequestHandler<UpdateRecipeCommand, U
         // it is summed from the ingredients on read. That is the point of
         // dropping recipe_nutrition: it could not go stale if it does not exist.
         // A preparation derived from this recipe keeps its snapshot until it is
-        // re-promoted, which is deliberate; see docs/REFOCUS.md §4.
+        // re-promoted, which is deliberate; see docs/ARCHITECTURE.md#navigation-and-logging.
         await _context.SaveChangesAsync(cancellationToken);
 
         await _cache.RemoveByTagAsync(CacheTags.Recipes, cancellationToken);

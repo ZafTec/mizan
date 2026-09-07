@@ -12,7 +12,7 @@ type Household = { id: string; name: string; memberCount: number; isActive: bool
 type MyHouseholds = { households: Household[]; activeHouseholdId?: string | null };
 
 /**
- * Tier 2 - docs/REFOCUS.md §3. One household is the overwhelming case and gets
+ * Tier 2 - docs/ARCHITECTURE.md#navigation-and-logging. One household is the overwhelming case and gets
  * no chrome at all; the control appears only for people who actually have
  * somewhere to switch to.
  */

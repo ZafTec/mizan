@@ -1,7 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { CircleAlert } from "lucide-react";
 
 export default function DashboardError({
   error,
@@ -13,39 +14,26 @@ export default function DashboardError({
   useEffect(() => {
     console.error("Dashboard error:", error);
   }, [error]);
-
   return (
-    <div className="container mx-auto px-4 py-16">
-      <div className="max-w-md mx-auto">
-        <div className="bg-card rounded-lg border p-8 text-center">
-          <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">⚡</span>
-          </div>
-          <h2 className="text-2xl font-bold mb-2">Something went wrong</h2>
-          <p className="text-muted-foreground mb-6">
-            Failed to load this page.
-          </p>
-          {error.message && (
-            <div className="mb-6 p-4 bg-muted rounded-lg">
-              <p className="text-sm text-left font-mono break-all">
-                {error.message}
-              </p>
-            </div>
-          )}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={reset}
-              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-            >
-              Try Again
-            </button>
-            <Link
-              href="/"
-              className="flex-1 px-4 py-2 border rounded-lg hover:bg-accent transition-colors text-center"
-            >
-              Go Home
-            </Link>
-          </div>
+    <div className="log-page py-12">
+      <div className="max-w-md">
+        <CircleAlert
+          size={28}
+          className="text-destructive mb-5"
+          aria-hidden="true"
+        />
+        <h1 className="text-2xl font-semibold">Something went wrong</h1>
+        <p className="log-muted mt-3 leading-relaxed">
+          This page couldn't load. Your saved entries are still there. Try again
+          to reconnect.
+        </p>
+        <div className="flex flex-wrap gap-3 mt-6">
+          <button onClick={reset} className="btn-primary">
+            Try again
+          </button>
+          <Link href="/today" className="btn-secondary">
+            Back to Today
+          </Link>
         </div>
       </div>
     </div>

@@ -3,9 +3,7 @@ namespace Mizan.Infrastructure.Data.Seed;
 /// <summary>
 /// The exercise library, the built-in programs and the achievement catalogue.
 ///
-/// This used to live inside the LiftLogIntegration migration. When the history
-/// collapsed to a single InitialCreate (docs/REFOCUS.md §6) it had to move
-/// somewhere a migration could still call it. Every statement is
+/// InitialCreate calls these catalogue seeds. Every statement is
 /// ON CONFLICT DO NOTHING and every id is derived from a stable name, so
 /// running it twice is a no-op and re-running it after adding rows backfills
 /// only the new ones.

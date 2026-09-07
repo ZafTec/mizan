@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const PROTECTED_PREFIXES = [
+  "/today",
+  "/history",
+  "/progress",
+  "/more",
+  "/workout/active",
   "/profile",
   "/meals",
   "/meal-plan",
@@ -39,7 +44,7 @@ export function proxy(request: NextRequest) {
   }
 
   // Presence only. Whether the session is still valid is the API's call, and
-  // this runs on every request - see docs/REFOCUS.md §6.
+  // this runs on every request - see docs/ARCHITECTURE.md#identity.
   const sessionCookie = request.cookies.get(SESSION_COOKIE);
 
   if (!sessionCookie?.value) {

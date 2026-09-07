@@ -77,7 +77,7 @@ public class NutritionController : ControllerBase
         var imageBytes = memoryStream.ToArray();
 
         // The bytes decide, not the Content-Type header - same rule the upload
-        // endpoint applies (docs/REFOCUS.md §7).
+        // endpoint applies (docs/ARCHITECTURE.md#storage-caching-and-jobs).
         var contentType = ImageFormat.Detect(imageBytes.AsSpan(0, Math.Min(ImageFormat.HeaderBytes, imageBytes.Length)));
         if (contentType is null or "image/gif")
         {

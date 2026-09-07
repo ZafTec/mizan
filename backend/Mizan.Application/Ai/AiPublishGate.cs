@@ -5,7 +5,7 @@ public record PublishVerdict(bool Publishable, string? Reason);
 /// <summary>
 /// Whether a draft has earned a publish button, decided from the eval matrix
 /// alone. Pure, so the console and the command reach the same answer without
-/// the console having to guess at the rule (docs/REFOCUS.md §12).
+/// the console having to guess at the rule (docs/AI.md).
 ///
 /// Adversarial cases gate; ordinary ones inform. A prompt that gets a
 /// nutrition question slightly wrong is a judgement call for the person

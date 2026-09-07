@@ -30,6 +30,8 @@ public record RecipeDto
     public string? ImageUrl { get; init; }
     public bool IsPublic { get; init; }
     public bool IsOwner { get; init; }
+    public bool IsFavorited { get; init; }
+    public DateTime? LastUsedAt { get; init; }
     public RecipeNutritionDto? Nutrition { get; init; }
     public DateTime CreatedAt { get; init; }
 }
@@ -52,7 +54,7 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
         ["createdat"] = r => r.CreatedAt
         // "proteinCalorieRatio" is gone: it sorted on the stored recipe_nutrition
         // column, which no longer exists. Nutrition is summed from ingredients on
-        // read (docs/REFOCUS.md §4), and sorting a page by a value computed after
+        // read (docs/ARCHITECTURE.md#navigation-and-logging), and sorting a page by a value computed after
         // paging would order only that page - worse than not offering it. Unknown
         // sort keys fall back to the default below.
     };
@@ -87,7 +89,7 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
             request,
             LoadAsync,
             CacheOptions,
-            tags: [CacheTags.Recipes],
+            tags: _currentUser.UserId.HasValue ? [CacheTags.Recipes, CacheTags.Nutrition(_currentUser.UserId.Value)] : [CacheTags.Recipes],
             cancellationToken: cancellationToken);
     }
 
@@ -101,7 +103,7 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
             {
                 query = from r in query
                         join f in _context.FavoriteRecipes on r.Id equals f.RecipeId
-                        where f.UserId == _currentUser.UserId
+                        where f.UserId == _currentUser.UserId && (r.IsPublic || r.UserId == _currentUser.UserId)
                         select r;
             }
             else
@@ -151,8 +153,16 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
             SortMappings,
             defaultSort: r => r.CreatedAt,
             defaultDescending: true);
+        if (string.IsNullOrWhiteSpace(request.SortBy) && _currentUser.UserId.HasValue)
+        {
+            sortedQuery = query
+                .OrderByDescending(r => _context.FavoriteRecipes.Any(f => f.RecipeId == r.Id && f.UserId == _currentUser.UserId))
+                .ThenByDescending(r => r.DiaryEntries.Where(e => e.UserId == _currentUser.UserId).Max(e => (DateTime?)e.LoggedAt) ?? DateTime.MinValue)
+                .ThenByDescending(r => r.CreatedAt);
+        }
 
         var recipes = await sortedQuery
+            .ThenBy(r => r.Id)
             .ApplyPaging(request)
             .Select(r => new RecipeDto
             {
@@ -164,7 +174,9 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
                 CookTimeMinutes = r.CookTimeMinutes,
                 ImageUrl = r.ImageUrl,
                 IsPublic = r.IsPublic,
-                IsOwner = r.UserId == _currentUser.UserId,
+                IsOwner = _currentUser.UserId.HasValue && r.UserId == _currentUser.UserId,
+                IsFavorited = _context.FavoriteRecipes.Any(f => f.RecipeId == r.Id && f.UserId == _currentUser.UserId),
+                LastUsedAt = r.DiaryEntries.Where(e => e.UserId == _currentUser.UserId).Max(e => (DateTime?)e.LoggedAt),
                 CreatedAt = r.CreatedAt
             })
             .ToListAsync(cancellationToken);

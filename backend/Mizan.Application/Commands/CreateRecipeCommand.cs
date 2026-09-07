@@ -1,8 +1,10 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging;
 using Mizan.Application.Common;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 using Mizan.Contracts.Recipes;
@@ -68,6 +70,16 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
             throw new UnauthorizedAccessException("User must be authenticated");
         }
 
+        var userId = _currentUser.UserId.Value;
+        var foodIds = request.Ingredients.Where(i => i.FoodId.HasValue).Select(i => i.FoodId!.Value).Distinct().ToList();
+        var accessible = await _context.Foods.CountAsync(
+            f => foodIds.Contains(f.Id) && (f.UserId == null || f.UserId == userId), cancellationToken);
+        if (accessible != foodIds.Count)
+            throw new ForbiddenAccessException("One or more ingredients are unavailable to you");
+        if (request.HouseholdId.HasValue && !await _context.HouseholdMembers.AnyAsync(
+                m => m.HouseholdId == request.HouseholdId && m.UserId == userId, cancellationToken))
+            throw new ForbiddenAccessException("You are not a member of this household");
+
         var recipe = new Recipe
         {
             Id = Guid.NewGuid(),
@@ -102,7 +114,7 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
 
         // No nutrition is stored. It is summed from the ingredients on read by
         // RecipeNutritionCalculator, so it cannot drift when a food changes -
-        // see docs/REFOCUS.md §4. Nor is there a circular-dependency check to
+        // see docs/ARCHITECTURE.md#navigation-and-logging. Nor is there a circular-dependency check to
         // run: reuse goes through preparations, which reference a derived Food.
         _context.Recipes.Add(recipe);
         await _context.SaveChangesAsync(cancellationToken);

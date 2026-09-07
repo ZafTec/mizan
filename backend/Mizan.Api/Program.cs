@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
@@ -79,10 +80,12 @@ builder.Services.AddFluentValidationRulesToSwagger();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    ReverseProxyHeaders.Configure(options, builder.Configuration));
 
 // Browsers authenticate with an opaque session cookie; the JWT bearer scheme
 // and everything that validated BetterAuth's EdDSA tokens is gone. See
-// docs/REFOCUS.md §6.
+// docs/ARCHITECTURE.md#identity.
 builder.Services.AddScoped<SessionCookie>();
 
 var authBuilder = builder.Services.AddAuthentication(SessionCookieAuthenticationSchemeOptions.DefaultScheme);
@@ -112,8 +115,7 @@ if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(goo
     {
         options.ClientId = googleClientId;
         options.ClientSecret = googleClientSecret;
-        options.SignInScheme = ExternalProviders.CookieScheme;
-        options.CallbackPath = "/api/Auth/external/google/callback";
+        ExternalProviders.Configure(options, builder.Configuration, "google");
     });
 }
 else
@@ -129,8 +131,7 @@ if (!string.IsNullOrWhiteSpace(githubClientId) && !string.IsNullOrWhiteSpace(git
     {
         options.ClientId = githubClientId;
         options.ClientSecret = githubClientSecret;
-        options.SignInScheme = ExternalProviders.CookieScheme;
-        options.CallbackPath = "/api/Auth/external/github/callback";
+        ExternalProviders.Configure(options, builder.Configuration, "github");
         // GitHub hides the address unless asked, and we cannot create an
         // account without one.
         options.Scope.Add("user:email");
@@ -172,6 +173,10 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("UserOrMcp", policy => policy
         .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser());
+
+    options.AddPolicy("OptionalUserOrMcp", policy => policy
+        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .RequireAssertion(_ => true));
 
     options.AddPolicy("RequireAdmin", policy => policy
         .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
@@ -358,6 +363,7 @@ if (!string.IsNullOrWhiteSpace(lokiEndpoint))
 }
 
 var app = builder.Build();
+app.UseForwardedHeaders();
 
 if (app.Environment.IsDevelopment())
 {
@@ -408,7 +414,7 @@ app.UseExceptionHandler(errorApp =>
         {
             // Which ceiling tripped and when it resets. "You are out of quota"
             // and "the service is at capacity" are different problems and the
-            // caller has to be able to tell them apart (docs/REFOCUS.md §10).
+            // caller has to be able to tell them apart (docs/AI.md).
             context.Response.StatusCode = 429;
             context.Response.Headers.RetryAfter =
                 ((int)Math.Max(1, (quotaEx.ResetsAt - DateTime.UtcNow).TotalSeconds)).ToString();
@@ -442,6 +448,11 @@ app.UseExceptionHandler(errorApp =>
             Log.Warning("Locked account attempted sign-in at {Path}", context.Request.Path);
             context.Response.StatusCode = 429;
             await context.Response.WriteAsJsonAsync(new { errorCode = "account_locked", error = lockedEx.Message });
+        }
+        else if (exception is Mizan.Application.Commands.PromotionWeightsRequiredException weightsEx)
+        {
+            context.Response.StatusCode = 400;
+            await context.Response.WriteAsJsonAsync(new { errorCode = "promotion_weights_required", error = weightsEx.Message, items = weightsEx.Items });
         }
         else if (exception is DomainValidationException domainValidationEx)
         {

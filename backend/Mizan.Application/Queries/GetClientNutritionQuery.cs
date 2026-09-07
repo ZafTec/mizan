@@ -59,7 +59,7 @@ public class GetClientNutritionQueryHandler : IRequestHandler<GetClientNutrition
 
         // Through the policy rather than reading the flag here: one place to
         // audit, and the reason CanViewMeasurements was missed for so long
-        // (docs/REFOCUS.md §11).
+        // (docs/AI.md#consent).
         if (!await _policy.CanReadAsync(
                 relationship.TrainerId, request.ClientId, DataAxis.Nutrition, AccessPurpose.Display, cancellationToken))
         {

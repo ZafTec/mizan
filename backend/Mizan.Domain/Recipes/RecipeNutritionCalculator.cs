@@ -6,7 +6,7 @@ namespace Mizan.Domain.Recipes;
 /// Recipe nutrition, computed from ingredients rather than stored.
 ///
 /// The recipe_nutrition table held values that drifted the moment an ingredient
-/// changed and nobody recalculated - see docs/REFOCUS.md §4. This is a pure
+/// changed and nobody recalculated - see docs/ARCHITECTURE.md#navigation-and-logging. This is a pure
 /// function over the ingredients, so it cannot go stale.
 ///
 /// Ingredient amounts are grams; food macros are per 100 g.
@@ -70,7 +70,13 @@ public static class RecipeNutritionCalculator
                 continue;
             }
 
-            var scale = (ingredient.Amount ?? 0m) / 100m;
+            var grams = Grams(ingredient, food);
+            if (!grams.HasValue)
+            {
+                missing.Add(ingredient.IngredientText);
+                continue;
+            }
+            var scale = grams.Value / 100m;
             calories += food.CaloriesPer100g * scale;
             protein += food.ProteinPer100g * scale;
             carbs += food.CarbsPer100g * scale;
@@ -85,5 +91,21 @@ public static class RecipeNutritionCalculator
             Math.Round(carbs, 2),
             Math.Round(fat, 2),
             Math.Round(fiber, 2));
+    }
+
+    /// <summary>Volume and informal measures need a known weight; never guess it.</summary>
+    public static decimal? Grams(RecipeIngredient ingredient, Food food)
+    {
+        if (ingredient.Amount is null or <= 0) return null;
+        var factor = ingredient.Unit?.Trim().ToLowerInvariant() switch
+        {
+            null or "" or "g" or "gram" or "grams" => 1m,
+            "kg" or "kilogram" or "kilograms" => 1000m,
+            "oz" or "ounce" or "ounces" => 28.349523125m,
+            "lb" or "pound" or "pounds" => 453.59237m,
+            "serving" or "servings" => food.ServingSize,
+            _ => 0m
+        };
+        return factor > 0 ? ingredient.Amount.Value * factor : null;
     }
 }

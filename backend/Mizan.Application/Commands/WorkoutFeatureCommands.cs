@@ -24,29 +24,16 @@ public sealed class DeleteWorkoutCommandHandler : IRequestHandler<DeleteWorkoutC
     }
 }
 
-public record UpdateWorkoutCommand : IRequest
+public record UpdateWorkoutCommand : LogWorkoutRequest, IRequest
 {
     public Guid Id { get; init; }
-    public string? Name { get; init; }
-    public DateOnly WorkoutDate { get; init; }
-    public Guid? TemplateId { get; init; }
-    public decimal? BodyweightKg { get; init; }
-    public DateTime? StartedAt { get; init; }
-    public DateTime? CompletedAt { get; init; }
-    public int? DurationMinutes { get; init; }
-    public int? CaloriesBurned { get; init; }
-    public string? Notes { get; init; }
-    public List<WorkoutExerciseDto> Exercises { get; init; } = [];
 }
 
-public sealed class UpdateWorkoutCommandValidator : AbstractValidator<UpdateWorkoutCommand>
+public sealed class UpdateWorkoutCommandValidator : LogWorkoutRequestValidator<UpdateWorkoutCommand>
 {
     public UpdateWorkoutCommandValidator()
     {
         RuleFor(x => x.Id).NotEmpty();
-        RuleFor(x => x.Name).MaximumLength(100);
-        RuleFor(x => x.Notes).MaximumLength(500);
-        RuleFor(x => x.Exercises).NotEmpty().Must(x => x.Count <= 30);
     }
 }
 
@@ -61,6 +48,9 @@ public sealed class UpdateWorkoutCommandHandler : IRequestHandler<UpdateWorkoutC
         var workout = await _context.Workouts.Include(w => w.Exercises).ThenInclude(e => e.Sets)
             .FirstOrDefaultAsync(w => w.Id == request.Id && w.UserId == userId, ct)
             ?? throw new EntityNotFoundException("Workout not found");
+        if (request.TemplateId.HasValue && !await _context.WorkoutTemplates.AnyAsync(
+                t => t.Id == request.TemplateId && (t.IsBuiltIn || t.UserId == userId), ct))
+            throw new DomainValidationException("Workout template is invalid or inaccessible");
         var ids = request.Exercises.Select(e => e.ExerciseId).Distinct().ToArray();
         var valid = await _context.Exercises.CountAsync(e => ids.Contains(e.Id) && (!e.IsCustom || e.CreatedByUserId == userId), ct);
         if (valid != ids.Length) throw new DomainValidationException("One or more exercises are invalid");

@@ -267,7 +267,7 @@ export default function MyTrainerPage() {
 			</div>
 
 			{/* What this trainer can see. The client decides, and can change it
-				at any time - see docs/REFOCUS.md §11. */}
+				at any time - see docs/AI.md#consent. */}
 			<div className="card p-6">
 				<h2 className="mb-1 text-lg font-semibold">What you share</h2>
 				<p className="mb-4 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">

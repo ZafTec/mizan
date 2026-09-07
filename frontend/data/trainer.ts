@@ -28,7 +28,7 @@ export interface MyTrainer {
  */
 export async function getMyTrainer(): Promise<MyTrainer | null> {
 	try {
-		return await serverApi<MyTrainer>("/api/Trainers/my-trainer");
+		return await serverApi<MyTrainer>("/api/Trainers/my-trainer", { expectedStatuses: [404] });
 	} catch (error) {
 		if (error instanceof ApiError && error.status === 404) return null;
 		trainerLogger.error("Failed to load trainer relationship", { error });

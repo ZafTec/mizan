@@ -12,7 +12,7 @@ namespace Mizan.Application.Ai;
 /// provider calls as the model records what it is told, so billing it to the
 /// free chat allowance means a new user's first act is emptying it - the one
 /// surface where the assistant earns its cost, priced so that using it costs
-/// you the rest of the day (docs/REFOCUS.md §10).
+/// you the rest of the day (docs/AI.md).
 ///
 /// Every line still lands in the same ledger and still passes under the same
 /// global ceiling. This decides which per-user cap applies, nothing more.
@@ -31,7 +31,7 @@ public enum AiQuotaLine
     /// <summary>
     /// A trainer reading a client. On the trainer's own line, because one coach
     /// with twenty clients must not drain twenty people's allowances and leave
-    /// them rate-limited by activity that is not theirs (docs/REFOCUS.md §11).
+    /// them rate-limited by activity that is not theirs (docs/AI.md#consent).
     /// </summary>
     TrainerClient = 3,
 }

@@ -1,5 +1,7 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.DependencyInjection;
 using Mizan.Application.Commands;
 using Mizan.Application.Exceptions;
 using Mizan.Domain.Entities;
@@ -10,7 +12,7 @@ using Xunit;
 namespace Mizan.Tests.Application;
 
 /// <summary>
-/// Preparations - see docs/REFOCUS.md §4. Marking a recipe as a preparation
+/// Preparations - see docs/ARCHITECTURE.md#navigation-and-logging. Marking a recipe as a preparation
 /// derives a Food, which is how homemade mayonnaise gets reused with correct
 /// macros without recipes referencing each other.
 /// </summary>
@@ -51,7 +53,8 @@ public class PromoteRecipeToPreparationTests
         });
         db.SaveChanges();
 
-        return (db, new PromoteRecipeToPreparationCommandHandler(db, new FakeCurrentUser { UserId = UserId }));
+        var cache = new ServiceCollection().AddHybridCache().Services.BuildServiceProvider().GetRequiredService<HybridCache>();
+        return (db, new PromoteRecipeToPreparationCommandHandler(db, new FakeCurrentUser { UserId = UserId }, cache));
     }
 
     [Fact]

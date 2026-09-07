@@ -13,7 +13,7 @@ function relativeTime(iso: string): string {
 }
 
 /**
- * Tier 2 - docs/REFOCUS.md §3. Renders nothing unless a session is open, which
+ * Tier 2 - docs/ARCHITECTURE.md#navigation-and-logging. Renders nothing unless a session is open, which
  * is why it is safe to mount unconditionally on the spine.
  */
 export default async function ResumeWorkoutBanner() {
@@ -27,7 +27,7 @@ export default async function ResumeWorkoutBanner() {
 
 	return (
 		<Link
-			href="/workouts"
+			href="/workout/active"
 			className="flex items-center gap-3 rounded-3xl border border-verdigris-500/30 bg-verdigris-500/10 p-4 transition-colors hover:border-verdigris-500/50 dark:bg-verdigris-500/10"
 		>
 			<span className="icon-chip h-10 w-10 shrink-0 text-verdigris-700 dark:text-verdigris-300">

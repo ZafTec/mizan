@@ -3,7 +3,7 @@ import { getCurrentGoal } from "@/data/goal";
 import { Icon } from "@/components/ui/icon";
 
 /**
- * Tier 2 - docs/REFOCUS.md §3. Renders nothing once a goal exists, so it is a
+ * Tier 2 - docs/ARCHITECTURE.md#navigation-and-logging. Renders nothing once a goal exists, so it is a
  * one-time nudge rather than a permanent fixture. Setup is not a nav item for
  * the same reason: nobody needs a standing link to something they do once.
  */

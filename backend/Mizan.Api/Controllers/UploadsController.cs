@@ -8,7 +8,7 @@ namespace Mizan.Api.Controllers;
 
 /// <summary>
 /// The one door images come through. The browser never talks to the object
-/// store directly and never holds a storage credential - docs/REFOCUS.md §7.
+/// store directly and never holds a storage credential - docs/ARCHITECTURE.md#storage-caching-and-jobs.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]

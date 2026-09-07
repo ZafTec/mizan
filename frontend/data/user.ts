@@ -11,7 +11,7 @@ const MIN_PASSWORD_LENGTH = 10;
 
 /**
  * Registration and verification are backend endpoints since v2; these actions
- * only validate the form and relay - see docs/REFOCUS.md §6.
+ * only validate the form and relay - see docs/ARCHITECTURE.md#identity.
  */
 async function postAnonymous(path: string, body: unknown): Promise<void> {
 	await request(serverApiOrigin(), path, { mode: "none" }, {

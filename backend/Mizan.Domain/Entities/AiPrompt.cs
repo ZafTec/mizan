@@ -28,7 +28,7 @@ public class AiPrompt
 /// An immutable revision. Published versions are never edited - a change is a
 /// new version - so an answer can always be traced to the exact text that
 /// produced it, and a rollback is a pointer move rather than a rewrite
-/// (docs/REFOCUS.md §12).
+/// (docs/AI.md).
 /// </summary>
 public class AiPromptVersion
 {

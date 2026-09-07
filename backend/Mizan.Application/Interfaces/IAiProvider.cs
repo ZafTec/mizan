@@ -39,14 +39,14 @@ public record AiCompletionRequest
     /// <summary>
     /// When set, the provider is asked for JSON matching this schema and the
     /// response is validated against it. Prose parsing is not a fallback:
-    /// a response that fails the schema is a failed call (docs/REFOCUS.md §10).
+    /// a response that fails the schema is a failed call (docs/AI.md).
     /// </summary>
     public AiJsonSchema? ResponseSchema { get; init; }
 
     /// <summary>
     /// The allowlist for this call. Empty means the model has no tools, which
     /// is the default: a surface that does not need to act does not get the
-    /// ability to (docs/REFOCUS.md §10).
+    /// ability to (docs/AI.md).
     /// </summary>
     public IReadOnlyList<AiToolSpec> Tools { get; init; } = Array.Empty<AiToolSpec>();
 
@@ -72,7 +72,7 @@ public record AiCompletionResponse(string Content, AiTokenUsage Usage, string Mo
 /// <summary>
 /// One OpenAI-compatible chat endpoint. The whole integration surface is
 /// configuration - base URL, key, model - so swapping providers never touches
-/// a call site (docs/REFOCUS.md §10).
+/// a call site (docs/AI.md).
 /// </summary>
 public interface IAiProvider
 {

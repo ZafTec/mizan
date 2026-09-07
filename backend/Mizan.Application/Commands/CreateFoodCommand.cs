@@ -48,7 +48,7 @@ public class CreateFoodCommandHandler : IRequestHandler<CreateFoodCommand, Creat
     public async Task<CreateFoodResult> Handle(CreateFoodCommand request, CancellationToken cancellationToken)
     {
         // Admins curate the shared catalogue; everyone else creates foods that are
-        // private to them. See docs/REFOCUS.md §4 - before Food.UserId existed the
+        // private to them. See docs/ARCHITECTURE.md#navigation-and-logging - before Food.UserId existed the
         // endpoint had to be admin-only, because every food was everyone's.
         var isAdmin = _currentUser.IsInRole("admin");
 

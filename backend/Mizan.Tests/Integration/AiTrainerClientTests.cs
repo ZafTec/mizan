@@ -13,7 +13,7 @@ namespace Mizan.Tests.Integration;
 
 /// <summary>
 /// A coach asking about a client. Two properties: the intersection decides
-/// what reaches the model, and the coach pays (docs/REFOCUS.md §11).
+/// what reaches the model, and the coach pays (docs/AI.md#consent).
 /// </summary>
 [Collection("ApiIntegration")]
 public class AiTrainerClientTests

@@ -2,7 +2,7 @@ namespace Mizan.Domain.Entities;
 
 /// <summary>
 /// The account. Owned by this backend end to end since v2 - see
-/// docs/REFOCUS.md §6. PasswordHash is null for accounts that only ever signed
+/// docs/ARCHITECTURE.md#identity. PasswordHash is null for accounts that only ever signed
 /// in through Google or GitHub.
 /// </summary>
 public class User

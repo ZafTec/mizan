@@ -15,7 +15,7 @@ public enum AiCallOutcome
 /// The durable ledger of every model call. Source of truth for the usage tab,
 /// for the global spend ceiling, and for reconciling against the provider's
 /// invoice. Redis counters are a cache in front of this and are rebuildable
-/// from it - see docs/REFOCUS.md §10.
+/// from it - see docs/AI.md.
 ///
 /// A row is written whether the call succeeded or not: a timeout still costs
 /// tokens at the provider, and a failure rate is exactly what you want to see
@@ -41,7 +41,7 @@ public class AiUsageLog
 
     /// <summary>
     /// The exact prompt version that produced this answer, so a quality
-    /// regression is bisectable instead of mysterious (docs/REFOCUS.md §12).
+    /// regression is bisectable instead of mysterious (docs/AI.md).
     /// </summary>
     public Guid? PromptVersionId { get; set; }
 

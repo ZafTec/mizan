@@ -9,6 +9,8 @@ namespace Mizan.Application.Queries;
 public record GetBodyMeasurementsQuery : IRequest<PagedResult<BodyMeasurementDto>>, IPagedQuery, ISortableQuery
 {
     public Guid UserId { get; init; }
+    public DateOnly? From { get; init; }
+    public DateOnly? To { get; init; }
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;
     public string? SortBy { get; init; }
@@ -50,6 +52,8 @@ public class GetBodyMeasurementsQueryHandler : IRequestHandler<GetBodyMeasuremen
     {
         var query = _context.BodyMeasurements
             .Where(m => m.UserId == request.UserId);
+        if (request.From.HasValue) query = query.Where(m => m.MeasurementDate >= request.From.Value);
+        if (request.To.HasValue) query = query.Where(m => m.MeasurementDate <= request.To.Value);
 
         var totalCount = await query.CountAsync(cancellationToken);
 
@@ -60,6 +64,8 @@ public class GetBodyMeasurementsQueryHandler : IRequestHandler<GetBodyMeasuremen
             defaultDescending: true);
 
         var measurements = await sortedQuery
+            .ThenByDescending(m => m.CreatedAt)
+            .ThenBy(m => m.Id)
             .ApplyPaging(request)
             .Select(m => new BodyMeasurementDto(
                 m.Id,

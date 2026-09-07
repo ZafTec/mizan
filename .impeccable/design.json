@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-07T10:47:08.346Z",
+  "title": "Design System: Mizan",
+  "extensions": {
+    "shadows": [
+      {
+        "name": "surface",
+        "value": "none",
+        "purpose": "The shared soft, panel, and glow shadow tokens all resolve to none."
+      }
+    ],
+    "motion": [
+      {
+        "name": "duration-instant",
+        "value": "120ms",
+        "purpose": "Button press feedback."
+      },
+      {
+        "name": "duration-fast",
+        "value": "160ms",
+        "purpose": "Control color and border transitions."
+      },
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.23, 1, 0.32, 1)",
+        "purpose": "Shared control easing."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The filled ink action used for logging and saving.",
+      "html": "<button type=\"button\" class=\"ds-primary\">Log meal</button>",
+      "css": ".ds-primary{font-family:var(--font-sans);display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:3px;padding:12px 20px;font-size:14px;font-weight:600;line-height:20px;cursor:pointer;transition:background-color var(--duration-fast) var(--ease-out),border-color var(--duration-fast) var(--ease-out),color var(--duration-fast) var(--ease-out),opacity var(--duration-fast) var(--ease-out);border:0;background:var(--color-charcoal-blue-900);color:var(--color-charcoal-blue-50)}.ds-primary:hover{background:var(--color-charcoal-blue-800)}:host-context(.dark) .ds-primary{background:var(--color-charcoal-blue-50);color:var(--color-charcoal-blue-950)}:host-context(.dark) .ds-primary:hover{background:var(--color-charcoal-blue-200)}.ds-primary:focus-visible{outline:none;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--color-charcoal-blue-400)}.ds-primary:active{transform:scale(.985);transition-duration:var(--duration-instant)}.ds-primary:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-primary{transition-duration:.01ms}}"
+    },
+    {
+      "name": "Secondary button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "A bordered alternative beside the main action.",
+      "html": "<button type=\"button\" class=\"ds-secondary\">Add set</button>",
+      "css": ".ds-secondary{font-family:var(--font-sans);display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:3px;padding:12px 20px;font-size:14px;font-weight:600;line-height:20px;cursor:pointer;transition:background-color var(--duration-fast) var(--ease-out),border-color var(--duration-fast) var(--ease-out),color var(--duration-fast) var(--ease-out),opacity var(--duration-fast) var(--ease-out);border:1px solid var(--color-charcoal-blue-300);background:transparent;color:var(--color-charcoal-blue-800)}.ds-secondary:hover{border-color:var(--color-charcoal-blue-400);background:var(--color-charcoal-blue-100)}:host-context(.dark) .ds-secondary{border-color:var(--color-charcoal-blue-700);color:var(--color-charcoal-blue-200)}:host-context(.dark) .ds-secondary:hover{background:var(--color-charcoal-blue-900)}.ds-secondary:focus-visible{outline:none;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--color-charcoal-blue-400)}.ds-secondary:active{transform:scale(.985);transition-duration:var(--duration-instant)}.ds-secondary:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-secondary{transition-duration:.01ms}}"
+    },
+    {
+      "name": "Ghost button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "A quiet action with a border appearing on hover.",
+      "html": "<button type=\"button\" class=\"ds-ghost\">Cancel</button>",
+      "css": ".ds-ghost{font-family:var(--font-sans);display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:3px;padding:12px 20px;font-size:14px;font-weight:600;line-height:20px;cursor:pointer;transition:background-color var(--duration-fast) var(--ease-out),border-color var(--duration-fast) var(--ease-out),color var(--duration-fast) var(--ease-out),opacity var(--duration-fast) var(--ease-out);border:1px solid transparent;background:transparent;color:var(--color-charcoal-blue-700)}.ds-ghost:hover{border-color:var(--color-charcoal-blue-300);color:var(--color-charcoal-blue-900)}:host-context(.dark) .ds-ghost{color:var(--color-charcoal-blue-300)}:host-context(.dark) .ds-ghost:hover{border-color:var(--color-charcoal-blue-700);color:var(--color-charcoal-blue-50)}.ds-ghost:focus-visible{outline:none;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--color-charcoal-blue-400)}.ds-ghost:active{transform:scale(.985);transition-duration:var(--duration-instant)}.ds-ghost:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-ghost{transition-duration:.01ms}}"
+    },
+    {
+      "name": "Labeled field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "A visible label, bordered field, and explicit keyboard focus.",
+      "html": "<label class=\"ds-label\" for=\"ds-measurement\">Weight (kg)</label><input class=\"ds-input\" id=\"ds-measurement\" type=\"number\" inputmode=\"decimal\" value=\"72.5\" step=\"0.1\">",
+      "css": ".ds-label{display:block;margin-bottom:6px;font:500 14px/20px var(--font-sans);color:var(--color-charcoal-blue-700)}.ds-input{width:100%;border:1px solid var(--color-charcoal-blue-300);border-radius:3px;background:var(--card);padding:12px 16px;font:400 16px/24px var(--font-sans);color:var(--color-charcoal-blue-900);caret-color:var(--ring);transition:border-color var(--duration-fast) var(--ease-out),background-color var(--duration-fast) var(--ease-out),color var(--duration-fast) var(--ease-out)}.ds-input:focus{border-color:var(--color-charcoal-blue-900)}.ds-input:focus-visible{outline:2px solid var(--ring);outline-offset:3px}:host-context(.dark) .ds-label{color:var(--color-charcoal-blue-300)}:host-context(.dark) .ds-input{border-color:var(--color-charcoal-blue-700);color:var(--color-charcoal-blue-50)}:host-context(.dark) .ds-input:focus{border-color:var(--color-charcoal-blue-400)}@media(prefers-reduced-motion:reduce){.ds-input{transition-duration:.01ms}}"
+    },
+    {
+      "name": "Sidebar navigation",
+      "kind": "nav",
+      "refersTo": "navigation-link",
+      "description": "Labeled line icons; the current item has a muted fill and stronger type.",
+      "html": "<nav aria-label=\"Primary\"><a class=\"ds-nav\" href=\"/today\" aria-current=\"page\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M8 2v4M16 2v4M3 10h18\"/><rect x=\"3\" y=\"4\" width=\"18\" height=\"18\" rx=\"2\"/><path d=\"m9 16 2 2 4-4\"/></svg>Today</a></nav>",
+      "css": ".ds-nav{display:flex;align-items:center;min-height:46px;gap:13px;padding:0 14px;border-radius:3px;font:400 14px/20px var(--font-sans);color:var(--muted-foreground);text-decoration:none;transition:background-color 160ms ease-out,color 160ms ease-out}.ds-nav[aria-current=\"page\"]{background:var(--muted);color:var(--foreground);font-weight:600}.ds-nav:focus-visible{outline:2px solid var(--ring);outline-offset:3px}@media(hover:hover) and (pointer:fine){.ds-nav:hover{background:var(--muted);color:var(--foreground)}}@media(prefers-reduced-motion:reduce){.ds-nav{transition-duration:.01ms}}"
+    },
+    {
+      "name": "Bordered surface",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "A flat card with the existing 24px content padding.",
+      "html": "<article class=\"ds-card\"><h2 class=\"ds-card-title\">Exercise history</h2><p class=\"ds-card-detail\">Recent sets and recorded weights.</p></article>",
+      "css": ".ds-card{overflow:hidden;border:1px solid var(--color-charcoal-blue-200);border-radius:3px;background:var(--card);padding:24px;color:var(--foreground);font-family:var(--font-sans);transition:border-color var(--duration-fast) var(--ease-out),background-color var(--duration-fast) var(--ease-out)}.ds-card-title{margin:0;font-size:20px;font-weight:600;line-height:1.3;letter-spacing:-.022em}.ds-card-detail{margin:8px 0 0;font-size:14px;line-height:20px;color:var(--muted-foreground)}:host-context(.dark) .ds-card{border-color:var(--color-charcoal-blue-700)}@media(prefers-reduced-motion:reduce){.ds-card{transition-duration:.01ms}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The daily ledger",
+    "overview": "A warm, restrained interface built from readable type, aligned data, and ruled surfaces. Hierarchy comes from weight, spacing, and contrast.",
+    "keyCharacteristics": [
+      "One type family, tabular figures, and static line icons.",
+      "Flat cream surfaces, near-black ink, and restrained teal interaction states."
+    ],
+    "rules": [
+      {
+        "name": "The Single Family Rule",
+        "body": "Use Archivo for headings, body text, controls, and numbers. Weight and tracking create hierarchy.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Sheet Rule",
+        "body": "Separate surfaces with borders, spacing, and tonal changes. Surfaces have no shadows or hover lift.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do reuse the semantic theme variables and existing component styles.",
+      "Do pair color states with readable labels or explicit control states.",
+      "Do keep numeric columns aligned and actions reachable on small screens."
+    ],
+    "donts": [
+      "Don't add display typefaces, gradients, surface shadows, or looping icon motion.",
+      "Don't turn every record into a card or every label into a badge."
+    ]
+  }
+}

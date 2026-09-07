@@ -18,7 +18,7 @@ namespace Mizan.Infrastructure.Ai;
 /// the pipeline the HTTP path uses applies unchanged: FluentValidation rejects
 /// the same arguments, and AuditBehavior records the write with the same
 /// attribution. A tool call is an ordinary command that happened to be asked
-/// for by a model (docs/REFOCUS.md §10).
+/// for by a model (docs/AI.md).
 /// </summary>
 public class AiToolRunner : IAiToolRunner
 {

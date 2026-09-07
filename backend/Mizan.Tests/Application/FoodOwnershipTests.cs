@@ -12,7 +12,7 @@ using Xunit;
 namespace Mizan.Tests.Application;
 
 /// <summary>
-/// Foods belong to someone - see docs/REFOCUS.md §4. Admins curate the shared
+/// Foods belong to someone - see docs/ARCHITECTURE.md#navigation-and-logging. Admins curate the shared
 /// catalogue; everyone else creates foods private to them. Before Food.UserId
 /// existed the endpoint had to be admin-only, because every food was everyone's.
 /// </summary>
@@ -56,6 +56,20 @@ public class FoodOwnershipTests
         var food = await db.Foods.SingleAsync(f => f.Id == result.Id);
         food.UserId.Should().Be(UserId);
         food.IsVerified.Should().BeFalse("verification is an admin judgement, not a self-assertion");
+    }
+
+    [Fact]
+    public async Task AUserCannotSelfVerifyByEditingTheirFood()
+    {
+        var (db, cache, user) = Make("user");
+        var food = new Food { Id = Guid.NewGuid(), UserId = UserId, Name = "Mine" };
+        db.Foods.Add(food);
+        await db.SaveChangesAsync();
+
+        await new UpdateFoodCommandHandler(db, cache, user).Handle(
+            new UpdateFoodCommand { Id = food.Id, Name = "Mine", IsVerified = true, ServingSize = 100, ServingUnit = "g" }, default);
+
+        food.IsVerified.Should().BeFalse();
     }
 
     [Fact]

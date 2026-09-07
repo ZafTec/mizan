@@ -3,7 +3,7 @@ namespace Mizan.Application.Interfaces;
 /// <summary>
 /// The user-facing AI surfaces. Both go through the same three gates - quota,
 /// consent, then the provider - because a surface that skips one is an
-/// unmetered or unconsented call (docs/REFOCUS.md §10, §11).
+/// unmetered or unconsented call (docs/AI.md).
 /// </summary>
 public interface INutritionAiService
 {
@@ -42,7 +42,7 @@ public interface INutritionAiService
     /// <summary>
     /// One turn of onboarding. The model may call allowlisted tools, which run
     /// as this user and come back in <see cref="OnboardingTurn.Performed"/> so
-    /// the UI can say what it did (docs/REFOCUS.md §10).
+    /// the UI can say what it did (docs/AI.md).
     /// </summary>
     Task<OnboardingTurn> RunOnboardingTurnAsync(
         Guid userId,
@@ -54,7 +54,7 @@ public interface INutritionAiService
     /// A coach asking about one client. Read-only by construction - no tools
     /// are offered, so there is nothing to enforce at call time. The context is
     /// the intersection of what the client granted the coach and what they
-    /// consented to for AI (docs/REFOCUS.md §11).
+    /// consented to for AI (docs/AI.md#consent).
     /// </summary>
     Task<TrainerAnswer> AskAboutClientAsync(
         Guid trainerId,

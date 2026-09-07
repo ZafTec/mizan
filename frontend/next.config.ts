@@ -27,7 +27,7 @@ const nextConfig: NextConfig = {
 	// Image configuration. Uploaded media lives in our own object store, whose
 	// public host is deployment-specific - MinIO behind a proxy, an R2 custom
 	// domain, r2.dev - so it comes from the environment rather than being
-	// hardcoded. See docs/REFOCUS.md §7.
+	// hardcoded. See docs/ARCHITECTURE.md#storage-caching-and-jobs.
 	images: {
 		remotePatterns: [
 			...(mediaHostname ? [{ hostname: mediaHostname }] : []),

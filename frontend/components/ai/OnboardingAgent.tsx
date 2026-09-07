@@ -26,7 +26,7 @@ interface Entry {
 }
 
 /**
- * Setup as a conversation instead of a six-screen form (docs/REFOCUS.md §10).
+ * Setup as a conversation instead of a six-screen form (docs/AI.md).
  *
  * The difference from chat is that this model has tools, so every turn says
  * what it actually did. That echo is not decoration: a model recording things

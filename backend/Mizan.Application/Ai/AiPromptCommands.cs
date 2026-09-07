@@ -160,7 +160,7 @@ public record EvalRunQueued(Guid JobId, Guid VersionId);
 ///
 /// Queued rather than run inline: a suite is twenty-odd sequential provider
 /// calls and would time out an HTTP request long before finishing. The console
-/// polls the matrix and watches results land (docs/REFOCUS.md §13b).
+/// polls the matrix and watches results land (docs/ARCHITECTURE.md#storage-caching-and-jobs).
 /// </summary>
 public record RunAiPromptEvalsCommand(Guid Id) : IRequest<EvalRunQueued>;
 

@@ -2027,9 +2027,9 @@ namespace Mizan.Infrastructure.Migrations
                 table: "workouts",
                 column: "user_id");
 
-            // One migration, always. A schema change replaces this file rather
-            // than stacking on it (docs/REFOCUS.md §6), so the seeds live here
-            // and every one of them is ON CONFLICT DO NOTHING.
+            // Initial catalogue seeds use ON CONFLICT DO NOTHING. Preserve this
+            // migration and add later schema changes as new migrations; see
+            // docs/ARCHITECTURE.md#data-and-migrations.
             migrationBuilder.Sql(CatalogSeed.Sql);
             migrationBuilder.Sql(AiEvalSeed.Sql);
         }

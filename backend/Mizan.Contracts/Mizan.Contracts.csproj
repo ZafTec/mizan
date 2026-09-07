@@ -7,10 +7,9 @@
   </PropertyGroup>
 
   <!--
-    Deliberately dependency-free. Every service that talks to the API - the MCP
-    server today, the Telegram bot in phase 13 - references this and nothing
-    else, so a wire shape cannot change in one place and drift in another.
-    See docs/REFOCUS.md §7.
+    Shared request records for MCP and Telegram stay dependency-free so
+    service clients use the same API contracts.
+    See docs/ARCHITECTURE.md#backend-layers.
   -->
 
 </Project>

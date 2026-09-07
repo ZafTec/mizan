@@ -13,6 +13,8 @@ coverage
 test-results/
 playwright-report/
 .auth/
+.impeccable/review/
+.deployment/
 
 # Next.js
 .next/
@@ -45,6 +47,7 @@ yarn-error.log*
 
 # Environment files
 .env
+.env.migration
 .env.local
 .env.development.local
 .env.test.local

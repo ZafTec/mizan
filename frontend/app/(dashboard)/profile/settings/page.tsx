@@ -485,7 +485,7 @@ export default function ProfileSettingsPage() {
 				</div>
 
 				<div className="space-y-6">
-					<section className="card p-6">
+					<section id="assistant" className="card p-6 scroll-mt-6">
 						<SectionHeading
 							icon="brain"
 							title="Assistant"
@@ -597,7 +597,7 @@ export default function ProfileSettingsPage() {
 						)}
 					</section>
 
-					<section className="card p-6">
+					<section id="export" className="card p-6 scroll-mt-6">
 						<SectionHeading
 							icon="upload"
 							title="Export data"

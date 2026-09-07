@@ -15,7 +15,7 @@ namespace Mizan.Tests.Integration;
 /// Chat is persisted now, so the properties worth testing are the ones a blob
 /// of thread state could not give you: a turn traces to the version that
 /// produced it, a failed call leaves nothing behind, and a thread belongs to
-/// exactly one person (docs/REFOCUS.md §12).
+/// exactly one person (docs/AI.md).
 /// </summary>
 [Collection("ApiIntegration")]
 public class AiChatTests

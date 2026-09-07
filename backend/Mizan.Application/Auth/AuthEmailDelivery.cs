@@ -17,7 +17,7 @@ internal static class AuthEmailDelivery
     /// The enqueue is an insert on the same context, so it commits with the
     /// user row. A registration that rolls back does not leave a verification
     /// email queued for an account that does not exist, and one that succeeds
-    /// cannot lose the email (docs/REFOCUS.md §13b).
+    /// cannot lose the email (docs/ARCHITECTURE.md#storage-caching-and-jobs).
     /// </summary>
     public static Task QueueAsync(
         IOutbox outbox,

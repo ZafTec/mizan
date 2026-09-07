@@ -58,11 +58,11 @@ the issue affects production data, notify affected users.
   `/api` and the MCP server under `/mcp` - no separate subdomains.
 - Published Docker images under `euaell/mizan-*`.
 - The MCP server surface and its tool catalog.
-- Authentication and authorization (BetterAuth JWT issuance, backend JWT
-  validation, household access control, trainer/client isolation).
+- Authentication and authorization (backend session cookies, MCP tokens,
+  household access control, trainer/client isolation).
 - Multi-tenant data isolation (households, recipes marked private vs.
   shared, trainer-client relationships).
-- Billing / subscription entitlement checks (once wired).
+- Billing / subscription entitlement checks.
 
 **Out of scope:**
 

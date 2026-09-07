@@ -14,7 +14,7 @@ namespace Mizan.Tests.Integration;
 /// <summary>
 /// A photo produces a proposal and nothing else. The property that matters is
 /// the absence: however the call goes, no diary row appears until the user
-/// posts one (docs/REFOCUS.md §12).
+/// posts one (docs/AI.md).
 /// </summary>
 [Collection("ApiIntegration")]
 public class FoodPhotoTests

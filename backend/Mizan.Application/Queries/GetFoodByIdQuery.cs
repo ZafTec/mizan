@@ -9,16 +9,18 @@ public record GetFoodByIdQuery(Guid Id) : IRequest<FoodDto?>;
 public class GetFoodByIdQueryHandler : IRequestHandler<GetFoodByIdQuery, FoodDto?>
 {
     private readonly IMizanDbContext _context;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetFoodByIdQueryHandler(IMizanDbContext context)
+    public GetFoodByIdQueryHandler(IMizanDbContext context, ICurrentUserService currentUser)
     {
         _context = context;
+        _currentUser = currentUser;
     }
 
     public async Task<FoodDto?> Handle(GetFoodByIdQuery request, CancellationToken cancellationToken)
     {
         var food = await _context.Foods
-            .FirstOrDefaultAsync(f => f.Id == request.Id, cancellationToken);
+            .FirstOrDefaultAsync(f => f.Id == request.Id && (f.UserId == null || f.UserId == _currentUser.UserId), cancellationToken);
 
         if (food == null)
             return null;

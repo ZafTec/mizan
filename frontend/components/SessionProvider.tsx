@@ -19,7 +19,7 @@ const SessionContext = createContext<SessionValue>({
 /**
  * The root layout already resolves the user server-side, so the client reads it
  * from context instead of fetching. Replaces BetterAuth's useSession without
- * adding a request - see docs/REFOCUS.md §6.
+ * adding a request - see docs/ARCHITECTURE.md#identity.
  */
 export function SessionProvider({ user, children }: { user: User | null; children: ReactNode }) {
 	const router = useRouter();

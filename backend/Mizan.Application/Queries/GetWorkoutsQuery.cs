@@ -10,6 +10,8 @@ namespace Mizan.Application.Queries;
 public record GetWorkoutsQuery : IRequest<PagedResult<WorkoutSummaryDto>>, IPagedQuery, ISortableQuery
 {
     public Guid UserId { get; init; }
+    public DateOnly? From { get; init; }
+    public DateOnly? To { get; init; }
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;
     public string? SortBy { get; init; }
@@ -77,6 +79,8 @@ public class GetWorkoutsQueryHandler : IRequestHandler<GetWorkoutsQuery, PagedRe
     {
         var query = _context.Workouts
             .Where(w => w.UserId == request.UserId);
+        if (request.From.HasValue) query = query.Where(w => w.WorkoutDate >= request.From.Value);
+        if (request.To.HasValue) query = query.Where(w => w.WorkoutDate <= request.To.Value);
 
         var totalCount = await query.CountAsync(cancellationToken);
 
@@ -87,6 +91,8 @@ public class GetWorkoutsQueryHandler : IRequestHandler<GetWorkoutsQuery, PagedRe
             defaultDescending: true);
 
         var workouts = await sortedQuery
+            .ThenByDescending(w => w.CreatedAt)
+            .ThenBy(w => w.Id)
             .ApplyPaging(request)
             .Include(w => w.Exercises)
                 .ThenInclude(we => we.Exercise)

@@ -3,7 +3,7 @@ namespace Mizan.Application.Interfaces;
 /// <summary>
 /// Browser sessions. The caller holds an opaque token; the database holds its
 /// hash. Revocation is a delete, which is the whole reason v2 stopped issuing
-/// JWTs to browsers - see docs/REFOCUS.md §6.
+/// JWTs to browsers - see docs/ARCHITECTURE.md#identity.
 /// </summary>
 public interface ISessionService
 {

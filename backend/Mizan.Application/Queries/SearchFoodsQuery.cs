@@ -33,6 +33,7 @@ public record FoodDto
     public decimal? FiberPer100g { get; init; }
     public decimal ProteinCalorieRatio { get; init; }
     public bool IsVerified { get; init; }
+    public DateTime? LastUsedAt { get; init; }
 }
 
 public class SearchFoodsQueryHandler : IRequestHandler<SearchFoodsQuery, PagedResult<FoodDto>>
@@ -76,13 +77,13 @@ public class SearchFoodsQueryHandler : IRequestHandler<SearchFoodsQuery, PagedRe
             request,
             LoadAsync,
             CacheOptions,
-            tags: new[] { CacheTags.Foods },
+            tags: userId.HasValue ? [CacheTags.Foods, CacheTags.Nutrition(userId.Value)] : [CacheTags.Foods],
             cancellationToken: cancellationToken);
     }
 
     private async ValueTask<PagedResult<FoodDto>> LoadAsync(SearchFoodsQuery request, CancellationToken cancellationToken)
     {
-        // Public foods, plus the caller's own. See docs/REFOCUS.md §4 - before
+        // Public foods, plus the caller's own. See docs/ARCHITECTURE.md#navigation-and-logging - before
         // Food.UserId existed, every user-created food was visible to everyone.
         var currentUserId = _currentUser.UserId;
         IQueryable<Domain.Entities.Food> query = _context.Foods
@@ -112,8 +113,14 @@ public class SearchFoodsQueryHandler : IRequestHandler<SearchFoodsQuery, PagedRe
             SortMappings,
             defaultSort: f => f.Name,
             defaultDescending: false);
+        if (string.IsNullOrWhiteSpace(request.SortBy) && currentUserId.HasValue)
+        {
+            sortedQuery = query.OrderByDescending(f => f.DiaryEntries.Where(e => e.UserId == currentUserId).Max(e => (DateTime?)e.LoggedAt) ?? DateTime.MinValue)
+                .ThenBy(f => f.Name);
+        }
 
         var foods = await sortedQuery
+            .ThenBy(f => f.Id)
             .ApplyPaging(request)
             .Select(f => new FoodDto
             {
@@ -129,7 +136,8 @@ public class SearchFoodsQueryHandler : IRequestHandler<SearchFoodsQuery, PagedRe
                 FatPer100g = f.FatPer100g,
                 FiberPer100g = f.FiberPer100g,
                 ProteinCalorieRatio = f.ProteinCalorieRatio,
-                IsVerified = f.IsVerified
+                IsVerified = f.IsVerified,
+                LastUsedAt = f.DiaryEntries.Where(e => e.UserId == currentUserId).Max(e => (DateTime?)e.LoggedAt)
             })
             .ToListAsync(cancellationToken);
 

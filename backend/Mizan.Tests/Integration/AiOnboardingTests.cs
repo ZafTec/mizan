@@ -15,7 +15,7 @@ namespace Mizan.Tests.Integration;
 /// <summary>
 /// The onboarding agent can write, which makes it the one AI surface where the
 /// allowlist is load-bearing. These tests are about what it cannot do
-/// (docs/REFOCUS.md §10).
+/// (docs/AI.md).
 /// </summary>
 [Collection("ApiIntegration")]
 public class AiOnboardingTests

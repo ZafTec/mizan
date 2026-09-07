@@ -56,7 +56,7 @@ const NOTHING: AiConsent = {
 /**
  * What the assistant may see, and what it has cost you. Both defaults matter:
  * every switch starts off, and an axis that is off is never sent - see
- * docs/REFOCUS.md §11.
+ * docs/AI.md#consent.
  */
 export function AiSettings() {
 	const [consent, setConsent] = useState<AiConsent>(NOTHING);

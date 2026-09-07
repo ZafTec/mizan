@@ -11,7 +11,7 @@ namespace Mizan.Infrastructure.Ai;
 /// <summary>
 /// One HTTP client against an OpenAI-compatible /chat/completions endpoint.
 /// Model, endpoint and key are configuration, so swapping providers never
-/// touches a call site (docs/REFOCUS.md §10).
+/// touches a call site (docs/AI.md).
 /// </summary>
 public class OpenAiCompatibleProvider : IAiProvider
 {
