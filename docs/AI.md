@@ -6,7 +6,9 @@ Mizan's assistant, food-photo analysis, onboarding, trainer questions, and promp
 
 The provider speaks the OpenAI-compatible chat-completions protocol. Set the Compose variables `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL`, or the equivalent backend `Ai:BaseUrl`, `Ai:ApiKey`, and `Ai:Model` configuration. An empty endpoint disables AI while basic logging remains available.
 
-`AI_SUPPORTS_TEMPERATURE=false` omits temperature for providers that reject it. `AI_GLOBAL_DAILY_TOKENS` and `AI_GLOBAL_DAILY_COST_MICROS` cap provider use across the application. Configure provider prices accurately when relying on the cost ceiling. Token and cost ceilings are enforced by code, not prompt text.
+`AI_SUPPORTS_TEMPERATURE=false` omits temperature for providers that reject it. Optional `AI_REASONING_EFFORT` sets the provider's reasoning effort; Azure GPT-5.6 chat-completion tool calls require `none`. Leave it empty for providers that do not accept this field.
+
+`AI_GLOBAL_DAILY_TOKENS` and `AI_GLOBAL_DAILY_COST_MICROS` cap provider use across the application. Configure provider prices accurately when relying on the cost ceiling. Token and cost ceilings are enforced by code, not prompt text.
 
 ## Consent
 

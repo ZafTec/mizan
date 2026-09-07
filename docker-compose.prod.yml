@@ -1,8 +1,9 @@
 # Production deployment on the existing proxy and PostgreSQL networks.
 # Stop the old Mizan services before this cutover. The upgrade service takes
 # a complete backup and applies the reviewed v1 bridge before any app starts.
-# Provision .env, private .env.migration (PG* only), deployment/, and backups/
-# beside this file. Public frontend URLs are GitHub build-time variables.
+# Keep .env and this file at the app root. The reviewed cutover scripts and
+# private PG settings live in backups/cutover/. Public frontend URLs are
+# GitHub build-time variables.
 
 services:
   mizan-db-upgrade:
@@ -10,23 +11,23 @@ services:
     container_name: mizan-db-upgrade
     restart: "no"
     env_file:
-      - .env.migration
+      - ./backups/cutover/pg.env
     entrypoint: ["/bin/sh", "/upgrade/db-upgrade.sh"]
     volumes:
       - type: bind
-        source: ./deployment/db-upgrade.sh
+        source: ./backups/cutover/db-upgrade.sh
         target: /upgrade/db-upgrade.sh
         read_only: true
         bind:
           create_host_path: false
       - type: bind
-        source: ./deployment/v1-to-v2-upgrade.sql
+        source: ./backups/cutover/v1-to-v2-upgrade.sql
         target: /upgrade/v1-to-v2-upgrade.sql
         read_only: true
         bind:
           create_host_path: false
       - type: bind
-        source: ./deployment/media-apply.sql
+        source: ./backups/cutover/media-apply.sql
         target: /migration/media-apply.sql
         read_only: true
         bind:
@@ -40,7 +41,7 @@ services:
       - postgresql-db-n8n
 
   mizan-backend:
-    image: euaell/mizan-backend:latest
+    image: zaftec/mizan-backend:latest
     container_name: mizan-backend
     restart: unless-stopped
     env_file:
@@ -70,6 +71,7 @@ services:
       Ai__ApiKey: ${AI_API_KEY:-}
       Ai__Model: ${AI_MODEL:-gpt-5.6-luna}
       Ai__SupportsTemperature: ${AI_SUPPORTS_TEMPERATURE:-true}
+      Ai__ReasoningEffort: ${AI_REASONING_EFFORT:-}
       Ai__GlobalDailyTokens: ${AI_GLOBAL_DAILY_TOKENS:-5000000}
       Ai__GlobalDailyCostMicros: ${AI_GLOBAL_DAILY_COST_MICROS:-20000000}
     depends_on:
@@ -93,7 +95,7 @@ services:
           memory: 512M
 
   mizan-frontend:
-    image: euaell/mizan-frontend:latest
+    image: zaftec/mizan-frontend:latest
     container_name: mizan-frontend
     restart: unless-stopped
     environment:
@@ -126,7 +128,7 @@ services:
           memory: 256M
 
   mizan-mcp:
-    image: euaell/mizan-mcp:latest
+    image: zaftec/mizan-mcp:latest
     container_name: mizan-mcp
     restart: unless-stopped
     environment:
