@@ -163,6 +163,7 @@ services:
       - Smtp__Password=${SMTP_PASS:-}
       - Smtp__FromAddress=${SMTP_FROM_ADDRESS:-${SMTP_FROM:-noreply@mizan.local}}
       - Smtp__FromName=${SMTP_FROM_NAME:-Mizan}
+      - Smtp__Security=${Smtp__Security:-Auto}
       - Smtp__LocalDomain=${Smtp__LocalDomain:-}
       - Authentication__Google__ClientId=${GOOGLE_CLIENT_ID:-}
       - Authentication__Google__ClientSecret=${GOOGLE_CLIENT_SECRET:-}

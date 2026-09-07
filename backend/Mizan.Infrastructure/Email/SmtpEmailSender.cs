@@ -1,5 +1,4 @@
 using MailKit.Net.Smtp;
-using MailKit.Security;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -8,22 +7,6 @@ using Mizan.Application.Interfaces;
 
 namespace Mizan.Infrastructure.Email;
 
-public class SmtpOptions
-{
-    public const string SectionName = "Smtp";
-
-    public string Host { get; set; } = string.Empty;
-    public int Port { get; set; } = 587;
-    public string? Username { get; set; }
-    public string? Password { get; set; }
-    public string FromAddress { get; set; } = "noreply@mizan.local";
-    public string FromName { get; set; } = "Mizan";
-    public bool UseStartTls { get; set; } = true;
-
-    /// <summary>Optional EHLO/HELO hostname. Empty preserves MailKit's default greeting.</summary>
-    public string? LocalDomain { get; set; }
-}
-
 /// <summary>
 /// Email moved to the backend with identity in v2.
 ///
@@ -31,7 +14,7 @@ public class SmtpOptions
 /// reset link is a credential: in the application log it outlives the token,
 /// travels to wherever logs are shipped, and is readable by anyone with log
 /// access. With no SMTP host configured, a development run prints the body to
-/// stdout and every other environment gets an error naming only the subject.
+/// stdout and every other environment fails the send so the outbox retains it.
 /// </summary>
 public class SmtpEmailSender : IEmailSender
 {
@@ -57,22 +40,28 @@ public class SmtpEmailSender : IEmailSender
             return;
         }
 
+        var from = MailboxAddress.Parse(_options.FromAddress);
+        from.Name = _options.FromName;
+        var localDomain = string.IsNullOrWhiteSpace(_options.LocalDomain)
+            ? from.Domain
+            : _options.LocalDomain.Trim();
+        if (string.IsNullOrWhiteSpace(localDomain))
+        {
+            throw new InvalidOperationException("The SMTP sender address must include a domain.");
+        }
+
         var mime = new MimeMessage();
-        mime.From.Add(new MailboxAddress(_options.FromName, _options.FromAddress));
+        mime.From.Add(from);
         mime.To.Add(MailboxAddress.Parse(message.To));
         mime.Subject = message.Subject;
         mime.Body = new BodyBuilder { HtmlBody = message.Html, TextBody = message.Text }.ToMessageBody();
 
-        using var client = new SmtpClient();
-        if (!string.IsNullOrWhiteSpace(_options.LocalDomain))
-        {
-            client.LocalDomain = _options.LocalDomain.Trim();
-        }
+        using var client = new SmtpClient { LocalDomain = localDomain };
 
         await client.ConnectAsync(
             _options.Host,
             _options.Port,
-            _options.UseStartTls ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto,
+            _options.GetSocketOptions(),
             cancellationToken);
 
         if (!string.IsNullOrWhiteSpace(_options.Username))
@@ -81,17 +70,25 @@ public class SmtpEmailSender : IEmailSender
         }
 
         await client.SendAsync(mime, cancellationToken);
-        await client.DisconnectAsync(true, cancellationToken);
+        _logger.LogInformation("Email accepted by the SMTP server");
 
-        _logger.LogInformation("Sent {Subject}", message.Subject);
+        // SendAsync returns after the server accepts DATA. A failed QUIT must
+        // not turn accepted delivery into an outbox retry and a duplicate email.
+        try
+        {
+            await client.DisconnectAsync(true, cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogDebug("SMTP disconnect failed after acceptance ({ErrorType})", exception.GetType().Name);
+        }
     }
 
     private void NotConfigured(EmailMessage message)
     {
         if (!_environment.IsDevelopment())
         {
-            _logger.LogError("SMTP is not configured; {Subject} was not sent", message.Subject);
-            return;
+            throw new InvalidOperationException("SMTP is not configured; set Smtp:Host before sending email.");
         }
 
         // Deliberately Console and not the logger: Serilog also writes to
