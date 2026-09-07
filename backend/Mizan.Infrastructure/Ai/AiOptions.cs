@@ -22,6 +22,12 @@ public class AiOptions : IAiCeilings
     /// </summary>
     public bool SupportsTemperature { get; set; } = true;
 
+    /// <summary>
+    /// Optional provider reasoning effort. GPT-5.6 tool calls on Chat Completions
+    /// require "none"; leave unset for providers that do not accept this field.
+    /// </summary>
+    public string? ReasoningEffort { get; set; }
+
     /// <summary>Per-day allowances by tier. Free gets enough to see the value.</summary>
     public AiTierLimits Free { get; set; } = new() { DailyRequests = 5, DailyTokens = 20_000 };
 

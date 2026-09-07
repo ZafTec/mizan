@@ -161,7 +161,9 @@ services:
       - Smtp__Port=${SMTP_PORT:-587}
       - Smtp__Username=${SMTP_USER:-}
       - Smtp__Password=${SMTP_PASS:-}
-      - Smtp__FromAddress=${SMTP_FROM:-noreply@mizan.local}
+      - Smtp__FromAddress=${SMTP_FROM_ADDRESS:-${SMTP_FROM:-noreply@mizan.local}}
+      - Smtp__FromName=${SMTP_FROM_NAME:-Mizan}
+      - Smtp__LocalDomain=${Smtp__LocalDomain:-}
       - Authentication__Google__ClientId=${GOOGLE_CLIENT_ID:-}
       - Authentication__Google__ClientSecret=${GOOGLE_CLIENT_SECRET:-}
       - Authentication__GitHub__ClientId=${GITHUB_CLIENT_ID:-}
@@ -181,6 +183,7 @@ services:
       - Ai__ApiKey=${AI_API_KEY:-}
       - Ai__Model=${AI_MODEL:-gpt-5.6-luna}
       - Ai__SupportsTemperature=${AI_SUPPORTS_TEMPERATURE:-true}
+      - Ai__ReasoningEffort=${AI_REASONING_EFFORT:-}
       - Ai__GlobalDailyTokens=${AI_GLOBAL_DAILY_TOKENS:-5000000}
       - Ai__GlobalDailyCostMicros=${AI_GLOBAL_DAILY_COST_MICROS:-20000000}
       # MCP service-to-service API keys

@@ -19,6 +19,9 @@ public class SmtpOptions
     public string FromAddress { get; set; } = "noreply@mizan.local";
     public string FromName { get; set; } = "Mizan";
     public bool UseStartTls { get; set; } = true;
+
+    /// <summary>Optional EHLO/HELO hostname. Empty preserves MailKit's default greeting.</summary>
+    public string? LocalDomain { get; set; }
 }
 
 /// <summary>
@@ -61,6 +64,11 @@ public class SmtpEmailSender : IEmailSender
         mime.Body = new BodyBuilder { HtmlBody = message.Html, TextBody = message.Text }.ToMessageBody();
 
         using var client = new SmtpClient();
+        if (!string.IsNullOrWhiteSpace(_options.LocalDomain))
+        {
+            client.LocalDomain = _options.LocalDomain.Trim();
+        }
+
         await client.ConnectAsync(
             _options.Host,
             _options.Port,
