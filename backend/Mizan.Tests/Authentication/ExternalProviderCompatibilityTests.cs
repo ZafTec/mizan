@@ -1,23 +1,147 @@
 using System.Net;
+using System.Security.Claims;
 using System.Text;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Mizan.Api.Authentication;
 using Mizan.Api.Middleware;
+using Mizan.Infrastructure.Identity;
 using Xunit;
 
 namespace Mizan.Tests.Authentication;
 
 public class ExternalProviderCompatibilityTests
 {
+    [Fact]
+    public void CallbackPreservesTheValidatedReturnTargetStoredBeforeTheOAuthRoundTrip()
+    {
+        var urls = new AppUrls(Options.Create(new AppOptions { PublicUrl = "https://mizan.example.test" }));
+        var storedTarget = urls.SafeReturnUrl("/history?tab=meals");
+
+        var target = ExternalProviders.ReturnUrl(AuthenticatedReturnTarget(storedTarget), urls);
+
+        target.Should().Be("https://mizan.example.test/history?tab=meals");
+    }
+
+    [Theory]
+    [InlineData("https://evil.example/history")]
+    [InlineData("https://mizan.example.test.evil.example/history")]
+    [InlineData("https://mizan.example.test@evil.example/history")]
+    [InlineData("javascript:alert(1)")]
+    public void CallbackDiscardsAnUntrustedStoredReturnTarget(string storedTarget)
+    {
+        var urls = new AppUrls(Options.Create(new AppOptions { PublicUrl = "https://mizan.example.test" }));
+
+        var target = ExternalProviders.ReturnUrl(AuthenticatedReturnTarget(storedTarget), urls);
+
+        target.Should().Be("https://mizan.example.test/");
+    }
+
+    private static AuthenticateResult AuthenticatedReturnTarget(string storedTarget)
+    {
+        var properties = new AuthenticationProperties();
+        properties.Items[ExternalProviders.ReturnUrlKey] = storedTarget;
+        return AuthenticateResult.Success(new AuthenticationTicket(
+            new ClaimsPrincipal(new ClaimsIdentity()), properties, ExternalProviders.CookieScheme));
+    }
+
+    public static IEnumerable<object[]> UntrustedAuthorizationDestinations()
+    {
+        foreach (var (provider, host, path, otherEndpoint) in new[]
+        {
+            ("google", "accounts.google.com", "/o/oauth2/v2/auth", "https://github.com/login/oauth/authorize"),
+            ("github", "github.com", "/login/oauth/authorize", "https://accounts.google.com/o/oauth2/v2/auth"),
+        })
+        {
+            foreach (var destination in new[]
+            {
+                "https://evil.example/authorize",
+                $"https://{host}.evil.example{path}",
+                $"https://{host}@evil.example{path}",
+                $"https://evil@{host}{path}",
+                $"http://{host}{path}",
+                $"https://{host}:8443{path}",
+                $"https://{host}/redirect",
+                $"https://{host}{path}#https://evil.example",
+                $"//{host}{path}",
+                "/https://evil.example",
+                "javascript:alert(1)",
+                otherEndpoint,
+            })
+            {
+                yield return [provider, destination];
+            }
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(UntrustedAuthorizationDestinations))]
+    public async Task UnexpectedAuthorizationDestinationsAreRejectedWithoutRedirecting(string provider, string destination)
+    {
+        var context = CreateRedirectContext(provider, destination);
+
+        var redirect = () => context.Options.Events.OnRedirectToAuthorizationEndpoint(context);
+
+        await redirect.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Unexpected OAuth authorization destination.");
+        context.Response.Headers.Location.Should().BeEmpty();
+        context.Response.StatusCode.Should().Be(StatusCodes.Status200OK);
+    }
+
+    [Theory]
+    [InlineData("google", "https://accounts.google.com/o/oauth2/v2/auth")]
+    [InlineData("github", "https://github.com/login/oauth/authorize")]
+    public async Task AllowlistedRedirectPreservesOAuthStateAndForcesOneLegacyCallback(string provider, string endpoint)
+    {
+        var context = CreateRedirectContext(provider, endpoint
+            + "?client_id=synthetic-client&response_type=code&scope=openid%20email"
+            + "&state=opaque%2Bstate%26key%3Dvalue&code_challenge=synthetic-pkce&code_challenge_method=S256"
+            + "&redirect_uri=https%3A%2F%2Fevil.example%2Ffirst&redirect_uri=%2F%2Fevil.example%2Fsecond");
+        context.Request.Scheme = "http";
+        context.Request.Host = new HostString("evil.example");
+
+        await context.Options.Events.OnRedirectToAuthorizationEndpoint(context);
+
+        context.Response.StatusCode.Should().Be(StatusCodes.Status302Found);
+        var destination = new Uri(context.Response.Headers.Location.ToString());
+        destination.GetLeftPart(UriPartial.Path).Should().Be(endpoint);
+        destination.UserInfo.Should().BeEmpty();
+        destination.Fragment.Should().BeEmpty();
+        var query = QueryHelpers.ParseQuery(destination.Query);
+        query["client_id"].ToString().Should().Be("synthetic-client");
+        query["response_type"].ToString().Should().Be("code");
+        query["scope"].ToString().Should().Be("openid email");
+        query["state"].ToString().Should().Be("opaque+state&key=value");
+        query["code_challenge"].ToString().Should().Be("synthetic-pkce");
+        query["code_challenge_method"].ToString().Should().Be("S256");
+        query["redirect_uri"].Should().ContainSingle()
+            .Which.Should().Be($"https://mizan.example.test/api/auth/callback/{provider}");
+    }
+
+    private static RedirectContext<OAuthOptions> CreateRedirectContext(string provider, string destination)
+    {
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["App:PublicUrl"] = "https://mizan.example.test",
+        }).Build();
+        var options = new OAuthOptions();
+        ExternalProviders.Configure(options, configuration, provider);
+        return new RedirectContext<OAuthOptions>(new DefaultHttpContext(),
+            new AuthenticationScheme(provider, provider, typeof(OAuthHandler<OAuthOptions>)),
+            options, new AuthenticationProperties(), destination);
+    }
+
     [Theory]
     [InlineData("google")]
     [InlineData("github")]

@@ -32,13 +32,19 @@ public static class ExternalProviders
     };
 
     /// <summary>
-    /// Keep the provider registrations made by Better Auth. The API can live
-    /// on a separate subdomain, while providers return to the public web host.
+    /// Keep the provider registrations made by Better Auth, with callbacks
+    /// returning to the canonical public web origin.
     /// </summary>
     public static void Configure(OAuthOptions options, IConfiguration configuration, string provider)
     {
         provider = provider.ToLowerInvariant();
-        if (Resolve(provider) is null) throw new ArgumentException("Unsupported sign-in provider.", nameof(provider));
+        var authorizationEndpoint = provider switch
+        {
+            "google" => GoogleDefaults.AuthorizationEndpoint,
+            "github" => GitHubAuthenticationDefaults.AuthorizationEndpoint,
+            _ => throw new ArgumentException("Unsupported sign-in provider.", nameof(provider)),
+        };
+        var allowedAuthorizationUri = new Uri(authorizationEndpoint);
 
         var app = configuration.GetSection(AppOptions.SectionName).Get<AppOptions>() ?? new AppOptions();
         if (!Uri.TryCreate(app.PublicUrl, UriKind.Absolute, out var origin)
@@ -64,15 +70,36 @@ public static class ExternalProviders
         var callbackUri = new Uri(origin, callbackPath).AbsoluteUri;
         options.Events.OnRedirectToAuthorizationEndpoint = context =>
         {
-            // The challenge may arrive on api.example.com, but the registered
-            // redirect_uri belongs to the web origin. The callback proxy must
-            // preserve that host and trusted HTTPS scheme for token exchange.
-            var authorizationUri = new UriBuilder(context.RedirectUri);
-            var query = QueryHelpers.ParseQuery(authorizationUri.Query);
+            if (!Uri.TryCreate(context.RedirectUri, UriKind.Absolute, out var requestedAuthorizationUri)
+                || !string.Equals(requestedAuthorizationUri.GetLeftPart(UriPartial.Path), authorizationEndpoint, StringComparison.Ordinal)
+                || requestedAuthorizationUri.UserInfo.Length != 0 || requestedAuthorizationUri.Fragment.Length != 0)
+            {
+                throw new InvalidOperationException("Unexpected OAuth authorization destination.");
+            }
+
+            // Use the registered public origin regardless of the request host.
+            // The callback proxy must preserve that host and trusted HTTPS
+            // scheme for token exchange.
+            var query = QueryHelpers.ParseQuery(requestedAuthorizationUri.Query);
             query["redirect_uri"] = callbackUri;
-            authorizationUri.Query = QueryString.Create(query).ToString();
-            context.Response.Redirect(authorizationUri.Uri.AbsoluteUri);
-            return Task.CompletedTask;
+            var authorizationUri = new UriBuilder(authorizationEndpoint)
+            {
+                Query = QueryString.Create(query).ToString(),
+            }.Uri;
+
+            // Build from the provider constant and enforce its exact endpoint
+            // at the redirect boundary. Query values cannot choose a host/path.
+            if (authorizationUri.Scheme == Uri.UriSchemeHttps
+                && authorizationUri.Host == allowedAuthorizationUri.Host
+                && authorizationUri.Port == allowedAuthorizationUri.Port
+                && authorizationUri.AbsolutePath == allowedAuthorizationUri.AbsolutePath
+                && authorizationUri.UserInfo.Length == 0 && authorizationUri.Fragment.Length == 0)
+            {
+                context.Response.Redirect(authorizationUri.AbsoluteUri);
+                return Task.CompletedTask;
+            }
+
+            throw new InvalidOperationException("Unexpected OAuth authorization destination.");
         };
     }
 
