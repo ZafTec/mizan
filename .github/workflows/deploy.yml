@@ -27,7 +27,7 @@ jobs:
     name: Build & Push Frontend
     runs-on: ubuntu-latest
     outputs:
-      image-tag: ${{ steps.meta.outputs.version }}
+      digest: ${{ steps.build.outputs.digest }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -63,6 +63,7 @@ jobs:
           echo "NEXT_PUBLIC_PADDLE_PRICE_LIFETIME is set: ${{ vars.NEXT_PUBLIC_PADDLE_PRICE_LIFETIME != '' }}"
 
       - name: Build and push
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
@@ -87,6 +88,8 @@ jobs:
   build-and-push-backend:
     name: Build & Push Backend
     runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -110,6 +113,7 @@ jobs:
             type=raw,value=latest
 
       - name: Build and push
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: ./backend
@@ -123,6 +127,8 @@ jobs:
   build-and-push-mcp:
     name: Build & Push MCP
     runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -146,6 +152,7 @@ jobs:
             type=raw,value=latest
 
       - name: Build and push
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: ./backend
@@ -157,19 +164,136 @@ jobs:
           cache-to: type=gha,mode=max
 
   create-release:
-    name: Create GitHub Release
+    name: Release Please
     runs-on: ubuntu-latest
     needs: [build-and-push-frontend, build-and-push-backend, build-and-push-mcp]
     permissions:
-      contents: write
+      contents: read
+    env:
+      FRONTEND_DIGEST: ${{ needs.build-and-push-frontend.outputs.digest }}
+      BACKEND_DIGEST: ${{ needs.build-and-push-backend.outputs.digest }}
+      MCP_DIGEST: ${{ needs.build-and-push-mcp.outputs.digest }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Build release notes
-        id: notes
+      - name: Create repository-scoped Release Please token
+        id: app_token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Run Release Please
+        id: release
+        uses: googleapis/release-please-action@8b8fd2cc23b2e18957157a9d923d75aa0c6f6ad5 # v4.4.1
+        with:
+          token: ${{ steps.app_token.outputs.token }}
+          target-branch: master
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      - name: Prepare draft release or resume publication
+        id: version
+        uses: actions/github-script@v7
+        env:
+          NEW_RELEASE_TAG: ${{ steps.release.outputs.tag_name }}
+        with:
+          github-token: ${{ steps.app_token.outputs.token }}
+          script: |
+            const fs = require('fs');
+            const manifest = JSON.parse(fs.readFileSync('.release-please-manifest.json', 'utf8'));
+            const tag = process.env.NEW_RELEASE_TAG || (manifest['.'] ? `v${manifest['.']}` : '');
+            if (!tag) return;
+
+            let release;
+            try {
+              release = (await github.rest.repos.getReleaseByTag({ ...context.repo, tag })).data;
+            } catch (error) {
+              if (error.status === 404) return;
+              throw error;
+            }
+            if (!release.draft) {
+              core.notice(`${tag} is already published; preserving its notes and versioned images.`);
+              return;
+            }
+
+            let target = (await github.rest.git.getRef({ ...context.repo, ref: `tags/${tag}` })).data.object;
+            if (target.type === 'tag') {
+              target = (await github.rest.git.getTag({ ...context.repo, tag_sha: target.sha })).data.object;
+            }
+            if (target.type !== 'commit' || target.sha !== context.sha) {
+              throw new Error(`${tag} targets ${target.sha}, but these images were built from ${context.sha}. Use Re-run failed jobs on the release commit's workflow run to publish its draft with the original build digests.`);
+            }
+
+            fs.writeFileSync(`${process.env.RUNNER_TEMP}/release-notes.md`, release.body || '');
+            core.setOutput('tag', tag);
+            core.setOutput('version', tag.replace(/^v/, ''));
+            core.setOutput('release_id', release.id);
+            core.setOutput('publish', 'true');
+
+      - name: Set up Docker Buildx
+        if: steps.version.outputs.publish == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        if: steps.version.outputs.publish == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Publish versioned image tags
+        if: steps.version.outputs.publish == 'true'
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          # Check every destination before publishing any tags. A retry may
+          # reuse the same digest, but must never replace different artifacts.
+          check_image() {
+            local image="$1" digest="$2" tag existing error_file
+            if [[ ! "$digest" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+              echo "::error::Missing or invalid build digest for ${image}."
+              exit 1
+            fi
+            for tag in "$RELEASE_TAG" "$RELEASE_VERSION"; do
+              error_file=$(mktemp)
+              if existing=$(docker buildx imagetools inspect "${image}:${tag}" --format '{{.Manifest.Digest}}' 2>"$error_file"); then
+                if [ "$existing" != "$digest" ]; then
+                  echo "::error::${image}:${tag} already contains a different digest; refusing to replace it."
+                  exit 1
+                fi
+              elif ! grep -Eiq 'not found|manifest unknown' "$error_file"; then
+                cat "$error_file" >&2
+                exit 1
+              fi
+              rm "$error_file"
+            done
+          }
+          check_image "$FRONTEND_IMAGE" "$FRONTEND_DIGEST"
+          check_image "$BACKEND_IMAGE" "$BACKEND_DIGEST"
+          check_image "$MCP_IMAGE" "$MCP_DIGEST"
+
+          docker buildx imagetools create --prefer-index=false \
+            --tag "${FRONTEND_IMAGE}:${RELEASE_TAG}" --tag "${FRONTEND_IMAGE}:${RELEASE_VERSION}" \
+            "${FRONTEND_IMAGE}@${FRONTEND_DIGEST}"
+          docker buildx imagetools create --prefer-index=false \
+            --tag "${BACKEND_IMAGE}:${RELEASE_TAG}" --tag "${BACKEND_IMAGE}:${RELEASE_VERSION}" \
+            "${BACKEND_IMAGE}@${BACKEND_DIGEST}"
+          docker buildx imagetools create --prefer-index=false \
+            --tag "${MCP_IMAGE}:${RELEASE_TAG}" --tag "${MCP_IMAGE}:${RELEASE_VERSION}" \
+            "${MCP_IMAGE}@${MCP_DIGEST}"
+
+      - name: Append deployment instructions to release notes
+        if: steps.version.outputs.publish == 'true'
         env:
           FRONTEND_IMAGE: ${{ env.FRONTEND_IMAGE }}
           BACKEND_IMAGE: ${{ env.BACKEND_IMAGE }}
@@ -177,33 +301,25 @@ jobs:
           ACTOR: ${{ github.actor }}
           SHA: ${{ github.sha }}
           REF: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
         run: |
           SHORT_SHA="${SHA::8}"
           DATE=$(date -u +%Y-%m-%d)
-          DATETIME=$(date -u +%Y%m%d%H%M%S)
 
-          echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
-          echo "date=${DATE}"           >> $GITHUB_OUTPUT
-          echo "tag=release/${DATETIME}-${SHORT_SHA}" >> $GITHUB_OUTPUT
-          echo "title=Release ${DATE} (${SHORT_SHA})" >> $GITHUB_OUTPUT
+          # Keep the changelog generated by Release Please and append the
+          # deployment details only when publishing its draft.
+          cat >> "$RUNNER_TEMP/release-notes.md" << BODY
 
-          # Collect commits since the last release tag (fall back to last 10)
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
-          if [ -n "$LAST_TAG" ]; then
-            RANGE="${LAST_TAG}..HEAD"
-          else
-            RANGE="HEAD~10..HEAD"
-          fi
-          COMMITS=$(git log "$RANGE" --pretty=format:"- %s (%h)" --no-merges)
+          ---
 
-          # Write full release body to a file
-          cat > /tmp/release-body.md << BODY
           ## Deployment Summary
 
-          All three services built and pushed to Docker Hub successfully.
+          All three services built and pushed to Docker Hub successfully. Their exact build digests are published as ${RELEASE_TAG} and ${RELEASE_VERSION}.
 
           | Field       | Value |
           |-------------|-------|
+          | Version     | \`${RELEASE_TAG}\` |
           | Commit      | \`${SHA}\` |
           | Branch      | \`${REF}\` |
           | Deployed by | @${ACTOR} |
@@ -216,22 +332,24 @@ jobs:
           Update your server with the exact tagged versions from this release:
 
           \`\`\`bash
-          docker pull ${FRONTEND_IMAGE}:${SHORT_SHA}
-          docker pull ${BACKEND_IMAGE}:${SHORT_SHA}
-          docker pull ${MCP_IMAGE}:${SHORT_SHA}
+          docker pull ${FRONTEND_IMAGE}:${RELEASE_TAG}
+          docker pull ${BACKEND_IMAGE}:${RELEASE_TAG}
+          docker pull ${MCP_IMAGE}:${RELEASE_TAG}
           \`\`\`
 
-          | Service  | Image | Tags |
+          The \`${SHORT_SHA}\` commit tag and \`latest\` are also available. Versioned tags are preserved on workflow reruns.
+
+          | Service  | Image | Digest |
           |----------|-------|------|
-          | Frontend | \`${FRONTEND_IMAGE}\` | \`${SHORT_SHA}\`, \`latest\` |
-          | Backend  | \`${BACKEND_IMAGE}\`  | \`${SHORT_SHA}\`, \`latest\` |
-          | MCP      | \`${MCP_IMAGE}\`      | \`${SHORT_SHA}\`, \`latest\` |
+          | Frontend | \`${FRONTEND_IMAGE}\` | \`${FRONTEND_DIGEST}\` |
+          | Backend  | \`${BACKEND_IMAGE}\`  | \`${BACKEND_DIGEST}\` |
+          | MCP      | \`${MCP_IMAGE}\`      | \`${MCP_DIGEST}\` |
 
           ---
 
           ## Deploying to Production
 
-          The prepared production Compose upgrade service takes a PostgreSQL backup and applies the database and media cutover before the app starts. Wait for all three image builds to finish successfully.
+          The prepared production Compose upgrade service takes a PostgreSQL backup and applies the database and media cutover before the app starts. The existing deploy helper follows \`latest\`; pin each application image to \`${RELEASE_TAG}\` in production Compose when deploying this exact release.
 
           SSH into your server and run:
 
@@ -240,24 +358,28 @@ jobs:
           deploy
           \`\`\`
 
-          ---
-
-          ## Changes in this Release
-
           BODY
 
-          if [ -n "$COMMITS" ]; then
-            echo "$COMMITS" >> /tmp/release-body.md
-          else
-            echo "_No individual commits found since the previous release._" >> /tmp/release-body.md
-          fi
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Publish prepared GitHub release
+        if: steps.version.outputs.publish == 'true'
+        uses: actions/github-script@v7
+        env:
+          RELEASE_ID: ${{ steps.version.outputs.release_id }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
         with:
-          tag_name: ${{ steps.notes.outputs.tag }}
-          name: ${{ steps.notes.outputs.title }}
-          body_path: /tmp/release-body.md
-          draft: false
-          prerelease: false
-          make_latest: true
+          github-token: ${{ steps.app_token.outputs.token }}
+          script: |
+            const fs = require('fs');
+            const releaseId = Number(process.env.RELEASE_ID);
+            const { data: release } = await github.rest.repos.getRelease({ ...context.repo, release_id: releaseId });
+            if (!release.draft) return;
+            if (release.tag_name !== process.env.RELEASE_TAG) throw new Error('The draft release tag changed during publication.');
+            await github.rest.repos.updateRelease({
+              ...context.repo,
+              release_id: releaseId,
+              body: fs.readFileSync(`${process.env.RUNNER_TEMP}/release-notes.md`, 'utf8'),
+              target_commitish: context.sha,
+              draft: false,
+              prerelease: false,
+              make_latest: 'true'
+            });
