@@ -279,7 +279,8 @@ export default async function TodayPage({
                     />
                   </div>
                   <p className="log-muted text-sm mt-1">
-                    {workout.exercises.length} exercises
+                    {workout.exercises.length} exercise
+                    {workout.exercises.length === 1 ? "" : "s"}
                     {workout.durationMinutes
                       ? ` · ${workout.durationMinutes} min`
                       : ""}
