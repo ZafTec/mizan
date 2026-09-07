@@ -107,11 +107,13 @@ dotnet ef migrations has-pending-model-changes --project Mizan.Infrastructure --
 
 Release Please opens the first release pull request for **v3.0.0**, then proposes later versions from Conventional Commits: `fix:` increments patch, `feat:` increments minor, and `!` or a `BREAKING CHANGE:` footer increments major. Keep these prefixes in commit messages or squash-merge titles. Release PRs maintain the changelog, `version.txt`, the release manifest, and the frontend package version together.
 
-Merge a release PR to publish it. After all three images build, the workflow creates a draft release, promotes their exact digests to Docker tags `vX.Y.Z` and `X.Y.Z`, and publishes the release with deployment instructions. Existing commit and `latest` image tags continue on each eligible `master` push. If publication fails, choose **Re-run failed jobs** on that workflow run to retain the successful builds' original digests. Pending drafts resume and completed releases stay unchanged.
+Merge a release PR to publish it. After all four images build, the workflow creates a draft release, promotes their exact digests to Docker tags `vX.Y.Z` and `X.Y.Z`, and publishes the release with deployment instructions. Existing commit and `latest` image tags continue on each eligible `master` push. If publication fails, choose **Re-run failed jobs** on that workflow run to retain the successful builds' original digests. Pending drafts resume and completed releases stay unchanged.
+
+A manual run of the deployment workflow builds only the Telegram image from the current default branch, tags it with that commit and `latest`, and skips Release Please.
 
 The workflow uses the existing organization secrets `RELEASE_APP_ID` and `RELEASE_APP_PRIVATE_KEY` to create a token scoped only to this repository. The GitHub App needs Contents and Pull requests write permissions, allowing release PRs to run CI. The same App can serve other repositories without sharing their versions, tags, or release PRs.
 
-Production Compose currently follows `latest`. To pin a release, use its version tag for all three application images before running the existing deployment helper. GitHub release notes include the image digests and deployment commands.
+Production Compose currently follows `latest`. To pin a release, use its version tag for all four application images before running the existing deployment helper. GitHub release notes include the image digests and deployment commands.
 
 ## Documentation
 

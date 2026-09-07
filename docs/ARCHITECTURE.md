@@ -38,6 +38,10 @@ Writes use MediatR commands. Controllers and tools translate their transport int
 
 `GET /api/Auth/me` returns the current user. Next.js resolves it once per render pass and forwards the cookie for server API calls. Client components receive the user through `SessionProvider`; there is no browser JWT. OAuth callbacks, email, account deletion, and session management belong to the backend.
 
+The backend sends email through MailKit and the durable outbox. Compose maps the `SMTP_*` credentials and sender settings into `Smtp:*`; credentials never belong in frontend variables. `Smtp__Security=Auto` requires STARTTLS except on port 465, where it uses implicit TLS. `StartTls` and `SslOnConnect` select those modes on other ports; use `None` only for an explicitly trusted plaintext relay. The legacy `Smtp__UseStartTls=false` setting retains opportunistic TLS in Auto mode; prefer explicit modes for new configurations. Authentication is optional when no SMTP username is supplied. The EHLO/HELO hostname defaults to the sender address's domain, with `Smtp__LocalDomain` available as an override. Certificate validation remains enabled.
+
+Each newly issued verification or reset token queues its own message. Retrying that exact message preserves its deduplication key. Missing SMTP configuration fails delivery outside Development, and a connection-close error after SMTP acceptance does not retry an already accepted message. SMTP acceptance does not guarantee inbox delivery. Sign-in alerts and household invitation emails are separate notification features; the current household invitation path creates in-app notifications.
+
 External MCP clients send a user token as `Authorization: Bearer <token>`. MCP validates it through the API, then calls internal endpoints with its service key and `X-Impersonate-User`. Internal credentials are distinct from user tokens. Backend policies determine accepted authentication methods, ownership, and roles.
 
 ## Data and migrations
