@@ -20,6 +20,9 @@ public class AppUrlsTests
     [InlineData("/dashboard", AppOrigin + "/dashboard")]
     [InlineData("/meals?date=2026-08-22", AppOrigin + "/meals?date=2026-08-22")]
     [InlineData("/", AppOrigin + "/")]
+    [InlineData("/https://evil.example/steal", AppOrigin + "/https://evil.example/steal")]
+    [InlineData("/javascript:alert(1)", AppOrigin + "/javascript:alert(1)")]
+    [InlineData(AppOrigin + "/history?tab=meals", AppOrigin + "/history?tab=meals")]
     public void SafeReturnUrl_KeepsSameOriginPaths(string candidate, string expected)
     {
         Create().SafeReturnUrl(candidate).Should().Be(expected);
@@ -35,9 +38,45 @@ public class AppUrlsTests
     [InlineData("javascript:alert(1)")]
     [InlineData("dashboard")]
     [InlineData("\\\\evil.example")]
+    [InlineData("/dashboard\n")]
+    [InlineData("/dashboard\r\nLocation:https://evil.example")]
+    [InlineData("/%2f%2fevil.example")]
+    [InlineData(AppOrigin + ".evil.example/steal")]
+    [InlineData(AppOrigin + "@evil.example/steal")]
+    [InlineData(AppOrigin + ":444/steal")]
+    [InlineData(AppOrigin + "/\\evil.example")]
+    [InlineData(AppOrigin + "//evil.example/steal")]
+    [InlineData("http://mizan.example/steal")]
     public void SafeReturnUrl_FallsBackToTheAppRoot(string? candidate)
     {
         Create().SafeReturnUrl(candidate).Should().Be(AppOrigin + "/");
+    }
+
+    [Theory]
+    [InlineData("/history?tab=meals")]
+    [InlineData("/settings?returnUrl=%2Fhistory%3Ftab%3Dmeals")]
+    [InlineData("/https://evil.example/steal")]
+    public void SafeReturnUrl_PreservesTheValidatedTargetAcrossOAuth(string candidate)
+    {
+        var urls = Create();
+        var stored = urls.SafeReturnUrl(candidate);
+
+        urls.SafeReturnUrl(stored).Should().Be(stored);
+        new Uri(stored).GetLeftPart(UriPartial.Authority).Should().Be(AppOrigin);
+    }
+
+    [Theory]
+    [InlineData("https://mizan.example/path")]
+    [InlineData("https://mizan.example/?q=value")]
+    [InlineData("https://mizan.example/#fragment")]
+    [InlineData("https://user@mizan.example")]
+    [InlineData("javascript:alert(1)")]
+    [InlineData("//mizan.example")]
+    public void Constructor_RejectsInvalidAppOrigins(string publicUrl)
+    {
+        var create = () => new AppUrls(Options.Create(new AppOptions { PublicUrl = publicUrl }));
+
+        create.Should().Throw<InvalidOperationException>();
     }
 
     [Fact]
