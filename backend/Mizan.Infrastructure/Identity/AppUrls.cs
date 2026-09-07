@@ -22,18 +22,25 @@ public class AppOptions
 public partial class AppUrls : IAppUrls
 {
     /// <summary>
-    /// An allowlist, not a denylist: a return target is a same-origin path or
-    /// it is discarded. Anything with a scheme, an authority or a backslash
-    /// fails to match and falls back to the app root.
+    /// Return paths use a restricted URL alphabet. Canonical app URLs stored
+    /// in OAuth state are reduced to a path before this validation.
     /// </summary>
-    [GeneratedRegex(@"^/[A-Za-z0-9\-._~!$&'()*+,;=:@/]*(\?[A-Za-z0-9\-._~!$&'()*+,;=:@/%?]*)?$")]
+    [GeneratedRegex(@"\A/[A-Za-z0-9\-._~!$&'()*+,;=:@/]*(\?[A-Za-z0-9\-._~!$&'()*+,;=:@/%?]*)?\z")]
     private static partial Regex SafePath();
 
     private readonly Uri _base;
 
     public AppUrls(IOptions<AppOptions> options)
     {
-        _base = new Uri(options.Value.PublicUrl.TrimEnd('/') + "/");
+        if (!Uri.TryCreate(options.Value.PublicUrl, UriKind.Absolute, out var origin)
+            || (origin.Scheme != Uri.UriSchemeHttps && origin.Scheme != Uri.UriSchemeHttp)
+            || origin.AbsolutePath != "/" || origin.Query.Length != 0 || origin.Fragment.Length != 0
+            || origin.UserInfo.Length != 0)
+        {
+            throw new InvalidOperationException("App:PublicUrl must be the HTTP(S) origin of the web app.");
+        }
+
+        _base = origin;
     }
 
     public string VerifyEmail(string token) => Build("verifyemail", token);
@@ -42,11 +49,21 @@ public partial class AppUrls : IAppUrls
 
     public string SafeReturnUrl(string? candidate)
     {
-        if (string.IsNullOrWhiteSpace(candidate)) return _base.ToString();
-        if (candidate.StartsWith("//", StringComparison.Ordinal)) return _base.ToString();
-        if (!SafePath().IsMatch(candidate)) return _base.ToString();
+        if (string.IsNullOrWhiteSpace(candidate)) return _base.AbsoluteUri;
 
-        return new Uri(_base, candidate.TrimStart('/')).ToString();
+        // OAuth validates on both sides of the round trip. Only our exact
+        // canonical origin (including the trailing slash) may be stripped.
+        if (candidate.StartsWith(_base.AbsoluteUri, StringComparison.Ordinal))
+        {
+            candidate = candidate[(_base.AbsoluteUri.Length - 1)..];
+        }
+
+        if (candidate.StartsWith("//", StringComparison.Ordinal)) return _base.AbsoluteUri;
+        if (!SafePath().IsMatch(candidate)) return _base.AbsoluteUri;
+
+        // Keep the leading slash: stripping it would let /https://host/path
+        // or /javascript:... become a URI with its own scheme.
+        return new Uri(_base, candidate).AbsoluteUri;
     }
 
     private string Build(string path, string token) =>
