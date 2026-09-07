@@ -74,13 +74,14 @@ public class UpdateFoodCommandHandler : IRequestHandler<UpdateFoodCommand, Updat
         food.SodiumPer100g = request.SodiumPer100g;
         food.ServingSize = request.ServingSize;
         food.ServingUnit = request.ServingUnit;
-        food.IsVerified = request.IsVerified;
+        food.IsVerified = _currentUser.IsInRole("admin") && request.IsVerified;
         food.ProteinCalorieRatio = Food.ComputeProteinCalorieRatio(request.CaloriesPer100g, request.ProteinPer100g);
         food.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
 
         await _cache.RemoveByTagAsync(CacheTags.Foods, cancellationToken);
+        await _cache.RemoveByTagAsync(CacheTags.Recipes, cancellationToken);
 
         return new UpdateFoodResult { Success = true, Message = "Food updated successfully" };
     }

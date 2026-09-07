@@ -1,5 +1,6 @@
-"use client";
+﻿"use client";
 
+import { Plus, Repeat2, ArrowRight } from "lucide-react";
 import type { WorkoutSummaryDto, WorkoutTemplateDto } from "@/types/workout";
 
 export default function StartWorkoutPanel({
@@ -16,71 +17,62 @@ export default function StartWorkoutPanel({
   onEmpty: () => void;
 }) {
   return (
-    <div className="space-y-5">
-      <div className="grid gap-4 md:grid-cols-3">
-        <button
-          className="card-hover press-feedback p-6 text-left"
-          onClick={onEmpty}
-        >
-          <span className="icon-chip h-12 w-12">
-            <i className="ri-add-line text-xl" />
+    <div className="space-y-8">
+      <div className="border-y divide-y">
+        <button className="workout-start-row" onClick={onEmpty}>
+          <Plus size={22} />
+          <span className="flex-1">
+            <span className="block font-semibold">Empty workout</span>
+            <span className="block text-sm log-muted mt-1">
+              Add exercises and record sets as you train.
+            </span>
           </span>
-          <h2 className="mt-4 font-semibold">Empty workout</h2>
-          <p className="mt-1 text-sm text-charcoal-blue-500">
-            Build a session as you train.
-          </p>
+          <ArrowRight size={17} />
         </button>
-        <button
-          className="card-hover press-feedback p-6 text-left disabled:opacity-50"
-          disabled={!lastWorkout}
-          onClick={() => lastWorkout && onRepeat(lastWorkout)}
-        >
-          <span className="icon-chip h-12 w-12">
-            <i className="ri-repeat-line text-xl" />
-          </span>
-          <h2 className="mt-4 font-semibold">Repeat last</h2>
-          <p className="mt-1 text-sm text-charcoal-blue-500">
-            {lastWorkout?.name || "No previous workout"}
-          </p>
-        </button>
-        <button
-          className="card-hover press-feedback p-6 text-left"
-          onClick={() =>
-            document
-              .getElementById("programs")
-              ?.scrollIntoView({ behavior: "smooth" })
-          }
-        >
-          <span className="icon-chip h-12 w-12">
-            <i className="ri-layout-grid-line text-xl" />
-          </span>
-          <h2 className="mt-4 font-semibold">From template</h2>
-          <p className="mt-1 text-sm text-charcoal-blue-500">
-            Use progression and planned sets.
-          </p>
-        </button>
+        {lastWorkout && (
+          <button
+            className="workout-start-row"
+            onClick={() => onRepeat(lastWorkout)}
+          >
+            <Repeat2 size={22} />
+            <span className="flex-1">
+              <span className="block font-semibold">Repeat last workout</span>
+              <span className="block text-sm log-muted mt-1">
+                {lastWorkout.name || "Previous workout"}
+              </span>
+            </span>
+            <ArrowRight size={17} />
+          </button>
+        )}
       </div>
       <section id="programs">
-        <h2 className="section-title mb-4">Programs and templates</h2>
-        <div className="grid gap-3 md:grid-cols-2">
-          {templates.map((template) => (
-            <button
-              key={template.id}
-              className="card-hover press-feedback flex items-center gap-4 p-4 text-left"
-              onClick={() => onTemplate(template.id)}
-            >
-              <svg className="size-8 text-brand-700">
-                <use href="/illustrations/icons-workout.svg#wi-template" />
-              </svg>
-              <span>
-                <strong className="block">{template.name}</strong>
-                <span className="text-sm text-charcoal-blue-500">
-                  {template.programName || "Custom"}
+        <h2 className="text-xl font-semibold mb-4">Your templates</h2>
+        {templates.length ? (
+          <div className="border-t divide-y">
+            {templates.map((template) => (
+              <button
+                key={template.id}
+                className="workout-start-row"
+                onClick={() => onTemplate(template.id)}
+              >
+                <span className="flex-1">
+                  <span className="block font-medium">{template.name}</span>
+                  {template.programName && (
+                    <span className="text-sm log-muted mt-1">
+                      {template.programName}
+                    </span>
+                  )}
                 </span>
-              </span>
-            </button>
-          ))}
-        </div>
+                <ArrowRight size={17} />
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm log-muted">
+            No saved templates yet. Start an empty workout to build your
+            session.
+          </p>
+        )}
       </section>
     </div>
   );

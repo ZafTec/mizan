@@ -19,6 +19,7 @@ public class FoodsController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize(Policy = "OptionalUserOrMcp")]
     public async Task<ActionResult<FoodDto>> GetFood(Guid id)
     {
         var result = await _mediator.Send(new GetFoodByIdQuery(id));
@@ -30,6 +31,7 @@ public class FoodsController : ControllerBase
     }
 
     [HttpGet("search")]
+    [Authorize(Policy = "OptionalUserOrMcp")]
     public async Task<ActionResult<PagedResult<FoodDto>>> SearchFoods([FromQuery] SearchFoodsQuery query)
     {
         var result = await _mediator.Send(query);

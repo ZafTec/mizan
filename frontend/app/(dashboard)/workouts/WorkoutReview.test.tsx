@@ -43,7 +43,7 @@ describe("reviewed workout UI", () => {
     fireEvent.change(screen.getByLabelText("Apply weight to"), {
       target: { value: "all" },
     });
-    fireEvent.change(screen.getByLabelText("Weight for set 1"), {
+    fireEvent.change(screen.getByLabelText("Weight (kg) for set 1"), {
       target: { value: "90" },
     });
 

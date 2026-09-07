@@ -16,7 +16,7 @@ public class SessionCookieAuthenticationSchemeOptions : AuthenticationSchemeOpti
 /// <summary>
 /// The browser's only credential since v2: an opaque token in an httpOnly
 /// cookie, resolved against user_sessions. Replaces the BetterAuth JWT bearer
-/// scheme and everything that validated it - see docs/REFOCUS.md §6.
+/// scheme and everything that validated it - see docs/ARCHITECTURE.md#identity.
 /// </summary>
 public class SessionCookieAuthenticationHandler : AuthenticationHandler<SessionCookieAuthenticationSchemeOptions>
 {

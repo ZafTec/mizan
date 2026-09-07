@@ -19,6 +19,11 @@ public record LogMealRequest
 
     public string MealType { get; init; } = "SNACK";
     public decimal Servings { get; init; } = 1;
+    /// <summary>
+    /// Total consumed weight for a custom meal. Foods use their serving size;
+    /// recipes use their ingredient weights.
+    /// </summary>
+    public decimal? AmountGrams { get; init; }
     public decimal? Calories { get; init; }
     public decimal? ProteinGrams { get; init; }
     public decimal? CarbsGrams { get; init; }

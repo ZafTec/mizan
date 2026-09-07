@@ -9,7 +9,7 @@ namespace Mizan.Api.Controllers;
 /// <summary>
 /// The prompt console's backend. Prompts are product surface, not a
 /// deploy-only constant, so an admin edits, evaluates and rolls one back
-/// without a release (docs/REFOCUS.md §12).
+/// without a release (docs/AI.md).
 ///
 /// Everything here is admin-only, and everything that changes what production
 /// says goes through a command, so the audit log records who moved it.

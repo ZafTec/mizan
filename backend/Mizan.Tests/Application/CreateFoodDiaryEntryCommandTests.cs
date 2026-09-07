@@ -6,6 +6,21 @@ namespace Mizan.Tests.Application;
 
 public class CreateFoodDiaryEntryCommandTests
 {
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Validator_ShouldFail_WhenSuppliedAmountIsNotPositive(int amountGrams)
+    {
+        var result = new CreateFoodDiaryEntryCommandValidator().Validate(new CreateFoodDiaryEntryCommand
+        {
+            Name = "Photo meal",
+            AmountGrams = amountGrams
+        });
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.PropertyName == "AmountGrams");
+    }
+
     [Fact]
     public void Validator_ShouldFail_WhenNoFoodRecipeOrName()
     {

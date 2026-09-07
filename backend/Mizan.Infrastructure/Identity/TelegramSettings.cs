@@ -16,7 +16,7 @@ public class TelegramOptions
 ///
 /// The bot token deliberately does not appear here. The API never calls
 /// Telegram - the bot service does, and it is the only thing that holds the
-/// token (docs/REFOCUS.md §13).
+/// token (docs/TELEGRAM.md).
 /// </summary>
 public class TelegramSettings : ITelegramSettings
 {

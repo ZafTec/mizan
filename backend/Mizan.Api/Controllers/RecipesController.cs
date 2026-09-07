@@ -19,6 +19,7 @@ public class RecipesController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = "OptionalUserOrMcp")]
     public async Task<ActionResult<PagedResult<RecipeDto>>> GetRecipes([FromQuery] GetRecipesQuery query)
     {
         var result = await _mediator.Send(query);
@@ -26,6 +27,7 @@ public class RecipesController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Policy = "OptionalUserOrMcp")]
     public async Task<ActionResult<RecipeDetailDto>> GetRecipeById(Guid id)
     {
         var result = await _mediator.Send(new GetRecipeByIdQuery(id));
@@ -36,10 +38,13 @@ public class RecipesController : ControllerBase
 
     [HttpPost]
     [Authorize(Policy = "UserOrMcp")]
-    public async Task<ActionResult<CreateRecipeResult>> CreateRecipe([FromBody] CreateRecipeCommand command)
+    public IActionResult CreateRecipe()
     {
-        var result = await _mediator.Send(command);
-        return CreatedAtAction(nameof(GetRecipeById), new { id = result.Id }, result);
+        return StatusCode(StatusCodes.Status410Gone, new
+        {
+            errorCode = "recipe_creation_requires_logged_meal",
+            error = "Log a meal with at least two items, then save it with POST /api/Recipes/promote."
+        });
     }
     [HttpPut("{id}")]
     [Authorize(Policy = "UserOrMcp")]
@@ -67,9 +72,10 @@ public class RecipesController : ControllerBase
 
     /// <summary>
     /// Promote an already-logged meal into a saved recipe - the only way a
-    /// recipe is authored. See docs/REFOCUS.md §4.
+    /// recipe is authored. See docs/ARCHITECTURE.md#navigation-and-logging.
     /// </summary>
     [HttpPost("promote")]
+    [Authorize(Policy = "UserOrMcp")]
     public async Task<ActionResult<object>> PromoteMeal([FromBody] PromoteMealToRecipeCommand command)
     {
         var id = await _mediator.Send(command);
@@ -81,6 +87,7 @@ public class RecipesController : ControllerBase
     /// used as an ingredient elsewhere and logged on its own. See §4.
     /// </summary>
     [HttpPost("{id:guid}/preparation")]
+    [Authorize(Policy = "UserOrMcp")]
     public async Task<ActionResult<object>> PromoteToPreparation(Guid id, [FromBody] PromoteToPreparationRequest? request)
     {
         var foodId = await _mediator.Send(

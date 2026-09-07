@@ -16,7 +16,7 @@ namespace Mizan.Infrastructure.Ai;
 ///    independent grants: what the client granted that trainer, and what the
 ///    client consented to for AI. Neither alone is sufficient - a client who
 ///    shares workouts with their coach but wants no AI involvement gets
-///    exactly that. See docs/REFOCUS.md §11.
+///    exactly that. See docs/AI.md#consent.
 /// </summary>
 public class DataAccessPolicy : IDataAccessPolicy
 {

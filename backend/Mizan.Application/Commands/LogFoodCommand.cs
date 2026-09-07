@@ -3,9 +3,11 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using Mizan.Application.Common;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Constants;
 using Mizan.Domain.Entities;
+using Mizan.Domain.Recipes;
 
 namespace Mizan.Application.Commands;
 
@@ -37,8 +39,8 @@ public class LogFoodCommandValidator : AbstractValidator<LogFoodCommand>
         RuleFor(x => x.Servings).GreaterThan(0).WithMessage("Servings must be greater than 0");
         RuleFor(x => x.MealType).Must(x => MealTypes.IsValid(x))
             .WithMessage($"Meal type must be one of: {string.Join(", ", MealTypes.All)}");
-        RuleFor(x => x).Must(x => x.FoodId.HasValue || x.RecipeId.HasValue)
-            .WithMessage("Either FoodId or RecipeId must be provided");
+        RuleFor(x => x).Must(x => x.FoodId.HasValue != x.RecipeId.HasValue)
+            .WithMessage("Exactly one of FoodId or RecipeId must be provided");
     }
 }
 
@@ -71,81 +73,53 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
             throw new UnauthorizedAccessException("User must be authenticated");
         }
 
-        decimal calories = 0;
-        decimal protein = 0, carbs = 0, fat = 0;
-        string itemName = "";
+        var userId = _currentUser.UserId.Value;
+        var entries = new List<FoodDiaryEntry>();
+        var now = DateTime.UtcNow;
+        string itemName;
 
         if (request.FoodId.HasValue)
         {
-            var food = await _context.Foods.FindAsync(new object[] { request.FoodId.Value }, cancellationToken);
-            if (food != null)
-            {
-                calories = food.CaloriesPer100g * (food.ServingSize / 100m) * request.Servings;
-                protein = food.ProteinPer100g * (food.ServingSize / 100m) * request.Servings;
-                carbs = food.CarbsPer100g * (food.ServingSize / 100m) * request.Servings;
-                fat = food.FatPer100g * (food.ServingSize / 100m) * request.Servings;
-                itemName = food.Name;
-            }
+            var food = await _context.Foods.FirstOrDefaultAsync(
+                f => f.Id == request.FoodId && (f.UserId == null || f.UserId == userId), cancellationToken)
+                ?? throw new EntityNotFoundException("Food", request.FoodId.Value);
+            itemName = food.Name;
+            entries.Add(DiaryEntryFactory.FromFood(food, food.ServingSize * request.Servings, userId, request.EntryDate, request.MealType, now));
         }
         else if (request.RecipeId.HasValue)
         {
             var recipe = await _context.Recipes
-                .FirstOrDefaultAsync(r => r.Id == request.RecipeId.Value, cancellationToken);
-
-            if (recipe != null)
-            {
-                // Summed from the ingredients rather than read from a stored
-                // table - see docs/REFOCUS.md §4. The result is copied onto the
-                // entry below, so the log keeps the macros it was written with
-                // even if the recipe later changes.
-                var totals = await RecipeNutritionLookup.ForRecipeAsync(
-                    _context, recipe.Id, cancellationToken);
-
-                calories = totals.Calories * request.Servings;
-                protein = totals.ProteinGrams * request.Servings;
-                carbs = totals.CarbsGrams * request.Servings;
-                fat = totals.FatGrams * request.Servings;
-                itemName = recipe.Title;
-            }
+                .Include(r => r.Ingredients).ThenInclude(i => i.Food)
+                .FirstOrDefaultAsync(r => r.Id == request.RecipeId.Value && (r.IsPublic || r.UserId == userId), cancellationToken)
+                ?? throw new EntityNotFoundException("Recipe", request.RecipeId.Value);
+            itemName = recipe.Title;
+            entries.AddRange(DiaryEntryFactory.FromRecipe(recipe, request.Servings, userId, request.EntryDate, request.MealType, now));
         }
+        else throw new DomainValidationException("Exactly one of FoodId or RecipeId must be provided");
 
-        var entry = new FoodDiaryEntry
-        {
-            Id = Guid.NewGuid(),
-            UserId = _currentUser.UserId.Value,
-            FoodId = request.FoodId,
-            RecipeId = request.RecipeId,
-            EntryDate = request.EntryDate,
-            MealType = MealTypes.Normalize(request.MealType),
-            Servings = request.Servings,
-            Calories = calories,
-            ProteinGrams = protein,
-            CarbsGrams = carbs,
-            FatGrams = fat,
-            ProteinCalorieRatio = Food.ComputeProteinCalorieRatio(calories, protein),
-            LoggedAt = DateTime.UtcNow
-        };
-
-        _context.FoodDiaryEntries.Add(entry);
+        _context.FoodDiaryEntries.AddRange(entries);
         await _context.SaveChangesAsync(cancellationToken);
 
         // Never a Postgres round trip, so it does not touch the logging budget
-        // (docs/REFOCUS.md §13a) - only the Redis-backed nutrition cache.
+        // (docs/ARCHITECTURE.md#navigation-and-logging) - only the Redis-backed nutrition cache.
         await _cache.RemoveByTagAsync(CacheTags.Nutrition(_currentUser.UserId.Value), cancellationToken);
+        if (request.RecipeId.HasValue)
+            await _cache.RemoveByTagAsync(CacheTags.Recipes, cancellationToken);
 
         var streak = await _streakService.RecordActivityAsync("nutrition", request.EntryDate, cancellationToken);
         var unlocked = await _achievements.EvaluateAsync(cancellationToken, ["meals_logged", "streak_nutrition"]);
 
         return new LogFoodResult
         {
-            Id = entry.Id,
-            Calories = calories,
-            ProteinGrams = protein,
-            CarbsGrams = carbs,
-            FatGrams = fat,
-            Message = $"Logged {request.Servings} serving(s) of {itemName} ({calories} kcal)",
+            Id = entries[0].Id,
+            Calories = entries.Sum(e => e.Calories ?? 0),
+            ProteinGrams = entries.Sum(e => e.ProteinGrams ?? 0),
+            CarbsGrams = entries.Sum(e => e.CarbsGrams ?? 0),
+            FatGrams = entries.Sum(e => e.FatGrams ?? 0),
+            Message = $"Logged {request.Servings} serving(s) of {itemName}",
             Streak = streak,
             UnlockedAchievements = unlocked
         };
+
     }
 }

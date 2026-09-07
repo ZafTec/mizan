@@ -54,7 +54,7 @@ export interface ApiRequestOptions {
 /**
  * How this call proves who is making it. Since v2 that is always the session
  * cookie: the browser attaches it itself, and the Next server forwards the one
- * it received. There is no bearer token any more - see docs/REFOCUS.md §6.
+ * it received. There is no bearer token any more - see docs/ARCHITECTURE.md#identity.
  */
 export type RequestAuth =
   | { mode: "none" }

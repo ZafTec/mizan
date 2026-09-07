@@ -101,7 +101,7 @@ public class FoodsControllerTests
         var response = await client.PostAsJsonAsync("/api/Foods", createCommand);
 
         // Creation was admin-only until Food gained an owner - see
-        // docs/REFOCUS.md §4. A non-admin now gets a food private to them.
+        // docs/ARCHITECTURE.md#navigation-and-logging. A non-admin now gets a food private to them.
         response.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var mine = await _fixture.GetFoodsByUserId(userId);
@@ -109,6 +109,20 @@ public class FoodsControllerTests
 
         var publicFoods = await _fixture.GetPublicFoodsAsync();
         publicFoods.Should().NotContain(f => f.Name == "My Private Food");
+
+        var foodId = mine.Single(f => f.Name == "My Private Food").Id;
+        using var anonymous = _fixture.CreateClient();
+        (await anonymous.GetAsync($"/api/Foods/{foodId}")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var otherId = Guid.NewGuid();
+        await _fixture.SeedUserAsync(otherId, $"other-{otherId}@example.com");
+        using var other = _fixture.CreateAuthenticatedClient(otherId, $"other-{otherId}@example.com");
+        (await other.GetAsync($"/api/Foods/{foodId}")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        using var service = _fixture.CreateClient();
+        service.DefaultRequestHeaders.Add("X-Api-Key", "test-api-key");
+        service.DefaultRequestHeaders.Add("X-Impersonate-User", userId.ToString());
+        (await service.GetAsync($"/api/Foods/{foodId}")).StatusCode.Should().Be(HttpStatusCode.OK);
+        var search = await service.GetFromJsonAsync<SearchFoodsResponse>("/api/Foods/search?searchTerm=My%20Private%20Food");
+        search!.Items.Should().Contain(f => f.Id == foodId);
     }
 
     private sealed record CreateFoodResponse(Guid Id, bool Success);

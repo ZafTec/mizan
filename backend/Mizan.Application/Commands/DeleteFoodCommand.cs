@@ -60,6 +60,7 @@ public class DeleteFoodCommandHandler : IRequestHandler<DeleteFoodCommand, Delet
         await _context.SaveChangesAsync(cancellationToken);
 
         await _cache.RemoveByTagAsync(CacheTags.Foods, cancellationToken);
+        await _cache.RemoveByTagAsync(CacheTags.Recipes, cancellationToken);
 
         return new DeleteFoodResult { Success = true, Message = "Food deleted successfully" };
     }

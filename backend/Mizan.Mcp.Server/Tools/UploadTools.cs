@@ -108,7 +108,7 @@ public sealed class UploadTools
 
     /// <summary>
     /// The bytes decide, not a caller-supplied content type - the same rule the
-    /// upload endpoint applies (docs/REFOCUS.md §7). Checking here as well
+    /// upload endpoint applies (docs/ARCHITECTURE.md#storage-caching-and-jobs). Checking here as well
     /// means a wrong format is a usable message instead of a 400.
     /// </summary>
     private static string DetectOrThrow(byte[] bytes) => bytes switch

@@ -15,7 +15,7 @@ public record MealPlanDetailDto
     public DateOnly StartDate { get; init; }
     public DateOnly EndDate { get; init; }
     public List<MealPlanRecipeDetailDto> Recipes { get; init; } = new();
-    public MealPlanNutritionSummaryDto NutritionSummary { get; init; } = new();
+    public MealPlanNutritionSummaryDto? NutritionSummary { get; init; } = new();
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; init; }
 }
@@ -78,7 +78,7 @@ public class GetMealPlanByIdQueryHandler : IRequestHandler<GetMealPlanByIdQuery,
             request,
             LoadAsync,
             CacheOptions,
-            tags: [CacheTags.MealPlan(request.Id)],
+            tags: [CacheTags.MealPlan(request.Id), CacheTags.Recipes],
             cancellationToken: cancellationToken);
     }
 
@@ -118,7 +118,7 @@ public class GetMealPlanByIdQueryHandler : IRequestHandler<GetMealPlanByIdQuery,
             Date = mpr.Date,
             MealType = mpr.MealType,
             Servings = mpr.Servings,
-            CaloriesPerServing = PerServing(mpr.RecipeId, t => t.Calories)
+            CaloriesPerServing = totalsById.TryGetValue(mpr.RecipeId, out var totals) ? totals.Calories : null
         }).OrderBy(r => r.Date).ThenBy(r => r.MealType).ToList();
 
         var totalCalories = mealPlan.MealPlanRecipes.Sum(mpr =>
@@ -139,7 +139,7 @@ public class GetMealPlanByIdQueryHandler : IRequestHandler<GetMealPlanByIdQuery,
             StartDate = mealPlan.StartDate,
             EndDate = mealPlan.EndDate,
             Recipes = recipes,
-            NutritionSummary = new MealPlanNutritionSummaryDto
+            NutritionSummary = mealPlan.MealPlanRecipes.All(r => totalsById.ContainsKey(r.RecipeId)) ? new MealPlanNutritionSummaryDto
             {
                 TotalCalories = totalCalories,
                 TotalProteinGrams = totalProtein,
@@ -147,7 +147,7 @@ public class GetMealPlanByIdQueryHandler : IRequestHandler<GetMealPlanByIdQuery,
                 TotalFatGrams = totalFat,
                 DaysCount = daysCount,
                 AvgCaloriesPerDay = daysCount > 0 ? totalCalories / daysCount : 0
-            },
+            } : null,
             CreatedAt = mealPlan.CreatedAt,
             UpdatedAt = mealPlan.UpdatedAt
         };

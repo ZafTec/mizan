@@ -12,7 +12,7 @@ const ACCEPT = "image/jpeg,image/png,image/webp,image/gif";
 /**
  * Uploads go to our API, which validates the bytes and stores them in S3 -
  * MinIO or R2, the browser cannot tell and never holds a storage credential.
- * Replaces the Cloudinary widget; see docs/REFOCUS.md §7.
+ * Replaces the Cloudinary widget; see docs/ARCHITECTURE.md#storage-caching-and-jobs.
  *
  * Headless on purpose: every call site already has its own button and preview
  * layout, and this only supplies the behaviour.

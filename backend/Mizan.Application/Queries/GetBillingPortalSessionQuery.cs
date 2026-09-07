@@ -8,7 +8,7 @@ namespace Mizan.Application.Queries;
 /// <summary>
 /// A one-time link to Paddle's hosted portal, where a subscriber cancels,
 /// changes plan, or updates a card. Minted fresh on every call - the links
-/// are single-use, so nothing here is ever cached (docs/REFOCUS.md §17).
+/// are single-use, so nothing here is ever cached (docs/ARCHITECTURE.md#billing).
 /// </summary>
 public record GetBillingPortalSessionQuery : IRequest<BillingPortalSessionDto?>;
 

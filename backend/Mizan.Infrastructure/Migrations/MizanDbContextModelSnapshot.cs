@@ -1433,6 +1433,11 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
+                    b.Property<decimal?>("AmountGrams")
+                        .HasPrecision(10, 4)
+                        .HasColumnType("numeric(10,4)")
+                        .HasColumnName("amount_grams");
+
                     b.Property<decimal?>("Calories")
                         .HasPrecision(8, 2)
                         .HasColumnType("numeric(8,2)")
@@ -1460,6 +1465,15 @@ namespace Mizan.Infrastructure.Migrations
                     b.Property<Guid?>("FoodId")
                         .HasColumnType("uuid")
                         .HasColumnName("food_id");
+
+                    b.Property<Guid?>("GroupId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("group_id");
+
+                    b.Property<string>("GroupName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("group_name");
 
                     b.Property<DateTime>("LoggedAt")
                         .ValueGeneratedOnAdd()

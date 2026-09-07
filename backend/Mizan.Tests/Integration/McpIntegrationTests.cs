@@ -252,9 +252,10 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         toolNames.Should().Contain(new[]
         {
             "search_foods", "create_food", "list_shopping_lists", "get_shopping_list",
-            "get_daily_nutrition", "search_recipes", "create_recipe", "log_meal",
+            "get_daily_nutrition", "search_recipes", "promote_to_recipe", "log_day", "log_meal",
             "log_food", "log_meal_manual"
         });
+        toolNames.Should().NotContain("create_recipe", "recipes are promoted from the meal log");
     }
 
     #endregion
@@ -392,7 +393,7 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         // Food creation is no longer admin-only: a non-admin creates a food that
-        // is private to them. See docs/REFOCUS.md §4 - it had to be admin-only
+        // is private to them. See docs/ARCHITECTURE.md#navigation-and-logging - it had to be admin-only
         // before Food.UserId existed, because every food was everyone's.
         var mine = await _apiFixture.GetFoodsByUserId(userId);
         mine.Should().ContainSingle(f => f.Name == "Test Ingredient");
@@ -648,177 +649,60 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
     #endregion
 
-    #region create_recipe Tool Tests
+    #region Meal promotion tools
 
     [Fact]
-    public async Task AddRecipe_CreatesNewRecipe()
+    public async Task PromoteRecipe_CreatesAPrivateRecipeFromTheLoggedMeal()
     {
         var userId = Guid.NewGuid();
-        await _apiFixture.SeedUserAsync(userId, "add-recipe@example.com", emailVerified: true);
+        await _apiFixture.SeedUserAsync(userId, "promote-recipe@example.com", emailVerified: true);
         var token = await CreateMcpTokenAsync(userId);
-
-        var food = await _apiFixture.SeedFoodAsync("Chicken Breast", 165, 31, 0, 3.6m);
-
+        var chicken = await _apiFixture.SeedFoodAsync("Chicken Breast", 165, 31, 0, 3.6m);
+        var rice = await _apiFixture.SeedFoodAsync("Rice", 130, 2.7m, 28, 0.3m);
         _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        var date = DateTime.UtcNow.ToString("yyyy-MM-dd");
 
-        var args = new
+        var logResponse = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "log_day", new
         {
-            title = "New Recipe",
-            description = "Test description",
-            servings = 4,
-            prepTimeMinutes = 30,
-            cookTimeMinutes = 45,
-            isPublic = false,
-            ingredientsJson = JsonSerializer.Serialize(new[]
+            date,
+            mealsJson = JsonSerializer.Serialize(new[]
             {
-                new { foodId = food.Id, amount = 100, unit = "g", ingredientText = "Chicken Breast" }
+                new { foodId = chicken.Id, mealType = "LUNCH", servings = 1 },
+                new { foodId = rice.Id, mealType = "LUNCH", servings = 1 },
             })
-        };
+        }));
+        logResponse.EnsureSuccessStatusCode();
 
-        var request = CreateJsonRpcCallRequest("tools/call", "create_recipe", args);
-
-        var response = await _mcpClient.PostMcpAsync(request);
-
+        var response = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "promote_to_recipe", new
+        {
+            date, mealType = "LUNCH", title = "Chicken and rice"
+        }));
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
-        result.Should().ContainKey("content");
-
         var recipes = await _apiFixture.GetRecipesByUserId(userId);
-        recipes.Should().Contain(r => r.Title == "New Recipe");
+        recipes.Should().Contain(recipe => recipe.Title == "Chicken and rice" && !recipe.IsPublic);
     }
 
     [Fact]
-    public async Task AddRecipe_ValidatesRequiredFields()
+    public async Task PromoteRecipe_CannotBypassTheTwoItemMinimum()
     {
         var userId = Guid.NewGuid();
-        await _apiFixture.SeedUserAsync(userId, "validation@example.com", emailVerified: true);
+        await _apiFixture.SeedUserAsync(userId, "promote-minimum@example.com", emailVerified: true);
         var token = await CreateMcpTokenAsync(userId);
-
-        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-        var args = new
-        {
-            servings = 4
-        };
-
-        var request = CreateJsonRpcCallRequest("tools/call", "create_recipe", args);
-
-        var response = await _mcpClient.PostMcpAsync(request);
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var errorMessage = ExtractErrorMessage(jsonResponse);
-        errorMessage.Should().Match(m => m.Contains("required") || m.Contains("title") || m.Contains("ingredientsJson"));
-    }
-
-    [Fact]
-    public async Task AddRecipe_ValidatesTimeFields()
-    {
-        var userId = Guid.NewGuid();
-        await _apiFixture.SeedUserAsync(userId, "validation-time@example.com", emailVerified: true);
-        var token = await CreateMcpTokenAsync(userId);
-
-        var food = await _apiFixture.SeedFoodAsync("Time Test Food", 100, 10, 10, 5);
-
-        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-        var args = new
-        {
-            title = "Test Recipe",
-            description = "Test description",
-            servings = 4,
-            prepTimeMinutes = -30,
-            cookTimeMinutes = 45,
-            ingredientsJson = JsonSerializer.Serialize(new[]
-            {
-                new { foodId = food.Id, amount = 100, unit = "g", ingredientText = "Time Test Food" }
-            })
-        };
-
-        var request = CreateJsonRpcCallRequest("tools/call", "create_recipe", args);
-
-        var response = await _mcpClient.PostMcpAsync(request);
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var errorMessage = ExtractErrorMessage(jsonResponse);
-        errorMessage.Should().Contain("positive");
-    }
-
-    [Fact]
-    public async Task AddRecipe_SetsPublicByDefault()
-    {
-        var userId = Guid.NewGuid();
-        await _apiFixture.SeedUserAsync(userId, "public-recipe@example.com", emailVerified: true);
-        var token = await CreateMcpTokenAsync(userId);
-
         var food = await _apiFixture.SeedFoodAsync("Rice", 130, 2.7m, 28, 0.3m);
-
         _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-        var args = new
+        var date = DateTime.UtcNow.ToString("yyyy-MM-dd");
+        await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "log_food", new
         {
-            title = "Default Public Recipe",
-            description = "Default public recipe",
-            servings = 2,
-            prepTimeMinutes = 15,
-            cookTimeMinutes = 20,
-            ingredientsJson = JsonSerializer.Serialize(new[]
-            {
-                new { foodId = food.Id, amount = 150, unit = "g", ingredientText = "Rice" }
-            })
-        };
+            date, foodId = food.Id, mealType = "LUNCH"
+        }));
 
-        var request = CreateJsonRpcCallRequest("tools/call", "create_recipe", args);
-
-        var response = await _mcpClient.PostMcpAsync(request);
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
-        result.Should().ContainKey("content");
-
-        var recipes = await _apiFixture.GetRecipesByUserId(userId);
-        recipes.Should().Contain(r => r.IsPublic);
-    }
-
-    [Fact]
-    public async Task AddRecipe_CanCreatePrivateRecipe()
-    {
-        var userId = Guid.NewGuid();
-        await _apiFixture.SeedUserAsync(userId, "private@example.com", emailVerified: true);
-        var token = await CreateMcpTokenAsync(userId);
-
-        var food = await _apiFixture.SeedFoodAsync("Secret Sauce", 50, 0, 5, 5);
-
-        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-        var args = new
+        var response = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "promote_to_recipe", new
         {
-            title = "Private Recipe",
-            description = "This is a private recipe",
-            servings = 2,
-            prepTimeMinutes = 15,
-            cookTimeMinutes = 20,
-            isPublic = false,
-            ingredientsJson = JsonSerializer.Serialize(new[]
-            {
-                new { foodId = food.Id, amount = 10, unit = "ml", ingredientText = "Secret Sauce" }
-            })
-        };
-
-        var request = CreateJsonRpcCallRequest("tools/call", "create_recipe", args);
-
-        var response = await _mcpClient.PostMcpAsync(request);
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+            date, mealType = "LUNCH", title = "Just rice"
+        }));
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
-        result.Should().ContainKey("content");
-
-        var recipes = await _apiFixture.GetRecipesByUserId(userId);
-        recipes.Should().Contain(r => r.Title == "Private Recipe" && !r.IsPublic);
+        ExtractErrorMessage(jsonResponse!).Should().Contain("at least 2");
+        (await _apiFixture.GetRecipesByUserId(userId)).Should().BeEmpty();
     }
 
     #endregion

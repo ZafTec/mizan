@@ -24,7 +24,7 @@ public enum OutboxJobStatus
 /// long before it finishes.
 ///
 /// Everything else in the app stays synchronous. A queue is a second place for
-/// state to be wrong, and most work does not need one (docs/REFOCUS.md §13b).
+/// state to be wrong, and most work does not need one (docs/ARCHITECTURE.md#storage-caching-and-jobs).
 /// </summary>
 public class OutboxJob
 {

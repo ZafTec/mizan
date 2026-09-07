@@ -25,7 +25,7 @@ namespace Mizan.Application.Ai.Tools;
 ///
 /// Shared with <c>Mizan.Mcp.Server</c> in spirit and in shape: MCP proved the
 /// tool-to-command pattern and this is the same one, so the two do not drift
-/// into different ideas of what an assistant may do (docs/REFOCUS.md §10).
+/// into different ideas of what an assistant may do (docs/AI.md).
 ///
 /// Every entry declares an axis and whether it reads or writes. Nothing runs
 /// until <see cref="Mizan.Domain.Entities.UserAiConsent"/> says that user

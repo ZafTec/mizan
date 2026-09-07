@@ -25,7 +25,7 @@ public enum AiChatThreadKind
 /// state", which nothing ever wrote and nothing could have queried. Messages
 /// are rows now: a turn traces to the prompt version that produced it, and a
 /// bad answer is findable rather than buried in a serialized lump
-/// (docs/REFOCUS.md §12).
+/// (docs/AI.md).
 /// </summary>
 public class AiChatThread
 {

@@ -19,7 +19,7 @@ namespace Mizan.Infrastructure.AI;
 /// consented to and nothing more, every call is reserved and settled against a
 /// quota, and the model no longer writes anything. Tool calling returns in
 /// phase 10 behind an allowlist and an explicit confirmation
-/// (docs/REFOCUS.md §10).
+/// (docs/AI.md).
 /// </summary>
 public class NutritionAiService : INutritionAiService
 {
@@ -153,7 +153,7 @@ public class NutritionAiService : INutritionAiService
         // The assistant acts as well as answers now. Every tool is refused by
         // the runner unless this user granted that axis, so offering the whole
         // catalogue here widens what the model may *ask* for, not what it may
-        // do (docs/REFOCUS.md §11).
+        // do (docs/AI.md#consent).
         var specs = AiToolCatalogue.Chat
             .Select(tool => new AiToolSpec(tool.Name, tool.Description, tool.ParametersSchema))
             .ToList();
@@ -289,7 +289,7 @@ public class NutritionAiService : INutritionAiService
     /// <summary>
     /// A response that does not match its declared schema is a failed call.
     /// There is no regex fallback: scraping a shape out of prose is how a
-    /// half-parsed answer ends up looking like a real one (docs/REFOCUS.md §10).
+    /// half-parsed answer ends up looking like a real one (docs/AI.md).
     /// </summary>
     private T Parse<T>(string content, string what, string failure)
     {
@@ -446,7 +446,7 @@ public class NutritionAiService : INutritionAiService
 
         var response = await CallAsync(
             // Billed to the coach. A client must never be rate-limited by
-            // their coach's questions about them (docs/REFOCUS.md §11).
+            // their coach's questions about them (docs/AI.md#consent).
             trainerId,
             householdId: null,
             AiFeatures.TrainerClient,

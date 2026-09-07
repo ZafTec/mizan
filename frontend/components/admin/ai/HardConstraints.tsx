@@ -6,7 +6,7 @@ import type { HardConstraint } from "@/data/admin/ai";
 /**
  * The half of the guardrails nobody can edit here, shown next to the half they
  * can. A constraint nobody can see gets worked around by people who do not
- * know it exists (docs/REFOCUS.md §12).
+ * know it exists (docs/AI.md).
  */
 export default function HardConstraints({
 	preamble,

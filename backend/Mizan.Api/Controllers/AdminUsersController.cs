@@ -9,7 +9,7 @@ namespace Mizan.Api.Controllers;
 /// <summary>
 /// User administration. This lived in the BetterAuth admin plugin and in
 /// Drizzle queries inside Next.js server components; v2 moves it here with the
-/// rest of identity - see docs/REFOCUS.md §6.
+/// rest of identity - see docs/ARCHITECTURE.md#identity.
 /// </summary>
 [ApiController]
 [Route("api/admin")]

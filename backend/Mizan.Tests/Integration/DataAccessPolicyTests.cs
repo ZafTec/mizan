@@ -70,7 +70,7 @@ public class DataAccessPolicyTests
     /// <summary>
     /// The axis that was declared, defaulted false, settable by the client -
     /// and read by nothing. It is enforced now, before an endpoint exists that
-    /// could have leaked it (docs/REFOCUS.md §11).
+    /// could have leaked it (docs/AI.md#consent).
     /// </summary>
     [Fact]
     public async Task MeasurementsAreGatedLikeTheOtherTwo()

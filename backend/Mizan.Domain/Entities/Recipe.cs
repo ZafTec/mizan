@@ -10,7 +10,7 @@ public class Recipe
 
     /// <summary>
     /// Free text. Replaced the recipe_instructions table: ordered rows bought
-    /// nothing a numbered list in one column does not - see docs/REFOCUS.md §4.
+    /// nothing a numbered list in one column does not - see docs/ARCHITECTURE.md#navigation-and-logging.
     /// </summary>
     public string? Instructions { get; set; }
     public int Servings { get; set; } = 1;

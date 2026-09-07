@@ -6,6 +6,9 @@ public class FoodDiaryEntry
     public Guid UserId { get; set; }
     public Guid? FoodId { get; set; }
     public Guid? RecipeId { get; set; }
+    public Guid? GroupId { get; set; }
+    public string? GroupName { get; set; }
+    public decimal? AmountGrams { get; set; }
     public DateOnly EntryDate { get; set; }
     public string MealType { get; set; } = "snack"; // breakfast, lunch, dinner, snack
     public decimal Servings { get; set; } = 1;

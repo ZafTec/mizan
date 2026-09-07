@@ -5,7 +5,7 @@ import { serverApiOrigin, sessionCookieHeader } from "@/lib/auth";
 
 /**
  * Server-side calls forward the caller's session cookie. Nothing here mints or
- * caches a token any more - see docs/REFOCUS.md §6.
+ * caches a token any more - see docs/ARCHITECTURE.md#identity.
  */
 export async function serverApi<T>(
 	path: string,

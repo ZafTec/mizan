@@ -6,7 +6,7 @@ namespace Mizan.Domain.Entities;
 /// A chat id is not an identity - anyone can send the bot a message claiming
 /// to be anyone. This row is the only thing that turns an incoming chat into a
 /// user, and it can only be created by consuming a single-use code the user
-/// generated while signed in on the web (docs/REFOCUS.md §13).
+/// generated while signed in on the web (docs/TELEGRAM.md).
 ///
 /// One-to-one in both directions. A second Telegram account cannot attach
 /// itself to a linked user, and a Telegram account that switches Mizan users

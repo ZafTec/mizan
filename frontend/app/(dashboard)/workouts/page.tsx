@@ -7,6 +7,8 @@ import type {
   WorkoutTemplateDto,
 } from "@/types/workout";
 import WorkoutDashboard from "./WorkoutDashboard";
+import { getUserServer } from "@/helper/session";
+import { dateInTimeZone } from "@/lib/log-date";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +30,7 @@ export default async function WorkoutsPage({
     params.tab === "log" || params.tab === "stats" || params.tab === "templates"
       ? params.tab
       : "history";
-  const [history, templates, stats, socialProfile] = await Promise.all([
+  const [history, templates, stats, socialProfile, user] = await Promise.all([
     serverApi<HistoryResult>(
       "/api/Workouts?page=1&pageSize=20&sortBy=date&sortOrder=desc",
     ),
@@ -40,6 +42,7 @@ export default async function WorkoutsPage({
       if (error instanceof ApiError && error.status === 404) return null;
       throw error;
     }),
+    getUserServer(),
   ]);
 
   return (
@@ -49,6 +52,7 @@ export default async function WorkoutsPage({
       initialTemplates={templates}
       initialStats={stats}
       defaultPublishWorkouts={socialProfile?.defaultPublishWorkouts ?? false}
+      initialDate={dateInTimeZone(user.timeZoneId || "UTC")}
     />
   );
 }

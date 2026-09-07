@@ -55,7 +55,7 @@ public sealed class AccountLockedException : DomainException
 /// A model call was refused because an allowance is spent. Carries which
 /// ceiling tripped and when it resets, because "you are out of quota" and "the
 /// service is at capacity" are different messages and conflating them is a
-/// support ticket (docs/REFOCUS.md §10).
+/// support ticket (docs/AI.md).
 /// </summary>
 public sealed class AiQuotaExceededException : DomainException
 {

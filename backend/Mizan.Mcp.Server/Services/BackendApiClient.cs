@@ -34,7 +34,9 @@ public sealed class BackendApiException : Exception
 {
     public HttpStatusCode Status { get; }
     public string? ErrorCode { get; }
-    public BackendApiException(HttpStatusCode status, string? errorCode, string message) : base(message) { Status = status; ErrorCode = errorCode; }
+    public string? ResponseBody { get; }
+    public BackendApiException(HttpStatusCode status, string? errorCode, string message, string? responseBody = null) : base(message)
+    { Status = status; ErrorCode = errorCode; ResponseBody = responseBody; }
 }
 
 public sealed class BackendApiClient : IBackendApiClient
@@ -81,7 +83,7 @@ public sealed class BackendApiClient : IBackendApiClient
         if (response.IsSuccessStatusCode) return content;
         var (code, message) = ParseError(content, response.StatusCode);
         _logger.LogWarning("Backend request failed with {Status} {ErrorCode}", response.StatusCode, code);
-        throw new BackendApiException(response.StatusCode, code, FormatMessage(response.StatusCode, code, message));
+        throw new BackendApiException(response.StatusCode, code, FormatMessage(response.StatusCode, code, message), content);
     }
 
     private static (string? Code, string Message) ParseError(string content, HttpStatusCode status)

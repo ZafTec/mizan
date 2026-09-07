@@ -19,6 +19,11 @@ public record FoodDiaryResult
 public record FoodDiaryEntryDto
 {
     public Guid Id { get; init; }
+    public Guid? FoodId { get; init; }
+    public Guid? RecipeId { get; init; }
+    public Guid? GroupId { get; init; }
+    public string? GroupName { get; init; }
+    public decimal? AmountGrams { get; init; }
     public string MealType { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;
     public decimal Servings { get; init; }
@@ -66,6 +71,11 @@ public class GetFoodDiaryQueryHandler : IRequestHandler<GetFoodDiaryQuery, FoodD
             .Select(e => new FoodDiaryEntryDto
             {
                 Id = e.Id,
+                FoodId = e.FoodId,
+                RecipeId = e.RecipeId,
+                GroupId = e.GroupId,
+                GroupName = e.GroupName,
+                AmountGrams = e.AmountGrams,
                 MealType = e.MealType,
                 Name = !string.IsNullOrEmpty(e.Name) ? e.Name : (e.Food != null ? e.Food.Name : (e.Recipe != null ? e.Recipe.Title : "Unknown")),
                 Servings = e.Servings,

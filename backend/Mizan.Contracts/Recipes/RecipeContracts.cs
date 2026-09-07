@@ -1,5 +1,14 @@
 namespace Mizan.Contracts.Recipes;
 
+/// <summary>Promote a logged meal, retaining quantities and explicit missing weights.</summary>
+public record PromoteMealToRecipeRequest(
+    DateOnly EntryDate,
+    string MealType,
+    string Title,
+    Guid? HouseholdId = null,
+    Dictionary<Guid, decimal>? RecipeYields = null,
+    Dictionary<Guid, decimal>? EntryWeightsGrams = null);
+
 /// <summary>
 /// One line of a recipe. FoodId links it to the database so the recipe's
 /// nutrition can be computed; IngredientText alone means "a pinch of salt" and
@@ -19,7 +28,7 @@ public record CreateRecipeRequest
     public string Title { get; init; } = string.Empty;
     public string? Description { get; init; }
 
-    /// <summary>Free text. Was an ordered table; see docs/REFOCUS.md §4.</summary>
+    /// <summary>Free text. Was an ordered table; see docs/ARCHITECTURE.md#navigation-and-logging.</summary>
     public string? Instructions { get; init; }
 
     public int Servings { get; init; } = 1;
@@ -38,7 +47,7 @@ public record UpdateRecipeRequest
     public string Title { get; init; } = string.Empty;
     public string? Description { get; init; }
 
-    /// <summary>Free text. Was an ordered table; see docs/REFOCUS.md §4.</summary>
+    /// <summary>Free text. Was an ordered table; see docs/ARCHITECTURE.md#navigation-and-logging.</summary>
     public string? Instructions { get; init; }
 
     public int Servings { get; init; } = 1;

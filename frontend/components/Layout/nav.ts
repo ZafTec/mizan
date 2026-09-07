@@ -1,62 +1,58 @@
 import type { IconName } from "@/components/ui/icon";
 
 export type NavItem = {
-	href: string;
-	label: string;
-	icon: IconName;
-	description?: string;
-	adminOnly?: boolean;
+  href: string;
+  label: string;
+  icon: IconName;
+  description?: string;
+  adminOnly?: boolean;
 };
 
 export type NavGroup = {
-	label: string;
-	items: NavItem[];
+  label: string;
+  items: NavItem[];
 };
 
 /**
- * NAVIGATION TIERS - see docs/REFOCUS.md §3.
+ * NAVIGATION TIERS - see docs/ARCHITECTURE.md#navigation-and-logging.
  *
  * Tier 1 (SPINE) is the only permanent navigation. Four destinations and one
- * action, on every route, at both breakpoints. Nothing else gets a permanent
- * slot: the audit in docs/ROUTE-AUDIT.md found 73 routes competing for 21 flat
- * nav entries, which is why nothing felt findable.
+ * action, on every route, at both breakpoints.
  *
- * Tier 2 is contextual and lives in the pages themselves (phase 5).
+ * Tier 2 is contextual and lives in the pages themselves.
  * Tier 3 is MORE_GROUPS, rendered by /more - two taps, zero permanent pixels.
  */
 
 /**
- * Spine destinations point at the routes that exist today. Phase 11 rebuilds
- * /today, /history and /progress and repoints these three hrefs; the shell
- * itself does not change when that happens.
+ * The spine is a daily log, a dated history, and trends across all three logs.
  */
 export const SPINE: NavItem[] = [
-	{ href: "/dashboard", label: "Today", icon: "home" },
-	{ href: "/meals", label: "History", icon: "flame" },
-	{ href: "/goal/dashboard", label: "Progress", icon: "chartLine" },
-	{ href: "/more", label: "More", icon: "menu" },
+  { href: "/today", label: "Today", icon: "home" },
+  { href: "/history", label: "History", icon: "calendarCheck" },
+  { href: "/progress", label: "Progress", icon: "chartLine" },
+  { href: "/more", label: "More", icon: "menu" },
 ];
 
 /** The ( + ) action. The three things this app exists to record. */
 export const LOG_ACTIONS: NavItem[] = [
-	{
-		href: "/meals/add",
-		label: "Meal",
-		icon: "flame",
-		description: "Log food against today's targets",
-	},
-	{
-		href: "/workouts",
-		label: "Workout",
-		icon: "activity",
-		description: "Start or resume a training session",
-	},
-	{
-		href: "/body-measurements",
-		label: "Measurement",
-		icon: "chartLine",
-		description: "Weight and body measurements",
-	},
+  {
+    href: "/meals/add",
+    label: "Meal",
+    icon: "flame",
+    description: "Log food against today's targets",
+  },
+  {
+    href: "/workouts",
+    label: "Workout",
+    icon: "activity",
+    description: "Start or resume a training session",
+  },
+  {
+    href: "/body-measurements",
+    label: "Measurement",
+    icon: "chartLine",
+    description: "Weight and body measurements",
+  },
 ];
 
 /**
@@ -67,19 +63,19 @@ export const LOG_ACTIONS: NavItem[] = [
  * before the tab strip existed, reachable only by typing the URL.
  */
 export const ADMIN_TABS: NavItem[] = [
-	{ href: "/admin", label: "Overview", icon: "shieldCheck" },
-	{ href: "/admin/users", label: "Users", icon: "users" },
-	{ href: "/admin/ingredients", label: "Ingredients", icon: "search" },
-	{ href: "/admin/recipes", label: "Recipes", icon: "cookingPot" },
-	{ href: "/admin/exercises", label: "Exercises", icon: "zap" },
-	{ href: "/admin/moderation", label: "Moderation", icon: "badgeAlert" },
-	{ href: "/admin/achievements", label: "Achievements", icon: "trendingUp" },
-	{ href: "/admin/relationships", label: "Relationships", icon: "users" },
-	{ href: "/admin/audit-logs", label: "Audit log", icon: "shieldCheck" },
-	{ href: "/admin/ai", label: "Assistant", icon: "bot" },
-	{ href: "/admin/households", label: "Households", icon: "home" },
-	{ href: "/admin/sessions", label: "Sessions", icon: "lock" },
-	{ href: "/admin/jobs", label: "Jobs", icon: "activity" },
+  { href: "/admin", label: "Overview", icon: "shieldCheck" },
+  { href: "/admin/users", label: "Users", icon: "users" },
+  { href: "/admin/ingredients", label: "Ingredients", icon: "search" },
+  { href: "/admin/recipes", label: "Recipes", icon: "cookingPot" },
+  { href: "/admin/exercises", label: "Exercises", icon: "zap" },
+  { href: "/admin/moderation", label: "Moderation", icon: "badgeAlert" },
+  { href: "/admin/achievements", label: "Achievements", icon: "trendingUp" },
+  { href: "/admin/relationships", label: "Relationships", icon: "users" },
+  { href: "/admin/audit-logs", label: "Audit log", icon: "shieldCheck" },
+  { href: "/admin/ai", label: "Assistant", icon: "bot" },
+  { href: "/admin/households", label: "Households", icon: "home" },
+  { href: "/admin/sessions", label: "Sessions", icon: "lock" },
+  { href: "/admin/jobs", label: "Jobs", icon: "activity" },
 ];
 
 /**
@@ -92,80 +88,172 @@ export const ADMIN_TABS: NavItem[] = [
  * query now (phase 13) and is back.
  */
 export const MORE_GROUPS: NavGroup[] = [
-	{
-		label: "Food",
-		items: [
-			{ href: "/recipes", label: "Recipes", icon: "cookingPot", description: "Saved meals you log in one tap" },
-			{ href: "/meal-plan", label: "Meal Plan", icon: "calendarCheck", description: "Plan the week with your household" },
-			{ href: "/meal-plan/shopping-list", label: "Shopping List", icon: "cart", description: "What the plan needs you to buy" },
-			{ href: "/ingredients", label: "Foods", icon: "search", description: "The ingredient database" },
-		],
-	},
-	{
-		label: "Fitness",
-		items: [
-			{ href: "/workouts", label: "Workouts", icon: "activity", description: "Sessions, templates and history" },
-			{ href: "/exercises", label: "Exercises", icon: "zap", description: "Movement library" },
-			{ href: "/body-measurements", label: "Body", icon: "chartLine", description: "Measurement history" },
-			{ href: "/goal", label: "Goals", icon: "rocket", description: "Targets and progress" },
-			{ href: "/achievements", label: "Achievements", icon: "sparkles" },
-		],
-	},
-	{
-		label: "People",
-		items: [
-			{ href: "/social", label: "Feed", icon: "users" },
-			{ href: "/trainers", label: "Find a Trainer", icon: "heart", description: "Browse available trainers" },
-			{ href: "/trainers/my-trainer", label: "My Trainer", icon: "heart", description: "Your current coaching relationship" },
-			{ href: "/trainers/requests", label: "Trainer Requests", icon: "bell", description: "Pending requests to and from you" },
-			{ href: "/messaging", label: "Messages", icon: "messageCircle" },
-			{ href: "/profile/household", label: "Household", icon: "home", description: "Share plans and lists" },
-		],
-	},
-	{
-		// Both entries are agent interfaces over the same log. Phase 10 grows
-		// this group: chat, food analysis, usage - see docs/REFOCUS.md §10.
-		label: "Assistant",
-		items: [
-			{ href: "/ai", label: "AI Coach", icon: "brain", description: "Ask about your log" },
-			{ href: "/onboarding", label: "Guided setup", icon: "sparkles", description: "Set your targets by conversation" },
-			{ href: "/profile/settings/telegram", label: "Telegram", icon: "messageCircle", description: "Log from a photo without opening the app" },
-			{ href: "/profile/mcp", label: "MCP Tokens", icon: "bot", description: "Connect an agent to your log" },
-		],
-	},
-	{
-		label: "Account",
-		items: [
-			{ href: "/profile", label: "Profile", icon: "user" },
-			{ href: "/notifications", label: "Notifications", icon: "bell" },
-			{ href: "/billing", label: "Billing", icon: "sparkles" },
-			{ href: "/profile/sessions", label: "Sessions", icon: "lock" },
-			{ href: "/profile/settings", label: "Settings", icon: "settings" },
-		],
-	},
-	{
-		label: "Admin",
-		items: ADMIN_TABS.map((item) => ({ ...item, adminOnly: true })),
-	},
+  {
+    label: "Food",
+    items: [
+      {
+        href: "/recipes",
+        label: "Recipes",
+        icon: "cookingPot",
+        description: "Saved meals you log in one tap",
+      },
+      {
+        href: "/meal-plan",
+        label: "Meal Plan",
+        icon: "calendarCheck",
+        description: "Plan the week with your household",
+      },
+      {
+        href: "/meal-plan/shopping-list",
+        label: "Shopping List",
+        icon: "cart",
+        description: "What the plan needs you to buy",
+      },
+      {
+        href: "/ingredients",
+        label: "Foods",
+        icon: "search",
+        description: "The ingredient database",
+      },
+    ],
+  },
+  {
+    label: "Fitness",
+    items: [
+      {
+        href: "/workouts",
+        label: "Workouts",
+        icon: "activity",
+        description: "Sessions, templates and history",
+      },
+      {
+        href: "/exercises",
+        label: "Exercises",
+        icon: "zap",
+        description: "Movement library",
+      },
+      {
+        href: "/body-measurements",
+        label: "Body",
+        icon: "chartLine",
+        description: "Measurement history",
+      },
+      {
+        href: "/goal",
+        label: "Goals",
+        icon: "rocket",
+        description: "Targets and progress",
+      },
+      { href: "/achievements", label: "Achievements", icon: "sparkles" },
+    ],
+  },
+  {
+    label: "People",
+    items: [
+      { href: "/social", label: "Feed", icon: "users" },
+      {
+        href: "/trainers",
+        label: "Find a Trainer",
+        icon: "heart",
+        description: "Browse available trainers",
+      },
+      {
+        href: "/trainers/my-trainer",
+        label: "My Trainer",
+        icon: "heart",
+        description: "Your current coaching relationship",
+      },
+      {
+        href: "/trainers/requests",
+        label: "Trainer Requests",
+        icon: "bell",
+        description: "Pending requests to and from you",
+      },
+      { href: "/messaging", label: "Messages", icon: "messageCircle" },
+      {
+        href: "/profile/household",
+        label: "Household",
+        icon: "home",
+        description: "Share plans and lists",
+      },
+    ],
+  },
+  {
+    // Assistant and integration entries share the same log and backend.
+    // See docs/AI.md and docs/MCP.md.
+    label: "Assistant",
+    items: [
+      {
+        href: "/ai",
+        label: "AI Coach",
+        icon: "brain",
+        description: "Ask about your log",
+      },
+      {
+        href: "/onboarding",
+        label: "Guided setup",
+        icon: "sparkles",
+        description: "Set your targets by conversation",
+      },
+      {
+        href: "/profile/settings/telegram",
+        label: "Telegram",
+        icon: "messageCircle",
+        description: "Log from a photo without opening the app",
+      },
+      {
+        href: "/profile/mcp",
+        label: "MCP Tokens",
+        icon: "bot",
+        description: "Connect an agent to your log",
+      },
+    ],
+  },
+  {
+    label: "Account",
+    items: [
+      { href: "/profile", label: "Profile", icon: "user" },
+      { href: "/notifications", label: "Notifications", icon: "bell" },
+      { href: "/billing", label: "Billing", icon: "sparkles" },
+      {
+        href: "/profile/settings#assistant",
+        label: "Usage",
+        icon: "chartLine",
+        description: "Assistant permissions and usage",
+      },
+      {
+        href: "/profile/settings#export",
+        label: "Export",
+        icon: "upload",
+        description: "Download your log and account data",
+      },
+      { href: "/profile/sessions", label: "Sessions", icon: "lock" },
+      { href: "/profile/settings", label: "Settings", icon: "settings" },
+    ],
+  },
+  {
+    label: "Admin",
+    items: ADMIN_TABS.map((item) => ({ ...item, adminOnly: true })),
+  },
 ];
 
 /** Avatar dropdown: the handful of account links worth one click from anywhere. */
 export const USER_MENU: NavItem[] = [
-	{ href: "/profile", label: "Profile", icon: "user" },
-	{ href: "/billing", label: "Billing", icon: "sparkles" },
-	{ href: "/profile/settings", label: "Settings", icon: "settings" },
-	{ href: "/admin", label: "Admin", icon: "shieldCheck", adminOnly: true },
+  { href: "/profile", label: "Profile", icon: "user" },
+  { href: "/billing", label: "Billing", icon: "sparkles" },
+  { href: "/profile/settings", label: "Settings", icon: "settings" },
+  { href: "/admin", label: "Admin", icon: "shieldCheck", adminOnly: true },
 ];
 
 export function visibleGroups(isAdmin: boolean): NavGroup[] {
-	return MORE_GROUPS.map((g) => ({
-		...g,
-		items: g.items.filter((i) => !i.adminOnly || isAdmin),
-	})).filter((g) => g.items.length > 0);
+  return MORE_GROUPS.map((g) => ({
+    ...g,
+    items: g.items.filter((i) => !i.adminOnly || isAdmin),
+  })).filter((g) => g.items.length > 0);
 }
 
 export function isActive(pathname: string | null, href: string): boolean {
-	if (!pathname) return false;
-	if (href === "/dashboard" || href === "/more") return pathname === href;
-	return pathname === href || pathname.startsWith(`${href}/`);
+  if (!pathname) return false;
+  if (href === "/today" || href === "/more") return pathname === href;
+  return pathname === href || pathname.startsWith(`${href}/`);
 }

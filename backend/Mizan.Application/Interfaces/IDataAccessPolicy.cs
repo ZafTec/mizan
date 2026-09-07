@@ -9,7 +9,7 @@ namespace Mizan.Application.Interfaces;
 /// It exists because the same rule was previously three ad-hoc checks in three
 /// query handlers, and a fourth axis - measurements - was simply forgotten.
 /// Adding the AI as a fourth consumer of that pattern would have guaranteed a
-/// fourth miss. See docs/REFOCUS.md §11.
+/// fourth miss. See docs/AI.md#consent.
 /// </summary>
 public interface IDataAccessPolicy
 {

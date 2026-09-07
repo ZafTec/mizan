@@ -6,7 +6,7 @@ public class Food
 
     /// <summary>
     /// null = public/global. Set = private to that user. Before this existed every
-    /// user-created food landed in everyone's search - see docs/REFOCUS.md §4.
+    /// user-created food landed in everyone's search - see docs/ARCHITECTURE.md#navigation-and-logging.
     /// </summary>
     public Guid? UserId { get; set; }
 
