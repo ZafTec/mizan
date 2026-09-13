@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { version } from "./package.json";
 
 function hostnameOf(url: string | undefined): string | undefined {
 	if (!url) return undefined;
@@ -14,6 +15,10 @@ const mediaHostname = hostnameOf(process.env.NEXT_PUBLIC_MEDIA_URL);
 const nextConfig: NextConfig = {
 	// Enable standalone output for Docker
 	output: "standalone",
+
+	env: {
+		NEXT_PUBLIC_APP_VERSION: version,
+	},
 
 	// Allow the dev server to serve HMR/dev resources when the app is accessed
 	// through a tunnel (e.g. ngrok, for local Paddle checkout domain testing).
