@@ -47,6 +47,21 @@ public class ReverseProxyHeadersTests
     }
 
     [Fact]
+    public void KnownProxyHostnameResolvesToATrustedAddress()
+    {
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["ReverseProxy:KnownProxy"] = "localhost",
+        }).Build();
+
+        var options = new ForwardedHeadersOptions();
+        ReverseProxyHeaders.Configure(options, configuration);
+
+        options.KnownProxies.Should().NotBeEmpty();
+        options.KnownProxies.Should().OnlyContain(ip => IPAddress.IsLoopback(ip));
+    }
+
+    [Fact]
     public void InvalidProxyConfigurationCannotEnableTrustForAllAddresses()
     {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
