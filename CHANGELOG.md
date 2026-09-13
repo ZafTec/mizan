@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.1.0](https://github.com/ZafTec/mizan/compare/v3.0.0...v3.1.0) (2026-09-13)
+
+
+### Features
+
+* add prometheus metrics and grafana faro rum to the frontend ([b2df2d6](https://github.com/ZafTec/mizan/commit/b2df2d6ebac60010969deca990e896333f134488))
+
+
+### Bug Fixes
+
+* restore backend email delivery and enable Telegram deployment ([e22a7f8](https://github.com/ZafTec/mizan/commit/e22a7f883f6d289d91bd37f439afe52dd313caeb))
+* seed streak test dates in the user's own timezone, not utc ([10a4651](https://github.com/ZafTec/mizan/commit/10a4651b85eabc56268b05173bf94d762a4a0010))
+* trust the reverse proxy by hostname instead of a fixed ip ([f56a4b1](https://github.com/ZafTec/mizan/commit/f56a4b1a1da87acdc327f19490db57bb13dcc0ae))
+
 ## 3.0.0 (2026-09-07)
 
 
