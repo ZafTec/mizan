@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.1](https://github.com/ZafTec/mizan/compare/v3.1.0...v3.1.1) (2026-09-13)
+
+
+### Bug Fixes
+
+* find draft releases by listing instead of get-by-tag ([b00b19a](https://github.com/ZafTec/mizan/commit/b00b19aa15378a0d6372ce6efa0fd92e9841b6a9))
+
 ## [3.1.0](https://github.com/ZafTec/mizan/compare/v3.0.0...v3.1.0) (2026-09-13)
 
 
