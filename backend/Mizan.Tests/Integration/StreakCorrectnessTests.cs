@@ -79,7 +79,7 @@ public class StreakCorrectnessTests
     {
         await _fixture.ResetDatabaseAsync();
         var (client, userId) = await UserAsync(timeZone: "Africa/Addis_Ababa");
-        await SeedStreakAsync(userId, count: 3, daysAgo: 1);
+        await SeedStreakAsync(userId, count: 3, daysAgo: 1, relativeToUsersZone: true);
 
         var streak = await client.GetFromJsonAsync<GetStreakResult>("/api/Achievements/streak");
 
@@ -167,10 +167,18 @@ public class StreakCorrectnessTests
         return (_fixture.CreateAuthenticatedClient(id, email), id);
     }
 
-    private async Task SeedStreakAsync(Guid userId, int count, int daysAgo)
+    private async Task SeedStreakAsync(Guid userId, int count, int daysAgo, bool relativeToUsersZone = false)
     {
         using var scope = _fixture.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+
+        // Near a UTC day boundary, "yesterday" in UTC and "yesterday" in the
+        // user's zone can be different dates. Match whichever one the
+        // assertion actually depends on instead of always using UTC.
+        var today = relativeToUsersZone
+            ? await scope.ServiceProvider.GetRequiredService<IUserClock>().TodayAsync(userId)
+            : DateOnly.FromDateTime(DateTime.UtcNow);
+
         db.Streaks.Add(new Streak
         {
             Id = Guid.CreateVersion7(),
@@ -178,7 +186,7 @@ public class StreakCorrectnessTests
             StreakType = "nutrition",
             CurrentCount = count,
             LongestCount = count,
-            LastActivityDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-daysAgo),
+            LastActivityDate = today.AddDays(-daysAgo),
             FreezesAvailable = 0,
         });
         await db.SaveChangesAsync();
