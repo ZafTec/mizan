@@ -68,6 +68,12 @@ Date-only logs use the user's IANA timezone. Missing observations remain gaps in
 
 Background work uses a transactional PostgreSQL outbox. Workers claim jobs with `FOR UPDATE SKIP LOCKED`, limit per-type concurrency, retry failures, and expose exhausted work through administrator jobs. Email and prompt evaluations use the outbox. Redis is not its durable store.
 
+## Telemetry
+
+The frontend exposes Prometheus-format process metrics (memory, event loop, GC) at `/metrics`, scraped over the internal Docker network; the reverse proxy must not route this path from the public internet. Structured JSON server logs go to stdout, already collected by the host's log pipeline.
+
+Client-side RUM (errors, traces, web vitals) ships via Grafana Faro when `NEXT_PUBLIC_FARO_URL` is set; empty disables it entirely. Faro has no server-side SDK, so server observability stays on Prometheus metrics and logs rather than Faro.
+
 ## Billing
 
 Paddle webhooks at `/api/webhooks/paddle` verify signatures, deduplicate events, and update subscription state. `EntitlementService` determines Free or Pro access, including legacy lifetime grants. `POST /api/Subscriptions/portal` mints uncached customer portal links. Current sales offer Free and monthly Pro; existing lifetime records remain supported.

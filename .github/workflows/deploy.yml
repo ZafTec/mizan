@@ -61,6 +61,7 @@ jobs:
           echo "NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY is set: ${{ vars.NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY != '' }}"
           echo "NEXT_PUBLIC_PADDLE_PRICE_PRO_YEARLY is set: ${{ vars.NEXT_PUBLIC_PADDLE_PRICE_PRO_YEARLY != '' }}"
           echo "NEXT_PUBLIC_PADDLE_PRICE_LIFETIME is set: ${{ vars.NEXT_PUBLIC_PADDLE_PRICE_LIFETIME != '' }}"
+          echo "NEXT_PUBLIC_FARO_URL is set: ${{ vars.NEXT_PUBLIC_FARO_URL != '' }}"
 
       - name: Build and push
         id: build
@@ -84,6 +85,8 @@ jobs:
             NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY=${{ vars.NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY }}
             NEXT_PUBLIC_PADDLE_PRICE_PRO_YEARLY=${{ vars.NEXT_PUBLIC_PADDLE_PRICE_PRO_YEARLY }}
             NEXT_PUBLIC_PADDLE_PRICE_LIFETIME=${{ vars.NEXT_PUBLIC_PADDLE_PRICE_LIFETIME }}
+            NEXT_PUBLIC_FARO_URL=${{ vars.NEXT_PUBLIC_FARO_URL }}
+            NEXT_PUBLIC_FARO_APP_NAME=${{ vars.NEXT_PUBLIC_FARO_APP_NAME }}
 
   build-and-push-backend:
     name: Build & Push Backend
