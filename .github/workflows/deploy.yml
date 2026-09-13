@@ -274,13 +274,11 @@ jobs:
             const tag = process.env.NEW_RELEASE_TAG || (manifest['.'] ? `v${manifest['.']}` : '');
             if (!tag) return;
 
-            let release;
-            try {
-              release = (await github.rest.repos.getReleaseByTag({ ...context.repo, tag })).data;
-            } catch (error) {
-              if (error.status === 404) return;
-              throw error;
-            }
+            // getReleaseByTag only matches published releases, so a fresh
+            // draft is invisible to it; the list endpoint sees drafts too.
+            const releases = await github.paginate(github.rest.repos.listReleases, { ...context.repo, per_page: 100 });
+            const release = releases.find((candidate) => candidate.tag_name === tag);
+            if (!release) return;
             if (!release.draft) {
               core.notice(`${tag} is already published; preserving its notes and versioned images.`);
               return;
