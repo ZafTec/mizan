@@ -27,7 +27,15 @@ public static class DiaryEntryFactory
         };
     }
 
-    public static List<FoodDiaryEntry> FromRecipe(Recipe recipe, decimal servings, Guid userId, DateOnly date, string mealType, DateTime loggedAt)
+    /// <summary>
+    /// One diary row per measured ingredient. When a line cannot be resolved,
+    /// a <paramref name="retained"/> snapshot that still describes the recipe
+    /// is logged instead as a single row - the same figures the recipe page
+    /// shows, without inventing links or weights for the unresolved lines.
+    /// </summary>
+    public static List<FoodDiaryEntry> FromRecipe(
+        Recipe recipe, decimal servings, Guid userId, DateOnly date, string mealType, DateTime loggedAt,
+        RecipeNutritionSnapshot? retained = null)
     {
         // Unmeasured notes ("salt to taste") carry no nutrition; the recipe
         // page lists them as excluded, so skipping them here keeps the diary
@@ -43,6 +51,8 @@ public static class DiaryEntryFactory
             .Where(i => i.Food is null || !RecipeNutritionCalculator.Grams(i, i.Food).HasValue)
             .Select(i => i.IngredientText)
             .ToList();
+        if (unresolved.Count > 0 && retained is not null && retained.Describes(recipe.Ingredients, recipe.Servings))
+            return [FromRetained(recipe, retained, servings, userId, date, mealType, loggedAt)];
         if (unresolved.Count > 0)
             throw new DomainValidationException(
                 "Link a food and a weight in grams for: " + string.Join("; ", unresolved) + ". Then log the recipe again.");
@@ -59,5 +69,25 @@ public static class DiaryEntryFactory
             entries.Add(entry);
         }
         return entries;
+    }
+
+    private static FoodDiaryEntry FromRetained(
+        Recipe recipe, RecipeNutritionSnapshot retained, decimal servings, Guid userId, DateOnly date, string mealType, DateTime loggedAt)
+    {
+        var perServing = retained.PerServing;
+        return new FoodDiaryEntry
+        {
+            Id = Guid.NewGuid(), UserId = userId, RecipeId = recipe.Id,
+            GroupId = Guid.NewGuid(), GroupName = recipe.Title,
+            EntryDate = date, MealType = MealTypes.Normalize(mealType),
+            Name = recipe.Title, Servings = servings,
+            Calories = Math.Round(perServing.Calories * servings, 2),
+            ProteinGrams = Math.Round(perServing.ProteinGrams * servings, 2),
+            CarbsGrams = Math.Round(perServing.CarbsGrams * servings, 2),
+            FatGrams = Math.Round(perServing.FatGrams * servings, 2),
+            FiberGrams = retained.FiberGrams.HasValue ? Math.Round(retained.FiberGrams.Value * servings, 2) : null,
+            ProteinCalorieRatio = perServing.ProteinCalorieRatio,
+            LoggedAt = loggedAt
+        };
     }
 }
