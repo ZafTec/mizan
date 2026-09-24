@@ -26,6 +26,16 @@ const user = {
 	role: "user", emailVerified: true, themePreference: "light", compactMode: false,
 	reduceAnimations: false, hasPassword: true, timeZoneId: "UTC", image: null,
 };
+type FixtureHousehold = { otherMembers: number; lists: number; plans: number; version: number; staleOnce: boolean };
+const householdId = "55555555-5555-4555-8555-555555555555";
+function householdPreview(household: FixtureHousehold) {
+	return {
+		householdId, householdName: "Home", otherMemberCount: household.otherMembers,
+		shoppingListCount: household.lists, shoppingListItemCount: household.lists * 3,
+		mealPlanCount: household.plans, mealPlanRecipeCount: household.plans * 5,
+		pendingInvitationCount: 0, version: `v${household.version}`,
+	};
+}
 type FixtureState = {
 	userId: string;
 	meals: MealEntry[];
@@ -38,12 +48,13 @@ type FixtureState = {
 	failures: string[];
 	writeFailures: Record<string, number>;
 	unhandled: string[];
+	household: FixtureHousehold | null;
 	writes: { path: string; body: Record<string, unknown> }[];
 };
 const states = new Map<string, FixtureState>();
 function initialState(empty = false): FixtureState {
 	return {
-		userId: user.id, empty, unread: 0, draft: null, failures: [], writeFailures: {}, unhandled: [], writes: [], recipes: empty ? [] : [{
+		userId: user.id, empty, unread: 0, draft: null, household: null, failures: [], writeFailures: {}, unhandled: [], writes: [], recipes: empty ? [] : [{
 			id: "33333333-3333-4333-8333-333333333333", title: "Yogurt and oats", servings: 1, isFavorited: true, isOwner: true,
 			isPublic: true, description: "A breakfast to come back to.", instructions: "Stir the yogurt and oats together. Serve chilled.",
 			ingredients: [{ foodId: food.id, foodName: food.name, ingredientText: food.name, amount: 200, unit: "g" }, { foodId: oats.id, foodName: oats.name, ingredientText: oats.name, amount: 50, unit: "g" }],
@@ -98,13 +109,14 @@ const server = Bun.serve({
 		if (method === "OPTIONS") return json(null, 204);
 		if (path === "/health") return json({ status: "fixture", today });
 		if (path === "/__fixture/session" && method === "POST") {
-			const options = await request.json() as { userId?: string; empty?: boolean; unread?: number; failures?: string[]; writeFailures?: Record<string, number> };
+			const options = await request.json() as { userId?: string; empty?: boolean; unread?: number; failures?: string[]; writeFailures?: Record<string, number>; household?: Partial<FixtureHousehold> };
 			const token = crypto.randomUUID();
 			const state = initialState(options.empty);
 			state.unread = options.unread ?? 0;
 			state.failures = options.failures ?? [];
 			state.writeFailures = options.writeFailures ?? {};
 			state.userId = options.userId ?? user.id;
+			if (options.household) state.household = { otherMembers: 0, lists: 0, plans: 0, version: 1, staleOnce: false, ...options.household };
 			states.set(token, state);
 			return json({ user: { ...user, id: state.userId }, today }, 200, { "Set-Cookie": `mizan_session=${token}; Path=/; HttpOnly; SameSite=Lax` });
 		}
@@ -124,7 +136,30 @@ const server = Bun.serve({
 		if (path === "/api/Auth/me") return json({ ...user, id: state.userId });
 		if (path === "/api/Auth/logout") return json(null, 204, { "Set-Cookie": "mizan_session=; Path=/; Max-Age=0" });
 		if (path === "/api/Subscriptions/me") return json({ isPro: false, plan: "Free", status: "none", isLifetime: false });
-		if (path === "/api/Households/mine") return json({ households: [], activeHouseholdId: null });
+		if (path === "/api/Households/mine") {
+			const household = state.household;
+			return json(household
+				? { households: [{ id: householdId, name: "Home", myRole: "admin", memberCount: household.otherMembers + 1, joinedAt: `${today}T08:00:00Z`, isActive: true }], activeHouseholdId: householdId, pendingInvitations: [] }
+				: { households: [], activeHouseholdId: null, pendingInvitations: [] });
+		}
+		if (state.household && path === `/api/Households/${householdId}` && method === "GET")
+			return json({ id: householdId, name: "Home", createdBy: state.userId, createdAt: `${today}T08:00:00Z`, members: [{ userId: state.userId, name: user.name, email: user.email, role: "admin", joinedAt: `${today}T08:00:00Z` }, ...Array.from({ length: state.household.otherMembers }, (_, index) => ({ userId: `member-${index}`, name: `Member ${index + 1}`, email: `member${index + 1}@example.test`, role: "member", joinedAt: `${today}T09:00:00Z` }))] });
+		if (state.household && path === `/api/Households/${householdId}/invitations`) return json([]);
+		if (state.household && path === `/api/Households/${householdId}/deletion`)
+			return json({ status: state.household.otherMembers > 0 ? "HasOtherMembers" : "Ready", preview: householdPreview(state.household) });
+		if (state.household && path === `/api/Households/${householdId}` && method === "DELETE") {
+			const household = state.household;
+			const body = await request.json() as { version: string; deletePlans: boolean };
+			if (household.staleOnce) {
+				household.staleOnce = false; household.lists += 1; household.version += 1;
+				return json({ status: "Stale", message: "This household changed after you opened the confirmation. Review it again.", preview: householdPreview(household) }, 409);
+			}
+			if (body.version !== `v${household.version}`) return json({ status: "Stale", message: "Stale", preview: householdPreview(household) }, 409);
+			if (household.lists + household.plans > 0 && !body.deletePlans) return json({ status: "PlansNotConfirmed", preview: householdPreview(household) }, 409);
+			state.writes.push({ path, body });
+			state.household = null;
+			return json({ status: "Deleted" });
+		}
 		if (path === "/api/Notifications/unread-count") return json({ unreadCount: state.unread });
 		if (path === "/api/Trainers/my-trainer") return json({ error: "No active trainer relationship found" }, 404);
 		if (path === "/api/Goals") return state.empty ? json(null, 204) : json(goal);

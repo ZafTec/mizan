@@ -113,6 +113,18 @@ public class MizanDbContext : DbContext, IMizanDbContext
         }
     }
 
+    public async Task<Household?> LockHouseholdAsync(Guid householdId, CancellationToken cancellationToken = default)
+    {
+        if (!Database.IsRelational())
+        {
+            return await Households.FirstOrDefaultAsync(h => h.Id == householdId, cancellationToken);
+        }
+
+        return await Households
+            .FromSqlInterpolated($"SELECT * FROM households WHERE id = {householdId} FOR UPDATE")
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

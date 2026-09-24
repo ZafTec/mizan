@@ -3027,7 +3027,36 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        delete?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DeleteHouseholdRequest"];
+                    "text/json": components["schemas"]["DeleteHouseholdRequest"];
+                    "application/*+json": components["schemas"]["DeleteHouseholdRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["HouseholdDeletionResult"];
+                        "application/json": components["schemas"]["HouseholdDeletionResult"];
+                        "text/json": components["schemas"]["HouseholdDeletionResult"];
+                    };
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -3305,6 +3334,45 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Households/{id}/deletion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["HouseholdDeletionResult"];
+                        "application/json": components["schemas"]["HouseholdDeletionResult"];
+                        "text/json": components["schemas"]["HouseholdDeletionResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -7623,6 +7691,10 @@ export interface components {
             success: boolean;
             message?: string | null;
         };
+        DeleteHouseholdRequest: {
+            version: string;
+            deletePlans: boolean;
+        };
         DeleteMealPlanResult: {
             success: boolean;
             message?: string | null;
@@ -7986,6 +8058,31 @@ export interface components {
             /** Format: date */
             date: string;
         };
+        HouseholdDeletionPreview: {
+            /** Format: uuid */
+            householdId: string;
+            householdName: string;
+            /** Format: int32 */
+            otherMemberCount: number;
+            /** Format: int32 */
+            shoppingListCount: number;
+            /** Format: int32 */
+            shoppingListItemCount: number;
+            /** Format: int32 */
+            mealPlanCount: number;
+            /** Format: int32 */
+            mealPlanRecipeCount: number;
+            /** Format: int32 */
+            pendingInvitationCount: number;
+            version: string;
+        };
+        HouseholdDeletionResult: {
+            status: components["schemas"]["HouseholdDeletionStatus"];
+            message?: string | null;
+            preview?: components["schemas"]["HouseholdDeletionPreview"];
+        };
+        /** @enum {string} */
+        HouseholdDeletionStatus: "Ready" | "Deleted" | "NotFound" | "NotOwner" | "HasOtherMembers" | "PlansNotConfirmed" | "Stale";
         HouseholdDto: {
             /** Format: uuid */
             id: string;
