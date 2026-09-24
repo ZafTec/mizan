@@ -168,7 +168,9 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
                 ["Outbox:Enabled"] = "false",
                 // A bot name, so the link endpoints are live. The API never
                 // calls Telegram, so nothing here reaches the network.
-                ["Telegram:BotUsername"] = "mizan_test_bot"
+                ["Telegram:BotUsername"] = "mizan_test_bot",
+                // Webhook tests sign their own payloads with this.
+                ["Paddle:WebhookSecret"] = PaddleWebhookSecret
             };
 
             config.AddInMemoryCollection(settings);
@@ -272,6 +274,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     public ScriptedAiProvider Ai { get; } = new();
 
     public FakePaddleApiClient Paddle { get; } = new();
+    public const string PaddleWebhookSecret = "test-paddle-webhook-secret";
 
     /// <summary>
     /// Counts database round trips. Idle until a test arms it, so it costs
