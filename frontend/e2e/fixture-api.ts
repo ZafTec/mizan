@@ -48,6 +48,12 @@ function initialState(empty = false): FixtureState {
 			isPublic: true, description: "A breakfast to come back to.", instructions: "Stir the yogurt and oats together. Serve chilled.",
 			ingredients: [{ foodId: food.id, foodName: food.name, ingredientText: food.name, amount: 200, unit: "g" }, { foodId: oats.id, foodName: oats.name, ingredientText: oats.name, amount: 50, unit: "g" }],
 			lastUsedAt: `${dateAgo(1)}T08:00:00Z`, nutrition: { caloriesPerServing: 389, proteinGrams: 26.5, carbsGrams: 41, fatGrams: 13.5, fiberGrams: 5.5 },
+			unmeasuredIngredients: [], unresolvedIngredients: [],
+		}, {
+			id: "44444444-4444-4444-8444-444444444444", title: "Imported lentil stew", servings: 4, isFavorited: false, isOwner: true,
+			isPublic: true, description: null, instructions: null, lastUsedAt: null, nutrition: null,
+			ingredients: [{ foodId: oats.id, foodName: oats.name, ingredientText: "200g oats", amount: 200, unit: "g" }, { foodId: null, foodName: "", ingredientText: "1 lemon (50g)", amount: 50, unit: "g" }, { foodId: null, foodName: "", ingredientText: "salt to taste", amount: null, unit: "" }],
+			unmeasuredIngredients: ["salt to taste"], unresolvedIngredients: ["1 lemon (50g)"],
 		}],
 		meals: empty ? [] : [
 			{ id: "meal-yogurt", foodId: food.id, name: "Greek yogurt", mealType: "BREAKFAST", servings: 2, calories: 194, proteinGrams: 18, carbsGrams: 8, fatGrams: 10, fiberGrams: 0, loggedAt: `${today}T08:15:00Z` },

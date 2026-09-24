@@ -52,6 +52,61 @@ public class RecipesControllerTests(ApiTestFixture fixture)
     }
 
     [Fact]
+    public async Task UnmeasuredNotesAreExcludedFromNutritionAndLogging_WhileUnlinkedMeasuredLinesBlock()
+    {
+        await fixture.ResetDatabaseAsync();
+        var userId = Guid.NewGuid();
+        var email = $"import-{userId:N}@example.com";
+        await fixture.SeedUserAsync(userId, email);
+        var food = await fixture.SeedFoodAsync("Chicken Breast", 165m, 31m, 0m, 3.6m);
+        using var client = fixture.CreateAuthenticatedClient(userId, email);
+        var day = DateOnly.FromDateTime(DateTime.UtcNow);
+        for (var i = 0; i < 2; i++)
+            (await client.PostAsJsonAsync("/api/Nutrition/log", new { foodId = food.Id, entryDate = day, mealType = "LUNCH", servings = 1 })).EnsureSuccessStatusCode();
+        var promoted = await client.PostAsJsonAsync("/api/Recipes/promote", new { entryDate = day, mealType = "lunch", title = "Imported Bowl" });
+        promoted.StatusCode.Should().Be(HttpStatusCode.Created);
+        var id = (await promoted.Content.ReadFromJsonAsync<PromotionResponse>())!.RecipeId;
+
+        (await client.PutAsJsonAsync($"/api/Recipes/{id}", new
+        {
+            id, title = "Imported Bowl", servings = 2, isPublic = false,
+            ingredients = new object[]
+            {
+                new { foodId = food.Id, ingredientText = "400g chicken", amount = 400, unit = "g" },
+                new { ingredientText = "salt, pepper, paprika" }
+            }
+        })).EnsureSuccessStatusCode();
+
+        var detail = await client.GetFromJsonAsync<RecipeDetailDto>($"/api/Recipes/{id}");
+        detail!.Nutrition!.CaloriesPerServing.Should().Be(330);
+        detail.UnmeasuredIngredients.Should().Equal("salt, pepper, paprika");
+        detail.UnresolvedIngredients.Should().BeEmpty();
+
+        var logDay = day.AddDays(-1);
+        (await client.PostAsJsonAsync("/api/Nutrition/log", new { recipeId = id, entryDate = logDay, mealType = "DINNER", servings = 1 }))
+            .StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Created);
+        var daily = await client.GetFromJsonAsync<DailyNutritionResult>($"/api/Nutrition/daily?date={logDay:yyyy-MM-dd}");
+        daily!.TotalCalories.Should().Be(detail.Nutrition.CaloriesPerServing);
+
+        (await client.PutAsJsonAsync($"/api/Recipes/{id}", new
+        {
+            id, title = "Imported Bowl", servings = 2, isPublic = false,
+            ingredients = new object[]
+            {
+                new { foodId = food.Id, ingredientText = "400g chicken", amount = 400, unit = "g" },
+                new { ingredientText = "1 lemon (50g)", amount = 50, unit = "g" }
+            }
+        })).EnsureSuccessStatusCode();
+
+        detail = await client.GetFromJsonAsync<RecipeDetailDto>($"/api/Recipes/{id}");
+        detail!.Nutrition.Should().BeNull();
+        detail.UnresolvedIngredients.Should().Equal("1 lemon (50g)");
+        var refused = await client.PostAsJsonAsync("/api/Nutrition/log", new { recipeId = id, entryDate = logDay, mealType = "DINNER", servings = 1 });
+        refused.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await refused.Content.ReadAsStringAsync()).Should().Contain("1 lemon (50g)");
+    }
+
+    [Fact]
     public async Task StandaloneCreationReturnsGone_AndCannotBypassMealPromotion()
     {
         await fixture.ResetDatabaseAsync();
