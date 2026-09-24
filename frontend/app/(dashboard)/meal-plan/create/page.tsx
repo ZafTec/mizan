@@ -145,12 +145,12 @@ export default function CreateMealPlanPage() {
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center gap-4">
-				<Link href="/meal-plan" className="w-10 h-10 rounded-xl bg-charcoal-blue-100 hover:bg-charcoal-blue-200 flex items-center justify-center transition-colors">
-					<i className="ri-arrow-left-line text-xl text-charcoal-blue-600" />
+				<Link href="/meal-plan" className="w-10 h-10 rounded-xl bg-muted hover:bg-accent flex items-center justify-center transition-colors">
+					<i className="ri-arrow-left-line text-xl text-muted-foreground" />
 				</Link>
 				<div className="flex-1">
-					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900">Create Meal Plan</h1>
-					<p className="text-charcoal-blue-500">
+					<h1 className="text-3xl font-semibold tracking-tight text-foreground">Create Meal Plan</h1>
+					<p className="text-muted-foreground">
 						{formatDateLabel(startDate)} - {formatDateLabel(endDate)}
 					</p>
 				</div>
@@ -179,7 +179,7 @@ export default function CreateMealPlanPage() {
 			</div>
 
 			{error && (
-				<div className="flex items-center gap-2 p-4 rounded-xl bg-red-50 text-red-600">
+				<div className="flex items-center gap-2 p-4 rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300">
 					<i className="ri-error-warning-line text-xl" />
 					<span>{error}</span>
 				</div>
@@ -193,10 +193,10 @@ export default function CreateMealPlanPage() {
 					return (
 						<div key={dateKey} className={`card p-3 ${isToday ? "ring-2 ring-brand-400" : ""}`}>
 							<div className="text-center mb-3">
-								<p className="text-xs font-medium text-charcoal-blue-500 uppercase">
+								<p className="text-xs font-medium text-muted-foreground uppercase">
 									{day.toLocaleDateString(undefined, { weekday: "short" })}
 								</p>
-								<p className={`text-lg font-bold ${isToday ? "text-brand-600" : "text-charcoal-blue-900"}`}>
+								<p className={`text-lg font-bold ${isToday ? "text-brand-600" : "text-foreground"}`}>
 									{day.getDate()}
 								</p>
 							</div>
@@ -206,24 +206,24 @@ export default function CreateMealPlanPage() {
 									return (
 										<div key={mealType}>
 											<div className="flex items-center justify-between mb-1">
-												<span className="text-[10px] font-medium text-charcoal-blue-400 uppercase flex items-center gap-1">
+												<span className="text-[10px] font-medium text-muted-foreground uppercase flex items-center gap-1">
 													<i className={`${MEAL_ICONS[mealType]} text-xs`} />
 													{MEAL_LABELS[mealType]}
 												</span>
 												<button
 													onClick={() => setActiveSlot({ dateKey, mealType })}
-													className="w-5 h-5 rounded-md bg-charcoal-blue-100 hover:bg-brand-100 hover:text-brand-600 flex items-center justify-center text-charcoal-blue-400 transition-colors"
+													className="w-5 h-5 rounded-md bg-muted hover:bg-brand-100 hover:text-brand-600 flex items-center justify-center text-muted-foreground transition-colors"
 												>
 													<i className="ri-add-line text-xs" />
 												</button>
 											</div>
 											{mealRecipes.map((recipe, idx) => (
-												<div key={idx} className="group flex items-center gap-1.5 p-1.5 bg-charcoal-blue-50 rounded-lg text-xs">
-													<span className="flex-1 truncate text-charcoal-blue-700">{recipe.title}</span>
-													<span className="text-charcoal-blue-400 shrink-0">{recipe.servings}x</span>
+												<div key={idx} className="group flex items-center gap-1.5 p-1.5 bg-background rounded-lg text-xs">
+													<span className="flex-1 truncate text-muted-foreground">{recipe.title}</span>
+													<span className="text-muted-foreground shrink-0">{recipe.servings}x</span>
 													<button
 														onClick={() => handleRemoveRecipe(dateKey, mealType, idx)}
-														className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-opacity"
+														className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-destructive transition-opacity"
 													>
 														<i className="ri-close-line" />
 													</button>

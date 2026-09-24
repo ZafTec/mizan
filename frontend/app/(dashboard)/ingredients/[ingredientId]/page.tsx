@@ -14,13 +14,13 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 	if (!ingredient) {
 		return (
 			<div className="min-h-[50vh] flex flex-col items-center justify-center">
-				<div className="w-20 h-20 rounded-2xl bg-charcoal-blue-100 flex items-center justify-center mb-4">
-					<i className="ri-leaf-line text-4xl text-charcoal-blue-400" />
+				<div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mb-4">
+					<i className="ri-leaf-line text-4xl text-muted-foreground" aria-hidden="true" />
 				</div>
-				<h2 className="text-xl font-semibold text-charcoal-blue-900 mb-2">Ingredient not found</h2>
-				<p className="text-charcoal-blue-500 mb-6">The ingredient you&apos;re looking for doesn&apos;t exist.</p>
+				<h2 className="text-xl font-semibold text-foreground mb-2">Ingredient not found</h2>
+				<p className="text-muted-foreground mb-6">The ingredient you&apos;re looking for doesn&apos;t exist.</p>
 				<Link href="/ingredients" className="btn-primary">
-					<i className="ri-arrow-left-line" />
+					<i className="ri-arrow-left-line" aria-hidden="true" />
 					Back to Ingredients
 				</Link>
 			</div>
@@ -35,128 +35,105 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 		? (ingredient.proteinPer100g * 4 / ingredient.caloriesPer100g) * 100
 		: 0;
 
+	// Same macro colours as the Today page; the chart tokens switch with the theme.
+	const nutrients = [
+		{ label: "Calories", value: `${ingredient.caloriesPer100g}`, icon: "ri-fire-line", color: "var(--foreground)" },
+		{ label: "Protein", value: `${ingredient.proteinPer100g}g`, icon: "ri-heart-pulse-line", color: "var(--chart-1)" },
+		{ label: "Carbs", value: `${ingredient.carbsPer100g}g`, icon: "ri-bread-line", color: "var(--chart-2)" },
+		{ label: "Fat", value: `${ingredient.fatPer100g}g`, icon: "ri-drop-line", color: "var(--chart-3)" },
+		{ label: "Fiber", value: `${ingredient.fiberPer100g ?? 0}g`, icon: "ri-leaf-line", color: "var(--muted-foreground)" },
+	];
+	const macros = [
+		{ label: "Protein", percentage: proteinPercentage, color: "var(--chart-1)" },
+		{ label: "Carbs", percentage: carbsPercentage, color: "var(--chart-2)" },
+		{ label: "Fat", percentage: fatPercentage, color: "var(--chart-3)" },
+	];
+
 	return (
 		<div className="max-w-3xl mx-auto space-y-6">
 			<div className="flex items-center gap-4">
-				<Link href="/ingredients" className="w-10 h-10 rounded-xl bg-charcoal-blue-100 hover:bg-charcoal-blue-200 flex items-center justify-center transition-colors">
-					<i className="ri-arrow-left-line text-xl text-charcoal-blue-600" />
+				<Link
+					href="/ingredients"
+					aria-label="Back to Ingredients"
+					className="w-10 h-10 shrink-0 rounded-xl border border-border bg-card text-foreground hover:bg-muted flex items-center justify-center transition-colors"
+				>
+					<i className="ri-arrow-left-line text-xl" aria-hidden="true" />
 				</Link>
-				<div className="flex-1">
-					<div className="flex items-center gap-3">
-						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 capitalize">{ingredient.name}</h1>
+				<div className="flex-1 min-w-0">
+					<div className="flex flex-wrap items-center gap-3">
+						<h1 className="text-3xl font-semibold tracking-tight text-foreground capitalize break-words">{ingredient.name}</h1>
 						{ingredient.isVerified && (
-							<span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-2xl bg-green-100 text-green-700 text-xs font-medium">
-								<i className="ri-verified-badge-line" />
+							<span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-2xl border border-border bg-muted text-foreground text-xs font-medium">
+								<i className="ri-verified-badge-line" style={{ color: "var(--chart-1)" }} aria-hidden="true" />
 								Verified
 							</span>
 						)}
 					</div>
-					<p className="text-charcoal-blue-500">Per {ingredient.servingSize} {ingredient.servingUnit}</p>
+					<p className="text-muted-foreground">Per {ingredient.servingSize} {ingredient.servingUnit}</p>
 				</div>
 			</div>
 
 			<div className="card p-6">
-				<h2 className="font-semibold text-charcoal-blue-900 mb-4">Nutritional Information</h2>
+				<h2 className="font-semibold text-card-foreground mb-4">Nutritional Information</h2>
 				<div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-					<div className="text-center p-4 bg-white rounded-xl">
-						<div className="w-10 h-10 rounded-xl bg-burnt-peach-100 flex items-center justify-center mx-auto mb-2">
-							<i className="ri-fire-line text-orange-600" />
+					{nutrients.map((nutrient) => (
+						<div key={nutrient.label} className="text-center p-4 rounded-xl border border-border bg-background">
+							<i className={`${nutrient.icon} text-xl`} style={{ color: nutrient.color }} aria-hidden="true" />
+							<p className="mt-1 text-3xl font-semibold tracking-tight text-foreground tabular-nums">{nutrient.value}</p>
+							<p className="text-xs text-muted-foreground">{nutrient.label}</p>
 						</div>
-						<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900">{ingredient.caloriesPer100g}</p>
-						<p className="text-xs text-charcoal-blue-500">Calories</p>
-					</div>
-					<div className="text-center p-4 bg-white rounded-xl">
-						<div className="w-10 h-10 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-2">
-							<i className="ri-heart-pulse-line text-red-600" />
-						</div>
-						<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900">{ingredient.proteinPer100g}g</p>
-						<p className="text-xs text-charcoal-blue-500">Protein</p>
-					</div>
-					<div className="text-center p-4 bg-white rounded-xl">
-						<div className="w-10 h-10 rounded-xl bg-tuscan-sun-100 flex items-center justify-center mx-auto mb-2">
-							<i className="ri-bread-line text-amber-600" />
-						</div>
-						<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900">{ingredient.carbsPer100g}g</p>
-						<p className="text-xs text-charcoal-blue-500">Carbs</p>
-					</div>
-					<div className="text-center p-4 bg-white rounded-xl">
-						<div className="w-10 h-10 rounded-xl bg-sandy-brown-100 flex items-center justify-center mx-auto mb-2">
-							<i className="ri-drop-line text-yellow-600" />
-						</div>
-						<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900">{ingredient.fatPer100g}g</p>
-						<p className="text-xs text-charcoal-blue-500">Fat</p>
-					</div>
-					<div className="text-center p-4 bg-white rounded-xl">
-						<div className="w-10 h-10 rounded-2xl bg-green-100 flex items-center justify-center mx-auto mb-2">
-							<i className="ri-leaf-line text-green-600" />
-						</div>
-						<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900">{ingredient.fiberPer100g ?? 0}g</p>
-						<p className="text-xs text-charcoal-blue-500">Fiber</p>
-					</div>
+					))}
 				</div>
 				{proteinCalRatio > 0 && (
-					<div className="mt-4 flex items-center gap-3 p-3 bg-white rounded-xl">
-						<div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
-							<i className="ri-percent-line text-violet-600" />
-						</div>
+					<div className="mt-4 flex items-center gap-3 p-3 rounded-xl border border-border bg-background">
+						<i className="ri-percent-line text-xl text-muted-foreground" aria-hidden="true" />
 						<div>
-							<p className="text-lg font-bold text-charcoal-blue-900">{proteinCalRatio.toFixed(0)}%</p>
-							<p className="text-xs text-charcoal-blue-500">Protein-to-Calorie Ratio</p>
+							<p className="text-lg font-bold text-foreground tabular-nums">{proteinCalRatio.toFixed(0)}%</p>
+							<p className="text-xs text-muted-foreground">Protein-to-Calorie Ratio</p>
 						</div>
 					</div>
 				)}
 			</div>
 
 			<div className="card p-6">
-				<h2 className="font-semibold text-charcoal-blue-900 flex items-center gap-2 mb-4">
-					<i className="ri-pie-chart-2-line text-brand-500" />
+				<h2 className="font-semibold text-card-foreground flex items-center gap-2 mb-4">
+					<i className="ri-pie-chart-2-line text-muted-foreground" aria-hidden="true" />
 					Macronutrient Distribution
 				</h2>
-				<div className="h-4 flex rounded-full overflow-hidden mb-4 bg-charcoal-blue-100">
-					<div
-						style={{ width: `${proteinPercentage}%` }}
-						className="bg-red-500 transition-all"
-						title={`Protein: ${proteinPercentage.toFixed(1)}%`}
-					/>
-					<div
-						style={{ width: `${carbsPercentage}%` }}
-						className="bg-amber-500 transition-all"
-						title={`Carbs: ${carbsPercentage.toFixed(1)}%`}
-					/>
-					<div
-						style={{ width: `${fatPercentage}%` }}
-						className="bg-yellow-500 transition-all"
-						title={`Fat: ${fatPercentage.toFixed(1)}%`}
-					/>
+				<div
+					role="img"
+					aria-label={macros.map((macro) => `${macro.label} ${macro.percentage.toFixed(0)}%`).join(", ")}
+					className="h-4 flex rounded-full overflow-hidden mb-4 bg-muted"
+				>
+					{macros.map((macro) => (
+						<div
+							key={macro.label}
+							style={{ width: `${macro.percentage}%`, background: macro.color }}
+							className="transition-all"
+							title={`${macro.label}: ${macro.percentage.toFixed(1)}%`}
+						/>
+					))}
 				</div>
 				<div className="flex flex-wrap gap-6">
-					<div className="flex items-center gap-2">
-						<div className="w-4 h-4 rounded-md bg-red-500" />
-						<span className="text-sm text-charcoal-blue-600">Protein</span>
-						<span className="text-sm font-semibold text-charcoal-blue-900">{proteinPercentage.toFixed(0)}%</span>
-					</div>
-					<div className="flex items-center gap-2">
-						<div className="w-4 h-4 rounded-md bg-amber-500" />
-						<span className="text-sm text-charcoal-blue-600">Carbs</span>
-						<span className="text-sm font-semibold text-charcoal-blue-900">{carbsPercentage.toFixed(0)}%</span>
-					</div>
-					<div className="flex items-center gap-2">
-						<div className="w-4 h-4 rounded-md bg-yellow-500" />
-						<span className="text-sm text-charcoal-blue-600">Fat</span>
-						<span className="text-sm font-semibold text-charcoal-blue-900">{fatPercentage.toFixed(0)}%</span>
-					</div>
+					{macros.map((macro) => (
+						<div key={macro.label} className="flex items-center gap-2">
+							<div className="w-4 h-4 rounded-md" style={{ background: macro.color }} aria-hidden="true" />
+							<span className="text-sm text-muted-foreground">{macro.label}</span>
+							<span className="text-sm font-semibold text-foreground tabular-nums">{macro.percentage.toFixed(0)}%</span>
+						</div>
+					))}
 				</div>
 			</div>
 
 			{isAdmin && (
 				<div className="card p-6">
 					<div className="flex items-center justify-between">
-						<div className="text-sm text-charcoal-blue-500">
+						<div className="text-sm text-muted-foreground">
 							{ingredient.brand && <span>Brand: {ingredient.brand}</span>}
 						</div>
 						<div className="flex gap-2">
 							<Link href={`/ingredients/${ingredientId}/edit`} className="btn-secondary text-sm px-3 py-1.5">
-								<i className="ri-edit-line" />
+								<i className="ri-edit-line" aria-hidden="true" />
 								Edit
 							</Link>
 							<DeleteIngredientButton id={ingredientId} />
