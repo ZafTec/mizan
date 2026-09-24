@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.1](https://github.com/ZafTec/mizan/compare/v3.2.0...v3.2.1) (2026-09-24)
+
+
+### Bug Fixes
+
+* back up and migrate the database on every production deploy ([93012e1](https://github.com/ZafTec/mizan/commit/93012e1244f7706d359bd33a290c73db911ed745))
+
 ## [3.2.0](https://github.com/ZafTec/mizan/compare/v3.1.1...v3.2.0) (2026-09-24)
 
 
