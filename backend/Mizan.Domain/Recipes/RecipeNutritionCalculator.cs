@@ -49,21 +49,41 @@ public readonly record struct RecipeNutritionTotals(
 public static class RecipeNutritionCalculator
 {
     /// <summary>
+    /// A line with neither a food nor an amount, such as "salt and pepper to
+    /// taste" or "ice cubes". It names something without measuring it, so it
+    /// has no nutrition to count and must not block the measured ingredients.
+    /// A line with an amount but no food is not a note: its nutrition is real
+    /// and unknown.
+    /// </summary>
+    public static bool IsUnmeasuredNote(RecipeIngredient ingredient) =>
+        !ingredient.FoodId.HasValue && ingredient.Amount is null;
+
+    /// <summary>
     /// Sums the ingredients. An ingredient with no resolvable food contributes
     /// nothing and is reported in <paramref name="unresolved"/> - callers that
     /// need exact figures, such as deriving a preparation, must refuse rather
-    /// than publish a total that silently understates.
+    /// than publish a total that silently understates. Unmeasured notes are
+    /// skipped and reported in <paramref name="unmeasured"/> so callers can
+    /// disclose them.
     /// </summary>
     public static RecipeNutritionTotals Sum(
         IEnumerable<RecipeIngredient> ingredients,
         IReadOnlyDictionary<Guid, Food> foodsById,
-        out IReadOnlyList<string> unresolved)
+        out IReadOnlyList<string> unresolved,
+        out IReadOnlyList<string> unmeasured)
     {
         decimal calories = 0, protein = 0, carbs = 0, fat = 0, fiber = 0;
         var missing = new List<string>();
+        var notes = new List<string>();
 
         foreach (var ingredient in ingredients)
         {
+            if (IsUnmeasuredNote(ingredient))
+            {
+                notes.Add(ingredient.IngredientText);
+                continue;
+            }
+
             if (!ingredient.FoodId.HasValue || !foodsById.TryGetValue(ingredient.FoodId.Value, out var food))
             {
                 missing.Add(ingredient.IngredientText);
@@ -85,6 +105,7 @@ public static class RecipeNutritionCalculator
         }
 
         unresolved = missing;
+        unmeasured = notes;
         return new RecipeNutritionTotals(
             Math.Round(calories, 2),
             Math.Round(protein, 2),

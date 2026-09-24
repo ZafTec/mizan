@@ -98,6 +98,7 @@ export default async function RecipePage({
           </div>
         ))}
       </div>
+      <NutritionNotes recipe={recipe} />
       {user && (
         <div className="sm:hidden mb-6">
           <LogEntryButton
@@ -131,4 +132,34 @@ export default async function RecipePage({
       )}
     </div>
   );
+}
+
+// Nutrition is summed from the ingredients. Say which lines it leaves out and
+// which lines stop it, so an imported recipe is never shown as more complete
+// than it is.
+function NutritionNotes({
+  recipe,
+}: {
+  recipe: {
+    nutrition?: unknown;
+    unmeasuredIngredients?: string[];
+    unresolvedIngredients?: string[];
+  };
+}) {
+  const unresolved = recipe.unresolvedIngredients ?? [];
+  const unmeasured = recipe.unmeasuredIngredients ?? [];
+  if (!recipe.nutrition && unresolved.length > 0)
+    return (
+      <p className="text-sm log-muted -mt-2 mb-6 max-w-prose" role="note">
+        Nutrition is not available. These ingredients need a linked food and a
+        weight in grams: {unresolved.join("; ")}.
+      </p>
+    );
+  if (recipe.nutrition && unmeasured.length > 0)
+    return (
+      <p className="text-sm log-muted -mt-2 mb-6 max-w-prose" role="note">
+        Does not include unmeasured items: {unmeasured.join("; ")}.
+      </p>
+    );
+  return null;
 }

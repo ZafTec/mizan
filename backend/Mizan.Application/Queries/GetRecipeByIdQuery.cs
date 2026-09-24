@@ -21,6 +21,12 @@ public record RecipeDetailDto
     public bool IsOwner { get; init; }
     public bool IsFavorited { get; init; }
     public RecipeNutritionDto? Nutrition { get; init; }
+
+    /// <summary>Unmeasured notes, such as "salt to taste", left out of <see cref="Nutrition"/>.</summary>
+    public List<string> UnmeasuredIngredients { get; init; } = new();
+
+    /// <summary>Measured lines without a linked food or a weight in grams. Any entry leaves <see cref="Nutrition"/> null.</summary>
+    public List<string> UnresolvedIngredients { get; init; } = new();
     public List<RecipeIngredientDto> Ingredients { get; init; } = new();
     public string? Instructions { get; init; }
     public DateTime CreatedAt { get; init; }
@@ -85,8 +91,9 @@ public class GetRecipeByIdQueryHandler : IRequestHandler<GetRecipeByIdQuery, Rec
             return null;
 
         // Summed from the ingredients; recipe_nutrition no longer exists.
-        var totalsById = await RecipeNutritionLookup.ForRecipesAsync(_context, [recipe.Id], cancellationToken);
-        var hasNutrition = totalsById.TryGetValue(recipe.Id, out var totals);
+        var statuses = await RecipeNutritionLookup.StatusesAsync(_context, [recipe.Id], cancellationToken);
+        var status = statuses[recipe.Id];
+        var totals = status.PerServing.GetValueOrDefault();
 
         return new RecipeDetailDto
         {
@@ -100,7 +107,7 @@ public class GetRecipeByIdQueryHandler : IRequestHandler<GetRecipeByIdQuery, Rec
             IsPublic = recipe.IsPublic,
             IsOwner = _currentUser.UserId.HasValue && recipe.UserId == _currentUser.UserId,
             IsFavorited = _currentUser.UserId.HasValue && await _context.FavoriteRecipes.AnyAsync(f => f.UserId == _currentUser.UserId.Value && f.RecipeId == recipe.Id, cancellationToken),
-            Nutrition = hasNutrition ? new RecipeNutritionDto
+            Nutrition = status.PerServing.HasValue ? new RecipeNutritionDto
             {
                 CaloriesPerServing = totals.Calories,
                 ProteinGrams = totals.ProteinGrams,
@@ -109,6 +116,8 @@ public class GetRecipeByIdQueryHandler : IRequestHandler<GetRecipeByIdQuery, Rec
                 FiberGrams = totals.FiberGrams,
                 ProteinCalorieRatio = totals.ProteinCalorieRatio
             } : null,
+            UnmeasuredIngredients = status.Unmeasured.ToList(),
+            UnresolvedIngredients = status.Unresolved.ToList(),
             Ingredients = recipe.Ingredients.OrderBy(i => i.SortOrder).Select(i => new RecipeIngredientDto
             {
                 FoodId = i.FoodId,

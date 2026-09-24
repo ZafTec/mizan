@@ -8482,6 +8482,8 @@ export interface components {
             isOwner: boolean;
             isFavorited: boolean;
             nutrition?: components["schemas"]["RecipeNutritionDto"];
+            unmeasuredIngredients: string[];
+            unresolvedIngredients: string[];
             ingredients: components["schemas"]["RecipeIngredientDto"][];
             instructions?: string | null;
             /** Format: date-time */

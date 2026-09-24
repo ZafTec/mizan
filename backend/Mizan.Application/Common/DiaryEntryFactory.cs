@@ -29,16 +29,30 @@ public static class DiaryEntryFactory
 
     public static List<FoodDiaryEntry> FromRecipe(Recipe recipe, decimal servings, Guid userId, DateOnly date, string mealType, DateTime loggedAt)
     {
-        if (recipe.Ingredients.Count == 0 || recipe.Servings <= 0)
-            throw new DomainValidationException("This recipe needs ingredients and a serving count before it can be logged.");
+        // Unmeasured notes ("salt to taste") carry no nutrition; the recipe
+        // page lists them as excluded, so skipping them here keeps the diary
+        // equal to what was shown.
+        var measured = recipe.Ingredients
+            .Where(i => !RecipeNutritionCalculator.IsUnmeasuredNote(i))
+            .OrderBy(i => i.SortOrder)
+            .ToList();
+        if (measured.Count == 0 || recipe.Servings <= 0)
+            throw new DomainValidationException("This recipe needs measured ingredients and a serving count before it can be logged.");
+
+        var unresolved = measured
+            .Where(i => i.Food is null || !RecipeNutritionCalculator.Grams(i, i.Food).HasValue)
+            .Select(i => i.IngredientText)
+            .ToList();
+        if (unresolved.Count > 0)
+            throw new DomainValidationException(
+                "Link a food and a weight in grams for: " + string.Join("; ", unresolved) + ". Then log the recipe again.");
+
         var entries = new List<FoodDiaryEntry>();
         var groupId = Guid.NewGuid();
-        foreach (var ingredient in recipe.Ingredients.OrderBy(i => i.SortOrder))
+        foreach (var ingredient in measured)
         {
-            var grams = ingredient.Food is null ? null : RecipeNutritionCalculator.Grams(ingredient, ingredient.Food);
-            if (!grams.HasValue)
-                throw new DomainValidationException($"Ingredient '{ingredient.IngredientText}' needs a linked food and a known weight before it can be logged.");
-            var entry = FromFood(ingredient.Food!, grams.Value / recipe.Servings * servings, userId, date, mealType, loggedAt);
+            var grams = RecipeNutritionCalculator.Grams(ingredient, ingredient.Food!)!.Value;
+            var entry = FromFood(ingredient.Food!, grams / recipe.Servings * servings, userId, date, mealType, loggedAt);
             entry.RecipeId = recipe.Id;
             entry.GroupId = groupId;
             entry.GroupName = recipe.Title;

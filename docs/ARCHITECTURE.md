@@ -54,7 +54,7 @@ Permanent navigation is Today, History, Progress, More, and Log entry. `/today?d
 
 Meal and measurement forms open over the current route. Workouts open `/workout/active`, with drafts saved locally and through `/api/Workouts/draft`. A resume banner appears when a draft exists. Trainer, household, and notification surfaces depend on the user's data. Secondary features remain under `/more`.
 
-Foods carry per-100g nutrition and a nullable owner: no owner means public catalogue; an owner means personal food. Recipes derive nutrition from ingredient foods. A preparation is a derived food with snapshotted nutrition and source recipe, enabling reuse without a recursive graph. Preparation conversion requires the finished yield in grams. Diary snapshots preserve past intake when foods or recipes change.
+Foods carry per-100g nutrition and a nullable owner: no owner means public catalogue; an owner means personal food. Recipes derive nutrition from ingredient foods. An unmeasured line with no food, such as "salt to taste", is left out of the totals and listed as excluded; a measured line without a linked food or a weight in grams withholds nutrition and blocks logging, and the recipe lists it. A preparation is a derived food with snapshotted nutrition and source recipe, enabling reuse without a recursive graph. Preparation conversion requires the finished yield in grams. Diary snapshots preserve past intake when foods or recipes change.
 
 Date-only logs use the user's IANA timezone. Missing observations remain gaps in trends. `StreakClock` shares the decay rule, and activity counters avoid recounting all history on each write.
 
