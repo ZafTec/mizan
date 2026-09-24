@@ -1,42 +1,98 @@
 # Production deployment on the existing proxy and PostgreSQL networks.
-# Stop the old Mizan services before this cutover. The upgrade service takes
-# a complete backup and applies the reviewed v1 bridge before any app starts.
-# Keep .env and this file at the app root. The reviewed cutover scripts and
-# private PG settings live in backups/cutover/. Public frontend URLs are
-# GitHub build-time variables.
+# Keep .env and this file at the app root (/opt/mizan). Private PostgreSQL
+# settings live in backups/cutover/pg.env. Public frontend URLs are GitHub
+# build-time variables.
+#
+# Every `docker compose up` runs, in order:
+#   1. mizan-db-backup   a verified pg_dump into backups/pre-deploy/
+#   2. mizan-db-migrate  the new backend image with --migrate, applying its
+#                        pending EF migrations (no-op when current)
+#   3. the application   which refuses to start on an outdated schema
+# A failed backup or migration stops the deploy before any app starts, and
+# `docker compose logs mizan-db-backup mizan-db-migrate` says why.
+
+x-backend-environment: &backend-environment
+  ASPNETCORE_ENVIRONMENT: Production
+  ASPNETCORE_URLS: http://+:8080
+  App__PublicUrl: ${App__PublicUrl:?App__PublicUrl is required}
+  Telegram__BotUsername: ${TELEGRAM_BOT_USERNAME:-}
+  Storage__ServiceUrl: ${STORAGE_SERVICE_URL:?STORAGE_SERVICE_URL is required}
+  Storage__Region: ${STORAGE_REGION:-us-east-1}
+  Storage__AccessKeyId: ${STORAGE_ACCESS_KEY_ID:?STORAGE_ACCESS_KEY_ID is required}
+  Storage__SecretAccessKey: ${STORAGE_SECRET_ACCESS_KEY:?STORAGE_SECRET_ACCESS_KEY is required}
+  Storage__Bucket: ${STORAGE_BUCKET:-mizan}
+  Storage__PublicBaseUrl: ${STORAGE_PUBLIC_BASE_URL:?STORAGE_PUBLIC_BASE_URL is required}
+  # AI photo requests permit 8 MB; the storage limit must accommodate them.
+  Storage__MaxUploadBytes: 8388608
+  Smtp__Host: ${SMTP_HOST:-}
+  Smtp__Port: ${SMTP_PORT:-587}
+  Smtp__Username: ${SMTP_USER:-}
+  Smtp__Password: ${SMTP_PASS:-}
+  Smtp__FromAddress: ${SMTP_FROM_ADDRESS:-${SMTP_FROM:-noreply@mizan.local}}
+  Smtp__FromName: ${SMTP_FROM_NAME:-Mizan}
+  Smtp__Security: ${Smtp__Security:-Auto}
+  Smtp__LocalDomain: ${Smtp__LocalDomain:-}
+  Authentication__Google__ClientId: ${GOOGLE_CLIENT_ID:-}
+  Authentication__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
+  Authentication__GitHub__ClientId: ${GITHUB_CLIENT_ID:-}
+  Authentication__GitHub__ClientSecret: ${GITHUB_CLIENT_SECRET:-}
+  Ai__BaseUrl: ${AI_BASE_URL:-}
+  Ai__ApiKey: ${AI_API_KEY:-}
+  Ai__Model: ${AI_MODEL:-gpt-5.6-luna}
+  Ai__SupportsTemperature: ${AI_SUPPORTS_TEMPERATURE:-true}
+  Ai__ReasoningEffort: ${AI_REASONING_EFFORT:-}
+  Ai__GlobalDailyTokens: ${AI_GLOBAL_DAILY_TOKENS:-5000000}
+  Ai__GlobalDailyCostMicros: ${AI_GLOBAL_DAILY_COST_MICROS:-20000000}
 
 services:
-  mizan-db-upgrade:
+  mizan-db-backup:
     image: postgres:18-alpine
-    container_name: mizan-db-upgrade
+    container_name: mizan-db-backup
     restart: "no"
     env_file:
       - ./backups/cutover/pg.env
-    entrypoint: ["/bin/sh", "/upgrade/db-upgrade.sh"]
+    environment:
+      KEEP_BACKUPS: ${MIZAN_KEEP_BACKUPS:-14}
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        umask 077
+        : "$${PGDATABASE:?PGDATABASE is required}"
+        export PGCONNECT_TIMEOUT="$${PGCONNECT_TIMEOUT:-15}"
+        dir=/backups/pre-deploy
+        mkdir -p "$$dir"
+        file="$$dir/$${PGDATABASE}-$$(date -u +%Y%m%dT%H%M%SZ).dump"
+        echo "Backing up $$PGDATABASE to $$file"
+        pg_dump --format=custom --file "$$file.partial"
+        test -s "$$file.partial"
+        pg_restore --list "$$file.partial" > /dev/null
+        mv "$$file.partial" "$$file"
+        sha256sum "$$file" > "$$file.sha256"
+        # Keep the newest KEEP_BACKUPS dumps.
+        ls -1t "$$dir"/*.dump | tail -n +"$$((KEEP_BACKUPS + 1))" | while read -r old; do
+          rm -f "$$old" "$$old.sha256"
+        done
+        echo "Verified backup: $$file"
     volumes:
-      - type: bind
-        source: ./backups/cutover/db-upgrade.sh
-        target: /upgrade/db-upgrade.sh
-        read_only: true
-        bind:
-          create_host_path: false
-      - type: bind
-        source: ./backups/cutover/v1-to-v2-upgrade.sql
-        target: /upgrade/v1-to-v2-upgrade.sql
-        read_only: true
-        bind:
-          create_host_path: false
-      - type: bind
-        source: ./backups/cutover/media-apply.sql
-        target: /migration/media-apply.sql
-        read_only: true
-        bind:
-          create_host_path: false
       - type: bind
         source: ./backups
         target: /backups
         bind:
           create_host_path: false
+    networks:
+      - postgresql-db-n8n
+
+  mizan-db-migrate:
+    image: zaftec/mizan-backend:latest
+    container_name: mizan-db-migrate
+    restart: "no"
+    command: ["--migrate"]
+    env_file:
+      - .env
+    environment: *backend-environment
+    depends_on:
+      mizan-db-backup:
+        condition: service_completed_successfully
     networks:
       - postgresql-db-n8n
 
@@ -46,39 +102,9 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-    environment:
-      ASPNETCORE_ENVIRONMENT: Production
-      ASPNETCORE_URLS: http://+:8080
-      Storage__ServiceUrl: ${STORAGE_SERVICE_URL:?STORAGE_SERVICE_URL is required}
-      Storage__Region: ${STORAGE_REGION:-us-east-1}
-      Storage__AccessKeyId: ${STORAGE_ACCESS_KEY_ID:?STORAGE_ACCESS_KEY_ID is required}
-      Storage__SecretAccessKey: ${STORAGE_SECRET_ACCESS_KEY:?STORAGE_SECRET_ACCESS_KEY is required}
-      Storage__Bucket: ${STORAGE_BUCKET:-mizan}
-      Storage__PublicBaseUrl: ${STORAGE_PUBLIC_BASE_URL:?STORAGE_PUBLIC_BASE_URL is required}
-      # AI photo requests permit 8 MB; the storage limit must accommodate them.
-      Storage__MaxUploadBytes: 8388608
-      Smtp__Host: ${SMTP_HOST:-}
-      Smtp__Port: ${SMTP_PORT:-587}
-      Smtp__Username: ${SMTP_USER:-}
-      Smtp__Password: ${SMTP_PASS:-}
-      Smtp__FromAddress: ${SMTP_FROM_ADDRESS:-${SMTP_FROM:-noreply@mizan.local}}
-      Smtp__FromName: ${SMTP_FROM_NAME:-Mizan}
-      Smtp__Security: ${Smtp__Security:-Auto}
-      Smtp__LocalDomain: ${Smtp__LocalDomain:-}
-      Telegram__BotUsername: ${TELEGRAM_BOT_USERNAME:-}
-      Authentication__Google__ClientId: ${GOOGLE_CLIENT_ID:-}
-      Authentication__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
-      Authentication__GitHub__ClientId: ${GITHUB_CLIENT_ID:-}
-      Authentication__GitHub__ClientSecret: ${GITHUB_CLIENT_SECRET:-}
-      Ai__BaseUrl: ${AI_BASE_URL:-}
-      Ai__ApiKey: ${AI_API_KEY:-}
-      Ai__Model: ${AI_MODEL:-gpt-5.6-luna}
-      Ai__SupportsTemperature: ${AI_SUPPORTS_TEMPERATURE:-true}
-      Ai__ReasoningEffort: ${AI_REASONING_EFFORT:-}
-      Ai__GlobalDailyTokens: ${AI_GLOBAL_DAILY_TOKENS:-5000000}
-      Ai__GlobalDailyCostMicros: ${AI_GLOBAL_DAILY_COST_MICROS:-20000000}
+    environment: *backend-environment
     depends_on:
-      mizan-db-upgrade:
+      mizan-db-migrate:
         condition: service_completed_successfully
     networks:
       - proxy-net
@@ -106,8 +132,6 @@ services:
       BACKEND_API_URL: http://mizan-backend:8080
       NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:?NEXT_SERVER_ACTIONS_ENCRYPTION_KEY is required}
     depends_on:
-      mizan-db-upgrade:
-        condition: service_completed_successfully
       mizan-backend:
         condition: service_healthy
     networks:
@@ -143,8 +167,6 @@ services:
       Mcp__AdminServiceApiKey: ${Mcp__AdminServiceApiKey:?Mcp__AdminServiceApiKey is required}
       Mcp__Stateless: ${Mcp__Stateless:-false}
     depends_on:
-      mizan-db-upgrade:
-        condition: service_completed_successfully
       mizan-backend:
         condition: service_healthy
     networks:
