@@ -218,6 +218,14 @@ test("delete requires confirmation and updates the day", async ({ context, page 
 	await expect(page.getByRole("meter", { name: "Calories", exact: true })).toHaveAttribute("aria-valuenow", "194");
 });
 
+test("recipe detail explains which ingredients stop its nutrition", async ({ context, page }) => {
+	await signIn(context);
+	await page.goto("/recipes/44444444-4444-4444-8444-444444444444");
+	await expect(page.getByRole("heading", { name: "Imported lentil stew", exact: true })).toBeVisible();
+	await expect(page.getByRole("note")).toHaveText(/need a linked food and a weight in grams: 1 lemon \(50g\)\./);
+	await expect(page.getByRole("note")).not.toContainText("salt to taste");
+});
+
 test("recipe detail preselects the recipe and saves quantities inline", async ({ context, page }) => {
 	await signIn(context);
 	const route = "/recipes/33333333-3333-4333-8333-333333333333";

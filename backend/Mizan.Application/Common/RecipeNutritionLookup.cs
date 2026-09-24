@@ -6,6 +6,17 @@ using Mizan.Domain.Recipes;
 namespace Mizan.Application.Common;
 
 /// <summary>
+/// Why a recipe does or does not have nutrition. <see cref="PerServing"/> is
+/// set only when every measured ingredient resolves; <see cref="Unmeasured"/>
+/// lists the notes left out of it, and <see cref="Unresolved"/> the measured
+/// lines that stop it.
+/// </summary>
+public sealed record RecipeNutritionStatus(
+    RecipeNutritionTotals? PerServing,
+    IReadOnlyList<string> Unresolved,
+    IReadOnlyList<string> Unmeasured);
+
+/// <summary>
 /// Loads computed nutrition for a set of recipes in two queries.
 ///
 /// Replaces the recipe_nutrition table - see docs/ARCHITECTURE.md#navigation-and-logging. Stored totals
@@ -20,9 +31,21 @@ public static class RecipeNutritionLookup
         IReadOnlyCollection<Guid> recipeIds,
         CancellationToken cancellationToken)
     {
+        var statuses = await StatusesAsync(context, recipeIds, cancellationToken);
+        return statuses
+            .Where(s => s.Value.PerServing.HasValue)
+            .ToDictionary(s => s.Key, s => s.Value.PerServing!.Value);
+    }
+
+    /// <summary>Nutrition and the reasons behind it, keyed by recipe id.</summary>
+    public static async Task<IReadOnlyDictionary<Guid, RecipeNutritionStatus>> StatusesAsync(
+        IMizanDbContext context,
+        IReadOnlyCollection<Guid> recipeIds,
+        CancellationToken cancellationToken)
+    {
         if (recipeIds.Count == 0)
         {
-            return new Dictionary<Guid, RecipeNutritionTotals>();
+            return new Dictionary<Guid, RecipeNutritionStatus>();
         }
 
         var recipes = await context.Recipes
@@ -43,13 +66,14 @@ public static class RecipeNutritionLookup
             .Where(f => foodIds.Contains(f.Id))
             .ToDictionaryAsync(f => f.Id, cancellationToken);
 
-        return recipes.Select(r =>
-            {
-                var totals = RecipeNutritionCalculator.Sum(r.Ingredients, foods, out var unresolved);
-                return new { r.Id, Totals = totals.PerServing(r.Servings), Complete = r.Servings > 0 && r.Ingredients.Count > 0 && unresolved.Count == 0 };
-            })
-            .Where(r => r.Complete)
-            .ToDictionary(r => r.Id, r => r.Totals);
+        return recipes.ToDictionary(r => r.Id, r =>
+        {
+            var ordered = r.Ingredients.OrderBy(i => i.SortOrder).ToList();
+            var totals = RecipeNutritionCalculator.Sum(ordered, foods, out var unresolved, out var unmeasured);
+            var measured = ordered.Count - unmeasured.Count;
+            var complete = r.Servings > 0 && measured > 0 && unresolved.Count == 0;
+            return new RecipeNutritionStatus(complete ? totals.PerServing(r.Servings) : null, unresolved, unmeasured);
+        });
     }
 
     /// <summary>Totals per serving for one recipe.</summary>

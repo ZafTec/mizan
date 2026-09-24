@@ -16,9 +16,11 @@ public static class RecipePreparation
             throw new DomainValidationException("A preparation needs a positive finished weight in grams.");
         var foodIds = recipe.Ingredients.Where(i => i.FoodId.HasValue).Select(i => i.FoodId!.Value).ToList();
         var foods = await context.Foods.Where(f => foodIds.Contains(f.Id)).ToDictionaryAsync(f => f.Id, ct);
-        var totals = RecipeNutritionCalculator.Sum(recipe.Ingredients, foods, out var unresolved);
-        if (recipe.Ingredients.Count == 0 || unresolved.Count > 0)
-            throw new DomainValidationException("Ingredient nutrition is unknown: " + string.Join(", ", unresolved)
+        // A preparation becomes a food with exact per-100g figures, so unlike
+        // logging it does not set unmeasured notes aside.
+        var totals = RecipeNutritionCalculator.Sum(recipe.Ingredients, foods, out var unresolved, out var unmeasured);
+        if (recipe.Ingredients.Count == 0 || unresolved.Count > 0 || unmeasured.Count > 0)
+            throw new DomainValidationException("Ingredient nutrition is unknown: " + string.Join(", ", unresolved.Concat(unmeasured))
                 + ". Every ingredient needs a linked food and a known weight.");
 
         var food = await context.Foods.FirstOrDefaultAsync(f => f.SourceRecipeId == recipe.Id && f.UserId == userId, ct);
