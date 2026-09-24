@@ -25,7 +25,18 @@ public record RecipeDetailDto
     /// <summary>Unmeasured notes, such as "salt to taste", left out of <see cref="Nutrition"/>.</summary>
     public List<string> UnmeasuredIngredients { get; init; } = new();
 
-    /// <summary>Measured lines without a linked food or a weight in grams. Any entry leaves <see cref="Nutrition"/> null.</summary>
+    /// <summary>
+    /// "calculated" when <see cref="Nutrition"/> was summed from the ingredients,
+    /// "retained" when it is the value kept from the recipe's import because the
+    /// ingredients cannot be summed yet. Null with no nutrition.
+    /// </summary>
+    public string? NutritionSource { get; init; }
+
+    /// <summary>
+    /// Measured lines without a linked food or a weight in grams. Any entry
+    /// leaves <see cref="Nutrition"/> null unless a retained value still
+    /// describes the recipe.
+    /// </summary>
     public List<string> UnresolvedIngredients { get; init; } = new();
     public List<RecipeIngredientDto> Ingredients { get; init; } = new();
     public string? Instructions { get; init; }
@@ -90,7 +101,8 @@ public class GetRecipeByIdQueryHandler : IRequestHandler<GetRecipeByIdQuery, Rec
         if (!recipe.IsPublic && (!_currentUser.UserId.HasValue || recipe.UserId != _currentUser.UserId))
             return null;
 
-        // Summed from the ingredients; recipe_nutrition no longer exists.
+        // Summed from the ingredients, or a retained import value while the
+        // ingredients cannot be summed and have not changed since.
         var statuses = await RecipeNutritionLookup.StatusesAsync(_context, [recipe.Id], cancellationToken);
         var status = statuses[recipe.Id];
         var totals = status.PerServing.GetValueOrDefault();
@@ -116,6 +128,7 @@ public class GetRecipeByIdQueryHandler : IRequestHandler<GetRecipeByIdQuery, Rec
                 FiberGrams = totals.FiberGrams,
                 ProteinCalorieRatio = totals.ProteinCalorieRatio
             } : null,
+            NutritionSource = status.Source,
             UnmeasuredIngredients = status.Unmeasured.ToList(),
             UnresolvedIngredients = status.Unresolved.ToList(),
             Ingredients = recipe.Ingredients.OrderBy(i => i.SortOrder).Select(i => new RecipeIngredientDto

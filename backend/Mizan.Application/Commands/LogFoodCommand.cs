@@ -93,7 +93,8 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
                 .FirstOrDefaultAsync(r => r.Id == request.RecipeId.Value && (r.IsPublic || r.UserId == userId), cancellationToken)
                 ?? throw new EntityNotFoundException("Recipe", request.RecipeId.Value);
             itemName = recipe.Title;
-            entries.AddRange(DiaryEntryFactory.FromRecipe(recipe, request.Servings, userId, request.EntryDate, request.MealType, now));
+            var retained = await _context.RecipeNutritionSnapshots.AsNoTracking().FirstOrDefaultAsync(s => s.RecipeId == recipe.Id, cancellationToken);
+            entries.AddRange(DiaryEntryFactory.FromRecipe(recipe, request.Servings, userId, request.EntryDate, request.MealType, now, retained));
         }
         else throw new DomainValidationException("Exactly one of FoodId or RecipeId must be provided");
 

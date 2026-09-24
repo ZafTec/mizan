@@ -33,6 +33,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         "ai_eval_runs",
         "billing_discounts",
         "billing_plans",
+        "recipe_nutrition_snapshots",
         "ai_prompt_versions",
         "ai_prompts",
         "ai_usage_logs",

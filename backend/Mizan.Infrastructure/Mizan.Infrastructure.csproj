@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Data\Legacy\ImportLegacyRecipeNutrition.sql" LogicalName="Mizan.Legacy.ImportLegacyRecipeNutrition.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 

@@ -142,12 +142,22 @@ function NutritionNotes({
 }: {
   recipe: {
     nutrition?: unknown;
+    nutritionSource?: string | null;
     unmeasuredIngredients?: string[];
     unresolvedIngredients?: string[];
   };
 }) {
   const unresolved = recipe.unresolvedIngredients ?? [];
   const unmeasured = recipe.unmeasuredIngredients ?? [];
+  // Kept from the recipe's import: say so, and what would let it be calculated.
+  if (recipe.nutrition && recipe.nutritionSource === "retained")
+    return (
+      <p className="text-sm log-muted -mt-2 mb-6 max-w-prose" role="note">
+        Nutrition from the original recipe, not calculated from these
+        ingredients. Link a food and a weight in grams for{" "}
+        {unresolved.join("; ")} to calculate it instead.
+      </p>
+    );
   if (!recipe.nutrition && unresolved.length > 0)
     return (
       <p className="text-sm log-muted -mt-2 mb-6 max-w-prose" role="note">

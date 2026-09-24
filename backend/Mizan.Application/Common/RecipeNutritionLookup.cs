@@ -7,14 +7,25 @@ namespace Mizan.Application.Common;
 
 /// <summary>
 /// Why a recipe does or does not have nutrition. <see cref="PerServing"/> is
-/// set only when every measured ingredient resolves; <see cref="Unmeasured"/>
-/// lists the notes left out of it, and <see cref="Unresolved"/> the measured
-/// lines that stop it.
+/// set when every measured ingredient resolves, or when a retained snapshot
+/// still describes the recipe; <see cref="Source"/> says which.
+/// <see cref="Unmeasured"/> lists the notes left out of it, and
+/// <see cref="Unresolved"/> the measured lines that stop the calculation.
 /// </summary>
 public sealed record RecipeNutritionStatus(
     RecipeNutritionTotals? PerServing,
     IReadOnlyList<string> Unresolved,
-    IReadOnlyList<string> Unmeasured);
+    IReadOnlyList<string> Unmeasured,
+    string? Source = null);
+
+public static class RecipeNutritionSources
+{
+    /// <summary>Summed from the ingredients just now.</summary>
+    public const string Calculated = "calculated";
+
+    /// <summary>Kept from the recipe's import; the ingredients cannot be summed yet.</summary>
+    public const string Retained = "retained";
+}
 
 /// <summary>
 /// Loads computed nutrition for a set of recipes in two queries.
@@ -66,13 +77,27 @@ public static class RecipeNutritionLookup
             .Where(f => foodIds.Contains(f.Id))
             .ToDictionaryAsync(f => f.Id, cancellationToken);
 
+        var snapshots = await context.RecipeNutritionSnapshots
+            .AsNoTracking()
+            .Where(s => recipeIds.Contains(s.RecipeId))
+            .ToDictionaryAsync(s => s.RecipeId, cancellationToken);
+
         return recipes.ToDictionary(r => r.Id, r =>
         {
             var ordered = r.Ingredients.OrderBy(i => i.SortOrder).ToList();
             var totals = RecipeNutritionCalculator.Sum(ordered, foods, out var unresolved, out var unmeasured);
             var measured = ordered.Count - unmeasured.Count;
             var complete = r.Servings > 0 && measured > 0 && unresolved.Count == 0;
-            return new RecipeNutritionStatus(complete ? totals.PerServing(r.Servings) : null, unresolved, unmeasured);
+            if (complete)
+            {
+                return new RecipeNutritionStatus(totals.PerServing(r.Servings), unresolved, unmeasured, RecipeNutritionSources.Calculated);
+            }
+
+            // A calculation beats a snapshot whenever one is possible; the
+            // snapshot only fills the gap while it still describes these lines.
+            return snapshots.TryGetValue(r.Id, out var snapshot) && snapshot.Describes(ordered, r.Servings)
+                ? new RecipeNutritionStatus(snapshot.PerServing, unresolved, unmeasured, RecipeNutritionSources.Retained)
+                : new RecipeNutritionStatus(null, unresolved, unmeasured);
         });
     }
 

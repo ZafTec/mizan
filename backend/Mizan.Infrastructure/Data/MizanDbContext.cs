@@ -91,6 +91,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
     // Billing
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<PaddleWebhookEvent> PaddleWebhookEvents => Set<PaddleWebhookEvent>();
+    public DbSet<RecipeNutritionSnapshot> RecipeNutritionSnapshots => Set<RecipeNutritionSnapshot>();
     public DbSet<BillingPlan> BillingPlans => Set<BillingPlan>();
     public DbSet<BillingDiscount> BillingDiscounts => Set<BillingDiscount>();
 
@@ -1144,6 +1145,25 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.HasIndex(e => e.PaddleSubscriptionId);
             entity.HasIndex(e => e.PaddleCustomerId);
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // RecipeNutritionSnapshot configuration (retained nutrition, valid only while it describes the recipe)
+        modelBuilder.Entity<RecipeNutritionSnapshot>(entity =>
+        {
+            entity.ToTable("recipe_nutrition_snapshots");
+            entity.HasKey(e => e.RecipeId);
+            entity.Property(e => e.RecipeId).HasColumnName("recipe_id");
+            entity.Property(e => e.Calories).HasColumnName("calories").HasPrecision(8, 2);
+            entity.Property(e => e.ProteinGrams).HasColumnName("protein_grams").HasPrecision(8, 2);
+            entity.Property(e => e.CarbsGrams).HasColumnName("carbs_grams").HasPrecision(8, 2);
+            entity.Property(e => e.FatGrams).HasColumnName("fat_grams").HasPrecision(8, 2);
+            entity.Property(e => e.FiberGrams).HasColumnName("fiber_grams").HasPrecision(8, 2);
+            entity.Property(e => e.Servings).HasColumnName("servings");
+            entity.Property(e => e.IngredientsFingerprint).HasColumnName("ingredients_fingerprint").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Source).HasColumnName("source").HasMaxLength(20).IsRequired();
+            entity.Property(e => e.CapturedAt).HasColumnName("captured_at").HasDefaultValueSql("NOW()");
+            entity.Ignore(e => e.PerServing);
+            entity.HasOne<Recipe>().WithOne().HasForeignKey<RecipeNutritionSnapshot>(e => e.RecipeId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // BillingPlan configuration (the Pro catalogue, mirrored from Paddle prices)

@@ -119,7 +119,8 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
             var recipe = await _context.Recipes.Include(r => r.Ingredients).ThenInclude(i => i.Food).FirstOrDefaultAsync(
                 r => r.Id == request.RecipeId && (r.IsPublic || r.UserId == userId), cancellationToken)
                 ?? throw new EntityNotFoundException("Recipe", request.RecipeId.Value);
-            recipeEntries = DiaryEntryFactory.FromRecipe(recipe, request.Servings, userId, entryDate.Value, request.MealType, loggedAt);
+            var retained = await _context.RecipeNutritionSnapshots.AsNoTracking().FirstOrDefaultAsync(s => s.RecipeId == recipe.Id, cancellationToken);
+            recipeEntries = DiaryEntryFactory.FromRecipe(recipe, request.Servings, userId, entryDate.Value, request.MealType, loggedAt, retained);
             if (!Matches(calories, recipeEntries.Sum(e => e.Calories ?? 0))
                 || !Matches(protein, recipeEntries.Sum(e => e.ProteinGrams ?? 0))
                 || !Matches(carbs, recipeEntries.Sum(e => e.CarbsGrams ?? 0))

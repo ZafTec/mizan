@@ -66,6 +66,7 @@ public interface IMizanDbContext
     // Billing
     DbSet<Subscription> Subscriptions { get; }
     DbSet<PaddleWebhookEvent> PaddleWebhookEvents { get; }
+    DbSet<RecipeNutritionSnapshot> RecipeNutritionSnapshots { get; }
     DbSet<BillingPlan> BillingPlans { get; }
     DbSet<BillingDiscount> BillingDiscounts { get; }
 
