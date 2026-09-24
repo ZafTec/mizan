@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.2.0](https://github.com/ZafTec/mizan/compare/v3.1.1...v3.2.0) (2026-09-24)
+
+
+### Features
+
+* let a household's sole owner delete it after confirming its plans ([194534d](https://github.com/ZafTec/mizan/commit/194534d27baddb6f9baff319523f4afad7ea90eb)), closes [#91](https://github.com/ZafTec/mizan/issues/91)
+* manage Pro pricing from the admin page and let subscribers change their plan ([fc17af5](https://github.com/ZafTec/mizan/commit/fc17af5dfda9be6d008446d7eeb775e054dfb433)), closes [#71](https://github.com/ZafTec/mizan/issues/71)
+
+
+### Bug Fixes
+
+* make ingredient and meal-plan screens readable in dark mode ([804411e](https://github.com/ZafTec/mizan/commit/804411e3ed88274ace7559ec6f53d007d7a45b75)), closes [#89](https://github.com/ZafTec/mizan/issues/89)
+* show and log the nutrition kept for imported recipes that cannot be calculated ([64ad3cf](https://github.com/ZafTec/mizan/commit/64ad3cfaaa005a65afbc32d06d0542e6689176a7)), closes [#85](https://github.com/ZafTec/mizan/issues/85)
+* show nutrition and allow logging for imported recipes with unmeasured lines ([6bf8955](https://github.com/ZafTec/mizan/commit/6bf895507ee2bcda676a0466700d8a6d08f8bec7)), closes [#85](https://github.com/ZafTec/mizan/issues/85)
+
 ## [3.1.1](https://github.com/ZafTec/mizan/compare/v3.1.0...v3.1.1) (2026-09-13)
 
 
