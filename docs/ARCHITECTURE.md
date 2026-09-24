@@ -48,6 +48,8 @@ External MCP clients send a user token as `Authorization: Bearer <token>`. MCP v
 
 EF Core owns identity and application tables in one model. Keep `InitialCreate` and every subsequent additive migration; later changes get a new migration. Check model/migration agreement after entity or DbContext edits using the command in [README](../README.md#maintain-the-database).
 
+Migrations ship inside the backend image. Development applies them on startup. In production, `docker-compose.prod.yml` runs two one-shot steps before any application container starts. `mizan-db-backup` writes a verified `pg_dump` to `backups/pre-deploy/` and keeps the newest 14 (`MIZAN_KEEP_BACKUPS`). `mizan-db-migrate` then runs the new backend image with `--migrate`, which exits 0 when the schema is current. A production API whose database is missing migrations refuses to start and names them, so a skipped step fails the deploy instead of answering 500. Restore with `pg_restore --clean --if-exists -d <db> <dump>` from the matching backup.
+
 ## Navigation and logging
 
 Permanent navigation is Today, History, Progress, More, and Log entry. `/today?date=YYYY-MM-DD` reviews a day. `/history` lists days with nutrition, training, and measurements. `/progress` combines nutrition, bodyweight, exercise volume, and estimated one-rep max.

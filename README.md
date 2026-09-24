@@ -37,7 +37,7 @@ docker compose ps
 | Redis | localhost:6379 |
 | MinIO console | http://localhost:9001 |
 
-An untracked `docker-compose.override.yml` may change local ports; `docker compose ps` shows actual addresses. Development startup applies EF migrations. Production configuration lives in `docker-compose.prod.yml`.
+An untracked `docker-compose.override.yml` may change local ports; `docker compose ps` shows actual addresses. Development startup applies EF migrations. Production configuration lives in `docker-compose.prod.yml`; each deploy backs up the database and applies migrations before the app starts (see [migrations](docs/ARCHITECTURE.md#data-and-migrations)).
 
 Register through the app and confirm your email. With SMTP unset in Development, the backend prints the verification message to its console. There is no default administrator password. Verification links are credentials; keep them out of shared reports.
 
