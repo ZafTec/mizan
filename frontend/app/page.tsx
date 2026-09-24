@@ -7,6 +7,8 @@ import { CoachingSection } from "@/components/Landing/CoachingSection";
 import { PricingSection } from "@/components/Landing/PricingSection";
 import { CTASection } from "@/components/Landing/CTASection";
 import { getUserOptionalServer } from "@/helper/session";
+import { getBillingPlans } from "@/data/subscription";
+import { pickPlans } from "@/lib/billing";
 
 // Authed users never see this page, they land on /dashboard. Keeping this as
 // a purely marketing route lets us keep metadata, structured data, and hero
@@ -36,7 +38,8 @@ export const metadata: Metadata = {
 	},
 };
 
-const structuredData = {
+function structuredData(proPrice: string) {
+	return {
 	"@context": "https://schema.org",
 	"@graph": [
 		{
@@ -58,11 +61,11 @@ const structuredData = {
 				{
 					"@type": "Offer",
 					name: "Pro",
-					price: "2.99",
+					price: proPrice,
 					priceCurrency: "USD",
 					priceSpecification: {
 						"@type": "UnitPriceSpecification",
-						price: "2.99",
+						price: proPrice,
 						priceCurrency: "USD",
 						billingDuration: "P1M",
 					},
@@ -71,24 +74,30 @@ const structuredData = {
 			],
 		},
 	],
-};
+	};
+}
 
 export default async function Home() {
 	const user = await getUserOptionalServer();
 	if (user) redirect("/dashboard");
 
+	// What admins have on sale; the landing copy's $2.99 until the API answers.
+	const plans = await getBillingPlans();
+	const { monthly } = pickPlans(plans);
+	const proPrice = monthly ? (monthly.amountCents / 100).toFixed(2) : "2.99";
+
 	return (
 		<>
 			<script
 				type="application/ld+json"
-				dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+				dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData(proPrice)) }}
 			/>
 			<div>
 				<HeroSection />
 				<ThreeDoorsSection />
 				<FaqSection />
 				<CoachingSection />
-				<PricingSection />
+				<PricingSection plans={plans} />
 				<CTASection />
 			</div>
 		</>

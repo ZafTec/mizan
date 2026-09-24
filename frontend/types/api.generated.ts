@@ -508,6 +508,322 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/billing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AdminBillingCatalogDto"];
+                        "application/json": components["schemas"]["AdminBillingCatalogDto"];
+                        "text/json": components["schemas"]["AdminBillingCatalogDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/billing/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateBillingPlanCommand"];
+                    "text/json": components["schemas"]["CreateBillingPlanCommand"];
+                    "application/*+json": components["schemas"]["CreateBillingPlanCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CreateBillingPlanResult"];
+                        "application/json": components["schemas"]["CreateBillingPlanResult"];
+                        "text/json": components["schemas"]["CreateBillingPlanResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/billing/plans/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateBillingPlanCommand"];
+                    "text/json": components["schemas"]["UpdateBillingPlanCommand"];
+                    "application/*+json": components["schemas"]["UpdateBillingPlanCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/billing/plans/{id}/price": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ReplaceBillingPlanPriceCommand"];
+                    "text/json": components["schemas"]["ReplaceBillingPlanPriceCommand"];
+                    "application/*+json": components["schemas"]["ReplaceBillingPlanPriceCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CreateBillingPlanResult"];
+                        "application/json": components["schemas"]["CreateBillingPlanResult"];
+                        "text/json": components["schemas"]["CreateBillingPlanResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/billing/plans/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/billing/plans/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ImportBillingPlansResult"];
+                        "application/json": components["schemas"]["ImportBillingPlansResult"];
+                        "text/json": components["schemas"]["ImportBillingPlansResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/billing/discounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateBillingDiscountCommand"];
+                    "text/json": components["schemas"]["CreateBillingDiscountCommand"];
+                    "application/*+json": components["schemas"]["CreateBillingDiscountCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CreateBillingDiscountResult"];
+                        "application/json": components["schemas"]["CreateBillingDiscountResult"];
+                        "text/json": components["schemas"]["CreateBillingDiscountResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/billing/discounts/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Admin/Jobs": {
         parameters: {
             query?: never;
@@ -5627,6 +5943,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Subscriptions/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BillingPlanDto"][];
+                        "application/json": components["schemas"]["BillingPlanDto"][];
+                        "text/json": components["schemas"]["BillingPlanDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Subscriptions/me": {
         parameters: {
             query?: never;
@@ -5652,6 +6005,242 @@ export interface paths {
                         "text/plain": components["schemas"]["MySubscriptionDto"];
                         "application/json": components["schemas"]["MySubscriptionDto"];
                         "text/json": components["schemas"]["MySubscriptionDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Subscriptions/change-plan/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PlanChangeRequest"];
+                    "text/json": components["schemas"]["PlanChangeRequest"];
+                    "application/*+json": components["schemas"]["PlanChangeRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PlanChangePreviewDto"];
+                        "application/json": components["schemas"]["PlanChangePreviewDto"];
+                        "text/json": components["schemas"]["PlanChangePreviewDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Subscriptions/change-plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PlanChangeRequest"];
+                    "text/json": components["schemas"]["PlanChangeRequest"];
+                    "application/*+json": components["schemas"]["PlanChangeRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MySubscriptionDto"];
+                        "application/json": components["schemas"]["MySubscriptionDto"];
+                        "text/json": components["schemas"]["MySubscriptionDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Subscriptions/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MySubscriptionDto"];
+                        "application/json": components["schemas"]["MySubscriptionDto"];
+                        "text/json": components["schemas"]["MySubscriptionDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Subscriptions/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MySubscriptionDto"];
+                        "application/json": components["schemas"]["MySubscriptionDto"];
+                        "text/json": components["schemas"]["MySubscriptionDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Subscriptions/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BillingTransactionDto"][];
+                        "application/json": components["schemas"]["BillingTransactionDto"][];
+                        "text/json": components["schemas"]["BillingTransactionDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Subscriptions/transactions/{transactionId}/invoice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    transactionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["InvoiceLinkDto"];
+                        "application/json": components["schemas"]["InvoiceLinkDto"];
+                        "text/json": components["schemas"]["InvoiceLinkDto"];
                     };
                 };
             };
@@ -6916,6 +7505,54 @@ export interface components {
             unit?: string | null;
             category?: string | null;
         };
+        AdminBillingCatalogDto: {
+            plans: components["schemas"]["AdminBillingPlanDto"][];
+            discounts: components["schemas"]["AdminBillingDiscountDto"][];
+            environment: string;
+            configured: boolean;
+        };
+        AdminBillingDiscountDto: {
+            /** Format: uuid */
+            id: string;
+            label: string;
+            code?: string | null;
+            type: string;
+            /** Format: double */
+            amount: number;
+            recurring: boolean;
+            /** Format: int32 */
+            maximumRecurringIntervals?: number | null;
+            /** Format: date-time */
+            expiresAt?: string | null;
+            planIds: string[];
+            paddleDiscountId: string;
+            isActive: boolean;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        AdminBillingPlanDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            description?: string | null;
+            interval: string;
+            /** Format: int32 */
+            amountCents: number;
+            currency: string;
+            /** Format: int32 */
+            trialDays?: number | null;
+            paddleProductId: string;
+            paddlePriceId: string;
+            isActive: boolean;
+            /** Format: int32 */
+            sortOrder: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            archivedAt?: string | null;
+            /** Format: int32 */
+            subscribers: number;
+        };
         AdminDeleteHouseholdResult: {
             success: boolean;
             message?: string | null;
@@ -7321,10 +7958,48 @@ export interface components {
             hasPassword: boolean;
             timeZoneId?: string | null;
         };
+        BillingDealDto: {
+            paddleDiscountId: string;
+            label: string;
+            type: string;
+            /** Format: double */
+            amount: number;
+            recurring: boolean;
+            /** Format: int32 */
+            maximumRecurringIntervals?: number | null;
+            /** Format: date-time */
+            expiresAt?: string | null;
+            /** Format: int32 */
+            discountedAmountCents: number;
+        };
+        BillingPlanDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            description?: string | null;
+            interval: string;
+            /** Format: int32 */
+            amountCents: number;
+            currency: string;
+            /** Format: int32 */
+            trialDays?: number | null;
+            paddlePriceId: string;
+            deal?: components["schemas"]["BillingDealDto"];
+        };
         BillingPortalSessionDto: {
             overviewUrl: string;
             cancelSubscriptionUrl?: string | null;
             updatePaymentMethodUrl?: string | null;
+        };
+        BillingTransactionDto: {
+            id: string;
+            status: string;
+            /** Format: date-time */
+            billedAt?: string | null;
+            /** Format: int32 */
+            totalCents: number;
+            currency: string;
+            invoiceNumber?: string | null;
         };
         BodyMeasurementDto: {
             /** Format: uuid */
@@ -7459,6 +8134,38 @@ export interface components {
             name?: string | null;
             role: string;
             emailVerified: boolean;
+        };
+        CreateBillingDiscountCommand: {
+            label: string;
+            code?: string | null;
+            type: string;
+            /** Format: double */
+            amount: number;
+            recurring: boolean;
+            /** Format: int32 */
+            maximumRecurringIntervals?: number | null;
+            /** Format: date-time */
+            expiresAt?: string | null;
+            planIds: string[];
+        };
+        CreateBillingDiscountResult: {
+            /** Format: uuid */
+            id: string;
+        };
+        CreateBillingPlanCommand: {
+            name: string;
+            description?: string | null;
+            interval: string;
+            /** Format: int32 */
+            amountCents: number;
+            /** Format: int32 */
+            trialDays?: number | null;
+            /** Format: int32 */
+            sortOrder: number;
+        };
+        CreateBillingPlanResult: {
+            /** Format: uuid */
+            id: string;
         };
         CreateDraftRequest: {
             body?: string | null;
@@ -8116,6 +8823,10 @@ export interface components {
             /** Format: date-time */
             joinedAt: string;
         };
+        ImportBillingPlansResult: {
+            /** Format: int32 */
+            imported: number;
+        };
         InviteHouseholdMemberResult: {
             success: boolean;
             /** Format: uuid */
@@ -8125,6 +8836,9 @@ export interface components {
         InviteMemberRequest: {
             email: string;
             role?: string | null;
+        };
+        InvoiceLinkDto: {
+            url: string;
         };
         LeaveHouseholdResult: {
             success: boolean;
@@ -8414,6 +9128,19 @@ export interface components {
             trialEndsAt?: string | null;
             /** Format: date-time */
             canceledAt?: string | null;
+            /** Format: date-time */
+            nextBilledAt?: string | null;
+            /** Format: date-time */
+            cancelsAt?: string | null;
+            /** Format: uuid */
+            planId?: string | null;
+            planName?: string | null;
+            interval?: string | null;
+            /** Format: int32 */
+            amountCents?: number | null;
+            currency?: string | null;
+            canManage: boolean;
+            hasBillingAccount: boolean;
         };
         MyTrainerDto: {
             /** Format: uuid */
@@ -8520,6 +9247,22 @@ export interface components {
             /** Format: double */
             previousBestKg?: number | null;
         };
+        PlanChangePreviewDto: {
+            /** Format: uuid */
+            planId: string;
+            planName: string;
+            /** Format: int32 */
+            dueNowCents: number;
+            currency: string;
+            /** Format: date-time */
+            nextBilledAt?: string | null;
+            /** Format: int32 */
+            nextAmountCents?: number | null;
+        };
+        PlanChangeRequest: {
+            /** Format: uuid */
+            planId: string;
+        };
         PlannedSetDto: {
             /** Format: int32 */
             setNumber: number;
@@ -8580,6 +9323,7 @@ export interface components {
             isFavorited: boolean;
             nutrition?: components["schemas"]["RecipeNutritionDto"];
             unmeasuredIngredients: string[];
+            nutritionSource?: string | null;
             unresolvedIngredients: string[];
             ingredients: components["schemas"]["RecipeIngredientDto"][];
             instructions?: string | null;
@@ -8690,6 +9434,14 @@ export interface components {
             success: boolean;
             message?: string | null;
         };
+        ReplaceBillingPlanPriceCommand: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            amountCents: number;
+            /** Format: int32 */
+            trialDays?: number | null;
+        };
         ReportContentCommand: {
             targetType: string;
             /** Format: uuid */
@@ -8713,6 +9465,7 @@ export interface components {
             name?: string | null;
             /** Format: date-time */
             linkedAt: string;
+            isPro: boolean;
         };
         RespondInvitationRequest: {
             action: string;
@@ -9062,6 +9815,14 @@ export interface components {
             writeNutrition: boolean;
             writeTraining: boolean;
             writeBody: boolean;
+        };
+        UpdateBillingPlanCommand: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            description?: string | null;
+            /** Format: int32 */
+            sortOrder: number;
         };
         UpdateDraftRequest: {
             body: string;

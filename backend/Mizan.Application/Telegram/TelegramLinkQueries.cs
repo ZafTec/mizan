@@ -57,14 +57,25 @@ public class GetTelegramLinkQueryHandler : IRequestHandler<GetTelegramLinkQuery,
 /// </summary>
 public record ResolveTelegramUserQuery(long TelegramUserId) : IRequest<ResolvedTelegramUser?>;
 
-public record ResolvedTelegramUser(Guid UserId, string? Name, DateTime LinkedAt);
+/// <summary>
+/// <see cref="IsPro"/> lets the bot answer a linked Free account with the
+/// upgrade path instead of serving it: Telegram is a Pro feature. The link
+/// stays, so the chat works again the moment the account is Pro.
+/// </summary>
+public record ResolvedTelegramUser(Guid UserId, string? Name, DateTime LinkedAt, bool IsPro);
 
 public class ResolveTelegramUserQueryHandler
     : IRequestHandler<ResolveTelegramUserQuery, ResolvedTelegramUser?>
 {
     private readonly IMizanDbContext _context;
 
-    public ResolveTelegramUserQueryHandler(IMizanDbContext context) => _context = context;
+    private readonly IEntitlementService _entitlements;
+
+    public ResolveTelegramUserQueryHandler(IMizanDbContext context, IEntitlementService entitlements)
+    {
+        _context = context;
+        _entitlements = entitlements;
+    }
 
     public async Task<ResolvedTelegramUser?> Handle(
         ResolveTelegramUserQuery request, CancellationToken cancellationToken)
@@ -85,6 +96,7 @@ public class ResolveTelegramUserQueryHandler
                 l => l.SetProperty(x => x.LastSeenAt, DateTime.UtcNow),
                 cancellationToken);
 
-        return new ResolvedTelegramUser(link.UserId, link.Name, link.LinkedAt);
+        var entitlement = await _entitlements.GetAsync(link.UserId, cancellationToken);
+        return new ResolvedTelegramUser(link.UserId, link.Name, link.LinkedAt, entitlement.IsPro);
     }
 }

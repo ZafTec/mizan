@@ -193,6 +193,8 @@ public class TelegramLinkTests
         var id = Guid.NewGuid();
         var email = $"tg-{id:N}@example.com";
         await _fixture.SeedUserAsync(id, email);
+        // The Telegram bot is a Pro feature; linking is what these tests cover.
+        await _fixture.GrantProAsync(id);
         return (id, _fixture.CreateAuthenticatedClient(id, email));
     }
 

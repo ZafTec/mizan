@@ -39,13 +39,11 @@ public class InviteHouseholdMemberCommandHandler : IRequestHandler<InviteHouseho
     private static readonly TimeSpan InvitationTtl = TimeSpan.FromDays(14);
 
     private readonly IMizanDbContext _context;
-    private readonly IEntitlementService _entitlements;
     private readonly INotificationWriter? _notifications;
 
-    public InviteHouseholdMemberCommandHandler(IMizanDbContext context, IEntitlementService entitlements, INotificationWriter? notifications = null)
+    public InviteHouseholdMemberCommandHandler(IMizanDbContext context, INotificationWriter? notifications = null)
     {
         _context = context;
-        _entitlements = entitlements;
         _notifications = notifications;
     }
 
@@ -57,12 +55,6 @@ public class InviteHouseholdMemberCommandHandler : IRequestHandler<InviteHouseho
         if (requester == null || !(requester.Role == "admin" || requester.Role == "owner"))
         {
             return new InviteHouseholdMemberResult { Success = false, Message = "Only household admins can invite members." };
-        }
-
-        var entitlement = await _entitlements.GetAsync(request.RequestingUserId, cancellationToken);
-        if (!entitlement.IsPro)
-        {
-            throw new UpgradeRequiredException("Household invitations are a Pro feature. Upgrade to invite members.");
         }
 
         var memberCount = await _context.HouseholdMembers

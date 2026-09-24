@@ -12,12 +12,6 @@ import { clientApi } from "@/lib/api.client";
 const TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
 const ENVIRONMENT = (process.env.NEXT_PUBLIC_PADDLE_ENV as Environments) ?? "sandbox";
 
-export const PADDLE_PRICES = {
-  proMonthly: process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTHLY ?? "",
-} as const;
-
-export type PaddlePlan = keyof typeof PADDLE_PRICES;
-
 // Single cached Paddle instance. The eventCallback passed on first init wins,
 // so callers that need checkout events (the billing page) should init first.
 let paddlePromise: Promise<Paddle | undefined> | null = null;
@@ -36,8 +30,14 @@ export function getPaddle(eventCallback?: (event: PaddleEventData) => void): Pro
   return paddlePromise;
 }
 
+/**
+ * Opens Paddle's overlay checkout for one plan. The price and any automatic
+ * deal come from the plan list the API serves (GET /api/Subscriptions/plans),
+ * never from build-time configuration, so an admin's change is live at once.
+ */
 export async function openCheckout(params: {
   priceId: string;
+  discountId?: string | null;
   userId: string;
   email?: string;
   eventCallback?: (event: PaddleEventData) => void;
@@ -47,13 +47,12 @@ export async function openCheckout(params: {
     return false;
   }
 
-  const base = {
+  const options: CheckoutOpenOptions = {
     items: [{ priceId: params.priceId, quantity: 1 }],
     customData: { user_id: params.userId },
+    ...(params.email ? { customer: { email: params.email } } : {}),
+    ...(params.discountId ? { discountId: params.discountId } : {}),
   };
-  const options: CheckoutOpenOptions = params.email
-    ? { ...base, customer: { email: params.email } }
-    : base;
 
   paddle.Checkout.open(options);
   return true;
@@ -66,9 +65,9 @@ export interface BillingPortalSession {
 }
 
 /**
- * Cancelling, changing plan, and updating a card all happen on a page Paddle
- * hosts and secures - never on ours. This mints a fresh link to it; the link
- * is single-use, so it is fetched right before opening, never stored.
+ * Updating a card happens on a page Paddle hosts and secures - never on ours.
+ * This mints a fresh link to it; the link is single-use, so it is fetched
+ * right before opening, never stored.
  */
 export async function getBillingPortal(): Promise<BillingPortalSession> {
   return clientApi<BillingPortalSession>("/api/Subscriptions/portal", { method: "POST" });

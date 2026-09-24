@@ -27,13 +27,15 @@ public class IssueTelegramLinkCodeCommandHandler
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
     private readonly ITelegramSettings _settings;
+    private readonly IEntitlementService _entitlements;
 
     public IssueTelegramLinkCodeCommandHandler(
-        IMizanDbContext context, ICurrentUserService currentUser, ITelegramSettings settings)
+        IMizanDbContext context, ICurrentUserService currentUser, ITelegramSettings settings, IEntitlementService entitlements)
     {
         _context = context;
         _currentUser = currentUser;
         _settings = settings;
+        _entitlements = entitlements;
     }
 
     public async Task<TelegramLinkCodeDto> Handle(
@@ -44,6 +46,11 @@ public class IssueTelegramLinkCodeCommandHandler
         if (!_settings.IsConfigured)
         {
             throw new DomainValidationException("Telegram is not set up on this server.");
+        }
+
+        if (!(await _entitlements.GetAsync(userId, cancellationToken)).IsPro)
+        {
+            throw new UpgradeRequiredException("The Telegram bot is part of Pro. Upgrade to connect a chat.");
         }
 
         var code = await AuthTokens.IssueAsync(
