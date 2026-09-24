@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
+using Mizan.Api;
 using Mizan.Api.Authentication;
 using Mizan.Api.Hubs;
 using Mizan.Api.Middleware;
@@ -533,19 +534,24 @@ app.MapHub<ChatHub>("/hubs/chat");
 app.MapHealthChecks("/health");
 app.MapPrometheusScrapingEndpoint();
 
+// Schema changes ship with the image. `--migrate` applies them and exits: the
+// production Compose file runs it as a one-shot step after a backup and
+// before the API starts. Development applies them on startup.
+if (args.Contains("--migrate"))
+{
+    Environment.Exit(await DatabaseMigrations.ApplyAsync(app.Services));
+}
+
 if (app.Environment.IsDevelopment())
 {
-    using var scope = app.Services.CreateScope();
-    var dbContext = scope.ServiceProvider.GetRequiredService<Mizan.Infrastructure.Data.MizanDbContext>();
-    try
-    {
-        dbContext.Database.Migrate();
-        Log.Information("Database migrations applied successfully");
-    }
-    catch (Exception ex)
-    {
-        Log.Error(ex, "Failed to apply database migrations");
-    }
+    await DatabaseMigrations.ApplyAsync(app.Services);
+}
+else
+{
+    // An API on an older schema answers 500 wherever a new column is read.
+    // Refusing to start makes a skipped migration step a failed deploy that
+    // Compose reports, not a site that looks healthy and is not.
+    await DatabaseMigrations.RequireCurrentAsync(app.Services);
 }
 
 Log.Information("Mizan API starting on {Urls}", string.Join(", ", app.Urls));
