@@ -91,6 +91,8 @@ public class MizanDbContext : DbContext, IMizanDbContext
     // Billing
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<PaddleWebhookEvent> PaddleWebhookEvents => Set<PaddleWebhookEvent>();
+    public DbSet<BillingPlan> BillingPlans => Set<BillingPlan>();
+    public DbSet<BillingDiscount> BillingDiscounts => Set<BillingDiscount>();
 
     public async Task<T> ExecuteInTransactionAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken = default)
     {
@@ -1132,12 +1134,63 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.CurrentPeriodEnd).HasColumnName("current_period_end");
             entity.Property(e => e.TrialEndsAt).HasColumnName("trial_ends_at");
             entity.Property(e => e.CanceledAt).HasColumnName("canceled_at");
+            entity.Property(e => e.NextBilledAt).HasColumnName("next_billed_at");
+            entity.Property(e => e.ScheduledChangeAction).HasColumnName("scheduled_change_action").HasMaxLength(20);
+            entity.Property(e => e.ScheduledChangeAt).HasColumnName("scheduled_change_at");
+            entity.Property(e => e.PaddleUpdatedAt).HasColumnName("paddle_updated_at");
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
             entity.HasIndex(e => e.UserId).IsUnique();
             entity.HasIndex(e => e.PaddleSubscriptionId);
             entity.HasIndex(e => e.PaddleCustomerId);
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // BillingPlan configuration (the Pro catalogue, mirrored from Paddle prices)
+        modelBuilder.Entity<BillingPlan>(entity =>
+        {
+            entity.ToTable("billing_plans");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(500);
+            entity.Property(e => e.Interval).HasColumnName("interval").HasMaxLength(10).IsRequired();
+            entity.Property(e => e.AmountCents).HasColumnName("amount_cents");
+            entity.Property(e => e.Currency).HasColumnName("currency").HasMaxLength(3).IsRequired();
+            entity.Property(e => e.TrialDays).HasColumnName("trial_days");
+            entity.Property(e => e.PaddleProductId).HasColumnName("paddle_product_id").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.PaddlePriceId).HasColumnName("paddle_price_id").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.IsActive).HasColumnName("is_active");
+            entity.Property(e => e.SortOrder).HasColumnName("sort_order");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.ArchivedAt).HasColumnName("archived_at");
+            entity.HasIndex(e => e.PaddlePriceId).IsUnique();
+            entity.HasIndex(e => new { e.IsActive, e.SortOrder });
+        });
+
+        // BillingDiscount configuration (Paddle discounts created from the admin page)
+        modelBuilder.Entity<BillingDiscount>(entity =>
+        {
+            entity.ToTable("billing_discounts");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.Label).HasColumnName("label").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Code).HasColumnName("code").HasMaxLength(32);
+            entity.Property(e => e.Type).HasColumnName("type").HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Amount).HasColumnName("amount").HasPrecision(10, 2);
+            entity.Property(e => e.Currency).HasColumnName("currency").HasMaxLength(3).IsRequired();
+            entity.Property(e => e.Recurring).HasColumnName("recurring");
+            entity.Property(e => e.MaximumRecurringIntervals).HasColumnName("maximum_recurring_intervals");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+            entity.Property(e => e.PlanIds).HasColumnName("plan_ids");
+            entity.Property(e => e.PaddleDiscountId).HasColumnName("paddle_discount_id").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.IsActive).HasColumnName("is_active");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.Ignore(e => e.IsAutomatic);
+            entity.HasIndex(e => e.PaddleDiscountId).IsUnique();
+            entity.HasIndex(e => e.Code).IsUnique().HasFilter("code IS NOT NULL");
         });
 
         // PaddleWebhookEvent configuration (webhook idempotency)

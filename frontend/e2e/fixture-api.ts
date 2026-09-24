@@ -28,6 +28,14 @@ const user = {
 };
 type FixtureHousehold = { otherMembers: number; lists: number; plans: number; version: number; staleOnce: boolean };
 const householdId = "55555555-5555-4555-8555-555555555555";
+// What an admin has on sale: $2.99 monthly, $24 yearly with a first-year deal.
+const plans = [
+	{ id: "66666666-6666-4666-8666-666666666661", name: "Pro Monthly", description: null, interval: "month", amountCents: 299, currency: "USD", trialDays: null, paddlePriceId: "pri_fixture_monthly", deal: null },
+	{
+		id: "66666666-6666-4666-8666-666666666662", name: "Pro Yearly", description: null, interval: "year", amountCents: 2400, currency: "USD", trialDays: 7, paddlePriceId: "pri_fixture_yearly",
+		deal: { paddleDiscountId: "dsc_fixture", label: "Launch offer", type: "percentage", amount: 25, recurring: false, maximumRecurringIntervals: null, expiresAt: null, discountedAmountCents: 1800 },
+	},
+];
 function householdPreview(household: FixtureHousehold) {
 	return {
 		householdId, householdName: "Home", otherMemberCount: household.otherMembers,
@@ -120,6 +128,8 @@ const server = Bun.serve({
 			states.set(token, state);
 			return json({ user: { ...user, id: state.userId }, today }, 200, { "Set-Cookie": `mizan_session=${token}; Path=/; HttpOnly; SameSite=Lax` });
 		}
+		// Public, like the real endpoint: the landing page reads it signed out.
+		if (method === "GET" && path === "/api/Subscriptions/plans") return json(plans);
 		const token = request.headers.get("cookie")?.match(/(?:^|;\s*)mizan_session=([^;]+)/)?.[1];
 		const state = token ? states.get(token) : undefined;
 		if (!state) {

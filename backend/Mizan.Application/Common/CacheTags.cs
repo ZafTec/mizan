@@ -18,6 +18,9 @@ public static class CacheTags
     /// </summary>
     public const string Recipes = "recipes";
 
+    /// <summary>The plans and deals on sale. Public and viewer-independent; cleared by every admin catalogue write.</summary>
+    public const string BillingPlans = "billing-plans";
+
     public static string UserStatus(Guid userId) => $"user:{userId}";
     public static string Entitlement(Guid userId) => $"entitlement:{userId}";
 

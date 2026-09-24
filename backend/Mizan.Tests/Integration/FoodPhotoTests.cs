@@ -114,7 +114,7 @@ public class FoodPhotoTests
 
         var response = await PostPhotoAsync(client);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        response.StatusCode.Should().Be(HttpStatusCode.PaymentRequired);
     }
 
     private async Task<(HttpClient Client, Guid UserId)> ProUserAsync()

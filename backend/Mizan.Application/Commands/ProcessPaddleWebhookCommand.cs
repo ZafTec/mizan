@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Mizan.Application.Billing;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
@@ -112,40 +113,31 @@ public class ProcessPaddleWebhookCommandHandler
 
     private Guid? ApplySubscriptionEvent(JsonElement data, string eventType)
     {
-        var userId = TryGetUserId(data);
-        var subscriptionId = GetString(data, "id");
-        var customerId = GetString(data, "customer_id");
-        var status = GetString(data, "status") ?? "active";
-        var priceId = FirstPriceId(data);
-        var periodEnd = GetNestedDateTime(data, "current_billing_period", "ends_at");
+        var state = PaddleSubscriptionState.Parse(data);
 
-        var sub = Resolve(userId, subscriptionId, customerId);
+        var sub = Resolve(state.UserId, state.Id, state.CustomerId);
         if (sub is null)
         {
-            if (userId is null)
+            if (state.UserId is null)
             {
-                _logger.LogWarning("Subscription event {EventType} for {SubId} has no resolvable user; skipping", eventType, subscriptionId);
+                _logger.LogWarning("Subscription event {EventType} for {SubId} has no resolvable user; skipping", eventType, state.Id);
                 return null;
             }
 
-            sub = NewSubscription(userId.Value);
+            sub = NewSubscription(state.UserId.Value);
             _context.Subscriptions.Add(sub);
         }
 
-        if (!sub.IsLifetime)
+        // Paddle does not deliver in order. An event whose entity is older than
+        // the stored one would roll back a newer state - a cancel undone, a
+        // plan switched back.
+        if (state.IsOlderThan(sub))
         {
-            sub.Plan = "pro";
+            _logger.LogInformation("Paddle {EventType} describes an older subscription state; ignoring", eventType);
+            return null;
         }
-        sub.Status = status;
-        sub.PaddleSubscriptionId = subscriptionId ?? sub.PaddleSubscriptionId;
-        sub.PaddleCustomerId = customerId ?? sub.PaddleCustomerId;
-        sub.PaddlePriceId = priceId ?? sub.PaddlePriceId;
-        sub.CurrentPeriodEnd = periodEnd ?? sub.CurrentPeriodEnd;
-        sub.TrialEndsAt = status == "trialing" ? (periodEnd ?? sub.TrialEndsAt) : sub.TrialEndsAt;
-        sub.CanceledAt = status == "canceled"
-            ? (GetDateTime(data, "canceled_at") ?? DateTime.UtcNow)
-            : sub.CanceledAt;
-        sub.UpdatedAt = DateTime.UtcNow;
+
+        state.ApplyTo(sub, DateTime.UtcNow);
         return sub.UserId;
     }
 
@@ -164,7 +156,7 @@ public class ProcessPaddleWebhookCommandHandler
             return null;
         }
 
-        var userId = TryGetUserId(data);
+        var userId = PaddleSubscriptionState.UserIdFrom(data);
         var customerId = GetString(data, "customer_id");
 
         var sub = Resolve(userId, null, customerId);
@@ -241,35 +233,6 @@ public class ProcessPaddleWebhookCommandHandler
         UpdatedAt = DateTime.UtcNow
     };
 
-    private static Guid? TryGetUserId(JsonElement data)
-    {
-        if (!data.TryGetProperty("custom_data", out var cd) || cd.ValueKind != JsonValueKind.Object)
-        {
-            return null;
-        }
-
-        var raw = GetString(cd, "user_id") ?? GetString(cd, "userId");
-        return Guid.TryParse(raw, out var id) ? id : null;
-    }
-
-    private static string? FirstPriceId(JsonElement data)
-    {
-        if (!data.TryGetProperty("items", out var items) || items.ValueKind != JsonValueKind.Array)
-        {
-            return null;
-        }
-
-        foreach (var item in items.EnumerateArray())
-        {
-            if (item.TryGetProperty("price", out var price) && price.TryGetProperty("id", out var id))
-            {
-                return id.GetString();
-            }
-        }
-
-        return null;
-    }
-
     private static bool ContainsPriceId(JsonElement data, string priceId)
     {
         if (!data.TryGetProperty("items", out var items) || items.ValueKind != JsonValueKind.Array)
@@ -292,15 +255,4 @@ public class ProcessPaddleWebhookCommandHandler
 
     private static string? GetString(JsonElement el, string prop) =>
         el.TryGetProperty(prop, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
-
-    private static DateTime? GetDateTime(JsonElement el, string prop) =>
-        el.TryGetProperty(prop, out var v) && v.ValueKind == JsonValueKind.String
-            && DateTimeOffset.TryParse(v.GetString(), out var dto)
-            ? dto.UtcDateTime
-            : null;
-
-    private static DateTime? GetNestedDateTime(JsonElement el, string parent, string child) =>
-        el.TryGetProperty(parent, out var obj) && obj.ValueKind == JsonValueKind.Object
-            ? GetDateTime(obj, child)
-            : null;
 }

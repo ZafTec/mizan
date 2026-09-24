@@ -5,7 +5,7 @@ interface ProUpsellProps {
   title: string;
   message: string;
   icon?: IconName;
-  checkoutPlan?: "pro" | "pro-yearly" | "lifetime";
+  checkoutPlan?: "pro" | "pro-yearly";
 }
 
 export function ProUpsell({ title, message, icon = "lock", checkoutPlan = "pro" }: ProUpsellProps) {

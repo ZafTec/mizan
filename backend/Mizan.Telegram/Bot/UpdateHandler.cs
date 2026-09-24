@@ -90,6 +90,14 @@ public sealed class UpdateHandler
             return;
         }
 
+        // Telegram is a Pro feature. A lapsed account keeps its link and can
+        // still disconnect; everything else points at the upgrade.
+        if (!user.IsPro && !IsAlwaysAllowed(text))
+        {
+            await SendUpgradePromptAsync(message.Chat.Id, ct);
+            return;
+        }
+
         if (message.Photo is { Count: > 0 })
         {
             await OnPhotoAsync(message, user, ct);
@@ -317,6 +325,12 @@ public sealed class UpdateHandler
             return;
         }
 
+        if (!user.IsPro)
+        {
+            await SendUpgradePromptAsync(chatId, ct);
+            return;
+        }
+
         var data = callback.Data ?? string.Empty;
 
         if (data == "discard")
@@ -407,6 +421,21 @@ public sealed class UpdateHandler
             + "3. Tap <b>Connect</b> and follow the link back here\n\n"
             + "No account? Sign up on the same page - it takes a minute.",
             ct: ct);
+
+    private async Task SendUpgradePromptAsync(long chatId, CancellationToken ct) =>
+        await _telegram.SendMessageAsync(
+            chatId,
+            "The Telegram bot is part of Mizan Pro.\n\n"
+            + $"Upgrade at {_options.PublicUrl.TrimEnd('/')}/billing and this chat works right away. "
+            + "Logging on the website stays free.\n\n"
+            + "<b>/unlink</b> - disconnect this chat",
+            ct: ct);
+
+    private static bool IsAlwaysAllowed(string text)
+    {
+        var command = text.Split(' ', 2)[0].Split('@', 2)[0].ToLowerInvariant();
+        return command is "/unlink" or "/help";
+    }
 
     private static string Greeting(string? name) =>
         (name is { Length: > 0 } ? $"Connected. Hello {Escape(name)}.\n\n" : "Connected.\n\n") + HelpText();

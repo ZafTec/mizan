@@ -1,53 +1,66 @@
 import Link from "next/link";
+import { cadence, describeDeal, formatMoney, pickPlans, yearlySavingPercent, type BillingPlan } from "@/lib/billing";
 
-const TIERS = [
-	{
-		id: "free" as const,
-		name: "Free",
-		price: "$0",
-		cadence: "forever",
-		features: [
-			"Unlimited meals, workouts, measurements",
-			"Recipes, meal plans, shopping lists",
-			"Streaks and achievements",
-			"A small daily assistant allowance",
-		],
-		cta: "Start logging",
-		ctaHref: "/register",
-	},
-	{
-		id: "pro" as const,
-		name: "Pro",
-		price: "$2.99",
-		cadence: "/mo",
-		highlight: true,
-		features: [
-			"Everything in Free",
-			"Photo analysis — snap a plate, confirm the estimate",
-			"A working daily assistant allowance",
-			"Telegram bot",
-			"Coach relationships",
-		],
-		cta: "Go Pro",
-		ctaHref: "/register?plan=pro",
-	},
-	{
-		id: "self-hosted" as const,
-		name: "Self-hosted",
-		price: "$0",
-		cadence: "",
-		features: [
-			"The whole thing, your machine",
-			"Docker Compose, PostgreSQL, Redis",
-			"Bring your own AI provider key",
-			"Your database, your backups",
-		],
-		cta: "Read the setup guide",
-		ctaHref: "https://github.com/ZafTec/mizan#self-hosting",
-	},
+const PRO_FEATURES = [
+	"Everything in Free",
+	"Photo analysis — snap a plate, confirm the estimate",
+	"A working daily assistant allowance",
+	"Telegram bot",
+	"Coach relationships",
 ];
 
-export function PricingSection() {
+/**
+ * Free, Pro, and Self-hosted. Pro's price, its yearly option, and any deal come
+ * from the plans an admin has on sale (/admin/billing); with none published
+ * the card keeps the launch price rather than going blank.
+ */
+export function PricingSection({ plans = [] }: { plans?: BillingPlan[] }) {
+	const { monthly, yearly } = pickPlans(plans);
+	const headline = monthly ?? yearly;
+	const deal = monthly?.deal ?? yearly?.deal;
+	const saving = yearlySavingPercent(monthly, yearly);
+
+	const tiers = [
+		{
+			id: "free",
+			name: "Free",
+			price: "$0",
+			cadence: "forever",
+			features: [
+				"Unlimited meals, workouts, measurements",
+				"Recipes, meal plans, shopping lists",
+				"Streaks and achievements",
+				"A small daily assistant allowance",
+			],
+			cta: "Start logging",
+			ctaHref: "/register",
+		},
+		{
+			id: "pro",
+			name: "Pro",
+			price: headline ? formatMoney(headline.amountCents, headline.currency) : "$2.99",
+			cadence: headline ? cadence(headline.interval) : "/mo",
+			highlight: true,
+			features: PRO_FEATURES,
+			cta: "Go Pro",
+			ctaHref: headline?.interval === "year" ? "/register?plan=pro-yearly" : "/register?plan=pro",
+		},
+		{
+			id: "self-hosted",
+			name: "Self-hosted",
+			price: "$0",
+			cadence: "",
+			features: [
+				"The whole thing, your machine",
+				"Docker Compose, PostgreSQL, Redis",
+				"Bring your own AI provider key",
+				"Your database, your backups",
+			],
+			cta: "Read the setup guide",
+			ctaHref: "https://github.com/ZafTec/mizan#self-hosting",
+		},
+	];
+
 	return (
 		<section aria-labelledby="pricing-heading" id="pricing" className="border-t border-charcoal-blue-200 py-16 sm:py-20">
 			<div className="mx-auto mb-10 max-w-2xl text-center">
@@ -61,7 +74,7 @@ export function PricingSection() {
 			</div>
 
 			<div className="mx-auto grid max-w-4xl grid-cols-1 border border-charcoal-blue-200 bg-charcoal-blue-200 gap-px sm:grid-cols-3 dark:border-charcoal-blue-700 dark:bg-charcoal-blue-700">
-				{TIERS.map((tier) => (
+				{tiers.map((tier) => (
 					<article
 						key={tier.id}
 						className={`flex flex-col gap-4 bg-white p-7 dark:bg-charcoal-blue-950 ${
@@ -79,6 +92,16 @@ export function PricingSection() {
 								{tier.price}
 								{tier.cadence && <span className="text-sm font-normal text-charcoal-blue-500 dark:text-charcoal-blue-500">{tier.cadence}</span>}
 							</div>
+							{tier.id === "pro" && monthly && yearly && (
+								<p className="mt-1 text-[13px] text-charcoal-blue-600 dark:text-charcoal-blue-400">
+									or {formatMoney(yearly.amountCents, yearly.currency)}/yr{saving ? ` — save ${saving}%` : ""}
+								</p>
+							)}
+							{tier.id === "pro" && deal && (
+								<p className="mt-2 inline-block border border-verdigris-600/40 px-2 py-0.5 text-[12px] font-medium text-verdigris-700 dark:text-verdigris-400">
+									{deal.label}: {describeDeal(deal, monthly?.deal ? "month" : "year")}
+								</p>
+							)}
 						</div>
 						<div className="flex flex-col gap-1.5 text-[13px] leading-relaxed text-charcoal-blue-600 dark:text-charcoal-blue-400">
 							{tier.features.map((feature) => (

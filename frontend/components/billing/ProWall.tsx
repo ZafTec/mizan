@@ -6,7 +6,7 @@ import { ModalShell } from "@/components/ModalShell";
 import { Icon } from "@/components/ui/icon";
 import { useSubscription } from "@/lib/hooks/useSubscription";
 
-export type CheckoutPlan = "pro" | "pro-yearly" | "lifetime";
+export type CheckoutPlan = "pro" | "pro-yearly";
 
 export interface ProWallConfig {
 	/** What the user just tried to do, as a heading: "Unlimited meal plans". */

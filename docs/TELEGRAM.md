@@ -10,6 +10,8 @@
 
 Unlinked chats receive a settings-page link. `/unlink` removes the connection without deleting logged data.
 
+The bot is a Pro feature. Issuing a link code answers 402 for a Free account. A linked account that returns to Free keeps its link: the bot replies with the upgrade page and still accepts `/unlink` and `/help`, and it works again as soon as the account is Pro. `/api/Telegram/resolve` reports `isPro` for this.
+
 ## Commands
 
 | Input | Behavior |

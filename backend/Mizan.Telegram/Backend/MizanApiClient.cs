@@ -185,7 +185,7 @@ public sealed class MizanApiClient
     }
 }
 
-public sealed record ResolvedUser(Guid UserId, string? Name, DateTime LinkedAt);
+public sealed record ResolvedUser(Guid UserId, string? Name, DateTime LinkedAt, bool IsPro = true);
 
 public sealed record LinkResult(Guid UserId, string? Name);
 
