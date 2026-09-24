@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
+using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Queries;
 
@@ -15,6 +16,55 @@ public record MySubscriptionDto
     public DateTime? CurrentPeriodEnd { get; init; }
     public DateTime? TrialEndsAt { get; init; }
     public DateTime? CanceledAt { get; init; }
+    public DateTime? NextBilledAt { get; init; }
+
+    /// <summary>Set while a cancellation is scheduled: Pro continues until then.</summary>
+    public DateTime? CancelsAt { get; init; }
+
+    /// <summary>The catalogue plan the subscription is billed at, when Mizan lists its price.</summary>
+    public Guid? PlanId { get; init; }
+    public string? PlanName { get; init; }
+    public string? Interval { get; init; }
+    public int? AmountCents { get; init; }
+    public string? Currency { get; init; }
+
+    /// <summary>A Paddle subscription exists that this account can change, cancel, or resume from Mizan.</summary>
+    public bool CanManage { get; init; }
+
+    /// <summary>A Paddle customer exists, so invoices and the hosted portal are available.</summary>
+    public bool HasBillingAccount { get; init; }
+
+    public static MySubscriptionDto From(Subscription? sub, BillingPlan? plan, bool isPro)
+    {
+        if (sub is null)
+        {
+            return new MySubscriptionDto { IsPro = isPro };
+        }
+
+        var manageable = !sub.IsLifetime
+            && !string.IsNullOrEmpty(sub.PaddleSubscriptionId)
+            && sub.Status is "active" or "trialing" or "past_due";
+
+        return new MySubscriptionDto
+        {
+            Plan = sub.Plan,
+            Status = sub.Status,
+            IsPro = isPro,
+            IsLifetime = sub.IsLifetime,
+            CurrentPeriodEnd = sub.CurrentPeriodEnd,
+            TrialEndsAt = sub.TrialEndsAt,
+            CanceledAt = sub.CanceledAt,
+            NextBilledAt = sub.NextBilledAt,
+            CancelsAt = sub.ScheduledChangeAction == "cancel" ? sub.ScheduledChangeAt : null,
+            PlanId = plan?.Id,
+            PlanName = plan?.Name,
+            Interval = plan?.Interval,
+            AmountCents = plan?.AmountCents,
+            Currency = plan?.Currency,
+            CanManage = manageable,
+            HasBillingAccount = !string.IsNullOrEmpty(sub.PaddleCustomerId)
+        };
+    }
 }
 
 public class GetMySubscriptionQueryHandler : IRequestHandler<GetMySubscriptionQuery, MySubscriptionDto>
@@ -43,26 +93,12 @@ public class GetMySubscriptionQueryHandler : IRequestHandler<GetMySubscriptionQu
         var userId = _currentUser.UserId.Value;
         var entitlement = await _entitlements.GetAsync(userId, cancellationToken);
 
-        var sub = await _context.Subscriptions
-            .AsNoTracking()
-            .Where(s => s.UserId == userId)
-            .Select(s => new { s.Plan, s.Status, s.IsLifetime, s.CurrentPeriodEnd, s.TrialEndsAt, s.CanceledAt })
-            .FirstOrDefaultAsync(cancellationToken);
+        var sub = await _context.Subscriptions.AsNoTracking()
+            .FirstOrDefaultAsync(s => s.UserId == userId, cancellationToken);
+        var plan = sub?.PaddlePriceId is { } priceId
+            ? await _context.BillingPlans.AsNoTracking().FirstOrDefaultAsync(p => p.PaddlePriceId == priceId, cancellationToken)
+            : null;
 
-        if (sub is null)
-        {
-            return new MySubscriptionDto { Plan = "free", Status = "none", IsPro = entitlement.IsPro };
-        }
-
-        return new MySubscriptionDto
-        {
-            Plan = sub.Plan,
-            Status = sub.Status,
-            IsPro = entitlement.IsPro,
-            IsLifetime = sub.IsLifetime,
-            CurrentPeriodEnd = sub.CurrentPeriodEnd,
-            TrialEndsAt = sub.TrialEndsAt,
-            CanceledAt = sub.CanceledAt
-        };
+        return MySubscriptionDto.From(sub, plan, entitlement.IsPro);
     }
 }

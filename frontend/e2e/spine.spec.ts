@@ -325,3 +325,25 @@ test("an owner with other members is told to remove them first", async ({ contex
 	expect((await fixtureState(context)).writes).toEqual([]);
 });
 
+
+test("pricing and billing show the plans on sale, with the yearly deal", async ({ context, page }) => {
+	await page.goto("/");
+	const pricing = page.locator("#pricing");
+	await expect(pricing.getByText("$2.99")).toBeVisible();
+	await expect(pricing.getByText(/or \$24\/yr — save 33%/)).toBeVisible();
+	await expect(pricing.getByText(/Launch offer: 25% off your first payment/)).toBeVisible();
+
+	await signIn(context);
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto("/billing");
+	const period = page.getByRole("radiogroup", { name: "Billing period" });
+	await expect(period.getByRole("radio", { name: "Monthly" })).toHaveAttribute("aria-checked", "true");
+	await expect(page.getByText("$2.99", { exact: true })).toBeVisible();
+	await period.getByRole("radio", { name: /Yearly/ }).focus();
+	await page.keyboard.press("Enter");
+	await expect(period.getByRole("radio", { name: /Yearly/ })).toHaveAttribute("aria-checked", "true");
+	await expect(page.getByText("$18", { exact: true })).toBeVisible();
+	await expect(page.getByText(/7-day free trial/)).toBeVisible();
+	await expect(page.getByRole("button", { name: "Go Pro" })).toBeEnabled();
+	await noOverflow(page);
+});

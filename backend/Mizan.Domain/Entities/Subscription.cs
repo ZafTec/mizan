@@ -21,6 +21,22 @@ public class Subscription
     public DateTime? TrialEndsAt { get; set; }
     public DateTime? CanceledAt { get; set; }
 
+    public DateTime? NextBilledAt { get; set; }
+
+    /// <summary>
+    /// A change Paddle will make at <see cref="ScheduledChangeAt"/>: "cancel",
+    /// "pause", or "resume". A subscriber who cancels keeps an active status
+    /// until then; this is what says it is ending.
+    /// </summary>
+    public string? ScheduledChangeAction { get; set; }
+    public DateTime? ScheduledChangeAt { get; set; }
+
+    /// <summary>
+    /// Paddle's updated_at for the state stored here. Paddle does not promise
+    /// webhook order, so an event describing an older state is ignored.
+    /// </summary>
+    public DateTime? PaddleUpdatedAt { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

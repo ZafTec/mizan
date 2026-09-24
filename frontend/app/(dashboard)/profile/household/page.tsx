@@ -1,13 +1,11 @@
 import Link from "next/link";
 import { getMyHouseholds, getHousehold, getHouseholdDeletionPreview, getHouseholdPendingInvites } from "@/data/household";
-import { getMySubscription } from "@/data/subscription";
 import { HouseholdSwitcherForm, CreateHouseholdForm } from "./parts/ActiveHouseholdControls";
 import { InvitationInbox } from "./parts/InvitationInbox";
 import { MemberList } from "./parts/MemberList";
 import { InviteForm } from "./parts/InviteForm";
 import { LeaveHouseholdButton } from "./parts/LeaveHouseholdButton";
 import { DeleteHouseholdButton } from "./parts/DeleteHouseholdButton";
-import { ProUpsell } from "@/components/billing/ProUpsell";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +20,7 @@ export default async function HouseholdSettingsPage({
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
 	const params = await searchParams;
-	const [my, subscription] = await Promise.all([getMyHouseholds(), getMySubscription()]);
+	const my = await getMyHouseholds();
 
 	const focusedId =
 		(typeof params.household === "string" && params.household) ||
@@ -116,15 +114,7 @@ export default async function HouseholdSettingsPage({
 							<h2 className="mb-3 text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
 								Invite someone
 							</h2>
-							{subscription.isPro ? (
-								<InviteForm householdId={detail.id} />
-							) : (
-								<ProUpsell
-									icon="home"
-									title="Household invites are a Pro feature"
-									message="Invite up to 6 members to share recipes, meal plans, and shopping lists. Upgrade to start inviting."
-								/>
-							)}
+							<InviteForm householdId={detail.id} />
 						</section>
 					)}
 				</div>

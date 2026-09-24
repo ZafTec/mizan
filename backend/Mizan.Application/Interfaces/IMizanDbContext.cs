@@ -66,6 +66,8 @@ public interface IMizanDbContext
     // Billing
     DbSet<Subscription> Subscriptions { get; }
     DbSet<PaddleWebhookEvent> PaddleWebhookEvents { get; }
+    DbSet<BillingPlan> BillingPlans { get; }
+    DbSet<BillingDiscount> BillingDiscounts { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<T> ExecuteInTransactionAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken = default);

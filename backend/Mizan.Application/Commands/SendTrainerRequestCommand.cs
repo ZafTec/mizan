@@ -24,11 +24,13 @@ public record SendTrainerRequestCommand(
 public class SendTrainerRequestCommandHandler : IRequestHandler<SendTrainerRequestCommand, Guid>
 {
     private readonly IMizanDbContext _context;
+    private readonly IEntitlementService _entitlements;
     private readonly INotificationWriter? _notifications;
 
-    public SendTrainerRequestCommandHandler(IMizanDbContext context, INotificationWriter? notifications = null)
+    public SendTrainerRequestCommandHandler(IMizanDbContext context, IEntitlementService entitlements, INotificationWriter? notifications = null)
     {
         _context = context;
+        _entitlements = entitlements;
         _notifications = notifications;
     }
 
@@ -58,6 +60,14 @@ public class SendTrainerRequestCommandHandler : IRequestHandler<SendTrainerReque
         if (existing != null)
         {
             return existing.Id;
+        }
+
+        // Coach relationships are Pro. Checked after the lookup, so resending
+        // a request that already exists stays harmless, and an existing coach
+        // is not cut off when a subscription lapses.
+        if (!(await _entitlements.GetAsync(request.ClientId, cancellationToken)).IsPro)
+        {
+            throw new UpgradeRequiredException("Working with a coach is part of Pro. Upgrade to send a request.");
         }
 
         var relationship = new TrainerClientRelationship

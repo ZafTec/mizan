@@ -31,6 +31,8 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         // ai_eval_cases is deliberately absent: the synthetic suite is seeded
         // by the migration and the publish gate has nothing to check without it.
         "ai_eval_runs",
+        "billing_discounts",
+        "billing_plans",
         "ai_prompt_versions",
         "ai_prompts",
         "ai_usage_logs",
@@ -731,63 +733,6 @@ public sealed class ScriptedAiProvider : IAiProvider
         }
 
         return Task.FromResult(response);
-    }
-}
-
-/// <summary>
-/// Answers portal-session requests without ever calling Paddle. Defaults to a
-/// successful session with placeholder URLs; a test can script a failure to
-/// exercise the 502 path, or read <see cref="LastCustomerId"/> to assert on
-/// what the handler actually sent.
-/// </summary>
-public sealed class FakePaddleApiClient : IPaddleApiClient
-{
-    private readonly object _lock = new();
-    private bool _fail;
-
-    public string? LastCustomerId { get; private set; }
-    public string? LastSubscriptionId { get; private set; }
-
-    public void Reset()
-    {
-        lock (_lock)
-        {
-            _fail = false;
-            LastCustomerId = null;
-            LastSubscriptionId = null;
-        }
-    }
-
-    /// <summary>The next call (and every call after, until Reset) returns null.</summary>
-    public void FailNext()
-    {
-        lock (_lock) _fail = true;
-    }
-
-    public Task<PaddlePortalSession?> CreatePortalSessionAsync(
-        string customerId, string? subscriptionId, CancellationToken cancellationToken)
-    {
-        lock (_lock)
-        {
-            LastCustomerId = customerId;
-            LastSubscriptionId = subscriptionId;
-
-            if (_fail)
-            {
-                return Task.FromResult<PaddlePortalSession?>(null);
-            }
-        }
-
-        var session = new PaddlePortalSession(
-            OverviewUrl: $"https://sandbox-customer-portal.paddle.com/{customerId}/overview",
-            CancelSubscriptionUrl: subscriptionId is null
-                ? null
-                : $"https://sandbox-customer-portal.paddle.com/{customerId}/subscriptions/{subscriptionId}/cancel",
-            UpdatePaymentMethodUrl: subscriptionId is null
-                ? null
-                : $"https://sandbox-customer-portal.paddle.com/{customerId}/subscriptions/{subscriptionId}/payment-method");
-
-        return Task.FromResult<PaddlePortalSession?>(session);
     }
 }
 

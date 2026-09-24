@@ -73,7 +73,6 @@ public class NutritionGoalsTests
         var userId = Guid.NewGuid();
         var email = $"goals-{userId:N}@example.com";
         await _fixture.SeedUserAsync(userId, email);
-        await _fixture.GrantProAsync(userId); // GET /api/Goals/progress (history) is Pro-gated
 
         using var client = _fixture.CreateAuthenticatedClient(userId, email);
 

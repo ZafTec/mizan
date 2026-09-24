@@ -11,6 +11,8 @@ import { useDebounce } from "@/lib/hooks/useDebounce";
 import type { TrainerPublicDto, TrainerPublicPagedResultDto } from "@/types/api-contracts";
 import { getPagedItems } from "@/types/api-contracts";
 import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
+import { useProWall } from "@/components/billing/ProWall";
+import { isUpgradeRequired } from "@/lib/billing";
 
 export default function TrainersPage() {
 	const { data: session, isPending } = useSession();
@@ -18,6 +20,10 @@ export default function TrainersPage() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [requestingTrainerId, setRequestingTrainerId] = useState<string | null>(null);
+	const { openWall, wall } = useProWall({
+		title: "Coaching is part of Pro",
+		message: "Work with a coach who sees what you choose to share and messages you in the app.",
+	});
 
 	const debouncedQuery = useDebounce(searchQuery, 200);
 
@@ -48,7 +54,8 @@ export default function TrainersPage() {
 			appToast.success("Trainer request sent");
 		} catch (error) {
 			console.error("Failed to send request:", error);
-			appToast.error(error, "Failed to send trainer request");
+			if (isUpgradeRequired(error)) openWall();
+			else appToast.error(error, "Failed to send trainer request");
 		} finally {
 			setRequestingTrainerId(null);
 		}
@@ -83,6 +90,7 @@ export default function TrainersPage() {
 
 	return (
 		<div className="max-w-6xl mx-auto space-y-6" data-testid="trainers-page">
+			{wall}
 			{/* Header */}
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div className="flex items-center gap-4">

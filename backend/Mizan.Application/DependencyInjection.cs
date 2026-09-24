@@ -20,6 +20,7 @@ public static class DependencyInjection
         });
 
         services.AddValidatorsFromAssembly(assembly);
+        services.AddScoped<Commands.SubscriberBilling>();
 
         return services;
     }

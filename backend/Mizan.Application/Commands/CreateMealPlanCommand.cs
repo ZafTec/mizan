@@ -55,19 +55,15 @@ public class CreateMealPlanCommandValidator : AbstractValidator<CreateMealPlanCo
 
 public class CreateMealPlanCommandHandler : IRequestHandler<CreateMealPlanCommand, CreateMealPlanResult>
 {
-    private const int FreeMealPlanLimit = 1;
-
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
-    private readonly IEntitlementService _entitlements;
     private readonly HybridCache _cache;
 
     public CreateMealPlanCommandHandler(
-        IMizanDbContext context, ICurrentUserService currentUser, IEntitlementService entitlements, HybridCache cache)
+        IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
     {
         _context = context;
         _currentUser = currentUser;
-        _entitlements = entitlements;
         _cache = cache;
     }
 
@@ -79,16 +75,6 @@ public class CreateMealPlanCommandHandler : IRequestHandler<CreateMealPlanComman
         }
 
         var userId = _currentUser.UserId.Value;
-
-        var entitlement = await _entitlements.GetAsync(userId, cancellationToken);
-        if (!entitlement.IsPro)
-        {
-            var existing = await _context.MealPlans.CountAsync(m => m.UserId == userId, cancellationToken);
-            if (existing >= FreeMealPlanLimit)
-            {
-                throw new UpgradeRequiredException("Free plan is limited to 1 meal plan. Upgrade to Pro for unlimited meal plans.");
-            }
-        }
 
         var mealPlan = new MealPlan
         {

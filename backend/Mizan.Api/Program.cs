@@ -195,6 +195,7 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, Mizan.Api.Authorization.ProAuthorizationHandler>();
+builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationMiddlewareResultHandler, Mizan.Api.Authorization.UpgradeRequiredResultHandler>();
 
 builder.Services.AddRateLimiter(options =>
 {
@@ -472,8 +473,10 @@ app.UseExceptionHandler(errorApp =>
         }
         else if (exception is UpgradeRequiredException upgradeEx)
         {
+            // 402, not 403: the user is allowed, the plan is not. Clients open
+            // the upgrade path on this status instead of reading error text.
             Log.Warning("Upgrade required for {Path}: {Message}", context.Request.Path, upgradeEx.Message);
-            context.Response.StatusCode = 403;
+            context.Response.StatusCode = StatusCodes.Status402PaymentRequired;
             await context.Response.WriteAsJsonAsync(new { errorCode = "upgrade_required", error = upgradeEx.Message });
         }
         else if (exception is ForbiddenAccessException forbiddenEx)
@@ -483,6 +486,22 @@ app.UseExceptionHandler(errorApp =>
 
             context.Response.StatusCode = 403;
             await context.Response.WriteAsJsonAsync(new { errorCode = "forbidden", error = forbiddenEx.Message });
+        }
+        else if (exception is PaddleRequestException paddleEx)
+        {
+            // Paddle's own detail describes the request (a price below the
+            // minimum, a change blocked by an unpaid bill), never a customer.
+            Log.Warning("Paddle request failed for {Path}: {Code}", context.Request.Path, paddleEx.Code);
+            if (paddleEx.Unavailable)
+            {
+                context.Response.StatusCode = StatusCodes.Status502BadGateway;
+                await context.Response.WriteAsJsonAsync(new { errorCode = "paddle_unavailable", error = "Could not reach Paddle. Try again in a moment." });
+            }
+            else
+            {
+                context.Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
+                await context.Response.WriteAsJsonAsync(new { errorCode = "paddle_rejected", error = paddleEx.Message, paddleCode = paddleEx.Code });
+            }
         }
         else if (exception is UnauthorizedAccessException)
         {

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import ConfirmationModal from "@/components/ConfirmationModal";
+import { useProWall } from "@/components/billing/ProWall";
+import { isUpgradeRequired } from "@/lib/billing";
 import { appToast } from "@/lib/toast";
 import {
 	getTelegramLink,
@@ -30,6 +32,10 @@ export default function TelegramSettingsPage() {
 	const [unlinking, setUnlinking] = useState(false);
 	const [confirmUnlink, setConfirmUnlink] = useState(false);
 	const [remaining, setRemaining] = useState<string | null>(null);
+	const { guard, openWall, wall } = useProWall({
+		title: "The Telegram bot is part of Pro",
+		message: "Log meals from a photo and talk to the assistant from Telegram. Logging on the website stays free.",
+	});
 
 	const waiting = code !== null && link?.linked !== true;
 	const waitingRef = useRef(waiting);
@@ -110,7 +116,8 @@ export default function TelegramSettingsPage() {
 		try {
 			setCode(await issueTelegramCode());
 		} catch (error) {
-			appToast.error(error, "Could not start the connection");
+			if (isUpgradeRequired(error)) openWall();
+			else appToast.error(error, "Could not start the connection");
 		} finally {
 			setIssuing(false);
 		}
@@ -168,10 +175,12 @@ export default function TelegramSettingsPage() {
 					remaining={remaining}
 					issuing={issuing}
 					botUsername={link.botUsername}
-					onConnect={onConnect}
+					onConnect={guard(onConnect)}
 					onCancel={() => setCode(null)}
 				/>
 			)}
+
+			{wall}
 
 			<ConfirmationModal
 				isOpen={confirmUnlink}
