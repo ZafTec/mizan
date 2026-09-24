@@ -278,7 +278,12 @@ jobs:
             // draft is invisible to it; the list endpoint sees drafts too.
             const releases = await github.paginate(github.rest.repos.listReleases, { ...context.repo, per_page: 100 });
             const release = releases.find((candidate) => candidate.tag_name === tag);
-            if (!release) return;
+            if (!release) {
+              // Release Please just reported this release; not finding it means
+              // publication would be skipped while the run still looks green.
+              if (process.env.NEW_RELEASE_TAG) throw new Error(`Release Please created ${tag}, but no release with that tag was found.`);
+              return;
+            }
             if (!release.draft) {
               core.notice(`${tag} is already published; preserving its notes and versioned images.`);
               return;
