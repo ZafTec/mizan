@@ -1,7 +1,7 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 
 const apiURL = process.env.PLAYWRIGHT_API_URL ?? "http://localhost:5100";
-async function signIn(context: BrowserContext, options: { userId?: string; empty?: boolean; unread?: number; failures?: string[]; writeFailures?: Record<string, number> } = {}) {
+async function signIn(context: BrowserContext, options: { userId?: string; empty?: boolean; unread?: number; failures?: string[]; writeFailures?: Record<string, number>; household?: { otherMembers?: number; lists?: number; plans?: number; staleOnce?: boolean } } = {}) {
 	const result = await context.request.post(`${apiURL}/__fixture/session`, { data: options });
 	expect(result.ok()).toBeTruthy();
 	return await result.json() as { today: string };
@@ -282,3 +282,46 @@ test("a shared browser does not offer another account's workout draft", async ({
 	await expect(page.getByRole("heading", { name: "Resume workout?" })).toHaveCount(0);
 	await expect(page.getByText("Private session for Alex", { exact: true })).toHaveCount(0);
 });
+
+test("a sole owner deletes a household only after confirming its plans", async ({ context, page }) => {
+	await signIn(context, { household: { lists: 1, plans: 2, staleOnce: true } });
+	await page.goto("/profile/household");
+	const trigger = page.getByRole("button", { name: "Delete", exact: true });
+	await trigger.click();
+	const dialog = page.getByRole("dialog", { name: "Delete Home?" });
+	await expect(dialog.getByText("1 shopping list with 3 items")).toBeVisible();
+	await expect(dialog.getByText("2 meal plans with 10 planned meals")).toBeVisible();
+	await expect(dialog.getByRole("button", { name: "Delete household", exact: true })).toHaveCount(0);
+
+	await page.keyboard.press("Escape");
+	await expect(dialog).not.toBeVisible();
+	await expect(trigger).toBeFocused();
+	expect((await fixtureState(context)).writes).toEqual([]);
+
+	await trigger.click();
+	await dialog.getByRole("button", { name: "Delete plans and household", exact: true }).click();
+	await expect(dialog.getByRole("alert")).toContainText("changed after you opened");
+	await expect(dialog.getByText("2 shopping lists with 6 items")).toBeVisible();
+	expect((await fixtureState(context)).writes).toEqual([]);
+
+	await dialog.getByRole("button", { name: "Delete plans and household", exact: true }).click();
+	await expect(dialog).not.toBeVisible();
+	await expect(page.getByText("You're not a member of any household yet.")).toBeVisible();
+	const state = await fixtureState(context);
+	expect(state.writes).toEqual([{ path: "/api/Households/55555555-5555-4555-8555-555555555555", body: { version: "v2", deletePlans: true } }]);
+	expect(state.unhandled).toEqual([]);
+});
+
+test("an owner with other members is told to remove them first", async ({ context, page }) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await signIn(context, { household: { otherMembers: 2 } });
+	await page.goto("/profile/household");
+	await page.getByRole("button", { name: "Delete", exact: true }).click();
+	const dialog = page.getByRole("dialog");
+	await expect(dialog).toContainText("2 other members still belong to this household");
+	await expect(dialog.getByRole("button", { name: /Delete/ })).toHaveCount(0);
+	await dialog.getByRole("button", { name: "Close", exact: true }).first().click();
+	await noOverflow(page);
+	expect((await fixtureState(context)).writes).toEqual([]);
+});
+

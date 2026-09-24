@@ -69,4 +69,12 @@ public interface IMizanDbContext
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<T> ExecuteInTransactionAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Loads a household and, inside a transaction on PostgreSQL, holds its row
+    /// with FOR UPDATE. Inserting a member, invitation, list or plan that
+    /// references it waits for that lock, so a caller's checks stay true until
+    /// it commits.
+    /// </summary>
+    Task<Household?> LockHouseholdAsync(Guid householdId, CancellationToken cancellationToken = default);
 }

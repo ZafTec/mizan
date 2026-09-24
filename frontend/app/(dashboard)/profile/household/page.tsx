@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { getMyHouseholds, getHousehold, getHouseholdPendingInvites } from "@/data/household";
+import { getMyHouseholds, getHousehold, getHouseholdDeletionPreview, getHouseholdPendingInvites } from "@/data/household";
 import { getMySubscription } from "@/data/subscription";
 import { HouseholdSwitcherForm, CreateHouseholdForm } from "./parts/ActiveHouseholdControls";
 import { InvitationInbox } from "./parts/InvitationInbox";
 import { MemberList } from "./parts/MemberList";
 import { InviteForm } from "./parts/InviteForm";
 import { LeaveHouseholdButton } from "./parts/LeaveHouseholdButton";
+import { DeleteHouseholdButton } from "./parts/DeleteHouseholdButton";
 import { ProUpsell } from "@/components/billing/ProUpsell";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +36,10 @@ export default async function HouseholdSettingsPage({
 
 	const focusedSummary = focusedId ? my.households.find((h) => h.id === focusedId) : null;
 	const isAdmin = focusedSummary?.myRole === "admin" || focusedSummary?.myRole === "owner";
+	// The server decides who owns a household; only its owner sees Delete.
+	// The delete endpoint checks again, so this only hides a control.
+	const deletion = isAdmin && detail ? await getHouseholdDeletionPreview(detail.id) : null;
+	const canDelete = deletion?.status === "Ready" || deletion?.status === "HasOtherMembers";
 
 	return (
 		<div className="space-y-6 lg:space-y-8">
@@ -85,10 +90,13 @@ export default async function HouseholdSettingsPage({
 										{focusedSummary?.myRole ? ` • you are ${focusedSummary.myRole}` : ""}
 									</p>
 								</div>
-								<LeaveHouseholdButton
-									householdId={detail.id}
-									disabled={!focusedSummary}
-								/>
+								<div className="flex shrink-0 flex-wrap justify-end gap-2">
+									<LeaveHouseholdButton
+										householdId={detail.id}
+										disabled={!focusedSummary}
+									/>
+									{canDelete && <DeleteHouseholdButton householdId={detail.id} />}
+								</div>
 							</div>
 							<MemberList
 								householdId={detail.id}
