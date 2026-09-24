@@ -178,3 +178,69 @@ export async function removeHouseholdMember(householdId: string, userId: string)
 		return { success: false, message: "Could not remove member." };
 	}
 }
+
+export interface HouseholdDeletionPreview {
+	householdId: string;
+	householdName: string;
+	otherMemberCount: number;
+	shoppingListCount: number;
+	shoppingListItemCount: number;
+	mealPlanCount: number;
+	mealPlanRecipeCount: number;
+	pendingInvitationCount: number;
+	version: string;
+}
+
+export type HouseholdDeletionStatus =
+	| "Ready"
+	| "Deleted"
+	| "NotFound"
+	| "NotOwner"
+	| "HasOtherMembers"
+	| "PlansNotConfirmed"
+	| "Stale";
+
+export interface HouseholdDeletionResult {
+	status: HouseholdDeletionStatus;
+	message?: string | null;
+	preview?: HouseholdDeletionPreview | null;
+}
+
+// Refusals (403, 404, 409) carry the same result shape with a fresh preview,
+// so they are returned rather than thrown.
+function deletionResult(error: unknown): HouseholdDeletionResult | null {
+	if (error instanceof ApiError && error.body && typeof error.body === "object" && "status" in error.body)
+		return error.body as HouseholdDeletionResult;
+	return null;
+}
+
+export async function getHouseholdDeletionPreview(householdId: string): Promise<HouseholdDeletionResult> {
+	try {
+		return await serverApi<HouseholdDeletionResult>(`/api/Households/${householdId}/deletion`);
+	} catch (error) {
+		const refusal = deletionResult(error);
+		if (refusal) return refusal;
+		householdLogger.error("Household deletion preview failed", { error, householdId });
+		return { status: "NotFound", message: "Could not check this household." };
+	}
+}
+
+export async function deleteHousehold(
+	householdId: string,
+	version: string,
+	deletePlans: boolean,
+): Promise<HouseholdDeletionResult> {
+	try {
+		const result = await serverApi<HouseholdDeletionResult>(`/api/Households/${householdId}`, {
+			method: "DELETE",
+			body: { version, deletePlans },
+		});
+		revalidatePath("/", "layout");
+		return result;
+	} catch (error) {
+		const refusal = deletionResult(error);
+		if (refusal) return refusal;
+		householdLogger.error("Delete household failed", { error, householdId });
+		return { status: "Stale", message: "Could not delete the household. Nothing was changed. Try again." };
+	}
+}

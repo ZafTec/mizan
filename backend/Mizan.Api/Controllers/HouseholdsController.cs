@@ -115,6 +115,33 @@ public class HouseholdsController : ControllerBase
         return Ok(result);
     }
 
+    // ---------- Owner deletion ----------
+
+    [HttpGet("{id:guid}/deletion")]
+    public async Task<ActionResult<HouseholdDeletionResult>> GetDeletionPreview(Guid id)
+    {
+        if (!_currentUser.UserId.HasValue) return Unauthorized();
+        return DeletionResponse(await _mediator.Send(new GetHouseholdDeletionPreviewQuery(id, _currentUser.UserId.Value)));
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<ActionResult<HouseholdDeletionResult>> Delete(Guid id, [FromBody] DeleteHouseholdRequest request)
+    {
+        if (!_currentUser.UserId.HasValue) return Unauthorized();
+        return DeletionResponse(await _mediator.Send(
+            new DeleteHouseholdCommand(id, _currentUser.UserId.Value, request.Version, request.DeletePlans)));
+    }
+
+    private ActionResult<HouseholdDeletionResult> DeletionResponse(HouseholdDeletionResult result) => result.Status switch
+    {
+        HouseholdDeletionStatus.NotFound => NotFound(result),
+        HouseholdDeletionStatus.NotOwner => StatusCode(StatusCodes.Status403Forbidden, result),
+        HouseholdDeletionStatus.Ready or HouseholdDeletionStatus.Deleted => Ok(result),
+        // A preview of a household with other members is informative, not an error.
+        HouseholdDeletionStatus.HasOtherMembers when HttpContext.Request.Method == HttpMethods.Get => Ok(result),
+        _ => Conflict(result)
+    };
+
     // ---------- Admin endpoints ----------
 
     [HttpGet("admin/all")]
@@ -154,3 +181,4 @@ public record CreateHouseholdRequest(string Name);
 public record SetActiveHouseholdRequest(Guid? HouseholdId);
 public record InviteMemberRequest(string Email, string? Role);
 public record RespondInvitationRequest(string Action);
+public record DeleteHouseholdRequest(string Version, bool DeletePlans);
