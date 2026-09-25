@@ -84,7 +84,9 @@ public class PaddleApiClient : IPaddleApiClient
         foreach (var product in list.RootElement.GetProperty("data").EnumerateArray())
         {
             if (product.TryGetProperty("custom_data", out var custom)
+                && custom.ValueKind == JsonValueKind.Object
                 && PaddleSubscriptionState.GetString(custom, "plan") == plan
+                && PaddleSubscriptionState.GetString(custom, "product") is null or PaddleSubscriptionState.ProductTag
                 && PaddleSubscriptionState.GetString(product, "id") is { } existing)
             {
                 return existing;
@@ -96,7 +98,7 @@ public class PaddleApiClient : IPaddleApiClient
             ["name"] = name,
             ["description"] = description,
             ["tax_category"] = "standard",
-            ["custom_data"] = new JsonObject { ["plan"] = plan }
+            ["custom_data"] = new JsonObject { ["plan"] = plan, ["product"] = PaddleSubscriptionState.ProductTag }
         };
         using var created = await SendAsync(HttpMethod.Post, "products", body, cancellationToken);
         return created.RootElement.GetProperty("data").GetProperty("id").GetString()!;

@@ -74,6 +74,17 @@ public class ProcessPaddleWebhookCommandHandler
             return new ProcessPaddleWebhookResult { Handled = false };
         }
 
+        // Another ZafTech app on the shared Paddle account. Stop before any
+        // lookup: matching by customer id would otherwise attach its
+        // subscription to a Mizan subscriber who paid with the same email,
+        // because Paddle keeps one customer per email.
+        if (PaddleSubscriptionState.BelongsToAnotherProduct(data))
+        {
+            _logger.LogInformation("Paddle {EventType} belongs to another product on the shared account; ignoring", eventType);
+            await _context.SaveChangesAsync(cancellationToken);
+            return new ProcessPaddleWebhookResult { Handled = true };
+        }
+
         // Paddle can deliver multiple events for one checkout (e.g. subscription.created
         // and subscription.trialing) in close succession. Two concurrent requests can
         // both see "no row for this user" and both try to insert, tripping the unique
