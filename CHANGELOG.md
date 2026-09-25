@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.2](https://github.com/ZafTec/mizan/compare/v3.2.1...v3.2.2) (2026-09-25)
+
+
+### Bug Fixes
+
+* **billing:** ignore other ZafTech apps on the shared Paddle account ([#104](https://github.com/ZafTec/mizan/issues/104)) ([1cf9a40](https://github.com/ZafTec/mizan/commit/1cf9a4070754cfe747fe697160c62fb46e4e7f33))
+
 ## [3.2.1](https://github.com/ZafTec/mizan/compare/v3.2.0...v3.2.1) (2026-09-24)
 
 
