@@ -49,7 +49,8 @@ export async function openCheckout(params: {
 
   const options: CheckoutOpenOptions = {
     items: [{ priceId: params.priceId, quantity: 1 }],
-    customData: { user_id: params.userId },
+    // "product" separates Mizan from other ZafTech apps on the same Paddle account.
+    customData: { product: 'mizan', user_id: params.userId },
     ...(params.email ? { customer: { email: params.email } } : {}),
     ...(params.discountId ? { discountId: params.discountId } : {}),
   };
