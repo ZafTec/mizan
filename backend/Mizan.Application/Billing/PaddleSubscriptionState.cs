@@ -11,6 +11,13 @@ namespace Mizan.Application.Billing;
 /// </summary>
 public sealed record PaddleSubscriptionState
 {
+    /// <summary>
+    /// Mizan's value of custom_data.product. One Paddle account serves several
+    /// ZafTech apps, and every notification destination receives all of their
+    /// events, so each app tags its checkouts and products.
+    /// </summary>
+    public const string ProductTag = "mizan";
+
     public string? Id { get; init; }
     public string? CustomerId { get; init; }
     public string Status { get; init; } = "active";
@@ -66,6 +73,16 @@ public sealed record PaddleSubscriptionState
         sub.PaddleUpdatedAt = UpdatedAt ?? sub.PaddleUpdatedAt;
         sub.UpdatedAt = now;
     }
+
+    /// <summary>
+    /// True when custom_data.product names another app (for example Convia).
+    /// Untagged entities are Mizan's: checkouts before the tag carry only user_id.
+    /// </summary>
+    public static bool BelongsToAnotherProduct(JsonElement data) =>
+        data.TryGetProperty("custom_data", out var cd)
+        && cd.ValueKind == JsonValueKind.Object
+        && GetString(cd, "product") is { } product
+        && product != ProductTag;
 
     public static Guid? UserIdFrom(JsonElement data)
     {

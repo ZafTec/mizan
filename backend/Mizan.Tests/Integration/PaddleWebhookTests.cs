@@ -77,4 +77,41 @@ public class PaddleWebhookTests(ApiTestFixture fixture)
         // Paddle redelivers; the second copy is acknowledged and changes nothing.
         (await PostAsync(paddle, body, Sign(body, ApiTestFixture.PaddleWebhookSecret))).StatusCode.Should().Be(HttpStatusCode.OK);
     }
+
+    [Fact]
+    public async Task AnotherAppsEventForTheSameCustomer_LeavesTheMizanSubscriptionAlone()
+    {
+        await fixture.ResetDatabaseAsync();
+        var userId = Guid.NewGuid();
+        var email = $"shared-{userId:N}@example.com";
+        await fixture.SeedUserAsync(userId, email);
+        using var user = fixture.CreateAuthenticatedClient(userId, email);
+        using var paddle = fixture.CreateClient();
+
+        var mizan = Payload(userId, $"evt_{Guid.NewGuid():N}");
+        (await PostAsync(paddle, mizan, Sign(mizan, ApiTestFixture.PaddleWebhookSecret))).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await user.GetFromJsonAsync<MySubscriptionDto>("/api/Subscriptions/me"))!.IsPro.Should().BeTrue();
+
+        // A Convia subscription on the same Paddle account and the same
+        // customer (Paddle keeps one customer per email), now canceled.
+        var convia = JsonSerializer.Serialize(new
+        {
+            event_id = $"evt_{Guid.NewGuid():N}",
+            event_type = "subscription.canceled",
+            data = new
+            {
+                id = "sub_convia",
+                customer_id = "ctm_test",
+                status = "canceled",
+                custom_data = new { product = "convia", org_id = "org_1", user_id = "7s6h6RwyVIB9norQZawEWf76op42ncfx" },
+                items = new[] { new { price = new { id = "pri_convia_pro" } } },
+                canceled_at = "2026-09-25T00:00:00Z"
+            }
+        });
+        (await PostAsync(paddle, convia, Sign(convia, ApiTestFixture.PaddleWebhookSecret))).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var subscription = await user.GetFromJsonAsync<MySubscriptionDto>("/api/Subscriptions/me");
+        subscription!.IsPro.Should().BeTrue();
+        subscription.Status.Should().Be("active");
+    }
 }
