@@ -1,4 +1,9 @@
+using Microsoft.AspNetCore.HttpOverrides;
+using Mizan.Contracts.Mcp;
 using Mizan.Mcp.Server.Authentication;
+using Mizan.Mcp.Server.Authorization;
+using ModelContextProtocol.AspNetCore.Authentication;
+using ModelContextProtocol.Authentication;
 using Mizan.Mcp.Server.Services;
 using Mizan.Mcp.Server.Tools;
 using Mizan.Mcp.Server.Logging;
@@ -19,10 +24,30 @@ var builder = WebApplication.CreateBuilder(args);
 Log.Logger = McpLoggingConfiguration.CreateLogger(builder.Configuration);
 builder.Host.UseSerilog();
 
-// Auth
-builder.Services.AddAuthentication(McpTokenAuthenticationOptions.DefaultScheme)
-    .AddScheme<McpTokenAuthenticationOptions, McpTokenAuthenticationHandler>(
-        McpTokenAuthenticationOptions.DefaultScheme, _ => { });
+// Auth: OAuth access tokens, validated by the API. A request with no token gets a 401
+// that says where to sign in (RFC 9728), which is how MCP clients start the OAuth flow.
+var publicUrl = (builder.Configuration["Mcp:PublicUrl"] ?? "http://localhost:5001/mcp").TrimEnd('/');
+var authorizationServer = (builder.Configuration["Mcp:AuthorizationServer"] ?? "http://localhost:5000/api").TrimEnd('/');
+
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = McpOAuthAuthenticationOptions.Scheme;
+        options.DefaultChallengeScheme = McpAuthenticationDefaults.AuthenticationScheme;
+    })
+    .AddScheme<McpOAuthAuthenticationOptions, McpOAuthAuthenticationHandler>(McpOAuthAuthenticationOptions.Scheme, _ => { })
+    .AddMcp(options =>
+    {
+        // Served under /mcp, which production already routes here, so no new proxy route is needed.
+        options.ResourceMetadataUri = new Uri(publicUrl + "/.well-known/oauth-protected-resource");
+        options.ResourceMetadata = new ProtectedResourceMetadata
+        {
+            Resource = publicUrl,
+            AuthorizationServers = { authorizationServer },
+            ScopesSupported = McpScopes.All.Where(scope => scope != McpScopes.Admin).ToList(),
+            ResourceName = "Mizan",
+            BearerMethodsSupported = { "header" },
+        };
+    });
 builder.Services.AddAuthorization();
 builder.Services.AddMemoryCache();
 
@@ -120,12 +145,15 @@ builder.Services.AddMcpServer(options =>
     options.ServerInfo = new()
     {
         Name = "mizan-mcp",
-        Version = "2.0.0"
+        Version = "3.0.0"
     };
+    options.ServerInstructions = McpServerInstructions.Text;
 })
 .WithHttpTransport(http =>
 {
-    http.Stateless = builder.Configuration.GetValue<bool>("Mcp:Stateless", false);
+    // Stateless: no session to pin a client to one instance. Older clients that
+    // still send initialize are served the same way.
+    http.Stateless = builder.Configuration.GetValue("Mcp:Stateless", true);
     http.IdleTimeout = TimeSpan.FromMinutes(30);
 })
 .WithTools<FoodTools>()
@@ -148,9 +176,30 @@ builder.Services.AddMcpServer(options =>
 .WithTools<TrainerTools>()
 .WithTools<AiTools>()
 .WithTools<UploadTools>()
-.AddAuthorizationFilters()
 .WithRequestFilters(filters =>
 {
+    // A connected app sees only the tools its grant covers, so a read-only
+    // connection never even learns that write tools exist.
+    filters.AddListToolsFilter(next => async (context, cancellationToken) =>
+    {
+        var result = await next(context, cancellationToken);
+        var held = HeldScopes(context.Server.Services?.GetService<IHttpContextAccessor>()?.HttpContext);
+
+        result.Tools = result.Tools
+            .Where(tool => McpToolScopes.TryGet(tool.Name, out var scope) && McpScopes.Allows(held, scope))
+            .ToList();
+
+        foreach (var tool in result.Tools)
+        {
+            tool.Title ??= McpToolText.Title(tool.Name);
+            tool.Annotations ??= new ToolAnnotations();
+            // Every tool talks only to Mizan, never to the open internet.
+            tool.Annotations.OpenWorldHint = false;
+        }
+
+        return result;
+    });
+
     filters.AddCallToolFilter(next => async (context, cancellationToken) =>
     {
         var httpContext = context.Server.Services?.GetService<IHttpContextAccessor>()?.HttpContext;
@@ -163,7 +212,28 @@ builder.Services.AddMcpServer(options =>
             Log.Warning("[MCP Tool] Tool call rejected - user not authenticated. Tool: {ToolName}", toolName);
             return new CallToolResult
             {
-                Content = [new TextContentBlock { Text = "Authentication required. Provide a valid MCP token." }],
+                Content = [new TextContentBlock { Text = "Authentication required. Connect Mizan from your MCP client." }],
+                IsError = true
+            };
+        }
+
+        var userId = Guid.TryParse(httpContext.User.FindFirst("sub")?.Value, out var uid) ? uid : Guid.Empty;
+        var grantId = Guid.TryParse(httpContext.User.FindFirst(GrantClaims.GrantId)?.Value, out var gid) ? gid : Guid.Empty;
+        var backend = httpContext.RequestServices.GetService<IBackendApiClient>();
+
+        // Fail closed: a tool with no scope on record is refused, and so is one the grant does not cover.
+        if (!McpToolScopes.TryGet(toolName, out var requiredScope)
+            || !McpScopes.Allows(HeldScopes(httpContext), requiredScope))
+        {
+            Log.Warning("[MCP Tool] Tool call refused by grant. Tool: {ToolName}", toolName);
+            if (backend != null && userId != Guid.Empty && grantId != Guid.Empty)
+            {
+                await backend.LogUsageAsync(grantId, userId, "tool", toolName, false, "Not allowed by the connection", 0);
+            }
+
+            return new CallToolResult
+            {
+                Content = [new TextContentBlock { Text = McpToolText.NotAllowed(toolName, requiredScope) }],
                 IsError = true
             };
         }
@@ -179,7 +249,6 @@ builder.Services.AddMcpServer(options =>
             };
         }
 
-        var userId = Guid.TryParse(httpContext.User.FindFirst("sub")?.Value, out var uid) ? uid : Guid.Empty;
         Log.Debug("[MCP Tool] Tool: {ToolName}, UserId: {UserId}", toolName, userId);
 
         using var activity = mcpActivitySource.StartActivity($"Tool:{toolName}");
@@ -203,12 +272,9 @@ builder.Services.AddMcpServer(options =>
             Log.Information("[MCP Tool] Tool succeeded: {ToolName} (elapsed: {ElapsedMs}ms, error: {IsError})",
                 toolName, sw.ElapsedMilliseconds, result.IsError);
 
-            var backend = httpContext.RequestServices.GetService<IBackendApiClient>();
-            var tokenId = Guid.TryParse(httpContext.User.FindFirst("mcp_token_id")?.Value, out var tid) ? tid : Guid.Empty;
-
-            if (backend != null && userId != Guid.Empty)
+            if (backend != null && userId != Guid.Empty && grantId != Guid.Empty)
             {
-                await backend.LogUsageAsync(tokenId, userId, toolName, null, result.IsError != true, null, (int)sw.ElapsedMilliseconds);
+                await backend.LogUsageAsync(grantId, userId, "tool", toolName, result.IsError != true, null, (int)sw.ElapsedMilliseconds);
             }
 
             return result;
@@ -229,12 +295,9 @@ builder.Services.AddMcpServer(options =>
             Log.Error("[MCP Tool] Tool failed: {ToolName} (elapsed: {ElapsedMs}ms, error: {Error})",
                 toolName, sw.ElapsedMilliseconds, ex.Message);
 
-            var backend = httpContext.RequestServices.GetService<IBackendApiClient>();
-            var tokenId = Guid.TryParse(httpContext.User.FindFirst("mcp_token_id")?.Value, out var tid) ? tid : Guid.Empty;
-
-            if (backend != null && userId != Guid.Empty)
+            if (backend != null && userId != Guid.Empty && grantId != Guid.Empty)
             {
-                await backend.LogUsageAsync(tokenId, userId, toolName, null, false, ex.Message, (int)sw.ElapsedMilliseconds);
+                await backend.LogUsageAsync(grantId, userId, "tool", toolName, false, ex.Message, (int)sw.ElapsedMilliseconds);
             }
 
             return new CallToolResult
@@ -246,6 +309,10 @@ builder.Services.AddMcpServer(options =>
     });
 });
 
+static IReadOnlyList<string> HeldScopes(HttpContext? httpContext) =>
+    (httpContext?.User.FindFirst(GrantClaims.Scopes)?.Value ?? string.Empty)
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
 var app = builder.Build();
 
 var showMcpLogs = app.Configuration.GetValue<bool>("SHOW_MCP_LOGS", false);
@@ -253,10 +320,32 @@ Log.Information("Mizan MCP Server v2.0.0 starting on {Urls}", string.Join(", ", 
 Log.Information("[MCP] Detailed logging enabled: {Enabled}", showMcpLogs);
 Log.Information("[MCP] Environment: {Environment}", builder.Configuration["ASPNETCORE_ENVIRONMENT"]);
 
+// Behind the reverse proxy the request says http and an internal host. Without these
+// headers the protected resource metadata would advertise the wrong address.
+var forwarded = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost,
+};
+forwarded.KnownIPNetworks.Clear();
+forwarded.KnownProxies.Clear();
+app.UseForwardedHeaders(forwarded);
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapMcp("/mcp");
+app.MapMcp("/mcp").RequireAuthorization();
+
+// Where the 401 points clients. Under /mcp, which production already routes to this
+// service, so signing in needs no extra proxy route. The SDK also serves the standard
+// root /.well-known path for clients that look there.
+app.MapGet("/mcp/.well-known/oauth-protected-resource", () => Results.Json(new Dictionary<string, object>
+{
+    ["resource"] = publicUrl,
+    ["authorization_servers"] = new[] { authorizationServer },
+    ["scopes_supported"] = McpScopes.All.Where(scope => scope != McpScopes.Admin).ToArray(),
+    ["bearer_methods_supported"] = new[] { "header" },
+    ["resource_name"] = "Mizan",
+})).AllowAnonymous();
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "mizan-mcp", version = "2.0.0" }));
 app.MapPrometheusScrapingEndpoint();
 
