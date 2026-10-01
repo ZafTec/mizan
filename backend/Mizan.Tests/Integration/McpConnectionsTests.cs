@@ -301,6 +301,25 @@ public class McpConnectionsTests
     }
 
     [Fact]
+    public async Task OnlyCallsThatReadOrChangeData_CountTowardTheFreePlanCap()
+    {
+        var w = await WorldAsync();
+        var access = await _fixture.CreateMcpAccessAsync(w.User);
+        await LogUsageAsync(w.User, access.GrantId, "search_foods", success: true);
+        await LogUsageAsync(w.User, access.GrantId, "log_food", success: false);
+        for (var i = 0; i < 5; i++) await LogUsageAsync(w.User, access.GrantId, "weekly_review", success: true, kind: "prompt");
+        await LogUsageAsync(w.User, access.GrantId, "mizan://profile", success: true, kind: "resource");
+
+        using var service = _fixture.CreateClient();
+        service.DefaultRequestHeaders.Add("X-Api-Key", "test-api-key");
+        var response = await service.PostAsJsonAsync("/api/oauth/introspect", new { token = access.Token, audience = "mcp" });
+        var info = await response.Content.ReadFromJsonAsync<JsonElement>();
+
+        info.GetProperty("monthlyLimit").GetInt32().Should().Be(15);
+        info.GetProperty("usedThisMonth").GetInt32().Should().Be(2, "a tool and a resource read count; a failure and prompts do not");
+    }
+
+    [Fact]
     public async Task Usage_IsRecordedAgainstTheConnection_AndAppearsInAnalytics()
     {
         var w = await WorldAsync();
@@ -445,13 +464,13 @@ public class McpConnectionsTests
         return grant.Id;
     }
 
-    private async Task LogUsageAsync(Guid user, Guid grant, string tool, bool success)
+    private async Task LogUsageAsync(Guid user, Guid grant, string tool, bool success, string kind = "tool")
     {
         using var scope = _fixture.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
         db.McpUsageLogs.Add(new McpUsageLog
         {
-            Id = Guid.NewGuid(), UserId = user, GrantId = grant, ToolName = tool, Success = success,
+            Id = Guid.NewGuid(), UserId = user, GrantId = grant, ToolName = tool, Success = success, Kind = kind,
             ExecutionTimeMs = 5, Timestamp = DateTime.UtcNow,
         });
         await db.SaveChangesAsync();

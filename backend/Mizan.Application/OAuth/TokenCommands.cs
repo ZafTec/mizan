@@ -245,7 +245,7 @@ public class IntrospectOAuthTokenQueryHandler : IRequestHandler<IntrospectOAuthT
             .Where(s => s.UserId == grant.UserId).Select(s => s.Plan).FirstOrDefaultAsync(cancellationToken) ?? "free";
         var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var used = await _context.McpUsageLogs.CountAsync(
-            l => l.UserId == grant.UserId && l.Success && l.Timestamp >= monthStart, cancellationToken);
+            l => l.UserId == grant.UserId && l.Success && l.Kind != "prompt" && l.Timestamp >= monthStart, cancellationToken);
 
         // Admin stays tied to the account's current role, not to what it was at consent time.
         var scopes = status.Role == "admin" ? grant.Scopes : grant.Scopes.Where(s => s != McpScopes.Admin).ToList();
