@@ -8,7 +8,10 @@ using Mizan.Domain.Identity;
 
 namespace Mizan.Application.Auth;
 
-public record VerifyEmailCommand(string Token) : IRequest<Unit>;
+public record VerifyEmailCommand(string Token) : IRequest<Unit>, IRedactedAudit
+{
+    object IRedactedAudit.AuditDetails => new { Verified = true };
+}
 
 public class VerifyEmailCommandHandler : IRequestHandler<VerifyEmailCommand, Unit>
 {

@@ -15,7 +15,10 @@ namespace Mizan.Application.Auth;
 /// UTC until they set one in settings.
 /// </summary>
 public record RegisterCommand(string Email, string Password, string? Name, string? TimeZoneId = null)
-    : IRequest<Unit>;
+    : IRequest<Unit>, IRedactedAudit
+{
+    object IRedactedAudit.AuditDetails => new { Email, Name, TimeZoneId };
+}
 
 public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
 {

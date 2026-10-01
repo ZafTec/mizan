@@ -62,6 +62,10 @@ public interface IMizanDbContext
     DbSet<AiEvalRun> AiEvalRuns { get; }
     DbSet<McpToken> McpTokens { get; }
     DbSet<McpUsageLog> McpUsageLogs { get; }
+    DbSet<OAuthClient> OAuthClients { get; }
+    DbSet<OAuthGrant> OAuthGrants { get; }
+    DbSet<OAuthAuthorizationRequest> OAuthAuthorizationRequests { get; }
+    DbSet<OAuthToken> OAuthTokens { get; }
 
     // Billing
     DbSet<Subscription> Subscriptions { get; }

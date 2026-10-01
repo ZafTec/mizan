@@ -41,6 +41,10 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         "chat_messages",
         "chat_conversations",
         "trainer_client_relationships",
+        "oauth_tokens",
+        "oauth_authorization_requests",
+        "oauth_grants",
+        "oauth_clients",
         "mcp_usage_logs",
         "mcp_tokens",
         "goal_progress",
@@ -173,7 +177,15 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
                 // calls Telegram, so nothing here reaches the network.
                 ["Telegram:BotUsername"] = "mizan_test_bot",
                 // Webhook tests sign their own payloads with this.
-                ["Paddle:WebhookSecret"] = PaddleWebhookSecret
+                ["Paddle:WebhookSecret"] = PaddleWebhookSecret,
+                ["OAuth:Issuer"] = "http://localhost/api",
+                ["OAuth:McpResource"] = "http://localhost/mcp",
+                ["OAuth:ConsentUrl"] = "http://localhost/oauth/consent",
+                ["OAuth:FirstPartyClients:0:ClientId"] = "test-first-party",
+                ["OAuth:FirstPartyClients:0:Name"] = "Mizan Test App",
+                ["OAuth:FirstPartyClients:0:RedirectUris:0"] = "com.zaftech.mizan.test:/oauth2redirect",
+                ["RateLimits:OAuth:PermitLimit"] = "100000",
+                ["RateLimits:OAuthRegister:PermitLimit"] = "100000"
             };
 
             config.AddInMemoryCollection(settings);
@@ -219,6 +231,11 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             // exercise the schema-validation path.
             services.RemoveAll<IAiProvider>();
             services.AddSingleton<IAiProvider>(Ai);
+
+            // Metadata clients are described by a document on the open internet.
+            // Tests describe them here instead.
+            services.RemoveAll<IOAuthClientMetadataFetcher>();
+            services.AddSingleton<IOAuthClientMetadataFetcher>(OAuthMetadata);
 
             // Nothing in a test run may reach Paddle either.
             services.RemoveAll<IPaddleApiClient>();
@@ -277,6 +294,8 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     public ScriptedAiProvider Ai { get; } = new();
 
     public FakePaddleApiClient Paddle { get; } = new();
+
+    public FakeOAuthMetadataFetcher OAuthMetadata { get; } = new();
     public const string PaddleWebhookSecret = "test-paddle-webhook-secret";
 
     /// <summary>
@@ -790,4 +809,23 @@ public sealed class CommandCounterScope : IDisposable
     public int Count => _counter.Count;
 
     public void Dispose() => _counter.Enabled = false;
+}
+
+
+/// <summary>Serves client metadata documents a test registered, and fails for any other URL.</summary>
+public sealed class FakeOAuthMetadataFetcher : IOAuthClientMetadataFetcher
+{
+    private readonly Dictionary<string, OAuthClientMetadata> _documents = new();
+
+    public int Fetches { get; private set; }
+
+    public void Serve(OAuthClientMetadata metadata) => _documents[metadata.ClientId] = metadata;
+
+    public Task<OAuthClientMetadata> FetchAsync(string clientIdUrl, CancellationToken cancellationToken)
+    {
+        Fetches++;
+        return _documents.TryGetValue(clientIdUrl, out var metadata)
+            ? Task.FromResult(metadata)
+            : throw new Mizan.Application.OAuth.OAuthException("invalid_client", "The client metadata document could not be loaded.");
+    }
 }

@@ -21,6 +21,7 @@ public static class DependencyInjection
 
         services.AddValidatorsFromAssembly(assembly);
         services.AddScoped<Commands.SubscriberBilling>();
+        services.AddScoped<OAuth.OAuthClientResolver>();
 
         return services;
     }

@@ -234,6 +234,25 @@ builder.Services.AddRateLimiter(options =>
             Window = TimeSpan.FromMinutes(5),
             QueueLimit = 0
         }));
+    // The OAuth endpoints are public by design, so they are limited per IP.
+    options.AddPolicy("OAuth", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = context.RequestServices.GetRequiredService<IConfiguration>()
+                .GetValue("RateLimits:OAuth:PermitLimit", 120),
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+    options.AddPolicy("OAuthRegister", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = context.RequestServices.GetRequiredService<IConfiguration>()
+                .GetValue("RateLimits:OAuthRegister:PermitLimit", 20),
+            Window = TimeSpan.FromHours(1),
+            QueueLimit = 0
+        }));
     options.AddPolicy("AnonymousSocial", context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions
@@ -304,6 +323,13 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod()
             .AllowCredentials();
     });
+    // Token, register, revoke and discovery are called by software and by
+    // browser-based clients from any origin. They carry no cookie, so allowing
+    // every origin exposes nothing that a bearer of the right secret could not do.
+    options.AddPolicy(Mizan.Api.Controllers.OAuthController.PublicCorsPolicy, policy => policy
+        .AllowAnyOrigin()
+        .WithHeaders("Content-Type", "Authorization", "MCP-Protocol-Version")
+        .WithMethods("GET", "POST", "OPTIONS"));
 });
 
 builder.Services.AddHealthChecks()
