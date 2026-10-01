@@ -1904,6 +1904,67 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("household_members", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.McpTask", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("ErrorJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("error_json");
+
+                    b.Property<Guid?>("GrantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("grant_id");
+
+                    b.Property<int>("PollIntervalMs")
+                        .HasColumnType("integer")
+                        .HasColumnName("poll_interval_ms");
+
+                    b.Property<string>("ResultJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("result_json");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("StatusMessage")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("status_message");
+
+                    b.Property<int>("TtlSeconds")
+                        .HasColumnType("integer")
+                        .HasColumnName("ttl_seconds");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.ToTable("mcp_tasks", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.McpUsageLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4205,6 +4266,17 @@ namespace Mizan.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Household");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.McpTask", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });

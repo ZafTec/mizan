@@ -1,6 +1,7 @@
 using System.Net;
 using System.Security.Claims;
 using System.Text.Json;
+using Mizan.Mcp.Server.Authorization;
 
 namespace Mizan.Mcp.Server.Services;
 
@@ -79,7 +80,7 @@ public sealed class BackendApiClient : IBackendApiClient
 
     private Guid GetUserId()
     {
-        var user = _httpContextAccessor.HttpContext?.User;
+        var user = McpCallIdentity.Of(_httpContextAccessor.HttpContext);
         var claim = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? user?.FindFirst("sub")?.Value;
         return Guid.Parse(claim ?? throw new UnauthorizedAccessException("No user context"));
     }
@@ -87,7 +88,7 @@ public sealed class BackendApiClient : IBackendApiClient
     private HttpRequestMessage CreateRequest(HttpMethod method, string endpoint, object? body = null)
     {
         var request = new HttpRequestMessage(method, endpoint);
-        var user = _httpContextAccessor.HttpContext?.User;
+        var user = McpCallIdentity.Of(_httpContextAccessor.HttpContext);
         var isAdmin = user?.IsInRole("admin") == true || string.Equals(user?.FindFirst("role")?.Value, "admin", StringComparison.OrdinalIgnoreCase);
         request.Headers.Add("X-Api-Key", isAdmin ? _adminServiceApiKey : _serviceApiKey);
         request.Headers.Add("X-Impersonate-User", GetUserId().ToString());
