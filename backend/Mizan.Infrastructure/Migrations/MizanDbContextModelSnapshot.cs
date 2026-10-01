@@ -1904,60 +1904,6 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("household_members", (string)null);
                 });
 
-            modelBuilder.Entity("Mizan.Domain.Entities.McpToken", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<DateTime?>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("expires_at");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("is_active");
-
-                    b.Property<DateTime?>("LastUsedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_used_at");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("name");
-
-                    b.Property<string>("TokenHash")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("token_hash");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TokenHash")
-                        .IsUnique();
-
-                    b.HasIndex("UserId", "IsActive");
-
-                    b.ToTable("mcp_tokens", (string)null);
-                });
-
             modelBuilder.Entity("Mizan.Domain.Entities.McpUsageLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1987,10 +1933,6 @@ namespace Mizan.Infrastructure.Migrations
                         .HasDefaultValue("tool")
                         .HasColumnName("kind");
 
-                    b.Property<Guid?>("McpTokenId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("mcp_token_id");
-
                     b.Property<string>("Parameters")
                         .HasColumnType("jsonb")
                         .HasColumnName("parameters");
@@ -2018,8 +1960,6 @@ namespace Mizan.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("GrantId");
-
-                    b.HasIndex("McpTokenId");
 
                     b.HasIndex("ToolName");
 
@@ -4269,27 +4209,11 @@ namespace Mizan.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Mizan.Domain.Entities.McpToken", b =>
-                {
-                    b.HasOne("Mizan.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Mizan.Domain.Entities.McpUsageLog", b =>
                 {
                     b.HasOne("Mizan.Domain.Entities.OAuthGrant", "Grant")
                         .WithMany()
                         .HasForeignKey("GrantId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("Mizan.Domain.Entities.McpToken", "McpToken")
-                        .WithMany()
-                        .HasForeignKey("McpTokenId")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Mizan.Domain.Entities.User", "User")
@@ -4299,8 +4223,6 @@ namespace Mizan.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Grant");
-
-                    b.Navigation("McpToken");
 
                     b.Navigation("User");
                 });

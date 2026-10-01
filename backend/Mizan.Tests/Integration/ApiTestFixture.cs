@@ -46,7 +46,6 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         "oauth_grants",
         "oauth_clients",
         "mcp_usage_logs",
-        "mcp_tokens",
         "goal_progress",
         "user_goals",
         "food_diary_entries",
@@ -154,7 +153,6 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
                 ["ConnectionStrings:Redis"] = _redisConnectionString,
                 ["Mcp:ServiceApiKey"] = "test-api-key",
                 ["Mcp:AdminServiceApiKey"] = "test-admin-api-key",
-                ["RateLimits:McpTokenValidation:PermitLimit"] = "10000",
                 ["RateLimits:AuthCredentials:PermitLimit"] = "10000",
                 ["RateLimits:AuthEmail:PermitLimit"] = "10000",
                 // Small AI ceilings so quota tests exercise the limits in a
@@ -339,7 +337,6 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             db.ChatConversations.RemoveRange(db.ChatConversations);
             db.TrainerClientRelationships.RemoveRange(db.TrainerClientRelationships);
             db.McpUsageLogs.RemoveRange(db.McpUsageLogs);
-            db.McpTokens.RemoveRange(db.McpTokens);
             db.GoalProgress.RemoveRange(db.GoalProgress);
             db.UserGoals.RemoveRange(db.UserGoals);
             db.FoodDiaryEntries.RemoveRange(db.FoodDiaryEntries);
@@ -585,7 +582,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         return food;
     }
 
-    public async Task<McpUsageLog> SeedMcpUsageLogAsync(Guid tokenId, Guid userId, string toolName, bool success, int executionTimeMs)
+    public async Task<McpUsageLog> SeedMcpUsageLogAsync(Guid grantId, Guid userId, string toolName, bool success, int executionTimeMs)
     {
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
@@ -593,7 +590,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         var log = new McpUsageLog
         {
             Id = Guid.NewGuid(),
-            McpTokenId = tokenId,
+            GrantId = grantId,
             UserId = userId,
             ToolName = toolName,
             Parameters = "{}",
@@ -605,6 +602,39 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         db.McpUsageLogs.Add(log);
         await db.SaveChangesAsync();
         return log;
+    }
+
+    public sealed record McpAccess(string Token, Guid GrantId);
+
+    /// <summary>
+    /// An OAuth access token for the MCP server, minted directly. The flow itself is
+    /// covered in OAuthFlowTests; tests that exercise tools only need a valid token.
+    /// Scopes default to everything the user may hold.
+    /// </summary>
+    public async Task<McpAccess> CreateMcpAccessAsync(Guid userId, string[]? scopes = null, string householdMode = "all", Guid[]? households = null)
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+        var settings = scope.ServiceProvider.GetRequiredService<IOAuthSettings>();
+        var isAdmin = await db.Users.Where(u => u.Id == userId).Select(u => u.Role == "admin").SingleAsync();
+
+        var now = DateTime.UtcNow;
+        var client = new OAuthClient
+        {
+            Id = Guid.NewGuid(), ClientId = "mzc_" + SecureToken.Generate()[..16], Name = "Test Assistant",
+            RedirectUris = ["http://localhost:1/cb"], Source = OAuthClient.SourceDynamic, CreatedAt = now,
+        };
+        var grant = new OAuthGrant
+        {
+            Id = Guid.NewGuid(), UserId = userId, ClientId = client.Id,
+            Scopes = Mizan.Contracts.Mcp.McpScopes.Normalize(scopes ?? Mizan.Contracts.Mcp.McpScopes.All.ToArray(), isAdmin),
+            HouseholdMode = householdMode, HouseholdIds = (households ?? []).ToList(), CreatedAt = now, UpdatedAt = now,
+        };
+        db.OAuthClients.Add(client);
+        db.OAuthGrants.Add(grant);
+        var issued = Mizan.Application.OAuth.OAuthTokens.Issue(db, settings, grant.Id, Guid.NewGuid(), "mcp", now);
+        await db.SaveChangesAsync();
+        return new McpAccess(issued.AccessToken, grant.Id);
     }
 
     public async Task<List<McpUsageLog>> GetMcpUsageLogsByUserId(Guid userId)

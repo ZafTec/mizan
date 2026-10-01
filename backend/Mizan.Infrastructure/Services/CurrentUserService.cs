@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Mcp;
 
 namespace Mizan.Infrastructure.Services;
 

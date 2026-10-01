@@ -149,12 +149,8 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         var response = await _mcpClient.PostMcpAsync(request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        jsonResponse.Should().NotBeNull();
-
-        var result = JsonSerializer.Deserialize<JsonElement>(jsonResponse!.Result!.ToString()!);
-        result.GetProperty("isError").GetBoolean().Should().BeTrue();
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.Headers.WwwAuthenticate.Should().ContainSingle(h => h.Scheme == "Bearer" && h.Parameter!.Contains("resource_metadata"));
     }
 
     [Fact]
@@ -177,12 +173,8 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         var response = await _mcpClient.PostMcpAsync(request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        jsonResponse.Should().NotBeNull();
-
-        var result = JsonSerializer.Deserialize<JsonElement>(jsonResponse!.Result!.ToString()!);
-        result.GetProperty("isError").GetBoolean().Should().BeTrue();
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.Headers.WwwAuthenticate.Should().ContainSingle(h => h.Scheme == "Bearer" && h.Parameter!.Contains("resource_metadata"));
     }
 
     #endregion
@@ -1223,18 +1215,14 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var userId = Guid.NewGuid();
         var email = $"quota-{userId:N}@example.com";
         await _apiFixture.SeedUserAsync(userId, email, emailVerified: true);
-        using var apiClient = _apiFixture.CreateAuthenticatedClient(userId, email);
-        var createResponse = await apiClient.PostAsJsonAsync("/api/McpTokens", new { Name = "Quota Token" });
-        createResponse.EnsureSuccessStatusCode();
-        var token = await createResponse.Content.ReadFromJsonAsync<CreateMcpTokenResult>();
-        token.Should().NotBeNull();
+        var access = await _apiFixture.CreateMcpAccessAsync(userId);
 
         for (var call = 0; call < 15; call++)
         {
-            await _apiFixture.SeedMcpUsageLogAsync(token!.Id, userId, "search_foods", success: true, executionTimeMs: 1);
+            await _apiFixture.SeedMcpUsageLogAsync(access.GrantId, userId, "search_foods", success: true, executionTimeMs: 1);
         }
 
-        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token!.PlaintextToken);
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", access.Token);
         var response = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "search_foods", new { search = "test" }));
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
 
@@ -1247,24 +1235,8 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
     #region Helper Methods
 
-    private async Task<string> CreateMcpTokenAsync(Guid userId)
-    {
-        var email = "test-mcp-user@example.com";
-
-        var client = _apiFixture.CreateAuthenticatedClient(userId, email);
-
-        var createResponse = await client.PostAsJsonAsync("/api/McpTokens", new { Name = "Test Token" });
-
-        if (createResponse.StatusCode != HttpStatusCode.Created)
-        {
-            var error = await createResponse.Content.ReadAsStringAsync();
-            throw new Exception($"Failed to create MCP token. Status: {createResponse.StatusCode}, Error: {error}");
-        }
-
-        var createResult = await createResponse.Content.ReadFromJsonAsync<CreateMcpTokenResult>();
-        createResult.Should().NotBeNull();
-        return createResult!.PlaintextToken;
-    }
+    private async Task<string> CreateMcpTokenAsync(Guid userId) =>
+        (await _apiFixture.CreateMcpAccessAsync(userId)).Token;
 
     private async Task<Guid> CreateShoppingListAsync(Guid userId, string name)
     {

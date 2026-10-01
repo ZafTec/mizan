@@ -165,7 +165,10 @@ services:
       ConnectionStrings__PostgreSQL: ${ConnectionStrings__PostgreSQL:?ConnectionStrings__PostgreSQL is required}
       Mcp__ServiceApiKey: ${Mcp__ServiceApiKey:?Mcp__ServiceApiKey is required}
       Mcp__AdminServiceApiKey: ${Mcp__AdminServiceApiKey:?Mcp__AdminServiceApiKey is required}
-      Mcp__Stateless: ${Mcp__Stateless:-false}
+      Mcp__Stateless: ${Mcp__Stateless:-true}
+      # Where clients are told to sign in. Both sit on the one public host.
+      Mcp__PublicUrl: ${App__PublicUrl}/mcp
+      Mcp__AuthorizationServer: ${App__PublicUrl}/api
     depends_on:
       mizan-backend:
         condition: service_healthy

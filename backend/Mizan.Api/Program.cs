@@ -201,18 +201,6 @@ builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationM
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.AddPolicy("McpTokenValidation", context =>
-    {
-        var configuration = context.RequestServices.GetRequiredService<IConfiguration>();
-        return RateLimitPartition.GetFixedWindowLimiter(
-            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = configuration.GetValue("RateLimits:McpTokenValidation:PermitLimit", 10),
-                Window = TimeSpan.FromMinutes(configuration.GetValue("RateLimits:McpTokenValidation:WindowMinutes", 1)),
-                QueueLimit = 0
-            });
-    });
     // Credential endpoints, per IP. The BetterAuth rate limiter went with it.
     options.AddPolicy("AuthCredentials", context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",

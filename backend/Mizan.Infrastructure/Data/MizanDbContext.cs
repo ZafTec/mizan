@@ -85,7 +85,6 @@ public class MizanDbContext : DbContext, IMizanDbContext
     public DbSet<AiEvalRun> AiEvalRuns => Set<AiEvalRun>();
 
     // MCP Integration
-    public DbSet<McpToken> McpTokens => Set<McpToken>();
     public DbSet<McpUsageLog> McpUsageLogs => Set<McpUsageLog>();
     public DbSet<OAuthClient> OAuthClients => Set<OAuthClient>();
     public DbSet<OAuthGrant> OAuthGrants => Set<OAuthGrant>();
@@ -1084,31 +1083,12 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.SetNull);
         });
 
-        // McpToken configuration
-        modelBuilder.Entity<McpToken>(entity =>
-        {
-            entity.ToTable("mcp_tokens");
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
-            entity.Property(e => e.UserId).HasColumnName("user_id").IsRequired();
-            entity.Property(e => e.TokenHash).HasColumnName("token_hash").HasMaxLength(64).IsRequired();
-            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
-            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
-            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
-            entity.Property(e => e.LastUsedAt).HasColumnName("last_used_at");
-            entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
-            entity.HasIndex(e => e.TokenHash).IsUnique();
-            entity.HasIndex(e => new { e.UserId, e.IsActive });
-            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
-        });
-
         // McpUsageLog configuration
         modelBuilder.Entity<McpUsageLog>(entity =>
         {
             entity.ToTable("mcp_usage_logs");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
-            entity.Property(e => e.McpTokenId).HasColumnName("mcp_token_id");
             entity.Property(e => e.GrantId).HasColumnName("grant_id");
             entity.Property(e => e.Kind).HasColumnName("kind").HasMaxLength(10).HasDefaultValue("tool").IsRequired();
             entity.Property(e => e.UserId).HasColumnName("user_id").IsRequired();
@@ -1119,10 +1099,8 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.ExecutionTimeMs).HasColumnName("execution_time_ms").IsRequired();
             entity.Property(e => e.Timestamp).HasColumnName("timestamp").HasDefaultValueSql("NOW()");
             entity.HasIndex(e => new { e.UserId, e.Timestamp });
-            entity.HasIndex(e => e.McpTokenId);
             entity.HasIndex(e => e.GrantId);
             entity.HasIndex(e => e.ToolName);
-            entity.HasOne(e => e.McpToken).WithMany().HasForeignKey(e => e.McpTokenId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Grant).WithMany().HasForeignKey(e => e.GrantId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
         });
