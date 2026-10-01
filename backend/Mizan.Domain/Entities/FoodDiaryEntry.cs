@@ -1,6 +1,6 @@
 namespace Mizan.Domain.Entities;
 
-public class FoodDiaryEntry
+public class FoodDiaryEntry : IChangeTracked
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
@@ -20,6 +20,7 @@ public class FoodDiaryEntry
     public decimal? ProteinCalorieRatio { get; set; }
     public string Name { get; set; } = string.Empty;
     public DateTime LoggedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
     // Navigation properties
     public virtual User User { get; set; } = null!;

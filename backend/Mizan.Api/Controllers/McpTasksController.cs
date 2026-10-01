@@ -40,5 +40,5 @@ public class McpTasksController : ControllerBase
     public Task<IActionResult> Cancel(string id) => Finish(id, McpTask.Cancelled, null);
 
     private async Task<IActionResult> Finish(string id, string outcome, JsonElement? json) =>
-        await _mediator.Send(new FinishMcpTaskCommand(id, outcome, json?.GetRawText())) ? NoContent() : Conflict(new { error = "The task is finished or does not exist." });
+        await _mediator.Send(new FinishMcpTaskCommand(id, outcome, json?.GetRawText())) ? NoContent() : Conflict(new { errorCode = "task_not_open", error = "The task is finished or does not exist." });
 }

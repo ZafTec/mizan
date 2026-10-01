@@ -943,6 +943,12 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("numeric(6,2)")
                         .HasColumnName("right_thigh_cm");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
@@ -959,7 +965,7 @@ namespace Mizan.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "UpdatedAt");
 
                     b.ToTable("body_measurements", (string)null);
                 });
@@ -1103,6 +1109,90 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("content_reports", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.DeletedRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("DeletedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("entity_id");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("entity_type");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "DeletedAt");
+
+                    b.ToTable("deleted_records", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.DeviceToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("DeviceName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("device_name");
+
+                    b.Property<DateTime>("LastSeenAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_seen_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("Platform")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("platform");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("token");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("device_tokens", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.Exercise", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1151,6 +1241,11 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false)
                         .HasColumnName("is_custom");
+
+                    b.Property<string>("ModelUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("model_url");
 
                     b.Property<string>("MuscleGroup")
                         .HasMaxLength(100)
@@ -1689,6 +1784,12 @@ namespace Mizan.Infrastructure.Migrations
                         .HasDefaultValue(1m)
                         .HasColumnName("servings");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
@@ -1700,6 +1801,8 @@ namespace Mizan.Infrastructure.Migrations
                     b.HasIndex("RecipeId");
 
                     b.HasIndex("UserId", "EntryDate");
+
+                    b.HasIndex("UserId", "UpdatedAt");
 
                     b.ToTable("food_diary_entries", (string)null);
                 });
@@ -1902,6 +2005,51 @@ namespace Mizan.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("household_members", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.IdempotencyKey", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("Key")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("key");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<string>("ContentType")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("content_type");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("request_hash");
+
+                    b.Property<byte[]>("ResponseBody")
+                        .HasColumnType("bytea")
+                        .HasColumnName("response_body");
+
+                    b.Property<int?>("StatusCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("status_code");
+
+                    b.HasKey("UserId", "Key");
+
+                    b.ToTable("idempotency_keys", (string)null);
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.McpTask", b =>
@@ -3668,6 +3816,12 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("template_id");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
@@ -3680,7 +3834,7 @@ namespace Mizan.Infrastructure.Migrations
 
                     b.HasIndex("TemplateId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "UpdatedAt");
 
                     b.ToTable("workouts", (string)null);
                 });
@@ -4023,6 +4177,26 @@ namespace Mizan.Infrastructure.Migrations
                     b.Navigation("Sender");
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.DeletedRecord", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.DeviceToken", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.Exercise", b =>
                 {
                     b.HasOne("Mizan.Domain.Entities.User", "CreatedByUser")
@@ -4266,6 +4440,17 @@ namespace Mizan.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Household");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.IdempotencyKey", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -57,7 +58,20 @@ builder.Host.UseSerilog();
 
 Log.Information("Starting Mizan API - Environment: {Environment}", environment);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options => options.Filters.Add<ErrorShapeFilter>())
+    // A body that cannot be read (bad JSON, a string where a number belongs) answers in the same shape as every
+    // other error, so a client has one thing to parse (docs/ARCHITECTURE.md#errors).
+    .ConfigureApiBehaviorOptions(options =>
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(entry => entry.Value?.Errors.Count > 0)
+                .ToDictionary(
+                    entry => entry.Key,
+                    entry => entry.Value!.Errors.Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? "The value is not valid." : e.ErrorMessage).ToArray());
+            var first = errors.Values.SelectMany(v => v).FirstOrDefault() ?? "The request is not valid.";
+            return new BadRequestObjectResult(new { errorCode = "invalid_request", error = first, errors });
+        });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -68,8 +82,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         Type = SecuritySchemeType.Http,
         Scheme = "bearer",
-        BearerFormat = "JWT",
-        Description = "JWT Authorization header using the Bearer scheme."
+        Description = "An OAuth access token from /api/oauth/token, issued for the API audience (native apps). Browsers use the session cookie instead."
     });
     c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
@@ -152,6 +165,11 @@ if (string.Equals(mcpServiceApiKey, mcpAdminServiceApiKey, StringComparison.Ordi
     throw new InvalidOperationException("MCP service and admin API keys must be different");
 }
 
+// The native app's credential: an OAuth access token issued for the API.
+authBuilder.AddScheme<OAuthBearerAuthenticationSchemeOptions, OAuthBearerAuthenticationHandler>(
+    OAuthBearerAuthenticationSchemeOptions.DefaultScheme,
+    _ => { });
+
 authBuilder.AddScheme<ApiKeyAuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
     ApiKeyAuthenticationSchemeOptions.DefaultScheme,
     options =>
@@ -163,7 +181,7 @@ authBuilder.AddScheme<ApiKeyAuthenticationSchemeOptions, ApiKeyAuthenticationHan
 builder.Services.AddAuthorization(options =>
 {
     options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
-        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme)
+        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, OAuthBearerAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser()
         .Build();
 
@@ -172,25 +190,25 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser());
 
     options.AddPolicy("UserOrMcp", policy => policy
-        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, OAuthBearerAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser());
 
     options.AddPolicy("OptionalUserOrMcp", policy => policy
-        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, OAuthBearerAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAssertion(_ => true));
 
     options.AddPolicy("RequireAdmin", policy => policy
-        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, OAuthBearerAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser()
         .RequireRole("admin"));
 
     options.AddPolicy("RequireTrainer", policy => policy
-        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme)
+        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, OAuthBearerAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser()
         .RequireRole("trainer"));
 
     options.AddPolicy("RequirePro", policy => policy
-        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, OAuthBearerAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser()
         .AddRequirements(new Mizan.Api.Authorization.ProRequirement()));
 });
@@ -381,9 +399,16 @@ if (!string.IsNullOrWhiteSpace(lokiEndpoint))
 var app = builder.Build();
 app.UseForwardedHeaders();
 
-if (app.Environment.IsDevelopment())
+// The OpenAPI document is how the web client and the Android app generate their types. It is served
+// in development, and in production only when OpenApi:Enabled is set, so the surface of a live
+// service is not published by accident. The interactive page is for development alone.
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("OpenApi:Enabled"))
 {
     app.UseSwagger();
+}
+
+if (app.Environment.IsDevelopment())
+{
     app.UseSwaggerUI();
 }
 
@@ -423,6 +448,7 @@ app.UseExceptionHandler(errorApp =>
             await context.Response.WriteAsJsonAsync(new
             {
                 errorCode = "validation_failed",
+                error = validationEx.Errors.FirstOrDefault()?.ErrorMessage ?? "The request is not valid.",
                 errors = validationEx.Errors.Select(e => new { e.PropertyName, e.ErrorMessage })
             });
         }
@@ -540,8 +566,26 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
+// Failures the framework produces without a body (not signed in, not allowed, no such address) get the same
+// shape as the ones our own code produces, so a client never meets an empty error.
+app.UseStatusCodePages(async context =>
+{
+    var response = context.HttpContext.Response;
+    var (code, message) = response.StatusCode switch
+    {
+        StatusCodes.Status401Unauthorized => ("unauthorized", "Unauthorized"),
+        StatusCodes.Status403Forbidden => ("forbidden", "You do not have access to this."),
+        StatusCodes.Status404NotFound => ("not_found", "Not found"),
+        StatusCodes.Status405MethodNotAllowed => ("method_not_allowed", "That method is not allowed here."),
+        StatusCodes.Status415UnsupportedMediaType => ("unsupported_media_type", "Send the body as JSON."),
+        _ => ("error", "The request failed."),
+    };
+    await response.WriteAsJsonAsync(new { errorCode = code, error = message });
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<IdempotencyMiddleware>();
 
 app.MapControllers();
 app.MapHub<ChatHub>("/hubs/chat");

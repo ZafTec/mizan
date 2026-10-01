@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
+using Mizan.Domain.Media;
 
 namespace Mizan.Infrastructure.Storage;
 
@@ -73,9 +74,10 @@ public class S3StorageService : IStorageService, IDisposable
             throw new DomainValidationException("The file is empty.");
         }
 
-        if (upload.Length > _options.MaxUploadBytes)
+        var limit = upload.ContentType == ModelFormat.ContentType ? _options.MaxModelBytes : _options.MaxUploadBytes;
+        if (upload.Length > limit)
         {
-            var mb = _options.MaxUploadBytes / (1024 * 1024);
+            var mb = limit / (1024 * 1024);
             throw new DomainValidationException($"The file must be {mb} MB or smaller.");
         }
 

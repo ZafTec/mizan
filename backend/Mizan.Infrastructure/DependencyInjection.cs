@@ -9,6 +9,7 @@ using Mizan.Infrastructure.Data;
 using Mizan.Infrastructure.Email;
 using Mizan.Infrastructure.Identity;
 using Mizan.Infrastructure.Outbox;
+using Mizan.Infrastructure.Push;
 using Mizan.Infrastructure.Services;
 using Mizan.Infrastructure.Storage;
 
@@ -113,6 +114,12 @@ public static class DependencyInjection
         services.AddScoped<IOutbox, Outbox.Outbox>();
         services.AddScoped<IOutboxHandler, EmailJobHandler>();
         services.AddScoped<IOutboxHandler, EvalRunJobHandler>();
+        services.AddScoped<IOutboxHandler, PushJobHandler>();
+
+        // Push to phones. Off until Firebase credentials are configured (docs/ARCHITECTURE.md#native-clients).
+        services.Configure<PushOptions>(configuration.GetSection(PushOptions.SectionName));
+        services.AddHttpClient(FcmPushSender.HttpClientName);
+        services.AddSingleton<IPushSender, FcmPushSender>();
         services.AddHostedService<OutboxDispatcher>();
 
         // Billing

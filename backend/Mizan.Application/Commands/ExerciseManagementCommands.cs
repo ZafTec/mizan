@@ -1,6 +1,7 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Application.Commands;
@@ -57,6 +58,37 @@ public sealed class PromoteExerciseCommandHandler : IRequestHandler<PromoteExerc
         if (!_currentUser.IsInRole("admin")) throw new UnauthorizedAccessException();
         var exercise = await _context.Exercises.FirstOrDefaultAsync(e => e.Id == request.Id, ct) ?? throw new InvalidOperationException("Exercise not found");
         exercise.IsCustom = false; exercise.IsApproved = true; exercise.CreatedByUserId = null;
+        await _context.SaveChangesAsync(ct);
+    }
+}
+
+/// <summary>
+/// Attaches the 3D figure to an exercise, or removes it. Only a file this application stored may be
+/// named, so a model can never point somewhere else on the internet.
+/// </summary>
+public record SetExerciseModelCommand(Guid Id, string? ModelUrl) : IRequest;
+
+public sealed class SetExerciseModelCommandHandler : IRequestHandler<SetExerciseModelCommand>
+{
+    private readonly IMizanDbContext _context;
+    private readonly IStorageService _storage;
+
+    public SetExerciseModelCommandHandler(IMizanDbContext context, IStorageService storage)
+    {
+        _context = context;
+        _storage = storage;
+    }
+
+    public async Task Handle(SetExerciseModelCommand request, CancellationToken ct)
+    {
+        var exercise = await _context.Exercises.FirstOrDefaultAsync(e => e.Id == request.Id, ct)
+            ?? throw new EntityNotFoundException("Exercise not found");
+
+        if (!string.IsNullOrWhiteSpace(request.ModelUrl)
+            && (_storage.TryGetKey(request.ModelUrl) is not { } key || !key.StartsWith("models/", StringComparison.Ordinal)))
+            throw new DomainValidationException("The model must be a file uploaded through the models endpoint.");
+
+        exercise.ModelUrl = string.IsNullOrWhiteSpace(request.ModelUrl) ? null : request.ModelUrl;
         await _context.SaveChangesAsync(ct);
     }
 }
