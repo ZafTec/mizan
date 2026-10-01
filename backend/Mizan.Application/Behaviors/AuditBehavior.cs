@@ -69,7 +69,7 @@ public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
                 Action = requestName,
                 EntityType = requestName.Replace("Command", ""),
                 EntityId = entityId,
-                Details = JsonSerializer.Serialize(request),
+                Details = JsonSerializer.Serialize(request is IRedactedAudit redacted ? redacted.AuditDetails : request),
                 IpAddress = ipAddress,
                 Timestamp = DateTime.UtcNow
             };

@@ -63,6 +63,19 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, PasswordHasherAdapter>();
         services.AddSingleton<IAppUrls, AppUrls>();
         services.AddScoped<ISessionService, SessionService>();
+
+        // OAuth authorization server for MCP clients and our own apps (docs/MCP.md#connect-with-oauth).
+        services.Configure<AuthorizationServerOptions>(configuration.GetSection(AuthorizationServerOptions.SectionName));
+        services.AddSingleton<IOAuthSettings, OAuthSettings>();
+        services.AddHttpClient(OAuthClientMetadataFetcher.HttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+            {
+                AllowAutoRedirect = false,
+                ConnectTimeout = TimeSpan.FromSeconds(4),
+                UseProxy = false,
+                ConnectCallback = OAuthClientMetadataFetcher.GuardedConnectAsync,
+            });
+        services.AddScoped<IOAuthClientMetadataFetcher, OAuthClientMetadataFetcher>();
         services.AddScoped<IUserCacheInvalidator, UserCacheInvalidator>();
         services.AddScoped<IEmailSender, SmtpEmailSender>();
 

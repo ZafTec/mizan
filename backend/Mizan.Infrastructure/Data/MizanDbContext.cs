@@ -87,6 +87,10 @@ public class MizanDbContext : DbContext, IMizanDbContext
     // MCP Integration
     public DbSet<McpToken> McpTokens => Set<McpToken>();
     public DbSet<McpUsageLog> McpUsageLogs => Set<McpUsageLog>();
+    public DbSet<OAuthClient> OAuthClients => Set<OAuthClient>();
+    public DbSet<OAuthGrant> OAuthGrants => Set<OAuthGrant>();
+    public DbSet<OAuthAuthorizationRequest> OAuthAuthorizationRequests => Set<OAuthAuthorizationRequest>();
+    public DbSet<OAuthToken> OAuthTokens => Set<OAuthToken>();
 
     // Billing
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
@@ -1117,6 +1121,91 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.HasIndex(e => e.ToolName);
             entity.HasOne(e => e.McpToken).WithMany().HasForeignKey(e => e.McpTokenId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // OAuth authorization server (docs/MCP.md#connect-with-oauth)
+        modelBuilder.Entity<OAuthClient>(entity =>
+        {
+            entity.ToTable("oauth_clients");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.ClientId).HasColumnName("client_id").HasMaxLength(512).IsRequired();
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.LogoUri).HasColumnName("logo_uri").HasMaxLength(512);
+            entity.Property(e => e.ClientUri).HasColumnName("client_uri").HasMaxLength(512);
+            entity.Property(e => e.RedirectUris).HasColumnName("redirect_uris").HasColumnType("text[]").IsRequired();
+            entity.Property(e => e.Source).HasColumnName("source").HasMaxLength(20).IsRequired();
+            entity.Property(e => e.VerifiedHost).HasColumnName("verified_host").HasMaxLength(255);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.MetadataFetchedAt).HasColumnName("metadata_fetched_at");
+            entity.Ignore(e => e.IsFirstParty);
+            entity.HasIndex(e => e.ClientId).IsUnique();
+        });
+
+        modelBuilder.Entity<OAuthGrant>(entity =>
+        {
+            entity.ToTable("oauth_grants");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.UserId).HasColumnName("user_id").IsRequired();
+            entity.Property(e => e.ClientId).HasColumnName("client_id").IsRequired();
+            entity.Property(e => e.Scopes).HasColumnName("scopes").HasColumnType("text[]").IsRequired();
+            entity.Property(e => e.HouseholdMode).HasColumnName("household_mode").HasMaxLength(10).IsRequired();
+            entity.Property(e => e.HouseholdIds).HasColumnName("household_ids").HasColumnType("uuid[]").IsRequired();
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.LastUsedAt).HasColumnName("last_used_at");
+            entity.Property(e => e.RevokedAt).HasColumnName("revoked_at");
+            entity.Ignore(e => e.IsActive);
+            // One live grant per user and client. A new consent replaces it.
+            entity.HasIndex(e => new { e.UserId, e.ClientId }).IsUnique().HasFilter("revoked_at IS NULL");
+            entity.HasIndex(e => e.ClientId);
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Client).WithMany().HasForeignKey(e => e.ClientId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<OAuthAuthorizationRequest>(entity =>
+        {
+            entity.ToTable("oauth_authorization_requests");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.RequestHash).HasColumnName("request_hash").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.ClientId).HasColumnName("client_id").IsRequired();
+            entity.Property(e => e.RedirectUri).HasColumnName("redirect_uri").HasMaxLength(512).IsRequired();
+            entity.Property(e => e.RequestedScopes).HasColumnName("requested_scopes").HasColumnType("text[]").IsRequired();
+            entity.Property(e => e.State).HasColumnName("state").HasMaxLength(512);
+            entity.Property(e => e.CodeChallenge).HasColumnName("code_challenge").HasMaxLength(128).IsRequired();
+            entity.Property(e => e.Audience).HasColumnName("audience").HasMaxLength(10).IsRequired();
+            entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(10).IsRequired();
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.GrantId).HasColumnName("grant_id");
+            entity.Property(e => e.CodeHash).HasColumnName("code_hash").HasMaxLength(64);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at").IsRequired();
+            entity.HasIndex(e => e.RequestHash).IsUnique();
+            entity.HasIndex(e => e.CodeHash).IsUnique().HasFilter("code_hash IS NOT NULL");
+            entity.HasIndex(e => e.ExpiresAt);
+            entity.HasOne(e => e.Client).WithMany().HasForeignKey(e => e.ClientId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<OAuthToken>(entity =>
+        {
+            entity.ToTable("oauth_tokens");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.GrantId).HasColumnName("grant_id").IsRequired();
+            entity.Property(e => e.FamilyId).HasColumnName("family_id").IsRequired();
+            entity.Property(e => e.Kind).HasColumnName("kind").HasMaxLength(10).IsRequired();
+            entity.Property(e => e.Audience).HasColumnName("audience").HasMaxLength(10).IsRequired();
+            entity.Property(e => e.TokenHash).HasColumnName("token_hash").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at").IsRequired();
+            entity.Property(e => e.UsedAt).HasColumnName("used_at");
+            entity.Property(e => e.RevokedAt).HasColumnName("revoked_at");
+            entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity.HasIndex(e => e.FamilyId);
+            entity.HasIndex(e => e.GrantId);
+            entity.HasOne(e => e.Grant).WithMany().HasForeignKey(e => e.GrantId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // Subscription configuration (backend-owned billing state)
