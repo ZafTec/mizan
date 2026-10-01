@@ -119,7 +119,7 @@ Production Compose currently follows `latest`. To pin a release, use its version
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Design](DESIGN.md)
-- [MCP setup and tools](docs/MCP.md)
+- [MCP setup, OAuth, and the Claude plugin](docs/MCP.md)
 - [AI consent, limits, and administration](docs/AI.md)
 - [Telegram setup](docs/TELEGRAM.md)
 - [Contributor and agent guidance](CLAUDE.md)
