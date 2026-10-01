@@ -56,12 +56,14 @@ public class CreateMealPlanCommandValidator : AbstractValidator<CreateMealPlanCo
 public class CreateMealPlanCommandHandler : IRequestHandler<CreateMealPlanCommand, CreateMealPlanResult>
 {
     private readonly IMizanDbContext _context;
+    private readonly IHouseholdAccess _households;
     private readonly ICurrentUserService _currentUser;
     private readonly HybridCache _cache;
 
     public CreateMealPlanCommandHandler(
-        IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
+        IMizanDbContext context, IHouseholdAccess households, ICurrentUserService currentUser, HybridCache cache)
     {
+        _households = households;
         _context = context;
         _currentUser = currentUser;
         _cache = cache;
@@ -75,6 +77,10 @@ public class CreateMealPlanCommandHandler : IRequestHandler<CreateMealPlanComman
         }
 
         var userId = _currentUser.UserId.Value;
+
+        // Without this a plan could be filed under someone else's household.
+        if (request.HouseholdId.HasValue && !await _households.CanAccessAsync(request.HouseholdId.Value, cancellationToken))
+            throw new ForbiddenAccessException("You are not a member of this household");
 
         var mealPlan = new MealPlan
         {

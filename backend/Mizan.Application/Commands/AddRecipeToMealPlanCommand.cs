@@ -40,11 +40,13 @@ public class AddRecipeToMealPlanCommandValidator : AbstractValidator<AddRecipeTo
 public class AddRecipeToMealPlanCommandHandler : IRequestHandler<AddRecipeToMealPlanCommand, AddRecipeToMealPlanResult>
 {
     private readonly IMizanDbContext _context;
+    private readonly IHouseholdAccess _households;
     private readonly ICurrentUserService _currentUser;
     private readonly HybridCache _cache;
 
-    public AddRecipeToMealPlanCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
+    public AddRecipeToMealPlanCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache, IHouseholdAccess households)
     {
+        _households = households;
         _context = context;
         _currentUser = currentUser;
         _cache = cache;
@@ -71,11 +73,11 @@ public class AddRecipeToMealPlanCommandHandler : IRequestHandler<AddRecipeToMeal
             throw new InvalidOperationException("Meal plan not found or access denied");
         }
 
+        var accessibleHouseholds = await _households.AccessibleIdsAsync(cancellationToken);
         var canUseRecipe = await _context.Recipes.AnyAsync(recipe =>
             recipe.Id == request.RecipeId &&
             (recipe.IsPublic || recipe.UserId == _currentUser.UserId ||
-             (recipe.HouseholdId.HasValue && _context.HouseholdMembers.Any(member =>
-                 member.HouseholdId == recipe.HouseholdId && member.UserId == _currentUser.UserId))),
+             (recipe.HouseholdId.HasValue && accessibleHouseholds.Contains(recipe.HouseholdId.Value))),
             cancellationToken);
         if (!canUseRecipe)
         {
@@ -116,19 +118,6 @@ public class AddRecipeToMealPlanCommandHandler : IRequestHandler<AddRecipeToMeal
         }
 
         // User owns the meal plan
-        if (mealPlan.UserId == userId.Value)
-        {
-            return true;
-        }
-
-        // Meal plan belongs to a household and user is a member
-        if (mealPlan.HouseholdId.HasValue)
-        {
-            var isMember = await _context.HouseholdMembers
-                .AnyAsync(hm => hm.HouseholdId == mealPlan.HouseholdId.Value && hm.UserId == userId.Value, cancellationToken);
-            return isMember;
-        }
-
-        return false;
+        return await _households.CanAccessRecordAsync(mealPlan.UserId, mealPlan.HouseholdId, cancellationToken);
     }
 }

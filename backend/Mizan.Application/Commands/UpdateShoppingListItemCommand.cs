@@ -23,10 +23,12 @@ public record UpdateShoppingListItemResult
 public class UpdateShoppingListItemCommandHandler : IRequestHandler<UpdateShoppingListItemCommand, UpdateShoppingListItemResult>
 {
     private readonly IMizanDbContext _context;
+    private readonly IHouseholdAccess _households;
     private readonly ICurrentUserService _currentUser;
 
-    public UpdateShoppingListItemCommandHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public UpdateShoppingListItemCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, IHouseholdAccess households)
     {
+        _households = households;
         _context = context;
         _currentUser = currentUser;
     }
@@ -91,19 +93,6 @@ public class UpdateShoppingListItemCommandHandler : IRequestHandler<UpdateShoppi
         }
 
         // User owns the list
-        if (shoppingList.UserId == userId.Value)
-        {
-            return true;
-        }
-
-        // List belongs to a household and user is a member
-        if (shoppingList.HouseholdId.HasValue)
-        {
-            var isMember = await _context.HouseholdMembers
-                .AnyAsync(hm => hm.HouseholdId == shoppingList.HouseholdId.Value && hm.UserId == userId.Value, cancellationToken);
-            return isMember;
-        }
-
-        return false;
+        return await _households.CanAccessRecordAsync(shoppingList.UserId, shoppingList.HouseholdId, cancellationToken);
     }
 }

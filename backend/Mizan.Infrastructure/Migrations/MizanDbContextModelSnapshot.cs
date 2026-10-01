@@ -1975,7 +1975,19 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("execution_time_ms");
 
-                    b.Property<Guid>("McpTokenId")
+                    b.Property<Guid?>("GrantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("grant_id");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("tool")
+                        .HasColumnName("kind");
+
+                    b.Property<Guid?>("McpTokenId")
                         .HasColumnType("uuid")
                         .HasColumnName("mcp_token_id");
 
@@ -2004,6 +2016,8 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GrantId");
 
                     b.HasIndex("McpTokenId");
 
@@ -4268,17 +4282,23 @@ namespace Mizan.Infrastructure.Migrations
 
             modelBuilder.Entity("Mizan.Domain.Entities.McpUsageLog", b =>
                 {
+                    b.HasOne("Mizan.Domain.Entities.OAuthGrant", "Grant")
+                        .WithMany()
+                        .HasForeignKey("GrantId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("Mizan.Domain.Entities.McpToken", "McpToken")
                         .WithMany()
                         .HasForeignKey("McpTokenId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Mizan.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Grant");
 
                     b.Navigation("McpToken");
 

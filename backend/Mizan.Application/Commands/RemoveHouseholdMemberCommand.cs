@@ -30,9 +30,11 @@ public class RemoveHouseholdMemberCommandValidator : AbstractValidator<RemoveHou
 public class RemoveHouseholdMemberCommandHandler : IRequestHandler<RemoveHouseholdMemberCommand, RemoveHouseholdMemberResult>
 {
     private readonly IMizanDbContext _context;
+    private readonly IHouseholdAccess _households;
 
-    public RemoveHouseholdMemberCommandHandler(IMizanDbContext context)
+    public RemoveHouseholdMemberCommandHandler(IMizanDbContext context, IHouseholdAccess households)
     {
+        _households = households;
         _context = context;
     }
 
@@ -43,8 +45,10 @@ public class RemoveHouseholdMemberCommandHandler : IRequestHandler<RemoveHouseho
             return new RemoveHouseholdMemberResult { Success = false, Message = "Use 'leave household' to remove yourself." };
         }
 
-        var acting = await _context.HouseholdMembers
-            .FirstOrDefaultAsync(m => m.HouseholdId == request.HouseholdId && m.UserId == request.ActingUserId, cancellationToken);
+        var acting = await _households.CanAccessAsync(request.HouseholdId, cancellationToken)
+            ? await _context.HouseholdMembers
+                .FirstOrDefaultAsync(m => m.HouseholdId == request.HouseholdId && m.UserId == request.ActingUserId, cancellationToken)
+            : null;
         if (acting == null || !(acting.Role == "admin" || acting.Role == "owner"))
         {
             return new RemoveHouseholdMemberResult { Success = false, Message = "Only household admins can remove members." };

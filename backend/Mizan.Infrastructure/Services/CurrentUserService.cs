@@ -32,6 +32,28 @@ public class CurrentUserService : ICurrentUserService
 
     public string? IpAddress => _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?.ToString();
 
+    public GrantContext? Grant
+    {
+        get
+        {
+            var user = _httpContextAccessor.HttpContext?.User;
+            if (!Guid.TryParse(user?.FindFirst(GrantClaims.GrantId)?.Value, out var grantId)) return null;
+
+            Guid.TryParse(user!.FindFirst(GrantClaims.Client)?.Value, out var clientRowId);
+            var scopes = (user.FindFirst(GrantClaims.Scopes)?.Value ?? string.Empty)
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var households = (user.FindFirst(GrantClaims.Households)?.Value ?? string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(h => Guid.TryParse(h, out var id) ? id : Guid.Empty)
+                .Where(id => id != Guid.Empty)
+                .ToList();
+
+            return new GrantContext(
+                grantId, clientRowId, scopes,
+                user.FindFirst(GrantClaims.HouseholdMode)?.Value ?? "none", households);
+        }
+    }
+
     public bool IsAuthenticated => _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
 
     public bool IsInRole(string role)

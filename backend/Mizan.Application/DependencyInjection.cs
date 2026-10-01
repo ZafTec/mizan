@@ -22,6 +22,7 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(assembly);
         services.AddScoped<Commands.SubscriberBilling>();
         services.AddScoped<OAuth.OAuthClientResolver>();
+        services.AddScoped<Interfaces.IHouseholdAccess, Services.HouseholdAccess>();
 
         return services;
     }

@@ -25,16 +25,20 @@ public class LeaveHouseholdCommandValidator : AbstractValidator<LeaveHouseholdCo
 public class LeaveHouseholdCommandHandler : IRequestHandler<LeaveHouseholdCommand, LeaveHouseholdResult>
 {
     private readonly IMizanDbContext _context;
+    private readonly IHouseholdAccess _households;
 
-    public LeaveHouseholdCommandHandler(IMizanDbContext context)
+    public LeaveHouseholdCommandHandler(IMizanDbContext context, IHouseholdAccess households)
     {
+        _households = households;
         _context = context;
     }
 
     public async Task<LeaveHouseholdResult> Handle(LeaveHouseholdCommand request, CancellationToken cancellationToken)
     {
-        var membership = await _context.HouseholdMembers
-            .FirstOrDefaultAsync(m => m.HouseholdId == request.HouseholdId && m.UserId == request.UserId, cancellationToken);
+        var membership = await _households.CanAccessAsync(request.HouseholdId, cancellationToken)
+            ? await _context.HouseholdMembers
+                .FirstOrDefaultAsync(m => m.HouseholdId == request.HouseholdId && m.UserId == request.UserId, cancellationToken)
+            : null;
         if (membership == null)
         {
             return new LeaveHouseholdResult { Success = false, Message = "You're not a member of this household." };

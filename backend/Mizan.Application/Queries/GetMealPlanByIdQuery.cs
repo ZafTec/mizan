@@ -51,11 +51,13 @@ public class GetMealPlanByIdQueryHandler : IRequestHandler<GetMealPlanByIdQuery,
     };
 
     private readonly IMizanDbContext _context;
+    private readonly IHouseholdAccess _households;
     private readonly ICurrentUserService _currentUser;
     private readonly HybridCache _cache;
 
-    public GetMealPlanByIdQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
+    public GetMealPlanByIdQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache, IHouseholdAccess households)
     {
+        _households = households;
         _context = context;
         _currentUser = currentUser;
         _cache = cache;
@@ -162,19 +164,6 @@ public class GetMealPlanByIdQueryHandler : IRequestHandler<GetMealPlanByIdQuery,
         }
 
         // User owns the meal plan
-        if (mealPlan.UserId == userId.Value)
-        {
-            return true;
-        }
-
-        // Meal plan belongs to a household and user is a member
-        if (mealPlan.HouseholdId.HasValue)
-        {
-            var isMember = await _context.HouseholdMembers
-                .AnyAsync(hm => hm.HouseholdId == mealPlan.HouseholdId.Value && hm.UserId == userId.Value, cancellationToken);
-            return isMember;
-        }
-
-        return false;
+        return await _households.CanAccessRecordAsync(mealPlan.UserId, mealPlan.HouseholdId, cancellationToken);
     }
 }

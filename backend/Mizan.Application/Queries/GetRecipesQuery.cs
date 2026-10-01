@@ -69,8 +69,11 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
     private readonly ICurrentUserService _currentUser;
     private readonly HybridCache _cache;
 
-    public GetRecipesQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
+    private readonly IHouseholdAccess _households;
+
+    public GetRecipesQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache, IHouseholdAccess households)
     {
+        _households = households;
         _context = context;
         _currentUser = currentUser;
         _cache = cache;
@@ -82,7 +85,7 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
         // viewer's id has to be part of the key for the same reason
         // SearchFoodsQuery keys on it.
         var viewerId = _currentUser.UserId?.ToString() ?? "anon";
-        var cacheKey = $"recipes:search:{viewerId}:{request.SearchTerm?.ToLower() ?? ""}:{request.IncludePublic}:{request.FavoritesOnly}:{request.MinProteinCalorieRatio}:{request.Page}:{request.PageSize}:{request.SortBy ?? ""}:{request.SortOrder ?? ""}";
+        var cacheKey = $"recipes:search:{viewerId}:{GrantContext.KeyFor(_currentUser.Grant)}:{request.SearchTerm?.ToLower() ?? ""}:{request.IncludePublic}:{request.FavoritesOnly}:{request.MinProteinCalorieRatio}:{request.Page}:{request.PageSize}:{request.SortBy ?? ""}:{request.SortOrder ?? ""}";
 
         return await _cache.GetOrCreateAsync(
             cacheKey,
@@ -97,19 +100,25 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
     {
         var query = _context.Recipes.AsQueryable();
 
+        // A connected app does not see the user's own recipes filed under households it was not given.
+        var restrict = _currentUser.Grant is not null;
+        var accessible = restrict ? await _households.AccessibleIdsAsync(cancellationToken) : [];
+
         if (_currentUser.UserId.HasValue)
         {
             if (request.FavoritesOnly)
             {
                 query = from r in query
                         join f in _context.FavoriteRecipes on r.Id equals f.RecipeId
-                        where f.UserId == _currentUser.UserId && (r.IsPublic || r.UserId == _currentUser.UserId)
+                        where f.UserId == _currentUser.UserId && (r.IsPublic || (r.UserId == _currentUser.UserId
+                            && (!restrict || r.HouseholdId == null || accessible.Contains(r.HouseholdId.Value))))
                         select r;
             }
             else
             {
                 query = query.Where(r =>
-                    r.UserId == _currentUser.UserId ||
+                    (r.UserId == _currentUser.UserId
+                        && (!restrict || r.HouseholdId == null || accessible.Contains(r.HouseholdId.Value))) ||
                     (request.IncludePublic && r.IsPublic));
             }
         }

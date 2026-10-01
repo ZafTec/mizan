@@ -38,7 +38,8 @@ public class ApiKeyAuthenticationHandlerTests
             _options.Object,
             _loggerFactory.Object,
             _encoder.Object,
-            _userStatusService.Object);
+            _userStatusService.Object,
+            Mock.Of<IMizanDbContext>());
     }
 
     [Fact]
