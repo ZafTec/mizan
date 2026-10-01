@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { resolvePublicApiOrigin } from "@/lib/api-base";
 import { appToast } from "@/lib/toast";
 
-export type UploadFolder = "avatars" | "recipes";
+export type UploadFolder = "avatars" | "recipes" | "exercises";
 
 /** JPEG, PNG, WebP and GIF - the same set the API sniffs for. */
 const ACCEPT = "image/jpeg,image/png,image/webp,image/gif";

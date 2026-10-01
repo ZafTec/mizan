@@ -2,6 +2,12 @@
 
 Mizan's assistant, food-photo analysis, onboarding, trainer questions, and prompt evaluations use one backend AI platform. Web, MCP, and Telegram call that platform rather than calling a model provider independently.
 
+## Logging a meal from words or a photo
+
+`POST /api/Nutrition/ai/analyze-text` turns a sentence ("two eggs, toast with butter") into the same structured proposal as `analyze-image`: foods with portion grams and macros, a confidence, and a note naming any portions the model assumed. Both are Pro features, share the `food_analysis` prompt and the `FoodAnalysis` quota line, and write nothing. A description is limited to 600 characters, and a reply that does not match the declared schema is a failed call, never scraped from prose.
+
+The logging sheet leads with this. The proposal lands in the meal as editable rows (name and grams, with the numbers scaling to the weight), and only what the person confirms is saved, one `POST /api/Meals` per food, so a retry after a failure sends only what is left. Free accounts see an inline upgrade note at the moment they try, and food search and recipes stay free.
+
 ## Configuration
 
 The provider speaks the OpenAI-compatible chat-completions protocol. Set the Compose variables `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL`, or the equivalent backend `Ai:BaseUrl`, `Ai:ApiKey`, and `Ai:Model` configuration. An empty endpoint disables AI while basic logging remains available.

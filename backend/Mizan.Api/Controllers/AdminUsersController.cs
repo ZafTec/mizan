@@ -55,6 +55,24 @@ public class AdminUsersController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// Opens a one-hour session as the user. The administrator's own session is kept aside and comes back when they
+    /// leave. The page that called this should load the app afresh.
+    /// </summary>
+    [HttpPost("users/{userId:guid}/impersonate")]
+    public async Task<ActionResult<Mizan.Application.Auth.AuthUserDto>> Impersonate(
+        Guid userId, [FromServices] Mizan.Api.Authentication.SessionCookie cookie)
+    {
+        Request.Cookies.TryGetValue(Mizan.Api.Authentication.SessionCookie.Name, out var ownToken);
+        var result = await _mediator.Send(new Mizan.Application.Auth.StartImpersonationCommand(
+            userId, HttpContext.Connection.RemoteIpAddress?.ToString(), Request.Headers.UserAgent.ToString()));
+
+        if (!string.IsNullOrEmpty(ownToken))
+            cookie.WriteAdmin(Response, ownToken, DateTimeOffset.UtcNow.Add(Mizan.Infrastructure.Identity.SessionService.Lifetime));
+        cookie.Write(Response, result.SessionToken, DateTimeOffset.UtcNow.Add(Mizan.Infrastructure.Identity.SessionService.ImpersonationLifetime));
+        return Ok(result.User);
+    }
+
     [HttpDelete("users/{userId:guid}/sessions")]
     public async Task<IActionResult> RevokeUserSessions(Guid userId)
     {

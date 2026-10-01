@@ -59,7 +59,37 @@ public class AuthController : ControllerBase
         }
 
         _cookie.Clear(Response);
+        _cookie.ClearAdmin(Response);
         return NoContent();
+    }
+
+    /// <summary>
+    /// Ends an administrator's view of the site as a user and puts their own session back. If their own session has
+    /// since expired they are signed out and sent to sign in again.
+    /// </summary>
+    [HttpPost("impersonation/stop")]
+    [AllowAnonymous]
+    public async Task<ActionResult<object>> StopImpersonation()
+    {
+        Request.Cookies.TryGetValue(SessionCookie.Name, out var current);
+        var impersonator = string.IsNullOrEmpty(current)
+            ? null
+            : await _mediator.Send(new StopImpersonationCommand(current));
+        if (impersonator is null) throw new ForbiddenAccessException("This is not an administrator's view of the site.");
+
+        // The administrator's own session comes back only if it is still good and still theirs.
+        Request.Cookies.TryGetValue(SessionCookie.AdminName, out var adminToken);
+        var admin = string.IsNullOrEmpty(adminToken) ? null : await _sessions.ResolveIdentityAsync(adminToken);
+        _cookie.ClearAdmin(Response);
+
+        if (admin is { ImpersonatorId: null } && admin.UserId == impersonator)
+        {
+            _cookie.Write(Response, adminToken!, DateTimeOffset.UtcNow.Add(SessionService.Lifetime));
+            return Ok(new { restored = true });
+        }
+
+        _cookie.Clear(Response);
+        return Ok(new { restored = false });
     }
 
     [HttpGet("me")]

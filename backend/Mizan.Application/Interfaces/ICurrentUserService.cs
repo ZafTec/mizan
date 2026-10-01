@@ -11,6 +11,12 @@ public interface ICurrentUserService
     bool IsAuthenticated { get; }
     bool IsInRole(string role);
 
+    /// <summary>The administrator behind this request when they are viewing the site as the user, otherwise null.</summary>
+    Guid? ImpersonatorId { get; }
+
+    /// <summary>When the impersonation session ends, for the banner that tells the administrator how long is left.</summary>
+    DateTime? ImpersonationExpiresAt { get; }
+
     /// <summary>
     /// Set when the request acts for a connected app (an MCP client, the
     /// Android app) rather than for a signed-in browser. It carries what the

@@ -55,6 +55,13 @@ public class CurrentUserService : ICurrentUserService
         }
     }
 
+    public Guid? ImpersonatorId =>
+        Guid.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirst(ImpersonationClaims.Impersonator)?.Value, out var id) ? id : null;
+
+    public DateTime? ImpersonationExpiresAt =>
+        DateTime.TryParse(_httpContextAccessor.HttpContext?.User?.FindFirst(ImpersonationClaims.Expires)?.Value,
+            null, System.Globalization.DateTimeStyles.RoundtripKind, out var at) ? at : null;
+
     public bool IsAuthenticated => _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
 
     public bool IsInRole(string role)

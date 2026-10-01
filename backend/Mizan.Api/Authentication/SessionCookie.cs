@@ -11,6 +11,12 @@ public class SessionCookie
 {
     public const string Name = "mizan_session";
 
+    /// <summary>
+    /// While an administrator views the site as a user, their own session waits here so one click puts it back. It is
+    /// httpOnly like the session itself, and it is only ever used for a session that is still valid and still theirs.
+    /// </summary>
+    public const string AdminName = "mizan_admin_session";
+
     private readonly AppOptions _options;
     private readonly IWebHostEnvironment _environment;
 
@@ -25,6 +31,12 @@ public class SessionCookie
 
     public void Clear(HttpResponse response) =>
         response.Cookies.Delete(Name, Build(null));
+
+    public void WriteAdmin(HttpResponse response, string token, DateTimeOffset expiresAt) =>
+        response.Cookies.Append(AdminName, token, Build(expiresAt));
+
+    public void ClearAdmin(HttpResponse response) =>
+        response.Cookies.Delete(AdminName, Build(null));
 
     private CookieOptions Build(DateTimeOffset? expiresAt) => new()
     {

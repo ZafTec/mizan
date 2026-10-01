@@ -585,6 +585,7 @@ app.UseStatusCodePages(async context =>
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<ImpersonationGuardMiddleware>();
 app.UseMiddleware<IdempotencyMiddleware>();
 
 app.MapControllers();

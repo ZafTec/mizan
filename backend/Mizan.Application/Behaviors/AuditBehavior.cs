@@ -71,6 +71,7 @@ public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
                 EntityId = entityId,
                 Details = JsonSerializer.Serialize(request is IRedactedAudit redacted ? redacted.AuditDetails : request),
                 IpAddress = ipAddress,
+                ImpersonatorId = _currentUserService.ImpersonatorId,
                 Timestamp = DateTime.UtcNow
             };
 

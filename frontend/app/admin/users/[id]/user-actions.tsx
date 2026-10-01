@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
 	deleteAdminUser,
+	impersonateAdminUser,
 	revokeAdminUserSessions,
 	updateAdminUser,
 } from "@/lib/api/admin-users";
@@ -110,6 +111,22 @@ export function UserActions({ user }: { user: User }) {
 		}
 	}
 
+	async function handleViewAs() {
+		setIsLoading(true);
+		setError(null);
+
+		try {
+			await impersonateAdminUser(user.id);
+			// A full load, so every server-rendered screen is drawn as this user.
+			// eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a full load is the point
+			window.location.assign("/today");
+		} catch (err) {
+			appToast.error(err, "Could not open the site as this user");
+			setError(err instanceof Error ? err.message : "Could not open the site as this user");
+			setIsLoading(false);
+		}
+	}
+
 	async function handleDeleteUser() {
 		setIsLoading(true);
 		setError(null);
@@ -159,6 +176,12 @@ export function UserActions({ user }: { user: User }) {
 			) : (
 				<button type="button" onClick={handleUnbanUser} disabled={isLoading} className="btn-primary w-full">
 					Unban user
+				</button>
+			)}
+
+			{user.role !== "admin" && !user.banned && (
+				<button type="button" onClick={handleViewAs} disabled={isLoading} className="btn-secondary w-full">
+					View the site as this user
 				</button>
 			)}
 

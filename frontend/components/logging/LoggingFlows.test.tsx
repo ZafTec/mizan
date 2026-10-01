@@ -63,6 +63,7 @@ describe("in-place logging", () => {
         onBusyChange={vi.fn()}
       />,
     );
+    fireEvent.click(screen.getByRole("button", { name: "Search foods" }));
     fireEvent.click(
       await screen.findByRole("button", { name: "Add Brown rice" }),
     );
@@ -126,6 +127,7 @@ describe("in-place logging", () => {
         onBusyChange={vi.fn()}
       />,
     );
+    fireEvent.click(screen.getByRole("button", { name: "Search foods" }));
     fireEvent.click(
       await screen.findByRole("button", { name: "Add Brown rice" }),
     );
