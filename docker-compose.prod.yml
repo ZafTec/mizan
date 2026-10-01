@@ -24,6 +24,11 @@ x-backend-environment: &backend-environment
   Storage__PublicBaseUrl: ${STORAGE_PUBLIC_BASE_URL:?STORAGE_PUBLIC_BASE_URL is required}
   # AI photo requests permit 8 MB; the storage limit must accommodate them.
   Storage__MaxUploadBytes: 8388608
+  # Push to the Android app. Empty keeps push off; Firebase credentials turn it on.
+  Push__FcmProjectId: ${FCM_PROJECT_ID:-}
+  Push__FcmServiceAccountJson: ${FCM_SERVICE_ACCOUNT_JSON:-}
+  # Serve /swagger/v1/swagger.json so the web and Android clients can generate types. Off by default.
+  OpenApi__Enabled: ${OPENAPI_ENABLED:-false}
   Smtp__Host: ${SMTP_HOST:-}
   Smtp__Port: ${SMTP_PORT:-587}
   Smtp__Username: ${SMTP_USER:-}
@@ -165,7 +170,10 @@ services:
       ConnectionStrings__PostgreSQL: ${ConnectionStrings__PostgreSQL:?ConnectionStrings__PostgreSQL is required}
       Mcp__ServiceApiKey: ${Mcp__ServiceApiKey:?Mcp__ServiceApiKey is required}
       Mcp__AdminServiceApiKey: ${Mcp__AdminServiceApiKey:?Mcp__AdminServiceApiKey is required}
-      Mcp__Stateless: ${Mcp__Stateless:-false}
+      Mcp__Stateless: ${Mcp__Stateless:-true}
+      # Where clients are told to sign in. Both sit on the one public host.
+      Mcp__PublicUrl: ${App__PublicUrl}/mcp
+      Mcp__AuthorizationServer: ${App__PublicUrl}/api
     depends_on:
       mizan-backend:
         condition: service_healthy

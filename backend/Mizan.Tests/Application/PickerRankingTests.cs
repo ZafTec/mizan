@@ -21,7 +21,7 @@ public class PickerRankingTests
         await db.SaveChangesAsync();
         var cache = new ServiceCollection().AddHybridCache().Services.BuildServiceProvider().GetRequiredService<HybridCache>();
 
-        var detail = await new GetRecipeByIdQueryHandler(db, new FakeCurrentUser(), cache)
+        var detail = await new GetRecipeByIdQueryHandler(db, new FakeCurrentUser(), cache, new Mizan.Application.Services.HouseholdAccess(db, new FakeCurrentUser()))
             .Handle(new GetRecipeByIdQuery(recipe.Id), default);
 
         detail.Should().BeNull();
@@ -45,7 +45,8 @@ public class PickerRankingTests
             new FoodDiaryEntry { Id = Guid.NewGuid(), UserId = Guid.NewGuid(), RecipeId = unused.Id, LoggedAt = now });
         await db.SaveChangesAsync();
         var cache = new ServiceCollection().AddHybridCache().Services.BuildServiceProvider().GetRequiredService<HybridCache>();
-        var handler = new GetRecipesQueryHandler(db, new FakeCurrentUser { UserId = userId }, cache);
+        var viewer = new FakeCurrentUser { UserId = userId };
+        var handler = new GetRecipesQueryHandler(db, viewer, cache, new Mizan.Application.Services.HouseholdAccess(db, viewer));
 
         var first = await handler.Handle(new GetRecipesQuery { PageSize = 2 }, default);
         first.TotalCount.Should().Be(3);

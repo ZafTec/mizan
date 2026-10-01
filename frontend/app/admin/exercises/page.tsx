@@ -9,6 +9,7 @@ import {
 	type Column,
 } from "@/components/ui/data-table";
 import ExerciseAdminActions from "./ExerciseAdminActions";
+import NewExerciseButton from "./NewExerciseButton";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,18 @@ const columns: Column<Exercise>[] = [
 	{ id: "muscle", header: "Muscle group", sortKey: "muscleGroup", secondary: true, cell: (e) => e.muscleGroup || "—" },
 	{ id: "equipment", header: "Equipment", secondary: true, cell: (e) => e.equipment || "—" },
 	{
+		id: "assets",
+		header: "Assets",
+		secondary: true,
+		cell: (e) => (
+			<span className="flex gap-1">
+				{e.imageUrl && <Pill tone="neutral">Picture</Pill>}
+				{e.modelUrl && <Pill tone="info">3D</Pill>}
+				{!e.imageUrl && !e.modelUrl && "—"}
+			</span>
+		),
+	},
+	{
 		id: "type",
 		header: "Type",
 		align: "center",
@@ -48,7 +61,7 @@ const columns: Column<Exercise>[] = [
 		header: "",
 		align: "right",
 		width: "1%",
-		cell: (e) => <ExerciseAdminActions id={e.id} custom={Boolean(e.isCustom)} />,
+		cell: (e) => <ExerciseAdminActions exercise={{ ...e, isCustom: Boolean(e.isCustom) }} />,
 	},
 ];
 
@@ -79,9 +92,12 @@ export default async function AdminExercisesPage({
 						Exercises
 					</h1>
 				</div>
-				<Link href="/workouts" className="btn-secondary !rounded-2xl">
-					Back to workouts
-				</Link>
+				<div className="flex gap-2">
+					<NewExerciseButton />
+					<Link href="/workouts" className="btn-secondary !rounded-2xl">
+						Back to workouts
+					</Link>
+				</div>
 			</header>
 
 			<TableToolbar

@@ -43,11 +43,13 @@ public sealed class PromotionWeightsRequiredException(IReadOnlyList<PromotionWei
 public class PromoteMealToRecipeCommandHandler : IRequestHandler<PromoteMealToRecipeCommand, Guid>
 {
     private readonly IMizanDbContext _context;
+    private readonly IHouseholdAccess _households;
     private readonly ICurrentUserService _currentUser;
     private readonly HybridCache _cache;
 
-    public PromoteMealToRecipeCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
+    public PromoteMealToRecipeCommandHandler(IMizanDbContext context, IHouseholdAccess households, ICurrentUserService currentUser, HybridCache cache)
     {
+        _households = households;
         _context = context;
         _currentUser = currentUser;
         _cache = cache;
@@ -56,8 +58,7 @@ public class PromoteMealToRecipeCommandHandler : IRequestHandler<PromoteMealToRe
     public async Task<Guid> Handle(PromoteMealToRecipeCommand request, CancellationToken cancellationToken)
     {
         var userId = _currentUser.UserId ?? throw new UnauthorizedAccessException("User must be authenticated");
-        if (request.HouseholdId.HasValue && !await _context.HouseholdMembers.AnyAsync(
-                m => m.HouseholdId == request.HouseholdId && m.UserId == userId, cancellationToken))
+        if (request.HouseholdId.HasValue && !await _households.CanAccessAsync(request.HouseholdId.Value, cancellationToken))
             throw new ForbiddenAccessException("You are not a member of this household");
 
         var mealType = MealTypes.Normalize(request.MealType);

@@ -15,6 +15,12 @@ public enum StorageFolder
     /// produced can be checked against the picture it came from.
     /// </summary>
     Meals = 2,
+
+    /// <summary>Images and clips that belong to exercises. Curated by an administrator.</summary>
+    Exercises = 3,
+
+    /// <summary>3D models (glTF binary) made for the app, such as the rigged exercise figures. Administrator only.</summary>
+    Models = 4,
 }
 
 public record StorageUpload(

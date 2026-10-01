@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text;
 using FluentAssertions;
 using Xunit;
@@ -59,11 +60,85 @@ public class UploadsControllerTests
         client.Dispose();
     }
 
-    private async Task<HttpClient> SignedInAsync()
+    // ---- 3D models for the app ----
+
+    [Fact]
+    public async Task UploadModel_IsForAdministratorsOnly()
+    {
+        var client = await SignedInAsync();
+
+        (await client.PostAsync("/api/Uploads/model", Glb())).StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        client.Dispose();
+    }
+
+    [Fact]
+    public async Task UploadModel_RejectsAFileThatIsNotAGlb()
+    {
+        var admin = await SignedInAsync(role: "admin");
+
+        var content = new MultipartFormDataContent();
+        content.Add(new ByteArrayContent(Encoding.ASCII.GetBytes("<html>not a model</html>")), "file", "evil.glb");
+
+        (await admin.PostAsync("/api/Uploads/model", content)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        admin.Dispose();
+    }
+
+    [Fact]
+    public async Task UploadModel_AcceptsAGlb_AndReachesTheStore()
+    {
+        var admin = await SignedInAsync(role: "admin");
+
+        // Storage is not configured in tests, so getting that answer proves the file passed every check before it.
+        (await admin.PostAsync("/api/Uploads/model", Glb())).StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        admin.Dispose();
+    }
+
+    [Fact]
+    public async Task TheImageDoor_IsClosedToTheModelsFolder_AndToExerciseMediaForOrdinaryUsers()
+    {
+        var user = await SignedInAsync();
+
+        (await user.PostAsync("/api/Uploads/image?folder=Models", Png("x.png"))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await user.PostAsync("/api/Uploads/image?folder=Exercises", Png("x.png"))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        user.Dispose();
+    }
+
+    [Fact]
+    public async Task AnExerciseModel_MustBeOneWeStored()
+    {
+        var admin = await SignedInAsync(role: "admin");
+        var id = await FirstExerciseAsync(admin);
+
+        var foreign = await admin.PutAsJsonAsync($"/api/Exercises/{id}/model", new { ModelUrl = "https://evil.example/x.glb" });
+        foreign.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        (await admin.PutAsJsonAsync($"/api/Exercises/{id}/model", new { ModelUrl = (string?)null })).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        admin.Dispose();
+    }
+
+    private async Task<Guid> FirstExerciseAsync(HttpClient client)
+    {
+        var created = await client.PostAsJsonAsync("/api/Exercises", new { Name = "Model test squat", Category = "strength" });
+        created.EnsureSuccessStatusCode();
+        var list = await client.GetFromJsonAsync<System.Text.Json.JsonElement>("/api/Exercises?search=Model test squat");
+        return list.GetProperty("items")[0].GetProperty("id").GetGuid();
+    }
+
+    private static MultipartFormDataContent Glb()
+    {
+        // "glTF", version 2, total length 12: a valid header, which is all the check reads.
+        var part = new ByteArrayContent(new byte[] { 0x67, 0x6C, 0x54, 0x46, 2, 0, 0, 0, 12, 0, 0, 0 });
+        part.Headers.ContentType = new MediaTypeHeaderValue("model/gltf-binary");
+        var content = new MultipartFormDataContent();
+        content.Add(part, "file", "squat.glb");
+        return content;
+    }
+
+    private async Task<HttpClient> SignedInAsync(string role = "user")
     {
         await _fixture.ResetDatabaseAsync();
         var userId = Guid.NewGuid();
-        await _fixture.SeedUserAsync(userId, $"upload-{userId:N}@example.com", emailVerified: true);
+        await _fixture.SeedUserAsync(userId, $"upload-{userId:N}@example.com", emailVerified: true, role: role);
         return _fixture.CreateAuthenticatedClient(userId, $"upload-{userId:N}@example.com");
     }
 

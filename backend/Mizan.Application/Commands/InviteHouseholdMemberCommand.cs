@@ -40,17 +40,21 @@ public class InviteHouseholdMemberCommandHandler : IRequestHandler<InviteHouseho
 
     private readonly IMizanDbContext _context;
     private readonly INotificationWriter? _notifications;
+    private readonly IHouseholdAccess _households;
 
-    public InviteHouseholdMemberCommandHandler(IMizanDbContext context, INotificationWriter? notifications = null)
+    public InviteHouseholdMemberCommandHandler(IMizanDbContext context, IHouseholdAccess households, INotificationWriter? notifications = null)
     {
+        _households = households;
         _context = context;
         _notifications = notifications;
     }
 
     public async Task<InviteHouseholdMemberResult> Handle(InviteHouseholdMemberCommand request, CancellationToken cancellationToken)
     {
-        var requester = await _context.HouseholdMembers
-            .FirstOrDefaultAsync(m => m.HouseholdId == request.HouseholdId && m.UserId == request.RequestingUserId, cancellationToken);
+        var requester = await _households.CanAccessAsync(request.HouseholdId, cancellationToken)
+            ? await _context.HouseholdMembers
+                .FirstOrDefaultAsync(m => m.HouseholdId == request.HouseholdId && m.UserId == request.RequestingUserId, cancellationToken)
+            : null;
 
         if (requester == null || !(requester.Role == "admin" || requester.Role == "owner"))
         {

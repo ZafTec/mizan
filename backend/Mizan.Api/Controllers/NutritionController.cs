@@ -59,12 +59,12 @@ public class NutritionController : ControllerBase
     {
         if (image.Length == 0)
         {
-            return BadRequest("No image provided");
+            return BadRequest(new { errorCode = "no_image", error = "No image provided" });
         }
 
         if (image.Length > 8_000_000)
         {
-            return BadRequest("Image must be 8 MB or smaller");
+            return BadRequest(new { errorCode = "image_too_large", error = "Image must be 8 MB or smaller" });
         }
 
         if (!_currentUser.UserId.HasValue)
@@ -81,7 +81,7 @@ public class NutritionController : ControllerBase
         var contentType = ImageFormat.Detect(imageBytes.AsSpan(0, Math.Min(ImageFormat.HeaderBytes, imageBytes.Length)));
         if (contentType is null or "image/gif")
         {
-            return BadRequest("Image must be JPEG, PNG or WebP");
+            return BadRequest(new { errorCode = "unsupported_image", error = "Image must be JPEG, PNG or WebP" });
         }
 
         var result = await _aiService.AnalyzeFoodImageAsync(
@@ -92,6 +92,34 @@ public class NutritionController : ControllerBase
         // picture rather than the whole request.
         return Ok(result with { ImageUrl = await StoreAsync(imageBytes, contentType) });
     }
+
+    /// <summary>A sentence becomes a proposal, the way a photo does. Nothing is logged until the person confirms it.</summary>
+    [HttpPost("ai/analyze-text")]
+    [Authorize(Policy = "RequirePro")]
+    public async Task<ActionResult<FoodAnalysisResult>> AnalyzeFoodText([FromBody] AnalyzeFoodTextRequest request)
+    {
+        var description = request.Description?.Trim() ?? string.Empty;
+        if (description.Length == 0)
+        {
+            return BadRequest(new { errorCode = "no_description", error = "Describe what you ate." });
+        }
+
+        if (description.Length > MaxDescriptionLength)
+        {
+            return BadRequest(new { errorCode = "description_too_long", error = $"Keep the description to {MaxDescriptionLength} characters or fewer." });
+        }
+
+        if (!_currentUser.UserId.HasValue)
+        {
+            return Unauthorized();
+        }
+
+        return Ok(await _aiService.AnalyzeFoodTextAsync(_currentUser.UserId.Value, description));
+    }
+
+    public const int MaxDescriptionLength = 600;
+
+    public record AnalyzeFoodTextRequest(string? Description);
 
     private async Task<string?> StoreAsync(byte[] bytes, string contentType)
     {

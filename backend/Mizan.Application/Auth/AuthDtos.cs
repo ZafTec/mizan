@@ -16,7 +16,11 @@ public record AuthUserDto(
     /// Null until the user has told us. Every screen that shows a day boundary
     /// needs it, so it rides the session rather than costing a request.
     /// </summary>
-    string? TimeZoneId);
+    string? TimeZoneId,
+    /// <summary>Set when an administrator is viewing the site as this user. The app shows a banner and an exit.</summary>
+    ImpersonationDto? Impersonation = null);
+
+public record ImpersonationDto(Guid ImpersonatorId, string? ImpersonatorName, DateTime ExpiresAt);
 
 public record SessionSummaryDto(
     Guid Id,

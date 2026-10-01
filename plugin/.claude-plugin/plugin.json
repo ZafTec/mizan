@@ -1,0 +1,8 @@
+{
+  "name": "mizan",
+  "displayName": "Mizan",
+  "version": "1.0.0",
+  "description": "Log meals, workouts and body measurements, plan meals and shopping, and review your progress from a conversation with Claude, using your own Mizan account.",
+  "author": { "name": "ZafTech", "url": "https://zaftech.co" },
+  "license": "MIT"
+}

@@ -55,7 +55,7 @@ public class FoodsController : ControllerBase
     public async Task<ActionResult<UpdateFoodResult>> UpdateFood(Guid id, [FromBody] UpdateFoodCommand command)
     {
         if (id != command.Id)
-            return BadRequest("ID mismatch");
+            return BadRequest(new { errorCode = "id_mismatch", error = "Route and body IDs must match" });
 
         var result = await _mediator.Send(command);
 

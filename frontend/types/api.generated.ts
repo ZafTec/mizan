@@ -1248,6 +1248,45 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/admin/users/{userId}/impersonate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AuthUserDto"];
+                        "application/json": components["schemas"]["AuthUserDto"];
+                        "text/json": components["schemas"]["AuthUserDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/users/{userId}/sessions": {
         parameters: {
             query?: never;
@@ -2115,6 +2154,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Auth/impersonation/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Auth/me": {
         parameters: {
             query?: never;
@@ -2710,6 +2782,105 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DeviceDto"][];
+                        "application/json": components["schemas"]["DeviceDto"][];
+                        "text/json": components["schemas"]["DeviceDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RegisterDeviceCommand"];
+                    "text/json": components["schemas"]["RegisterDeviceCommand"];
+                    "application/*+json": components["schemas"]["RegisterDeviceCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DeviceDto"];
+                        "application/json": components["schemas"]["DeviceDto"];
+                        "text/json": components["schemas"]["DeviceDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Devices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Exercises": {
         parameters: {
             query?: never;
@@ -2839,6 +3010,47 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Exercises/{id}/model": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SetModelRequest"];
+                    "text/json": components["schemas"]["SetModelRequest"];
+                    "application/*+json": components["schemas"]["SetModelRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -3817,7 +4029,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/McpTokens": {
+    "/api/McpConnections": {
         parameters: {
             query?: never;
             header?: never;
@@ -3826,12 +4038,7 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: {
-                    Page?: number;
-                    PageSize?: number;
-                    SortBy?: string;
-                    SortOrder?: string;
-                };
+                query?: never;
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -3844,28 +4051,36 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["McpTokenDtoPagedResult"];
-                        "application/json": components["schemas"]["McpTokenDtoPagedResult"];
-                        "text/json": components["schemas"]["McpTokenDtoPagedResult"];
+                        "text/plain": components["schemas"]["McpConnectionDto"][];
+                        "application/json": components["schemas"]["McpConnectionDto"][];
+                        "text/json": components["schemas"]["McpConnectionDto"][];
                     };
                 };
             };
         };
         put?: never;
-        post: {
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/McpConnections/scopes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["CreateMcpTokenCommand"];
-                    "text/json": components["schemas"]["CreateMcpTokenCommand"];
-                    "application/*+json": components["schemas"]["CreateMcpTokenCommand"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description OK */
                 200: {
@@ -3873,20 +4088,22 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["CreateMcpTokenResult"];
-                        "application/json": components["schemas"]["CreateMcpTokenResult"];
-                        "text/json": components["schemas"]["CreateMcpTokenResult"];
+                        "text/plain": components["schemas"]["ScopeGroupView"][];
+                        "application/json": components["schemas"]["ScopeGroupView"][];
+                        "text/json": components["schemas"]["ScopeGroupView"][];
                     };
                 };
             };
         };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/McpTokens/{id}": {
+    "/api/McpConnections/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -3918,30 +4135,20 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/McpTokens/validate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
+        patch: {
             parameters: {
                 query?: never;
                 header?: never;
-                path?: never;
+                path: {
+                    id: string;
+                };
                 cookie?: never;
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["ValidateTokenCommand"];
-                    "text/json": components["schemas"]["ValidateTokenCommand"];
-                    "application/*+json": components["schemas"]["ValidateTokenCommand"];
+                    "application/json": components["schemas"]["UpdateMcpConnectionBody"];
+                    "text/json": components["schemas"]["UpdateMcpConnectionBody"];
+                    "application/*+json": components["schemas"]["UpdateMcpConnectionBody"];
                 };
             };
             responses: {
@@ -3950,21 +4157,54 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/McpConnections/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    startDate?: string;
+                    endDate?: string;
+                    connectionId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
                     content: {
-                        "text/plain": components["schemas"]["ValidateTokenResult"];
-                        "application/json": components["schemas"]["ValidateTokenResult"];
-                        "text/json": components["schemas"]["ValidateTokenResult"];
+                        "text/plain": components["schemas"]["McpUsageAnalyticsResult"];
+                        "application/json": components["schemas"]["McpUsageAnalyticsResult"];
+                        "text/json": components["schemas"]["McpUsageAnalyticsResult"];
                     };
                 };
             };
         };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/McpTokens/usage": {
+    "/api/McpConnections/usage": {
         parameters: {
             query?: never;
             header?: never;
@@ -4003,19 +4243,18 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/McpTokens/analytics": {
+    "/api/McpTasks": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: {
+        get?: never;
+        put?: never;
+        post: {
             parameters: {
-                query?: {
-                    startDate?: string;
-                    endDate?: string;
-                };
+                query?: never;
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -4028,15 +4267,169 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["McpUsageAnalyticsResult"];
-                        "application/json": components["schemas"]["McpUsageAnalyticsResult"];
-                        "text/json": components["schemas"]["McpUsageAnalyticsResult"];
+                        "text/plain": components["schemas"]["McpTaskDto"];
+                        "application/json": components["schemas"]["McpTaskDto"];
+                        "text/json": components["schemas"]["McpTaskDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/McpTasks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["McpTaskDto"];
+                        "application/json": components["schemas"]["McpTaskDto"];
+                        "text/json": components["schemas"]["McpTaskDto"];
                     };
                 };
             };
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/McpTasks/{id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": unknown;
+                    "text/json": unknown;
+                    "application/*+json": unknown;
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/McpTasks/{id}/fail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": unknown;
+                    "text/json": unknown;
+                    "application/*+json": unknown;
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/McpTasks/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -4718,6 +5111,409 @@ export interface paths {
                         "text/plain": components["schemas"]["FoodAnalysisResult"];
                         "application/json": components["schemas"]["FoodAnalysisResult"];
                         "text/json": components["schemas"]["FoodAnalysisResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Nutrition/ai/analyze-text": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AnalyzeFoodTextRequest"];
+                    "text/json": components["schemas"]["AnalyzeFoodTextRequest"];
+                    "application/*+json": components["schemas"]["AnalyzeFoodTextRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FoodAnalysisResult"];
+                        "application/json": components["schemas"]["FoodAnalysisResult"];
+                        "text/json": components["schemas"]["FoodAnalysisResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/.well-known/openid-configuration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/.well-known/oauth-authorization-server": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/oauth/authorize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    client_id?: string;
+                    redirect_uri?: string;
+                    response_type?: string;
+                    scope?: string;
+                    state?: string;
+                    code_challenge?: string;
+                    code_challenge_method?: string;
+                    resource?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/oauth/token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/x-www-form-urlencoded": {
+                        grant_type?: string;
+                        client_id?: string;
+                        code?: string;
+                        code_verifier?: string;
+                        redirect_uri?: string;
+                        refresh_token?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/oauth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RegisterBody"];
+                    "text/json": components["schemas"]["RegisterBody"];
+                    "application/*+json": components["schemas"]["RegisterBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/oauth/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/x-www-form-urlencoded": {
+                        token?: string;
+                        client_id?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/oauth/authorization-requests/view": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RequestSecretBody"];
+                    "text/json": components["schemas"]["RequestSecretBody"];
+                    "application/*+json": components["schemas"]["RequestSecretBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AuthorizationRequestView"];
+                        "application/json": components["schemas"]["AuthorizationRequestView"];
+                        "text/json": components["schemas"]["AuthorizationRequestView"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/oauth/authorization-requests/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DecisionBody"];
+                    "text/json": components["schemas"]["DecisionBody"];
+                    "application/*+json": components["schemas"]["DecisionBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DecideAuthorizationResult"];
+                        "application/json": components["schemas"]["DecideAuthorizationResult"];
+                        "text/json": components["schemas"]["DecideAuthorizationResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/oauth/introspect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["IntrospectBody"];
+                    "text/json": components["schemas"]["IntrospectBody"];
+                    "application/*+json": components["schemas"]["IntrospectBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OAuthIntrospection"];
+                        "application/json": components["schemas"]["OAuthIntrospection"];
+                        "text/json": components["schemas"]["OAuthIntrospection"];
                     };
                 };
             };
@@ -6290,6 +7086,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Sync/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    since?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SyncChangesResult"];
+                        "application/json": components["schemas"]["SyncChangesResult"];
+                        "text/json": components["schemas"]["SyncChangesResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Telegram/link": {
         parameters: {
             query?: never;
@@ -6888,6 +7724,50 @@ export interface paths {
                 query?: {
                     folder?: components["schemas"]["StorageFolder"];
                 };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        file?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UploadedImageDto"];
+                        "application/json": components["schemas"]["UploadedImageDto"];
+                        "text/json": components["schemas"]["UploadedImageDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Uploads/model": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -7910,6 +8790,9 @@ export interface components {
             /** Format: int32 */
             tokens: number;
         };
+        AnalyzeFoodTextRequest: {
+            description?: string | null;
+        };
         AskClientRequest: {
             /** Format: uuid */
             threadId?: string | null;
@@ -7957,6 +8840,23 @@ export interface components {
             reduceAnimations: boolean;
             hasPassword: boolean;
             timeZoneId?: string | null;
+            impersonation?: components["schemas"]["ImpersonationDto"];
+        };
+        AuthorizationRequestView: {
+            clientName: string;
+            source: string;
+            verifiedHost?: string | null;
+            logoUri?: string | null;
+            clientUri?: string | null;
+            redirectHost: string;
+            audience: string;
+            requestedScopes: string[];
+            scopeGroups: components["schemas"]["ScopeGroupView"][];
+            households: components["schemas"]["ConsentHouseholdView"][];
+            existingGrant?: components["schemas"]["ExistingGrantView"];
+            isFirstParty: boolean;
+            /** Format: date-time */
+            expiresAt: string;
         };
         BillingDealDto: {
             paddleDiscountId: string;
@@ -8076,8 +8976,24 @@ export interface components {
             foodLogs: components["schemas"]["FoodLogEntryDto"][];
             summary: components["schemas"]["NutritionSummaryDto"];
         };
+        ClientUsageDto: {
+            /** Format: uuid */
+            grantId: string;
+            clientName: string;
+            /** Format: int32 */
+            callCount: number;
+            /** Format: int32 */
+            failureCount: number;
+            /** Format: date-time */
+            lastUsed: string;
+        };
         CommentRequest: {
             body: string;
+        };
+        ConsentHouseholdView: {
+            /** Format: uuid */
+            id: string;
+            name: string;
         };
         ConsumeTelegramLinkCommand: {
             code: string;
@@ -8254,21 +9170,6 @@ export interface components {
         CreateHouseholdRequest: {
             name: string;
         };
-        CreateMcpTokenCommand: {
-            name: string;
-            /** Format: date-time */
-            expiresAt?: string | null;
-        };
-        CreateMcpTokenResult: {
-            /** Format: uuid */
-            id: string;
-            plaintextToken: string;
-            name: string;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            expiresAt?: string | null;
-        };
         CreateMealPlanCommand: {
             name?: string | null;
             /** Format: date */
@@ -8390,6 +9291,16 @@ export interface components {
             /** Format: int32 */
             failureCount: number;
         };
+        DecideAuthorizationResult: {
+            redirectUrl: string;
+        };
+        DecisionBody: {
+            request: string;
+            approve: boolean;
+            scopes?: string[] | null;
+            householdMode?: string | null;
+            householdIds?: string[] | null;
+        };
         DeleteBodyMeasurementResult: {
             success: boolean;
             message?: string | null;
@@ -8409,6 +9320,16 @@ export interface components {
         DeleteRecipeResult: {
             success: boolean;
             message?: string | null;
+        };
+        DeviceDto: {
+            /** Format: uuid */
+            id: string;
+            platform: string;
+            deviceName?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            lastSeenAt: string;
         };
         EmailRequest: {
             email: string;
@@ -8432,6 +9353,7 @@ export interface components {
             equipment?: string | null;
             videoUrl?: string | null;
             imageUrl?: string | null;
+            modelUrl?: string | null;
             isCustom: boolean;
             isApproved: boolean;
             isOwner: boolean;
@@ -8469,6 +9391,11 @@ export interface components {
             exerciseId: string;
             name: string;
             points: components["schemas"]["ExercisePoint"][];
+        };
+        ExistingGrantView: {
+            scopes: string[];
+            householdMode: string;
+            householdIds: string[];
         };
         FeedCommentDto: {
             /** Format: uuid */
@@ -8823,9 +9750,20 @@ export interface components {
             /** Format: date-time */
             joinedAt: string;
         };
+        ImpersonationDto: {
+            /** Format: uuid */
+            impersonatorId: string;
+            impersonatorName?: string | null;
+            /** Format: date-time */
+            expiresAt: string;
+        };
         ImportBillingPlansResult: {
             /** Format: int32 */
             imported: number;
+        };
+        IntrospectBody: {
+            token?: string | null;
+            audience?: string | null;
         };
         InviteHouseholdMemberResult: {
             success: boolean;
@@ -8877,7 +9815,8 @@ export interface components {
         };
         LogMcpUsageCommand: {
             /** Format: uuid */
-            mcpTokenId: string;
+            grantId: string;
+            kind: string;
             toolName: string;
             parameters?: string | null;
             success: boolean;
@@ -8945,33 +9884,52 @@ export interface components {
             email: string;
             password: string;
         };
-        McpTokenDto: {
+        McpConnectionDto: {
             /** Format: uuid */
             id: string;
-            name: string;
+            clientName: string;
+            source: string;
+            verifiedHost?: string | null;
+            logoUri?: string | null;
+            isFirstParty: boolean;
+            scopes: string[];
+            householdMode: string;
+            households: components["schemas"]["McpConnectionHouseholdDto"][];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
-            expiresAt?: string | null;
-            /** Format: date-time */
             lastUsedAt?: string | null;
-            isActive: boolean;
+            /** Format: int32 */
+            calls30Days: number;
+            /** Format: int32 */
+            failed30Days: number;
         };
-        McpTokenDtoPagedResult: {
-            items: components["schemas"]["McpTokenDto"][];
+        McpConnectionHouseholdDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
+        McpTaskDto: {
+            id: string;
+            status: string;
+            statusMessage?: string | null;
+            /** @enum {unknown|null} */
+            result?: null;
+            /** @enum {unknown|null} */
+            error?: null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
             /** Format: int32 */
-            totalCount: number;
+            ttlSeconds: number;
             /** Format: int32 */
-            page: number;
-            /** Format: int32 */
-            pageSize: number;
-            /** Format: int32 */
-            readonly totalPages: number;
+            pollIntervalMs: number;
         };
         McpUsageAnalyticsResult: {
             overview: components["schemas"]["UsageOverview"];
             toolUsage: components["schemas"]["ToolUsageDto"][];
-            tokenUsage: components["schemas"]["TokenUsageDto"][];
+            clientUsage: components["schemas"]["ClientUsageDto"][];
             dailyUsage: components["schemas"]["DailyUsageDto"][];
         };
         MealPlanDetailDto: {
@@ -9238,6 +10196,26 @@ export interface components {
             /** Format: double */
             totalFat: number;
         };
+        OAuthIntrospection: {
+            active: boolean;
+            /** Format: uuid */
+            userId: string;
+            /** Format: uuid */
+            grantId: string;
+            /** Format: uuid */
+            clientRowId: string;
+            clientId: string;
+            clientName: string;
+            scopes: string[];
+            householdMode: string;
+            householdIds: string[];
+            role: string;
+            plan: string;
+            /** Format: int32 */
+            monthlyLimit?: number | null;
+            /** Format: int32 */
+            usedThisMonth: number;
+        };
         PersonalRecordResult: {
             /** Format: uuid */
             exerciseId: string;
@@ -9347,6 +10325,8 @@ export interface components {
             isFavorited: boolean;
             /** Format: date-time */
             lastUsedAt?: string | null;
+            /** Format: int32 */
+            timesLogged: number;
             nutrition?: components["schemas"]["RecipeNutritionDto"];
             /** Format: date-time */
             createdAt: string;
@@ -9419,12 +10399,26 @@ export interface components {
             /** Format: uuid */
             id?: string | null;
         };
+        RegisterBody: {
+            client_name?: string | null;
+            redirect_uris?: string[] | null;
+            logo_uri?: string | null;
+            client_uri?: string | null;
+            token_endpoint_auth_method?: string | null;
+            grant_types?: string[] | null;
+            response_types?: string[] | null;
+        };
         RegisterCommand: {
             /** Format: email */
             email: string;
             password: string;
             name?: string | null;
             timeZoneId?: string | null;
+        };
+        RegisterDeviceCommand: {
+            token: string;
+            platform: string;
+            deviceName?: string | null;
         };
         RemoveHouseholdMemberResult: {
             success: boolean;
@@ -9450,6 +10444,9 @@ export interface components {
         };
         RequestFollowCommand: {
             shareToken: string;
+        };
+        RequestSecretBody: {
+            request: string;
         };
         ResetPasswordCommand: {
             token: string;
@@ -9503,6 +10500,14 @@ export interface components {
             isBuiltIn: boolean;
             exercises: components["schemas"]["WorkoutTemplateExerciseInput"][];
         };
+        ScopeGroupView: {
+            group: string;
+            title: string;
+            description: string;
+            hasWrite: boolean;
+            readScope: string;
+            writeScope?: string | null;
+        };
         SendAiChatMessageCommand: {
             /** Format: uuid */
             threadId?: string | null;
@@ -9550,6 +10555,9 @@ export interface components {
             message?: string | null;
             /** Format: uuid */
             activeHouseholdId?: string | null;
+        };
+        SetModelRequest: {
+            modelUrl?: string | null;
         };
         ShoppingListDto: {
             /** Format: uuid */
@@ -9631,7 +10639,7 @@ export interface components {
          * Format: int32
          * @enum {integer}
          */
-        StorageFolder: 0 | 1 | 2;
+        StorageFolder: 0 | 1 | 2 | 3 | 4;
         StreakUpdate: {
             streakType: string;
             /** Format: int32 */
@@ -9645,6 +10653,61 @@ export interface components {
             freezeConsumed: boolean;
             /** Format: int32 */
             freezesAvailable: number;
+        };
+        SyncChangesResult: {
+            /** Format: date-time */
+            serverTime: string;
+            resyncRequired: boolean;
+            hasMore: boolean;
+            /** Format: date-time */
+            nextSince: string;
+            diaryEntries: components["schemas"]["SyncDiaryEntryDto"][];
+            workouts: components["schemas"]["WorkoutSummaryDto"][];
+            bodyMeasurements: components["schemas"]["BodyMeasurementDto"][];
+            notifications: components["schemas"]["NotificationDto"][];
+            deleted: components["schemas"]["SyncDeletionDto"][];
+        };
+        SyncDeletionDto: {
+            type: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            deletedAt: string;
+        };
+        SyncDiaryEntryDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date */
+            entryDate: string;
+            /** Format: uuid */
+            foodId?: string | null;
+            /** Format: uuid */
+            recipeId?: string | null;
+            /** Format: uuid */
+            groupId?: string | null;
+            groupName?: string | null;
+            /** Format: double */
+            amountGrams?: number | null;
+            mealType: string;
+            name: string;
+            /** Format: double */
+            servings: number;
+            /** Format: double */
+            calories?: number | null;
+            /** Format: double */
+            proteinGrams?: number | null;
+            /** Format: double */
+            carbsGrams?: number | null;
+            /** Format: double */
+            fatGrams?: number | null;
+            /** Format: double */
+            fiberGrams?: number | null;
+            /** Format: double */
+            proteinCalorieRatio?: number | null;
+            /** Format: date-time */
+            loggedAt: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         SystemInfoDto: {
             environment: string;
@@ -9683,15 +10746,6 @@ export interface components {
         };
         TokenRequest: {
             token: string;
-        };
-        TokenUsageDto: {
-            /** Format: uuid */
-            tokenId: string;
-            tokenName: string;
-            /** Format: int32 */
-            callCount: number;
-            /** Format: date-time */
-            lastUsed: string;
         };
         ToolUsageDto: {
             toolName: string;
@@ -9876,6 +10930,11 @@ export interface components {
             canMessage?: boolean | null;
             end: boolean;
         };
+        UpdateMcpConnectionBody: {
+            scopes?: string[] | null;
+            householdMode?: string | null;
+            householdIds?: string[] | null;
+        };
         UpdateMealPlanRecipeRequest: {
             /** Format: date */
             date: string;
@@ -9962,7 +11021,7 @@ export interface components {
             /** Format: int32 */
             averageExecutionTimeMs: number;
             /** Format: int32 */
-            uniqueTokensUsed: number;
+            uniqueClientsUsed: number;
         };
         UserDto: {
             /** Format: uuid */
@@ -10014,25 +11073,6 @@ export interface components {
             targetCarbsGrams?: number | null;
             /** Format: double */
             targetFatGrams?: number | null;
-        };
-        ValidateTokenCommand: {
-            token: string;
-        };
-        ValidateTokenResult: {
-            /** Format: uuid */
-            userId: string;
-            isValid: boolean;
-            /** Format: uuid */
-            tokenId?: string | null;
-            role: string;
-            plan: string;
-            /** Format: int32 */
-            monthlyLimit?: number | null;
-            /** Format: int32 */
-            usedThisMonth: number;
-            /** Format: int32 */
-            readonly remainingThisMonth?: number | null;
-            readonly quotaExceeded: boolean;
         };
         WorkoutDraftDto: {
             payload: string;

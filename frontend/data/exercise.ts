@@ -14,6 +14,7 @@ export interface Exercise {
     equipment?: string;
     videoUrl?: string;
     imageUrl?: string;
+    modelUrl?: string;
     isCustom?: boolean;
     isApproved?: boolean;
     isOwner?: boolean;

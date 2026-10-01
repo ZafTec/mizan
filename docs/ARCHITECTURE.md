@@ -42,7 +42,15 @@ The backend sends email through MailKit and the durable outbox. Compose maps the
 
 Each newly issued verification or reset token queues its own message. Retrying that exact message preserves its deduplication key. Missing SMTP configuration fails delivery outside Development, and a connection-close error after SMTP acceptance does not retry an already accepted message. SMTP acceptance does not guarantee inbox delivery. Sign-in alerts and household invitation emails are separate notification features; the current household invitation path creates in-app notifications.
 
-External MCP clients send a user token as `Authorization: Bearer <token>`. MCP validates it through the API, then calls internal endpoints with its service key and `X-Impersonate-User`. Internal credentials are distinct from user tokens. Backend policies determine accepted authentication methods, ownership, and roles.
+The API is also an OAuth 2.1 authorization server (`/api/oauth/*`, [MCP](MCP.md#connect-with-oauth)). It issues opaque tokens, `mza_` access tokens and rotating `mzr_` refresh tokens, each tied to a grant and an audience. An MCP client's token is validated by the MCP service through introspection; MCP then calls internal endpoints with its service key, `X-Impersonate-User`, and `X-Mcp-Grant`, and the API loads the grant from its database. `IHouseholdAccess` makes household access the intersection of membership and the grant, and `IDataAccessPolicy` intersects readable axes with it. Internal credentials are distinct from user tokens. Backend policies determine accepted authentication methods, ownership, and roles.
+
+Audit entries for commands that carry passwords, codes, or tokens are redacted before they are stored (`IRedactedAudit`).
+
+### Viewing the site as a user
+
+An administrator can open a one-hour session as another user (`POST /api/admin/users/{id}/impersonate`, from the user's admin page). It is refused for another administrator, for oneself, for an account that cannot sign in, and from inside another view. The new session is an ordinary `user_sessions` row with `impersonator_id` set and a fixed one-hour life that never slides. The administrator's own session cookie is kept aside in `mizan_admin_session`, and `POST /api/Auth/impersonation/stop` revokes the view and puts it back, but only if it is still valid and belongs to the administrator who opened the view. Otherwise the person is signed out.
+
+The user the server sees is the target, with the target's role, so the admin area is closed while viewing. `ImpersonationGuardMiddleware` also refuses changes that would last or take the account over: credentials and sessions (`/api/Auth`), billing (`/api/Subscriptions`), Telegram links, connected apps (`/api/oauth`, `/api/McpConnections`) and push devices. Every audited action in the view records the administrator in `audit_logs.impersonator_id`, and starting a view is itself audited. `GET /api/Auth/me` carries `impersonation`, which the app uses to show a banner on every screen with the time left and one way back.
 
 ## Data and migrations
 
@@ -80,7 +88,21 @@ Date-only logs use the user's IANA timezone. Missing observations remain gaps in
 
 `HybridCache` caches session lookups and read models including nutrition ranges, recipes, and meal plans. Writes invalidate associated tags. Viewer-specific keys include the identity or household context needed to keep cached personal results private.
 
-Background work uses a transactional PostgreSQL outbox. Workers claim jobs with `FOR UPDATE SKIP LOCKED`, limit per-type concurrency, retry failures, and expose exhausted work through administrator jobs. Email and prompt evaluations use the outbox. Redis is not its durable store.
+Background work uses a transactional PostgreSQL outbox. Workers claim jobs with `FOR UPDATE SKIP LOCKED`, limit per-type concurrency, retry failures, and expose exhausted work through administrator jobs. Email, push, and prompt evaluations use the outbox. Redis is not its durable store.
+
+## Native clients
+
+The Android app signs in as the first-party OAuth client `mizan-android` (Authorization Code with PKCE, `resource` set to the API issuer), through a browser tab so the web consent and sign-in screens are reused. Its access token is sent as `Authorization: Bearer`; SignalR may also pass it as `access_token` on `/hubs`. A token issued for MCP is refused here. Disconnecting the app under Connected apps ends its access at once.
+
+- **OpenAPI**: `/swagger/v1/swagger.json` is served in development, and in production only when `OpenApi__Enabled=true`. Generate client types from it.
+- **Retrying writes**: send an `Idempotency-Key` header (up to 128 printable characters) on a write. A retry with the same key and request gets the first answer back with `Idempotent-Replayed: true`; the same key with a different request is `422 idempotency_key_reused`; a duplicate arriving while the first runs is `409 idempotency_in_progress`. Server errors are not remembered, and keys expire after 24 hours.
+- **Staying current**: `GET /api/Sync/changes?since=` returns diary entries, workouts, body measurements, and notifications changed since a cursor, plus tombstones for deleted diary entries, workouts, and measurements. Omit `since` the first time, send back `nextSince`, and repeat while `hasMore`. Items are upserts, so redelivery is harmless. An app away longer than 90 days gets `resyncRequired` and starts again. Recipes, meal plans, and shopping lists are not in the feed yet.
+- **Push**: `POST /api/Devices` registers an FCM token (an upsert; a token moves to whoever registers it last) and `DELETE /api/Devices/{id}` removes it on sign-out. Creating a notification queues a `push` outbox job when Firebase is configured (`Push__FcmProjectId`, `Push__FcmServiceAccountJson`); a device the provider no longer knows is forgotten. Unconfigured, nothing is queued.
+- **3D models**: administrators upload `.glb` files to `POST /api/Uploads/model` (glTF 2 binary, checked by its bytes, up to `Storage__MaxModelBytes`, default 30 MB) into the `models/` folder, then attach one with `PUT /api/Exercises/{id}/model`. Exercises expose `modelUrl`. In the app, an administrator does both from **Admin → Exercises**: the edit form (and **New exercise**, which creates a system exercise in one step) uploads the picture and the `.glb` and attaches them on save, so assets made later can be added to any exercise without a deploy.
+
+## Errors
+
+Every error from our code has the body `{ "errorCode": "...", "error": "..." }`, with extra fields where useful (`errors` for field messages). That includes unreadable request bodies (`invalid_request`), failed validation (`validation_failed`), and the framework's own `401`, `403`, `404`, and `405`. Result objects such as `{ success: false, message }` keep their fields and gain the two standard ones. The OAuth endpoints are the exception: they use `error` and `error_description` as RFC 6749 requires.
 
 ## Telemetry
 

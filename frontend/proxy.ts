@@ -20,6 +20,7 @@ const PROTECTED_PREFIXES = [
   "/workouts",
   "/exercises",
   "/achievements",
+  "/oauth",
 ];
 
 const PROTECTED_PATTERNS = [
@@ -37,7 +38,7 @@ function isProtectedRoute(pathname: string): boolean {
 }
 
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
 
   if (!isProtectedRoute(pathname)) {
     return NextResponse.next();
@@ -49,7 +50,9 @@ export function proxy(request: NextRequest) {
 
   if (!sessionCookie?.value) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", pathname);
+    // The login page reads callbackUrl. The query string comes along so a connection
+    // request survives signing in.
+    loginUrl.searchParams.set("callbackUrl", pathname + search);
     return NextResponse.redirect(loginUrl);
   }
 

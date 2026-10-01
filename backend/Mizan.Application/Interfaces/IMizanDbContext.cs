@@ -60,8 +60,15 @@ public interface IMizanDbContext
     DbSet<AiPromptVersion> AiPromptVersions { get; }
     DbSet<AiEvalCase> AiEvalCases { get; }
     DbSet<AiEvalRun> AiEvalRuns { get; }
-    DbSet<McpToken> McpTokens { get; }
     DbSet<McpUsageLog> McpUsageLogs { get; }
+    DbSet<OAuthClient> OAuthClients { get; }
+    DbSet<OAuthGrant> OAuthGrants { get; }
+    DbSet<OAuthAuthorizationRequest> OAuthAuthorizationRequests { get; }
+    DbSet<OAuthToken> OAuthTokens { get; }
+    DbSet<McpTask> McpTasks { get; }
+    DbSet<IdempotencyKey> IdempotencyKeys { get; }
+    DbSet<DeletedRecord> DeletedRecords { get; }
+    DbSet<DeviceToken> DeviceTokens { get; }
 
     // Billing
     DbSet<Subscription> Subscriptions { get; }

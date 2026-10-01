@@ -59,7 +59,10 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
     }
 }
 
-public record ResetPasswordCommand(string Token, string Password) : IRequest<Unit>;
+public record ResetPasswordCommand(string Token, string Password) : IRequest<Unit>, IRedactedAudit
+{
+    object IRedactedAudit.AuditDetails => new { Reset = true };
+}
 
 public class ResetPasswordCommandValidator : AbstractValidator<ResetPasswordCommand>
 {
@@ -118,7 +121,10 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
 /// one is cut.
 /// </summary>
 public record ChangePasswordCommand(string? CurrentPassword, string NewPassword, string? CurrentSessionToken = null)
-    : IRequest<Unit>;
+    : IRequest<Unit>, IRedactedAudit
+{
+    object IRedactedAudit.AuditDetails => new { Changed = true };
+}
 
 public class ChangePasswordCommandValidator : AbstractValidator<ChangePasswordCommand>
 {

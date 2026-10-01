@@ -26,8 +26,20 @@ const user = {
 	role: "user", emailVerified: true, themePreference: "light", compactMode: false,
 	reduceAnimations: false, hasPassword: true, timeZoneId: "UTC", image: null,
 };
-type FixtureHousehold = { otherMembers: number; lists: number; plans: number; version: number; staleOnce: boolean };
 const householdId = "55555555-5555-4555-8555-555555555555";
+const scopeGroups = [
+	{ group: "nutrition", title: "Food and nutrition", description: "Food diary, foods, daily totals and calorie goals.", hasWrite: true, readScope: "nutrition:read", writeScope: "nutrition:write" },
+	{ group: "training", title: "Training", description: "Workouts, workout templates and exercises.", hasWrite: true, readScope: "training:read", writeScope: "training:write" },
+	{ group: "planning", title: "Meal plans and shopping", description: "Meal plans and shopping lists.", hasWrite: true, readScope: "planning:read", writeScope: "planning:write" },
+	{ group: "ai", title: "Mizan assistant", description: "Ask the assistant and analyze photos.", hasWrite: false, readScope: "ai:use", writeScope: null },
+];
+type FixtureConnection = { id: string; clientName: string; source: string; verifiedHost: string | null; logoUri: null; isFirstParty: boolean; scopes: string[]; householdMode: string; households: { id: string; name: string }[]; createdAt: string; lastUsedAt: string | null; calls30Days: number; failed30Days: number };
+const consentRequest = {
+	clientName: "Claude", source: "dynamic", verifiedHost: null, logoUri: null, clientUri: null, redirectHost: "localhost",
+	audience: "mcp", requestedScopes: [], scopeGroups, isFirstParty: false, expiresAt: `${today}T23:59:00Z`,
+	households: [{ id: householdId, name: "Home" }], existingGrant: null,
+};
+type FixtureHousehold = { otherMembers: number; lists: number; plans: number; version: number; staleOnce: boolean };
 // What an admin has on sale: $2.99 monthly, $24 yearly with a first-year deal.
 const plans = [
 	{ id: "66666666-6666-4666-8666-666666666661", name: "Pro Monthly", description: null, interval: "month", amountCents: 299, currency: "USD", trialDays: null, paddlePriceId: "pri_fixture_monthly", deal: null },
@@ -58,18 +70,46 @@ type FixtureState = {
 	unhandled: string[];
 	household: FixtureHousehold | null;
 	writes: { path: string; body: Record<string, unknown> }[];
+	connections: FixtureConnection[];
+	role: string;
+	pro: boolean;
+	impersonating: boolean;
+	threads: FixtureThread[];
+	exercises: FixtureExercise[];
 };
+type FixtureThread = { id: string; title: string; updatedAt: string; messages: { id: string; fromUser: boolean; content: string; createdAt: string; imageUrl?: string | null }[] };
+type FixtureExercise = { id: string; name: string; category: string; muscleGroup?: string | null; equipment?: string | null; description?: string | null; videoUrl?: string | null; imageUrl?: string | null; modelUrl?: string | null; isCustom: boolean; isApproved: boolean };
+// A one-pixel PNG, so a "stored" picture really renders.
+const pixel = `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="240" height="160"><rect width="240" height="160" fill="#c9d6cf"/><circle cx="120" cy="80" r="50" fill="#e8dcc4"/></svg>')}`;
+const analysis = { foods: [
+	{ name: "Scrambled eggs", portionGrams: 120, calories: 180, protein: 12, carbs: 2, fat: 14 },
+	{ name: "Toast with butter", portionGrams: 60, calories: 190, protein: 4, carbs: 22, fat: 9 },
+], totalCalories: 370, confidence: 0.7, note: "Assumed two eggs and one slice." };
 const states = new Map<string, FixtureState>();
 function initialState(empty = false): FixtureState {
 	return {
-		userId: user.id, empty, unread: 0, draft: null, household: null, failures: [], writeFailures: {}, unhandled: [], writes: [], recipes: empty ? [] : [{
-			id: "33333333-3333-4333-8333-333333333333", title: "Yogurt and oats", servings: 1, isFavorited: true, isOwner: true,
+		role: "user", pro: false, impersonating: false,
+		threads: empty ? [] : [{ id: "thread-1", title: "Protein ideas", updatedAt: `${dateAgo(1)}T09:00:00Z`, messages: [
+			{ id: "m1", fromUser: true, content: "How is my protein this week?", createdAt: `${dateAgo(1)}T09:00:00Z` },
+			{ id: "m2", fromUser: false, content: "You averaged **128 g** a day, close to your 140 g goal.", createdAt: `${dateAgo(1)}T09:00:05Z` },
+			{ id: "m3", fromUser: true, content: "What about this plate?", createdAt: `${dateAgo(1)}T09:01:00Z`, imageUrl: pixel },
+			{ id: "m4", fromUser: false, content: "It looks like rice and chicken, about 520 kcal.", createdAt: `${dateAgo(1)}T09:01:06Z` },
+		] }],
+		exercises: [
+			{ id: "exercise-bench", name: "Bench press", category: "Strength", muscleGroup: "Chest", equipment: "Barbell", description: null, videoUrl: null, imageUrl: null, modelUrl: null, isCustom: false, isApproved: true },
+			{ id: "exercise-row", name: "Barbell row", category: "Strength", muscleGroup: "Back", equipment: "Barbell", description: "Pull to the belly.", videoUrl: null, imageUrl: null, modelUrl: null, isCustom: true, isApproved: true },
+		],
+		userId: user.id, empty, unread: 0, draft: null, household: null, failures: [], writeFailures: {}, unhandled: [], writes: [], connections: empty ? [] : [
+			{ id: "c0000000-0000-4000-8000-000000000001", clientName: "Claude", source: "metadata", verifiedHost: "claude.ai", logoUri: null, isFirstParty: false, scopes: ["nutrition:read", "nutrition:write", "training:read", "ai:use"], householdMode: "selected", households: [{ id: householdId, name: "Home" }], createdAt: `${dateAgo(9)}T08:00:00Z`, lastUsedAt: `${today}T07:30:00Z`, calls30Days: 42, failed30Days: 2 },
+			{ id: "c0000000-0000-4000-8000-000000000002", clientName: "Gemini CLI", source: "dynamic", verifiedHost: null, logoUri: null, isFirstParty: false, scopes: ["nutrition:read"], householdMode: "none", households: [], createdAt: `${dateAgo(2)}T08:00:00Z`, lastUsedAt: null, calls30Days: 0, failed30Days: 0 },
+		], recipes: empty ? [] : [{
+			id: "33333333-3333-4333-8333-333333333333", title: "Yogurt and oats", servings: 1, isFavorited: true, isOwner: true, timesLogged: 6,
 			isPublic: true, description: "A breakfast to come back to.", instructions: "Stir the yogurt and oats together. Serve chilled.",
 			ingredients: [{ foodId: food.id, foodName: food.name, ingredientText: food.name, amount: 200, unit: "g" }, { foodId: oats.id, foodName: oats.name, ingredientText: oats.name, amount: 50, unit: "g" }],
 			lastUsedAt: `${dateAgo(1)}T08:00:00Z`, nutrition: { caloriesPerServing: 389, proteinGrams: 26.5, carbsGrams: 41, fatGrams: 13.5, fiberGrams: 5.5 },
 			unmeasuredIngredients: [], unresolvedIngredients: [],
 		}, {
-			id: "44444444-4444-4444-8444-444444444444", title: "Imported lentil stew", servings: 4, isFavorited: false, isOwner: true,
+			id: "44444444-4444-4444-8444-444444444444", title: "Imported lentil stew", servings: 4, isFavorited: false, isOwner: true, timesLogged: 0,
 			isPublic: true, description: null, instructions: null, lastUsedAt: null, nutrition: null,
 			ingredients: [{ foodId: oats.id, foodName: oats.name, ingredientText: "200g oats", amount: 200, unit: "g" }, { foodId: null, foodName: "", ingredientText: "1 lemon (50g)", amount: 50, unit: "g" }, { foodId: null, foodName: "", ingredientText: "salt to taste", amount: null, unit: "" }],
 			unmeasuredIngredients: ["salt to taste"], unresolvedIngredients: ["1 lemon (50g)"],
@@ -117,13 +157,15 @@ const server = Bun.serve({
 		if (method === "OPTIONS") return json(null, 204);
 		if (path === "/health") return json({ status: "fixture", today });
 		if (path === "/__fixture/session" && method === "POST") {
-			const options = await request.json() as { userId?: string; empty?: boolean; unread?: number; failures?: string[]; writeFailures?: Record<string, number>; household?: Partial<FixtureHousehold> };
+			const options = await request.json() as { role?: string; pro?: boolean; userId?: string; empty?: boolean; unread?: number; failures?: string[]; writeFailures?: Record<string, number>; household?: Partial<FixtureHousehold> };
 			const token = crypto.randomUUID();
 			const state = initialState(options.empty);
 			state.unread = options.unread ?? 0;
 			state.failures = options.failures ?? [];
 			state.writeFailures = options.writeFailures ?? {};
 			state.userId = options.userId ?? user.id;
+			state.role = options.role ?? "user";
+			state.pro = options.pro ?? false;
 			if (options.household) state.household = { otherMembers: 0, lists: 0, plans: 0, version: 1, staleOnce: false, ...options.household };
 			states.set(token, state);
 			return json({ user: { ...user, id: state.userId }, today }, 200, { "Set-Cookie": `mizan_session=${token}; Path=/; HttpOnly; SameSite=Lax` });
@@ -143,9 +185,9 @@ const server = Bun.serve({
 			state.writeFailures[path] -= 1;
 			return json({ error: "Could not save this entry. Please try again." }, 503);
 		}
-		if (path === "/api/Auth/me") return json({ ...user, id: state.userId });
+		if (path === "/api/Auth/me") return json({ ...user, id: state.userId, role: state.impersonating ? "user" : state.role, impersonation: state.impersonating ? { impersonatorId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", impersonatorName: "Ada Admin", expiresAt: new Date(Date.now() + 55 * 60000).toISOString() } : null });
 		if (path === "/api/Auth/logout") return json(null, 204, { "Set-Cookie": "mizan_session=; Path=/; Max-Age=0" });
-		if (path === "/api/Subscriptions/me") return json({ isPro: false, plan: "Free", status: "none", isLifetime: false });
+		if (path === "/api/Subscriptions/me") return json({ isPro: state.pro, plan: state.pro ? "Pro" : "Free", status: state.pro ? "active" : "none", isLifetime: false });
 		if (path === "/api/Households/mine") {
 			const household = state.household;
 			return json(household
@@ -170,6 +212,97 @@ const server = Bun.serve({
 			state.household = null;
 			return json({ status: "Deleted" });
 		}
+		if (path === "/api/McpConnections" && method === "GET") return json(state.connections);
+		if (path === "/api/McpConnections/scopes") return json(scopeGroups);
+		if (path === "/api/McpConnections/analytics") return json({
+			overview: { totalCalls: 42, successfulCalls: 40, failedCalls: 2, successRate: 95.2, averageExecutionTimeMs: 180, uniqueClientsUsed: 1 },
+			toolUsage: [{ toolName: "log_food", callCount: 30, successCount: 28, failureCount: 2, averageExecutionTimeMs: 210 }],
+			clientUsage: [{ grantId: state.connections[0]?.id, clientName: "Claude", callCount: 42, failureCount: 2, lastUsed: `${today}T07:30:00Z` }],
+			dailyUsage: [{ date: dateAgo(1), callCount: 12, successCount: 12, failureCount: 0 }, { date: today, callCount: 30, successCount: 28, failureCount: 2 }],
+		});
+		const connection = path.match(/^\/api\/McpConnections\/([^/]+)$/);
+		if (connection && method === "PATCH") {
+			const target = state.connections.find((item) => item.id === connection[1]);
+			if (!target) return json({ error: "Connection not found" }, 404);
+			const body = await request.json() as { scopes?: string[]; householdMode?: string; householdIds?: string[] };
+			if (body.scopes?.some((scope) => !target.scopes.includes(scope))) return json({ error: "A connection can only lose access here." }, 400);
+			if (body.scopes) target.scopes = body.scopes;
+			if (body.householdMode) target.householdMode = body.householdMode;
+			state.writes.push({ path, body });
+			return json(null, 204);
+		}
+		if (connection && method === "DELETE") {
+			state.connections = state.connections.filter((item) => item.id !== connection[1]);
+			state.writes.push({ path, body: {} });
+			return json(null, 204);
+		}
+		if (path === "/api/oauth/authorization-requests/view" && method === "POST") {
+			const body = await request.json() as { request: string };
+			if (body.request === "first-party") return json({ ...consentRequest, clientName: "Mizan for Android", source: "first_party", isFirstParty: true, requestedScopes: ["full"] });
+			if (body.request === "asks-for-little") return json({ ...consentRequest, clientName: "Notes helper", requestedScopes: ["nutrition:read"] });
+			return body.request === "fixture-request" ? json(consentRequest) : json({ error: "This connection request has expired." }, 404);
+		}
+		if (path === "/api/oauth/authorization-requests/decision" && method === "POST") {
+			const body = await request.json() as Record<string, unknown>;
+			state.writes.push({ path, body });
+			return json({ redirectUrl: body.approve ? "http://localhost:8123/callback?code=fixture-code&state=s1&iss=fixture" : "http://localhost:8123/callback?error=access_denied&state=s1" });
+		}
+		if (path === "/api/Nutrition/ai/analyze-text" && method === "POST") {
+			if (!state.pro) return json({ errorCode: "upgrade_required", error: "This is part of Pro." }, 402);
+			const body = await request.json() as { description?: string };
+			state.writes.push({ path, body });
+			return body.description?.trim() ? json(analysis) : json({ errorCode: "no_description", error: "Describe what you ate." }, 400);
+		}
+		if (path === "/api/Ai/threads" && method === "GET") return json(state.threads.map(({ id, title, updatedAt }) => ({ id, title, updatedAt })));
+		const thread = path.match(/^\/api\/Ai\/threads\/([^/]+)$/);
+		if (thread && method === "GET") { const found = state.threads.find((item) => item.id === thread[1]); return found ? json(found) : json({ errorCode: "not_found", error: "Not found" }, 404); }
+		if (thread && method === "DELETE") { state.threads = state.threads.filter((item) => item.id !== thread[1]); state.writes.push({ path, body: {} }); return json(null, 204); }
+		if ((path === "/api/Ai/chat" || path === "/api/Ai/chat/image") && method === "POST") {
+			let message = ""; let threadId: string | null = null; let image = false;
+			if (path.endsWith("/image")) { const form = await request.formData(); message = String(form.get("message") ?? ""); threadId = (form.get("threadId") as string | null) ?? null; image = true; }
+			else { const body = await request.json() as { message: string; threadId: string | null }; message = body.message; threadId = body.threadId; }
+			if (message.includes("fail please")) return json({ errorCode: "ai_quota_exceeded", error: "You have used today's assistant allowance. It resets at midnight." }, 429);
+			const now = new Date().toISOString();
+			const target = state.threads.find((item) => item.id === threadId) ?? { id: `thread-${state.threads.length + 1}`, title: message.slice(0, 40) || "Photo", updatedAt: now, messages: [] };
+			if (!state.threads.includes(target)) state.threads.unshift(target);
+			const reply = { id: crypto.randomUUID(), fromUser: false, content: image ? "That looks like **rice and chicken**." : `You asked: ${message}`, createdAt: now };
+			target.messages.push({ id: crypto.randomUUID(), fromUser: true, content: message, createdAt: now, imageUrl: image ? pixel : null }, reply);
+			state.writes.push({ path, body: { message, image } });
+			return json({ threadId: target.id, title: target.title, reply, performed: [] });
+		}
+		if (path === "/api/Uploads/image" && method === "POST") { state.writes.push({ path, body: {} }); return json({ key: "exercises/picture.png", url: pixel }); }
+		if (path === "/api/Uploads/model" && method === "POST") {
+			const form = await request.formData(); const file = form.get("file") as File | null;
+			if (!file || !file.name.endsWith(".glb")) return json({ errorCode: "domain_validation_failed", error: "That file is not a glTF 2 binary (.glb) model." }, 400);
+			state.writes.push({ path, body: { name: file.name, size: file.size } });
+			return json({ key: "models/figure.glb", url: `http://localhost:${port}/files/models/figure.glb` });
+		}
+		if (path === "/api/Exercises" && method === "POST") {
+			const body = await request.json() as Record<string, string>;
+			const created: FixtureExercise = { id: crypto.randomUUID(), name: body.name, category: body.category, muscleGroup: body.muscleGroup ?? null, equipment: body.equipment ?? null, description: body.description ?? null, videoUrl: body.videoUrl ?? null, imageUrl: body.imageUrl ?? null, modelUrl: null, isCustom: true, isApproved: true };
+			state.exercises.unshift(created); state.writes.push({ path, body });
+			return json({ id: created.id, name: created.name, success: true }, 201);
+		}
+		const exercise = path.match(/^\/api\/Exercises\/([^/]+)(?:\/(promote|model))?$/);
+		if (exercise) {
+			const found = state.exercises.find((item) => item.id === exercise[1]);
+			if (!found) return json({ errorCode: "not_found", error: "Exercise not found" }, 404);
+			const body = method === "POST" || method === "DELETE" ? {} : await request.json() as Record<string, string | null>;
+			if (exercise[2] === "promote" && method === "POST") { found.isCustom = false; state.writes.push({ path, body: {} }); return json(null, 204); }
+			if (exercise[2] === "model" && method === "PUT") { found.modelUrl = body.modelUrl ?? null; state.writes.push({ path, body }); return json(null, 204); }
+			if (!exercise[2] && method === "PUT") { Object.assign(found, { name: body.name, category: body.category, muscleGroup: body.muscleGroup, equipment: body.equipment, description: body.description, videoUrl: body.videoUrl, imageUrl: body.imageUrl }); state.writes.push({ path, body }); return json(null, 204); }
+			if (!exercise[2] && method === "DELETE") { state.exercises = state.exercises.filter((item) => item !== found); state.writes.push({ path, body: {} }); return json(null, 204); }
+		}
+		const adminUser = path.match(/^\/api\/admin\/users\/([^/]+)(\/impersonate)?$/);
+		if (adminUser && state.role === "admin") {
+			if (adminUser[2] && method === "POST") { state.impersonating = true; state.writes.push({ path, body: {} }); return json({ ...user, id: adminUser[1] }); }
+			if (!adminUser[2] && method === "GET") return json({ user: { id: adminUser[1], email: "sam@example.test", name: "Sam Rivera", role: "user", emailVerified: true, banned: false, createdAt: `${dateAgo(40)}T08:00:00Z`, updatedAt: `${dateAgo(2)}T08:00:00Z` }, activeSessionCount: 1, recentSessions: [] });
+		}
+		if (path === "/api/Auth/impersonation/stop" && method === "POST") {
+			if (!state.impersonating) return json({ errorCode: "forbidden", error: "This is not an administrator's view of the site." }, 403);
+			state.impersonating = false; state.writes.push({ path, body: {} });
+			return json({ restored: true });
+		}
 		if (path === "/api/Notifications/unread-count") return json({ unreadCount: state.unread });
 		if (path === "/api/Trainers/my-trainer") return json({ error: "No active trainer relationship found" }, 404);
 		if (path === "/api/Goals") return state.empty ? json(null, 204) : json(goal);
@@ -183,7 +316,9 @@ const server = Bun.serve({
 		if (path === "/api/Recipes") {
 			const query = parameter(url, "searchTerm")?.toLowerCase() ?? "";
 			const favoritesOnly = parameter(url, "favoritesOnly") === "true";
-			return json(page(state.recipes.filter((item) => String(item.title).toLowerCase().includes(query) && (!favoritesOnly || item.isFavorited)), url));
+			const frequent = parameter(url, "sortBy") === "frequent";
+			const matching = state.recipes.filter((item) => String(item.title).toLowerCase().includes(query) && (!favoritesOnly || item.isFavorited) && (!frequent || Number(item.timesLogged) > 0));
+			return json(page(frequent ? matching.sort((a, b) => Number(b.timesLogged) - Number(a.timesLogged)) : matching, url));
 		}
 		if (path === "/api/Nutrition/log" && method === "POST") {
 			const body = await request.json() as Record<string, unknown>;
@@ -290,7 +425,10 @@ const server = Bun.serve({
 			state.writes.push({ path, body });
 			return json({ id: workout.id, totalExercises: workout.exercises.length, totalSets: workout.exercises.reduce((sum, exercise) => sum + exercise.sets.filter((set) => set.completed).length, 0), personalRecords: [] });
 		}
-		if (path === "/api/Exercises") return json(page([{ id: "exercise-bench", name: "Bench press", category: "STRENGTH", muscleGroup: "Chest", isPublic: true }], url));
+		if (path === "/api/Exercises" && method === "GET") {
+			const query = parameter(url, "searchTerm")?.toLowerCase() ?? "";
+			return json(page(state.exercises.filter((item) => item.name.toLowerCase().includes(query)), url));
+		}
 		if (path === "/api/WorkoutTemplates") return json([{ id: "template-strength", name: "Simple strength", programName: "Weekly training", exercises: [], isBuiltIn: true, sessionOrder: 0, sortOrder: 0 }]);
 		if (path === "/api/WorkoutTemplates/template-strength/next-session") return json({ templateId: "template-strength", name: "Simple strength", exercises: [{ exerciseId: "exercise-bench", name: "Bench press", category: "Strength", supersetWithNext: false, restSecondsMin: 60, restSecondsMax: 120, sets: [{ targetReps: 8, weightKg: 55 }] }] });
 		if (path === "/api/Social/profile") return json({ error: "No social profile" }, 404);

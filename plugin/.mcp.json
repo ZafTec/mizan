@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "mizan": {
+      "type": "http",
+      "url": "https://mizan.zaftech.co/mcp"
+    }
+  }
+}

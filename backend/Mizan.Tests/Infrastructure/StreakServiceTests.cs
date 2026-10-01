@@ -187,6 +187,9 @@ public class StreakServiceTests
 
 internal sealed class FakeCurrentUser : ICurrentUserService
 {
+    public GrantContext? Grant => null;
+    public Guid? ImpersonatorId => null;
+    public DateTime? ImpersonationExpiresAt => null;
     public Guid? UserId { get; set; }
     public string? Email { get; set; }
     public string? Role { get; set; } = "user";
