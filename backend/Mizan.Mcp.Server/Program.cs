@@ -2,17 +2,21 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Mizan.Contracts.Mcp;
 using Mizan.Mcp.Server.Authentication;
 using Mizan.Mcp.Server.Authorization;
+using Mizan.Mcp.Server.Prompts;
+using Mizan.Mcp.Server.Resources;
 using ModelContextProtocol.AspNetCore.Authentication;
 using ModelContextProtocol.Authentication;
 using Mizan.Mcp.Server.Services;
 using Mizan.Mcp.Server.Tools;
 using Mizan.Mcp.Server.Logging;
+using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
 using ModelContextProtocol.Protocol;
 using System.Diagnostics;
+using System.Text.Json.Nodes;
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -148,6 +152,31 @@ builder.Services.AddMcpServer(options =>
         Version = "3.0.0"
     };
     options.ServerInstructions = McpServerInstructions.Text;
+
+    // Skills over MCP: the server advertises the extension and answers its two methods.
+    // The skill files themselves are ordinary resources, registered below.
+    options.Capabilities ??= new ServerCapabilities();
+    options.Capabilities.Extensions ??= new Dictionary<string, object>();
+    options.Capabilities.Extensions[McpSkillCatalog.ExtensionId] = new JsonObject();
+    options.RequestHandlers =
+    [
+        new McpServerRequestHandler
+        {
+            Method = "skills/list",
+            Handler = (request, ct) => ValueTask.FromResult<JsonNode?>(McpSkillCatalog.List()),
+        },
+        new McpServerRequestHandler
+        {
+            Method = "skills/get",
+            Handler = (request, ct) =>
+            {
+                var uri = request.Params?["uri"]?.GetValue<string>();
+                var found = McpSkillCatalog.Get(uri)
+                    ?? throw new McpProtocolException($"Unknown skill: {uri}", McpErrorCode.InvalidParams);
+                return ValueTask.FromResult<JsonNode?>(found);
+            },
+        },
+    ];
 })
 .WithHttpTransport(http =>
 {
@@ -176,6 +205,11 @@ builder.Services.AddMcpServer(options =>
 .WithTools<TrainerTools>()
 .WithTools<AiTools>()
 .WithTools<UploadTools>()
+.WithResources<MizanResources>()
+.WithResources(McpSkillCatalog.Files.Select(file => McpServerResource.Create(
+    () => file.Text,
+    new McpServerResourceCreateOptions { UriTemplate = file.Uri, Name = file.Uri["skill://".Length..], MimeType = file.MimeType })))
+.WithPrompts<MizanPrompts>()
 .WithRequestFilters(filters =>
 {
     // A connected app sees only the tools its grant covers, so a read-only
@@ -183,7 +217,7 @@ builder.Services.AddMcpServer(options =>
     filters.AddListToolsFilter(next => async (context, cancellationToken) =>
     {
         var result = await next(context, cancellationToken);
-        var held = HeldScopes(context.Server.Services?.GetService<IHttpContextAccessor>()?.HttpContext);
+        var held = McpGrantAccess.Held(context.Server.Services?.GetService<IHttpContextAccessor>()?.HttpContext);
 
         result.Tools = result.Tools
             .Where(tool => McpToolScopes.TryGet(tool.Name, out var scope) && McpScopes.Allows(held, scope))
@@ -197,6 +231,91 @@ builder.Services.AddMcpServer(options =>
             tool.Annotations.OpenWorldHint = false;
         }
 
+        return result;
+    });
+
+    // Resources and prompts are held to the same grant as tools. A client sees only
+    // the ones it may use, and a direct read of one it may not is refused.
+    filters.AddListResourcesFilter(next => async (context, cancellationToken) =>
+    {
+        var result = await next(context, cancellationToken);
+        var http = context.Server.Services?.GetService<IHttpContextAccessor>()?.HttpContext;
+        result.Resources = result.Resources
+            .Where(r => McpResourceScopes.TryGet(r.Uri, out var scope) && McpGrantAccess.Allowed(http, scope))
+            .ToList();
+        return result;
+    });
+
+    filters.AddListResourceTemplatesFilter(next => async (context, cancellationToken) =>
+    {
+        var result = await next(context, cancellationToken);
+        var http = context.Server.Services?.GetService<IHttpContextAccessor>()?.HttpContext;
+        result.ResourceTemplates = result.ResourceTemplates
+            .Where(t => McpResourceScopes.TryGet(t.UriTemplate.Replace("{", "x").Replace("}", "x"), out var scope) && McpGrantAccess.Allowed(http, scope))
+            .ToList();
+        return result;
+    });
+
+    filters.AddReadResourceFilter(next => async (context, cancellationToken) =>
+    {
+        var http = context.Server.Services?.GetService<IHttpContextAccessor>()?.HttpContext;
+        var uri = context.Params?.Uri ?? string.Empty;
+        var userId = McpGrantAccess.UserId(http);
+        var grantId = McpGrantAccess.GrantId(http);
+        var backend = http?.RequestServices.GetService<IBackendApiClient>();
+        var name = McpResourceScopes.Pattern(uri);
+
+        if (http?.User.Identity?.IsAuthenticated != true)
+            throw new McpProtocolException("Authentication required. Connect Mizan from your MCP client.", McpErrorCode.InvalidRequest);
+
+        if (!McpResourceScopes.TryGet(uri, out var scope) || !McpGrantAccess.Allowed(http, scope))
+        {
+            if (backend != null && grantId != Guid.Empty) await backend.LogUsageAsync(grantId, userId, "resource", name, false, "Not allowed by the connection", 0);
+            throw new McpProtocolException(McpToolText.NotAllowed(name, scope), McpErrorCode.InvalidParams);
+        }
+
+        // Skills are public instructions, so reading one is free. Everything else shares the monthly cap with tools.
+        if (uri.StartsWith("skill://", StringComparison.Ordinal)) return await next(context, cancellationToken);
+        if (McpGrantAccess.LimitReached(http) is { } limit) throw new McpProtocolException(limit, McpErrorCode.InvalidRequest);
+
+        var sw = Stopwatch.StartNew();
+        try
+        {
+            var result = await next(context, cancellationToken);
+            if (backend != null && grantId != Guid.Empty) await backend.LogUsageAsync(grantId, userId, "resource", name, true, null, (int)sw.ElapsedMilliseconds);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            if (backend != null && grantId != Guid.Empty) await backend.LogUsageAsync(grantId, userId, "resource", name, false, ex.Message, (int)sw.ElapsedMilliseconds);
+            throw;
+        }
+    });
+
+    filters.AddListPromptsFilter(next => async (context, cancellationToken) =>
+    {
+        var result = await next(context, cancellationToken);
+        var http = context.Server.Services?.GetService<IHttpContextAccessor>()?.HttpContext;
+        result.Prompts = result.Prompts
+            .Where(p => McpResourceScopes.PromptScopes.TryGetValue(p.Name, out var scope) && McpGrantAccess.Allowed(http, scope))
+            .ToList();
+        return result;
+    });
+
+    filters.AddGetPromptFilter(next => async (context, cancellationToken) =>
+    {
+        var http = context.Server.Services?.GetService<IHttpContextAccessor>()?.HttpContext;
+        var name = context.Params?.Name ?? string.Empty;
+        var userId = McpGrantAccess.UserId(http);
+        var grantId = McpGrantAccess.GrantId(http);
+        var backend = http?.RequestServices.GetService<IBackendApiClient>();
+
+        if (!McpResourceScopes.PromptScopes.TryGetValue(name, out var scope) || !McpGrantAccess.Allowed(http, scope))
+            throw new McpProtocolException(McpToolText.NotAllowed(name, McpResourceScopes.PromptScopes.GetValueOrDefault(name)), McpErrorCode.InvalidParams);
+
+        var result = await next(context, cancellationToken);
+        // A prompt is only text and reads nothing, so it is recorded but not counted against the monthly cap.
+        if (backend != null && grantId != Guid.Empty) await backend.LogUsageAsync(grantId, userId, "prompt", name, true, null, 0);
         return result;
     });
 
@@ -223,7 +342,7 @@ builder.Services.AddMcpServer(options =>
 
         // Fail closed: a tool with no scope on record is refused, and so is one the grant does not cover.
         if (!McpToolScopes.TryGet(toolName, out var requiredScope)
-            || !McpScopes.Allows(HeldScopes(httpContext), requiredScope))
+            || !McpScopes.Allows(McpGrantAccess.Held(httpContext), requiredScope))
         {
             Log.Warning("[MCP Tool] Tool call refused by grant. Tool: {ToolName}", toolName);
             if (backend != null && userId != Guid.Empty && grantId != Guid.Empty)
@@ -308,10 +427,6 @@ builder.Services.AddMcpServer(options =>
         }
     });
 });
-
-static IReadOnlyList<string> HeldScopes(HttpContext? httpContext) =>
-    (httpContext?.User.FindFirst(GrantClaims.Scopes)?.Value ?? string.Empty)
-        .Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
 var app = builder.Build();
 
