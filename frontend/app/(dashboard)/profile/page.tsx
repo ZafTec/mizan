@@ -90,8 +90,8 @@ export default function ProfilePage() {
 		if (session?.user) {
 			links.push({
 				href: "/profile/mcp",
-				title: "MCP tools",
-				description: "Developer tokens and usage.",
+				title: "Connected apps",
+				description: "AI assistants you have connected, and what they may do.",
 				icon: "bot",
 			});
 		}

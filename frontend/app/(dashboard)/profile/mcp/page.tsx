@@ -1,538 +1,267 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import ConfirmationModal from "@/components/ConfirmationModal";
-import { useMcpTokens, useMcpAnalytics } from "@/lib/hooks/useMcpTokens";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Copy, Trash2, Plus, CheckCircle2, Activity, Clock, TrendingUp, Terminal, Monitor, Code2 } from "lucide-react";
-import type { CreateMcpTokenResult } from "@/types/mcp";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { appToast } from "@/lib/toast";
+import { useMcpAnalytics, useMcpConnections } from "@/lib/hooks/useMcpConnections";
+import { householdSummary, summarizeAccess } from "@/lib/mcp-permissions";
+import type { McpConnection } from "@/types/mcp";
+import { EditAccessDialog } from "./EditAccessDialog";
+import { AddAppGuide } from "./AddAppGuide";
 
-const EMPTY_OVERVIEW = {
-  totalCalls: 0,
-  successRate: 0,
-  averageExecutionTimeMs: 0,
-  uniqueTokensUsed: 0,
-};
-
-function getMcpUrl(): string {
-  if (process.env.NEXT_PUBLIC_MCP_URL) return process.env.NEXT_PUBLIC_MCP_URL;
-  if (typeof window !== "undefined") {
-    const host = window.location.hostname;
-    const protocol = window.location.protocol;
-    if (host !== "localhost" && host !== "127.0.0.1") {
-      return `${protocol}//mcp.${host}/mcp`;
-    }
-  }
-  return "http://localhost:5001/mcp";
-}
+const formatWhen = (value?: string | null) =>
+	value
+		? new Date(value).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+		: "Never";
 
 export default function McpPage() {
-  const { tokens, loading, error, fetchTokens, createToken, revokeToken } = useMcpTokens();
-  const { analytics, loading: analyticsLoading, fetchAnalytics } = useMcpAnalytics();
+	const { connections, groups, loading, error, load, update, disconnect } = useMcpConnections();
+	const { analytics, loading: analyticsLoading, load: loadAnalytics } = useMcpAnalytics();
+	const [editing, setEditing] = useState<McpConnection | null>(null);
+	const [removing, setRemoving] = useState<McpConnection | null>(null);
 
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [tokenName, setTokenName] = useState("");
-  const [createdToken, setCreatedToken] = useState<CreateMcpTokenResult | null>(null);
-  const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [guideTab, setGuideTab] = useState<"desktop" | "code" | "cursor">("desktop");
-  const [tokenToRevoke, setTokenToRevoke] = useState<string | null>(null);
+	useEffect(() => {
+		void load();
+		void loadAnalytics();
+	}, [load, loadAnalytics]);
 
-  useEffect(() => {
-    fetchTokens();
-    fetchAnalytics();
-  }, [fetchTokens, fetchAnalytics]);
-
-  const handleCreateToken = async () => {
-    if (!tokenName.trim()) return;
-
-    const result = await createToken({ name: tokenName.trim() });
-    if (result) {
-      setCreatedToken(result);
-      setTokenName("");
-      setCreateDialogOpen(false);
-    }
-  };
-
-  const handleRevokeToken = async (tokenId: string) => {
-	    await revokeToken(tokenId);
-	    setTokenToRevoke(null);
-  };
-
-  const copyToClipboard = (text: string, field: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedField(field);
-    appToast.success("Copied to clipboard");
-    setTimeout(() => setCopiedField(null), 2000);
-  };
-
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-  const mcpUrl = getMcpUrl();
-  const tokenValue = createdToken?.plaintextToken ?? "";
-  const overview = {
-    ...EMPTY_OVERVIEW,
-    ...(analytics?.overview ?? {}),
-  };
-  const toolUsage = analytics?.toolUsage ?? [];
-  const tokenUsage = analytics?.tokenUsage ?? [];
-
-  const desktopConfig = (token: string) => `{
-  "mcpServers": {
-    "mizan": {
-      "type": "streamable-http",
-      "url": "${mcpUrl}",
-      "headers": {
-        "Authorization": "Bearer ${token}"
-      }
-    }
-  }
-}`;
-
-  const claudeCodeCommand = (token: string) =>
-    `claude mcp add mizan --transport http "${mcpUrl}" --header "Authorization: Bearer ${token}"`;
-
-  const cursorConfig = (token: string) => `{
-  "mcpServers": {
-    "mizan": {
-      "url": "${mcpUrl}",
-      "headers": {
-        "Authorization": "Bearer ${token}"
-      }
-    }
-  }
-}`;
-
-  return (
-		<div className="max-w-5xl mx-auto space-y-6 pb-10">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+	return (
+		<div className="mx-auto max-w-5xl space-y-6 pb-10">
 			<div className="space-y-2">
-			  <p className="eyebrow">Model Context Protocol</p>
-			  <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-				MCP integration
-			  </h1>
-			  <p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-				Connect MCP-compatible clients (Claude Desktop, Cursor, etc.) to your Mizan data.
-			  </p>
-        </div>
-
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <button className="btn-primary inline-flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Generate Token
-            </button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Generate New MCP Token</DialogTitle>
-              <DialogDescription>
-                Create a token for any MCP-compatible client: Claude Desktop, Claude Code, Cursor, or others.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="name">Token Name</Label>
-                <Input
-                  id="name"
-                  placeholder="e.g., Home Laptop, Work Desktop"
-                  value={tokenName}
-                  onChange={(e) => setTokenName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleCreateToken();
-                  }}
-                />
-              </div>
-            </div>
-            <DialogFooter className="flex justify-end gap-2">
-              <button className="btn-secondary" onClick={() => setCreateDialogOpen(false)}>
-                Cancel
-              </button>
-              <button className="btn-primary" onClick={handleCreateToken} disabled={!tokenName.trim()}>
-                Generate
-              </button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {createdToken && (
-        <Dialog open={!!createdToken} onOpenChange={() => setCreatedToken(null)}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Token Created</DialogTitle>
-              <DialogDescription>Copy this value now. It won&apos;t be shown again.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="bg-charcoal-blue-900 text-white rounded-xl p-4 flex items-center justify-between gap-3">
-                  <code className="text-sm break-all">{tokenValue}</code>
-                  <button
-                    type="button"
-                    className="btn-secondary shrink-0 bg-white/10 border-white/20 text-white hover:bg-white/20"
-                    onClick={() => copyToClipboard(tokenValue, "token")}
-                    disabled={!tokenValue}
-                  >
-                  {copiedField === "token" ? <CheckCircle2 className="h-4 w-4 text-emerald-300" /> : <Copy className="h-4 w-4" />}
-                </button>
-              </div>
-
-              <div className="card p-4">
-				<h4 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-3">Setup Guide</h4>
-				<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-3">
-				  Choose your MCP client and follow the instructions below.
+				<p className="eyebrow">Model Context Protocol</p>
+				<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+					Connected apps
+				</h1>
+				<p className="max-w-2xl text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+					AI assistants you let work with your Mizan data. You choose what each one may do, and you can take it back at any time.
 				</p>
+			</div>
 
-				<div className="flex gap-1 bg-charcoal-blue-100 dark:bg-charcoal-blue-900 p-1 rounded-xl mb-4">
-                  <button
-                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                      guideTab === "desktop"
-						? "bg-white dark:bg-charcoal-blue-950 shadow text-charcoal-blue-900 dark:text-charcoal-blue-100"
-						: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-charcoal-blue-700 dark:hover:text-charcoal-blue-200"
-                    }`}
-                    onClick={() => setGuideTab("desktop")}
-                  >
-                    <Monitor className="h-4 w-4" />
-                    <span className="hidden sm:inline">Claude Desktop</span>
-                    <span className="sm:hidden">Desktop</span>
-                  </button>
-                  <button
-                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                      guideTab === "code"
-						? "bg-white dark:bg-charcoal-blue-950 shadow text-charcoal-blue-900 dark:text-charcoal-blue-100"
-						: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-charcoal-blue-700 dark:hover:text-charcoal-blue-200"
-                    }`}
-                    onClick={() => setGuideTab("code")}
-                  >
-                    <Terminal className="h-4 w-4" />
-                    <span className="hidden sm:inline">Claude Code</span>
-                    <span className="sm:hidden">Code</span>
-                  </button>
-                  <button
-                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                      guideTab === "cursor"
-						? "bg-white dark:bg-charcoal-blue-950 shadow text-charcoal-blue-900 dark:text-charcoal-blue-100"
-						: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-charcoal-blue-700 dark:hover:text-charcoal-blue-200"
-                    }`}
-                    onClick={() => setGuideTab("cursor")}
-                  >
-                    <Code2 className="h-4 w-4" />
-                    Cursor
-                  </button>
-                </div>
+			{error && (
+				<Alert variant="destructive">
+					<AlertDescription>{error}</AlertDescription>
+				</Alert>
+			)}
 
-                {guideTab === "desktop" && (
-                  <div className="space-y-3">
-					  <p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
-						Add this to your <code className="bg-charcoal-blue-100 dark:bg-charcoal-blue-900 px-1.5 py-0.5 rounded text-xs">claude_desktop_config.json</code>:
-					  </p>
-                    <div className="relative">
-                      <pre className="bg-charcoal-blue-900 text-charcoal-blue-50 rounded-lg p-4 text-xs overflow-x-auto">
-                        {desktopConfig(tokenValue)}
-                      </pre>
-                      <button
-                        type="button"
-                        className="absolute top-2 right-2 p-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white"
-                        onClick={() => copyToClipboard(desktopConfig(tokenValue), "desktop")}
-                      >
-                        {copiedField === "desktop" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
-                      </button>
-                    </div>
-					  <div className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						<p>Config file locations:</p>
-						<ul className="list-disc list-inside ml-4 space-y-1 mt-1">
-						  <li>macOS: <code className="bg-charcoal-blue-100 dark:bg-charcoal-blue-900 px-1.5 py-0.5 rounded text-xs">~/Library/Application Support/Claude/claude_desktop_config.json</code></li>
-						  <li>Windows: <code className="bg-charcoal-blue-100 dark:bg-charcoal-blue-900 px-1.5 py-0.5 rounded text-xs">%APPDATA%\Claude\claude_desktop_config.json</code></li>
+			<Tabs defaultValue="apps">
+				<TabsList>
+					<TabsTrigger value="apps">Connected apps</TabsTrigger>
+					<TabsTrigger value="usage">Usage</TabsTrigger>
+					<TabsTrigger value="add">Add an app</TabsTrigger>
+				</TabsList>
+
+				<TabsContent value="apps" className="mt-4">
+					{loading ? (
+						<div className="space-y-3">
+							<Skeleton className="h-24" />
+							<Skeleton className="h-24" />
+						</div>
+					) : connections.length === 0 ? (
+						<div className="card p-6 text-center">
+							<p className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">No apps connected yet</p>
+							<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+								Add Mizan to Claude, ChatGPT, Gemini or another assistant. The Add an app tab shows how.
+							</p>
+						</div>
+					) : (
+						<ul className="card divide-y divide-charcoal-blue-100 dark:divide-white/10">
+							{connections.map((connection) => (
+								<ConnectionRow
+									key={connection.id}
+									connection={connection}
+									summary={summarizeAccess(groups, connection.scopes ?? [])}
+									onEdit={() => setEditing(connection)}
+									onDisconnect={() => setRemoving(connection)}
+								/>
+							))}
 						</ul>
-					  </div>
-                  </div>
-                )}
+					)}
+				</TabsContent>
 
-                {guideTab === "code" && (
-                  <div className="space-y-3">
-					  <p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
-						Run this command in your terminal:
-					  </p>
-                    <div className="relative">
-                      <pre className="bg-charcoal-blue-900 text-charcoal-blue-50 rounded-lg p-4 text-xs overflow-x-auto whitespace-pre-wrap break-all">
-                        {claudeCodeCommand(tokenValue)}
-                      </pre>
-                      <button
-                        type="button"
-                        className="absolute top-2 right-2 p-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white"
-                        onClick={() => copyToClipboard(claudeCodeCommand(tokenValue), "code")}
-                      >
-                        {copiedField === "code" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
-                      </button>
-                    </div>
-					  <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						This registers the Mizan MCP server globally. Use <code className="bg-charcoal-blue-100 dark:bg-charcoal-blue-900 px-1.5 py-0.5 rounded text-xs">--scope project</code> to scope it to the current directory.
-					  </p>
-                  </div>
-                )}
-
-                {guideTab === "cursor" && (
-                  <div className="space-y-3">
-					  <p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
-						Add this to your <code className="bg-charcoal-blue-100 dark:bg-charcoal-blue-900 px-1.5 py-0.5 rounded text-xs">.cursor/mcp.json</code> in your project root:
-					  </p>
-                    <div className="relative">
-                      <pre className="bg-charcoal-blue-900 text-charcoal-blue-50 rounded-lg p-4 text-xs overflow-x-auto">
-                        {cursorConfig(tokenValue)}
-                      </pre>
-                      <button
-                        type="button"
-                        className="absolute top-2 right-2 p-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white"
-                        onClick={() => copyToClipboard(cursorConfig(tokenValue), "cursor")}
-                      >
-                        {copiedField === "cursor" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
-                      </button>
-                    </div>
-					  <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						Or add it globally via Cursor Settings &gt; MCP Servers.
-					  </p>
-                  </div>
-                )}
-
-					<div className="mt-4 p-3 bg-charcoal-blue-50 dark:bg-charcoal-blue-900 rounded-lg border border-charcoal-blue-200 dark:border-white/10">
-					  <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						<span className="font-semibold text-charcoal-blue-700 dark:text-charcoal-blue-200">Other clients:</span>{" "}
-						Any MCP client that supports SSE transport can connect using the server URL{" "}
-						<code className="bg-charcoal-blue-100 dark:bg-charcoal-blue-950 px-1.5 py-0.5 rounded">{mcpUrl}</code>{" "}
-						with the token as a Bearer authorization header.
-					  </p>
-					</div>
-              </div>
-            </div>
-            <DialogFooter>
-              <button className="btn-primary" onClick={() => setCreatedToken(null)}>
-                Done
-              </button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-
-		<div className="card p-6">
-		  <Tabs defaultValue="tokens" className="w-full">
-			<TabsList className="bg-charcoal-blue-100 dark:bg-charcoal-blue-900 p-1 rounded-2xl inline-flex gap-1">
-			  <TabsTrigger value="tokens" className="rounded-xl px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow data-[state=active]:text-charcoal-blue-900 dark:data-[state=active]:bg-charcoal-blue-950 dark:data-[state=active]:text-charcoal-blue-100">
-				Tokens
-			  </TabsTrigger>
-			  <TabsTrigger value="analytics" className="rounded-xl px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow data-[state=active]:text-charcoal-blue-900 dark:data-[state=active]:bg-charcoal-blue-950 dark:data-[state=active]:text-charcoal-blue-100">
-				Analytics
-			  </TabsTrigger>
-			</TabsList>
-
-          <TabsContent value="tokens" className="mt-4 space-y-4">
-            {loading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-              </div>
-			  ) : tokens.length === 0 ? (
-				<div className="text-center py-10 text-charcoal-blue-500 dark:text-charcoal-blue-400">
-				  No tokens yet. Generate your first token to get started.
-				</div>
-			  ) : (
-				<div className="overflow-hidden rounded-2xl border border-charcoal-blue-200 dark:border-white/10">
-				  <table className="w-full text-sm">
-					<thead className="bg-charcoal-blue-50 dark:bg-charcoal-blue-900 text-left">
-					  <tr>
-						<th className="px-4 py-3 font-semibold text-charcoal-blue-600 dark:text-charcoal-blue-300">Name</th>
-						<th className="px-4 py-3 font-semibold text-charcoal-blue-600 dark:text-charcoal-blue-300">Status</th>
-						<th className="px-4 py-3 font-semibold text-charcoal-blue-600 dark:text-charcoal-blue-300 hidden sm:table-cell">Created</th>
-						<th className="px-4 py-3 font-semibold text-charcoal-blue-600 dark:text-charcoal-blue-300 hidden md:table-cell">Last Used</th>
-						<th className="px-4 py-3 font-semibold text-right text-charcoal-blue-600 dark:text-charcoal-blue-300">Actions</th>
-					  </tr>
-					</thead>
-					<tbody className="divide-y divide-charcoal-blue-100 dark:divide-white/10">
-					  {tokens.map((token) => (
-						<tr key={token.id} className="hover:bg-charcoal-blue-50/60 dark:hover:bg-charcoal-blue-900/70">
-						  <td className="px-4 py-3 font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{token.name}</td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${
-                              token.isActive
-								? "bg-emerald-50 text-emerald-700 border border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20"
-								: "bg-charcoal-blue-100 text-charcoal-blue-500 border border-charcoal-blue-200 dark:bg-charcoal-blue-900 dark:text-charcoal-blue-400 dark:border-white/10"
-							}`}
-						  >
-                            <span
-                              className={`h-2 w-2 rounded-sm ${
-                                token.isActive ? "bg-emerald-500" : "bg-charcoal-blue-300"
-                              }`}
-                            />
-                            {token.isActive ? "Active" : "Revoked"}
-                          </span>
-                        </td>
-						  <td className="px-4 py-3 text-charcoal-blue-700 dark:text-charcoal-blue-300 hidden sm:table-cell">{formatDate(token.createdAt)}</td>
-						  <td className="px-4 py-3 text-charcoal-blue-700 dark:text-charcoal-blue-300 hidden md:table-cell">
-                          {token.lastUsedAt ? formatDate(token.lastUsedAt) : "Never"}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          {token.isActive && (
-                            <button
-							className="btn-secondary inline-flex items-center gap-2 text-destructive"
-	                              onClick={() => setTokenToRevoke(token.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              <span className="hidden sm:inline">Revoke</span>
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="analytics" className="mt-4 space-y-4">
-            {analyticsLoading ? (
-              <div className="grid gap-4 md:grid-cols-3">
-                <Skeleton className="h-32" />
-                <Skeleton className="h-32" />
-                <Skeleton className="h-32" />
-              </div>
-            ) : analytics ? (
-              <>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <MetricCard
-                    title="Total Calls"
-                    value={overview.totalCalls}
-                    subtitle={`${overview.successRate.toFixed(1)}% success rate`}
-                    icon={<Activity className="h-5 w-5 text-brand-600" />}
-                  />
-                  <MetricCard
-                    title="Avg Response Time"
-                    value={`${overview.averageExecutionTimeMs} ms`}
-                    subtitle="Per MCP call"
-                    icon={<Clock className="h-5 w-5 text-brand-600" />}
-                  />
-                  <MetricCard
-                    title="Active Tokens"
-                    value={overview.uniqueTokensUsed}
-                    subtitle="Tokens in use"
-                    icon={<TrendingUp className="h-5 w-5 text-brand-600" />}
-                  />
-                </div>
-
-					<div className="grid gap-4 lg:grid-cols-2">
-					  <div className="card p-4">
-						<div className="flex items-center justify-between mb-3">
-						  <h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Tool Usage</h3>
-						  <span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Last 30 days</span>
+				<TabsContent value="usage" className="mt-4 space-y-4">
+					{analyticsLoading ? (
+						<div className="grid gap-4 md:grid-cols-3">
+							<Skeleton className="h-28" />
+							<Skeleton className="h-28" />
+							<Skeleton className="h-28" />
 						</div>
-						<div className="divide-y divide-charcoal-blue-100 dark:divide-white/10">
-						  {toolUsage.map((tool) => (
-							<div key={tool.toolName ?? `tool-${tool.callCount ?? 0}`} className="py-3 flex items-center justify-between">
-							  <div>
-								<p className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{tool.toolName || "Unknown tool"}</p>
-								<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-								  {tool.successCount ?? 0} success / {tool.failureCount ?? 0} failed
-								</p>
-							  </div>
-							  <div className="text-right">
-								<p className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">{tool.callCount ?? 0} calls</p>
-								<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{tool.averageExecutionTimeMs ?? 0} ms avg</p>
-							  </div>
-							</div>
-						  ))}
+					) : !analytics || (analytics.overview?.totalCalls ?? 0) === 0 ? (
+						<div className="card p-6 text-center text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+							No activity in the last 30 days. Calls from your connected apps appear here.
 						</div>
-					  </div>
+					) : (
+						<UsagePanel analytics={analytics} />
+					)}
+				</TabsContent>
 
-					  <div className="card p-4">
-						<div className="flex items-center justify-between mb-3">
-						  <h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Token Usage</h3>
-						  <span className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">Most recent activity</span>
-						</div>
-						<div className="divide-y divide-charcoal-blue-100 dark:divide-white/10">
-						  {tokenUsage.map((token) => (
-							<div key={token.tokenId ?? token.tokenName ?? "unknown-token"} className="py-3 flex items-center justify-between">
-							  <div>
-								<p className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{token.tokenName || "Unknown token"}</p>
-								<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{token.callCount ?? 0} calls</p>
-							  </div>
-							  <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{token.lastUsed ? formatDate(token.lastUsed) : "Never"}</p>
-							</div>
-						  ))}
-						</div>
-					  </div>
-					</div>
-				  </>
-			) : (
-				<div className="text-center py-10 text-charcoal-blue-500 dark:text-charcoal-blue-400">
-				  No analytics data yet. Start using your MCP tokens to see insights.
-				</div>
-            )}
-          </TabsContent>
-        </Tabs>
+				<TabsContent value="add" className="mt-4">
+					<AddAppGuide />
+				</TabsContent>
+			</Tabs>
 
-        <ConfirmationModal
-          isOpen={!!tokenToRevoke}
-          onClose={() => setTokenToRevoke(null)}
-          onConfirm={() => tokenToRevoke && handleRevokeToken(tokenToRevoke)}
-          title="Revoke Token"
-          message="Connected clients will lose access immediately."
-          confirmText="Revoke Token"
-          isDanger
-          isLoading={loading}
-        />
-      </div>
-    </div>
-  );
+			{editing && (
+				<EditAccessDialog
+					connection={editing}
+					groups={groups}
+					onClose={() => setEditing(null)}
+					onSave={async (change) => {
+						const saved = await update(editing.id!, change);
+						if (saved) setEditing(null);
+					}}
+				/>
+			)}
+
+			<ConfirmationModal
+				isOpen={removing !== null}
+				onClose={() => setRemoving(null)}
+				onConfirm={async () => {
+					if (removing && (await disconnect(removing.id!))) {
+						appToast.success(`${removing.clientName} disconnected`);
+						setRemoving(null);
+					}
+				}}
+				title={`Disconnect ${removing?.clientName ?? "this app"}?`}
+				message="It loses access on its next request. You can connect it again later."
+				confirmText="Disconnect"
+				isDanger
+			/>
+		</div>
+	);
 }
 
-function MetricCard({
-  title,
-  value,
-  subtitle,
-  icon,
+function ConnectionRow({
+	connection,
+	summary,
+	onEdit,
+	onDisconnect,
 }: {
-  title: string;
-  value: string | number;
-  subtitle?: string;
-  icon?: ReactNode;
+	connection: McpConnection;
+	summary: string[];
+	onEdit: () => void;
+	onDisconnect: () => void;
 }) {
-  return (
-	<div className="card p-4 border border-charcoal-blue-200 dark:border-white/10">
-	  <div className="flex items-center justify-between mb-3">
-		<div>
-		  <p className="text-xs uppercase text-charcoal-blue-500 dark:text-charcoal-blue-400 font-semibold">{title}</p>
-		  <p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">{value}</p>
-		  {subtitle && <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{subtitle}</p>}
+	const names = (connection.households ?? []).map((h) => h.name ?? "");
+
+	return (
+		<li className="space-y-3 p-4 sm:flex sm:items-start sm:justify-between sm:gap-6 sm:space-y-0">
+			<div className="min-w-0 space-y-1">
+				<p className="flex flex-wrap items-center gap-2 font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
+					{connection.clientName}
+					{connection.verifiedHost && (
+						<span className="inline-flex items-center gap-1 text-xs font-normal text-charcoal-blue-500 dark:text-charcoal-blue-400">
+							<Icon name="circleCheck" size={14} /> {connection.verifiedHost}
+						</span>
+					)}
+					{connection.source === "dynamic" && (
+						<span className="text-xs font-normal text-charcoal-blue-500 dark:text-charcoal-blue-400">Unverified</span>
+					)}
+				</p>
+				<p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
+					{summary.length > 0 ? summary.join(" · ") : "No permissions"}
+				</p>
+				<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+					{householdSummary(connection.householdMode ?? "none", names)} · Last used {formatWhen(connection.lastUsedAt)} ·{" "}
+					<span className="tabular-nums">{connection.calls30Days ?? 0}</span> calls in 30 days
+					{(connection.failed30Days ?? 0) > 0 && (
+						<>
+							, <span className="tabular-nums">{connection.failed30Days}</span> failed
+						</>
+					)}
+				</p>
+			</div>
+			<div className="flex shrink-0 gap-2">
+				{!connection.isFirstParty && (
+					<button type="button" className="btn-secondary" onClick={onEdit}>
+						Edit access
+					</button>
+				)}
+				<button type="button" className="btn-secondary text-destructive" onClick={onDisconnect}>
+					Disconnect
+				</button>
+			</div>
+		</li>
+	);
+}
+
+type Analytics = NonNullable<ReturnType<typeof useMcpAnalytics>["analytics"]>;
+
+function UsagePanel({ analytics }: { analytics: Analytics }) {
+	const overview = analytics.overview!;
+	const apps = analytics.clientUsage ?? [];
+	const tools = analytics.toolUsage ?? [];
+	const days = analytics.dailyUsage ?? [];
+	const busiest = Math.max(1, ...days.map((d) => d.callCount ?? 0));
+
+	return (
+		<>
+			<dl className="grid gap-4 sm:grid-cols-3">
+				<Metric label="Calls" value={String(overview.totalCalls ?? 0)} note={`${(overview.successRate ?? 0).toFixed(1)}% succeeded`} />
+				<Metric label="Average time" value={`${overview.averageExecutionTimeMs ?? 0} ms`} note="Per call" />
+				<Metric label="Apps used" value={String(overview.uniqueClientsUsed ?? 0)} note="Last 30 days" />
+			</dl>
+
+			<div className="card p-4">
+				<h2 className="mb-3 font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Calls per day</h2>
+				<div className="flex h-24 items-end gap-1" role="img" aria-label="Calls per day for the last 30 days">
+					{days.map((day) => (
+						<div
+							key={day.date}
+							title={`${day.date}: ${day.callCount} calls`}
+							className="min-w-[3px] flex-1 bg-brand-600/70"
+							style={{ height: `${Math.max(4, ((day.callCount ?? 0) / busiest) * 100)}%` }}
+						/>
+					))}
+				</div>
+			</div>
+
+			<div className="grid gap-4 lg:grid-cols-2">
+				<div className="card p-4">
+					<h2 className="mb-3 font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">By app</h2>
+					<ul className="divide-y divide-charcoal-blue-100 dark:divide-white/10">
+						{apps.map((app) => (
+							<li key={app.grantId} className="flex items-center justify-between py-3">
+								<div>
+									<p className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{app.clientName}</p>
+									<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+										Last used {formatWhen(app.lastUsed)}
+									</p>
+								</div>
+								<p className="text-sm tabular-nums text-charcoal-blue-700 dark:text-charcoal-blue-300">
+									{app.callCount} calls{(app.failureCount ?? 0) > 0 ? `, ${app.failureCount} failed` : ""}
+								</p>
+							</li>
+						))}
+					</ul>
+				</div>
+
+				<div className="card p-4">
+					<h2 className="mb-3 font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">By tool</h2>
+					<ul className="divide-y divide-charcoal-blue-100 dark:divide-white/10">
+						{tools.slice(0, 12).map((tool) => (
+							<li key={tool.toolName} className="flex items-center justify-between py-3">
+								<p className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{tool.toolName}</p>
+								<p className="text-sm tabular-nums text-charcoal-blue-700 dark:text-charcoal-blue-300">
+									{tool.callCount} calls · {tool.averageExecutionTimeMs} ms
+								</p>
+							</li>
+						))}
+					</ul>
+				</div>
+			</div>
+		</>
+	);
+}
+
+function Metric({ label, value, note }: { label: string; value: string; note: string }) {
+	return (
+		<div className="card p-4">
+			<dt className="text-xs font-semibold uppercase text-charcoal-blue-500 dark:text-charcoal-blue-400">{label}</dt>
+			<dd className="text-3xl font-semibold tracking-tight tabular-nums text-charcoal-blue-900 dark:text-charcoal-blue-50">{value}</dd>
+			<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">{note}</p>
 		</div>
-		<div className="h-10 w-10 rounded-2xl bg-brand-50 text-brand-700 flex items-center justify-center dark:bg-brand-500/15 dark:text-brand-300">
-		  {icon}
-		</div>
-	  </div>
-    </div>
-  );
+	);
 }

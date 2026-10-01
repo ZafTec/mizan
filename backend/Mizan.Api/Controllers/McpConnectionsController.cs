@@ -23,6 +23,11 @@ public class McpConnectionsController : ControllerBase
     public async Task<ActionResult<List<McpConnectionDto>>> List() =>
         Ok(await _mediator.Send(new ListMcpConnectionsQuery()));
 
+    /// <summary>The permission groups the consent screen and the edit dialog offer.</summary>
+    [HttpGet("scopes")]
+    [Authorize]
+    public ActionResult<List<ScopeGroupView>> Scopes() => Ok(McpScopeCatalog.For(User.IsInRole("admin")));
+
     [HttpPatch("{id:guid}")]
     [Authorize]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateMcpConnectionBody body)

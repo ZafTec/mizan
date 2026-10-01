@@ -204,9 +204,9 @@ export const MORE_GROUPS: NavGroup[] = [
       },
       {
         href: "/profile/mcp",
-        label: "MCP Tokens",
+        label: "Connected apps",
         icon: "bot",
-        description: "Connect an agent to your log",
+        description: "Choose what AI assistants can do",
       },
     ],
   },
