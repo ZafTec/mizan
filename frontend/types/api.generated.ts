@@ -3817,7 +3817,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/McpTokens": {
+    "/api/McpConnections": {
         parameters: {
             query?: never;
             header?: never;
@@ -3826,12 +3826,7 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: {
-                    Page?: number;
-                    PageSize?: number;
-                    SortBy?: string;
-                    SortOrder?: string;
-                };
+                query?: never;
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -3844,28 +3839,36 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["McpTokenDtoPagedResult"];
-                        "application/json": components["schemas"]["McpTokenDtoPagedResult"];
-                        "text/json": components["schemas"]["McpTokenDtoPagedResult"];
+                        "text/plain": components["schemas"]["McpConnectionDto"][];
+                        "application/json": components["schemas"]["McpConnectionDto"][];
+                        "text/json": components["schemas"]["McpConnectionDto"][];
                     };
                 };
             };
         };
         put?: never;
-        post: {
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/McpConnections/scopes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["CreateMcpTokenCommand"];
-                    "text/json": components["schemas"]["CreateMcpTokenCommand"];
-                    "application/*+json": components["schemas"]["CreateMcpTokenCommand"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description OK */
                 200: {
@@ -3873,20 +3876,22 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["CreateMcpTokenResult"];
-                        "application/json": components["schemas"]["CreateMcpTokenResult"];
-                        "text/json": components["schemas"]["CreateMcpTokenResult"];
+                        "text/plain": components["schemas"]["ScopeGroupView"][];
+                        "application/json": components["schemas"]["ScopeGroupView"][];
+                        "text/json": components["schemas"]["ScopeGroupView"][];
                     };
                 };
             };
         };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/McpTokens/{id}": {
+    "/api/McpConnections/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -3918,30 +3923,20 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/McpTokens/validate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
+        patch: {
             parameters: {
                 query?: never;
                 header?: never;
-                path?: never;
+                path: {
+                    id: string;
+                };
                 cookie?: never;
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["ValidateTokenCommand"];
-                    "text/json": components["schemas"]["ValidateTokenCommand"];
-                    "application/*+json": components["schemas"]["ValidateTokenCommand"];
+                    "application/json": components["schemas"]["UpdateMcpConnectionBody"];
+                    "text/json": components["schemas"]["UpdateMcpConnectionBody"];
+                    "application/*+json": components["schemas"]["UpdateMcpConnectionBody"];
                 };
             };
             responses: {
@@ -3950,21 +3945,54 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/McpConnections/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    startDate?: string;
+                    endDate?: string;
+                    connectionId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
                     content: {
-                        "text/plain": components["schemas"]["ValidateTokenResult"];
-                        "application/json": components["schemas"]["ValidateTokenResult"];
-                        "text/json": components["schemas"]["ValidateTokenResult"];
+                        "text/plain": components["schemas"]["McpUsageAnalyticsResult"];
+                        "application/json": components["schemas"]["McpUsageAnalyticsResult"];
+                        "text/json": components["schemas"]["McpUsageAnalyticsResult"];
                     };
                 };
             };
         };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/McpTokens/usage": {
+    "/api/McpConnections/usage": {
         parameters: {
             query?: never;
             header?: never;
@@ -3997,46 +4025,6 @@ export interface paths {
                 };
             };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/McpTokens/analytics": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    startDate?: string;
-                    endDate?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["McpUsageAnalyticsResult"];
-                        "application/json": components["schemas"]["McpUsageAnalyticsResult"];
-                        "text/json": components["schemas"]["McpUsageAnalyticsResult"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -4718,6 +4706,366 @@ export interface paths {
                         "text/plain": components["schemas"]["FoodAnalysisResult"];
                         "application/json": components["schemas"]["FoodAnalysisResult"];
                         "text/json": components["schemas"]["FoodAnalysisResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/.well-known/openid-configuration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/.well-known/oauth-authorization-server": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/oauth/authorize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    client_id?: string;
+                    redirect_uri?: string;
+                    response_type?: string;
+                    scope?: string;
+                    state?: string;
+                    code_challenge?: string;
+                    code_challenge_method?: string;
+                    resource?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/oauth/token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/x-www-form-urlencoded": {
+                        grant_type?: string;
+                        client_id?: string;
+                        code?: string;
+                        code_verifier?: string;
+                        redirect_uri?: string;
+                        refresh_token?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/oauth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RegisterBody"];
+                    "text/json": components["schemas"]["RegisterBody"];
+                    "application/*+json": components["schemas"]["RegisterBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/oauth/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/x-www-form-urlencoded": {
+                        token?: string;
+                        client_id?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/oauth/authorization-requests/view": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RequestSecretBody"];
+                    "text/json": components["schemas"]["RequestSecretBody"];
+                    "application/*+json": components["schemas"]["RequestSecretBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AuthorizationRequestView"];
+                        "application/json": components["schemas"]["AuthorizationRequestView"];
+                        "text/json": components["schemas"]["AuthorizationRequestView"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/oauth/authorization-requests/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DecisionBody"];
+                    "text/json": components["schemas"]["DecisionBody"];
+                    "application/*+json": components["schemas"]["DecisionBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DecideAuthorizationResult"];
+                        "application/json": components["schemas"]["DecideAuthorizationResult"];
+                        "text/json": components["schemas"]["DecideAuthorizationResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/oauth/introspect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["IntrospectBody"];
+                    "text/json": components["schemas"]["IntrospectBody"];
+                    "application/*+json": components["schemas"]["IntrospectBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OAuthIntrospection"];
+                        "application/json": components["schemas"]["OAuthIntrospection"];
+                        "text/json": components["schemas"]["OAuthIntrospection"];
                     };
                 };
             };
@@ -7958,6 +8306,22 @@ export interface components {
             hasPassword: boolean;
             timeZoneId?: string | null;
         };
+        AuthorizationRequestView: {
+            clientName: string;
+            source: string;
+            verifiedHost?: string | null;
+            logoUri?: string | null;
+            clientUri?: string | null;
+            redirectHost: string;
+            audience: string;
+            requestedScopes: string[];
+            scopeGroups: components["schemas"]["ScopeGroupView"][];
+            households: components["schemas"]["ConsentHouseholdView"][];
+            existingGrant?: components["schemas"]["ExistingGrantView"];
+            isFirstParty: boolean;
+            /** Format: date-time */
+            expiresAt: string;
+        };
         BillingDealDto: {
             paddleDiscountId: string;
             label: string;
@@ -8076,8 +8440,24 @@ export interface components {
             foodLogs: components["schemas"]["FoodLogEntryDto"][];
             summary: components["schemas"]["NutritionSummaryDto"];
         };
+        ClientUsageDto: {
+            /** Format: uuid */
+            grantId: string;
+            clientName: string;
+            /** Format: int32 */
+            callCount: number;
+            /** Format: int32 */
+            failureCount: number;
+            /** Format: date-time */
+            lastUsed: string;
+        };
         CommentRequest: {
             body: string;
+        };
+        ConsentHouseholdView: {
+            /** Format: uuid */
+            id: string;
+            name: string;
         };
         ConsumeTelegramLinkCommand: {
             code: string;
@@ -8254,21 +8634,6 @@ export interface components {
         CreateHouseholdRequest: {
             name: string;
         };
-        CreateMcpTokenCommand: {
-            name: string;
-            /** Format: date-time */
-            expiresAt?: string | null;
-        };
-        CreateMcpTokenResult: {
-            /** Format: uuid */
-            id: string;
-            plaintextToken: string;
-            name: string;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            expiresAt?: string | null;
-        };
         CreateMealPlanCommand: {
             name?: string | null;
             /** Format: date */
@@ -8390,6 +8755,16 @@ export interface components {
             /** Format: int32 */
             failureCount: number;
         };
+        DecideAuthorizationResult: {
+            redirectUrl: string;
+        };
+        DecisionBody: {
+            request: string;
+            approve: boolean;
+            scopes?: string[] | null;
+            householdMode?: string | null;
+            householdIds?: string[] | null;
+        };
         DeleteBodyMeasurementResult: {
             success: boolean;
             message?: string | null;
@@ -8469,6 +8844,11 @@ export interface components {
             exerciseId: string;
             name: string;
             points: components["schemas"]["ExercisePoint"][];
+        };
+        ExistingGrantView: {
+            scopes: string[];
+            householdMode: string;
+            householdIds: string[];
         };
         FeedCommentDto: {
             /** Format: uuid */
@@ -8827,6 +9207,10 @@ export interface components {
             /** Format: int32 */
             imported: number;
         };
+        IntrospectBody: {
+            token?: string | null;
+            audience?: string | null;
+        };
         InviteHouseholdMemberResult: {
             success: boolean;
             /** Format: uuid */
@@ -8877,7 +9261,8 @@ export interface components {
         };
         LogMcpUsageCommand: {
             /** Format: uuid */
-            mcpTokenId: string;
+            grantId: string;
+            kind: string;
             toolName: string;
             parameters?: string | null;
             success: boolean;
@@ -8945,33 +9330,35 @@ export interface components {
             email: string;
             password: string;
         };
-        McpTokenDto: {
+        McpConnectionDto: {
             /** Format: uuid */
             id: string;
-            name: string;
+            clientName: string;
+            source: string;
+            verifiedHost?: string | null;
+            logoUri?: string | null;
+            isFirstParty: boolean;
+            scopes: string[];
+            householdMode: string;
+            households: components["schemas"]["McpConnectionHouseholdDto"][];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
-            expiresAt?: string | null;
-            /** Format: date-time */
             lastUsedAt?: string | null;
-            isActive: boolean;
+            /** Format: int32 */
+            calls30Days: number;
+            /** Format: int32 */
+            failed30Days: number;
         };
-        McpTokenDtoPagedResult: {
-            items: components["schemas"]["McpTokenDto"][];
-            /** Format: int32 */
-            totalCount: number;
-            /** Format: int32 */
-            page: number;
-            /** Format: int32 */
-            pageSize: number;
-            /** Format: int32 */
-            readonly totalPages: number;
+        McpConnectionHouseholdDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
         };
         McpUsageAnalyticsResult: {
             overview: components["schemas"]["UsageOverview"];
             toolUsage: components["schemas"]["ToolUsageDto"][];
-            tokenUsage: components["schemas"]["TokenUsageDto"][];
+            clientUsage: components["schemas"]["ClientUsageDto"][];
             dailyUsage: components["schemas"]["DailyUsageDto"][];
         };
         MealPlanDetailDto: {
@@ -9238,6 +9625,26 @@ export interface components {
             /** Format: double */
             totalFat: number;
         };
+        OAuthIntrospection: {
+            active: boolean;
+            /** Format: uuid */
+            userId: string;
+            /** Format: uuid */
+            grantId: string;
+            /** Format: uuid */
+            clientRowId: string;
+            clientId: string;
+            clientName: string;
+            scopes: string[];
+            householdMode: string;
+            householdIds: string[];
+            role: string;
+            plan: string;
+            /** Format: int32 */
+            monthlyLimit?: number | null;
+            /** Format: int32 */
+            usedThisMonth: number;
+        };
         PersonalRecordResult: {
             /** Format: uuid */
             exerciseId: string;
@@ -9419,6 +9826,15 @@ export interface components {
             /** Format: uuid */
             id?: string | null;
         };
+        RegisterBody: {
+            client_name?: string | null;
+            redirect_uris?: string[] | null;
+            logo_uri?: string | null;
+            client_uri?: string | null;
+            token_endpoint_auth_method?: string | null;
+            grant_types?: string[] | null;
+            response_types?: string[] | null;
+        };
         RegisterCommand: {
             /** Format: email */
             email: string;
@@ -9450,6 +9866,9 @@ export interface components {
         };
         RequestFollowCommand: {
             shareToken: string;
+        };
+        RequestSecretBody: {
+            request: string;
         };
         ResetPasswordCommand: {
             token: string;
@@ -9502,6 +9921,14 @@ export interface components {
             sortOrder: number;
             isBuiltIn: boolean;
             exercises: components["schemas"]["WorkoutTemplateExerciseInput"][];
+        };
+        ScopeGroupView: {
+            group: string;
+            title: string;
+            description: string;
+            hasWrite: boolean;
+            readScope: string;
+            writeScope?: string | null;
         };
         SendAiChatMessageCommand: {
             /** Format: uuid */
@@ -9683,15 +10110,6 @@ export interface components {
         };
         TokenRequest: {
             token: string;
-        };
-        TokenUsageDto: {
-            /** Format: uuid */
-            tokenId: string;
-            tokenName: string;
-            /** Format: int32 */
-            callCount: number;
-            /** Format: date-time */
-            lastUsed: string;
         };
         ToolUsageDto: {
             toolName: string;
@@ -9876,6 +10294,11 @@ export interface components {
             canMessage?: boolean | null;
             end: boolean;
         };
+        UpdateMcpConnectionBody: {
+            scopes?: string[] | null;
+            householdMode?: string | null;
+            householdIds?: string[] | null;
+        };
         UpdateMealPlanRecipeRequest: {
             /** Format: date */
             date: string;
@@ -9962,7 +10385,7 @@ export interface components {
             /** Format: int32 */
             averageExecutionTimeMs: number;
             /** Format: int32 */
-            uniqueTokensUsed: number;
+            uniqueClientsUsed: number;
         };
         UserDto: {
             /** Format: uuid */
@@ -10014,25 +10437,6 @@ export interface components {
             targetCarbsGrams?: number | null;
             /** Format: double */
             targetFatGrams?: number | null;
-        };
-        ValidateTokenCommand: {
-            token: string;
-        };
-        ValidateTokenResult: {
-            /** Format: uuid */
-            userId: string;
-            isValid: boolean;
-            /** Format: uuid */
-            tokenId?: string | null;
-            role: string;
-            plan: string;
-            /** Format: int32 */
-            monthlyLimit?: number | null;
-            /** Format: int32 */
-            usedThisMonth: number;
-            /** Format: int32 */
-            readonly remainingThisMonth?: number | null;
-            readonly quotaExceeded: boolean;
         };
         WorkoutDraftDto: {
             payload: string;

@@ -127,6 +127,20 @@ public record GetAuthorizationRequestQuery(string RequestSecret) : IRequest<Auth
 
 public record ScopeGroupView(string Group, string Title, string Description, bool HasWrite, string ReadScope, string? WriteScope);
 
+/// <summary>The permission groups a user can give a connected app, in the order the screens show them.</summary>
+public static class McpScopeCatalog
+{
+    public static List<ScopeGroupView> For(bool isAdmin) => McpScopes.Groups
+        .Where(g => !g.Value.AdminOnly || isAdmin)
+        .Select(g => g.Key switch
+        {
+            "ai" => new ScopeGroupView("ai", g.Value.Title, g.Value.Description, false, McpScopes.AiUse, null),
+            "admin" => new ScopeGroupView("admin", g.Value.Title, g.Value.Description, false, McpScopes.Admin, null),
+            _ => new ScopeGroupView(g.Key, g.Value.Title, g.Value.Description, g.Value.HasWrite, $"{g.Key}:read", g.Value.HasWrite ? $"{g.Key}:write" : null),
+        })
+        .ToList();
+}
+
 public record ConsentHouseholdView(Guid Id, string Name);
 
 public record ExistingGrantView(IReadOnlyList<string> Scopes, string HouseholdMode, IReadOnlyList<Guid> HouseholdIds);
@@ -164,14 +178,7 @@ public class GetAuthorizationRequestQueryHandler : IRequestHandler<GetAuthorizat
         var client = request.Client;
 
         var isAdmin = _currentUser.IsInRole("admin");
-        var groups = McpScopes.Groups
-            .Where(g => !g.Value.AdminOnly || isAdmin)
-            .Select(g => g.Key == "ai"
-                ? new ScopeGroupView("ai", g.Value.Title, g.Value.Description, false, McpScopes.AiUse, null)
-                : g.Key == "admin"
-                    ? new ScopeGroupView("admin", g.Value.Title, g.Value.Description, false, McpScopes.Admin, null)
-                    : new ScopeGroupView(g.Key, g.Value.Title, g.Value.Description, g.Value.HasWrite, $"{g.Key}:read", g.Value.HasWrite ? $"{g.Key}:write" : null))
-            .ToList();
+        var groups = McpScopeCatalog.For(isAdmin);
 
         var households = await _context.HouseholdMembers
             .Where(m => m.UserId == userId)

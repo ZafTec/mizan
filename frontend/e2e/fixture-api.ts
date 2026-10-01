@@ -26,8 +26,20 @@ const user = {
 	role: "user", emailVerified: true, themePreference: "light", compactMode: false,
 	reduceAnimations: false, hasPassword: true, timeZoneId: "UTC", image: null,
 };
-type FixtureHousehold = { otherMembers: number; lists: number; plans: number; version: number; staleOnce: boolean };
 const householdId = "55555555-5555-4555-8555-555555555555";
+const scopeGroups = [
+	{ group: "nutrition", title: "Food and nutrition", description: "Food diary, foods, daily totals and calorie goals.", hasWrite: true, readScope: "nutrition:read", writeScope: "nutrition:write" },
+	{ group: "training", title: "Training", description: "Workouts, workout templates and exercises.", hasWrite: true, readScope: "training:read", writeScope: "training:write" },
+	{ group: "planning", title: "Meal plans and shopping", description: "Meal plans and shopping lists.", hasWrite: true, readScope: "planning:read", writeScope: "planning:write" },
+	{ group: "ai", title: "Mizan assistant", description: "Ask the assistant and analyze photos.", hasWrite: false, readScope: "ai:use", writeScope: null },
+];
+type FixtureConnection = { id: string; clientName: string; source: string; verifiedHost: string | null; logoUri: null; isFirstParty: boolean; scopes: string[]; householdMode: string; households: { id: string; name: string }[]; createdAt: string; lastUsedAt: string | null; calls30Days: number; failed30Days: number };
+const consentRequest = {
+	clientName: "Claude", source: "dynamic", verifiedHost: null, logoUri: null, clientUri: null, redirectHost: "localhost",
+	audience: "mcp", requestedScopes: [], scopeGroups, isFirstParty: false, expiresAt: `${today}T23:59:00Z`,
+	households: [{ id: householdId, name: "Home" }], existingGrant: null,
+};
+type FixtureHousehold = { otherMembers: number; lists: number; plans: number; version: number; staleOnce: boolean };
 // What an admin has on sale: $2.99 monthly, $24 yearly with a first-year deal.
 const plans = [
 	{ id: "66666666-6666-4666-8666-666666666661", name: "Pro Monthly", description: null, interval: "month", amountCents: 299, currency: "USD", trialDays: null, paddlePriceId: "pri_fixture_monthly", deal: null },
@@ -58,11 +70,15 @@ type FixtureState = {
 	unhandled: string[];
 	household: FixtureHousehold | null;
 	writes: { path: string; body: Record<string, unknown> }[];
+	connections: FixtureConnection[];
 };
 const states = new Map<string, FixtureState>();
 function initialState(empty = false): FixtureState {
 	return {
-		userId: user.id, empty, unread: 0, draft: null, household: null, failures: [], writeFailures: {}, unhandled: [], writes: [], recipes: empty ? [] : [{
+		userId: user.id, empty, unread: 0, draft: null, household: null, failures: [], writeFailures: {}, unhandled: [], writes: [], connections: empty ? [] : [
+			{ id: "c0000000-0000-4000-8000-000000000001", clientName: "Claude", source: "metadata", verifiedHost: "claude.ai", logoUri: null, isFirstParty: false, scopes: ["nutrition:read", "nutrition:write", "training:read", "ai:use"], householdMode: "selected", households: [{ id: householdId, name: "Home" }], createdAt: `${dateAgo(9)}T08:00:00Z`, lastUsedAt: `${today}T07:30:00Z`, calls30Days: 42, failed30Days: 2 },
+			{ id: "c0000000-0000-4000-8000-000000000002", clientName: "Gemini CLI", source: "dynamic", verifiedHost: null, logoUri: null, isFirstParty: false, scopes: ["nutrition:read"], householdMode: "none", households: [], createdAt: `${dateAgo(2)}T08:00:00Z`, lastUsedAt: null, calls30Days: 0, failed30Days: 0 },
+		], recipes: empty ? [] : [{
 			id: "33333333-3333-4333-8333-333333333333", title: "Yogurt and oats", servings: 1, isFavorited: true, isOwner: true,
 			isPublic: true, description: "A breakfast to come back to.", instructions: "Stir the yogurt and oats together. Serve chilled.",
 			ingredients: [{ foodId: food.id, foodName: food.name, ingredientText: food.name, amount: 200, unit: "g" }, { foodId: oats.id, foodName: oats.name, ingredientText: oats.name, amount: 50, unit: "g" }],
@@ -169,6 +185,41 @@ const server = Bun.serve({
 			state.writes.push({ path, body });
 			state.household = null;
 			return json({ status: "Deleted" });
+		}
+		if (path === "/api/McpConnections" && method === "GET") return json(state.connections);
+		if (path === "/api/McpConnections/scopes") return json(scopeGroups);
+		if (path === "/api/McpConnections/analytics") return json({
+			overview: { totalCalls: 42, successfulCalls: 40, failedCalls: 2, successRate: 95.2, averageExecutionTimeMs: 180, uniqueClientsUsed: 1 },
+			toolUsage: [{ toolName: "log_food", callCount: 30, successCount: 28, failureCount: 2, averageExecutionTimeMs: 210 }],
+			clientUsage: [{ grantId: state.connections[0]?.id, clientName: "Claude", callCount: 42, failureCount: 2, lastUsed: `${today}T07:30:00Z` }],
+			dailyUsage: [{ date: dateAgo(1), callCount: 12, successCount: 12, failureCount: 0 }, { date: today, callCount: 30, successCount: 28, failureCount: 2 }],
+		});
+		const connection = path.match(/^\/api\/McpConnections\/([^/]+)$/);
+		if (connection && method === "PATCH") {
+			const target = state.connections.find((item) => item.id === connection[1]);
+			if (!target) return json({ error: "Connection not found" }, 404);
+			const body = await request.json() as { scopes?: string[]; householdMode?: string; householdIds?: string[] };
+			if (body.scopes?.some((scope) => !target.scopes.includes(scope))) return json({ error: "A connection can only lose access here." }, 400);
+			if (body.scopes) target.scopes = body.scopes;
+			if (body.householdMode) target.householdMode = body.householdMode;
+			state.writes.push({ path, body });
+			return json(null, 204);
+		}
+		if (connection && method === "DELETE") {
+			state.connections = state.connections.filter((item) => item.id !== connection[1]);
+			state.writes.push({ path, body: {} });
+			return json(null, 204);
+		}
+		if (path === "/api/oauth/authorization-requests/view" && method === "POST") {
+			const body = await request.json() as { request: string };
+			if (body.request === "first-party") return json({ ...consentRequest, clientName: "Mizan for Android", source: "first_party", isFirstParty: true, requestedScopes: ["full"] });
+			if (body.request === "asks-for-little") return json({ ...consentRequest, clientName: "Notes helper", requestedScopes: ["nutrition:read"] });
+			return body.request === "fixture-request" ? json(consentRequest) : json({ error: "This connection request has expired." }, 404);
+		}
+		if (path === "/api/oauth/authorization-requests/decision" && method === "POST") {
+			const body = await request.json() as Record<string, unknown>;
+			state.writes.push({ path, body });
+			return json({ redirectUrl: body.approve ? "http://localhost:8123/callback?code=fixture-code&state=s1&iss=fixture" : "http://localhost:8123/callback?error=access_denied&state=s1" });
 		}
 		if (path === "/api/Notifications/unread-count") return json({ unreadCount: state.unread });
 		if (path === "/api/Trainers/my-trainer") return json({ error: "No active trainer relationship found" }, 404);

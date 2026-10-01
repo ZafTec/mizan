@@ -252,6 +252,28 @@ public class McpConnectionsTests
     }
 
     [Fact]
+    public async Task TheScopeCatalog_OffersAdminOnlyToAdministrators()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var plain = Guid.NewGuid();
+        var admin = Guid.NewGuid();
+        await _fixture.SeedUserAsync(plain, $"p-{plain:N}@example.com");
+        await _fixture.SeedUserAsync(admin, $"a-{admin:N}@example.com", role: "admin");
+
+        using var plainClient = _fixture.CreateAuthenticatedClient(plain, "p@example.com");
+        var plainGroups = await plainClient.GetFromJsonAsync<JsonElement>("/api/McpConnections/scopes");
+        var names = plainGroups.EnumerateArray().Select(g => g.GetProperty("group").GetString()).ToList();
+        names.Should().Contain("nutrition").And.Contain("ai").And.NotContain("admin");
+        var nutrition = plainGroups.EnumerateArray().Single(g => g.GetProperty("group").GetString() == "nutrition");
+        nutrition.GetProperty("readScope").GetString().Should().Be("nutrition:read");
+        nutrition.GetProperty("writeScope").GetString().Should().Be("nutrition:write");
+
+        using var adminClient = _fixture.CreateAuthenticatedClient(admin, "a@example.com", "admin");
+        (await adminClient.GetFromJsonAsync<JsonElement>("/api/McpConnections/scopes")).EnumerateArray()
+            .Select(g => g.GetProperty("group").GetString()).Should().Contain("admin");
+    }
+
+    [Fact]
     public async Task Connections_BelongToTheirOwner()
     {
         var w = await WorldAsync();
