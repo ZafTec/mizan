@@ -1,6 +1,6 @@
 namespace Mizan.Domain.Entities;
 
-public class BodyMeasurement
+public class BodyMeasurement : IChangeTracked
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
@@ -17,6 +17,7 @@ public class BodyMeasurement
     public decimal? RightThighCm { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
     // Navigation property
     public virtual User User { get; set; } = null!;

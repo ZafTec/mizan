@@ -167,3 +167,30 @@ public class StorageUrlTests
         storage.TryGetKey(url).Should().Be(expected);
     }
 }
+
+public class ModelFormatTests
+{
+    [Fact]
+    public void AGlb2Header_IsRecognised()
+    {
+        ModelFormat.Detect(new byte[] { 0x67, 0x6C, 0x54, 0x46, 2, 0, 0, 0, 12, 0, 0, 0 }).Should().Be("model/gltf-binary");
+    }
+
+    [Fact]
+    public void AnythingElse_IsNot()
+    {
+        ModelFormat.Detect(new byte[] { 0x67, 0x6C, 0x54, 0x46, 1, 0, 0, 0 }).Should().BeNull("glTF 1 is a different format");
+        ModelFormat.Detect(Encoding.ASCII.GetBytes("<html>glTF</html>")).Should().BeNull();
+        ModelFormat.Detect(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }).Should().BeNull();
+        ModelFormat.Detect(ReadOnlySpan<byte>.Empty).Should().BeNull();
+    }
+
+    [Fact]
+    public void ModelsAndExerciseMedia_HaveFoldersOfTheirOwn_AndGlbKeepsItsExtension()
+    {
+        var now = new DateTime(2026, 3, 9, 12, 0, 0, DateTimeKind.Utc);
+        StorageKey.Build(StorageFolder.Models, "squat.glb", now).Should().MatchRegex(@"^models/2026/03/[0-9a-f]{32}\.glb$");
+        StorageKey.Build(StorageFolder.Exercises, "squat.png", now).Should().StartWith("exercises/");
+        StorageKey.IsOurs("models/2026/03/abc.glb").Should().BeTrue();
+    }
+}

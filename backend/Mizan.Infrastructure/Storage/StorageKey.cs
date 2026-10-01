@@ -15,6 +15,8 @@ public static class StorageKey
             [StorageFolder.Avatars] = "avatars",
             [StorageFolder.Recipes] = "recipes",
             [StorageFolder.Meals] = "meals",
+            [StorageFolder.Exercises] = "exercises",
+            [StorageFolder.Models] = "models",
         };
 
     public static string Build(StorageFolder folder, string fileName, DateTime? nowUtc = null)
@@ -44,6 +46,6 @@ public static class StorageKey
     private static string Extension(string fileName)
     {
         var extension = Path.GetExtension(fileName)?.ToLowerInvariant();
-        return extension is ".jpg" or ".jpeg" or ".png" or ".webp" or ".gif" ? extension : ".bin";
+        return extension is ".jpg" or ".jpeg" or ".png" or ".webp" or ".gif" or ".glb" ? extension : ".bin";
     }
 }

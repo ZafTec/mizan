@@ -45,6 +45,16 @@ public class ExercisesController : ControllerBase
     [Authorize(Policy = "UserOrMcp")]
     public async Task<IActionResult> Delete(Guid id) { await _mediator.Send(new DeleteExerciseCommand(id)); return NoContent(); }
 
+    [HttpPut("{id:guid}/model")]
+    [Authorize(Policy = "RequireAdmin")]
+    public async Task<IActionResult> SetModel(Guid id, [FromBody] SetModelRequest body)
+    {
+        await _mediator.Send(new SetExerciseModelCommand(id, body.ModelUrl));
+        return NoContent();
+    }
+
+    public record SetModelRequest(string? ModelUrl);
+
     [HttpPost("{id:guid}/promote")]
     [Authorize(Policy = "RequireAdmin")]
     public async Task<IActionResult> Promote(Guid id) { await _mediator.Send(new PromoteExerciseCommand(id)); return NoContent(); }

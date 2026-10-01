@@ -66,6 +66,9 @@ public interface IMizanDbContext
     DbSet<OAuthAuthorizationRequest> OAuthAuthorizationRequests { get; }
     DbSet<OAuthToken> OAuthTokens { get; }
     DbSet<McpTask> McpTasks { get; }
+    DbSet<IdempotencyKey> IdempotencyKeys { get; }
+    DbSet<DeletedRecord> DeletedRecords { get; }
+    DbSet<DeviceToken> DeviceTokens { get; }
 
     // Billing
     DbSet<Subscription> Subscriptions { get; }

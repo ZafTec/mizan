@@ -2710,6 +2710,105 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DeviceDto"][];
+                        "application/json": components["schemas"]["DeviceDto"][];
+                        "text/json": components["schemas"]["DeviceDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RegisterDeviceCommand"];
+                    "text/json": components["schemas"]["RegisterDeviceCommand"];
+                    "application/*+json": components["schemas"]["RegisterDeviceCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DeviceDto"];
+                        "application/json": components["schemas"]["DeviceDto"];
+                        "text/json": components["schemas"]["DeviceDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Devices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Exercises": {
         parameters: {
             query?: never;
@@ -2839,6 +2938,47 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Exercises/{id}/model": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SetModelRequest"];
+                    "text/json": components["schemas"]["SetModelRequest"];
+                    "application/*+json": components["schemas"]["SetModelRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -4015,6 +4155,199 @@ export interface paths {
                     "application/*+json": components["schemas"]["LogMcpUsageCommand"];
                 };
             };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/McpTasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["McpTaskDto"];
+                        "application/json": components["schemas"]["McpTaskDto"];
+                        "text/json": components["schemas"]["McpTaskDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/McpTasks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["McpTaskDto"];
+                        "application/json": components["schemas"]["McpTaskDto"];
+                        "text/json": components["schemas"]["McpTaskDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/McpTasks/{id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": unknown;
+                    "text/json": unknown;
+                    "application/*+json": unknown;
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/McpTasks/{id}/fail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": unknown;
+                    "text/json": unknown;
+                    "application/*+json": unknown;
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/McpTasks/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
             responses: {
                 /** @description OK */
                 200: {
@@ -6638,6 +6971,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Sync/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    since?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SyncChangesResult"];
+                        "application/json": components["schemas"]["SyncChangesResult"];
+                        "text/json": components["schemas"]["SyncChangesResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Telegram/link": {
         parameters: {
             query?: never;
@@ -7236,6 +7609,50 @@ export interface paths {
                 query?: {
                     folder?: components["schemas"]["StorageFolder"];
                 };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        file?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UploadedImageDto"];
+                        "application/json": components["schemas"]["UploadedImageDto"];
+                        "text/json": components["schemas"]["UploadedImageDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Uploads/model": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -8785,6 +9202,16 @@ export interface components {
             success: boolean;
             message?: string | null;
         };
+        DeviceDto: {
+            /** Format: uuid */
+            id: string;
+            platform: string;
+            deviceName?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            lastSeenAt: string;
+        };
         EmailRequest: {
             email: string;
         };
@@ -8807,6 +9234,7 @@ export interface components {
             equipment?: string | null;
             videoUrl?: string | null;
             imageUrl?: string | null;
+            modelUrl?: string | null;
             isCustom: boolean;
             isApproved: boolean;
             isOwner: boolean;
@@ -9355,6 +9783,23 @@ export interface components {
             id: string;
             name: string;
         };
+        McpTaskDto: {
+            id: string;
+            status: string;
+            statusMessage?: string | null;
+            /** @enum {unknown|null} */
+            result?: null;
+            /** @enum {unknown|null} */
+            error?: null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: int32 */
+            ttlSeconds: number;
+            /** Format: int32 */
+            pollIntervalMs: number;
+        };
         McpUsageAnalyticsResult: {
             overview: components["schemas"]["UsageOverview"];
             toolUsage: components["schemas"]["ToolUsageDto"][];
@@ -9842,6 +10287,11 @@ export interface components {
             name?: string | null;
             timeZoneId?: string | null;
         };
+        RegisterDeviceCommand: {
+            token: string;
+            platform: string;
+            deviceName?: string | null;
+        };
         RemoveHouseholdMemberResult: {
             success: boolean;
             message?: string | null;
@@ -9978,6 +10428,9 @@ export interface components {
             /** Format: uuid */
             activeHouseholdId?: string | null;
         };
+        SetModelRequest: {
+            modelUrl?: string | null;
+        };
         ShoppingListDto: {
             /** Format: uuid */
             id: string;
@@ -10058,7 +10511,7 @@ export interface components {
          * Format: int32
          * @enum {integer}
          */
-        StorageFolder: 0 | 1 | 2;
+        StorageFolder: 0 | 1 | 2 | 3 | 4;
         StreakUpdate: {
             streakType: string;
             /** Format: int32 */
@@ -10072,6 +10525,61 @@ export interface components {
             freezeConsumed: boolean;
             /** Format: int32 */
             freezesAvailable: number;
+        };
+        SyncChangesResult: {
+            /** Format: date-time */
+            serverTime: string;
+            resyncRequired: boolean;
+            hasMore: boolean;
+            /** Format: date-time */
+            nextSince: string;
+            diaryEntries: components["schemas"]["SyncDiaryEntryDto"][];
+            workouts: components["schemas"]["WorkoutSummaryDto"][];
+            bodyMeasurements: components["schemas"]["BodyMeasurementDto"][];
+            notifications: components["schemas"]["NotificationDto"][];
+            deleted: components["schemas"]["SyncDeletionDto"][];
+        };
+        SyncDeletionDto: {
+            type: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            deletedAt: string;
+        };
+        SyncDiaryEntryDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date */
+            entryDate: string;
+            /** Format: uuid */
+            foodId?: string | null;
+            /** Format: uuid */
+            recipeId?: string | null;
+            /** Format: uuid */
+            groupId?: string | null;
+            groupName?: string | null;
+            /** Format: double */
+            amountGrams?: number | null;
+            mealType: string;
+            name: string;
+            /** Format: double */
+            servings: number;
+            /** Format: double */
+            calories?: number | null;
+            /** Format: double */
+            proteinGrams?: number | null;
+            /** Format: double */
+            carbsGrams?: number | null;
+            /** Format: double */
+            fatGrams?: number | null;
+            /** Format: double */
+            fiberGrams?: number | null;
+            /** Format: double */
+            proteinCalorieRatio?: number | null;
+            /** Format: date-time */
+            loggedAt: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         SystemInfoDto: {
             environment: string;

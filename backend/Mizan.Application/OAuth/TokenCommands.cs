@@ -270,3 +270,55 @@ public class IntrospectOAuthTokenQueryHandler : IRequestHandler<IntrospectOAuthT
         };
     }
 }
+
+/// <summary>
+/// Who an access token for the API itself belongs to. Asked on every request a native
+/// app makes, so it reads only what is needed to let the request in.
+/// </summary>
+public record ResolveApiAccessTokenQuery(string Token) : IRequest<ApiTokenIdentity?>;
+
+public record ApiTokenIdentity(Guid UserId, Guid GrantId, string Role);
+
+public class ResolveApiAccessTokenQueryHandler : IRequestHandler<ResolveApiAccessTokenQuery, ApiTokenIdentity?>
+{
+    private static readonly TimeSpan LastUsedGranularity = TimeSpan.FromMinutes(1);
+
+    private readonly IMizanDbContext _context;
+    private readonly IUserStatusService _users;
+
+    public ResolveApiAccessTokenQueryHandler(IMizanDbContext context, IUserStatusService users)
+    {
+        _context = context;
+        _users = users;
+    }
+
+    public async Task<ApiTokenIdentity?> Handle(ResolveApiAccessTokenQuery request, CancellationToken cancellationToken)
+    {
+        if (!request.Token.StartsWith(OAuthTokens.AccessPrefix, StringComparison.Ordinal)) return null;
+
+        var hash = OAuthTokens.Hash(request.Token);
+        var now = DateTime.UtcNow;
+        var token = await _context.OAuthTokens
+            .Include(t => t.Grant)
+            .FirstOrDefaultAsync(t => t.TokenHash == hash && t.Kind == OAuthToken.KindAccess, cancellationToken);
+
+        // Only a token issued for the API is accepted, and the authorization server issues
+        // those to first-party apps alone. A token meant for the MCP server is refused here.
+        if (token is null || token.RevokedAt is not null || token.ExpiresAt < now
+            || token.Audience != OAuthToken.AudienceApi || token.Grant.RevokedAt is not null)
+            return null;
+
+        var status = await _users.GetStatusAsync(token.Grant.UserId, cancellationToken);
+        if (!status.IsAllowed) return null;
+
+        var grant = token.Grant;
+        if (grant.LastUsedAt is null || now - grant.LastUsedAt > LastUsedGranularity)
+        {
+            await _context.OAuthGrants
+                .Where(g => g.Id == grant.Id)
+                .ExecuteUpdateAsync(s => s.SetProperty(g => g.LastUsedAt, now), cancellationToken);
+        }
+
+        return new ApiTokenIdentity(grant.UserId, grant.Id, status.Role);
+    }
+}

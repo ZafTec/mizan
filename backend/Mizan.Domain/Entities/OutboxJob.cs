@@ -62,6 +62,7 @@ public static class OutboxJobTypes
 {
     public const string Email = "email";
     public const string EvalRun = "eval-run";
+    public const string Push = "push";
 }
 
 /// <summary>

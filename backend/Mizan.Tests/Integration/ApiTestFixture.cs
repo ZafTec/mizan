@@ -235,6 +235,10 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             services.RemoveAll<IOAuthClientMetadataFetcher>();
             services.AddSingleton<IOAuthClientMetadataFetcher>(OAuthMetadata);
 
+            // Nor may a test push reach Firebase. The fake records what would have been sent.
+            services.RemoveAll<IPushSender>();
+            services.AddSingleton<IPushSender>(Push);
+
             // Nothing in a test run may reach Paddle either.
             services.RemoveAll<IPaddleApiClient>();
             services.AddSingleton<IPaddleApiClient>(Paddle);
@@ -288,6 +292,8 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     public const string SessionCookieName = "mizan_session";
 
     public RecordingEmailSender Email { get; } = new();
+
+    public RecordingPushSender Push { get; } = new();
 
     public ScriptedAiProvider Ai { get; } = new();
 
@@ -611,7 +617,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     /// covered in OAuthFlowTests; tests that exercise tools only need a valid token.
     /// Scopes default to everything the user may hold.
     /// </summary>
-    public async Task<McpAccess> CreateMcpAccessAsync(Guid userId, string[]? scopes = null, string householdMode = "all", Guid[]? households = null)
+    public async Task<McpAccess> CreateMcpAccessAsync(Guid userId, string[]? scopes = null, string householdMode = "all", Guid[]? households = null, string audience = "mcp")
     {
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
@@ -622,7 +628,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         var client = new OAuthClient
         {
             Id = Guid.NewGuid(), ClientId = "mzc_" + SecureToken.Generate()[..16], Name = "Test Assistant",
-            RedirectUris = ["http://localhost:1/cb"], Source = OAuthClient.SourceDynamic, CreatedAt = now,
+            RedirectUris = ["http://localhost:1/cb"], Source = audience == "api" ? OAuthClient.SourceFirstParty : OAuthClient.SourceDynamic, CreatedAt = now,
         };
         var grant = new OAuthGrant
         {
@@ -632,7 +638,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         };
         db.OAuthClients.Add(client);
         db.OAuthGrants.Add(grant);
-        var issued = Mizan.Application.OAuth.OAuthTokens.Issue(db, settings, grant.Id, Guid.NewGuid(), "mcp", now);
+        var issued = Mizan.Application.OAuth.OAuthTokens.Issue(db, settings, grant.Id, Guid.NewGuid(), audience, now);
         await db.SaveChangesAsync();
         return new McpAccess(issued.AccessToken, grant.Id);
     }
@@ -821,6 +827,35 @@ public sealed class RecordingEmailSender : IEmailSender
         var match = System.Text.RegularExpressions.Regex.Match(
             message.Text, pathSegment + @"\?token=([A-Za-z0-9_\-%]+)");
         return match.Success ? Uri.UnescapeDataString(match.Groups[1].Value) : null;
+    }
+}
+
+/// <summary>Captures pushes instead of sending them. A test decides how each token answers.</summary>
+public sealed class RecordingPushSender : IPushSender
+{
+    private readonly List<PushMessage> _sent = new();
+    private readonly Dictionary<string, PushOutcome> _answers = new();
+
+    public bool IsConfigured { get; set; } = true;
+
+    public IReadOnlyList<PushMessage> Sent
+    {
+        get { lock (_sent) return _sent.ToList(); }
+    }
+
+    public void Reset()
+    {
+        lock (_sent) _sent.Clear();
+        _answers.Clear();
+        IsConfigured = true;
+    }
+
+    public void Answer(string token, PushOutcome outcome) => _answers[token] = outcome;
+
+    public Task<PushOutcome> SendAsync(PushMessage message, CancellationToken cancellationToken)
+    {
+        lock (_sent) _sent.Add(message);
+        return Task.FromResult(_answers.GetValueOrDefault(message.Token, PushOutcome.Sent));
     }
 }
 

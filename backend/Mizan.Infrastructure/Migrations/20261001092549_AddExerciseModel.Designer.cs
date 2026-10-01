@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Mizan.Infrastructure.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Mizan.Infrastructure.Migrations
 {
     [DbContext(typeof(MizanDbContext))]
-    partial class MizanDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261001092549_AddExerciseModel")]
+    partial class AddExerciseModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -943,12 +946,6 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("numeric(6,2)")
                         .HasColumnName("right_thigh_cm");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at")
-                        .HasDefaultValueSql("NOW()");
-
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
@@ -965,7 +962,7 @@ namespace Mizan.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId", "UpdatedAt");
+                    b.HasIndex("UserId");
 
                     b.ToTable("body_measurements", (string)null);
                 });
@@ -1107,40 +1104,6 @@ namespace Mizan.Infrastructure.Migrations
                     b.HasIndex("Status", "CreatedAt");
 
                     b.ToTable("content_reports", (string)null);
-                });
-
-            modelBuilder.Entity("Mizan.Domain.Entities.DeletedRecord", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime>("DeletedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<Guid>("EntityId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("entity_id");
-
-                    b.Property<string>("EntityType")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasColumnName("entity_type");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId", "DeletedAt");
-
-                    b.ToTable("deleted_records", (string)null);
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.DeviceToken", b =>
@@ -1784,12 +1747,6 @@ namespace Mizan.Infrastructure.Migrations
                         .HasDefaultValue(1m)
                         .HasColumnName("servings");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at")
-                        .HasDefaultValueSql("NOW()");
-
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
@@ -1801,8 +1758,6 @@ namespace Mizan.Infrastructure.Migrations
                     b.HasIndex("RecipeId");
 
                     b.HasIndex("UserId", "EntryDate");
-
-                    b.HasIndex("UserId", "UpdatedAt");
 
                     b.ToTable("food_diary_entries", (string)null);
                 });
@@ -3816,12 +3771,6 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("template_id");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at")
-                        .HasDefaultValueSql("NOW()");
-
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
@@ -3834,7 +3783,7 @@ namespace Mizan.Infrastructure.Migrations
 
                     b.HasIndex("TemplateId");
 
-                    b.HasIndex("UserId", "UpdatedAt");
+                    b.HasIndex("UserId");
 
                     b.ToTable("workouts", (string)null);
                 });
@@ -4175,15 +4124,6 @@ namespace Mizan.Infrastructure.Migrations
                     b.Navigation("Conversation");
 
                     b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Mizan.Domain.Entities.DeletedRecord", b =>
-                {
-                    b.HasOne("Mizan.Domain.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.DeviceToken", b =>
