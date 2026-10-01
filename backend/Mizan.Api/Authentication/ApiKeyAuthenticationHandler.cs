@@ -3,8 +3,10 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Mcp;
 
 namespace Mizan.Api.Authentication;
 
@@ -20,16 +22,21 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
 {
     private readonly ILogger<ApiKeyAuthenticationHandler> _logger;
     private readonly IUserStatusService _userStatusService;
+    private readonly IMizanDbContext _context;
+
+    public const string GrantHeader = "X-Mcp-Grant";
 
     public ApiKeyAuthenticationHandler(
         IOptionsMonitor<ApiKeyAuthenticationSchemeOptions> options,
         ILoggerFactory logger,
         UrlEncoder encoder,
-        IUserStatusService userStatusService)
+        IUserStatusService userStatusService,
+        IMizanDbContext context)
         : base(options, logger, encoder)
     {
         _logger = logger.CreateLogger<ApiKeyAuthenticationHandler>();
         _userStatusService = userStatusService;
+        _context = context;
     }
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -68,7 +75,7 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
                 return AuthenticateResult.Fail("Impersonated user invalid");
             }
 
-            var claims = new[]
+            var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                 new Claim("sub", userId.ToString()),
@@ -78,6 +85,31 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
                 // Add standard role claim for Identity
                 new Claim("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", status.Role)
             };
+
+            // The MCP service names the connection a call came from. What that
+            // connection may do is read from the database here, never taken from
+            // the header, so the service cannot widen it by asking.
+            if (Request.Headers.TryGetValue(GrantHeader, out var grantHeader))
+            {
+                if (!Guid.TryParse(grantHeader, out var grantId))
+                    return AuthenticateResult.Fail("Invalid connection");
+
+                var grant = await _context.OAuthGrants.AsNoTracking()
+                    .FirstOrDefaultAsync(g => g.Id == grantId && g.UserId == userId && g.RevokedAt == null, Context.RequestAborted);
+                if (grant is null)
+                {
+                    _logger.LogWarning("Rejected a call for connection {GrantId}: not found, revoked or not this user's.", grantId);
+                    return AuthenticateResult.Fail("The connection is no longer valid");
+                }
+
+                var isAdminUser = string.Equals(status.Role, "admin", StringComparison.OrdinalIgnoreCase);
+                var scopes = isAdminUser ? grant.Scopes : grant.Scopes.Where(s => s != McpScopes.Admin).ToList();
+                claims.Add(new Claim(GrantClaims.GrantId, grant.Id.ToString()));
+                claims.Add(new Claim(GrantClaims.Client, grant.ClientId.ToString()));
+                claims.Add(new Claim(GrantClaims.Scopes, string.Join(' ', scopes)));
+                claims.Add(new Claim(GrantClaims.HouseholdMode, grant.HouseholdMode));
+                claims.Add(new Claim(GrantClaims.Households, string.Join(',', grant.HouseholdIds)));
+            }
 
             var identity = new ClaimsIdentity(claims, Scheme.Name, ClaimTypes.NameIdentifier, ClaimTypes.Role);
             var principal = new ClaimsPrincipal(identity);

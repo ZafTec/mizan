@@ -7,7 +7,9 @@ namespace Mizan.Application.Commands;
 
 public record LogMcpUsageCommand : IRequest
 {
-    public Guid McpTokenId { get; init; }
+    public Guid? McpTokenId { get; init; }
+    public Guid? GrantId { get; init; }
+    public string Kind { get; init; } = "tool";
     public string ToolName { get; init; } = string.Empty;
     public string? Parameters { get; init; }
     public bool Success { get; init; }
@@ -33,19 +35,29 @@ public class LogMcpUsageCommandHandler : IRequestHandler<LogMcpUsageCommand>
             throw new UnauthorizedAccessException("User must be authenticated");
         }
 
-        var tokenExists = await _context.McpTokens
-            .AsNoTracking()
-            .AnyAsync(t => t.Id == request.McpTokenId && t.UserId == _currentUser.UserId.Value, cancellationToken);
-
-        if (!tokenExists)
+        if (request.GrantId is { } grantId)
         {
-            throw new UnauthorizedAccessException("MCP token not found");
+            var grantExists = await _context.OAuthGrants
+                .AsNoTracking()
+                .AnyAsync(g => g.Id == grantId && g.UserId == _currentUser.UserId.Value, cancellationToken);
+            if (!grantExists) throw new UnauthorizedAccessException("MCP connection not found");
         }
+        else
+        {
+            var tokenExists = await _context.McpTokens
+                .AsNoTracking()
+                .AnyAsync(t => t.Id == request.McpTokenId && t.UserId == _currentUser.UserId.Value, cancellationToken);
+            if (!tokenExists) throw new UnauthorizedAccessException("MCP token not found");
+        }
+
+        var kind = request.Kind is "tool" or "resource" or "prompt" or "task" ? request.Kind : "tool";
 
         var log = new McpUsageLog
         {
             Id = Guid.NewGuid(),
-            McpTokenId = request.McpTokenId,
+            McpTokenId = request.GrantId is null ? request.McpTokenId : null,
+            GrantId = request.GrantId,
+            Kind = kind,
             UserId = _currentUser.UserId.Value,
             ToolName = request.ToolName,
             Parameters = request.Parameters,

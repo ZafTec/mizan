@@ -64,8 +64,11 @@ public class GetRecipeByIdQueryHandler : IRequestHandler<GetRecipeByIdQuery, Rec
     private readonly ICurrentUserService _currentUser;
     private readonly HybridCache _cache;
 
-    public GetRecipeByIdQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
+    private readonly IHouseholdAccess _households;
+
+    public GetRecipeByIdQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache, IHouseholdAccess households)
     {
+        _households = households;
         _context = context;
         _currentUser = currentUser;
         _cache = cache;
@@ -79,7 +82,7 @@ public class GetRecipeByIdQueryHandler : IRequestHandler<GetRecipeByIdQuery, Rec
         var viewerId = _currentUser.UserId?.ToString() ?? "anon";
 
         return await _cache.GetOrCreateAsync(
-            $"recipe:{request.Id}:{viewerId}",
+            $"recipe:{request.Id}:{viewerId}:{GrantContext.KeyFor(_currentUser.Grant)}",
             request,
             LoadAsync,
             CacheOptions,
@@ -98,7 +101,8 @@ public class GetRecipeByIdQueryHandler : IRequestHandler<GetRecipeByIdQuery, Rec
             return null;
 
         // Check access: must be owner or recipe must be public
-        if (!recipe.IsPublic && (!_currentUser.UserId.HasValue || recipe.UserId != _currentUser.UserId))
+        if (!recipe.IsPublic && (!_currentUser.UserId.HasValue
+                || !await _households.CanAccessRecordAsync(recipe.UserId ?? Guid.Empty, recipe.HouseholdId, cancellationToken)))
             return null;
 
         // Summed from the ingredients, or a retained import value while the

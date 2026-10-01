@@ -22,17 +22,17 @@ public record HouseholdInvitationAdminDto(
 public class GetHouseholdInvitationsQueryHandler : IRequestHandler<GetHouseholdInvitationsQuery, List<HouseholdInvitationAdminDto>?>
 {
     private readonly IMizanDbContext _context;
+    private readonly IHouseholdAccess _households;
 
-    public GetHouseholdInvitationsQueryHandler(IMizanDbContext context)
+    public GetHouseholdInvitationsQueryHandler(IMizanDbContext context, IHouseholdAccess households)
     {
+        _households = households;
         _context = context;
     }
 
     public async Task<List<HouseholdInvitationAdminDto>?> Handle(GetHouseholdInvitationsQuery request, CancellationToken cancellationToken)
     {
-        var isMember = await _context.HouseholdMembers
-            .AsNoTracking()
-            .AnyAsync(m => m.HouseholdId == request.HouseholdId && m.UserId == request.RequestingUserId, cancellationToken);
+        var isMember = await _households.CanAccessAsync(request.HouseholdId, cancellationToken);
         if (!isMember)
         {
             return null;

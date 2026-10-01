@@ -8,6 +8,9 @@ public record GetMcpUsageAnalyticsQuery : IRequest<McpUsageAnalyticsResult>
 {
     public DateTime? StartDate { get; init; }
     public DateTime? EndDate { get; init; }
+
+    /// <summary>Only this connection, when set.</summary>
+    public Guid? GrantId { get; init; }
 }
 
 public record McpUsageAnalyticsResult
@@ -15,6 +18,7 @@ public record McpUsageAnalyticsResult
     public UsageOverview Overview { get; init; } = new();
     public List<ToolUsageDto> ToolUsage { get; init; } = new();
     public List<TokenUsageDto> TokenUsage { get; init; } = new();
+    public List<ClientUsageDto> ClientUsage { get; init; } = new();
     public List<DailyUsageDto> DailyUsage { get; init; } = new();
 }
 
@@ -26,6 +30,16 @@ public record UsageOverview
     public double SuccessRate { get; init; }
     public int AverageExecutionTimeMs { get; init; }
     public int UniqueTokensUsed { get; init; }
+    public int UniqueClientsUsed { get; init; }
+}
+
+public record ClientUsageDto
+{
+    public Guid GrantId { get; init; }
+    public string ClientName { get; init; } = string.Empty;
+    public int CallCount { get; init; }
+    public int FailureCount { get; init; }
+    public DateTime LastUsed { get; init; }
 }
 
 public record ToolUsageDto
@@ -76,7 +90,9 @@ public class GetMcpUsageAnalyticsQueryHandler : IRequestHandler<GetMcpUsageAnaly
 
         var logs = await _context.McpUsageLogs
             .Include(l => l.McpToken)
-            .Where(l => l.UserId == _currentUser.UserId && l.Timestamp >= startDate && l.Timestamp <= endDate)
+            .Include(l => l.Grant).ThenInclude(g => g!.Client)
+            .Where(l => l.UserId == _currentUser.UserId && l.Timestamp >= startDate && l.Timestamp <= endDate
+                && (request.GrantId == null || l.GrantId == request.GrantId))
             .ToListAsync(cancellationToken);
 
         // Overview
@@ -85,7 +101,8 @@ public class GetMcpUsageAnalyticsQueryHandler : IRequestHandler<GetMcpUsageAnaly
         var failedCalls = totalCalls - successfulCalls;
         var successRate = totalCalls > 0 ? (double)successfulCalls / totalCalls * 100 : 0;
         var avgExecutionTime = logs.Any() ? (int)logs.Average(l => l.ExecutionTimeMs) : 0;
-        var uniqueTokens = logs.Select(l => l.McpTokenId).Distinct().Count();
+        var uniqueTokens = logs.Where(l => l.McpTokenId != null).Select(l => l.McpTokenId).Distinct().Count();
+        var uniqueClients = logs.Where(l => l.GrantId != null).Select(l => l.GrantId).Distinct().Count();
 
         // Tool Usage
         var toolUsage = logs
@@ -103,15 +120,31 @@ public class GetMcpUsageAnalyticsQueryHandler : IRequestHandler<GetMcpUsageAnaly
 
         // Token Usage
         var tokenUsage = logs
-            .GroupBy(l => new { l.McpTokenId, l.McpToken.Name })
+            .Where(l => l.McpToken != null)
+            .GroupBy(l => new { TokenId = l.McpTokenId!.Value, l.McpToken!.Name })
             .Select(g => new TokenUsageDto
             {
-                TokenId = g.Key.McpTokenId,
+                TokenId = g.Key.TokenId,
                 TokenName = g.Key.Name,
                 CallCount = g.Count(),
                 LastUsed = g.Max(l => l.Timestamp)
             })
             .OrderByDescending(t => t.CallCount)
+            .ToList();
+
+        // Client usage: one row per connection
+        var clientUsage = logs
+            .Where(l => l.Grant != null)
+            .GroupBy(l => new { GrantId = l.GrantId!.Value, l.Grant!.Client.Name })
+            .Select(g => new ClientUsageDto
+            {
+                GrantId = g.Key.GrantId,
+                ClientName = g.Key.Name,
+                CallCount = g.Count(),
+                FailureCount = g.Count(l => !l.Success),
+                LastUsed = g.Max(l => l.Timestamp)
+            })
+            .OrderByDescending(c => c.CallCount)
             .ToList();
 
         // Daily Usage
@@ -136,10 +169,12 @@ public class GetMcpUsageAnalyticsQueryHandler : IRequestHandler<GetMcpUsageAnaly
                 FailedCalls = failedCalls,
                 SuccessRate = successRate,
                 AverageExecutionTimeMs = avgExecutionTime,
-                UniqueTokensUsed = uniqueTokens
+                UniqueTokensUsed = uniqueTokens,
+                UniqueClientsUsed = uniqueClients
             },
             ToolUsage = toolUsage,
             TokenUsage = tokenUsage,
+            ClientUsage = clientUsage,
             DailyUsage = dailyUsage
         };
     }

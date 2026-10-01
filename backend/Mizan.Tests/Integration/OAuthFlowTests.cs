@@ -524,7 +524,9 @@ public class OAuthFlowTests
         var tokens = await ExchangeAsync("test-first-party", code, pkce.Verifier, redirect: appRedirect);
 
         tokens.GetProperty("scope").GetString().Should().Be("full");
-        (await IntrospectAsync(tokens.GetProperty("access_token").GetString()!, audience: "api")).GetProperty("active").GetBoolean().Should().BeTrue();
+        var firstParty = await IntrospectAsync(tokens.GetProperty("access_token").GetString()!, audience: "api");
+        firstParty.GetProperty("active").GetBoolean().Should().BeTrue();
+        firstParty.GetProperty("householdMode").GetString().Should().Be("all");
 
         // A dynamically registered client may not ask for the API audience.
         var clientId = await RegisterAsync();

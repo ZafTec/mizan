@@ -186,7 +186,18 @@ public record ProfileExportFavoriteRecipeDto(
 
 public record ProfileExportMcpDto(
     List<ProfileExportMcpTokenDto> Tokens,
+    List<ProfileExportMcpConnectionDto> Connections,
     List<ProfileExportMcpUsageLogDto> UsageLogs
+);
+
+public record ProfileExportMcpConnectionDto(
+    Guid Id,
+    string ClientName,
+    List<string> Scopes,
+    string HouseholdMode,
+    DateTime CreatedAt,
+    DateTime? LastUsedAt,
+    DateTime? RevokedAt
 );
 
 public record ProfileExportMcpTokenDto(
@@ -200,7 +211,9 @@ public record ProfileExportMcpTokenDto(
 
 public record ProfileExportMcpUsageLogDto(
     Guid Id,
-    Guid McpTokenId,
+    Guid? McpTokenId,
+    Guid? GrantId,
+    string Kind,
     string ToolName,
     bool Success,
     string? ErrorMessage,
@@ -401,6 +414,21 @@ public class GetProfileExportQueryHandler : IRequestHandler<GetProfileExportQuer
             ))
             .ToListAsync(cancellationToken);
 
+        var mcpConnections = await _context.OAuthGrants
+            .AsNoTracking()
+            .Where(grant => grant.UserId == request.UserId)
+            .OrderByDescending(grant => grant.CreatedAt)
+            .Select(grant => new ProfileExportMcpConnectionDto(
+                grant.Id,
+                grant.Client.Name,
+                grant.Scopes,
+                grant.HouseholdMode,
+                grant.CreatedAt,
+                grant.LastUsedAt,
+                grant.RevokedAt
+            ))
+            .ToListAsync(cancellationToken);
+
         var mcpUsageLogs = await _context.McpUsageLogs
             .AsNoTracking()
             .Where(log => log.UserId == request.UserId)
@@ -408,6 +436,8 @@ public class GetProfileExportQueryHandler : IRequestHandler<GetProfileExportQuer
             .Select(log => new ProfileExportMcpUsageLogDto(
                 log.Id,
                 log.McpTokenId,
+                log.GrantId,
+                log.Kind,
                 log.ToolName,
                 log.Success,
                 log.ErrorMessage,
@@ -478,7 +508,7 @@ public class GetProfileExportQueryHandler : IRequestHandler<GetProfileExportQuer
                 achievements,
                 recipes,
                 favoriteRecipes,
-                new ProfileExportMcpDto(mcpTokens, mcpUsageLogs)
+                new ProfileExportMcpDto(mcpTokens, mcpConnections, mcpUsageLogs)
             )
         );
     }

@@ -265,6 +265,13 @@ public class DecideAuthorizationCommandHandler : IRequestHandler<DecideAuthoriza
             : new List<Guid>();
         if (mode == OAuthGrant.HouseholdsSelected && householdIds.Count == 0) mode = OAuthGrant.HouseholdsNone;
 
+        // Our own app is the user's app, not a third party, so it sees every household they belong to.
+        if (request.Client.IsFirstParty)
+        {
+            mode = OAuthGrant.HouseholdsAll;
+            householdIds = new List<Guid>();
+        }
+
         var grant = await _context.OAuthGrants
             .FirstOrDefaultAsync(g => g.UserId == userId && g.ClientId == request.ClientId && g.RevokedAt == null, cancellationToken);
         if (grant is null)

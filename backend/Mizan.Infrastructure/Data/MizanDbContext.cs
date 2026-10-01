@@ -1108,7 +1108,9 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.ToTable("mcp_usage_logs");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
-            entity.Property(e => e.McpTokenId).HasColumnName("mcp_token_id").IsRequired();
+            entity.Property(e => e.McpTokenId).HasColumnName("mcp_token_id");
+            entity.Property(e => e.GrantId).HasColumnName("grant_id");
+            entity.Property(e => e.Kind).HasColumnName("kind").HasMaxLength(10).HasDefaultValue("tool").IsRequired();
             entity.Property(e => e.UserId).HasColumnName("user_id").IsRequired();
             entity.Property(e => e.ToolName).HasColumnName("tool_name").HasMaxLength(100).IsRequired();
             entity.Property(e => e.Parameters).HasColumnName("parameters").HasColumnType("jsonb");
@@ -1118,8 +1120,10 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.Timestamp).HasColumnName("timestamp").HasDefaultValueSql("NOW()");
             entity.HasIndex(e => new { e.UserId, e.Timestamp });
             entity.HasIndex(e => e.McpTokenId);
+            entity.HasIndex(e => e.GrantId);
             entity.HasIndex(e => e.ToolName);
             entity.HasOne(e => e.McpToken).WithMany().HasForeignKey(e => e.McpTokenId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Grant).WithMany().HasForeignKey(e => e.GrantId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
