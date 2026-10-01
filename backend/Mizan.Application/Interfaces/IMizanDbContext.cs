@@ -65,6 +65,7 @@ public interface IMizanDbContext
     DbSet<OAuthGrant> OAuthGrants { get; }
     DbSet<OAuthAuthorizationRequest> OAuthAuthorizationRequests { get; }
     DbSet<OAuthToken> OAuthTokens { get; }
+    DbSet<McpTask> McpTasks { get; }
 
     // Billing
     DbSet<Subscription> Subscriptions { get; }

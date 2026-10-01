@@ -23,12 +23,26 @@ public static class McpResourceScopes
         ["shopping-lists"] = McpScopes.PlanningRead,
     };
 
+    private static readonly Dictionary<string, string> AppScopes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["nutrition-day.html"] = McpScopes.NutritionRead,
+        ["food-photo.html"] = McpScopes.AiUse,
+        ["body-trend.html"] = McpScopes.BodyRead,
+    };
+
     /// <summary>Null means the resource is public (a skill). A resource nobody mapped is refused.</summary>
     public static bool TryGet(string uri, out string? scope)
     {
         scope = null;
         if (!Uri.TryCreate(uri, UriKind.Absolute, out var parsed)) return false;
         if (parsed.Scheme == "skill") return true;
+        if (parsed.Scheme == "ui")
+        {
+            // An app page holds no data. It reads through tools, so it needs the scope its tool needs.
+            if (!AppScopes.TryGetValue(parsed.AbsolutePath.Trim('/'), out var appScope)) return false;
+            scope = appScope;
+            return true;
+        }
         if (parsed.Scheme != "mizan") return false;
         if (!ByHost.TryGetValue(parsed.Host, out var found)) return false;
         scope = found;
@@ -40,6 +54,7 @@ public static class McpResourceScopes
     {
         if (!Uri.TryCreate(uri, UriKind.Absolute, out var parsed)) return "unknown";
         if (parsed.Scheme == "skill") return "skill://" + parsed.Host;
+        if (parsed.Scheme == "ui") return "ui://mizan/" + parsed.AbsolutePath.Trim('/');
 
         var last = parsed.AbsolutePath.Trim('/');
         return parsed.Host.ToLowerInvariant() switch

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.HttpOverrides;
 using Mizan.Contracts.Mcp;
+using Mizan.Mcp.Server.Apps;
 using Mizan.Mcp.Server.Authentication;
 using Mizan.Mcp.Server.Authorization;
 using Mizan.Mcp.Server.Prompts;
@@ -10,6 +11,8 @@ using Mizan.Mcp.Server.Services;
 using Mizan.Mcp.Server.Tools;
 using Mizan.Mcp.Server.Logging;
 using ModelContextProtocol;
+using ModelContextProtocol.Extensions.Apps;
+using ModelContextProtocol.Extensions.Tasks;
 using ModelContextProtocol.Server;
 using Serilog;
 using Serilog.Events;
@@ -143,6 +146,14 @@ if (!string.IsNullOrWhiteSpace(lokiEndpoint))
     });
 }
 
+// The container does not exist while the server is configured, and a task finishes after
+// its request is over, so work that outlives a request reaches services through this.
+IServiceProvider? rootServices = null;
+
+// Only these tools can take a task. A task is for work that may outlast a chat turn,
+// which here means the ones that call an AI provider or build a whole export.
+var taskTools = new HashSet<string> { "ask_ai", "suggest_meals", "analyze_food_image", "export_profile" };
+
 // MCP Server
 builder.Services.AddMcpServer(options =>
 {
@@ -205,11 +216,23 @@ builder.Services.AddMcpServer(options =>
 .WithTools<TrainerTools>()
 .WithTools<AiTools>()
 .WithTools<UploadTools>()
+.WithMcpApps()
 .WithResources<MizanResources>()
+.WithResources(MizanApps.Resources())
 .WithResources(McpSkillCatalog.Files.Select(file => McpServerResource.Create(
     () => file.Text,
     new McpServerResourceCreateOptions { UriTemplate = file.Uri, Name = file.Uri["skill://".Length..], MimeType = file.MimeType })))
 .WithPrompts<MizanPrompts>()
+.WithTasks(
+    new ApiMcpTaskStore(() => rootServices!.GetRequiredService<IServiceScopeFactory>()),
+    options => options.ExecutionModeSelector = context =>
+    {
+        // A call the grant does not cover, or one over the monthly cap, is refused on the spot
+        // instead of becoming a task that can only fail.
+        var name = context.Params?.Name ?? string.Empty;
+        var allowed = McpToolScopes.TryGet(name, out var scope) && McpGrantAccess.Allowed(null, scope) && McpGrantAccess.LimitReached(null) is null;
+        return allowed && taskTools.Contains(name) ? McpTaskExecutionMode.Optional : McpTaskExecutionMode.Synchronous;
+    })
 .WithRequestFilters(filters =>
 {
     // A connected app sees only the tools its grant covers, so a read-only
@@ -274,8 +297,9 @@ builder.Services.AddMcpServer(options =>
             throw new McpProtocolException(McpToolText.NotAllowed(name, scope), McpErrorCode.InvalidParams);
         }
 
-        // Skills are public instructions, so reading one is free. Everything else shares the monthly cap with tools.
-        if (uri.StartsWith("skill://", StringComparison.Ordinal)) return await next(context, cancellationToken);
+        // Skills are public instructions and app pages hold no data, so reading one is free. Everything else shares the monthly cap with tools.
+        if (uri.StartsWith("skill://", StringComparison.Ordinal) || uri.StartsWith("ui://", StringComparison.Ordinal))
+            return await next(context, cancellationToken);
         if (McpGrantAccess.LimitReached(http) is { } limit) throw new McpProtocolException(limit, McpErrorCode.InvalidRequest);
 
         var sw = Stopwatch.StartNew();
@@ -326,7 +350,8 @@ builder.Services.AddMcpServer(options =>
 
         Log.Information("[MCP Tool] Calling tool: {ToolName}", toolName);
 
-        if (httpContext?.User.Identity?.IsAuthenticated != true)
+        var caller = McpCallIdentity.Of(httpContext);
+        if (caller?.Identity?.IsAuthenticated != true)
         {
             Log.Warning("[MCP Tool] Tool call rejected - user not authenticated. Tool: {ToolName}", toolName);
             return new CallToolResult
@@ -336,9 +361,11 @@ builder.Services.AddMcpServer(options =>
             };
         }
 
-        var userId = Guid.TryParse(httpContext.User.FindFirst("sub")?.Value, out var uid) ? uid : Guid.Empty;
-        var grantId = Guid.TryParse(httpContext.User.FindFirst(GrantClaims.GrantId)?.Value, out var gid) ? gid : Guid.Empty;
-        var backend = httpContext.RequestServices.GetService<IBackendApiClient>();
+        var userId = Guid.TryParse(caller.FindFirst("sub")?.Value, out var uid) ? uid : Guid.Empty;
+        var grantId = Guid.TryParse(caller.FindFirst(GrantClaims.GrantId)?.Value, out var gid) ? gid : Guid.Empty;
+        // A task's tool runs after the request is over, so this does not come from the request's own services.
+        using var backendScope = rootServices?.CreateScope();
+        var backend = backendScope?.ServiceProvider.GetService<IBackendApiClient>();
 
         // Fail closed: a tool with no scope on record is refused, and so is one the grant does not cover.
         if (!McpToolScopes.TryGet(toolName, out var requiredScope)
@@ -357,8 +384,8 @@ builder.Services.AddMcpServer(options =>
             };
         }
 
-        if (int.TryParse(httpContext.User.FindFirst("mcp_usage_limit")?.Value, out var monthlyLimit) &&
-            int.TryParse(httpContext.User.FindFirst("mcp_usage_used")?.Value, out var usedThisMonth) &&
+        if (int.TryParse(caller.FindFirst("mcp_usage_limit")?.Value, out var monthlyLimit) &&
+            int.TryParse(caller.FindFirst("mcp_usage_used")?.Value, out var usedThisMonth) &&
             usedThisMonth >= monthlyLimit)
         {
             return new CallToolResult
@@ -429,6 +456,7 @@ builder.Services.AddMcpServer(options =>
 });
 
 var app = builder.Build();
+rootServices = app.Services;
 
 var showMcpLogs = app.Configuration.GetValue<bool>("SHOW_MCP_LOGS", false);
 Log.Information("Mizan MCP Server v2.0.0 starting on {Urls}", string.Join(", ", app.Urls));
@@ -447,6 +475,14 @@ app.UseForwardedHeaders(forwarded);
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// A task keeps running after its request ends. Naming the caller here lets that
+// background work act as them, and only them.
+app.Use(async (context, next) =>
+{
+    McpCallIdentity.Current = context.User.Identity?.IsAuthenticated == true ? context.User : null;
+    await next();
+});
 
 app.MapMcp("/mcp").RequireAuthorization();
 

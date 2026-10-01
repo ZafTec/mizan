@@ -90,6 +90,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
     public DbSet<OAuthGrant> OAuthGrants => Set<OAuthGrant>();
     public DbSet<OAuthAuthorizationRequest> OAuthAuthorizationRequests => Set<OAuthAuthorizationRequest>();
     public DbSet<OAuthToken> OAuthTokens => Set<OAuthToken>();
+    public DbSet<McpTask> McpTasks => Set<McpTask>();
 
     // Billing
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
@@ -1188,6 +1189,25 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.HasIndex(e => e.FamilyId);
             entity.HasIndex(e => e.GrantId);
             entity.HasOne(e => e.Grant).WithMany().HasForeignKey(e => e.GrantId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<McpTask>(entity =>
+        {
+            entity.ToTable("mcp_tasks");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasMaxLength(64);
+            entity.Property(e => e.UserId).HasColumnName("user_id").IsRequired();
+            entity.Property(e => e.GrantId).HasColumnName("grant_id");
+            entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(16).IsRequired();
+            entity.Property(e => e.StatusMessage).HasColumnName("status_message").HasMaxLength(500);
+            entity.Property(e => e.ResultJson).HasColumnName("result_json").HasColumnType("jsonb");
+            entity.Property(e => e.ErrorJson).HasColumnName("error_json").HasColumnType("jsonb");
+            entity.Property(e => e.TtlSeconds).HasColumnName("ttl_seconds").IsRequired();
+            entity.Property(e => e.PollIntervalMs).HasColumnName("poll_interval_ms").IsRequired();
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.UserId, e.CreatedAt });
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // Subscription configuration (backend-owned billing state)

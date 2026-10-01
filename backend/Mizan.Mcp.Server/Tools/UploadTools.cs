@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using Mizan.Mcp.Server.Services;
+using ModelContextProtocol.Extensions.Apps;
 using ModelContextProtocol.Server;
 
 namespace Mizan.Mcp.Server.Tools;
@@ -51,6 +52,7 @@ public sealed class UploadTools
     }
 
     [McpServerTool(Name = "analyze_food_image")]
+    [McpAppUi(ResourceUri = Mizan.Mcp.Server.Apps.MizanApps.FoodPhoto)]
     [Description(
         "Estimates what is in a photo of a meal and its macros. Pro only, and "
         + "it costs against your assistant allowance. Returns an estimate to "
