@@ -1248,6 +1248,45 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/admin/users/{userId}/impersonate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AuthUserDto"];
+                        "application/json": components["schemas"]["AuthUserDto"];
+                        "text/json": components["schemas"]["AuthUserDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/users/{userId}/sessions": {
         parameters: {
             query?: never;
@@ -2083,6 +2122,39 @@ export interface paths {
         trace?: never;
     };
     "/api/Auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Auth/impersonation/stop": {
         parameters: {
             query?: never;
             header?: never;
@@ -5027,6 +5099,49 @@ export interface paths {
                         /** Format: binary */
                         image?: string;
                     };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FoodAnalysisResult"];
+                        "application/json": components["schemas"]["FoodAnalysisResult"];
+                        "text/json": components["schemas"]["FoodAnalysisResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Nutrition/ai/analyze-text": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AnalyzeFoodTextRequest"];
+                    "text/json": components["schemas"]["AnalyzeFoodTextRequest"];
+                    "application/*+json": components["schemas"]["AnalyzeFoodTextRequest"];
                 };
             };
             responses: {
@@ -8675,6 +8790,9 @@ export interface components {
             /** Format: int32 */
             tokens: number;
         };
+        AnalyzeFoodTextRequest: {
+            description?: string | null;
+        };
         AskClientRequest: {
             /** Format: uuid */
             threadId?: string | null;
@@ -8722,6 +8840,7 @@ export interface components {
             reduceAnimations: boolean;
             hasPassword: boolean;
             timeZoneId?: string | null;
+            impersonation?: components["schemas"]["ImpersonationDto"];
         };
         AuthorizationRequestView: {
             clientName: string;
@@ -9631,6 +9750,13 @@ export interface components {
             /** Format: date-time */
             joinedAt: string;
         };
+        ImpersonationDto: {
+            /** Format: uuid */
+            impersonatorId: string;
+            impersonatorName?: string | null;
+            /** Format: date-time */
+            expiresAt: string;
+        };
         ImportBillingPlansResult: {
             /** Format: int32 */
             imported: number;
@@ -10199,6 +10325,8 @@ export interface components {
             isFavorited: boolean;
             /** Format: date-time */
             lastUsedAt?: string | null;
+            /** Format: int32 */
+            timesLogged: number;
             nutrition?: components["schemas"]["RecipeNutritionDto"];
             /** Format: date-time */
             createdAt: string;

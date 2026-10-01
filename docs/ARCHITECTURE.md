@@ -46,6 +46,12 @@ The API is also an OAuth 2.1 authorization server (`/api/oauth/*`, [MCP](MCP.md#
 
 Audit entries for commands that carry passwords, codes, or tokens are redacted before they are stored (`IRedactedAudit`).
 
+### Viewing the site as a user
+
+An administrator can open a one-hour session as another user (`POST /api/admin/users/{id}/impersonate`, from the user's admin page). It is refused for another administrator, for oneself, for an account that cannot sign in, and from inside another view. The new session is an ordinary `user_sessions` row with `impersonator_id` set and a fixed one-hour life that never slides. The administrator's own session cookie is kept aside in `mizan_admin_session`, and `POST /api/Auth/impersonation/stop` revokes the view and puts it back, but only if it is still valid and belongs to the administrator who opened the view. Otherwise the person is signed out.
+
+The user the server sees is the target, with the target's role, so the admin area is closed while viewing. `ImpersonationGuardMiddleware` also refuses changes that would last or take the account over: credentials and sessions (`/api/Auth`), billing (`/api/Subscriptions`), Telegram links, connected apps (`/api/oauth`, `/api/McpConnections`) and push devices. Every audited action in the view records the administrator in `audit_logs.impersonator_id`, and starting a view is itself audited. `GET /api/Auth/me` carries `impersonation`, which the app uses to show a banner on every screen with the time left and one way back.
+
 ## Data and migrations
 
 EF Core owns identity and application tables in one model. Keep `InitialCreate` and every subsequent additive migration; later changes get a new migration. Check model/migration agreement after entity or DbContext edits using the command in [README](../README.md#maintain-the-database).
@@ -92,7 +98,7 @@ The Android app signs in as the first-party OAuth client `mizan-android` (Author
 - **Retrying writes**: send an `Idempotency-Key` header (up to 128 printable characters) on a write. A retry with the same key and request gets the first answer back with `Idempotent-Replayed: true`; the same key with a different request is `422 idempotency_key_reused`; a duplicate arriving while the first runs is `409 idempotency_in_progress`. Server errors are not remembered, and keys expire after 24 hours.
 - **Staying current**: `GET /api/Sync/changes?since=` returns diary entries, workouts, body measurements, and notifications changed since a cursor, plus tombstones for deleted diary entries, workouts, and measurements. Omit `since` the first time, send back `nextSince`, and repeat while `hasMore`. Items are upserts, so redelivery is harmless. An app away longer than 90 days gets `resyncRequired` and starts again. Recipes, meal plans, and shopping lists are not in the feed yet.
 - **Push**: `POST /api/Devices` registers an FCM token (an upsert; a token moves to whoever registers it last) and `DELETE /api/Devices/{id}` removes it on sign-out. Creating a notification queues a `push` outbox job when Firebase is configured (`Push__FcmProjectId`, `Push__FcmServiceAccountJson`); a device the provider no longer knows is forgotten. Unconfigured, nothing is queued.
-- **3D models**: administrators upload `.glb` files to `POST /api/Uploads/model` (glTF 2 binary, checked by its bytes, up to `Storage__MaxModelBytes`, default 30 MB) into the `models/` folder, then attach one with `PUT /api/Exercises/{id}/model`. Exercises expose `modelUrl`.
+- **3D models**: administrators upload `.glb` files to `POST /api/Uploads/model` (glTF 2 binary, checked by its bytes, up to `Storage__MaxModelBytes`, default 30 MB) into the `models/` folder, then attach one with `PUT /api/Exercises/{id}/model`. Exercises expose `modelUrl`. In the app, an administrator does both from **Admin → Exercises**: the edit form (and **New exercise**, which creates a system exercise in one step) uploads the picture and the `.glb` and attaches them on save, so assets made later can be added to any exercise without a deploy.
 
 ## Errors
 

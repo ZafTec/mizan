@@ -363,7 +363,9 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.LastSeenAt).HasColumnName("last_seen_at").HasDefaultValueSql("NOW()");
             entity.Property(e => e.IpAddress).HasColumnName("ip_address").HasMaxLength(64);
             entity.Property(e => e.UserAgent).HasColumnName("user_agent").HasMaxLength(512);
+            entity.Property(e => e.ImpersonatorId).HasColumnName("impersonator_id");
             entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity.HasIndex(e => e.ImpersonatorId);
             entity.HasIndex(e => e.UserId);
             entity.HasOne(e => e.User).WithMany(u => u.Sessions)
                 .HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
@@ -1159,6 +1161,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.EntityId).HasColumnName("entity_id").HasMaxLength(100).IsRequired();
             entity.Property(e => e.Details).HasColumnName("details");
             entity.Property(e => e.IpAddress).HasColumnName("ip_address").HasMaxLength(45);
+            entity.Property(e => e.ImpersonatorId).HasColumnName("impersonator_id");
             entity.Property(e => e.Timestamp).HasColumnName("timestamp").HasDefaultValueSql("NOW()");
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.SetNull);
         });

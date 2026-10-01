@@ -286,6 +286,39 @@ public class NutritionAiService : INutritionAiService
             response.Content, "food analysis", "The assistant could not read that photo. Try another.");
     }
 
+    public async Task<FoodAnalysisResult> AnalyzeFoodTextAsync(
+        Guid userId,
+        string description,
+        CancellationToken cancellationToken = default)
+    {
+        var prompt = await _prompts.ResolveAsync(AiPromptKeys.FoodAnalysis, cancellationToken);
+
+        // The photo prompt does the work; this only says the meal arrives as words. Quantities the person gave are
+        // kept, and a food with no quantity gets an ordinary portion rather than a guess dressed up as fact.
+        const string fromWords =
+            "There is no photo. The user describes the meal in words. Split it into separate foods, use any quantity "
+            + "they gave, and use an ordinary portion for a food they gave none for. Say in the note which portions you assumed.";
+
+        var request = new AiCompletionRequest
+        {
+            Messages =
+            [
+                new AiMessage(AiRole.System, prompt.SystemPrompt),
+                new AiMessage(AiRole.System, fromWords),
+                new AiMessage(AiRole.User, description),
+            ],
+            ResponseSchema = new AiJsonSchema("food_analysis_v1", AnalysisSchemaV1),
+            Temperature = 0.2,
+        };
+
+        var response = await CallAsync(
+            userId, householdId: null, AiFeatures.FoodAnalysis, request,
+            EstimateTokens(description.Length) + 600, prompt.VersionId, cancellationToken);
+
+        return Parse<FoodAnalysisResult>(
+            response.Content, "food analysis", "The assistant could not read that description. Try rewording it.");
+    }
+
     /// <summary>
     /// A response that does not match its declared schema is a failed call.
     /// There is no regex fallback: scraping a shape out of prose is how a

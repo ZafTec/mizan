@@ -339,6 +339,30 @@ public sealed class UpdateHandler
             return;
         }
 
+        // "Split" asks how many people share the meal, then logs one share.
+        if (data.StartsWith("split:", StringComparison.Ordinal))
+        {
+            if (!TryParseTotals(data["split:".Length..], out var whole))
+            {
+                await _telegram.SendMessageAsync(
+                    chatId, "That card is too old to use. Send the photo again.", ct: ct);
+                return;
+            }
+
+            await _telegram.SendMessageAsync(
+                chatId,
+                "<b>Split this meal</b>\nHow many people are sharing it? I will log your share only.",
+                SplitKeyboard(data["split:".Length..]),
+                ct);
+            return;
+        }
+
+        if (data.StartsWith("share:", StringComparison.Ordinal))
+        {
+            await LogShareAsync(chatId, user, data["share:".Length..], ct);
+            return;
+        }
+
         if (!data.StartsWith("log:", StringComparison.Ordinal))
         {
             return;
@@ -368,17 +392,19 @@ public sealed class UpdateHandler
     /// Confirm / Discard. The totals ride in the callback data, rounded to
     /// whole numbers so they fit inside Telegram's 64-byte limit.
     /// </summary>
-    private static object ConfirmKeyboard(FoodAnalysis analysis)
+    internal static object ConfirmKeyboard(FoodAnalysis analysis)
     {
-        var name = string.Join(", ", analysis.Foods.Select(f => f.Name)).Replace('|', '/');
-        if (name.Length > 24) name = name[..24];
-
         var protein = analysis.Foods.Sum(f => f.Protein);
         var carbs = analysis.Foods.Sum(f => f.Carbs);
         var fat = analysis.Foods.Sum(f => f.Fat);
 
-        var payload =
-            $"log:{Math.Round(analysis.TotalCalories)}|{Math.Round(protein)}|{Math.Round(carbs)}|{Math.Round(fat)}|{name}";
+        var numbers = $"{Math.Round(analysis.TotalCalories)}|{Math.Round(protein)}|{Math.Round(carbs)}|{Math.Round(fat)}|";
+
+        // The longest button is "share:5|" plus this, and Telegram refuses the whole message over 64 bytes. The
+        // name is cut by bytes, not characters, so a name in another script cannot push a button over the limit.
+        var name = TruncateUtf8(string.Join(", ", analysis.Foods.Select(f => f.Name)).Replace('|', '/'), 64 - "share:5|".Length - numbers.Length);
+
+        var payload = $"log:{numbers}{name}";
 
         return new
         {
@@ -387,13 +413,90 @@ public sealed class UpdateHandler
                 new object[]
                 {
                     new { text = "Log it", callback_data = payload },
+                    new { text = "Split", callback_data = "split:" + payload["log:".Length..] },
                     new { text = "Discard", callback_data = "discard" },
                 },
             },
         };
     }
 
-    private static bool TryParseLog(string data, out LoggedMeal request)
+    /// <summary>People to choose from when a meal is shared. Larger groups can log it by hand on the website.</summary>
+    internal static readonly int[] SplitChoices = [2, 3, 4, 5];
+
+    /// <summary>
+    /// The count picker. Each button carries the whole meal's totals and the number of people, so one tap logs
+    /// one share and the bot needs no state. "Log it all" is there because a tap on Split can be a mistake.
+    /// </summary>
+    internal static object SplitKeyboard(string totals) => new
+    {
+        inline_keyboard = new[]
+        {
+            SplitChoices.Select(n => (object)new { text = n.ToString(CultureInfo.InvariantCulture), callback_data = $"share:{n}|{totals}" }).ToArray(),
+            new object[]
+            {
+                new { text = "Log it all", callback_data = "log:" + totals },
+                new { text = "Discard", callback_data = "discard" },
+            },
+        },
+    };
+
+    private async Task LogShareAsync(long chatId, ResolvedUser user, string data, CancellationToken ct)
+    {
+        var bar = data.IndexOf('|');
+        if (bar < 1
+            || !int.TryParse(data[..bar], NumberStyles.None, CultureInfo.InvariantCulture, out var people)
+            || !SplitChoices.Contains(people)
+            || !TryParseTotals(data[(bar + 1)..], out var whole))
+        {
+            await _telegram.SendMessageAsync(
+                chatId, "That card is too old to use. Send the photo again.", ct: ct);
+            return;
+        }
+
+        var share = ShareOf(whole, people);
+        var result = await _api.SendForResultAsync<object>(
+            user.UserId, HttpMethod.Post, "api/Meals", share, ct);
+
+        await _telegram.SendMessageAsync(
+            chatId,
+            result.Ok
+                ? $"Logged your 1/{people} share of {Escape(whole.Name)}: {share.Calories:0} kcal, "
+                    + $"P {share.ProteinGrams:0.#}g · C {share.CarbsGrams:0.#}g · F {share.FatGrams:0.#}g."
+                : Escape(ExplainFailure(result)),
+            ct: ct);
+    }
+
+    /// <summary>One person's part of a meal that several people ate together.</summary>
+    internal static LoggedMeal ShareOf(LoggedMeal whole, int people) => new(
+        $"{whole.Name} (1/{people} share)",
+        Math.Round(whole.Calories / people, 0),
+        Math.Round(whole.ProteinGrams / people, 1),
+        Math.Round(whole.CarbsGrams / people, 1),
+        Math.Round(whole.FatGrams / people, 1));
+
+    /// <summary>The longest prefix of the text that fits in the given number of UTF-8 bytes, never cutting a character.</summary>
+    internal static string TruncateUtf8(string value, int maxBytes)
+    {
+        if (maxBytes <= 0) return string.Empty;
+        if (Encoding.UTF8.GetByteCount(value) <= maxBytes) return value;
+
+        var builder = new StringBuilder();
+        var used = 0;
+        foreach (var rune in value.EnumerateRunes())
+        {
+            var size = rune.Utf8SequenceLength;
+            if (used + size > maxBytes) break;
+            builder.Append(rune.ToString());
+            used += size;
+        }
+
+        return builder.ToString();
+    }
+
+    private static bool TryParseTotals(string data, out LoggedMeal request) =>
+        TryParseLog("log:" + data, out request);
+
+    internal static bool TryParseLog(string data, out LoggedMeal request)
     {
         request = default!;
 
@@ -441,7 +544,7 @@ public sealed class UpdateHandler
         (name is { Length: > 0 } ? $"Connected. Hello {Escape(name)}.\n\n" : "Connected.\n\n") + HelpText();
 
     private static string HelpText() =>
-        "Send me a photo of a meal and I will estimate it - you confirm before anything is logged.\n"
+        "Send me a photo of a meal and I will estimate it. You choose to log it, split it with the people you ate with, or discard it.\n"
         + "Ask me anything the way you would on the website; it is the same conversation.\n\n"
         + "<b>/today</b> - totals against your targets\n"
         + "<b>/weight 82.4</b> - log a weigh-in\n"
@@ -520,7 +623,7 @@ public sealed class UpdateHandler
 
     private sealed record ChatMessage(Guid Id, bool FromUser, string Content, DateTime CreatedAt);
 
-    private sealed record FoodAnalysis
+    internal sealed record FoodAnalysis
     {
         public List<RecognizedFood> Foods { get; init; } = [];
         public decimal TotalCalories { get; init; }
@@ -528,7 +631,7 @@ public sealed class UpdateHandler
         public string? Note { get; init; }
     }
 
-    private sealed record RecognizedFood
+    internal sealed record RecognizedFood
     {
         public string Name { get; init; } = string.Empty;
         public decimal PortionGrams { get; init; }
@@ -538,7 +641,7 @@ public sealed class UpdateHandler
         public decimal Fat { get; init; }
     }
 
-    private sealed record LoggedMeal(
+    internal sealed record LoggedMeal(
         string Name, decimal Calories, decimal ProteinGrams, decimal CarbsGrams, decimal FatGrams)
     {
         public string MealType => "SNACK";

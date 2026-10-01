@@ -20,10 +20,10 @@ The bot is a Pro feature. Issuing a link code answers 402 for a Free account. A 
 | `/weight 82.4` | Records a weigh-in |
 | `/unlink` | Disconnects this chat |
 | `/help` | Lists commands |
-| A photo | Proposes nutrition with **Log it** and **Discard** actions |
+| A photo | Proposes nutrition with **Log it**, **Split**, and **Discard** actions |
 | Other text | Continues the shared AI chat used on the website |
 
-Photo confirmation logs the combined nutrition totals; the Telegram card has no inline quantity editor. Shared API consent, entitlements, validation, and AI quotas apply.
+**Log it** logs the combined nutrition totals. **Split** asks how many people share the meal (2 to 5) and logs one share, named "(1/N share)", with calories rounded to whole numbers and macros to a tenth of a gram. Each button carries the meal's totals, because the bot keeps no state, so a button works whenever it is pressed. The meal name is cut by UTF-8 bytes to keep every button under Telegram's 64-byte limit. The card has no inline quantity editor. Shared API consent, entitlements, validation, and AI quotas apply.
 
 ## Configure and run
 

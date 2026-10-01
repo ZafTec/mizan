@@ -10,6 +10,9 @@ public class SessionService : ISessionService
 {
     public static readonly TimeSpan Lifetime = TimeSpan.FromDays(7);
 
+    /// <summary>How long an administrator may view the site as a user before signing in again.</summary>
+    public static readonly TimeSpan ImpersonationLifetime = TimeSpan.FromHours(1);
+
     /// <summary>
     /// A revoked session must stop working promptly, and the cache is only an
     /// optimisation over an indexed single-row lookup, so the window is short.
@@ -57,7 +60,33 @@ public class SessionService : ISessionService
         return token;
     }
 
-    public async Task<Guid?> ResolveAsync(string token, CancellationToken cancellationToken = default)
+    public async Task<string> CreateImpersonationAsync(
+        Guid userId, Guid impersonatorId, string? ipAddress, string? userAgent, CancellationToken cancellationToken = default)
+    {
+        var token = SecureToken.Generate();
+        var now = DateTime.UtcNow;
+
+        _context.UserSessions.Add(new UserSession
+        {
+            Id = Guid.CreateVersion7(),
+            UserId = userId,
+            ImpersonatorId = impersonatorId,
+            TokenHash = SecureToken.Hash(token),
+            CreatedAt = now,
+            LastSeenAt = now,
+            ExpiresAt = now.Add(ImpersonationLifetime),
+            IpAddress = Truncate(ipAddress, 64),
+            UserAgent = Truncate(userAgent, 512),
+        });
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return token;
+    }
+
+    public async Task<Guid?> ResolveAsync(string token, CancellationToken cancellationToken = default) =>
+        (await ResolveIdentityAsync(token, cancellationToken))?.UserId;
+
+    public async Task<SessionIdentity?> ResolveIdentityAsync(string token, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(token)) return null;
 
@@ -68,7 +97,7 @@ public class SessionService : ISessionService
             static async (state, ct) => await state.context.UserSessions
                 .AsNoTracking()
                 .Where(s => s.TokenHash == state.hash && s.ExpiresAt > DateTime.UtcNow)
-                .Select(s => new ResolvedSession(s.UserId, s.LastSeenAt))
+                .Select(s => new ResolvedSession(s.UserId, s.LastSeenAt, s.ImpersonatorId, s.ExpiresAt))
                 .FirstOrDefaultAsync(ct),
             CacheOptions,
             cancellationToken: cancellationToken);
@@ -80,7 +109,7 @@ public class SessionService : ISessionService
             await TouchAsync(hash, cancellationToken);
         }
 
-        return resolved.UserId;
+        return new SessionIdentity(resolved.UserId, resolved.ImpersonatorId, resolved.ExpiresAt);
     }
 
     public async Task RevokeAsync(string token, CancellationToken cancellationToken = default)
@@ -168,5 +197,5 @@ public class SessionService : ISessionService
     private static string? Truncate(string? value, int max) =>
         value is null || value.Length <= max ? value : value[..max];
 
-    private sealed record ResolvedSession(Guid UserId, DateTime LastSeenAt);
+    private sealed record ResolvedSession(Guid UserId, DateTime LastSeenAt, Guid? ImpersonatorId, DateTime ExpiresAt);
 }

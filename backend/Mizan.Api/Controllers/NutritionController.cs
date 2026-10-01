@@ -93,6 +93,34 @@ public class NutritionController : ControllerBase
         return Ok(result with { ImageUrl = await StoreAsync(imageBytes, contentType) });
     }
 
+    /// <summary>A sentence becomes a proposal, the way a photo does. Nothing is logged until the person confirms it.</summary>
+    [HttpPost("ai/analyze-text")]
+    [Authorize(Policy = "RequirePro")]
+    public async Task<ActionResult<FoodAnalysisResult>> AnalyzeFoodText([FromBody] AnalyzeFoodTextRequest request)
+    {
+        var description = request.Description?.Trim() ?? string.Empty;
+        if (description.Length == 0)
+        {
+            return BadRequest(new { errorCode = "no_description", error = "Describe what you ate." });
+        }
+
+        if (description.Length > MaxDescriptionLength)
+        {
+            return BadRequest(new { errorCode = "description_too_long", error = $"Keep the description to {MaxDescriptionLength} characters or fewer." });
+        }
+
+        if (!_currentUser.UserId.HasValue)
+        {
+            return Unauthorized();
+        }
+
+        return Ok(await _aiService.AnalyzeFoodTextAsync(_currentUser.UserId.Value, description));
+    }
+
+    public const int MaxDescriptionLength = 600;
+
+    public record AnalyzeFoodTextRequest(string? Description);
+
     private async Task<string?> StoreAsync(byte[] bytes, string contentType)
     {
         try

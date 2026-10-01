@@ -10,6 +10,15 @@ public interface ISessionService
     /// <summary>Returns the plaintext token to put in the cookie. Stored hashed.</summary>
     Task<string> CreateAsync(Guid userId, string? ipAddress, string? userAgent, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// A short session for an administrator viewing the site as <paramref name="userId"/>. Unlike a normal one it never
+    /// slides, so it ends an hour after it starts whatever the administrator does.
+    /// </summary>
+    Task<string> CreateImpersonationAsync(Guid userId, Guid impersonatorId, string? ipAddress, string? userAgent, CancellationToken cancellationToken = default);
+
+    /// <summary>Who the token belongs to and, for an impersonation session, which administrator opened it.</summary>
+    Task<SessionIdentity?> ResolveIdentityAsync(string token, CancellationToken cancellationToken = default);
+
     /// <summary>The owning user, or null when the token is unknown or expired.</summary>
     Task<Guid?> ResolveAsync(string token, CancellationToken cancellationToken = default);
 
@@ -26,3 +35,5 @@ public interface ISessionService
     /// <summary>Revokes one of the user's own sessions. Ignores ids they do not own.</summary>
     Task RevokeByIdAsync(Guid userId, Guid sessionId, CancellationToken cancellationToken = default);
 }
+
+public sealed record SessionIdentity(Guid UserId, Guid? ImpersonatorId, DateTime ExpiresAt);

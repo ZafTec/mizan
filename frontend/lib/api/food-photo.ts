@@ -44,6 +44,13 @@ export async function analyzeFoodPhoto(file: File): Promise<FoodAnalysis> {
   return (await response.json()) as FoodAnalysis;
 }
 
+/** A sentence becomes a proposal the way a photo does. Nothing is logged until the person confirms it. */
+export const analyzeFoodText = (description: string) =>
+  clientApi<FoodAnalysis>("/api/Nutrition/ai/analyze-text", {
+    method: "POST",
+    body: { description },
+  });
+
 export interface LogMealBody {
   name: string;
   entryDate: string;
