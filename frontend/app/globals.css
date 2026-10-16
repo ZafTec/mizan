@@ -1102,6 +1102,26 @@ html.dark .ring-track {
   border-bottom: 1px solid var(--border);
   margin-bottom: 32px;
 }
+.facts-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  padding: 20px 0 22px;
+  border-top: 1px solid var(--foreground);
+  border-bottom: 1px solid var(--border);
+}
+.facts-strip .nutrition-value {
+  font-size: 24px;
+  margin: 6px 0 0;
+}
+.ledger-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
 .nutrition-value {
   font-size: 29px;
   font-weight: 500;

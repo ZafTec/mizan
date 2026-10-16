@@ -32,13 +32,13 @@ const TIME_RANGES: { label: string; value: TimeRange }[] = [
 ];
 
 const CIRCUMFERENCE_SERIES = [
-	{ key: "waist", label: "Waist", color: "#f97316", group: "core" },
-	{ key: "hips", label: "Hips", color: "#ec4899", group: "core" },
-	{ key: "chest", label: "Chest", color: "#06b6d4", group: "core" },
-	{ key: "leftArm", label: "Left Arm", color: "#10b981", group: "limbs" },
-	{ key: "rightArm", label: "Right Arm", color: "#84cc16", group: "limbs" },
-	{ key: "leftThigh", label: "Left Thigh", color: "#f59e0b", group: "limbs" },
-	{ key: "rightThigh", label: "Right Thigh", color: "#eab308", group: "limbs" },
+	{ key: "waist", label: "Waist", color: "var(--chart-1)", group: "core" },
+	{ key: "hips", label: "Hips", color: "var(--chart-4)", group: "core" },
+	{ key: "chest", label: "Chest", color: "var(--chart-5)", group: "core" },
+	{ key: "leftArm", label: "Left Arm", color: "var(--chart-2)", group: "limbs" },
+	{ key: "rightArm", label: "Right Arm", color: "var(--chart-3)", group: "limbs" },
+	{ key: "leftThigh", label: "Left Thigh", color: "var(--foreground)", group: "limbs" },
+	{ key: "rightThigh", label: "Right Thigh", color: "var(--muted-foreground)", group: "limbs" },
 ] as const;
 
 type CircKey = (typeof CIRCUMFERENCE_SERIES)[number]["key"];
@@ -106,16 +106,14 @@ function TimeRangePicker({
 	onChange: (r: TimeRange) => void;
 }) {
 	return (
-		<div className="flex gap-1 bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 rounded-lg p-1">
+		<div role="group" aria-label="Period" className="flex gap-4">
 			{TIME_RANGES.map((r) => (
 				<button
 					key={r.value}
+					type="button"
 					onClick={() => onChange(r.value)}
-					className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-						range === r.value
-							? "bg-white dark:bg-charcoal-blue-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 "
-							: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-charcoal-blue-700 dark:hover:text-charcoal-blue-300"
-					}`}
+					aria-pressed={range === r.value}
+					className={`num min-h-11 text-sm transition-colors ${range === r.value ? "font-semibold text-foreground" : "log-muted hover:text-foreground"}`}
 				>
 					{r.label}
 				</button>
@@ -143,6 +141,7 @@ function CompositionChart({ data }: { data: ReturnType<typeof buildData> }) {
 				<XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
 				<YAxis
 					yAxisId="kg"
+					domain={["dataMin - 1", "dataMax + 1"]}
 					tick={{ fontSize: 11 }}
 					stroke="var(--muted-foreground)"
 					tickFormatter={(v) => `${v}kg`}
@@ -162,9 +161,9 @@ function CompositionChart({ data }: { data: ReturnType<typeof buildData> }) {
 						type="monotone"
 						dataKey="weight"
 						name="Weight"
-						stroke="#2563eb"
+						stroke="var(--foreground)"
 						strokeWidth={2.5}
-						dot={{ r: 3, fill: "#2563eb" }}
+						dot={{ r: 3, fill: "var(--foreground)" }}
 						connectNulls
 					/>
 				)}
@@ -174,9 +173,9 @@ function CompositionChart({ data }: { data: ReturnType<typeof buildData> }) {
 						type="monotone"
 						dataKey="muscle"
 						name="Muscle"
-						stroke="#16a34a"
+						stroke="var(--chart-1)"
 						strokeWidth={2.5}
-						dot={{ r: 3, fill: "#16a34a" }}
+						dot={{ r: 3, fill: "var(--chart-1)" }}
 						connectNulls
 					/>
 				)}
@@ -186,9 +185,9 @@ function CompositionChart({ data }: { data: ReturnType<typeof buildData> }) {
 						type="monotone"
 						dataKey="bodyFat"
 						name="Body Fat"
-						stroke="#dc2626"
+						stroke="var(--chart-4)"
 						strokeWidth={2.5}
-						dot={{ r: 3, fill: "#dc2626" }}
+						dot={{ r: 3, fill: "var(--chart-4)" }}
 						connectNulls
 					/>
 				)}
@@ -198,7 +197,7 @@ function CompositionChart({ data }: { data: ReturnType<typeof buildData> }) {
 						type="stepAfter"
 						dataKey="goalWeight"
 						name="Weight Goal"
-						stroke="#2563eb"
+						stroke="var(--foreground)"
 						strokeDasharray="6 3"
 						strokeWidth={1.5}
 						dot={false}
@@ -211,7 +210,7 @@ function CompositionChart({ data }: { data: ReturnType<typeof buildData> }) {
 						type="stepAfter"
 						dataKey="goalMuscle"
 						name="Muscle Goal"
-						stroke="#16a34a"
+						stroke="var(--chart-1)"
 						strokeDasharray="6 3"
 						strokeWidth={1.5}
 						dot={false}
@@ -224,7 +223,7 @@ function CompositionChart({ data }: { data: ReturnType<typeof buildData> }) {
 						type="stepAfter"
 						dataKey="goalBodyFat"
 						name="BF Goal"
-						stroke="#dc2626"
+						stroke="var(--chart-4)"
 						strokeDasharray="6 3"
 						strokeWidth={1.5}
 						dot={false}
@@ -330,24 +329,14 @@ function ToggleGroup({
 				return (
 					<button
 						key={s.key}
+						type="button"
+						aria-pressed={on}
 						onClick={() => onToggle(s.key)}
-						className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all border ${
-							on
-								? "border-transparent"
-								: "bg-white dark:bg-charcoal-blue-900 text-charcoal-blue-500 dark:text-charcoal-blue-400 border-charcoal-blue-200 dark:border-charcoal-blue-800"
-						}`}
-						style={
-							on
-								? {
-										backgroundColor: `color-mix(in oklab, ${s.color} 16%, var(--card))`,
-										borderColor: `color-mix(in oklab, ${s.color} 40%, transparent)`,
-										color: s.color,
-									}
-								: {}
-						}
+						className={`inline-flex min-h-9 items-center gap-1.5 text-xs transition-colors ${on ? "font-medium text-foreground" : "log-muted hover:text-foreground"}`}
 					>
 						<span
-							className="w-2 h-2 rounded-sm inline-block"
+							aria-hidden="true"
+							className={`inline-block h-2 w-2 rounded-full ${on ? "" : "opacity-40"}`}
 							style={{ backgroundColor: s.color }}
 						/>
 						{s.label}
@@ -425,53 +414,43 @@ export default function MeasurementChart({
 
 	if (measurements.length < 2) {
 		return (
-			<div className="card p-6">
-				<h2 className="section-title mb-4">Progress Chart</h2>
-				<div className="text-center py-8 text-charcoal-blue-500 dark:text-charcoal-blue-400">
-					Add at least 2 measurements to see your progress chart.
-				</div>
-			</div>
+			<section aria-labelledby="trend-title">
+				<header className="log-section-header">
+					<h2 id="trend-title">Trend</h2>
+				</header>
+				<p className="log-empty log-muted text-sm">A second measurement draws the first line.</p>
+			</section>
 		);
 	}
 
 	return (
-		<div className="card p-6">
-			{/* Header row */}
-			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
-				<div className="flex gap-1 bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 rounded-lg p-1 w-fit">
-					<button
-						onClick={() => setTab("composition")}
-						className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-							tab === "composition"
-								? "bg-white dark:bg-charcoal-blue-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 "
-								: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-charcoal-blue-700 dark:hover:text-charcoal-blue-300"
-						}`}
-					>
-						Body Composition
-					</button>
-					<button
-						onClick={() => setTab("circumference")}
-						className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-							tab === "circumference"
-								? "bg-white dark:bg-charcoal-blue-900 text-charcoal-blue-900 dark:text-charcoal-blue-100 "
-								: "text-charcoal-blue-500 dark:text-charcoal-blue-400 hover:text-charcoal-blue-700 dark:hover:text-charcoal-blue-300"
-						}`}
-					>
-						Circumference
-					</button>
+		<section aria-labelledby="trend-title" className="space-y-4">
+			<header className="log-section-header">
+				<div role="tablist" aria-label="Measurement" className="flex gap-5">
+					{(
+						[
+							{ id: "composition", label: "Composition" },
+							{ id: "circumference", label: "Circumference" },
+						] as const
+					).map((item) => (
+						<button
+							key={item.id}
+							type="button"
+							role="tab"
+							aria-selected={tab === item.id}
+							onClick={() => setTab(item.id)}
+							id={item.id === "composition" ? "trend-title" : undefined}
+							className={`min-h-11 text-xl font-semibold transition-colors ${tab === item.id ? "text-foreground" : "log-muted hover:text-foreground"}`}
+						>
+							{item.label}
+						</button>
+					))}
 				</div>
-				<TimeRangePicker range={range} onChange={setRange} />
-			</div>
+			</header>
+			<TimeRangePicker range={range} onChange={setRange} />
 
-			{/* Composition legend note */}
 			{tab === "composition" && (
-				<p className="text-[11px] text-charcoal-blue-400 dark:text-charcoal-blue-500 mb-4">
-					<span className="text-blue-600 dark:text-blue-400 font-medium">Weight</span> &amp;{" "}
-					<span className="text-green-600 dark:text-green-400 font-medium">Muscle</span> use the
-					left axis (kg) ·{" "}
-					<span className="text-red-600 dark:text-red-400 font-medium">Body Fat</span> uses the
-					right axis (%) · Dashed lines = goals
-				</p>
+				<p className="text-xs log-muted">Weight and muscle on the left axis in kg, body fat on the right in percent. A dashed line is a goal.</p>
 			)}
 
 			{tab === "composition" ? (
@@ -479,6 +458,6 @@ export default function MeasurementChart({
 			) : (
 				<CircumferenceChart data={data} active={activeCirc} onToggle={toggleCirc} />
 			)}
-		</div>
+		</section>
 	);
 }

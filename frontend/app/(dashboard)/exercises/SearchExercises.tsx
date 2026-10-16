@@ -1,93 +1,58 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Search } from "lucide-react";
 
-interface SearchExercisesProps {
-    initialSearch?: string;
-    initialCategory?: string;
-}
+const CATEGORIES = ["Strength", "Cardio", "Flexibility", "Balance"] as const;
 
-export default function SearchExercises({ initialSearch, initialCategory }: SearchExercisesProps) {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const [isPending, startTransition] = useTransition();
-    const [search, setSearch] = useState(initialSearch || "");
-    const [category, setCategory] = useState(initialCategory || "");
+/** Filters as you type. The query string is the state, so the page is shareable and the back button works. */
+export default function SearchExercises({ initialSearch, initialCategory }: { initialSearch?: string; initialCategory?: string }) {
+	const router = useRouter();
+	const [, startTransition] = useTransition();
+	const [search, setSearch] = useState(initialSearch ?? "");
+	const [category, setCategory] = useState(initialCategory ?? "");
+	const first = useRef(true);
 
-    const handleSearch = () => {
-        const params = new URLSearchParams(searchParams);
-        if (search) {
-            params.set("search", search);
-        } else {
-            params.delete("search");
-        }
-        if (category) {
-            params.set("category", category);
-        } else {
-            params.delete("category");
-        }
+	useEffect(() => {
+		if (first.current) {
+			first.current = false;
+			return;
+		}
+		const handle = setTimeout(() => {
+			const params = new URLSearchParams();
+			if (search.trim()) params.set("search", search.trim());
+			if (category) params.set("category", category);
+			const query = params.toString();
+			startTransition(() => router.replace(query ? `/exercises?${query}` : "/exercises"));
+		}, 250);
+		return () => clearTimeout(handle);
+	}, [search, category, router]);
 
-        startTransition(() => {
-            router.push(`/exercises?${params.toString()}`);
-        });
-    };
-
-    const handleClear = () => {
-        setSearch("");
-        setCategory("");
-        startTransition(() => {
-            router.push("/exercises");
-        });
-    };
-
-    return (
-        <div className="card p-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                    <input
-                        type="text"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                        placeholder="Search exercises..."
-                        className="input"
-                    />
-                </div>
-                <div className="sm:w-48">
-                    <select
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                        className="input"
-                    >
-                        <option value="">All Categories</option>
-                        <option value="Strength">Strength</option>
-                        <option value="Cardio">Cardio</option>
-                        <option value="Flexibility">Flexibility</option>
-                        <option value="Balance">Balance</option>
-                    </select>
-                </div>
-                <div className="flex gap-2">
-                    <button
-                        onClick={handleSearch}
-                        disabled={isPending}
-                        className="btn-primary whitespace-nowrap"
-                    >
-                        <i className="ri-search-line" />
-                        Search
-                    </button>
-                    {(search || category) && (
-                        <button
-                            onClick={handleClear}
-                            disabled={isPending}
-                            className="btn-secondary"
-                        >
-                            <i className="ri-close-line" />
-                            Clear
-                        </button>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
+	return (
+		<div className="flex gap-2">
+			<label className="relative min-w-0 flex-1">
+				<span className="sr-only">Search exercises</span>
+				<Search aria-hidden="true" size={16} strokeWidth={1.7} className="log-muted pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" />
+				<input
+					type="search"
+					value={search}
+					onChange={(event) => setSearch(event.target.value)}
+					placeholder="Search exercises"
+					className="input min-h-11 pl-9"
+				/>
+			</label>
+			<label className="shrink-0">
+				<span className="sr-only">Type</span>
+				<select value={category} onChange={(event) => setCategory(event.target.value)} className="input min-h-11">
+					<option value="">Any type</option>
+					{CATEGORIES.map((name) => (
+						<option key={name} value={name}>
+							{name}
+						</option>
+					))}
+				</select>
+			</label>
+		</div>
+	);
 }

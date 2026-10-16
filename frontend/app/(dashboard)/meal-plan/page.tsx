@@ -1,15 +1,24 @@
-import { getUserServer } from "@/helper/session";
 import Link from "next/link";
+import { ArrowRight, ChevronRight } from "lucide-react";
+import { getUserServer } from "@/helper/session";
 import { getMealPlans } from "@/data/mealPlan";
 import Pagination from "@/components/Pagination";
 import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
-import MealPlanListItem from "./MealPlanListItem";
-import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
-
 import { logger } from "@/lib/logger";
+
 const mealLogger = logger.createModuleLogger("meal-plan-page");
 
 export const dynamic = "force-dynamic";
+
+type Plan = Awaited<ReturnType<typeof getMealPlans>>["mealPlans"][number];
+
+const shortDate = (iso: string) =>
+	new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+
+/** A plan is "this week" when today falls inside its dates. */
+function isCurrent(plan: Plan, today: string) {
+	return plan.startDate <= today && today <= plan.endDate;
+}
 
 export default async function MealPlanPage({
 	searchParams,
@@ -21,14 +30,13 @@ export default async function MealPlanPage({
 	const { page, sortBy, sortOrder } = parseListParams(params);
 	const baseUrl = buildListUrl("/meal-plan", { sortBy, sortOrder });
 
-	let mealPlans: Awaited<ReturnType<typeof getMealPlans>>["mealPlans"] = [];
+	let plans: Plan[] = [];
 	let totalCount = 0;
 	let totalPages = 0;
-	let loadError: string | null = null;
-
+	let failed = false;
 	try {
 		const result = await getMealPlans(page, 20, sortBy ?? undefined, sortOrder);
-		mealPlans = result.mealPlans;
+		plans = result.mealPlans;
 		totalCount = result.totalCount;
 		totalPages = result.totalPages;
 	} catch (error) {
@@ -36,144 +44,98 @@ export default async function MealPlanPage({
 			error: error instanceof Error ? error.message : String(error),
 			userID: user.id,
 		});
-		loadError = "Failed to load meal plans";
+		failed = true;
 	}
 
-	if (loadError) {
-		return (
-			<div className="space-y-6" data-testid="meal-plan-page">
-				<header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-					<div className="space-y-2">
-						<p className="eyebrow">Planner</p>
-						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-							Meal planning
-						</h1>
-					</div>
-					<Link href="/meal-plan/create" className="btn-primary">
-						<i className="ri-add-line" />
-						Create Meal Plan
-					</Link>
-				</header>
-
-				<div className="card p-6">
-					<div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400">
-						<i className="ri-error-warning-line text-xl" />
-						<p>An error occurred loading your meal plans. Please try again later.</p>
-					</div>
-				</div>
-			</div>
-		);
-	}
+	const today = new Date().toISOString().slice(0, 10);
+	const current = plans.filter((plan) => isCurrent(plan, today));
+	const mealsThisWeek = current.reduce((sum, plan) => sum + (plan.recipes?.length ?? 0), 0);
 
 	return (
-		<div className="space-y-6" data-testid="meal-plan-page">
-			{/* Page Header */}
-			<header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-				<div className="space-y-2">
-					<p className="eyebrow">Planner</p>
-					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-						Meal planning
-					</h1>
-				</div>
-				<div className="flex gap-3">
-					<Link href="/meal-plan/shopping-list" className="btn-secondary">
-						<i className="ri-shopping-cart-line" />
-						Shopping List
-					</Link>
-					<Link href="/meal-plan/create" className="btn-primary">
-						<i className="ri-add-line" />
-						Create Meal Plan
-					</Link>
-				</div>
+		<div className="log-page space-y-8" data-testid="meal-plan-page">
+			<header className="log-page-header block!">
+				<h1>Meal plans</h1>
+				<p className="log-muted mt-2">A week of recipes your household can shop for.</p>
 			</header>
 
-			{/* Quick Stats */}
-			<div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-				{[
-					{
-						label: "Meal Plans",
-						value: mealPlans.length,
-						icon: "ri-calendar-check-line",
-						color: "bg-brand-600",
-					},
-					{
-						label: "This Week",
-						value: mealPlans.filter((p) => p.recipes?.length > 0).length,
-						icon: "ri-calendar-line",
-						color: "bg-accent-600",
-					},
-					{
-						label: "Total Meals",
-						value: mealPlans.reduce((acc, p) => acc + (p.recipes?.length || 0), 0),
-						icon: "ri-restaurant-line",
-						color: "bg-charcoal-blue-900 dark:bg-charcoal-blue-100 dark:text-charcoal-blue-900",
-					},
-					{
-						label: "Recipes",
-						value: new Set(mealPlans.flatMap((p) => p.recipes?.map((m) => m.recipeId) || [])).size,
-						icon: "ri-book-3-line",
-						color: "bg-charcoal-blue-700",
-					},
-				].map((stat) => (
-					<div key={stat.label} className="card p-4">
-						<div className="flex items-center gap-3">
-							<div
-								className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center text-white`}
-							>
-								<i className={`${stat.icon} text-current`} />
+			{failed ? (
+				<div className="log-empty border-t border-foreground">
+					<p>Your plans could not be loaded.</p>
+					<p className="log-muted mt-2 text-sm">Try again in a moment. Nothing was changed.</p>
+				</div>
+			) : (
+				<>
+					{plans.length > 0 && (
+						<section aria-label="Plan summary" className="facts-strip">
+							<div>
+								<p className="text-sm log-muted">Plans</p>
+								<p className="num nutrition-value">{totalCount}</p>
 							</div>
 							<div>
-								<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-									{stat.value}
-								</p>
-								<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-									{stat.label}
+								<p className="text-sm log-muted">This week</p>
+								<p className="num nutrition-value">
+									{mealsThisWeek}
+									<span className="text-sm font-normal log-muted"> meals</span>
 								</p>
 							</div>
-						</div>
-					</div>
-				))}
-			</div>
+							<div>
+								<p className="text-sm log-muted">Shopping</p>
+								<p className="nutrition-value">
+									<Link href="/meal-plan/shopping-list" className="text-link inline-flex items-center gap-1 text-base font-medium">
+										Open list <ArrowRight aria-hidden="true" size={15} strokeWidth={1.7} />
+									</Link>
+								</p>
+							</div>
+						</section>
+					)}
 
-			{/* Meal Plans */}
-			<div className="card p-6">
-				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2 mb-4">
-					<i className="ri-calendar-2-line text-brand-500 dark:text-brand-400" />
-					Your Meal Plans
-				</h2>
-				{mealPlans.length > 0 ? (
-					<div className="space-y-4">
-						{mealPlans.map((plan) => (
-							<MealPlanListItem key={plan.id} plan={plan} />
-						))}
-					</div>
-				) : (
-					<div className="text-center py-12 flex flex-col items-center">
-						<div className="mb-6 w-full max-w-[18rem] opacity-95">
-							<AppFeatureIllustration variant="meal-plan" className="h-auto w-full" />
-						</div>
-						<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
-							No meal plans yet
-						</h3>
-						<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-4">
-							No meal plans yet.
-						</p>
-						<Link href="/meal-plan/create" className="btn-primary">
-							<i className="ri-add-line" />
-							Create Meal Plan
-						</Link>
-					</div>
-				)}
-			</div>
+					<section aria-labelledby="plans-title">
+						<header className="log-section-header">
+							<h2 id="plans-title">Your plans</h2>
+							{plans.length > 0 && (
+								<Link href="/meal-plan/shopping-list" className="text-link text-sm">
+									Shopping list
+								</Link>
+							)}
+						</header>
+						{plans.length === 0 ? (
+							<div className="log-empty">
+								<p>No plans yet.</p>
+								<p className="log-muted mt-2 text-sm">
+									Pick a week and add recipes to its days. The shopping list writes itself from what you add.
+								</p>
+							</div>
+						) : (
+							<ul>
+								{plans.map((plan) => (
+									<li key={plan.id}>
+										<Link href={`/meal-plan/${plan.id}`} className="ledger-row transition-colors hover:bg-muted">
+											<span className="min-w-0 flex-1">
+												<span className="block font-medium">{plan.name || "Weekly plan"}</span>
+												<span className="mt-0.5 block text-sm log-muted">
+													{shortDate(plan.startDate)} – {shortDate(plan.endDate)}
+													{isCurrent(plan, today) ? " · this week" : ""}
+												</span>
+											</span>
+											<span className="num whitespace-nowrap text-sm log-muted">
+												<span className="text-base font-semibold text-foreground">{plan.recipes?.length ?? 0}</span> meals
+											</span>
+											<ChevronRight aria-hidden="true" size={17} strokeWidth={1.7} className="log-muted" />
+										</Link>
+									</li>
+								))}
+							</ul>
+						)}
+					</section>
 
-			{totalPages > 1 && (
-				<Pagination
-					currentPage={page}
-					totalPages={totalPages}
-					totalCount={totalCount}
-					pageSize={20}
-					baseUrl={baseUrl}
-				/>
+					<Link href="/meal-plan/create" className="btn-primary min-h-11 w-full sm:w-auto">
+						New plan
+					</Link>
+
+					{totalPages > 1 && (
+						<Pagination currentPage={page} totalPages={totalPages} totalCount={totalCount} pageSize={20} baseUrl={baseUrl} />
+					)}
+				</>
 			)}
 		</div>
 	);

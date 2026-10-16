@@ -4,7 +4,6 @@ import { getUserOptionalServer } from "@/helper/session";
 import { DataTable, readPage, readSort, type Column } from "@/components/ui/data-table";
 import SearchBar from "@/components/IngredientTable/SearchInputField";
 import IngredientFilters from "./IngredientFilters";
-import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
 
 export const dynamic = "force-dynamic";
 
@@ -93,9 +92,6 @@ export default async function IngredientsPage({
 		<div className="space-y-6 lg:space-y-8" data-testid="ingredient-list">
 			<header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
 				<div className="flex items-start gap-6">
-					<div className="hidden w-28 shrink-0 sm:block">
-						<AppFeatureIllustration variant="recipes" />
-					</div>
 					<div className="space-y-2">
 						<p className="eyebrow">Catalogue</p>
 						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
@@ -103,7 +99,7 @@ export default async function IngredientsPage({
 						</h1>
 					</div>
 				</div>
-				<div className="flex items-center gap-3">
+				<div className="flex flex-wrap items-center gap-3">
 					<SearchBar />
 					<IngredientFilters currentMinPcal={minPcal || undefined} />
 					{user?.role === "admin" && (

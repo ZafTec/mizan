@@ -109,7 +109,8 @@ export default function AiChat({ quickPrompts }: { quickPrompts: QuickPrompt[] }
 	}, []);
 
 	useLayoutEffect(() => {
-		scrollToBottom();
+		// The empty state reads top-down; only a transcript follows its newest line.
+		if (messages.length > 0 || pending) scrollToBottom();
 	}, [messages, pending, scrollToBottom]);
 
 	// The box grows with what is typed, up to a few lines, then scrolls.

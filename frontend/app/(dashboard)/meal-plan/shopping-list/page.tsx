@@ -1,11 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
-import Loading from "@/components/Loading";
-import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
 
 interface ShoppingListItem {
 	id: string;
@@ -22,190 +19,133 @@ interface ShoppingList {
 	items: ShoppingListItem[];
 }
 
+const amount = (item: ShoppingListItem) =>
+	item.quantity && item.unit ? `${Number(item.quantity).toLocaleString()} ${item.unit}` : item.quantity ? String(item.quantity) : "";
+
 export default function ShoppingListPage() {
-	const router = useRouter();
-	const [shoppingLists, setShoppingLists] = useState<ShoppingList[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState("");
-	const [showCompleted, setShowCompleted] = useState(false);
+	const [lists, setLists] = useState<ShoppingList[] | null>(null);
+	const [failed, setFailed] = useState(false);
+	const [showBought, setShowBought] = useState(false);
+	const [attempt, setAttempt] = useState(0);
 
 	useEffect(() => {
-		loadShoppingLists();
-	}, []);
+		let cancelled = false;
+		clientApi<{ items: ShoppingList[] }>("/api/ShoppingLists")
+			.then((data) => {
+				if (!cancelled) setLists(data.items || []);
+			})
+			.catch(() => {
+				if (!cancelled) {
+					setFailed(true);
+					setLists([]);
+				}
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [attempt]);
 
-	const loadShoppingLists = async () => {
-		try {
-			setLoading(true);
-			const data = await clientApi<{ items: ShoppingList[] }>("/api/ShoppingLists");
-			setShoppingLists(data.items || []);
-		} catch (err) {
-			setError("Failed to load shopping lists");
-			console.error("Error loading shopping lists:", err);
-		} finally {
-			setLoading(false);
-		}
+	const retry = () => {
+		setFailed(false);
+		setLists(null);
+		setAttempt((n) => n + 1);
 	};
 
-	const toggleItemChecked = async (itemId: string, currentIsChecked: boolean) => {
-		try {
-			await clientApi(`/api/ShoppingLists/items/${itemId}/toggle`, {
-				method: "PATCH",
-				body: { IsChecked: !currentIsChecked },
-			});
-
-			setShoppingLists((prevLists) =>
-				prevLists.map((list) => ({
+	const toggle = async (item: ShoppingListItem) => {
+		const next = !item.isChecked;
+		// Optimistic: the tick is instant and reverts only if the server disagrees.
+		const apply = (checked: boolean) =>
+			setLists((current) =>
+				(current ?? []).map((list) => ({
 					...list,
-					items: list.items.map((item) =>
-						item.id === itemId ? { ...item, isChecked: !item.isChecked } : item,
-					),
+					items: list.items.map((candidate) => (candidate.id === item.id ? { ...candidate, isChecked: checked } : candidate)),
 				})),
 			);
-		} catch (err) {
-			console.error("Error toggling item:", err);
+		apply(next);
+		try {
+			await clientApi(`/api/ShoppingLists/items/${item.id}/toggle`, { method: "PATCH", body: { IsChecked: next } });
+		} catch {
+			apply(!next);
 		}
 	};
 
-	const allItems = shoppingLists.flatMap((list) => list.items);
-	const displayedItems = showCompleted ? allItems : allItems.filter((item) => !item.isChecked);
+	const items = (lists ?? []).flatMap((list) => list.items);
+	const left = items.filter((item) => !item.isChecked);
+	const shown = showBought ? items : left;
 
 	return (
-		<div className="flex flex-col gap-6">
-			<div className="flex justify-between items-center">
-				<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-					Shopping List
-				</h1>
-				<Link href="/meal-plan" className="btn-primary">
-					Back to Meal Plan
-				</Link>
-			</div>
+		<div className="log-page space-y-8" data-testid="shopping-list-page">
+			<header className="log-page-header block!">
+				<h1>Shopping list</h1>
+				<p className="log-muted mt-2">What your plans need you to buy.</p>
+			</header>
 
-			{error && (
-				<div className="card border border-red-200 bg-red-50 p-4 dark:border-red-500/30 dark:bg-red-500/10">
-					<div className="flex items-center gap-2 text-red-700 dark:text-red-300">
-						<i className="ri-error-warning-line" />
-						<span>{error}</span>
-					</div>
-				</div>
-			)}
+			<section aria-labelledby="buy-title">
+				<header className="log-section-header">
+					<h2 id="buy-title">To buy</h2>
+					{items.length > 0 && (
+						<span className="num text-sm log-muted">
+							{left.length} left of {items.length}
+						</span>
+					)}
+				</header>
 
-			<div className="card p-6">
-				<div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-					<h2 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
-						Your Shopping Items
-					</h2>
-					<div className="flex flex-col sm:flex-row gap-2">
-						<button
-							onClick={loadShoppingLists}
-							className="btn-secondary flex items-center gap-2"
-							disabled={loading}
-						>
-							{loading ? (
-								<>
-									<i className="ri-loader-4-line animate-spin"></i>
-									Loading...
-								</>
-							) : (
-								<>
-									<i className="ri-refresh-line"></i>
-									Refresh List
-								</>
-							)}
+				{lists === null ? (
+					<ul aria-busy="true" aria-label="Loading your list">
+						{[0, 1, 2].map((row) => (
+							<li key={row} className="ledger-row">
+								<span className="h-5 w-5 rounded-sm bg-muted" />
+								<span className="h-3 flex-1 rounded-sm bg-muted" style={{ maxWidth: `${40 + row * 12}%` }} />
+							</li>
+						))}
+					</ul>
+				) : failed ? (
+					<div className="log-empty">
+						<p>Your list could not be loaded.</p>
+						<button type="button" onClick={retry} className="text-link mt-3 text-sm">
+							Try again
 						</button>
-						<label className="flex items-center gap-2 text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300">
-							<input
-								type="checkbox"
-								checked={showCompleted}
-								onChange={() => setShowCompleted(!showCompleted)}
-								className="h-4 w-4"
-							/>
-							Show completed items
-						</label>
 					</div>
-				</div>
-
-				{loading && allItems.length === 0 ? (
-					<div className="flex justify-center items-center py-10">
-						<Loading />
-					</div>
-				) : allItems.length === 0 ? (
-					<div className="text-center py-10 flex flex-col items-center">
-						<div className="mb-6 w-full max-w-[18rem] opacity-95">
-							<AppFeatureIllustration variant="shopping" className="h-auto w-full" />
-						</div>
-						<p className="mb-4 text-charcoal-blue-600 dark:text-charcoal-blue-300">
-							No items in your shopping list
-						</p>
-						<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-							Add meals to your meal plan to generate a shopping list
-						</p>
-						<Link href="/meal-plan/add" className="mt-4 inline-block btn-primary">
-							Add Meals to Plan
+				) : items.length === 0 ? (
+					<div className="log-empty">
+						<p>Nothing to buy.</p>
+						<p className="log-muted mt-2 text-sm">Add recipes to a meal plan and their ingredients land here.</p>
+						<Link href="/meal-plan" className="text-link mt-3 inline-block text-sm">
+							Open meal plans →
 						</Link>
 					</div>
 				) : (
-					<div>
-						{displayedItems.length === 0 && (
-							<p className="py-4 text-center text-charcoal-blue-500 dark:text-charcoal-blue-400">
-								All items have been checked off!
-							</p>
+					<>
+						{shown.length === 0 && (
+							<p className="log-empty">Everything is bought.</p>
 						)}
-
-						{displayedItems.length > 0 && (
-							<ul className="space-y-2">
-								{displayedItems.map((item) => (
-									<li
-										key={item.id}
-										className="flex items-center gap-3 rounded-lg p-2 transition hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-900/60"
-									>
+						<ul>
+							{shown.map((item) => (
+								<li key={item.id}>
+									<label className="ledger-row cursor-pointer">
 										<input
 											type="checkbox"
 											checked={item.isChecked}
-											onChange={() => toggleItemChecked(item.id, item.isChecked)}
-											className="h-5 w-5 cursor-pointer"
+											onChange={() => void toggle(item)}
+											className="h-5 w-5 shrink-0 accent-brand-700"
 										/>
-										<span
-											className={
-												item.isChecked
-													? "line-through text-charcoal-blue-400 dark:text-charcoal-blue-500"
-													: "text-charcoal-blue-900 dark:text-charcoal-blue-100"
-											}
-										>
-											{item.ingredientText}
-											{item.quantity && item.unit && (
-												<span className="ml-2 text-charcoal-blue-500 dark:text-charcoal-blue-400">
-													- {item.quantity} {item.unit}
-												</span>
-											)}
-										</span>
-									</li>
-								))}
-							</ul>
-						)}
-
-						<div className="mt-6 border-t border-charcoal-blue-200 pt-4 dark:border-white/10">
-							<div className="flex justify-between items-center">
-								<div>
-									<span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-										{allItems.length} total items
-									</span>
-									<span className="mx-2 text-charcoal-blue-300 dark:text-charcoal-blue-600">|</span>
-									<span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-										{allItems.filter((item) => item.isChecked).length} checked off
-									</span>
-								</div>
-								<button
-									onClick={() => window.print()}
-									className="btn-secondary flex items-center gap-2"
-								>
-									<i className="ri-printer-line"></i>
-									Print List
-								</button>
-							</div>
+										<span className={`min-w-0 flex-1 ${item.isChecked ? "log-muted line-through" : ""}`}>{item.ingredientText}</span>
+										<span className={`num whitespace-nowrap text-sm ${item.isChecked ? "log-muted" : ""}`}>{amount(item)}</span>
+									</label>
+								</li>
+							))}
+						</ul>
+						<div className="flex items-center justify-between pt-4 text-sm">
+							<button type="button" onClick={() => setShowBought((value) => !value)} className="text-link">
+								{showBought ? "Hide bought items" : `Show bought items (${items.length - left.length})`}
+							</button>
+							<button type="button" onClick={() => window.print()} className="text-link">
+								Print
+							</button>
 						</div>
-					</div>
+					</>
 				)}
-			</div>
+			</section>
 		</div>
 	);
 }

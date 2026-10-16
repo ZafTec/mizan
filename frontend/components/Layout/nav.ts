@@ -145,13 +145,23 @@ export const MORE_GROUPS: NavGroup[] = [
         icon: "rocket",
         description: "Targets and progress",
       },
-      { href: "/achievements", label: "Achievements", icon: "sparkles" },
+      {
+        href: "/achievements",
+        label: "Achievements",
+        icon: "sparkles",
+        description: "Streak, points and badges",
+      },
     ],
   },
   {
     label: "People",
     items: [
-      { href: "/social", label: "Feed", icon: "users" },
+      {
+        href: "/social",
+        label: "Feed",
+        icon: "users",
+        description: "Training shared by people you approve",
+      },
       {
         href: "/trainers",
         label: "Find a Trainer",
@@ -170,7 +180,12 @@ export const MORE_GROUPS: NavGroup[] = [
         icon: "bell",
         description: "Pending requests to and from you",
       },
-      { href: "/messaging", label: "Messages", icon: "messageCircle" },
+      {
+        href: "/messaging",
+        label: "Messages",
+        icon: "messageCircle",
+        description: "Chat with your coach",
+      },
       {
         href: "/profile/household",
         label: "Household",
@@ -213,9 +228,19 @@ export const MORE_GROUPS: NavGroup[] = [
   {
     label: "Account",
     items: [
-      { href: "/profile", label: "Profile", icon: "user" },
-      { href: "/notifications", label: "Notifications", icon: "bell" },
-      { href: "/billing", label: "Billing", icon: "sparkles" },
+      { href: "/profile", label: "Profile", icon: "user", description: "Your account" },
+      {
+        href: "/notifications",
+        label: "Notifications",
+        icon: "bell",
+        description: "What happened while you were away",
+      },
+      {
+        href: "/billing",
+        label: "Billing",
+        icon: "sparkles",
+        description: "Your plan and invoices",
+      },
       {
         href: "/profile/settings#assistant",
         label: "Usage",
@@ -228,8 +253,18 @@ export const MORE_GROUPS: NavGroup[] = [
         icon: "upload",
         description: "Download your log and account data",
       },
-      { href: "/profile/sessions", label: "Sessions", icon: "lock" },
-      { href: "/profile/settings", label: "Settings", icon: "settings" },
+      {
+        href: "/profile/sessions",
+        label: "Sessions",
+        icon: "lock",
+        description: "Where you are signed in",
+      },
+      {
+        href: "/profile/settings",
+        label: "Settings",
+        icon: "settings",
+        description: "Name, time zone, appearance, assistant",
+      },
     ],
   },
   {
