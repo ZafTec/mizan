@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
 	useCallback,
 	useEffect,
@@ -319,9 +320,9 @@ export default function AiChat({ quickPrompts }: { quickPrompts: QuickPrompt[] }
 								type="button"
 								onClick={() => setLightbox({ src: attachment.url, label: "Photo to send" })}
 								aria-label="Preview the photo to send"
-								className="h-14 w-14 shrink-0 overflow-hidden rounded-sm border border-border"
+								className="relative h-14 w-14 shrink-0 overflow-hidden rounded-sm border border-border"
 							>
-								<PictureImage src={attachment.url} alt="" className="h-full w-full object-cover" />
+								<PictureImage src={attachment.url} alt="" className="object-cover" />
 							</button>
 							<span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{attachment.file.name}</span>
 							<button type="button" onClick={() => attach(null)} aria-label="Remove photo" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm hover:bg-muted">
@@ -449,13 +450,13 @@ function ConversationList({
 }
 
 /**
- * Only addresses a browser can show as a picture reach an <img>: the preview blob, an inline image, a hosted
- * photo, or a path on this site. The check guards the parameter directly, the shape static analysis follows.
+ * Only addresses a browser can show as a picture reach an image: the preview blob, an inline image, a hosted
+ * photo, or a path on this site. Rendered through next/image without optimization, since these are the
+ * person's own photos and previews rather than site assets; the parent sets the box and `fill` fits it.
  */
 function PictureImage({ src, alt, className, onClick }: { src: string; alt: string; className?: string; onClick?: (event: MouseEvent<HTMLImageElement>) => void }) {
 	if (!(src.startsWith("blob:") || src.startsWith("data:image/") || src.startsWith("https://") || src.startsWith("http://") || src.startsWith("/"))) return null;
-	// eslint-disable-next-line @next/next/no-img-element -- previews and photos the person chose, not hosted site images
-	return <img src={src} alt={alt} className={className} onClick={onClick} />;
+	return <Image src={src} alt={alt} fill unoptimized sizes="100vw" className={className} onClick={onClick} />;
 }
 
 function EmptyState({
@@ -584,12 +585,9 @@ function Lightbox({ image, onClose }: { image: { src: string; label: string } | 
 				>
 					<Dialog.Title className="sr-only">{image?.label ?? "Photo"}</Dialog.Title>
 					{image && (
-						<PictureImage
-							src={image.src}
-							alt={image.label}
-							onClick={(event) => event.stopPropagation()}
-							className="max-h-[90dvh] max-w-full rounded-sm object-contain"
-						/>
+						<div className="relative h-[90dvh] w-[92vw] max-w-5xl" onClick={(event) => event.stopPropagation()}>
+							<PictureImage src={image.src} alt={image.label} className="rounded-sm object-contain" />
+						</div>
 					)}
 					<Dialog.Close aria-label="Close photo" className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-sm bg-black/60 text-white hover:bg-black/80">
 						<X aria-hidden="true" size={22} strokeWidth={1.7} />
