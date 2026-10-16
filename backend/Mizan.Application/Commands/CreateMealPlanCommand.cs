@@ -82,6 +82,20 @@ public class CreateMealPlanCommandHandler : IRequestHandler<CreateMealPlanComman
         if (request.HouseholdId.HasValue && !await _households.CanAccessAsync(request.HouseholdId.Value, cancellationToken))
             throw new ForbiddenAccessException("You are not a member of this household");
 
+        // The same rule as adding one recipe later: public, your own, or shared in a household you can see.
+        var recipeIds = request.Recipes.Select(r => r.RecipeId).Distinct().ToList();
+        if (recipeIds.Count > 0)
+        {
+            var accessibleHouseholds = await _households.AccessibleIdsAsync(cancellationToken);
+            var usable = await _context.Recipes.CountAsync(recipe =>
+                recipeIds.Contains(recipe.Id) &&
+                (recipe.IsPublic || recipe.UserId == userId ||
+                 (recipe.HouseholdId.HasValue && accessibleHouseholds.Contains(recipe.HouseholdId.Value))),
+                cancellationToken);
+            if (usable != recipeIds.Count)
+                throw new InvalidOperationException("Recipe not found or access denied");
+        }
+
         var mealPlan = new MealPlan
         {
             Id = Guid.NewGuid(),

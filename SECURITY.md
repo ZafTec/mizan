@@ -5,14 +5,14 @@ the people who use it, safe.
 
 ## Supported versions
 
-Mizan is delivered as a rolling release. Only the current `main` and
-`subscriptions` branches, and the latest Docker images tagged `latest`, are
+Mizan is delivered as a rolling release. Only the current `master` branch and
+the latest Docker images tagged `latest` are
 supported and will receive security fixes. Self-hosted deployments running
 older images should update before reporting issues.
 
 | Version | Supported |
 | --- | --- |
-| `main` / `subscriptions` (HEAD) | Yes |
+| `master` (HEAD) | Yes |
 | `euaell/mizan-*:latest` images | Yes |
 | Older tags / forks | No |
 
@@ -58,7 +58,7 @@ the issue affects production data, notify affected users.
   `/api` and the MCP server under `/mcp` - no separate subdomains.
 - Published Docker images under `euaell/mizan-*`.
 - The MCP server surface and its tool catalog.
-- Authentication and authorization (backend session cookies, MCP tokens,
+- Authentication and authorization (backend session cookies, OAuth grants,
   household access control, trainer/client isolation).
 - Multi-tenant data isolation (households, recipes marked private vs.
   shared, trainer-client relationships).

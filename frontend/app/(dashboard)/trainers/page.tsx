@@ -3,14 +3,12 @@
 import { useSession } from "@/lib/auth-client";
 import { clientApi } from "@/lib/api.client";
 import Image from "next/image";
-import Link from "next/link";
 import { useState, useEffect } from "react";
 import { appToast } from "@/lib/toast";
 import Loading from "@/components/Loading";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import type { TrainerPublicDto, TrainerPublicPagedResultDto } from "@/types/api-contracts";
 import { getPagedItems } from "@/types/api-contracts";
-import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
 import { useProWall } from "@/components/billing/ProWall";
 import { isUpgradeRequired } from "@/lib/billing";
 
@@ -94,9 +92,6 @@ export default function TrainersPage() {
 			{/* Header */}
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div className="flex items-center gap-4">
-					<div className="hidden w-20 sm:block opacity-95">
-						<AppFeatureIllustration variant="trainers" className="h-auto w-full" />
-					</div>
 					<div className="space-y-2">
 						<p className="eyebrow">Coaching</p>
 						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
@@ -107,14 +102,10 @@ export default function TrainersPage() {
 						</p>
 					</div>
 				</div>
-				<Link href="/profile" className="btn-secondary">
-					<i className="ri-arrow-left-line" />
-					Back to profile
-				</Link>
 			</div>
 
 			{/* Search Bar */}
-			<div className="card p-4">
+			<div>
 				<div className="relative">
 					<i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-blue-400" />
 					<input
@@ -130,12 +121,9 @@ export default function TrainersPage() {
 
 			{/* Trainers Grid */}
 			{filteredTrainers.length === 0 ? (
-				<div className="card p-12 text-center">
-					<i className="ri-user-search-line text-6xl text-charcoal-blue-300 dark:text-charcoal-blue-600 mb-4" />
-					<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
-						No trainers found
-					</h3>
-					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">No trainers found.</p>
+				<div className="log-empty border-t border-foreground">
+					<p>No trainers match.</p>
+					<p className="log-muted mt-2 text-sm">Coaches appear here once they have joined Mizan as trainers.</p>
 				</div>
 			) : (
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

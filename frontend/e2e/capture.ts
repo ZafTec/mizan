@@ -42,6 +42,11 @@ const captures: Capture[] = matrix
         name: "recipe-mobile",
         mobile: true,
       },
+      { route: "/body-measurements", name: "body-mobile", mobile: true },
+      { route: "/meal-plan", name: "meal-plans-mobile", mobile: true },
+      { route: "/exercises", name: "exercises-mobile", mobile: true },
+      { route: "/achievements", name: "achievements-mobile", mobile: true },
+      { route: "/profile", name: "profile-mobile", mobile: true },
       { route: "/today", name: "meal-desktop", dialog: "meal" },
       { route: "/today", name: "meal-mobile", mobile: true, dialog: "meal" },
       {
@@ -113,6 +118,10 @@ for (const capture of captures) {
       .click();
     await expect(page.getByRole("dialog")).toBeVisible();
     if (capture.dialog === "meal") {
+      await page
+        .getByRole("button", { name: "Search foods", exact: true })
+        .click();
+      await page.getByRole("searchbox").first().fill("Greek");
       await page
         .getByRole("button", { name: "Add Greek yogurt", exact: true })
         .click();

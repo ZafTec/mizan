@@ -214,7 +214,7 @@ export default async function TodayPage({
             <div className="log-empty">
               <p>Your meals go here.</p>
               <p className="log-muted text-sm mt-2">
-                Search for a food, reuse a recipe, or add a quick entry.
+                Say what you ate, add a photo, or search. You check it before it is saved.
               </p>
               <LogEntryButton
                 kind="meal"
