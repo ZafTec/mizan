@@ -321,10 +321,9 @@ export default function AiChat({ quickPrompts }: { quickPrompts: QuickPrompt[] }
 								aria-label="Preview the photo to send"
 								className="h-14 w-14 shrink-0 overflow-hidden rounded-sm border border-border"
 							>
-								{pictureAddress(attachment.url) && (
+								{(attachment.url.startsWith("blob:") || attachment.url.startsWith("data:image/") || attachment.url.startsWith("https://") || attachment.url.startsWith("http://") || attachment.url.startsWith("/")) && (
 									/* eslint-disable-next-line @next/next/no-img-element -- a local preview, not a hosted image */
-									// codeql[js/xss-through-dom] -- pictureAddress admits only blob:, data:image/, http(s) and site-relative addresses
-									<img src={pictureAddress(attachment.url) ?? undefined} alt="" className="h-full w-full object-cover" />
+									<img src={attachment.url} alt="" className="h-full w-full object-cover" />
 								)}
 							</button>
 							<span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{attachment.file.name}</span>
@@ -454,11 +453,10 @@ function ConversationList({
 
 /**
  * Only addresses a browser can show as a picture reach an <img>: the preview blob, an inline image, a hosted
- * photo, or a path on this site. A file name or any other text from the page never becomes a source.
+ * photo, or a path on this site. The check is written out at each image so static analysis can see it.
  */
-function pictureAddress(src: string): string | null {
-	if (src.startsWith("blob:") || src.startsWith("data:image/") || src.startsWith("https://") || src.startsWith("http://") || src.startsWith("/")) return src;
-	return null;
+export function isPictureAddress(src: string): boolean {
+	return src.startsWith("blob:") || src.startsWith("data:image/") || src.startsWith("https://") || src.startsWith("http://") || src.startsWith("/");
 }
 
 function EmptyState({
@@ -586,10 +584,10 @@ function Lightbox({ image, onClose }: { image: { src: string; label: string } | 
 					onClick={onClose}
 				>
 					<Dialog.Title className="sr-only">{image?.label ?? "Photo"}</Dialog.Title>
-					{image && pictureAddress(image.src) && (
+					{image && (image.src.startsWith("blob:") || image.src.startsWith("data:image/") || image.src.startsWith("https://") || image.src.startsWith("http://") || image.src.startsWith("/")) && (
 						/* eslint-disable-next-line @next/next/no-img-element -- see above */
-						// codeql[js/xss-through-dom] -- pictureAddress admits only blob:, data:image/, http(s) and site-relative addresses
-						<img src={pictureAddress(image.src) ?? undefined}
+						<img
+							src={image.src}
 							alt={image.label}
 							onClick={(event) => event.stopPropagation()}
 							className="max-h-[90dvh] max-w-full rounded-sm object-contain"
