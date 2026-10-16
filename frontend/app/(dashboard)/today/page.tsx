@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Plus, Dumbbell, Ruler, ArrowRight } from "lucide-react";
+import { Plus, ArrowRight } from "lucide-react";
 import { getUserServer } from "@/helper/session";
 import {
   getDayDiary,
@@ -207,7 +207,7 @@ export default async function TodayPage({
           <header className="log-section-header">
             <h2 id="meals-title">Meals</h2>
             <LogEntryButton kind="meal" date={date} className="text-link">
-              <Plus size={16} /> Add meal
+               Add meal
             </LogEntryButton>
           </header>
           {diary.entries.length === 0 ? (
@@ -265,7 +265,6 @@ export default async function TodayPage({
           <section aria-labelledby="training-title">
             <header className="log-section-header">
               <h2 id="training-title">Training</h2>
-              <Dumbbell size={18} className="log-muted" />
             </header>
             {workouts.length ? (
               workouts.map((workout) => (
@@ -326,7 +325,6 @@ export default async function TodayPage({
           <section aria-labelledby="measurements-title">
             <header className="log-section-header">
               <h2 id="measurements-title">Measurements</h2>
-              <Ruler size={18} className="log-muted" />
             </header>
             {measurements.length ? (
               measurements.map((measurement) => (
@@ -380,7 +378,7 @@ export default async function TodayPage({
               date={date}
               className="text-link mt-3"
             >
-              <Plus size={14} /> Add measurement
+              Add measurement
             </LogEntryButton>
           </section>
         </div>

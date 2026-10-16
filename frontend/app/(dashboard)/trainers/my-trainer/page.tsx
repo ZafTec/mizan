@@ -114,17 +114,14 @@ export default function MyTrainerPage() {
 						</p>
 					</div>
 					<Link href="/profile" className="btn-secondary">
-						<i className="ri-arrow-left-line" />
 						Back to Profile
 					</Link>
 				</div>
 
 				<div className="card p-12 text-center">
-					<i className="ri-user-heart-line text-6xl text-charcoal-blue-300 mb-4" />
 					<h3 className="text-lg font-semibold text-charcoal-blue-900 mb-2">No Active Trainer</h3>
 					<p className="text-charcoal-blue-500 mb-6">No active trainer relationship.</p>
 					<Link href="/trainers" className="btn-primary inline-flex items-center gap-2">
-						<i className="ri-search-line" />
 						Find a trainer
 					</Link>
 				</div>
@@ -142,7 +139,6 @@ export default function MyTrainerPage() {
 					</h1>
 				</div>
 				<Link href="/profile" className="btn-secondary">
-					<i className="ri-arrow-left-line" />
 					Back to Profile
 				</Link>
 			</div>
@@ -174,7 +170,6 @@ export default function MyTrainerPage() {
 						<p className="text-charcoal-blue-500">{trainer.trainerEmail}</p>
 						<div className="flex items-center gap-2 mt-2 justify-center sm:justify-start">
 							<span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-sm font-medium">
-								<i className="ri-checkbox-circle-line" />
 								Active
 							</span>
 							<span className="text-sm text-charcoal-blue-500">
@@ -199,7 +194,6 @@ export default function MyTrainerPage() {
 										: "bg-charcoal-blue-200 text-charcoal-blue-400"
 								}`}
 							>
-								<i className="ri-restaurant-2-line text-lg" />
 							</div>
 							<div>
 								<p className="font-medium text-charcoal-blue-900">Nutrition Data</p>
@@ -217,7 +211,6 @@ export default function MyTrainerPage() {
 										: "bg-charcoal-blue-200 text-charcoal-blue-400"
 								}`}
 							>
-								<i className="ri-run-line text-lg" />
 							</div>
 							<div>
 								<p className="font-medium text-charcoal-blue-900">Workout Data</p>
@@ -235,7 +228,6 @@ export default function MyTrainerPage() {
 										: "bg-charcoal-blue-200 text-charcoal-blue-400"
 								}`}
 							>
-								<i className="ri-ruler-line text-lg" />
 							</div>
 							<div>
 								<p className="font-medium text-charcoal-blue-900">Body Measurements</p>
@@ -253,7 +245,6 @@ export default function MyTrainerPage() {
 										: "bg-charcoal-blue-200 text-charcoal-blue-400"
 								}`}
 							>
-								<i className="ri-message-3-line text-lg" />
 							</div>
 							<div>
 								<p className="font-medium text-charcoal-blue-900">Direct Messaging</p>
@@ -302,7 +293,6 @@ export default function MyTrainerPage() {
 					{trainer.canMessage &&
 						(trainer.trainerId ? (
 							<Link href={`/chat?recipientId=${trainer.trainerId}`} className="btn-primary w-full">
-								<i className="ri-message-3-line" />
 								Send Message
 							</Link>
 						) : null)}
@@ -312,7 +302,6 @@ export default function MyTrainerPage() {
 						disabled={saving}
 						onClick={endRelationship}
 					>
-						<i className="ri-close-circle-line" />
 						End Relationship
 					</button>
 				</div>

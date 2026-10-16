@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Icon } from "@/components/ui/icon";
 import { getUserServer } from "@/helper/session";
 import { serverApi } from "@/lib/api.server";
 import MessagingThread from "@/components/Messaging/MessagingThread";
@@ -97,7 +96,6 @@ export default async function MessagingPage({
 			{conversations.length === 0 ? (
 				<section className="glass-panel flex flex-col items-center justify-center gap-3 p-12 text-center">
 					<span className="icon-chip h-14 w-14 text-verdigris-700 dark:text-verdigris-300">
-						<Icon name="messageCircle" size={22} />
 					</span>
 					<p className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
 						No conversations yet
@@ -110,7 +108,6 @@ export default async function MessagingPage({
 					{!isTrainer && (
 						<Link href="/trainers" className="btn-primary !rounded-2xl !py-2 text-sm">
 							Find a coach
-							<Icon name="arrowRight" size={14} />
 						</Link>
 					)}
 				</section>
@@ -120,7 +117,6 @@ export default async function MessagingPage({
 						<header className="border-b border-charcoal-blue-200/70 p-4 dark:border-white/10">
 							<div className="flex items-center gap-2">
 								<span className="icon-chip h-9 w-9 text-verdigris-700 dark:text-verdigris-300">
-									<Icon name="users" size={15} />
 								</span>
 								<div>
 									<p className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">

@@ -215,7 +215,6 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 						>
 							<div className="mb-5 flex items-start gap-4">
 								<span className="icon-chip h-12 w-12 text-red-500 dark:text-red-400">
-									<Icon name="logout" size={20} aria-hidden="true" />
 								</span>
 								<div className="space-y-1">
 									<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -311,7 +310,6 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 											className="group flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
 										>
 											<span className="flex h-5 w-5 items-center justify-center text-red-500 dark:text-red-400">
-												<Icon name="logout" size={16} aria-hidden="true" />
 											</span>
 											<span>Sign out</span>
 										</button>
@@ -329,7 +327,6 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 							</Link>
 							<Link href="/register" className="btn-primary">
 								Get Started
-								<Icon name="arrowRight" size={16} aria-hidden="true" />
 							</Link>
 						</>
 					)}
@@ -389,7 +386,6 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 											}}
 											className="btn-ghost text-red-600 dark:text-red-400"
 										>
-											<Icon name="logout" size={16} aria-hidden="true" />
 											Sign out
 										</button>
 									</div>
@@ -408,7 +404,6 @@ export default function NavbarContent({ user }: NavbarContentProps) {
 											className="btn-primary flex-1 justify-center"
 										>
 											Get Started
-											<Icon name="arrowRight" size={16} aria-hidden="true" />
 										</Link>
 									</div>
 								)}

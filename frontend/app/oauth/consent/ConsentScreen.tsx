@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HouseholdPicker, PermissionPicker } from "@/components/mcp/PermissionPicker";
 import { McpApiError, oauthConsentApi } from "@/lib/api/mcp";
@@ -196,7 +195,7 @@ function Trust({ request }: { request: AuthorizationRequest }) {
 	if (request.isFirstParty) {
 		return (
 			<p className="flex items-center gap-2 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
-				<Icon name="shieldCheck" size={16} /> A Mizan app
+				 A Mizan app
 			</p>
 		);
 	}
@@ -204,14 +203,13 @@ function Trust({ request }: { request: AuthorizationRequest }) {
 	if (request.source === "metadata" && request.verifiedHost) {
 		return (
 			<p className="flex items-center gap-2 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
-				<Icon name="circleCheck" size={16} /> Published by {request.verifiedHost}
+				 Published by {request.verifiedHost}
 			</p>
 		);
 	}
 
 	return (
 		<p className="flex items-start gap-2 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-300">
-			<Icon name="badgeAlert" size={16} className="mt-0.5" />
 			<span>
 				This app registered itself and Mizan cannot confirm who made it. Only continue if you started this connection
 				yourself.

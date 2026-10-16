@@ -7,7 +7,6 @@ export default function NotFound() {
 				{/* Header */}
 				<div className="text-center mb-8">
 					<div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-charcoal-blue-900 dark:bg-charcoal-blue-700 mb-6">
-						<i className="ri-error-warning-line text-4xl text-white" />
 					</div>
 					<h1 className="text-6xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 						404
@@ -24,11 +23,9 @@ export default function NotFound() {
 				<div className="card p-6 sm:p-8 space-y-4">
 					<div className="space-y-3">
 						<Link href="/" className="btn-primary w-full py-3">
-							<i className="ri-home-line" />
 							Go to Dashboard
 						</Link>
 						<Link href="/recipes" className="btn-secondary w-full py-3">
-							<i className="ri-restaurant-line" />
 							Browse Recipes
 						</Link>
 					</div>

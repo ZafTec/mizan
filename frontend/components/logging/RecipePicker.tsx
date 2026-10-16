@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { ArrowLeft, Heart, History, Plus, Search } from "lucide-react";
+import { Heart, History, Plus, Search } from "lucide-react";
 import { clientApi } from "@/lib/api.client";
 import type { RecipeResult } from "./logging";
 
@@ -78,7 +78,6 @@ export default function RecipePicker({
           onClick={onBack}
           className="flex min-h-11 items-center gap-2 text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300"
         >
-          <ArrowLeft aria-hidden="true" size={16} strokeWidth={1.7} />
           Back to your meal
         </button>
       </div>

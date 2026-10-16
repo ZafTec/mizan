@@ -30,7 +30,6 @@ export default function IngredientForm({ action, initialData, submitText }: Ingr
 
             <div className="card p-6 space-y-5">
 	                <h2 className="flex items-center gap-2 border-b border-charcoal-blue-100 pb-4 font-semibold text-charcoal-blue-900 dark:border-white/10 dark:text-charcoal-blue-100">
-                    <i className="ri-information-line text-brand-500" />
                     General Information
                 </h2>
 
@@ -93,7 +92,6 @@ export default function IngredientForm({ action, initialData, submitText }: Ingr
 
             <div className="card p-6 space-y-5">
 	                <h2 className="flex items-center gap-2 border-b border-charcoal-blue-100 pb-4 font-semibold text-charcoal-blue-900 dark:border-white/10 dark:text-charcoal-blue-100">
-                    <i className="ri-heart-pulse-line text-brand-500" />
                     Nutrition (per 100g)
                 </h2>
 
@@ -163,7 +161,6 @@ export default function IngredientForm({ action, initialData, submitText }: Ingr
                     </div>
                 </div>
 	                <p className="mt-2 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-                    <i className="ri-information-line mr-1" />
                     Important: All nutrition values must be provided <strong>per 100g</strong> of the ingredient for consistent calculations.
                 </p>
             </div>
@@ -194,7 +191,6 @@ export default function IngredientForm({ action, initialData, submitText }: Ingr
 
 	            {formState.status === "error" && (
 	                <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-sm font-medium text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
-                    <i className="ri-error-warning-line mr-2" />
                     {formState.message}
                 </div>
             )}

@@ -18,7 +18,6 @@ import {
 	type PlanChangePreview,
 } from "@/lib/billing";
 import { appToast } from "@/lib/toast";
-import { Icon } from "@/components/ui/icon";
 import Loading from "@/components/Loading";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import { ModalShell } from "@/components/ModalShell";
@@ -239,7 +238,6 @@ function ChoosePlan({
 			<ul className="mt-4 space-y-2">
 				{PRO_PERKS.map((perk) => (
 					<li key={perk} className="flex items-start gap-2 text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300">
-						<Icon name="circleCheck" size={14} className="mt-0.5 shrink-0 text-verdigris-700 dark:text-verdigris-400" aria-hidden="true" />
 						{perk}
 					</li>
 				))}
@@ -383,7 +381,6 @@ function Subscribed({
 			<ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
 				{PRO_PERKS.map((perk) => (
 					<li key={perk} className="flex items-start gap-2 text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300">
-						<Icon name="circleCheck" size={14} className="mt-0.5 shrink-0 text-verdigris-700 dark:text-verdigris-400" aria-hidden="true" />
 						{perk}
 					</li>
 				))}

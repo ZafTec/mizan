@@ -4,14 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Dumbbell,
-  Ruler,
-  Utensils,
-  X,
-} from "lucide-react";
+import { ArrowRight, Dumbbell, Ruler, Utensils, X } from "lucide-react";
 import MealLogForm from "@/components/logging/MealLogForm";
 import MeasurementLogForm from "@/components/logging/MeasurementLogForm";
 import { type LogKind } from "@/components/logging/LogEntryButton";
@@ -115,7 +108,6 @@ function OpenLogSheet({
                   disabled={busy}
                   className="flex min-h-11 items-center gap-2 text-sm text-charcoal-blue-700 disabled:opacity-50 dark:text-charcoal-blue-300"
                 >
-                  <ArrowLeft aria-hidden="true" size={16} strokeWidth={1.7} />
                   All entries
                 </button>
               ) : (
@@ -221,7 +213,6 @@ function OpenLogSheet({
                 className="btn-primary min-h-11 w-full"
               >
                 Open workout
-                <ArrowRight aria-hidden="true" size={17} strokeWidth={1.7} />
               </Link>
             </div>
           )}

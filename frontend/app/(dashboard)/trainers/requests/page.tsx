@@ -58,7 +58,6 @@ export default function TrainerRequestsPage() {
 					</h1>
 				</div>
 				<Link href="/profile" className="btn-secondary">
-					<i className="ri-arrow-left-line" />
 					Back to Profile
 				</Link>
 			</div>
@@ -66,7 +65,6 @@ export default function TrainerRequestsPage() {
 			{/* Requests List */}
 			{requests.length === 0 ? (
 				<div className="card p-12 text-center">
-					<i className="ri-mail-send-line text-6xl text-charcoal-blue-300 dark:text-charcoal-blue-600 mb-4" />
 					<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
 						No Pending Requests
 					</h3>
@@ -74,7 +72,6 @@ export default function TrainerRequestsPage() {
 						No pending trainer requests.
 					</p>
 					<Link href="/trainers" className="btn-primary inline-flex items-center gap-2">
-						<i className="ri-search-line" />
 						Find a Trainer
 					</Link>
 				</div>
@@ -118,7 +115,6 @@ export default function TrainerRequestsPage() {
 									</p>
 									<div className="flex items-center gap-2 mt-2 justify-center sm:justify-start">
 										<span className="inline-flex items-center gap-1 px-3 py-1 rounded-2xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-medium">
-											<i className="ri-time-line" />
 											Pending
 										</span>
 										<span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
@@ -137,7 +133,6 @@ export default function TrainerRequestsPage() {
 											appToast.info("Cancel request is not available yet");
 										}}
 									>
-										<i className="ri-close-line" />
 										Cancel
 									</button>
 								</div>
@@ -151,7 +146,6 @@ export default function TrainerRequestsPage() {
 			<div className="card p-6 border border-blue-200 dark:border-blue-800">
 				<div className="flex items-start gap-4">
 					<div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
-						<i className="ri-information-line text-2xl text-white" />
 					</div>
 					<div>
 						<h3 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
@@ -159,17 +153,14 @@ export default function TrainerRequestsPage() {
 						</h3>
 						<ul className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 space-y-2">
 							<li className="flex items-start gap-2">
-								<i className="ri-arrow-right-s-line text-blue-500 mt-0.5" />
 								<span>The trainer will review your request and decide whether to accept</span>
 							</li>
 							<li className="flex items-start gap-2">
-								<i className="ri-arrow-right-s-line text-blue-500 mt-0.5" />
 								<span>
 									If accepted, they will set what data they can access (nutrition, workouts, etc.)
 								</span>
 							</li>
 							<li className="flex items-start gap-2">
-								<i className="ri-arrow-right-s-line text-blue-500 mt-0.5" />
 								<span>You'll be notified when the trainer responds to your request</span>
 							</li>
 						</ul>

@@ -155,7 +155,6 @@ export default function TrainersPage() {
 									{trainer.email}
 								</p>
 								<div className="flex items-center gap-2 text-xs text-charcoal-blue-600 dark:text-charcoal-blue-400">
-									<i className="ri-group-line" />
 									<span>{trainer.clientCount || 0} clients</span>
 								</div>
 							</div>
@@ -180,7 +179,6 @@ export default function TrainersPage() {
 									</>
 								) : (
 									<>
-										<i className="ri-user-add-line" />
 										Send Request
 									</>
 								)}

@@ -76,7 +76,6 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 			{/* Basic Info Card */}
 			<div className="card p-6 space-y-5">
 				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
-					<i className="ri-edit-line text-brand-500" />
 					Log Details
 				</h2>
 
@@ -121,7 +120,6 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 			{/* Serving Size Card */}
 			<div className="card p-6 space-y-4">
 				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
-					<i className="ri-scales-line text-brand-500" />
 					Serving Size
 				</h2>
 
@@ -178,7 +176,6 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 			{/* Nutrition Info Card */}
 			<div className="card p-6 space-y-5 text-charcoal-blue-900 dark:text-charcoal-blue-100">
 				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
-					<i className="ri-heart-pulse-line text-brand-500" />
 					Nutritional Information
 					{servings !== 1 && (
 						<span className="ml-auto text-xs font-normal text-brand-500 bg-brand-50 dark:bg-brand-950/40 px-2 py-0.5 rounded-full">
@@ -270,7 +267,6 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 				{formState.status === "success" && formState.warnings?.length ? (
 					<div ref={warningsRef} className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
 						<div className="flex items-start gap-3">
-							<i className="ri-error-warning-line text-xl text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
 							<div>
 								<p className="font-semibold text-amber-800 dark:text-amber-300">Nutrition hint{formState.warnings.length > 1 ? "s" : ""}</p>
 								<ul className="mt-2 space-y-1.5">
@@ -284,14 +280,12 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 					</div>
 				) : formState.status === "error" && formState.message ? (
 					<div className="p-4 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 flex items-center gap-2">
-						<i className="ri-error-warning-line text-xl" />
 						<span>{formState.message}</span>
 					</div>
 				) : null}
 
 				{formState.status === "success" && formState.warnings?.length ? (
 					<Link href="/meals" className="btn-primary w-full py-3 flex items-center justify-center gap-2">
-						<i className="ri-arrow-right-line text-xl" />
 						Continue to Diary
 					</Link>
 				) : (
@@ -307,7 +301,6 @@ export default function AddMealFromRecipe({ recipeId, name, macros }: AddMealFro
 							</>
 						) : (
 							<>
-								<i className="ri-check-line text-xl" />
 								Confirm & Log Meal
 							</>
 						)}

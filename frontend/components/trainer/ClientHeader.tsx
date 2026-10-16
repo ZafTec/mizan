@@ -5,7 +5,7 @@ import { clientApi } from "@/lib/api.client";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 
 interface ClientRelationship {
 	relationshipId: string;
@@ -65,7 +65,6 @@ export function ClientHeader({ clientId }: ClientHeaderProps) {
 					href="/trainer"
 					className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-4"
 				>
-					<ArrowLeft className="w-4 h-4 mr-2" />
 					Back to Dashboard
 				</Link>
 				<div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
@@ -83,7 +82,6 @@ export function ClientHeader({ clientId }: ClientHeaderProps) {
 				href="/trainer"
 				className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-4"
 			>
-				<ArrowLeft className="w-4 h-4 mr-2" />
 				Back to Dashboard
 			</Link>
 

@@ -37,7 +37,6 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         />
         {error && (
           <p className="mt-1.5 text-sm text-red-500 flex items-center gap-1">
-            <i className="ri-error-warning-line" />
             {error}
           </p>
         )}

@@ -106,3 +106,4 @@ Controls and panels use the shared corner token; structural rules are (1px). Cir
 - **Do** keep numeric columns aligned and actions reachable on small screens.
 - **Don't** add display typefaces, gradients, surface shadows, or looping icon motion.
 - **Don't** turn every record into a card or every label into a badge.
+- **Don't** add an icon that only decorates. An icon stays when it is the control and its meaning is universal: close, delete on a row, paging and date chevrons, the magnifier in a search field, a dropdown chevron, the checkbox tick, a provider logo, the primary Log entry plus, and a chevron on a row that opens something. Glyphs beside headings or button labels, empty-state and alert glyphs, icon tiles, category glyphs in lists and arrows inside buttons are removed.

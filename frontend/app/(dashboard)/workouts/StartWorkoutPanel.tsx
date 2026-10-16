@@ -1,6 +1,5 @@
 ﻿"use client";
 
-import { Plus, Repeat2, ArrowRight } from "lucide-react";
 import type { WorkoutSummaryDto, WorkoutTemplateDto } from "@/types/workout";
 
 export default function StartWorkoutPanel({
@@ -20,28 +19,24 @@ export default function StartWorkoutPanel({
     <div className="space-y-8">
       <div className="border-y divide-y">
         <button className="workout-start-row" onClick={onEmpty}>
-          <Plus size={22} />
           <span className="flex-1">
             <span className="block font-semibold">Empty workout</span>
             <span className="block text-sm log-muted mt-1">
               Add exercises and record sets as you train.
             </span>
           </span>
-          <ArrowRight size={17} />
         </button>
         {lastWorkout && (
           <button
             className="workout-start-row"
             onClick={() => onRepeat(lastWorkout)}
           >
-            <Repeat2 size={22} />
             <span className="flex-1">
               <span className="block font-semibold">Repeat last workout</span>
               <span className="block text-sm log-muted mt-1">
                 {lastWorkout.name || "Previous workout"}
               </span>
             </span>
-            <ArrowRight size={17} />
           </button>
         )}
       </div>
@@ -63,7 +58,6 @@ export default function StartWorkoutPanel({
                     </span>
                   )}
                 </span>
-                <ArrowRight size={17} />
               </button>
             ))}
           </div>
