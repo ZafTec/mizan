@@ -8,7 +8,7 @@ import {
 	useState,
 	useTransition,
 	type FormEvent,
-	type KeyboardEvent,
+	type KeyboardEvent, type MouseEvent,
 } from "react";
 import { useRouter } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -321,10 +321,7 @@ export default function AiChat({ quickPrompts }: { quickPrompts: QuickPrompt[] }
 								aria-label="Preview the photo to send"
 								className="h-14 w-14 shrink-0 overflow-hidden rounded-sm border border-border"
 							>
-								{(attachment.url.startsWith("blob:") || attachment.url.startsWith("data:image/") || attachment.url.startsWith("https://") || attachment.url.startsWith("http://") || attachment.url.startsWith("/")) && (
-									/* eslint-disable-next-line @next/next/no-img-element -- a local preview, not a hosted image */
-									<img src={attachment.url} alt="" className="h-full w-full object-cover" />
-								)}
+								<PictureImage src={attachment.url} alt="" className="h-full w-full object-cover" />
 							</button>
 							<span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{attachment.file.name}</span>
 							<button type="button" onClick={() => attach(null)} aria-label="Remove photo" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm hover:bg-muted">
@@ -453,10 +450,12 @@ function ConversationList({
 
 /**
  * Only addresses a browser can show as a picture reach an <img>: the preview blob, an inline image, a hosted
- * photo, or a path on this site. The check is written out at each image so static analysis can see it.
+ * photo, or a path on this site. The check guards the parameter directly, the shape static analysis follows.
  */
-export function isPictureAddress(src: string): boolean {
-	return src.startsWith("blob:") || src.startsWith("data:image/") || src.startsWith("https://") || src.startsWith("http://") || src.startsWith("/");
+function PictureImage({ src, alt, className, onClick }: { src: string; alt: string; className?: string; onClick?: (event: MouseEvent<HTMLImageElement>) => void }) {
+	if (!(src.startsWith("blob:") || src.startsWith("data:image/") || src.startsWith("https://") || src.startsWith("http://") || src.startsWith("/"))) return null;
+	// eslint-disable-next-line @next/next/no-img-element -- previews and photos the person chose, not hosted site images
+	return <img src={src} alt={alt} className={className} onClick={onClick} />;
 }
 
 function EmptyState({
@@ -584,9 +583,8 @@ function Lightbox({ image, onClose }: { image: { src: string; label: string } | 
 					onClick={onClose}
 				>
 					<Dialog.Title className="sr-only">{image?.label ?? "Photo"}</Dialog.Title>
-					{image && (image.src.startsWith("blob:") || image.src.startsWith("data:image/") || image.src.startsWith("https://") || image.src.startsWith("http://") || image.src.startsWith("/")) && (
-						/* eslint-disable-next-line @next/next/no-img-element -- see above */
-						<img
+					{image && (
+						<PictureImage
 							src={image.src}
 							alt={image.label}
 							onClick={(event) => event.stopPropagation()}
