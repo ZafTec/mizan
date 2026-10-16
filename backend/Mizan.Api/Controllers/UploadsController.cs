@@ -34,8 +34,9 @@ public class UploadsController : ControllerBase
             throw new DomainValidationException("No file was uploaded.");
         }
 
-        // Only an administrator curates exercise media, and models have their own door.
-        if (folder == StorageFolder.Models || (folder == StorageFolder.Exercises && !User.IsInRole("admin")))
+        // Only an administrator curates exercise media and achievement badges, and models have their own door.
+        var curated = folder is StorageFolder.Exercises or StorageFolder.Achievements;
+        if (folder == StorageFolder.Models || (curated && !User.IsInRole("admin")))
         {
             throw new DomainValidationException("That folder is not open to uploads.");
         }

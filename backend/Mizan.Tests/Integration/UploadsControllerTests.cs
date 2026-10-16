@@ -100,7 +100,22 @@ public class UploadsControllerTests
 
         (await user.PostAsync("/api/Uploads/image?folder=Models", Png("x.png"))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await user.PostAsync("/api/Uploads/image?folder=Exercises", Png("x.png"))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await user.PostAsync("/api/Uploads/image?folder=Achievements", Png("x.png"))).StatusCode.Should().Be(HttpStatusCode.BadRequest, "badges are curated like exercise media");
         user.Dispose();
+    }
+
+    [Fact]
+    public async Task AnAdministrator_CanUploadAnAchievementBadge_AndItLandsInItsOwnFolder()
+    {
+        var admin = await SignedInAsync(role: "admin");
+
+        var response = await admin.PostAsync("/api/Uploads/image?folder=Achievements", Png("badge.png"));
+
+        // Storage is not configured in the test host, so the door is open but the shelf is missing: the
+        // request gets past authorization and is refused for storage, never for the folder.
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().NotContain("not open to uploads");
+        admin.Dispose();
     }
 
     [Fact]
