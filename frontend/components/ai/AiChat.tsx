@@ -330,8 +330,10 @@ export default function AiChat({ quickPrompts }: { quickPrompts: QuickPrompt[] }
 								aria-label="Preview the photo to send"
 								className="h-14 w-14 shrink-0 overflow-hidden rounded-sm border border-border"
 							>
-								{/* eslint-disable-next-line @next/next/no-img-element -- a local preview, not a hosted image */}
-								<img src={attachment.url} alt="" className="h-full w-full object-cover" />
+								{pictureAddress(attachment.url) && (
+									/* eslint-disable-next-line @next/next/no-img-element -- a local preview, not a hosted image */
+									<img src={pictureAddress(attachment.url) ?? undefined} alt="" className="h-full w-full object-cover" />
+								)}
 							</button>
 							<span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{attachment.file.name}</span>
 							<button type="button" onClick={() => attach(null)} aria-label="Remove photo" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm hover:bg-muted">
@@ -455,6 +457,15 @@ function ConversationList({
 			)}
 		</div>
 	);
+}
+
+/**
+ * Only addresses a browser can show as a picture reach an <img>: the preview blob, a hosted photo, or a
+ * path on this site. A file name or any other text from the page never becomes a source.
+ */
+function pictureAddress(src: string): string | null {
+	if (src.startsWith("blob:") || src.startsWith("https://") || src.startsWith("http://") || src.startsWith("/")) return src;
+	return null;
 }
 
 function EmptyState({
@@ -583,10 +594,10 @@ function Lightbox({ image, onClose }: { image: { src: string; label: string } | 
 					onClick={onClose}
 				>
 					<Dialog.Title className="sr-only">{image?.label ?? "Photo"}</Dialog.Title>
-					{image && (
+					{image && pictureAddress(image.src) && (
 						/* eslint-disable-next-line @next/next/no-img-element -- see above */
 						<img
-							src={image.src}
+							src={pictureAddress(image.src) ?? undefined}
 							alt={image.label}
 							onClick={(event) => event.stopPropagation()}
 							className="max-h-[90dvh] max-w-full rounded-sm object-contain"
