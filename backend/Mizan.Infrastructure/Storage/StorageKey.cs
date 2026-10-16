@@ -17,6 +17,7 @@ public static class StorageKey
             [StorageFolder.Meals] = "meals",
             [StorageFolder.Exercises] = "exercises",
             [StorageFolder.Models] = "models",
+            [StorageFolder.Achievements] = "achievements",
         };
 
     public static string Build(StorageFolder folder, string fileName, DateTime? nowUtc = null)

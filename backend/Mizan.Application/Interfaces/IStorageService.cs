@@ -21,6 +21,9 @@ public enum StorageFolder
 
     /// <summary>3D models (glTF binary) made for the app, such as the rigged exercise figures. Administrator only.</summary>
     Models = 4,
+
+    /// <summary>Achievement badges. Rendered offline, uploaded by an administrator, shown at 28px in the list.</summary>
+    Achievements = 5,
 }
 
 public record StorageUpload(

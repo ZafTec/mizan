@@ -17,7 +17,6 @@ import {
 	ArrowUp,
 	ChartLine,
 	Flame,
-	Camera,
 	Check,
 	CircleAlert,
 	Copy,
@@ -342,7 +341,7 @@ export default function AiChat({ quickPrompts }: { quickPrompts: QuickPrompt[] }
 						</div>
 					)}
 
-					<div className="flex items-end gap-2">
+					<div className="rounded-md border border-border bg-background transition-colors focus-within:border-foreground">
 						<input
 							ref={fileInput}
 							type="file"
@@ -355,16 +354,6 @@ export default function AiChat({ quickPrompts }: { quickPrompts: QuickPrompt[] }
 								if (picked) attach(picked);
 							}}
 						/>
-						<button
-							type="button"
-							onClick={() => fileInput.current?.click()}
-							disabled={pending}
-							aria-label="Attach a photo"
-							title="Attach a photo"
-							className="btn-secondary h-11 w-11 shrink-0 !p-0 disabled:opacity-60"
-						>
-							<Camera aria-hidden="true" size={18} strokeWidth={1.7} />
-						</button>
 						<label htmlFor="ai-message" className="sr-only">
 							Message the assistant
 						</label>
@@ -377,16 +366,28 @@ export default function AiChat({ quickPrompts }: { quickPrompts: QuickPrompt[] }
 							onKeyDown={onKeyDown}
 							disabled={pending}
 							placeholder={attachment ? "Say something about it (optional)" : "Ask the assistant"}
-							className="input min-h-11 flex-1 resize-none py-2.5 leading-6"
+							className="block w-full resize-none bg-transparent px-4 pb-1 pt-3 leading-6 text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-60"
 						/>
-						<button
-							type="submit"
-							disabled={pending || (!input.trim() && !attachment)}
-							aria-label="Send"
-							className="btn-primary h-11 w-11 shrink-0 !p-0 disabled:cursor-not-allowed disabled:opacity-50"
-						>
-							<ArrowUp aria-hidden="true" size={18} strokeWidth={1.9} />
-						</button>
+						<div className="flex items-center justify-between px-2 pb-2">
+							<button
+								type="button"
+								onClick={() => fileInput.current?.click()}
+								disabled={pending}
+								aria-label="Attach a photo"
+								title="Attach a photo"
+								className="flex h-10 w-10 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-60"
+							>
+								<Plus aria-hidden="true" size={20} strokeWidth={1.7} />
+							</button>
+							<button
+								type="submit"
+								disabled={pending || (!input.trim() && !attachment)}
+								aria-label="Send"
+								className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-700 text-white transition-colors hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-brand-300 dark:text-charcoal-blue-950 dark:hover:bg-brand-200"
+							>
+								<ArrowUp aria-hidden="true" size={18} strokeWidth={2} />
+							</button>
+						</div>
 					</div>
 					<p className="hidden text-xs text-muted-foreground sm:block">Enter sends. Shift and Enter start a new line.</p>
 				</form>
@@ -460,11 +461,11 @@ function ConversationList({
 }
 
 /**
- * Only addresses a browser can show as a picture reach an <img>: the preview blob, a hosted photo, or a
- * path on this site. A file name or any other text from the page never becomes a source.
+ * Only addresses a browser can show as a picture reach an <img>: the preview blob, an inline image, a hosted
+ * photo, or a path on this site. A file name or any other text from the page never becomes a source.
  */
 function pictureAddress(src: string): string | null {
-	if (src.startsWith("blob:") || src.startsWith("https://") || src.startsWith("http://") || src.startsWith("/")) return src;
+	if (src.startsWith("blob:") || src.startsWith("data:image/") || src.startsWith("https://") || src.startsWith("http://") || src.startsWith("/")) return src;
 	return null;
 }
 

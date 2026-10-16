@@ -2,7 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { clientApi } from "@/lib/api.client";
+import { useImageUpload } from "@/components/ImageUpload";
 import { appToast } from "@/lib/toast";
 
 /**
@@ -58,6 +60,10 @@ export default function AchievementForm({ initial }: { initial: AchievementDraft
 	const [pending, startTransition] = useTransition();
 
 	const editing = Boolean(initial.id);
+	const badge = useImageUpload({
+		folder: "achievements",
+		onUploaded: (url) => setDraft((current) => ({ ...current, iconUrl: url })),
+	});
 
 	function set<K extends keyof AchievementDraft>(key: K, value: AchievementDraft[K]) {
 		setDraft((d) => ({ ...d, [key]: value }));
@@ -120,6 +126,35 @@ export default function AchievementForm({ initial }: { initial: AchievementDraft
 						maxLength={500}
 						className="input w-full"
 						placeholder="Log a meal every day for a week."
+					/>
+				</Field>
+
+				<Field label="Badge" helper="Shown at 28px beside the name. Rendered badges follow design/achievement-assets.md.">
+					<div className="flex flex-wrap items-center gap-3">
+						{draft.iconUrl ? (
+							<Image src={draft.iconUrl} alt="" width={56} height={56} unoptimized className="h-14 w-14 rounded-sm border border-border object-contain" />
+						) : (
+							<span aria-hidden="true" className="flex h-14 w-14 items-center justify-center rounded-sm border border-dashed border-border text-xs log-muted">
+								28px
+							</span>
+						)}
+						<button type="button" className="btn-secondary btn-sm" onClick={badge.open} disabled={pending || badge.uploading}>
+							{badge.uploading ? "Uploading…" : draft.iconUrl ? "Replace badge" : "Upload badge"}
+						</button>
+						{draft.iconUrl && (
+							<button type="button" className="text-link text-sm" onClick={() => set("iconUrl", "")} disabled={pending}>
+								Remove
+							</button>
+						)}
+						{badge.input}
+					</div>
+					<input
+						type="url"
+						value={draft.iconUrl}
+						onChange={(e) => set("iconUrl", e.target.value)}
+						className="input mt-3 w-full"
+						placeholder="https://… or upload a file"
+						aria-label="Badge address"
 					/>
 				</Field>
 
