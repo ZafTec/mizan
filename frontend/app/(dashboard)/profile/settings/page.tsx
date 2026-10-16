@@ -300,7 +300,6 @@ export default function ProfileSettingsPage() {
 						<AvatarPreview image={previewImage} email={user.email} name={displayName} />
 						<div>
 							<p className="eyebrow mb-3">
-								<Icon name="user" size={14} aria-hidden="true" />
 								Settings center
 							</p>
 							<h1 className="text-3xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -342,7 +341,6 @@ export default function ProfileSettingsPage() {
 									disabled={uploadingAvatar || avatarUpload.uploading}
 									className="btn-secondary w-full justify-center"
 								>
-									<Icon name="upload" size={16} aria-hidden="true" />
 									{uploadingAvatar || avatarUpload.uploading ? "Saving avatar..." : "Upload avatar"}
 								</button>
 							</div>
@@ -505,7 +503,6 @@ export default function ProfileSettingsPage() {
 							className="group mt-6 flex items-center gap-3 rounded-2xl border border-charcoal-blue-200 p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-brand-500/40 hover:bg-brand-50/40 active:translate-y-0 dark:border-white/10 dark:hover:bg-white/5"
 						>
 							<span className="icon-chip h-10 w-10 shrink-0 text-brand-600 transition-colors group-hover:bg-brand-500/15 dark:text-brand-400">
-								<Icon name="messageCircle" size={18} />
 							</span>
 							<span className="min-w-0 flex-1">
 								<span className="block font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -516,7 +513,6 @@ export default function ProfileSettingsPage() {
 								</span>
 							</span>
 							<span className="shrink-0 text-charcoal-blue-300 transition-transform duration-150 group-hover:translate-x-0.5 dark:text-charcoal-blue-600">
-								<Icon name="arrowRight" size={16} aria-hidden="true" />
 							</span>
 						</Link>
 					</section>
@@ -662,7 +658,6 @@ function SectionHeading({
 	return (
 		<div className="flex items-start gap-3">
 			<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
-				<Icon name={icon} size={18} aria-hidden="true" />
 			</span>
 			<div>
 				<h2 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{title}</h2>

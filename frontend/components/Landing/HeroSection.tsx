@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Icon } from "@/components/ui/icon";
 
 /**
  * The proof card is the product, not an illustration of it: same flat
@@ -29,7 +28,6 @@ export function HeroSection() {
 				<div className="flex items-center gap-3">
 					<Link href="/register" className="btn-primary">
 						Start logging free
-						<Icon name="arrowRight" size={15} aria-hidden="true" />
 					</Link>
 					<Link href="#thesis" className="btn-secondary">
 						Read the thesis
@@ -46,7 +44,6 @@ export function HeroSection() {
 						Tuesday, 26 August
 					</span>
 					<span className="flex items-center gap-1.5 text-xs font-semibold text-burnt-peach-700 dark:text-burnt-peach-400">
-						<Icon name="flame" size={13} aria-hidden="true" />
 						12 days · resets 09:41
 					</span>
 				</div>
@@ -72,7 +69,6 @@ export function HeroSection() {
 					<MealRow name="Shiro wat & injera" meta="Lunch · 1 serving" kcal="612 kcal" />
 					<MealRow name="Greek yoghurt, honey" meta="Breakfast · 200 g" kcal="248 kcal" />
 					<div className="flex items-center gap-3 px-5 py-3 bg-charcoal-blue-50 dark:bg-charcoal-blue-900">
-						<Icon name="messageCircle" size={15} className="shrink-0 text-verdigris-700 dark:text-verdigris-400" aria-hidden="true" />
 						<div className="min-w-0 flex-1 text-[13px] text-verdigris-700 dark:text-verdigris-400">
 							From Telegram — photo of dinner, confirmed
 						</div>

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Icon } from "@/components/ui/icon";
 import { ADMIN_TABS } from "@/components/Layout/nav";
 import { cn } from "@/lib/utils";
 
@@ -31,7 +30,6 @@ export default function AdminTabs() {
 									: "border-transparent text-charcoal-blue-500 hover:text-charcoal-blue-800 dark:text-charcoal-blue-400 dark:hover:text-charcoal-blue-100",
 							)}
 						>
-							<Icon name={tab.icon} size={15} aria-hidden="true" />
 							{tab.label}
 						</Link>
 					);

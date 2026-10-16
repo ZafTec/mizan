@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { Icon } from "@/components/ui/icon";
 import {
 	removeHouseholdMember,
 	respondToInvitation,
@@ -70,7 +69,6 @@ export function MemberList({
 								onClick={() => handleRemove(m.userId, m.name)}
 								disabled={pending}
 							>
-								<Icon name="logout" size={14} aria-hidden="true" />
 								Remove
 							</button>
 						)}

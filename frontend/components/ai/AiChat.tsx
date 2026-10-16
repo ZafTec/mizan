@@ -13,19 +13,13 @@ import {
 import { useRouter } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
-	Activity,
 	ArrowUp,
-	ChartLine,
-	Flame,
 	Check,
 	CircleAlert,
 	Copy,
-	MessagesSquare,
+	History,
 	Plus,
-	Sparkles,
-	Trash2,
 	X,
-	type LucideIcon,
 } from "lucide-react";
 import AiMarkdown from "@/components/ai/AiMarkdown";
 import ConfirmationModal from "@/components/ConfirmationModal";
@@ -46,13 +40,11 @@ import { cn } from "@/lib/utils";
  * Icons are named, not passed. The suggestions come from a server component, and a component cannot cross to the
  * browser, only data can.
  */
-const PROMPT_ICONS = { flame: Flame, chart: ChartLine, sparkles: Sparkles, activity: Activity } satisfies Record<string, LucideIcon>;
 
 export interface QuickPrompt {
 	id: string;
 	label: string;
 	prompt: string;
-	icon: keyof typeof PROMPT_ICONS;
 }
 
 const MAX_ROWS = 6;
@@ -244,21 +236,21 @@ export default function AiChat({ quickPrompts }: { quickPrompts: QuickPrompt[] }
 				{list}
 			</aside>
 
-			<section aria-label="Assistant" className="flex min-h-0 flex-col rounded-md border border-border bg-card">
+			<section aria-label="Assistant" className="flex min-h-0 flex-col border-y border-border bg-card max-sm:-mx-5 sm:rounded-md sm:border">
 				<header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
 					<div className="min-w-0">
 						<h2 className="truncate text-base font-semibold">
 							{threads.find((t) => t.id === threadId)?.title ?? "New conversation"}
 						</h2>
-						<p className="text-xs text-muted-foreground">Answers use only what you chose to share.</p>
+						<p className="hidden text-xs text-muted-foreground sm:block">Answers use only what you chose to share.</p>
 					</div>
-					<div className="flex shrink-0 items-center gap-1 lg:hidden">
-						<button type="button" onClick={startNew} aria-label="New conversation" className="flex h-11 w-11 items-center justify-center rounded-sm hover:bg-muted">
-							<Plus aria-hidden="true" size={18} strokeWidth={1.7} />
+					<div className="flex shrink-0 items-center lg:hidden">
+						<button type="button" onClick={startNew} aria-label="New conversation" title="New conversation" className="flex h-11 w-11 items-center justify-center rounded-sm hover:bg-muted">
+							<Plus aria-hidden="true" size={20} strokeWidth={1.7} />
 						</button>
 						<Dialog.Root open={listOpen} onOpenChange={setListOpen}>
-							<Dialog.Trigger aria-label="Conversations" className="flex h-11 w-11 items-center justify-center rounded-sm hover:bg-muted">
-								<MessagesSquare aria-hidden="true" size={18} strokeWidth={1.7} />
+							<Dialog.Trigger aria-label="Conversations" title="Conversations" className="flex h-11 w-11 items-center justify-center rounded-sm hover:bg-muted">
+								<History aria-hidden="true" size={20} strokeWidth={1.7} />
 							</Dialog.Trigger>
 							<Dialog.Portal>
 								<Dialog.Overlay className="fixed inset-0 z-[100] bg-charcoal-blue-950/45" />
@@ -331,6 +323,7 @@ export default function AiChat({ quickPrompts }: { quickPrompts: QuickPrompt[] }
 							>
 								{pictureAddress(attachment.url) && (
 									/* eslint-disable-next-line @next/next/no-img-element -- a local preview, not a hosted image */
+									// codeql[js/xss-through-dom] -- pictureAddress admits only blob:, data:image/, http(s) and site-relative addresses
 									<img src={pictureAddress(attachment.url) ?? undefined} alt="" className="h-full w-full object-cover" />
 								)}
 							</button>
@@ -424,7 +417,6 @@ function ConversationList({
 	return (
 		<div className="flex min-h-0 flex-1 flex-col gap-3">
 			<button type="button" onClick={onNew} className="btn-secondary min-h-11 w-full">
-				<Plus aria-hidden="true" size={16} strokeWidth={1.7} />
 				New conversation
 			</button>
 			{threads.length === 0 ? (
@@ -448,9 +440,9 @@ function ConversationList({
 								type="button"
 								onClick={() => onDelete(thread)}
 								aria-label={`Delete ${thread.title}`}
-								className="flex h-11 w-11 shrink-0 items-center justify-center text-muted-foreground hover:text-destructive"
+								className="min-h-11 shrink-0 px-2 text-xs text-muted-foreground hover:text-destructive"
 							>
-								<Trash2 aria-hidden="true" size={15} strokeWidth={1.7} />
+								Delete
 							</button>
 						</li>
 					))}
@@ -479,38 +471,37 @@ function EmptyState({
 	disabled: boolean;
 }) {
 	return (
-		<div className="mx-auto flex max-w-xl flex-col gap-4 py-6 sm:py-10">
-			<div className="space-y-1">
-				<h3 className="flex items-center gap-2 text-lg font-semibold">
-					<Sparkles aria-hidden="true" size={18} strokeWidth={1.7} className="text-brand-700 dark:text-brand-300" />
-					What would you like to know?
-				</h3>
-				<p className="text-sm text-muted-foreground">Ask about your day, your week, or your training. You can also send a photo of a meal.</p>
+		<div className="mx-auto flex max-w-xl flex-col gap-4 py-3 sm:py-10">
+			<div className="space-y-2">
+				<h3 className="text-xl font-semibold tracking-tight sm:text-2xl">What would you like to know?</h3>
+				<p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
+					Ask about your day, your week, or your training. You can also send a photo of a meal.
+				</p>
 			</div>
-			<ul className="divide-y divide-border border-y border-border">
-				{quickPrompts.map((quick) => (
-					<li key={quick.id}>
-						<button
-							type="button"
-							disabled={disabled}
-							onClick={() => onPick(quick.prompt)}
-							className="flex min-h-14 w-full items-center gap-3 px-1 py-3 text-left text-sm transition-colors hover:bg-muted disabled:opacity-60"
-						>
-							<PromptIcon name={quick.icon} />
-							<span className="flex-1">{quick.label}</span>
-							<ArrowUp aria-hidden="true" size={15} strokeWidth={1.7} className="shrink-0 rotate-45 text-muted-foreground" />
-						</button>
-					</li>
-				))}
-			</ul>
+			<div>
+				<p className="border-b border-foreground pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Try asking</p>
+				<ul className="divide-y divide-border">
+					{quickPrompts.map((quick, index) => (
+						<li key={quick.id}>
+							<button
+								type="button"
+								disabled={disabled}
+								onClick={() => onPick(quick.prompt)}
+								className="flex min-h-14 w-full items-baseline gap-4 py-3 text-left text-sm transition-colors hover:bg-muted disabled:opacity-60"
+							>
+								<span aria-hidden="true" className="num w-6 shrink-0 text-xs text-muted-foreground">
+									{String(index + 1).padStart(2, "0")}
+								</span>
+								<span className="flex-1">{quick.label}</span>
+							</button>
+						</li>
+					))}
+				</ul>
+			</div>
 		</div>
 	);
 }
 
-function PromptIcon({ name }: { name: QuickPrompt["icon"] }) {
-	const Glyph = PROMPT_ICONS[name];
-	return <Glyph aria-hidden="true" size={18} strokeWidth={1.7} className="shrink-0 text-brand-700 dark:text-brand-300" />;
-}
 
 function MessageView({
 	message,
@@ -597,8 +588,8 @@ function Lightbox({ image, onClose }: { image: { src: string; label: string } | 
 					<Dialog.Title className="sr-only">{image?.label ?? "Photo"}</Dialog.Title>
 					{image && pictureAddress(image.src) && (
 						/* eslint-disable-next-line @next/next/no-img-element -- see above */
-						<img
-							src={pictureAddress(image.src) ?? undefined}
+						// codeql[js/xss-through-dom] -- pictureAddress admits only blob:, data:image/, http(s) and site-relative addresses
+						<img src={pictureAddress(image.src) ?? undefined}
 							alt={image.label}
 							onClick={(event) => event.stopPropagation()}
 							className="max-h-[90dvh] max-w-full rounded-sm object-contain"

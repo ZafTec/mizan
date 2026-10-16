@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Icon } from "@/components/ui/icon";
 import { inviteToHousehold } from "@/data/household";
 import { appToast } from "@/lib/toast";
 
@@ -52,7 +51,6 @@ export function InviteForm({ householdId }: { householdId: string }) {
 				<option value="admin">Admin</option>
 			</select>
 			<button type="submit" className="btn-primary h-10" disabled={pending || email.trim().length === 0}>
-				<Icon name="sparkles" size={16} aria-hidden="true" />
 				{pending ? "Sending..." : "Invite"}
 			</button>
 		</form>

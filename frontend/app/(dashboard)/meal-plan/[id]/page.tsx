@@ -34,7 +34,7 @@ export default async function MealPlanDetailPage({
 						<Link href="/meal-plan" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
 							Meal Plans
 						</Link>
-						<i className="ri-arrow-right-s-line" />
+						<span aria-hidden="true" className="log-muted">/</span>
 						<span className="text-charcoal-blue-900 dark:text-charcoal-blue-100">{plan.name || "Meal Plan"}</span>
 					</div>
 					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">{plan.name || "Meal Plan"}</h1>
@@ -72,7 +72,6 @@ export default async function MealPlanDetailPage({
 
 			<div className="card p-6">
 				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2 mb-4">
-					<i className="ri-restaurant-line text-brand-500 dark:text-brand-400" />
 					Scheduled Meals
 				</h2>
 
@@ -81,7 +80,6 @@ export default async function MealPlanDetailPage({
 						{sortedDates.map((date) => (
 							<div key={date}>
 								<h3 className="text-sm font-medium text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-3 flex items-center gap-2">
-									<i className="ri-calendar-event-line" />
 									{new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
 								</h3>
 								<div className="space-y-2">
@@ -111,12 +109,10 @@ export default async function MealPlanDetailPage({
 				) : (
 					<div className="text-center py-12">
 						<div className="w-16 h-16 rounded-2xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900/60 flex items-center justify-center mx-auto mb-4">
-							<i className="ri-restaurant-line text-3xl text-charcoal-blue-400 dark:text-charcoal-blue-500" />
 						</div>
 						<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No meals scheduled</h3>
 						<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-4">Add recipes to this meal plan</p>
 						<Link href={`/meal-plan/${plan.id}/edit`} className="btn-primary">
-							<i className="ri-add-line" />
 							Edit Plan
 						</Link>
 					</div>

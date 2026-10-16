@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Icon } from "@/components/ui/icon";
 
 type Axis = "N" | "W" | "M";
 
@@ -25,7 +24,6 @@ export function CoachingSection() {
 					</p>
 					<Link href="/register?role=trainer" className="btn-primary mt-1 self-start">
 						See the coach view
-						<Icon name="arrowRight" size={15} aria-hidden="true" />
 					</Link>
 				</div>
 

@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { Icon } from "@/components/ui/icon";
 import { respondToInvitation, type HouseholdInvitationSummary } from "@/data/household";
 import { appToast } from "@/lib/toast";
 
@@ -25,7 +24,6 @@ export function InvitationInbox({ invitations }: { invitations: HouseholdInvitat
 	return (
 		<section className="card p-5 sm:p-6" aria-label="Pending invitations">
 			<div className="mb-4 flex items-center gap-2 text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-				<Icon name="bell" size={16} aria-hidden="true" />
 				Invitations waiting for you
 			</div>
 			<ul className="space-y-3">

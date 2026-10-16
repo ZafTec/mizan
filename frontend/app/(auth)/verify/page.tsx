@@ -9,7 +9,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
 			<div className="min-h-[60vh] flex flex-col items-center justify-center">
 				<div className="card p-8 max-w-md w-full text-center">
 					<div className="w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
-						<i className="ri-error-warning-line text-3xl text-red-600 dark:text-red-400" />
 					</div>
 					<h1 className="text-xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">Error</h1>
 					<p className="text-charcoal-blue-600 dark:text-charcoal-blue-400">
@@ -24,7 +23,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
 		<div className="min-h-[60vh] flex flex-col items-center justify-center">
 			<div className="card p-8 max-w-md w-full text-center">
 				<div className="w-16 h-16 rounded-2xl bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center mx-auto mb-4">
-					<i className="ri-mail-check-line text-3xl text-brand-600 dark:text-brand-400" />
 				</div>
 				<h1 className="text-xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">Verify Your Email Address</h1>
 				<p className="text-charcoal-blue-600 dark:text-charcoal-blue-400 mb-4">

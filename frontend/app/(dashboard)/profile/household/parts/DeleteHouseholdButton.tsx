@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Icon } from "@/components/ui/icon";
 import {
 	Dialog,
 	DialogContent,
@@ -73,7 +72,6 @@ export function DeleteHouseholdButton({ householdId }: { householdId: string }) 
 		>
 			<DialogTrigger asChild>
 				<button type="button" className="btn-ghost h-9 text-sm text-destructive">
-					<Icon name="trash" size={14} aria-hidden="true" />
 					Delete
 				</button>
 			</DialogTrigger>

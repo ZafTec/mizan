@@ -129,7 +129,6 @@ export default function ProfileSessionsPage() {
 	          </h1>
         </div>
         <Link href="/profile/settings" className="btn-secondary">
-          <i className="ri-arrow-left-line" />
           Back to Settings
         </Link>
       </header>
@@ -155,7 +154,6 @@ export default function ProfileSessionsPage() {
       <div className="space-y-4">
 	        {activeSessions.length === 0 ? (
 	          <div className="card p-12 text-center">
-	            <i className="ri-lock-line mb-4 text-6xl text-charcoal-blue-300 dark:text-charcoal-blue-600" />
 	            <h2 className="mb-2 text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 	              No Active Sessions
 	            </h2>
@@ -191,16 +189,13 @@ export default function ProfileSessionsPage() {
 	                    <div className="space-y-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
                       {session.ipAddress && (
                         <p className="flex items-center gap-2">
-                          <i className="ri-map-pin-line" />
                           {session.ipAddress}
                         </p>
                       )}
                       <p className="flex items-center gap-2">
-                        <i className="ri-time-line" />
                         Started {new Date(session.createdAt).toLocaleString()}
                       </p>
                       <p className="flex items-center gap-2">
-                        <i className="ri-calendar-line" />
                         Expires {new Date(session.expiresAt).toLocaleString()}
                       </p>
                     </div>
@@ -224,7 +219,6 @@ export default function ProfileSessionsPage() {
 
 	      <div className="card border-blue-200 bg-blue-50 p-6 dark:border-blue-500/30 dark:bg-blue-500/10">
 	        <div className="flex gap-3">
-	          <i className="ri-information-line shrink-0 text-xl text-blue-600 dark:text-blue-300" />
 	          <div>
 	            <h3 className="mb-1 font-semibold text-blue-900 dark:text-blue-100">Security Tip</h3>
 	            <p className="text-sm text-blue-800 dark:text-blue-200">

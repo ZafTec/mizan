@@ -59,7 +59,6 @@ export function DeleteConfirmModal({
 			>
 				<div className="flex items-center gap-3 mb-4">
 					<div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-						<i className="ri-delete-bin-line text-2xl text-red-600 dark:text-red-400" />
 					</div>
 					<h3 className="text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
 						Delete {itemName || "Item"}?

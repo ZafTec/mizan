@@ -78,7 +78,6 @@ export function ProWallDialog({
 						Not now
 					</button>
 					<Link href={`/billing?checkout=${plan}`} className="btn-primary !rounded-2xl">
-						<Icon name="sparkles" size={16} />
 						See Pro
 					</Link>
 				</div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Icon } from "@/components/ui/icon";
 
 const TARGET_GLASSES = 8;
 const GLASS_ML = 250;
@@ -87,7 +86,7 @@ export default function HydrationTracker() {
 					disabled={!mounted}
 					className="btn-primary rounded-2xl! py-2! text-sm"
 				>
-					<Icon name="sparkles" size={14} />+ Glass
+					+ Glass
 				</button>
 				<button
 					type="button"

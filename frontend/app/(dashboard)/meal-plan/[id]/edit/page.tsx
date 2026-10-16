@@ -24,11 +24,11 @@ export default async function MealPlanEditPage({
 					<Link href="/meal-plan" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
 						Meal Plans
 					</Link>
-					<i className="ri-arrow-right-s-line" />
+					<span aria-hidden="true" className="log-muted">/</span>
 					<Link href={`/meal-plan/${plan.id}`} className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
 						{plan.name || "Meal Plan"}
 					</Link>
-					<i className="ri-arrow-right-s-line" />
+					<span aria-hidden="true" className="log-muted">/</span>
 					<span className="text-charcoal-blue-900 dark:text-charcoal-blue-100">Edit</span>
 				</div>
 				<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Edit Meal Plan</h1>

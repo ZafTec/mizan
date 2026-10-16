@@ -15,12 +15,10 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 		return (
 			<div className="min-h-[50vh] flex flex-col items-center justify-center">
 				<div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mb-4">
-					<i className="ri-leaf-line text-4xl text-muted-foreground" aria-hidden="true" />
 				</div>
 				<h2 className="text-xl font-semibold text-foreground mb-2">Ingredient not found</h2>
 				<p className="text-muted-foreground mb-6">The ingredient you&apos;re looking for doesn&apos;t exist.</p>
 				<Link href="/ingredients" className="btn-primary">
-					<i className="ri-arrow-left-line" aria-hidden="true" />
 					Back to Ingredients
 				</Link>
 			</div>
@@ -64,7 +62,6 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 						<h1 className="text-3xl font-semibold tracking-tight text-foreground capitalize break-words">{ingredient.name}</h1>
 						{ingredient.isVerified && (
 							<span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-2xl border border-border bg-muted text-foreground text-xs font-medium">
-								<i className="ri-verified-badge-line" style={{ color: "var(--chart-1)" }} aria-hidden="true" />
 								Verified
 							</span>
 						)}
@@ -86,7 +83,6 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 				</div>
 				{proteinCalRatio > 0 && (
 					<div className="mt-4 flex items-center gap-3 p-3 rounded-xl border border-border bg-background">
-						<i className="ri-percent-line text-xl text-muted-foreground" aria-hidden="true" />
 						<div>
 							<p className="text-lg font-bold text-foreground tabular-nums">{proteinCalRatio.toFixed(0)}%</p>
 							<p className="text-xs text-muted-foreground">Protein-to-Calorie Ratio</p>
@@ -97,7 +93,6 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 
 			<div className="card p-6">
 				<h2 className="font-semibold text-card-foreground flex items-center gap-2 mb-4">
-					<i className="ri-pie-chart-2-line text-muted-foreground" aria-hidden="true" />
 					Macronutrient Distribution
 				</h2>
 				<div
@@ -133,7 +128,6 @@ export default async function Page({ params }: { params: Promise<{ ingredientId:
 						</div>
 						<div className="flex gap-2">
 							<Link href={`/ingredients/${ingredientId}/edit`} className="btn-secondary text-sm px-3 py-1.5">
-								<i className="ri-edit-line" aria-hidden="true" />
 								Edit
 							</Link>
 							<DeleteIngredientButton id={ingredientId} />

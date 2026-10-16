@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getMyTrainer } from "@/data/trainer";
-import { Icon } from "@/components/ui/icon";
 
 /**
  * Tier 2 - docs/ARCHITECTURE.md#navigation-and-logging. Absent until a coaching relationship exists.
@@ -29,7 +28,6 @@ export default async function TrainerStrip() {
 				</div>
 			) : (
 				<span className="icon-chip h-10 w-10 shrink-0 text-brand-700 dark:text-brand-300">
-					<Icon name="heart" size={18} />
 				</span>
 			)}
 
@@ -47,7 +45,6 @@ export default async function TrainerStrip() {
 			<div className="flex shrink-0 items-center gap-2">
 				{trainer.canMessage && (
 					<Link href="/messaging" className="btn-ghost !rounded-2xl !py-2 text-xs">
-						<Icon name="messageCircle" size={14} />
 						Message
 					</Link>
 				)}

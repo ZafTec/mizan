@@ -1,7 +1,6 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
-import { Camera, Sparkles } from "lucide-react";
 import {
   analyzeFoodPhoto,
   analyzeFoodText,
@@ -86,12 +85,6 @@ export default function AiMealInput({
       className="space-y-3 rounded-md border border-brand-600/30 bg-brand-50/50 p-4 dark:border-brand-400/30 dark:bg-brand-950/20"
     >
       <div className="flex items-center gap-2">
-        <Sparkles
-          aria-hidden="true"
-          size={18}
-          strokeWidth={1.7}
-          className="shrink-0 text-brand-700 dark:text-brand-300"
-        />
         <label htmlFor={id} className="text-sm font-semibold">
           Tell me what you ate
         </label>
@@ -134,7 +127,6 @@ export default function AiMealInput({
           onClick={guard(() => fileInput.current?.click())}
           className="btn-secondary min-h-11 shrink-0"
         >
-          <Camera aria-hidden="true" size={16} strokeWidth={1.7} />
           {busy === "photo" ? "Reading…" : "Photo"}
         </button>
         <button
@@ -143,7 +135,6 @@ export default function AiMealInput({
           onClick={estimate}
           className="btn-primary min-h-11 flex-1 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <Sparkles aria-hidden="true" size={16} strokeWidth={1.7} />
           {busy === "text" ? "Estimating…" : "Estimate meal"}
         </button>
       </div>
@@ -169,7 +160,6 @@ export default function AiMealInput({
           </p>
           <div className="flex flex-wrap gap-2">
             <Link href="/billing?checkout=pro" className="btn-primary min-h-11">
-              <Sparkles aria-hidden="true" size={16} strokeWidth={1.7} />
               See Pro
             </Link>
             <button

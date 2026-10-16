@@ -96,7 +96,6 @@ export default async function HabitsPage() {
 				<div className="flex items-center gap-2">
 					{streak && streak.currentStreak > 0 && (
 						<div className="streak-gradient inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white">
-							<Icon name="flame" size={16} />
 							<span>{streak.currentStreak}-day streak</span>
 						</div>
 					)}
@@ -167,8 +166,6 @@ export default async function HabitsPage() {
 										<span className="rounded-full bg-verdigris-600 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
 											Done
 										</span>
-									) : habit.href ? (
-										<Icon name="arrowRight" size={14} />
 									) : null}
 								</div>
 							);

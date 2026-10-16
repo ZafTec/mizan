@@ -65,7 +65,6 @@ export default function EditIngredientForm({ ingredient }: { ingredient: Ingredi
 		<form onSubmit={handleSubmit} className="space-y-6">
 			<div className="card p-6 space-y-5">
 				<h2 className="font-semibold text-foreground flex items-center gap-2">
-					<i className="ri-leaf-line text-brand-500" />
 					Basic Information
 				</h2>
 				<div>
@@ -105,7 +104,6 @@ export default function EditIngredientForm({ ingredient }: { ingredient: Ingredi
 
 			<div className="card p-6 space-y-5">
 				<h2 className="font-semibold text-foreground flex items-center gap-2">
-					<i className="ri-heart-pulse-line text-brand-500" />
 					Nutritional Information
 				</h2>
 
@@ -227,14 +225,12 @@ export default function EditIngredientForm({ ingredient }: { ingredient: Ingredi
 
 			{success && (
 				<div className="flex items-center gap-2 p-4 rounded-xl bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-300">
-					<i className="ri-checkbox-circle-line text-xl" />
 					<span>Ingredient updated successfully! Redirecting...</span>
 				</div>
 			)}
 
 			{error && (
 				<div className="flex items-center gap-2 p-4 rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300">
-					<i className="ri-error-warning-line text-xl" />
 					<span>{error}</span>
 				</div>
 			)}
@@ -251,7 +247,6 @@ export default function EditIngredientForm({ ingredient }: { ingredient: Ingredi
 					</>
 				) : (
 					<>
-						<i className="ri-check-line text-xl" />
 						Update Ingredient
 					</>
 				)}

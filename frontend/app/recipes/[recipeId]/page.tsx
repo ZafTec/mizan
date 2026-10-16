@@ -1,7 +1,7 @@
 ﻿import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { getRecipeById } from "@/data/recipe";
 import { getUserOptionalServer } from "@/helper/session";
 import { LogEntryButton } from "@/components/logging/LogEntryButton";
@@ -41,7 +41,6 @@ export default async function RecipePage({
   return (
     <div className="log-page max-w-4xl!">
       <Link href="/recipes" className="text-link mb-6">
-        <ArrowLeft size={15} />
         Recipes
       </Link>
       <header className="log-page-header">

@@ -76,7 +76,6 @@ export default function AddIngredientForm() {
 			<form onSubmit={handleSubmit} className="space-y-6">
 				<div className="card p-6 space-y-5">
 					<h2 className="flex items-center gap-2 font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
-						<i className="ri-leaf-line text-brand-500 dark:text-brand-400" />
 						Basic Information
 					</h2>
 					<div>
@@ -97,7 +96,6 @@ export default function AddIngredientForm() {
 
 				<div className="card p-6 space-y-5">
 					<h2 className="flex items-center gap-2 font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
-						<i className="ri-heart-pulse-line text-brand-500 dark:text-brand-400" />
 						Nutritional Information
 					</h2>
 
@@ -161,14 +159,12 @@ export default function AddIngredientForm() {
 
 				{success ? (
 					<div className="flex items-center gap-2 rounded-xl bg-green-50 p-4 text-green-700 dark:bg-green-500/10 dark:text-green-300">
-						<i className="ri-checkbox-circle-line text-xl" />
 						<span>Ingredient added successfully! Redirecting...</span>
 					</div>
 				) : null}
 
 				{error ? (
 					<div className="flex items-center gap-2 rounded-xl bg-red-50 p-4 text-red-700 dark:bg-red-500/10 dark:text-red-300">
-						<i className="ri-error-warning-line text-xl" />
 						<span>{error}</span>
 					</div>
 				) : null}
@@ -181,7 +177,6 @@ export default function AddIngredientForm() {
 						</>
 					) : (
 						<>
-							<i className="ri-check-line text-xl" />
 							Add Ingredient
 						</>
 					)}

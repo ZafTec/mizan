@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Icon } from "@/components/ui/icon";
 
 export function CTASection() {
 	return (
@@ -16,7 +15,6 @@ export function CTASection() {
 			</p>
 			<Link href="/register" className="btn-primary mt-1">
 				Start logging free
-				<Icon name="arrowRight" size={16} aria-hidden="true" />
 			</Link>
 		</section>
 	);

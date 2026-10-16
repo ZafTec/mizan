@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import { BookOpen, Plus, Search, Sparkles, Trash2 } from "lucide-react";
+import { BookOpen, Search, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
 import { publishLogFeedback } from "@/lib/log-feedback";
@@ -338,12 +338,6 @@ export default function MealLogForm({
                 <h3 className="text-sm font-semibold">Your meal</h3>
                 {proposal && proposed.length > 0 && (
                   <p className="flex items-start gap-2 text-xs text-charcoal-blue-700 dark:text-charcoal-blue-300">
-                    <Sparkles
-                      aria-hidden="true"
-                      size={14}
-                      strokeWidth={1.7}
-                      className="mt-0.5 shrink-0 text-brand-700 dark:text-brand-300"
-                    />
                     <span>
                       Estimated from{" "}
                       {proposal.source === "photo"
@@ -565,7 +559,6 @@ export default function MealLogForm({
               onClick={() => setSearchOpen((current) => !current)}
               className="flex min-h-11 items-center gap-2 text-sm font-medium text-brand-700 underline-offset-4 hover:underline dark:text-brand-300"
             >
-              <Search aria-hidden="true" size={16} strokeWidth={1.7} />
               {searchOpen ? "Hide food search" : "Search foods"}
             </button>
             <button
@@ -587,7 +580,6 @@ export default function MealLogForm({
             aria-controls={`${id}-manual`}
             className="flex min-h-11 items-center gap-2 text-sm font-medium text-brand-700 underline-offset-4 hover:underline dark:text-brand-300"
           >
-            <Plus aria-hidden="true" size={16} strokeWidth={1.7} />
             {manualOpen ? "Close custom entry" : "Enter a food manually"}
           </button>
           {manualOpen && (

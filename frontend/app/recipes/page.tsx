@@ -1,5 +1,5 @@
 ﻿import Link from "next/link";
-import { ArrowRight, Search, Plus } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import { getUserOptionalServer } from "@/helper/session";
 import { serverApi } from "@/lib/api.server";
 import type { RecipeDto } from "@/data/recipe";
@@ -46,7 +46,7 @@ export default async function RecipesPage({
         </div>
         {user && (
           <LogEntryButton kind="meal" className="btn-primary">
-            <Plus size={17} /> Log a meal
+             Log a meal
           </LogEntryButton>
         )}
       </header>

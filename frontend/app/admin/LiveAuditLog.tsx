@@ -137,7 +137,6 @@ export default function LiveAuditLog() {
 								</div>
 								{log.ipAddress && (
 									<div className="text-[10px] text-charcoal-blue-400 dark:text-charcoal-blue-500 mt-1 flex items-center gap-1">
-										<i className="ri-map-pin-line text-[12px]" />
 										{log.ipAddress}
 									</div>
 								)}

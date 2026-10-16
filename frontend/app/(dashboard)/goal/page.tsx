@@ -121,9 +121,6 @@ export default function GoalForm() {
 					className="w-full flex items-center justify-between p-6 text-left hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-800/50 transition-colors"
 				>
 					<div className="flex items-center gap-3">
-						<div className="w-9 h-9 rounded-lg bg-brand-100 dark:bg-brand-900/40 flex items-center justify-center shrink-0">
-							<i className="ri-calculator-line text-brand-600 dark:text-brand-400" />
-						</div>
 						<div>
 							<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Calculate TDEE</h2>
 							<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
@@ -298,7 +295,6 @@ export default function GoalForm() {
 									}}
 									className="btn-primary shrink-0"
 								>
-									<i className="ri-check-line" />
 									Use This
 								</button>
 							</div>
@@ -320,7 +316,6 @@ export default function GoalForm() {
 				{/* Goal Type Card */}
 				<div className="card p-6 space-y-5">
 					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
-						<i className="ri-bookmark-line text-brand-500" />
 						Goal Type
 					</h2>
 					<div>
@@ -345,7 +340,6 @@ export default function GoalForm() {
 				{/* Macro Targets Card */}
 				<div className="card p-6 space-y-5">
 					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
-						<i className="ri-pie-chart-2-line text-brand-500" />
 						Daily Macro Targets
 					</h2>
 
@@ -353,7 +347,6 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="calories" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-sm bg-burnt-peach-500" />
 									Calories (kcal)
 								</span>
 							</label>
@@ -372,7 +365,6 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="protein" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-sm bg-verdigris-500" />
 									Protein (g)
 								</span>
 							</label>
@@ -394,7 +386,6 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="carbs" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-sm bg-tuscan-sun-500" />
 									Carbs (g)
 								</span>
 							</label>
@@ -413,7 +404,6 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="fat" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-sm bg-sandy-brown-500" />
 									Fat (g)
 								</span>
 							</label>
@@ -432,7 +422,6 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="fiber" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-sm bg-green-500" />
 									Fiber (g)
 								</span>
 							</label>
@@ -454,7 +443,6 @@ export default function GoalForm() {
 				{/* Body Composition Goals */}
 				<div className="card p-6 space-y-5">
 					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
-						<i className="ri-body-scan-line text-brand-500" />
 						Body Composition Goals
 					</h2>
 
@@ -462,7 +450,6 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="targetWeight" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-sm bg-blue-500" />
 									Target Weight
 								</span>
 							</label>
@@ -498,7 +485,6 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="targetBodyFatPercentage" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-sm bg-rose-500" />
 									Target Body Fat (%)
 								</span>
 							</label>
@@ -519,7 +505,6 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="targetMuscleMassKg" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-sm bg-violet-500" />
 									Target Muscle Mass (kg)
 								</span>
 							</label>
@@ -540,7 +525,6 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="targetProteinCalorieRatio" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-sm bg-indigo-500" />
 									Target P/Cal Ratio (%)
 								</span>
 							</label>
@@ -561,7 +545,6 @@ export default function GoalForm() {
 						<div>
 							<label htmlFor="targetDate" className="label">
 								<span className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-sm bg-teal-500" />
 									Target Date
 								</span>
 							</label>
@@ -580,7 +563,6 @@ export default function GoalForm() {
 				{/* Status Messages */}
 				{formState.status === "success" && !formState.warnings?.length && (
 					<div className="flex items-center gap-2 p-4 rounded-xl bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-300">
-						<i className="ri-checkbox-circle-line text-xl" />
 						<span>Goal saved successfully!</span>
 					</div>
 				)}
@@ -588,7 +570,6 @@ export default function GoalForm() {
 				{formState.status === "success" && formState.warnings?.length ? (
 					<div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
 						<div className="flex items-start gap-3">
-							<i className="ri-error-warning-line text-xl text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
 							<div>
 								<p className="font-semibold text-amber-800 dark:text-amber-300">Goal hint{formState.warnings.length > 1 ? "s" : ""}</p>
 								<ul className="mt-2 space-y-1.5">
@@ -604,7 +585,6 @@ export default function GoalForm() {
 
 				{formState.status === "error" && formState.message && (
 					<div className="flex items-center gap-2 p-4 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-300">
-						<i className="ri-error-warning-line text-xl" />
 						<span>{formState.message}</span>
 					</div>
 				)}
@@ -622,7 +602,6 @@ export default function GoalForm() {
 						</>
 					) : (
 						<>
-							<i className="ri-save-line text-xl" />
 							Save Goal
 						</>
 					)}

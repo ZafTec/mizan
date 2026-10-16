@@ -30,11 +30,9 @@ export default function MealPlanActions({ planId, planName }: MealPlanActionsPro
 		<>
 			<div className="flex gap-2">
 				<Link href={`/meal-plan/${planId}/edit`} className="btn-secondary">
-					<i className="ri-edit-line" />
 					Edit
 				</Link>
 				<button onClick={() => setShowDelete(true)} className="btn-danger">
-					<i className="ri-delete-bin-line" />
 					Delete
 				</button>
 			</div>

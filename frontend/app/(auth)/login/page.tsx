@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { UserInput } from "@/types/user";
 import Loading from "@/components/Loading";
 import { PasswordInput } from "@/components/PasswordInput";
-import { Icon } from "@/components/ui/icon";
 import { resendVerification, signIn, startExternalSignIn, type AuthError } from "@/lib/auth-client";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 
@@ -208,7 +207,6 @@ export default function Page() {
 								data-testid="error-message"
 								className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm"
 							>
-								<Icon name="badgeAlert" size={18} aria-hidden="true" />
 								<span>{error}</span>
 								{unverified && user.email && !resent && (
 									<button
@@ -239,7 +237,6 @@ export default function Page() {
 							) : (
 								<>
 									Sign in
-									<Icon name="arrowRight" size={18} aria-hidden="true" />
 								</>
 							)}
 						</button>

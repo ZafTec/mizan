@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { Icon } from "@/components/ui/icon";
 import { clientApi } from "@/lib/api.client";
 import { cn } from "@/lib/utils";
 
@@ -143,7 +142,6 @@ export default function MessagingThread({
 				) : messages.length === 0 ? (
 					<div className="flex h-full flex-col items-center justify-center gap-3 text-center">
 						<span className="icon-chip h-12 w-12 text-charcoal-blue-400">
-							<Icon name="messageCircle" size={18} />
 						</span>
 						<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
 							No messages yet. Say hello.
@@ -216,7 +214,6 @@ export default function MessagingThread({
 					className="btn-primary !rounded-2xl !py-3"
 					aria-label="Send"
 				>
-					<Icon name="arrowRight" size={16} />
 				</button>
 			</form>
 		</section>

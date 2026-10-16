@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Icon } from "@/components/ui/icon";
 import Loading from "@/components/Loading";
 import { getAiConsent, getMyAiUsage, updateAiConsent, type AiConsent, type MyAiUsage } from "@/lib/api/ai";
 import { appToast } from "@/lib/toast";
@@ -293,5 +292,5 @@ function Toggle({
 }
 
 export function AiSettingsIcon() {
-	return <Icon name="brain" size={18} aria-hidden="true" />;
+	return ;
 }

@@ -35,7 +35,6 @@ export default function ForgotPasswordPage() {
 					<div className="card p-6 sm:p-8">
 						<div className="text-center space-y-4">
 							<div className="w-16 h-16 rounded-2xl bg-green-100 dark:bg-green-950 flex items-center justify-center mx-auto">
-								<i className="ri-mail-send-line text-3xl text-green-600" />
 							</div>
 							<div>
 								<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
@@ -51,7 +50,6 @@ export default function ForgotPasswordPage() {
 							</div>
 							<div className="pt-4">
 								<Link href="/login" className="btn-primary w-full py-3">
-									<i className="ri-arrow-left-line" />
 									Back to login
 								</Link>
 							</div>
@@ -111,7 +109,6 @@ export default function ForgotPasswordPage() {
 								data-testid="error-message"
 								className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm"
 							>
-								<i className="ri-error-warning-line text-lg" />
 								<span>{error}</span>
 							</div>
 						)}
@@ -124,8 +121,7 @@ export default function ForgotPasswordPage() {
 								</>
 							) : (
 								<>
-									<i className="ri-mail-send-line" /> Send reset link
-									<i className="ri-arrow-right-line" />
+Send reset link
 								</>
 							)}
 						</button>
@@ -135,7 +131,6 @@ export default function ForgotPasswordPage() {
 								href="/login"
 								className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 hover:text-charcoal-blue-900 dark:hover:text-charcoal-blue-100 inline-flex items-center gap-1"
 							>
-								<i className="ri-arrow-left-line" />
 								Back to login
 							</Link>
 						</div>
