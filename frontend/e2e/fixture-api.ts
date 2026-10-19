@@ -131,6 +131,10 @@ function initialState(empty = false): FixtureState {
 function totals(entries: MealEntry[]) {
 	return entries.reduce((sum, entry) => ({ calories: sum.calories + (entry.calories ?? 0), protein: sum.protein + (entry.proteinGrams ?? 0), carbs: sum.carbs + (entry.carbsGrams ?? 0), fat: sum.fat + (entry.fatGrams ?? 0), fiber: sum.fiber + (entry.fiberGrams ?? 0) }), { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
 }
+const achievements = [
+	{ id: "ac000000-0000-0000-0000-000000000001", name: "First Meal", description: "Log your first meal", iconUrl: "/badges/128/achievement-first-meal.png", points: 10, category: "nutrition", criteriaType: "meals_logged", threshold: 1, progress: 1, isEarned: true, earnedAt: `${dateAgo(3)}T12:00:00Z` },
+	{ id: "ac000000-0000-0000-0000-000000000002", name: "Getting Started", description: "Log 10 meals", iconUrl: "/badges/128/achievement-getting-started.png", points: 25, category: "nutrition", criteriaType: "meals_logged", threshold: 10, progress: 3, isEarned: false, earnedAt: null },
+];
 const goal = { id: "goal-1", targetCalories: 2200, targetProteinGrams: 140, targetCarbsGrams: 250, targetFatGrams: 70, targetWeight: 73, goalType: "maintenance", isActive: true, createdAt: `${dateAgo(30)}T12:00:00Z` };
 function parameter(url: URL, name: string) {
 	return [...url.searchParams].find(([key]) => key.toLowerCase() === name.toLowerCase())?.[1];
@@ -308,6 +312,7 @@ const server = Bun.serve({
 		if (path === "/api/Goals") return state.empty ? json(null, 204) : json(goal);
 		if (path === "/api/Goals/history") return json(state.empty ? [] : [goal]);
 		if (path === "/api/Achievements/streak") return json({ currentStreak: 4, longestStreak: 12, isActiveToday: !state.empty });
+		if (path === "/api/Achievements") return json({ items: state.empty ? achievements.map((item) => ({ ...item, isEarned: false, earnedAt: null })) : achievements, totalCount: achievements.length, totalPages: 1, totalPoints: state.empty ? 0 : 10, earnedCount: state.empty ? 0 : 1, level: 1, levelName: state.empty ? "Rookie" : "Bronze", levelFloor: 0, nextLevelAt: state.empty ? 100 : 500 });
 		if (path === "/api/Foods/search") {
 			const query = parameter(url, "searchTerm")?.toLowerCase() ?? "";
 			return json(page(foods.filter((item) => item.name.toLowerCase().includes(query)), url));

@@ -66,6 +66,13 @@ public partial class AppUrls : IAppUrls
         return new Uri(_base, candidate).AbsoluteUri;
     }
 
+    public string? Asset(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return null;
+        if (!url.StartsWith('/') || url.StartsWith("//", StringComparison.Ordinal)) return url;
+        return SafePath().IsMatch(url) ? new Uri(_base, url).AbsoluteUri : url;
+    }
+
     private string Build(string path, string token) =>
         new UriBuilder(new Uri(_base, path)) { Query = $"token={Uri.EscapeDataString(token)}" }.Uri.ToString();
 }

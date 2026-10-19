@@ -1,10 +1,12 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Achievements;
 using Mizan.Domain.Entities;
 using Mizan.Domain.Streaks;
 using Mizan.Infrastructure.Data;
+using Mizan.Infrastructure.Identity;
 using Mizan.Infrastructure.Services;
 using Xunit;
 
@@ -25,7 +27,7 @@ public class AchievementEvaluatorTests
     }
 
     private static AchievementEvaluator Evaluator(MizanDbContext db, FakeCurrentUser user) =>
-        new(db, user, new InMemoryStats(db), new DirectCatalogue(db));
+        new(db, user, new InMemoryStats(db), new DirectCatalogue(db), new AppUrls(Options.Create(new AppOptions())));
 
     /// <summary>
     /// Reads the same tables the real provider reads, minus the counter row -

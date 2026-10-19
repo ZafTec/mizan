@@ -1,6 +1,6 @@
 # Achievement badges: brief for the Blender agent
 
-Mizan shows one badge per achievement. Today every achievement has no picture (`icon_url` is empty), so the list shows text only. This brief gives a local agent everything it needs to render the set in Blender and hand it to an administrator for upload.
+Mizan shows one badge per achievement. This brief gives a local agent everything it needs to render the set in Blender. The approved set ships with the app as the default badges; later sets are uploaded by an administrator.
 
 ## Where the badges appear
 
@@ -79,12 +79,13 @@ Mizan is a ledger, not a game. Read [DESIGN.md](../DESIGN.md) and [Language.dc.h
 - Export PNG RGBA 8-bit. Strip metadata. Run `oxipng -o4 --strip all` on the results.
 - Budget: a full set of 32 renders should finish in a few minutes on this card. If it does not, lower samples before touching resolution.
 
-## Delivery and upload
+## Delivery
 
 1. Put the files in a folder with the contact sheet at the top. A person approves the sheet first.
-2. Upload each badge through the admin editor: More → Achievements is the user view; `/admin/achievements` lists the catalog, each row opens the editor, and the editor has an **Upload badge** control beside the icon address. The file goes to the `achievements` storage folder, which only administrators may write to.
-3. Or by API, signed in as an administrator: `POST /api/Uploads/image?folder=Achievements` with the file as `file`, then `PUT /api/Achievements/{id}` with the returned URL as `iconUrl`.
-4. Check `/achievements` in light and dark mode on a phone. The badge must be readable at 28 px and must not pull the eye away from the name.
+2. The approved set is the app's default. It ships in the repo under `frontend/public/badges/128` and `frontend/public/badges/512`, named as in `deliverables/`, and a migration points each seeded achievement at its `/badges/128/<file>` where `icon_url` is still empty. A redeploy never overwrites a badge an administrator has since replaced. The three level marks are referenced by the achievements page directly.
+3. Later badges, for new achievements or to replace a default, go through the admin editor: `/admin/achievements` lists the catalog, each row opens the editor, and the editor has an **Upload badge** control beside the icon address. The file goes to the `achievements` storage folder, which only administrators may write to. By API, signed in as an administrator: `POST /api/Uploads/image?folder=Achievements` with the file as `file`, then `PUT /api/Achievements/{id}` with the returned URL as `iconUrl`.
+4. The API returns every badge as an absolute URL, defaults on the app origin and uploads on the media host, so the web, Telegram and the native client fetch them the same way.
+5. Check `/achievements` in light and dark mode on a phone. The badge must be readable at 28 px and must not pull the eye away from the name.
 
 ## Out of scope
 

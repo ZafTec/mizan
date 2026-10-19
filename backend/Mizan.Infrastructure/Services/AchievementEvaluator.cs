@@ -11,6 +11,7 @@ public class AchievementEvaluator : IAchievementEvaluator
     private readonly ICurrentUserService _currentUser;
     private readonly IUserStatsProvider _stats;
     private readonly IAchievementCatalogue _catalogue;
+    private readonly IAppUrls _urls;
     private readonly INotificationWriter? _notifications;
 
     public AchievementEvaluator(
@@ -18,12 +19,14 @@ public class AchievementEvaluator : IAchievementEvaluator
         ICurrentUserService currentUser,
         IUserStatsProvider stats,
         IAchievementCatalogue catalogue,
+        IAppUrls urls,
         INotificationWriter? notifications = null)
     {
         _context = context;
         _currentUser = currentUser;
         _stats = stats;
         _catalogue = catalogue;
+        _urls = urls;
         _notifications = notifications;
     }
 
@@ -126,7 +129,7 @@ public class AchievementEvaluator : IAchievementEvaluator
         await _context.SaveChangesAsync(cancellationToken);
 
         return unlocks
-            .Select(a => new UnlockedAchievement(a.Id, a.Name, a.Description, a.IconUrl, a.Points, a.Category))
+            .Select(a => new UnlockedAchievement(a.Id, a.Name, a.Description, _urls.Asset(a.IconUrl), a.Points, a.Category))
             .ToList();
     }
 
