@@ -1,6 +1,4 @@
 import { ClientList } from "@/components/trainer/ClientList";
-import { TrainerStats } from "@/components/trainer/TrainerStats";
-import { RecentMessages } from "@/components/trainer/RecentMessages";
 import { TrainerPendingRequests } from "@/components/trainer/TrainerPendingRequests";
 
 export const dynamic = "force-dynamic";
@@ -19,41 +17,15 @@ export default function TrainerDashboard() {
 
       <section className="glass-panel p-6 sm:p-8">
         <header className="mb-4 flex items-center gap-3">
-          <span className="icon-chip h-10 w-10 text-verdigris-700 dark:text-verdigris-300"></span>
+          <span className="icon-chip h-10 w-10 text-sandy-brown-700 dark:text-sandy-brown-300"></span>
           <div>
             <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-              Stats at a glance
+              Pending requests
             </h2>
           </div>
         </header>
-        <TrainerStats />
+        <TrainerPendingRequests />
       </section>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className="glass-panel p-6 sm:p-8">
-          <header className="mb-4 flex items-center gap-3">
-            <span className="icon-chip h-10 w-10 text-sandy-brown-700 dark:text-sandy-brown-300"></span>
-            <div>
-              <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-                Pending requests
-              </h2>
-            </div>
-          </header>
-          <TrainerPendingRequests />
-        </section>
-
-        <section className="glass-panel p-6 sm:p-8">
-          <header className="mb-4 flex items-center gap-3">
-            <span className="icon-chip h-10 w-10 text-tuscan-sun-700 dark:text-tuscan-sun-300"></span>
-            <div>
-              <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-                Recent messages
-              </h2>
-            </div>
-          </header>
-          <RecentMessages />
-        </section>
-      </div>
 
       <section className="glass-panel p-6 sm:p-8">
         <header className="mb-4 flex items-center gap-3">
