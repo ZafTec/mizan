@@ -98,20 +98,8 @@ export async function getProfileObservations(): Promise<ProfileObservations> {
         earnedCount: 0,
         totalPoints: 0,
       })),
-      clientApi<McpUsageAnalyticsResult>("/api/McpTokens/analytics").catch(
-        () => ({
-          overview: {
-            totalCalls: 0,
-            successfulCalls: 0,
-            failedCalls: 0,
-            successRate: 0,
-            averageExecutionTimeMs: 0,
-            uniqueTokensUsed: 0,
-          },
-          toolUsage: [],
-          tokenUsage: [],
-          dailyUsage: [],
-        }),
+      clientApi<McpUsageAnalyticsResult>("/api/McpConnections/analytics").catch(
+        () => null,
       ),
     ]);
 
@@ -128,8 +116,8 @@ export async function getProfileObservations(): Promise<ProfileObservations> {
       loggedDays.length > 0 ? Math.round(totalCalories / loggedDays.length) : 0,
     achievementCount: achievements.earnedCount,
     totalAchievementPoints: achievements.totalPoints,
-    mcpCalls: mcpAnalytics.overview?.totalCalls ?? 0,
-    mcpSuccessRate: Math.round(mcpAnalytics.overview?.successRate ?? 0),
+    mcpCalls: mcpAnalytics?.overview.totalCalls ?? 0,
+    mcpSuccessRate: Math.round(mcpAnalytics?.overview.successRate ?? 0),
   };
 }
 
