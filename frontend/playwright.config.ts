@@ -3,6 +3,20 @@ import { defineConfig, devices } from "@playwright/test";
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3100";
 const apiURL = process.env.PLAYWRIGHT_API_URL ?? "http://localhost:5100";
 const external = process.env.PLAYWRIGHT_EXTERNAL === "1";
+const ci = Boolean(process.env.CI);
+const webPort = new URL(baseURL).port;
+// CI exercises the production build the way Dockerfile.prod serves it: the
+// standalone server with public/ and .next/static beside it. Local runs keep
+// the faster dev server.
+const webCommand = ci
+  ? [
+      "NEXT_BUILD=1 bunx next build",
+      "rm -rf .next/standalone/public .next/standalone/.next/static",
+      "cp -r public .next/standalone/public",
+      "cp -r .next/static .next/standalone/.next/static",
+      `PORT=${webPort} HOSTNAME=localhost bun .next/standalone/server.js`,
+    ].join(" && ")
+  : `bun --bun next dev --hostname localhost --port ${webPort}`;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -10,7 +24,7 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   timeout: 45_000,
-  retries: process.env.CI ? 2 : 0,
+  retries: ci ? 1 : 0,
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL,
@@ -24,17 +38,17 @@ export default defineConfig({
         {
           command: "bun e2e/fixture-api.ts",
           url: `${apiURL}/health`,
-          reuseExistingServer: !process.env.CI,
+          reuseExistingServer: !ci,
           env: {
             PLAYWRIGHT_BASE_URL: baseURL,
             PLAYWRIGHT_API_PORT: new URL(apiURL).port,
           },
         },
         {
-          command: `bun --bun next dev --hostname localhost --port ${new URL(baseURL).port}`,
+          command: webCommand,
           url: `${baseURL}/api/health`,
-          reuseExistingServer: !process.env.CI,
-          timeout: 120_000,
+          reuseExistingServer: !ci,
+          timeout: ci ? 300_000 : 120_000,
           env: {
             API_URL: apiURL,
             NEXT_PUBLIC_API_URL: apiURL,
