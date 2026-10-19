@@ -3,28 +3,30 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { clientApi } from "@/lib/api.client";
+import type { components } from "@/types/api.generated";
 
-interface ShoppingListItem {
-  id: string;
-  ingredientText: string;
-  quantity: number;
-  unit: string;
-  isChecked: boolean;
-}
-
-interface ShoppingList {
-  id: string;
-  name: string;
-  createdAt: string;
-  items: ShoppingListItem[];
-}
+type ShoppingListSummary = components["schemas"]["ShoppingListSummaryDto"];
+type ShoppingList = components["schemas"]["ShoppingListDto"];
+type ShoppingListItem = components["schemas"]["ShoppingListItemDto"];
 
 const amount = (item: ShoppingListItem) =>
-  item.quantity && item.unit
-    ? `${Number(item.quantity).toLocaleString()} ${item.unit}`
-    : item.quantity
-      ? String(item.quantity)
+  item.amount && item.unit
+    ? `${Number(item.amount).toLocaleString()} ${item.unit}`
+    : item.amount
+      ? String(item.amount)
       : "";
+
+/** The list endpoint returns summaries without items; each list is fetched for its items. */
+async function loadLists(): Promise<ShoppingList[]> {
+  const summaries = await clientApi<{ items: ShoppingListSummary[] }>(
+    "/api/ShoppingLists",
+  );
+  return Promise.all(
+    (summaries.items ?? []).map((summary) =>
+      clientApi<ShoppingList>(`/api/ShoppingLists/${summary.id}`),
+    ),
+  );
+}
 
 export default function ShoppingListPage() {
   const [lists, setLists] = useState<ShoppingList[] | null>(null);
@@ -34,9 +36,9 @@ export default function ShoppingListPage() {
 
   useEffect(() => {
     let cancelled = false;
-    clientApi<{ items: ShoppingList[] }>("/api/ShoppingLists")
+    loadLists()
       .then((data) => {
-        if (!cancelled) setLists(data.items || []);
+        if (!cancelled) setLists(data);
       })
       .catch(() => {
         if (!cancelled) {
@@ -155,7 +157,7 @@ export default function ShoppingListPage() {
                     <span
                       className={`min-w-0 flex-1 ${item.isChecked ? "log-muted line-through" : ""}`}
                     >
-                      {item.ingredientText}
+                      {item.itemName}
                     </span>
                     <span
                       className={`num whitespace-nowrap text-sm ${item.isChecked ? "log-muted" : ""}`}

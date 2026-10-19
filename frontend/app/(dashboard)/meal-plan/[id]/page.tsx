@@ -53,7 +53,7 @@ export default async function MealPlanDetailPage({
             {plan.startDate} to {plan.endDate}
           </p>
         </div>
-        <MealPlanActions planId={plan.id} planName={plan.name} />
+        <MealPlanActions planId={plan.id} planName={plan.name || "Meal Plan"} />
       </div>
 
       {plan.nutritionSummary && (

@@ -3,6 +3,7 @@
 import { serverApi } from "@/lib/api.server";
 import { ApiError } from "@/lib/api";
 import { logger } from "@/lib/logger";
+import type { components } from "@/types/api.generated";
 
 const mealPlanLogger = logger.createModuleLogger("meal-plan-data");
 
@@ -18,39 +19,17 @@ function apiErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-export interface MealPlanRecipe {
-  id: string;
-  recipeId: string;
-  recipeTitle?: string;
-  recipeImageUrl?: string;
-  date: string;
-  mealType: string;
-  servings: number;
-  caloriesPerServing?: number;
-}
+type Schemas = components["schemas"];
 
-export interface MealPlanNutritionSummary {
-  totalCalories: number;
-  totalProteinGrams: number;
-  totalCarbsGrams: number;
-  totalFatGrams: number;
-  daysCount: number;
-  avgCaloriesPerDay: number;
-}
-
-export interface MealPlan {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  recipes: MealPlanRecipe[];
-  nutritionSummary?: MealPlanNutritionSummary;
-  createdAt?: string;
-  updatedAt?: string;
-}
+export type MealPlanRecipe = Schemas["MealPlanRecipeDetailDto"];
+export type MealPlanNutritionSummary = Schemas["MealPlanNutritionSummaryDto"];
+/** One plan with its recipes, as GET /api/MealPlans/{id} returns it. */
+export type MealPlan = Schemas["MealPlanDetailDto"];
+/** A plan as the list endpoint returns it: a recipe count, not the recipes. */
+export type MealPlanSummary = Schemas["MealPlanDto"];
 
 export interface MealPlanListResult {
-  mealPlans: MealPlan[];
+  mealPlans: MealPlanSummary[];
   totalCount: number;
   totalPages: number;
 }
@@ -68,13 +47,9 @@ export async function getMealPlans(
     if (sortBy) params.append("SortBy", sortBy);
     if (sortOrder) params.append("SortOrder", sortOrder);
 
-    const result = await serverApi<{
-      items: MealPlan[];
-      totalCount: number;
-      page: number;
-      pageSize: number;
-      totalPages: number;
-    }>(`/api/MealPlans?${params}`);
+    const result = await serverApi<Schemas["MealPlanDtoPagedResult"]>(
+      `/api/MealPlans?${params}`,
+    );
     return {
       mealPlans: result.items || [],
       totalCount: result.totalCount || 0,
@@ -107,14 +82,13 @@ export async function createMealPlan(data: {
   }[];
 }): Promise<{ id: string; success: boolean; message?: string } | null> {
   try {
-    const result = await serverApi<{
-      id: string;
-      name: string;
-      recipeCount: number;
-    }>("/api/MealPlans", {
-      method: "POST",
-      body: data,
-    });
+    const result = await serverApi<Schemas["CreateMealPlanResult"]>(
+      "/api/MealPlans",
+      {
+        method: "POST",
+        body: data,
+      },
+    );
     return { id: result.id, success: true };
   } catch (error) {
     mealPlanLogger.error("Failed to create meal plan", { error });
@@ -131,10 +105,13 @@ export async function addRecipeToMealPlan(
   data: { recipeId: string; date: string; mealType: string; servings: number },
 ): Promise<boolean> {
   try {
-    await serverApi(`/api/MealPlans/${mealPlanId}/recipes`, {
-      method: "POST",
-      body: data,
-    });
+    await serverApi<Schemas["AddRecipeToMealPlanResult"]>(
+      `/api/MealPlans/${mealPlanId}/recipes`,
+      {
+        method: "POST",
+        body: data,
+      },
+    );
     return true;
   } catch (error) {
     mealPlanLogger.error("Failed to add recipe to meal plan", {
@@ -150,7 +127,7 @@ export async function updateMealPlan(
   data: { name: string; startDate: string; endDate: string },
 ): Promise<{ success: boolean; message?: string }> {
   try {
-    const result = await serverApi<{ success: boolean; message?: string }>(
+    const result = await serverApi<Schemas["UpdateMealPlanResult"]>(
       `/api/MealPlans/${id}`,
       {
         method: "PUT",
@@ -169,7 +146,7 @@ export async function removeRecipeFromMealPlan(
   mealPlanRecipeId: string,
 ): Promise<{ success: boolean; message?: string }> {
   try {
-    const result = await serverApi<{ success: boolean; message?: string }>(
+    const result = await serverApi<Schemas["RemoveRecipeFromMealPlanResult"]>(
       `/api/MealPlans/${mealPlanId}/recipes/${mealPlanRecipeId}`,
       { method: "DELETE" },
     );
@@ -193,7 +170,7 @@ export async function updateMealPlanRecipe(
   data: { date: string; mealType: string; servings: number },
 ): Promise<{ success: boolean; message?: string }> {
   try {
-    const result = await serverApi<{ success: boolean; message?: string }>(
+    const result = await serverApi<Schemas["UpdateMealPlanRecipeResult"]>(
       `/api/MealPlans/${mealPlanId}/recipes/${mealPlanRecipeId}`,
       { method: "PUT", body: data },
     );
@@ -210,7 +187,9 @@ export async function updateMealPlanRecipe(
 
 export async function deleteMealPlan(id: string): Promise<boolean> {
   try {
-    await serverApi(`/api/MealPlans/${id}`, { method: "DELETE" });
+    await serverApi<Schemas["DeleteMealPlanResult"]>(`/api/MealPlans/${id}`, {
+      method: "DELETE",
+    });
     return true;
   } catch (error) {
     mealPlanLogger.error("Failed to delete meal plan", { error, id });
