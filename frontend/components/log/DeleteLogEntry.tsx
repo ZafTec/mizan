@@ -11,6 +11,15 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
+type EntryKind = "Meals" | "Workouts" | "BodyMeasurements";
+
+const deleteEntry: Record<EntryKind, (id: string) => Promise<unknown>> = {
+  Meals: (id) => clientApi(`/api/Meals/${id}`, { method: "DELETE" }),
+  Workouts: (id) => clientApi(`/api/Workouts/${id}`, { method: "DELETE" }),
+  BodyMeasurements: (id) =>
+    clientApi(`/api/BodyMeasurements/${id}`, { method: "DELETE" }),
+};
+
 export default function DeleteLogEntry({
   id,
   name,
@@ -18,7 +27,7 @@ export default function DeleteLogEntry({
 }: {
   id: string;
   name: string;
-  kind?: "Meals" | "Workouts" | "BodyMeasurements";
+  kind?: EntryKind;
 }) {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
@@ -66,7 +75,7 @@ export default function DeleteLogEntry({
               setPending(true);
               setError("");
               try {
-                await clientApi(`/api/${kind}/${id}`, { method: "DELETE" });
+                await deleteEntry[kind](id);
                 setOpen(false);
                 router.refresh();
               } catch {
