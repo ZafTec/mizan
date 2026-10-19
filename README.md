@@ -97,11 +97,20 @@ After API contract changes, run the API and `bun run codegen` in `frontend` to r
 
 ## Maintain the database
 
-Keep the current EF migration history and add migrations for schema changes. Do not regenerate or reset `InitialCreate`. After entity or DbContext changes, check model agreement from `backend`:
+Keep the EF migration history on `master` and add migrations for schema changes. Do not regenerate or reset `InitialCreate`. After entity or DbContext changes, check model agreement from `backend`:
 
 ```sh
 dotnet ef migrations has-pending-model-changes --project Mizan.Infrastructure --startup-project Mizan.Api
 ```
+
+An unmerged branch carries one migration. After a model change on such a branch, remove that migration and generate it again with the EF tools, from `backend`:
+
+```sh
+dotnet ef migrations remove --project Mizan.Infrastructure --startup-project Mizan.Api
+dotnet ef migrations add <Name> --project Mizan.Infrastructure --startup-project Mizan.Api
+```
+
+Never edit a migration file by hand.
 
 ## Releases
 
@@ -122,6 +131,7 @@ Production Compose currently follows `latest`. To pin a release, use its version
 - [MCP setup, OAuth, and the Claude plugin](docs/MCP.md)
 - [AI consent, limits, and administration](docs/AI.md)
 - [Telegram setup](docs/TELEGRAM.md)
+- [Meal planning, shopping lists, and prices](docs/PLANNING.md)
 - [Contributor and agent guidance](CLAUDE.md)
 - [Security policy](SECURITY.md)
 
