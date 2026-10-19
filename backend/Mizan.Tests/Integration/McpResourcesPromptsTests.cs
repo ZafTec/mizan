@@ -193,7 +193,9 @@ public class McpResourcesPromptsTests : IClassFixture<WebApplicationFactory<McpS
 
         var init = await RpcAsync(client, "initialize", new
         {
-            protocolVersion = "2025-06-18", capabilities = new { }, clientInfo = new { name = "t", version = "1" },
+            protocolVersion = "2025-06-18",
+            capabilities = new { },
+            clientInfo = new { name = "t", version = "1" },
         });
 
         init.ToString().Should().Contain("\"capabilities\"");
@@ -290,9 +292,17 @@ public class McpResourcesPromptsTests : IClassFixture<WebApplicationFactory<McpS
 
     private TokenIntrospection Introspection(string[] scopes, int? limit = null, int used = 0) => new()
     {
-        Active = true, UserId = _user, GrantId = _grant, ClientRowId = Guid.NewGuid(), ClientName = "Test",
-        Scopes = scopes, HouseholdMode = "all", Role = "user", Plan = limit is null ? "pro" : "free",
-        MonthlyLimit = limit, UsedThisMonth = used,
+        Active = true,
+        UserId = _user,
+        GrantId = _grant,
+        ClientRowId = Guid.NewGuid(),
+        ClientName = "Test",
+        Scopes = scopes,
+        HouseholdMode = "all",
+        Role = "user",
+        Plan = limit is null ? "pro" : "free",
+        MonthlyLimit = limit,
+        UsedThisMonth = used,
     };
 
     private HttpClient ClientWith(string token)

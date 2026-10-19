@@ -627,14 +627,23 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         var now = DateTime.UtcNow;
         var client = new OAuthClient
         {
-            Id = Guid.NewGuid(), ClientId = "mzc_" + SecureToken.Generate()[..16], Name = "Test Assistant",
-            RedirectUris = ["http://localhost:1/cb"], Source = audience == "api" ? OAuthClient.SourceFirstParty : OAuthClient.SourceDynamic, CreatedAt = now,
+            Id = Guid.NewGuid(),
+            ClientId = "mzc_" + SecureToken.Generate()[..16],
+            Name = "Test Assistant",
+            RedirectUris = ["http://localhost:1/cb"],
+            Source = audience == "api" ? OAuthClient.SourceFirstParty : OAuthClient.SourceDynamic,
+            CreatedAt = now,
         };
         var grant = new OAuthGrant
         {
-            Id = Guid.NewGuid(), UserId = userId, ClientId = client.Id,
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            ClientId = client.Id,
             Scopes = Mizan.Contracts.Mcp.McpScopes.Normalize(scopes ?? Mizan.Contracts.Mcp.McpScopes.All.ToArray(), isAdmin),
-            HouseholdMode = householdMode, HouseholdIds = (households ?? []).ToList(), CreatedAt = now, UpdatedAt = now,
+            HouseholdMode = householdMode,
+            HouseholdIds = (households ?? []).ToList(),
+            CreatedAt = now,
+            UpdatedAt = now,
         };
         db.OAuthClients.Add(client);
         db.OAuthGrants.Add(grant);

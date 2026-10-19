@@ -189,7 +189,9 @@ describe("global logging date context", () => {
       expect(banner.textContent).toContain("Viewing as Test User");
       expect(banner.textContent).toContain("45 min left");
       expect(banner.textContent).toContain("recorded under your name");
-      expect(screen.queryByRole("button", { name: /dismiss|close/i })).toBeNull();
+      expect(
+        screen.queryByRole("button", { name: /dismiss|close/i }),
+      ).toBeNull();
     });
 
     it("is absent for an ordinary session", () => {
@@ -205,7 +207,9 @@ describe("global logging date context", () => {
 
       fireEvent.click(screen.getByRole("button", { name: "Back to admin" }));
 
-      await vi.waitFor(() => expect(assign).toHaveBeenCalledWith("/admin/users"));
+      await vi.waitFor(() =>
+        expect(assign).toHaveBeenCalledWith("/admin/users"),
+      );
       expect(stopImpersonation).toHaveBeenCalledTimes(1);
       vi.unstubAllGlobals();
     });

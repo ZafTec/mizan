@@ -61,8 +61,11 @@ public class UpdateUserCommandTests
         var previousUpdate = DateTime.UtcNow.AddDays(-1);
         var user = new User
         {
-            Id = Guid.NewGuid(), Email = "profile@example.test", Name = "Original name",
-            Image = SharedImage, UpdatedAt = previousUpdate,
+            Id = Guid.NewGuid(),
+            Email = "profile@example.test",
+            Name = "Original name",
+            Image = SharedImage,
+            UpdatedAt = previousUpdate,
         };
         db.Users.Add(user);
         await db.SaveChangesAsync();

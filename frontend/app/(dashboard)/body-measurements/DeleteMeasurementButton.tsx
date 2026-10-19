@@ -27,8 +27,8 @@ export default function DeleteMeasurementButton({ id }: { id: string }) {
       setOpen(false);
       appToast.success("Measurement deleted");
       router.refresh();
-	    } catch (error) {
-	      appToast.error(error, "Failed to delete measurement");
+    } catch (error) {
+      appToast.error(error, "Failed to delete measurement");
     } finally {
       setIsDeleting(false);
     }
@@ -48,14 +48,23 @@ export default function DeleteMeasurementButton({ id }: { id: string }) {
         <DialogHeader>
           <DialogTitle>Delete Measurement</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this measurement? This action cannot be undone.
+            Are you sure you want to delete this measurement? This action cannot
+            be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={isDeleting}>
+          <Button
+            variant="outline"
+            onClick={() => setOpen(false)}
+            disabled={isDeleting}
+          >
             Cancel
           </Button>
-          <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+          <Button
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={isDeleting}
+          >
             {isDeleting ? (
               <>
                 <i className="ri-loader-4-line animate-spin mr-2" />

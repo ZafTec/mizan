@@ -15,52 +15,52 @@ import { createPortal } from "react-dom";
  * Use this everywhere instead of hand-rolled `fixed inset-0 z-50` wrappers.
  */
 export function ModalShell({
-	open,
-	onClose,
-	children,
-	closeOnOverlayClick = true,
+  open,
+  onClose,
+  children,
+  closeOnOverlayClick = true,
 }: {
-	open: boolean;
-	onClose: () => void;
-	children: ReactNode;
-	closeOnOverlayClick?: boolean;
+  open: boolean;
+  onClose: () => void;
+  children: ReactNode;
+  closeOnOverlayClick?: boolean;
 }) {
-	const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-	useEffect(() => {
-		// eslint-disable-next-line react-hooks/set-state-in-effect -- mount detection for SSR-safe portal
-		setMounted(true);
-	}, []);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- mount detection for SSR-safe portal
+    setMounted(true);
+  }, []);
 
-	useEffect(() => {
-		if (!open) return;
-		document.body.style.overflow = "hidden";
-		const onEsc = (e: KeyboardEvent) => {
-			if (e.key === "Escape") onClose();
-		};
-		window.addEventListener("keydown", onEsc);
-		return () => {
-			// Always clear the inline override rather than restoring a saved value -
-			// a saved "hidden" from overlapping modals can lock scroll permanently.
-			document.body.style.overflow = "";
-			window.removeEventListener("keydown", onEsc);
-		};
-	}, [open, onClose]);
+  useEffect(() => {
+    if (!open) return;
+    document.body.style.overflow = "hidden";
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onEsc);
+    return () => {
+      // Always clear the inline override rather than restoring a saved value -
+      // a saved "hidden" from overlapping modals can lock scroll permanently.
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onEsc);
+    };
+  }, [open, onClose]);
 
-	if (!open || !mounted) return null;
+  if (!open || !mounted) return null;
 
-	return createPortal(
-		<div
-			className="modal-overlay-in fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm"
-			onClick={closeOnOverlayClick ? onClose : undefined}
-		>
-			<div
-				className="modal-pop-in my-auto w-full max-w-md"
-				onClick={(e) => e.stopPropagation()}
-			>
-				{children}
-			</div>
-		</div>,
-		document.body
-	);
+  return createPortal(
+    <div
+      className="modal-overlay-in fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm"
+      onClick={closeOnOverlayClick ? onClose : undefined}
+    >
+      <div
+        className="modal-pop-in my-auto w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </div>
+    </div>,
+    document.body,
+  );
 }

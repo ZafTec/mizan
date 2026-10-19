@@ -19,7 +19,9 @@ export function useSubscription() {
       setSubscription(data);
       return data;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load subscription");
+      setError(
+        err instanceof Error ? err.message : "Failed to load subscription",
+      );
       return null;
     } finally {
       setLoading(false);

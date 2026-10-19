@@ -43,7 +43,10 @@ export default function AiMealInput({
       else setWalled(true);
     };
 
-  async function run(source: "text" | "photo", work: () => Promise<FoodAnalysis>) {
+  async function run(
+    source: "text" | "photo",
+    work: () => Promise<FoodAnalysis>,
+  ) {
     setBusy(source);
     onBusyChange?.(true);
     setError("");
@@ -152,7 +155,10 @@ export default function AiMealInput({
         }}
       />
       {walled && (
-        <div role="note" className="space-y-2 border-t border-border pt-3 text-sm">
+        <div
+          role="note"
+          className="space-y-2 border-t border-border pt-3 text-sm"
+        >
           <h3 className="font-semibold">Log a meal in plain words</h3>
           <p className="text-charcoal-blue-700 dark:text-charcoal-blue-300">
             Pro turns a sentence or a photo into a meal for you to check.

@@ -43,7 +43,9 @@ public class AuthEmailDeliveryTests(ApiTestFixture fixture)
         {
             (await client.PostAsJsonAsync("/api/Auth/register", new
             {
-                Email = email, Password = "synthetic-long-password", Name = "Delivery test"
+                Email = email,
+                Password = "synthetic-long-password",
+                Name = "Delivery test"
             })).StatusCode.Should().Be(HttpStatusCode.Accepted);
         }
 

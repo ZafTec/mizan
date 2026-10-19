@@ -8,7 +8,10 @@ import type { User } from "@/lib/auth";
 type Impersonation = NonNullable<User["impersonation"]>;
 
 function minutesLeft(expiresAt: string) {
-  return Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 60000));
+  return Math.max(
+    0,
+    Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 60000),
+  );
 }
 
 /**
@@ -27,7 +30,10 @@ export default function ImpersonationBanner({
   const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
-    const timer = window.setInterval(() => setLeft(minutesLeft(impersonation.expiresAt)), 30_000);
+    const timer = window.setInterval(
+      () => setLeft(minutesLeft(impersonation.expiresAt)),
+      30_000,
+    );
     return () => window.clearInterval(timer);
   }, [impersonation.expiresAt]);
 
@@ -49,8 +55,8 @@ export default function ImpersonationBanner({
       className="sticky top-0 z-[60] flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-burnt-peach-300 bg-burnt-peach-50 px-4 py-2 text-sm text-burnt-peach-900 dark:border-burnt-peach-500/40 dark:bg-burnt-peach-950 dark:text-burnt-peach-100"
     >
       <p className="min-w-0">
-        <strong className="font-semibold">Viewing as {userName}.</strong>{" "}
-        What you do here is real and is recorded under your name.{" "}
+        <strong className="font-semibold">Viewing as {userName}.</strong> What
+        you do here is real and is recorded under your name.{" "}
         <span className="tabular-nums">
           {left > 0 ? `${left} min left.` : "This view has ended."}
         </span>

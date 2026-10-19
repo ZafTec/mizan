@@ -34,7 +34,7 @@ export default async function ActiveWorkoutPage({
   return (
     <div className="log-page">
       <Link href={`/today?date=${date}`} className="text-link mb-4">
-         Back to your log
+        Back to your log
       </Link>
       <WorkoutDashboard
         initialTab="log"

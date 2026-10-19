@@ -1,65 +1,64 @@
 import Link from "next/link";
 
 export default function NotFound() {
-	return (
-		<div className="min-h-[70vh] flex items-center justify-center px-4">
-			<div className="w-full max-w-md">
-				{/* Header */}
-				<div className="text-center mb-8">
-					<div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-charcoal-blue-900 dark:bg-charcoal-blue-700 mb-6">
-					</div>
-					<h1 className="text-6xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
-						404
-					</h1>
-					<h2 className="text-2xl font-bold text-charcoal-blue-700 dark:text-charcoal-blue-300 mb-2">
-						Page not found
-					</h2>
-					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						That page doesn&apos;t exist.
-					</p>
-				</div>
+  return (
+    <div className="min-h-[70vh] flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-charcoal-blue-900 dark:bg-charcoal-blue-700 mb-6"></div>
+          <h1 className="text-6xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
+            404
+          </h1>
+          <h2 className="text-2xl font-bold text-charcoal-blue-700 dark:text-charcoal-blue-300 mb-2">
+            Page not found
+          </h2>
+          <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">
+            That page doesn&apos;t exist.
+          </p>
+        </div>
 
-				{/* Action Card */}
-				<div className="card p-6 sm:p-8 space-y-4">
-					<div className="space-y-3">
-						<Link href="/" className="btn-primary w-full py-3">
-							Go to Dashboard
-						</Link>
-						<Link href="/recipes" className="btn-secondary w-full py-3">
-							Browse Recipes
-						</Link>
-					</div>
+        {/* Action Card */}
+        <div className="card p-6 sm:p-8 space-y-4">
+          <div className="space-y-3">
+            <Link href="/" className="btn-primary w-full py-3">
+              Go to Dashboard
+            </Link>
+            <Link href="/recipes" className="btn-secondary w-full py-3">
+              Browse Recipes
+            </Link>
+          </div>
 
-					<div className="pt-4 border-t border-charcoal-blue-200 dark:border-charcoal-blue-800">
-						<div className="grid grid-cols-2 gap-2 text-sm">
-							<Link
-								href="/meals"
-								className="text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:underline text-center"
-							>
-								Meals
-							</Link>
-							<Link
-								href="/ingredients"
-								className="text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:underline text-center"
-							>
-								Ingredients
-							</Link>
-							<Link
-								href="/goal"
-								className="text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:underline text-center"
-							>
-								Goals
-							</Link>
-							<Link
-								href="/profile"
-								className="text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:underline text-center"
-							>
-								Profile
-							</Link>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	);
+          <div className="pt-4 border-t border-charcoal-blue-200 dark:border-charcoal-blue-800">
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <Link
+                href="/meals"
+                className="text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:underline text-center"
+              >
+                Meals
+              </Link>
+              <Link
+                href="/ingredients"
+                className="text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:underline text-center"
+              >
+                Ingredients
+              </Link>
+              <Link
+                href="/goal"
+                className="text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:underline text-center"
+              >
+                Goals
+              </Link>
+              <Link
+                href="/profile"
+                className="text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:underline text-center"
+              >
+                Profile
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

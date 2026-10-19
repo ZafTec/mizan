@@ -457,7 +457,9 @@ public class OAuthFlowTests
         using var http = _fixture.CreateClient();
         var response = await http.PostAsJsonAsync("/api/oauth/register", new
         {
-            client_name = "x", redirect_uris = new[] { Redirect }, token_endpoint_auth_method = "client_secret_basic",
+            client_name = "x",
+            redirect_uris = new[] { Redirect },
+            token_endpoint_auth_method = "client_secret_basic",
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -595,7 +597,10 @@ public class OAuthFlowTests
         db.Households.Add(household);
         db.HouseholdMembers.Add(new HouseholdMember
         {
-            HouseholdId = household.Id, UserId = userId, Role = "owner", JoinedAt = DateTime.UtcNow,
+            HouseholdId = household.Id,
+            UserId = userId,
+            Role = "owner",
+            JoinedAt = DateTime.UtcNow,
         });
         await db.SaveChangesAsync();
         return household.Id;
@@ -634,7 +639,11 @@ public class OAuthFlowTests
     {
         var response = await browser.PostAsJsonAsync("/api/oauth/authorization-requests/decision", new
         {
-            request = secret, approve = true, scopes, householdMode, householdIds = households ?? Array.Empty<Guid>(),
+            request = secret,
+            approve = true,
+            scopes,
+            householdMode,
+            householdIds = households ?? Array.Empty<Guid>(),
         });
         response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
         var url = (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("redirectUrl").GetString()!;

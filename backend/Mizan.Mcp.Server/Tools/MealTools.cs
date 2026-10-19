@@ -60,8 +60,11 @@ public sealed class MealTools
             // in the same transaction; a second measurement POST would duplicate it.
             writes.Add(new DayWrite("workout", null, "/api/Workouts", new LogWorkoutRequest
             {
-                WorkoutDate = day, Name = workoutName, DurationMinutes = workoutDurationMinutes,
-                Exercises = exercises, BodyweightKg = weightKg,
+                WorkoutDate = day,
+                Name = workoutName,
+                DurationMinutes = workoutDurationMinutes,
+                Exercises = exercises,
+                BodyweightKg = weightKg,
             }));
         }
         else if (weightKg.HasValue)
@@ -79,8 +82,13 @@ public sealed class MealTools
             try
             {
                 var response = await _api.PostAsync(write.Endpoint, write.Body, ct);
-                completed.Add(new { write.Kind, write.MealIndex, response = JsonSerializer.Deserialize<JsonElement>(response),
-                    includesWeight = write.Kind == "workout" && weightKg.HasValue });
+                completed.Add(new
+                {
+                    write.Kind,
+                    write.MealIndex,
+                    response = JsonSerializer.Deserialize<JsonElement>(response),
+                    includesWeight = write.Kind == "workout" && weightKg.HasValue
+                });
             }
             catch (Exception error) when (error is not OperationCanceledException)
             {
@@ -89,7 +97,9 @@ public sealed class MealTools
                 var unconfirmed = error is not BackendApiException backendError || (int)backendError.Status >= 500;
                 return DayResult(new
                 {
-                    success = false, date = day, completed,
+                    success = false,
+                    date = day,
+                    completed,
                     failed = new { write.Kind, write.MealIndex, error = error.Message, mayHaveBeenSaved = unconfirmed },
                     remaining = writes.Skip(index + (unconfirmed ? 1 : 0)).Select(item => new { item.Kind, item.MealIndex }),
                     guidance = unconfirmed

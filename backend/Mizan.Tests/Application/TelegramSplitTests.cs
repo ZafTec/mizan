@@ -234,7 +234,10 @@ public class TelegramSplitTests
         {
             var options = Options.Create(new TelegramBotOptions
             {
-                BotToken = "token", ServiceApiKey = "key", ApiUrl = "http://api.test", PublicUrl = "https://mizan.test",
+                BotToken = "token",
+                ServiceApiKey = "key",
+                ApiUrl = "http://api.test",
+                PublicUrl = "https://mizan.test",
             });
             return new UpdateHandler(
                 new TelegramClient(new HttpClient(this), options, NullLogger<TelegramClient>.Instance),

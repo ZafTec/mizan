@@ -4,7 +4,10 @@ import NotificationList, { type NotificationDto } from "./NotificationList";
 export const dynamic = "force-dynamic";
 
 export default async function NotificationsPage() {
-  const result = await serverApi<{ items: NotificationDto[]; unreadCount: number }>("/api/Notifications?page=1&pageSize=50");
+  const result = await serverApi<{
+    items: NotificationDto[];
+    unreadCount: number;
+  }>("/api/Notifications?page=1&pageSize=50");
   return (
     <div className="log-page space-y-8">
       <header className="log-page-header block!">

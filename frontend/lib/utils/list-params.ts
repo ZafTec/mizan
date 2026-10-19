@@ -26,7 +26,7 @@ export function parseListParams(
     pageSize?: number;
     sortBy?: string;
     sortOrder?: "asc" | "desc";
-  }
+  },
 ): {
   page: number;
   pageSize: number;
@@ -39,23 +39,32 @@ export function parseListParams(
   const sortOrderParam = searchParams.sortOrder;
 
   const page = pageParam
-    ? Math.max(1, parseInt(Array.isArray(pageParam) ? pageParam[0] : pageParam, 10))
+    ? Math.max(
+        1,
+        parseInt(Array.isArray(pageParam) ? pageParam[0] : pageParam, 10),
+      )
     : 1;
 
   const pageSize = pageSizeParam
-    ? Math.max(1, parseInt(Array.isArray(pageSizeParam) ? pageSizeParam[0] : pageSizeParam, 10))
-    : defaults?.pageSize ?? 20;
+    ? Math.max(
+        1,
+        parseInt(
+          Array.isArray(pageSizeParam) ? pageSizeParam[0] : pageSizeParam,
+          10,
+        ),
+      )
+    : (defaults?.pageSize ?? 20);
 
   const sortBy = sortByParam
     ? Array.isArray(sortByParam)
       ? sortByParam[0]
       : sortByParam
-    : defaults?.sortBy ?? null;
+    : (defaults?.sortBy ?? null);
 
   const sortOrder =
     sortOrderParam && (sortOrderParam === "asc" || sortOrderParam === "desc")
       ? sortOrderParam
-      : defaults?.sortOrder ?? "asc";
+      : (defaults?.sortOrder ?? "asc");
 
   return { page, pageSize, sortBy, sortOrder };
 }

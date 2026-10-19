@@ -1,61 +1,63 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { format, parse } from 'date-fns';
-import { clientApi } from '@/lib/api.client';
-import { getErrorMessage } from '@/lib/toast';
-import Loading from '@/components/Loading';
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { format, parse } from "date-fns";
+import { clientApi } from "@/lib/api.client";
+import { getErrorMessage } from "@/lib/toast";
+import Loading from "@/components/Loading";
 
 type SimplifiedRecipe = {
   id: string;
   title: string;
   calories: number;
   protein: number;
-}
+};
 
 type SelectedRecipe = {
   recipeId: string;
   recipeName: string;
   servings: number;
   mealTime: string;
-}
+};
 
 export default function AddMealPlanPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const dateParam = searchParams.get('date');
-  const weekParam = searchParams.get('week');
+  const dateParam = searchParams.get("date");
+  const weekParam = searchParams.get("week");
 
   const [date, setDate] = useState<Date>(
-    dateParam
-      ? parse(dateParam, 'yyyy-MM-dd', new Date())
-      : new Date()
+    dateParam ? parse(dateParam, "yyyy-MM-dd", new Date()) : new Date(),
   );
   const [recipes, setRecipes] = useState<SimplifiedRecipe[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [selectedRecipes, setSelectedRecipes] = useState<SelectedRecipe[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filteredRecipes, setFilteredRecipes] = useState<SimplifiedRecipe[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredRecipes, setFilteredRecipes] = useState<SimplifiedRecipe[]>(
+    [],
+  );
 
   useEffect(() => {
     const loadRecipes = async () => {
       try {
-        const data = await clientApi<{ items: SimplifiedRecipe[] }>('/api/Recipes?IncludePublic=true&PageSize=50');
-        const simplifiedRecipes = (data.items || []).map(recipe => ({
+        const data = await clientApi<{ items: SimplifiedRecipe[] }>(
+          "/api/Recipes?IncludePublic=true&PageSize=50",
+        );
+        const simplifiedRecipes = (data.items || []).map((recipe) => ({
           id: recipe.id,
           title: recipe.title,
           calories: recipe.calories || 0,
-          protein: recipe.protein || 0
+          protein: recipe.protein || 0,
         }));
         setRecipes(simplifiedRecipes);
         setFilteredRecipes(simplifiedRecipes);
       } catch (err) {
-        setError('Failed to load recipes');
-        console.error('Error loading recipes:', err);
+        setError("Failed to load recipes");
+        console.error("Error loading recipes:", err);
       } finally {
         setLoading(false);
       }
@@ -65,11 +67,11 @@ export default function AddMealPlanPage() {
   }, []);
 
   useEffect(() => {
-    if (searchTerm.trim() === '') {
+    if (searchTerm.trim() === "") {
       setFilteredRecipes(recipes);
     } else {
-      const filtered = recipes.filter(recipe =>
-        recipe.title?.toLowerCase().includes(searchTerm.toLowerCase())
+      const filtered = recipes.filter((recipe) =>
+        recipe.title?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
       setFilteredRecipes(filtered);
     }
@@ -82,8 +84,8 @@ export default function AddMealPlanPage() {
         recipeId: recipe.id,
         recipeName: recipe.title,
         servings: 1,
-        mealTime: 'lunch'
-      }
+        mealTime: "lunch",
+      },
     ]);
   };
 
@@ -93,11 +95,15 @@ export default function AddMealPlanPage() {
     setSelectedRecipes(newSelectedRecipes);
   };
 
-  const updateSelectedRecipe = (index: number, field: string, value: string | number) => {
+  const updateSelectedRecipe = (
+    index: number,
+    field: string,
+    value: string | number,
+  ) => {
     const newSelectedRecipes = [...selectedRecipes];
     newSelectedRecipes[index] = {
       ...newSelectedRecipes[index],
-      [field]: value
+      [field]: value,
     };
     setSelectedRecipes(newSelectedRecipes);
   };
@@ -106,88 +112,101 @@ export default function AddMealPlanPage() {
     e.preventDefault();
 
     if (selectedRecipes.length === 0) {
-      setError('Please select at least one recipe');
+      setError("Please select at least one recipe");
       return;
     }
 
     setSubmitting(true);
     try {
-      const dateString = format(date, 'yyyy-MM-dd');
-      await clientApi('/api/MealPlans', {
-        method: 'POST',
+      const dateString = format(date, "yyyy-MM-dd");
+      await clientApi("/api/MealPlans", {
+        method: "POST",
         body: {
-          name: 'Meal Plan',
+          name: "Meal Plan",
           startDate: dateString,
           endDate: dateString,
-          recipes: selectedRecipes.map(item => ({
+          recipes: selectedRecipes.map((item) => ({
             recipeId: item.recipeId,
             date: dateString,
             mealType: item.mealTime,
-            servings: item.servings
-          }))
-        }
+            servings: item.servings,
+          })),
+        },
       });
 
       if (weekParam) {
         router.push(`/meal-plan?week=${weekParam}`);
       } else {
-        router.push('/meal-plan');
+        router.push("/meal-plan");
       }
       router.refresh();
     } catch (err) {
-      console.error('Error adding meal plan:', err);
-      setError(getErrorMessage(err, 'Failed to save meal plan'));
+      console.error("Error adding meal plan:", err);
+      setError(getErrorMessage(err, "Failed to save meal plan"));
       setSubmitting(false);
     }
   };
 
-	return (
-	  <div className="flex flex-col gap-6">
-	    <div className="flex justify-between items-center">
-	      <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">Add to Meal Plan</h1>
-	      <Link
-	        href={weekParam ? `/meal-plan?week=${weekParam}` : "/meal-plan"}
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+          Add to Meal Plan
+        </h1>
+        <Link
+          href={weekParam ? `/meal-plan?week=${weekParam}` : "/meal-plan"}
           className="btn-secondary"
         >
           Cancel
         </Link>
       </div>
 
-	    {error && (
-	      <div className="card border border-red-200 bg-red-50 p-4 dark:border-red-500/30 dark:bg-red-500/10">
-	        <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
-	          <span>{error}</span>
+      {error && (
+        <div className="card border border-red-200 bg-red-50 p-4 dark:border-red-500/30 dark:bg-red-500/10">
+          <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
+            <span>{error}</span>
           </div>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-	        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-	          <div className="card p-4">
-	            <h2 className="mb-3 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Select Date</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="card p-4">
+            <h2 className="mb-3 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+              Select Date
+            </h2>
             <input
               type="date"
-              value={format(date, 'yyyy-MM-dd')}
+              value={format(date, "yyyy-MM-dd")}
               onChange={(e) => setDate(new Date(e.target.value))}
               className="input w-full"
             />
           </div>
 
-	          <div className="card p-4">
-	            <h2 className="mb-3 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Selected Recipes</h2>
-	            {selectedRecipes.length === 0 ? (
-	              <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">No recipes selected yet</p>
-	            ) : (
-	              <ul className="space-y-4">
-	                {selectedRecipes.map((item, index) => (
-	                  <li key={`${item.recipeId}-${index}`} className="border-b border-charcoal-blue-200 pb-3 dark:border-white/10">
-	                    <div className="flex justify-between items-center">
-	                      <span className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{item.recipeName}</span>
-	                      <button
-	                        type="button"
-	                        onClick={() => removeRecipeFromSelection(index)}
-	                        className="text-red-500 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200"
-	                      >
+          <div className="card p-4">
+            <h2 className="mb-3 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+              Selected Recipes
+            </h2>
+            {selectedRecipes.length === 0 ? (
+              <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400">
+                No recipes selected yet
+              </p>
+            ) : (
+              <ul className="space-y-4">
+                {selectedRecipes.map((item, index) => (
+                  <li
+                    key={`${item.recipeId}-${index}`}
+                    className="border-b border-charcoal-blue-200 pb-3 dark:border-white/10"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
+                        {item.recipeName}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeRecipeFromSelection(index)}
+                        className="text-red-500 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200"
+                      >
                         <i className="ri-delete-bin-line"></i>
                       </button>
                     </div>
@@ -198,7 +217,13 @@ export default function AddMealPlanPage() {
                           type="number"
                           min="1"
                           value={item.servings}
-                          onChange={(e) => updateSelectedRecipe(index, 'servings', parseInt(e.target.value))}
+                          onChange={(e) =>
+                            updateSelectedRecipe(
+                              index,
+                              "servings",
+                              parseInt(e.target.value),
+                            )
+                          }
                           className="input w-full"
                         />
                       </div>
@@ -206,7 +231,13 @@ export default function AddMealPlanPage() {
                         <label className="label">Meal Time</label>
                         <select
                           value={item.mealTime}
-                          onChange={(e) => updateSelectedRecipe(index, 'mealTime', e.target.value)}
+                          onChange={(e) =>
+                            updateSelectedRecipe(
+                              index,
+                              "mealTime",
+                              e.target.value,
+                            )
+                          }
                           className="input w-full"
                         >
                           <option value="breakfast">Breakfast</option>
@@ -223,8 +254,10 @@ export default function AddMealPlanPage() {
           </div>
         </div>
 
-	        <div className="card p-4">
-	          <h2 className="mb-3 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">Choose Recipes</h2>
+        <div className="card p-4">
+          <h2 className="mb-3 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
+            Choose Recipes
+          </h2>
           <div className="mb-4">
             <input
               type="text"
@@ -240,22 +273,27 @@ export default function AddMealPlanPage() {
               <Loading />
             </div>
           ) : (
-	            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-	              {filteredRecipes.map((recipe) => (
-	                <div
-	                  key={recipe.id}
-	                  className="card cursor-pointer p-3 transition hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-900/60"
-	                  onClick={() => addRecipeToSelection(recipe)}
-	                >
-	                  <h3 className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">{recipe.title}</h3>
-	                  <p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
-	                    {Math.round(recipe.calories)} cal | {Math.round(recipe.protein)}g protein
-	                  </p>
-	                </div>
-	              ))}
-	              {filteredRecipes.length === 0 && (
-	                <p className="col-span-full py-4 text-center text-charcoal-blue-500 dark:text-charcoal-blue-400">No recipes found</p>
-	              )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {filteredRecipes.map((recipe) => (
+                <div
+                  key={recipe.id}
+                  className="card cursor-pointer p-3 transition hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-900/60"
+                  onClick={() => addRecipeToSelection(recipe)}
+                >
+                  <h3 className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
+                    {recipe.title}
+                  </h3>
+                  <p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
+                    {Math.round(recipe.calories)} cal |{" "}
+                    {Math.round(recipe.protein)}g protein
+                  </p>
+                </div>
+              ))}
+              {filteredRecipes.length === 0 && (
+                <p className="col-span-full py-4 text-center text-charcoal-blue-500 dark:text-charcoal-blue-400">
+                  No recipes found
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -266,7 +304,7 @@ export default function AddMealPlanPage() {
             disabled={submitting || selectedRecipes.length === 0}
             className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting ? 'Saving...' : 'Save Meal Plan'}
+            {submitting ? "Saving..." : "Save Meal Plan"}
           </button>
         </div>
       </form>

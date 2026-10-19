@@ -168,11 +168,24 @@ public sealed class GetSyncChangesQueryHandler : IRequestHandler<GetSyncChangesQ
 
     private static SyncDiaryEntryDto ToDto(FoodDiaryEntry e) => new()
     {
-        Id = e.Id, EntryDate = e.EntryDate, FoodId = e.FoodId, RecipeId = e.RecipeId, GroupId = e.GroupId, GroupName = e.GroupName,
-        AmountGrams = e.AmountGrams, MealType = e.MealType,
+        Id = e.Id,
+        EntryDate = e.EntryDate,
+        FoodId = e.FoodId,
+        RecipeId = e.RecipeId,
+        GroupId = e.GroupId,
+        GroupName = e.GroupName,
+        AmountGrams = e.AmountGrams,
+        MealType = e.MealType,
         Name = !string.IsNullOrEmpty(e.Name) ? e.Name : (e.Food?.Name ?? e.Recipe?.Title ?? "Unknown"),
-        Servings = e.Servings, Calories = e.Calories, ProteinGrams = e.ProteinGrams, CarbsGrams = e.CarbsGrams, FatGrams = e.FatGrams,
-        FiberGrams = e.FiberGrams, ProteinCalorieRatio = e.ProteinCalorieRatio, LoggedAt = e.LoggedAt, UpdatedAt = e.UpdatedAt,
+        Servings = e.Servings,
+        Calories = e.Calories,
+        ProteinGrams = e.ProteinGrams,
+        CarbsGrams = e.CarbsGrams,
+        FatGrams = e.FatGrams,
+        FiberGrams = e.FiberGrams,
+        ProteinCalorieRatio = e.ProteinCalorieRatio,
+        LoggedAt = e.LoggedAt,
+        UpdatedAt = e.UpdatedAt,
     };
 
     private static WorkoutSummaryDto ToDto(Workout w) => new(

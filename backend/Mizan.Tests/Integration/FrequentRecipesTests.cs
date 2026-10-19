@@ -77,8 +77,14 @@ public class FrequentRecipesTests
         for (var i = 0; i < times; i++)
             db.FoodDiaryEntries.Add(new FoodDiaryEntry
             {
-                Id = Guid.NewGuid(), UserId = user, RecipeId = recipe, Name = "x", EntryDate = DateOnly.FromDateTime(DateTime.UtcNow),
-                MealType = "lunch", Servings = 1, LoggedAt = DateTime.UtcNow.AddMinutes(-i),
+                Id = Guid.NewGuid(),
+                UserId = user,
+                RecipeId = recipe,
+                Name = "x",
+                EntryDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                MealType = "lunch",
+                Servings = 1,
+                LoggedAt = DateTime.UtcNow.AddMinutes(-i),
             });
         await db.SaveChangesAsync();
     }

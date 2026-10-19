@@ -256,8 +256,14 @@ public class SyncTests
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
         db.FoodDiaryEntries.Add(new FoodDiaryEntry
         {
-            Id = Guid.NewGuid(), UserId = user, Name = name, EntryDate = DateOnly.FromDateTime(DateTime.UtcNow), MealType = "breakfast",
-            Servings = 1, Calories = 300, LoggedAt = DateTime.UtcNow,
+            Id = Guid.NewGuid(),
+            UserId = user,
+            Name = name,
+            EntryDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            MealType = "breakfast",
+            Servings = 1,
+            Calories = 300,
+            LoggedAt = DateTime.UtcNow,
         });
         await db.SaveChangesAsync();
     }

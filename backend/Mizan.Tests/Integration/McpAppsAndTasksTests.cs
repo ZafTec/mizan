@@ -49,8 +49,17 @@ public class McpAppsAndTasksTests : IClassFixture<WebApplicationFactory<McpServe
         });
         _api.Introspection = () => new
         {
-            active = true, userId = _user, grantId = _grant, clientRowId = Guid.NewGuid(), clientId = "c", clientName = "Test",
-            scopes = _scopes, householdMode = "all", householdIds = Array.Empty<Guid>(), role = "user", plan = "pro",
+            active = true,
+            userId = _user,
+            grantId = _grant,
+            clientRowId = Guid.NewGuid(),
+            clientId = "c",
+            clientName = "Test",
+            scopes = _scopes,
+            householdMode = "all",
+            householdIds = Array.Empty<Guid>(),
+            role = "user",
+            plan = "pro",
         };
     }
 

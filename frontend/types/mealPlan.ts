@@ -41,4 +41,4 @@ export interface ShoppingList {
   endDate: Date;
   items: ShoppingListItem[];
   user: User;
-} 
+}

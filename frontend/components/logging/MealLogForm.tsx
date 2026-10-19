@@ -334,7 +334,11 @@ export default function MealLogForm({
               </div>
             </fieldset>
             {totalCount > 0 && (
-              <section ref={mealList} aria-label="Items in this meal" className="space-y-2">
+              <section
+                ref={mealList}
+                aria-label="Items in this meal"
+                className="space-y-2"
+              >
                 <h3 className="text-sm font-semibold">Your meal</h3>
                 {proposal && proposed.length > 0 && (
                   <p className="flex items-start gap-2 text-xs text-charcoal-blue-700 dark:text-charcoal-blue-300">
