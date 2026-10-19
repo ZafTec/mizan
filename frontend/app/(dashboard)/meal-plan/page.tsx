@@ -53,7 +53,7 @@ export default async function MealPlanPage({
   const today = new Date().toISOString().slice(0, 10);
   const current = plans.filter((plan) => isCurrent(plan, today));
   const mealsThisWeek = current.reduce(
-    (sum, plan) => sum + (plan.recipes?.length ?? 0),
+    (sum, plan) => sum + plan.recipeCount,
     0,
   );
 
@@ -147,7 +147,7 @@ export default async function MealPlanPage({
                       </span>
                       <span className="num whitespace-nowrap text-sm log-muted">
                         <span className="text-base font-semibold text-foreground">
-                          {plan.recipes?.length ?? 0}
+                          {plan.recipeCount}
                         </span>{" "}
                         meals
                       </span>
