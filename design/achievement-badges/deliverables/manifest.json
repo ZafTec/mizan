@@ -1,0 +1,988 @@
+{
+  "style": "hand-folded textured paper origami",
+  "colorSpace": "sRGB",
+  "alpha": "straight",
+  "encoding": "PNG RGBA 8-bit; metadata stripped",
+  "assets": [
+    {
+      "key": "first-meal",
+      "name": "First Meal",
+      "category": "nutrition",
+      "motif": "empty-bowl",
+      "tier": 1,
+      "pigment": "clay",
+      "seed": 1,
+      "id": "ac000000-0000-0000-0000-000000000001",
+      "file": "512/achievement-first-meal.png",
+      "preview": "128/achievement-first-meal.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 3,
+      "bytes": 56437,
+      "previewBytes": 9466,
+      "alphaBounds": [
+        50,
+        143,
+        462,
+        368
+      ],
+      "sha256": "8aba860e15507cefea595b241984ff160bd0eade737293b669cf0dafed873756"
+    },
+    {
+      "key": "getting-started",
+      "name": "Getting Started",
+      "category": "nutrition",
+      "motif": "plate",
+      "tier": 2,
+      "pigment": "clay",
+      "seed": 2,
+      "id": "ac000000-0000-0000-0000-000000000002",
+      "file": "512/achievement-getting-started.png",
+      "preview": "128/achievement-getting-started.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 4,
+      "bytes": 54928,
+      "previewBytes": 10770,
+      "alphaBounds": [
+        50,
+        126,
+        462,
+        386
+      ],
+      "sha256": "f613ab9b8e50f1f334e8865e54c57a762aec4d4cb24dd287c6da2babe54d577d"
+    },
+    {
+      "key": "century-club",
+      "name": "Century Club",
+      "category": "nutrition",
+      "motif": "filled-bowl",
+      "tier": 3,
+      "pigment": "bronze",
+      "seed": 3,
+      "id": "ac000000-0000-0000-0000-000000000003",
+      "file": "512/achievement-century-club.png",
+      "preview": "128/achievement-century-club.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 8,
+      "bytes": 53510,
+      "previewBytes": 14036,
+      "alphaBounds": [
+        50,
+        88,
+        462,
+        424
+      ],
+      "sha256": "05f1d2725a37e1245182d127f3f245ff1b968a9406612c02ccdbf8fcb42df760"
+    },
+    {
+      "key": "half-grand",
+      "name": "Half Grand",
+      "category": "nutrition",
+      "motif": "harvest-bowl",
+      "tier": 4,
+      "pigment": "gold",
+      "seed": 4,
+      "id": "ac000000-0000-0000-0000-000000000004",
+      "file": "512/achievement-half-grand.png",
+      "preview": "128/achievement-half-grand.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 10,
+      "bytes": 57990,
+      "previewBytes": 17501,
+      "alphaBounds": [
+        54,
+        50,
+        458,
+        462
+      ],
+      "sha256": "cda7da9d42cf269e47d87d69a409b7ee69ab3f4105ef2455f3d921321a3921e1"
+    },
+    {
+      "key": "kitchen-opener",
+      "name": "Kitchen Opener",
+      "category": "nutrition",
+      "motif": "recipe-bowl",
+      "tier": 1,
+      "pigment": "clay",
+      "seed": 16,
+      "id": "ac000000-0000-0000-0000-000000000016",
+      "file": "512/achievement-kitchen-opener.png",
+      "preview": "128/achievement-kitchen-opener.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 5,
+      "bytes": 58906,
+      "previewBytes": 12037,
+      "alphaBounds": [
+        50,
+        95,
+        462,
+        417
+      ],
+      "sha256": "e535f78d3192f90fdef1ee6c6e4ea83078b1102004e0689b2a9986c4a9152606"
+    },
+    {
+      "key": "chefs-shelf",
+      "name": "Chef's Shelf",
+      "category": "nutrition",
+      "motif": "pot",
+      "tier": 2,
+      "pigment": "bronze",
+      "seed": 17,
+      "id": "ac000000-0000-0000-0000-000000000017",
+      "file": "512/achievement-chefs-shelf.png",
+      "preview": "128/achievement-chefs-shelf.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 3,
+      "bytes": 59287,
+      "previewBytes": 10485,
+      "alphaBounds": [
+        50,
+        100,
+        462,
+        412
+      ],
+      "sha256": "d8a48373b09aa2c6c4d235a31456c33c0649c613570dfd41978ee1fdf7581a38"
+    },
+    {
+      "key": "three-day-runner",
+      "name": "Three-Day Runner",
+      "category": "consistency",
+      "motif": "steps",
+      "tier": 1,
+      "pigment": "verdigris",
+      "seed": 5,
+      "id": "ac000000-0000-0000-0000-000000000005",
+      "file": "512/achievement-three-day-runner.png",
+      "preview": "128/achievement-three-day-runner.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 1,
+      "bytes": 25395,
+      "previewBytes": 4153,
+      "alphaBounds": [
+        50,
+        150,
+        462,
+        362
+      ],
+      "sha256": "d0d67c2c5afa35d92ec1f0879b0da01aabf2031b23e05d7be4f28a62d5071ef3"
+    },
+    {
+      "key": "one-week-warrior",
+      "name": "One-Week Warrior",
+      "category": "consistency",
+      "motif": "steps",
+      "tier": 2,
+      "pigment": "verdigris",
+      "seed": 6,
+      "id": "ac000000-0000-0000-0000-000000000006",
+      "file": "512/achievement-one-week-warrior.png",
+      "preview": "128/achievement-one-week-warrior.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 1,
+      "bytes": 41283,
+      "previewBytes": 5931,
+      "alphaBounds": [
+        50,
+        117,
+        462,
+        395
+      ],
+      "sha256": "9c008a3babf2aa2f630a95fb6982770f825c0b54dff863672be56cdba9f57743"
+    },
+    {
+      "key": "two-week-titan",
+      "name": "Two-Week Titan",
+      "category": "consistency",
+      "motif": "steps",
+      "tier": 3,
+      "pigment": "bronze",
+      "seed": 7,
+      "id": "ac000000-0000-0000-0000-000000000007",
+      "file": "512/achievement-two-week-titan.png",
+      "preview": "128/achievement-two-week-titan.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 2,
+      "bytes": 58317,
+      "previewBytes": 9774,
+      "alphaBounds": [
+        50,
+        82,
+        462,
+        430
+      ],
+      "sha256": "499d3b61a90ba3db6272fe828b2809d8acc12e11d87a32d95ddc229950f02af7"
+    },
+    {
+      "key": "monthly-master",
+      "name": "Monthly Master",
+      "category": "consistency",
+      "motif": "steps",
+      "tier": 4,
+      "pigment": "silver",
+      "seed": 8,
+      "id": "ac000000-0000-0000-0000-000000000008",
+      "file": "512/achievement-monthly-master.png",
+      "preview": "128/achievement-monthly-master.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 4,
+      "bytes": 57269,
+      "previewBytes": 12158,
+      "alphaBounds": [
+        50,
+        70,
+        462,
+        442
+      ],
+      "sha256": "8684c2c072f31e8d9d3c0892c5b43b28519b552b2a8de76232eb9e2b94440374"
+    },
+    {
+      "key": "quarter-year-habit",
+      "name": "Quarter-Year Habit",
+      "category": "consistency",
+      "motif": "steps",
+      "tier": 5,
+      "pigment": "gold",
+      "seed": 9,
+      "id": "ac000000-0000-0000-0000-000000000009",
+      "file": "512/achievement-quarter-year-habit.png",
+      "preview": "128/achievement-quarter-year-habit.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 2,
+      "bytes": 51045,
+      "previewBytes": 9143,
+      "alphaBounds": [
+        162,
+        50,
+        350,
+        462
+      ],
+      "sha256": "d662f8ec2459be49c6b515e36f22a32d7afb386145ceb2aac04935f2d8057c38"
+    },
+    {
+      "key": "first-rep",
+      "name": "First Rep",
+      "category": "workout",
+      "motif": "dumbbell",
+      "tier": 1,
+      "pigment": "verdigris",
+      "seed": 10,
+      "id": "ac000000-0000-0000-0000-000000000010",
+      "file": "512/achievement-first-rep.png",
+      "preview": "128/achievement-first-rep.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 1,
+      "bytes": 59932,
+      "previewBytes": 7748,
+      "alphaBounds": [
+        147,
+        50,
+        365,
+        462
+      ],
+      "sha256": "92b9af2b60c1437e62f086683c224c2cd6ac0b87ea65104fe66e00c33a168766"
+    },
+    {
+      "key": "gym-regular",
+      "name": "Gym Regular",
+      "category": "workout",
+      "motif": "barbell",
+      "tier": 2,
+      "pigment": "bronze",
+      "seed": 11,
+      "id": "ac000000-0000-0000-0000-000000000011",
+      "file": "512/achievement-gym-regular.png",
+      "preview": "128/achievement-gym-regular.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 1,
+      "bytes": 42445,
+      "previewBytes": 6588,
+      "alphaBounds": [
+        50,
+        151,
+        462,
+        361
+      ],
+      "sha256": "275c1540026ef34b4c7edbfcea8a26aa88a89c2874d1cb714029e604cb7195e0"
+    },
+    {
+      "key": "iron-habit",
+      "name": "Iron Habit",
+      "category": "workout",
+      "motif": "loaded-bar",
+      "tier": 3,
+      "pigment": "silver",
+      "seed": 12,
+      "id": "ac000000-0000-0000-0000-000000000012",
+      "file": "512/achievement-iron-habit.png",
+      "preview": "128/achievement-iron-habit.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 2,
+      "bytes": 54914,
+      "previewBytes": 8358,
+      "alphaBounds": [
+        50,
+        115,
+        462,
+        397
+      ],
+      "sha256": "ee675bf96bbe1f53db0b30387d914f345c17a94fe8b66f6055b679949225a6ca"
+    },
+    {
+      "key": "workout-week",
+      "name": "Workout Week",
+      "category": "workout",
+      "motif": "rack",
+      "tier": 2,
+      "pigment": "verdigris",
+      "seed": 13,
+      "id": "ac000000-0000-0000-0000-000000000013",
+      "file": "512/achievement-workout-week.png",
+      "preview": "128/achievement-workout-week.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 3,
+      "bytes": 59704,
+      "previewBytes": 11049,
+      "alphaBounds": [
+        78,
+        50,
+        434,
+        462
+      ],
+      "sha256": "ba8a00d702f508f7175e40ab150b19043f50bd1db96e8b2310a031be98ec0105"
+    },
+    {
+      "key": "first-pr",
+      "name": "Personal Best",
+      "category": "workout",
+      "motif": "raised-bar",
+      "tier": 1,
+      "pigment": "bronze",
+      "id": "e2242a6d-8975-6ca8-46c8-94c2aee8730b",
+      "file": "512/achievement-first-pr.png",
+      "preview": "128/achievement-first-pr.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 2,
+      "bytes": 59065,
+      "previewBytes": 9750,
+      "alphaBounds": [
+        50,
+        119,
+        462,
+        393
+      ],
+      "sha256": "705d031d73dc91adee9bf1a13f9f8cf5918eb5b05b13cc6558387e034f8dd6b0"
+    },
+    {
+      "key": "volume",
+      "name": "Heavy Lifter",
+      "category": "workout",
+      "motif": "large-plate-bar",
+      "tier": 4,
+      "pigment": "gold",
+      "id": "f80d1840-0dab-ff3d-e9d5-9b97bcfaedb5",
+      "file": "512/achievement-volume.png",
+      "preview": "128/achievement-volume.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 2,
+      "bytes": 58413,
+      "previewBytes": 9718,
+      "alphaBounds": [
+        50,
+        93,
+        462,
+        419
+      ],
+      "sha256": "3e4b5c88124ed7f41faa34a4f5fff12e9b10a174348c6cfcb57bf5718cd1ee92"
+    },
+    {
+      "key": "template-ten",
+      "name": "Program Regular",
+      "category": "workout",
+      "motif": "plate-stack",
+      "tier": 2,
+      "pigment": "verdigris",
+      "id": "c789b13a-d85e-1e9b-de73-6ecccec7d69a",
+      "file": "512/achievement-template-ten.png",
+      "preview": "128/achievement-template-ten.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 5,
+      "bytes": 52845,
+      "previewBytes": 12653,
+      "alphaBounds": [
+        76,
+        50,
+        436,
+        462
+      ],
+      "sha256": "f6cd851e349514f60728c78bab6bbab40bebf020c33169e8c9e82f021f5d2e85"
+    },
+    {
+      "key": "baseline-set",
+      "name": "Baseline Set",
+      "category": "milestone",
+      "motif": "tape",
+      "tier": 1,
+      "pigment": "amber",
+      "seed": 14,
+      "id": "ac000000-0000-0000-0000-000000000014",
+      "file": "512/achievement-baseline-set.png",
+      "preview": "128/achievement-baseline-set.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 6,
+      "bytes": 55673,
+      "previewBytes": 13804,
+      "alphaBounds": [
+        50,
+        56,
+        462,
+        456
+      ],
+      "sha256": "74f4ec4d0ac9f14e204d810e3e932d671a02f4b50dac42245e3977e1c81fae90"
+    },
+    {
+      "key": "body-tracker",
+      "name": "Body Tracker",
+      "category": "milestone",
+      "motif": "tape",
+      "tier": 2,
+      "pigment": "bronze",
+      "seed": 15,
+      "id": "ac000000-0000-0000-0000-000000000015",
+      "file": "512/achievement-body-tracker.png",
+      "preview": "128/achievement-body-tracker.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 3,
+      "bytes": 54757,
+      "previewBytes": 10667,
+      "alphaBounds": [
+        50,
+        97,
+        462,
+        415
+      ],
+      "sha256": "c8cc568ef36ba3e08a2e5c8591e64341b52f67c1d87ef6f302dd9578c2fbdacf"
+    },
+    {
+      "key": "bronze-badge",
+      "name": "Bronze Badge",
+      "category": "milestone",
+      "motif": "scale",
+      "tier": 1,
+      "pigment": "bronze",
+      "seed": 18,
+      "id": "ac000000-0000-0000-0000-000000000018",
+      "file": "512/achievement-bronze-badge.png",
+      "preview": "128/achievement-bronze-badge.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 2,
+      "bytes": 54054,
+      "previewBytes": 7891,
+      "alphaBounds": [
+        50,
+        127,
+        462,
+        385
+      ],
+      "sha256": "44e643ce6683bce30249414320042c30a41315791f712e724705b53a31bbcbc2"
+    },
+    {
+      "key": "silver-badge",
+      "name": "Silver Badge",
+      "category": "milestone",
+      "motif": "scale",
+      "tier": 2,
+      "pigment": "silver",
+      "seed": 19,
+      "id": "ac000000-0000-0000-0000-000000000019",
+      "file": "512/achievement-silver-badge.png",
+      "preview": "128/achievement-silver-badge.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 3,
+      "bytes": 56710,
+      "previewBytes": 9450,
+      "alphaBounds": [
+        50,
+        112,
+        462,
+        399
+      ],
+      "sha256": "77b3f73e9277a4efe64358ce11ae1bc812fad31869c059f2485ecc0127b27070"
+    },
+    {
+      "key": "gold-badge",
+      "name": "Gold Badge",
+      "category": "milestone",
+      "motif": "scale",
+      "tier": 3,
+      "pigment": "gold",
+      "seed": 20,
+      "id": "ac000000-0000-0000-0000-000000000020",
+      "file": "512/achievement-gold-badge.png",
+      "preview": "128/achievement-gold-badge.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 6,
+      "bytes": 56437,
+      "previewBytes": 12512,
+      "alphaBounds": [
+        50,
+        70,
+        462,
+        442
+      ],
+      "sha256": "d826eab0b8d676ef86970195b2630bc80f908f2d997ffb4dd5d98f858d7f6b19"
+    },
+    {
+      "key": "first-share",
+      "name": "First Workout Shared",
+      "category": "social",
+      "motif": "people-share",
+      "tier": 1,
+      "pigment": "verdigris",
+      "id": "73c4f5c1-f35b-bc50-0b6b-5ba31e056746",
+      "file": "512/achievement-first-share.png",
+      "preview": "128/achievement-first-share.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 6,
+      "bytes": 58156,
+      "previewBytes": 13070,
+      "alphaBounds": [
+        50,
+        55,
+        462,
+        457
+      ],
+      "sha256": "63d4d1975ff24ac9e6d7cea110829ae010f66bcfdfafa34034c655ac1bbe7986"
+    },
+    {
+      "key": "ten-shares",
+      "name": "Training Out Loud",
+      "category": "social",
+      "motif": "people-share",
+      "tier": 2,
+      "pigment": "bronze",
+      "id": "d4b4321f-c770-bf5f-74e6-a340bb989940",
+      "file": "512/achievement-ten-shares.png",
+      "preview": "128/achievement-ten-shares.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 8,
+      "bytes": 54217,
+      "previewBytes": 14063,
+      "alphaBounds": [
+        50,
+        76,
+        462,
+        436
+      ],
+      "sha256": "81db9e6321680829e44ca4d996dec0b68caa8d96b8047093e50b48cc782b28a5"
+    },
+    {
+      "key": "first-follower",
+      "name": "First Follower",
+      "category": "social",
+      "motif": "people-follow",
+      "tier": 1,
+      "pigment": "verdigris",
+      "id": "e57fa782-5449-fd99-4d6c-ddb25abe0561",
+      "file": "512/achievement-first-follower.png",
+      "preview": "128/achievement-first-follower.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 4,
+      "bytes": 54817,
+      "previewBytes": 10190,
+      "alphaBounds": [
+        50,
+        59,
+        462,
+        452
+      ],
+      "sha256": "488242f2ef32344ca295b1d2438b8a60a5811e4e572f3d9287c30da0779decf9"
+    },
+    {
+      "key": "ten-followers",
+      "name": "Training Circle",
+      "category": "social",
+      "motif": "people-follow",
+      "tier": 2,
+      "pigment": "silver",
+      "id": "e5550922-79ac-e9b5-78fa-b503d641d3f0",
+      "file": "512/achievement-ten-followers.png",
+      "preview": "128/achievement-ten-followers.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 8,
+      "bytes": 54731,
+      "previewBytes": 12821,
+      "alphaBounds": [
+        51,
+        50,
+        461,
+        462
+      ],
+      "sha256": "dbc1d3ce1188a0ad7252eaff6c24e8c7b3f9d0dacc3c3861c54ffbef63bd3158"
+    },
+    {
+      "key": "reactions",
+      "name": "Hype Crew",
+      "category": "social",
+      "motif": "people-highfive",
+      "tier": 1,
+      "pigment": "clay",
+      "id": "16aca930-26ff-f0e4-e82c-89dc8037e1e2",
+      "file": "512/achievement-reactions.png",
+      "preview": "128/achievement-reactions.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 4,
+      "bytes": 59643,
+      "previewBytes": 11119,
+      "alphaBounds": [
+        96,
+        50,
+        416,
+        462
+      ],
+      "sha256": "e30c127043de80c5ab3f63f8f58b748d0a61f6177c954cedde1951428ad0281d"
+    },
+    {
+      "key": "comments",
+      "name": "Training Partner",
+      "category": "social",
+      "motif": "people-talk",
+      "tier": 1,
+      "pigment": "verdigris",
+      "id": "7d2dd2b8-cde2-923c-2c4c-1d090c9186b5",
+      "file": "512/achievement-comments.png",
+      "preview": "128/achievement-comments.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 2,
+      "bytes": 57983,
+      "previewBytes": 9362,
+      "alphaBounds": [
+        113,
+        50,
+        399,
+        462
+      ],
+      "sha256": "2f71bf05e91e7e126b751d9676a4adfa4dec1f10936bd527693c0f11b1efef7a"
+    },
+    {
+      "key": "bronze",
+      "name": "Bronze · 100 points",
+      "category": "level",
+      "motif": "level",
+      "tier": 1,
+      "pigment": "bronze",
+      "id": null,
+      "file": "512/level-bronze.png",
+      "preview": "128/level-bronze.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 1,
+      "bytes": 56406,
+      "previewBytes": 4788,
+      "alphaBounds": [
+        193,
+        50,
+        319,
+        462
+      ],
+      "sha256": "0c1ea9113f39b7894ea5409268b5dc468a5a9950ba5425f32380410fc4338dcc"
+    },
+    {
+      "key": "silver",
+      "name": "Silver · 500 points",
+      "category": "level",
+      "motif": "level",
+      "tier": 2,
+      "pigment": "silver",
+      "id": null,
+      "file": "512/level-silver.png",
+      "preview": "128/level-silver.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 3,
+      "bytes": 52020,
+      "previewBytes": 6809,
+      "alphaBounds": [
+        138,
+        50,
+        374,
+        462
+      ],
+      "sha256": "1b7fffd72f2cd19209352b2814747b81d134d704512ac9d6b516165ee48d35c0"
+    },
+    {
+      "key": "gold",
+      "name": "Gold · 1500 points",
+      "category": "level",
+      "motif": "level",
+      "tier": 3,
+      "pigment": "gold",
+      "id": null,
+      "file": "512/level-gold.png",
+      "preview": "128/level-gold.png",
+      "dimensions": [
+        512,
+        512
+      ],
+      "previewDimensions": [
+        128,
+        128
+      ],
+      "quantizedColors": null,
+      "rgbChannelStep": 5,
+      "bytes": 53138,
+      "previewBytes": 8644,
+      "alphaBounds": [
+        99,
+        50,
+        413,
+        462
+      ],
+      "sha256": "1038e024f9ccc4ba5063a25d9eb92fbc277a9a5da2b806007adfb09bb8e4414a"
+    }
+  ]
+}

@@ -1114,6 +1114,12 @@ html.dark .ring-track {
   font-size: 24px;
   margin: 6px 0 0;
 }
+/* A word with its level mark beside it; a third of a phone is about 100px. */
+@media (max-width: 639px) {
+  .facts-strip .facts-level {
+    font-size: 20px;
+  }
+}
 .ledger-row {
   display: flex;
   align-items: center;

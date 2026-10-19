@@ -29,6 +29,16 @@ function criteriaLabel(criteriaType: string | null | undefined, threshold: numbe
 
 const NEXT_LEVEL: Record<string, string> = { Rookie: "Bronze", Bronze: "Silver", Silver: "Gold", Gold: "Platinum" };
 
+/**
+ * Badges are small PNGs shown as they are: the defaults ship under /badges
+ * (design/achievement-assets.md) and admin uploads come from the media host.
+ * The API returns the defaults as absolute URLs on the app origin, so the
+ * images stay out of the optimizer, which would otherwise need that host
+ * allowlisted and would fetch the app through its own public address.
+ * Rookie has no level mark and Platinum has not been rendered yet.
+ */
+const LEVEL_MARK: Record<string, string> = { Bronze: "/badges/128/level-bronze.png", Silver: "/badges/128/level-silver.png", Gold: "/badges/128/level-gold.png" };
+
 type Achievement = Awaited<ReturnType<typeof getAchievements>>["achievements"][number] & {
 	threshold?: number;
 	progress?: number;
@@ -44,7 +54,7 @@ function Row({ achievement, earned }: { achievement: Achievement; earned: boolea
 	return (
 		<li className="ledger-row">
 			{achievement.iconUrl && (
-				<Image src={achievement.iconUrl} alt="" width={28} height={28} className={`h-7 w-7 shrink-0 ${earned ? "" : "opacity-50 grayscale"}`} />
+				<Image src={achievement.iconUrl} alt="" width={28} height={28} unoptimized className={`h-7 w-7 shrink-0 ${earned ? "" : "opacity-50 grayscale"}`} />
 			)}
 			<span className="min-w-0 flex-1">
 				<span className="block font-medium">{achievement.name || "Achievement"}</span>
@@ -89,7 +99,10 @@ export default async function AchievementsPage() {
 				</div>
 				<div>
 					<p className="text-sm log-muted">Level</p>
-					<p className="nutrition-value">{levelName}</p>
+					<p className="nutrition-value facts-level flex items-center gap-1.5">
+						{LEVEL_MARK[levelName] && <Image src={LEVEL_MARK[levelName]} alt="" width={28} height={28} unoptimized className="h-5 w-5 shrink-0" />}
+						{levelName}
+					</p>
 				</div>
 			</section>
 			<p className="num -mt-4 text-sm log-muted">

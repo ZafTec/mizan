@@ -38,6 +38,12 @@ test.describe("the pages under More read like the daily log", () => {
 		await expect(facts).toContainText("Streak");
 		await expect(facts).toContainText("Longest");
 		await expect(page.getByRole("heading", { name: "Earned" })).toBeVisible();
+		await expect(facts).toContainText("Bronze");
+		await expect(facts.locator("img")).toHaveAttribute("src", /level-bronze\.png/);
+		const first = page.locator("li", { hasText: "First Meal" });
+		await expect(first.locator("img")).toHaveAttribute("src", /achievement-first-meal\.png/);
+		await expect(first.locator("img")).toHaveJSProperty("naturalWidth", 128);
+		await expect(page.locator("li", { hasText: "Getting Started" })).toContainText("3 / 10");
 	});
 
 	test("Profile is the account, not a second More", async ({ page }) => {

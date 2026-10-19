@@ -84,7 +84,7 @@ Date-only logs use the user's IANA timezone. Missing observations remain gaps in
 
 ## Storage, caching, and jobs
 
-`IStorageService` supports S3-compatible MinIO and R2 configuration. A public media base URL defines upload URLs and Next.js's image hostname allowlist.
+`IStorageService` supports S3-compatible MinIO and R2 configuration. A public media base URL defines upload URLs and Next.js's image hostname allowlist. Assets that ship with a release, such as the default achievement badges under `frontend/public/badges`, are stored as site-relative paths and are not uploaded; `IAppUrls.Asset` turns them into absolute URLs on the app origin when the API returns them, so every client fetches a default and an upload the same way.
 
 `HybridCache` caches session lookups and read models including nutrition ranges, recipes, and meal plans. Writes invalidate associated tags. Viewer-specific keys include the identity or household context needed to keep cached personal results private.
 
