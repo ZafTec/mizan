@@ -99,14 +99,19 @@ internal static class HouseholdDeletionRules
 public class GetHouseholdDeletionPreviewQueryHandler : IRequestHandler<GetHouseholdDeletionPreviewQuery, HouseholdDeletionResult>
 {
     private readonly IMizanDbContext _context;
+    private readonly IHouseholdAccess _households;
 
-    public GetHouseholdDeletionPreviewQueryHandler(IMizanDbContext context)
+    public GetHouseholdDeletionPreviewQueryHandler(IMizanDbContext context, IHouseholdAccess households)
     {
+        _households = households;
         _context = context;
     }
 
     public async Task<HouseholdDeletionResult> Handle(GetHouseholdDeletionPreviewQuery request, CancellationToken cancellationToken)
     {
+        if (!await _households.CanAccessAsync(request.HouseholdId, cancellationToken))
+            return new HouseholdDeletionResult { Status = HouseholdDeletionStatus.NotFound, Message = "Household not found." };
+
         var household = await _context.Households.AsNoTracking().FirstOrDefaultAsync(h => h.Id == request.HouseholdId, cancellationToken);
         if (household is null)
             return new HouseholdDeletionResult { Status = HouseholdDeletionStatus.NotFound, Message = "Household not found." };
@@ -132,16 +137,21 @@ public class GetHouseholdDeletionPreviewQueryHandler : IRequestHandler<GetHouseh
 public class DeleteHouseholdCommandHandler : IRequestHandler<DeleteHouseholdCommand, HouseholdDeletionResult>
 {
     private readonly IMizanDbContext _context;
+    private readonly IHouseholdAccess _households;
     private readonly HybridCache _cache;
 
-    public DeleteHouseholdCommandHandler(IMizanDbContext context, HybridCache cache)
+    public DeleteHouseholdCommandHandler(IMizanDbContext context, IHouseholdAccess households, HybridCache cache)
     {
+        _households = households;
         _context = context;
         _cache = cache;
     }
 
     public async Task<HouseholdDeletionResult> Handle(DeleteHouseholdCommand request, CancellationToken cancellationToken)
     {
+        if (!await _households.CanAccessAsync(request.HouseholdId, cancellationToken))
+            return new HouseholdDeletionResult { Status = HouseholdDeletionStatus.NotFound, Message = "Household not found." };
+
         var removedPlans = new List<(Guid Id, Guid UserId)>();
         var result = await _context.ExecuteInTransactionAsync(async ct =>
         {

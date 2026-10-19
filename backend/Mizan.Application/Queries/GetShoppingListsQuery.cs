@@ -35,9 +35,11 @@ public class GetShoppingListsQueryHandler : IRequestHandler<GetShoppingListsQuer
 
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly IHouseholdAccess _households;
 
-    public GetShoppingListsQueryHandler(IMizanDbContext context, ICurrentUserService currentUser)
+    public GetShoppingListsQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, IHouseholdAccess households)
     {
+        _households = households;
         _context = context;
         _currentUser = currentUser;
     }
@@ -49,9 +51,14 @@ public class GetShoppingListsQueryHandler : IRequestHandler<GetShoppingListsQuer
             throw new UnauthorizedAccessException("User must be authenticated");
         }
 
+        // A connected app does not see lists filed under households it was not given.
+        var restrict = _currentUser.Grant is not null;
+        var accessible = restrict ? await _households.AccessibleIdsAsync(cancellationToken) : [];
+
         var query = _context.ShoppingLists
             .Include(sl => sl.Items)
-            .Where(sl => sl.UserId == _currentUser.UserId);
+            .Where(sl => sl.UserId == _currentUser.UserId
+                && (!restrict || sl.HouseholdId == null || accessible.Contains(sl.HouseholdId.Value)));
 
         var totalCount = await query.CountAsync(cancellationToken);
 

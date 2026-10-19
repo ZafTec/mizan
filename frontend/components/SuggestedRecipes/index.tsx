@@ -33,7 +33,6 @@ export default function SuggestedRecipes({ user, suggestions, serverError }: Sug
 				</div>
 				{user && (
 					<Link href="/suggestions/regenerate" className="btn-secondary">
-						<i className="ri-refresh-line" />
 						Regenerate
 					</Link>
 				)}
@@ -42,14 +41,12 @@ export default function SuggestedRecipes({ user, suggestions, serverError }: Sug
 			{!suggestions || suggestions.length === 0 ? (
 				<div className="card p-8 text-center">
 					<div className="w-16 h-16 rounded-2xl bg-charcoal-blue-100 dark:bg-charcoal-blue-900 flex items-center justify-center mx-auto mb-4">
-						<i className="ri-lightbulb-line text-3xl text-charcoal-blue-400 dark:text-charcoal-blue-500" />
 					</div>
 					<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">No suggestions yet</h3>
 					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-4">
 						Log more meals to get personalized suggestions.
 					</p>
 					<Link href="/meals" className="btn-primary">
-						<i className="ri-add-line" />
 						Log a Meal
 					</Link>
 				</div>
@@ -72,19 +69,15 @@ export default function SuggestedRecipes({ user, suggestions, serverError }: Sug
 							</div>
 							<div className="flex flex-wrap gap-2">
 								<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-sm font-medium">
-									<i className="ri-fire-line" />
 									{recipe.calories} kcal
 								</span>
 								<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm font-medium">
-									<i className="ri-heart-pulse-line" />
 									{recipe.protein}g protein
 								</span>
 								<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-medium">
-									<i className="ri-bread-line" />
 									{recipe.carbs}g carbs
 								</span>
 								<span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-sm font-medium">
-									<i className="ri-drop-line" />
 									{recipe.fat}g fat
 								</span>
 							</div>

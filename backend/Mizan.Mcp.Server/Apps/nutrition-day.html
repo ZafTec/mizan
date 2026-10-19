@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nutrition today</title>
+<style>
+:root { color-scheme: light dark; --ink: oklch(21% .007 78); --paper: oklch(98.5% .004 91); --card: #fff; --muted: oklch(43.65% .012 82); --rule: oklch(90.4% .013 87); --teal: oklch(49.3% .076 187); --warn: oklch(49.5% .142 31); --fill: oklch(93.5% .013 87); }
+:root[data-theme="dark"], :root:not([data-theme="light"]) { }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ink: oklch(95.5% .007 89); --paper: oklch(17.2% .005 80); --card: oklch(21% .006 80); --muted: oklch(76.5% .021 88); --rule: oklch(30% .012 84); --teal: oklch(77.2% .097 186); --warn: oklch(71.3% .13 30); --fill: oklch(26% .01 84); } }
+:root[data-theme="dark"] { --ink: oklch(95.5% .007 89); --paper: oklch(17.2% .005 80); --card: oklch(21% .006 80); --muted: oklch(76.5% .021 88); --rule: oklch(30% .012 84); --teal: oklch(77.2% .097 186); --warn: oklch(71.3% .13 30); --fill: oklch(26% .01 84); }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 16px; background: var(--paper); color: var(--ink); font: 14px/20px system-ui, -apple-system, "Segoe UI", sans-serif; }
+h1 { margin: 0 0 4px; font-size: 18px; line-height: 24px; font-weight: 600; letter-spacing: -.01em; }
+.sub { margin: 0 0 12px; color: var(--muted); }
+.card { background: var(--card); border: 1px solid var(--rule); border-radius: 3px; padding: 12px 14px; }
+.row { display: flex; align-items: center; gap: 12px; }
+.grow { flex: 1; min-width: 0; }
+button { font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--rule); border-radius: 3px; padding: 8px 12px; cursor: pointer; min-height: 36px; }
+button.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); font-weight: 600; }
+button:disabled { opacity: .5; cursor: default; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+input, select { font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--rule); border-radius: 3px; padding: 6px 8px; min-height: 36px; }
+.num { font-variant-numeric: tabular-nums; }
+.err { color: var(--warn); }
+.muted { color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<h1 id="title">Nutrition</h1>
+<p class="sub" id="date">Waiting for data…</p>
+<div id="view" class="card" hidden>
+  <div class="row" style="align-items:flex-start;gap:20px;flex-wrap:wrap">
+    <div id="ring" role="img" aria-label="Calories"></div>
+    <div class="grow" id="macros" style="min-width:200px"></div>
+  </div>
+</div>
+<p id="message" class="muted" role="status"></p>
+<div class="row" style="margin-top:12px">
+  <button id="prev" type="button" disabled>Previous day</button>
+  <button id="next" type="button" disabled>Next day</button>
+</div>
+<script>
+// Talks to the host over postMessage (MCP Apps). No libraries, so the page is one file.
+const pending = new Map();
+let nextId = 0;
+const send = (message) => parent.postMessage(message, "*");
+const request = (method, params) => new Promise((resolve, reject) => {
+  const id = ++nextId;
+  pending.set(id, { resolve, reject });
+  send({ jsonrpc: "2.0", id, method, params });
+});
+const notify = (method, params) => send({ jsonrpc: "2.0", method, params: params || {} });
+const callTool = (name, args) => request("tools/call", { name, arguments: args || {} });
+const textOf = (result) => ((result && result.content) || []).filter((c) => c.type === "text").map((c) => c.text).join("\n");
+const jsonOf = (result) => { try { return JSON.parse(textOf(result)); } catch { return null; } };
+const el = (tag, props, ...kids) => {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(props || {})) {
+    if (key === "class") node.className = value;
+    else if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
+    else if (value !== undefined && value !== null && value !== false) node.setAttribute(key, value === true ? "" : value);
+  }
+  for (const kid of kids.flat()) if (kid !== null && kid !== undefined && kid !== false) node.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+  return node;
+};
+const reportSize = () => notify("ui/notifications/size-changed", { width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight });
+const applyContext = (context) => { if (context && context.theme) document.documentElement.dataset.theme = context.theme; };
+window.addEventListener("message", (event) => {
+  const message = event.data;
+  if (!message || message.jsonrpc !== "2.0") return;
+  if (message.id !== undefined && !message.method) {
+    const waiting = pending.get(message.id);
+    if (!waiting) return;
+    pending.delete(message.id);
+    if (message.error) waiting.reject(new Error(message.error.message || "The request failed")); else waiting.resolve(message.result);
+  } else if (message.method === "ui/notifications/tool-result") window.onToolResult(message.params);
+  else if (message.method === "ui/notifications/host-context-changed") applyContext(message.params);
+});
+const connect = (name) => request("ui/initialize", { protocolVersion: "2025-06-18", appInfo: { name, version: "1.0.0" }, appCapabilities: {} })
+  .then((result) => { applyContext(result && result.hostContext); notify("ui/notifications/initialized"); })
+  .catch(() => {})
+  .finally(() => { new ResizeObserver(reportSize).observe(document.body); reportSize(); });
+
+
+let current = null;
+const num = (n) => Math.round(Number(n) || 0).toLocaleString();
+const shiftDate = (iso, days) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + days); return d.toISOString().slice(0, 10); };
+
+function ring(total, target) {
+  const size = 120, stroke = 12, r = (size - stroke) / 2, c = 2 * Math.PI * r;
+  const fraction = target > 0 ? Math.min(total / target, 1) : 0;
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", size); svg.setAttribute("height", size); svg.setAttribute("viewBox", `0 0 ${size} ${size}`);
+  const circle = (color, dash) => {
+    const node = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    for (const [k, v] of Object.entries({ cx: size / 2, cy: size / 2, r, fill: "none", "stroke-width": stroke, stroke: color, "stroke-dasharray": dash, transform: `rotate(-90 ${size / 2} ${size / 2})` })) node.setAttribute(k, v);
+    return node;
+  };
+  svg.append(circle("var(--fill)", `${c} ${c}`), circle(total > target && target > 0 ? "var(--warn)" : "var(--teal)", `${c * fraction} ${c}`));
+  const wrap = el("div", { style: "position:relative;width:120px;height:120px" }, svg,
+    el("div", { style: "position:absolute;inset:0;display:grid;place-content:center;text-align:center" },
+      el("strong", { class: "num", style: "font-size:22px;line-height:24px" }, num(total)),
+      el("span", { class: "muted", style: "font-size:12px" }, target > 0 ? `of ${num(target)} kcal` : "kcal")));
+  return wrap;
+}
+
+function macro(label, grams, target) {
+  const pct = target > 0 ? Math.min(100, (grams / target) * 100) : 0;
+  return el("div", { style: "margin-bottom:10px" },
+    el("div", { class: "row" }, el("span", { class: "grow" }, label),
+      el("span", { class: "num muted" }, target > 0 ? `${num(grams)} / ${num(target)} g` : `${num(grams)} g`)),
+    target > 0 ? el("div", { style: "height:6px;background:var(--fill);border-radius:3px;margin-top:4px" },
+      el("div", { style: `height:6px;width:${pct}%;background:var(--teal);border-radius:3px` })) : null);
+}
+
+function render(day) {
+  current = day;
+  document.getElementById("date").textContent = day.date;
+  document.getElementById("message").textContent = "";
+  const ringHost = document.getElementById("ring");
+  ringHost.replaceChildren(ring(Number(day.totalCalories) || 0, Number(day.targetCalories) || 0));
+  ringHost.setAttribute("aria-label", `${num(day.totalCalories)} calories` + (day.targetCalories ? ` of ${num(day.targetCalories)}` : ""));
+  document.getElementById("macros").replaceChildren(
+    macro("Protein", Number(day.totalProtein) || 0, Number(day.targetProtein) || 0),
+    macro("Carbs", Number(day.totalCarbs) || 0, Number(day.targetCarbs) || 0),
+    macro("Fat", Number(day.totalFat) || 0, Number(day.targetFat) || 0));
+  document.getElementById("view").hidden = false;
+  document.getElementById("prev").disabled = false;
+  document.getElementById("next").disabled = false;
+}
+
+async function go(days) {
+  if (!current) return;
+  const message = document.getElementById("message");
+  message.className = "muted"; message.textContent = "Loading…";
+  try {
+    const result = await callTool("get_nutrition_summary", { date: shiftDate(current.date, days) });
+    const data = jsonOf(result);
+    if (result.isError || !data) throw new Error(textOf(result) || "Could not load that day");
+    render(data);
+  } catch (error) { message.className = "err"; message.textContent = error.message; }
+}
+
+window.onToolResult = (result) => {
+  const data = jsonOf(result);
+  if (result.isError || !data) { const m = document.getElementById("message"); m.className = "err"; m.textContent = textOf(result) || "No data."; return; }
+  render(data);
+};
+document.getElementById("prev").addEventListener("click", () => go(-1));
+document.getElementById("next").addEventListener("click", () => go(1));
+connect("Mizan nutrition");
+
+</script>
+</body>
+</html>

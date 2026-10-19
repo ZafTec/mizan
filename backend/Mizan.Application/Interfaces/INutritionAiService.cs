@@ -37,6 +37,15 @@ public interface INutritionAiService
         string contentType,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// The same proposal as a photo gives, from a sentence: "two eggs, toast and a coffee". A proposal and nothing more;
+    /// the person confirms it before anything is logged.
+    /// </summary>
+    Task<FoodAnalysisResult> AnalyzeFoodTextAsync(
+        Guid userId,
+        string description,
+        CancellationToken cancellationToken = default);
+
     Task<MealSuggestionResult> SuggestMealsAsync(Guid userId, CancellationToken cancellationToken = default);
 
     /// <summary>

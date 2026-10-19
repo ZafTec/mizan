@@ -32,4 +32,7 @@ public class StorageOptions
     public int PresignedUrlMinutes { get; set; } = 60;
 
     public long MaxUploadBytes { get; set; } = 5 * 1024 * 1024;
+
+    /// <summary>A rigged, textured model is far larger than a photo, so models have a ceiling of their own.</summary>
+    public long MaxModelBytes { get; set; } = 30 * 1024 * 1024;
 }

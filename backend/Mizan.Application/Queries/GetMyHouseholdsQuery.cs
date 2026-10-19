@@ -34,9 +34,11 @@ public record GetMyHouseholdsResult(
 public class GetMyHouseholdsQueryHandler : IRequestHandler<GetMyHouseholdsQuery, GetMyHouseholdsResult>
 {
     private readonly IMizanDbContext _context;
+    private readonly IHouseholdAccess _households;
 
-    public GetMyHouseholdsQueryHandler(IMizanDbContext context)
+    public GetMyHouseholdsQueryHandler(IMizanDbContext context, IHouseholdAccess households)
     {
+        _households = households;
         _context = context;
     }
 
@@ -47,9 +49,11 @@ public class GetMyHouseholdsQueryHandler : IRequestHandler<GetMyHouseholdsQuery,
             .FirstOrDefaultAsync(p => p.UserId == request.UserId, cancellationToken);
         var activeId = pref?.ActiveHouseholdId;
 
+        // A connected app sees only the households its user allowed it to see.
+        var accessible = await _households.AccessibleIdsAsync(cancellationToken);
         var memberships = await _context.HouseholdMembers
             .AsNoTracking()
-            .Where(m => m.UserId == request.UserId)
+            .Where(m => m.UserId == request.UserId && accessible.Contains(m.HouseholdId))
             .Join(_context.Households.AsNoTracking(),
                 m => m.HouseholdId,
                 h => h.Id,

@@ -162,7 +162,7 @@ export default function CreateMealPlanPage() {
 					{isSubmitting ? (
 						<><i className="ri-loader-4-line animate-spin" /> Saving...</>
 					) : (
-						<><i className="ri-check-line" /> Save Plan ({totalRecipes})</>
+						<> Save Plan ({totalRecipes})</>
 					)}
 				</button>
 			</div>
@@ -180,7 +180,6 @@ export default function CreateMealPlanPage() {
 
 			{error && (
 				<div className="flex items-center gap-2 p-4 rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300">
-					<i className="ri-error-warning-line text-xl" />
 					<span>{error}</span>
 				</div>
 			)}

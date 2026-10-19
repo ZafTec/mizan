@@ -29,6 +29,7 @@ import type { GamificationFeedback } from "@/types/gamification";
 import logoTransparent from "@/public/logo_transparent.png";
 import HouseholdSwitcher from "./HouseholdSwitcher";
 import LogSheet from "./LogSheet";
+import ImpersonationBanner from "./ImpersonationBanner";
 import { SPINE, USER_MENU, isActive, type NavItem } from "./nav";
 import {
   LOG_ENTRY_EVENT,
@@ -204,6 +205,12 @@ export default function AppShell({
         </div>
       </aside>
       <div className="app-column">
+        {user.impersonation && (
+          <ImpersonationBanner
+            impersonation={user.impersonation}
+            userName={user.name || user.email}
+          />
+        )}
         <header className="app-topbar">
           <Link href="/today" className="mobile-brand">
             <Image src={logoTransparent} alt="" width={28} height={28} />

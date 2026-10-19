@@ -15,5 +15,11 @@ public class UserSession
     public string? IpAddress { get; set; }
     public string? UserAgent { get; set; }
 
+    /// <summary>
+    /// Set when an administrator opened this session to see the site as the user. Such a session is short, cannot
+    /// change credentials or billing, and every audited action in it names the administrator.
+    /// </summary>
+    public Guid? ImpersonatorId { get; set; }
+
     public virtual User? User { get; set; }
 }

@@ -26,6 +26,13 @@ export interface User {
 
 	/** IANA zone. Null until the user has told us; treated as UTC until then. */
 	timeZoneId?: string | null;
+
+	/** Set while an administrator is viewing the site as this user. */
+	impersonation?: {
+		impersonatorId: string;
+		impersonatorName?: string | null;
+		expiresAt: string;
+	} | null;
 }
 
 export function serverApiOrigin(): string {

@@ -1,0 +1,136 @@
+{
+  "blender": "5.2.2 LTS",
+  "device": "NVIDIA GeForce RTX 3060 Laptop GPU",
+  "samples": 256,
+  "seconds": 36.274,
+  "renders": [
+    {
+      "key": "kitchen-opener",
+      "seconds": 1.329
+    },
+    {
+      "key": "chefs-shelf",
+      "seconds": 0.975
+    },
+    {
+      "key": "first-rep",
+      "seconds": 0.856
+    },
+    {
+      "key": "iron-habit",
+      "seconds": 0.79
+    },
+    {
+      "key": "workout-week",
+      "seconds": 0.925
+    },
+    {
+      "key": "volume",
+      "seconds": 0.731
+    },
+    {
+      "key": "template-ten",
+      "seconds": 1.034
+    },
+    {
+      "key": "baseline-set",
+      "seconds": 1.383
+    },
+    {
+      "key": "body-tracker",
+      "seconds": 1.075
+    },
+    {
+      "key": "bronze-badge",
+      "seconds": 0.775
+    },
+    {
+      "key": "silver-badge",
+      "seconds": 1.018
+    },
+    {
+      "key": "gold-badge",
+      "seconds": 1.064
+    },
+    {
+      "key": "first-share",
+      "seconds": 1.063
+    },
+    {
+      "key": "ten-shares",
+      "seconds": 1.216
+    },
+    {
+      "key": "first-follower",
+      "seconds": 0.888
+    },
+    {
+      "key": "ten-followers",
+      "seconds": 1.157
+    },
+    {
+      "key": "reactions",
+      "seconds": 0.932
+    },
+    {
+      "key": "comments",
+      "seconds": 0.85
+    },
+    {
+      "key": "bronze",
+      "seconds": 0.933
+    },
+    {
+      "key": "silver",
+      "seconds": 1.246
+    },
+    {
+      "key": "gold",
+      "seconds": 1.218
+    },
+    {
+      "key": "first-meal",
+      "seconds": 2.651
+    },
+    {
+      "key": "getting-started",
+      "seconds": 1.476
+    },
+    {
+      "key": "century-club",
+      "seconds": 1.827
+    },
+    {
+      "key": "half-grand",
+      "seconds": 2.346
+    },
+    {
+      "key": "three-day-runner",
+      "seconds": 0.837
+    },
+    {
+      "key": "one-week-warrior",
+      "seconds": 0.815
+    },
+    {
+      "key": "two-week-titan",
+      "seconds": 0.962
+    },
+    {
+      "key": "monthly-master",
+      "seconds": 1.204
+    },
+    {
+      "key": "quarter-year-habit",
+      "seconds": 1.127
+    },
+    {
+      "key": "gym-regular",
+      "seconds": 0.735
+    },
+    {
+      "key": "first-pr",
+      "seconds": 0.836
+    }
+  ]
+}

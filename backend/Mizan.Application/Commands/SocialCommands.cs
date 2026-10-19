@@ -120,7 +120,10 @@ public sealed class DeleteSocialProfileCommandHandler : IRequestHandler<DeleteSo
     }
 }
 
-public record RequestFollowCommand(string ShareToken) : IRequest<Guid>;
+public record RequestFollowCommand(string ShareToken) : IRequest<Guid>, IRedactedAudit
+{
+    object IRedactedAudit.AuditDetails => new { Requested = true };
+}
 
 public sealed class RequestFollowCommandHandler : IRequestHandler<RequestFollowCommand, Guid>
 {

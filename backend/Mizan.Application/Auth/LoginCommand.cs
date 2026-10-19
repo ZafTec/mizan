@@ -7,7 +7,11 @@ using Mizan.Application.Interfaces;
 namespace Mizan.Application.Auth;
 
 public record LoginCommand(string Email, string Password, string? IpAddress, string? UserAgent)
-    : IRequest<LoginResult>;
+    : IRequest<LoginResult>, IRedactedAudit
+{
+    // The audit log keeps that a sign-in happened, never the password.
+    object IRedactedAudit.AuditDetails => new { Email, IpAddress, UserAgent };
+}
 
 /// <summary>The session token belongs in a cookie; the controller sets it.</summary>
 public record LoginResult(string SessionToken, AuthUserDto User);

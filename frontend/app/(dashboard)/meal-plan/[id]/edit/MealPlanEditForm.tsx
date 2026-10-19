@@ -96,7 +96,6 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 		<>
 			<div className="card p-6">
 				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2 mb-4">
-					<i className="ri-settings-3-line text-brand-500 dark:text-brand-400" />
 					Plan Details
 				</h2>
 				<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -140,11 +139,9 @@ export default function MealPlanEditForm({ plan }: MealPlanEditFormProps) {
 			<div className="card p-6">
 				<div className="flex items-center justify-between mb-4">
 					<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
-						<i className="ri-restaurant-line text-brand-500 dark:text-brand-400" />
 						Recipes ({recipes.length})
 					</h2>
 					<button onClick={() => setShowRecipeSearch(true)} className="btn-primary text-sm">
-						<i className="ri-add-line" />
 						Add Recipe
 					</button>
 				</div>

@@ -78,6 +78,7 @@ test("a meal can be composed and saved over the current page", async ({ context,
 	await page.getByRole("button", { name: "Add meal", exact: true }).click();
 	const dialog = page.getByRole("dialog", { name: "Log a meal", exact: true });
 	await dialog.getByLabel("Meal", { exact: true }).selectOption("LUNCH");
+	await dialog.getByRole("button", { name: "Search foods", exact: true }).click();
 	await dialog.getByRole("button", { name: "Add Greek yogurt", exact: true }).click();
 	await dialog.getByLabel("Greek yogurt quantity in grams").fill("150");
 	await dialog.getByRole("button", { name: "Add Yogurt and oats", exact: true }).click();
@@ -103,6 +104,7 @@ test("a multi-item meal becomes a reusable recipe", async ({ context, page }) =>
 	await page.getByRole("button", { name: "Save recipe", exact: true }).click();
 	await expect(page.getByRole("dialog")).not.toBeVisible();
 	await page.getByRole("button", { name: "Add meal", exact: true }).click();
+	await page.getByRole("button", { name: "Search foods", exact: true }).click();
 	await page.getByLabel("Find food or a recipe").fill("My morning bowl");
 	await expect(page.getByRole("button", { name: "Add My morning bowl", exact: true })).toBeVisible();
 	expect((await fixtureState(context)).writes.at(-1)).toMatchObject({ path: "/api/Recipes/promote", body: { title: "My morning bowl", mealType: "BREAKFAST" } });
@@ -177,7 +179,7 @@ test("a custom meal accepts entered nutrition without leaving More", async ({ co
 	await signIn(context, { empty: true });
 	await page.goto("/more");
 	await page.getByRole("button", { name: "Log an entry", exact: true }).click();
-	await page.getByRole("button", { name: /^Meal Foods/ }).click();
+	await page.getByRole("button", { name: /^Meal Describe/ }).click();
 	await page.getByRole("button", { name: "Enter a food manually" }).click();
 	await page.getByLabel("Food name", { exact: true }).fill("Homemade smoothie");
 	for (const [name, value] of [["Calories (kcal)", "310"], ["Protein (g)", "24"], ["Carbs (g)", "40"], ["Fat (g)", "6"]]) await page.getByLabel(name, { exact: true }).fill(value);

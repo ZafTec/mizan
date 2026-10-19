@@ -29,11 +29,13 @@ public class UpdateMealPlanCommandValidator : AbstractValidator<UpdateMealPlanCo
 public class UpdateMealPlanCommandHandler : IRequestHandler<UpdateMealPlanCommand, UpdateMealPlanResult>
 {
     private readonly IMizanDbContext _context;
+    private readonly IHouseholdAccess _households;
     private readonly ICurrentUserService _currentUser;
     private readonly HybridCache _cache;
 
-    public UpdateMealPlanCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
+    public UpdateMealPlanCommandHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache, IHouseholdAccess households)
     {
+        _households = households;
         _context = context;
         _currentUser = currentUser;
         _cache = cache;
@@ -94,18 +96,6 @@ public class UpdateMealPlanCommandHandler : IRequestHandler<UpdateMealPlanComman
             return false;
         }
 
-        if (mealPlan.UserId == userId.Value)
-        {
-            return true;
-        }
-
-        if (mealPlan.HouseholdId.HasValue)
-        {
-            var isMember = await _context.HouseholdMembers
-                .AnyAsync(hm => hm.HouseholdId == mealPlan.HouseholdId.Value && hm.UserId == userId.Value, cancellationToken);
-            return isMember;
-        }
-
-        return false;
+        return await _households.CanAccessRecordAsync(mealPlan.UserId, mealPlan.HouseholdId, cancellationToken);
     }
 }

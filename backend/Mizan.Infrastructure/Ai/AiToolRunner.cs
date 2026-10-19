@@ -4,6 +4,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Mizan.Application.Ai.Tools;
+using Mizan.Application.Common;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Ai;
@@ -25,12 +26,16 @@ public class AiToolRunner : IAiToolRunner
     private readonly IMediator _mediator;
     private readonly IMizanDbContext _context;
     private readonly ILogger<AiToolRunner> _logger;
+    private readonly ICurrentUserService? _currentUser;
 
-    public AiToolRunner(IMediator mediator, IMizanDbContext context, ILogger<AiToolRunner> logger)
+    public AiToolRunner(
+        IMediator mediator, IMizanDbContext context, ILogger<AiToolRunner> logger,
+        ICurrentUserService? currentUser = null)
     {
         _mediator = mediator;
         _context = context;
         _logger = logger;
+        _currentUser = currentUser;
     }
 
     public async Task<AiToolInvocation> RunAsync(
@@ -49,6 +54,23 @@ public class AiToolRunner : IAiToolRunner
         // Consent is checked per call rather than by filtering the list the
         // model is offered, because a grant can be withdrawn mid-conversation
         // and the tool specs were chosen a turn ago.
+        // A connected app's assistant is held to what that app was allowed to do:
+        // an app with no write access to nutrition cannot get the model to log food.
+        if (_currentUser?.Grant is { } connection && _currentUser.UserId == context.UserId)
+        {
+            var needed = tool.Access == AiToolAccess.Write
+                ? GrantAxes.WriteScope(tool.Axis)
+                : GrantAxes.ReadScope(tool.Axis);
+            if (!connection.Allows(needed))
+            {
+                var action = tool.Access == AiToolAccess.Write ? "change" : "read";
+                return new AiToolInvocation(
+                    call.Name, string.Empty, false,
+                    $"This connection is not allowed to {action} the user's {Describe(tool.Axis)}. "
+                    + "Tell them they can change that on their MCP connections page.");
+            }
+        }
+
         var consent = await ConsentAsync(context.UserId, cancellationToken);
         var permitted = tool.Access == AiToolAccess.Write
             ? consent.AllowsWrite(tool.Axis)

@@ -46,9 +46,11 @@ public class GetMealPlansQueryHandler : IRequestHandler<GetMealPlansQuery, Paged
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
     private readonly HybridCache _cache;
+    private readonly IHouseholdAccess _households;
 
-    public GetMealPlansQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
+    public GetMealPlansQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache, IHouseholdAccess households)
     {
+        _households = households;
         _context = context;
         _currentUser = currentUser;
         _cache = cache;
@@ -62,7 +64,7 @@ public class GetMealPlansQueryHandler : IRequestHandler<GetMealPlansQuery, Paged
         }
 
         var userId = _currentUser.UserId.Value;
-        var cacheKey = $"mealplans:{userId}:{request.StartDate}:{request.EndDate}:{request.Page}:{request.PageSize}:{request.SortBy ?? ""}:{request.SortOrder ?? ""}";
+        var cacheKey = $"mealplans:{userId}:{GrantContext.KeyFor(_currentUser.Grant)}:{request.StartDate}:{request.EndDate}:{request.Page}:{request.PageSize}:{request.SortBy ?? ""}:{request.SortOrder ?? ""}";
 
         return await _cache.GetOrCreateAsync(
             cacheKey,
@@ -76,9 +78,13 @@ public class GetMealPlansQueryHandler : IRequestHandler<GetMealPlansQuery, Paged
     private async ValueTask<PagedResult<MealPlanDto>> LoadAsync(
         GetMealPlansQuery request, Guid userId, CancellationToken cancellationToken)
     {
+        var restrict = _currentUser.Grant is not null;
+        var accessible = restrict ? await _households.AccessibleIdsAsync(cancellationToken) : [];
+
         var query = _context.MealPlans
             .Include(mp => mp.MealPlanRecipes)
-            .Where(mp => mp.UserId == _currentUser.UserId);
+            .Where(mp => mp.UserId == _currentUser.UserId
+                && (!restrict || mp.HouseholdId == null || accessible.Contains(mp.HouseholdId.Value)));
 
         if (request.StartDate.HasValue)
         {

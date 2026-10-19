@@ -41,8 +41,11 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         "chat_messages",
         "chat_conversations",
         "trainer_client_relationships",
+        "oauth_tokens",
+        "oauth_authorization_requests",
+        "oauth_grants",
+        "oauth_clients",
         "mcp_usage_logs",
-        "mcp_tokens",
         "goal_progress",
         "user_goals",
         "food_diary_entries",
@@ -150,7 +153,6 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
                 ["ConnectionStrings:Redis"] = _redisConnectionString,
                 ["Mcp:ServiceApiKey"] = "test-api-key",
                 ["Mcp:AdminServiceApiKey"] = "test-admin-api-key",
-                ["RateLimits:McpTokenValidation:PermitLimit"] = "10000",
                 ["RateLimits:AuthCredentials:PermitLimit"] = "10000",
                 ["RateLimits:AuthEmail:PermitLimit"] = "10000",
                 // Small AI ceilings so quota tests exercise the limits in a
@@ -173,7 +175,15 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
                 // calls Telegram, so nothing here reaches the network.
                 ["Telegram:BotUsername"] = "mizan_test_bot",
                 // Webhook tests sign their own payloads with this.
-                ["Paddle:WebhookSecret"] = PaddleWebhookSecret
+                ["Paddle:WebhookSecret"] = PaddleWebhookSecret,
+                ["OAuth:Issuer"] = "http://localhost/api",
+                ["OAuth:McpResource"] = "http://localhost/mcp",
+                ["OAuth:ConsentUrl"] = "http://localhost/oauth/consent",
+                ["OAuth:FirstPartyClients:0:ClientId"] = "test-first-party",
+                ["OAuth:FirstPartyClients:0:Name"] = "Mizan Test App",
+                ["OAuth:FirstPartyClients:0:RedirectUris:0"] = "com.zaftech.mizan.test:/oauth2redirect",
+                ["RateLimits:OAuth:PermitLimit"] = "100000",
+                ["RateLimits:OAuthRegister:PermitLimit"] = "100000"
             };
 
             config.AddInMemoryCollection(settings);
@@ -219,6 +229,15 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             // exercise the schema-validation path.
             services.RemoveAll<IAiProvider>();
             services.AddSingleton<IAiProvider>(Ai);
+
+            // Metadata clients are described by a document on the open internet.
+            // Tests describe them here instead.
+            services.RemoveAll<IOAuthClientMetadataFetcher>();
+            services.AddSingleton<IOAuthClientMetadataFetcher>(OAuthMetadata);
+
+            // Nor may a test push reach Firebase. The fake records what would have been sent.
+            services.RemoveAll<IPushSender>();
+            services.AddSingleton<IPushSender>(Push);
 
             // Nothing in a test run may reach Paddle either.
             services.RemoveAll<IPaddleApiClient>();
@@ -274,9 +293,13 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
 
     public RecordingEmailSender Email { get; } = new();
 
+    public RecordingPushSender Push { get; } = new();
+
     public ScriptedAiProvider Ai { get; } = new();
 
     public FakePaddleApiClient Paddle { get; } = new();
+
+    public FakeOAuthMetadataFetcher OAuthMetadata { get; } = new();
     public const string PaddleWebhookSecret = "test-paddle-webhook-secret";
 
     /// <summary>
@@ -320,7 +343,6 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             db.ChatConversations.RemoveRange(db.ChatConversations);
             db.TrainerClientRelationships.RemoveRange(db.TrainerClientRelationships);
             db.McpUsageLogs.RemoveRange(db.McpUsageLogs);
-            db.McpTokens.RemoveRange(db.McpTokens);
             db.GoalProgress.RemoveRange(db.GoalProgress);
             db.UserGoals.RemoveRange(db.UserGoals);
             db.FoodDiaryEntries.RemoveRange(db.FoodDiaryEntries);
@@ -566,7 +588,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         return food;
     }
 
-    public async Task<McpUsageLog> SeedMcpUsageLogAsync(Guid tokenId, Guid userId, string toolName, bool success, int executionTimeMs)
+    public async Task<McpUsageLog> SeedMcpUsageLogAsync(Guid grantId, Guid userId, string toolName, bool success, int executionTimeMs)
     {
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
@@ -574,7 +596,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         var log = new McpUsageLog
         {
             Id = Guid.NewGuid(),
-            McpTokenId = tokenId,
+            GrantId = grantId,
             UserId = userId,
             ToolName = toolName,
             Parameters = "{}",
@@ -586,6 +608,39 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         db.McpUsageLogs.Add(log);
         await db.SaveChangesAsync();
         return log;
+    }
+
+    public sealed record McpAccess(string Token, Guid GrantId);
+
+    /// <summary>
+    /// An OAuth access token for the MCP server, minted directly. The flow itself is
+    /// covered in OAuthFlowTests; tests that exercise tools only need a valid token.
+    /// Scopes default to everything the user may hold.
+    /// </summary>
+    public async Task<McpAccess> CreateMcpAccessAsync(Guid userId, string[]? scopes = null, string householdMode = "all", Guid[]? households = null, string audience = "mcp")
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+        var settings = scope.ServiceProvider.GetRequiredService<IOAuthSettings>();
+        var isAdmin = await db.Users.Where(u => u.Id == userId).Select(u => u.Role == "admin").SingleAsync();
+
+        var now = DateTime.UtcNow;
+        var client = new OAuthClient
+        {
+            Id = Guid.NewGuid(), ClientId = "mzc_" + SecureToken.Generate()[..16], Name = "Test Assistant",
+            RedirectUris = ["http://localhost:1/cb"], Source = audience == "api" ? OAuthClient.SourceFirstParty : OAuthClient.SourceDynamic, CreatedAt = now,
+        };
+        var grant = new OAuthGrant
+        {
+            Id = Guid.NewGuid(), UserId = userId, ClientId = client.Id,
+            Scopes = Mizan.Contracts.Mcp.McpScopes.Normalize(scopes ?? Mizan.Contracts.Mcp.McpScopes.All.ToArray(), isAdmin),
+            HouseholdMode = householdMode, HouseholdIds = (households ?? []).ToList(), CreatedAt = now, UpdatedAt = now,
+        };
+        db.OAuthClients.Add(client);
+        db.OAuthGrants.Add(grant);
+        var issued = Mizan.Application.OAuth.OAuthTokens.Issue(db, settings, grant.Id, Guid.NewGuid(), audience, now);
+        await db.SaveChangesAsync();
+        return new McpAccess(issued.AccessToken, grant.Id);
     }
 
     public async Task<List<McpUsageLog>> GetMcpUsageLogsByUserId(Guid userId)
@@ -775,6 +830,35 @@ public sealed class RecordingEmailSender : IEmailSender
     }
 }
 
+/// <summary>Captures pushes instead of sending them. A test decides how each token answers.</summary>
+public sealed class RecordingPushSender : IPushSender
+{
+    private readonly List<PushMessage> _sent = new();
+    private readonly Dictionary<string, PushOutcome> _answers = new();
+
+    public bool IsConfigured { get; set; } = true;
+
+    public IReadOnlyList<PushMessage> Sent
+    {
+        get { lock (_sent) return _sent.ToList(); }
+    }
+
+    public void Reset()
+    {
+        lock (_sent) _sent.Clear();
+        _answers.Clear();
+        IsConfigured = true;
+    }
+
+    public void Answer(string token, PushOutcome outcome) => _answers[token] = outcome;
+
+    public Task<PushOutcome> SendAsync(PushMessage message, CancellationToken cancellationToken)
+    {
+        lock (_sent) _sent.Add(message);
+        return Task.FromResult(_answers.GetValueOrDefault(message.Token, PushOutcome.Sent));
+    }
+}
+
 /// <summary>A window during which database round trips are counted.</summary>
 public sealed class CommandCounterScope : IDisposable
 {
@@ -790,4 +874,23 @@ public sealed class CommandCounterScope : IDisposable
     public int Count => _counter.Count;
 
     public void Dispose() => _counter.Enabled = false;
+}
+
+
+/// <summary>Serves client metadata documents a test registered, and fails for any other URL.</summary>
+public sealed class FakeOAuthMetadataFetcher : IOAuthClientMetadataFetcher
+{
+    private readonly Dictionary<string, OAuthClientMetadata> _documents = new();
+
+    public int Fetches { get; private set; }
+
+    public void Serve(OAuthClientMetadata metadata) => _documents[metadata.ClientId] = metadata;
+
+    public Task<OAuthClientMetadata> FetchAsync(string clientIdUrl, CancellationToken cancellationToken)
+    {
+        Fetches++;
+        return _documents.TryGetValue(clientIdUrl, out var metadata)
+            ? Task.FromResult(metadata)
+            : throw new Mizan.Application.OAuth.OAuthException("invalid_client", "The client metadata document could not be loaded.");
+    }
 }

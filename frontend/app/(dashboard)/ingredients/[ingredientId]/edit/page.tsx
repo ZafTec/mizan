@@ -19,12 +19,10 @@ export default async function EditIngredientPage({ params }: { params: Promise<{
 		return (
 			<div className="min-h-[50vh] flex flex-col items-center justify-center">
 				<div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mb-4">
-					<i className="ri-leaf-line text-4xl text-muted-foreground" />
 				</div>
 				<h2 className="text-xl font-semibold text-foreground mb-2">Ingredient not found</h2>
 				<p className="text-muted-foreground mb-6">The ingredient you&apos;re looking for doesn&apos;t exist.</p>
 				<Link href="/ingredients" className="btn-primary">
-					<i className="ri-arrow-left-line" />
 					Back to Ingredients
 				</Link>
 			</div>

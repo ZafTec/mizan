@@ -13,6 +13,11 @@ export function updateAdminUser(userId: string, input: UpdateAdminUserInput) {
 	return clientApi<void>(`/api/admin/users/${userId}`, { method: "PATCH", body: input });
 }
 
+/** Opens a one-hour session as the user. The page must then load afresh, so the server renders as them. */
+export function impersonateAdminUser(userId: string) {
+	return clientApi<{ id: string }>(`/api/admin/users/${userId}/impersonate`, { method: "POST" });
+}
+
 export function deleteAdminUser(userId: string) {
 	return clientApi<void>(`/api/admin/users/${userId}`, { method: "DELETE" });
 }

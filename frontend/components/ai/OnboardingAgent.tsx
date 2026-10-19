@@ -225,7 +225,6 @@ export default function OnboardingAgent() {
 					className="btn-primary !rounded-2xl !py-3"
 					aria-label="Send"
 				>
-					<Icon name="arrowRight" size={16} />
 				</button>
 			</form>
 

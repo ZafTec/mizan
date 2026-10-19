@@ -1,302 +1,114 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
-import Loading from "@/components/Loading";
-import { Icon, type IconName } from "@/components/ui/icon";
 import { getProfileObservations, type ProfileObservations } from "@/lib/api/profile";
 
-type QuickLink = {
-	href: string;
-	title: string;
-	description: string;
-	icon: IconName;
-};
+const ACCOUNT_LINKS = [
+	{ href: "/profile/settings", title: "Settings", detail: "Name, time zone, appearance, assistant" },
+	{ href: "/profile/sessions", title: "Sessions", detail: "Where you are signed in" },
+	{ href: "/profile/mcp", title: "Connected apps", detail: "What AI assistants may do" },
+	{ href: "/billing", title: "Billing", detail: "Your plan and invoices" },
+	{ href: "/profile/settings#export", title: "Export my data", detail: "Everything you have logged, as one file" },
+] as const;
 
+const longDate = (value: string) =>
+	new Date(value).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+
+/** Only the account. Features live in More; this page says who you are to Mizan and where the account settings are. */
 export default function ProfilePage() {
 	const { data: session, isPending } = useSession();
-	const [observations, setObservations] = useState<ProfileObservations | null>(null);
-	const [loadingObservations, setLoadingObservations] = useState(true);
+	const [facts, setFacts] = useState<ProfileObservations | null>(null);
 
 	useEffect(() => {
-		if (!session?.user) {
-			return;
-		}
-
+		if (!session?.user) return;
 		let cancelled = false;
-
-		(async () => {
-			try {
-				const result = await getProfileObservations();
-				if (!cancelled) {
-					setObservations(result);
-				}
-			} catch (error) {
-				console.error("Failed to load profile observations:", error);
-			} finally {
-				if (!cancelled) {
-					setLoadingObservations(false);
-				}
-			}
-		})();
-
+		getProfileObservations()
+			.then((result) => {
+				if (!cancelled) setFacts(result);
+			})
+			.catch(() => {
+				/* The identity rows still render; the streak row shows a dash. */
+			});
 		return () => {
 			cancelled = true;
 		};
 	}, [session?.user]);
 
-	const quickLinks = useMemo<QuickLink[]>(() => {
-		const links: QuickLink[] = [
-			// {
-			// 	href: "/profile/settings",
-			// 	title: "Settings center",
-			// 	description: "Account, appearance, export, sessions, and delete flow.",
-			// 	icon: "sparkles",
-			// },
-			{
-				href: "/goal",
-				title: "Nutrition goals",
-				description: "Set and update your daily macro targets.",
-				icon: "chartLine",
-			},
-			{
-				href: "/meals",
-				title: "Food diary",
-				description: "View your logged meals and daily totals.",
-				icon: "flame",
-			},
-			{
-				href: "/workouts",
-				title: "Workouts",
-				description: "Log sessions and browse exercises.",
-				icon: "rocket",
-			},
-			{
-				href: "/body-measurements",
-				title: "Measurements",
-				description: "Track your body composition over time.",
-				icon: "trendingUp",
-			},
-			{
-				href: "/achievements",
-				title: "Achievements",
-				description: "Your streaks, badges, and milestones.",
-				icon: "circleCheck",
-			},
-		];
-
-		if (session?.user) {
-			links.push({
-				href: "/profile/mcp",
-				title: "MCP tools",
-				description: "Developer tokens and usage.",
-				icon: "bot",
-			});
-		}
-
-		return links;
-	}, [session?.user]);
-
 	if (isPending) {
 		return (
-			<div className="flex min-h-[60vh] items-center justify-center">
-				<Loading />
+			<div className="log-page" aria-busy="true">
+				<header className="log-page-header block!">
+					<h1>Profile</h1>
+				</header>
+				<div className="h-14 border-y border-border" />
 			</div>
 		);
 	}
-
-	if (!session?.user) {
-		return (
-			<div className="flex min-h-[60vh] items-center justify-center">
-				<p className="text-charcoal-blue-500">Not authenticated</p>
-			</div>
-		);
-	}
+	if (!session?.user) return null;
 
 	const user = session.user;
-	const isTrainer = user.role === "trainer" || user.role === "admin";
-	const showRoleCard = Boolean(user.role && user.role !== "user");
+	const rows: Array<{ label: string; value: string }> = [
+		{ label: "Member since", value: facts ? longDate(facts.joinedAt) : "—" },
+		{ label: "Time zone", value: user.timeZoneId?.replace(/_/g, " ") || "Not set" },
+		...(user.role && user.role !== "user" ? [{ label: "Role", value: user.role === "admin" ? "Administrator" : "Trainer" }] : []),
+		{ label: "Streak", value: facts ? `${facts.streakCount} day${facts.streakCount === 1 ? "" : "s"}` : "—" },
+		{ label: "Targets", value: facts?.goalSummary || "—" },
+	];
 
 	return (
-		<div className="mx-auto max-w-6xl space-y-6" data-testid="profile-page">
-			<section className="surface-panel p-6 sm:p-8">
-				<div className="flex items-start gap-4 sm:gap-5">
-					<div className="flex items-start gap-4 sm:gap-5">
-						<ProfileAvatar image={user.image} email={user.email} name={user.name} />
-						<div>
-							<p className="eyebrow mb-3">
-								<Icon name="user" size={14} aria-hidden="true" />
-								Profile hub
-							</p>
-							<h1 className="text-3xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-								{user.name || user.email}
-							</h1>
-							<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{user.email}</p>
-						</div>
-					</div>
+		<div className="log-page space-y-8" data-testid="profile-page">
+			<header className="log-page-header block!">
+				<h1>Profile</h1>
+				<p className="log-muted mt-2">Who you are to Mizan.</p>
+			</header>
+
+			<div className="flex items-center gap-4 border-y border-t-foreground border-b-border py-4">
+				{user.image ? (
+					<span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full">
+						<Image src={user.image} alt="" fill sizes="56px" className="object-cover" />
+					</span>
+				) : (
+					<span aria-hidden="true" className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-muted text-xl font-semibold">
+						{(user.name || user.email || "?").charAt(0).toUpperCase()}
+					</span>
+				)}
+				<div className="min-w-0">
+					<p className="truncate text-base font-semibold">{user.name || user.email}</p>
+					<p className="truncate text-sm log-muted">{user.email}</p>
 				</div>
+			</div>
 
-				<div className={`mt-6 grid gap-3 sm:grid-cols-2 ${showRoleCard ? "xl:grid-cols-4" : "xl:grid-cols-3"}`}>
-					{showRoleCard ? (
-						<StatCard
-							label="Role"
-							value={user.role || "user"}
-							helper={isTrainer ? "Trainer access" : "Standard access"}
-						/>
-					) : null}
-					<StatCard
-						label="Joined"
-						value={loadingObservations || !observations ? "--" : formatDate(observations.joinedAt)}
-						helper="Account age"
-					/>
-					<StatCard
-						label="Current streak"
-						value={loadingObservations || !observations ? "--" : `${observations.streakCount} days`}
-						helper={loadingObservations || !observations ? "Loading..." : `Longest ${observations.longestStreak} days`}
-					/>
-					<StatCard
-						label="Active goal"
-						value={loadingObservations || !observations ? "--" : observations.goalSummary}
-						helper="Saved nutrition targets"
-					/>
-				</div>
-			</section>
-
-			<div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-				<section className="card p-6 sm:p-7">
-					<div className="flex items-center justify-between gap-4">
-						<div>
-							<h2 className="text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Account hub</h2>
-						</div>
-						<Link href="/profile/settings" className="btn-secondary btn-sm">
-							Open settings
-							<Icon name="arrowRight" size={16} aria-hidden="true" />
-						</Link>
+			<dl>
+				{rows.map((row) => (
+					<div key={row.label} className="ledger-row">
+						<dt className="flex-1">{row.label}</dt>
+						<dd className="num text-right text-sm">{row.value}</dd>
 					</div>
+				))}
+			</dl>
 
-					<div className="mt-6 grid gap-3 sm:grid-cols-2">
-						{quickLinks.map((link) => (
-							<Link
-								key={link.href}
-								href={link.href}
-								className="group rounded-3xl border border-charcoal-blue-200 bg-white p-4 transition-colors hover:border-charcoal-blue-300 dark:border-white/10 dark:bg-charcoal-blue-950 dark:hover:border-white/20"
-							>
-								<div className="flex items-start gap-3">
-									<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
-										<Icon name={link.icon} size={18} aria-hidden="true" />
-									</span>
-									<div className="min-w-0">
-										<div className="flex items-center justify-between gap-3">
-											<p className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">{link.title}</p>
-											<Icon name="arrowRight" size={16} aria-hidden="true" className="text-charcoal-blue-400 group-hover:text-charcoal-blue-900 dark:group-hover:text-white" />
-										</div>
-										<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{link.description}</p>
-									</div>
-								</div>
+			<section aria-labelledby="account-title">
+				<header className="log-section-header">
+					<h2 id="account-title">Account</h2>
+				</header>
+				<ul>
+					{ACCOUNT_LINKS.map((link) => (
+						<li key={link.href}>
+							<Link href={link.href} className="ledger-row transition-colors hover:bg-muted">
+								<span className="min-w-0 flex-1">
+									<span className="block font-medium">{link.title}</span>
+									<span className="mt-0.5 block text-sm log-muted">{link.detail}</span>
+								</span>
+								<ChevronRight aria-hidden="true" size={17} strokeWidth={1.7} className="log-muted" />
 							</Link>
-						))}
-					</div>
-				</section>
-
-				<section className="space-y-6">
-					<div className="card p-6">
-						<div className="flex items-start gap-3">
-							<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
-								<Icon name="activity" size={18} aria-hidden="true" />
-							</span>
-						<div>
-							<h2 className="text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Current read</h2>
-						</div>
-						</div>
-
-						{loadingObservations || !observations ? (
-							<div className="mt-6 flex min-h-48 items-center justify-center">
-								<Loading />
-							</div>
-						) : (
-							<div className="mt-6 space-y-3">
-								<InsightRow label="Meal logging cadence" value={`${observations.mealLoggingDays}/14 tracked days`} helper={`Average ${observations.averageCalories} kcal on logged days`} />
-								<InsightRow label="Achievements" value={`${observations.achievementCount} earned`} helper={`${observations.totalAchievementPoints} total points`} />
-								<InsightRow label="MCP usage" value={`${observations.mcpCalls} calls`} helper={`${observations.mcpSuccessRate}% success rate`} />
-							</div>
-						)}
-					</div>
-
-				</section>
-			</div>
+						</li>
+					))}
+				</ul>
+			</section>
 		</div>
 	);
-}
-
-function ProfileAvatar({
-	image,
-	email,
-	name,
-}: {
-	image?: string | null;
-	email?: string | null;
-	name?: string | null;
-}) {
-	if (image) {
-		return (
-			<div className="relative h-20 w-20 overflow-hidden rounded-2xl ring-1 ring-brand-500/20 sm:h-24 sm:w-24">
-				<Image src={image} alt={name || email || "User"} fill sizes="(max-width: 640px) 80px, 96px" className="object-cover" />
-			</div>
-		);
-	}
-
-	return (
-		<div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-600 text-2xl font-semibold text-white ring-1 ring-brand-500/20 dark:bg-brand-500 sm:h-24 sm:w-24">
-			{(email || "U").charAt(0).toUpperCase()}
-		</div>
-	);
-}
-
-function StatCard({
-	label,
-	value,
-	helper,
-}: {
-	label: string;
-	value: string;
-	helper: string;
-}) {
-	return (
-		<div className="rounded-3xl border border-charcoal-blue-200 bg-white p-4 dark:border-white/10 dark:bg-charcoal-blue-900">
-			<p className="text-xs font-semibold uppercase tracking-[0.14em] text-charcoal-blue-500 dark:text-charcoal-blue-400">{label}</p>
-			<p className="mt-3 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{value}</p>
-			<p className="mt-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{helper}</p>
-		</div>
-	);
-}
-
-function InsightRow({
-	label,
-	value,
-	helper,
-}: {
-	label: string;
-	value: string;
-	helper: string;
-}) {
-	return (
-		<div className="rounded-3xl border border-charcoal-blue-200 bg-charcoal-blue-50/90 p-4 dark:border-white/10 dark:bg-charcoal-blue-900/70">
-			<div className="flex items-center justify-between gap-3">
-				<p className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">{label}</p>
-				<p className="text-sm font-medium text-brand-700 dark:text-brand-300">{value}</p>
-			</div>
-			<p className="mt-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{helper}</p>
-		</div>
-	);
-}
-
-function formatDate(value?: string | null) {
-	if (!value) return "--";
-	return new Date(value).toLocaleDateString(undefined, {
-		year: "numeric",
-		month: "short",
-		day: "numeric",
-	});
 }

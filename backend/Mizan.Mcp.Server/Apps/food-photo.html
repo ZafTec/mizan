@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confirm your meal</title>
+<style>
+:root { color-scheme: light dark; --ink: oklch(21% .007 78); --paper: oklch(98.5% .004 91); --card: #fff; --muted: oklch(43.65% .012 82); --rule: oklch(90.4% .013 87); --teal: oklch(49.3% .076 187); --warn: oklch(49.5% .142 31); --fill: oklch(93.5% .013 87); }
+:root[data-theme="dark"], :root:not([data-theme="light"]) { }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ink: oklch(95.5% .007 89); --paper: oklch(17.2% .005 80); --card: oklch(21% .006 80); --muted: oklch(76.5% .021 88); --rule: oklch(30% .012 84); --teal: oklch(77.2% .097 186); --warn: oklch(71.3% .13 30); --fill: oklch(26% .01 84); } }
+:root[data-theme="dark"] { --ink: oklch(95.5% .007 89); --paper: oklch(17.2% .005 80); --card: oklch(21% .006 80); --muted: oklch(76.5% .021 88); --rule: oklch(30% .012 84); --teal: oklch(77.2% .097 186); --warn: oklch(71.3% .13 30); --fill: oklch(26% .01 84); }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 16px; background: var(--paper); color: var(--ink); font: 14px/20px system-ui, -apple-system, "Segoe UI", sans-serif; }
+h1 { margin: 0 0 4px; font-size: 18px; line-height: 24px; font-weight: 600; letter-spacing: -.01em; }
+.sub { margin: 0 0 12px; color: var(--muted); }
+.card { background: var(--card); border: 1px solid var(--rule); border-radius: 3px; padding: 12px 14px; }
+.row { display: flex; align-items: center; gap: 12px; }
+.grow { flex: 1; min-width: 0; }
+button { font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--rule); border-radius: 3px; padding: 8px 12px; cursor: pointer; min-height: 36px; }
+button.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); font-weight: 600; }
+button:disabled { opacity: .5; cursor: default; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+input, select { font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--rule); border-radius: 3px; padding: 6px 8px; min-height: 36px; }
+.num { font-variant-numeric: tabular-nums; }
+.err { color: var(--warn); }
+.muted { color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<h1>Confirm your meal</h1>
+<p class="sub" id="note">Waiting for the photo analysis…</p>
+<div id="view" hidden>
+  <div class="card" style="padding:0">
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr class="muted" style="text-align:left"><th style="padding:8px 10px;width:32px"><span class="sr-only" style="position:absolute;left:-9999px">Include</span></th><th style="padding:8px 4px">Food</th><th style="padding:8px 4px;width:92px">Grams</th><th style="padding:8px 10px;text-align:right;width:84px">kcal</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <div class="row" style="margin-top:12px;flex-wrap:wrap">
+    <label class="row" style="gap:6px">Meal <select id="meal"><option>BREAKFAST</option><option>LUNCH</option><option>DINNER</option><option>SNACK</option></select></label>
+    <label class="row" style="gap:6px">Date <input id="date" type="date"></label>
+    <span class="grow num" id="total" style="text-align:right"></span>
+    <button class="primary" id="log" type="button">Log selected</button>
+  </div>
+</div>
+<p id="status" role="status" class="muted" style="margin-top:12px"></p>
+<script>
+// Talks to the host over postMessage (MCP Apps). No libraries, so the page is one file.
+const pending = new Map();
+let nextId = 0;
+const send = (message) => parent.postMessage(message, "*");
+const request = (method, params) => new Promise((resolve, reject) => {
+  const id = ++nextId;
+  pending.set(id, { resolve, reject });
+  send({ jsonrpc: "2.0", id, method, params });
+});
+const notify = (method, params) => send({ jsonrpc: "2.0", method, params: params || {} });
+const callTool = (name, args) => request("tools/call", { name, arguments: args || {} });
+const textOf = (result) => ((result && result.content) || []).filter((c) => c.type === "text").map((c) => c.text).join("\n");
+const jsonOf = (result) => { try { return JSON.parse(textOf(result)); } catch { return null; } };
+const el = (tag, props, ...kids) => {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(props || {})) {
+    if (key === "class") node.className = value;
+    else if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
+    else if (value !== undefined && value !== null && value !== false) node.setAttribute(key, value === true ? "" : value);
+  }
+  for (const kid of kids.flat()) if (kid !== null && kid !== undefined && kid !== false) node.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+  return node;
+};
+const reportSize = () => notify("ui/notifications/size-changed", { width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight });
+const applyContext = (context) => { if (context && context.theme) document.documentElement.dataset.theme = context.theme; };
+window.addEventListener("message", (event) => {
+  const message = event.data;
+  if (!message || message.jsonrpc !== "2.0") return;
+  if (message.id !== undefined && !message.method) {
+    const waiting = pending.get(message.id);
+    if (!waiting) return;
+    pending.delete(message.id);
+    if (message.error) waiting.reject(new Error(message.error.message || "The request failed")); else waiting.resolve(message.result);
+  } else if (message.method === "ui/notifications/tool-result") window.onToolResult(message.params);
+  else if (message.method === "ui/notifications/host-context-changed") applyContext(message.params);
+});
+const connect = (name) => request("ui/initialize", { protocolVersion: "2025-06-18", appInfo: { name, version: "1.0.0" }, appCapabilities: {} })
+  .then((result) => { applyContext(result && result.hostContext); notify("ui/notifications/initialized"); })
+  .catch(() => {})
+  .finally(() => { new ResizeObserver(reportSize).observe(document.body); reportSize(); });
+
+
+let foods = [];
+const num = (n) => Math.round(Number(n) || 0).toLocaleString();
+const today = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+const scaled = (food, grams) => { const f = food.portion > 0 ? grams / food.portion : 1; return { calories: food.calories * f, protein: food.protein * f, carbs: food.carbs * f, fat: food.fat * f }; };
+
+function totals() {
+  const chosen = foods.filter((f) => f.include);
+  const kcal = chosen.reduce((sum, f) => sum + scaled(f, f.grams).calories, 0);
+  document.getElementById("total").textContent = `${chosen.length} item${chosen.length === 1 ? "" : "s"}, ${num(kcal)} kcal`;
+  document.getElementById("log").disabled = chosen.length === 0;
+}
+
+function renderRows() {
+  document.getElementById("rows").replaceChildren(...foods.map((food, index) => {
+    const kcal = el("td", { class: "num", style: "padding:8px 10px;text-align:right" }, num(scaled(food, food.grams).calories));
+    return el("tr", { style: "border-top:1px solid var(--rule)" },
+      el("td", { style: "padding:8px 10px" }, el("input", { type: "checkbox", checked: food.include, "aria-label": `Include ${food.name}`, onchange: (e) => { food.include = e.target.checked; totals(); } })),
+      el("td", { style: "padding:8px 4px" }, el("input", { type: "text", value: food.name, "aria-label": "Food name", style: "width:100%", oninput: (e) => { food.name = e.target.value; } })),
+      el("td", { style: "padding:8px 4px" }, el("input", { type: "number", min: "1", step: "1", value: String(Math.round(food.grams)), "aria-label": `Grams of ${food.name}`, style: "width:80px", oninput: (e) => { food.grams = Math.max(0, Number(e.target.value) || 0); kcal.textContent = num(scaled(food, food.grams).calories); totals(); } })),
+      kcal);
+  }));
+  totals();
+}
+
+window.onToolResult = (result) => {
+  const data = jsonOf(result);
+  const status = document.getElementById("status");
+  if (result.isError || !data || !Array.isArray(data.foods)) { status.className = "err"; status.textContent = textOf(result) || "Nothing was recognized in that photo."; return; }
+  foods = data.foods.map((f) => ({ name: f.name || "Food", portion: Number(f.portionGrams) || 100, grams: Number(f.portionGrams) || 100, calories: Number(f.calories) || 0, protein: Number(f.protein) || 0, carbs: Number(f.carbs) || 0, fat: Number(f.fat) || 0, include: true, logged: false }));
+  const confidence = Number(data.confidence);
+  document.getElementById("note").textContent = (isFinite(confidence) && confidence > 0 ? `Estimate (${Math.round(confidence * (confidence <= 1 ? 100 : 1))}% confident). ` : "Estimate. ") + (data.note || "Check the amounts before you log.");
+  document.getElementById("date").value = today();
+  document.getElementById("view").hidden = false;
+  renderRows();
+};
+
+document.getElementById("log").addEventListener("click", async () => {
+  const button = document.getElementById("log");
+  const status = document.getElementById("status");
+  const date = document.getElementById("date").value || today();
+  const mealType = document.getElementById("meal").value;
+  button.disabled = true; status.className = "muted";
+  let done = 0;
+  for (const food of foods.filter((f) => f.include && !f.logged)) {
+    const n = scaled(food, food.grams);
+    status.textContent = `Logging ${food.name}…`;
+    try {
+      const result = await callTool("log_meal_manual", { name: food.name.trim() || "Food", date, mealType, calories: Math.round(n.calories), servings: 1, proteinGrams: Math.round(n.protein * 10) / 10, carbsGrams: Math.round(n.carbs * 10) / 10, fatGrams: Math.round(n.fat * 10) / 10 });
+      if (result.isError) throw new Error(textOf(result) || "Could not log that item");
+      food.logged = true; food.include = false; done++;
+    } catch (error) {
+      // Stop at the first failure so nothing is logged twice on retry. Items already logged stay unticked.
+      status.className = "err"; status.textContent = `${done} logged. ${food.name} failed: ${error.message}. The rest were not logged.`;
+      renderRows(); return;
+    }
+  }
+  status.textContent = `${done} item${done === 1 ? "" : "s"} logged to ${date}.`;
+  renderRows();
+});
+connect("Mizan meal photo");
+
+</script>
+</body>
+</html>

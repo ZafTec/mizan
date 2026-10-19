@@ -81,7 +81,7 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
     public async Task TheNewSurfacesAreAllListed()
     {
         await _api.ResetDatabaseAsync();
-        await AuthenticateAsync();
+        await AuthenticateAsync(admin: true);
 
         var names = await ToolNamesAsync();
 
@@ -101,6 +101,15 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
             // Background queue
             "admin_list_jobs", "admin_get_job_stats", "admin_retry_job", "admin_delete_job",
         });
+    }
+
+    [Fact]
+    public async Task AdminToolsAreNotEvenListedForAPlainUser()
+    {
+        await _api.ResetDatabaseAsync();
+        await AuthenticateAsync();
+
+        (await ToolNamesAsync()).Should().NotContain(name => name.StartsWith("admin_"));
     }
 
     // ---- Consent ----------------------------------------------------------
@@ -238,9 +247,8 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         await _api.ResetDatabaseAsync();
         await AuthenticateAsync();
 
-        // The tool is listed - the catalogue is the same for everyone - but the
-        // backend is what decides, so calling it fails rather than the MCP layer
-        // keeping a second copy of the rule.
+        // The tool is not listed for a plain user, and calling it anyway is refused
+        // before it reaches the API. The API refuses it too, as a second line.
         var result = await CallAsync("admin_list_jobs", new { });
 
         result.Should().NotContain("\"deadLettered\"");
@@ -269,11 +277,7 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         var email = $"parity-{id:N}@example.com";
         await _api.SeedUserAsync(id, email, role: admin ? "admin" : "user");
 
-        using var client = _api.CreateAuthenticatedClient(id, email, admin ? "admin" : "user");
-        var created = await client.PostAsJsonAsync("/api/McpTokens", new { Name = "Parity" });
-        created.StatusCode.Should().Be(HttpStatusCode.Created);
-
-        var token = (await created.Content.ReadFromJsonAsync<CreateMcpTokenResult>())!.PlaintextToken;
+        var token = (await _api.CreateMcpAccessAsync(id)).Token;
 
         _mcp.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);

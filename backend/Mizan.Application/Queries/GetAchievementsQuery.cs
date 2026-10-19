@@ -61,13 +61,15 @@ public class GetAchievementsQueryHandler : IRequestHandler<GetAchievementsQuery,
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
     private readonly IUserStatsProvider _stats;
+    private readonly IAppUrls _urls;
 
     public GetAchievementsQueryHandler(
-        IMizanDbContext context, ICurrentUserService currentUser, IUserStatsProvider stats)
+        IMizanDbContext context, ICurrentUserService currentUser, IUserStatsProvider stats, IAppUrls urls)
     {
         _context = context;
         _currentUser = currentUser;
         _stats = stats;
+        _urls = urls;
     }
 
     public async Task<GetAchievementsResult> Handle(GetAchievementsQuery request, CancellationToken cancellationToken)
@@ -130,7 +132,7 @@ public class GetAchievementsQueryHandler : IRequestHandler<GetAchievementsQuery,
             Id = a.Id,
             Name = a.Name,
             Description = a.Description,
-            IconUrl = a.IconUrl,
+            IconUrl = _urls.Asset(a.IconUrl),
             Points = a.Points,
             Category = a.Category,
             CriteriaType = a.CriteriaType,

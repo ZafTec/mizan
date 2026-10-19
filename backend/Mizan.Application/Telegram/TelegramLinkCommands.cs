@@ -74,7 +74,10 @@ public class IssueTelegramLinkCodeCommandHandler
 /// signed-in browser session.
 /// </summary>
 public record ConsumeTelegramLinkCommand(string Code, long TelegramUserId, string? TelegramUsername)
-    : IRequest<TelegramLinkResult>;
+    : IRequest<TelegramLinkResult>, IRedactedAudit
+{
+    object IRedactedAudit.AuditDetails => new { TelegramUserId, TelegramUsername };
+}
 
 public record TelegramLinkResult(Guid UserId, string? Name);
 

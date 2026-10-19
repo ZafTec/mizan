@@ -80,7 +80,6 @@ export default function ResetPasswordPage() {
 					{tokenError ? (
 						<div className="text-center space-y-4">
 							<div className="w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto">
-								<i className="ri-error-warning-line text-3xl text-red-600 dark:text-red-400" />
 							</div>
 							<div>
 								<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
@@ -95,7 +94,6 @@ export default function ResetPasswordPage() {
 									Request new reset link
 								</Link>
 								<Link href="/login" className="btn-secondary w-full py-3">
-									<i className="ri-arrow-left-line" />
 									Back to login
 								</Link>
 							</div>
@@ -103,7 +101,6 @@ export default function ResetPasswordPage() {
 					) : success ? (
 						<div className="text-center space-y-4">
 							<div className="w-16 h-16 rounded-2xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto">
-								<i className="ri-checkbox-circle-line text-3xl text-green-600 dark:text-green-400" />
 							</div>
 							<div>
 								<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
@@ -162,7 +159,6 @@ export default function ResetPasswordPage() {
 									data-testid="error-message"
 									className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm"
 								>
-									<i className="ri-error-warning-line text-lg" />
 									<span>{error}</span>
 								</div>
 							)}
@@ -176,7 +172,6 @@ export default function ResetPasswordPage() {
 								) : (
 									<>
 										Reset password
-										<i className="ri-check-line" />
 									</>
 								)}
 							</button>
@@ -186,7 +181,6 @@ export default function ResetPasswordPage() {
 									href="/login"
 									className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 hover:text-charcoal-blue-900 dark:hover:text-charcoal-blue-100 inline-flex items-center gap-1"
 								>
-									<i className="ri-arrow-left-line" />
 									Back to login
 								</Link>
 							</div>

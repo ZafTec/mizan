@@ -11,7 +11,7 @@ Recipes, meal plans, shopping lists, trainers, households, messaging, billing, a
 - PostgreSQL 18 owns all application and identity data. Next.js has no database connection.
 - Redis provides distributed caching and the SignalR backplane.
 - S3-compatible storage supports MinIO and Cloudflare R2.
-- Backend session cookies authenticate browsers. User MCP tokens authenticate external MCP clients.
+- Backend session cookies authenticate browsers. OAuth grants authenticate connected MCP clients and the native app.
 
 ## Run with Docker
 
@@ -119,7 +119,7 @@ Production Compose currently follows `latest`. To pin a release, use its version
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Design](DESIGN.md)
-- [MCP setup and tools](docs/MCP.md)
+- [MCP setup, OAuth, and the Claude plugin](docs/MCP.md)
 - [AI consent, limits, and administration](docs/AI.md)
 - [Telegram setup](docs/TELEGRAM.md)
 - [Contributor and agent guidance](CLAUDE.md)

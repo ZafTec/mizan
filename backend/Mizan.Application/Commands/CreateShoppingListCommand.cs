@@ -11,14 +11,20 @@ public record CreateShoppingListCommand(string Name, Guid UserId, Guid? Househol
 public class CreateShoppingListCommandHandler : IRequestHandler<CreateShoppingListCommand, Guid>
 {
     private readonly IMizanDbContext _context;
+    private readonly IHouseholdAccess _households;
 
-    public CreateShoppingListCommandHandler(IMizanDbContext context)
+    public CreateShoppingListCommandHandler(IMizanDbContext context, IHouseholdAccess households)
     {
+        _households = households;
         _context = context;
     }
 
     public async Task<Guid> Handle(CreateShoppingListCommand request, CancellationToken cancellationToken)
     {
+        // Without this a list could be filed under someone else's household.
+        if (request.HouseholdId.HasValue && !await _households.CanAccessAsync(request.HouseholdId.Value, cancellationToken))
+            throw new ForbiddenAccessException("You are not a member of this household");
+
         var shoppingList = new ShoppingList
         {
             Id = Guid.NewGuid(),

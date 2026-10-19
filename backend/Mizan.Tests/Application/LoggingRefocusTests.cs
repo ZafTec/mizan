@@ -113,9 +113,9 @@ public class LoggingRefocusTests
             : () => FoodHandler().Handle(new LogFoodCommand { RecipeId = recipe.Id, EntryDate = _day }, default);
         await act.Should().ThrowAsync<DomainValidationException>();
         _db.FoodDiaryEntries.Should().BeEmpty();
-        var detail = await new GetRecipeByIdQueryHandler(_db, User, _cache).Handle(new GetRecipeByIdQuery(recipe.Id), default);
+        var detail = await new GetRecipeByIdQueryHandler(_db, User, _cache, new Mizan.Application.Services.HouseholdAccess(_db, User)).Handle(new GetRecipeByIdQuery(recipe.Id), default);
         detail!.Nutrition.Should().BeNull();
-        var list = await new GetRecipesQueryHandler(_db, User, _cache).Handle(new GetRecipesQuery(), default);
+        var list = await new GetRecipesQueryHandler(_db, User, _cache, new Mizan.Application.Services.HouseholdAccess(_db, User)).Handle(new GetRecipesQuery(), default);
         list.Items.Single(r => r.Id == recipe.Id).Nutrition.Should().BeNull();
     }
 
@@ -203,7 +203,7 @@ public class LoggingRefocusTests
             Name = "Bread", Servings = 1, AmountGrams = 50,
             Calories = 100, ProteinGrams = 3, CarbsGrams = 17, FatGrams = 1
         }, default);
-        var recipeId = await new PromoteMealToRecipeCommandHandler(_db, User, _cache).Handle(
+        var recipeId = await new PromoteMealToRecipeCommandHandler(_db, new Mizan.Application.Services.HouseholdAccess(_db, User), User, _cache).Handle(
             new PromoteMealToRecipeCommand(_day, request.MealType, "Photo meal and bread"), default);
         var recipe = await _db.Recipes.Include(r => r.Ingredients).SingleAsync(r => r.Id == recipeId);
         recipe.Ingredients.Single(i => i.IngredientText == "Photo meal").Amount.Should().Be(175);

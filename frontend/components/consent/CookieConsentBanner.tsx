@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Icon } from "@/components/ui/icon";
 
 // Slides up from the bottom with a strong ease-out on enter (400ms) and a
 // fast exit (200ms) once the user decides. The banner only mounts when GA
@@ -48,7 +47,6 @@ export function CookieConsentBanner({
 			>
 				<div className="flex items-start gap-3 sm:items-center">
 					<span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-brand-500/15 text-brand-700 sm:mt-0 dark:text-brand-300">
-						<Icon name="shieldCheck" size={18} aria-hidden="true" />
 					</span>
 					<div className="text-sm leading-relaxed text-charcoal-blue-700 dark:text-charcoal-blue-200">
 						<p className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">

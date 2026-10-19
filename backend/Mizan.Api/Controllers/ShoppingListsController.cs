@@ -45,7 +45,7 @@ public class ShoppingListsController : ControllerBase
     {
         if (!_currentUser.UserId.HasValue)
         {
-            return Unauthorized("User not authenticated");
+            return Unauthorized(new { errorCode = "unauthorized", error = "Unauthorized" });
         }
 
         var command = new CreateShoppingListCommand(request.Name, _currentUser.UserId.Value, request.HouseholdId);
@@ -62,7 +62,7 @@ public class ShoppingListsController : ControllerBase
 
         if (itemId == null)
         {
-            return NotFound("Shopping list not found");
+            return NotFound(new { errorCode = "not_found", error = "Shopping list not found" });
         }
 
         return Ok(itemId);
@@ -76,7 +76,7 @@ public class ShoppingListsController : ControllerBase
 
         if (!success)
         {
-            return NotFound("Item not found");
+            return NotFound(new { errorCode = "not_found", error = "Item not found" });
         }
 
         return NoContent();

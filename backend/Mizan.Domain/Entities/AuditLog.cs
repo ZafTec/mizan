@@ -12,6 +12,9 @@ public class AuditLog
     public string EntityId { get; set; } = string.Empty;
     public string? Details { get; set; } // JSON or description
     public string? IpAddress { get; set; }
+
+    /// <summary>The administrator who was acting as <see cref="UserId"/>, when the action happened in an impersonation session.</summary>
+    public Guid? ImpersonatorId { get; set; }
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
     public virtual User? User { get; set; }

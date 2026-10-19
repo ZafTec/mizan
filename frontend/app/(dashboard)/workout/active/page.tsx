@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { serverApi } from "@/lib/api.server";
 import { ApiError } from "@/lib/api";
 import { getUserServer } from "@/helper/session";
@@ -35,7 +34,7 @@ export default async function ActiveWorkoutPage({
   return (
     <div className="log-page">
       <Link href={`/today?date=${date}`} className="text-link mb-4">
-        <ArrowLeft size={15} /> Back to your log
+         Back to your log
       </Link>
       <WorkoutDashboard
         initialTab="log"

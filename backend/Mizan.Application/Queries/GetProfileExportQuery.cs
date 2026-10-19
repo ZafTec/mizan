@@ -42,7 +42,7 @@ public record ProfileExportObservationsDto(
     int TotalMeasurements,
     int TotalWorkouts,
     int TotalAchievements,
-    int TotalMcpTokens,
+    int TotalMcpConnections,
     int TotalMcpRequests,
     DateTime? LastMealLoggedAt,
     DateTime? LastWorkoutLoggedAt,
@@ -185,22 +185,24 @@ public record ProfileExportFavoriteRecipeDto(
 );
 
 public record ProfileExportMcpDto(
-    List<ProfileExportMcpTokenDto> Tokens,
+    List<ProfileExportMcpConnectionDto> Connections,
     List<ProfileExportMcpUsageLogDto> UsageLogs
 );
 
-public record ProfileExportMcpTokenDto(
+public record ProfileExportMcpConnectionDto(
     Guid Id,
-    string Name,
+    string ClientName,
+    List<string> Scopes,
+    string HouseholdMode,
     DateTime CreatedAt,
-    DateTime? ExpiresAt,
     DateTime? LastUsedAt,
-    bool IsActive
+    DateTime? RevokedAt
 );
 
 public record ProfileExportMcpUsageLogDto(
     Guid Id,
-    Guid McpTokenId,
+    Guid? GrantId,
+    string Kind,
     string ToolName,
     bool Success,
     string? ErrorMessage,
@@ -387,17 +389,18 @@ public class GetProfileExportQueryHandler : IRequestHandler<GetProfileExportQuer
             ))
             .ToListAsync(cancellationToken);
 
-        var mcpTokens = await _context.McpTokens
+        var mcpConnections = await _context.OAuthGrants
             .AsNoTracking()
-            .Where(token => token.UserId == request.UserId)
-            .OrderByDescending(token => token.CreatedAt)
-            .Select(token => new ProfileExportMcpTokenDto(
-                token.Id,
-                token.Name,
-                token.CreatedAt,
-                token.ExpiresAt,
-                token.LastUsedAt,
-                token.IsActive
+            .Where(grant => grant.UserId == request.UserId)
+            .OrderByDescending(grant => grant.CreatedAt)
+            .Select(grant => new ProfileExportMcpConnectionDto(
+                grant.Id,
+                grant.Client.Name,
+                grant.Scopes,
+                grant.HouseholdMode,
+                grant.CreatedAt,
+                grant.LastUsedAt,
+                grant.RevokedAt
             ))
             .ToListAsync(cancellationToken);
 
@@ -407,7 +410,8 @@ public class GetProfileExportQueryHandler : IRequestHandler<GetProfileExportQuer
             .OrderByDescending(log => log.Timestamp)
             .Select(log => new ProfileExportMcpUsageLogDto(
                 log.Id,
-                log.McpTokenId,
+                log.GrantId,
+                log.Kind,
                 log.ToolName,
                 log.Success,
                 log.ErrorMessage,
@@ -443,7 +447,7 @@ public class GetProfileExportQueryHandler : IRequestHandler<GetProfileExportQuer
             bodyMeasurements.Count,
             workouts.Count,
             achievements.Count,
-            mcpTokens.Count,
+            mcpConnections.Count,
             mcpUsageLogs.Count,
             meals.FirstOrDefault()?.LoggedAt,
             workouts.FirstOrDefault()?.CreatedAt,
@@ -478,7 +482,7 @@ public class GetProfileExportQueryHandler : IRequestHandler<GetProfileExportQuer
                 achievements,
                 recipes,
                 favoriteRecipes,
-                new ProfileExportMcpDto(mcpTokens, mcpUsageLogs)
+                new ProfileExportMcpDto(mcpConnections, mcpUsageLogs)
             )
         );
     }

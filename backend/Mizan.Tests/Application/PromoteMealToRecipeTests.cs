@@ -37,7 +37,7 @@ public class PromoteMealToRecipeTests
         var currentUser = new FakeCurrentUser { UserId = UserId };
         var cache = new ServiceCollection().AddHybridCache().Services
             .BuildServiceProvider().GetRequiredService<HybridCache>();
-        return (db, new PromoteMealToRecipeCommandHandler(db, currentUser, cache));
+        return (db, new PromoteMealToRecipeCommandHandler(db, new Mizan.Application.Services.HouseholdAccess(db, currentUser), currentUser, cache));
     }
 
     private static FoodDiaryEntry Entry(string name, Guid? foodId = null, string mealType = "dinner", int minute = 0)

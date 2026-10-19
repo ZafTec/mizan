@@ -220,7 +220,6 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
 			{/* Basic Information Card */}
 			<div className="card p-6 space-y-5">
 				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
-					<i className="ri-image-line text-brand-500" />
 					Basic Information
 				</h2>
 
@@ -235,7 +234,6 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
 							disabled={imageUpload.uploading}
 							className="w-24 h-24 rounded-2xl border-2 border-dashed border-charcoal-blue-300 dark:border-charcoal-blue-700 hover:border-brand-400 bg-charcoal-blue-50 dark:bg-charcoal-blue-900 hover:bg-brand-50 disabled:opacity-60 flex flex-col items-center justify-center transition-colors group"
 						>
-							<i className="ri-image-add-line text-2xl text-charcoal-blue-400 group-hover:text-brand-500" />
 							<span className="text-xs text-charcoal-blue-400 group-hover:text-brand-500 mt-1">
 								{imageUpload.uploading ? "..." : "Change"}
 							</span>
@@ -290,7 +288,6 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
 			{/* Ingredients Card */}
 			<div className="card p-6 space-y-4 relative overflow-visible z-20">
 				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
-					<i className="ri-list-check-2 text-brand-500" />
 					Ingredients
 				</h2>
 
@@ -396,7 +393,6 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
 					onClick={handleAddIngredient}
 					className="flex items-center gap-2 text-brand-600 dark:text-brand-400 hover:text-brand-700 font-medium transition-colors"
 				>
-					<i className="ri-add-circle-line text-lg" />
 					Add Ingredient
 				</button>
 			</div>
@@ -404,7 +400,6 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
 			{/* Instructions Card */}
 			<div className="card p-6 space-y-4">
 				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
-					<i className="ri-file-list-3-line text-brand-500" />
 					Instructions
 				</h2>
 				<textarea
@@ -420,7 +415,6 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
 			{/* Additional Details Card */}
 			<div className="card p-6 space-y-5">
 				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
-					<i className="ri-settings-3-line text-brand-500" />
 					Additional Details
 				</h2>
 
@@ -500,7 +494,6 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
 					</>
 				) : (
 					<>
-						<i className="ri-check-line text-xl" />
 						Save Changes
 					</>
 				)}

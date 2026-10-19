@@ -16,6 +16,8 @@ export type RecipeResult = {
   title: string;
   isFavorited?: boolean;
   lastUsedAt?: string | null;
+  /** How many times this person has logged it. */
+  timesLogged?: number;
   nutrition?: {
     caloriesPerServing?: number | null;
     proteinGrams?: number | null;

@@ -32,6 +32,9 @@ public record RecipeDto
     public bool IsOwner { get; init; }
     public bool IsFavorited { get; init; }
     public DateTime? LastUsedAt { get; init; }
+
+    /// <summary>How many times the viewer has logged this recipe. Drives the "often logged" list.</summary>
+    public int TimesLogged { get; init; }
     public RecipeNutritionDto? Nutrition { get; init; }
     public DateTime CreatedAt { get; init; }
 }
@@ -69,8 +72,11 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
     private readonly ICurrentUserService _currentUser;
     private readonly HybridCache _cache;
 
-    public GetRecipesQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache)
+    private readonly IHouseholdAccess _households;
+
+    public GetRecipesQueryHandler(IMizanDbContext context, ICurrentUserService currentUser, HybridCache cache, IHouseholdAccess households)
     {
+        _households = households;
         _context = context;
         _currentUser = currentUser;
         _cache = cache;
@@ -82,7 +88,7 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
         // viewer's id has to be part of the key for the same reason
         // SearchFoodsQuery keys on it.
         var viewerId = _currentUser.UserId?.ToString() ?? "anon";
-        var cacheKey = $"recipes:search:{viewerId}:{request.SearchTerm?.ToLower() ?? ""}:{request.IncludePublic}:{request.FavoritesOnly}:{request.MinProteinCalorieRatio}:{request.Page}:{request.PageSize}:{request.SortBy ?? ""}:{request.SortOrder ?? ""}";
+        var cacheKey = $"recipes:search:{viewerId}:{GrantContext.KeyFor(_currentUser.Grant)}:{request.SearchTerm?.ToLower() ?? ""}:{request.IncludePublic}:{request.FavoritesOnly}:{request.MinProteinCalorieRatio}:{request.Page}:{request.PageSize}:{request.SortBy ?? ""}:{request.SortOrder ?? ""}";
 
         return await _cache.GetOrCreateAsync(
             cacheKey,
@@ -97,19 +103,25 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
     {
         var query = _context.Recipes.AsQueryable();
 
+        // A connected app does not see the user's own recipes filed under households it was not given.
+        var restrict = _currentUser.Grant is not null;
+        var accessible = restrict ? await _households.AccessibleIdsAsync(cancellationToken) : [];
+
         if (_currentUser.UserId.HasValue)
         {
             if (request.FavoritesOnly)
             {
                 query = from r in query
                         join f in _context.FavoriteRecipes on r.Id equals f.RecipeId
-                        where f.UserId == _currentUser.UserId && (r.IsPublic || r.UserId == _currentUser.UserId)
+                        where f.UserId == _currentUser.UserId && (r.IsPublic || (r.UserId == _currentUser.UserId
+                            && (!restrict || r.HouseholdId == null || accessible.Contains(r.HouseholdId.Value))))
                         select r;
             }
             else
             {
                 query = query.Where(r =>
-                    r.UserId == _currentUser.UserId ||
+                    (r.UserId == _currentUser.UserId
+                        && (!restrict || r.HouseholdId == null || accessible.Contains(r.HouseholdId.Value))) ||
                     (request.IncludePublic && r.IsPublic));
             }
         }
@@ -146,6 +158,11 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
                    / r.Ingredients.Sum(i => i.Food!.CaloriesPer100g * (i.Amount ?? 0m)) >= minRatio);
         }
 
+        // "frequent" is the recipes this viewer logs most, most-logged first. It leaves out ones never logged.
+        var frequent = _currentUser.UserId is not null
+            && string.Equals(request.SortBy, "frequent", StringComparison.OrdinalIgnoreCase);
+        if (frequent) query = query.Where(r => r.DiaryEntries.Any(e => e.UserId == _currentUser.UserId));
+
         var totalCount = await query.CountAsync(cancellationToken);
 
         var sortedQuery = query.ApplySorting(
@@ -153,7 +170,13 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
             SortMappings,
             defaultSort: r => r.CreatedAt,
             defaultDescending: true);
-        if (string.IsNullOrWhiteSpace(request.SortBy) && _currentUser.UserId.HasValue)
+        if (frequent)
+        {
+            sortedQuery = query
+                .OrderByDescending(r => r.DiaryEntries.Count(e => e.UserId == _currentUser.UserId))
+                .ThenByDescending(r => r.DiaryEntries.Where(e => e.UserId == _currentUser.UserId).Max(e => (DateTime?)e.LoggedAt) ?? DateTime.MinValue);
+        }
+        else if (string.IsNullOrWhiteSpace(request.SortBy) && _currentUser.UserId.HasValue)
         {
             sortedQuery = query
                 .OrderByDescending(r => _context.FavoriteRecipes.Any(f => f.RecipeId == r.Id && f.UserId == _currentUser.UserId))
@@ -177,6 +200,7 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
                 IsOwner = _currentUser.UserId.HasValue && r.UserId == _currentUser.UserId,
                 IsFavorited = _context.FavoriteRecipes.Any(f => f.RecipeId == r.Id && f.UserId == _currentUser.UserId),
                 LastUsedAt = r.DiaryEntries.Where(e => e.UserId == _currentUser.UserId).Max(e => (DateTime?)e.LoggedAt),
+                TimesLogged = r.DiaryEntries.Count(e => e.UserId == _currentUser.UserId),
                 CreatedAt = r.CreatedAt
             })
             .ToListAsync(cancellationToken);

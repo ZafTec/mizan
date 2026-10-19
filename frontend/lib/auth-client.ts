@@ -65,6 +65,9 @@ export const signIn = (email: string, password: string) =>
 
 export const signOut = () => call<void>("/logout");
 
+/** Ends an administrator's view of the site as a user. `restored` is false when their own session had expired. */
+export const stopImpersonation = () => call<{ restored: boolean }>("/impersonation/stop");
+
 export const getSession = () => call<User>("/me", undefined, "GET");
 
 export const verifyEmail = (token: string) => call<void>("/verify-email", { token });

@@ -9,7 +9,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Loading from "@/components/Loading";
 import { PasswordInput } from "@/components/PasswordInput";
-import { Icon } from "@/components/ui/icon";
 
 export default function Page() {
 	const router = useRouter();
@@ -121,7 +120,6 @@ export default function Page() {
 
 						{formState.status === "success" && (
 							<div className="flex items-center gap-2 p-3 rounded-xl bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400 text-sm">
-								<Icon name="circleCheck" size={18} aria-hidden="true" />
 								<span>Account created! Redirecting...</span>
 							</div>
 						)}
@@ -131,7 +129,6 @@ export default function Page() {
 								data-testid="error-message"
 								className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm"
 							>
-								<Icon name="badgeAlert" size={18} className="shrink-0" aria-hidden="true" />
 								<span>
 									{formState.message}
 									{formState.message.includes("already exists") && (
@@ -160,7 +157,6 @@ export default function Page() {
 							) : (
 								<>
 									Create Account
-									<Icon name="arrowRight" size={18} aria-hidden="true" />
 								</>
 							)}
 						</button>

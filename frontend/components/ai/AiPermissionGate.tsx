@@ -75,7 +75,6 @@ export default function AiPermissionGate({
 			<div className="flex flex-wrap items-center gap-3">
 				<button type="button" onClick={grant} disabled={saving} className="btn-primary !rounded-2xl">
 					{saving ? "Saving…" : "Continue"}
-					{!saving && <Icon name="arrowRight" size={16} />}
 				</button>
 				<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
 					{!allowWrites && !allowReads

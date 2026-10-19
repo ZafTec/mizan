@@ -26,9 +26,11 @@ public class SetActiveHouseholdCommandValidator : AbstractValidator<SetActiveHou
 public class SetActiveHouseholdCommandHandler : IRequestHandler<SetActiveHouseholdCommand, SetActiveHouseholdResult>
 {
     private readonly IMizanDbContext _context;
+    private readonly IHouseholdAccess _households;
 
-    public SetActiveHouseholdCommandHandler(IMizanDbContext context)
+    public SetActiveHouseholdCommandHandler(IMizanDbContext context, IHouseholdAccess households)
     {
+        _households = households;
         _context = context;
     }
 
@@ -36,8 +38,7 @@ public class SetActiveHouseholdCommandHandler : IRequestHandler<SetActiveHouseho
     {
         if (request.HouseholdId.HasValue)
         {
-            var isMember = await _context.HouseholdMembers
-                .AnyAsync(m => m.HouseholdId == request.HouseholdId.Value && m.UserId == request.UserId, cancellationToken);
+            var isMember = await _households.CanAccessAsync(request.HouseholdId.Value, cancellationToken);
             if (!isMember)
             {
                 return new SetActiveHouseholdResult { Success = false, Message = "You're not a member of that household." };

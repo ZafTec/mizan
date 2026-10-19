@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
 
 interface StreakChipProps {
@@ -55,7 +54,6 @@ export default function StreakChip({ count, resetsAt, isActiveToday, atRisk }: S
 					: "Log something before the day ends to keep it."
 			}
 		>
-			<Icon name="flame" size={16} />
 			<span>{count}-day streak</span>
 			{atRisk && left && <span className="num text-xs font-medium opacity-80">{left} left</span>}
 		</div>

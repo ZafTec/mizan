@@ -27,12 +27,12 @@ export type TrainerPendingRequestPagedResultDto = Schemas["TrainerPendingRequest
 export type TrainerPublicDto = Schemas["TrainerPublicDto"];
 export type TrainerPublicPagedResultDto = Schemas["TrainerPublicDtoPagedResult"];
 
-export type CreateMcpTokenCommand = Schemas["CreateMcpTokenCommand"];
-export type CreateMcpTokenResultDto = Schemas["CreateMcpTokenResult"];
-export type McpTokenDto = Schemas["McpTokenDto"];
-export type McpTokenPagedResultDto = Schemas["McpTokenDtoPagedResult"];
+export type McpConnectionDto = Schemas["McpConnectionDto"];
+export type McpConnectionHouseholdDto = Schemas["McpConnectionHouseholdDto"];
 export type McpUsageAnalyticsResultDto = Schemas["McpUsageAnalyticsResult"];
-export type ValidateTokenResultDto = Schemas["ValidateTokenResult"];
+export type ScopeGroupDto = Schemas["ScopeGroupView"];
+export type AuthorizationRequestViewDto = Schemas["AuthorizationRequestView"];
+export type DecideAuthorizationResultDto = Schemas["DecideAuthorizationResult"];
 
 export function getPagedItems<T>(result: { items?: T[] | null } | null | undefined): T[] {
   return result?.items ?? [];
