@@ -86,7 +86,10 @@ public class McpConnectionsTests
 
         var plan = new
         {
-            name = "Week", startDate = "2026-10-05", endDate = "2026-10-11", recipes = Array.Empty<object>(),
+            name = "Week",
+            startDate = "2026-10-05",
+            endDate = "2026-10-11",
+            recipes = Array.Empty<object>(),
         };
         (await app.PostAsJsonAsync("/api/MealPlans", new { plan.name, plan.startDate, plan.endDate, plan.recipes, householdId = w.HouseholdB }))
             .StatusCode.Should().Be(HttpStatusCode.Forbidden);
@@ -106,8 +109,11 @@ public class McpConnectionsTests
             .StatusCode.Should().Be(HttpStatusCode.Forbidden);
         (await browser.PostAsJsonAsync("/api/MealPlans", new
         {
-            name = "Injected", startDate = "2026-10-05", endDate = "2026-10-11",
-            recipes = Array.Empty<object>(), householdId = w.HouseholdA,
+            name = "Injected",
+            startDate = "2026-10-05",
+            endDate = "2026-10-11",
+            recipes = Array.Empty<object>(),
+            householdId = w.HouseholdA,
         })).StatusCode.Should().Be(HttpStatusCode.Forbidden);
 
         using var scope = _fixture.Services.CreateScope();
@@ -206,7 +212,8 @@ public class McpConnectionsTests
         using var browser = _fixture.CreateAuthenticatedClient(w.User, w.Email);
         (await browser.PatchAsJsonAsync($"/api/McpConnections/{grant}", new
         {
-            householdMode = "selected", householdIds = new[] { w.HouseholdA },
+            householdMode = "selected",
+            householdIds = new[] { w.HouseholdA },
         })).StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         (await app.GetAsync($"/api/ShoppingLists/{w.ListInB}")).StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -329,13 +336,20 @@ public class McpConnectionsTests
         {
             var response = await service.PostAsJsonAsync("/api/McpConnections/usage", new
             {
-                grantId = grant, kind = "resource", toolName = "mizan://profile", success = true, executionTimeMs = 12,
+                grantId = grant,
+                kind = "resource",
+                toolName = "mizan://profile",
+                success = true,
+                executionTimeMs = 12,
             });
             response.StatusCode.Should().Be(HttpStatusCode.OK);
 
             var foreign = await service.PostAsJsonAsync("/api/McpConnections/usage", new
             {
-                grantId = Guid.NewGuid(), toolName = "x", success = true, executionTimeMs = 1,
+                grantId = Guid.NewGuid(),
+                toolName = "x",
+                success = true,
+                executionTimeMs = 1,
             });
             foreign.StatusCode.Should().Be(HttpStatusCode.Unauthorized, "a call can only be logged against the user's own connection");
         }
@@ -381,8 +395,14 @@ public class McpConnectionsTests
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
         db.TrainerClientRelationships.Add(new TrainerClientRelationship
         {
-            Id = Guid.NewGuid(), TrainerId = w.User, ClientId = client, Status = "active",
-            CanViewNutrition = true, CanViewWorkouts = true, CanViewMeasurements = true, CreatedAt = DateTime.UtcNow,
+            Id = Guid.NewGuid(),
+            TrainerId = w.User,
+            ClientId = client,
+            Status = "active",
+            CanViewNutrition = true,
+            CanViewWorkouts = true,
+            CanViewMeasurements = true,
+            CreatedAt = DateTime.UtcNow,
         });
         await db.SaveChangesAsync();
 
@@ -431,8 +451,12 @@ public class McpConnectionsTests
 
         ShoppingList List(Guid? household, string name) => new()
         {
-            Id = Guid.NewGuid(), Name = name, UserId = user, HouseholdId = household,
-            CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow,
+            Id = Guid.NewGuid(),
+            Name = name,
+            UserId = user,
+            HouseholdId = household,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
         };
         var inA = List(a.Id, "In A");
         var inB = List(b.Id, "In B");
@@ -449,14 +473,23 @@ public class McpConnectionsTests
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
         var client = new OAuthClient
         {
-            Id = Guid.NewGuid(), ClientId = "mzc_" + SecureToken.Generate()[..16], Name = clientName,
-            RedirectUris = ["http://localhost:1/cb"], Source = OAuthClient.SourceDynamic, CreatedAt = DateTime.UtcNow,
+            Id = Guid.NewGuid(),
+            ClientId = "mzc_" + SecureToken.Generate()[..16],
+            Name = clientName,
+            RedirectUris = ["http://localhost:1/cb"],
+            Source = OAuthClient.SourceDynamic,
+            CreatedAt = DateTime.UtcNow,
         };
         var grant = new OAuthGrant
         {
-            Id = Guid.NewGuid(), UserId = user, ClientId = client.Id,
-            Scopes = McpScopes.Normalize(scopes, allowAdmin: false), HouseholdMode = mode,
-            HouseholdIds = household is { } h ? [h] : [], CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow,
+            Id = Guid.NewGuid(),
+            UserId = user,
+            ClientId = client.Id,
+            Scopes = McpScopes.Normalize(scopes, allowAdmin: false),
+            HouseholdMode = mode,
+            HouseholdIds = household is { } h ? [h] : [],
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
         };
         db.OAuthClients.Add(client);
         db.OAuthGrants.Add(grant);
@@ -470,8 +503,14 @@ public class McpConnectionsTests
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
         db.McpUsageLogs.Add(new McpUsageLog
         {
-            Id = Guid.NewGuid(), UserId = user, GrantId = grant, ToolName = tool, Success = success, Kind = kind,
-            ExecutionTimeMs = 5, Timestamp = DateTime.UtcNow,
+            Id = Guid.NewGuid(),
+            UserId = user,
+            GrantId = grant,
+            ToolName = tool,
+            Success = success,
+            Kind = kind,
+            ExecutionTimeMs = 5,
+            Timestamp = DateTime.UtcNow,
         });
         await db.SaveChangesAsync();
     }

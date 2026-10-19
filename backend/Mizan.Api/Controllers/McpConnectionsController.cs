@@ -50,7 +50,9 @@ public class McpConnectionsController : ControllerBase
         [FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate, [FromQuery] Guid? connectionId) =>
         Ok(await _mediator.Send(new GetMcpUsageAnalyticsQuery
         {
-            StartDate = startDate, EndDate = endDate, GrantId = connectionId,
+            StartDate = startDate,
+            EndDate = endDate,
+            GrantId = connectionId,
         }));
 
     /// <summary>Reported by the MCP service for each call it served on a connection's behalf.</summary>

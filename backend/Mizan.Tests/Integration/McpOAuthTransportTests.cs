@@ -277,9 +277,17 @@ public class McpOAuthTransportTests : IClassFixture<WebApplicationFactory<McpSer
 
     private TokenIntrospection Introspection(string[] scopes, int? limit = null, int used = 0) => new()
     {
-        Active = true, UserId = _user, GrantId = _grant, ClientRowId = Guid.NewGuid(), ClientName = "Test",
-        Scopes = scopes, HouseholdMode = "all", Role = "user", Plan = limit is null ? "pro" : "free",
-        MonthlyLimit = limit, UsedThisMonth = used,
+        Active = true,
+        UserId = _user,
+        GrantId = _grant,
+        ClientRowId = Guid.NewGuid(),
+        ClientName = "Test",
+        Scopes = scopes,
+        HouseholdMode = "all",
+        Role = "user",
+        Plan = limit is null ? "pro" : "free",
+        MonthlyLimit = limit,
+        UsedThisMonth = used,
     };
 
     private HttpClient ClientWith(string token)
@@ -335,7 +343,10 @@ public class McpOAuthTransportTests : IClassFixture<WebApplicationFactory<McpSer
     {
         var response = await client.PostMcpAsync(new
         {
-            jsonrpc = "2.0", id = 3, method = "tools/call", @params = new { name = tool, arguments },
+            jsonrpc = "2.0",
+            id = 3,
+            method = "tools/call",
+            @params = new { name = tool, arguments },
         });
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         return JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("result").Clone();

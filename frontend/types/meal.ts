@@ -1,40 +1,37 @@
-
 import { ID } from "./id";
 import Macros from "./macro";
 import User from "./user";
 
 // an enum of category, snack, meal, drink
 export enum MealType {
-	Meal = "Meal",
-	Snack = "Snack",
-	Drink = "Drink",
+  Meal = "Meal",
+  Snack = "Snack",
+  Drink = "Drink",
 }
-
 
 export default interface Meal {
-	_id: ID;
+  _id: ID;
 
-	name: string;
-	mealType: MealType;
+  name: string;
+  mealType: MealType;
 
-	totalMacros: Macros;
+  totalMacros: Macros;
 
-    user: User;
+  user: User;
 
-	// timestamps
-	createdAt: Date;
-	updatedAt: Date;
+  // timestamps
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-
 export interface PerDayMealsAggregate {
-	date: Date;
-	totalMacros: Macros;
-	meals: Meal[];
+  date: Date;
+  totalMacros: Macros;
+  meals: Meal[];
 }
 
 export interface MealInput {
-	name: string;
-	mealType: MealType;
-	totalMacros: Macros;
+  name: string;
+  mealType: MealType;
+  totalMacros: Macros;
 }

@@ -159,7 +159,11 @@ public class PromoteMealToRecipeTests
         db.Foods.Add(ingredientFood);
         db.Recipes.Add(new Recipe
         {
-            Id = fromRecipe.RecipeId.Value, UserId = UserId, Title = "Stew", Servings = 2, YieldGrams = 400,
+            Id = fromRecipe.RecipeId.Value,
+            UserId = UserId,
+            Title = "Stew",
+            Servings = 2,
+            YieldGrams = 400,
             Ingredients = { new RecipeIngredient { Id = Guid.NewGuid(), FoodId = ingredientFood.Id, IngredientText = "Beans", Amount = 200, Unit = "g" } }
         });
         await db.SaveChangesAsync();

@@ -8,41 +8,44 @@ import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import { appToast } from "@/lib/toast";
 
 interface MealPlanActionsProps {
-	planId: string;
-	planName: string;
+  planId: string;
+  planName: string;
 }
 
-export default function MealPlanActions({ planId, planName }: MealPlanActionsProps) {
-	const router = useRouter();
-	const [showDelete, setShowDelete] = useState(false);
+export default function MealPlanActions({
+  planId,
+  planName,
+}: MealPlanActionsProps) {
+  const router = useRouter();
+  const [showDelete, setShowDelete] = useState(false);
 
-	const handleDelete = async () => {
-		const success = await deleteMealPlan(planId);
-		if (success) {
-			appToast.success("Meal plan deleted");
-			router.push("/meal-plan");
-		} else {
-			appToast.error("Failed to delete meal plan");
-		}
-	};
+  const handleDelete = async () => {
+    const success = await deleteMealPlan(planId);
+    if (success) {
+      appToast.success("Meal plan deleted");
+      router.push("/meal-plan");
+    } else {
+      appToast.error("Failed to delete meal plan");
+    }
+  };
 
-	return (
-		<>
-			<div className="flex gap-2">
-				<Link href={`/meal-plan/${planId}/edit`} className="btn-secondary">
-					Edit
-				</Link>
-				<button onClick={() => setShowDelete(true)} className="btn-danger">
-					Delete
-				</button>
-			</div>
+  return (
+    <>
+      <div className="flex gap-2">
+        <Link href={`/meal-plan/${planId}/edit`} className="btn-secondary">
+          Edit
+        </Link>
+        <button onClick={() => setShowDelete(true)} className="btn-danger">
+          Delete
+        </button>
+      </div>
 
-			<DeleteConfirmModal
-				isOpen={showDelete}
-				onClose={() => setShowDelete(false)}
-				onConfirm={handleDelete}
-				itemName={planName || "Meal Plan"}
-			/>
-		</>
-	);
+      <DeleteConfirmModal
+        isOpen={showDelete}
+        onClose={() => setShowDelete(false)}
+        onConfirm={handleDelete}
+        itemName={planName || "Meal Plan"}
+      />
+    </>
+  );
 }

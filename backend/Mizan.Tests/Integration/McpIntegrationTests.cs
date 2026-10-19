@@ -667,7 +667,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         var response = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "promote_to_recipe", new
         {
-            date, mealType = "LUNCH", title = "Chicken and rice"
+            date,
+            mealType = "LUNCH",
+            title = "Chicken and rice"
         }));
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var recipes = await _apiFixture.GetRecipesByUserId(userId);
@@ -685,12 +687,16 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var date = DateTime.UtcNow.ToString("yyyy-MM-dd");
         await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "log_food", new
         {
-            date, foodId = food.Id, mealType = "LUNCH"
+            date,
+            foodId = food.Id,
+            mealType = "LUNCH"
         }));
 
         var response = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "promote_to_recipe", new
         {
-            date, mealType = "LUNCH", title = "Just rice"
+            date,
+            mealType = "LUNCH",
+            title = "Just rice"
         }));
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
         ExtractErrorMessage(jsonResponse!).Should().Contain("at least 2");

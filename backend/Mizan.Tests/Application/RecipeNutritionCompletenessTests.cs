@@ -25,13 +25,20 @@ public class RecipeNutritionCompletenessTests
 
     private static RecipeIngredient Measured(Food food, decimal grams, int order, string? unit = "g") => new()
     {
-        Id = Guid.NewGuid(), FoodId = food.Id, Food = food, Amount = grams, Unit = unit,
-        IngredientText = $"{grams}{unit} {food.Name}", SortOrder = order
+        Id = Guid.NewGuid(),
+        FoodId = food.Id,
+        Food = food,
+        Amount = grams,
+        Unit = unit,
+        IngredientText = $"{grams}{unit} {food.Name}",
+        SortOrder = order
     };
 
     private static RecipeIngredient Note(string text, int order) => new()
     {
-        Id = Guid.NewGuid(), IngredientText = text, SortOrder = order
+        Id = Guid.NewGuid(),
+        IngredientText = text,
+        SortOrder = order
     };
 
     private static Recipe Recipe(int servings, params RecipeIngredient[] ingredients)

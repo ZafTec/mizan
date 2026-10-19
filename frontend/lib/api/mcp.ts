@@ -29,7 +29,11 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     const body = await response.json().catch(() => ({}));
     throw new McpApiError(
       response.status,
-      body.error || body.message || body.detail || body.title || response.statusText,
+      body.error ||
+        body.message ||
+        body.detail ||
+        body.title ||
+        response.statusText,
     );
   }
 
@@ -48,14 +52,25 @@ export const mcpConnectionsApi = {
 
   scopes: () => request<ScopeGroup[]>("/McpConnections/scopes"),
 
-  update: (id: string, change: { scopes?: string[] } & Partial<HouseholdChoice>) =>
-    request<void>(`/McpConnections/${id}`, { method: "PATCH", body: JSON.stringify(change) }),
+  update: (
+    id: string,
+    change: { scopes?: string[] } & Partial<HouseholdChoice>,
+  ) =>
+    request<void>(`/McpConnections/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(change),
+    }),
 
-  revoke: (id: string) => request<void>(`/McpConnections/${id}`, { method: "DELETE" }),
+  revoke: (id: string) =>
+    request<void>(`/McpConnections/${id}`, { method: "DELETE" }),
 
   analytics: (days = 30) => {
-    const params = new URLSearchParams({ startDate: new Date(Date.now() - days * 86_400_000).toISOString() });
-    return request<McpUsageAnalyticsResult>(`/McpConnections/analytics?${params}`);
+    const params = new URLSearchParams({
+      startDate: new Date(Date.now() - days * 86_400_000).toISOString(),
+    });
+    return request<McpUsageAnalyticsResult>(
+      `/McpConnections/analytics?${params}`,
+    );
   },
 };
 
@@ -69,16 +84,26 @@ export const oauthConsentApi = {
 
   decide: (
     requestSecret: string,
-    decision: { approve: boolean; scopes?: string[] } & Partial<HouseholdChoice>,
+    decision: {
+      approve: boolean;
+      scopes?: string[];
+    } & Partial<HouseholdChoice>,
   ) =>
-    request<DecideAuthorizationResult>("/oauth/authorization-requests/decision", {
-      method: "POST",
-      body: JSON.stringify({ request: requestSecret, ...decision }),
-    }),
+    request<DecideAuthorizationResult>(
+      "/oauth/authorization-requests/decision",
+      {
+        method: "POST",
+        body: JSON.stringify({ request: requestSecret, ...decision }),
+      },
+    ),
 };
 
 /** The user's households, by name, for the edit dialog when an app currently sees all of them. */
-export async function fetchMyHouseholds(): Promise<{ id: string; name: string }[]> {
-  const result = await request<{ households?: { id: string; name: string }[] }>("/Households/mine");
+export async function fetchMyHouseholds(): Promise<
+  { id: string; name: string }[]
+> {
+  const result = await request<{ households?: { id: string; name: string }[] }>(
+    "/Households/mine",
+  );
   return result.households ?? [];
 }

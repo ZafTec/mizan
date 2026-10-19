@@ -10,7 +10,8 @@ import {
 import { clientApi } from "@/lib/api.client";
 
 const TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
-const ENVIRONMENT = (process.env.NEXT_PUBLIC_PADDLE_ENV as Environments) ?? "sandbox";
+const ENVIRONMENT =
+  (process.env.NEXT_PUBLIC_PADDLE_ENV as Environments) ?? "sandbox";
 
 // Single cached Paddle instance. The eventCallback passed on first init wins,
 // so callers that need checkout events (the billing page) should init first.
@@ -20,12 +21,18 @@ export function isPaddleConfigured(): boolean {
   return Boolean(TOKEN);
 }
 
-export function getPaddle(eventCallback?: (event: PaddleEventData) => void): Promise<Paddle | undefined> {
+export function getPaddle(
+  eventCallback?: (event: PaddleEventData) => void,
+): Promise<Paddle | undefined> {
   if (!TOKEN) {
     return Promise.resolve(undefined);
   }
   if (!paddlePromise) {
-    paddlePromise = initializePaddle({ token: TOKEN, environment: ENVIRONMENT, eventCallback });
+    paddlePromise = initializePaddle({
+      token: TOKEN,
+      environment: ENVIRONMENT,
+      eventCallback,
+    });
   }
   return paddlePromise;
 }
@@ -50,7 +57,7 @@ export async function openCheckout(params: {
   const options: CheckoutOpenOptions = {
     items: [{ priceId: params.priceId, quantity: 1 }],
     // "product" separates Mizan from other ZafTech apps on the same Paddle account.
-    customData: { product: 'mizan', user_id: params.userId },
+    customData: { product: "mizan", user_id: params.userId },
     ...(params.email ? { customer: { email: params.email } } : {}),
     ...(params.discountId ? { discountId: params.discountId } : {}),
   };
@@ -71,5 +78,7 @@ export interface BillingPortalSession {
  * right before opening, never stored.
  */
 export async function getBillingPortal(): Promise<BillingPortalSession> {
-  return clientApi<BillingPortalSession>("/api/Subscriptions/portal", { method: "POST" });
+  return clientApi<BillingPortalSession>("/api/Subscriptions/portal", {
+    method: "POST",
+  });
 }

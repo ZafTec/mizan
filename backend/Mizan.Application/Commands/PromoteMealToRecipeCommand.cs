@@ -105,9 +105,14 @@ public class PromoteMealToRecipeCommandHandler : IRequestHandler<PromoteMealToRe
             var now = DateTime.UtcNow;
             var recipe = new Recipe
             {
-                Id = Guid.NewGuid(), UserId = userId, HouseholdId = request.HouseholdId,
-                Title = request.Title.Trim(), Servings = 1, IsPublic = false,
-                CreatedAt = now, UpdatedAt = now
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                HouseholdId = request.HouseholdId,
+                Title = request.Title.Trim(),
+                Servings = 1,
+                IsPublic = false,
+                CreatedAt = now,
+                UpdatedAt = now
             };
             var derived = new Dictionary<Guid, Food>();
             foreach (var entry in entries)
@@ -138,9 +143,13 @@ public class PromoteMealToRecipeCommandHandler : IRequestHandler<PromoteMealToRe
                 }
                 recipe.Ingredients.Add(new RecipeIngredient
                 {
-                    Id = Guid.NewGuid(), RecipeId = recipe.Id, FoodId = food.Id,
+                    Id = Guid.NewGuid(),
+                    RecipeId = recipe.Id,
+                    FoodId = food.Id,
                     IngredientText = string.IsNullOrWhiteSpace(entry.Name) ? food.Name : entry.Name,
-                    Amount = grams, Unit = "g", SortOrder = recipe.Ingredients.Count
+                    Amount = grams,
+                    Unit = "g",
+                    SortOrder = recipe.Ingredients.Count
                 });
             }
             _context.Recipes.Add(recipe);
@@ -177,13 +186,19 @@ public class PromoteMealToRecipeCommandHandler : IRequestHandler<PromoteMealToRe
         var protein = entry.ProteinGrams.HasValue ? Math.Round(entry.ProteinGrams.Value * scale, 2) : original!.ProteinPer100g;
         return new Food
         {
-            Id = Guid.NewGuid(), UserId = userId, Name = string.IsNullOrWhiteSpace(entry.Name) ? original?.Name ?? "Logged food" : entry.Name,
-            ServingSize = grams, ServingUnit = "g", CaloriesPer100g = calories, ProteinPer100g = protein,
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Name = string.IsNullOrWhiteSpace(entry.Name) ? original?.Name ?? "Logged food" : entry.Name,
+            ServingSize = grams,
+            ServingUnit = "g",
+            CaloriesPer100g = calories,
+            ProteinPer100g = protein,
             CarbsPer100g = entry.CarbsGrams.HasValue ? Math.Round(entry.CarbsGrams.Value * scale, 2) : original!.CarbsPer100g,
             FatPer100g = entry.FatGrams.HasValue ? Math.Round(entry.FatGrams.Value * scale, 2) : original!.FatPer100g,
             FiberPer100g = entry.FiberGrams.HasValue ? Math.Round(entry.FiberGrams.Value * scale, 2) : original?.FiberPer100g,
             ProteinCalorieRatio = Food.ComputeProteinCalorieRatio(calories, protein),
-            CreatedAt = now, UpdatedAt = now
+            CreatedAt = now,
+            UpdatedAt = now
         };
     }
 }

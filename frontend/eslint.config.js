@@ -1,15 +1,15 @@
 const nextCoreWebVitals = require("eslint-config-next/core-web-vitals");
 
 module.exports = [
-	...nextCoreWebVitals,
-	{
-		rules: {
-			"react/no-unescaped-entities": "off",
-			"@typescript-eslint/no-explicit-any": "off",
-			"@typescript-eslint/no-unused-vars": "off",
-		},
-	},
-	{
-		ignores: ["e2e/**"],
-	},
+  ...nextCoreWebVitals,
+  {
+    rules: {
+      "react/no-unescaped-entities": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+    },
+  },
+  {
+    ignores: ["e2e/**"],
+  },
 ];

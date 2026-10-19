@@ -9,20 +9,24 @@ const CONSENT_COOKIE = "mizan-consent";
 type ConsentState = "pending" | "accepted" | "declined";
 
 function readConsentCookie(): ConsentState {
-	if (typeof document === "undefined") return "pending";
-	const match = document.cookie
-		.split("; ")
-		.find((row) => row.startsWith(`${CONSENT_COOKIE}=`));
-	if (!match) return "pending";
-	const value = match.split("=")[1];
-	return value === "accepted" ? "accepted" : value === "declined" ? "declined" : "pending";
+  if (typeof document === "undefined") return "pending";
+  const match = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith(`${CONSENT_COOKIE}=`));
+  if (!match) return "pending";
+  const value = match.split("=")[1];
+  return value === "accepted"
+    ? "accepted"
+    : value === "declined"
+      ? "declined"
+      : "pending";
 }
 
 function writeConsentCookie(value: "accepted" | "declined") {
-	if (typeof document === "undefined") return;
-	const oneYear = 60 * 60 * 24 * 365;
-	const secure = window.location.protocol === "https:" ? "; Secure" : "";
-	document.cookie = `${CONSENT_COOKIE}=${value}; path=/; max-age=${oneYear}; SameSite=Lax${secure}`;
+  if (typeof document === "undefined") return;
+  const oneYear = 60 * 60 * 24 * 365;
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${CONSENT_COOKIE}=${value}; path=/; max-age=${oneYear}; SameSite=Lax${secure}`;
 }
 
 // useSyncExternalStore keeps React in sync with the cookie without tripping
@@ -32,32 +36,34 @@ function writeConsentCookie(value: "accepted" | "declined") {
 const subscribe = () => () => {};
 
 export function ConsentGate({ gaId }: { gaId?: string | null }) {
-	// Shortcut: no GA ID configured means no tracking ever happens, no
-	// banner needed, no script to load. The entire consent layer is dark.
-	const trackingAvailable = Boolean(gaId && gaId.trim().length > 0);
+  // Shortcut: no GA ID configured means no tracking ever happens, no
+  // banner needed, no script to load. The entire consent layer is dark.
+  const trackingAvailable = Boolean(gaId && gaId.trim().length > 0);
 
-	const cookieConsent = useSyncExternalStore<ConsentState>(
-		subscribe,
-		readConsentCookie,
-		() => "pending",
-	);
+  const cookieConsent = useSyncExternalStore<ConsentState>(
+    subscribe,
+    readConsentCookie,
+    () => "pending",
+  );
 
-	// Tracks the user's in-session decision so we re-render immediately
-	// without waiting for a cookie read round-trip.
-	const [override, setOverride] = useState<ConsentState | null>(null);
-	const consent = override ?? cookieConsent;
+  // Tracks the user's in-session decision so we re-render immediately
+  // without waiting for a cookie read round-trip.
+  const [override, setOverride] = useState<ConsentState | null>(null);
+  const consent = override ?? cookieConsent;
 
-	const handleDecision = useCallback((decision: "accepted" | "declined") => {
-		writeConsentCookie(decision);
-		setOverride(decision);
-	}, []);
+  const handleDecision = useCallback((decision: "accepted" | "declined") => {
+    writeConsentCookie(decision);
+    setOverride(decision);
+  }, []);
 
-	if (!trackingAvailable) return null;
+  if (!trackingAvailable) return null;
 
-	return (
-		<>
-			{consent === "accepted" && <GoogleAnalytics gaId={gaId!} />}
-			{consent === "pending" && <CookieConsentBanner onDecision={handleDecision} />}
-		</>
-	);
+  return (
+    <>
+      {consent === "accepted" && <GoogleAnalytics gaId={gaId!} />}
+      {consent === "pending" && (
+        <CookieConsentBanner onDecision={handleDecision} />
+      )}
+    </>
+  );
 }

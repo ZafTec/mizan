@@ -176,7 +176,11 @@ public class MizanDbContext : DbContext, IMizanDbContext
                 {
                     DeletedRecords.Add(new DeletedRecord
                     {
-                        Id = Guid.NewGuid(), UserId = tracked.UserId, EntityType = type, EntityId = tracked.Id, DeletedAt = now,
+                        Id = Guid.NewGuid(),
+                        UserId = tracked.UserId,
+                        EntityType = type,
+                        EntityId = tracked.Id,
+                        DeletedAt = now,
                     });
                 }
             }

@@ -228,7 +228,12 @@ export const MORE_GROUPS: NavGroup[] = [
   {
     label: "Account",
     items: [
-      { href: "/profile", label: "Profile", icon: "user", description: "Your account" },
+      {
+        href: "/profile",
+        label: "Profile",
+        icon: "user",
+        description: "Your account",
+      },
       {
         href: "/notifications",
         label: "Notifications",
