@@ -608,7 +608,8 @@ function json(data: unknown, status = 200, headers: HeadersInit = {}) {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": webOrigin,
       "Access-Control-Allow-Credentials": "true",
-      "Access-Control-Allow-Headers": "Content-Type,ngrok-skip-browser-warning",
+      "Access-Control-Allow-Headers":
+        "Content-Type,Idempotency-Key,ngrok-skip-browser-warning",
       "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
       ...headers,
     },
@@ -1004,20 +1005,19 @@ const server = Bun.serve({
           : `You asked: ${message}`,
         createdAt: now,
       };
-      target.messages.push(
-        {
-          id: crypto.randomUUID(),
-          fromUser: true,
-          content: message,
-          createdAt: now,
-          imageUrl: image ? pixel : null,
-        },
-        reply,
-      );
+      const stored = {
+        id: crypto.randomUUID(),
+        fromUser: true,
+        content: message,
+        createdAt: now,
+        imageUrl: image ? pixel : null,
+      };
+      target.messages.push(stored, reply);
       state.writes.push({ path, body: { message, image } });
       return json({
         threadId: target.id,
         title: target.title,
+        message: stored,
         reply,
         performed: [],
       });
