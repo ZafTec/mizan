@@ -191,11 +191,13 @@ Pages follow [DESIGN](../DESIGN.md): `log-page`, `facts-strip`, `ledger-row`, on
 | `/meal-plan` | Active plan first, then drafts and past plans. A draft from a coach shows **Accept** and **Decline**. |
 | `/meal-plan/[id]` | Day tabs, entries per slot, nutrition per day against targets, violations, cost. **Log** on each entry. **Make shopping list**. |
 | `/meal-plan/[id]/edit` | Rules, entries, prep sessions. |
-| `/meal-plan/new` | From a template, from the assistant, or empty. |
+| `/meal-plan/new` | From a template or empty; a coach sends the same form as a draft from `/trainer/clients/[id]/plan`. The assistant path arrives with step 4. |
 | `/meal-plan/shopping-list` and `/shopping-lists/[id]` | Items by category or prep session, add, edit, delete, toggle, clear checked, cost. |
 | `/today` | The plan entries for today with **Log**, when an active plan covers today. |
-| `/admin/meal-plans`, `/admin/prices` | Templates. Regions, sources, aliases, review queue, manual prices. |
-| `/trainer/clients/[id]/plan`, `/trainer/templates` | Draft for a client. Templates of the coach. |
+| `/trainer/clients/[id]/plan` | Draft for a client when the client granted meal planning; the client grants it on `/trainers/my-trainer`. |
+| `/admin/prices` | Regions, sources, aliases, review queue, manual prices (step 3). |
+
+Global templates are managed through the admin MCP tools in step 2; an `/admin/meal-plans` page and coach-owned templates are not built.
 
 All API calls go through `lib/api/*` modules typed from `types/api.generated.ts`. Pages do not declare their own response types.
 
