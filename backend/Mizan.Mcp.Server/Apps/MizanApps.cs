@@ -17,9 +17,12 @@ public static class MizanApps
 
     private static readonly string[] Pages = ["nutrition-day", "food-photo", "body-trend"];
 
+    /// <summary>Where a page takes the shared host bridge (<c>_bridge.js</c>) when it is served.</summary>
+    public const string BridgeMarker = "<!-- mizan:bridge -->";
+
     public static IEnumerable<McpServerResource> Resources() => Pages.Select(page =>
     {
-        var html = Read(page);
+        var html = Page(page);
         var resource = McpServerResource.Create(
             () => html,
             new McpServerResourceCreateOptions
@@ -31,11 +34,25 @@ public static class MizanApps
         return McpApps.SetResourceUi(resource, new McpUiResourceMeta { PrefersBorder = false });
     });
 
-    private static string Read(string page)
+    private static readonly Lazy<string> Bridge = new(() => Read("apps/_bridge.js"));
+
+    /// <summary>
+    /// The page with the shared host bridge inlined at its marker. Served pages stay one file each,
+    /// because the host blocks network requests, while the bridge is kept once in the source.
+    /// </summary>
+    internal static string Page(string page)
+    {
+        var html = Read($"apps/{page}.html");
+        if (!html.Contains(BridgeMarker, StringComparison.Ordinal))
+            throw new InvalidOperationException($"The app page {page} has no {BridgeMarker} marker, so it would be served without its host bridge.");
+        return html.Replace(BridgeMarker, Bridge.Value, StringComparison.Ordinal);
+    }
+
+    private static string Read(string resource)
     {
         var assembly = typeof(MizanApps).Assembly;
-        using var stream = assembly.GetManifestResourceStream($"apps/{page}.html")
-            ?? throw new InvalidOperationException($"The app page {page} is not embedded.");
+        using var stream = assembly.GetManifestResourceStream(resource)
+            ?? throw new InvalidOperationException($"The app resource {resource} is not embedded.");
         using var reader = new StreamReader(stream);
         return reader.ReadToEnd();
     }

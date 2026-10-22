@@ -113,6 +113,22 @@ public class McpAppsAndTasksTests : IClassFixture<WebApplicationFactory<McpServe
         _api.Requests.Should().NotContain(r => r.Path == "/api/McpConnections/usage", "app pages hold no data, like skills");
     }
 
+    [Theory]
+    [InlineData("nutrition-day")]
+    [InlineData("food-photo")]
+    [InlineData("body-trend")]
+    public async Task EveryAppPage_IsServedWithTheSharedBridgeInlined_AndNoMarkerLeft(string page)
+    {
+        using var client = Authorized();
+
+        var (_, body) = await SendAsync(client, "resources/read", new { uri = $"ui://mizan/{page}.html" });
+
+        var html = JsonDocument.Parse(body).RootElement.GetProperty("result").GetProperty("contents")[0].GetProperty("text").GetString()!;
+        html.Should().NotContain("<!-- mizan:bridge -->", "the source pages share Apps/_bridge.js; the served page must carry it inline");
+        html.Should().Contain("ui/initialize").And.Contain("ui/notifications/size-changed").And.Contain("ui/notifications/tool-result");
+        html.Should().NotContain("<script></script>").And.NotContain("src=", "the host blocks network requests, so nothing may be fetched");
+    }
+
     [Fact]
     public async Task AnAppPage_IsRefusedWithoutItsScope()
     {

@@ -3,8 +3,16 @@ import { resolve } from "node:path";
 import { expect, test, type FrameLocator, type Page } from "@playwright/test";
 
 const appsDir = resolve(__dirname, "../../backend/Mizan.Mcp.Server/Apps");
-const page_ = (name: string) =>
-  readFileSync(resolve(appsDir, `${name}.html`), "utf8");
+const bridgeMarker = "<!-- mizan:bridge -->";
+const bridge = readFileSync(resolve(appsDir, "_bridge.js"), "utf8");
+// The same inlining MizanApps.Resources() does when the server serves a page.
+const page_ = (name: string) => {
+  const html = readFileSync(resolve(appsDir, `${name}.html`), "utf8");
+  if (!html.includes(bridgeMarker)) {
+    throw new Error(`${name}.html has no ${bridgeMarker} marker`);
+  }
+  return html.replace(bridgeMarker, bridge);
+};
 
 type Call = { name: string; arguments: Record<string, unknown> };
 type ToolReply = {
