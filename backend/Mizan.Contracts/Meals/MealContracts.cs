@@ -30,4 +30,11 @@ public record LogMealRequest
     public decimal? FatGrams { get; init; }
     public decimal? FiberGrams { get; init; }
     public string Name { get; init; } = string.Empty;
+
+    /// <summary>
+    /// How many people shared this meal, 2 to 10. The totals and amount sent are
+    /// the whole meal's; the API logs one share and labels the entry, so no
+    /// client divides anything itself.
+    /// </summary>
+    public int? SharedBetween { get; init; }
 }
