@@ -20,6 +20,7 @@ The bot is a Pro feature. Issuing a link code answers 402 for a Free account. A 
 | `/weight 82.4` | Records a weigh-in |
 | `/plan`, `/plan tomorrow`, `/plan 2026-10-23` | The active plan's day: entries per slot with ✓ on logged ones, totals against the plan's rules, violations, the eating window. One **Log** button per unlogged recipe or food entry and a **Tomorrow** button. No active plan points at `/meal-plan`. |
 | `/shop` | The newest shopping list: up to ten unticked items grouped by prep session, with amounts and a "needs review" marker, "N left of M" at the end. One toggle button per item, **More** and **Back** to page. No list points at `/meal-plan`. |
+| `/planme high protein, cheap` | Drafts a week from tomorrow with the assistant and replies with its summary, weekly cost and violations, and **Confirm** / **Discard** |
 | `/unlink` | Disconnects this chat |
 | `/help` | Lists commands |
 | A photo | Proposes nutrition with **Log it**, **Split**, and **Discard** actions |
@@ -52,6 +53,8 @@ Startup requests registration of `{PublicUrl}/telegram/webhook` and disables pol
 Chat replays the last ten turns and a rolling summary stored on the shared thread. Summary refresh happens after a saved reply; a failed refresh preserves the previous summary without failing the turn. The reply ends with one line per performed action (`✓` or `✗` with the error), so a request to create a list shows that it happened.
 
 The bot reads and writes the records in `Mizan.Contracts` (`LogMealRequest`, `DailyNutritionTotals`, `FoodAnalysisResult`, `AiChatTurnDto`) and formats `/today` with `Mizan.Domain.Nutrition.NutritionText`, the same wording the assistant's tools and context use.
+
+`/planme` sends the words as the preference to `POST /api/MealPlans/generate` and spends the planning allowance. **Confirm** (`pm:ok:{planId}`) accepts the draft and **Discard** (`pm:no:{planId}`) declines it; the handler is `Bot/PlanMeHandler.cs`.
 
 Photo analysis uses `/api/Nutrition/ai/analyze-image` and stores the image under `meals/` in object storage. A storage failure loses the retained picture but does not discard the analysis. See [AI](AI.md) for consent and metering.
 
