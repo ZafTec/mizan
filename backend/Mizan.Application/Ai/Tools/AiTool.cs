@@ -40,4 +40,9 @@ public record AiToolDefinition(
     /// honestly cannot be added: there is no default.
     /// </summary>
     DataAxis Axis,
-    AiToolAccess Access);
+    AiToolAccess Access,
+    /// <summary>
+    /// Typed cards built from the command's result, for the surfaces to render with a fixed
+    /// component. Code builds them; the model never supplies one.
+    /// </summary>
+    Func<object?, IReadOnlyList<AiCardDraft>>? Cards = null);
