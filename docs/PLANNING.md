@@ -209,6 +209,25 @@ Typed cards: `AiChatTurnDto.Cards[]` carries `{ type, data }` with `type` in `pl
 
 New chat tools, all through existing commands: `generate_meal_plan`, `get_plan_day`, `add_plan_entry`, `update_plan_entry`, `remove_plan_entry`, `generate_shopping_list`. Planning tools use `DataAxis.Planning`. Consent for planning follows the nutrition write flag. MCP grants map `DataAxis.Planning` to `planning:read` and `planning:write`.
 
+### API (step 4, as built)
+
+| Route or surface | What it does |
+| --- | --- |
+| `POST /api/MealPlans/generate` | `GenerateMealPlanCommand` with `GenerateMealPlanRequest` (`Mizan.Contracts/Planning/PlanGenerationContracts.cs`). Answers `GenerateMealPlanResult`: `drafts` (each the plan detail, `budgetCeiling`, `violations`, `cost`, `unresolved`, `note`) and `skipped`. 429 `ai_quota_exceeded` when the planning line is spent, 503 `ai_unavailable` when the provider fails or breaks the schema. |
+| `POST /api/MealPlans/{id}/accept`, `/decline` | Also decide a generated draft: accept makes it active and archives the owner's other active plan; decline archives it. |
+| `GET /api/MealPlans/day?planId=&date=` | The day of a named plan, drafts included; the date defaults to its first day. `404 no_plan_day` outside it. |
+| `GET /api/MealPlans`, `/{id}` | Plans carry `generatedFrom` (prompt key and version, model, budget ceiling, currency) when the assistant drafted them. |
+| Chat | The six planning tools; turns carry typed `cards`. See [AI](AI.md#planning-tools-and-typed-cards). |
+| MCP | `generate_meal_plan` (scope `planning:write`, may run as a task); `list_meal_plans` takes `status`; the `plan_my_week` prompt drafts through it. |
+| Telegram | `/planme <words>` drafts a week from tomorrow and replies with the summary and **Confirm** (`pm:ok:{id}`) / **Discard** (`pm:no:{id}`). |
+
+Settled details:
+
+- Each budget ceiling is one draft named with its budget. With no ceiling, one draft is made against `Rules.WeeklyBudget`, in the rules' currency or the price region's.
+- A generated plan runs 1 to 14 days. A day keeps at most ten entries; grams are capped at 2,000 and servings at 0.25 to 20.
+- The draft's cost is in the person's price region (`ET-AA` by default). The weekly figure is checked against the budget only when the currencies agree. `weeklyCost` is filled on the generate response; a plain plan read leaves it null until plan costing is wired into `PlanReadModel`.
+- The assistant's update and remove tools carry `DraftOnly`, so they cannot change a plan the person follows.
+
 ## Surfaces
 
 ### Web
