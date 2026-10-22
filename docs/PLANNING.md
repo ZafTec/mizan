@@ -90,6 +90,34 @@ Lists have full CRUD: create, rename, delete, add item, update item, delete item
 
 A template is a plan with `Kind = Template`. Administrators manage global templates under `/admin/meal-plans`. A coach manages their own under `/trainer/templates`. `ApplyTemplateCommand(templateId, startDate, householdId?)` copies entries, prep sessions and rules into a new personal plan. Global templates are visible to everyone. Templates of a coach are visible to the coach and, when applied, to the client.
 
+### API (step 2, as built)
+
+Request and response records live in `Mizan.Contracts/Planning`. Enumerations travel as names (`Kind`, `Status`, entry `Kind`, `MacroMode`, `PrepStyle`); slots are the diary's `MealTypes`.
+
+| Route | Command or query |
+| --- | --- |
+| `GET /api/MealPlans?status=&page=&pageSize=` | `GetMealPlansQuery`: owned plans, household plans, drafts the viewer authored. Templates are not listed here. |
+| `GET /api/MealPlans/day?date=` | `GetPlanDayQuery`: the active plan's day, today by default. `404 no_active_plan` when none covers the date. |
+| `GET /api/MealPlans/templates`, `POST`, `PUT|DELETE /templates/{id}`, `POST /templates/{id}/apply` | `GetTemplatesQuery`, `CreateTemplateCommand`, `UpdateTemplateCommand`, `DeleteTemplateCommand`, `ApplyTemplateCommand`. |
+| `GET|PUT|DELETE /api/MealPlans/{id}`, `POST /api/MealPlans` | `GetMealPlanByIdQuery`, `UpdateMealPlanCommand`, `DeleteMealPlanCommand`, `CreateMealPlanCommand`. |
+| `POST /api/MealPlans/{id}/status`, `/accept`, `/decline` | `SetMealPlanStatusCommand`, `AcceptPlanCommand`, `DeclinePlanCommand`. |
+| `POST /api/MealPlans/{id}/entries`, `PUT|DELETE /entries/{entryId}`, `POST /entries/{entryId}/log` | `AddPlanEntryCommand`, `UpdatePlanEntryCommand`, `RemovePlanEntryCommand`, `LogPlanEntryCommand`. |
+| `POST /api/MealPlans/{id}/prep-sessions`, `PUT|DELETE /prep-sessions/{sessionId}` | `AddPrepSessionCommand`, `UpdatePrepSessionCommand`, `RemovePrepSessionCommand`. |
+| `POST /api/MealPlans/{id}/shopping-list` | `GenerateShoppingListCommand`, creating a list or replacing one's items. |
+| `POST /api/Trainers/clients/{clientId}/meal-plans` | `CreatePlanForClientCommand`: a draft for a client who granted `canPlanMeals`. |
+| `GET /api/ShoppingLists`, `GET|PUT|DELETE /{id}`, `POST`, `POST /{id}/items`, `PUT|DELETE /items/{itemId}`, `PATCH /items/{itemId}/toggle`, `POST /{id}/clear-checked` | The shopping list commands and queries in `Application/Planning`. |
+
+Where the implementation settled details the design left open:
+
+- Entries on a create or a template carry `prepSessionIndex` into the request's `prepSessions`; on add or update they carry `prepSessionId`. Templates reuse the entry and prep session routes with the template's id.
+- A plan's owner and the members of its household edit it. A coach edits a draft only while it is a draft, and the client cannot change a draft until accepting it. `canEdit` on the plan says which applies to the viewer.
+- Creating a plan leaves other plans alone. Setting a plan active and accepting a draft archive the owner's other active personal plan; household plans are never archived that way. Today's plan prefers the viewer's own plan over a household plan, then the most recently changed.
+- `logged` is the viewer's own diary: a row with the entry's `PlanEntryId` on the entry's date. Logging a day more than a day away from today fills the diary but does not move the streak.
+- A household plan may log a recipe shared in that household; a coach's draft may log the coach's own recipe.
+- Cost fields (`cost`, `weeklyCost`, `totalCost`) are present and null until the prices step.
+- Only administrators and coaches keep templates; a global one needs the admin role.
+- `PlanStatus.Active` is the enumeration's first member because it is the column's database default; a value equal to the CLR default is left out of an insert.
+
 ## Prices
 
 ### Data (API owns the schema)
