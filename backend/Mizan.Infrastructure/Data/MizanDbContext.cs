@@ -632,6 +632,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
                 rules.Ignore(r => r.EffectiveMaxCarbs);
                 rules.Ignore(r => r.HasAnyRule);
             });
+            entity.OwnsOne(e => e.GeneratedFrom, generated => generated.ToJson("generated_from"));
             entity.HasIndex(e => new { e.UserId, e.Status, e.StartDate }).HasDatabaseName("ix_meal_plans_user_status_start");
             entity.HasIndex(e => new { e.Kind, e.UserId }).HasDatabaseName("ix_meal_plans_kind_user");
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);

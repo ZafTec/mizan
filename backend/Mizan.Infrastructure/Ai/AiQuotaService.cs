@@ -106,12 +106,16 @@ public class AiQuotaService : IAiQuotaService
                 cancellationToken);
     }
 
-    public async Task<AiQuotaSnapshot> GetUserSnapshotAsync(Guid userId, CancellationToken cancellationToken = default)
+    public Task<AiQuotaSnapshot> GetUserSnapshotAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        GetUserSnapshotAsync(userId, AiQuotaLine.Personal, cancellationToken);
+
+    public async Task<AiQuotaSnapshot> GetUserSnapshotAsync(
+        Guid userId, AiQuotaLine line, CancellationToken cancellationToken = default)
     {
         var (windowStart, windowEnd) = Today();
         var entitlement = await _entitlements.GetAsync(userId, cancellationToken);
-        var limits = entitlement.IsPro ? _options.Pro : _options.Free;
-        var mine = await UsageSinceAsync(userId, windowStart, AiQuotaLine.Personal, cancellationToken);
+        var limits = await LimitsForAsync(userId, line, cancellationToken);
+        var mine = await UsageSinceAsync(userId, windowStart, line, cancellationToken);
 
         return new AiQuotaSnapshot(
             mine.Requests,
@@ -137,6 +141,7 @@ public class AiQuotaService : IAiQuotaService
         if (line == AiQuotaLine.TrainerClient) return _options.Trainer;
 
         var entitlement = await _entitlements.GetAsync(userId, cancellationToken);
+        if (line == AiQuotaLine.Planning) return entitlement.IsPro ? _options.PlanningPro : _options.PlanningFree;
         return entitlement.IsPro ? _options.Pro : _options.Free;
     }
 
@@ -155,10 +160,12 @@ public class AiQuotaService : IAiQuotaService
             AiQuotaLine.Eval => query.Where(log => log.Feature == AiFeatures.Eval),
             AiQuotaLine.Onboarding => query.Where(log => log.Feature == AiFeatures.Onboarding),
             AiQuotaLine.TrainerClient => query.Where(log => log.Feature == AiFeatures.TrainerClient),
+            AiQuotaLine.Planning => query.Where(log => log.Feature == AiFeatures.Planning),
             _ => query.Where(log =>
                 log.Feature != AiFeatures.Eval
                 && log.Feature != AiFeatures.Onboarding
-                && log.Feature != AiFeatures.TrainerClient),
+                && log.Feature != AiFeatures.TrainerClient
+                && log.Feature != AiFeatures.Planning),
         };
 
         var totals = await query

@@ -83,6 +83,13 @@ public sealed class PlanAccess
         return await _households.CanAccessRecordAsync(ownerId, plan.HouseholdId, cancellationToken);
     }
 
+    /// <summary>Refuses a change meant only for a draft when the plan is no longer one.</summary>
+    public static void EnsureDraftWhenAsked(MealPlan plan, bool draftOnly)
+    {
+        if (draftOnly && plan.Status != PlanStatus.Draft)
+            throw new DomainValidationException("Only a draft can be changed this way. The person edits a plan they follow themselves.");
+    }
+
     /// <summary>Every cached read that could show this plan: its detail, its owner's and author's listings, its household's listings.</summary>
     public static async Task InvalidateAsync(HybridCache cache, MealPlan plan, CancellationToken cancellationToken)
     {

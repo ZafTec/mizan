@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Mizan.Infrastructure.Migrations
 {
     [DbContext(typeof(MizanDbContext))]
-    [Migration("20261022045036_ConnectedAppsPlanningAndPrices")]
+    [Migration("20261022094614_ConnectedAppsPlanningAndPrices")]
     partial class ConnectedAppsPlanningAndPrices
     {
         /// <inheritdoc />
@@ -5086,6 +5086,39 @@ namespace Mizan.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
 
+                    b.OwnsOne("Mizan.Domain.Planning.PlanGeneration", "GeneratedFrom", b1 =>
+                        {
+                            b1.Property<Guid>("MealPlanId")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<decimal?>("BudgetCeiling");
+
+                            b1.Property<string>("Currency");
+
+                            b1.Property<DateTime>("GeneratedAt");
+
+                            b1.Property<string>("Model")
+                                .IsRequired();
+
+                            b1.Property<string>("PromptKey")
+                                .IsRequired();
+
+                            b1.Property<int?>("PromptVersion");
+
+                            b1.Property<Guid?>("PromptVersionId");
+
+                            b1.HasKey("MealPlanId");
+
+                            b1.ToTable("meal_plans");
+
+                            b1
+                                .ToJson("generated_from")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("MealPlanId");
+                        });
+
                     b.OwnsOne("Mizan.Domain.Planning.PlanRules", "Rules", b1 =>
                         {
                             b1.Property<Guid>("MealPlanId")
@@ -5133,6 +5166,8 @@ namespace Mizan.Infrastructure.Migrations
                         });
 
                     b.Navigation("AuthoredBy");
+
+                    b.Navigation("GeneratedFrom");
 
                     b.Navigation("Household");
 

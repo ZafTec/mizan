@@ -69,6 +69,7 @@ public sealed class PlanReadModel
             CostCoverage = resolved.Cost.Summary.Coverage,
             CostConfidence = resolved.Cost.Summary.LowestConfidence?.ToString(),
             UnpricedItems = resolved.Cost.Summary.Unpriced.Select(i => new UnpricedItemDto(i.Name, i.FoodId, i.Reason ?? string.Empty)).ToList(),
+            GeneratedFrom = PlanGenerationMapping.ToDto(plan.GeneratedFrom),
             CreatedAt = plan.CreatedAt,
             UpdatedAt = plan.UpdatedAt,
         };
@@ -190,15 +191,20 @@ public sealed class PlanReadModel
                 _ => [],
             }));
         var foodNames = foods.ToDictionary(f => f.Key, f => f.Value.Name);
-        var violations = PlanRuleCheck.Evaluate(plan.Rules, entries, days, foodIdsByEntry, foodNames);
-
-        string? authorName = null;
-        if (plan.AuthoredByUserId is { } authorId)
-            authorName = await _context.Users.AsNoTracking().Where(u => u.Id == authorId).Select(u => u.Name).FirstOrDefaultAsync(cancellationToken);
 
         var region = await _prices.RegionForAsync(viewerId, cancellationToken);
         var quotes = await _prices.QuotesAsync(foods.Values, region, cancellationToken);
         var cost = PlanCosting.Cost(entries, plan.DurationDays, fullRecipes, foods, quotes, region.Currency);
+
+        // The budget rule compares like with like: a budget in another currency is not checked.
+        var comparableWeeklyCost = string.Equals(plan.Rules.Currency, region.Currency, StringComparison.OrdinalIgnoreCase)
+            ? cost.WeeklyCost
+            : null;
+        var violations = PlanRuleCheck.Evaluate(plan.Rules, entries, days, foodIdsByEntry, foodNames, comparableWeeklyCost);
+
+        string? authorName = null;
+        if (plan.AuthoredByUserId is { } authorId)
+            authorName = await _context.Users.AsNoTracking().Where(u => u.Id == authorId).Select(u => u.Name).FirstOrDefaultAsync(cancellationToken);
 
         return new Resolved(recipes, perServing, foods, logged, days, violations, authorName, cost, region.Currency);
     }

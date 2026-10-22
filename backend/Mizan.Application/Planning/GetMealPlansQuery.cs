@@ -103,6 +103,7 @@ public class GetMealPlansQueryHandler : IRequestHandler<GetMealPlansQuery, Paged
             AuthoredByName = r.AuthorName,
             EntryCount = r.EntryCount,
             HasRules = r.Plan.Rules.HasAnyRule,
+            GeneratedFrom = PlanGenerationMapping.ToDto(r.Plan.GeneratedFrom),
             CreatedAt = r.Plan.CreatedAt,
             UpdatedAt = r.Plan.UpdatedAt,
         }).ToList();

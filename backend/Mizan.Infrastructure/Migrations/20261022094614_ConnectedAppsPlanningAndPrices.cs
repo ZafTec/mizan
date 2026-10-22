@@ -161,6 +161,12 @@ namespace Mizan.Infrastructure.Migrations
                 defaultValue: 7);
 
             migrationBuilder.AddColumn<string>(
+                name: "generated_from",
+                table: "meal_plans",
+                type: "jsonb",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
                 name: "kind",
                 table: "meal_plans",
                 type: "character varying(20)",
@@ -1084,6 +1090,10 @@ namespace Mizan.Infrastructure.Migrations
 
             migrationBuilder.DropColumn(
                 name: "duration_days",
+                table: "meal_plans");
+
+            migrationBuilder.DropColumn(
+                name: "generated_from",
                 table: "meal_plans");
 
             migrationBuilder.DropColumn(

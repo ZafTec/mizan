@@ -12,7 +12,9 @@ public record AiUsageFeatureDto(string Feature, int Requests, int Tokens);
 public record MyAiUsageDto(
     AiQuotaSnapshot Today,
     IReadOnlyList<AiUsageDayDto> History,
-    IReadOnlyList<AiUsageFeatureDto> ByFeature);
+    IReadOnlyList<AiUsageFeatureDto> ByFeature,
+    /// <summary>The meal planning line: plans generated today against the tier's daily allowance.</summary>
+    AiQuotaSnapshot Planning);
 
 public record GetMyAiUsageQuery(int Days = 14) : IRequest<MyAiUsageDto>;
 
@@ -54,7 +56,10 @@ public class GetMyAiUsageQueryHandler : IRequestHandler<GetMyAiUsageQuery, MyAiU
             .ToList();
 
         return new MyAiUsageDto(
-            await _quota.GetUserSnapshotAsync(userId, cancellationToken), history, byFeature);
+            await _quota.GetUserSnapshotAsync(userId, cancellationToken),
+            history,
+            byFeature,
+            await _quota.GetUserSnapshotAsync(userId, AiQuotaLine.Planning, cancellationToken));
     }
 }
 

@@ -26,15 +26,28 @@ public class MealPlansController : ControllerBase
     public async Task<ActionResult<PagedResult<MealPlanSummaryDto>>> GetMealPlans([FromQuery] GetMealPlansQuery query)
         => Ok(await _mediator.Send(query));
 
-    /// <summary>The viewer's active plan for a date (today by default), or 404 when none covers it.</summary>
+    /// <summary>
+    /// The viewer's active plan for a date (today by default), or 404 when none covers it. With
+    /// <c>planId</c>, that plan's day instead, drafts included; the date defaults to its first day.
+    /// </summary>
     [HttpGet("day")]
-    public async Task<ActionResult<PlanDayViewDto>> GetPlanDay([FromQuery] DateOnly? date)
+    public async Task<ActionResult<PlanDayViewDto>> GetPlanDay([FromQuery] DateOnly? date, [FromQuery] Guid? planId)
     {
-        var result = await _mediator.Send(new GetPlanDayQuery(date));
+        var result = await _mediator.Send(new GetPlanDayQuery(date, planId));
         if (result is null)
-            return NotFound(new { errorCode = "no_active_plan", error = "No active plan covers that date." });
+            return NotFound(planId is null
+                ? new { errorCode = "no_active_plan", error = "No active plan covers that date." }
+                : new { errorCode = "no_plan_day", error = "That plan has no such day." });
         return Ok(result);
     }
+
+    /// <summary>
+    /// The assistant drafts a plan: one draft per budget ceiling, each saved as Draft with its
+    /// violations and cost. Metered on the planning allowance line; 429 when it is spent.
+    /// </summary>
+    [HttpPost("generate")]
+    public async Task<ActionResult<GenerateMealPlanResult>> Generate([FromBody] GenerateMealPlanCommand command)
+        => Ok(await _mediator.Send(command));
 
     [HttpGet("templates")]
     public async Task<ActionResult<List<TemplateDto>>> GetTemplates()
