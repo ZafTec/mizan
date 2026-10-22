@@ -30,15 +30,53 @@ public sealed class MealPlanTools
     // ---- read ------------------------------------------------------------
 
     [McpServerTool(Name = "list_meal_plans", ReadOnly = true, Idempotent = true)]
-    [Description("List the user's meal plans: their own, their households', and the drafts they authored as a coach. status filters by Draft, Active, Archived or Declined.")]
+    [Description("List the user's meal plans: their own, their households', and the drafts they authored as a coach. status filters by Draft, Active, Archived or Declined. A generated draft carries generatedFrom.")]
     public async Task<string> ListMealPlans(
         [Description("Status filter: Draft, Active, Archived or Declined (optional)")] string? status = null,
         [Description("Page number (default 1)")] int page = 1,
         [Description("Results per page (default 20)")] int pageSize = 20,
+        [Description("Only plans with this status: Active, Draft or Archived")] string? status = null,
         CancellationToken ct = default)
     {
         var query = new QueryString().Add("status", status).Add("page", page).Add("pageSize", pageSize);
         return await _api.GetAsync($"/api/MealPlans{query}", ct);
+    }
+
+    [McpServerTool(Name = "generate_meal_plan")]
+    [Description("Draft a meal plan with the assistant from rules, the user's recipes, catalogue foods and prices. "
+        + "One draft per budget in budgetCeilings, each saved with status Draft and returned with its violations and cost table. "
+        + "Nutrition and cost are computed by Mizan, not written by the model. Spends the daily planning allowance (Free: one plan a day). "
+        + "The user confirms a draft in the app, or it can be read with get_meal_plan.")]
+    public async Task<string> GenerateMealPlan(
+        [Description("First day, YYYY-MM-DD")] string startDate,
+        [Description("Number of days, 1 to 14 (default 7)")] int durationDays = 7,
+        [Description("What the user wants, in their own words")] string? preference = null,
+        [Description("Plan name")] string? name = null,
+        [Description("None, Keto, HighProtein or Custom")] string? macroMode = null,
+        [Description("Daily calorie target")] decimal? targetCalories = null,
+        [Description("Daily protein target in grams")] decimal? targetProtein = null,
+        [Description("Daily carb ceiling in grams")] decimal? maxCarbs = null,
+        [Description("Weekly budgets to draft against, at most three; one draft each")] decimal[]? budgetCeilings = null,
+        [Description("Three-letter currency of the budgets; defaults to the user's price region")] string? currency = null,
+        CancellationToken ct = default)
+    {
+        var request = new GenerateMealPlanRequest
+        {
+            StartDate = ToolArguments.ParseDate(startDate, "startDate"),
+            DurationDays = durationDays,
+            Preference = preference,
+            Name = name,
+            Rules = new PlanRulesDto
+            {
+                MacroMode = string.IsNullOrWhiteSpace(macroMode) ? "None" : macroMode.Trim(),
+                TargetCalories = targetCalories,
+                TargetProtein = targetProtein,
+                MaxCarbs = maxCarbs,
+                Currency = string.IsNullOrWhiteSpace(currency) ? null : currency.Trim(),
+            },
+            BudgetCeilings = budgetCeilings?.ToList() ?? [],
+        };
+        return await _api.PostAsync("/api/MealPlans/generate", request, ct);
     }
 
     [McpServerTool(Name = "get_meal_plan", ReadOnly = true, Idempotent = true)]
