@@ -46,4 +46,20 @@ public record RecognizedFood
     public decimal Protein { get; init; }
     public decimal Carbs { get; init; }
     public decimal Fat { get; init; }
+
+    /// <summary>
+    /// The same numbers for 100 g, derived from the portion. A client sends
+    /// these with the grams the person confirmed and the server does the
+    /// scaling, so no client carries its own copy of the arithmetic. Null when
+    /// the model gave no portion weight to scale from.
+    /// </summary>
+    public Meals.NutritionPer100g? Per100g => PortionGrams > 0
+        ? new Meals.NutritionPer100g
+        {
+            Calories = Math.Round(Calories / PortionGrams * 100, 2),
+            ProteinGrams = Math.Round(Protein / PortionGrams * 100, 2),
+            CarbsGrams = Math.Round(Carbs / PortionGrams * 100, 2),
+            FatGrams = Math.Round(Fat / PortionGrams * 100, 2),
+        }
+        : null;
 }

@@ -6,7 +6,7 @@ Mizan's assistant, food-photo analysis, onboarding, trainer questions, and promp
 
 `POST /api/Nutrition/ai/analyze-text` turns a sentence ("two eggs, toast with butter") into the same structured proposal as `analyze-image`: foods with portion grams and macros, a confidence, and a note naming any portions the model assumed. Both are Pro features, share the `food_analysis` prompt and the `FoodAnalysis` quota line, and write nothing. A description is limited to 600 characters, and a reply that does not match the declared schema is a failed call, never scraped from prose.
 
-The logging sheet leads with this. The proposal lands in the meal as editable rows (name and grams, with the numbers scaling to the weight), and only what the person confirms is saved, one `POST /api/Meals` per food, so a retry after a failure sends only what is left. Free accounts see an inline upgrade note at the moment they try, and food search and recipes stay free.
+Each recognized food also carries `per100g`, derived from its portion. The logging sheet leads with this. The proposal lands in the meal as editable rows (name and grams), and only what the person confirms is saved, one `POST /api/Meals` per food with `amountGrams` and `per100g` under an `Idempotency-Key` minted when the row was proposed: the server computes the stored totals (rounded to two decimals, like a catalogue food), ignores any client totals sent alongside, and treats a retry as a replay. The MCP photo app sends the same figures through `log_meal_manual`. Free accounts see an inline upgrade note at the moment they try, and food search and recipes stay free.
 
 ## Configuration
 

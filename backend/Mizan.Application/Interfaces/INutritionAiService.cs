@@ -1,4 +1,5 @@
 using Mizan.Contracts.Ai;
+using Mizan.Contracts.Meals;
 using Mizan.Contracts.Nutrition;
 
 namespace Mizan.Application.Interfaces;
