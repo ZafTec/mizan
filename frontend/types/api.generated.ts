@@ -10639,7 +10639,7 @@ export interface components {
          * Format: int32
          * @enum {integer}
          */
-        StorageFolder: 0 | 1 | 2 | 3 | 4;
+        StorageFolder: 0 | 1 | 2 | 3 | 4 | 5;
         StreakUpdate: {
             streakType: string;
             /** Format: int32 */
