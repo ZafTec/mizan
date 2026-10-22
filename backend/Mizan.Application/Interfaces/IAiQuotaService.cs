@@ -54,4 +54,8 @@ public interface IAiQuotaService
         CancellationToken cancellationToken = default);
 
     Task<AiQuotaSnapshot> GetUserSnapshotAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    /// <summary>The same snapshot for one allowance line, such as the planning line.</summary>
+    Task<AiQuotaSnapshot> GetUserSnapshotAsync(
+        Guid userId, Ai.AiQuotaLine line, CancellationToken cancellationToken = default);
 }

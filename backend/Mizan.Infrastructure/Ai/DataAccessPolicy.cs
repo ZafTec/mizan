@@ -23,7 +23,7 @@ namespace Mizan.Infrastructure.Ai;
 public class DataAccessPolicy : IDataAccessPolicy
 {
     private static readonly DataAxis[] AllAxes =
-        [DataAxis.Nutrition, DataAxis.Training, DataAxis.Body];
+        [DataAxis.Nutrition, DataAxis.Training, DataAxis.Body, DataAxis.Planning];
 
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService? _currentUser;

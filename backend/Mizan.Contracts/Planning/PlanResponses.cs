@@ -81,6 +81,9 @@ public record MealPlanSummaryDto
     public string? AuthoredByName { get; init; }
     public int EntryCount { get; init; }
     public bool HasRules { get; init; }
+
+    /// <summary>Set on a draft the assistant generated.</summary>
+    public PlanGenerationDto? GeneratedFrom { get; init; }
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; init; }
 }
@@ -130,6 +133,10 @@ public record MealPlanDetailDto
 
     /// <summary>The lines left out of the cost.</summary>
     public List<UnpricedItemDto> UnpricedItems { get; init; } = [];
+
+    /// <summary>Set on a draft the assistant generated: prompt version, model and budget ceiling.</summary>
+    public PlanGenerationDto? GeneratedFrom { get; init; }
+
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; init; }
 }

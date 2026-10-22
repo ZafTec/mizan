@@ -7,8 +7,11 @@ using Mizan.Contracts.Planning;
 
 namespace Mizan.Application.Planning;
 
-/// <summary>Rewrites one entry. The entry id is the one the plan lists; it stays the same.</summary>
-public record UpdatePlanEntryCommand(Guid PlanId, Guid EntryId, PlanEntryRequest Entry) : IRequest<Unit>;
+/// <summary>
+/// Rewrites one entry. The entry id is the one the plan lists; it stays the same.
+/// <c>DraftOnly</c> refuses a plan that is not a draft, as on <see cref="RemovePlanEntryCommand"/>.
+/// </summary>
+public record UpdatePlanEntryCommand(Guid PlanId, Guid EntryId, PlanEntryRequest Entry, bool DraftOnly = false) : IRequest<Unit>;
 
 public class UpdatePlanEntryCommandValidator : AbstractValidator<UpdatePlanEntryCommand>
 {
@@ -38,6 +41,7 @@ public class UpdatePlanEntryCommandHandler : IRequestHandler<UpdatePlanEntryComm
     public async Task<Unit> Handle(UpdatePlanEntryCommand request, CancellationToken cancellationToken)
     {
         var plan = await _access.LoadEditableAsync(request.PlanId, cancellationToken);
+        PlanAccess.EnsureDraftWhenAsked(plan, request.DraftOnly);
         var entry = plan.Entries.FirstOrDefault(e => e.Id == request.EntryId)
             ?? throw new EntityNotFoundException("Plan entry", request.EntryId);
         await _entries.ApplyAsync(plan, entry, request.Entry, cancellationToken);
