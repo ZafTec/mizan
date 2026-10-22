@@ -5,6 +5,8 @@ using Mizan.Application.Ai;
 using Mizan.Application.Ai.Tools;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Ai;
+using Mizan.Contracts.Nutrition;
 using Mizan.Domain.Entities;
 
 namespace Mizan.Infrastructure.AI;

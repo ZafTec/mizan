@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Nutrition;
 
 namespace Mizan.Application.Queries;
 
@@ -11,17 +12,10 @@ public record GetDailyNutritionQuery : IRequest<DailyNutritionResult>
     public DateOnly Date { get; init; }
 }
 
-public record DailyNutritionResult
+/// <summary>The shared totals-against-targets contract, plus the date and a per-meal breakdown.</summary>
+public record DailyNutritionResult : DailyNutritionTotals
 {
     public DateOnly Date { get; init; }
-    public decimal TotalCalories { get; init; }
-    public decimal TotalProtein { get; init; }
-    public decimal TotalCarbs { get; init; }
-    public decimal TotalFat { get; init; }
-    public decimal? TargetCalories { get; init; }
-    public decimal? TargetProtein { get; init; }
-    public decimal? TargetCarbs { get; init; }
-    public decimal? TargetFat { get; init; }
     public List<MealSummary> MealBreakdown { get; init; } = new();
 }
 

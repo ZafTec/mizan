@@ -1,3 +1,6 @@
+using Mizan.Contracts.Ai;
+using Mizan.Contracts.Nutrition;
+
 namespace Mizan.Application.Interfaces;
 
 /// <summary>
@@ -86,7 +89,7 @@ public record TrainerAnswer(
 public record OnboardingTurn(
     string Content,
     Guid? PromptVersionId,
-    IReadOnlyList<Ai.Tools.AiToolInvocation> Performed);
+    IReadOnlyList<AiToolInvocation> Performed);
 
 /// <summary>
 /// Proposals, not records. There is deliberately no recipe id here: the model
@@ -124,34 +127,7 @@ public record AiChatHistoryTurn(bool FromUser, string Content);
 public record AiChatTurn(
     string Content,
     Guid? PromptVersionId,
-    IReadOnlyList<Ai.Tools.AiToolInvocation> Performed);
+    IReadOnlyList<AiToolInvocation> Performed);
 
 /// <summary>An image already read into memory, on its way to the model.</summary>
 public record AiImageRef(byte[] Bytes, string ContentType);
-
-public record FoodAnalysisResult
-{
-    public List<RecognizedFood> Foods { get; init; } = new();
-    public decimal TotalCalories { get; init; }
-    public decimal Confidence { get; init; }
-
-    /// <summary>Caveats from the model. Never the payload - the numbers are.</summary>
-    public string? Note { get; init; }
-
-    /// <summary>
-    /// Where the photo was stored, if storage is configured. The model's
-    /// numbers are a guess at a portion size; keeping the picture is what lets
-    /// someone check the guess later instead of taking it on trust.
-    /// </summary>
-    public string? ImageUrl { get; init; }
-}
-
-public record RecognizedFood
-{
-    public string Name { get; init; } = string.Empty;
-    public decimal PortionGrams { get; init; }
-    public decimal Calories { get; init; }
-    public decimal Protein { get; init; }
-    public decimal Carbs { get; init; }
-    public decimal Fat { get; init; }
-}

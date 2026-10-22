@@ -2,11 +2,10 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Ai;
 using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Ai;
-
-public record AiChatThreadDto(Guid Id, string Title, DateTime UpdatedAt);
 
 public record ListAiChatThreadsQuery(int Take = 30) : IRequest<IReadOnlyList<AiChatThreadDto>>;
 

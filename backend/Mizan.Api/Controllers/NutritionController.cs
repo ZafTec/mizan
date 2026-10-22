@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Mizan.Application.Commands;
 using Mizan.Application.Interfaces;
 using Mizan.Application.Queries;
+using Mizan.Contracts.Nutrition;
 using Mizan.Domain.Media;
 
 namespace Mizan.Api.Controllers;

@@ -25,7 +25,7 @@ Production routes one public host by path: `/api` and `/hubs` to the API, `/mcp`
 | `Mizan.Domain` | Entities, identity records, and domain rules |
 | `Mizan.Application` | Commands, queries, validation, interfaces |
 | `Mizan.Infrastructure` | EF Core, sessions, storage, email, AI, caching, outbox |
-| `Mizan.Contracts` | Request records shared by service clients |
+| `Mizan.Contracts` | Request and response records shared by the API and its service clients; no adapter declares its own copy |
 | `Mizan.Api` | HTTP controllers, authentication, authorization, SignalR |
 | `Mizan.Mcp.Server` | MCP transport and adapters calling the API |
 | `Mizan.Telegram` | Account linking, Telegram transport, API adapters |

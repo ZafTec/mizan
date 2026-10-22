@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Mizan.Application.Ai;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Ai;
 using Mizan.Domain.Entities;
 using Mizan.Infrastructure.Data;
 using Xunit;
