@@ -203,7 +203,7 @@ All API calls go through `lib/api/*` modules typed from `types/api.generated.ts`
 
 Tools: `list_meal_plans`, `get_meal_plan`, `get_plan_day`, `create_meal_plan`, `update_meal_plan`, `delete_meal_plan`, `add_plan_entry`, `update_plan_entry`, `remove_plan_entry`, `generate_shopping_list`, `log_plan_entry`, `list_templates`, `apply_template`, `generate_meal_plan`, and the shopping list CRUD. Entry tools take the entry id and say so. Admin tools manage templates and prices. Trainer tools draft for a client under `trainer` scope.
 
-The MCP App `meal-plan` renders `get_meal_plan` and `get_plan_day`. It calls `log_plan_entry` and `toggle_shopping_list_item` through the host. The prompts `plan_my_week` and `grocery_run` call `generate_meal_plan` and `generate_shopping_list` instead of asking the model to aggregate.
+The MCP App `meal-plan` renders `get_meal_plan` and `get_plan_day`. It calls `log_plan_entry` and `generate_shopping_list` through the host. The prompt `plan_my_week` builds a plan through `create_meal_plan` and `add_plan_entry` (and `generate_meal_plan` from step 4); `grocery_run` calls `generate_shopping_list`. Neither asks the model to aggregate.
 
 ### Telegram
 
