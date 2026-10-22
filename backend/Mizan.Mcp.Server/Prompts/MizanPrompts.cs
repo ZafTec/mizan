@@ -34,13 +34,13 @@ public sealed class MizanPrompts
         [Description("First day of the plan, YYYY-MM-DD. Leave empty to start today.")] string? startDate = null,
         [Description("Anything to respect: foods I dislike, days I eat out, budget, time")] string? preferences = null) =>
         $"""
-        Plan my meals in Mizan for the next 7 days{(string.IsNullOrWhiteSpace(startDate) ? "" : $", starting {startDate}")}.
+        Plan my meals in Mizan for the next 7 days{(string.IsNullOrWhiteSpace(startDate) ? ", starting today" : $", starting {startDate}")}.
 
-        Look at my recipes (search_recipes) and my current goal (get_current_goal). Create a meal plan (create_meal_plan) and fill it with add_recipe_to_meal_plan, aiming for my daily calories and protein. Use only recipes I have. If I do not have enough, say what is missing instead of inventing recipes.
+        Start from what I have: my recipes (search_recipes), my current goal (get_current_goal), and catalogue foods for simple lines like fruit, eggs or yogurt (search_foods). Create the plan with create_meal_plan, passing my goal's calories and protein as rules (rulesJson); put any budget, cooking time or foods I dislike in the rules too (weeklyBudget, prepStyle, forbiddenFoodIds). Then fill each day with add_plan_entry: kind Recipe with a recipe id and servings, kind Food with a food id and grams, or kind Text only for something that has no nutrition to track. Use only recipes and foods that exist; if I do not have enough, say what is missing instead of inventing recipes.
 
         {(string.IsNullOrWhiteSpace(preferences) ? "" : $"Please also respect this: {preferences}")}
 
-        Show me the finished plan with its nutrition totals and point out any day that is far from my goal.
+        When the plan is built, show it with get_meal_plan. Read its per-day totals and its violations list, and tell me which days break a rule and what you would swap to fix them. Do not add up nutrition yourself; the plan already carries it.
         """;
 
     [McpServerPrompt(Name = "grocery_run", Title = "Grocery run")]
@@ -50,9 +50,9 @@ public sealed class MizanPrompts
         $"""
         Make me a shopping list in Mizan from {(string.IsNullOrWhiteSpace(mealPlanId) ? "my most recent meal plan (list_meal_plans)" : $"meal plan {mealPlanId}")}.
 
-        Read the plan with get_meal_plan and each recipe with get_recipe. Combine the same ingredient across recipes and add up the amounts. Create the list with create_shopping_list and add each item with add_shopping_list_item, with the amount in the name (for example "Rolled oats, 400 g").
+        Build it with generate_shopping_list, which combines the same ingredient across recipes and converts amounts to grams where it can. Do not add up amounts yourself. Then read the list with get_shopping_list.
 
-        Show me the list grouped by where I would find things in a shop.
+        Show me the list grouped by prep session (the lines with no session come last), with grams or the amount and unit on each line. Point out every line marked needsReview: it is an amount that could not be converted, so I should check it before shopping. If I confirm a line, fix it with update_shopping_list_item and clear needsReview.
         """;
 
     [McpServerPrompt(Name = "weekly_review", Title = "Weekly review")]
