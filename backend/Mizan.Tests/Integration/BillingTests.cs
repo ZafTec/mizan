@@ -310,7 +310,7 @@ public class BillingTests(ApiTestFixture fixture)
         // Free: meal plans, shopping lists, and household invites are not capped.
         for (var i = 0; i < 2; i++)
         {
-            (await free.PostAsJsonAsync("/api/MealPlans", new { name = $"Week {i}", startDate = "2030-01-01", endDate = "2030-01-07" }))
+            (await free.PostAsJsonAsync("/api/MealPlans", new { name = $"Week {i}", startDate = "2030-01-01", durationDays = 7 }))
                 .IsSuccessStatusCode.Should().BeTrue();
             (await free.PostAsJsonAsync("/api/ShoppingLists", new { name = $"List {i}" }))
                 .IsSuccessStatusCode.Should().BeTrue();

@@ -53,8 +53,11 @@ public class DeleteRecipeCommandHandler : IRequestHandler<DeleteRecipeCommand, D
             return new DeleteRecipeResult { Success = false, Message = "You do not have permission to delete this recipe" };
         }
 
-        var mealPlanUsage = await _context.MealPlanRecipes
-            .CountAsync(mpr => mpr.RecipeId == request.Id, cancellationToken);
+        var mealPlanUsage = await _context.PlanEntries
+            .Where(e => e.RecipeId == request.Id)
+            .Select(e => e.MealPlanId)
+            .Distinct()
+            .CountAsync(cancellationToken);
 
         if (mealPlanUsage > 0)
         {

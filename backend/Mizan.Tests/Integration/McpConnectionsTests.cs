@@ -88,12 +88,11 @@ public class McpConnectionsTests
         {
             name = "Week",
             startDate = "2026-10-05",
-            endDate = "2026-10-11",
-            recipes = Array.Empty<object>(),
+            durationDays = 7,
         };
-        (await app.PostAsJsonAsync("/api/MealPlans", new { plan.name, plan.startDate, plan.endDate, plan.recipes, householdId = w.HouseholdB }))
+        (await app.PostAsJsonAsync("/api/MealPlans", new { plan.name, plan.startDate, plan.durationDays, householdId = w.HouseholdB }))
             .StatusCode.Should().Be(HttpStatusCode.Forbidden);
-        (await app.PostAsJsonAsync("/api/MealPlans", new { plan.name, plan.startDate, plan.endDate, plan.recipes, householdId = w.HouseholdA }))
+        (await app.PostAsJsonAsync("/api/MealPlans", new { plan.name, plan.startDate, plan.durationDays, householdId = w.HouseholdA }))
             .StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Created);
     }
 
@@ -111,8 +110,7 @@ public class McpConnectionsTests
         {
             name = "Injected",
             startDate = "2026-10-05",
-            endDate = "2026-10-11",
-            recipes = Array.Empty<object>(),
+            durationDays = 7,
             householdId = w.HouseholdA,
         })).StatusCode.Should().Be(HttpStatusCode.Forbidden);
 

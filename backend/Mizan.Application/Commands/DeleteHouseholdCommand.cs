@@ -17,7 +17,7 @@ public record HouseholdDeletionPreview
     public int ShoppingListCount { get; init; }
     public int ShoppingListItemCount { get; init; }
     public int MealPlanCount { get; init; }
-    public int MealPlanRecipeCount { get; init; }
+    public int MealPlanEntryCount { get; init; }
     public int PendingInvitationCount { get; init; }
 
     /// <summary>Send back with the deletion. Any change to members, lists or plans changes it.</summary>
@@ -31,7 +31,7 @@ public record HouseholdDeletionPreview
         ShoppingListCount = snapshot.ShoppingListIds.Count,
         ShoppingListItemCount = snapshot.ShoppingListItemCount,
         MealPlanCount = snapshot.MealPlanIds.Count,
-        MealPlanRecipeCount = snapshot.MealPlanRecipeCount,
+        MealPlanEntryCount = snapshot.MealPlanEntryCount,
         PendingInvitationCount = snapshot.PendingInvitationCount,
         Version = snapshot.Version
     };
@@ -185,10 +185,12 @@ public class DeleteHouseholdCommandHandler : IRequestHandler<DeleteHouseholdComm
             _context.ShoppingLists.RemoveRange(lists);
 
             var plans = await _context.MealPlans.Where(p => snapshot.MealPlanIds.Contains(p.Id)).ToListAsync(ct);
-            _context.MealPlanRecipes.RemoveRange(
-                await _context.MealPlanRecipes.Where(r => snapshot.MealPlanIds.Contains(r.MealPlanId)).ToListAsync(ct));
+            _context.PlanEntries.RemoveRange(
+                await _context.PlanEntries.Where(e => snapshot.MealPlanIds.Contains(e.MealPlanId)).ToListAsync(ct));
+            _context.PrepSessions.RemoveRange(
+                await _context.PrepSessions.Where(s => snapshot.MealPlanIds.Contains(s.MealPlanId)).ToListAsync(ct));
             _context.MealPlans.RemoveRange(plans);
-            removedPlans.AddRange(plans.Select(p => (p.Id, p.UserId)));
+            removedPlans.AddRange(plans.Where(p => p.UserId.HasValue).Select(p => (p.Id, p.UserId!.Value)));
 
             // Recipes stay with their owner; only the shared-household link goes.
             var now = DateTime.UtcNow;
@@ -220,6 +222,8 @@ public class DeleteHouseholdCommandHandler : IRequestHandler<DeleteHouseholdComm
                 await _cache.RemoveByTagAsync(CacheTags.MealPlan(id), cancellationToken);
                 await _cache.RemoveByTagAsync(CacheTags.MealPlansList(userId), cancellationToken);
             }
+            await _cache.RemoveByTagAsync(CacheTags.HouseholdPlans(request.HouseholdId), cancellationToken);
+            await _cache.RemoveByTagAsync(CacheTags.HouseholdShoppingLists(request.HouseholdId), cancellationToken);
             await _cache.RemoveByTagAsync(CacheTags.Recipes, cancellationToken);
         }
         return result;

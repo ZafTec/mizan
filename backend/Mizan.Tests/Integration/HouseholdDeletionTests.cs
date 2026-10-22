@@ -153,11 +153,11 @@ public class HouseholdDeletionTests(ApiTestFixture fixture)
                 new ShoppingListItem { Id = Guid.NewGuid(), ShoppingListId = sharedList, ItemName = "Onions" },
                 new ShoppingListItem { Id = Guid.NewGuid(), ShoppingListId = personalList, ItemName = "Coffee" });
             db.MealPlans.AddRange(
-                new MealPlan { Id = sharedPlan, UserId = home.OwnerId, HouseholdId = home.HouseholdId, StartDate = today.AddDays(-30), EndDate = today.AddDays(-24), CreatedAt = now, UpdatedAt = now },
-                new MealPlan { Id = personalPlan, UserId = home.OwnerId, StartDate = today, EndDate = today.AddDays(6), CreatedAt = now, UpdatedAt = now });
-            db.MealPlanRecipes.AddRange(
-                new MealPlanRecipe { Id = Guid.NewGuid(), MealPlanId = sharedPlan, RecipeId = recipe.Id, Date = today.AddDays(-30) },
-                new MealPlanRecipe { Id = Guid.NewGuid(), MealPlanId = personalPlan, RecipeId = recipe.Id, Date = today });
+                new MealPlan { Id = sharedPlan, UserId = home.OwnerId, HouseholdId = home.HouseholdId, StartDate = today.AddDays(-30), DurationDays = 7, CreatedAt = now, UpdatedAt = now },
+                new MealPlan { Id = personalPlan, UserId = home.OwnerId, StartDate = today, DurationDays = 7, CreatedAt = now, UpdatedAt = now });
+            db.PlanEntries.AddRange(
+                new PlanEntry { Id = Guid.NewGuid(), MealPlanId = sharedPlan, RecipeId = recipe.Id, Servings = 1, DayIndex = 0, Slot = "DINNER" },
+                new PlanEntry { Id = Guid.NewGuid(), MealPlanId = personalPlan, RecipeId = recipe.Id, Servings = 1, DayIndex = 0, Slot = "DINNER" });
             var tracked = await db.Recipes.SingleAsync(r => r.Id == recipe.Id);
             tracked.HouseholdId = home.HouseholdId;
             await db.SaveChangesAsync();
@@ -167,7 +167,7 @@ public class HouseholdDeletionTests(ApiTestFixture fixture)
         preview.ShoppingListCount.Should().Be(1);
         preview.ShoppingListItemCount.Should().Be(2);
         preview.MealPlanCount.Should().Be(1, "a past plan is disclosed, never treated as disposable");
-        preview.MealPlanRecipeCount.Should().Be(1);
+        preview.MealPlanEntryCount.Should().Be(1);
 
         var withoutConsent = await DeleteAsync(home.Owner, home.HouseholdId, preview.Version);
         withoutConsent.StatusCode.Should().Be(HttpStatusCode.Conflict);
@@ -181,7 +181,7 @@ public class HouseholdDeletionTests(ApiTestFixture fixture)
             (await db.ShoppingLists.Select(l => l.Id).ToListAsync()).Should().BeEquivalentTo([personalList, otherList]);
             (await db.ShoppingListItems.Select(i => i.ItemName).ToListAsync()).Should().Equal("Coffee");
             (await db.MealPlans.Select(p => p.Id).ToListAsync()).Should().Equal(personalPlan);
-            (await db.MealPlanRecipes.CountAsync()).Should().Be(1);
+            (await db.PlanEntries.CountAsync()).Should().Be(1);
             var kept = await db.Recipes.SingleAsync(r => r.Id == recipe.Id);
             kept.HouseholdId.Should().BeNull();
             kept.UserId.Should().Be(home.OwnerId);

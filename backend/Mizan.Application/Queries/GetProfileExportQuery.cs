@@ -120,11 +120,28 @@ public record ProfileExportMealDto(
 public record ProfileExportMealPlanDto(
     Guid Id,
     string? Name,
-    DateOnly StartDate,
-    DateOnly EndDate,
-    int RecipeCount,
+    string Kind,
+    string Status,
+    DateOnly? StartDate,
+    DateOnly? EndDate,
+    int DurationDays,
+    int EntryCount,
+    List<ProfileExportPlanEntryDto> Entries,
     DateTime CreatedAt,
     DateTime UpdatedAt
+);
+
+public record ProfileExportPlanEntryDto(
+    Guid Id,
+    int DayIndex,
+    string Slot,
+    string Kind,
+    Guid? RecipeId,
+    decimal? Servings,
+    Guid? FoodId,
+    decimal? Grams,
+    string? Text,
+    string? Notes
 );
 
 public record ProfileExportBodyMeasurementDto(
@@ -292,20 +309,29 @@ public class GetProfileExportQueryHandler : IRequestHandler<GetProfileExportQuer
             ))
             .ToListAsync(cancellationToken);
 
-        var mealPlans = await _context.MealPlans
+        var mealPlans = (await _context.MealPlans
             .AsNoTracking()
+            .Include(plan => plan.Entries)
             .Where(plan => plan.UserId == request.UserId)
             .OrderByDescending(plan => plan.CreatedAt)
+            .ToListAsync(cancellationToken))
             .Select(plan => new ProfileExportMealPlanDto(
                 plan.Id,
                 plan.Name,
+                plan.Kind.ToString(),
+                plan.Status.ToString(),
                 plan.StartDate,
                 plan.EndDate,
-                plan.MealPlanRecipes.Count,
+                plan.DurationDays,
+                plan.Entries.Count,
+                plan.Entries
+                    .OrderBy(e => e.DayIndex).ThenBy(e => e.Slot).ThenBy(e => e.SortOrder)
+                    .Select(e => new ProfileExportPlanEntryDto(e.Id, e.DayIndex, e.Slot, e.Kind.ToString(), e.RecipeId, e.Servings, e.FoodId, e.Grams, e.Text, e.Notes))
+                    .ToList(),
                 plan.CreatedAt,
                 plan.UpdatedAt
             ))
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         var bodyMeasurements = await _context.BodyMeasurements
             .AsNoTracking()
