@@ -9152,6 +9152,8 @@ export interface components {
             /** Format: double */
             fiberGrams?: number | null;
             name: string;
+            /** Format: int32 */
+            sharedBetween?: number | null;
             per100g?: components["schemas"]["NutritionPer100g"];
         };
         CreateFoodDiaryEntryResult: {
@@ -9237,8 +9239,6 @@ export interface components {
             days: components["schemas"]["DailyNutritionSummaryDto"][];
         };
         DailyNutritionResult: {
-            /** Format: date */
-            date: string;
             /** Format: double */
             totalCalories: number;
             /** Format: double */
@@ -9255,6 +9255,8 @@ export interface components {
             targetCarbs?: number | null;
             /** Format: double */
             targetFat?: number | null;
+            /** Format: date */
+            date: string;
             mealBreakdown: components["schemas"]["MealSummary"][];
         };
         DailyNutritionSummaryDto: {
