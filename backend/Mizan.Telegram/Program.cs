@@ -28,6 +28,8 @@ builder.Services.AddHttpClient<MizanApiClient>(client =>
     client.Timeout = TimeSpan.FromSeconds(120));
 
 builder.Services.AddScoped<UpdateHandler>();
+builder.Services.AddScoped<MiniAppSessionEndpoint>();
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddHostedService<LongPollWorker>();
 
 var app = builder.Build();
@@ -79,9 +81,15 @@ app.MapGet("/health", () => Results.Ok(new
     mode = options.UseWebhook ? "webhook" : "long-poll",
 }));
 
-/// The only public surface. Telegram sends the secret in a header on every
-/// call; anything without it is not Telegram, and gets nothing back that would
-/// confirm the endpoint exists.
+/// The Mini App's sign-in. Public by nature - the page in Telegram's WebView
+/// calls it - and guarded by Telegram's signature on the body rather than by
+/// a header. See docs/TELEGRAM.md#mini-app.
+app.MapPost("/telegram/miniapp/session", (HttpContext context, MiniAppSessionEndpoint endpoint, CancellationToken ct) =>
+    endpoint.HandleAsync(context, ct));
+
+/// The webhook. Telegram sends the secret in a header on every call; anything
+/// without it is not Telegram, and gets nothing back that would confirm the
+/// endpoint exists.
 app.MapPost("/telegram/webhook", async (
     HttpContext context,
     Update update,

@@ -204,7 +204,7 @@ public sealed class UpdateHandler
                 return;
 
             case "/help":
-                await _telegram.SendMessageAsync(chatId, HelpText(), ct: ct);
+                await _telegram.SendMessageAsync(chatId, HelpText(), MiniAppKeyboard("Open Mizan"), ct);
                 return;
 
             default:
@@ -1098,6 +1098,23 @@ public sealed class UpdateHandler
     };
 
     private string SettingsUrl() => $"{_options.PublicUrl.TrimEnd('/')}/profile/settings/telegram";
+
+    /// <summary>
+    /// One button that opens the Mini App at <paramref name="path"/> under the
+    /// configured base. Telegram accepts <c>web_app</c> URLs over HTTPS only and
+    /// refuses the whole message otherwise, so a plain-HTTP development setup
+    /// gets the text without the button rather than no text at all.
+    /// </summary>
+    internal InlineKeyboardMarkup? MiniAppKeyboard(string text, string path = "")
+    {
+        var url = MiniAppUrl(path);
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps) return null;
+
+        return InlineKeyboardMarkup.Column(InlineKeyboardButton.OpenWebApp(text, url));
+    }
+
+    internal string MiniAppUrl(string path = "") =>
+        path.Length == 0 ? _options.MiniAppBaseUrl : $"{_options.MiniAppBaseUrl}/{path.TrimStart('/')}";
 
     /// <summary>
     /// Messages go out as HTML, and every one of them contains something a

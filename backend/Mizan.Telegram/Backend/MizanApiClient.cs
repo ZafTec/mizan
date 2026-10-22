@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using Mizan.Contracts.Measurements;
+using Mizan.Contracts.Telegram;
 
 namespace Mizan.Telegram.Backend;
 
@@ -74,6 +75,23 @@ public sealed class MizanApiClient
         using var request = Service(HttpMethod.Delete, $"api/Telegram/resolve/{telegramUserId}");
         using var response = await _http.SendAsync(request, ct);
         return response.IsSuccessStatusCode;
+    }
+
+    // ---- The Mini App -----------------------------------------------------
+
+    /// <summary>
+    /// A session for a Telegram user whose <c>initData</c> this service has
+    /// verified. The service key is the whole credential: the API trusts that
+    /// the signature was checked before it was asked.
+    /// </summary>
+    public async Task<ApiResult<TelegramMiniAppSessionResponse>> CreateMiniAppSessionAsync(
+        TelegramMiniAppSessionRequest body, CancellationToken ct)
+    {
+        using var request = Service(HttpMethod.Post, "api/Telegram/sessions");
+        request.Content = JsonContent.Create(body, options: Json);
+
+        using var response = await _http.SendAsync(request, ct);
+        return await ReadAsync<TelegramMiniAppSessionResponse>(response, ct);
     }
 
     // ---- Acting as the linked user ----------------------------------------
