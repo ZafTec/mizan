@@ -29,6 +29,10 @@ A template is a plan without dates: `list_templates`, then `apply_template` with
 
 `add_prep_session` adds a cooking session on a day. Entries that point at it with `prepSessionId` are cooked then, and the shopping list groups their ingredients under the session. `update_prep_session` and `remove_prep_session` change or drop one; the entries stay.
 
+## Draft a plan with the assistant
+
+`generate_meal_plan` drafts a whole plan from a start date, a number of days, the person's words as `preference`, any targets, and up to three weekly budgets in `budgetCeilings` (one draft each). Mizan chooses foods and recipes, computes nutrition and cost, and saves each draft with status Draft. Show the person the violations, the weekly cost and the lines left for review. A draft is not their plan until they accept it in the app. It spends the daily planning allowance: one plan a day on Free.
+
 ## Shopping lists
 
 1. `generate_shopping_list` turns a plan into a list: ingredients are combined across recipes and converted to grams where possible, grouped by prep session. Pass `replaceListId` to refresh an existing list instead of making a new one.

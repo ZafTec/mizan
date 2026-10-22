@@ -28,6 +28,7 @@ public sealed class UpdateHandler
     private readonly MizanApiClient _api;
     private readonly TelegramBotOptions _options;
     private readonly ILogger<UpdateHandler> _logger;
+    private readonly PlanMeHandler _planMe;
 
     public UpdateHandler(
         TelegramClient telegram,
@@ -39,6 +40,7 @@ public sealed class UpdateHandler
         _api = api;
         _options = options.Value;
         _logger = logger;
+        _planMe = new PlanMeHandler(telegram, api, options.Value);
     }
 
     public async Task HandleAsync(Update update, CancellationToken ct)
@@ -187,6 +189,10 @@ public sealed class UpdateHandler
 
             case "/shop":
                 await OnShopAsync(chatId, user, page: 0, ct);
+                return;
+
+            case PlanMeHandler.Command:
+                await _planMe.HandleCommandAsync(chatId, user, argument, ct);
                 return;
 
             case "/unlink":
@@ -435,6 +441,12 @@ public sealed class UpdateHandler
             }
 
             await OnShopAsync(chatId, user, page, ct);
+            return;
+        }
+
+        if (PlanMeHandler.IsCallback(data))
+        {
+            await _planMe.HandleCallbackAsync(chatId, user, data, ct);
             return;
         }
 
@@ -1044,6 +1056,7 @@ public sealed class UpdateHandler
         + "<b>/weight 82.4</b> - log a weigh-in\n"
         + "<b>/plan</b> - today's meal plan, with a Log button per entry (<b>/plan tomorrow</b> works too)\n"
         + "<b>/shop</b> - your shopping list, tick items off as you go\n"
+        + "<b>/planme high protein, cheap</b> - draft a week of meals to confirm\n"
         + "<b>/unlink</b> - disconnect this chat";
 
     private static string AnalysisCard(FoodAnalysisResult analysis)

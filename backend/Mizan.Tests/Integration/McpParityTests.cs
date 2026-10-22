@@ -112,6 +112,25 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         (await ToolNamesAsync()).Should().NotContain(name => name.StartsWith("admin_"));
     }
 
+    // ---- Planning ---------------------------------------------------------
+
+    [Fact]
+    public async Task GenerateMealPlanDraftsThroughTheApi_AndTheDraftIsListed()
+    {
+        await _api.ResetDatabaseAsync();
+        _api.Ai.Reset();
+        await AuthenticateAsync();
+        _api.Ai.Reply("""
+            {"name":"Connected week","note":null,"prepSessions":[],"days":[{"dayIndex":0,"entries":[
+              {"slot":"LUNCH","kind":"text","foodName":"Market salad","recipeId":null,"grams":null,"servings":null,"note":null,"prepSessionIndex":null}]}]}
+            """);
+
+        var generated = await CallAsync("generate_meal_plan", new { startDate = "2026-11-02", durationDays = 1, preference = "salad" });
+
+        generated.Should().Contain("\"status\":\"Draft\"").And.Contain("Connected week").And.Contain("Market salad");
+        (await CallAsync("list_meal_plans", new { status = "Draft" })).Should().Contain("Connected week");
+    }
+
     // ---- Consent ----------------------------------------------------------
 
     [Fact]
