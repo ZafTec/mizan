@@ -1,88 +1,87 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Mizan.Application.Commands;
 using Mizan.Application.Common;
-using Mizan.Application.Interfaces;
-using Mizan.Application.Queries;
+using Mizan.Application.Planning;
+using Mizan.Contracts.Planning;
 
 namespace Mizan.Api.Controllers;
 
+/// <summary>
+/// Shopping lists and their items. Household members read a household list;
+/// the owner and members allowed to edit lists write to it. Generation from a
+/// plan lives under the plan: POST /api/MealPlans/{id}/shopping-list.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Policy = "UserOrMcp")]
 public class ShoppingListsController : ControllerBase
 {
     private readonly IMediator _mediator;
-    private readonly ICurrentUserService _currentUser;
 
-    public ShoppingListsController(IMediator mediator, ICurrentUserService currentUser)
-    {
-        _mediator = mediator;
-        _currentUser = currentUser;
-    }
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<ShoppingListDto>> GetShoppingList(Guid id)
-    {
-        var result = await _mediator.Send(new GetShoppingListQuery(id));
-        if (result == null)
-        {
-            return NotFound();
-        }
-        return Ok(result);
-    }
+    public ShoppingListsController(IMediator mediator) => _mediator = mediator;
 
     [HttpGet]
     public async Task<ActionResult<PagedResult<ShoppingListSummaryDto>>> GetShoppingLists([FromQuery] GetShoppingListsQuery query)
+        => Ok(await _mediator.Send(query));
+
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<ShoppingListDetailDto>> GetShoppingList(Guid id)
     {
-        var result = await _mediator.Send(query);
+        var result = await _mediator.Send(new GetShoppingListQuery(id));
+        if (result is null) return NotFound();
         return Ok(result);
     }
 
+    /// <summary>Answers with the new list's id, as before, so existing clients keep working.</summary>
     [HttpPost]
     public async Task<ActionResult<Guid>> CreateShoppingList([FromBody] CreateShoppingListRequest request)
     {
-        if (!_currentUser.UserId.HasValue)
-        {
-            return Unauthorized(new { errorCode = "unauthorized", error = "Unauthorized" });
-        }
-
-        var command = new CreateShoppingListCommand(request.Name, _currentUser.UserId.Value, request.HouseholdId);
-        var listId = await _mediator.Send(command);
-
-        return CreatedAtAction(nameof(GetShoppingList), new { id = listId }, listId);
+        var id = await _mediator.Send(new CreateShoppingListCommand(request.Name, request.HouseholdId));
+        return CreatedAtAction(nameof(GetShoppingList), new { id }, id);
     }
 
-    [HttpPost("{id}/items")]
-    public async Task<ActionResult<Guid>> AddItem(Guid id, [FromBody] AddShoppingListItemRequest request)
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> UpdateShoppingList(Guid id, [FromBody] UpdateShoppingListRequest request)
     {
-        var command = new AddShoppingListItemCommand(id, request.ItemName, request.Amount, request.Unit, request.Category);
-        var itemId = await _mediator.Send(command);
-
-        if (itemId == null)
-        {
-            return NotFound(new { errorCode = "not_found", error = "Shopping list not found" });
-        }
-
-        return Ok(itemId);
-    }
-
-    [HttpPatch("items/{itemId}/toggle")]
-    public async Task<IActionResult> ToggleItem(Guid itemId, [FromBody] ToggleItemRequest request)
-    {
-        var command = new ToggleShoppingListItemCommand(itemId, request.IsChecked);
-        var success = await _mediator.Send(command);
-
-        if (!success)
-        {
-            return NotFound(new { errorCode = "not_found", error = "Item not found" });
-        }
-
+        await _mediator.Send(new UpdateShoppingListCommand(id, request.Name));
         return NoContent();
     }
-}
 
-public record CreateShoppingListRequest(string Name, Guid? HouseholdId);
-public record AddShoppingListItemRequest(string ItemName, decimal? Amount, string? Unit, string? Category);
-public record ToggleItemRequest(bool IsChecked);
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteShoppingList(Guid id)
+    {
+        await _mediator.Send(new DeleteShoppingListCommand(id));
+        return NoContent();
+    }
+
+    /// <summary>Answers with the new item's id.</summary>
+    [HttpPost("{id:guid}/items")]
+    public async Task<ActionResult<Guid>> AddItem(Guid id, [FromBody] AddShoppingListItemRequest request)
+        => Ok(await _mediator.Send(new AddShoppingListItemCommand(id, request)));
+
+    [HttpPut("items/{itemId:guid}")]
+    public async Task<IActionResult> UpdateItem(Guid itemId, [FromBody] UpdateShoppingListItemRequest request)
+    {
+        await _mediator.Send(new UpdateShoppingListItemCommand(itemId, request));
+        return NoContent();
+    }
+
+    [HttpDelete("items/{itemId:guid}")]
+    public async Task<IActionResult> DeleteItem(Guid itemId)
+    {
+        await _mediator.Send(new DeleteShoppingListItemCommand(itemId));
+        return NoContent();
+    }
+
+    [HttpPatch("items/{itemId:guid}/toggle")]
+    public async Task<IActionResult> ToggleItem(Guid itemId, [FromBody] ToggleShoppingListItemRequest request)
+    {
+        await _mediator.Send(new ToggleShoppingListItemCommand(itemId, request.IsChecked));
+        return NoContent();
+    }
+
+    [HttpPost("{id:guid}/clear-checked")]
+    public async Task<ActionResult<ClearCheckedResult>> ClearChecked(Guid id)
+        => Ok(await _mediator.Send(new ClearCheckedShoppingListItemsCommand(id)));
+}

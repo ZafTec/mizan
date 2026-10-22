@@ -342,6 +342,272 @@ test.describe("MCP apps, inside a stand-in host", () => {
     ]);
   });
 
+  test("the meal plan shows a day with its totals and violations, logs an entry once, and asks for the shopping list", async ({
+    page,
+  }) => {
+    const planId = "11111111-1111-4111-8111-111111111111";
+    const entry = (
+      id: string,
+      slot: string,
+      extra: Record<string, unknown>,
+    ) => ({
+      id,
+      dayIndex: 0,
+      date: "2026-10-12",
+      slot,
+      logged: false,
+      notes: null,
+      prepSessionId: null,
+      ...extra,
+    });
+    const plan = {
+      id: planId,
+      name: "Week of the 12th",
+      status: "Active",
+      startDate: "2026-10-12",
+      endDate: "2026-10-13",
+      durationDays: 2,
+      rules: { targetCalories: 2000 },
+      prepSessions: [
+        {
+          id: "s1",
+          dayIndex: 0,
+          date: "2026-10-12",
+          title: "Sunday batch",
+          notes: null,
+          entryCount: 1,
+        },
+      ],
+      violations: [
+        {
+          dayIndex: 0,
+          slot: null,
+          rule: "calories",
+          message: "Day 1 is 1,205 kcal under target",
+        },
+      ],
+      days: [
+        {
+          dayIndex: 0,
+          date: "2026-10-12",
+          entryCount: 3,
+          loggedCount: 0,
+          unresolvedCount: 1,
+          totals: {
+            calories: 795,
+            proteinGrams: 30,
+            carbsGrams: 100,
+            fatGrams: 20,
+            fiberGrams: 5,
+          },
+          violations: [
+            {
+              dayIndex: 0,
+              slot: null,
+              rule: "calories",
+              message: "Day 1 is 1,205 kcal under target",
+            },
+          ],
+          slots: [
+            {
+              slot: "BREAKFAST",
+              entries: [
+                entry("e1", "BREAKFAST", {
+                  kind: "Text",
+                  text: "Coffee from the cafe",
+                  nutrition: null,
+                }),
+              ],
+            },
+            {
+              slot: "LUNCH",
+              entries: [
+                entry("e2", "LUNCH", {
+                  kind: "Food",
+                  foodId: "f1",
+                  foodName: "Rice",
+                  grams: 150,
+                  nutrition: {
+                    calories: 195,
+                    proteinGrams: 4,
+                    carbsGrams: 42,
+                    fatGrams: 0.5,
+                    fiberGrams: 0,
+                  },
+                }),
+              ],
+            },
+            {
+              slot: "DINNER",
+              entries: [
+                entry("e3", "DINNER", {
+                  kind: "Recipe",
+                  recipeId: "r1",
+                  recipeTitle: "Stew",
+                  servings: 1,
+                  prepSessionId: "s1",
+                  nutrition: {
+                    calories: 600,
+                    proteinGrams: 26,
+                    carbsGrams: 58,
+                    fatGrams: 19.5,
+                    fiberGrams: 5,
+                  },
+                }),
+              ],
+            },
+          ],
+        },
+        {
+          dayIndex: 1,
+          date: "2026-10-13",
+          entryCount: 0,
+          loggedCount: 0,
+          unresolvedCount: 0,
+          totals: {
+            calories: 0,
+            proteinGrams: 0,
+            carbsGrams: 0,
+            fatGrams: 0,
+            fiberGrams: 0,
+          },
+          violations: [],
+          slots: [],
+        },
+      ],
+    };
+    const app = await openApp(page, "meal-plan", text(plan), (call) =>
+      call.name === "generate_shopping_list"
+        ? text({ listId: "l1", itemCount: 3, needsReviewCount: 1 })
+        : text({
+            diaryEntryIds: ["d1"],
+            calories: 195,
+            date: "2026-10-12",
+            mealType: "LUNCH",
+          }),
+    );
+
+    await expect(
+      app.getByRole("heading", { name: "Week of the 12th" }),
+    ).toBeVisible();
+    await expect(
+      app.getByText("2026-10-12 to 2026-10-13 · Active · 0 of 3 logged"),
+    ).toBeVisible();
+    await expect(app.getByText("Stew")).toBeVisible();
+    await expect(app.getByText("600 kcal · P 26 · C 58 · F 20")).toBeVisible();
+    await expect(app.getByText("No nutrition for this line")).toBeVisible();
+    await expect(app.getByText("1 line without nutrition")).toBeVisible();
+    await expect(app.getByText("Day 1 is 1,205 kcal under target")).toHaveCount(
+      1,
+    );
+    await expect(app.getByText("Sunday batch")).toBeVisible();
+
+    // Logging goes through the host with the plan id and the ENTRY id, and the button cannot be pressed twice.
+    await app.getByRole("button", { name: "Log Rice" }).click();
+    await expect(app.getByRole("status")).toContainText(
+      "Logged Rice on 2026-10-12",
+    );
+    await expect(
+      app.getByRole("button", { name: "Logged Rice" }),
+    ).toBeDisabled();
+    await expect(
+      app.getByText("2026-10-12 to 2026-10-13 · Active · 1 of 3 logged"),
+    ).toBeVisible();
+
+    await app.getByRole("button", { name: "Shopping list" }).click();
+    await expect(app.getByRole("status")).toContainText(
+      "Shopping list ready: 3 items, 1 to check",
+    );
+    expect(await calls(page)).toEqual([
+      {
+        name: "log_plan_entry",
+        arguments: { mealPlanId: planId, entryId: "e2" },
+      },
+      { name: "generate_shopping_list", arguments: { mealPlanId: planId } },
+    ]);
+
+    // The second day is empty, and says so.
+    await app.getByRole("button", { name: /Tue 13/ }).click();
+    await expect(app.getByText("Nothing planned for this day.")).toBeVisible();
+    await expect(app.getByRole("button", { name: /Tue 13/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
+  test("the plan day view renders one day, and a plain 'no active plan' answer is a message", async ({
+    page,
+  }) => {
+    const app = await openApp(
+      page,
+      "meal-plan",
+      text({
+        planId: "22222222-2222-4222-8222-222222222222",
+        planName: "Cutting week",
+        date: "2026-10-14",
+        rules: {},
+        day: {
+          dayIndex: 2,
+          date: "2026-10-14",
+          entryCount: 1,
+          loggedCount: 1,
+          unresolvedCount: 0,
+          totals: {
+            calories: 400,
+            proteinGrams: 30,
+            carbsGrams: 40,
+            fatGrams: 10,
+            fiberGrams: 2,
+          },
+          violations: [],
+          slots: [
+            {
+              slot: "LUNCH",
+              entries: [
+                {
+                  id: "e9",
+                  dayIndex: 2,
+                  date: "2026-10-14",
+                  slot: "LUNCH",
+                  kind: "Food",
+                  foodName: "Eggs",
+                  grams: 120,
+                  logged: true,
+                  nutrition: {
+                    calories: 400,
+                    proteinGrams: 30,
+                    carbsGrams: 40,
+                    fatGrams: 10,
+                    fiberGrams: 2,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    );
+
+    await expect(
+      app.getByRole("heading", { name: "Cutting week" }),
+    ).toBeVisible();
+    await expect(app.getByText("2026-10-14 · 1 of 1 logged")).toBeVisible();
+    await expect(
+      app.getByRole("button", { name: "Logged Eggs" }),
+    ).toBeDisabled();
+    await expect(app.getByRole("button", { name: /Wed 14/ })).toHaveCount(0);
+
+    const second = await page.context().newPage();
+    const none = await openApp(
+      second,
+      "meal-plan",
+      text("No active plan covers that date."),
+    );
+    await expect(none.getByRole("status")).toContainText(
+      "No active plan covers that date.",
+    );
+  });
+
   test("a hostile food name is shown as text and never runs", async ({
     page,
   }) => {

@@ -1,54 +1,49 @@
-import { getMealPlanById } from "@/data/mealPlan";
-import { notFound } from "next/navigation";
-import Link from "next/link";
-import MealPlanEditForm from "./MealPlanEditForm";
+import { notFound, redirect } from "next/navigation";
+import { getUserServer } from "@/helper/session";
+import { dateInTimeZone } from "@/lib/log-date";
+import { serverApi } from "@/lib/api.server";
+import { getMealPlanServer } from "@/lib/api/mealPlans.server";
+import PlanEditor from "@/components/planning/PlanEditor";
+import type { components } from "@/types/api.generated";
 
 export const dynamic = "force-dynamic";
 
-export default async function MealPlanEditPage({
+/** The rules hold food ids; the form shows names, read once here. */
+async function foodNames(ids: string[]): Promise<Record<string, string>> {
+  const names: Record<string, string> = {};
+  await Promise.all(
+    [...new Set(ids)].map(async (id) => {
+      try {
+        const food = await serverApi<components["schemas"]["FoodDto"]>(
+          `/api/Foods/${id}`,
+        );
+        if (food?.name) names[id] = food.name;
+      } catch {
+        // The id still shows as "Food"; the rule is kept as it is.
+      }
+    }),
+  );
+  return names;
+}
+
+export default async function EditMealPlanPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const plan = await getMealPlanById(id);
-
-  if (!plan) {
-    notFound();
-  }
-
+  const [{ id }, user] = await Promise.all([params, getUserServer()]);
+  const plan = await getMealPlanServer(id);
+  if (!plan) notFound();
+  if (!plan.canEdit) redirect(`/meal-plan/${id}`);
+  const names = await foodNames([
+    ...plan.rules.allowedFoodIds,
+    ...plan.rules.forbiddenFoodIds,
+  ]);
   return (
-    <div className="space-y-6" data-testid="meal-plan-edit-page">
-      <div>
-        <div className="flex items-center gap-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-1">
-          <Link
-            href="/meal-plan"
-            className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
-          >
-            Meal Plans
-          </Link>
-          <span aria-hidden="true" className="log-muted">
-            /
-          </span>
-          <Link
-            href={`/meal-plan/${plan.id}`}
-            className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
-          >
-            {plan.name || "Meal Plan"}
-          </Link>
-          <span aria-hidden="true" className="log-muted">
-            /
-          </span>
-          <span className="text-charcoal-blue-900 dark:text-charcoal-blue-100">
-            Edit
-          </span>
-        </div>
-        <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-          Edit Meal Plan
-        </h1>
-      </div>
-
-      <MealPlanEditForm plan={plan} />
-    </div>
+    <PlanEditor
+      plan={plan}
+      today={dateInTimeZone(user.timeZoneId || "UTC")}
+      foodNames={names}
+    />
   );
 }

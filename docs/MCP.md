@@ -42,23 +42,26 @@ The free plan allows 15 successful tool calls and resource reads per month. Prom
 
 Use `tools/list` for argument schemas. The source catalogue is [`backend/Mizan.Mcp.Server/Tools`](../backend/Mizan.Mcp.Server/Tools). Every tool has a title and is marked closed-world.
 
-**Resources**: `mizan://profile`, `mizan://goals/current`, `mizan://nutrition/today`, `mizan://streak`, and templates for `diary/{date}`, `recipes/{id}`, `workouts/{id}`, `meal-plans/{id}`, `shopping-lists/{id}`. Each needs the scope of the matching tool.
+Planning tools follow [PLANNING](PLANNING.md). `planning:read` covers `list_meal_plans`, `get_meal_plan`, `get_plan_day` (plain text, not an error, when no active plan covers the date), `list_templates`, `list_shopping_lists`, `get_shopping_list`. `planning:write` adds the plan tools (`create_meal_plan`, `update_meal_plan`, `delete_meal_plan`, `set_meal_plan_status`, `accept_meal_plan`, `decline_meal_plan`, `apply_template`), the entry tools (`add_plan_entry`, `update_plan_entry`, `remove_plan_entry`, `log_plan_entry`; they take the entry's own id), the prep session tools, `generate_shopping_list`, and the shopping list CRUD (`create_shopping_list`, `update_shopping_list`, `delete_shopping_list`, `add_shopping_list_item`, `update_shopping_list_item`, `delete_shopping_list_item`, `toggle_shopping_list_item`, `clear_checked_items`). `create_plan_for_client` needs `trainer:write`; `admin_create_template`, `admin_update_template` and `admin_delete_template` manage global templates under `admin`. JSON arguments (`rulesJson`, `entriesJson`, `prepSessionsJson`) carry the records from `Mizan.Contracts/Planning`, as `log_day` does for meals.
 
-**Prompts**: `log_my_day`, `plan_my_week`, `grocery_run`, `weekly_review`, `workout_planner`, `macro_rescue`, `recipe_from_leftovers`, `trainer_checkin`.
+**Resources**: `mizan://profile`, `mizan://goals/current`, `mizan://nutrition/today`, `mizan://streak`, `mizan://meal-plans/today`, and templates for `diary/{date}`, `recipes/{id}`, `workouts/{id}`, `meal-plans/{id}`, `shopping-lists/{id}`. Each needs the scope of the matching tool.
+
+**Prompts**: `log_my_day`, `plan_my_week`, `grocery_run`, `weekly_review`, `workout_planner`, `macro_rescue`, `recipe_from_leftovers`, `trainer_checkin`. `plan_my_week` builds the plan with `create_meal_plan` and `add_plan_entry`, passing the goal and stated limits as rules, and reads the violations back from `get_meal_plan`; `grocery_run` calls `generate_shopping_list` and reads the result with `get_shopping_list`. Neither asks the model to add up nutrition or amounts.
 
 ## Extensions
 
 **Skills** (`io.modelcontextprotocol/skills`): `skills/list` and `skills/get` serve six skills, and their files are readable as `skill://` resources. The source is `backend/Mizan.Mcp.Server/Skills`, embedded in the server. The Claude plugin carries the same files; see [Plugin](#claude-plugin).
 
-**Apps**: three small views render inside a host that supports MCP Apps, each a single self-contained HTML page served as `ui://mizan/<name>.html` (the host blocks network requests, so a page carries everything). The pages share the host bridge `Apps/_bridge.js`, inlined at each page's `<!-- mizan:bridge -->` marker when it is served. A page reads through tools via its host and holds no credential. A tool without a host that shows apps still returns its text.
+**Apps**: four small views render inside a host that supports MCP Apps, each a single self-contained HTML page served as `ui://mizan/<name>.html` (the host blocks network requests, so a page carries everything). The pages share the host bridge `Apps/_bridge.js`, inlined at each page's `<!-- mizan:bridge -->` marker when it is served. A page reads through tools via its host and holds no credential. A tool without a host that shows apps still returns its text.
 
 | Tool | App | Needs |
 | --- | --- | --- |
 | `get_nutrition_summary` | `nutrition-day` | `nutrition:read` |
 | `analyze_food_image` | `food-photo` | `ai:use` |
 | `list_body_measurements` | `body-trend` | `body:read` |
+| `get_meal_plan`, `get_plan_day` | `meal-plan` | `planning:read` |
 
-The photo review logs ticked items one at a time and stops at the first failure, so a retry never logs anything twice.
+The photo review logs ticked items one at a time and stops at the first failure, so a retry never logs anything twice. The meal plan page shows a plan's days (or one day) with entries, nutrition, totals, prep sessions and violations; its Log button calls `log_plan_entry` through the host and disables itself once the entry is logged, and its Shopping list button calls `generate_shopping_list`. Those writes need `planning:write` on the connection; the page itself needs only `planning:read`.
 
 **Tasks**: `ask_ai`, `suggest_meals`, `analyze_food_image`, and `export_profile` may run as tasks for clients that declare `io.modelcontextprotocol/tasks`. The call returns a task id at once; the client polls `tasks/get`. State lives in the API's `mcp_tasks` table, so any instance can answer a poll and a restart does not lose it. A task is visible only to the user who started it, ends once, expires after an hour, and a task nobody has touched for 15 minutes is reported as interrupted. A call the grant does not cover, or one over the monthly cap, is refused immediately rather than becoming a task. The task's tool runs in the background as the same user under the same grant, and usage is settled on success and failure.
 

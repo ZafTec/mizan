@@ -1,9 +1,5 @@
-import Loading from "@/components/Loading";
+import { DetailSkeleton } from "@/components/ui/skeletons";
 
-export default function LoadingPage() {
-  return (
-    <div className="flex justify-center items-center h-screen">
-      <Loading />
-    </div>
-  );
+export default function Loading() {
+  return <DetailSkeleton />;
 }

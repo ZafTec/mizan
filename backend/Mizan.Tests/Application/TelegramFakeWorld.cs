@@ -36,11 +36,44 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
     public string ChatReply { get; set; } = "Hello.";
     public string PerformedJson { get; set; } = "[]";
 
+    // ---- the meal plan the API holds ----
+
+    /// <summary>The user's today as the API sees it; the plan starts here and runs a week.</summary>
+    public DateOnly PlanToday { get; set; } = new(2026, 10, 22);
+    public bool HasPlan { get; set; } = true;
+    public Guid PlanId { get; } = Guid.Parse("55555555-5555-4555-8555-555555555555");
+    public string PlanName { get; set; } = "Cut week";
+    public HttpStatusCode LogEntryStatus { get; set; } = HttpStatusCode.OK;
+    public List<FakePlanEntry> PlanEntries { get; } =
+    [
+        new(Guid.Parse("a1111111-1111-4111-8111-111111111111"), "BREAKFAST", "Food", "Oats with milk", 80, null, 300, Logged: true),
+        new(Guid.Parse("a2222222-2222-4222-8222-222222222222"), "LUNCH", "Recipe", "Shiro & injera", null, 1.5m, 650, Logged: false),
+        new(Guid.Parse("a3333333-3333-4333-8333-333333333333"), "DINNER", "Food", "Chicken breast", 200, null, 330, Logged: false),
+        new(Guid.Parse("a4444444-4444-4444-8444-444444444444"), "SNACK", "Text", "Whatever is in the fridge", null, null, null, Logged: false),
+    ];
+
+    // ---- the shopping list the API holds ----
+
+    public bool HasShoppingList { get; set; } = true;
+    public Guid ShoppingListId { get; } = Guid.Parse("66666666-6666-4666-8666-666666666666");
+    public List<FakeShopItem> ShopItems { get; } = Enumerable.Range(1, 12).Select(n => new FakeShopItem(
+        Guid.Parse($"b{n:D7}-0000-4000-8000-000000000000"),
+        n <= 4 ? $"Batch item {n}" : $"Item {n}",
+        n <= 4 ? "Sunday batch" : null,
+        Grams: n % 3 == 0 ? 500 : null,
+        Amount: n % 3 == 1 ? 2 : null,
+        Unit: n % 3 == 1 ? "pcs" : null,
+        NeedsReview: n == 2,
+        Checked: false)).ToList();
+
     // ---- what the bot asked for ----
 
     public List<JsonElement> MealsPosted { get; } = [];
     public List<JsonElement> ChatPosted { get; } = [];
     public List<JsonElement> LinkPosted { get; } = [];
+    public List<string> PlanDaysRequested { get; } = [];
+    public List<(string Url, JsonElement Body)> PlanLogsPosted { get; } = [];
+    public List<(string Url, JsonElement Body)> TogglesPatched { get; } = [];
 
     public JsonElement LastSend => JsonDocument.Parse(_telegramSends.Last(s => s.Url.EndsWith("/sendMessage")).Body).RootElement.Clone();
 
@@ -157,6 +190,131 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
             return MealsStatus == HttpStatusCode.OK ? Json("{}") : Json("""{"errorCode":"bad_request","error":"No."}""", MealsStatus);
         }
 
+        if (url.Contains("api/MealPlans/day"))
+        {
+            var query = request.RequestUri!.Query;
+            PlanDaysRequested.Add(query);
+            var date = query.Length == 0 ? PlanToday : DateOnly.ParseExact(query["?date=".Length..], "yyyy-MM-dd");
+            var offset = date.DayNumber - PlanToday.DayNumber;
+            return HasPlan && offset is >= 0 and < 7
+                ? Json(PlanDayJson(date, offset))
+                : Json("""{"errorCode":"no_active_plan","error":"No active plan covers that date."}""", HttpStatusCode.NotFound);
+        }
+        if (url.Contains("api/MealPlans/") && url.EndsWith("/log"))
+        {
+            PlanLogsPosted.Add((url, JsonDocument.Parse(body).RootElement.Clone()));
+            if (LogEntryStatus != HttpStatusCode.OK)
+                return Json("""{"errorCode":"text_entry","error":"A text entry has nothing to log."}""", LogEntryStatus);
+            var entryId = Guid.Parse(url.Split('/')[^2]);
+            var index = PlanEntries.FindIndex(e => e.Id == entryId);
+            if (index < 0) return Json("""{"errorCode":"not_found","error":"No such entry."}""", HttpStatusCode.NotFound);
+            PlanEntries[index] = PlanEntries[index] with { Logged = true };
+            return Json("""{"diaryEntryIds":[],"calories":0,"date":"2026-10-22","mealType":"LUNCH"}""");
+        }
+
+        if (url.Contains("api/ShoppingLists/items/") && url.EndsWith("/toggle"))
+        {
+            TogglesPatched.Add((url, JsonDocument.Parse(body).RootElement.Clone()));
+            var itemId = Guid.Parse(url.Split('/')[^2]);
+            var index = ShopItems.FindIndex(i => i.Id == itemId);
+            if (index < 0) return new HttpResponseMessage(HttpStatusCode.NotFound);
+            ShopItems[index] = ShopItems[index] with { Checked = JsonDocument.Parse(body).RootElement.GetProperty("isChecked").GetBoolean() };
+            return new HttpResponseMessage(HttpStatusCode.NoContent);
+        }
+        if (url.Contains("api/ShoppingLists?"))
+        {
+            return Json(HasShoppingList
+                ? $$"""{"items":[{"id":"{{ShoppingListId}}","name":"Week 43","userId":"{{User}}","totalItems":{{ShopItems.Count}},"checkedItems":0,"needsReviewCount":1,"createdAt":"2026-10-20T00:00:00Z","updatedAt":"2026-10-21T00:00:00Z"}],"totalCount":1,"page":1,"pageSize":1}"""
+                : """{"items":[],"totalCount":0,"page":1,"pageSize":1}""");
+        }
+        if (url.Contains($"api/ShoppingLists/{ShoppingListId}"))
+        {
+            return HasShoppingList ? Json(ShoppingListJson()) : new HttpResponseMessage(HttpStatusCode.NotFound);
+        }
+
         return new HttpResponseMessage(HttpStatusCode.NotFound);
     }
+
+    // ---- the API's answers, built from the state above the way the read model would ----
+
+    private static readonly JsonSerializerOptions Web = new(JsonSerializerDefaults.Web);
+
+    private string PlanDayJson(DateOnly date, int dayIndex)
+    {
+        var slots = PlanEntries.GroupBy(e => e.Slot).Select(g => new
+        {
+            slot = g.Key,
+            entries = g.Select(e => new
+            {
+                id = e.Id,
+                dayIndex,
+                date,
+                slot = e.Slot,
+                kind = e.Kind,
+                recipeTitle = e.Kind == "Recipe" ? e.Name : null,
+                foodName = e.Kind == "Food" ? e.Name : null,
+                text = e.Kind == "Text" ? e.Name : null,
+                grams = e.Grams,
+                servings = e.Servings,
+                nutrition = e.Calories is { } kcal ? new { calories = kcal, proteinGrams = 10m, carbsGrams = 20m, fatGrams = 5m, fiberGrams = 1m } : null,
+                logged = e.Logged,
+            }),
+        });
+
+        return JsonSerializer.Serialize(new
+        {
+            planId = PlanId,
+            planName = PlanName,
+            date,
+            day = new
+            {
+                dayIndex,
+                date,
+                slots,
+                totals = new { calories = PlanEntries.Sum(e => e.Calories ?? 0), proteinGrams = 110m, carbsGrams = 150m, fatGrams = 40m, fiberGrams = 20m },
+                unresolvedCount = 1,
+                entryCount = PlanEntries.Count,
+                loggedCount = PlanEntries.Count(e => e.Logged),
+                violations = new[] { new { dayIndex, slot = (string?)null, rule = "MaxCarbs", message = "Day 1 has 150 g carbs, over the 120 g limit." } },
+            },
+            rules = new
+            {
+                macroMode = "Custom",
+                targetCalories = 1800m,
+                targetProtein = 140m,
+                maxCarbs = 120m,
+                eatingWindowStart = "08:00:00",
+                eatingWindowEnd = "20:00:00",
+                prepStyle = "Batch",
+            },
+        }, Web);
+    }
+
+    private string ShoppingListJson() => JsonSerializer.Serialize(new
+    {
+        id = ShoppingListId,
+        name = "Week 43",
+        userId = User,
+        items = ShopItems.Select((i, n) => new
+        {
+            id = i.Id,
+            itemName = i.Name,
+            amount = i.Amount,
+            unit = i.Unit,
+            grams = i.Grams,
+            needsReview = i.NeedsReview,
+            prepSessionId = i.Session is null ? (Guid?)null : Guid.Parse("77777777-7777-4777-8777-777777777777"),
+            prepSessionTitle = i.Session,
+            sortOrder = n,
+            isChecked = i.Checked,
+        }),
+        totalItems = ShopItems.Count,
+        checkedItems = ShopItems.Count(i => i.Checked),
+        needsReviewCount = ShopItems.Count(i => i.NeedsReview),
+        canEdit = true,
+    }, Web);
 }
+
+internal sealed record FakePlanEntry(Guid Id, string Slot, string Kind, string Name, decimal? Grams, decimal? Servings, decimal? Calories, bool Logged);
+
+internal sealed record FakeShopItem(Guid Id, string Name, string? Session, decimal? Grams, decimal? Amount, string? Unit, bool NeedsReview, bool Checked);

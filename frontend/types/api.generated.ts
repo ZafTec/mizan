@@ -4446,12 +4446,9 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    StartDate?: string;
-                    EndDate?: string;
+                    Status?: string;
                     Page?: number;
                     PageSize?: number;
-                    SortBy?: string;
-                    SortOrder?: string;
                 };
                 header?: never;
                 path?: never;
@@ -4465,9 +4462,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["MealPlanDtoPagedResult"];
-                        "application/json": components["schemas"]["MealPlanDtoPagedResult"];
-                        "text/json": components["schemas"]["MealPlanDtoPagedResult"];
+                        "text/plain": components["schemas"]["MealPlanSummaryDtoPagedResult"];
+                        "application/json": components["schemas"]["MealPlanSummaryDtoPagedResult"];
+                        "text/json": components["schemas"]["MealPlanSummaryDtoPagedResult"];
                     };
                 };
             };
@@ -4494,9 +4491,217 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["CreateMealPlanResult"];
-                        "application/json": components["schemas"]["CreateMealPlanResult"];
-                        "text/json": components["schemas"]["CreateMealPlanResult"];
+                        "text/plain": components["schemas"]["MealPlanCreatedResult"];
+                        "application/json": components["schemas"]["MealPlanCreatedResult"];
+                        "text/json": components["schemas"]["MealPlanCreatedResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/MealPlans/day": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    date?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PlanDayViewDto"];
+                        "application/json": components["schemas"]["PlanDayViewDto"];
+                        "text/json": components["schemas"]["PlanDayViewDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/MealPlans/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TemplateDto"][];
+                        "application/json": components["schemas"]["TemplateDto"][];
+                        "text/json": components["schemas"]["TemplateDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateTemplateCommand"];
+                    "text/json": components["schemas"]["CreateTemplateCommand"];
+                    "application/*+json": components["schemas"]["CreateTemplateCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MealPlanCreatedResult"];
+                        "application/json": components["schemas"]["MealPlanCreatedResult"];
+                        "text/json": components["schemas"]["MealPlanCreatedResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/MealPlans/templates/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateTemplateRequest"];
+                    "text/json": components["schemas"]["UpdateTemplateRequest"];
+                    "application/*+json": components["schemas"]["UpdateTemplateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/MealPlans/templates/{id}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ApplyTemplateRequest"];
+                    "text/json": components["schemas"]["ApplyTemplateRequest"];
+                    "application/*+json": components["schemas"]["ApplyTemplateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MealPlanCreatedResult"];
+                        "application/json": components["schemas"]["MealPlanCreatedResult"];
+                        "text/json": components["schemas"]["MealPlanCreatedResult"];
                     };
                 };
             };
@@ -4560,11 +4765,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "text/plain": components["schemas"]["UpdateMealPlanResult"];
-                        "application/json": components["schemas"]["UpdateMealPlanResult"];
-                        "text/json": components["schemas"]["UpdateMealPlanResult"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -4585,11 +4786,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "text/plain": components["schemas"]["DeleteMealPlanResult"];
-                        "application/json": components["schemas"]["DeleteMealPlanResult"];
-                        "text/json": components["schemas"]["DeleteMealPlanResult"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -4598,7 +4795,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/MealPlans/{id}/recipes": {
+    "/api/MealPlans/{id}/status": {
         parameters: {
             query?: never;
             header?: never;
@@ -4618,9 +4815,120 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["AddRecipeToMealPlanRequest"];
-                    "text/json": components["schemas"]["AddRecipeToMealPlanRequest"];
-                    "application/*+json": components["schemas"]["AddRecipeToMealPlanRequest"];
+                    "application/json": components["schemas"]["SetMealPlanStatusRequest"];
+                    "text/json": components["schemas"]["SetMealPlanStatusRequest"];
+                    "application/*+json": components["schemas"]["SetMealPlanStatusRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/MealPlans/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/MealPlans/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/MealPlans/{id}/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PlanEntryRequest"];
+                    "text/json": components["schemas"]["PlanEntryRequest"];
+                    "application/*+json": components["schemas"]["PlanEntryRequest"];
                 };
             };
             responses: {
@@ -4630,9 +4938,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["AddRecipeToMealPlanResult"];
-                        "application/json": components["schemas"]["AddRecipeToMealPlanResult"];
-                        "text/json": components["schemas"]["AddRecipeToMealPlanResult"];
+                        "text/plain": components["schemas"]["PlanEntryCreatedResult"];
+                        "application/json": components["schemas"]["PlanEntryCreatedResult"];
+                        "text/json": components["schemas"]["PlanEntryCreatedResult"];
                     };
                 };
             };
@@ -4643,7 +4951,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/MealPlans/{id}/recipes/{recipeId}": {
+    "/api/MealPlans/{id}/entries/{entryId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -4657,15 +4965,15 @@ export interface paths {
                 header?: never;
                 path: {
                     id: string;
-                    recipeId: string;
+                    entryId: string;
                 };
                 cookie?: never;
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["UpdateMealPlanRecipeRequest"];
-                    "text/json": components["schemas"]["UpdateMealPlanRecipeRequest"];
-                    "application/*+json": components["schemas"]["UpdateMealPlanRecipeRequest"];
+                    "application/json": components["schemas"]["PlanEntryRequest"];
+                    "text/json": components["schemas"]["PlanEntryRequest"];
+                    "application/*+json": components["schemas"]["PlanEntryRequest"];
                 };
             };
             responses: {
@@ -4674,11 +4982,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "text/plain": components["schemas"]["UpdateMealPlanRecipeResult"];
-                        "application/json": components["schemas"]["UpdateMealPlanRecipeResult"];
-                        "text/json": components["schemas"]["UpdateMealPlanRecipeResult"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -4689,7 +4993,7 @@ export interface paths {
                 header?: never;
                 path: {
                     id: string;
-                    recipeId: string;
+                    entryId: string;
                 };
                 cookie?: never;
             };
@@ -4700,14 +5004,208 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/MealPlans/{id}/entries/{entryId}/log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    entryId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["LogPlanEntryRequest"];
+                    "text/json": components["schemas"]["LogPlanEntryRequest"];
+                    "application/*+json": components["schemas"]["LogPlanEntryRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
                     content: {
-                        "text/plain": components["schemas"]["RemoveRecipeFromMealPlanResult"];
-                        "application/json": components["schemas"]["RemoveRecipeFromMealPlanResult"];
-                        "text/json": components["schemas"]["RemoveRecipeFromMealPlanResult"];
+                        "text/plain": components["schemas"]["LogPlanEntryResult"];
+                        "application/json": components["schemas"]["LogPlanEntryResult"];
+                        "text/json": components["schemas"]["LogPlanEntryResult"];
                     };
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/MealPlans/{id}/prep-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PrepSessionRequest"];
+                    "text/json": components["schemas"]["PrepSessionRequest"];
+                    "application/*+json": components["schemas"]["PrepSessionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PrepSessionCreatedResult"];
+                        "application/json": components["schemas"]["PrepSessionCreatedResult"];
+                        "text/json": components["schemas"]["PrepSessionCreatedResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/MealPlans/{id}/prep-sessions/{sessionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    sessionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PrepSessionRequest"];
+                    "text/json": components["schemas"]["PrepSessionRequest"];
+                    "application/*+json": components["schemas"]["PrepSessionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    sessionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/MealPlans/{id}/shopping-list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["GenerateShoppingListRequest"];
+                    "text/json": components["schemas"]["GenerateShoppingListRequest"];
+                    "application/*+json": components["schemas"]["GenerateShoppingListRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GenerateShoppingListResult"];
+                        "application/json": components["schemas"]["GenerateShoppingListResult"];
+                        "text/json": components["schemas"]["GenerateShoppingListResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -5863,45 +6361,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/ShoppingLists/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ShoppingListDto"];
-                        "application/json": components["schemas"]["ShoppingListDto"];
-                        "text/json": components["schemas"]["ShoppingListDto"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/ShoppingLists": {
         parameters: {
             query?: never;
@@ -5914,8 +6373,6 @@ export interface paths {
                 query?: {
                     Page?: number;
                     PageSize?: number;
-                    SortBy?: string;
-                    SortOrder?: string;
                 };
                 header?: never;
                 path?: never;
@@ -5971,6 +6428,89 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ShoppingLists/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ShoppingListDetailDto"];
+                        "application/json": components["schemas"]["ShoppingListDetailDto"];
+                        "text/json": components["schemas"]["ShoppingListDetailDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateShoppingListRequest"];
+                    "text/json": components["schemas"]["UpdateShoppingListRequest"];
+                    "application/*+json": components["schemas"]["UpdateShoppingListRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ShoppingLists/{id}/items": {
         parameters: {
             query?: never;
@@ -6016,6 +6556,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ShoppingLists/items/{itemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    itemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateShoppingListItemRequest"];
+                    "text/json": components["schemas"]["UpdateShoppingListItemRequest"];
+                    "application/*+json": components["schemas"]["UpdateShoppingListItemRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    itemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ShoppingLists/items/{itemId}/toggle": {
         parameters: {
             query?: never;
@@ -6040,9 +6640,9 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["ToggleItemRequest"];
-                    "text/json": components["schemas"]["ToggleItemRequest"];
-                    "application/*+json": components["schemas"]["ToggleItemRequest"];
+                    "application/json": components["schemas"]["ToggleShoppingListItemRequest"];
+                    "text/json": components["schemas"]["ToggleShoppingListItemRequest"];
+                    "application/*+json": components["schemas"]["ToggleShoppingListItemRequest"];
                 };
             };
             responses: {
@@ -6055,6 +6655,45 @@ export interface paths {
                 };
             };
         };
+        trace?: never;
+    };
+    "/api/ShoppingLists/{id}/clear-checked": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ClearCheckedResult"];
+                        "application/json": components["schemas"]["ClearCheckedResult"];
+                        "text/json": components["schemas"]["ClearCheckedResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/Social/profile": {
@@ -7668,6 +8307,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Trainers/clients/{clientId}/meal-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    clientId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateMealPlanRequest"];
+                    "text/json": components["schemas"]["CreateMealPlanRequest"];
+                    "application/*+json": components["schemas"]["CreateMealPlanRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MealPlanCreatedResult"];
+                        "application/json": components["schemas"]["MealPlanCreatedResult"];
+                        "text/json": components["schemas"]["MealPlanCreatedResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Trainers/clients/{clientId}/workouts": {
         parameters: {
             query?: never;
@@ -8364,26 +9048,18 @@ export interface components {
             /** Format: date-time */
             earnedAt?: string | null;
         };
-        AddRecipeToMealPlanRequest: {
-            /** Format: uuid */
-            recipeId: string;
-            /** Format: date */
-            date: string;
-            mealType: string;
-            /** Format: double */
-            servings: number;
-        };
-        AddRecipeToMealPlanResult: {
-            /** Format: uuid */
-            id: string;
-            success: boolean;
-        };
         AddShoppingListItemRequest: {
             itemName: string;
             /** Format: double */
             amount?: number | null;
             unit?: string | null;
             category?: string | null;
+            /** Format: double */
+            grams?: number | null;
+            /** Format: uuid */
+            foodId?: string | null;
+            /** Format: uuid */
+            prepSessionId?: string | null;
         };
         AdminBillingCatalogDto: {
             plans: components["schemas"]["AdminBillingPlanDto"][];
@@ -8794,6 +9470,13 @@ export interface components {
         AnalyzeFoodTextRequest: {
             description?: string | null;
         };
+        ApplyTemplateRequest: {
+            /** Format: date */
+            startDate: string;
+            /** Format: uuid */
+            householdId?: string | null;
+            name?: string | null;
+        };
         AskClientRequest: {
             /** Format: uuid */
             threadId?: string | null;
@@ -8968,6 +9651,10 @@ export interface components {
             content: string;
             /** Format: date-time */
             sentAt: string;
+        };
+        ClearCheckedResult: {
+            /** Format: int32 */
+            removed: number;
         };
         ClientNutritionDto: {
             /** Format: uuid */
@@ -9176,20 +9863,29 @@ export interface components {
         };
         CreateMealPlanCommand: {
             name?: string | null;
+            description?: string | null;
             /** Format: date */
             startDate: string;
-            /** Format: date */
-            endDate: string;
+            /** Format: int32 */
+            durationDays: number;
             /** Format: uuid */
             householdId?: string | null;
-            recipes: components["schemas"]["MealPlanRecipeDto"][];
+            rules?: components["schemas"]["PlanRulesDto"];
+            entries: components["schemas"]["PlanEntryRequest"][];
+            prepSessions: components["schemas"]["PrepSessionRequest"][];
         };
-        CreateMealPlanResult: {
-            /** Format: uuid */
-            id: string;
+        CreateMealPlanRequest: {
             name?: string | null;
+            description?: string | null;
+            /** Format: date */
+            startDate?: string | null;
             /** Format: int32 */
-            recipeCount: number;
+            durationDays: number;
+            /** Format: uuid */
+            householdId?: string | null;
+            rules?: components["schemas"]["PlanRulesDto"];
+            entries: components["schemas"]["PlanEntryRequest"][];
+            prepSessions: components["schemas"]["PrepSessionRequest"][];
         };
         CreateRecipeIngredientDto: {
             /** Format: uuid */
@@ -9203,6 +9899,16 @@ export interface components {
             name: string;
             /** Format: uuid */
             householdId?: string | null;
+        };
+        CreateTemplateCommand: {
+            name: string;
+            description?: string | null;
+            /** Format: int32 */
+            durationDays: number;
+            global: boolean;
+            rules?: components["schemas"]["PlanRulesDto"];
+            entries: components["schemas"]["PlanEntryRequest"][];
+            prepSessions: components["schemas"]["PrepSessionRequest"][];
         };
         CreateUserGoalCommand: {
             goalType?: string | null;
@@ -9317,10 +10023,6 @@ export interface components {
             version: string;
             deletePlans: boolean;
         };
-        DeleteMealPlanResult: {
-            success: boolean;
-            message?: string | null;
-        };
         DeleteRecipeResult: {
             success: boolean;
             message?: string | null;
@@ -9340,6 +10042,18 @@ export interface components {
         };
         EndRelationshipRequest: {
             reason?: string | null;
+        };
+        EntryNutritionDto: {
+            /** Format: double */
+            calories: number;
+            /** Format: double */
+            proteinGrams: number;
+            /** Format: double */
+            carbsGrams: number;
+            /** Format: double */
+            fatGrams: number;
+            /** Format: double */
+            fiberGrams: number;
         };
         EvalRunQueued: {
             /** Format: uuid */
@@ -9549,6 +10263,19 @@ export interface components {
             /** Format: date-time */
             loggedAt: string;
         };
+        GenerateShoppingListRequest: {
+            name?: string | null;
+            /** Format: uuid */
+            replaceListId?: string | null;
+        };
+        GenerateShoppingListResult: {
+            /** Format: uuid */
+            listId: string;
+            /** Format: int32 */
+            itemCount: number;
+            /** Format: int32 */
+            needsReviewCount: number;
+        };
         GetAchievementAnalyticsResult: {
             /** Format: int32 */
             totalAchievements: number;
@@ -9709,7 +10436,7 @@ export interface components {
             /** Format: int32 */
             mealPlanCount: number;
             /** Format: int32 */
-            mealPlanRecipeCount: number;
+            mealPlanEntryCount: number;
             /** Format: int32 */
             pendingInvitationCount: number;
             version: string;
@@ -9853,6 +10580,28 @@ export interface components {
             rightThighCm?: number | null;
             notes?: string | null;
         };
+        LogPlanEntryRequest: {
+            /** Format: date */
+            date?: string | null;
+            mealType?: string | null;
+        };
+        LogPlanEntryResult: {
+            diaryEntryIds: string[];
+            /** Format: double */
+            calories: number;
+            /** Format: double */
+            proteinGrams: number;
+            /** Format: double */
+            carbsGrams: number;
+            /** Format: double */
+            fatGrams: number;
+            /** Format: date */
+            date: string;
+            mealType: string;
+            message: string;
+            streak?: components["schemas"]["StreakUpdate"];
+            unlockedAchievements: components["schemas"]["UnlockedAchievement"][];
+        };
         LogWorkoutCommand: {
             name?: string | null;
             /** Format: date */
@@ -9936,38 +10685,80 @@ export interface components {
             clientUsage: components["schemas"]["ClientUsageDto"][];
             dailyUsage: components["schemas"]["DailyUsageDto"][];
         };
+        MealPlanCreatedResult: {
+            /** Format: uuid */
+            id: string;
+            name?: string | null;
+            status: string;
+            /** Format: int32 */
+            entryCount: number;
+        };
         MealPlanDetailDto: {
             /** Format: uuid */
             id: string;
             name?: string | null;
+            description?: string | null;
+            kind: string;
+            status: string;
             /** Format: date */
-            startDate: string;
+            startDate?: string | null;
             /** Format: date */
-            endDate: string;
-            recipes: components["schemas"]["MealPlanRecipeDetailDto"][];
-            nutritionSummary?: components["schemas"]["MealPlanNutritionSummaryDto"];
+            endDate?: string | null;
+            /** Format: int32 */
+            durationDays: number;
+            /** Format: uuid */
+            userId?: string | null;
+            /** Format: uuid */
+            householdId?: string | null;
+            /** Format: uuid */
+            authoredByUserId?: string | null;
+            authoredByName?: string | null;
+            rules: components["schemas"]["PlanRulesDto"];
+            days: components["schemas"]["PlanDayDto"][];
+            prepSessions: components["schemas"]["PrepSessionDto"][];
+            violations: components["schemas"]["PlanViolationDto"][];
+            /** Format: int32 */
+            entryCount: number;
+            /** Format: int32 */
+            loggedCount: number;
+            canEdit: boolean;
+            /** Format: double */
+            weeklyCost?: number | null;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
         };
-        MealPlanDto: {
+        MealPlanSummaryDto: {
             /** Format: uuid */
             id: string;
             name?: string | null;
+            description?: string | null;
+            kind: string;
+            status: string;
             /** Format: date */
-            startDate: string;
+            startDate?: string | null;
             /** Format: date */
-            endDate: string;
+            endDate?: string | null;
             /** Format: int32 */
-            recipeCount: number;
+            durationDays: number;
+            /** Format: uuid */
+            userId?: string | null;
+            /** Format: uuid */
+            householdId?: string | null;
+            /** Format: uuid */
+            authoredByUserId?: string | null;
+            authoredByName?: string | null;
+            /** Format: int32 */
+            entryCount: number;
+            hasRules: boolean;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
         };
-        MealPlanDtoPagedResult: {
-            items: components["schemas"]["MealPlanDto"][];
+        MealPlanSummaryDtoPagedResult: {
+            items: components["schemas"]["MealPlanSummaryDto"][];
             /** Format: int32 */
             totalCount: number;
             /** Format: int32 */
@@ -9976,44 +10767,6 @@ export interface components {
             pageSize: number;
             /** Format: int32 */
             readonly totalPages: number;
-        };
-        MealPlanNutritionSummaryDto: {
-            /** Format: double */
-            totalCalories: number;
-            /** Format: double */
-            totalProteinGrams: number;
-            /** Format: double */
-            totalCarbsGrams: number;
-            /** Format: double */
-            totalFatGrams: number;
-            /** Format: int32 */
-            daysCount: number;
-            /** Format: double */
-            avgCaloriesPerDay: number;
-        };
-        MealPlanRecipeDetailDto: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            recipeId: string;
-            recipeTitle: string;
-            recipeImageUrl?: string | null;
-            /** Format: date */
-            date: string;
-            mealType: string;
-            /** Format: double */
-            servings: number;
-            /** Format: double */
-            caloriesPerServing?: number | null;
-        };
-        MealPlanRecipeDto: {
-            /** Format: uuid */
-            recipeId: string;
-            /** Format: date */
-            date: string;
-            mealType: string;
-            /** Format: double */
-            servings: number;
         };
         MealSuggestion: {
             title: string;
@@ -10117,6 +10870,7 @@ export interface components {
             canViewWorkouts: boolean;
             canViewMeasurements: boolean;
             canMessage: boolean;
+            canPlanMeals: boolean;
             /** Format: date-time */
             startedAt: string;
             /** Format: date-time */
@@ -10257,6 +11011,122 @@ export interface components {
             /** Format: uuid */
             planId: string;
         };
+        PlanDayDto: {
+            /** Format: int32 */
+            dayIndex: number;
+            /** Format: date */
+            date?: string | null;
+            slots: components["schemas"]["PlanSlotDto"][];
+            totals: components["schemas"]["EntryNutritionDto"];
+            /** Format: int32 */
+            unresolvedCount: number;
+            /** Format: int32 */
+            entryCount: number;
+            /** Format: int32 */
+            loggedCount: number;
+            violations: components["schemas"]["PlanViolationDto"][];
+            /** Format: double */
+            cost?: number | null;
+        };
+        PlanDayViewDto: {
+            /** Format: uuid */
+            planId: string;
+            planName?: string | null;
+            /** Format: date */
+            date: string;
+            day: components["schemas"]["PlanDayDto"];
+            rules: components["schemas"]["PlanRulesDto"];
+        };
+        PlanEntryCreatedResult: {
+            /** Format: uuid */
+            id: string;
+        };
+        PlanEntryDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            dayIndex: number;
+            /** Format: date */
+            date?: string | null;
+            slot: string;
+            kind: string;
+            /** Format: uuid */
+            recipeId?: string | null;
+            recipeTitle?: string | null;
+            recipeImageUrl?: string | null;
+            /** Format: double */
+            servings?: number | null;
+            /** Format: uuid */
+            foodId?: string | null;
+            foodName?: string | null;
+            /** Format: double */
+            grams?: number | null;
+            text?: string | null;
+            notes?: string | null;
+            /** Format: int32 */
+            sortOrder: number;
+            /** Format: uuid */
+            prepSessionId?: string | null;
+            nutrition?: components["schemas"]["EntryNutritionDto"];
+            logged: boolean;
+            /** Format: double */
+            cost?: number | null;
+        };
+        PlanEntryRequest: {
+            /** Format: int32 */
+            dayIndex: number;
+            slot: string;
+            kind: string;
+            /** Format: uuid */
+            recipeId?: string | null;
+            /** Format: double */
+            servings?: number | null;
+            /** Format: uuid */
+            foodId?: string | null;
+            /** Format: double */
+            grams?: number | null;
+            text?: string | null;
+            notes?: string | null;
+            /** Format: int32 */
+            sortOrder: number;
+            /** Format: uuid */
+            prepSessionId?: string | null;
+            /** Format: int32 */
+            prepSessionIndex?: number | null;
+        };
+        PlanRulesDto: {
+            macroMode: string;
+            /** Format: double */
+            targetCalories?: number | null;
+            /** Format: double */
+            targetProtein?: number | null;
+            /** Format: double */
+            maxCarbs?: number | null;
+            /** Format: double */
+            targetFat?: number | null;
+            /** Format: time */
+            eatingWindowStart?: string | null;
+            /** Format: time */
+            eatingWindowEnd?: string | null;
+            allowedFoodIds: string[];
+            forbiddenFoodIds: string[];
+            /** Format: double */
+            weeklyBudget?: number | null;
+            currency?: string | null;
+            prepStyle: string;
+            batchDays: number[];
+        };
+        PlanSlotDto: {
+            slot: string;
+            entries: components["schemas"]["PlanEntryDto"][];
+        };
+        PlanViolationDto: {
+            /** Format: int32 */
+            dayIndex?: number | null;
+            slot?: string | null;
+            rule: string;
+            message: string;
+        };
         PlannedSetDto: {
             /** Format: int32 */
             setNumber: number;
@@ -10268,6 +11138,28 @@ export interface components {
             targetSeconds?: number | null;
             /** Format: double */
             targetDistanceMeters?: number | null;
+        };
+        PrepSessionCreatedResult: {
+            /** Format: uuid */
+            id: string;
+        };
+        PrepSessionDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            dayIndex: number;
+            /** Format: date */
+            date?: string | null;
+            title: string;
+            notes?: string | null;
+            /** Format: int32 */
+            entryCount: number;
+        };
+        PrepSessionRequest: {
+            /** Format: int32 */
+            dayIndex: number;
+            title: string;
+            notes?: string | null;
         };
         PromoteMealToRecipeCommand: {
             /** Format: date */
@@ -10441,10 +11333,6 @@ export interface components {
             success: boolean;
             message?: string | null;
         };
-        RemoveRecipeFromMealPlanResult: {
-            success: boolean;
-            message?: string | null;
-        };
         ReplaceBillingPlanPriceCommand: {
             /** Format: uuid */
             id: string;
@@ -10573,10 +11461,13 @@ export interface components {
             /** Format: uuid */
             activeHouseholdId?: string | null;
         };
+        SetMealPlanStatusRequest: {
+            status: string;
+        };
         SetModelRequest: {
             modelUrl?: string | null;
         };
-        ShoppingListDto: {
+        ShoppingListDetailDto: {
             /** Format: uuid */
             id: string;
             name?: string | null;
@@ -10584,26 +11475,67 @@ export interface components {
             userId: string;
             /** Format: uuid */
             householdId?: string | null;
+            /** Format: uuid */
+            mealPlanId?: string | null;
+            mealPlanName?: string | null;
+            /** Format: date-time */
+            generatedAt?: string | null;
             items: components["schemas"]["ShoppingListItemDto"][];
+            /** Format: int32 */
+            totalItems: number;
+            /** Format: int32 */
+            checkedItems: number;
+            /** Format: int32 */
+            needsReviewCount: number;
+            canEdit: boolean;
+            /** Format: double */
+            totalCost?: number | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         ShoppingListItemDto: {
             /** Format: uuid */
             id: string;
+            /** Format: uuid */
+            foodId?: string | null;
+            foodName?: string | null;
             itemName: string;
             /** Format: double */
             amount?: number | null;
             unit?: string | null;
+            /** Format: double */
+            grams?: number | null;
             category?: string | null;
+            needsReview: boolean;
+            /** Format: uuid */
+            prepSessionId?: string | null;
+            prepSessionTitle?: string | null;
+            /** Format: int32 */
+            sortOrder: number;
             isChecked: boolean;
+            /** Format: double */
+            cost?: number | null;
         };
         ShoppingListSummaryDto: {
             /** Format: uuid */
             id: string;
             name?: string | null;
+            /** Format: uuid */
+            userId: string;
+            /** Format: uuid */
+            householdId?: string | null;
+            /** Format: uuid */
+            mealPlanId?: string | null;
+            /** Format: date-time */
+            generatedAt?: string | null;
             /** Format: int32 */
             totalItems: number;
             /** Format: int32 */
             checkedItems: number;
+            /** Format: int32 */
+            needsReviewCount: number;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -10754,11 +11686,29 @@ export interface components {
             userId: string;
             name?: string | null;
         };
+        TemplateDto: {
+            /** Format: uuid */
+            id: string;
+            name?: string | null;
+            description?: string | null;
+            /** Format: int32 */
+            durationDays: number;
+            global: boolean;
+            /** Format: uuid */
+            ownerId?: string | null;
+            /** Format: int32 */
+            entryCount: number;
+            rules: components["schemas"]["PlanRulesDto"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         ToggleFavoriteRecipeResult: {
             isFavorited: boolean;
             message: string;
         };
-        ToggleItemRequest: {
+        ToggleShoppingListItemRequest: {
             isChecked: boolean;
         };
         TokenRequest: {
@@ -10786,6 +11736,7 @@ export interface components {
             canViewNutrition: boolean;
             canViewWorkouts: boolean;
             canMessage: boolean;
+            canPlanMeals: boolean;
             /** Format: date-time */
             startedAt: string;
             /** Format: date-time */
@@ -10946,33 +11897,21 @@ export interface components {
             canViewMeasurements?: boolean | null;
             canMessage?: boolean | null;
             end: boolean;
+            canPlanMeals?: boolean | null;
         };
         UpdateMcpConnectionBody: {
             scopes?: string[] | null;
             householdMode?: string | null;
             householdIds?: string[] | null;
         };
-        UpdateMealPlanRecipeRequest: {
-            /** Format: date */
-            date: string;
-            mealType: string;
-            /** Format: double */
-            servings: number;
-        };
-        UpdateMealPlanRecipeResult: {
-            success: boolean;
-            message?: string | null;
-        };
         UpdateMealPlanRequest: {
-            name: string;
+            name?: string | null;
+            description?: string | null;
             /** Format: date */
-            startDate: string;
-            /** Format: date */
-            endDate: string;
-        };
-        UpdateMealPlanResult: {
-            success: boolean;
-            message?: string | null;
+            startDate?: string | null;
+            /** Format: int32 */
+            durationDays: number;
+            rules?: components["schemas"]["PlanRulesDto"];
         };
         UpdateRecipeCommand: {
             /** Format: uuid */
@@ -10993,6 +11932,29 @@ export interface components {
         UpdateRecipeResult: {
             success: boolean;
             message?: string | null;
+        };
+        UpdateShoppingListItemRequest: {
+            itemName?: string | null;
+            /** Format: double */
+            amount?: number | null;
+            unit?: string | null;
+            /** Format: double */
+            grams?: number | null;
+            category?: string | null;
+            isChecked?: boolean | null;
+            needsReview?: boolean | null;
+            /** Format: int32 */
+            sortOrder?: number | null;
+        };
+        UpdateShoppingListRequest: {
+            name: string;
+        };
+        UpdateTemplateRequest: {
+            name: string;
+            description?: string | null;
+            /** Format: int32 */
+            durationDays: number;
+            rules?: components["schemas"]["PlanRulesDto"];
         };
         UpdateUserRequest: {
             name?: string | null;

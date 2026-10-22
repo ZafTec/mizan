@@ -11,6 +11,9 @@ public class TrainerClientRelationship
     public bool CanViewMeasurements { get; set; }
     public bool CanMessage { get; set; } = true;
     public bool CanAwardAchievements { get; set; }
+
+    /// <summary>The coach may draft meal plans for the client. The client decides, like the other grants.</summary>
+    public bool CanPlanMeals { get; set; }
     public DateTime? StartedAt { get; set; }
     public DateTime? EndedAt { get; set; }
     public DateTime CreatedAt { get; set; }

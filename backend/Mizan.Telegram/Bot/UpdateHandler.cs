@@ -6,6 +6,7 @@ using Mizan.Contracts.Ai;
 using Mizan.Contracts.Meals;
 using Mizan.Contracts.Measurements;
 using Mizan.Contracts.Nutrition;
+using Mizan.Contracts.Planning;
 using Mizan.Domain.Nutrition;
 using Mizan.Telegram.Backend;
 
@@ -178,6 +179,14 @@ public sealed class UpdateHandler
 
             case "/weight":
                 await OnWeightAsync(chatId, user, argument, ct);
+                return;
+
+            case "/plan":
+                await OnPlanAsync(chatId, user, argument, ct);
+                return;
+
+            case "/shop":
+                await OnShopAsync(chatId, user, page: 0, ct);
                 return;
 
             case "/unlink":
@@ -391,6 +400,44 @@ public sealed class UpdateHandler
             return;
         }
 
+        // The plan and shopping cards. Each button carries one id, because two
+        // guids do not fit in 64 bytes; the rest is read back from the API.
+        if (data.StartsWith("pe:", StringComparison.Ordinal))
+        {
+            await LogPlanEntryAsync(chatId, user, data["pe:".Length..], ct);
+            return;
+        }
+
+        if (data.StartsWith("pd:", StringComparison.Ordinal))
+        {
+            if (!TryParseDate(data["pd:".Length..], out var day))
+            {
+                await SendStaleCardAsync(chatId, "/plan", ct);
+                return;
+            }
+
+            await SendPlanDayAsync(chatId, user, day, prefix: null, ct);
+            return;
+        }
+
+        if (data.StartsWith("sh:", StringComparison.Ordinal))
+        {
+            await ToggleShoppingItemAsync(chatId, user, data["sh:".Length..], ct);
+            return;
+        }
+
+        if (data.StartsWith("sp:", StringComparison.Ordinal))
+        {
+            if (!int.TryParse(data["sp:".Length..], NumberStyles.None, CultureInfo.InvariantCulture, out var page))
+            {
+                await SendStaleCardAsync(chatId, "/shop", ct);
+                return;
+            }
+
+            await OnShopAsync(chatId, user, page, ct);
+            return;
+        }
+
         if (!data.StartsWith("log:", StringComparison.Ordinal))
         {
             return;
@@ -542,6 +589,415 @@ public sealed class UpdateHandler
         return true;
     }
 
+    // ---- Meal plan --------------------------------------------------------
+
+    /// <summary>
+    /// /plan, /plan tomorrow, /plan 2026-10-23. Without a date the API picks the
+    /// user's today in their own time zone; the bot never works that out itself.
+    /// </summary>
+    private async Task OnPlanAsync(long chatId, ResolvedUser user, string argument, CancellationToken ct)
+    {
+        DateOnly? date = null;
+
+        if (argument.Equals("tomorrow", StringComparison.OrdinalIgnoreCase))
+        {
+            date = (await TodayAsync(user, ct)).AddDays(1);
+        }
+        else if (argument.Length > 0)
+        {
+            if (!TryParseDate(argument, out var parsed))
+            {
+                await _telegram.SendMessageAsync(
+                    chatId,
+                    "Send it as <code>/plan</code>, <code>/plan tomorrow</code> or <code>/plan 2026-10-23</code>.",
+                    ct: ct);
+                return;
+            }
+
+            date = parsed;
+        }
+
+        await SendPlanDayAsync(chatId, user, date, prefix: null, ct);
+    }
+
+    private async Task SendPlanDayAsync(
+        long chatId, ResolvedUser user, DateOnly? date, string? prefix, CancellationToken ct)
+    {
+        var result = await GetPlanDayAsync(user, date, ct);
+
+        if (result.Status == HttpStatusCode.NotFound)
+        {
+            await _telegram.SendMessageAsync(
+                chatId,
+                (prefix ?? string.Empty)
+                + $"No active plan covers {(date is { } d ? Escape(DayLabel(d)) : "today")}. "
+                + $"Set one up at {_options.PublicUrl.TrimEnd('/')}/meal-plan.",
+                ct: ct);
+            return;
+        }
+
+        if (!result.Ok || result.Value is null)
+        {
+            await _telegram.SendMessageAsync(chatId, (prefix ?? string.Empty) + Escape(ExplainFailure(result)), ct: ct);
+            return;
+        }
+
+        await _telegram.SendMessageAsync(
+            chatId, (prefix ?? string.Empty) + PlanDayCard(result.Value), PlanDayKeyboard(result.Value), ct);
+    }
+
+    private Task<ApiResult<PlanDayViewDto>> GetPlanDayAsync(ResolvedUser user, DateOnly? date, CancellationToken ct) =>
+        _api.SendForResultAsync<PlanDayViewDto>(
+            user.UserId,
+            HttpMethod.Get,
+            date is { } d ? $"api/MealPlans/day?date={d:yyyy-MM-dd}" : "api/MealPlans/day",
+            null,
+            ct);
+
+    /// <summary>
+    /// The user's today, as the API says it: the plan day without a date is dated
+    /// in their time zone. Neither the resolve call nor /api/Users/me exposes the
+    /// zone to a service caller, so without a plan today UTC is the fallback.
+    /// </summary>
+    private async Task<DateOnly> TodayAsync(ResolvedUser user, CancellationToken ct)
+    {
+        var today = await GetPlanDayAsync(user, null, ct);
+        return today.Value?.Date ?? DateOnly.FromDateTime(DateTime.UtcNow);
+    }
+
+    /// <summary>
+    /// A Log button carries the entry id alone. The plan it belongs to is found
+    /// again on today's or tomorrow's card, the days a button is sent for; an
+    /// older button is refused rather than guessed at.
+    /// </summary>
+    private async Task LogPlanEntryAsync(long chatId, ResolvedUser user, string id, CancellationToken ct)
+    {
+        if (!Guid.TryParseExact(id, "D", out var entryId))
+        {
+            await SendStaleCardAsync(chatId, "/plan", ct);
+            return;
+        }
+
+        var today = await GetPlanDayAsync(user, null, ct);
+        var found = FindEntry(today.Value, entryId);
+
+        if (found is null)
+        {
+            var tomorrow = (today.Value?.Date ?? DateOnly.FromDateTime(DateTime.UtcNow)).AddDays(1);
+            found = FindEntry((await GetPlanDayAsync(user, tomorrow, ct)).Value, entryId);
+        }
+
+        if (found is null)
+        {
+            await SendStaleCardAsync(chatId, "/plan", ct);
+            return;
+        }
+
+        var (view, entry) = found.Value;
+
+        // An empty body: the API dates and types the diary row from the entry.
+        var result = await _api.SendForResultAsync<object>(
+            user.UserId, HttpMethod.Post, $"api/MealPlans/{view.PlanId:D}/entries/{entry.Id:D}/log", new { }, ct);
+
+        if (!result.Ok)
+        {
+            await _telegram.SendMessageAsync(chatId, Escape(ExplainFailure(result)), ct: ct);
+            return;
+        }
+
+        await SendPlanDayAsync(chatId, user, view.Date, $"Logged {Escape(EntryName(entry))}.\n\n", ct);
+    }
+
+    private static (PlanDayViewDto View, PlanEntryDto Entry)? FindEntry(PlanDayViewDto? view, Guid entryId)
+    {
+        var entry = view?.Day.Slots.SelectMany(s => s.Entries).FirstOrDefault(e => e.Id == entryId);
+        return view is not null && entry is not null ? (view, entry) : null;
+    }
+
+    /// <summary>The day as text: name and date, a block per slot, totals against the rules, then violations and the window.</summary>
+    internal static string PlanDayCard(PlanDayViewDto view)
+    {
+        var text = new StringBuilder();
+        var day = view.Day;
+
+        text.Append("<b>").Append(Escape(view.PlanName ?? "Meal plan")).Append("</b> · ").Append(Escape(DayLabel(view.Date)));
+        if (day.EntryCount > 0)
+        {
+            text.Append(" · ").Append(day.LoggedCount).Append(" of ").Append(day.EntryCount).Append(" logged");
+        }
+        text.AppendLine();
+
+        foreach (var slot in day.Slots.Where(s => s.Entries.Count > 0))
+        {
+            text.AppendLine().Append("<b>").Append(Escape(SlotLabel(slot.Slot))).AppendLine("</b>");
+            foreach (var entry in slot.Entries)
+            {
+                text.AppendLine(EntryLine(entry));
+            }
+        }
+
+        if (day.EntryCount == 0)
+        {
+            text.AppendLine().AppendLine("Nothing is planned for this day.");
+        }
+
+        // The words are the domain's; only the bold is ours. The plan's rules
+        // are the targets here, because that is what the plan is held to.
+        text.AppendLine();
+        foreach (var amount in NutritionText.Daily(
+            day.Totals.Calories, day.Totals.ProteinGrams, day.Totals.CarbsGrams, day.Totals.FatGrams,
+            view.Rules.TargetCalories, view.Rules.TargetProtein, view.Rules.MaxCarbs, view.Rules.TargetFat))
+        {
+            text.AppendLine(NutritionText.Describe(amount, actual => $"<b>{actual}</b>"));
+        }
+
+        if (day.Violations.Count > 0)
+        {
+            text.AppendLine();
+            foreach (var violation in day.Violations)
+            {
+                text.Append("⚠ ").AppendLine(Escape(violation.Message));
+            }
+        }
+
+        if (view.Rules is { EatingWindowStart: { } start, EatingWindowEnd: { } end })
+        {
+            text.AppendLine().Append("Eating window ")
+                .Append(start.ToString("HH:mm", CultureInfo.InvariantCulture))
+                .Append('–')
+                .AppendLine(end.ToString("HH:mm", CultureInfo.InvariantCulture));
+        }
+
+        return text.ToString();
+    }
+
+    /// <summary>"Oats with milk, 80 g, 300 kcal ✓" - the tick marks an entry already in the diary.</summary>
+    internal static string EntryLine(PlanEntryDto entry)
+    {
+        var parts = new List<string> { Escape(EntryName(entry)) };
+
+        if (entry.Grams is { } grams)
+        {
+            parts.Add(grams.ToString("0.#", CultureInfo.InvariantCulture) + " g");
+        }
+        else if (entry.Servings is { } servings)
+        {
+            parts.Add(servings == 1
+                ? "1 serving"
+                : servings.ToString("0.#", CultureInfo.InvariantCulture) + " servings");
+        }
+
+        if (entry.Nutrition is { } nutrition)
+        {
+            parts.Add(nutrition.Calories.ToString("0", CultureInfo.InvariantCulture) + " kcal");
+        }
+
+        var line = string.Join(", ", parts);
+        return entry.Logged ? line + " ✓" : line;
+    }
+
+    internal static string EntryName(PlanEntryDto entry) =>
+        entry.RecipeTitle ?? entry.FoodName ?? entry.Text ?? "Entry";
+
+    /// <summary>One Log button per entry the API would accept: unlogged, and not a free-text line.</summary>
+    internal static bool CanLog(PlanEntryDto entry) =>
+        !entry.Logged && !string.Equals(entry.Kind, "Text", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>A Log row per loggable entry, then Tomorrow. Each payload is a prefix and one id: well under 64 bytes.</summary>
+    internal static object PlanDayKeyboard(PlanDayViewDto view)
+    {
+        var rows = new List<object[]>();
+
+        foreach (var entry in view.Day.Slots.SelectMany(s => s.Entries).Where(CanLog))
+        {
+            rows.Add([new { text = "Log " + TruncateUtf8(EntryName(entry), 40), callback_data = $"pe:{entry.Id:D}" }]);
+        }
+
+        rows.Add([new { text = "Tomorrow", callback_data = $"pd:{view.Date.AddDays(1):yyyy-MM-dd}" }]);
+
+        return new { inline_keyboard = rows };
+    }
+
+    /// <summary>BREAKFAST, the diary's slot name, shown as Breakfast.</summary>
+    private static string SlotLabel(string slot) =>
+        slot.Length == 0 ? "Meal" : char.ToUpperInvariant(slot[0]) + slot[1..].ToLowerInvariant();
+
+    private static string DayLabel(DateOnly date) => date.ToString("ddd d MMM", CultureInfo.InvariantCulture);
+
+    private static bool TryParseDate(string value, out DateOnly date) =>
+        DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
+
+    // ---- Shopping list ----------------------------------------------------
+
+    /// <summary>Items on one shopping page. Ten rows of buttons is what a phone screen shows without scrolling.</summary>
+    internal const int ShopPageSize = 10;
+
+    /// <summary>/shop and the More button: the newest list, one page of what is still to buy.</summary>
+    private async Task OnShopAsync(long chatId, ResolvedUser user, int page, CancellationToken ct)
+    {
+        var list = await NewestShoppingListAsync(user, ct);
+
+        if (list is null)
+        {
+            await _telegram.SendMessageAsync(
+                chatId,
+                $"You have no shopping list yet. Make one from your plan at {_options.PublicUrl.TrimEnd('/')}/meal-plan.",
+                ct: ct);
+            return;
+        }
+
+        await _telegram.SendMessageAsync(chatId, ShoppingCard(list, page), ShoppingKeyboard(list, page), ct);
+    }
+
+    /// <summary>
+    /// A toggle button carries the item id alone, so the page it sat on is worked
+    /// out from the item's place among the unticked items before it moves.
+    /// </summary>
+    private async Task ToggleShoppingItemAsync(long chatId, ResolvedUser user, string id, CancellationToken ct)
+    {
+        if (!Guid.TryParseExact(id, "D", out var itemId))
+        {
+            await SendStaleCardAsync(chatId, "/shop", ct);
+            return;
+        }
+
+        var list = await NewestShoppingListAsync(user, ct);
+        var index = list is null ? -1 : Unchecked(list).FindIndex(i => i.Id == itemId);
+
+        if (list is null || index < 0)
+        {
+            await SendStaleCardAsync(chatId, "/shop", ct);
+            return;
+        }
+
+        var result = await _api.SendForResultAsync<object>(
+            user.UserId, HttpMethod.Patch, $"api/ShoppingLists/items/{itemId:D}/toggle",
+            new ToggleShoppingListItemRequest(true), ct);
+
+        if (!result.Ok)
+        {
+            await _telegram.SendMessageAsync(chatId, Escape(ExplainFailure(result)), ct: ct);
+            return;
+        }
+
+        // Read back rather than ticked locally: the list is the API's, and a
+        // household member may have changed it in the meantime.
+        var updated = await _api.GetAsAsync<ShoppingListDetailDto>(user.UserId, $"api/ShoppingLists/{list.Id:D}", ct);
+        if (updated is null)
+        {
+            await _telegram.SendMessageAsync(chatId, "Ticked, but I could not read the list back. Send /shop.", ct: ct);
+            return;
+        }
+
+        var page = index / ShopPageSize;
+        await _telegram.SendMessageAsync(chatId, ShoppingCard(updated, page), ShoppingKeyboard(updated, page), ct);
+    }
+
+    /// <summary>The most recently changed list, in full. Null when there is none.</summary>
+    private async Task<ShoppingListDetailDto?> NewestShoppingListAsync(ResolvedUser user, CancellationToken ct)
+    {
+        // The page envelope is the API's own paging record, read as JSON rather
+        // than redeclared here; one id is all the bot needs from it.
+        var lists = await _api.GetAsAsync<System.Text.Json.JsonElement>(user.UserId, "api/ShoppingLists?pageSize=1", ct);
+
+        if (lists.ValueKind != System.Text.Json.JsonValueKind.Object
+            || !lists.TryGetProperty("items", out var items)
+            || items.ValueKind != System.Text.Json.JsonValueKind.Array
+            || items.GetArrayLength() == 0
+            || !items[0].TryGetProperty("id", out var id)
+            || !id.TryGetGuid(out var listId))
+        {
+            return null;
+        }
+
+        return await _api.GetAsAsync<ShoppingListDetailDto>(user.UserId, $"api/ShoppingLists/{listId:D}", ct);
+    }
+
+    internal static List<ShoppingListItemDto> Unchecked(ShoppingListDetailDto list) =>
+        list.Items.Where(i => !i.IsChecked).ToList();
+
+    /// <summary>The page's items, with the page number clamped to what is left, so a card pressed after ticking still lands somewhere.</summary>
+    internal static (List<ShoppingListItemDto> Shown, int Page, int Left, bool More) ShopPage(ShoppingListDetailDto list, int page)
+    {
+        var left = Unchecked(list);
+        var lastPage = Math.Max(0, (left.Count - 1) / ShopPageSize);
+        page = Math.Clamp(page, 0, lastPage);
+
+        return (left.Skip(page * ShopPageSize).Take(ShopPageSize).ToList(), page, left.Count, page < lastPage);
+    }
+
+    /// <summary>Unticked items grouped under their prep session, each with its amount, then "N left of M".</summary>
+    internal static string ShoppingCard(ShoppingListDetailDto list, int page)
+    {
+        var (shown, _, left, _) = ShopPage(list, page);
+        var text = new StringBuilder("<b>").Append(Escape(list.Name ?? "Shopping list")).AppendLine("</b>");
+
+        if (shown.Count == 0)
+        {
+            text.AppendLine().AppendLine("Everything is ticked off.");
+        }
+
+        string? session = null;
+        foreach (var item in shown)
+        {
+            if (item.PrepSessionTitle is { Length: > 0 } title && title != session)
+            {
+                text.AppendLine().Append("<b>").Append(Escape(title)).AppendLine("</b>");
+            }
+            else if (session is not null && item.PrepSessionTitle is null or "")
+            {
+                text.AppendLine();
+            }
+            else if (session is null && text.Length > 0 && shown[0] == item)
+            {
+                text.AppendLine();
+            }
+
+            session = item.PrepSessionTitle is { Length: > 0 } ? item.PrepSessionTitle : null;
+            text.Append("• ").AppendLine(ItemLine(item));
+        }
+
+        text.AppendLine().Append(left).Append(" left of ").Append(list.TotalItems);
+        return text.ToString();
+    }
+
+    /// <summary>"500 g Teff", "2 cups Rice", or just the name; "needs review" when the generator was unsure.</summary>
+    internal static string ItemLine(ShoppingListItemDto item)
+    {
+        var amount = item.Grams is { } grams
+            ? grams.ToString("0.#", CultureInfo.InvariantCulture) + " g"
+            : item.Amount is { } quantity
+                ? quantity.ToString("0.##", CultureInfo.InvariantCulture)
+                  + (item.Unit is { Length: > 0 } unit ? " " + unit : string.Empty)
+                : null;
+
+        var line = amount is null ? Escape(item.ItemName) : amount + " " + Escape(item.ItemName);
+        return item.NeedsReview ? line + " (needs review)" : line;
+    }
+
+    /// <summary>One toggle per shown item, then Back and More as the pages allow. More re-resolves the newest list: a list id does not fit beside a page.</summary>
+    internal static object ShoppingKeyboard(ShoppingListDetailDto list, int page)
+    {
+        var (shown, current, _, more) = ShopPage(list, page);
+        var rows = new List<object[]>();
+
+        foreach (var item in shown)
+        {
+            rows.Add([new { text = "☐ " + TruncateUtf8(item.ItemName, 40), callback_data = $"sh:{item.Id:D}" }]);
+        }
+
+        var paging = new List<object>();
+        if (current > 0) paging.Add(new { text = "Back", callback_data = $"sp:{current - 1}" });
+        if (more) paging.Add(new { text = "More", callback_data = $"sp:{current + 1}" });
+        if (paging.Count > 0) rows.Add(paging.ToArray());
+
+        return new { inline_keyboard = rows };
+    }
+
+    private async Task SendStaleCardAsync(long chatId, string command, CancellationToken ct) =>
+        await _telegram.SendMessageAsync(
+            chatId, $"That card is too old to use. Send <b>{command}</b> for a fresh one.", ct: ct);
+
     // ---- Text -------------------------------------------------------------
 
     private async Task SendSignInPromptAsync(long chatId, CancellationToken ct) =>
@@ -577,6 +1033,8 @@ public sealed class UpdateHandler
         + "Ask me anything the way you would on the website; it is the same conversation.\n\n"
         + "<b>/today</b> - totals against your targets\n"
         + "<b>/weight 82.4</b> - log a weigh-in\n"
+        + "<b>/plan</b> - today's meal plan, with a Log button per entry (<b>/plan tomorrow</b> works too)\n"
+        + "<b>/shop</b> - your shopping list, tick items off as you go\n"
         + "<b>/unlink</b> - disconnect this chat";
 
     private static string AnalysisCard(FoodAnalysisResult analysis)

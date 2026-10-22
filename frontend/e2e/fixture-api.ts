@@ -2,6 +2,12 @@ import type { BodyMeasurement } from "../data/bodyMeasurement";
 import type { Ingredient } from "../data/ingredient";
 import type { MealEntry } from "../data/meal";
 import type { WorkoutSummary } from "../data/workout";
+import {
+  handlePlanning,
+  initialPlanning,
+  type PlanningOptions,
+  type PlanningState,
+} from "./fixture-planning";
 
 const port = Number(process.env.PLAYWRIGHT_API_PORT ?? 5100);
 const webOrigin = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3100";
@@ -187,6 +193,7 @@ type FixtureState = {
   impersonating: boolean;
   threads: FixtureThread[];
   exercises: FixtureExercise[];
+  planning: PlanningState;
 };
 type FixtureThread = {
   id: string;
@@ -253,6 +260,7 @@ const analysis = {
 const states = new Map<string, FixtureState>();
 function initialState(empty = false): FixtureState {
   return {
+    planning: initialPlanning(user.id, today, { none: empty }),
     role: "user",
     pro: false,
     impersonating: false,
@@ -634,6 +642,7 @@ const server = Bun.serve({
         failures?: string[];
         writeFailures?: Record<string, number>;
         household?: Partial<FixtureHousehold>;
+        planning?: PlanningOptions;
       };
       const token = crypto.randomUUID();
       const state = initialState(options.empty);
@@ -643,6 +652,10 @@ const server = Bun.serve({
       state.userId = options.userId ?? user.id;
       state.role = options.role ?? "user";
       state.pro = options.pro ?? false;
+      state.planning = initialPlanning(state.userId, today, {
+        none: options.empty,
+        ...options.planning,
+      });
       if (options.household)
         state.household = {
           otherMembers: 0,
@@ -1145,6 +1158,21 @@ const server = Bun.serve({
     }
     if (path === "/api/Notifications/unread-count")
       return json({ unreadCount: state.unread });
+    const planned = await handlePlanning(
+      request,
+      url,
+      {
+        userId: state.userId,
+        planning: state.planning,
+        writes: state.writes,
+        recipes: state.recipes,
+        meals: state.meals,
+        foods,
+      },
+      today,
+      json,
+    );
+    if (planned) return planned;
     if (path === "/api/Trainers/my-trainer")
       return json({ error: "No active trainer relationship found" }, 404);
     if (path === "/api/Goals")

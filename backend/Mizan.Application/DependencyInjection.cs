@@ -23,6 +23,10 @@ public static class DependencyInjection
         services.AddScoped<Commands.SubscriberBilling>();
         services.AddScoped<OAuth.OAuthClientResolver>();
         services.AddScoped<Interfaces.IHouseholdAccess, Services.HouseholdAccess>();
+        services.AddScoped<Planning.PlanAccess>();
+        services.AddScoped<Planning.PlanEntryBuilder>();
+        services.AddScoped<Planning.PlanReadModel>();
+        services.AddScoped<Planning.ShoppingListAccess>();
 
         return services;
     }

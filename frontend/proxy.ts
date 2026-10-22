@@ -10,6 +10,7 @@ const PROTECTED_PREFIXES = [
   "/profile",
   "/meals",
   "/meal-plan",
+  "/shopping-lists",
   "/goal",
   "/suggestions",
   "/trainer",

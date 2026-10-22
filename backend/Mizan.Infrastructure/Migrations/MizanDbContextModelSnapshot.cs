@@ -1767,6 +1767,10 @@ namespace Mizan.Infrastructure.Migrations
                         .HasDefaultValue("")
                         .HasColumnName("name");
 
+                    b.Property<Guid?>("PlanEntryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("plan_entry_id");
+
                     b.Property<decimal?>("ProteinCalorieRatio")
                         .HasPrecision(8, 2)
                         .HasColumnType("numeric(8,2)")
@@ -1801,6 +1805,8 @@ namespace Mizan.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("FoodId");
+
+                    b.HasIndex("PlanEntryId");
 
                     b.HasIndex("RecipeId");
 
@@ -2189,28 +2195,55 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
+                    b.Property<Guid?>("AuthoredByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("authored_by_user_id");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("NOW()");
 
-                    b.Property<DateOnly>("EndDate")
-                        .HasColumnType("date")
-                        .HasColumnName("end_date");
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<int>("DurationDays")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(7)
+                        .HasColumnName("duration_days");
 
                     b.Property<Guid?>("HouseholdId")
                         .HasColumnType("uuid")
                         .HasColumnName("household_id");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Personal")
+                        .HasColumnName("kind");
 
                     b.Property<string>("Name")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("name");
 
-                    b.Property<DateOnly>("StartDate")
+                    b.Property<DateOnly?>("StartDate")
                         .HasColumnType("date")
                         .HasColumnName("start_date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Active")
+                        .HasColumnName("status");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
@@ -2218,59 +2251,23 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnName("updated_at")
                         .HasDefaultValueSql("NOW()");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid?>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AuthoredByUserId");
+
                     b.HasIndex("HouseholdId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("Kind", "UserId")
+                        .HasDatabaseName("ix_meal_plans_kind_user");
+
+                    b.HasIndex("UserId", "Status", "StartDate")
+                        .HasDatabaseName("ix_meal_plans_user_status_start");
 
                     b.ToTable("meal_plans", (string)null);
-                });
-
-            modelBuilder.Entity("Mizan.Domain.Entities.MealPlanRecipe", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date")
-                        .HasColumnName("date");
-
-                    b.Property<Guid>("MealPlanId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("meal_plan_id");
-
-                    b.Property<string>("MealType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("meal_type");
-
-                    b.Property<Guid>("RecipeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("recipe_id");
-
-                    b.Property<decimal>("Servings")
-                        .ValueGeneratedOnAdd()
-                        .HasPrecision(6, 2)
-                        .HasColumnType("numeric(6,2)")
-                        .HasDefaultValue(1m)
-                        .HasColumnName("servings");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MealPlanId");
-
-                    b.HasIndex("RecipeId");
-
-                    b.ToTable("meal_plan_recipes", (string)null);
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.Notification", b =>
@@ -2712,6 +2709,121 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("paddle_webhook_events", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.PlanEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<int>("DayIndex")
+                        .HasColumnType("integer")
+                        .HasColumnName("day_index");
+
+                    b.Property<Guid?>("FoodId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("food_id");
+
+                    b.Property<decimal?>("Grams")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("grams");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<Guid>("MealPlanId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("meal_plan_id");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("notes");
+
+                    b.Property<Guid?>("PrepSessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("prep_session_id");
+
+                    b.Property<Guid?>("RecipeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recipe_id");
+
+                    b.Property<decimal?>("Servings")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)")
+                        .HasColumnName("servings");
+
+                    b.Property<string>("Slot")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("slot");
+
+                    b.Property<int>("SortOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("sort_order");
+
+                    b.Property<string>("Text")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FoodId");
+
+                    b.HasIndex("PrepSessionId");
+
+                    b.HasIndex("RecipeId");
+
+                    b.HasIndex("MealPlanId", "DayIndex")
+                        .HasDatabaseName("ix_plan_entries_plan_day");
+
+                    b.ToTable("plan_entries", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.PrepSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<int>("DayIndex")
+                        .HasColumnType("integer")
+                        .HasColumnName("day_index");
+
+                    b.Property<Guid>("MealPlanId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("meal_plan_id");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("notes");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MealPlanId")
+                        .HasDatabaseName("ix_prep_sessions_meal_plan");
+
+                    b.ToTable("prep_sessions", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.Recipe", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2921,9 +3033,17 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("NOW()");
 
+                    b.Property<DateTime?>("GeneratedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("generated_at");
+
                     b.Property<Guid?>("HouseholdId")
                         .HasColumnType("uuid")
                         .HasColumnName("household_id");
+
+                    b.Property<Guid?>("MealPlanId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("meal_plan_id");
 
                     b.Property<string>("Name")
                         .HasMaxLength(255)
@@ -2944,7 +3064,10 @@ namespace Mizan.Infrastructure.Migrations
 
                     b.HasIndex("HouseholdId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("MealPlanId");
+
+                    b.HasIndex("UserId", "UpdatedAt")
+                        .HasDatabaseName("ix_shopping_lists_user_updated");
 
                     b.ToTable("shopping_lists", (string)null);
                 });
@@ -2971,6 +3094,11 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("food_id");
 
+                    b.Property<decimal?>("Grams")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("grams");
+
                     b.Property<bool>("IsChecked")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -2983,9 +3111,25 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("item_name");
 
+                    b.Property<bool>("NeedsReview")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("needs_review");
+
+                    b.Property<Guid?>("PrepSessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("prep_session_id");
+
                     b.Property<Guid>("ShoppingListId")
                         .HasColumnType("uuid")
                         .HasColumnName("shopping_list_id");
+
+                    b.Property<int>("SortOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("sort_order");
 
                     b.Property<string>("Unit")
                         .HasMaxLength(50)
@@ -2996,7 +3140,8 @@ namespace Mizan.Infrastructure.Migrations
 
                     b.HasIndex("FoodId");
 
-                    b.HasIndex("ShoppingListId");
+                    b.HasIndex("ShoppingListId")
+                        .HasDatabaseName("ix_shopping_list_items_list");
 
                     b.ToTable("shopping_list_items", (string)null);
                 });
@@ -3264,6 +3409,12 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true)
                         .HasColumnName("can_message");
+
+                    b.Property<bool>("CanPlanMeals")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("can_plan_meals");
 
                     b.Property<bool>("CanViewMeasurements")
                         .ValueGeneratedOnAdd()
@@ -4371,6 +4522,11 @@ namespace Mizan.Infrastructure.Migrations
                         .HasForeignKey("FoodId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Mizan.Domain.Entities.PlanEntry", "PlanEntry")
+                        .WithMany()
+                        .HasForeignKey("PlanEntryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Mizan.Domain.Entities.Recipe", "Recipe")
                         .WithMany("DiaryEntries")
                         .HasForeignKey("RecipeId")
@@ -4383,6 +4539,8 @@ namespace Mizan.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Food");
+
+                    b.Navigation("PlanEntry");
 
                     b.Navigation("Recipe");
 
@@ -4496,6 +4654,11 @@ namespace Mizan.Infrastructure.Migrations
 
             modelBuilder.Entity("Mizan.Domain.Entities.MealPlan", b =>
                 {
+                    b.HasOne("Mizan.Domain.Entities.User", "AuthoredBy")
+                        .WithMany()
+                        .HasForeignKey("AuthoredByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Mizan.Domain.Entities.Household", "Household")
                         .WithMany()
                         .HasForeignKey("HouseholdId")
@@ -4504,31 +4667,62 @@ namespace Mizan.Infrastructure.Migrations
                     b.HasOne("Mizan.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.OwnsOne("Mizan.Domain.Planning.PlanRules", "Rules", b1 =>
+                        {
+                            b1.Property<Guid>("MealPlanId")
+                                .ValueGeneratedOnAdd();
+
+                            b1.PrimitiveCollection<string>("AllowedFoodIds")
+                                .IsRequired();
+
+                            b1.PrimitiveCollection<string>("BatchDays")
+                                .IsRequired();
+
+                            b1.Property<string>("Currency");
+
+                            b1.Property<TimeOnly?>("EatingWindowEnd");
+
+                            b1.Property<TimeOnly?>("EatingWindowStart");
+
+                            b1.PrimitiveCollection<string>("ForbiddenFoodIds")
+                                .IsRequired();
+
+                            b1.Property<int>("MacroMode");
+
+                            b1.Property<decimal?>("MaxCarbs");
+
+                            b1.Property<int>("PrepStyle");
+
+                            b1.Property<decimal?>("TargetCalories");
+
+                            b1.Property<decimal?>("TargetFat");
+
+                            b1.Property<decimal?>("TargetProtein");
+
+                            b1.Property<decimal?>("WeeklyBudget");
+
+                            b1.HasKey("MealPlanId");
+
+                            b1.ToTable("meal_plans");
+
+                            b1
+                                .ToJson("rules")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("MealPlanId");
+                        });
+
+                    b.Navigation("AuthoredBy");
 
                     b.Navigation("Household");
 
+                    b.Navigation("Rules")
+                        .IsRequired();
+
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Mizan.Domain.Entities.MealPlanRecipe", b =>
-                {
-                    b.HasOne("Mizan.Domain.Entities.MealPlan", "MealPlan")
-                        .WithMany("MealPlanRecipes")
-                        .HasForeignKey("MealPlanId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Mizan.Domain.Entities.Recipe", "Recipe")
-                        .WithMany("MealPlanRecipes")
-                        .HasForeignKey("RecipeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("MealPlan");
-
-                    b.Navigation("Recipe");
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.Notification", b =>
@@ -4583,6 +4777,49 @@ namespace Mizan.Infrastructure.Migrations
                     b.Navigation("Grant");
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.PlanEntry", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.Food", "Food")
+                        .WithMany()
+                        .HasForeignKey("FoodId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mizan.Domain.Entities.MealPlan", "MealPlan")
+                        .WithMany("Entries")
+                        .HasForeignKey("MealPlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Mizan.Domain.Entities.PrepSession", "PrepSession")
+                        .WithMany("Entries")
+                        .HasForeignKey("PrepSessionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Mizan.Domain.Entities.Recipe", "Recipe")
+                        .WithMany("PlanEntries")
+                        .HasForeignKey("RecipeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Food");
+
+                    b.Navigation("MealPlan");
+
+                    b.Navigation("PrepSession");
+
+                    b.Navigation("Recipe");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.PrepSession", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.MealPlan", "MealPlan")
+                        .WithMany("PrepSessions")
+                        .HasForeignKey("MealPlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MealPlan");
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.Recipe", b =>
                 {
                     b.HasOne("Mizan.Domain.Entities.Household", "Household")
@@ -4634,6 +4871,11 @@ namespace Mizan.Infrastructure.Migrations
                         .HasForeignKey("HouseholdId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Mizan.Domain.Entities.MealPlan", "MealPlan")
+                        .WithMany()
+                        .HasForeignKey("MealPlanId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Mizan.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -4641,6 +4883,8 @@ namespace Mizan.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Household");
+
+                    b.Navigation("MealPlan");
 
                     b.Navigation("User");
                 });
@@ -4945,7 +5189,14 @@ namespace Mizan.Infrastructure.Migrations
 
             modelBuilder.Entity("Mizan.Domain.Entities.MealPlan", b =>
                 {
-                    b.Navigation("MealPlanRecipes");
+                    b.Navigation("Entries");
+
+                    b.Navigation("PrepSessions");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.PrepSession", b =>
+                {
+                    b.Navigation("Entries");
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.Recipe", b =>
@@ -4954,7 +5205,7 @@ namespace Mizan.Infrastructure.Migrations
 
                     b.Navigation("Ingredients");
 
-                    b.Navigation("MealPlanRecipes");
+                    b.Navigation("PlanEntries");
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.ShoppingList", b =>
