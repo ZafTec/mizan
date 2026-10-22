@@ -74,6 +74,7 @@ public class McpResourcesPromptsTests : IClassFixture<WebApplicationFactory<McpS
             .Where(u => u.StartsWith("mizan://")).Should().BeEquivalentTo(new[]
             {
                 "mizan://profile", "mizan://goals/current", "mizan://nutrition/today", "mizan://streak", "mizan://households",
+                "mizan://meal-plans/today",
             });
         Names(await RpcAsync(client, "resources/templates/list"), "resourceTemplates", "uriTemplate").Should().BeEquivalentTo(new[]
         {
@@ -277,7 +278,8 @@ public class McpResourcesPromptsTests : IClassFixture<WebApplicationFactory<McpS
     private static readonly string[] ToolVerbs =
     [
         "get_", "list_", "search_", "log_", "create_", "add_", "delete_", "update_", "promote_", "toggle_", "save_",
-        "send_", "respond_", "analyze_", "upload_", "remove_", "record_", "duplicate_",
+        "send_", "respond_", "analyze_", "upload_", "remove_", "record_", "duplicate_", "generate_", "apply_", "set_",
+        "accept_", "decline_", "clear_",
     ];
 
     /// <summary>Words shaped like a tool name, so a made-up or renamed tool in a prompt or skill is caught.</summary>

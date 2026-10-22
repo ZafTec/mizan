@@ -2,6 +2,7 @@ extern alias McpServer;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
@@ -14,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using McpServer::Mizan.Mcp.Server.Authorization;
 using McpServer::Mizan.Mcp.Server.Services;
 using Mizan.Contracts.Mcp;
+using ModelContextProtocol.Server;
 using Moq;
 using Xunit;
 
@@ -159,6 +161,14 @@ public class McpOAuthTransportTests : IClassFixture<WebApplicationFactory<McpSer
         listed.Should().BeEquivalentTo(McpToolScopes.All.Keys,
             "a tool with no scope on record is invisible and uncallable, and a scope on record for no tool is stale");
         McpToolScopes.All.Values.Should().OnlyContain(scope => McpScopes.All.Contains(scope));
+
+        // The list above hides a tool that has no scope, so the source is checked too: every [McpServerTool] in the server has a row.
+        var registered = typeof(McpToolScopes).Assembly.GetTypes()
+            .SelectMany(type => type.GetMethods())
+            .Select(method => method.GetCustomAttribute<McpServerToolAttribute>()?.Name)
+            .Where(name => name is not null)
+            .ToList();
+        registered.Should().BeEquivalentTo(McpToolScopes.All.Keys, "a tool missing from McpToolScopes would ship invisible instead of open, but it would still ship broken");
     }
 
     [Fact]
@@ -196,6 +206,62 @@ public class McpOAuthTransportTests : IClassFixture<WebApplicationFactory<McpSer
         result.GetProperty("isError").GetBoolean().Should().BeTrue();
         result.GetProperty("content")[0].GetProperty("text").GetString().Should().Contain("administrator");
         _backend.Verify(b => b.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task PlanningTools_AreHiddenWithoutPlanningRead_AndWritesNeedPlanningWrite()
+    {
+        using var stranger = Authorized("s", "nutrition:read");
+        (await ToolNamesAsync(stranger)).Should().NotContain(n => McpToolScopes.All[n].StartsWith("planning:"));
+
+        using var reader = Authorized("r", "planning:read");
+        var read = await ToolNamesAsync(reader);
+        read.Should().Contain(new[] { "list_meal_plans", "get_meal_plan", "get_plan_day", "list_templates", "list_shopping_lists", "get_shopping_list" });
+        read.Should().NotContain(new[] { "create_meal_plan", "add_plan_entry", "log_plan_entry", "generate_shopping_list", "toggle_shopping_list_item", "create_plan_for_client", "admin_create_template" });
+
+        var refused = await CallAsync(reader, "add_plan_entry", new { mealPlanId = Guid.NewGuid(), dayIndex = 0, slot = "DINNER", kind = "Text", text = "soup" });
+        refused.GetProperty("isError").GetBoolean().Should().BeTrue();
+        refused.GetProperty("content")[0].GetProperty("text").GetString().Should().Contain("planning:write");
+        _backend.Verify(b => b.PostAsync(It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<CancellationToken>()), Times.Never);
+
+        using var writer = Authorized("w", "planning:write");
+        var written = await ToolNamesAsync(writer);
+        written.Should().Contain(new[] { "get_meal_plan", "create_meal_plan", "add_plan_entry", "remove_plan_entry", "log_plan_entry", "generate_shopping_list", "apply_template", "clear_checked_items" });
+        written.Should().NotContain(new[] { "create_plan_for_client", "admin_create_template", "admin_update_template", "admin_delete_template" },
+            "a coach's draft needs the trainer scope and global templates the admin scope");
+    }
+
+    [Fact]
+    public async Task TheCoachsDraftTool_NeedsTheTrainerScope_AndTemplateAdminTheAdminScope()
+    {
+        using var planner = Authorized("p", "planning:write");
+        var draft = await CallAsync(planner, "create_plan_for_client", new { clientId = Guid.NewGuid(), name = "Week", startDate = "2026-10-12" });
+        draft.GetProperty("isError").GetBoolean().Should().BeTrue();
+        draft.GetProperty("content")[0].GetProperty("text").GetString().Should().Contain("trainer:write");
+
+        var template = await CallAsync(planner, "admin_create_template", new { name = "Keto week" });
+        template.GetProperty("isError").GetBoolean().Should().BeTrue();
+        template.GetProperty("content")[0].GetProperty("text").GetString().Should().Contain("administrator");
+        _backend.Verify(b => b.PostAsync(It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<CancellationToken>()), Times.Never);
+
+        using var coach = Authorized("c", "trainer:write");
+        (await ToolNamesAsync(coach)).Should().Contain("create_plan_for_client").And.NotContain("create_meal_plan");
+
+        using var admin = Authorized("a", "planning:read", "admin");
+        (await ToolNamesAsync(admin)).Should().Contain(new[] { "admin_create_template", "admin_update_template", "admin_delete_template" });
+    }
+
+    [Fact]
+    public async Task GetPlanDay_TurnsNoActivePlanIntoPlainText_NotAnError()
+    {
+        _backend.Setup(b => b.GetAsync(It.Is<string>(s => s.StartsWith("/api/MealPlans/day")), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new BackendApiException(HttpStatusCode.NotFound, "no_active_plan", "Not found: No active plan covers that date."));
+        using var client = Authorized("t", "planning:read");
+
+        var result = await CallAsync(client, "get_plan_day", new { date = "2026-10-12" });
+
+        (result.TryGetProperty("isError", out var error) && error.GetBoolean()).Should().BeFalse();
+        result.GetProperty("content")[0].GetProperty("text").GetString().Should().Contain("No active plan covers that date");
     }
 
     [Fact]
