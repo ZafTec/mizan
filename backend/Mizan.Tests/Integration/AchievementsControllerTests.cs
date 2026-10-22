@@ -448,7 +448,7 @@ public class AchievementsControllerTests
         expected.Should().HaveCount(29);
 
         var migrator = db.GetService<Microsoft.EntityFrameworkCore.Migrations.IMigrator>();
-        await migrator.MigrateAsync("AddImpersonation");
+        await migrator.MigrateAsync("RecipeNutritionSnapshots");
         await migrator.MigrateAsync();
 
         var rows = await db.Achievements.AsNoTracking()

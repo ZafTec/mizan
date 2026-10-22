@@ -1,22 +1,46 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
-#nullable disable
+namespace Mizan.Infrastructure.Migrations;
 
-namespace Mizan.Infrastructure.Migrations
+/// <summary>
+/// Data motion for the branch migration. EF generates the schema part of a
+/// migration; this file carries the row updates that go with it. The generated
+/// migration calls <see cref="Up"/> after its schema operations and
+/// <see cref="Down"/> before reverting them. Every statement is idempotent, so a
+/// regenerated migration can call it again without harm.
+/// </summary>
+internal static class BranchDataMotion
 {
-    /// <inheritdoc />
-    public partial class SeedAchievementBadges : Migration
+    public static void Up(MigrationBuilder migrationBuilder)
     {
-        /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
-            // The default badge set rendered from design/achievement-badges and
-            // shipped with the web app under /badges. Only rows that still have
-            // no picture are touched, so a badge an administrator uploaded later
-            // is never overwritten by a redeploy. The 20 position-seeded ids come
-            // from MizanDbContext; the rest derive from their catalogue key the
-            // way CatalogSeed does.
-            migrationBuilder.Sql("""
+        // The audit log used to serialize whole commands, so a sign-in,
+        // registration or password change stored the password in
+        // audit_logs.details. Keep the event, drop the secrets.
+        migrationBuilder.Sql(@"
+                UPDATE audit_logs
+                SET details = CASE action
+                    WHEN 'LoginCommand' THEN json_build_object('Email', details::json->>'Email', 'IpAddress', details::json->>'IpAddress', 'UserAgent', details::json->>'UserAgent')::text
+                    WHEN 'RegisterCommand' THEN json_build_object('Email', details::json->>'Email', 'Name', details::json->>'Name', 'TimeZoneId', details::json->>'TimeZoneId')::text
+                    WHEN 'ResetPasswordCommand' THEN '{""Reset"":true}'
+                    WHEN 'ChangePasswordCommand' THEN '{""Changed"":true}'
+                    WHEN 'VerifyEmailCommand' THEN '{""Verified"":true}'
+                    WHEN 'ConsumeTelegramLinkCommand' THEN json_build_object('TelegramUserId', details::json->>'TelegramUserId', 'TelegramUsername', details::json->>'TelegramUsername')::text
+                    WHEN 'RequestFollowCommand' THEN '{""Requested"":true}'
+                END
+                WHERE action IN ('LoginCommand','RegisterCommand','ResetPasswordCommand','ChangePasswordCommand','VerifyEmailCommand','ConsumeTelegramLinkCommand','RequestFollowCommand')
+                  AND details IS NOT NULL;
+            ");
+
+        // Rows that existed before updated_at did get their creation time,
+        // not the migration time.
+        migrationBuilder.Sql("UPDATE workouts SET updated_at = created_at;");
+        migrationBuilder.Sql("UPDATE food_diary_entries SET updated_at = logged_at;");
+        migrationBuilder.Sql("UPDATE body_measurements SET updated_at = created_at;");
+
+        // Every seeded achievement gets its default badge from
+        // frontend/public/badges. Only rows without a picture are touched, so a
+        // badge an administrator uploaded is never overwritten by a redeploy.
+        migrationBuilder.Sql("""
                 UPDATE achievements AS a
                 SET icon_url = badge.path
                 FROM (VALUES
@@ -52,14 +76,12 @@ namespace Mizan.Infrastructure.Migrations
                 ) AS badge(id, path)
                 WHERE a.id = badge.id AND a.icon_url IS NULL;
                 """);
-        }
+    }
 
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.Sql("""
+    public static void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.Sql("""
                 UPDATE achievements SET icon_url = NULL WHERE icon_url LIKE '/badges/128/%';
                 """);
-        }
     }
 }

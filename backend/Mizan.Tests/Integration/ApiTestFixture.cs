@@ -265,6 +265,23 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         }
 
         await EnsureDatabaseAsync();
+        await ClearCacheAsync();
+    }
+
+    /// <summary>
+    /// The cache outlives a test run when Redis does. Read models such as the
+    /// achievements list are cached under tags, so a table this suite truncates
+    /// would otherwise come back from the previous run and break foreign keys.
+    /// </summary>
+    private async Task ClearCacheAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_redisConnectionString)) return;
+
+        var options = StackExchange.Redis.ConfigurationOptions.Parse(_redisConnectionString);
+        options.AllowAdmin = true;
+        using var redis = await StackExchange.Redis.ConnectionMultiplexer.ConnectAsync(options);
+        foreach (var endpoint in redis.GetEndPoints())
+            await redis.GetServer(endpoint).FlushDatabaseAsync();
     }
 
     public new async Task DisposeAsync()
@@ -371,6 +388,8 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             await db.Database.ExecuteSqlRawAsync(CatalogSeed.Sql);
 #pragma warning restore EF1002
         }
+
+        await ClearCacheAsync();
     }
 
     /// <summary>
