@@ -301,7 +301,7 @@ public class MealPlanGenerationTests
         {
             Id = Guid.NewGuid(),
             FoodId = food.Id,
-            RegionCode = PlanCosting.DefaultRegion,
+            RegionCode = PriceRegionDefaults.Code,
             Price = pricePerKg,
             Quantity = 1,
             Unit = PriceUnits.Kilogram,

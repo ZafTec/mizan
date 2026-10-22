@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
+using Mizan.Application.Prices;
 using Mizan.Domain.Ai;
 using Mizan.Domain.Entities;
 using Mizan.Domain.Planning;
@@ -36,20 +37,21 @@ public sealed class MealPlanContextBuilder
     private readonly IMizanDbContext _context;
     private readonly IDataAccessPolicy _policy;
     private readonly IHouseholdAccess _households;
-    private readonly PlanCosting _costing;
+    private readonly PriceBookReader _prices;
 
-    public MealPlanContextBuilder(IMizanDbContext context, IDataAccessPolicy policy, IHouseholdAccess households, PlanCosting costing)
+    public MealPlanContextBuilder(IMizanDbContext context, IDataAccessPolicy policy, IHouseholdAccess households, PriceBookReader prices)
     {
         _context = context;
         _policy = policy;
         _households = households;
-        _costing = costing;
+        _prices = prices;
     }
 
     public async Task<MealPlanContext> BuildAsync(Guid userId, PlanRules rules, string? preference, CancellationToken cancellationToken)
     {
         var axes = await _policy.ReadableAxesAsync(userId, userId, AccessPurpose.AiContext, cancellationToken);
-        var (region, currency) = await _costing.RegionAsync(userId, cancellationToken);
+        var region = await _prices.RegionForAsync(userId, cancellationToken);
+        var currency = region.Currency;
         var text = new StringBuilder();
         var included = new List<string>();
 
@@ -97,14 +99,8 @@ public sealed class MealPlanContextBuilder
             }
         }
 
-        var foods = await FoodsAsync(userId, personal, rules, preference, region, cancellationToken);
-        var foodIds = foods.Select(f => f.Id).ToList();
-        var prices = foodIds.Count == 0
-            ? []
-            : await _context.FoodPrices.AsNoTracking()
-                .Where(p => foodIds.Contains(p.FoodId) && p.RegionCode == region)
-                .ToListAsync(cancellationToken);
-        var quotes = PriceBook.QuoteAll(foods, region, currency, prices);
+        var foods = await FoodsAsync(userId, personal, rules, preference, region.Code, cancellationToken);
+        var quotes = await _prices.QuotesAsync(foods, region, cancellationToken);
 
         if (foods.Count > 0)
         {
@@ -131,7 +127,7 @@ public sealed class MealPlanContextBuilder
                 text.Append("## Never use\n").Append(string.Join("\n", forbidden.Select(Clean))).Append("\n\n");
         }
 
-        return new MealPlanContext(text.ToString(), recipes, foods, region, currency, included);
+        return new MealPlanContext(text.ToString(), recipes, foods, region.Code, currency, included);
     }
 
     /// <summary>

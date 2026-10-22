@@ -50,7 +50,7 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
     private readonly PlanAccess _access;
     private readonly PlanEntryBuilder _entries;
     private readonly PlanReadModel _readModel;
-    private readonly PlanCosting _costing;
+    private readonly PlanCostTable _costing;
     private readonly MealPlanContextBuilder _contextBuilder;
     private readonly IAiPromptResolver _prompts;
     private readonly IAiMeteredClient _ai;
@@ -62,7 +62,7 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
         PlanAccess access,
         PlanEntryBuilder entries,
         PlanReadModel readModel,
-        PlanCosting costing,
+        PlanCostTable costing,
         MealPlanContextBuilder contextBuilder,
         IAiPromptResolver prompts,
         IAiMeteredClient ai,
