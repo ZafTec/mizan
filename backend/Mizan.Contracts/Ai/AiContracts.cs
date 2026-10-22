@@ -11,6 +11,11 @@ public record AiChatMessageDto(
 public record AiChatTurnDto(
     Guid ThreadId,
     string Title,
+    /// <summary>
+    /// The user's message as stored, with the address of any photo. The web
+    /// client shows a local preview until this arrives, then swaps to it.
+    /// </summary>
+    AiChatMessageDto Message,
     AiChatMessageDto Reply,
     /// <summary>
     /// What the turn actually did. Echoed for the same reason onboarding

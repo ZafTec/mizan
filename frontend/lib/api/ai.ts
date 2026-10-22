@@ -71,6 +71,8 @@ export interface AiChatThreadDetail extends AiChatThread {
 export interface AiChatTurn {
   threadId: string;
   title: string;
+  /** The person's message as stored, with the address of any photo they sent. */
+  message: AiChatMessage;
   reply: AiChatMessage;
   /** What the turn wrote, if anything. Shown, never silent. */
   performed: AiToolInvocation[];

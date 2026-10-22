@@ -78,7 +78,7 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
             CreatedAt = now.AddMilliseconds(1),
         };
 
-        _context.AiChatMessages.Add(new AiChatMessage
+        var stored = new AiChatMessage
         {
             Id = Guid.CreateVersion7(),
             ThreadId = thread.Id,
@@ -86,7 +86,8 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
             Content = message,
             ImageUrl = request.ImageUrl,
             CreatedAt = now,
-        });
+        };
+        _context.AiChatMessages.Add(stored);
         _context.AiChatMessages.Add(reply);
         thread.UpdatedAt = now;
 
@@ -96,6 +97,7 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
         return new AiChatTurnDto(
             thread.Id,
             thread.Title,
+            new AiChatMessageDto(stored.Id, true, stored.Content, stored.CreatedAt, stored.ImageUrl),
             new AiChatMessageDto(reply.Id, false, reply.Content, reply.CreatedAt),
             turn.Performed);
     }

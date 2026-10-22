@@ -101,12 +101,24 @@ export default function AiChat({
       .catch(() => setThreads([]));
   }, []);
 
-  // The thumbnail's address is a handle on memory, so it is released when the photo goes.
+  // A thumbnail's address is a handle on memory. It is released when the photo is removed, when the server's
+  // stored address replaces it in the transcript, or when the screen goes - never while something still shows it.
+  const previews = useRef(new Set<string>());
+  const preview = useCallback((file: File) => {
+    const url = URL.createObjectURL(file);
+    previews.current.add(url);
+    return url;
+  }, []);
+  const release = useCallback((url: string) => {
+    if (!previews.current.delete(url)) return;
+    URL.revokeObjectURL(url);
+  }, []);
   useEffect(
     () => () => {
-      if (attachment) URL.revokeObjectURL(attachment.url);
+      for (const url of previews.current) URL.revokeObjectURL(url);
+      previews.current.clear();
     },
-    [attachment],
+    [],
   );
 
   const scrollToBottom = useCallback(() => {
@@ -169,7 +181,8 @@ export default function AiChat({
   }
 
   function attach(file: File | null) {
-    setAttachment(file ? { file, url: URL.createObjectURL(file) } : null);
+    if (attachment) release(attachment.url);
+    setAttachment(file ? { file, url: preview(file) } : null);
   }
 
   async function send(prompt: string) {
@@ -202,7 +215,13 @@ export default function AiChat({
           ? await sendAiChatImage(threadId, text, photo.file)
           : await sendAiChatMessage(threadId, text);
         setThreadId(turn.threadId);
-        setMessages((current) => [...current, turn.reply]);
+        // The stored message takes the optimistic one's place, so the photo now comes from its stored address
+        // and the local preview can go.
+        setMessages((current) => [
+          ...current.map((m) => (m.id === optimisticId ? turn.message : m)),
+          turn.reply,
+        ]);
+        if (photo) release(photo.url);
         if (turn.performed?.length) {
           setPerformed((current) => ({
             ...current,
@@ -226,11 +245,8 @@ export default function AiChat({
         // The turn was never recorded, so the screen must not keep it, and the person gets their words back.
         setMessages((current) => current.filter((m) => m.id !== optimisticId));
         setInput(text);
-        if (photo)
-          setAttachment({
-            file: photo.file,
-            url: URL.createObjectURL(photo.file),
-          });
+        // The preview was never released, so the same photo returns to the composer as it was.
+        if (photo) setAttachment(photo);
       }
     });
   }
@@ -570,17 +586,20 @@ function ConversationList({
 /**
  * Only addresses a browser can show as a picture reach an image: the preview blob, an inline image, a hosted
  * photo, or a path on this site. Rendered through next/image without optimization, since these are the
- * person's own photos and previews rather than site assets; the parent sets the box and `fill` fits it.
+ * person's own photos and previews rather than site assets. By default the parent sets the box and `fill`
+ * fits it; `inline` keeps the photo's own proportions for a transcript line, bounded by its class names.
  */
 function PictureImage({
   src,
   alt,
   className,
+  inline = false,
   onClick,
 }: {
   src: string;
   alt: string;
   className?: string;
+  inline?: boolean;
   onClick?: (event: MouseEvent<HTMLImageElement>) => void;
 }) {
   if (!(
@@ -591,6 +610,19 @@ function PictureImage({
     src.startsWith("/")
   ))
     return null;
+  if (inline)
+    return (
+      <Image
+        src={src}
+        alt={alt}
+        width={640}
+        height={480}
+        unoptimized
+        loading="lazy"
+        className={cn("h-auto w-auto", className)}
+        onClick={onClick}
+      />
+    );
   return (
     <Image
       src={src}
@@ -707,12 +739,10 @@ function MessageView({
             aria-label="Open photo"
             className="block overflow-hidden rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element -- the object store is configured per deployment, so it is
-						    not in next/image's host allowlist. */}
-            <img
+            <PictureImage
               src={message.imageUrl}
               alt="Photo in the conversation"
-              loading="lazy"
+              inline
               className="max-h-60 w-auto max-w-full cursor-zoom-in object-contain"
             />
           </button>
