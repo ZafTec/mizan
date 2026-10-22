@@ -78,6 +78,7 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new() { Title = "Mizan API", Version = "v1" });
     c.SupportNonNullableReferenceTypes();
     c.NonNullableReferenceTypesAsRequired();
+    c.DocumentFilter<Mizan.Api.OpenApi.AiCardSchemasFilter>();
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Type = SecuritySchemeType.Http,
