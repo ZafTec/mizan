@@ -13,7 +13,11 @@ namespace Mizan.Application.Ai;
 /// published, so editing production means branching from it.
 /// </summary>
 public record CreateAiPromptDraftCommand(string Key, string? Body, string? SoftPolicy, string? Notes)
-    : IRequest<AiPromptVersionDto>;
+    : IRequest<AiPromptVersionDto>, IRedactedAudit
+{
+    // Key names the prompt, it is not a credential; the body is long and lives in the version row.
+    object IRedactedAudit.AuditDetails => new { Key, Notes };
+}
 
 public class CreateAiPromptDraftCommandValidator : AbstractValidator<CreateAiPromptDraftCommand>
 {

@@ -15,7 +15,11 @@ public record DeviceDto(Guid Id, string Platform, string? DeviceName, DateTime C
 /// refreshes it. A token that was last registered by another account moves to this one,
 /// because a device belongs to whoever is signed in on it now.
 /// </summary>
-public record RegisterDeviceCommand(string Token, string Platform, string? DeviceName) : IRequest<DeviceDto>;
+public record RegisterDeviceCommand(string Token, string Platform, string? DeviceName) : IRequest<DeviceDto>, IRedactedAudit
+{
+    // The push token addresses the phone; whoever holds it can send it notifications, so it stays out of the log.
+    object IRedactedAudit.AuditDetails => new { Platform, DeviceName };
+}
 
 public sealed class RegisterDeviceCommandValidator : AbstractValidator<RegisterDeviceCommand>
 {
