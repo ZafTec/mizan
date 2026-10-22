@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Ai;
+using Mizan.Domain.Nutrition;
 
 namespace Mizan.Infrastructure.Ai;
 
@@ -99,8 +100,13 @@ public class AiContextBuilder : IAiContextBuilder
 
         foreach (var day in days)
         {
-            text.Append(CultureInfo.InvariantCulture,
-                $"{day.Date:yyyy-MM-dd}: {Math.Round(day.Calories)} kcal, {Math.Round(day.Protein)} g protein\n");
+            text.Append(CultureInfo.InvariantCulture, $"{day.Date:yyyy-MM-dd}: ")
+                .Append(NutritionText.Summary(
+                [
+                    new NutrientAmount("Calories", day.Calories, goal?.TargetCalories, "kcal"),
+                    new NutrientAmount("Protein", day.Protein, goal?.TargetProteinGrams, "g"),
+                ]))
+                .Append('\n');
         }
 
         return text.ToString();

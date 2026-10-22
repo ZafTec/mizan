@@ -3,6 +3,7 @@ using Mizan.Application.Commands;
 using Mizan.Application.Queries;
 using Mizan.Domain.Ai;
 using Mizan.Domain.Constants;
+using Mizan.Domain.Nutrition;
 
 namespace Mizan.Application.Ai.Tools;
 
@@ -317,9 +318,9 @@ public static class AiToolCatalogue
                 Date = AiToolArgs.OptionalDate(args, "date") ?? DateOnly.FromDateTime(DateTime.UtcNow),
             },
             result => result is DailyNutritionResult day
-                ? $"{day.Date:yyyy-MM-dd}: {day.TotalCalories} kcal "
-                  + $"(target {day.TargetCalories?.ToString() ?? "none"}), "
-                  + $"P{day.TotalProtein} C{day.TotalCarbs} F{day.TotalFat}"
+                ? $"{day.Date:yyyy-MM-dd}: " + NutritionText.Summary(NutritionText.Daily(
+                    day.TotalCalories, day.TotalProtein, day.TotalCarbs, day.TotalFat,
+                    day.TargetCalories, day.TargetProtein, day.TargetCarbs, day.TargetFat))
                 : "No totals for that day.",
             DataAxis.Nutrition, AiToolAccess.Read),
 
