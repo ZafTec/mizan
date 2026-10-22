@@ -63,7 +63,7 @@ Planning tools follow [PLANNING](PLANNING.md). `planning:read` covers `list_meal
 
 The photo review logs ticked items one at a time and stops at the first failure, so a retry never logs anything twice. The meal plan page shows a plan's days (or one day) with entries, nutrition, totals, prep sessions and violations; its Log button calls `log_plan_entry` through the host and disables itself once the entry is logged, and its Shopping list button calls `generate_shopping_list`. Those writes need `planning:write` on the connection; the page itself needs only `planning:read`.
 
-**Tasks**: `ask_ai`, `suggest_meals`, `analyze_food_image`, and `export_profile` may run as tasks for clients that declare `io.modelcontextprotocol/tasks`. The call returns a task id at once; the client polls `tasks/get`. State lives in the API's `mcp_tasks` table, so any instance can answer a poll and a restart does not lose it. A task is visible only to the user who started it, ends once, expires after an hour, and a task nobody has touched for 15 minutes is reported as interrupted. A call the grant does not cover, or one over the monthly cap, is refused immediately rather than becoming a task. The task's tool runs in the background as the same user under the same grant, and usage is settled on success and failure.
+**Tasks**: `ask_ai`, `suggest_meals`, `analyze_food_image`, `generate_meal_plan`, and `export_profile` may run as tasks for clients that declare `io.modelcontextprotocol/tasks`. The call returns a task id at once; the client polls `tasks/get`. State lives in the API's `mcp_tasks` table, so any instance can answer a poll and a restart does not lose it. A task is visible only to the user who started it, ends once, expires after an hour, and a task nobody has touched for 15 minutes is reported as interrupted. A call the grant does not cover, or one over the monthly cap, is refused immediately rather than becoming a task. The task's tool runs in the background as the same user under the same grant, and usage is settled on success and failure.
 
 Apps and Tasks packages are marked experimental by the SDK and may change.
 
@@ -88,6 +88,8 @@ promote_to_recipe(date: "2026-09-07", mealType: "BREAKFAST", title: "Morning bow
 ```
 
 The selected meal must contain at least two items. If the API requests missing weights, ask the user and supply `recipeYieldsJson` or `entryWeightsGramsJson`; do not infer a batch yield. `promote_recipe_to_preparation` turns an owned recipe into a reusable ingredient using its finished batch weight.
+
+`generate_meal_plan` (scope `planning:write`) drafts a plan through `POST /api/MealPlans/generate`: one draft per budget in `budgetCeilings`, each saved as Draft with its violations and cost table. It spends the planning allowance, one plan a day on Free. Read drafts with `list_meal_plans(status: "Draft")` and `get_meal_plan`; the person accepts one in the app.
 
 AI tools consume the caller's applicable AI quota and enforce consent. Trainer AI calls cannot access axes the client withheld. See [AI](AI.md). `upload_image` and `analyze_food_image` accept base64 image bytes, capped at 4 MB decoded.
 
