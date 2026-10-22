@@ -268,7 +268,7 @@ Callback data stays under 64 bytes because it carries ids only.
 
 ### Telegram Mini App
 
-The Mini App is the web app. Next.js serves `/tg/plan` and `/tg/shopping-list`, which render the same components as `/meal-plan/[id]` and the shopping list without the shell. On open, the page sends `initData` to `POST /telegram/miniapp/session` on the bot service. The bot service verifies the HMAC with the bot token and checks that `auth_date` is within five minutes. It then calls `POST /api/Telegram/sessions` with the service key for the linked user. The API returns an ordinary session, and the page receives the `mizan_session` cookie. A chat that is not linked gets the link page. The `/plan` and `/shop` replies carry a `web_app` button.
+The Mini App is the web app. Next.js serves `/tg/plan` and `/tg/shopping-list`, which render the same components as `/meal-plan/[id]` and the shopping list without the shell. On open, the page sends `initData` to `POST /telegram/miniapp/session` on the bot service. The bot service verifies the HMAC with the bot token and checks that `auth_date` is within five minutes. It then calls `POST /api/Telegram/sessions` with the service key for the linked user. The API applies the sign-in and Pro checks and returns an ordinary session with a 24-hour sliding life, and the page receives the `mizan_session` cookie. A chat that is not linked gets the link page (`404 not_linked` with `linkUrl`). The `/help` reply carries a `web_app` button today; `/plan` and `/shop` carry one when they arrive. See [Telegram](TELEGRAM.md#mini-app) for the wire shapes.
 
 ## Tests
 

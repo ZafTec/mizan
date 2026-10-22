@@ -266,6 +266,8 @@ services:
       # linked user and nothing beyond it.
       - TelegramBot__ServiceApiKey=${MCP_SERVICE_KEY:?MCP_SERVICE_KEY is required}
       - TelegramBot__PublicUrl=${PUBLIC_APP_URL:-http://localhost:3000}
+      # Where the Mini App pages live. Empty means {PublicUrl}/tg.
+      - TelegramBot__MiniAppUrl=${TELEGRAM_MINIAPP_URL:-}
     depends_on:
       backend:
         condition: service_started
