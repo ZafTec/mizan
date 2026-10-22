@@ -156,7 +156,7 @@ IServiceProvider? rootServices = null;
 
 // Only these tools can take a task. A task is for work that may outlast a chat turn,
 // which here means the ones that call an AI provider or build a whole export.
-var taskTools = new HashSet<string> { "ask_ai", "suggest_meals", "analyze_food_image", "export_profile" };
+var taskTools = new HashSet<string> { "ask_ai", "suggest_meals", "analyze_food_image", "generate_meal_plan", "export_profile" };
 
 // MCP Server
 builder.Services.AddMcpServer(options =>

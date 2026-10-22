@@ -36,11 +36,11 @@ public sealed class MizanPrompts
         $"""
         Plan my meals in Mizan for the next 7 days{(string.IsNullOrWhiteSpace(startDate) ? ", starting today" : $", starting {startDate}")}.
 
-        Start from what I have: my recipes (search_recipes), my current goal (get_current_goal), and catalogue foods for simple lines like fruit, eggs or yogurt (search_foods). Create the plan with create_meal_plan, passing my goal's calories and protein as rules (rulesJson); put any budget, cooking time or foods I dislike in the rules too (weeklyBudget, prepStyle, forbiddenFoodIds). Then fill each day with add_plan_entry: kind Recipe with a recipe id and servings, kind Food with a food id and grams, or kind Text only for something that has no nutrition to track. Use only recipes and foods that exist; if I do not have enough, say what is missing instead of inventing recipes.
+        Draft it with generate_meal_plan, passing my words below as the preference and any budget as budgetCeilings. Mizan picks the foods and recipes against my goal and computes the nutrition and the cost; do not add them up yourself.
 
-        {(string.IsNullOrWhiteSpace(preferences) ? "" : $"Please also respect this: {preferences}")}
+        {(string.IsNullOrWhiteSpace(preferences) ? "" : $"My preference: {preferences}")}
 
-        When the plan is built, show it with get_meal_plan. Read its per-day totals and its violations list, and tell me which days break a rule and what you would swap to fix them. Do not add up nutrition yourself; the plan already carries it.
+        Show me the draft day by day with its nutrition totals, its weekly cost, the violations it reports and any line it left for me to review. Tell me the draft becomes my plan only when I accept it in the app.
         """;
 
     [McpServerPrompt(Name = "grocery_run", Title = "Grocery run")]

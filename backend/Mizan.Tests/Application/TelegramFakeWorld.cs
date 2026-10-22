@@ -35,6 +35,8 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
     public string ThreadsJson { get; set; } = "[]";
     public string ChatReply { get; set; } = "Hello.";
     public string PerformedJson { get; set; } = "[]";
+    public HttpStatusCode GenerateStatus { get; set; } = HttpStatusCode.OK;
+    public string GenerateJson { get; set; } = "{}";
 
     // ---- the meal plan the API holds ----
 
@@ -74,6 +76,8 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
     public List<string> PlanDaysRequested { get; } = [];
     public List<(string Url, JsonElement Body)> PlanLogsPosted { get; } = [];
     public List<(string Url, JsonElement Body)> TogglesPatched { get; } = [];
+    public List<JsonElement> PlansGenerated { get; } = [];
+    public List<string> PlanDecisions { get; } = [];
 
     public JsonElement LastSend => JsonDocument.Parse(_telegramSends.Last(s => s.Url.EndsWith("/sendMessage")).Body).RootElement.Clone();
 
@@ -183,6 +187,18 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
                  "reply":{"id":"33333333-3333-4333-8333-333333333333","fromUser":false,"content":{{reply}},"createdAt":"2026-10-22T10:00:00Z"},
                  "performed":{{PerformedJson}}}
                 """);
+        }
+        if (url.Contains("api/MealPlans/generate"))
+        {
+            PlansGenerated.Add(JsonDocument.Parse(body).RootElement.Clone());
+            return GenerateStatus == HttpStatusCode.OK
+                ? Json(GenerateJson)
+                : Json("""{"errorCode":"ai_quota_exceeded","error":"You have used your AI allowance for now."}""", GenerateStatus);
+        }
+        if (url.Contains("api/MealPlans/") && (url.EndsWith("/accept") || url.EndsWith("/decline")))
+        {
+            PlanDecisions.Add(url[(url.IndexOf("api/MealPlans/", StringComparison.Ordinal) + "api/MealPlans/".Length)..]);
+            return new HttpResponseMessage(HttpStatusCode.NoContent);
         }
         if (url.Contains("api/Meals"))
         {

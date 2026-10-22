@@ -54,7 +54,7 @@ public static class McpToolScopes
         Add(McpScopes.PlanningWrite, "create_meal_plan", "update_meal_plan", "delete_meal_plan", "set_meal_plan_status",
             "accept_meal_plan", "decline_meal_plan", "add_plan_entry", "update_plan_entry", "remove_plan_entry",
             "log_plan_entry", "add_prep_session", "update_prep_session", "remove_prep_session",
-            "generate_shopping_list", "apply_template",
+            "generate_shopping_list", "apply_template", "generate_meal_plan",
             "create_shopping_list", "update_shopping_list", "delete_shopping_list", "add_shopping_list_item",
             "update_shopping_list_item", "delete_shopping_list_item", "toggle_shopping_list_item", "clear_checked_items");
 
