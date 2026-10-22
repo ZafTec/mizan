@@ -128,7 +128,8 @@ public record AiChatHistoryTurn(bool FromUser, string Content);
 public record AiChatTurn(
     string Content,
     Guid? PromptVersionId,
-    IReadOnlyList<AiToolInvocation> Performed);
+    IReadOnlyList<AiToolInvocation> Performed,
+    IReadOnlyList<AiCardDto> Cards);
 
 /// <summary>An image already read into memory, on its way to the model.</summary>
 public record AiImageRef(byte[] Bytes, string ContentType);

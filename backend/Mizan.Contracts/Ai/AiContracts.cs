@@ -22,7 +22,13 @@ public record AiChatTurnDto(
     /// echoes it: an assistant that writes to someone's log without saying so
     /// is indistinguishable from one making things up.
     /// </summary>
-    IReadOnlyList<AiToolInvocation> Performed);
+    IReadOnlyList<AiToolInvocation> Performed,
+    /// <summary>
+    /// Typed cards from what the turn did: a generated plan, a day, a cost table, a shopping
+    /// list. Built by code from command results and checked against their records; see
+    /// <see cref="AiCardTypes"/>.
+    /// </summary>
+    IReadOnlyList<AiCardDto> Cards);
 
 /// <summary>One row of GET /api/Ai/threads, newest first.</summary>
 public record AiChatThreadDto(Guid Id, string Title, DateTime UpdatedAt);

@@ -3,6 +3,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Mizan.Application.Ai;
 using Mizan.Application.Ai.Tools;
 using Mizan.Application.Common;
 using Mizan.Application.Exceptions;
@@ -40,6 +41,10 @@ public class AiToolRunner : IAiToolRunner
     }
 
     public async Task<AiToolInvocation> RunAsync(
+        AiToolCall call, AiToolContext context, CancellationToken cancellationToken = default) =>
+        (await RunWithCardsAsync(call, context, cancellationToken)).Invocation;
+
+    public async Task<AiToolRun> RunWithCardsAsync(
         AiToolCall call, AiToolContext context, CancellationToken cancellationToken = default)
     {
         var tool = AiToolCatalogue.Find(call.Name);
@@ -48,8 +53,7 @@ public class AiToolRunner : IAiToolRunner
             // Not an error worth logging loudly: a model asking for a tool it
             // was not given is a model being told no, which is the system
             // working.
-            return new AiToolInvocation(
-                call.Name, string.Empty, false, $"There is no tool called '{call.Name}'.");
+            return Failed(call.Name, $"There is no tool called '{call.Name}'.");
         }
 
         // Consent is checked per call rather than by filtering the list the
@@ -65,8 +69,8 @@ public class AiToolRunner : IAiToolRunner
             if (!connection.Allows(needed))
             {
                 var action = tool.Access == AiToolAccess.Write ? "change" : "read";
-                return new AiToolInvocation(
-                    call.Name, string.Empty, false,
+                return Failed(
+                    call.Name,
                     $"This connection is not allowed to {action} the user's {Describe(tool.Axis)}. "
                     + "Tell them they can change that on their MCP connections page.");
             }
@@ -80,8 +84,8 @@ public class AiToolRunner : IAiToolRunner
         if (!permitted)
         {
             var verb = tool.Access == AiToolAccess.Write ? "change" : "read";
-            return new AiToolInvocation(
-                call.Name, string.Empty, false,
+            return Failed(
+                call.Name,
                 $"The user has not given permission to {verb} their {Describe(tool.Axis)}. "
                 + "Tell them, and say they can grant it in Settings.");
         }
@@ -95,33 +99,57 @@ public class AiToolRunner : IAiToolRunner
         }
         catch (JsonException)
         {
-            return new AiToolInvocation(call.Name, string.Empty, false, "The arguments were not valid JSON.");
+            return Failed(call.Name, "The arguments were not valid JSON.");
         }
 
+        object? result;
         try
         {
             var request = tool.Build(args, context);
-            var result = await _mediator.Send(request, cancellationToken);
-            return new AiToolInvocation(call.Name, tool.Describe(result), true);
+            result = await _mediator.Send(request, cancellationToken);
         }
         catch (ValidationException ex)
         {
-            return new AiToolInvocation(
-                call.Name, string.Empty, false,
-                string.Join(" ", ex.Errors.Select(e => e.ErrorMessage)));
+            return Failed(call.Name, string.Join(" ", ex.Errors.Select(e => e.ErrorMessage)));
         }
         catch (DomainException ex)
         {
-            return new AiToolInvocation(call.Name, string.Empty, false, ex.Message);
+            return Failed(call.Name, ex.Message);
         }
         catch (Exception ex)
         {
             // An unexpected failure is ours, not the model's, so it is logged
             // and the model is told something generic rather than a stack trace.
             _logger.LogError(ex, "Tool {Tool} failed for user {UserId}", call.Name, context.UserId);
-            return new AiToolInvocation(call.Name, string.Empty, false, "That could not be completed.");
+            return Failed(call.Name, "That could not be completed.");
         }
+
+        return new AiToolRun(new AiToolInvocation(call.Name, tool.Describe(result), true), Cards(tool, result));
     }
+
+    /// <summary>
+    /// The tool's cards, each through the validator. One that fails is dropped and logged: it is
+    /// a bug in the tool, and the turn's answer stands without it.
+    /// </summary>
+    private IReadOnlyList<AiCardDto> Cards(AiToolDefinition tool, object? result)
+    {
+        if (tool.Cards is null) return [];
+        var cards = new List<AiCardDto>();
+        foreach (var draft in tool.Cards(result))
+        {
+            var card = AiCardValidator.Validate(draft, out var reason);
+            if (card is null)
+            {
+                _logger.LogWarning("Tool {Tool} built a {Type} card that failed its schema: {Reason}", tool.Name, draft.Type, reason);
+                continue;
+            }
+            cards.Add(card);
+        }
+        return cards;
+    }
+
+    private static AiToolRun Failed(string tool, string error) =>
+        new(new AiToolInvocation(tool, string.Empty, false, error), []);
 
     private async Task<UserAiConsent> ConsentAsync(Guid userId, CancellationToken cancellationToken)
     {
@@ -137,6 +165,7 @@ public class AiToolRunner : IAiToolRunner
         DataAxis.Nutrition => "food and goals",
         DataAxis.Training => "training",
         DataAxis.Body => "body measurements",
+        DataAxis.Planning => "meal plans",
         _ => "log",
     };
 }

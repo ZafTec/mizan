@@ -21,8 +21,11 @@ namespace Mizan.Application.Ai.Tools;
 ///    any other field that says whose record this is. Ownership comes from
 ///    <see cref="AiToolContext"/>, which comes from the session. A model that
 ///    writes someone else's id into its arguments changes nothing.
-/// 3. Nothing destructive is here, ever. Every tool creates or records; none
-///    deletes, and none overwrites something the user cannot see afterwards.
+/// 3. Nothing destructive is here. Every tool creates or records; none deletes
+///    a record, and none overwrites something the user cannot see afterwards.
+///    The one exception is a draft meal plan: its entries may be changed and
+///    removed, because the person reviews the draft before accepting it, and
+///    the commands refuse the same change on a plan that is no longer a draft.
 ///
 /// Shared with <c>Mizan.Mcp.Server</c> in spirit and in shape: MCP proved the
 /// tool-to-command pattern and this is the same one, so the two do not drift
@@ -296,7 +299,7 @@ public static class AiToolCatalogue
             },
             result => result is Common.PagedResult<FoodDto> foods && foods.Items.Count > 0
                 ? string.Join("\n", foods.Items.Select(f =>
-                    $"{f.Name} (per 100g) - {f.CaloriesPer100g} kcal, "
+                    $"{f.Id} — {f.Name} (per 100g) - {f.CaloriesPer100g} kcal, "
                     + $"P{f.ProteinPer100g} C{f.CarbsPer100g} F{f.FatPer100g}"))
                 : "No foods matched that.",
             DataAxis.Nutrition, AiToolAccess.Read),
@@ -400,6 +403,8 @@ public static class AiToolCatalogue
                     AiToolArgs.OptionalString(args, "category"))),
             _ => "Added that to the list.",
             DataAxis.Nutrition, AiToolAccess.Write),
+
+        .. AiPlanningTools.All,
     ];
 
     public static AiToolDefinition? Find(string name) =>

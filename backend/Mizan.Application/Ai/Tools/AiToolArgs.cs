@@ -72,6 +72,74 @@ public static class AiToolArgs
             : throw new DomainValidationException($"'{field}' must be an id returned by a search tool.");
     }
 
+    public static Guid? OptionalGuid(JsonElement args, string field)
+    {
+        var raw = OptionalString(args, field);
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+        return Guid.TryParse(raw, out var id)
+            ? id
+            : throw new DomainValidationException($"'{field}' must be an id returned by a tool.");
+    }
+
+    /// <summary>A list of numbers; a missing or null field is an empty list.</summary>
+    public static List<decimal> DecimalList(JsonElement args, string field)
+    {
+        if (args.ValueKind != JsonValueKind.Object
+            || !args.TryGetProperty(field, out var element)
+            || element.ValueKind == JsonValueKind.Null)
+        {
+            return [];
+        }
+        if (element.ValueKind != JsonValueKind.Array)
+            throw new DomainValidationException($"'{field}' must be a list of numbers.");
+
+        return element.EnumerateArray()
+            .Select(item => item.ValueKind == JsonValueKind.Number
+                ? item.GetDecimal()
+                : throw new DomainValidationException($"'{field}' must be a list of numbers."))
+            .ToList();
+    }
+
+    /// <summary>The planning tools' shapes: an entry and a plan's rules, read from flat arguments.</summary>
+    public static class Planning
+    {
+        /// <summary>
+        /// One entry. The kind follows from what is given: a recipe id makes a recipe entry, a
+        /// food id a food entry, and text alone a text entry, so the model cannot ask for a food
+        /// entry with no food.
+        /// </summary>
+        public static Contracts.Planning.PlanEntryRequest Entry(JsonElement args)
+        {
+            var recipeId = OptionalGuid(args, "recipeId");
+            var foodId = OptionalGuid(args, "foodId");
+            var kind = recipeId is not null ? "Recipe" : foodId is not null ? "Food" : "Text";
+            return new Contracts.Planning.PlanEntryRequest
+            {
+                DayIndex = OptionalInt(args, "dayIndex") ?? 0,
+                Slot = Domain.Planning.PlanSlots.Normalize(OptionalString(args, "slot")),
+                Kind = kind,
+                RecipeId = recipeId,
+                Servings = kind == "Recipe" ? OptionalDecimal(args, "servings") ?? 1 : null,
+                FoodId = foodId,
+                Grams = kind == "Food" ? OptionalDecimal(args, "grams") : null,
+                Text = kind == "Text" ? OptionalString(args, "text") : null,
+                Notes = OptionalString(args, "notes"),
+            };
+        }
+
+        public static Contracts.Planning.PlanRulesDto Rules(JsonElement args) => new()
+        {
+            MacroMode = OptionalString(args, "macroMode") ?? "None",
+            TargetCalories = OptionalDecimal(args, "targetCalories"),
+            TargetProtein = OptionalDecimal(args, "targetProtein"),
+            MaxCarbs = OptionalDecimal(args, "maxCarbs"),
+            TargetFat = OptionalDecimal(args, "targetFat"),
+            WeeklyBudget = OptionalDecimal(args, "weeklyBudget"),
+            Currency = OptionalString(args, "currency"),
+            PrepStyle = OptionalString(args, "prepStyle") ?? "Daily",
+        };
+    }
+
     /// <summary>
     /// The one nested shape in the catalogue. Workouts are exercises of sets,
     /// and flattening that into scalars would make the model's job harder than
