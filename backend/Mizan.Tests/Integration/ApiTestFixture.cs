@@ -289,9 +289,20 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
 
         var options = StackExchange.Redis.ConfigurationOptions.Parse(_redisConnectionString);
         options.AllowAdmin = true;
-        using var redis = await StackExchange.Redis.ConnectionMultiplexer.ConnectAsync(options);
-        foreach (var endpoint in redis.GetEndPoints())
-            await redis.GetServer(endpoint).FlushDatabaseAsync();
+        options.AbortOnConnectFail = false;
+        options.ConnectTimeout = 2000;
+        try
+        {
+            using var redis = await StackExchange.Redis.ConnectionMultiplexer.ConnectAsync(options);
+            foreach (var endpoint in redis.GetEndPoints())
+                await redis.GetServer(endpoint).FlushDatabaseAsync();
+        }
+        catch (StackExchange.Redis.RedisException ex)
+        {
+            // Without Redis the application falls back to its in-process cache, so the
+            // suite still runs; say so once instead of failing every test from here.
+            Console.WriteLine($"[ApiTestFixture] Redis cache not flushed: {ex.Message}");
+        }
     }
 
     public new async Task DisposeAsync()
