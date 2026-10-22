@@ -49,22 +49,23 @@ input, select { font: inherit; color: var(--ink); background: var(--card); borde
 <script>
 let foods = [];
 const today = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
-const scaled = (food, grams) => { const f = food.portion > 0 ? grams / food.portion : 1; return { calories: food.calories * f, protein: food.protein * f, carbs: food.carbs * f, fat: food.fat * f }; };
+// A preview for the screen only. The tool is sent the grams and the per-100 g figures, and the server does the arithmetic.
+const previewKcal = (food, grams) => food.per100g.calories * grams / 100;
 
 function totals() {
   const chosen = foods.filter((f) => f.include);
-  const kcal = chosen.reduce((sum, f) => sum + scaled(f, f.grams).calories, 0);
+  const kcal = chosen.reduce((sum, f) => sum + previewKcal(f, f.grams), 0);
   document.getElementById("total").textContent = `${chosen.length} item${chosen.length === 1 ? "" : "s"}, ${num(kcal)} kcal`;
   document.getElementById("log").disabled = chosen.length === 0;
 }
 
 function renderRows() {
   document.getElementById("rows").replaceChildren(...foods.map((food, index) => {
-    const kcal = el("td", { class: "num", style: "padding:8px 10px;text-align:right" }, num(scaled(food, food.grams).calories));
+    const kcal = el("td", { class: "num", style: "padding:8px 10px;text-align:right" }, num(previewKcal(food, food.grams)));
     return el("tr", { style: "border-top:1px solid var(--rule)" },
       el("td", { style: "padding:8px 10px" }, el("input", { type: "checkbox", checked: food.include, "aria-label": `Include ${food.name}`, onchange: (e) => { food.include = e.target.checked; totals(); } })),
       el("td", { style: "padding:8px 4px" }, el("input", { type: "text", value: food.name, "aria-label": "Food name", style: "width:100%", oninput: (e) => { food.name = e.target.value; } })),
-      el("td", { style: "padding:8px 4px" }, el("input", { type: "number", min: "1", step: "1", value: String(Math.round(food.grams)), "aria-label": `Grams of ${food.name}`, style: "width:80px", oninput: (e) => { food.grams = Math.max(0, Number(e.target.value) || 0); kcal.textContent = num(scaled(food, food.grams).calories); totals(); } })),
+      el("td", { style: "padding:8px 4px" }, el("input", { type: "number", min: "1", step: "1", value: String(Math.round(food.grams)), "aria-label": `Grams of ${food.name}`, style: "width:80px", oninput: (e) => { food.grams = Math.max(0, Number(e.target.value) || 0); kcal.textContent = num(previewKcal(food, food.grams)); totals(); } })),
       kcal);
   }));
   totals();
@@ -74,7 +75,9 @@ window.onToolResult = (result) => {
   const data = jsonOf(result);
   const status = document.getElementById("status");
   if (result.isError || !data || !Array.isArray(data.foods)) { status.className = "err"; status.textContent = textOf(result) || "Nothing was recognized in that photo."; return; }
-  foods = data.foods.map((f) => ({ name: f.name || "Food", portion: Number(f.portionGrams) || 100, grams: Number(f.portionGrams) || 100, calories: Number(f.calories) || 0, protein: Number(f.protein) || 0, carbs: Number(f.carbs) || 0, fat: Number(f.fat) || 0, include: true, logged: false }));
+  // A food without a weight or per-100 g figures cannot be scaled by the server, so it is not offered.
+  foods = data.foods.filter((f) => f && f.per100g && Number(f.portionGrams) > 0).map((f) => ({ name: f.name || "Food", grams: Number(f.portionGrams), per100g: f.per100g, include: true, logged: false }));
+  if (foods.length === 0) { status.className = "err"; status.textContent = "Nothing in that photo could be weighed."; return; }
   const confidence = Number(data.confidence);
   document.getElementById("note").textContent = (isFinite(confidence) && confidence > 0 ? `Estimate (${Math.round(confidence * (confidence <= 1 ? 100 : 1))}% confident). ` : "Estimate. ") + (data.note || "Check the amounts before you log.");
   document.getElementById("date").value = today();
@@ -90,10 +93,9 @@ document.getElementById("log").addEventListener("click", async () => {
   button.disabled = true; status.className = "muted";
   let done = 0;
   for (const food of foods.filter((f) => f.include && !f.logged)) {
-    const n = scaled(food, food.grams);
     status.textContent = `Logging ${food.name}…`;
     try {
-      const result = await callTool("log_meal_manual", { name: food.name.trim() || "Food", date, mealType, calories: Math.round(n.calories), servings: 1, proteinGrams: Math.round(n.protein * 10) / 10, carbsGrams: Math.round(n.carbs * 10) / 10, fatGrams: Math.round(n.fat * 10) / 10 });
+      const result = await callTool("log_meal_manual", { name: food.name.trim() || "Food", date, mealType, servings: 1, amountGrams: food.grams, caloriesPer100g: food.per100g.calories, proteinPer100g: food.per100g.proteinGrams, carbsPer100g: food.per100g.carbsGrams, fatPer100g: food.per100g.fatGrams });
       if (result.isError) throw new Error(textOf(result) || "Could not log that item");
       food.logged = true; food.include = false; done++;
     } catch (error) {

@@ -224,6 +224,12 @@ const analysis = {
       protein: 12,
       carbs: 2,
       fat: 14,
+      per100g: {
+        calories: 150,
+        proteinGrams: 10,
+        carbsGrams: 1.67,
+        fatGrams: 11.67,
+      },
     },
     {
       name: "Toast with butter",
@@ -232,6 +238,12 @@ const analysis = {
       protein: 4,
       carbs: 22,
       fat: 9,
+      per100g: {
+        calories: 316.67,
+        proteinGrams: 6.67,
+        carbsGrams: 36.67,
+        fatGrams: 15,
+      },
     },
   ],
   totalCalories: 370,

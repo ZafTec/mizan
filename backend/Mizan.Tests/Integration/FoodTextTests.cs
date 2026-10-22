@@ -45,6 +45,23 @@ public class FoodTextTests
     }
 
     [Fact]
+    public async Task EachFood_ComesWithItsNutritionPer100g()
+    {
+        var (client, _) = await ProUserAsync();
+        _fixture.Ai.Reply(Analysis);
+
+        var response = await Post(client, "two eggs and a slice of toast with butter");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var json = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        var toast = json.GetProperty("foods")[1].GetProperty("per100g");
+        toast.GetProperty("calories").GetDecimal().Should().Be(316.67m);
+        toast.GetProperty("proteinGrams").GetDecimal().Should().Be(6.67m);
+        toast.GetProperty("carbsGrams").GetDecimal().Should().Be(36.67m);
+        toast.GetProperty("fatGrams").GetDecimal().Should().Be(15m);
+    }
+
+    [Fact]
     public async Task TheModelIsToldItIsReadingWords_AndSeesTheDescription()
     {
         var (client, _) = await ProUserAsync();

@@ -28,6 +28,7 @@ const analysis = {
       protein: 10,
       carbs: 2,
       fat: 11,
+      per100g: { calories: 150, proteinGrams: 10, carbsGrams: 2, fatGrams: 11 },
     },
     {
       name: "Toast",
@@ -36,6 +37,7 @@ const analysis = {
       protein: 4,
       carbs: 24,
       fat: 2,
+      per100g: { calories: 260, proteinGrams: 8, carbsGrams: 48, fatGrams: 4 },
     },
   ],
   totalCalories: 280,
@@ -163,7 +165,7 @@ describe("describing a meal to the assistant", () => {
     ).toBe("");
   });
 
-  it("scales the numbers when the weight changes, and logs what the person confirmed", async () => {
+  it("sends the grams the person confirmed with the per-100 g figures, under a key the server can dedupe on", async () => {
     const onSaved = renderForm();
     await estimate();
     const meal = await screen.findByRole("region", {
@@ -197,12 +199,21 @@ describe("describing a meal to the assistant", () => {
         mealType: "BREAKFAST",
         servings: 1,
         amountGrams: 200,
-        calories: 300,
-        proteinGrams: 20,
-        carbsGrams: 4,
-        fatGrams: 22,
+        per100g: {
+          calories: 150,
+          proteinGrams: 10,
+          carbsGrams: 2,
+          fatGrams: 11,
+        },
       },
+      headers: { "Idempotency-Key": expect.stringMatching(/^[0-9a-f-]{36}$/) },
     });
+    // No totals computed here: the server scales per100g to the grams.
+    expect((posts[0][1] as { body: object }).body).not.toHaveProperty(
+      "calories",
+    );
+    // The screen still shows the person what the row comes to at that weight.
+    expect(meal.textContent).toContain("300 kcal");
   });
 
   it("keeps only the unsaved items after a failure, so a retry cannot log anything twice", async () => {
@@ -235,6 +246,23 @@ describe("describing a meal to the assistant", () => {
           (o as { body?: { name?: string } })?.body?.name === "Scrambled eggs",
       );
     expect(eggs).toHaveLength(1);
+    // Toast was sent twice, under the one key minted when it was proposed, so the server treats the retry as a replay.
+    const toastKeys = vi
+      .mocked(clientApi)
+      .mock.calls.filter(
+        ([, o]) => (o as { body?: { name?: string } })?.body?.name === "Toast",
+      )
+      .map(
+        ([, o]) =>
+          (o as { headers: Record<string, string> }).headers["Idempotency-Key"],
+      );
+    expect(toastKeys).toHaveLength(2);
+    expect(toastKeys[0]).toBe(toastKeys[1]);
+    expect(toastKeys[0]).not.toBe(
+      (eggs[0][1] as { headers: Record<string, string> }).headers[
+        "Idempotency-Key"
+      ],
+    );
   });
 
   it("says so when it found no food, and leaves the meal alone", async () => {

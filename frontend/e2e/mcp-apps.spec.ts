@@ -203,6 +203,12 @@ test.describe("MCP apps, inside a stand-in host", () => {
           protein: 2.7,
           carbs: 28,
           fat: 0.3,
+          per100g: {
+            calories: 130,
+            proteinGrams: 2.7,
+            carbsGrams: 28,
+            fatGrams: 0.3,
+          },
         },
         {
           name: "Chicken",
@@ -211,6 +217,12 @@ test.describe("MCP apps, inside a stand-in host", () => {
           protein: 31,
           carbs: 0,
           fat: 3.6,
+          per100g: {
+            calories: 165,
+            proteinGrams: 31,
+            carbsGrams: 0,
+            fatGrams: 3.6,
+          },
         },
         {
           name: "Salad",
@@ -219,6 +231,12 @@ test.describe("MCP apps, inside a stand-in host", () => {
           protein: 1,
           carbs: 3,
           fat: 0,
+          per100g: {
+            calories: 40,
+            proteinGrams: 2,
+            carbsGrams: 6,
+            fatGrams: 0,
+          },
         },
       ],
     };
@@ -237,7 +255,10 @@ test.describe("MCP apps, inside a stand-in host", () => {
       "log_meal_manual",
     ]);
     expect(made.map((c) => c.arguments.name)).toEqual(["Rice", "Chicken"]);
-    expect(made[0].arguments.calories).toBe(260);
+    // The grams and the per-100 g figures go to the server; no total is computed here.
+    expect(made[0].arguments.amountGrams).toBe(200);
+    expect(made[0].arguments.caloriesPer100g).toBe(130);
+    expect(made[0].arguments.calories).toBeUndefined();
     await expect(
       app.getByRole("button", { name: "Log selected" }),
     ).toBeDisabled();
@@ -255,6 +276,12 @@ test.describe("MCP apps, inside a stand-in host", () => {
           protein: 2.7,
           carbs: 28,
           fat: 0.3,
+          per100g: {
+            calories: 130,
+            proteinGrams: 2.7,
+            carbsGrams: 28,
+            fatGrams: 0.3,
+          },
         },
         {
           name: "Chicken",
@@ -263,6 +290,12 @@ test.describe("MCP apps, inside a stand-in host", () => {
           protein: 31,
           carbs: 0,
           fat: 3.6,
+          per100g: {
+            calories: 165,
+            proteinGrams: 31,
+            carbsGrams: 0,
+            fatGrams: 3.6,
+          },
         },
         {
           name: "Beans",
@@ -271,6 +304,12 @@ test.describe("MCP apps, inside a stand-in host", () => {
           protein: 8,
           carbs: 20,
           fat: 1,
+          per100g: {
+            calories: 120,
+            proteinGrams: 8,
+            carbsGrams: 20,
+            fatGrams: 1,
+          },
         },
       ],
     };
@@ -319,6 +358,12 @@ test.describe("MCP apps, inside a stand-in host", () => {
             protein: 0,
             carbs: 0,
             fat: 0,
+            per100g: {
+              calories: 10,
+              proteinGrams: 0,
+              carbsGrams: 0,
+              fatGrams: 0,
+            },
           },
         ],
       }),

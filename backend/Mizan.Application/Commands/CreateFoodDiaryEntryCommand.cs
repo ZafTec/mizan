@@ -46,6 +46,15 @@ public class CreateFoodDiaryEntryCommandValidator : AbstractValidator<CreateFood
         RuleFor(x => x.CarbsGrams).GreaterThanOrEqualTo(0).When(x => x.CarbsGrams.HasValue);
         RuleFor(x => x.FatGrams).GreaterThanOrEqualTo(0).When(x => x.FatGrams.HasValue);
         RuleFor(x => x.FiberGrams).GreaterThanOrEqualTo(0).When(x => x.FiberGrams.HasValue);
+        When(x => x.Per100g is not null, () =>
+        {
+            RuleFor(x => x.AmountGrams).NotNull().WithMessage("Per100g needs amountGrams to scale to");
+            RuleFor(x => x.Per100g!.Calories).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.Per100g!.ProteinGrams).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.Per100g!.CarbsGrams).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.Per100g!.FatGrams).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.Per100g!.FiberGrams).GreaterThanOrEqualTo(0).When(x => x.Per100g!.FiberGrams.HasValue);
+        });
         RuleFor(x => x.LoggedAt)
             .LessThanOrEqualTo(_ => DateTime.UtcNow.AddMinutes(5))
             .When(x => x.LoggedAt.HasValue)
@@ -109,6 +118,18 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
         string name = request.Name;
         decimal? calories = request.Calories, protein = request.ProteinGrams,
             carbs = request.CarbsGrams, fat = request.FatGrams, fiber = request.FiberGrams;
+        if (request.Per100g is { } per100g && request.AmountGrams is { } grams)
+        {
+            // The server owns the arithmetic: the same rounding the food path
+            // uses, from the per-100 g figures and the grams the person
+            // confirmed. Totals a client sent alongside are not trusted.
+            var scale = grams / 100m;
+            calories = Math.Round(per100g.Calories * scale, 2);
+            protein = Math.Round(per100g.ProteinGrams * scale, 2);
+            carbs = Math.Round(per100g.CarbsGrams * scale, 2);
+            fat = Math.Round(per100g.FatGrams * scale, 2);
+            fiber = per100g.FiberGrams.HasValue ? Math.Round(per100g.FiberGrams.Value * scale, 2) : null;
+        }
         if (request.FoodId.HasValue)
         {
             food = await _context.Foods.FirstOrDefaultAsync(
@@ -186,11 +207,11 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
         var unlocked = await _achievements.EvaluateAsync(cancellationToken, ["meals_logged", "streak_nutrition"]);
 
         var warnings = NutritionHints.CheckConsistency(
-            request.Calories,
-            request.ProteinGrams,
-            request.CarbsGrams,
-            request.FatGrams,
-            request.FiberGrams);
+            request.Per100g is null ? request.Calories : calories,
+            request.Per100g is null ? request.ProteinGrams : protein,
+            request.Per100g is null ? request.CarbsGrams : carbs,
+            request.Per100g is null ? request.FatGrams : fat,
+            request.Per100g is null ? request.FiberGrams : fiber);
 
         return new CreateFoodDiaryEntryResult
         {

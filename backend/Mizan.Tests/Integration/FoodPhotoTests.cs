@@ -48,6 +48,28 @@ public class FoodPhotoTests
         result.Confidence.Should().Be(0.72m);
     }
 
+    /// <summary>
+    /// The proposal carries each food per 100 g, so a client sends the grams the
+    /// person confirmed and the server does the scaling (docs/AI.md).
+    /// </summary>
+    [Fact]
+    public async Task EachFoodComesWithItsNutritionPer100g()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, _) = await ProUserAsync();
+        _fixture.Ai.Reply(GoodAnalysis);
+
+        var response = await PostPhotoAsync(client);
+        response.EnsureSuccessStatusCode();
+        var json = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+
+        var per100g = json.GetProperty("foods")[0].GetProperty("per100g");
+        per100g.GetProperty("calories").GetDecimal().Should().Be(165.33m);
+        per100g.GetProperty("proteinGrams").GetDecimal().Should().Be(31m);
+        per100g.GetProperty("carbsGrams").GetDecimal().Should().Be(0m);
+        per100g.GetProperty("fatGrams").GetDecimal().Should().Be(3.6m);
+    }
+
     [Fact]
     public async Task NothingIsWrittenToTheDiary()
     {
