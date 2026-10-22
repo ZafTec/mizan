@@ -68,8 +68,7 @@ public class GenerateShoppingListCommandHandler : IRequestHandler<GenerateShoppi
         if (request.ReplaceListId is { } replaceId)
         {
             list = await _lists.LoadEditableAsync(replaceId, cancellationToken);
-            _context.ShoppingListItems.RemoveRange(list.Items);
-            list.Items.Clear();
+            _context.ShoppingListItems.RemoveRange(list.Items.ToList());
             if (!string.IsNullOrWhiteSpace(request.Name)) list.Name = request.Name.Trim();
         }
         else
@@ -94,7 +93,7 @@ public class GenerateShoppingListCommandHandler : IRequestHandler<GenerateShoppi
         var order = 0;
         foreach (var item in draft)
         {
-            list.Items.Add(new ShoppingListItem
+            _context.ShoppingListItems.Add(new ShoppingListItem
             {
                 Id = Guid.NewGuid(),
                 ShoppingListId = list.Id,

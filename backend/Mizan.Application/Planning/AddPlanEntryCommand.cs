@@ -37,7 +37,9 @@ public class AddPlanEntryCommandHandler : IRequestHandler<AddPlanEntryCommand, P
     {
         var plan = await _access.LoadEditableAsync(request.PlanId, cancellationToken);
         var entry = (await _entries.BuildAsync(plan, [request.Entry], null, cancellationToken)).Single();
-        plan.Entries.Add(entry);
+        // Through the set, not the navigation: an entity found by change
+        // detection with its key already set is taken for an existing row.
+        _context.PlanEntries.Add(entry);
         plan.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
         await PlanAccess.InvalidateAsync(_cache, plan, cancellationToken);
