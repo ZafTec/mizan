@@ -159,7 +159,7 @@ public static class AiToolCatalogue
 
         new AiToolDefinition(
             "create_meal_plan",
-            "Create an empty meal plan over a date range. Recipes are added later, by the user.",
+            "Create an empty meal plan starting on a date and running for a number of days (default 7). Entries are added later, by the user.",
             """
             {
               "type": "object",
@@ -167,23 +167,22 @@ public static class AiToolCatalogue
               "properties": {
                 "name": { "type": "string" },
                 "startDate": { "type": "string", "description": "YYYY-MM-DD" },
-                "endDate": { "type": "string", "description": "YYYY-MM-DD" }
+                "durationDays": { "type": "integer", "minimum": 1, "maximum": 31 }
               },
-              "required": ["startDate", "endDate"]
+              "required": ["startDate"]
             }
             """,
-            (args, _) => new CreateMealPlanCommand
+            (args, _) => new Planning.CreateMealPlanCommand
             {
                 Name = AiToolArgs.OptionalString(args, "name"),
                 StartDate = AiToolArgs.OptionalDate(args, "startDate")
                     ?? throw new Exceptions.DomainValidationException("'startDate' is required."),
-                EndDate = AiToolArgs.OptionalDate(args, "endDate")
-                    ?? throw new Exceptions.DomainValidationException("'endDate' is required."),
+                DurationDays = AiToolArgs.OptionalInt(args, "durationDays") ?? 7,
                 // Never from the model: a household id it guessed would be an
                 // attempt to write into someone else's household.
                 HouseholdId = null,
             },
-            result => result is CreateMealPlanResult plan && !string.IsNullOrWhiteSpace(plan.Name)
+            result => result is Mizan.Contracts.Planning.MealPlanCreatedResult plan && !string.IsNullOrWhiteSpace(plan.Name)
                 ? $"Created the plan \"{plan.Name}\"."
                 : "Created your meal plan.",
             DataAxis.Nutrition, AiToolAccess.Write),
@@ -370,8 +369,8 @@ public static class AiToolCatalogue
               "required": ["name"]
             }
             """,
-            (args, ctx) => new CreateShoppingListCommand(
-                AiToolArgs.RequiredString(args, "name"), ctx.UserId, null),
+            (args, _) => new Planning.CreateShoppingListCommand(
+                AiToolArgs.RequiredString(args, "name"), null),
             _ => "Created that shopping list.",
             DataAxis.Nutrition, AiToolAccess.Write),
 
@@ -392,12 +391,13 @@ public static class AiToolCatalogue
               "required": ["shoppingListId", "itemName"]
             }
             """,
-            (args, _) => new AddShoppingListItemCommand(
+            (args, _) => new Planning.AddShoppingListItemCommand(
                 AiToolArgs.RequiredGuid(args, "shoppingListId"),
-                AiToolArgs.RequiredString(args, "itemName"),
-                AiToolArgs.OptionalDecimal(args, "amount"),
-                AiToolArgs.OptionalString(args, "unit"),
-                AiToolArgs.OptionalString(args, "category")),
+                new Mizan.Contracts.Planning.AddShoppingListItemRequest(
+                    AiToolArgs.RequiredString(args, "itemName"),
+                    AiToolArgs.OptionalDecimal(args, "amount"),
+                    AiToolArgs.OptionalString(args, "unit"),
+                    AiToolArgs.OptionalString(args, "category"))),
             _ => "Added that to the list.",
             DataAxis.Nutrition, AiToolAccess.Write),
     ];

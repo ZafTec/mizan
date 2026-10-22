@@ -38,7 +38,7 @@ public sealed record HouseholdDeletionSnapshot(
     IReadOnlyList<Guid> ShoppingListIds,
     int ShoppingListItemCount,
     IReadOnlyList<Guid> MealPlanIds,
-    int MealPlanRecipeCount,
+    int MealPlanEntryCount,
     int PendingInvitationCount,
     string Version)
 {
@@ -60,7 +60,7 @@ public sealed record HouseholdDeletionSnapshot(
         var plans = await context.MealPlans
             .Where(p => p.HouseholdId == household.Id)
             .OrderBy(p => p.Id)
-            .Select(p => new { p.Id, Recipes = p.MealPlanRecipes.Count })
+            .Select(p => new { p.Id, Entries = p.Entries.Count })
             .ToListAsync(cancellationToken);
         var pendingInvitations = await context.HouseholdInvitations
             .CountAsync(i => i.HouseholdId == household.Id && i.Status == "pending", cancellationToken);
@@ -68,7 +68,7 @@ public sealed record HouseholdDeletionSnapshot(
         var fingerprint = new StringBuilder()
             .AppendJoin(',', members.Select(m => $"{m.UserId}:{m.Role}")).Append('|')
             .AppendJoin(',', lists.Select(l => $"{l.Id}:{l.Items}")).Append('|')
-            .AppendJoin(',', plans.Select(p => $"{p.Id}:{p.Recipes}"))
+            .AppendJoin(',', plans.Select(p => $"{p.Id}:{p.Entries}"))
             .ToString();
         var version = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(fingerprint)))[..16];
 
@@ -79,7 +79,7 @@ public sealed record HouseholdDeletionSnapshot(
             lists.Select(l => l.Id).ToList(),
             lists.Sum(l => l.Items),
             plans.Select(p => p.Id).ToList(),
-            plans.Sum(p => p.Recipes),
+            plans.Sum(p => p.Entries),
             pendingInvitations,
             version.ToLowerInvariant());
     }

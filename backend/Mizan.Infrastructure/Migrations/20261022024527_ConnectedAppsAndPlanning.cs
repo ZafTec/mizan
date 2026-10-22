@@ -7,11 +7,13 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Mizan.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class ConnectedAppsNativeImpersonationAndBadges : Migration
+    public partial class ConnectedAppsAndPlanning : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            BranchDataMotion.Before(migrationBuilder);
+
             migrationBuilder.DropForeignKey(
                 name: "FK_mcp_usage_logs_mcp_tokens_mcp_token_id",
                 table: "mcp_usage_logs");
@@ -19,9 +21,20 @@ namespace Mizan.Infrastructure.Migrations
             migrationBuilder.DropTable(
                 name: "mcp_tokens");
 
+            migrationBuilder.DropTable(
+                name: "meal_plan_recipes");
+
             migrationBuilder.DropIndex(
                 name: "IX_workouts_user_id",
                 table: "workouts");
+
+            migrationBuilder.DropIndex(
+                name: "IX_shopping_lists_user_id",
+                table: "shopping_lists");
+
+            migrationBuilder.DropIndex(
+                name: "IX_meal_plans_user_id",
+                table: "meal_plans");
 
             migrationBuilder.DropIndex(
                 name: "IX_mcp_usage_logs_mcp_token_id",
@@ -32,8 +45,17 @@ namespace Mizan.Infrastructure.Migrations
                 table: "body_measurements");
 
             migrationBuilder.DropColumn(
+                name: "end_date",
+                table: "meal_plans");
+
+            migrationBuilder.DropColumn(
                 name: "mcp_token_id",
                 table: "mcp_usage_logs");
+
+            migrationBuilder.RenameIndex(
+                name: "IX_shopping_list_items_shopping_list_id",
+                table: "shopping_list_items",
+                newName: "ix_shopping_list_items_list");
 
             migrationBuilder.AddColumn<DateTime>(
                 name: "updated_at",
@@ -48,6 +70,112 @@ namespace Mizan.Infrastructure.Migrations
                 type: "uuid",
                 nullable: true);
 
+            migrationBuilder.AddColumn<bool>(
+                name: "can_plan_meals",
+                table: "trainer_client_relationships",
+                type: "boolean",
+                nullable: false,
+                defaultValue: false);
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "generated_at",
+                table: "shopping_lists",
+                type: "timestamp with time zone",
+                nullable: true);
+
+            migrationBuilder.AddColumn<Guid>(
+                name: "meal_plan_id",
+                table: "shopping_lists",
+                type: "uuid",
+                nullable: true);
+
+            migrationBuilder.AddColumn<decimal>(
+                name: "grams",
+                table: "shopping_list_items",
+                type: "numeric(10,2)",
+                precision: 10,
+                scale: 2,
+                nullable: true);
+
+            migrationBuilder.AddColumn<bool>(
+                name: "needs_review",
+                table: "shopping_list_items",
+                type: "boolean",
+                nullable: false,
+                defaultValue: false);
+
+            migrationBuilder.AddColumn<Guid>(
+                name: "prep_session_id",
+                table: "shopping_list_items",
+                type: "uuid",
+                nullable: true);
+
+            migrationBuilder.AddColumn<int>(
+                name: "sort_order",
+                table: "shopping_list_items",
+                type: "integer",
+                nullable: false,
+                defaultValue: 0);
+
+            migrationBuilder.AlterColumn<Guid>(
+                name: "user_id",
+                table: "meal_plans",
+                type: "uuid",
+                nullable: true,
+                oldClrType: typeof(Guid),
+                oldType: "uuid");
+
+            migrationBuilder.AlterColumn<DateOnly>(
+                name: "start_date",
+                table: "meal_plans",
+                type: "date",
+                nullable: true,
+                oldClrType: typeof(DateOnly),
+                oldType: "date");
+
+            migrationBuilder.AddColumn<Guid>(
+                name: "authored_by_user_id",
+                table: "meal_plans",
+                type: "uuid",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "description",
+                table: "meal_plans",
+                type: "character varying(2000)",
+                maxLength: 2000,
+                nullable: true);
+
+            migrationBuilder.AddColumn<int>(
+                name: "duration_days",
+                table: "meal_plans",
+                type: "integer",
+                nullable: false,
+                defaultValue: 7);
+
+            migrationBuilder.AddColumn<string>(
+                name: "kind",
+                table: "meal_plans",
+                type: "character varying(20)",
+                maxLength: 20,
+                nullable: false,
+                defaultValue: "Personal");
+
+            migrationBuilder.AddColumn<string>(
+                name: "rules",
+                table: "meal_plans",
+                type: "jsonb",
+                nullable: false,
+                defaultValue: "{}");
+
+            migrationBuilder.AddColumn<string>(
+                name: "status",
+                table: "meal_plans",
+                type: "character varying(20)",
+                maxLength: 20,
+                nullable: false,
+                defaultValue: "Active");
+
             migrationBuilder.AddColumn<Guid>(
                 name: "grant_id",
                 table: "mcp_usage_logs",
@@ -61,6 +189,12 @@ namespace Mizan.Infrastructure.Migrations
                 maxLength: 10,
                 nullable: false,
                 defaultValue: "tool");
+
+            migrationBuilder.AddColumn<Guid>(
+                name: "plan_entry_id",
+                table: "food_diary_entries",
+                type: "uuid",
+                nullable: true);
 
             migrationBuilder.AddColumn<DateTime>(
                 name: "updated_at",
@@ -205,6 +339,27 @@ namespace Mizan.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "prep_sessions",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    meal_plan_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    day_index = table.Column<int>(type: "integer", nullable: false),
+                    title = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    notes = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_prep_sessions", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_prep_sessions_meal_plans_meal_plan_id",
+                        column: x => x.meal_plan_id,
+                        principalTable: "meal_plans",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "oauth_authorization_requests",
                 columns: table => new
                 {
@@ -267,6 +422,53 @@ namespace Mizan.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "plan_entries",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    meal_plan_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    day_index = table.Column<int>(type: "integer", nullable: false),
+                    slot = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    kind = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    recipe_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    servings = table.Column<decimal>(type: "numeric(6,2)", precision: 6, scale: 2, nullable: true),
+                    food_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    grams = table.Column<decimal>(type: "numeric(10,2)", precision: 10, scale: 2, nullable: true),
+                    text = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
+                    notes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    sort_order = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    prep_session_id = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_plan_entries", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_plan_entries_foods_food_id",
+                        column: x => x.food_id,
+                        principalTable: "foods",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_plan_entries_meal_plans_meal_plan_id",
+                        column: x => x.meal_plan_id,
+                        principalTable: "meal_plans",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_plan_entries_prep_sessions_prep_session_id",
+                        column: x => x.prep_session_id,
+                        principalTable: "prep_sessions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_plan_entries_recipes_recipe_id",
+                        column: x => x.recipe_id,
+                        principalTable: "recipes",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "oauth_tokens",
                 columns: table => new
                 {
@@ -303,9 +505,39 @@ namespace Mizan.Infrastructure.Migrations
                 column: "impersonator_id");
 
             migrationBuilder.CreateIndex(
+                name: "IX_shopping_lists_meal_plan_id",
+                table: "shopping_lists",
+                column: "meal_plan_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_shopping_lists_user_updated",
+                table: "shopping_lists",
+                columns: new[] { "user_id", "updated_at" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_meal_plans_authored_by_user_id",
+                table: "meal_plans",
+                column: "authored_by_user_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_meal_plans_kind_user",
+                table: "meal_plans",
+                columns: new[] { "kind", "user_id" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_meal_plans_user_status_start",
+                table: "meal_plans",
+                columns: new[] { "user_id", "status", "start_date" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_mcp_usage_logs_grant_id",
                 table: "mcp_usage_logs",
                 column: "grant_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_food_diary_entries_plan_entry_id",
+                table: "food_diary_entries",
+                column: "plan_entry_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_food_diary_entries_user_id_updated_at",
@@ -395,6 +627,39 @@ namespace Mizan.Infrastructure.Migrations
                 column: "token_hash",
                 unique: true);
 
+            migrationBuilder.CreateIndex(
+                name: "IX_plan_entries_food_id",
+                table: "plan_entries",
+                column: "food_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_plan_entries_plan_day",
+                table: "plan_entries",
+                columns: new[] { "meal_plan_id", "day_index" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_plan_entries_prep_session_id",
+                table: "plan_entries",
+                column: "prep_session_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_plan_entries_recipe_id",
+                table: "plan_entries",
+                column: "recipe_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_prep_sessions_meal_plan",
+                table: "prep_sessions",
+                column: "meal_plan_id");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_food_diary_entries_plan_entries_plan_entry_id",
+                table: "food_diary_entries",
+                column: "plan_entry_id",
+                principalTable: "plan_entries",
+                principalColumn: "id",
+                onDelete: ReferentialAction.SetNull);
+
             migrationBuilder.AddForeignKey(
                 name: "FK_mcp_usage_logs_oauth_grants_grant_id",
                 table: "mcp_usage_logs",
@@ -403,7 +668,23 @@ namespace Mizan.Infrastructure.Migrations
                 principalColumn: "id",
                 onDelete: ReferentialAction.Cascade);
 
-            BranchDataMotion.Up(migrationBuilder);
+            migrationBuilder.AddForeignKey(
+                name: "FK_meal_plans_users_authored_by_user_id",
+                table: "meal_plans",
+                column: "authored_by_user_id",
+                principalTable: "users",
+                principalColumn: "id",
+                onDelete: ReferentialAction.SetNull);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_shopping_lists_meal_plans_meal_plan_id",
+                table: "shopping_lists",
+                column: "meal_plan_id",
+                principalTable: "meal_plans",
+                principalColumn: "id",
+                onDelete: ReferentialAction.SetNull);
+
+            BranchDataMotion.After(migrationBuilder);
         }
 
         /// <inheritdoc />
@@ -412,8 +693,20 @@ namespace Mizan.Infrastructure.Migrations
             BranchDataMotion.Down(migrationBuilder);
 
             migrationBuilder.DropForeignKey(
+                name: "FK_food_diary_entries_plan_entries_plan_entry_id",
+                table: "food_diary_entries");
+
+            migrationBuilder.DropForeignKey(
                 name: "FK_mcp_usage_logs_oauth_grants_grant_id",
                 table: "mcp_usage_logs");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_meal_plans_users_authored_by_user_id",
+                table: "meal_plans");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_shopping_lists_meal_plans_meal_plan_id",
+                table: "shopping_lists");
 
             migrationBuilder.DropTable(
                 name: "deleted_records");
@@ -434,7 +727,13 @@ namespace Mizan.Infrastructure.Migrations
                 name: "oauth_tokens");
 
             migrationBuilder.DropTable(
+                name: "plan_entries");
+
+            migrationBuilder.DropTable(
                 name: "oauth_grants");
+
+            migrationBuilder.DropTable(
+                name: "prep_sessions");
 
             migrationBuilder.DropTable(
                 name: "oauth_clients");
@@ -448,8 +747,32 @@ namespace Mizan.Infrastructure.Migrations
                 table: "user_sessions");
 
             migrationBuilder.DropIndex(
+                name: "IX_shopping_lists_meal_plan_id",
+                table: "shopping_lists");
+
+            migrationBuilder.DropIndex(
+                name: "ix_shopping_lists_user_updated",
+                table: "shopping_lists");
+
+            migrationBuilder.DropIndex(
+                name: "IX_meal_plans_authored_by_user_id",
+                table: "meal_plans");
+
+            migrationBuilder.DropIndex(
+                name: "ix_meal_plans_kind_user",
+                table: "meal_plans");
+
+            migrationBuilder.DropIndex(
+                name: "ix_meal_plans_user_status_start",
+                table: "meal_plans");
+
+            migrationBuilder.DropIndex(
                 name: "IX_mcp_usage_logs_grant_id",
                 table: "mcp_usage_logs");
+
+            migrationBuilder.DropIndex(
+                name: "IX_food_diary_entries_plan_entry_id",
+                table: "food_diary_entries");
 
             migrationBuilder.DropIndex(
                 name: "IX_food_diary_entries_user_id_updated_at",
@@ -468,12 +791,68 @@ namespace Mizan.Infrastructure.Migrations
                 table: "user_sessions");
 
             migrationBuilder.DropColumn(
+                name: "can_plan_meals",
+                table: "trainer_client_relationships");
+
+            migrationBuilder.DropColumn(
+                name: "generated_at",
+                table: "shopping_lists");
+
+            migrationBuilder.DropColumn(
+                name: "meal_plan_id",
+                table: "shopping_lists");
+
+            migrationBuilder.DropColumn(
+                name: "grams",
+                table: "shopping_list_items");
+
+            migrationBuilder.DropColumn(
+                name: "needs_review",
+                table: "shopping_list_items");
+
+            migrationBuilder.DropColumn(
+                name: "prep_session_id",
+                table: "shopping_list_items");
+
+            migrationBuilder.DropColumn(
+                name: "sort_order",
+                table: "shopping_list_items");
+
+            migrationBuilder.DropColumn(
+                name: "authored_by_user_id",
+                table: "meal_plans");
+
+            migrationBuilder.DropColumn(
+                name: "description",
+                table: "meal_plans");
+
+            migrationBuilder.DropColumn(
+                name: "duration_days",
+                table: "meal_plans");
+
+            migrationBuilder.DropColumn(
+                name: "kind",
+                table: "meal_plans");
+
+            migrationBuilder.DropColumn(
+                name: "rules",
+                table: "meal_plans");
+
+            migrationBuilder.DropColumn(
+                name: "status",
+                table: "meal_plans");
+
+            migrationBuilder.DropColumn(
                 name: "grant_id",
                 table: "mcp_usage_logs");
 
             migrationBuilder.DropColumn(
                 name: "kind",
                 table: "mcp_usage_logs");
+
+            migrationBuilder.DropColumn(
+                name: "plan_entry_id",
+                table: "food_diary_entries");
 
             migrationBuilder.DropColumn(
                 name: "updated_at",
@@ -490,6 +869,38 @@ namespace Mizan.Infrastructure.Migrations
             migrationBuilder.DropColumn(
                 name: "impersonator_id",
                 table: "audit_logs");
+
+            migrationBuilder.RenameIndex(
+                name: "ix_shopping_list_items_list",
+                table: "shopping_list_items",
+                newName: "IX_shopping_list_items_shopping_list_id");
+
+            migrationBuilder.AlterColumn<Guid>(
+                name: "user_id",
+                table: "meal_plans",
+                type: "uuid",
+                nullable: false,
+                defaultValue: new Guid("00000000-0000-0000-0000-000000000000"),
+                oldClrType: typeof(Guid),
+                oldType: "uuid",
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<DateOnly>(
+                name: "start_date",
+                table: "meal_plans",
+                type: "date",
+                nullable: false,
+                defaultValue: new DateOnly(1, 1, 1),
+                oldClrType: typeof(DateOnly),
+                oldType: "date",
+                oldNullable: true);
+
+            migrationBuilder.AddColumn<DateOnly>(
+                name: "end_date",
+                table: "meal_plans",
+                type: "date",
+                nullable: false,
+                defaultValue: new DateOnly(1, 1, 1));
 
             migrationBuilder.AddColumn<Guid>(
                 name: "mcp_token_id",
@@ -522,9 +933,47 @@ namespace Mizan.Infrastructure.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "meal_plan_recipes",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    meal_plan_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    recipe_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    date = table.Column<DateOnly>(type: "date", nullable: false),
+                    meal_type = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    servings = table.Column<decimal>(type: "numeric(6,2)", precision: 6, scale: 2, nullable: false, defaultValue: 1m)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_meal_plan_recipes", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_meal_plan_recipes_meal_plans_meal_plan_id",
+                        column: x => x.meal_plan_id,
+                        principalTable: "meal_plans",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_meal_plan_recipes_recipes_recipe_id",
+                        column: x => x.recipe_id,
+                        principalTable: "recipes",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_workouts_user_id",
                 table: "workouts",
+                column: "user_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_shopping_lists_user_id",
+                table: "shopping_lists",
+                column: "user_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_meal_plans_user_id",
+                table: "meal_plans",
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
@@ -547,6 +996,16 @@ namespace Mizan.Infrastructure.Migrations
                 name: "IX_mcp_tokens_user_id_is_active",
                 table: "mcp_tokens",
                 columns: new[] { "user_id", "is_active" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_meal_plan_recipes_meal_plan_id",
+                table: "meal_plan_recipes",
+                column: "meal_plan_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_meal_plan_recipes_recipe_id",
+                table: "meal_plan_recipes",
+                column: "recipe_id");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_mcp_usage_logs_mcp_tokens_mcp_token_id",

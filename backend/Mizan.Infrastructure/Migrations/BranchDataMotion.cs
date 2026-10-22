@@ -5,13 +5,32 @@ namespace Mizan.Infrastructure.Migrations;
 /// <summary>
 /// Data motion for the branch migration. EF generates the schema part of a
 /// migration; this file carries the row updates that go with it. The generated
-/// migration calls <see cref="Up"/> after its schema operations and
-/// <see cref="Down"/> before reverting them. Every statement is idempotent, so a
-/// regenerated migration can call it again without harm.
+/// migration calls <see cref="Before"/> first, so the rows the schema change
+/// would drop are copied aside, <see cref="After"/> last, so they are written
+/// back in their new shape, and <see cref="Down"/> before reverting. Every
+/// statement is idempotent, so a regenerated migration can call it again
+/// without harm.
 /// </summary>
 internal static class BranchDataMotion
 {
-    public static void Up(MigrationBuilder migrationBuilder)
+    /// <summary>
+    /// The old plan rows: one recipe per date, and a plan with an end date.
+    /// Both go away in this migration, so they are copied first. Copying with
+    /// IF NOT EXISTS keeps a copy made by an earlier, interrupted run.
+    /// </summary>
+    public static void Before(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.Sql("""
+                CREATE TABLE IF NOT EXISTS _legacy_meal_plan_recipes AS
+                SELECT id, meal_plan_id, recipe_id, date, meal_type, servings FROM meal_plan_recipes;
+                """);
+        migrationBuilder.Sql("""
+                CREATE TABLE IF NOT EXISTS _legacy_meal_plans AS
+                SELECT id, start_date, end_date FROM meal_plans;
+                """);
+    }
+
+    public static void After(MigrationBuilder migrationBuilder)
     {
         // The audit log used to serialize whole commands, so a sign-in,
         // registration or password change stored the password in
@@ -76,10 +95,40 @@ internal static class BranchDataMotion
                 ) AS badge(id, path)
                 WHERE a.id = badge.id AND a.icon_url IS NULL;
                 """);
+
+        // A plan's length is what its old dates spanned. A plan whose recipes
+        // fell outside its dates grows to hold them, because an entry's day
+        // must be inside the plan.
+        migrationBuilder.Sql("""
+                UPDATE meal_plans AS p
+                SET duration_days = GREATEST(1, LEAST(31, l.end_date - l.start_date + 1))
+                FROM _legacy_meal_plans AS l
+                WHERE p.id = l.id AND l.end_date IS NOT NULL AND l.start_date IS NOT NULL;
+                """);
+        migrationBuilder.Sql("""
+                INSERT INTO plan_entries (id, meal_plan_id, day_index, slot, kind, recipe_id, servings, sort_order)
+                SELECT r.id, r.meal_plan_id, GREATEST(0, r.date - l.start_date), upper(r.meal_type), 'Recipe', r.recipe_id, r.servings, 0
+                FROM _legacy_meal_plan_recipes AS r
+                JOIN _legacy_meal_plans AS l ON l.id = r.meal_plan_id
+                JOIN meal_plans AS p ON p.id = r.meal_plan_id
+                JOIN recipes AS rc ON rc.id = r.recipe_id
+                WHERE l.start_date IS NOT NULL
+                  AND NOT EXISTS (SELECT 1 FROM plan_entries AS e WHERE e.id = r.id);
+                """);
+        migrationBuilder.Sql("""
+                UPDATE meal_plans AS p
+                SET duration_days = GREATEST(p.duration_days, used.last_day + 1)
+                FROM (SELECT meal_plan_id, max(day_index) AS last_day FROM plan_entries GROUP BY meal_plan_id) AS used
+                WHERE p.id = used.meal_plan_id AND used.last_day >= p.duration_days;
+                """);
+        migrationBuilder.Sql("DROP TABLE IF EXISTS _legacy_meal_plan_recipes;");
+        migrationBuilder.Sql("DROP TABLE IF EXISTS _legacy_meal_plans;");
     }
 
     public static void Down(MigrationBuilder migrationBuilder)
     {
+        migrationBuilder.Sql("DROP TABLE IF EXISTS _legacy_meal_plan_recipes;");
+        migrationBuilder.Sql("DROP TABLE IF EXISTS _legacy_meal_plans;");
         migrationBuilder.Sql("""
                 UPDATE achievements SET icon_url = NULL WHERE icon_url LIKE '/badges/128/%';
                 """);
