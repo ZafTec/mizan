@@ -104,6 +104,22 @@ public class ImpersonationTests
     }
 
     [Fact]
+    public async Task AWriteToARouteNobodyClassified_IsRefusedWhileViewing_ButFineForTheUser()
+    {
+        var w = await WorldAsync();
+        var viewing = w.AdminBrowser();
+        await viewing.PostAsync($"/api/admin/users/{w.User}/impersonate");
+
+        // The test assembly adds a controller the policy has never heard of (see UnclassifiedTestController).
+        var refused = await viewing.PostAsync("/api/UnclassifiedTest");
+        var allowed = await w.UserBrowser().PostAsync("/api/UnclassifiedTest");
+
+        refused.StatusCode.Should().Be(HttpStatusCode.Forbidden, "a new route is closed to the view until someone classifies it");
+        (await refused.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("errorCode").GetString().Should().Be("impersonation_restricted");
+        allowed.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
     public async Task TheSameRequests_AreFineForTheUserThemselves()
     {
         var w = await WorldAsync();

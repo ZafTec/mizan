@@ -243,6 +243,10 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             services.RemoveAll<IPaddleApiClient>();
             services.AddSingleton<IPaddleApiClient>(Paddle);
 
+            // A controller the impersonation policy does not know about, so a test can show that a
+            // new route is closed to an administrator viewing the site as a user until it is classified.
+            services.AddControllers().AddApplicationPart(typeof(UnclassifiedTestController).Assembly);
+
             // Configure minimal logging for tests
             services.AddLogging(logging =>
             {
