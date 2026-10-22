@@ -55,7 +55,11 @@ public class MealShareTests
 
         (await client.PostAsJsonAsync("/api/Meals", new
         {
-            name = "Stew (1/2 share)", mealType = "LUNCH", servings = 1, calories = 500, sharedBetween = 2,
+            name = "Stew (1/2 share)",
+            mealType = "LUNCH",
+            servings = 1,
+            calories = 500,
+            sharedBetween = 2,
         })).EnsureSuccessStatusCode();
 
         var entry = (await _fixture.GetFoodDiaryEntriesByUserId(userId)).Should().ContainSingle().Subject;
@@ -73,7 +77,11 @@ public class MealShareTests
 
         var response = await client.PostAsJsonAsync("/api/Meals", new
         {
-            name = "Stew", mealType = "LUNCH", servings = 1, calories = 500, sharedBetween = people,
+            name = "Stew",
+            mealType = "LUNCH",
+            servings = 1,
+            calories = 500,
+            sharedBetween = people,
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
