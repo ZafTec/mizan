@@ -24,7 +24,8 @@ public interface IMizanDbContext
     DbSet<AuditLog> AuditLogs { get; }
     DbSet<FoodDiaryEntry> FoodDiaryEntries { get; }
     DbSet<MealPlan> MealPlans { get; }
-    DbSet<MealPlanRecipe> MealPlanRecipes { get; }
+    DbSet<PlanEntry> PlanEntries { get; }
+    DbSet<PrepSession> PrepSessions { get; }
     DbSet<ShoppingList> ShoppingLists { get; }
     DbSet<ShoppingListItem> ShoppingListItems { get; }
     DbSet<UserGoal> UserGoals { get; }
