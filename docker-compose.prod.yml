@@ -228,6 +228,44 @@ services:
         reservations:
           memory: 64M
 
+  # Prices worker, optional: COMPOSE_PROFILES=prices. It reaches the API over
+  # proxy-net and Redis wherever ConnectionStrings__Redis in .env points, so it
+  # joins both networks like the MCP server. Image: prices/Dockerfile, built
+  # from the repository root.
+  mizan-prices:
+    image: zaftec/mizan-prices:latest
+    container_name: mizan-prices
+    profiles: [prices]
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:5003
+      Prices__ApiUrl: http://mizan-backend:8080
+      Prices__ServiceApiKey: ${Mcp__ServiceApiKey:?Mcp__ServiceApiKey is required}
+      Prices__Redis: ${Prices__Redis:-${ConnectionStrings__Redis:?ConnectionStrings__Redis is required}}
+      Prices__UserAgent: ${Prices__UserAgent:-MizanPriceBot/1.0 (+https://mizan.zaftech.co; prices@zaftech.co)}
+      Prices__RequestDelayMs: ${Prices__RequestDelayMs:-1000}
+      Prices__MaxProductsPerRun: ${Prices__MaxProductsPerRun:-500}
+    depends_on:
+      mizan-backend:
+        condition: service_healthy
+    networks:
+      - proxy-net
+      - postgresql-db-n8n
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://127.0.0.1:5003/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          memory: 64M
+
 networks:
   proxy-net:
     external: true

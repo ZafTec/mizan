@@ -270,6 +270,36 @@ services:
     networks:
       - mizan-network
 
+  # Prices worker. Scrapes the enabled scraper sources on their cron, posts
+  # observations to the API and takes a Redis lock per source so a second
+  # instance never crawls the same shop at the same time. Starts and idles
+  # when the API URL or service key is missing.
+  prices:
+    build:
+      context: .
+      dockerfile: prices/Dockerfile
+    container_name: mizan-prices
+    ports:
+      - "5003:5003"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5003
+      - Prices__ApiUrl=http://backend:8080
+      # The same non-admin service key the MCP server and the bot use. The
+      # worker impersonates nobody; it only reaches /api/internal/prices/*.
+      - Prices__ServiceApiKey=${MCP_SERVICE_KEY:?MCP_SERVICE_KEY is required}
+      - Prices__Redis=redis:6379,password=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+      - Prices__UserAgent=${PRICES_USER_AGENT:-MizanPriceBot/1.0 (+https://mizan.zaftech.co; prices@zaftech.co)}
+      - Prices__RequestDelayMs=${PRICES_REQUEST_DELAY_MS:-1000}
+      - Prices__MaxProductsPerRun=${PRICES_MAX_PRODUCTS_PER_RUN:-500}
+    depends_on:
+      backend:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    networks:
+      - mizan-network
+
   # Test runner service
   test:
     build:
