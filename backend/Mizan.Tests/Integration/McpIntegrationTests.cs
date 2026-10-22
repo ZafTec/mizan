@@ -1203,14 +1203,8 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
         result.Should().ContainKey("content");
 
-        // LogUsageAsync is fire-and-forget in Program.cs: poll until it completes.
-        List<McpUsageLog> logs = [];
-        for (var i = 0; i < 20; i++)
-        {
-            logs = await _apiFixture.GetMcpUsageLogsByUserId(userId);
-            if (logs.Count >= 1) break;
-            await Task.Delay(100);
-        }
+        // The tool filter in Program.cs awaits LogUsageAsync before it answers, so the row is there by now.
+        var logs = await _apiFixture.GetMcpUsageLogsByUserId(userId);
         logs.Should().HaveCount(1);
         logs.Should().OnlyContain(l => l.ToolName == "log_food");
     }
