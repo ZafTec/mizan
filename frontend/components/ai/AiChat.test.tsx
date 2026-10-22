@@ -35,9 +35,20 @@ const reply = (content: string, extra: object = {}) => ({
   createdAt: "2026-10-01T10:00:00Z",
   ...extra,
 });
-const turn = (content: string, performed: api.AiToolInvocation[] = []) => ({
+const turn = (
+  content: string,
+  performed: api.AiToolInvocation[] = [],
+  message: Partial<api.AiChatMessage> = {},
+): api.AiChatTurn => ({
   threadId: "t1",
   title: "Macros",
+  message: {
+    id: crypto.randomUUID(),
+    fromUser: true,
+    content: "",
+    createdAt: "2026-10-01T09:59:00Z",
+    ...message,
+  },
   reply: reply(content),
   performed,
 });
@@ -156,7 +167,7 @@ describe("the assistant conversation", () => {
 
   it("renders the assistant's markdown and the person's own text literally", async () => {
     vi.mocked(api.sendAiChatMessage).mockResolvedValue(
-      turn("You are **on track**."),
+      turn("You are **on track**.", [], { content: "is *this* fine" }),
     );
     render(<AiChat quickPrompts={prompts} />);
 
@@ -215,6 +226,99 @@ describe("photos", () => {
       "",
       expect.any(File),
     );
+  });
+
+  it("keeps the preview until the stored photo replaces it, then releases it", async () => {
+    let answer!: (value: api.AiChatTurn) => void;
+    vi.mocked(api.sendAiChatImage).mockReturnValue(
+      new Promise<api.AiChatTurn>((resolve) => {
+        answer = resolve;
+      }),
+    );
+    render(<AiChat quickPrompts={prompts} />);
+
+    fireEvent.change(screen.getByLabelText("Choose a photo"), {
+      target: { files: [photo()] },
+    });
+    fireEvent.change(box(), { target: { value: "lunch" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    // While the server thinks, the sent line shows the local preview and nothing has been released.
+    const mine = await screen.findByRole("article", { name: "You said" });
+    expect(
+      (
+        within(mine).getByRole("img", {
+          name: "Photo in the conversation",
+        }) as HTMLImageElement
+      ).src,
+    ).toBe("blob:preview");
+    expect(screen.queryByText("lunch.jpg")).toBeNull();
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+
+    answer(
+      turn("Rice and beans.", [], {
+        content: "lunch",
+        imageUrl: "https://cdn.test/lunch.jpg",
+      }),
+    );
+
+    await screen.findByText("Rice and beans.");
+    const sent = screen.getByRole("article", { name: "You said" });
+    expect(
+      (
+        within(sent).getByRole("img", {
+          name: "Photo in the conversation",
+        }) as HTMLImageElement
+      ).src,
+    ).toBe("https://cdn.test/lunch.jpg");
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:preview");
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+  });
+
+  it("gives the same photo back when the turn fails, without making a new preview", async () => {
+    vi.mocked(api.sendAiChatImage).mockRejectedValue(
+      new Error("The assistant is unavailable."),
+    );
+    render(<AiChat quickPrompts={prompts} />);
+
+    fireEvent.change(screen.getByLabelText("Choose a photo"), {
+      target: { files: [photo()] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    await screen.findByRole("alert");
+    expect(screen.getByText("lunch.jpg")).toBeTruthy();
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+
+    // Removing it is what releases it.
+    fireEvent.click(screen.getByRole("button", { name: "Remove photo" }));
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:preview");
+  });
+
+  it("shows a photo in a past conversation only through the guarded image", async () => {
+    vi.mocked(api.getAiChatThread).mockResolvedValue({
+      id: "t0",
+      title: "Last week",
+      updatedAt: "2026-09-24T10:00:00Z",
+      messages: [
+        {
+          id: "m1",
+          fromUser: true,
+          content: "Look",
+          createdAt: "2026-09-24T10:00:00Z",
+          imageUrl: "javascript:alert(1)",
+        },
+        reply("I cannot see that.", { id: "m2" }),
+      ],
+    });
+    render(<AiChat quickPrompts={prompts} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Last week" }));
+    await screen.findByText("I cannot see that.");
+
+    expect(
+      screen.queryByRole("img", { name: "Photo in the conversation" }),
+    ).toBeNull();
   });
 
   it("opens a photo in a past conversation full size, and closes it with Escape", async () => {

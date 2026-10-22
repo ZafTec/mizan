@@ -38,6 +38,10 @@ public class AiChatTests
         turn.Title.Should().Be("How much protein have I logged today?");
         turn.Reply.Content.Should().Be("About 96 g so far.");
         turn.Reply.FromUser.Should().BeFalse();
+        // The stored question comes back too, so a client can swap its optimistic line for the record.
+        turn.Message.FromUser.Should().BeTrue();
+        turn.Message.Content.Should().Be("How much protein have I logged today?");
+        turn.Message.ImageUrl.Should().BeNull();
     }
 
     [Fact]
