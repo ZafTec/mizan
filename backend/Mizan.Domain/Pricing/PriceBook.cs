@@ -2,7 +2,11 @@ using Mizan.Domain.Entities;
 
 namespace Mizan.Domain.Pricing;
 
-/// <summary>The price in force for one food in one region, per gram.</summary>
+/// <summary>
+/// The price in force for one food in one region, per gram, with the row it
+/// came from: <see cref="Price"/> for <see cref="Quantity"/> <see cref="Unit"/>
+/// is what a shop or a person actually quoted.
+/// </summary>
 public sealed record FoodPriceQuote(
     Guid FoodId,
     string RegionCode,
@@ -11,7 +15,14 @@ public sealed record FoodPriceQuote(
     PriceConfidence Confidence,
     DateTime ObservedAt,
     Guid? SourceId,
-    string? SourceName);
+    string? SourceName,
+    decimal Price = 0,
+    decimal Quantity = 1,
+    string Unit = PriceUnits.Kilogram)
+{
+    /// <summary>The same price per kilogram, to two places, so every surface compares like with like.</summary>
+    public decimal PricePerKg => PriceBook.PerKg(PricePerGram);
+}
 
 /// <summary>
 /// Picks the price for a food and region: the newest Observed price, else the
@@ -45,7 +56,9 @@ public static class PriceBook
         var perGram = PerGram(best, food)!.Value;
         string? name = null;
         if (best.SourceId is { } sid && sourceNames is not null) sourceNames.TryGetValue(sid, out name);
-        return new FoodPriceQuote(food.Id, regionCode, currency, perGram, best.Confidence, best.ObservedAt, best.SourceId, name);
+        return new FoodPriceQuote(
+            food.Id, regionCode, currency, perGram, best.Confidence, best.ObservedAt, best.SourceId, name,
+            best.Price, best.Quantity, PriceUnits.Normalize(best.Unit));
     }
 
     /// <summary>Quotes for many foods at once, keyed by food id. Foods without a usable price are absent.</summary>
@@ -66,6 +79,9 @@ public static class PriceBook
         }
         return quotes;
     }
+
+    /// <summary>A price per gram as a price per kilogram, rounded to two places.</summary>
+    public static decimal PerKg(decimal pricePerGram) => Math.Round(pricePerGram * 1000m, 2);
 
     /// <summary>Price per gram of one row, or null when its unit cannot be converted for this food.</summary>
     public static decimal? PerGram(FoodPrice price, Food food)

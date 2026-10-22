@@ -48,7 +48,7 @@ public record ShoppingListSummaryDto
     public DateTime UpdatedAt { get; init; }
 }
 
-/// <summary>One line of a list. <c>Cost</c> is reserved for the prices step and null for now.</summary>
+/// <summary>One line of a list. <c>Cost</c> is its grams at the region's price; null when the line is unpriced, and <c>UnpricedReason</c> says why.</summary>
 public record ShoppingListItemDto
 {
     public Guid Id { get; init; }
@@ -65,6 +65,10 @@ public record ShoppingListItemDto
     public int SortOrder { get; init; }
     public bool IsChecked { get; init; }
     public decimal? Cost { get; init; }
+
+    /// <summary>The confidence of the price behind <see cref="Cost"/>: Observed, Reported or Estimated.</summary>
+    public string? CostConfidence { get; init; }
+    public string? UnpricedReason { get; init; }
 }
 
 /// <summary>GET /api/ShoppingLists/{id}. Items are ordered by prep session, then by their sort order.</summary>
@@ -84,7 +88,19 @@ public record ShoppingListDetailDto
 
     /// <summary>Whether the viewer may change the list: its owner, or a household member allowed to edit lists.</summary>
     public bool CanEdit { get; init; }
+
+    /// <summary>The region's currency the costs are in.</summary>
+    public string Currency { get; init; } = string.Empty;
+
+    /// <summary>The priced lines added up; null when nothing is priced.</summary>
     public decimal? TotalCost { get; init; }
+
+    /// <summary>Share of lines that carry a price, 0 to 1.</summary>
+    public decimal CostCoverage { get; init; }
+
+    /// <summary>The lowest confidence among the prices used; null when nothing is priced.</summary>
+    public string? CostConfidence { get; init; }
+    public int UnpricedCount { get; init; }
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; init; }
 }

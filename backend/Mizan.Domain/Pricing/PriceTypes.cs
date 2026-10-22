@@ -79,3 +79,9 @@ public static class PriceUnits
         };
     }
 }
+
+/// <summary>The region a person sees when they have not picked one, and the one the migration seeds.</summary>
+public static class PriceRegionDefaults
+{
+    public const string Code = "ET-AA";
+}

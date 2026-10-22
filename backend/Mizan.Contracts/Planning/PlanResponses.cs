@@ -17,7 +17,8 @@ public record PrepSessionDto(Guid Id, int DayIndex, DateOnly? Date, string Title
 /// One entry as every surface shows it. <c>Nutrition</c> is null when it cannot
 /// be resolved (a text line, a recipe without summable ingredients).
 /// <c>Logged</c> says whether the viewer's diary already has a row from this
-/// entry for its date. <c>Cost</c> is reserved for the prices step and null for now.
+/// entry for its date. <c>Cost</c> is what the entry's food, or its recipe's
+/// ingredients, cost in the viewer's region; null when nothing in it is priced.
 /// </summary>
 public record PlanEntryDto
 {
@@ -55,8 +56,13 @@ public record PlanDayDto
     public int EntryCount { get; init; }
     public int LoggedCount { get; init; }
     public List<PlanViolationDto> Violations { get; init; } = [];
+
+    /// <summary>The day's priced items added up, in the viewer's region currency; null when nothing is priced.</summary>
     public decimal? Cost { get; init; }
 }
+
+/// <summary>A shopping line that has no cost, and why: no food linked, no weight, or no price in the region.</summary>
+public record UnpricedItemDto(string Name, Guid? FoodId, string Reason);
 
 /// <summary>A row of GET /api/MealPlans. <c>Kind</c> and <c>Status</c> travel as names.</summary>
 public record MealPlanSummaryDto
@@ -104,8 +110,26 @@ public record MealPlanDetailDto
     /// <summary>Whether the viewer may change entries, sessions and rules.</summary>
     public bool CanEdit { get; init; }
 
-    /// <summary>Reserved for the prices step; null until then.</summary>
+    /// <summary>The region's currency the costs are in.</summary>
+    public string Currency { get; init; } = string.Empty;
+
+    /// <summary>The plan's priced items added up over its whole length; null when nothing is priced.</summary>
+    public decimal? TotalCost { get; init; }
+
+    /// <summary>The total scaled to seven days, so it compares with <c>Rules.WeeklyBudget</c>; null when nothing is priced.</summary>
     public decimal? WeeklyCost { get; init; }
+
+    /// <summary>True when the weekly cost is over the budget; null without a budget, a cost, or when the budget is in another currency.</summary>
+    public bool? OverBudget { get; init; }
+
+    /// <summary>Share of shopping lines that carry a price, 0 to 1.</summary>
+    public decimal CostCoverage { get; init; }
+
+    /// <summary>The lowest confidence among the prices used: Observed, Reported or Estimated. Null when nothing is priced.</summary>
+    public string? CostConfidence { get; init; }
+
+    /// <summary>The lines left out of the cost.</summary>
+    public List<UnpricedItemDto> UnpricedItems { get; init; } = [];
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; init; }
 }
@@ -118,6 +142,9 @@ public record PlanDayViewDto
     public DateOnly Date { get; init; }
     public PlanDayDto Day { get; init; } = new();
     public PlanRulesDto Rules { get; init; } = new();
+
+    /// <summary>The currency of <c>Day.Cost</c> and the entry costs.</summary>
+    public string Currency { get; init; } = string.Empty;
 }
 
 /// <summary>A row of GET /api/MealPlans/templates. <c>Global</c> templates belong to no one and are visible to everyone.</summary>
