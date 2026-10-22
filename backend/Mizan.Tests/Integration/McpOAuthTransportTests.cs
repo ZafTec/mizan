@@ -210,7 +210,10 @@ public class McpOAuthTransportTests : IClassFixture<WebApplicationFactory<McpSer
 
         var result = await CallAsync(client, "search_foods", new { search = "x" });
 
-        result.GetProperty("content")[0].GetProperty("text").GetString().Should().StartWith("[MONTHLY LIMIT REACHED]");
+        var text = result.GetProperty("content")[0].GetProperty("text").GetString()!;
+        text.Should().StartWith("[MONTHLY LIMIT REACHED]").And.Contain("15");
+        // No App:PublicUrl here, so the web app is Mcp:PublicUrl without its /mcp, never a hard-coded host.
+        text.Should().Contain("https://mizan.example/billing").And.NotContain("zaftech");
     }
 
     // ---- caching of the introspection ----

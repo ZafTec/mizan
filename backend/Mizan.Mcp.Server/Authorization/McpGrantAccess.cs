@@ -18,11 +18,11 @@ public static class McpGrantAccess
     public static Guid GrantId(HttpContext? httpContext) =>
         Guid.TryParse(McpCallIdentity.Of(httpContext)?.FindFirst(GrantClaims.GrantId)?.Value, out var id) ? id : Guid.Empty;
 
-    /// <summary>The free plan's monthly cap, or null when the plan has none or the cap has not been reached.</summary>
-    public static string? LimitReached(HttpContext? httpContext) =>
+    /// <summary>The free plan's monthly cap as a message for the model, or null when the plan has none or the cap has not been reached.</summary>
+    public static string? LimitReached(HttpContext? httpContext, McpLinks links) =>
         int.TryParse(McpCallIdentity.Of(httpContext)?.FindFirst("mcp_usage_limit")?.Value, out var limit)
         && int.TryParse(McpCallIdentity.Of(httpContext)?.FindFirst("mcp_usage_used")?.Value, out var used)
         && used >= limit
-            ? $"[MONTHLY LIMIT REACHED] The free plan includes {limit} MCP calls per month. Upgrade at https://mizan.zaftech.co/billing."
+            ? links.LimitReached(limit)
             : null;
 }

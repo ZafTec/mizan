@@ -224,6 +224,8 @@ services:
       - ConnectionStrings__PostgreSQL=Host=postgres;Database=mizan;Username=mizan;Password=${DB_PASSWORD:?DB_PASSWORD is required}
       # Backend API connection (internal network)
       - BACKEND_API_URL=http://backend:8080
+      # The web app, for the billing link in limit and upgrade messages
+      - App__PublicUrl=${PUBLIC_APP_URL:-http://localhost:3000}
       # Service API keys for backend authentication
       - Mcp__ServiceApiKey=${MCP_SERVICE_KEY:?MCP_SERVICE_KEY is required}
       - Mcp__AdminServiceApiKey=${MCP_ADMIN_SERVICE_KEY:?MCP_ADMIN_SERVICE_KEY is required}
