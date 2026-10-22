@@ -11,6 +11,12 @@ public interface ISessionService
     Task<string> CreateAsync(Guid userId, string? ipAddress, string? userAgent, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// An ordinary session with a life of its own choosing, for a sign-in that should not last as long as a browser's
+    /// (the Telegram Mini App). It slides like any other session, by that same lifetime.
+    /// </summary>
+    Task<string> CreateAsync(Guid userId, TimeSpan lifetime, string? ipAddress, string? userAgent, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// A short session for an administrator viewing the site as <paramref name="userId"/>. Unlike a normal one it never
     /// slides, so it ends an hour after it starts whatever the administrator does.
     /// </summary>

@@ -35,12 +35,22 @@ public class SessionService : ISessionService
         _cache = cache;
     }
 
+    public Task<string> CreateAsync(
+        Guid userId,
+        string? ipAddress,
+        string? userAgent,
+        CancellationToken cancellationToken = default) =>
+        CreateAsync(userId, Lifetime, ipAddress, userAgent, cancellationToken);
+
     public async Task<string> CreateAsync(
         Guid userId,
+        TimeSpan lifetime,
         string? ipAddress,
         string? userAgent,
         CancellationToken cancellationToken = default)
     {
+        if (lifetime <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(lifetime), "A session must last for some time.");
+
         var token = SecureToken.Generate();
         var now = DateTime.UtcNow;
 
@@ -51,7 +61,7 @@ public class SessionService : ISessionService
             TokenHash = SecureToken.Hash(token),
             CreatedAt = now,
             LastSeenAt = now,
-            ExpiresAt = now.Add(Lifetime),
+            ExpiresAt = now.Add(lifetime),
             IpAddress = Truncate(ipAddress, 64),
             UserAgent = Truncate(userAgent, 512),
         });
@@ -104,9 +114,13 @@ public class SessionService : ISessionService
 
         if (resolved is null) return null;
 
-        if (DateTime.UtcNow - resolved.LastSeenAt > TouchInterval)
+        // A session slides by its own lifetime: seven days for a browser, a day
+        // for the Mini App. Both ends of that span are written together, so
+        // their distance is the lifetime it was created with. An impersonation
+        // view is the exception and ends when it was always going to.
+        if (resolved.ImpersonatorId is null && DateTime.UtcNow - resolved.LastSeenAt > TouchInterval)
         {
-            await TouchAsync(hash, cancellationToken);
+            await TouchAsync(hash, resolved.ExpiresAt - resolved.LastSeenAt, cancellationToken);
         }
 
         return new SessionIdentity(resolved.UserId, resolved.ImpersonatorId, resolved.ExpiresAt);
@@ -174,14 +188,15 @@ public class SessionService : ISessionService
         await _cache.RemoveAsync($"session:{hash}", cancellationToken);
     }
 
-    private async Task TouchAsync(string hash, CancellationToken cancellationToken)
+    private async Task TouchAsync(string hash, TimeSpan lifetime, CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
+        var expiresAt = now.Add(lifetime);
         await _context.UserSessions
             .Where(s => s.TokenHash == hash)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(x => x.LastSeenAt, now)
-                .SetProperty(x => x.ExpiresAt, now.Add(Lifetime)),
+                .SetProperty(x => x.ExpiresAt, expiresAt),
                 cancellationToken);
         await _cache.RemoveAsync($"session:{hash}", cancellationToken);
     }
