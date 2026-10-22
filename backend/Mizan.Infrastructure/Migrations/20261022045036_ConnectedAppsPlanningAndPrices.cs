@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Mizan.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class ConnectedAppsAndPlanning : Migration
+    public partial class ConnectedAppsPlanningAndPrices : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -63,6 +63,13 @@ namespace Mizan.Infrastructure.Migrations
                 type: "timestamp with time zone",
                 nullable: false,
                 defaultValueSql: "NOW()");
+
+            migrationBuilder.AddColumn<string>(
+                name: "price_region_code",
+                table: "users",
+                type: "character varying(16)",
+                maxLength: 16,
+                nullable: true);
 
             migrationBuilder.AddColumn<Guid>(
                 name: "impersonator_id",
@@ -360,6 +367,21 @@ namespace Mizan.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "price_regions",
+                columns: table => new
+                {
+                    code = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
+                    name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    currency = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
+                    enabled = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_price_regions", x => x.code);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "oauth_authorization_requests",
                 columns: table => new
                 {
@@ -469,6 +491,84 @@ namespace Mizan.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "price_reports",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    food_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    region_code = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
+                    suggested_price = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
+                    quantity = table.Column<decimal>(type: "numeric(10,3)", precision: 10, scale: 3, nullable: false, defaultValue: 1m),
+                    unit = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    note = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    shown_price_per_gram = table.Column<decimal>(type: "numeric(14,6)", precision: 14, scale: 6, nullable: true),
+                    status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    resolved_by_user_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    resolved_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    resolution_note = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_price_reports", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_price_reports_foods_food_id",
+                        column: x => x.food_id,
+                        principalTable: "foods",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_price_reports_price_regions_region_code",
+                        column: x => x.region_code,
+                        principalTable: "price_regions",
+                        principalColumn: "code",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_price_reports_users_resolved_by_user_id",
+                        column: x => x.resolved_by_user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_price_reports_users_user_id",
+                        column: x => x.user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "price_sources",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    kind = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    url = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
+                    scraper_key = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    region_code = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
+                    enabled = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    schedule = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    last_run_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    last_status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    last_error = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    last_observations = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_price_sources", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_price_sources_price_regions_region_code",
+                        column: x => x.region_code,
+                        principalTable: "price_regions",
+                        principalColumn: "code",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "oauth_tokens",
                 columns: table => new
                 {
@@ -493,6 +593,86 @@ namespace Mizan.Infrastructure.Migrations
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateTable(
+                name: "food_prices",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    food_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    region_code = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
+                    source_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    price = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
+                    quantity = table.Column<decimal>(type: "numeric(10,3)", precision: 10, scale: 3, nullable: false, defaultValue: 1m),
+                    unit = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    confidence = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    observed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    source_url = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true),
+                    reported_by_user_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_food_prices", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_food_prices_foods_food_id",
+                        column: x => x.food_id,
+                        principalTable: "foods",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_food_prices_price_regions_region_code",
+                        column: x => x.region_code,
+                        principalTable: "price_regions",
+                        principalColumn: "code",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_food_prices_price_sources_source_id",
+                        column: x => x.source_id,
+                        principalTable: "price_sources",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "price_source_aliases",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    source_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    product_name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    product_key = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
+                    food_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    quantity = table.Column<decimal>(type: "numeric(10,3)", precision: 10, scale: 3, nullable: true),
+                    unit = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    ignored = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    last_seen_price = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true),
+                    last_seen_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    last_seen_url = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_price_source_aliases", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_price_source_aliases_foods_food_id",
+                        column: x => x.food_id,
+                        principalTable: "foods",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_price_source_aliases_price_sources_source_id",
+                        column: x => x.source_id,
+                        principalTable: "price_sources",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.InsertData(
+                table: "price_regions",
+                columns: new[] { "code", "created_at", "currency", "enabled", "name" },
+                values: new object[] { "ET-AA", new DateTime(2026, 10, 22, 0, 0, 0, 0, DateTimeKind.Utc), "ETB", true, "Addis Ababa" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_workouts_user_id_updated_at",
@@ -564,6 +744,21 @@ namespace Mizan.Infrastructure.Migrations
                 name: "IX_device_tokens_user_id",
                 table: "device_tokens",
                 column: "user_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_food_prices_food_region_observed",
+                table: "food_prices",
+                columns: new[] { "food_id", "region_code", "observed_at" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_food_prices_region_code",
+                table: "food_prices",
+                column: "region_code");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_food_prices_source_id",
+                table: "food_prices",
+                column: "source_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_mcp_tasks_user_id_created_at",
@@ -652,6 +847,48 @@ namespace Mizan.Infrastructure.Migrations
                 table: "prep_sessions",
                 column: "meal_plan_id");
 
+            migrationBuilder.CreateIndex(
+                name: "IX_price_reports_food_id",
+                table: "price_reports",
+                column: "food_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_price_reports_region_code",
+                table: "price_reports",
+                column: "region_code");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_price_reports_resolved_by_user_id",
+                table: "price_reports",
+                column: "resolved_by_user_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_price_reports_status_created",
+                table: "price_reports",
+                columns: new[] { "status", "created_at" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_price_reports_user_id",
+                table: "price_reports",
+                column: "user_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_price_source_aliases_food",
+                table: "price_source_aliases",
+                column: "food_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ux_price_source_aliases_source_product",
+                table: "price_source_aliases",
+                columns: new[] { "source_id", "product_name" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ux_price_sources_region_name",
+                table: "price_sources",
+                columns: new[] { "region_code", "name" },
+                unique: true);
+
             migrationBuilder.AddForeignKey(
                 name: "FK_food_diary_entries_plan_entries_plan_entry_id",
                 table: "food_diary_entries",
@@ -715,6 +952,9 @@ namespace Mizan.Infrastructure.Migrations
                 name: "device_tokens");
 
             migrationBuilder.DropTable(
+                name: "food_prices");
+
+            migrationBuilder.DropTable(
                 name: "idempotency_keys");
 
             migrationBuilder.DropTable(
@@ -730,13 +970,25 @@ namespace Mizan.Infrastructure.Migrations
                 name: "plan_entries");
 
             migrationBuilder.DropTable(
+                name: "price_reports");
+
+            migrationBuilder.DropTable(
+                name: "price_source_aliases");
+
+            migrationBuilder.DropTable(
                 name: "oauth_grants");
 
             migrationBuilder.DropTable(
                 name: "prep_sessions");
 
             migrationBuilder.DropTable(
+                name: "price_sources");
+
+            migrationBuilder.DropTable(
                 name: "oauth_clients");
+
+            migrationBuilder.DropTable(
+                name: "price_regions");
 
             migrationBuilder.DropIndex(
                 name: "IX_workouts_user_id_updated_at",
@@ -785,6 +1037,10 @@ namespace Mizan.Infrastructure.Migrations
             migrationBuilder.DropColumn(
                 name: "updated_at",
                 table: "workouts");
+
+            migrationBuilder.DropColumn(
+                name: "price_region_code",
+                table: "users");
 
             migrationBuilder.DropColumn(
                 name: "impersonator_id",
