@@ -54,8 +54,12 @@ public sealed class MizanResources
     [Description("One logged workout with its sets.")]
     public Task<string> Workout(string id, CancellationToken ct) => new WorkoutTools(_api).GetWorkout(id, ct);
 
+    [McpServerResource(UriTemplate = "mizan://meal-plans/today", Name = "meal-plan-today", Title = "Today's plan", MimeType = "application/json")]
+    [Description("The active meal plan's day for today: its entries with nutrition, totals and rule violations.")]
+    public Task<string> MealPlanToday(CancellationToken ct) => new MealPlanTools(_api).GetPlanDay(null, ct);
+
     [McpServerResource(UriTemplate = "mizan://meal-plans/{id}", Name = "meal-plan", Title = "Meal plan", MimeType = "application/json")]
-    [Description("A meal plan with its scheduled recipes and nutrition totals.")]
+    [Description("A meal plan with its days, entries, nutrition totals, prep sessions and rule violations.")]
     public Task<string> MealPlan(string id, CancellationToken ct) => new MealPlanTools(_api).GetMealPlan(id, ct);
 
     [McpServerResource(UriTemplate = "mizan://shopping-lists/{id}", Name = "shopping-list", Title = "Shopping list", MimeType = "application/json")]

@@ -28,6 +28,7 @@ public static class McpResourceScopes
         ["nutrition-day.html"] = McpScopes.NutritionRead,
         ["food-photo.html"] = McpScopes.AiUse,
         ["body-trend.html"] = McpScopes.BodyRead,
+        ["meal-plan.html"] = McpScopes.PlanningRead,
     };
 
     /// <summary>Null means the resource is public (a skill). A resource nobody mapped is refused.</summary>
@@ -62,6 +63,7 @@ public static class McpResourceScopes
             "diary" => "mizan://diary/{date}",
             "nutrition" when last == "today" => "mizan://nutrition/today",
             "nutrition" => "mizan://nutrition/{date}",
+            "meal-plans" when last == "today" => "mizan://meal-plans/today",
             "recipes" or "workouts" or "meal-plans" or "shopping-lists" => $"mizan://{parsed.Host}/{{id}}",
             _ => last.Length == 0 ? $"mizan://{parsed.Host}" : $"mizan://{parsed.Host}/{last}",
         };

@@ -48,10 +48,14 @@ public static class McpToolScopes
             "delete_recipe", "toggle_favorite_recipe", "upload_image");
 
         // Meal plans and shopping
-        Add(McpScopes.PlanningRead, "list_meal_plans", "get_meal_plan", "list_shopping_lists", "get_shopping_list");
-        Add(McpScopes.PlanningWrite, "create_meal_plan", "update_meal_plan", "delete_meal_plan",
-            "add_recipe_to_meal_plan", "remove_recipe_from_meal_plan", "update_meal_plan_recipe",
-            "create_shopping_list", "add_shopping_list_item", "toggle_shopping_list_item");
+        Add(McpScopes.PlanningRead, "list_meal_plans", "get_meal_plan", "get_plan_day", "list_templates",
+            "list_shopping_lists", "get_shopping_list");
+        Add(McpScopes.PlanningWrite, "create_meal_plan", "update_meal_plan", "delete_meal_plan", "set_meal_plan_status",
+            "accept_meal_plan", "decline_meal_plan", "add_plan_entry", "update_plan_entry", "remove_plan_entry",
+            "log_plan_entry", "add_prep_session", "update_prep_session", "remove_prep_session",
+            "generate_shopping_list", "apply_template",
+            "create_shopping_list", "update_shopping_list", "delete_shopping_list", "add_shopping_list_item",
+            "update_shopping_list_item", "delete_shopping_list_item", "toggle_shopping_list_item", "clear_checked_items");
 
         // Households
         Add(McpScopes.HouseholdsRead, "list_my_households", "get_household");
@@ -78,7 +82,7 @@ public static class McpToolScopes
         // Coaching
         Add(McpScopes.TrainerRead, "list_available_trainers", "get_my_trainer", "get_my_trainer_requests",
             "list_trainer_clients", "list_trainer_pending_requests", "get_client_nutrition");
-        Add(McpScopes.TrainerWrite, "send_trainer_request", "respond_to_trainer_request");
+        Add(McpScopes.TrainerWrite, "send_trainer_request", "respond_to_trainer_request", "create_plan_for_client");
 
         // The assistant. Each call spends the user's daily AI allowance.
         Add(McpScopes.AiUse, "ask_ai", "suggest_meals", "analyze_food_image", "get_ai_usage", "list_ai_threads",
@@ -95,7 +99,7 @@ public static class McpToolScopes
             "admin_get_job_stats", "admin_retry_job", "admin_delete_job", "admin_list_ai_prompts",
             "admin_get_ai_prompt", "admin_create_ai_prompt_draft", "admin_update_ai_prompt_draft",
             "admin_run_ai_prompt_evals", "admin_get_ai_prompt_evals", "admin_publish_ai_prompt_version",
-            "admin_get_global_ai_usage");
+            "admin_get_global_ai_usage", "admin_create_template", "admin_update_template", "admin_delete_template");
 
         return map;
     }

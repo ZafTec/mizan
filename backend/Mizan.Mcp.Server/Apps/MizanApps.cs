@@ -14,8 +14,9 @@ public static class MizanApps
     public const string NutritionDay = "ui://mizan/nutrition-day.html";
     public const string FoodPhoto = "ui://mizan/food-photo.html";
     public const string BodyTrend = "ui://mizan/body-trend.html";
+    public const string MealPlan = "ui://mizan/meal-plan.html";
 
-    private static readonly string[] Pages = ["nutrition-day", "food-photo", "body-trend"];
+    private static readonly string[] Pages = ["nutrition-day", "food-photo", "body-trend", "meal-plan"];
 
     /// <summary>Where a page takes the shared host bridge (<c>_bridge.js</c>) when it is served.</summary>
     public const string BridgeMarker = "<!-- mizan:bridge -->";
