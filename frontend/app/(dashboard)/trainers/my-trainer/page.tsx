@@ -19,6 +19,7 @@ interface MyTrainerDto {
   canViewWorkouts: boolean;
   canViewMeasurements: boolean;
   canMessage: boolean;
+  canPlanMeals: boolean;
   startedAt: string;
   endedAt: string | null;
 }
@@ -291,6 +292,7 @@ export default function MyTrainerPage() {
               ["canViewWorkouts", "Workouts and training"],
               ["canViewMeasurements", "Body measurements"],
               ["canMessage", "Send you messages"],
+              ["canPlanMeals", "Draft meal plans for you to accept"],
             ] as const
           ).map(([key, label]) => (
             <label

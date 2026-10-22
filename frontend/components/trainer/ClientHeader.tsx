@@ -17,6 +17,7 @@ interface ClientRelationship {
   canViewWorkouts: boolean;
   canViewMeasurements: boolean;
   canMessage: boolean;
+  canPlanMeals: boolean;
   startedAt: string;
   endedAt?: string;
 }
@@ -118,17 +119,28 @@ export function ClientHeader({ clientId }: ClientHeaderProps) {
             {relationship.canViewMeasurements && (
               <Badge variant="outline">Can View Measurements</Badge>
             )}
+            {relationship.canPlanMeals && (
+              <Badge variant="outline">Can Plan Meals</Badge>
+            )}
           </div>
         </div>
 
-        {relationship.canMessage && (
-          <Link href={`/chat?clientId=${clientId}`}>
-            <Button>
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Message Client
-            </Button>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/trainer/clients/${clientId}/plan`}
+            className="btn-secondary"
+          >
+            Draft a plan
           </Link>
-        )}
+          {relationship.canMessage && (
+            <Link href={`/chat?clientId=${clientId}`}>
+              <Button>
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Message Client
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );

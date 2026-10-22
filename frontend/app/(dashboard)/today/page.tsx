@@ -17,6 +17,7 @@ import { LogEntryButton } from "@/components/logging/LogEntryButton";
 import SaveMealAsRecipe from "@/components/logging/SaveMealAsRecipe";
 import ResumeWorkoutBanner from "@/components/context/ResumeWorkoutBanner";
 import TrainerStrip from "@/components/context/TrainerStrip";
+import TodayPlan from "@/components/planning/TodayPlan";
 
 export const metadata = { title: "Today · Mizan" };
 
@@ -202,6 +203,9 @@ export default async function TodayPage({
           </Link>
         </p>
       )}
+      <Suspense fallback={null}>
+        <TodayPlan date={date} />
+      </Suspense>
       <div className="day-log-grid">
         <section aria-labelledby="meals-title">
           <header className="log-section-header">

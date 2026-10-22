@@ -1,185 +1,244 @@
 import Link from "next/link";
-import { ArrowRight, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { getUserServer } from "@/helper/session";
-import { getMealPlans } from "@/data/mealPlan";
-import Pagination from "@/components/Pagination";
-import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
+import { dateInTimeZone, shiftDate } from "@/lib/log-date";
+import {
+  getMealPlanServer,
+  listMealPlansServer,
+} from "@/lib/api/mealPlans.server";
+import { listShoppingListsServer } from "@/lib/api/shoppingLists.server";
+import type { MealPlanSummary } from "@/lib/api/mealPlans";
+import { planDates } from "@/lib/planning/rules";
+import DraftActions from "@/components/planning/DraftActions";
 import { logger } from "@/lib/logger";
 
-const mealLogger = logger.createModuleLogger("meal-plan-page");
+const log = logger.createModuleLogger("meal-plan-page");
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Meal plans · Mizan" };
 
-type Plan = Awaited<ReturnType<typeof getMealPlans>>["mealPlans"][number];
-
-const shortDate = (iso: string) =>
-  new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-  });
-
-/** A plan is "this week" when today falls inside its dates. */
-function isCurrent(plan: Plan, today: string) {
-  return plan.startDate <= today && today <= plan.endDate;
+function covers(plan: MealPlanSummary, date: string) {
+  return (
+    !!plan.startDate &&
+    !!plan.endDate &&
+    plan.startDate <= date &&
+    date <= plan.endDate
+  );
 }
 
-export default async function MealPlanPage({
-  searchParams,
+function PlanRow({
+  plan,
+  today,
+  viewerId,
+  children,
 }: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  plan: MealPlanSummary;
+  today: string;
+  viewerId: string;
+  children?: React.ReactNode;
 }) {
-  const user = await getUserServer();
-  const params = await searchParams;
-  const { page, sortBy, sortOrder } = parseListParams(params);
-  const baseUrl = buildListUrl("/meal-plan", { sortBy, sortOrder });
+  const name = plan.name || "Meal plan";
+  const notes = [
+    planDates(plan),
+    covers(plan, today) ? "this week" : null,
+    plan.authoredByUserId && plan.authoredByUserId !== viewerId
+      ? `from ${plan.authoredByName ?? "your coach"}`
+      : null,
+    plan.authoredByUserId === viewerId && plan.userId !== viewerId
+      ? "draft for a client"
+      : null,
+    plan.householdId ? "household" : null,
+  ].filter(Boolean);
+  return (
+    <li className="ledger-row">
+      <Link
+        href={`/meal-plan/${plan.id}`}
+        className="flex min-w-0 flex-1 items-center gap-3"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block font-medium">{name}</span>
+          <span className="mt-0.5 block text-sm log-muted">
+            {notes.join(" · ")}
+          </span>
+        </span>
+        <span className="num whitespace-nowrap text-sm log-muted">
+          <span className="text-base font-semibold text-foreground">
+            {plan.entryCount}
+          </span>{" "}
+          {plan.entryCount === 1 ? "entry" : "entries"}
+        </span>
+        {!children && (
+          <ChevronRight
+            aria-hidden="true"
+            size={17}
+            strokeWidth={1.7}
+            className="log-muted"
+          />
+        )}
+      </Link>
+      {children}
+    </li>
+  );
+}
 
-  let plans: Plan[] = [];
-  let totalCount = 0;
-  let totalPages = 0;
+export default async function MealPlanPage() {
+  const user = await getUserServer();
+  const today = dateInTimeZone(user.timeZoneId || "UTC");
+  let plans: MealPlanSummary[] = [];
+  let listCount = 0;
   let failed = false;
   try {
-    const result = await getMealPlans(page, 20, sortBy ?? undefined, sortOrder);
-    plans = result.mealPlans;
-    totalCount = result.totalCount;
-    totalPages = result.totalPages;
+    const [planPage, listPage] = await Promise.all([
+      listMealPlansServer({ PageSize: 100 }),
+      listShoppingListsServer(1),
+    ]);
+    plans = planPage.items;
+    listCount = listPage.totalCount;
   } catch (error) {
-    mealLogger.error("Failed to load meal plans", {
+    log.error("Failed to load meal plans", {
       error: error instanceof Error ? error.message : String(error),
-      userID: user.id,
     });
     failed = true;
   }
 
-  const today = new Date().toISOString().slice(0, 10);
-  const current = plans.filter((plan) => isCurrent(plan, today));
-  const mealsThisWeek = current.reduce(
-    (sum, plan) => sum + plan.recipeCount,
-    0,
-  );
+  const active = plans
+    .filter((plan) => plan.status === "Active")
+    .sort((a, b) => Number(covers(b, today)) - Number(covers(a, today)));
+  const drafts = plans.filter((plan) => plan.status === "Draft");
+  const past = plans.filter((plan) => plan.status === "Archived");
+  const current = active.find((plan) => covers(plan, today)) ?? null;
+  const weekEnd = shiftDate(today, 6);
+  let entriesThisWeek = 0;
+  if (current) {
+    const detail = await getMealPlanServer(current.id).catch(() => null);
+    entriesThisWeek =
+      detail?.days
+        .filter((day) => day.date && day.date >= today && day.date <= weekEnd)
+        .reduce((sum, day) => sum + day.entryCount, 0) ?? 0;
+  }
 
   return (
     <div className="log-page space-y-8" data-testid="meal-plan-page">
       <header className="log-page-header block!">
         <h1>Meal plans</h1>
         <p className="log-muted mt-2">
-          A week of recipes your household can shop for.
+          What you plan to eat, and the list it needs.
         </p>
       </header>
 
       {failed ? (
-        <div className="log-empty border-t border-foreground">
-          <p>Your plans could not be loaded.</p>
-          <p className="log-muted mt-2 text-sm">
-            Try again in a moment. Nothing was changed.
-          </p>
-        </div>
+        <p className="log-empty">Your plans could not be loaded.</p>
       ) : (
         <>
           {plans.length > 0 && (
             <section aria-label="Plan summary" className="facts-strip">
               <div>
-                <p className="text-sm log-muted">Plans</p>
-                <p className="num nutrition-value">{totalCount}</p>
+                <p className="text-sm log-muted">Active plan</p>
+                <p className="nutrition-value truncate text-xl!">
+                  {current ? current.name || "Meal plan" : "None"}
+                </p>
               </div>
               <div>
                 <p className="text-sm log-muted">This week</p>
                 <p className="num nutrition-value">
-                  {mealsThisWeek}
-                  <span className="text-sm font-normal log-muted"> meals</span>
+                  {entriesThisWeek}
+                  <span className="text-sm font-normal log-muted">
+                    {" "}
+                    {entriesThisWeek === 1 ? "entry" : "entries"}
+                  </span>
                 </p>
               </div>
               <div>
-                <p className="text-sm log-muted">Shopping</p>
-                <p className="nutrition-value">
-                  <Link
-                    href="/meal-plan/shopping-list"
-                    className="text-link inline-flex items-center gap-1 text-base font-medium"
-                  >
-                    Open list{" "}
-                    <ArrowRight
-                      aria-hidden="true"
-                      size={15}
-                      strokeWidth={1.7}
-                    />
+                <p className="text-sm log-muted">Lists</p>
+                <p className="num nutrition-value">
+                  <Link href="/meal-plan/shopping-list" className="text-link">
+                    {listCount}
                   </Link>
                 </p>
               </div>
             </section>
           )}
 
-          <section aria-labelledby="plans-title">
-            <header className="log-section-header">
-              <h2 id="plans-title">Your plans</h2>
-              {plans.length > 0 && (
-                <Link
-                  href="/meal-plan/shopping-list"
-                  className="text-link text-sm"
-                >
-                  Shopping list
-                </Link>
-              )}
-            </header>
-            {plans.length === 0 ? (
-              <div className="log-empty">
-                <p>No plans yet.</p>
-                <p className="log-muted mt-2 text-sm">
-                  Pick a week and add recipes to its days. The shopping list
-                  writes itself from what you add.
-                </p>
-              </div>
-            ) : (
-              <ul>
-                {plans.map((plan) => (
-                  <li key={plan.id}>
-                    <Link
-                      href={`/meal-plan/${plan.id}`}
-                      className="ledger-row transition-colors hover:bg-muted"
-                    >
-                      <span className="min-w-0 flex-1">
-                        <span className="block font-medium">
-                          {plan.name || "Weekly plan"}
-                        </span>
-                        <span className="mt-0.5 block text-sm log-muted">
-                          {shortDate(plan.startDate)} –{" "}
-                          {shortDate(plan.endDate)}
-                          {isCurrent(plan, today) ? " · this week" : ""}
-                        </span>
-                      </span>
-                      <span className="num whitespace-nowrap text-sm log-muted">
-                        <span className="text-base font-semibold text-foreground">
-                          {plan.recipeCount}
-                        </span>{" "}
-                        meals
-                      </span>
-                      <ChevronRight
-                        aria-hidden="true"
-                        size={17}
-                        strokeWidth={1.7}
-                        className="log-muted"
+          {plans.length === 0 ? (
+            <p className="log-empty">No plans yet.</p>
+          ) : (
+            <>
+              {active.length > 0 && (
+                <section aria-labelledby="active-title">
+                  <header className="log-section-header">
+                    <h2 id="active-title">Active</h2>
+                  </header>
+                  <ul>
+                    {active.map((plan) => (
+                      <PlanRow
+                        key={plan.id}
+                        plan={plan}
+                        today={today}
+                        viewerId={user.id}
                       />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+                    ))}
+                  </ul>
+                </section>
+              )}
+              {drafts.length > 0 && (
+                <section aria-labelledby="drafts-title">
+                  <header className="log-section-header">
+                    <h2 id="drafts-title">
+                      {drafts.some(
+                        (plan) =>
+                          plan.authoredByUserId &&
+                          plan.authoredByUserId !== user.id,
+                      )
+                        ? "From your coach"
+                        : "Drafts"}
+                    </h2>
+                  </header>
+                  <ul>
+                    {drafts.map((plan) => (
+                      <PlanRow
+                        key={plan.id}
+                        plan={plan}
+                        today={today}
+                        viewerId={user.id}
+                      >
+                        {plan.authoredByUserId &&
+                        plan.authoredByUserId !== user.id ? (
+                          <DraftActions
+                            planId={plan.id}
+                            planName={plan.name || "Meal plan"}
+                          />
+                        ) : undefined}
+                      </PlanRow>
+                    ))}
+                  </ul>
+                </section>
+              )}
+              {past.length > 0 && (
+                <section aria-labelledby="past-title">
+                  <header className="log-section-header">
+                    <h2 id="past-title">Past plans</h2>
+                  </header>
+                  <ul>
+                    {past.map((plan) => (
+                      <PlanRow
+                        key={plan.id}
+                        plan={plan}
+                        today={today}
+                        viewerId={user.id}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </>
+          )}
 
           <Link
-            href="/meal-plan/create"
+            href="/meal-plan/new"
             className="btn-primary min-h-11 w-full sm:w-auto"
           >
             New plan
           </Link>
-
-          {totalPages > 1 && (
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              totalCount={totalCount}
-              pageSize={20}
-              baseUrl={baseUrl}
-            />
-          )}
         </>
       )}
     </div>
