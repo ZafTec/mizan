@@ -201,6 +201,7 @@ builder.Services.AddMcpServer(options =>
     http.IdleTimeout = TimeSpan.FromMinutes(30);
 })
 .WithTools<FoodTools>()
+.WithTools<PriceTools>()
 .WithTools<RecipeTools>()
 .WithTools<MealTools>()
 .WithTools<NutritionTools>()

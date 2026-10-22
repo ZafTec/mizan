@@ -26,9 +26,10 @@ public static class McpToolScopes
 
         // Food, nutrition and goals
         Add(McpScopes.NutritionRead, "search_foods", "get_food", "get_food_diary", "get_daily_nutrition",
-            "get_nutrition_range", "get_nutrition_summary", "get_current_goal", "get_goal_history", "get_goal_progress");
+            "get_nutrition_range", "get_nutrition_summary", "get_current_goal", "get_goal_history", "get_goal_progress",
+            "get_food_price");
         Add(McpScopes.NutritionWrite, "create_food", "update_food", "delete_food", "log_day", "log_food", "log_meal",
-            "log_meal_manual", "delete_meal", "create_goal", "record_goal_progress");
+            "log_meal_manual", "delete_meal", "create_goal", "record_goal_progress", "report_food_price");
 
         // Training
         Add(McpScopes.TrainingRead, "list_exercises", "list_workouts", "get_workout", "get_workout_stats",
@@ -99,7 +100,10 @@ public static class McpToolScopes
             "admin_get_job_stats", "admin_retry_job", "admin_delete_job", "admin_list_ai_prompts",
             "admin_get_ai_prompt", "admin_create_ai_prompt_draft", "admin_update_ai_prompt_draft",
             "admin_run_ai_prompt_evals", "admin_get_ai_prompt_evals", "admin_publish_ai_prompt_version",
-            "admin_get_global_ai_usage", "admin_create_template", "admin_update_template", "admin_delete_template");
+            "admin_get_global_ai_usage", "admin_create_template", "admin_update_template", "admin_delete_template",
+            "admin_list_price_sources", "admin_run_price_source",
+            "admin_list_price_review_queue", "admin_update_price_alias", "admin_add_manual_price",
+            "admin_list_price_reports", "admin_resolve_price_report");
 
         return map;
     }
