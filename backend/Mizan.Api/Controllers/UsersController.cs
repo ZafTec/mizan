@@ -55,7 +55,8 @@ public class UsersController : ControllerBase
             request.Image,
             request.ThemePreference,
             request.CompactMode,
-            request.ReduceAnimations);
+            request.ReduceAnimations,
+            PriceRegionCode: request.PriceRegionCode);
         var success = await _mediator.Send(command);
 
         if (!success)
@@ -72,5 +73,6 @@ public record UpdateUserRequest(
     string? Image,
     string? ThemePreference = null,
     bool? CompactMode = null,
-    bool? ReduceAnimations = null);
+    bool? ReduceAnimations = null,
+    string? PriceRegionCode = null);
 

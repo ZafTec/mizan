@@ -21,6 +21,16 @@ public static class CacheTags
     /// <summary>The plans and deals on sale. Public and viewer-independent; cleared by every admin catalogue write.</summary>
     public const string BillingPlans = "billing-plans";
 
+    /// <summary>
+    /// Every read that shows a price or a cost: plans, plan days and shopping
+    /// lists. Global, like <see cref="Foods"/>: any stored price, accepted
+    /// report or region change by an administrator clears them all.
+    /// </summary>
+    public const string Prices = "prices";
+
+    /// <summary>The user's reads priced in their region. Cleared when they switch region.</summary>
+    public static string PriceRegion(Guid userId) => $"price-region:{userId}";
+
     public static string UserStatus(Guid userId) => $"user:{userId}";
     public static string Entitlement(Guid userId) => $"entitlement:{userId}";
 

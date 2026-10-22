@@ -14,7 +14,8 @@ public record UserDto(
     string? Image,
     DateTime CreatedAt,
     UserGoalSummaryDto? CurrentGoal,
-    int StreakCount
+    int StreakCount,
+    string? PriceRegionCode = null
 );
 
 public record UserGoalSummaryDto(
@@ -78,7 +79,8 @@ public class GetUserQueryHandler : IRequestHandler<GetUserQuery, UserDto?>
                 currentGoal.TargetCarbsGrams,
                 currentGoal.TargetFatGrams
             ) : null,
-            currentStreak
+            currentStreak,
+            user.PriceRegionCode ?? Domain.Pricing.PriceRegionDefaults.Code
         );
     }
 }

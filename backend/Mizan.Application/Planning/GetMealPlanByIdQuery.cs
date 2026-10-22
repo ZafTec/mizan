@@ -37,13 +37,14 @@ public class GetMealPlanByIdQueryHandler : IRequestHandler<GetMealPlanByIdQuery,
         // The viewer is part of the key: the logged flags are theirs, and a
         // stranger gets null. The tags are the plan's own, the catalogues it
         // resolves through, and the viewer's diary, so an edit by anyone, a
-        // recipe change, or a log by the viewer clears this copy.
+        // recipe change, or a log by the viewer clears this copy. Costs are in
+        // the viewer's region, so a stored price or a region switch clears it too.
         return await _cache.GetOrCreateAsync(
             $"mealplan:{request.Id}:{userId}:{GrantContext.KeyFor(_currentUser.Grant)}",
             (self: this, request, userId),
             static (state, ct) => state.self.LoadAsync(state.request, state.userId, ct),
             CacheOptions,
-            tags: [CacheTags.MealPlan(request.Id), CacheTags.Recipes, CacheTags.Foods, CacheTags.Nutrition(userId)],
+            tags: [CacheTags.MealPlan(request.Id), CacheTags.Recipes, CacheTags.Foods, CacheTags.Nutrition(userId), CacheTags.Prices, CacheTags.PriceRegion(userId)],
             cancellationToken: cancellationToken);
     }
 

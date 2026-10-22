@@ -189,6 +189,8 @@ services:
       # MCP service-to-service API keys
       - Mcp__ServiceApiKey=${MCP_SERVICE_KEY:?MCP_SERVICE_KEY is required}
       - Mcp__AdminServiceApiKey=${MCP_ADMIN_SERVICE_KEY:?MCP_ADMIN_SERVICE_KEY is required}
+      # The prices worker's Run now endpoint, called with the service key above.
+      - Prices__WorkerUrl=${PRICES_WORKER_URL:-http://prices:5003}
       # OpenTelemetry (optional, no-op if endpoints not set)
       - OTLP_ENDPOINT_URL=${OTLP_ENDPOINT_URL:-}
       - LOKI_OTLP_ENDPOINT=${LOKI_OTLP_ENDPOINT:-}

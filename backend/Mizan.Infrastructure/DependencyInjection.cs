@@ -128,6 +128,10 @@ public static class DependencyInjection
         services.AddHttpClient(Billing.PaddleApiClient.HttpClientName);
         services.AddScoped<IPaddleApiClient, Billing.PaddleApiClient>();
 
+        // The prices worker's Run now endpoint (docs/PLANNING.md#prices).
+        services.AddHttpClient(PricesWorkerClient.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(15));
+        services.AddScoped<IPricesWorkerClient, PricesWorkerClient>();
+
         return services;
     }
 }

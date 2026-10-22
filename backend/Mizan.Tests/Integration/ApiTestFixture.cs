@@ -48,6 +48,12 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         "mcp_usage_logs",
         "goal_progress",
         "user_goals",
+        "price_reports",
+        "food_prices",
+        "price_source_aliases",
+        "price_sources",
+        // Put back below: the migration seeds the default region.
+        "price_regions",
         "shopping_list_items",
         "shopping_lists",
         "plan_entries",
@@ -249,6 +255,10 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             services.RemoveAll<IPaddleApiClient>();
             services.AddSingleton<IPaddleApiClient>(Paddle);
 
+            // Run now reaches the prices worker over HTTP; a test decides whether one is configured.
+            services.RemoveAll<IPricesWorkerClient>();
+            services.AddSingleton<IPricesWorkerClient>(PricesWorker);
+
             // A controller the impersonation policy does not know about, so a test can show that a
             // new route is closed to an administrator viewing the site as a user until it is classified.
             services.AddControllers().AddApplicationPart(typeof(UnclassifiedTestController).Assembly);
@@ -337,6 +347,8 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
 
     public FakePaddleApiClient Paddle { get; } = new();
 
+    public FakePricesWorker PricesWorker { get; } = new();
+
     public FakeOAuthMetadataFetcher OAuthMetadata { get; } = new();
     public const string PaddleWebhookSecret = "test-paddle-webhook-secret";
 
@@ -407,9 +419,12 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             // previous one truncated or added. The seed is ON CONFLICT DO
             // NOTHING, so this is safe to run repeatedly.
             await db.Database.ExecuteSqlRawAsync(CatalogSeed.Sql);
+            await db.Database.ExecuteSqlRawAsync(
+                "INSERT INTO price_regions (code, name, currency, enabled, created_at) VALUES ('ET-AA', 'Addis Ababa', 'ETB', true, NOW()) ON CONFLICT DO NOTHING;");
 #pragma warning restore EF1002
         }
 
+        PricesWorker.Reset();
         await ClearCacheAsync();
     }
 

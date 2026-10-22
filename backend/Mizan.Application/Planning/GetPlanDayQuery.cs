@@ -47,7 +47,11 @@ public class GetPlanDayQueryHandler : IRequestHandler<GetPlanDayQuery, PlanDayVi
         var date = request.Date ?? await _clock.TodayAsync(userId, cancellationToken);
         var households = await _households.AccessibleIdsAsync(cancellationToken);
 
-        var tags = new List<string> { CacheTags.MealPlansList(userId), CacheTags.Recipes, CacheTags.Foods, CacheTags.Nutrition(userId) };
+        var tags = new List<string>
+        {
+            CacheTags.MealPlansList(userId), CacheTags.Recipes, CacheTags.Foods, CacheTags.Nutrition(userId),
+            CacheTags.Prices, CacheTags.PriceRegion(userId),
+        };
         tags.AddRange(households.Select(CacheTags.HouseholdPlans));
 
         return await _cache.GetOrCreateAsync(
@@ -74,7 +78,7 @@ public class GetPlanDayQueryHandler : IRequestHandler<GetPlanDayQuery, PlanDayVi
         var plan = candidates.FirstOrDefault(p => p.Covers(date));
         if (plan is null) return null;
         var dayIndex = PlanSchedule.DayIndexOf(plan.StartDate!.Value, plan.DurationDays, date)!.Value;
-        var day = await _readModel.BuildDayAsync(plan, dayIndex, userId, cancellationToken);
+        var (day, currency) = await _readModel.BuildDayAsync(plan, dayIndex, userId, cancellationToken);
         return new PlanDayViewDto
         {
             PlanId = plan.Id,
@@ -82,6 +86,7 @@ public class GetPlanDayQueryHandler : IRequestHandler<GetPlanDayQuery, PlanDayVi
             Date = date,
             Day = day,
             Rules = PlanRulesMapping.ToDto(plan.Rules),
+            Currency = currency,
         };
     }
 }
