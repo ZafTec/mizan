@@ -9,16 +9,27 @@ import type { components } from "@/types/api.generated";
 
 export type NotificationDto = components["schemas"]["NotificationDto"];
 
-export default function NotificationList({ initial }: { initial: NotificationDto[] }) {
+export default function NotificationList({
+  initial,
+}: {
+  initial: NotificationDto[];
+}) {
   const router = useRouter();
   const [items, setItems] = useState(initial);
   const unread = items.filter((item) => !item.readAt).length;
 
   async function open(item: NotificationDto) {
     try {
-      if (!item.readAt) await clientApi(`/api/Notifications/${item.id}/read`, { method: "POST" });
+      if (!item.readAt)
+        await clientApi(`/api/Notifications/${item.id}/read`, {
+          method: "POST",
+        });
       setItems((current) =>
-        current.map((value) => (value.id === item.id ? { ...value, readAt: new Date().toISOString() } : value)),
+        current.map((value) =>
+          value.id === item.id
+            ? { ...value, readAt: new Date().toISOString() }
+            : value,
+        ),
       );
       if (item.linkUrl) router.push(item.linkUrl);
     } catch (error) {
@@ -29,7 +40,12 @@ export default function NotificationList({ initial }: { initial: NotificationDto
   async function readAll() {
     try {
       await clientApi("/api/Notifications/read-all", { method: "POST" });
-      setItems((current) => current.map((item) => ({ ...item, readAt: item.readAt ?? new Date().toISOString() })));
+      setItems((current) =>
+        current.map((item) => ({
+          ...item,
+          readAt: item.readAt ?? new Date().toISOString(),
+        })),
+      );
     } catch (error) {
       appToast.error(error, "Could not mark notifications read");
     }
@@ -38,7 +54,9 @@ export default function NotificationList({ initial }: { initial: NotificationDto
   return (
     <section aria-labelledby="inbox-title">
       <header className="log-section-header">
-        <h2 id="inbox-title">{unread === 0 ? "All read" : `${unread} unread`}</h2>
+        <h2 id="inbox-title">
+          {unread === 0 ? "All read" : `${unread} unread`}
+        </h2>
         {unread > 0 && (
           <button type="button" className="text-link text-sm" onClick={readAll}>
             Mark all read
@@ -48,26 +66,57 @@ export default function NotificationList({ initial }: { initial: NotificationDto
       {items.length === 0 ? (
         <div className="log-empty">
           <p>Nothing yet.</p>
-          <p className="log-muted mt-2 text-sm">Achievements, coach messages and household invites land here.</p>
+          <p className="log-muted mt-2 text-sm">
+            Achievements, coach messages and household invites land here.
+          </p>
         </div>
       ) : (
         <ul>
           {items.map((item) => (
             <li key={item.id}>
-              <button type="button" onClick={() => open(item)} className="ledger-row w-full text-left transition-colors hover:bg-muted">
-                <span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-full ${item.readAt ? "bg-transparent" : "bg-brand-700 dark:bg-brand-300"}`} />
+              <button
+                type="button"
+                onClick={() => open(item)}
+                className="ledger-row w-full text-left transition-colors hover:bg-muted"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`h-2 w-2 shrink-0 rounded-full ${item.readAt ? "bg-transparent" : "bg-brand-700 dark:bg-brand-300"}`}
+                />
                 <span className="min-w-0 flex-1">
-                  <span className={`block ${item.readAt ? "" : "font-semibold"}`}>
+                  <span
+                    className={`block ${item.readAt ? "" : "font-semibold"}`}
+                  >
                     {item.title}
                     {!item.readAt && <span className="sr-only"> (unread)</span>}
                   </span>
-                  {item.body && <span className="mt-0.5 block text-sm log-muted">{item.body}</span>}
+                  {item.body && (
+                    <span className="mt-0.5 block text-sm log-muted">
+                      {item.body}
+                    </span>
+                  )}
                 </span>
                 {/* The browser's zone differs from the server's; the first paint is corrected on the client. */}
-                <time dateTime={item.createdAt} suppressHydrationWarning className="num shrink-0 text-xs log-muted">
-                  {new Date(item.createdAt).toLocaleString(undefined, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}
+                <time
+                  dateTime={item.createdAt}
+                  suppressHydrationWarning
+                  className="num shrink-0 text-xs log-muted"
+                >
+                  {new Date(item.createdAt).toLocaleString(undefined, {
+                    day: "numeric",
+                    month: "short",
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
                 </time>
-                {item.linkUrl && <ChevronRight aria-hidden="true" size={17} strokeWidth={1.7} className="log-muted shrink-0" />}
+                {item.linkUrl && (
+                  <ChevronRight
+                    aria-hidden="true"
+                    size={17}
+                    strokeWidth={1.7}
+                    className="log-muted shrink-0"
+                  />
+                )}
               </button>
             </li>
           ))}

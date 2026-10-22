@@ -1,4 +1,5 @@
 using Mizan.Application.Ai.Tools;
+using Mizan.Contracts.Ai;
 
 namespace Mizan.Application.Interfaces;
 

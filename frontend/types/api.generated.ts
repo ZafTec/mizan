@@ -8638,6 +8638,7 @@ export interface components {
             /** Format: uuid */
             threadId: string;
             title: string;
+            message: components["schemas"]["AiChatMessageDto"];
             reply: components["schemas"]["AiChatMessageDto"];
             performed: components["schemas"]["AiToolInvocation"][];
         };
@@ -9151,6 +9152,9 @@ export interface components {
             /** Format: double */
             fiberGrams?: number | null;
             name: string;
+            /** Format: int32 */
+            sharedBetween?: number | null;
+            per100g?: components["schemas"]["NutritionPer100g"];
         };
         CreateFoodDiaryEntryResult: {
             /** Format: uuid */
@@ -9235,8 +9239,6 @@ export interface components {
             days: components["schemas"]["DailyNutritionSummaryDto"][];
         };
         DailyNutritionResult: {
-            /** Format: date */
-            date: string;
             /** Format: double */
             totalCalories: number;
             /** Format: double */
@@ -9253,6 +9255,8 @@ export interface components {
             targetCarbs?: number | null;
             /** Format: double */
             targetFat?: number | null;
+            /** Format: date */
+            date: string;
             mealBreakdown: components["schemas"]["MealSummary"][];
         };
         DailyNutritionSummaryDto: {
@@ -10186,6 +10190,18 @@ export interface components {
             /** Format: int32 */
             pageSize: number;
         };
+        NutritionPer100g: {
+            /** Format: double */
+            calories: number;
+            /** Format: double */
+            proteinGrams: number;
+            /** Format: double */
+            carbsGrams: number;
+            /** Format: double */
+            fatGrams: number;
+            /** Format: double */
+            fiberGrams?: number | null;
+        };
         NutritionSummaryDto: {
             /** Format: double */
             totalCalories: number;
@@ -10377,6 +10393,7 @@ export interface components {
             carbs: number;
             /** Format: double */
             fat: number;
+            per100g?: components["schemas"]["NutritionPer100g"];
         };
         RecordGoalProgressCommand: {
             /** Format: int32 */
@@ -10639,7 +10656,7 @@ export interface components {
          * Format: int32
          * @enum {integer}
          */
-        StorageFolder: 0 | 1 | 2 | 3 | 4;
+        StorageFolder: 0 | 1 | 2 | 3 | 4 | 5;
         StreakUpdate: {
             streakType: string;
             /** Format: int32 */

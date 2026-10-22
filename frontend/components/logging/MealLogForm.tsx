@@ -13,7 +13,7 @@ import {
   defaultMealTypeForHour,
   formatMealType,
 } from "@/lib/utils/mealType";
-import type { FoodAnalysis } from "@/lib/api/food-photo";
+import type { FoodAnalysis, NutritionPer100g } from "@/lib/api/food-photo";
 import AiMealInput from "./AiMealInput";
 import FoodPicker from "./FoodPicker";
 import RecipePicker from "./RecipePicker";
@@ -35,29 +35,27 @@ type ManualItem = {
 };
 
 /**
- * What the assistant proposed for one food. The numbers are for the portion it guessed, so changing the weight
- * scales them, and the person can still correct any of it before saving.
+ * What the assistant proposed for one food: a name, a guessed weight and the nutrition per 100 g. The person
+ * corrects the name and the grams; the server scales the per-100 g figures to the grams it receives. The key
+ * is minted once per row and reused on a retry, so the same row can never be logged twice.
  */
 type ProposedItem = {
   key: string;
+  idempotencyKey: string;
   name: string;
   grams: string;
-  base: {
-    grams: number;
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-  };
+  per100g: NutritionPer100g;
 };
 
-function scaled(item: ProposedItem) {
-  const factor = (Number(item.grams) || 0) / item.base.grams;
+/**
+ * A preview for the screen only - what the row will roughly come to at the weight typed so far. Nothing from
+ * here is sent; the saved numbers are the server's.
+ */
+function preview(item: ProposedItem) {
+  const factor = (Number(item.grams) || 0) / 100;
   return {
-    calories: item.base.calories * factor,
-    protein: item.base.protein * factor,
-    carbs: item.base.carbs * factor,
-    fat: item.base.fat * factor,
+    calories: item.per100g.calories * factor,
+    protein: item.per100g.proteinGrams * factor,
   };
 }
 
@@ -131,7 +129,7 @@ export default function MealLogForm({
       0,
     ) +
     manual.reduce((sum, entry) => sum + entry.calories, 0) +
-    proposed.reduce((sum, entry) => sum + scaled(entry).calories, 0);
+    proposed.reduce((sum, entry) => sum + preview(entry).calories, 0);
   const hasUnknownNutrition = selected.some(
     (entry) => entry.item.calories === null,
   );
@@ -146,20 +144,16 @@ export default function MealLogForm({
     });
     setProposed((current) => [
       ...current,
-      ...analysis.foods.map((food) => ({
-        key: crypto.randomUUID(),
-        name: food.name,
-        grams: String(
-          Math.round(food.portionGrams > 0 ? food.portionGrams : 100),
-        ),
-        base: {
-          grams: food.portionGrams > 0 ? food.portionGrams : 100,
-          calories: food.calories,
-          protein: food.protein,
-          carbs: food.carbs,
-          fat: food.fat,
-        },
-      })),
+      // A food the model gave no weight for cannot be scaled, so it is not offered as a row.
+      ...analysis.foods
+        .filter((food) => food.per100g && food.portionGrams > 0)
+        .map((food) => ({
+          key: crypto.randomUUID(),
+          idempotencyKey: crypto.randomUUID(),
+          name: food.name,
+          grams: String(Math.round(food.portionGrams)),
+          per100g: food.per100g!,
+        })),
     ]);
   }
 
@@ -226,7 +220,7 @@ export default function MealLogForm({
         );
       }
       for (const entry of proposed) {
-        const nutrition = scaled(entry);
+        // The grams the person confirmed and the per-100 g figures; the server does the arithmetic.
         const feedback = await clientApi<GamificationFeedback>("/api/Meals", {
           method: "POST",
           body: {
@@ -235,11 +229,9 @@ export default function MealLogForm({
             mealType,
             servings: 1,
             amountGrams: Number(entry.grams),
-            calories: Math.round(nutrition.calories * 10) / 10,
-            proteinGrams: Math.round(nutrition.protein * 10) / 10,
-            carbsGrams: Math.round(nutrition.carbs * 10) / 10,
-            fatGrams: Math.round(nutrition.fat * 10) / 10,
+            per100g: entry.per100g,
           },
+          headers: { "Idempotency-Key": entry.idempotencyKey },
         });
         publishLogFeedback(feedback);
         saved += 1;
@@ -334,7 +326,11 @@ export default function MealLogForm({
               </div>
             </fieldset>
             {totalCount > 0 && (
-              <section ref={mealList} aria-label="Items in this meal" className="space-y-2">
+              <section
+                ref={mealList}
+                aria-label="Items in this meal"
+                className="space-y-2"
+              >
                 <h3 className="text-sm font-semibold">Your meal</h3>
                 {proposal && proposed.length > 0 && (
                   <p className="flex items-start gap-2 text-xs text-charcoal-blue-700 dark:text-charcoal-blue-300">
@@ -353,7 +349,7 @@ export default function MealLogForm({
                 )}
                 <ul className="divide-y divide-border border-y border-border">
                   {proposed.map((entry) => {
-                    const nutrition = scaled(entry);
+                    const nutrition = preview(entry);
                     return (
                       <li
                         key={entry.key}

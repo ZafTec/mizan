@@ -5,6 +5,7 @@ using Mizan.Application.Ai;
 using Mizan.Application.Ai.Tools;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Ai;
 using Mizan.Domain.Media;
 
 namespace Mizan.Api.Controllers;

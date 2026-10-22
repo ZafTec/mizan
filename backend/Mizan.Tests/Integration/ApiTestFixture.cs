@@ -243,6 +243,10 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             services.RemoveAll<IPaddleApiClient>();
             services.AddSingleton<IPaddleApiClient>(Paddle);
 
+            // A controller the impersonation policy does not know about, so a test can show that a
+            // new route is closed to an administrator viewing the site as a user until it is classified.
+            services.AddControllers().AddApplicationPart(typeof(UnclassifiedTestController).Assembly);
+
             // Configure minimal logging for tests
             services.AddLogging(logging =>
             {
@@ -265,6 +269,23 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         }
 
         await EnsureDatabaseAsync();
+        await ClearCacheAsync();
+    }
+
+    /// <summary>
+    /// The cache outlives a test run when Redis does. Read models such as the
+    /// achievements list are cached under tags, so a table this suite truncates
+    /// would otherwise come back from the previous run and break foreign keys.
+    /// </summary>
+    private async Task ClearCacheAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_redisConnectionString)) return;
+
+        var options = StackExchange.Redis.ConfigurationOptions.Parse(_redisConnectionString);
+        options.AllowAdmin = true;
+        using var redis = await StackExchange.Redis.ConnectionMultiplexer.ConnectAsync(options);
+        foreach (var endpoint in redis.GetEndPoints())
+            await redis.GetServer(endpoint).FlushDatabaseAsync();
     }
 
     public new async Task DisposeAsync()
@@ -371,6 +392,8 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             await db.Database.ExecuteSqlRawAsync(CatalogSeed.Sql);
 #pragma warning restore EF1002
         }
+
+        await ClearCacheAsync();
     }
 
     /// <summary>
@@ -627,14 +650,23 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         var now = DateTime.UtcNow;
         var client = new OAuthClient
         {
-            Id = Guid.NewGuid(), ClientId = "mzc_" + SecureToken.Generate()[..16], Name = "Test Assistant",
-            RedirectUris = ["http://localhost:1/cb"], Source = audience == "api" ? OAuthClient.SourceFirstParty : OAuthClient.SourceDynamic, CreatedAt = now,
+            Id = Guid.NewGuid(),
+            ClientId = "mzc_" + SecureToken.Generate()[..16],
+            Name = "Test Assistant",
+            RedirectUris = ["http://localhost:1/cb"],
+            Source = audience == "api" ? OAuthClient.SourceFirstParty : OAuthClient.SourceDynamic,
+            CreatedAt = now,
         };
         var grant = new OAuthGrant
         {
-            Id = Guid.NewGuid(), UserId = userId, ClientId = client.Id,
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            ClientId = client.Id,
             Scopes = Mizan.Contracts.Mcp.McpScopes.Normalize(scopes ?? Mizan.Contracts.Mcp.McpScopes.All.ToArray(), isAdmin),
-            HouseholdMode = householdMode, HouseholdIds = (households ?? []).ToList(), CreatedAt = now, UpdatedAt = now,
+            HouseholdMode = householdMode,
+            HouseholdIds = (households ?? []).ToList(),
+            CreatedAt = now,
+            UpdatedAt = now,
         };
         db.OAuthClients.Add(client);
         db.OAuthGrants.Add(grant);

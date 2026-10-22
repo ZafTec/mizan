@@ -46,7 +46,7 @@ export default async function RecipesPage({
         </div>
         {user && (
           <LogEntryButton kind="meal" className="btn-primary">
-             Log a meal
+            Log a meal
           </LogEntryButton>
         )}
       </header>

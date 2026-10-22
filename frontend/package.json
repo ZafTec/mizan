@@ -7,12 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "format": "prettier --write \"app/(dashboard)/workouts/ActiveWorkout.tsx\" \"app/(dashboard)/workouts/ExercisePicker.tsx\" \"app/(dashboard)/workouts/StartWorkoutPanel.tsx\" \"app/(dashboard)/workouts/WorkoutDashboard.tsx\" \"app/(dashboard)/workouts/WorkoutOverview.tsx\" \"app/(dashboard)/workouts/WorkoutPrompts.tsx\" \"app/(dashboard)/workouts/WorkoutReview.test.tsx\" \"app/(dashboard)/workouts/page.tsx\" \"app/(dashboard)/social/SocialFeed.tsx\" \"app/(dashboard)/social/page.tsx\" \"app/(dashboard)/social/profile/SocialProfileManager.tsx\" \"app/(dashboard)/social/profile/page.tsx\" \"app/(dashboard)/notifications/NotificationList.tsx\" \"app/admin/moderation/ModerationActions.tsx\" \"app/admin/moderation/page.tsx\" \"app/u/share/FollowRequestButton.tsx\" \"app/u/share/page.tsx\" \"lib/workouts/draft.ts\" \"lib/workouts/draft.test.ts\" \"lib/api.ts\" package.json",
-    "format:check": "prettier --check \"app/(dashboard)/workouts/ActiveWorkout.tsx\" \"app/(dashboard)/workouts/ExercisePicker.tsx\" \"app/(dashboard)/workouts/StartWorkoutPanel.tsx\" \"app/(dashboard)/workouts/WorkoutDashboard.tsx\" \"app/(dashboard)/workouts/WorkoutOverview.tsx\" \"app/(dashboard)/workouts/WorkoutPrompts.tsx\" \"app/(dashboard)/workouts/WorkoutReview.test.tsx\" \"app/(dashboard)/workouts/page.tsx\" \"app/(dashboard)/social/SocialFeed.tsx\" \"app/(dashboard)/social/page.tsx\" \"app/(dashboard)/social/profile/SocialProfileManager.tsx\" \"app/(dashboard)/social/profile/page.tsx\" \"app/(dashboard)/notifications/NotificationList.tsx\" \"app/admin/moderation/ModerationActions.tsx\" \"app/admin/moderation/page.tsx\" \"app/u/share/FollowRequestButton.tsx\" \"app/u/share/page.tsx\" \"lib/workouts/draft.ts\" \"lib/workouts/draft.test.ts\" \"lib/api.ts\" package.json",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "codegen": "openapi-typescript http://localhost:5000/swagger/v1/swagger.json -o ./types/api.generated.ts"
+    "codegen": "openapi-typescript http://localhost:5000/swagger/v1/swagger.json -o ./types/api.generated.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@grafana/faro-web-sdk": "^2.12.1",

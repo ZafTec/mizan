@@ -19,13 +19,17 @@ export type LogBodyMeasurementResultDto = Schemas["LogBodyMeasurementResult"];
 
 export type MyTrainerDto = Schemas["MyTrainerDto"];
 export type MyTrainerRequestDto = Schemas["MyTrainerRequestDto"];
-export type MyTrainerRequestPagedResultDto = Schemas["MyTrainerRequestDtoPagedResult"];
+export type MyTrainerRequestPagedResultDto =
+  Schemas["MyTrainerRequestDtoPagedResult"];
 export type TrainerClientDto = Schemas["TrainerClientDto"];
-export type TrainerClientPagedResultDto = Schemas["TrainerClientDtoPagedResult"];
+export type TrainerClientPagedResultDto =
+  Schemas["TrainerClientDtoPagedResult"];
 export type TrainerPendingRequestDto = Schemas["TrainerPendingRequestDto"];
-export type TrainerPendingRequestPagedResultDto = Schemas["TrainerPendingRequestDtoPagedResult"];
+export type TrainerPendingRequestPagedResultDto =
+  Schemas["TrainerPendingRequestDtoPagedResult"];
 export type TrainerPublicDto = Schemas["TrainerPublicDto"];
-export type TrainerPublicPagedResultDto = Schemas["TrainerPublicDtoPagedResult"];
+export type TrainerPublicPagedResultDto =
+  Schemas["TrainerPublicDtoPagedResult"];
 
 export type McpConnectionDto = Schemas["McpConnectionDto"];
 export type McpConnectionHouseholdDto = Schemas["McpConnectionHouseholdDto"];
@@ -34,6 +38,8 @@ export type ScopeGroupDto = Schemas["ScopeGroupView"];
 export type AuthorizationRequestViewDto = Schemas["AuthorizationRequestView"];
 export type DecideAuthorizationResultDto = Schemas["DecideAuthorizationResult"];
 
-export function getPagedItems<T>(result: { items?: T[] | null } | null | undefined): T[] {
+export function getPagedItems<T>(
+  result: { items?: T[] | null } | null | undefined,
+): T[] {
   return result?.items ?? [];
 }

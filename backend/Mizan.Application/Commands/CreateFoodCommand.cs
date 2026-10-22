@@ -8,7 +8,11 @@ using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Commands;
 
-public record CreateFoodCommand : CreateFoodRequest, IRequest<CreateFoodResult>;
+public record CreateFoodCommand : CreateFoodRequest, IRequest<CreateFoodResult>, IRedactedAudit
+{
+    // Barcode is the product's number, not a credential, so the whole request is safe to store.
+    object IRedactedAudit.AuditDetails => this;
+}
 
 public record CreateFoodResult
 {

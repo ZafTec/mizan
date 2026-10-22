@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Mizan.Application.Ai;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Nutrition;
 using Mizan.Infrastructure.Data;
 using Xunit;
 
@@ -41,6 +42,23 @@ public class FoodTextTests
         result!.Foods.Select(f => f.Name).Should().Equal("Scrambled eggs", "Toast with butter");
         result.TotalCalories.Should().Be(370);
         result.Note.Should().Contain("Assumed");
+    }
+
+    [Fact]
+    public async Task EachFood_ComesWithItsNutritionPer100g()
+    {
+        var (client, _) = await ProUserAsync();
+        _fixture.Ai.Reply(Analysis);
+
+        var response = await Post(client, "two eggs and a slice of toast with butter");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var json = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        var toast = json.GetProperty("foods")[1].GetProperty("per100g");
+        toast.GetProperty("calories").GetDecimal().Should().Be(316.67m);
+        toast.GetProperty("proteinGrams").GetDecimal().Should().Be(6.67m);
+        toast.GetProperty("carbsGrams").GetDecimal().Should().Be(36.67m);
+        toast.GetProperty("fatGrams").GetDecimal().Should().Be(15m);
     }
 
     [Fact]

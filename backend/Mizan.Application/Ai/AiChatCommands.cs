@@ -4,23 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Application.Ai.Tools;
+using Mizan.Contracts.Ai;
 using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Ai;
-
-public record AiChatMessageDto(
-    Guid Id, bool FromUser, string Content, DateTime CreatedAt, string? ImageUrl = null);
-
-public record AiChatTurnDto(
-    Guid ThreadId,
-    string Title,
-    AiChatMessageDto Reply,
-    /// <summary>
-    /// What the turn actually did. Echoed for the same reason onboarding
-    /// echoes it: an assistant that writes to someone's log without saying so
-    /// is indistinguishable from one making things up.
-    /// </summary>
-    IReadOnlyList<Tools.AiToolInvocation> Performed);
 
 /// <summary>
 /// One turn. A null thread starts a new one, which is what the first message
@@ -91,7 +78,7 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
             CreatedAt = now.AddMilliseconds(1),
         };
 
-        _context.AiChatMessages.Add(new AiChatMessage
+        var stored = new AiChatMessage
         {
             Id = Guid.CreateVersion7(),
             ThreadId = thread.Id,
@@ -99,7 +86,8 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
             Content = message,
             ImageUrl = request.ImageUrl,
             CreatedAt = now,
-        });
+        };
+        _context.AiChatMessages.Add(stored);
         _context.AiChatMessages.Add(reply);
         thread.UpdatedAt = now;
 
@@ -109,6 +97,7 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
         return new AiChatTurnDto(
             thread.Id,
             thread.Title,
+            new AiChatMessageDto(stored.Id, true, stored.Content, stored.CreatedAt, stored.ImageUrl),
             new AiChatMessageDto(reply.Id, false, reply.Content, reply.CreatedAt),
             turn.Performed);
     }

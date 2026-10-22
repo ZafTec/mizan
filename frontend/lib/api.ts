@@ -57,9 +57,7 @@ export interface ApiRequestOptions {
  * it received. There is no bearer token any more - see docs/ARCHITECTURE.md#identity.
  */
 export type RequestAuth =
-  | { mode: "none" }
-  | { mode: "browser" }
-  | { mode: "cookie"; cookie: string };
+  { mode: "none" } | { mode: "browser" } | { mode: "cookie"; cookie: string };
 
 export async function request<T>(
   baseUrl: string,

@@ -45,12 +45,22 @@ export function WorkoutHistory({
                   {workout.name || "Workout"}
                 </strong>
                 <span className="num text-sm log-muted">
-                  {new Date(`${workout.workoutDate}T00:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short" })}
-                  {" "}· {workout.exercises.length} {workout.exercises.length === 1 ? "exercise" : "exercises"} · {sets} sets
+                  {new Date(
+                    `${workout.workoutDate}T00:00:00`,
+                  ).toLocaleDateString(undefined, {
+                    day: "numeric",
+                    month: "short",
+                  })}{" "}
+                  · {workout.exercises.length}{" "}
+                  {workout.exercises.length === 1 ? "exercise" : "exercises"} ·{" "}
+                  {sets} sets
                 </span>
               </span>
               <span className="num hidden text-sm sm:block">
-                <span className="font-semibold">{Math.round(volume).toLocaleString()}</span> <span className="log-muted">kg</span>
+                <span className="font-semibold">
+                  {Math.round(volume).toLocaleString()}
+                </span>{" "}
+                <span className="log-muted">kg</span>
               </span>
               <button
                 className="btn-ghost btn-sm"
@@ -64,10 +74,17 @@ export function WorkoutHistory({
             </summary>
             <ul className="border-t border-border pb-3 pl-1">
               {workout.exercises.map((exercise) => (
-                <li key={exercise.id} className="flex items-baseline justify-between gap-4 py-2 text-sm">
+                <li
+                  key={exercise.id}
+                  className="flex items-baseline justify-between gap-4 py-2 text-sm"
+                >
                   <span className="font-medium">{exercise.exerciseName}</span>
                   <span className="num text-right log-muted">
-                    {exercise.sets.map((set) => `${set.weightKg ?? 0} kg × ${set.reps ?? 0}`).join(" · ")}
+                    {exercise.sets
+                      .map(
+                        (set) => `${set.weightKg ?? 0} kg × ${set.reps ?? 0}`,
+                      )
+                      .join(" · ")}
                   </span>
                 </li>
               ))}

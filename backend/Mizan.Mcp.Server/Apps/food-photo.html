@@ -45,68 +45,27 @@ input, select { font: inherit; color: var(--ink); background: var(--card); borde
   </div>
 </div>
 <p id="status" role="status" class="muted" style="margin-top:12px"></p>
+<script><!-- mizan:bridge --></script>
 <script>
-// Talks to the host over postMessage (MCP Apps). No libraries, so the page is one file.
-const pending = new Map();
-let nextId = 0;
-const send = (message) => parent.postMessage(message, "*");
-const request = (method, params) => new Promise((resolve, reject) => {
-  const id = ++nextId;
-  pending.set(id, { resolve, reject });
-  send({ jsonrpc: "2.0", id, method, params });
-});
-const notify = (method, params) => send({ jsonrpc: "2.0", method, params: params || {} });
-const callTool = (name, args) => request("tools/call", { name, arguments: args || {} });
-const textOf = (result) => ((result && result.content) || []).filter((c) => c.type === "text").map((c) => c.text).join("\n");
-const jsonOf = (result) => { try { return JSON.parse(textOf(result)); } catch { return null; } };
-const el = (tag, props, ...kids) => {
-  const node = document.createElement(tag);
-  for (const [key, value] of Object.entries(props || {})) {
-    if (key === "class") node.className = value;
-    else if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
-    else if (value !== undefined && value !== null && value !== false) node.setAttribute(key, value === true ? "" : value);
-  }
-  for (const kid of kids.flat()) if (kid !== null && kid !== undefined && kid !== false) node.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
-  return node;
-};
-const reportSize = () => notify("ui/notifications/size-changed", { width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight });
-const applyContext = (context) => { if (context && context.theme) document.documentElement.dataset.theme = context.theme; };
-window.addEventListener("message", (event) => {
-  const message = event.data;
-  if (!message || message.jsonrpc !== "2.0") return;
-  if (message.id !== undefined && !message.method) {
-    const waiting = pending.get(message.id);
-    if (!waiting) return;
-    pending.delete(message.id);
-    if (message.error) waiting.reject(new Error(message.error.message || "The request failed")); else waiting.resolve(message.result);
-  } else if (message.method === "ui/notifications/tool-result") window.onToolResult(message.params);
-  else if (message.method === "ui/notifications/host-context-changed") applyContext(message.params);
-});
-const connect = (name) => request("ui/initialize", { protocolVersion: "2025-06-18", appInfo: { name, version: "1.0.0" }, appCapabilities: {} })
-  .then((result) => { applyContext(result && result.hostContext); notify("ui/notifications/initialized"); })
-  .catch(() => {})
-  .finally(() => { new ResizeObserver(reportSize).observe(document.body); reportSize(); });
-
-
 let foods = [];
-const num = (n) => Math.round(Number(n) || 0).toLocaleString();
 const today = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
-const scaled = (food, grams) => { const f = food.portion > 0 ? grams / food.portion : 1; return { calories: food.calories * f, protein: food.protein * f, carbs: food.carbs * f, fat: food.fat * f }; };
+// A preview for the screen only. The tool is sent the grams and the per-100 g figures, and the server does the arithmetic.
+const previewKcal = (food, grams) => food.per100g.calories * grams / 100;
 
 function totals() {
   const chosen = foods.filter((f) => f.include);
-  const kcal = chosen.reduce((sum, f) => sum + scaled(f, f.grams).calories, 0);
+  const kcal = chosen.reduce((sum, f) => sum + previewKcal(f, f.grams), 0);
   document.getElementById("total").textContent = `${chosen.length} item${chosen.length === 1 ? "" : "s"}, ${num(kcal)} kcal`;
   document.getElementById("log").disabled = chosen.length === 0;
 }
 
 function renderRows() {
   document.getElementById("rows").replaceChildren(...foods.map((food, index) => {
-    const kcal = el("td", { class: "num", style: "padding:8px 10px;text-align:right" }, num(scaled(food, food.grams).calories));
+    const kcal = el("td", { class: "num", style: "padding:8px 10px;text-align:right" }, num(previewKcal(food, food.grams)));
     return el("tr", { style: "border-top:1px solid var(--rule)" },
       el("td", { style: "padding:8px 10px" }, el("input", { type: "checkbox", checked: food.include, "aria-label": `Include ${food.name}`, onchange: (e) => { food.include = e.target.checked; totals(); } })),
       el("td", { style: "padding:8px 4px" }, el("input", { type: "text", value: food.name, "aria-label": "Food name", style: "width:100%", oninput: (e) => { food.name = e.target.value; } })),
-      el("td", { style: "padding:8px 4px" }, el("input", { type: "number", min: "1", step: "1", value: String(Math.round(food.grams)), "aria-label": `Grams of ${food.name}`, style: "width:80px", oninput: (e) => { food.grams = Math.max(0, Number(e.target.value) || 0); kcal.textContent = num(scaled(food, food.grams).calories); totals(); } })),
+      el("td", { style: "padding:8px 4px" }, el("input", { type: "number", min: "1", step: "1", value: String(Math.round(food.grams)), "aria-label": `Grams of ${food.name}`, style: "width:80px", oninput: (e) => { food.grams = Math.max(0, Number(e.target.value) || 0); kcal.textContent = num(previewKcal(food, food.grams)); totals(); } })),
       kcal);
   }));
   totals();
@@ -116,7 +75,9 @@ window.onToolResult = (result) => {
   const data = jsonOf(result);
   const status = document.getElementById("status");
   if (result.isError || !data || !Array.isArray(data.foods)) { status.className = "err"; status.textContent = textOf(result) || "Nothing was recognized in that photo."; return; }
-  foods = data.foods.map((f) => ({ name: f.name || "Food", portion: Number(f.portionGrams) || 100, grams: Number(f.portionGrams) || 100, calories: Number(f.calories) || 0, protein: Number(f.protein) || 0, carbs: Number(f.carbs) || 0, fat: Number(f.fat) || 0, include: true, logged: false }));
+  // A food without a weight or per-100 g figures cannot be scaled by the server, so it is not offered.
+  foods = data.foods.filter((f) => f && f.per100g && Number(f.portionGrams) > 0).map((f) => ({ name: f.name || "Food", grams: Number(f.portionGrams), per100g: f.per100g, include: true, logged: false }));
+  if (foods.length === 0) { status.className = "err"; status.textContent = "Nothing in that photo could be weighed."; return; }
   const confidence = Number(data.confidence);
   document.getElementById("note").textContent = (isFinite(confidence) && confidence > 0 ? `Estimate (${Math.round(confidence * (confidence <= 1 ? 100 : 1))}% confident). ` : "Estimate. ") + (data.note || "Check the amounts before you log.");
   document.getElementById("date").value = today();
@@ -132,10 +93,9 @@ document.getElementById("log").addEventListener("click", async () => {
   button.disabled = true; status.className = "muted";
   let done = 0;
   for (const food of foods.filter((f) => f.include && !f.logged)) {
-    const n = scaled(food, food.grams);
     status.textContent = `Logging ${food.name}…`;
     try {
-      const result = await callTool("log_meal_manual", { name: food.name.trim() || "Food", date, mealType, calories: Math.round(n.calories), servings: 1, proteinGrams: Math.round(n.protein * 10) / 10, carbsGrams: Math.round(n.carbs * 10) / 10, fatGrams: Math.round(n.fat * 10) / 10 });
+      const result = await callTool("log_meal_manual", { name: food.name.trim() || "Food", date, mealType, servings: 1, amountGrams: food.grams, caloriesPer100g: food.per100g.calories, proteinPer100g: food.per100g.proteinGrams, carbsPer100g: food.per100g.carbsGrams, fatPer100g: food.per100g.fatGrams });
       if (result.isError) throw new Error(textOf(result) || "Could not log that item");
       food.logged = true; food.include = false; done++;
     } catch (error) {

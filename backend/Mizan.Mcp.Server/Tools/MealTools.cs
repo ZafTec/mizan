@@ -60,8 +60,11 @@ public sealed class MealTools
             // in the same transaction; a second measurement POST would duplicate it.
             writes.Add(new DayWrite("workout", null, "/api/Workouts", new LogWorkoutRequest
             {
-                WorkoutDate = day, Name = workoutName, DurationMinutes = workoutDurationMinutes,
-                Exercises = exercises, BodyweightKg = weightKg,
+                WorkoutDate = day,
+                Name = workoutName,
+                DurationMinutes = workoutDurationMinutes,
+                Exercises = exercises,
+                BodyweightKg = weightKg,
             }));
         }
         else if (weightKg.HasValue)
@@ -79,8 +82,13 @@ public sealed class MealTools
             try
             {
                 var response = await _api.PostAsync(write.Endpoint, write.Body, ct);
-                completed.Add(new { write.Kind, write.MealIndex, response = JsonSerializer.Deserialize<JsonElement>(response),
-                    includesWeight = write.Kind == "workout" && weightKg.HasValue });
+                completed.Add(new
+                {
+                    write.Kind,
+                    write.MealIndex,
+                    response = JsonSerializer.Deserialize<JsonElement>(response),
+                    includesWeight = write.Kind == "workout" && weightKg.HasValue
+                });
             }
             catch (Exception error) when (error is not OperationCanceledException)
             {
@@ -89,7 +97,9 @@ public sealed class MealTools
                 var unconfirmed = error is not BackendApiException backendError || (int)backendError.Status >= 500;
                 return DayResult(new
                 {
-                    success = false, date = day, completed,
+                    success = false,
+                    date = day,
+                    completed,
                     failed = new { write.Kind, write.MealIndex, error = error.Message, mayHaveBeenSaved = unconfirmed },
                     remaining = writes.Skip(index + (unconfirmed ? 1 : 0)).Select(item => new { item.Kind, item.MealIndex }),
                     guidance = unconfirmed
@@ -225,31 +235,52 @@ public sealed class MealTools
     }
 
     [McpServerTool(Name = "log_meal_manual")]
-    [Description("Log a meal with manual nutrition values when no food/recipe exists in the database.")]
+    [Description("Log a meal with manual nutrition values when no food/recipe exists in the database. Either give the totals eaten, or give amountGrams with the per-100 g figures (as analyze_food_image returns them) and the server computes the totals.")]
     public async Task<string> LogMealManual(
         [Description("Meal name (e.g. 'Homemade smoothie')")] string name,
         [Description("Date in YYYY-MM-DD format")] string date,
-        [Description("Total calories")] decimal calories,
+        [Description("Total calories eaten. Not needed when per-100 g figures and amountGrams are given.")] decimal? calories = null,
         [Description("Meal category: BREAKFAST, LUNCH, DINNER, SNACK, or DRINK")] string mealType = "BREAKFAST",
         [Description("Number of servings (default 1)")] decimal servings = 1,
         [Description("Protein in grams")] decimal? proteinGrams = null,
         [Description("Carbs in grams")] decimal? carbsGrams = null,
         [Description("Fat in grams")] decimal? fatGrams = null,
         [Description("Fiber in grams")] decimal? fiberGrams = null,
+        [Description("Weight eaten in grams. With the per-100 g figures, the server scales them to this.")] decimal? amountGrams = null,
+        [Description("Calories per 100 g")] decimal? caloriesPer100g = null,
+        [Description("Protein per 100 g")] decimal? proteinPer100g = null,
+        [Description("Carbs per 100 g")] decimal? carbsPer100g = null,
+        [Description("Fat per 100 g")] decimal? fatPer100g = null,
+        [Description("Fiber per 100 g")] decimal? fiberPer100g = null,
         [Description("Optional ISO 8601 timestamp of when the meal was eaten; defaults to now")] string? loggedAt = null,
         CancellationToken ct = default)
     {
+        var per100g = caloriesPer100g.HasValue
+            ? new NutritionPer100g
+            {
+                Calories = caloriesPer100g.Value,
+                ProteinGrams = proteinPer100g ?? 0,
+                CarbsGrams = carbsPer100g ?? 0,
+                FatGrams = fatPer100g ?? 0,
+                FiberGrams = fiberPer100g,
+            }
+            : null;
+        if (per100g is null && calories is null)
+            throw new ArgumentException("Give calories, or amountGrams with caloriesPer100g.", nameof(calories));
+
         return await _api.PostAsync("/api/Meals", new LogMealRequest
         {
             EntryDate = ToolArguments.ParseOptionalDate(date, "date"),
             MealType = NormalizeMealType(mealType),
             Servings = servings,
             Name = name,
+            AmountGrams = amountGrams,
             Calories = calories,
             ProteinGrams = proteinGrams,
             CarbsGrams = carbsGrams,
             FatGrams = fatGrams,
             FiberGrams = fiberGrams,
+            Per100g = per100g,
             LoggedAt = ToolArguments.ParseOptionalTimestamp(loggedAt, "loggedAt"),
         }, ct);
     }

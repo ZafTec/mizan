@@ -1,5 +1,5 @@
 export enum TimeSpan {
-    Week = "Week",
-    Month = "Month",
-    Year = "Year",
+  Week = "Week",
+  Month = "Month",
+  Year = "Year",
 }

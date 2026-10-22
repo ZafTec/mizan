@@ -7,6 +7,7 @@ using Mizan.Application.Ai.Tools;
 using Mizan.Application.Common;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Ai;
 using Mizan.Domain.Ai;
 using Mizan.Domain.Entities;
 

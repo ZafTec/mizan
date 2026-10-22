@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.HttpOverrides;
 using Mizan.Contracts.Mcp;
+using Mizan.Mcp.Server;
 using Mizan.Mcp.Server.Apps;
 using Mizan.Mcp.Server.Authentication;
 using Mizan.Mcp.Server.Authorization;
@@ -35,6 +36,9 @@ builder.Host.UseSerilog();
 // that says where to sign in (RFC 9728), which is how MCP clients start the OAuth flow.
 var publicUrl = (builder.Configuration["Mcp:PublicUrl"] ?? "http://localhost:5001/mcp").TrimEnd('/');
 var authorizationServer = (builder.Configuration["Mcp:AuthorizationServer"] ?? "http://localhost:5000/api").TrimEnd('/');
+// The web app's address, for the links in limit and upgrade messages.
+var links = new McpLinks(builder.Configuration);
+builder.Services.AddSingleton(links);
 
 builder.Services.AddAuthentication(options =>
     {
@@ -230,7 +234,7 @@ builder.Services.AddMcpServer(options =>
         // A call the grant does not cover, or one over the monthly cap, is refused on the spot
         // instead of becoming a task that can only fail.
         var name = context.Params?.Name ?? string.Empty;
-        var allowed = McpToolScopes.TryGet(name, out var scope) && McpGrantAccess.Allowed(null, scope) && McpGrantAccess.LimitReached(null) is null;
+        var allowed = McpToolScopes.TryGet(name, out var scope) && McpGrantAccess.Allowed(null, scope) && McpGrantAccess.LimitReached(null, links) is null;
         return allowed && taskTools.Contains(name) ? McpTaskExecutionMode.Optional : McpTaskExecutionMode.Synchronous;
     })
 .WithRequestFilters(filters =>
@@ -300,7 +304,7 @@ builder.Services.AddMcpServer(options =>
         // Skills are public instructions and app pages hold no data, so reading one is free. Everything else shares the monthly cap with tools.
         if (uri.StartsWith("skill://", StringComparison.Ordinal) || uri.StartsWith("ui://", StringComparison.Ordinal))
             return await next(context, cancellationToken);
-        if (McpGrantAccess.LimitReached(http) is { } limit) throw new McpProtocolException(limit, McpErrorCode.InvalidRequest);
+        if (McpGrantAccess.LimitReached(http, links) is { } limit) throw new McpProtocolException(limit, McpErrorCode.InvalidRequest);
 
         var sw = Stopwatch.StartNew();
         try
@@ -384,13 +388,11 @@ builder.Services.AddMcpServer(options =>
             };
         }
 
-        if (int.TryParse(caller.FindFirst("mcp_usage_limit")?.Value, out var monthlyLimit) &&
-            int.TryParse(caller.FindFirst("mcp_usage_used")?.Value, out var usedThisMonth) &&
-            usedThisMonth >= monthlyLimit)
+        if (McpGrantAccess.LimitReached(httpContext, links) is { } limitReached)
         {
             return new CallToolResult
             {
-                Content = [new TextContentBlock { Text = $"[MONTHLY LIMIT REACHED] The free plan includes {monthlyLimit} MCP tool calls per month. Upgrade at https://mizan.zaftech.co/billing." }],
+                Content = [new TextContentBlock { Text = limitReached }],
                 IsError = true
             };
         }
@@ -474,6 +476,9 @@ forwarded.KnownProxies.Clear();
 app.UseForwardedHeaders(forwarded);
 
 app.UseAuthentication();
+// An outage of the API that validates tokens is a 503 with Retry-After, not a 401 that
+// sends every client back through sign-in.
+app.UseMiddleware<McpAuthOutageMiddleware>();
 app.UseAuthorization();
 
 // A task keeps running after its request ends. Naming the caller here lets that

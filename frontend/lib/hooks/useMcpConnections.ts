@@ -1,8 +1,16 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { mcpConnectionsApi, McpApiError, type HouseholdChoice } from "@/lib/api/mcp";
-import type { McpConnection, McpUsageAnalyticsResult, ScopeGroup } from "@/types/mcp";
+import {
+  mcpConnectionsApi,
+  McpApiError,
+  type HouseholdChoice,
+} from "@/lib/api/mcp";
+import type {
+  McpConnection,
+  McpUsageAnalyticsResult,
+  ScopeGroup,
+} from "@/types/mcp";
 import { appToast } from "@/lib/toast";
 
 const messageOf = (error: unknown, fallback: string) =>
@@ -17,7 +25,10 @@ export function useMcpConnections() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [list, scopes] = await Promise.all([mcpConnectionsApi.list(), mcpConnectionsApi.scopes()]);
+      const [list, scopes] = await Promise.all([
+        mcpConnectionsApi.list(),
+        mcpConnectionsApi.scopes(),
+      ]);
       setConnections(list);
       setGroups(scopes);
     } catch (caught) {
@@ -28,7 +39,10 @@ export function useMcpConnections() {
   }, []);
 
   const update = useCallback(
-    async (id: string, change: { scopes?: string[] } & Partial<HouseholdChoice>) => {
+    async (
+      id: string,
+      change: { scopes?: string[] } & Partial<HouseholdChoice>,
+    ) => {
       try {
         await mcpConnectionsApi.update(id, change);
         await load();
@@ -61,7 +75,9 @@ export function useMcpConnections() {
 }
 
 export function useMcpAnalytics() {
-  const [analytics, setAnalytics] = useState<McpUsageAnalyticsResult | null>(null);
+  const [analytics, setAnalytics] = useState<McpUsageAnalyticsResult | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {

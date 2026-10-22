@@ -24,13 +24,25 @@ public static class OAuthTokens
 
         context.OAuthTokens.Add(new OAuthToken
         {
-            Id = Guid.CreateVersion7(), GrantId = grantId, FamilyId = familyId, Kind = OAuthToken.KindAccess,
-            Audience = audience, TokenHash = Hash(access), CreatedAt = now, ExpiresAt = accessExpires,
+            Id = Guid.CreateVersion7(),
+            GrantId = grantId,
+            FamilyId = familyId,
+            Kind = OAuthToken.KindAccess,
+            Audience = audience,
+            TokenHash = Hash(access),
+            CreatedAt = now,
+            ExpiresAt = accessExpires,
         });
         context.OAuthTokens.Add(new OAuthToken
         {
-            Id = Guid.CreateVersion7(), GrantId = grantId, FamilyId = familyId, Kind = OAuthToken.KindRefresh,
-            Audience = audience, TokenHash = Hash(refresh), CreatedAt = now, ExpiresAt = now + settings.RefreshTokenLifetime,
+            Id = Guid.CreateVersion7(),
+            GrantId = grantId,
+            FamilyId = familyId,
+            Kind = OAuthToken.KindRefresh,
+            Audience = audience,
+            TokenHash = Hash(refresh),
+            CreatedAt = now,
+            ExpiresAt = now + settings.RefreshTokenLifetime,
         });
 
         return new Issued(access, refresh, accessExpires);

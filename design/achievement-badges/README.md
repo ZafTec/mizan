@@ -4,7 +4,7 @@ The revised set uses realistic folded paper: visible stock thickness, warm pulp 
 
 The set contains 29 achievement glyphs and three level marks. The packaged PNGs live once, in `frontend/public/badges/512` and `frontend/public/badges/128`, which the app serves as the default badges; `deliverables/` holds the review sheets, the manifest, the render report and the GLBs. `deliverables/contact-sheet.png` shows every glyph at **28 px**, beside a **14 px Archivo** label, on cream and dark paper. Each pair shows earned and the CSS-equivalent grayscale/50%-opacity state. `detail-sheet.png` shows the 128 px copies for inspecting geometry and edges. `silhouette-sheet.png` renders every alpha silhouette in the same ink at 28 px to check whether shape alone distinguishes the marks.
 
-Review the real-size sheet before shipping. The app ships the `128/` files as defaults (see the `SeedAchievementBadges` migration); the 512 px files are for the administrator's **Upload badge** control at `/admin/achievements/[id]/edit` when a record needs a different mark. The manifest maps filenames to the seeded achievement IDs; confirm each record against the current catalog since administrators may rename or remove records.
+Review the real-size sheet before shipping. The app ships the `128/` files as defaults (see `BranchDataMotion` beside the branch migration); the 512 px files are for the administrator's **Upload badge** control at `/admin/achievements/[id]/edit` when a record needs a different mark. The manifest maps filenames to the seeded achievement IDs; confirm each record against the current catalog since administrators may rename or remove records.
 
 ## Rebuild
 

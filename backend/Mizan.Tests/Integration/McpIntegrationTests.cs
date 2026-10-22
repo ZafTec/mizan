@@ -667,7 +667,9 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         var response = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "promote_to_recipe", new
         {
-            date, mealType = "LUNCH", title = "Chicken and rice"
+            date,
+            mealType = "LUNCH",
+            title = "Chicken and rice"
         }));
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var recipes = await _apiFixture.GetRecipesByUserId(userId);
@@ -685,12 +687,16 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var date = DateTime.UtcNow.ToString("yyyy-MM-dd");
         await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "log_food", new
         {
-            date, foodId = food.Id, mealType = "LUNCH"
+            date,
+            foodId = food.Id,
+            mealType = "LUNCH"
         }));
 
         var response = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "promote_to_recipe", new
         {
-            date, mealType = "LUNCH", title = "Just rice"
+            date,
+            mealType = "LUNCH",
+            title = "Just rice"
         }));
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
         ExtractErrorMessage(jsonResponse!).Should().Contain("at least 2");
@@ -1197,14 +1203,8 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
         result.Should().ContainKey("content");
 
-        // LogUsageAsync is fire-and-forget in Program.cs: poll until it completes.
-        List<McpUsageLog> logs = [];
-        for (var i = 0; i < 20; i++)
-        {
-            logs = await _apiFixture.GetMcpUsageLogsByUserId(userId);
-            if (logs.Count >= 1) break;
-            await Task.Delay(100);
-        }
+        // The tool filter in Program.cs awaits LogUsageAsync before it answers, so the row is there by now.
+        var logs = await _apiFixture.GetMcpUsageLogsByUserId(userId);
         logs.Should().HaveCount(1);
         logs.Should().OnlyContain(l => l.ToolName == "log_food");
     }

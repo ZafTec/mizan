@@ -24,6 +24,7 @@ namespace Mizan.Tests.Integration;
 /// </summary>
 public class McpAppsAndTasksTests : IClassFixture<WebApplicationFactory<McpServer::Program>>
 {
+    private const string AppUrl = "https://app.example";
     private readonly WebApplicationFactory<McpServer::Program> _factory;
     private readonly StubApi _api = new();
     private readonly Guid _user = Guid.NewGuid();
@@ -38,6 +39,7 @@ public class McpAppsAndTasksTests : IClassFixture<WebApplicationFactory<McpServe
         {
             builder.UseSetting("Mcp:ServiceApiKey", "test-api-key");
             builder.UseSetting("Mcp:AdminServiceApiKey", "test-admin-api-key");
+            builder.UseSetting("App:PublicUrl", AppUrl);
             builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["MizanApiUrl"] = "http://localhost:5000",
@@ -49,8 +51,17 @@ public class McpAppsAndTasksTests : IClassFixture<WebApplicationFactory<McpServe
         });
         _api.Introspection = () => new
         {
-            active = true, userId = _user, grantId = _grant, clientRowId = Guid.NewGuid(), clientId = "c", clientName = "Test",
-            scopes = _scopes, householdMode = "all", householdIds = Array.Empty<Guid>(), role = "user", plan = "pro",
+            active = true,
+            userId = _user,
+            grantId = _grant,
+            clientRowId = Guid.NewGuid(),
+            clientId = "c",
+            clientName = "Test",
+            scopes = _scopes,
+            householdMode = "all",
+            householdIds = Array.Empty<Guid>(),
+            role = "user",
+            plan = "pro",
         };
     }
 
@@ -102,6 +113,22 @@ public class McpAppsAndTasksTests : IClassFixture<WebApplicationFactory<McpServe
         _api.Requests.Should().NotContain(r => r.Path == "/api/McpConnections/usage", "app pages hold no data, like skills");
     }
 
+    [Theory]
+    [InlineData("nutrition-day")]
+    [InlineData("food-photo")]
+    [InlineData("body-trend")]
+    public async Task EveryAppPage_IsServedWithTheSharedBridgeInlined_AndNoMarkerLeft(string page)
+    {
+        using var client = Authorized();
+
+        var (_, body) = await SendAsync(client, "resources/read", new { uri = $"ui://mizan/{page}.html" });
+
+        var html = JsonDocument.Parse(body).RootElement.GetProperty("result").GetProperty("contents")[0].GetProperty("text").GetString()!;
+        html.Should().NotContain("<!-- mizan:bridge -->", "the source pages share Apps/_bridge.js; the served page must carry it inline");
+        html.Should().Contain("ui/initialize").And.Contain("ui/notifications/size-changed").And.Contain("ui/notifications/tool-result");
+        html.Should().NotContain("<script></script>").And.NotContain("src=", "the host blocks network requests, so nothing may be fetched");
+    }
+
     [Fact]
     public async Task AnAppPage_IsRefusedWithoutItsScope()
     {
@@ -126,6 +153,21 @@ public class McpAppsAndTasksTests : IClassFixture<WebApplicationFactory<McpServe
         Ui("get_nutrition_summary").Should().Be("ui://mizan/nutrition-day.html");
         Ui("analyze_food_image").Should().Be("ui://mizan/food-photo.html");
         Ui("list_body_measurements").Should().Be("ui://mizan/body-trend.html");
+    }
+
+    // ---- messages that point at the web app ----
+
+    [Fact]
+    public async Task AnUpgradeRefusalFromTheApi_PointsAtTheConfiguredAppsBillingPage()
+    {
+        _api.Reply("GET", "/api/Nutrition/daily", 403, """{"errorCode":"upgrade_required","detail":"That needs a Pro plan."}""");
+        using var client = Authorized();
+
+        var (_, body) = await SendAsync(client, "tools/call", new { name = "get_nutrition_summary", arguments = new { } });
+
+        var text = JsonDocument.Parse(body).RootElement.GetProperty("result").GetProperty("content")[0].GetProperty("text").GetString()!;
+        text.Should().Contain("[UPGRADE REQUIRED]").And.Contain("That needs a Pro plan.")
+            .And.Contain(AppUrl + "/billing").And.NotContain("zaftech");
     }
 
     // ---- tasks ----

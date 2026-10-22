@@ -7,18 +7,18 @@ import { logger } from "@/lib/logger";
 const trainerLogger = logger.createModuleLogger("trainer-data");
 
 export interface MyTrainer {
-	relationshipId: string;
-	trainerId: string;
-	trainerName?: string | null;
-	trainerEmail?: string | null;
-	trainerImage?: string | null;
-	status: string;
-	canViewNutrition: boolean;
-	canViewWorkouts: boolean;
-	canViewMeasurements: boolean;
-	canMessage: boolean;
-	startedAt: string;
-	endedAt?: string | null;
+  relationshipId: string;
+  trainerId: string;
+  trainerName?: string | null;
+  trainerEmail?: string | null;
+  trainerImage?: string | null;
+  status: string;
+  canViewNutrition: boolean;
+  canViewWorkouts: boolean;
+  canViewMeasurements: boolean;
+  canMessage: boolean;
+  startedAt: string;
+  endedAt?: string | null;
 }
 
 /**
@@ -27,11 +27,13 @@ export interface MyTrainer {
  * degrades to null so a contextual surface can never break the page it is on.
  */
 export async function getMyTrainer(): Promise<MyTrainer | null> {
-	try {
-		return await serverApi<MyTrainer>("/api/Trainers/my-trainer", { expectedStatuses: [404] });
-	} catch (error) {
-		if (error instanceof ApiError && error.status === 404) return null;
-		trainerLogger.error("Failed to load trainer relationship", { error });
-		return null;
-	}
+  try {
+    return await serverApi<MyTrainer>("/api/Trainers/my-trainer", {
+      expectedStatuses: [404],
+    });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    trainerLogger.error("Failed to load trainer relationship", { error });
+    return null;
+  }
 }

@@ -207,14 +207,15 @@ export default async function TodayPage({
           <header className="log-section-header">
             <h2 id="meals-title">Meals</h2>
             <LogEntryButton kind="meal" date={date} className="text-link">
-               Add meal
+              Add meal
             </LogEntryButton>
           </header>
           {diary.entries.length === 0 ? (
             <div className="log-empty">
               <p>Your meals go here.</p>
               <p className="log-muted text-sm mt-2">
-                Say what you ate, add a photo, or search. You check it before it is saved.
+                Say what you ate, add a photo, or search. You check it before it
+                is saved.
               </p>
               <LogEntryButton
                 kind="meal"

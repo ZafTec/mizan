@@ -23,10 +23,7 @@ const PROTECTED_PREFIXES = [
   "/oauth",
 ];
 
-const PROTECTED_PATTERNS = [
-  /^\/recipes\/add/,
-  /^\/recipes\/[^/]+\/edit/,
-];
+const PROTECTED_PATTERNS = [/^\/recipes\/add/, /^\/recipes\/[^/]+\/edit/];
 
 const SESSION_COOKIE = "mizan_session";
 

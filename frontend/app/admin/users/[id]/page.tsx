@@ -68,7 +68,11 @@ export default async function UserDetailPage({
               <InfoRow label="Role" value={user.role || "user"} />
               <InfoRow
                 label="Status"
-                value={user.banned ? `Banned - ${user.banReason || "No reason"}` : "Active"}
+                value={
+                  user.banned
+                    ? `Banned - ${user.banReason || "No reason"}`
+                    : "Active"
+                }
               />
               {user.banExpires && (
                 <InfoRow
@@ -111,10 +115,11 @@ export default async function UserDetailPage({
                         {session.ipAddress || "Unknown IP"}
                       </span>
                       <span
-                        className={`text-xs px-2 py-1 rounded-full ${new Date(session.expiresAt) > new Date()
-                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                          : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
-                          }`}
+                        className={`text-xs px-2 py-1 rounded-full ${
+                          new Date(session.expiresAt) > new Date()
+                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                            : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+                        }`}
                       >
                         {new Date(session.expiresAt) > new Date()
                           ? "Active"
@@ -145,9 +150,7 @@ export default async function UserDetailPage({
               <StatItem
                 label="Account Status"
                 value={user.banned ? "Banned" : "Active"}
-                valueClassName={
-                  user.banned ? "text-red-600" : "text-green-600"
-                }
+                valueClassName={user.banned ? "text-red-600" : "text-green-600"}
               />
             </div>
           </div>

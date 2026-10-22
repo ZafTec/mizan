@@ -25,7 +25,11 @@ public interface IBackendApiClient
         string fileName,
         string contentType,
         CancellationToken ct = default);
-    /// <summary>Asks the API what an access token is. Null when the API cannot be reached.</summary>
+    /// <summary>
+    /// Asks the API what an access token is. <see cref="TokenIntrospection.Inactive"/> when the API
+    /// says the token is no good; null when the API cannot be reached or fails, which says nothing
+    /// about the token and must not be treated as a rejection.
+    /// </summary>
     Task<TokenIntrospection?> IntrospectAsync(string token, CancellationToken ct = default);
     Task LogUsageAsync(Guid grantId, Guid userId, string kind, string name, bool success, string? error, int elapsedMs);
 }
@@ -66,10 +70,12 @@ public sealed class BackendApiClient : IBackendApiClient
     private readonly ILogger<BackendApiClient> _logger;
     private readonly string _serviceApiKey;
     private readonly string _adminServiceApiKey;
+    private readonly McpLinks _links;
 
-    public BackendApiClient(HttpClient http, IHttpContextAccessor httpContextAccessor, ILogger<BackendApiClient> logger, IConfiguration? configuration = null)
+    public BackendApiClient(HttpClient http, IHttpContextAccessor httpContextAccessor, ILogger<BackendApiClient> logger, IConfiguration? configuration = null, McpLinks? links = null)
     {
         _http = http; _httpContextAccessor = httpContextAccessor; _logger = logger;
+        _links = links ?? new McpLinks(configuration);
         _serviceApiKey = configuration is null ? "test-api-key" : configuration["Mcp:ServiceApiKey"] ?? configuration["ServiceApiKey"] ?? throw new InvalidOperationException("ServiceApiKey not configured");
         _adminServiceApiKey = configuration is null ? "test-admin-api-key" : configuration["Mcp:AdminServiceApiKey"] ?? configuration["AdminServiceApiKey"] ?? throw new InvalidOperationException("AdminServiceApiKey not configured");
         if (string.Equals(_serviceApiKey, _adminServiceApiKey, StringComparison.Ordinal))
@@ -140,10 +146,10 @@ public sealed class BackendApiClient : IBackendApiClient
         return string.Empty;
     }
 
-    private static string FormatMessage(HttpStatusCode status, string? code, string message) => status switch
+    private string FormatMessage(HttpStatusCode status, string? code, string message) => status switch
     {
         HttpStatusCode.Unauthorized => "This connection is no longer valid. Connect Mizan again from your MCP client.",
-        HttpStatusCode.Forbidden when code == "upgrade_required" => $"[UPGRADE REQUIRED] {message} Manage plan: https://mizan.zaftech.co/billing",
+        HttpStatusCode.Forbidden when code == "upgrade_required" => _links.UpgradeRequired(message),
         HttpStatusCode.Forbidden => message,
         HttpStatusCode.NotFound => $"Not found: {message}",
         HttpStatusCode.TooManyRequests => $"Rate limited: {message}. Wait before retrying.",
@@ -186,10 +192,19 @@ public sealed class BackendApiClient : IBackendApiClient
             };
             request.Headers.Add("X-Api-Key", _serviceApiKey);
             var response = await _http.SendAsync(request, ct);
-            if (!response.IsSuccessStatusCode) return null;
-            return await response.Content.ReadFromJsonAsync<TokenIntrospection>(ct);
+
+            // The API answered and refused the token (or this service's key): the token is not good.
+            // The API failing is a different thing, and must not read as "token rejected".
+            if ((int)response.StatusCode >= 500)
+            {
+                _logger.LogError("Token introspection failed: the API answered {Status}", (int)response.StatusCode);
+                return null;
+            }
+
+            if (!response.IsSuccessStatusCode) return TokenIntrospection.Inactive;
+            return await response.Content.ReadFromJsonAsync<TokenIntrospection>(ct) ?? TokenIntrospection.Inactive;
         }
-        catch (Exception ex) { _logger.LogError(ex, "Token introspection failed"); return null; }
+        catch (Exception ex) { _logger.LogError(ex, "Token introspection failed: the API could not be reached"); return null; }
     }
 
     public async Task LogUsageAsync(Guid grantId, Guid userId, string kind, string name, bool success, string? error, int elapsedMs)

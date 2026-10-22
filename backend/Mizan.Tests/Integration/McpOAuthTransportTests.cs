@@ -94,12 +94,22 @@ public class McpOAuthTransportTests : IClassFixture<WebApplicationFactory<McpSer
     }
 
     [Fact]
-    public async Task WhenTheApiCannotBeReached_TheTokenIsNotTrusted()
+    public async Task WhenTheApiCannotBeReached_TheAnswerIs503WithRetryAfter_NotAReAuthChallenge()
     {
+        // Null is what the backend client returns for an unreachable or failing API (see BackendApiClientIntrospectionTests).
         _backend.Setup(b => b.IntrospectAsync("t", It.IsAny<CancellationToken>())).ReturnsAsync((TokenIntrospection?)null);
         using var client = ClientWith("t");
 
-        (await RawAsync(client, "tools/list")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        var first = await RawAsync(client, "tools/list");
+        var second = await RawAsync(client, "tools/list");
+
+        first.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable, "the token was never judged, so the client must not throw it away");
+        first.Headers.RetryAfter.Should().NotBeNull();
+        first.Headers.RetryAfter!.Delta.Should().BeGreaterThan(TimeSpan.Zero);
+        first.Headers.WwwAuthenticate.Should().BeEmpty("a sign-in challenge would restart OAuth for an outage");
+        second.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+        _backend.Verify(b => b.IntrospectAsync("t", It.IsAny<CancellationToken>()), Times.Exactly(2),
+            "an outage is not remembered as a rejected token; the next request asks again");
     }
 
     // ---- what a grant can see and call ----
@@ -210,7 +220,10 @@ public class McpOAuthTransportTests : IClassFixture<WebApplicationFactory<McpSer
 
         var result = await CallAsync(client, "search_foods", new { search = "x" });
 
-        result.GetProperty("content")[0].GetProperty("text").GetString().Should().StartWith("[MONTHLY LIMIT REACHED]");
+        var text = result.GetProperty("content")[0].GetProperty("text").GetString()!;
+        text.Should().StartWith("[MONTHLY LIMIT REACHED]").And.Contain("15");
+        // No App:PublicUrl here, so the web app is Mcp:PublicUrl without its /mcp, never a hard-coded host.
+        text.Should().Contain("https://mizan.example/billing").And.NotContain("zaftech");
     }
 
     // ---- caching of the introspection ----
@@ -277,9 +290,17 @@ public class McpOAuthTransportTests : IClassFixture<WebApplicationFactory<McpSer
 
     private TokenIntrospection Introspection(string[] scopes, int? limit = null, int used = 0) => new()
     {
-        Active = true, UserId = _user, GrantId = _grant, ClientRowId = Guid.NewGuid(), ClientName = "Test",
-        Scopes = scopes, HouseholdMode = "all", Role = "user", Plan = limit is null ? "pro" : "free",
-        MonthlyLimit = limit, UsedThisMonth = used,
+        Active = true,
+        UserId = _user,
+        GrantId = _grant,
+        ClientRowId = Guid.NewGuid(),
+        ClientName = "Test",
+        Scopes = scopes,
+        HouseholdMode = "all",
+        Role = "user",
+        Plan = limit is null ? "pro" : "free",
+        MonthlyLimit = limit,
+        UsedThisMonth = used,
     };
 
     private HttpClient ClientWith(string token)
@@ -335,7 +356,10 @@ public class McpOAuthTransportTests : IClassFixture<WebApplicationFactory<McpSer
     {
         var response = await client.PostMcpAsync(new
         {
-            jsonrpc = "2.0", id = 3, method = "tools/call", @params = new { name = tool, arguments },
+            jsonrpc = "2.0",
+            id = 3,
+            method = "tools/call",
+            @params = new { name = tool, arguments },
         });
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         return JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("result").Clone();
