@@ -69,13 +69,14 @@ test.describe("logging a meal with the assistant", () => {
     await expect(page.getByRole("dialog")).toBeHidden();
     const saved = writesTo(await state(context), "/api/Meals");
     expect(saved).toHaveLength(1);
+    // The browser sends grams and the per-100 g figures; the API does the scaling.
     expect(saved[0].body).toMatchObject({
       name: "Scrambled eggs",
       amountGrams: 60,
-      calories: 90,
-      proteinGrams: 6,
+      per100g: { calories: 150, proteinGrams: 10 },
       mealType: expect.any(String),
     });
+    expect(saved[0].body).not.toHaveProperty("calories");
   });
 
   test("a free account is walled when it tries, and can still search", async ({
