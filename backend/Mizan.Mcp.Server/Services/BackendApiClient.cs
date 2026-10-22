@@ -25,7 +25,11 @@ public interface IBackendApiClient
         string fileName,
         string contentType,
         CancellationToken ct = default);
-    /// <summary>Asks the API what an access token is. Null when the API cannot be reached.</summary>
+    /// <summary>
+    /// Asks the API what an access token is. <see cref="TokenIntrospection.Inactive"/> when the API
+    /// says the token is no good; null when the API cannot be reached or fails, which says nothing
+    /// about the token and must not be treated as a rejection.
+    /// </summary>
     Task<TokenIntrospection?> IntrospectAsync(string token, CancellationToken ct = default);
     Task LogUsageAsync(Guid grantId, Guid userId, string kind, string name, bool success, string? error, int elapsedMs);
 }
@@ -188,10 +192,19 @@ public sealed class BackendApiClient : IBackendApiClient
             };
             request.Headers.Add("X-Api-Key", _serviceApiKey);
             var response = await _http.SendAsync(request, ct);
-            if (!response.IsSuccessStatusCode) return null;
-            return await response.Content.ReadFromJsonAsync<TokenIntrospection>(ct);
+
+            // The API answered and refused the token (or this service's key): the token is not good.
+            // The API failing is a different thing, and must not read as "token rejected".
+            if ((int)response.StatusCode >= 500)
+            {
+                _logger.LogError("Token introspection failed: the API answered {Status}", (int)response.StatusCode);
+                return null;
+            }
+
+            if (!response.IsSuccessStatusCode) return TokenIntrospection.Inactive;
+            return await response.Content.ReadFromJsonAsync<TokenIntrospection>(ct) ?? TokenIntrospection.Inactive;
         }
-        catch (Exception ex) { _logger.LogError(ex, "Token introspection failed"); return null; }
+        catch (Exception ex) { _logger.LogError(ex, "Token introspection failed: the API could not be reached"); return null; }
     }
 
     public async Task LogUsageAsync(Guid grantId, Guid userId, string kind, string name, bool success, string? error, int elapsedMs)

@@ -94,12 +94,22 @@ public class McpOAuthTransportTests : IClassFixture<WebApplicationFactory<McpSer
     }
 
     [Fact]
-    public async Task WhenTheApiCannotBeReached_TheTokenIsNotTrusted()
+    public async Task WhenTheApiCannotBeReached_TheAnswerIs503WithRetryAfter_NotAReAuthChallenge()
     {
+        // Null is what the backend client returns for an unreachable or failing API (see BackendApiClientIntrospectionTests).
         _backend.Setup(b => b.IntrospectAsync("t", It.IsAny<CancellationToken>())).ReturnsAsync((TokenIntrospection?)null);
         using var client = ClientWith("t");
 
-        (await RawAsync(client, "tools/list")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        var first = await RawAsync(client, "tools/list");
+        var second = await RawAsync(client, "tools/list");
+
+        first.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable, "the token was never judged, so the client must not throw it away");
+        first.Headers.RetryAfter.Should().NotBeNull();
+        first.Headers.RetryAfter!.Delta.Should().BeGreaterThan(TimeSpan.Zero);
+        first.Headers.WwwAuthenticate.Should().BeEmpty("a sign-in challenge would restart OAuth for an outage");
+        second.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+        _backend.Verify(b => b.IntrospectAsync("t", It.IsAny<CancellationToken>()), Times.Exactly(2),
+            "an outage is not remembered as a rejected token; the next request asks again");
     }
 
     // ---- what a grant can see and call ----
