@@ -2,7 +2,11 @@ using System.Globalization;
 using System.Net;
 using System.Text;
 using Microsoft.Extensions.Options;
+using Mizan.Contracts.Ai;
+using Mizan.Contracts.Meals;
 using Mizan.Contracts.Measurements;
+using Mizan.Contracts.Nutrition;
+using Mizan.Domain.Nutrition;
 using Mizan.Telegram.Backend;
 
 namespace Mizan.Telegram.Bot;
@@ -207,21 +211,44 @@ public sealed class UpdateHandler
     {
         await _telegram.SendTypingAsync(chatId, ct);
 
-        var threads = await _api.GetAsAsync<List<ThreadSummary>>(user.UserId, "api/Ai/threads?take=1", ct);
+        var threads = await _api.GetAsAsync<List<AiChatThreadDto>>(user.UserId, "api/Ai/threads?take=1", ct);
         var threadId = threads is { Count: > 0 } ? threads[0].Id : (Guid?)null;
 
-        var result = await _api.SendForResultAsync<ChatTurn>(
+        var result = await _api.SendForResultAsync<AiChatTurnDto>(
             user.UserId, HttpMethod.Post, "api/Ai/chat", new { threadId, message = text }, ct);
 
-        if (result is { Ok: true, Value.Reply.Content: { Length: > 0 } reply })
+        if (result is { Ok: true, Value: { Reply.Content: { Length: > 0 } reply } turn })
         {
             // The model answers in markdown, same as it does on the website.
             // Escaping it raw showed people literal asterisks.
-            await _telegram.SendMessageAsync(chatId, TelegramMarkdown.ToHtml(reply), ct: ct);
+            await _telegram.SendMessageAsync(
+                chatId, TelegramMarkdown.ToHtml(reply) + PerformedLines(turn.Performed), ct: ct);
             return;
         }
 
         await _telegram.SendMessageAsync(chatId, Escape(ExplainFailure(result)), ct: ct);
+    }
+
+    /// <summary>
+    /// What the turn did to the log, one line each. The website shows these as
+    /// chips; here they ride under the reply, so "make me a shopping list"
+    /// ends with proof it happened rather than a sentence claiming it did.
+    /// </summary>
+    internal static string PerformedLines(IReadOnlyList<AiToolInvocation>? performed)
+    {
+        if (performed is not { Count: > 0 }) return string.Empty;
+
+        var text = new StringBuilder("\n");
+        foreach (var action in performed)
+        {
+            text.Append('\n').Append(action.Succeeded ? "✓ " : "✗ ").Append(Escape(action.Summary));
+            if (!action.Succeeded && action.Error is { Length: > 0 } error)
+            {
+                text.Append(": ").Append(Escape(error));
+            }
+        }
+
+        return text.ToString();
     }
 
     // ---- Logging ----------------------------------------------------------
@@ -241,7 +268,7 @@ public sealed class UpdateHandler
             return;
         }
 
-        var result = await _api.PostImageAsAsync<FoodAnalysis>(
+        var result = await _api.PostImageAsAsync<FoodAnalysisResult>(
             user.UserId, "api/Nutrition/ai/analyze-image", "image", bytes, "meal.jpg", ct);
 
         if (!result.Ok || result.Value is null)
@@ -268,7 +295,7 @@ public sealed class UpdateHandler
 
     private async Task OnTodayAsync(long chatId, ResolvedUser user, CancellationToken ct)
     {
-        var day = await _api.GetAsAsync<DailyNutrition>(user.UserId, "api/Nutrition/daily", ct);
+        var day = await _api.GetAsAsync<DailyNutritionTotals>(user.UserId, "api/Nutrition/daily", ct);
 
         if (day is null)
         {
@@ -276,15 +303,16 @@ public sealed class UpdateHandler
             return;
         }
 
-        var text = new StringBuilder()
-            .AppendLine("<b>Today</b>")
-            .AppendLine(Line("Calories", day.TotalCalories, day.TargetCalories, "kcal"))
-            .AppendLine(Line("Protein", day.TotalProtein, day.TargetProtein, "g"))
-            .AppendLine(Line("Carbs", day.TotalCarbs, day.TargetCarbs, "g"))
-            .AppendLine(Line("Fat", day.TotalFat, day.TargetFat, "g"))
-            .ToString();
+        // The words are the domain's; only the bold is ours.
+        var text = new StringBuilder().AppendLine("<b>Today</b>");
+        foreach (var amount in NutritionText.Daily(
+            day.TotalCalories, day.TotalProtein, day.TotalCarbs, day.TotalFat,
+            day.TargetCalories, day.TargetProtein, day.TargetCarbs, day.TargetFat))
+        {
+            text.AppendLine(NutritionText.Describe(amount, actual => $"<b>{actual}</b>"));
+        }
 
-        await _telegram.SendMessageAsync(chatId, text, ct: ct);
+        await _telegram.SendMessageAsync(chatId, text.ToString(), ct: ct);
     }
 
     private async Task OnWeightAsync(long chatId, ResolvedUser user, string argument, CancellationToken ct)
@@ -392,7 +420,7 @@ public sealed class UpdateHandler
     /// Confirm / Discard. The totals ride in the callback data, rounded to
     /// whole numbers so they fit inside Telegram's 64-byte limit.
     /// </summary>
-    internal static object ConfirmKeyboard(FoodAnalysis analysis)
+    internal static object ConfirmKeyboard(FoodAnalysisResult analysis)
     {
         var protein = analysis.Foods.Sum(f => f.Protein);
         var carbs = analysis.Foods.Sum(f => f.Carbs);
@@ -453,26 +481,18 @@ public sealed class UpdateHandler
             return;
         }
 
-        var share = ShareOf(whole, people);
+        // The whole meal goes over the wire with the head count; the API divides
+        // and labels the share, so this number means the same thing everywhere.
         var result = await _api.SendForResultAsync<object>(
-            user.UserId, HttpMethod.Post, "api/Meals", share, ct);
+            user.UserId, HttpMethod.Post, "api/Meals", whole with { SharedBetween = people }, ct);
 
         await _telegram.SendMessageAsync(
             chatId,
             result.Ok
-                ? $"Logged your 1/{people} share of {Escape(whole.Name)}: {share.Calories:0} kcal, "
-                    + $"P {share.ProteinGrams:0.#}g · C {share.CarbsGrams:0.#}g · F {share.FatGrams:0.#}g."
+                ? $"Logged your 1/{people} share of {Escape(whole.Name)}."
                 : Escape(ExplainFailure(result)),
             ct: ct);
     }
-
-    /// <summary>One person's part of a meal that several people ate together.</summary>
-    internal static LoggedMeal ShareOf(LoggedMeal whole, int people) => new(
-        $"{whole.Name} (1/{people} share)",
-        Math.Round(whole.Calories / people, 0),
-        Math.Round(whole.ProteinGrams / people, 1),
-        Math.Round(whole.CarbsGrams / people, 1),
-        Math.Round(whole.FatGrams / people, 1));
 
     /// <summary>The longest prefix of the text that fits in the given number of UTF-8 bytes, never cutting a character.</summary>
     internal static string TruncateUtf8(string value, int maxBytes)
@@ -493,10 +513,11 @@ public sealed class UpdateHandler
         return builder.ToString();
     }
 
-    private static bool TryParseTotals(string data, out LoggedMeal request) =>
+    private static bool TryParseTotals(string data, out LogMealRequest request) =>
         TryParseLog("log:" + data, out request);
 
-    internal static bool TryParseLog(string data, out LoggedMeal request)
+    /// <summary>The card's numbers back into the shared wire record: a whole meal, logged as one snack.</summary>
+    internal static bool TryParseLog(string data, out LogMealRequest request)
     {
         request = default!;
 
@@ -508,8 +529,16 @@ public sealed class UpdateHandler
         if (!decimal.TryParse(parts[2], CultureInfo.InvariantCulture, out var carbs)) return false;
         if (!decimal.TryParse(parts[3], CultureInfo.InvariantCulture, out var fat)) return false;
 
-        request = new LoggedMeal(
-            parts[4].Length == 0 ? "Meal" : parts[4], calories, protein, carbs, fat);
+        request = new LogMealRequest
+        {
+            Name = parts[4].Length == 0 ? "Meal" : parts[4],
+            MealType = "SNACK",
+            Servings = 1,
+            Calories = calories,
+            ProteinGrams = protein,
+            CarbsGrams = carbs,
+            FatGrams = fat,
+        };
         return true;
     }
 
@@ -550,7 +579,7 @@ public sealed class UpdateHandler
         + "<b>/weight 82.4</b> - log a weigh-in\n"
         + "<b>/unlink</b> - disconnect this chat";
 
-    private static string AnalysisCard(FoodAnalysis analysis)
+    private static string AnalysisCard(FoodAnalysisResult analysis)
     {
         var text = new StringBuilder("<b>Looks like:</b>\n");
 
@@ -575,11 +604,6 @@ public sealed class UpdateHandler
         return text.ToString();
     }
 
-    private static string Line(string label, decimal actual, decimal? target, string unit) =>
-        target is { } goal and > 0
-            ? $"{label}: <b>{actual:0}</b> / {goal:0} {unit}  ({actual / goal:P0})"
-            : $"{label}: <b>{actual:0}</b> {unit}";
-
     /// <summary>
     /// Turns an API failure into something a person can act on. A quota or
     /// upgrade wall is the common one and deserves better than "failed".
@@ -602,49 +626,4 @@ public sealed class UpdateHandler
     /// </summary>
     private static string Escape(string value) =>
         value.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
-
-    // ---- Wire shapes read back from the API -------------------------------
-
-    private sealed record ThreadSummary(Guid Id, string Title, DateTime UpdatedAt);
-
-    private sealed record DailyNutrition
-    {
-        public decimal TotalCalories { get; init; }
-        public decimal TotalProtein { get; init; }
-        public decimal TotalCarbs { get; init; }
-        public decimal TotalFat { get; init; }
-        public decimal? TargetCalories { get; init; }
-        public decimal? TargetProtein { get; init; }
-        public decimal? TargetCarbs { get; init; }
-        public decimal? TargetFat { get; init; }
-    }
-
-    private sealed record ChatTurn(Guid ThreadId, string Title, ChatMessage Reply);
-
-    private sealed record ChatMessage(Guid Id, bool FromUser, string Content, DateTime CreatedAt);
-
-    internal sealed record FoodAnalysis
-    {
-        public List<RecognizedFood> Foods { get; init; } = [];
-        public decimal TotalCalories { get; init; }
-        public decimal Confidence { get; init; }
-        public string? Note { get; init; }
-    }
-
-    internal sealed record RecognizedFood
-    {
-        public string Name { get; init; } = string.Empty;
-        public decimal PortionGrams { get; init; }
-        public decimal Calories { get; init; }
-        public decimal Protein { get; init; }
-        public decimal Carbs { get; init; }
-        public decimal Fat { get; init; }
-    }
-
-    internal sealed record LoggedMeal(
-        string Name, decimal Calories, decimal ProteinGrams, decimal CarbsGrams, decimal FatGrams)
-    {
-        public string MealType => "SNACK";
-        public decimal Servings => 1;
-    }
 }

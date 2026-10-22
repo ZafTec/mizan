@@ -17,6 +17,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Mizan.Contracts\Mizan.Contracts.csproj" />
+    <!-- Dependency-free domain rules only, so totals read the same here as on the website. -->
+    <ProjectReference Include="..\Mizan.Domain\Mizan.Domain.csproj" />
   </ItemGroup>
 
 </Project>

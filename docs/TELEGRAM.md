@@ -23,7 +23,7 @@ The bot is a Pro feature. Issuing a link code answers 402 for a Free account. A 
 | A photo | Proposes nutrition with **Log it**, **Split**, and **Discard** actions |
 | Other text | Continues the shared AI chat used on the website |
 
-**Log it** logs the combined nutrition totals. **Split** asks how many people share the meal (2 to 5) and logs one share, named "(1/N share)", with calories rounded to whole numbers and macros to a tenth of a gram. Each button carries the meal's totals, because the bot keeps no state, so a button works whenever it is pressed. The meal name is cut by UTF-8 bytes to keep every button under Telegram's 64-byte limit. The card has no inline quantity editor. Shared API consent, entitlements, validation, and AI quotas apply.
+**Log it** logs the combined nutrition totals. **Split** asks how many people share the meal (2 to 5) and sends the whole totals with `sharedBetween` on `POST /api/Meals`; the API divides them (calories to whole numbers, grams to a tenth) and names the entry "(1/N share)", so the bot computes nothing. Each button carries the meal's totals, because the bot keeps no state, so a button works whenever it is pressed. The meal name is cut by UTF-8 bytes to keep every button under Telegram's 64-byte limit. The card has no inline quantity editor. Shared API consent, entitlements, validation, and AI quotas apply.
 
 ## Configure and run
 
@@ -45,7 +45,9 @@ Startup requests registration of `{PublicUrl}/telegram/webhook` and disables pol
 
 ## Conversation and photos
 
-Chat replays the last ten turns and a rolling summary stored on the shared thread. Summary refresh happens after a saved reply; a failed refresh preserves the previous summary without failing the turn.
+Chat replays the last ten turns and a rolling summary stored on the shared thread. Summary refresh happens after a saved reply; a failed refresh preserves the previous summary without failing the turn. The reply ends with one line per performed action (`✓` or `✗` with the error), so a request to create a list shows that it happened.
+
+The bot reads and writes the records in `Mizan.Contracts` (`LogMealRequest`, `DailyNutritionTotals`, `FoodAnalysisResult`, `AiChatTurnDto`) and formats `/today` with `Mizan.Domain.Nutrition.NutritionText`, the same wording the assistant's tools and context use.
 
 Photo analysis uses `/api/Nutrition/ai/analyze-image` and stores the image under `meals/` in object storage. A storage failure loses the retained picture but does not discard the analysis. See [AI](AI.md) for consent and metering.
 
