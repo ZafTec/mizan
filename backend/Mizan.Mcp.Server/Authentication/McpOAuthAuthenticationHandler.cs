@@ -50,7 +50,16 @@ public class McpOAuthAuthenticationHandler : AuthenticationHandler<McpOAuthAuthe
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(Context.RequestAborted);
             cts.CancelAfter(TimeSpan.FromSeconds(10));
-            introspection = await _backend.IntrospectAsync(token, cts.Token) ?? TokenIntrospection.Inactive;
+            introspection = await _backend.IntrospectAsync(token, cts.Token);
+
+            if (introspection is null)
+            {
+                // The API is down or unreachable. That says nothing about the token, so it is not
+                // remembered as rejected, and the client is told to retry rather than to sign in again.
+                Log.Error("[MCP Auth] Token introspection unavailable; answering 503");
+                Context.Items[McpAuthOutageMiddleware.Item] = true;
+                return AuthenticateResult.Fail("The sign-in service is not available");
+            }
 
             // A plan with a monthly call cap is counted on every call, so it is not cached.
             if (!introspection.Active) _cache.Set(key, introspection, InactiveFor);

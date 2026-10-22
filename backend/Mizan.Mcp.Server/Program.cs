@@ -476,6 +476,9 @@ forwarded.KnownProxies.Clear();
 app.UseForwardedHeaders(forwarded);
 
 app.UseAuthentication();
+// An outage of the API that validates tokens is a 503 with Retry-After, not a 401 that
+// sends every client back through sign-in.
+app.UseMiddleware<McpAuthOutageMiddleware>();
 app.UseAuthorization();
 
 // A task keeps running after its request ends. Naming the caller here lets that
