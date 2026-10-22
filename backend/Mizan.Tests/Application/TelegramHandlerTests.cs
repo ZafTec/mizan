@@ -100,4 +100,36 @@ public class TelegramHandlerTests
         _world.ChatPosted.Should().BeEmpty();
         _world.LastText.Should().Contain("not connected");
     }
+
+    [Fact]
+    public async Task Help_CarriesAButtonThatOpensTheMiniApp()
+    {
+        await _world.Handler().HandleAsync(Text("/help"), CancellationToken.None);
+
+        _world.LastText.Should().Contain("/today");
+
+        // Telegram's shape, exactly: a web_app button has a url and no callback_data.
+        var rows = _world.LastSend.GetProperty("reply_markup").GetProperty("inline_keyboard");
+        rows.GetArrayLength().Should().Be(1);
+        var button = rows[0].EnumerateArray().Should().ContainSingle().Subject;
+        button.GetProperty("text").GetString().Should().Be("Open Mizan");
+        button.GetProperty("web_app").GetProperty("url").GetString().Should().Be("https://mizan.test/tg");
+        button.TryGetProperty("callback_data", out _).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task TheMiniAppButton_FollowsTheConfiguredUrl_AndIsLeftOutOverPlainHttp()
+    {
+        // Telegram refuses a web_app button that is not HTTPS, and with it the whole message.
+        _world.BotOptions.Value.PublicUrl = "http://localhost:3000";
+        await _world.Handler().HandleAsync(Text("/help"), CancellationToken.None);
+        _world.LastSend.TryGetProperty("reply_markup", out _).Should().BeFalse();
+        _world.LastText.Should().Contain("/today", "the text still arrives");
+
+        _world.BotOptions.Value.MiniAppUrl = "https://tg.mizan.test/";
+        await _world.Handler().HandleAsync(Text("/help"), CancellationToken.None);
+        _world.LastSend.GetProperty("reply_markup").GetProperty("inline_keyboard")[0][0]
+            .GetProperty("web_app").GetProperty("url").GetString().Should().Be("https://tg.mizan.test");
+        _world.Handler().MiniAppUrl("shopping-list").Should().Be("https://tg.mizan.test/shopping-list");
+    }
 }

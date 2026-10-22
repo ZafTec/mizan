@@ -29,6 +29,24 @@ public class TelegramBotOptions
     /// <summary>The web app, for the "sign in first" message and the settings link.</summary>
     public string PublicUrl { get; set; } = "http://localhost:3000";
 
+    /// <summary>
+    /// Where the Mini App pages live. Empty means <c>{PublicUrl}/tg</c>, which is
+    /// where the web app serves them; set it only when the Mini App is hosted
+    /// somewhere else. Telegram opens <c>web_app</c> buttons over HTTPS only.
+    /// </summary>
+    public string? MiniAppUrl { get; set; }
+
+    /// <summary>
+    /// How old a signed <c>initData</c> may be and still open a session. Telegram
+    /// signs it when the Mini App opens, so a few minutes covers a slow page and
+    /// leaves a stolen copy worthless by the time it could be replayed.
+    /// </summary>
+    public TimeSpan MiniAppMaxAge { get; set; } = TimeSpan.FromMinutes(5);
+
     public bool IsConfigured => !string.IsNullOrWhiteSpace(BotToken)
         && !string.IsNullOrWhiteSpace(ServiceApiKey);
+
+    /// <summary>The Mini App's base URL without a trailing slash.</summary>
+    public string MiniAppBaseUrl =>
+        string.IsNullOrWhiteSpace(MiniAppUrl) ? $"{PublicUrl.TrimEnd('/')}/tg" : MiniAppUrl.TrimEnd('/');
 }

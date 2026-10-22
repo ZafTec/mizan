@@ -64,3 +64,34 @@ public sealed record TelegramFile
     [JsonPropertyName("file_path")] public string? FilePath { get; init; }
     [JsonPropertyName("file_size")] public int? FileSize { get; init; }
 }
+
+/// <summary>
+/// The <c>reply_markup</c> of a message with buttons under it. Each button is one
+/// of two kinds: a <c>callback_data</c> button comes back to the bot as a
+/// <see cref="CallbackQuery"/>; a <c>web_app</c> button opens the Mini App over
+/// HTTPS and the bot hears nothing until the page calls it.
+/// </summary>
+public sealed record InlineKeyboardMarkup
+{
+    [JsonPropertyName("inline_keyboard")] public IReadOnlyList<IReadOnlyList<InlineKeyboardButton>> InlineKeyboard { get; init; } = [];
+
+    /// <summary>One button per row.</summary>
+    public static InlineKeyboardMarkup Column(params InlineKeyboardButton[] buttons) =>
+        new() { InlineKeyboard = buttons.Select(b => (IReadOnlyList<InlineKeyboardButton>)[b]).ToList() };
+}
+
+public sealed record InlineKeyboardButton
+{
+    [JsonPropertyName("text")] public string Text { get; init; } = string.Empty;
+    [JsonPropertyName("callback_data")] public string? CallbackData { get; init; }
+    [JsonPropertyName("web_app")] public WebAppInfo? WebApp { get; init; }
+
+    public static InlineKeyboardButton Callback(string text, string data) => new() { Text = text, CallbackData = data };
+
+    public static InlineKeyboardButton OpenWebApp(string text, string url) => new() { Text = text, WebApp = new WebAppInfo { Url = url } };
+}
+
+public sealed record WebAppInfo
+{
+    [JsonPropertyName("url")] public string Url { get; init; } = string.Empty;
+}

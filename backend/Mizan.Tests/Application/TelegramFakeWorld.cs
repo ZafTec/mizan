@@ -2,6 +2,9 @@ extern alias telegram;
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using telegram::Mizan.Telegram;
@@ -68,6 +71,15 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
         NeedsReview: n == 2,
         Checked: false)).ToList();
 
+    /// <summary>What POST api/Telegram/sessions answers when the chat is linked and Pro. 403 plays a banned account.</summary>
+    public HttpStatusCode SessionStatus { get; set; } = HttpStatusCode.OK;
+    public const string SessionToken = "sess-0123456789abcdef";
+    public static readonly DateTime SessionExpiresAt = new(2026, 10, 23, 10, 25, 0, DateTimeKind.Utc);
+
+    /// <summary>The bot service's own clock, for the initData window. Matches <see cref="SignedInitData.Now"/>.</summary>
+    public DateTimeOffset Now { get; set; } = SignedInitData.Now;
+    public string EnvironmentName { get; set; } = "Production";
+
     // ---- what the bot asked for ----
 
     public List<JsonElement> MealsPosted { get; } = [];
@@ -78,6 +90,7 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
     public List<(string Url, JsonElement Body)> TogglesPatched { get; } = [];
     public List<JsonElement> PlansGenerated { get; } = [];
     public List<string> PlanDecisions { get; } = [];
+    public List<JsonElement> SessionsPosted { get; } = [];
 
     public JsonElement LastSend => JsonDocument.Parse(_telegramSends.Last(s => s.Url.EndsWith("/sendMessage")).Body).RootElement.Clone();
 
@@ -87,20 +100,67 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
         LastSend.GetProperty("reply_markup").GetProperty("inline_keyboard").EnumerateArray().SelectMany(row => row.EnumerateArray())
             .Select(b => (b.GetProperty("text").GetString()!, b.GetProperty("callback_data").GetString()!)).ToList();
 
+    public IOptions<TelegramBotOptions> BotOptions { get; } = Options.Create(new TelegramBotOptions
+    {
+        BotToken = SignedInitData.Token,
+        ServiceApiKey = "key",
+        ApiUrl = "http://api.test",
+        PublicUrl = "https://mizan.test",
+    });
+
     public UpdateHandler Handler()
     {
-        var options = Options.Create(new TelegramBotOptions
-        {
-            BotToken = "token",
-            ServiceApiKey = "key",
-            ApiUrl = "http://api.test",
-            PublicUrl = "https://mizan.test",
-        });
+        var options = BotOptions;
         return new UpdateHandler(
             new TelegramClient(new HttpClient(this), options, NullLogger<TelegramClient>.Instance),
             new MizanApiClient(new HttpClient(this), options, NullLogger<MizanApiClient>.Instance),
             options,
             NullLogger<UpdateHandler>.Instance);
+    }
+
+    public MiniAppSessionEndpoint MiniAppEndpoint() =>
+        new(
+            new MizanApiClient(new HttpClient(this), BotOptions, NullLogger<MizanApiClient>.Instance),
+            BotOptions,
+            new FakeEnvironment(EnvironmentName),
+            new FixedClock(this),
+            NullLogger<MiniAppSessionEndpoint>.Instance);
+
+    /// <summary>
+    /// Runs the endpoint against a bare HttpContext carrying <paramref name="body"/>, and returns what the page would
+    /// see: the status, the parsed body and the Set-Cookie header, if any.
+    /// </summary>
+    public async Task<(int Status, JsonElement Body, string? SetCookie)> PostMiniAppSessionAsync(string body, string contentType = "application/json")
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Method = "POST";
+        context.Request.Path = "/telegram/miniapp/session";
+        context.Request.ContentType = contentType;
+        context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(body));
+        context.Request.Headers.UserAgent = "Telegram-Android/11.0";
+        context.Connection.RemoteIpAddress = IPAddress.Parse("203.0.113.9");
+        context.Response.Body = new MemoryStream();
+
+        await MiniAppEndpoint().HandleAsync(context, CancellationToken.None);
+
+        context.Response.Body.Position = 0;
+        var text = await new StreamReader(context.Response.Body).ReadToEndAsync();
+        var parsed = text.Length == 0 ? default : JsonDocument.Parse(text).RootElement.Clone();
+        var cookie = context.Response.Headers.SetCookie.Count == 0 ? null : context.Response.Headers.SetCookie.ToString();
+        return (context.Response.StatusCode, parsed, cookie);
+    }
+
+    private sealed class FixedClock(TelegramFakeWorld world) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => world.Now;
+    }
+
+    private sealed class FakeEnvironment(string name) : IHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = name;
+        public string ApplicationName { get; set; } = "Mizan.Telegram";
+        public string ContentRootPath { get; set; } = "/";
+        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 
     // ---- updates a person can cause ----
@@ -156,6 +216,15 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
             if (url.EndsWith("/getFile")) return Json("""{"ok":true,"result":{"file_path":"photos/a.jpg","file_size":3}}""");
             if (url.EndsWith("/sendMessage")) _telegramSends.Add((url, body));
             return Json("""{"ok":true,"result":{}}""");
+        }
+
+        if (url.EndsWith("api/Telegram/sessions"))
+        {
+            SessionsPosted.Add(JsonDocument.Parse(body).RootElement.Clone());
+            if (!Linked) return Json("""{"errorCode":"not_found","error":"This Telegram account is not linked to a Mizan account."}""", HttpStatusCode.NotFound);
+            if (!IsPro) return Json("""{"errorCode":"upgrade_required","error":"The Telegram bot is part of Pro."}""", HttpStatusCode.PaymentRequired);
+            if (SessionStatus != HttpStatusCode.OK) return Json("""{"errorCode":"forbidden","error":"This account is suspended."}""", SessionStatus);
+            return Json($$"""{"token":"{{SessionToken}}","expiresAt":"{{SessionExpiresAt:O}}","userId":"{{User}}"}""");
         }
 
         if (url.Contains("api/Telegram/resolve/"))
