@@ -18,10 +18,14 @@ The bot is a Pro feature. Issuing a link code answers 402 for a Free account. A 
 | --- | --- |
 | `/today` | Daily totals against the user's targets |
 | `/weight 82.4` | Records a weigh-in |
+| `/plan`, `/plan tomorrow`, `/plan 2026-10-23` | The active plan's day: entries per slot with ✓ on logged ones, totals against the plan's rules, violations, the eating window. One **Log** button per unlogged recipe or food entry and a **Tomorrow** button. No active plan points at `/meal-plan`. |
+| `/shop` | The newest shopping list: up to ten unticked items grouped by prep session, with amounts and a "needs review" marker, "N left of M" at the end. One toggle button per item, **More** and **Back** to page. No list points at `/meal-plan`. |
 | `/unlink` | Disconnects this chat |
 | `/help` | Lists commands |
 | A photo | Proposes nutrition with **Log it**, **Split**, and **Discard** actions |
 | Other text | Continues the shared AI chat used on the website |
+
+The plan and shopping cards carry one id per button, because two guids do not fit in 64 bytes: **Log** is `pe:{entryId}`, **Tomorrow** is `pd:{yyyy-MM-dd}`, a shopping toggle is `sh:{itemId}`, and **More** or **Back** is `sp:{page}`. The bot reads the rest back from the API when the button is pressed. A **Log** press finds its plan by reading today's and tomorrow's day (`GET /api/MealPlans/day`), the days a card is sent for, then calls `POST /api/MealPlans/{planId}/entries/{entryId}/log` with an empty body and renders the day again; an entry it cannot find is answered with "That card is too old to use". A toggle re-resolves the newest list, notes which page the item sat on, calls `PATCH /api/ShoppingLists/items/{itemId}/toggle` with `{ "isChecked": true }`, reads the list again and renders that page. Without a date, `GET /api/MealPlans/day` dates the day in the user's time zone; `/plan tomorrow` adds a day to that date, and only when no plan covers today does the bot fall back to UTC, because neither the resolve call nor `/api/Users/me` exposes the time zone to a service caller.
 
 **Log it** logs the combined nutrition totals. **Split** asks how many people share the meal (2 to 5) and sends the whole totals with `sharedBetween` on `POST /api/Meals`; the API divides them (calories to whole numbers, grams to a tenth) and names the entry "(1/N share)", so the bot computes nothing. Each button carries the meal's totals, because the bot keeps no state, so a button works whenever it is pressed. The meal name is cut by UTF-8 bytes to keep every button under Telegram's 64-byte limit. The card has no inline quantity editor. Shared API consent, entitlements, validation, and AI quotas apply.
 
