@@ -35,7 +35,8 @@ public class MizanDbContext : DbContext, IMizanDbContext
 
     // Meal Planning
     public DbSet<MealPlan> MealPlans => Set<MealPlan>();
-    public DbSet<MealPlanRecipe> MealPlanRecipes => Set<MealPlanRecipe>();
+    public DbSet<PlanEntry> PlanEntries => Set<PlanEntry>();
+    public DbSet<PrepSession> PrepSessions => Set<PrepSession>();
     public DbSet<ShoppingList> ShoppingLists => Set<ShoppingList>();
     public DbSet<ShoppingListItem> ShoppingListItems => Set<ShoppingListItem>();
 
@@ -597,6 +598,8 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.HasOne(e => e.User).WithMany(u => u.FoodDiaryEntries).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Food).WithMany(f => f.DiaryEntries).HasForeignKey(e => e.FoodId).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(e => e.Recipe).WithMany(r => r.DiaryEntries).HasForeignKey(e => e.RecipeId).OnDelete(DeleteBehavior.SetNull);
+            entity.Property(e => e.PlanEntryId).HasColumnName("plan_entry_id");
+            entity.HasOne(e => e.PlanEntry).WithMany().HasForeignKey(e => e.PlanEntryId).OnDelete(DeleteBehavior.SetNull);
         });
 
         // MealPlan configuration
@@ -607,28 +610,66 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.HouseholdId).HasColumnName("household_id");
+            entity.Property(e => e.AuthoredByUserId).HasColumnName("authored_by_user_id");
+            entity.Property(e => e.Kind).HasColumnName("kind").HasConversion<string>().HasMaxLength(20).HasDefaultValue(Mizan.Domain.Planning.PlanKind.Personal);
+            entity.Property(e => e.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(20).HasDefaultValue(Mizan.Domain.Planning.PlanStatus.Active);
             entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(255);
-            entity.Property(e => e.StartDate).HasColumnName("start_date").IsRequired();
-            entity.Property(e => e.EndDate).HasColumnName("end_date").IsRequired();
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(2000);
+            entity.Property(e => e.StartDate).HasColumnName("start_date");
+            entity.Property(e => e.DurationDays).HasColumnName("duration_days").HasDefaultValue(7);
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.Ignore(e => e.EndDate);
+            entity.OwnsOne(e => e.Rules, rules =>
+            {
+                rules.ToJson("rules");
+                rules.Ignore(r => r.EffectiveMaxCarbs);
+                rules.Ignore(r => r.HasAnyRule);
+            });
+            entity.HasIndex(e => new { e.UserId, e.Status, e.StartDate }).HasDatabaseName("ix_meal_plans_user_status_start");
+            entity.HasIndex(e => new { e.Kind, e.UserId }).HasDatabaseName("ix_meal_plans_kind_user");
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Household).WithMany().HasForeignKey(e => e.HouseholdId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.AuthoredBy).WithMany().HasForeignKey(e => e.AuthoredByUserId).OnDelete(DeleteBehavior.SetNull);
         });
 
-        // MealPlanRecipe configuration
-        modelBuilder.Entity<MealPlanRecipe>(entity =>
+        // PrepSession configuration
+        modelBuilder.Entity<PrepSession>(entity =>
         {
-            entity.ToTable("meal_plan_recipes");
+            entity.ToTable("prep_sessions");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
             entity.Property(e => e.MealPlanId).HasColumnName("meal_plan_id");
+            entity.Property(e => e.DayIndex).HasColumnName("day_index");
+            entity.Property(e => e.Title).HasColumnName("title").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Notes).HasColumnName("notes").HasMaxLength(2000);
+            entity.HasIndex(e => e.MealPlanId).HasDatabaseName("ix_prep_sessions_meal_plan");
+            entity.HasOne(e => e.MealPlan).WithMany(m => m.PrepSessions).HasForeignKey(e => e.MealPlanId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // PlanEntry configuration
+        modelBuilder.Entity<PlanEntry>(entity =>
+        {
+            entity.ToTable("plan_entries");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.MealPlanId).HasColumnName("meal_plan_id");
+            entity.Property(e => e.DayIndex).HasColumnName("day_index");
+            entity.Property(e => e.Slot).HasColumnName("slot").HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Kind).HasColumnName("kind").HasConversion<string>().HasMaxLength(20);
             entity.Property(e => e.RecipeId).HasColumnName("recipe_id");
-            entity.Property(e => e.Date).HasColumnName("date").IsRequired();
-            entity.Property(e => e.MealType).HasColumnName("meal_type").HasMaxLength(20);
-            entity.Property(e => e.Servings).HasColumnName("servings").HasPrecision(6, 2).HasDefaultValue(1m);
-            entity.HasOne(e => e.MealPlan).WithMany(m => m.MealPlanRecipes).HasForeignKey(e => e.MealPlanId).OnDelete(DeleteBehavior.Cascade);
-            entity.HasOne(e => e.Recipe).WithMany(r => r.MealPlanRecipes).HasForeignKey(e => e.RecipeId).OnDelete(DeleteBehavior.Cascade);
+            entity.Property(e => e.Servings).HasColumnName("servings").HasPrecision(6, 2);
+            entity.Property(e => e.FoodId).HasColumnName("food_id");
+            entity.Property(e => e.Grams).HasColumnName("grams").HasPrecision(10, 2);
+            entity.Property(e => e.Text).HasColumnName("text").HasMaxLength(255);
+            entity.Property(e => e.Notes).HasColumnName("notes").HasMaxLength(1000);
+            entity.Property(e => e.SortOrder).HasColumnName("sort_order").HasDefaultValue(0);
+            entity.Property(e => e.PrepSessionId).HasColumnName("prep_session_id");
+            entity.HasIndex(e => new { e.MealPlanId, e.DayIndex }).HasDatabaseName("ix_plan_entries_plan_day");
+            entity.HasOne(e => e.MealPlan).WithMany(m => m.Entries).HasForeignKey(e => e.MealPlanId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Recipe).WithMany(r => r.PlanEntries).HasForeignKey(e => e.RecipeId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.Food).WithMany().HasForeignKey(e => e.FoodId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.PrepSession).WithMany(p => p.Entries).HasForeignKey(e => e.PrepSessionId).OnDelete(DeleteBehavior.SetNull);
         });
 
         // ShoppingList configuration
@@ -644,6 +685,10 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Household).WithMany(h => h.ShoppingLists).HasForeignKey(e => e.HouseholdId).OnDelete(DeleteBehavior.SetNull);
+            entity.Property(e => e.MealPlanId).HasColumnName("meal_plan_id");
+            entity.Property(e => e.GeneratedAt).HasColumnName("generated_at");
+            entity.HasIndex(e => new { e.UserId, e.UpdatedAt }).HasDatabaseName("ix_shopping_lists_user_updated");
+            entity.HasOne(e => e.MealPlan).WithMany().HasForeignKey(e => e.MealPlanId).OnDelete(DeleteBehavior.SetNull);
         });
 
         // ShoppingListItem configuration
@@ -659,6 +704,11 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.Unit).HasColumnName("unit").HasMaxLength(50);
             entity.Property(e => e.Category).HasColumnName("category").HasMaxLength(100);
             entity.Property(e => e.IsChecked).HasColumnName("is_checked").HasDefaultValue(false);
+            entity.Property(e => e.Grams).HasColumnName("grams").HasPrecision(10, 2);
+            entity.Property(e => e.NeedsReview).HasColumnName("needs_review").HasDefaultValue(false);
+            entity.Property(e => e.PrepSessionId).HasColumnName("prep_session_id");
+            entity.Property(e => e.SortOrder).HasColumnName("sort_order").HasDefaultValue(0);
+            entity.HasIndex(e => e.ShoppingListId).HasDatabaseName("ix_shopping_list_items_list");
             entity.HasOne(e => e.ShoppingList).WithMany(s => s.Items).HasForeignKey(e => e.ShoppingListId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Food).WithMany().HasForeignKey(e => e.FoodId).OnDelete(DeleteBehavior.SetNull);
         });
@@ -883,6 +933,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.CanViewMeasurements).HasColumnName("can_view_measurements").HasDefaultValue(false);
             entity.Property(e => e.CanMessage).HasColumnName("can_message").HasDefaultValue(true);
             entity.Property(e => e.CanAwardAchievements).HasColumnName("can_award_achievements").HasDefaultValue(false);
+            entity.Property(e => e.CanPlanMeals).HasColumnName("can_plan_meals").HasDefaultValue(false);
             entity.Property(e => e.StartedAt).HasColumnName("started_at");
             entity.Property(e => e.EndedAt).HasColumnName("ended_at");
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
