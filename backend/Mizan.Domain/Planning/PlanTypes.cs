@@ -10,12 +10,14 @@ public enum PlanKind
 /// <summary>
 /// A plan a coach drafts for a client starts as <see cref="Draft"/>. The client
 /// accepts it to make it <see cref="Active"/>. A person has one active plan at a
-/// time; accepting a new one archives the old one.
+/// time; accepting a new one archives the old one. <see cref="Active"/> is the
+/// first member because it is also the column's database default: a value equal
+/// to the CLR default is left out of an insert and the database fills it in.
 /// </summary>
 public enum PlanStatus
 {
-    Draft,
     Active,
+    Draft,
     Archived,
 }
 

@@ -47,7 +47,7 @@ public class AddPrepSessionCommandHandler : IRequestHandler<AddPrepSessionComman
             Title = request.Session.Title.Trim(),
             Notes = string.IsNullOrWhiteSpace(request.Session.Notes) ? null : request.Session.Notes.Trim(),
         };
-        plan.PrepSessions.Add(session);
+        _context.PrepSessions.Add(session);
         plan.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
         await PlanAccess.InvalidateAsync(_cache, plan, cancellationToken);
