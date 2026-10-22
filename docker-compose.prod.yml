@@ -212,6 +212,8 @@ services:
       TelegramBot__ApiUrl: http://mizan-backend:8080
       TelegramBot__ServiceApiKey: ${Mcp__ServiceApiKey:?Mcp__ServiceApiKey is required}
       TelegramBot__PublicUrl: ${App__PublicUrl:-${PUBLIC_APP_URL:-http://localhost:3000}}
+      # Where the Mini App pages live. Empty means {PublicUrl}/tg.
+      TelegramBot__MiniAppUrl: ${TELEGRAM_MINIAPP_URL:-}
     depends_on:
       mizan-backend:
         condition: service_healthy

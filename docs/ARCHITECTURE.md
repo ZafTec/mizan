@@ -16,7 +16,7 @@ Telegram ────> Telegram service ──┤
                                   └── metered AI provider
 ```
 
-Production routes one public host by path: `/api` and `/hubs` to the API, `/mcp` to MCP, `/telegram/webhook` to the bot, and pages to Next.js. Development uses ports 3000, 5000, 5001, and 5002. Browser API calls go directly to the configured API origin. Next.js does not own authentication endpoints.
+Production routes one public host by path: `/api` and `/hubs` to the API, `/mcp` to MCP, `/telegram/webhook` and `/telegram/miniapp/session` to the bot, and pages to Next.js. Development uses ports 3000, 5000, 5001, and 5002. Browser API calls go directly to the configured API origin. Next.js does not own authentication endpoints.
 
 ## Backend layers
 
@@ -34,7 +34,7 @@ Writes use MediatR commands. Controllers and tools translate their transport int
 
 ## Identity
 
-`POST /api/Auth/login` verifies a PBKDF2 password and creates a session. The browser receives an opaque, httpOnly `mizan_session` cookie. The backend resolves the token through its session service and checks account status. Sessions have a seven-day sliding lifetime; deleting one revokes it. Email confirmation and password reset use single-use, hashed tokens.
+`POST /api/Auth/login` verifies a PBKDF2 password and creates a session. The browser receives an opaque, httpOnly `mizan_session` cookie. The backend resolves the token through its session service and checks account status. A browser session has a seven-day lifetime and a Telegram Mini App session ([Telegram](TELEGRAM.md#mini-app)) a 24-hour one; each slides by its own lifetime when used, and deleting one revokes it. Email confirmation and password reset use single-use, hashed tokens.
 
 `GET /api/Auth/me` returns the current user. Next.js resolves it once per render pass and forwards the cookie for server API calls. Client components receive the user through `SessionProvider`; there is no browser JWT. OAuth callbacks, email, account deletion, and session management belong to the backend.
 
