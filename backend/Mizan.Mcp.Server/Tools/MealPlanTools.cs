@@ -35,7 +35,6 @@ public sealed class MealPlanTools
         [Description("Status filter: Draft, Active, Archived or Declined (optional)")] string? status = null,
         [Description("Page number (default 1)")] int page = 1,
         [Description("Results per page (default 20)")] int pageSize = 20,
-        [Description("Only plans with this status: Active, Draft or Archived")] string? status = null,
         CancellationToken ct = default)
     {
         var query = new QueryString().Add("status", status).Add("page", page).Add("pageSize", pageSize);

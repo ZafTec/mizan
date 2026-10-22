@@ -84,12 +84,14 @@ public class GetPlanDayQueryHandler : IRequestHandler<GetPlanDayQuery, PlanDayVi
 
         var day = date ?? start;
         if (PlanSchedule.DayIndexOf(start, plan.DurationDays, day) is not { } dayIndex) return null;
+        var built = await _readModel.BuildDayAsync(plan, dayIndex, userId, cancellationToken);
         return new PlanDayViewDto
         {
             PlanId = plan.Id,
             PlanName = plan.Name,
             Date = day,
-            Day = await _readModel.BuildDayAsync(plan, dayIndex, userId, cancellationToken),
+            Day = built.Day,
+            Currency = built.Currency,
             Rules = PlanRulesMapping.ToDto(plan.Rules),
         };
     }

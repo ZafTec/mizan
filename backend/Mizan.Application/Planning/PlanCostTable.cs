@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
+using Mizan.Application.Prices;
 using Mizan.Contracts.Planning;
 using Mizan.Domain.Entities;
 using Mizan.Domain.Planning;
@@ -8,38 +9,25 @@ using Mizan.Domain.Pricing;
 namespace Mizan.Application.Planning;
 
 /// <summary>
-/// Prices a plan in the person's region: the plan becomes shopping lines through
-/// <see cref="ShoppingAggregator"/>, each line gets the price <see cref="PriceBook"/> picks, and
-/// <see cref="PlanCostCalculator"/> adds them up. Loading is all this does; the rules are Domain's.
+/// The cost table of a generated draft: the plan becomes shopping lines through
+/// <see cref="ShoppingAggregator"/>, <see cref="PriceBookReader"/> quotes them in the
+/// person's region, and <see cref="PlanCostCalculator"/> adds them up. It is the same
+/// path the plan page and the shopping list take, line by line, so the numbers agree.
 /// </summary>
-public sealed class PlanCosting
+public sealed class PlanCostTable
 {
-    /// <summary>The region a person without one is priced in (docs/PLANNING.md#prices).</summary>
-    public const string DefaultRegion = "ET-AA";
-
-    private const string DefaultCurrency = "ETB";
-
     private readonly IMizanDbContext _context;
+    private readonly PriceBookReader _prices;
 
-    public PlanCosting(IMizanDbContext context) => _context = context;
-
-    /// <summary>The person's price region and its currency.</summary>
-    public async Task<(string Region, string Currency)> RegionAsync(Guid userId, CancellationToken cancellationToken)
+    public PlanCostTable(IMizanDbContext context, PriceBookReader prices)
     {
-        var region = await _context.Users.AsNoTracking()
-            .Where(u => u.Id == userId)
-            .Select(u => u.PriceRegionCode)
-            .FirstOrDefaultAsync(cancellationToken) ?? DefaultRegion;
-        var currency = await _context.PriceRegions.AsNoTracking()
-            .Where(r => r.Code == region)
-            .Select(r => r.Currency)
-            .FirstOrDefaultAsync(cancellationToken) ?? DefaultCurrency;
-        return (region, currency);
+        _context = context;
+        _prices = prices;
     }
 
     public async Task<PlanCostDto> CostAsync(MealPlan plan, Guid userId, CancellationToken cancellationToken)
     {
-        var (region, currency) = await RegionAsync(userId, cancellationToken);
+        var region = await _prices.RegionForAsync(userId, cancellationToken);
 
         var recipeIds = plan.Entries.Where(e => e.RecipeId.HasValue).Select(e => e.RecipeId!.Value).Distinct().ToList();
         var recipes = recipeIds.Count == 0
@@ -54,18 +42,11 @@ public sealed class PlanCosting
             : await _context.Foods.AsNoTracking().Where(f => foodIds.Contains(f.Id)).ToDictionaryAsync(f => f.Id, cancellationToken);
 
         var lines = ShoppingAggregator.Aggregate(plan.Entries, recipes, foods);
-        var pricedIds = lines.Where(l => l.FoodId.HasValue).Select(l => l.FoodId!.Value).Distinct().ToList();
-        var prices = pricedIds.Count == 0
-            ? []
-            : await _context.FoodPrices.AsNoTracking()
-                .Where(p => pricedIds.Contains(p.FoodId) && p.RegionCode == region)
-                .ToListAsync(cancellationToken);
-        var quotes = PriceBook.QuoteAll(pricedIds.Where(foods.ContainsKey).Select(id => foods[id]), region, currency, prices);
-
-        var summary = PlanCostCalculator.Cost(lines, quotes, currency);
+        var quotes = await _prices.QuotesAsync(foods.Values.ToList(), region, cancellationToken);
+        var summary = PlanCostCalculator.Cost(lines, quotes, region.Currency);
         return new PlanCostDto(
-            region,
-            currency,
+            region.Code,
+            region.Currency,
             summary.Total,
             PlanCostCalculator.PerWeek(summary.Total, plan.DurationDays),
             plan.Rules.WeeklyBudget,
@@ -83,15 +64,6 @@ public sealed class PlanCosting
                     i.Reason))
                 .ToList());
     }
-
-    /// <summary>
-    /// The weekly figure the budget rule compares, or null when the rules count money in another
-    /// currency: a budget in dollars is not checked against a total in birr.
-    /// </summary>
-    public static decimal? ComparableWeeklyCost(PlanRules rules, PlanCostDto cost) =>
-        rules.Currency is null || string.Equals(rules.Currency, cost.Currency, StringComparison.OrdinalIgnoreCase)
-            ? cost.WeeklyTotal
-            : null;
 }
 
 /// <summary>The stored generation metadata as it crosses the wire.</summary>
