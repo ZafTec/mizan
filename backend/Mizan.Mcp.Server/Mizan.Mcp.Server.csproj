@@ -30,8 +30,10 @@
   <ItemGroup>
     <!-- The skills ship inside the server, and the plugin carries the same files (see docs/MCP.md#skills). -->
     <EmbeddedResource Include="Skills\**\*" LogicalName="skills/%(RecursiveDir)%(Filename)%(Extension)" />
-    <!-- Each MCP App is one self-contained page, because the host's default policy blocks every network request. -->
+    <!-- Each MCP App is served as one self-contained page, because the host's default policy blocks every network
+         request. The pages share the host bridge in _bridge.js, which MizanApps inlines when a page is served. -->
     <EmbeddedResource Include="Apps\*.html" LogicalName="apps/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Apps\_bridge.js" LogicalName="apps/_bridge.js" />
   </ItemGroup>
 
   <ItemGroup>

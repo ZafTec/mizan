@@ -50,7 +50,7 @@ Use `tools/list` for argument schemas. The source catalogue is [`backend/Mizan.M
 
 **Skills** (`io.modelcontextprotocol/skills`): `skills/list` and `skills/get` serve six skills, and their files are readable as `skill://` resources. The source is `backend/Mizan.Mcp.Server/Skills`, embedded in the server. The Claude plugin carries the same files; see [Plugin](#claude-plugin).
 
-**Apps**: three small views render inside a host that supports MCP Apps, each a single self-contained HTML page served as `ui://mizan/<name>.html` (the host blocks network requests, so a page carries everything). A page reads through tools via its host and holds no credential. A tool without a host that shows apps still returns its text.
+**Apps**: three small views render inside a host that supports MCP Apps, each a single self-contained HTML page served as `ui://mizan/<name>.html` (the host blocks network requests, so a page carries everything). The pages share the host bridge `Apps/_bridge.js`, inlined at each page's `<!-- mizan:bridge -->` marker when it is served. A page reads through tools via its host and holds no credential. A tool without a host that shows apps still returns its text.
 
 | Tool | App | Needs |
 | --- | --- | --- |
