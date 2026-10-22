@@ -8,6 +8,7 @@ using Mizan.Application.Interfaces;
 using Mizan.Application.Services;
 using Mizan.Domain.Constants;
 using Mizan.Domain.Entities;
+using Mizan.Domain.Nutrition;
 using Mizan.Contracts.Meals;
 
 namespace Mizan.Application.Commands;
@@ -49,6 +50,13 @@ public class CreateFoodDiaryEntryCommandValidator : AbstractValidator<CreateFood
             .LessThanOrEqualTo(_ => DateTime.UtcNow.AddMinutes(5))
             .When(x => x.LoggedAt.HasValue)
             .WithMessage("LoggedAt cannot be in the future");
+        RuleFor(x => x.SharedBetween)
+            .InclusiveBetween(MealShare.MinPeople, MealShare.MaxPeople)
+            .When(x => x.SharedBetween.HasValue);
+        RuleFor(x => x.SharedBetween)
+            .Null()
+            .When(x => x.RecipeId.HasValue)
+            .WithMessage("A recipe is split by lowering servings, not sharedBetween");
     }
 }
 
@@ -130,6 +138,21 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
             if (string.IsNullOrWhiteSpace(name)) name = recipe.Title;
         }
 
+        var amountGrams = food != null ? food.ServingSize * request.Servings : request.AmountGrams;
+
+        // A shared meal arrives whole and is logged as one person's share. The
+        // rule lives in the domain, not in whichever client asked (docs/TELEGRAM.md).
+        if (request.SharedBetween is { } people)
+        {
+            calories = MealShare.OfCalories(calories, people);
+            protein = MealShare.OfGrams(protein, people);
+            carbs = MealShare.OfGrams(carbs, people);
+            fat = MealShare.OfGrams(fat, people);
+            fiber = MealShare.OfGrams(fiber, people);
+            amountGrams = MealShare.OfGrams(amountGrams, people);
+            name = MealShare.Name(name, people);
+        }
+
         var entry = new FoodDiaryEntry
         {
             Id = Guid.NewGuid(),
@@ -139,7 +162,7 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
             EntryDate = entryDate.Value,
             MealType = MealTypes.Normalize(request.MealType),
             Servings = request.Servings,
-            AmountGrams = food != null ? food.ServingSize * request.Servings : request.AmountGrams,
+            AmountGrams = amountGrams,
             Calories = calories,
             ProteinGrams = protein,
             CarbsGrams = carbs,
