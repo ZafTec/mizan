@@ -114,7 +114,7 @@ Where the implementation settled details the design left open:
 - Creating a plan leaves other plans alone. Setting a plan active and accepting a draft archive the owner's other active personal plan; household plans are never archived that way. Today's plan prefers the viewer's own plan over a household plan, then the most recently changed.
 - `logged` is the viewer's own diary: a row with the entry's `PlanEntryId` on the entry's date. Logging a day more than a day away from today fills the diary but does not move the streak.
 - A household plan may log a recipe shared in that household; a coach's draft may log the coach's own recipe.
-- Cost fields (`cost`, `weeklyCost`, `totalCost`) are present and null until the prices step.
+- Cost fields are filled by the prices step; see below.
 - Only administrators and coaches keep templates; a global one needs the admin role.
 - `PlanStatus.Active` is the enumeration's first member because it is the column's database default; a value equal to the CLR default is left out of an insert.
 
@@ -165,6 +165,30 @@ Administrators manage regions, sources, aliases, the review queue, and manual pr
 - The food page (`/ingredients/[id]`) shows the current price for the region of the user, with its source and date. It has the **Report a wrong price** action.
 - The plan page shows cost per day and per week against `WeeklyBudget`.
 - The shopping list shows a cost per item and a total, with unpriced items listed.
+
+### API (step 3, as built)
+
+Records live in `Mizan.Contracts/Prices`; handlers in `Application/Prices`. `PriceBookReader` resolves the viewer's region (their `PriceRegionCode` when enabled, else `ET-AA`) and loads the newest rows per food and confidence for `PriceBook`.
+
+| Route | Command or query |
+| --- | --- |
+| `GET /api/internal/prices/sources`, `POST /observations`, `POST /sources/{id}/runs` | `GetWorkerPriceSourcesQuery`, `RecordPriceObservationsCommand`, `RecordPriceSourceRunCommand`. Policy `PricesWorker`: the service key with no `X-Impersonate-User`. |
+| `GET /api/Foods/{id}/price` | `GetFoodPriceQuery`. `priced: false` and null price fields when the region has none. |
+| `POST /api/Foods/{id}/price-reports` | `CreatePriceReportCommand`. Records the shown price, notifies every administrator (`price_report`). Takes `Idempotency-Key`. |
+| `GET /api/Prices/regions`; `PUT /api/Users/me` with `priceRegionCode` | `GetPriceRegionsQuery`; `UpdateUserCommand` refuses a region that is missing or disabled. `GET /api/Users/me` returns the region. |
+| `GET|POST /api/admin/prices/regions`, `PUT /regions/{code}` | `GetPriceRegionsQuery`, `CreatePriceRegionCommand`, `UpdatePriceRegionCommand`. |
+| `GET|POST /api/admin/prices/sources`, `PUT|DELETE /sources/{id}`, `POST /sources/{id}/run` | `GetPriceSourcesQuery`, `SavePriceSourceCommand`, `DeletePriceSourceCommand`, `RunPriceSourceCommand`. Run now calls the worker at `Prices:WorkerUrl` and answers 202; 409 when that is unset, 502 when the worker does not answer. |
+| `GET /api/admin/prices/aliases?queue=&sourceId=&search=`, `PUT /aliases/{id}` | `GetPriceAliasesQuery`, `UpdatePriceAliasCommand`. `queue=true` is the review queue. |
+| `POST /api/admin/prices/prices`, `POST /seed-staples` | `CreateManualPriceCommand` (Estimated or Observed, under the region's `Manual` source, created on first use); `SeedStaplePricesCommand`. |
+| `GET /api/admin/prices/reports?status=`, `POST /reports/{id}/accept|reject` | `GetPriceReportsQuery`, `ResolvePriceReportCommand`. Accepting writes a `Reported` price under the region's `User reports` source; the reporter is notified either way. |
+
+Where the implementation settled details the design left open:
+
+- An observation finds its alias by `productKey`, then by `productName`. The alias's quantity and unit win over the listing's. A mapped alias without a usable quantity, and an unknown product, are queued; an ignored alias or a price in another currency is ignored. Every sighting updates `lastSeen*`.
+- Costing runs `ShoppingAggregator` then `PlanCostCalculator` (`PlanCosting` in Domain) over the whole plan, each day and each entry, so the plan and its list agree. `weeklyCost` is the total over `durationDays` times seven. `overBudget` is null without a budget or when the budget is in another currency. A day or entry with nothing priced has a null cost.
+- `GET /api/MealPlans/{id}` adds `currency`, `totalCost`, `weeklyCost`, `overBudget`, `costCoverage`, `costConfidence` (the lowest used) and `unpricedItems`. The plan day adds `currency`. A shopping list adds `currency`, `totalCost`, `costCoverage`, `costConfidence`, `unpricedCount`, and per item `cost`, `costConfidence`, `unpricedReason`. These reads carry the `prices` cache tag, cleared by every price write, and the viewer's `price-region` tag, cleared when they switch.
+- There is no seed at migration time: the catalogue foods do not exist then. `POST /api/admin/prices/seed-staples` writes the 33 Addis Ababa staples in `AddisAbabaStaplePrices` as `Estimated` ETB prices for the catalogue foods whose names match, skips foods that already have an estimate, and returns the names it could not match.
+- MCP: `get_food_price`, `report_food_price` (nutrition scopes) and `admin_list_price_sources`, `admin_run_price_source`, `admin_list_price_review_queue`, `admin_update_price_alias`, `admin_add_manual_price`, `admin_list_price_reports`, `admin_resolve_price_report`. Telegram: `PlanCostText` formats the cost lines for `/plan` and `/shop`.
 
 ## AI planning
 

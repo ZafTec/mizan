@@ -37,6 +37,10 @@ A template is a plan without dates: `list_templates`, then `apply_template` with
 
 A list made by hand works the same: `create_shopping_list`, `add_shopping_list_item` (grams when the weight is known, otherwise amount and unit), `update_shopping_list` to rename, `delete_shopping_list_item` and `delete_shopping_list` to remove.
 
+## Costs
+
+`get_meal_plan` and `get_shopping_list` carry costs in the person's price region: per entry, per day, per week, per item, and the lines that have no price. Quote those numbers; do not compute your own. Say how much of the list is priced and the lowest confidence (Estimated means a rough guess). `get_food_price` gives one food's price and source. When the person says a price is wrong, `report_food_price` with what they paid.
+
 ## Households and coaching
 
 A plan or list can belong to a household so other members see it. This connection can only use the households the person allowed when they connected the app. If a household is not available, say so and offer to save the plan as personal, or tell the person they can allow it in Mizan under More, then Connected apps.
