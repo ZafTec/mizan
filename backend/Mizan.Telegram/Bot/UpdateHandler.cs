@@ -751,6 +751,11 @@ public sealed class UpdateHandler
             text.AppendLine(NutritionText.Describe(amount, actual => $"<b>{actual}</b>"));
         }
 
+        if (PlanCostText.Day(view) is { } cost)
+        {
+            text.AppendLine(Escape(cost));
+        }
+
         if (day.Violations.Count > 0)
         {
             text.AppendLine();
@@ -954,10 +959,14 @@ public sealed class UpdateHandler
             }
 
             session = item.PrepSessionTitle is { Length: > 0 } ? item.PrepSessionTitle : null;
-            text.Append("• ").AppendLine(ItemLine(item));
+            text.Append("• ").Append(ItemLine(item)).AppendLine(Escape(PlanCostText.Item(item, list.Currency)));
         }
 
         text.AppendLine().Append(left).Append(" left of ").Append(list.TotalItems);
+        if (PlanCostText.List(list) is { } total)
+        {
+            text.AppendLine().Append(Escape(total));
+        }
         return text.ToString();
     }
 
