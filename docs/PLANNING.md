@@ -136,23 +136,27 @@ Where the implementation settled details the design left open:
 
 ### Service
 
-`prices/` at the repository root holds `Mizan.Prices`, a .NET worker like `Mizan.Telegram`. It has no database access. It calls the API with the service key:
+`prices/` at the repository root holds `Mizan.Prices`, a .NET worker like `Mizan.Telegram`. It has no database access. It calls the API with the service key in `X-Api-Key` and impersonates nobody. The wire records are in `backend/Mizan.Contracts/Prices/PriceContracts.cs`:
 
-- `GET /api/internal/prices/sources` for enabled scraper sources and their aliases.
-- `POST /api/internal/prices/observations` with a batch of `{ sourceId, productName, price, quantity, unit, observedAt, url }`. The API resolves aliases, writes `food_prices`, and queues unknown product names for review.
-- `POST /api/internal/prices/sources/{id}/run` to record a run result.
+- `GET /api/internal/prices/sources` returns the enabled sources as `PriceSourceDto` (`id`, `name`, `kind`, `url`, `scraperKey`, `regionCode`, `currency`, `schedule`, `lastRunAt`).
+- `POST /api/internal/prices/observations` takes a `PriceObservationBatch` (`sourceId`, up to 100 `PriceObservation`s: `productName`, `productKey`, `price`, `currency`, `quantity`, `unit`, `observedAt`, `url`) and answers a `PriceObservationReceipt` (`stored`, `queued`, `ignored`). The API resolves aliases, writes `food_prices`, and queues unknown product names for review.
+- `POST /api/internal/prices/sources/{id}/runs` takes a `PriceSourceRunResult` (`status` `succeeded`, `failed` or `skipped`, `error`, `observations`, `finishedAt`). The API sets `LastRunAt`, `LastStatus` and `LastError` from it.
 
-Redis holds the schedule lock and the per-source dedupe key. Two worker instances then never scrape the same source in the same window. Observations are durable only once the API stores them. Each scraper implements `IPriceScraper` with `SourceKey`, `CanHandle(url)`, and `ScrapeAsync`. Scrapers read `robots.txt` and send one request per second per host. Their `User-Agent` names Mizan and a contact address.
+#### Prices worker
 
-First targets, Addis Ababa, found in October 2026. Check the terms of each site before you enable it.
+`ScrapeScheduler` ticks every minute, reads the sources, and runs each `Scraper` source whose cron `Schedule` (five fields, UTC, Cronos) has an occurrence after `LastRunAt`, or that has never run. `SourceRunner` takes the Redis lock `prices:run:{sourceId}` (`SET NX`, one hour) first, so two worker instances never scrape the same source together; when the lock is held it records a `skipped` run. It streams observations to the API in chunks of 100 as they arrive and ends with the run result, including the error message when a run fails. One failing source never stops the others. `POST /run/{sourceId}` on the worker, guarded by the same `X-Api-Key`, starts a run without waiting for cron; the API's **Run now** action calls it and the result arrives as an ordinary run record. `GET /health` reports `{ status, configured, sources }` where `sources` lists the registered scraper keys.
 
-| Source | What it has | Note |
+Each scraper implements `IPriceScraper` (`Key`, `ScrapeAsync`) and receives a `ScrapeContext`, which owns the manners: it fetches `robots.txt` once per host and honours `Disallow` for `*` and for our user agent and `Crawl-delay`, spaces requests to one host by `Prices:RequestDelayMs` (default one second), sends the configured `User-Agent` (`MizanPriceBot/1.0 (+https://mizan.zaftech.co; prices@zaftech.co)`), gives up after 30 seconds, and caps a run at `Prices:MaxProductsPerRun` pages (default 500, newest sitemap entries first). Scrapers parse; they hold no politeness and no pricing rules. `prices/README.md` has the configuration and the steps for adding a scraper.
+
+Targets probed on 2026-10-22 from Addis Ababa. Check the terms of a site before you enable it.
+
+| Source | Finding | Status |
 | --- | --- | --- |
-| asbeza.net | Online grocery with shelf prices from several Addis Ababa stores | Best first target. HTML product pages. |
-| aradamart.net | Online grocery with product pages and prices | Second HTML target. |
-| numbeo.com food prices for Addis Ababa | Crowd averages for about 20 staples | Mark as `Estimated`. Good for a gap fill. |
-| ecx.com.et | Ethiopia Commodity Exchange, grain prices | Wholesale, per quintal. Useful for teff and beans. |
-| beU, Zmall | App only | No HTML to scrape. Manual prices only. |
+| aradamart.net | Wix store. `robots.txt` allows everything except `?lightbox=`. `store-products-sitemap.xml` lists about 357 product pages, each with a server-rendered JSON-LD `Product` (name, SKU, price in ETB, availability) and `product:price:*` metas. | Scraper `aradamart` ships. Quantity and unit are read from the end of the name (`1kg`, `500g`, `330ml`, `5l`, `10pc`); aliases supply the rest. Out-of-stock pages with a price are observations too. |
+| asbeza.net | Ecwid storefront rendered in the browser; the HTML carries no prices. | Needs a headless browser. Not now. |
+| numbeo.com | Answers 403 to non-browser clients. | No scraper. Enter the staples by hand as `Estimated` manual prices. |
+| ecx.com.et | Unreachable during the probe. | Retry later. |
+| beU, Zmall | App only. | Manual prices only. |
 
 Administrators manage regions, sources, aliases, the review queue, and manual prices under `/admin/prices`. A user reports a wrong price from the food page. The report creates a notification for administrators. Accepting a report writes a `Reported` price.
 
@@ -234,7 +238,7 @@ The Mini App is the web app. Next.js serves `/tg/plan` and `/tg/shopping-list`, 
 
 1. **Cleanup.** One branch migration. Fix the defects listed in the pull request. Fail-safe audit redaction and the impersonation guard. Server-side scaling of AI proposals with `Idempotency-Key`. One copy of each badge. Remove the unused planning code. CI gains type check, format checks, OpenAPI drift check, and a pinned Bun.
 2. **Planning core.** Entries, rules, prep sessions, today, log from plan, list generation and CRUD, templates, trainer drafts. Web, MCP, MCP App, Telegram `/plan` and `/shop`.
-3. **Prices.** Tables and admin pages. `Mizan.Prices` with the asbeza and Arada Mart scrapers and the numbeo gap fill. Reports, the food page, and costing on plans and lists.
+3. **Prices.** Tables and admin pages. `Mizan.Prices` with the Arada Mart scraper; the numbeo staples as manual `Estimated` prices. Reports, the food page, and costing on plans and lists.
 4. **AI planning.** `GenerateMealPlanCommand`, drafts, budget ceilings, typed cards, planning quota line, chat tools, MCP and Telegram wiring.
 5. **Mini App.** `/tg` routes, session exchange, `web_app` buttons, evening reminder.
 
