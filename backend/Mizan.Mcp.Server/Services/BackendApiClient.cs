@@ -66,10 +66,12 @@ public sealed class BackendApiClient : IBackendApiClient
     private readonly ILogger<BackendApiClient> _logger;
     private readonly string _serviceApiKey;
     private readonly string _adminServiceApiKey;
+    private readonly McpLinks _links;
 
-    public BackendApiClient(HttpClient http, IHttpContextAccessor httpContextAccessor, ILogger<BackendApiClient> logger, IConfiguration? configuration = null)
+    public BackendApiClient(HttpClient http, IHttpContextAccessor httpContextAccessor, ILogger<BackendApiClient> logger, IConfiguration? configuration = null, McpLinks? links = null)
     {
         _http = http; _httpContextAccessor = httpContextAccessor; _logger = logger;
+        _links = links ?? new McpLinks(configuration);
         _serviceApiKey = configuration is null ? "test-api-key" : configuration["Mcp:ServiceApiKey"] ?? configuration["ServiceApiKey"] ?? throw new InvalidOperationException("ServiceApiKey not configured");
         _adminServiceApiKey = configuration is null ? "test-admin-api-key" : configuration["Mcp:AdminServiceApiKey"] ?? configuration["AdminServiceApiKey"] ?? throw new InvalidOperationException("AdminServiceApiKey not configured");
         if (string.Equals(_serviceApiKey, _adminServiceApiKey, StringComparison.Ordinal))
@@ -140,10 +142,10 @@ public sealed class BackendApiClient : IBackendApiClient
         return string.Empty;
     }
 
-    private static string FormatMessage(HttpStatusCode status, string? code, string message) => status switch
+    private string FormatMessage(HttpStatusCode status, string? code, string message) => status switch
     {
         HttpStatusCode.Unauthorized => "This connection is no longer valid. Connect Mizan again from your MCP client.",
-        HttpStatusCode.Forbidden when code == "upgrade_required" => $"[UPGRADE REQUIRED] {message} Manage plan: https://mizan.zaftech.co/billing",
+        HttpStatusCode.Forbidden when code == "upgrade_required" => _links.UpgradeRequired(message),
         HttpStatusCode.Forbidden => message,
         HttpStatusCode.NotFound => $"Not found: {message}",
         HttpStatusCode.TooManyRequests => $"Rate limited: {message}. Wait before retrying.",

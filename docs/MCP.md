@@ -103,7 +103,7 @@ On claude.ai, zip the `plugin` folder and add it under **Customize â†’ Plugins â
 
 ## Operate and verify
 
-Compose starts `mcp` with the backend URL, the internal service keys, `Mcp__PublicUrl`, and `Mcp__AuthorizationServer`. `/health` reports transport availability. A healthy check alone does not prove token validation, permissions, or a write path; integration tests cover those separately.
+Compose starts `mcp` with the backend URL, the internal service keys, `Mcp__PublicUrl`, and `Mcp__AuthorizationServer`. `App__PublicUrl` names the web app for the billing link in limit and upgrade messages; without it the service uses `Mcp__PublicUrl` minus its trailing `/mcp`. `/health` reports transport availability. A healthy check alone does not prove token validation, permissions, or a write path; integration tests cover those separately.
 
 Behind the proxy the service trusts `X-Forwarded-*` so the advertised metadata uses the public address. Check this after a deploy: a wrong host in the 401 challenge is the usual reason a client cannot start sign-in.
 

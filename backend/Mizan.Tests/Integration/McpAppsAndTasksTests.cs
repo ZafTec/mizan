@@ -24,6 +24,7 @@ namespace Mizan.Tests.Integration;
 /// </summary>
 public class McpAppsAndTasksTests : IClassFixture<WebApplicationFactory<McpServer::Program>>
 {
+    private const string AppUrl = "https://app.example";
     private readonly WebApplicationFactory<McpServer::Program> _factory;
     private readonly StubApi _api = new();
     private readonly Guid _user = Guid.NewGuid();
@@ -38,6 +39,7 @@ public class McpAppsAndTasksTests : IClassFixture<WebApplicationFactory<McpServe
         {
             builder.UseSetting("Mcp:ServiceApiKey", "test-api-key");
             builder.UseSetting("Mcp:AdminServiceApiKey", "test-admin-api-key");
+            builder.UseSetting("App:PublicUrl", AppUrl);
             builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["MizanApiUrl"] = "http://localhost:5000",
@@ -135,6 +137,21 @@ public class McpAppsAndTasksTests : IClassFixture<WebApplicationFactory<McpServe
         Ui("get_nutrition_summary").Should().Be("ui://mizan/nutrition-day.html");
         Ui("analyze_food_image").Should().Be("ui://mizan/food-photo.html");
         Ui("list_body_measurements").Should().Be("ui://mizan/body-trend.html");
+    }
+
+    // ---- messages that point at the web app ----
+
+    [Fact]
+    public async Task AnUpgradeRefusalFromTheApi_PointsAtTheConfiguredAppsBillingPage()
+    {
+        _api.Reply("GET", "/api/Nutrition/daily", 403, """{"errorCode":"upgrade_required","detail":"That needs a Pro plan."}""");
+        using var client = Authorized();
+
+        var (_, body) = await SendAsync(client, "tools/call", new { name = "get_nutrition_summary", arguments = new { } });
+
+        var text = JsonDocument.Parse(body).RootElement.GetProperty("result").GetProperty("content")[0].GetProperty("text").GetString()!;
+        text.Should().Contain("[UPGRADE REQUIRED]").And.Contain("That needs a Pro plan.")
+            .And.Contain(AppUrl + "/billing").And.NotContain("zaftech");
     }
 
     // ---- tasks ----
