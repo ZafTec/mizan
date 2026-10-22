@@ -23,6 +23,7 @@ env:
   BACKEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/mizan-backend
   MCP_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/mizan-mcp
   TELEGRAM_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/mizan-telegram
+  PRICES_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/mizan-prices
 
 jobs:
   build-and-push-frontend:
@@ -217,11 +218,63 @@ jobs:
           cache-from: type=gha,scope=telegram
           cache-to: type=gha,mode=max,scope=telegram
 
+  build-and-push-prices:
+    name: Build & Push Prices
+    runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout application code
+        uses: actions/checkout@v4
+        with:
+          # Manual runs only publish application code from the default branch.
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.repository.default_branch || github.sha }}
+
+      - name: Resolve build revision
+        id: revision
+        shell: bash
+        run: |
+          SHA=$(git rev-parse HEAD)
+          echo "sha=${SHA}" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${SHA::8}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.PRICES_IMAGE }}
+          tags: |
+            type=raw,value=${{ steps.revision.outputs.short_sha }}
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.revision=${{ steps.revision.outputs.sha }}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./prices/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=prices
+          cache-to: type=gha,mode=max,scope=prices
+
   create-release:
     name: Release Please
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    needs: [build-and-push-frontend, build-and-push-backend, build-and-push-mcp, build-and-push-telegram]
+    needs: [build-and-push-frontend, build-and-push-backend, build-and-push-mcp, build-and-push-telegram, build-and-push-prices]
     permissions:
       contents: read
     env:
@@ -229,6 +282,7 @@ jobs:
       BACKEND_DIGEST: ${{ needs.build-and-push-backend.outputs.digest }}
       MCP_DIGEST: ${{ needs.build-and-push-mcp.outputs.digest }}
       TELEGRAM_DIGEST: ${{ needs.build-and-push-telegram.outputs.digest }}
+      PRICES_DIGEST: ${{ needs.build-and-push-prices.outputs.digest }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -341,6 +395,7 @@ jobs:
           check_image "$BACKEND_IMAGE" "$BACKEND_DIGEST"
           check_image "$MCP_IMAGE" "$MCP_DIGEST"
           check_image "$TELEGRAM_IMAGE" "$TELEGRAM_DIGEST"
+          check_image "$PRICES_IMAGE" "$PRICES_DIGEST"
 
           docker buildx imagetools create --prefer-index=false \
             --tag "${FRONTEND_IMAGE}:${RELEASE_TAG}" --tag "${FRONTEND_IMAGE}:${RELEASE_VERSION}" \
@@ -354,6 +409,9 @@ jobs:
           docker buildx imagetools create --prefer-index=false \
             --tag "${TELEGRAM_IMAGE}:${RELEASE_TAG}" --tag "${TELEGRAM_IMAGE}:${RELEASE_VERSION}" \
             "${TELEGRAM_IMAGE}@${TELEGRAM_DIGEST}"
+          docker buildx imagetools create --prefer-index=false \
+            --tag "${PRICES_IMAGE}:${RELEASE_TAG}" --tag "${PRICES_IMAGE}:${RELEASE_VERSION}" \
+            "${PRICES_IMAGE}@${PRICES_DIGEST}"
 
       - name: Append deployment instructions to release notes
         if: steps.version.outputs.publish == 'true'
@@ -362,6 +420,7 @@ jobs:
           BACKEND_IMAGE: ${{ env.BACKEND_IMAGE }}
           MCP_IMAGE: ${{ env.MCP_IMAGE }}
           TELEGRAM_IMAGE: ${{ env.TELEGRAM_IMAGE }}
+          PRICES_IMAGE: ${{ env.PRICES_IMAGE }}
           ACTOR: ${{ github.actor }}
           SHA: ${{ github.sha }}
           REF: ${{ github.ref_name }}
@@ -379,7 +438,7 @@ jobs:
 
           ## Deployment Summary
 
-          All four services built and pushed to Docker Hub successfully. Their exact build digests are published as ${RELEASE_TAG} and ${RELEASE_VERSION}.
+          All five services built and pushed to Docker Hub successfully. Their exact build digests are published as ${RELEASE_TAG} and ${RELEASE_VERSION}.
 
           | Field       | Value |
           |-------------|-------|
@@ -400,6 +459,7 @@ jobs:
           docker pull ${BACKEND_IMAGE}:${RELEASE_TAG}
           docker pull ${MCP_IMAGE}:${RELEASE_TAG}
           docker pull ${TELEGRAM_IMAGE}:${RELEASE_TAG}
+          docker pull ${PRICES_IMAGE}:${RELEASE_TAG}
           \`\`\`
 
           The \`${SHORT_SHA}\` commit tag and \`latest\` are also available. Versioned tags are preserved on workflow reruns.
@@ -410,6 +470,7 @@ jobs:
           | Backend  | \`${BACKEND_IMAGE}\`  | \`${BACKEND_DIGEST}\` |
           | MCP      | \`${MCP_IMAGE}\`      | \`${MCP_DIGEST}\` |
           | Telegram | \`${TELEGRAM_IMAGE}\` | \`${TELEGRAM_DIGEST}\` |
+          | Prices   | \`${PRICES_IMAGE}\`   | \`${PRICES_DIGEST}\` |
 
           ---
 
