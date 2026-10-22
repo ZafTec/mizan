@@ -22,6 +22,9 @@ public class User
     /// the previous day, and their streak never advances.
     /// </summary>
     public string? TimeZoneId { get; set; }
+
+    /// <summary>The <see cref="PriceRegion"/> whose prices the person sees. Null means the default region.</summary>
+    public string? PriceRegionCode { get; set; }
     public string? PasswordHash { get; set; }
     public int AccessFailedCount { get; set; }
     public DateTime? LockoutEnd { get; set; }

@@ -95,6 +95,11 @@ public class MizanDbContext : DbContext, IMizanDbContext
     public DbSet<IdempotencyKey> IdempotencyKeys => Set<IdempotencyKey>();
     public DbSet<DeletedRecord> DeletedRecords => Set<DeletedRecord>();
     public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
+    public DbSet<PriceRegion> PriceRegions => Set<PriceRegion>();
+    public DbSet<PriceSource> PriceSources => Set<PriceSource>();
+    public DbSet<PriceSourceAlias> PriceSourceAliases => Set<PriceSourceAlias>();
+    public DbSet<FoodPrice> FoodPrices => Set<FoodPrice>();
+    public DbSet<PriceReport> PriceReports => Set<PriceReport>();
 
     // Billing
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
@@ -224,6 +229,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.Name).HasColumnName("name");
             entity.Property(e => e.Image).HasColumnName("image");
             entity.Property(e => e.TimeZoneId).HasColumnName("time_zone_id").HasMaxLength(64);
+            entity.Property(e => e.PriceRegionCode).HasColumnName("price_region_code").HasMaxLength(16);
             entity.Property(e => e.ThemePreference).HasColumnName("theme_preference");
             entity.Property(e => e.CompactMode).HasColumnName("compact_mode");
             entity.Property(e => e.ReduceAnimations).HasColumnName("reduce_animations");
@@ -670,6 +676,111 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.HasOne(e => e.Recipe).WithMany(r => r.PlanEntries).HasForeignKey(e => e.RecipeId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(e => e.Food).WithMany().HasForeignKey(e => e.FoodId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(e => e.PrepSession).WithMany(p => p.Entries).HasForeignKey(e => e.PrepSessionId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Prices: regions, sources, aliases, observations and reports (docs/PLANNING.md#prices)
+        modelBuilder.Entity<PriceRegion>(entity =>
+        {
+            entity.ToTable("price_regions");
+            entity.HasKey(e => e.Code);
+            entity.Property(e => e.Code).HasColumnName("code").HasMaxLength(16);
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Currency).HasColumnName("currency").HasMaxLength(3).IsRequired();
+            entity.Property(e => e.Enabled).HasColumnName("enabled").HasDefaultValue(true);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.HasData(new PriceRegion { Code = "ET-AA", Name = "Addis Ababa", Currency = "ETB", Enabled = true, CreatedAt = new DateTime(2026, 10, 22, 0, 0, 0, DateTimeKind.Utc) });
+        });
+
+        modelBuilder.Entity<PriceSource>(entity =>
+        {
+            entity.ToTable("price_sources");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Kind).HasColumnName("kind").HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.Url).HasColumnName("url").HasMaxLength(512);
+            entity.Property(e => e.ScraperKey).HasColumnName("scraper_key").HasMaxLength(50);
+            entity.Property(e => e.RegionCode).HasColumnName("region_code").HasMaxLength(16).IsRequired();
+            entity.Property(e => e.Enabled).HasColumnName("enabled").HasDefaultValue(true);
+            entity.Property(e => e.Schedule).HasColumnName("schedule").HasMaxLength(100);
+            entity.Property(e => e.LastRunAt).HasColumnName("last_run_at");
+            entity.Property(e => e.LastStatus).HasColumnName("last_status").HasMaxLength(50);
+            entity.Property(e => e.LastError).HasColumnName("last_error").HasMaxLength(2000);
+            entity.Property(e => e.LastObservations).HasColumnName("last_observations").HasDefaultValue(0);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.RegionCode, e.Name }).IsUnique().HasDatabaseName("ux_price_sources_region_name");
+            entity.HasOne(e => e.Region).WithMany(r => r.Sources).HasForeignKey(e => e.RegionCode).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PriceSourceAlias>(entity =>
+        {
+            entity.ToTable("price_source_aliases");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.SourceId).HasColumnName("source_id");
+            entity.Property(e => e.ProductName).HasColumnName("product_name").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.ProductKey).HasColumnName("product_key").HasMaxLength(512);
+            entity.Property(e => e.FoodId).HasColumnName("food_id");
+            entity.Property(e => e.Quantity).HasColumnName("quantity").HasPrecision(10, 3);
+            entity.Property(e => e.Unit).HasColumnName("unit").HasMaxLength(10);
+            entity.Property(e => e.Ignored).HasColumnName("ignored").HasDefaultValue(false);
+            entity.Property(e => e.LastSeenPrice).HasColumnName("last_seen_price").HasPrecision(12, 2);
+            entity.Property(e => e.LastSeenAt).HasColumnName("last_seen_at");
+            entity.Property(e => e.LastSeenUrl).HasColumnName("last_seen_url").HasMaxLength(1024);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.SourceId, e.ProductName }).IsUnique().HasDatabaseName("ux_price_source_aliases_source_product");
+            entity.HasIndex(e => e.FoodId).HasDatabaseName("ix_price_source_aliases_food");
+            entity.HasOne(e => e.Source).WithMany(s => s.Aliases).HasForeignKey(e => e.SourceId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Food).WithMany().HasForeignKey(e => e.FoodId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<FoodPrice>(entity =>
+        {
+            entity.ToTable("food_prices");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.FoodId).HasColumnName("food_id");
+            entity.Property(e => e.RegionCode).HasColumnName("region_code").HasMaxLength(16).IsRequired();
+            entity.Property(e => e.SourceId).HasColumnName("source_id");
+            entity.Property(e => e.Price).HasColumnName("price").HasPrecision(12, 2);
+            entity.Property(e => e.Quantity).HasColumnName("quantity").HasPrecision(10, 3).HasDefaultValue(1m);
+            entity.Property(e => e.Unit).HasColumnName("unit").HasMaxLength(10).IsRequired();
+            entity.Property(e => e.Confidence).HasColumnName("confidence").HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.ObservedAt).HasColumnName("observed_at");
+            entity.Property(e => e.SourceUrl).HasColumnName("source_url").HasMaxLength(1024);
+            entity.Property(e => e.ReportedByUserId).HasColumnName("reported_by_user_id");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.FoodId, e.RegionCode, e.ObservedAt }).HasDatabaseName("ix_food_prices_food_region_observed");
+            entity.HasOne(e => e.Food).WithMany().HasForeignKey(e => e.FoodId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Region).WithMany().HasForeignKey(e => e.RegionCode).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.Source).WithMany(s => s.Prices).HasForeignKey(e => e.SourceId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<PriceReport>(entity =>
+        {
+            entity.ToTable("price_reports");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.FoodId).HasColumnName("food_id");
+            entity.Property(e => e.RegionCode).HasColumnName("region_code").HasMaxLength(16).IsRequired();
+            entity.Property(e => e.SuggestedPrice).HasColumnName("suggested_price").HasPrecision(12, 2);
+            entity.Property(e => e.Quantity).HasColumnName("quantity").HasPrecision(10, 3).HasDefaultValue(1m);
+            entity.Property(e => e.Unit).HasColumnName("unit").HasMaxLength(10).IsRequired();
+            entity.Property(e => e.Note).HasColumnName("note").HasMaxLength(1000);
+            entity.Property(e => e.ShownPricePerGram).HasColumnName("shown_price_per_gram").HasPrecision(14, 6);
+            entity.Property(e => e.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.ResolvedByUserId).HasColumnName("resolved_by_user_id");
+            entity.Property(e => e.ResolvedAt).HasColumnName("resolved_at");
+            entity.Property(e => e.ResolutionNote).HasColumnName("resolution_note").HasMaxLength(1000);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.Status, e.CreatedAt }).HasDatabaseName("ix_price_reports_status_created");
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Food).WithMany().HasForeignKey(e => e.FoodId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Region).WithMany().HasForeignKey(e => e.RegionCode).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.ResolvedBy).WithMany().HasForeignKey(e => e.ResolvedByUserId).OnDelete(DeleteBehavior.SetNull);
         });
 
         // ShoppingList configuration

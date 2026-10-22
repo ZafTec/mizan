@@ -28,6 +28,11 @@ public interface IMizanDbContext
     DbSet<PrepSession> PrepSessions { get; }
     DbSet<ShoppingList> ShoppingLists { get; }
     DbSet<ShoppingListItem> ShoppingListItems { get; }
+    DbSet<PriceRegion> PriceRegions { get; }
+    DbSet<PriceSource> PriceSources { get; }
+    DbSet<PriceSourceAlias> PriceSourceAliases { get; }
+    DbSet<FoodPrice> FoodPrices { get; }
+    DbSet<PriceReport> PriceReports { get; }
     DbSet<UserGoal> UserGoals { get; }
     DbSet<GoalProgress> GoalProgress { get; }
     DbSet<Exercise> Exercises { get; }
