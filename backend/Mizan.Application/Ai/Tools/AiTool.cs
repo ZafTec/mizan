@@ -41,6 +41,3 @@ public record AiToolDefinition(
     /// </summary>
     DataAxis Axis,
     AiToolAccess Access);
-
-/// <summary>What a tool call did, echoed back so the UI can say "I set X".</summary>
-public record AiToolInvocation(string Tool, string Summary, bool Succeeded, string? Error = null);
