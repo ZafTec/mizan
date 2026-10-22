@@ -87,7 +87,8 @@ test("Today presents all three logs and the four spine destinations", async ({
     await expect(
       page.getByRole("heading", { name, exact: true }),
     ).toBeVisible();
-  await expect(page.getByText("Greek yogurt", { exact: true })).toBeVisible();
+  const meals = page.getByRole("region", { name: "Meals" });
+  await expect(meals.getByText("Greek yogurt", { exact: true })).toBeVisible();
   await expect(page.getByText("Upper body", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("meter", { name: "Calories", exact: true }),
@@ -175,7 +176,9 @@ test("a meal can be composed and saved over the current page", async ({
   ).toBeVisible();
   await page.reload();
   await expect(
-    page.getByText("Yogurt and oats", { exact: true }),
+    page
+      .getByRole("region", { name: "Meals" })
+      .getByText("Yogurt and oats", { exact: true }),
   ).toBeVisible();
   const state = await fixtureState(context);
   expect(state.writes).toHaveLength(2);

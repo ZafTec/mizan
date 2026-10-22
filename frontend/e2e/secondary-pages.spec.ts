@@ -81,6 +81,9 @@ test.describe("the pages under More read like the daily log", () => {
   });
 
   test("Meal plans say what to do when there are none", async ({ page }) => {
+    await page.request.post(`${apiURL}/__fixture/session`, {
+      data: { planning: { none: true } },
+    });
     await page.goto("/meal-plan");
     await expect(page.getByText("No plans yet.")).toBeVisible();
     await expect(page.getByRole("link", { name: "New plan" })).toBeVisible();
