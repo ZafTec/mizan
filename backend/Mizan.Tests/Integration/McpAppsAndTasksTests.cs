@@ -78,7 +78,7 @@ public class McpAppsAndTasksTests : IClassFixture<WebApplicationFactory<McpServe
         var resources = JsonDocument.Parse(body).RootElement.GetProperty("result").GetProperty("resources").EnumerateArray()
             .Where(r => r.GetProperty("uri").GetString()!.StartsWith("ui://")).ToList();
         resources.Select(r => r.GetProperty("uri").GetString()).Should().BeEquivalentTo(
-            "ui://mizan/nutrition-day.html", "ui://mizan/food-photo.html", "ui://mizan/body-trend.html");
+            "ui://mizan/nutrition-day.html", "ui://mizan/food-photo.html", "ui://mizan/body-trend.html", "ui://mizan/meal-plan.html");
         resources.Should().OnlyContain(r => r.GetProperty("mimeType").GetString() == "text/html;profile=mcp-app");
     }
 
@@ -117,6 +117,7 @@ public class McpAppsAndTasksTests : IClassFixture<WebApplicationFactory<McpServe
     [InlineData("nutrition-day")]
     [InlineData("food-photo")]
     [InlineData("body-trend")]
+    [InlineData("meal-plan")]
     public async Task EveryAppPage_IsServedWithTheSharedBridgeInlined_AndNoMarkerLeft(string page)
     {
         using var client = Authorized();
@@ -153,6 +154,8 @@ public class McpAppsAndTasksTests : IClassFixture<WebApplicationFactory<McpServe
         Ui("get_nutrition_summary").Should().Be("ui://mizan/nutrition-day.html");
         Ui("analyze_food_image").Should().Be("ui://mizan/food-photo.html");
         Ui("list_body_measurements").Should().Be("ui://mizan/body-trend.html");
+        Ui("get_meal_plan").Should().Be("ui://mizan/meal-plan.html");
+        Ui("get_plan_day").Should().Be("ui://mizan/meal-plan.html");
     }
 
     // ---- messages that point at the web app ----
