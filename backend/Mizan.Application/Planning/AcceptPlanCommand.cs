@@ -8,7 +8,7 @@ using Mizan.Domain.Planning;
 
 namespace Mizan.Application.Planning;
 
-/// <summary>The client accepts a coach's draft: it becomes the active plan and the previous active plan is archived. The coach is told.</summary>
+/// <summary>The person accepts a draft, a coach's or one the assistant generated: it becomes the active plan and the previous active plan is archived. A coach is told.</summary>
 public record AcceptPlanCommand(Guid Id) : IRequest<Unit>;
 
 public class AcceptPlanCommandHandler : IRequestHandler<AcceptPlanCommand, Unit>
@@ -48,7 +48,9 @@ public static class DraftDecision
     {
         if (plan.UserId != userId)
             throw new ForbiddenAccessException("Only the person the plan is for can accept or decline it.");
-        if (plan.Status != PlanStatus.Draft || plan.AuthoredByUserId is null)
+        // A coach's draft, or one the assistant generated for this person. Either way the person
+        // it is for decides; a plan they wrote themselves is never a draft.
+        if (plan.Status != PlanStatus.Draft || (plan.AuthoredByUserId is null && plan.GeneratedFrom is null))
             throw new DomainValidationException("This plan is not a draft waiting for a decision.");
     }
 

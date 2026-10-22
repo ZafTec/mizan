@@ -378,9 +378,11 @@ public class McpConnectionsTests
         own.Should().BeEquivalentTo(new[] { DataAxis.Nutrition, DataAxis.Body });
 
         (await new DataAccessPolicy(db, AppUser(w.User, McpScopes.Full)).ReadableAxesAsync(w.User, w.User, AccessPurpose.Display))
-            .Should().HaveCount(3);
+            .Should().HaveCount(4);
+        (await new DataAccessPolicy(db, AppUser(w.User, "planning:read")).ReadableAxesAsync(w.User, w.User, AccessPurpose.Display))
+            .Should().BeEquivalentTo(new[] { DataAxis.Planning }, "meal plans are read under planning:read");
         (await new DataAccessPolicy(db).ReadableAxesAsync(w.User, w.User, AccessPurpose.Display))
-            .Should().HaveCount(3, "the web app has no grant and keeps full authority");
+            .Should().HaveCount(4, "the web app has no grant and keeps full authority");
     }
 
     [Fact]

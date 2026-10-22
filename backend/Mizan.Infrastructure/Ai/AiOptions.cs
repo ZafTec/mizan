@@ -56,6 +56,14 @@ public class AiOptions : IAiCeilings
     public AiTierLimits Trainer { get; set; } = new() { DailyRequests = 300, DailyTokens = 600_000 };
 
     /// <summary>
+    /// Generating a meal plan, by tier. One request is one draft for one budget ceiling. Its own
+    /// line, so a plan does not spend the day's chat and a day of chat does not block the plan.
+    /// </summary>
+    public AiTierLimits PlanningFree { get; set; } = new() { DailyRequests = 1, DailyTokens = 30_000 };
+
+    public AiTierLimits PlanningPro { get; set; } = new() { DailyRequests = 20, DailyTokens = 400_000 };
+
+    /// <summary>
     /// The circuit breaker on the whole provider bill. Not optional: a loop or
     /// an abusive account stops here rather than at the invoice.
     /// </summary>

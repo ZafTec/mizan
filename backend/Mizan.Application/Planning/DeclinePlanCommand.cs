@@ -5,7 +5,7 @@ using Mizan.Domain.Planning;
 
 namespace Mizan.Application.Planning;
 
-/// <summary>The client declines a coach's draft: it is archived and the coach is told.</summary>
+/// <summary>The person declines a draft, a coach's or a generated one: it is archived and a coach is told.</summary>
 public record DeclinePlanCommand(Guid Id) : IRequest<Unit>;
 
 public class DeclinePlanCommandHandler : IRequestHandler<DeclinePlanCommand, Unit>

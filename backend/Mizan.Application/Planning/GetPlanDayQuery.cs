@@ -11,9 +11,11 @@ namespace Mizan.Application.Planning;
 /// <summary>
 /// What the viewer's active plan says for one date, today by default. Their own
 /// plan wins over a household plan; among several, the most recently changed.
-/// Null when no active plan covers the date.
+/// Null when no active plan covers the date. With <c>PlanId</c>, the day of that
+/// plan instead, whatever its status, so a draft can be read before it is
+/// accepted; the date then defaults to the plan's first day.
 /// </summary>
-public record GetPlanDayQuery(DateOnly? Date) : IRequest<PlanDayViewDto?>;
+public record GetPlanDayQuery(DateOnly? Date, Guid? PlanId = null) : IRequest<PlanDayViewDto?>;
 
 public class GetPlanDayQueryHandler : IRequestHandler<GetPlanDayQuery, PlanDayViewDto?>
 {
@@ -28,11 +30,13 @@ public class GetPlanDayQueryHandler : IRequestHandler<GetPlanDayQuery, PlanDayVi
     private readonly IHouseholdAccess _households;
     private readonly IUserClock _clock;
     private readonly PlanReadModel _readModel;
+    private readonly PlanAccess _access;
     private readonly HybridCache _cache;
 
     public GetPlanDayQueryHandler(
-        IMizanDbContext context, ICurrentUserService currentUser, IHouseholdAccess households, IUserClock clock, PlanReadModel readModel, HybridCache cache)
+        IMizanDbContext context, ICurrentUserService currentUser, IHouseholdAccess households, IUserClock clock, PlanReadModel readModel, PlanAccess access, HybridCache cache)
     {
+        _access = access;
         _context = context;
         _currentUser = currentUser;
         _households = households;
@@ -44,6 +48,7 @@ public class GetPlanDayQueryHandler : IRequestHandler<GetPlanDayQuery, PlanDayVi
     public async Task<PlanDayViewDto?> Handle(GetPlanDayQuery request, CancellationToken cancellationToken)
     {
         var userId = _currentUser.UserId ?? throw new UnauthorizedAccessException("User must be authenticated");
+        if (request.PlanId is { } planId) return await DayOfPlanAsync(planId, request.Date, userId, cancellationToken);
         var date = request.Date ?? await _clock.TodayAsync(userId, cancellationToken);
         var households = await _households.AccessibleIdsAsync(cancellationToken);
 
@@ -61,6 +66,32 @@ public class GetPlanDayQueryHandler : IRequestHandler<GetPlanDayQuery, PlanDayVi
             CacheOptions,
             tags,
             cancellationToken);
+    }
+
+    /// <summary>One day of a named plan. Uncached: it is read while a draft is being edited.</summary>
+    private async Task<PlanDayViewDto?> DayOfPlanAsync(Guid planId, DateOnly? date, Guid userId, CancellationToken cancellationToken)
+    {
+        Domain.Entities.MealPlan plan;
+        try
+        {
+            plan = await _access.LoadReadableAsync(planId, cancellationToken);
+        }
+        catch (Exceptions.EntityNotFoundException)
+        {
+            return null;
+        }
+        if (plan.Kind != PlanKind.Personal || plan.StartDate is not { } start) return null;
+
+        var day = date ?? start;
+        if (PlanSchedule.DayIndexOf(start, plan.DurationDays, day) is not { } dayIndex) return null;
+        return new PlanDayViewDto
+        {
+            PlanId = plan.Id,
+            PlanName = plan.Name,
+            Date = day,
+            Day = await _readModel.BuildDayAsync(plan, dayIndex, userId, cancellationToken),
+            Rules = PlanRulesMapping.ToDto(plan.Rules),
+        };
     }
 
     private async ValueTask<PlanDayViewDto?> LoadAsync(Guid userId, DateOnly date, IReadOnlyList<Guid> households, CancellationToken cancellationToken)

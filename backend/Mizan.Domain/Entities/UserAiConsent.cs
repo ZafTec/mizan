@@ -44,6 +44,7 @@ public class UserAiConsent
         DataAxis.Nutrition => ShareNutrition,
         DataAxis.Training => ShareTraining,
         DataAxis.Body => ShareBody,
+        DataAxis.Planning => ShareNutrition,
         _ => false,
     };
 
@@ -58,6 +59,7 @@ public class UserAiConsent
         DataAxis.Nutrition => WriteNutrition,
         DataAxis.Training => WriteTraining,
         DataAxis.Body => WriteBody,
+        DataAxis.Planning => WriteNutrition,
         _ => false,
     };
 }

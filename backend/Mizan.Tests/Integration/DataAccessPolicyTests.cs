@@ -25,7 +25,7 @@ public class DataAccessPolicyTests
         var me = await UserAsync();
         var axes = await AxesAsync(me, me, AccessPurpose.Display);
 
-        axes.Should().BeEquivalentTo([DataAxis.Nutrition, DataAxis.Training, DataAxis.Body]);
+        axes.Should().BeEquivalentTo([DataAxis.Nutrition, DataAxis.Training, DataAxis.Body, DataAxis.Planning]);
     }
 
     /// <summary>
@@ -46,7 +46,8 @@ public class DataAccessPolicyTests
         var me = await UserAsync();
         await ConsentAsync(me, enabled: true, nutrition: true, training: false, body: false);
 
-        (await AxesAsync(me, me, AccessPurpose.AiContext)).Should().BeEquivalentTo([DataAxis.Nutrition]);
+        // Meal plans have no flag of their own: they follow the nutrition share (docs/AI.md#consent).
+        (await AxesAsync(me, me, AccessPurpose.AiContext)).Should().BeEquivalentTo([DataAxis.Nutrition, DataAxis.Planning]);
     }
 
     [Fact]

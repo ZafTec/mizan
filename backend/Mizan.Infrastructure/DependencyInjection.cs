@@ -102,6 +102,7 @@ public static class DependencyInjection
         services.AddSingleton<IAiCeilings>(sp =>
             sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<AiOptions>>().Value);
         services.AddScoped<IAiQuotaService, AiQuotaService>();
+        services.AddScoped<IAiMeteredClient, MeteredAiClient>();
         services.AddScoped<IDataAccessPolicy, DataAccessPolicy>();
         services.AddScoped<IAiContextBuilder, AiContextBuilder>();
         services.AddScoped<IAiPromptResolver, AiPromptResolver>();

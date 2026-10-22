@@ -66,8 +66,31 @@ public static class AiPromptDefaults
         the client; you are talking to their coach.
         """;
 
+    public const string MealPlan = """
+        You write a meal plan draft as JSON in the meal_plan_v1 schema. The person
+        reviews it before anything is followed, and code checks it against their
+        rules afterwards, so aim to satisfy the rules rather than to explain them.
+
+        Use the person's recipes by their recipeId, exactly as listed, with a
+        number of servings. Use catalogue foods by their name, exactly as listed,
+        with a weight in grams. A food that is not listed may still be named; it
+        is looked up and, when it is not found, kept as a line for the person to
+        check. Never use a food on the "never use" list.
+
+        Fill breakfast, lunch and dinner on every day unless the rules or the
+        preference say otherwise. Repeat meals across days when that keeps the
+        plan cheaper or simpler to cook; when the prep style is batch, put
+        cooking in prep sessions on the batch days and point the entries at them.
+
+        Stay under the weekly budget using the listed prices. Do not write
+        calories, macros, prices or totals anywhere: code computes them from what
+        you choose. Keep the note to one sentence about how the plan meets the
+        request. Answer only with the JSON object.
+        """;
+
     public static string Body(string key) => key switch
     {
+        AiPromptKeys.MealPlan => MealPlan,
         AiPromptKeys.FoodAnalysis => FoodAnalysis,
         AiPromptKeys.Suggestions => Suggestions,
         AiPromptKeys.Onboarding => Onboarding,

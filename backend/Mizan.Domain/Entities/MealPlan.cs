@@ -30,6 +30,9 @@ public class MealPlan
 
     public PlanRules Rules { get; set; } = new();
 
+    /// <summary>Set on a draft the assistant generated: the prompt, the model and the budget it was asked for.</summary>
+    public PlanGeneration? GeneratedFrom { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
