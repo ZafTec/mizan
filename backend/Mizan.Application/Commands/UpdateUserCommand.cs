@@ -1,6 +1,7 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Streaks;
 
@@ -10,6 +11,8 @@ namespace Mizan.Application.Commands;
 /// Appearance preferences live on the user row and used to be written by
 /// BetterAuth's updateUser. Since v2 they come through here - null means
 /// "leave alone", so a name change cannot silently reset a theme.
+/// <c>PriceRegionCode</c> picks the region whose prices the person sees; it
+/// must be an enabled region.
 /// </summary>
 public record UpdateUserCommand(
     Guid UserId,
@@ -18,7 +21,12 @@ public record UpdateUserCommand(
     string? ThemePreference = null,
     bool? CompactMode = null,
     bool? ReduceAnimations = null,
-    string? TimeZoneId = null) : IRequest<bool>;
+    string? TimeZoneId = null,
+    string? PriceRegionCode = null) : IRequest<bool>, IRedactedAudit
+{
+    /// <summary>The region code names a market, not a credential; the details list every field so nothing else is hidden.</summary>
+    object IRedactedAudit.AuditDetails => new { UserId, Name, Image, ThemePreference, CompactMode, ReduceAnimations, TimeZoneId, PriceRegionCode };
+}
 
 public class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>
 {
@@ -68,12 +76,21 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, bool>
         if (request.ReduceAnimations is { } reduce) user.ReduceAnimations = reduce;
         if (request.TimeZoneId is { } zone) user.TimeZoneId = zone;
 
+        if (request.PriceRegionCode is { } regionCode && regionCode != user.PriceRegionCode)
+        {
+            if (!await _context.PriceRegions.AnyAsync(r => r.Code == regionCode && r.Enabled, cancellationToken))
+                throw new DomainValidationException($"There is no enabled price region '{regionCode}'.");
+            user.PriceRegionCode = regionCode;
+        }
+
         user.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
 
         // The zone is cached on the logging path, so a change has to be
         // published or the next few hours of logs use the old day boundary.
+        // Plans and lists are priced in the person's region, so their cached
+        // copies go with it.
         await _cache.InvalidateAsync(request.UserId, cancellationToken);
 
         return true;

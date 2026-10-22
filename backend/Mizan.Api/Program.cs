@@ -189,6 +189,13 @@ builder.Services.AddAuthorization(options =>
         .AddAuthenticationSchemes(ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser());
 
+    // The prices worker: the service key acting for nobody. A session cookie, a
+    // bearer token, or a service call impersonating a user never qualifies.
+    options.AddPolicy("PricesWorker", policy => policy
+        .AddAuthenticationSchemes(ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .RequireAuthenticatedUser()
+        .RequireClaim("type", "service"));
+
     options.AddPolicy("UserOrMcp", policy => policy
         .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, OAuthBearerAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser());
@@ -495,6 +502,17 @@ app.UseExceptionHandler(errorApp =>
         {
             context.Response.StatusCode = 400;
             await context.Response.WriteAsJsonAsync(new { errorCode = "promotion_weights_required", error = weightsEx.Message, items = weightsEx.Items });
+        }
+        else if (exception is ConflictException conflictEx)
+        {
+            context.Response.StatusCode = 409;
+            await context.Response.WriteAsJsonAsync(new { errorCode = "conflict", error = conflictEx.Message });
+        }
+        else if (exception is UpstreamUnavailableException upstreamEx)
+        {
+            Log.Warning("Upstream service failed for {Path}: {Message}", context.Request.Path, upstreamEx.Message);
+            context.Response.StatusCode = StatusCodes.Status502BadGateway;
+            await context.Response.WriteAsJsonAsync(new { errorCode = "upstream_unavailable", error = upstreamEx.Message });
         }
         else if (exception is DomainValidationException domainValidationEx)
         {

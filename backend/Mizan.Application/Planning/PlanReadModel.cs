@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
+using Mizan.Application.Prices;
 using Mizan.Contracts.Planning;
 using Mizan.Domain.Entities;
 using Mizan.Domain.Planning;
+using Mizan.Domain.Pricing;
 using Mizan.Domain.Recipes;
 
 namespace Mizan.Application.Planning;
@@ -13,13 +15,19 @@ namespace Mizan.Application.Planning;
 /// nutrition, day totals from <see cref="PlanNutrition"/>, violations from
 /// <see cref="PlanRuleCheck"/>, and each entry's logged flag from the viewer's
 /// diary. Recipe nutrition comes from <see cref="RecipeNutritionLookup"/>, so a
-/// retained snapshot stands in exactly as it does on the recipe page.
+/// retained snapshot stands in exactly as it does on the recipe page. Costs
+/// come from <see cref="PlanCosting"/> at the viewer's region prices.
 /// </summary>
 public sealed class PlanReadModel
 {
     private readonly IMizanDbContext _context;
+    private readonly PriceBookReader _prices;
 
-    public PlanReadModel(IMizanDbContext context) => _context = context;
+    public PlanReadModel(IMizanDbContext context, PriceBookReader prices)
+    {
+        _context = context;
+        _prices = prices;
+    }
 
     public async Task<MealPlanDetailDto> BuildAsync(MealPlan plan, Guid viewerId, bool canEdit, CancellationToken cancellationToken)
     {
@@ -54,16 +62,23 @@ public sealed class PlanReadModel
             EntryCount = plan.Entries.Count,
             LoggedCount = days.Sum(d => d.LoggedCount),
             CanEdit = canEdit,
-            WeeklyCost = null,
+            Currency = resolved.Currency,
+            TotalCost = resolved.Cost.TotalCost,
+            WeeklyCost = resolved.Cost.WeeklyCost,
+            OverBudget = PlanCosting.OverBudget(resolved.Cost.WeeklyCost, plan.Rules.WeeklyBudget, plan.Rules.Currency, resolved.Currency),
+            CostCoverage = resolved.Cost.Summary.Coverage,
+            CostConfidence = resolved.Cost.Summary.LowestConfidence?.ToString(),
+            UnpricedItems = resolved.Cost.Summary.Unpriced.Select(i => new UnpricedItemDto(i.Name, i.FoodId, i.Reason ?? string.Empty)).ToList(),
             CreatedAt = plan.CreatedAt,
             UpdatedAt = plan.UpdatedAt,
         };
     }
 
-    public async Task<PlanDayDto> BuildDayAsync(MealPlan plan, int dayIndex, Guid viewerId, CancellationToken cancellationToken)
+    /// <summary>One day of the plan and the currency its costs are in.</summary>
+    public async Task<(PlanDayDto Day, string Currency)> BuildDayAsync(MealPlan plan, int dayIndex, Guid viewerId, CancellationToken cancellationToken)
     {
         var resolved = await ResolveAsync(plan, viewerId, cancellationToken);
-        return BuildDay(plan, dayIndex, resolved);
+        return (BuildDay(plan, dayIndex, resolved), resolved.Currency);
     }
 
     private static PlanDayDto BuildDay(MealPlan plan, int dayIndex, Resolved resolved)
@@ -89,7 +104,7 @@ public sealed class PlanReadModel
             EntryCount = dayEntries.Count,
             LoggedCount = dayEntries.Count(e => resolved.Logged.Contains(e.Id)),
             Violations = resolved.Violations.Where(v => v.DayIndex == dayIndex).Select(ToDto).ToList(),
-            Cost = null,
+            Cost = resolved.Cost.DayCosts.GetValueOrDefault(dayIndex),
         };
     }
 
@@ -120,7 +135,7 @@ public sealed class PlanReadModel
                 ? new EntryNutritionDto(Math.Round(n.Calories, 1), Math.Round(n.ProteinGrams, 1), Math.Round(n.CarbsGrams, 1), Math.Round(n.FatGrams, 1), Math.Round(n.FiberGrams, 1))
                 : null,
             Logged = resolved.Logged.Contains(entry.Id),
-            Cost = null,
+            Cost = resolved.Cost.EntryCosts.GetValueOrDefault(entry.Id),
         };
     }
 
@@ -132,12 +147,15 @@ public sealed class PlanReadModel
     private async Task<Resolved> ResolveAsync(MealPlan plan, Guid viewerId, CancellationToken cancellationToken)
     {
         var recipeIds = plan.Entries.Where(e => e.RecipeId.HasValue).Select(e => e.RecipeId!.Value).Distinct().ToList();
-        var recipes = recipeIds.Count == 0
-            ? new Dictionary<Guid, RecipeHead>()
-            : await _context.Recipes.AsNoTracking()
+        // Whole recipes with their lines: the cost scales each line the way the shopping list does.
+        var fullRecipes = recipeIds.Count == 0
+            ? new Dictionary<Guid, Recipe>()
+            : await _context.Recipes.AsNoTracking().Include(r => r.Ingredients)
                 .Where(r => recipeIds.Contains(r.Id))
-                .Select(r => new RecipeHead(r.Id, r.Title, r.ImageUrl, r.Ingredients.Where(i => i.FoodId != null).Select(i => i.FoodId!.Value).ToList()))
                 .ToDictionaryAsync(r => r.Id, cancellationToken);
+        var recipes = fullRecipes.Values.ToDictionary(
+            r => r.Id,
+            r => new RecipeHead(r.Id, r.Title, r.ImageUrl, r.Ingredients.Where(i => i.FoodId != null).Select(i => i.FoodId!.Value).ToList()));
         var perServing = await RecipeNutritionLookup.ForRecipesAsync(_context, recipeIds, cancellationToken);
 
         var foodIds = plan.Entries.Where(e => e.FoodId.HasValue).Select(e => e.FoodId!.Value)
@@ -178,7 +196,11 @@ public sealed class PlanReadModel
         if (plan.AuthoredByUserId is { } authorId)
             authorName = await _context.Users.AsNoTracking().Where(u => u.Id == authorId).Select(u => u.Name).FirstOrDefaultAsync(cancellationToken);
 
-        return new Resolved(recipes, perServing, foods, logged, days, violations, authorName);
+        var region = await _prices.RegionForAsync(viewerId, cancellationToken);
+        var quotes = await _prices.QuotesAsync(foods.Values, region, cancellationToken);
+        var cost = PlanCosting.Cost(entries, plan.DurationDays, fullRecipes, foods, quotes, region.Currency);
+
+        return new Resolved(recipes, perServing, foods, logged, days, violations, authorName, cost, region.Currency);
     }
 
     private sealed record RecipeHead(Guid Id, string Title, string? ImageUrl, List<Guid> FoodIds);
@@ -190,5 +212,7 @@ public sealed class PlanReadModel
         HashSet<Guid> Logged,
         IReadOnlyList<PlanDayNutrition> Days,
         IReadOnlyList<PlanViolation> Violations,
-        string? AuthoredByName);
+        string? AuthoredByName,
+        PlanCost Cost,
+        string Currency);
 }

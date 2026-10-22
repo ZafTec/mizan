@@ -16,6 +16,9 @@ x-backend-environment: &backend-environment
   ASPNETCORE_URLS: http://+:8080
   App__PublicUrl: ${App__PublicUrl:?App__PublicUrl is required}
   Telegram__BotUsername: ${TELEGRAM_BOT_USERNAME:-}
+  # The prices worker, for the admin Run now action. Empty turns Run now off;
+  # with COMPOSE_PROFILES=prices set it to http://mizan-prices:5003.
+  Prices__WorkerUrl: ${Prices__WorkerUrl:-}
   Storage__ServiceUrl: ${STORAGE_SERVICE_URL:?STORAGE_SERVICE_URL is required}
   Storage__Region: ${STORAGE_REGION:-us-east-1}
   Storage__AccessKeyId: ${STORAGE_ACCESS_KEY_ID:?STORAGE_ACCESS_KEY_ID is required}

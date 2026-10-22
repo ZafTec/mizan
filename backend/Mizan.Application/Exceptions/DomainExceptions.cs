@@ -77,3 +77,15 @@ public sealed class AiUnavailableException : DomainException
 {
     public AiUnavailableException(string message) : base(message) { }
 }
+
+/// <summary>The request is valid but the current state or configuration does not allow it. Answered with 409.</summary>
+public sealed class ConflictException : DomainException
+{
+    public ConflictException(string message) : base(message) { }
+}
+
+/// <summary>A service the API depends on did not answer, or answered with an error. Answered with 502.</summary>
+public sealed class UpstreamUnavailableException : DomainException
+{
+    public UpstreamUnavailableException(string message) : base(message) { }
+}
