@@ -131,6 +131,7 @@ public static class DependencyInjection
         services.AddHttpClient(OpenAiCompatibleProvider.HttpClientName);
         services.AddSingleton<IAiProvider, OpenAiCompatibleProvider>();
         services.AddSingleton<IAiCeilings, AiCeilings>();
+        services.AddSingleton<IAiTierDefaults, AiTierDefaults>();
         services.AddScoped<IAiQuotaService, AiQuotaService>();
         services.AddScoped<IAiMeteredClient, MeteredAiClient>();
         services.AddScoped<IDataAccessPolicy, DataAccessPolicy>();

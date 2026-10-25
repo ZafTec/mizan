@@ -1,3 +1,6 @@
+using Mizan.Application.Ai;
+using Mizan.Domain.Usage;
+
 namespace Mizan.Infrastructure.Ai;
 
 /// <summary>
@@ -77,6 +80,24 @@ public class AiOptions
     public long PromptCostPerMillionMicros { get; set; } = 150_000;
 
     public long CompletionCostPerMillionMicros { get; set; } = 600_000;
+
+    /// <summary>
+    /// The tier allowance for a line, before any administrator override
+    /// (IUsageLimits composes those on top). The tiers set no cost caps.
+    /// </summary>
+    /// <summary>The tier allowance for a line, before any override; <c>AiTierDefaults</c> reads it per call.</summary>
+    public UsageLimitValues For(AiQuotaLine line, bool isPro)
+    {
+        var tier = line switch
+        {
+            AiQuotaLine.Eval => Eval,
+            AiQuotaLine.Onboarding => Onboarding,
+            AiQuotaLine.TrainerClient => Trainer,
+            AiQuotaLine.Planning => isPro ? PlanningPro : PlanningFree,
+            _ => isPro ? Pro : Free,
+        };
+        return new UsageLimitValues(tier.DailyRequests, tier.DailyTokens, null, null);
+    }
 }
 
 public class AiTierLimits

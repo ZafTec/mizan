@@ -8,10 +8,13 @@ using Mizan.Application.Interfaces;
 using Mizan.Contracts.Prices;
 using Mizan.Domain.Entities;
 using Mizan.Domain.Pricing;
+using Mizan.Application.Features;
+using Mizan.Domain.Features;
 
 namespace Mizan.Application.Prices;
 
 /// <summary>GET /api/Foods/{id}/price: the price in force for the viewer's region, or an unpriced answer.</summary>
+[RequiresFeature(FeatureFlags.Prices)]
 public record GetFoodPriceQuery(Guid FoodId) : IRequest<FoodPriceQuoteDto>;
 
 public class GetFoodPriceQueryHandler : IRequestHandler<GetFoodPriceQuery, FoodPriceQuoteDto>
@@ -75,6 +78,7 @@ internal static class PriceReports
 /// much. The report records the price they were shown, and every
 /// administrator gets a notification.
 /// </summary>
+[RequiresFeature(FeatureFlags.Prices)]
 public record CreatePriceReportCommand(Guid FoodId, decimal SuggestedPrice, decimal Quantity, string Unit, string? Note) : IRequest<Guid>;
 
 public class CreatePriceReportCommandValidator : AbstractValidator<CreatePriceReportCommand>

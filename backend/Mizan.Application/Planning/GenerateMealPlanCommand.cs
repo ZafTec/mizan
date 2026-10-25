@@ -12,6 +12,8 @@ using Mizan.Application.Interfaces;
 using Mizan.Contracts.Planning;
 using Mizan.Domain.Entities;
 using Mizan.Domain.Planning;
+using Mizan.Application.Features;
+using Mizan.Domain.Features;
 
 namespace Mizan.Application.Planning;
 
@@ -23,6 +25,7 @@ namespace Mizan.Application.Planning;
 /// Nutrition, violations and cost are computed by code. Each draft is saved with status Draft and
 /// its <see cref="PlanGeneration"/>; the person confirms one with the accept route.
 /// </summary>
+[RequiresFeature(FeatureFlags.PlanningGenerate)]
 public record GenerateMealPlanCommand : GenerateMealPlanRequest, IRequest<GenerateMealPlanResult>;
 
 public class GenerateMealPlanCommandValidator : AbstractValidator<GenerateMealPlanCommand>

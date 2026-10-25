@@ -119,6 +119,11 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
     public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
+    // Platform administration: feature flags and allowance overrides (docs/ADMIN.md)
+    public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
+    public DbSet<FeatureFlagOverride> FeatureFlagOverrides => Set<FeatureFlagOverride>();
+    public DbSet<UsageLimitOverride> UsageLimitOverrides => Set<UsageLimitOverride>();
+
     public async Task<T> ExecuteInTransactionAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken = default)
     {
         if (!Database.IsRelational() || Database.CurrentTransaction is not null)
@@ -1710,6 +1715,55 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
             entity.Property(e => e.EventType).HasColumnName("event_type").HasMaxLength(100).IsRequired();
             entity.Property(e => e.ReceivedAt).HasColumnName("received_at").HasDefaultValueSql("NOW()");
             entity.HasIndex(e => e.EventId).IsUnique();
+        });
+
+        // Feature flags: only an administrator's changes are stored; the catalog carries the defaults.
+        modelBuilder.Entity<FeatureFlag>(entity =>
+        {
+            entity.ToTable("feature_flags");
+            entity.HasKey(e => e.Key);
+            entity.Property(e => e.Key).HasColumnName("key").HasMaxLength(64);
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(256).IsRequired();
+            entity.Property(e => e.DefaultEnabled).HasColumnName("default_enabled");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedByUserId).HasColumnName("updated_by_user_id");
+        });
+
+        modelBuilder.Entity<FeatureFlagOverride>(entity =>
+        {
+            entity.ToTable("feature_flag_overrides");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.FlagKey).HasColumnName("flag_key").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.HouseholdId).HasColumnName("household_id");
+            entity.Property(e => e.Enabled).HasColumnName("enabled");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedByUserId).HasColumnName("updated_by_user_id");
+            entity.HasIndex(e => new { e.FlagKey, e.HouseholdId }).IsUnique();
+            entity.HasIndex(e => e.HouseholdId);
+            entity.HasOne(e => e.Household).WithMany()
+                .HasForeignKey(e => e.HouseholdId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Allowance overrides by user, household or billing plan. One row per subject and line;
+        // a null line covers every line, so nulls must not be distinct in the unique index.
+        modelBuilder.Entity<UsageLimitOverride>(entity =>
+        {
+            entity.ToTable("usage_limit_overrides");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.Scope).HasColumnName("scope").HasConversion<int>();
+            entity.Property(e => e.SubjectId).HasColumnName("subject_id");
+            entity.Property(e => e.Line).HasColumnName("line").HasMaxLength(32);
+            entity.Property(e => e.DailyRequests).HasColumnName("daily_requests");
+            entity.Property(e => e.DailyTokens).HasColumnName("daily_tokens");
+            entity.Property(e => e.DailyCostMicros).HasColumnName("daily_cost_micros");
+            entity.Property(e => e.MonthlyCostMicros).HasColumnName("monthly_cost_micros");
+            entity.Property(e => e.Note).HasColumnName("note").HasMaxLength(500);
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedByUserId).HasColumnName("updated_by_user_id");
+            entity.Ignore(e => e.Values);
+            entity.HasIndex(e => new { e.Scope, e.SubjectId, e.Line }).IsUnique().AreNullsDistinct(false);
         });
 
         SeedAchievements(modelBuilder);

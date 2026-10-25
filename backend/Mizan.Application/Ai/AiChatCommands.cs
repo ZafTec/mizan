@@ -6,6 +6,8 @@ using Mizan.Application.Interfaces;
 using Mizan.Application.Ai.Tools;
 using Mizan.Contracts.Ai;
 using Mizan.Domain.Entities;
+using Mizan.Application.Features;
+using Mizan.Domain.Features;
 
 namespace Mizan.Application.Ai;
 
@@ -13,6 +15,7 @@ namespace Mizan.Application.Ai;
 /// One turn. A null thread starts a new one, which is what the first message
 /// on an empty screen does.
 /// </summary>
+[RequiresFeature(FeatureFlags.AiAssistant)]
 public record SendAiChatMessageCommand(
     Guid? ThreadId,
     string Message,

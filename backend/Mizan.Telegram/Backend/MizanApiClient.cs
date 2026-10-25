@@ -199,6 +199,8 @@ public sealed class MizanApiClient
     {
         var request = Service(method, path);
         request.Headers.Add("X-Impersonate-User", userId.ToString());
+        // Holds the bot's writes to the telegram.bot feature flag; the API decides and answers with the message to show.
+        request.Headers.Add(TelegramSurface.Header, TelegramSurface.Value);
         return request;
     }
 }

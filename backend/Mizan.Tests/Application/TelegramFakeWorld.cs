@@ -43,6 +43,12 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
     public HttpStatusCode GenerateStatus { get; set; } = HttpStatusCode.OK;
     /// <summary>The profile's <c>notifyByTelegram</c>; a PUT to <c>api/Users/me</c> changes it the way the API would.</summary>
     public bool NotifyByTelegram { get; set; }
+
+    /// <summary>Plays the API with a feature flag off for the user's household: every write as the user is refused.</summary>
+    public bool FeatureOff { get; set; }
+
+    /// <summary>The surface header on each call the bot made as the user, null where it was missing.</summary>
+    public List<string?> SurfacesSent { get; } = [];
     public string GenerateJson { get; set; } = "{}";
 
     // ---- the meal plan the API holds ----
@@ -262,6 +268,13 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
             if (url.EndsWith("/getFile")) return Json("""{"ok":true,"result":{"file_path":"photos/a.jpg","file_size":3}}""");
             if (url.EndsWith("/sendMessage")) _telegramSends.Add((url, body));
             return Json("""{"ok":true,"result":{}}""");
+        }
+
+        if (request.Headers.Contains("X-Impersonate-User"))
+        {
+            SurfacesSent.Add(request.Headers.TryGetValues("X-Mizan-Surface", out var surface) ? surface.Single() : null);
+            if (FeatureOff && request.Method != HttpMethod.Get)
+                return Json("""{"errorCode":"feature_disabled","error":"This feature is turned off for your household.","feature":"telegram.bot"}""", HttpStatusCode.Forbidden);
         }
 
         if (url.EndsWith("api/Telegram/sessions"))

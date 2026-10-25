@@ -98,6 +98,10 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
             "admin_update_ai_prompt_draft", "admin_run_ai_prompt_evals",
             "admin_get_ai_prompt_evals", "admin_publish_ai_prompt_version",
             "admin_get_global_ai_usage",
+            // Feature flags, allowance overrides and platform usage
+            "admin_list_feature_flags", "admin_set_feature_flag", "admin_set_feature_flag_override",
+            "admin_clear_feature_flag_override", "admin_list_usage_limits", "admin_set_usage_limit",
+            "admin_clear_usage_limit", "admin_get_platform_usage",
             // Background queue
             "admin_list_jobs", "admin_get_job_stats", "admin_retry_job", "admin_delete_job",
             // Runtime settings
@@ -346,6 +350,29 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
             .Should().Contain("Called about billing.");
         (await CallAsync("admin_list_support_notes", new { subjectType = "User", subjectId = subject.ToString() }))
             .Should().Contain("Called about billing.");
+    }
+
+    [Fact]
+    public async Task AnAdminSwitchesAFeatureOffForAHousehold_CapsAUser_AndReadsUsage_ThroughTools()
+    {
+        await _api.ResetDatabaseAsync();
+        await AuthenticateAsync(admin: true);
+        var world = new PlatformAdminWorld(_api);
+        var (person, _) = await world.PersonAsync("member");
+        var home = await world.HouseholdAsync("Home", person);
+
+        (await CallAsync("admin_set_feature_flag_override", new { key = "social.feed", householdId = home.ToString(), enabled = false }))
+            .Should().Contain("\"enabled\":false");
+        (await CallAsync("admin_list_feature_flags", new { })).Should().Contain("\"disabledOverrides\":1");
+        (await CallAsync("admin_set_usage_limit", new { scope = "User", subjectId = person.ToString(), line = "Personal", dailyRequests = 2 }))
+            .Should().Contain("\"source\":\"User\"");
+        (await CallAsync("admin_list_usage_limits", new { scope = "User" })).Should().Contain(person.ToString());
+        (await CallAsync("admin_get_platform_usage", new { groupBy = "feature" })).Should().Contain("\"groupBy\":\"feature\"");
+        (await CallAsync("admin_clear_usage_limit", new { scope = "User", subjectId = person.ToString(), line = "Personal" }))
+            .Should().NotContain("error");
+        (await CallAsync("admin_clear_feature_flag_override", new { key = "social.feed", householdId = home.ToString() }))
+            .Should().NotContain("error");
+        (await CallAsync("admin_set_feature_flag", new { key = "social.feed", enabled = true })).Should().Contain("\"defaultEnabled\":true");
     }
 
     // ---- Helpers ----------------------------------------------------------

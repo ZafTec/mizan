@@ -31,6 +31,12 @@ public static class CacheTags
     /// <summary>The user's reads priced in their region. Cleared when they switch region.</summary>
     public static string PriceRegion(Guid userId) => $"price-region:{userId}";
 
+    /// <summary>Stored flag defaults and household overrides. Global and small; cleared by every flag write.</summary>
+    public const string FeatureFlags = "feature-flags";
+
+    /// <summary>Every allowance override, read on each reservation. Cleared by every override write.</summary>
+    public const string UsageLimits = "usage-limits";
+
     public static string UserStatus(Guid userId) => $"user:{userId}";
     public static string Entitlement(Guid userId) => $"entitlement:{userId}";
 
