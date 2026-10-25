@@ -13,6 +13,7 @@ import {
   updateMealPlan,
   updatePlanEntry,
   updatePrepSession,
+  updateTemplate,
   type MealPlanDetail,
   type PlanEntry,
   type PlanEntryRequest,
@@ -24,6 +25,7 @@ import {
   formatPlanDate,
   parsePlanForm,
   parseRules,
+  parseTemplateForm,
   rulesToForm,
   slotLabel,
   type PlanFormErrors,
@@ -443,15 +445,20 @@ function SessionForm({
  * Everything on a plan a person may change: its name and dates, its rules,
  * the entries of each day and the cooking sessions. Each write goes to the
  * API and the plan is read back, so totals and violations stay the API's.
+ * A template is edited here too: it has no start date, and its name, length
+ * and rules go through the templates route, while its entries and sessions
+ * use the same routes as a plan's. `back` is where the title links to.
  */
 export default function PlanEditor({
   plan: initialPlan,
   today,
   foodNames,
+  back,
 }: {
   plan: MealPlanDetail;
   today: string;
   foodNames: Record<string, string>;
+  back?: { href: string; label: string };
 }) {
   const router = useRouter();
   const id = useId();
@@ -475,15 +482,45 @@ export default function PlanEditor({
     { kind: "new" } | { kind: "session"; session: PrepSession } | null
   >(null);
   const day = plan.days.find((d) => d.dayIndex === dayIndex) ?? plan.days[0];
-  const planName = plan.name || "Meal plan";
+  const isTemplate = plan.kind === "Template";
+  const planName = plan.name || (isTemplate ? "Template" : "Meal plan");
+  const backLink = back ?? { href: `/meal-plan/${plan.id}`, label: planName };
 
   const reload = async () => {
     setPlan(await getMealPlan(plan.id));
     router.refresh();
   };
 
+  const saveTemplate = async () => {
+    const parsed = parseTemplateForm({ name, durationDays });
+    const parsedRules = parseRules(rules);
+    setPlanErrors(parsed.errors ?? {});
+    setRulesErrors(parsedRules.errors ?? {});
+    if (parsed.errors || parsedRules.errors) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await updateTemplate(plan.id, {
+        name: parsed.template.name,
+        description: description.trim() || null,
+        durationDays: parsed.template.durationDays,
+        rules: parsedRules.rules,
+      });
+      appToast.success("Template saved");
+      await reload();
+    } catch (error) {
+      setSaveError(getErrorMessage(error, "Could not save the template"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const savePlan = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (isTemplate) {
+      await saveTemplate();
+      return;
+    }
     const parsedPlan = parsePlanForm({ name, startDate, durationDays });
     const parsedRules = parseRules(rules);
     setPlanErrors(parsedPlan.errors ?? {});
@@ -495,7 +532,7 @@ export default function PlanEditor({
       await updateMealPlan(plan.id, {
         name: parsedPlan.plan.name || null,
         description: description.trim() || null,
-        startDate: plan.kind === "Template" ? null : parsedPlan.plan.startDate,
+        startDate: parsedPlan.plan.startDate,
         durationDays: parsedPlan.plan.durationDays,
         rules: parsedRules.rules,
       });
@@ -568,11 +605,13 @@ export default function PlanEditor({
     <div className="log-page space-y-10" data-testid="meal-plan-edit-page">
       <header className="log-page-header block!">
         <p className="text-sm">
-          <Link href={`/meal-plan/${plan.id}`} className="text-link">
-            {planName}
+          <Link href={backLink.href} className="text-link">
+            {backLink.label}
           </Link>
         </p>
-        <h1 className="mt-1">Edit plan</h1>
+        <h1 className="mt-1">
+          {isTemplate ? `Edit ${planName}` : "Edit plan"}
+        </h1>
       </header>
 
       <form onSubmit={savePlan} className="space-y-6" noValidate>
@@ -605,7 +644,7 @@ export default function PlanEditor({
               onChange={(event) => setDescription(event.target.value)}
             />
           </div>
-          {plan.kind !== "Template" && (
+          {!isTemplate && (
             <div>
               <label htmlFor={`${id}-start`} className="label">
                 Start date
@@ -663,7 +702,7 @@ export default function PlanEditor({
           className="btn-primary min-h-11 w-full sm:w-auto"
           disabled={saving}
         >
-          Save plan
+          {isTemplate ? "Save template" : "Save plan"}
         </button>
       </form>
 

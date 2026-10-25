@@ -4,6 +4,7 @@ import {
   emptyRulesForm,
   parsePlanForm,
   parseRules,
+  parseTemplateForm,
   rulesToForm,
   type RulesFormValues,
 } from "./rules";
@@ -176,6 +177,23 @@ describe("the plan form", () => {
         durationDays: 7,
       }).plan,
     ).toEqual({ name: "Week", startDate: "2026-10-20", durationDays: 7 });
+  });
+});
+
+describe("the template form", () => {
+  it.each([
+    [{ name: "", durationDays: "7" }, "name", /a name/],
+    [{ name: "   ", durationDays: "7" }, "name", /a name/],
+    [{ name: "Keto week", durationDays: "0" }, "durationDays", /at least/],
+    [{ name: "Keto week", durationDays: "40" }, "durationDays", /at most 31/],
+  ] as const)("refuses %o", (values, field, message) => {
+    expect(parseTemplateForm(values).errors?.[field]).toMatch(message);
+  });
+
+  it("needs no start date", () => {
+    expect(
+      parseTemplateForm({ name: " Keto week ", durationDays: "5" }).template,
+    ).toEqual({ name: "Keto week", durationDays: 5 });
   });
 });
 

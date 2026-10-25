@@ -63,6 +63,29 @@ export async function getPlanDayServer(
 export const listTemplatesServer = () =>
   serverApi<Template[]>("/api/MealPlans/templates");
 
+/**
+ * The names of the foods a plan's rules hold by id, for the rules form. A
+ * food that cannot be read still shows as "Food"; the rule is kept as it is.
+ */
+export async function foodNamesServer(
+  ids: string[],
+): Promise<Record<string, string>> {
+  const names: Record<string, string> = {};
+  await Promise.all(
+    [...new Set(ids)].map(async (id) => {
+      try {
+        const food = await serverApi<components["schemas"]["FoodDto"]>(
+          `/api/Foods/${id}`,
+        );
+        if (food?.name) names[id] = food.name;
+      } catch {
+        // Left out; the form falls back to "Food".
+      }
+    }),
+  );
+  return names;
+}
+
 export type MyHouseholds = components["schemas"]["GetMyHouseholdsResult"];
 
 /** The active household, when the person is in one, so a plan can be shared with it. */

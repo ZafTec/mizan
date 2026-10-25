@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ClientList } from "@/components/trainer/ClientList";
 import { TrainerPendingRequests } from "@/components/trainer/TrainerPendingRequests";
 
@@ -13,6 +14,12 @@ export default function TrainerDashboard() {
             Trainer dashboard
           </h1>
         </div>
+        <Link
+          href="/trainer/templates"
+          className="btn-secondary min-h-11 self-start sm:self-auto"
+        >
+          Meal plan templates
+        </Link>
       </header>
 
       <section className="glass-panel p-6 sm:p-8">

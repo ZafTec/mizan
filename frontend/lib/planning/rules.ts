@@ -224,6 +224,35 @@ export function parsePlanForm(values: {
   return { plan: null, errors };
 }
 
+/** Name and length of a template. A template has no dates, and the API needs its name. */
+export const templateSchema = planSchema.pick({ durationDays: true }).extend({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Give the template a name")
+    .max(120, "Keep the name under 120 characters"),
+});
+
+export type TemplateFormErrors = Partial<
+  Record<"name" | "durationDays", string>
+>;
+
+export function parseTemplateForm(values: {
+  name: string;
+  durationDays: string | number;
+}):
+  | { template: z.infer<typeof templateSchema>; errors: null }
+  | { template: null; errors: TemplateFormErrors } {
+  const result = templateSchema.safeParse(values);
+  if (result.success) return { template: result.data, errors: null };
+  const errors: TemplateFormErrors = {};
+  for (const issue of result.error.issues) {
+    const key = issue.path[0] as keyof TemplateFormErrors | undefined;
+    if (key && !errors[key]) errors[key] = issue.message;
+  }
+  return { template: null, errors };
+}
+
 /** What an entry is called in a list: the recipe, the food with its weight, or the line of text. */
 export function entryTitle(entry: PlanEntry): string {
   if (entry.kind === "Recipe") return entry.recipeTitle ?? "Recipe";
