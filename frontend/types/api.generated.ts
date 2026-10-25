@@ -9242,6 +9242,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Trainers/clients/{clientId}/meal-plans/from-template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    clientId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ApplyTemplateForClientRequest"];
+                    "text/json": components["schemas"]["ApplyTemplateForClientRequest"];
+                    "application/*+json": components["schemas"]["ApplyTemplateForClientRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MealPlanCreatedResult"];
+                        "application/json": components["schemas"]["MealPlanCreatedResult"];
+                        "text/json": components["schemas"]["MealPlanCreatedResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Trainers/clients/{clientId}/workouts": {
         parameters: {
             query?: never;
@@ -10364,6 +10409,13 @@ export interface components {
         };
         AnalyzeFoodTextRequest: {
             description?: string | null;
+        };
+        ApplyTemplateForClientRequest: {
+            /** Format: uuid */
+            templateId: string;
+            /** Format: date */
+            startDate: string;
+            name?: string | null;
         };
         ApplyTemplateRequest: {
             /** Format: date */

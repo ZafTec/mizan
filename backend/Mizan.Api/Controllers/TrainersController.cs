@@ -172,6 +172,20 @@ public class TrainersController : ControllerBase
         return Created($"/api/MealPlans/{result.Id}", result);
     }
 
+    /// <summary>
+    /// A coach drafts a client's plan from a template (their own or a global one).
+    /// The copy is the client's draft, as with a plan written by hand.
+    /// </summary>
+    [HttpPost("clients/{clientId:guid}/meal-plans/from-template")]
+    [Authorize(Policy = "RequireTrainer")]
+    public async Task<ActionResult<MealPlanCreatedResult>> ApplyTemplateForClient(Guid clientId, [FromBody] ApplyTemplateForClientRequest request)
+    {
+        var result = await _mediator.Send(new ApplyTemplateForClientCommand(clientId, request.TemplateId, request.StartDate, request.Name));
+        _logger.LogInformation("Trainer {TrainerId} drafted plan {PlanId} for client {ClientId} from template {TemplateId}",
+            _currentUser.UserId, result.Id, clientId, request.TemplateId);
+        return Created($"/api/MealPlans/{result.Id}", result);
+    }
+
     [HttpGet("clients/{clientId:guid}/workouts")]
     [Authorize(Policy = "RequireTrainer")]
     public async Task<ActionResult<PagedResult<WorkoutSummaryDto>>> GetClientWorkouts(Guid clientId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)

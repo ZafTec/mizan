@@ -50,27 +50,34 @@ public class ApplyTemplateCommandHandler : IRequestHandler<ApplyTemplateCommand,
         if (request.HouseholdId.HasValue && !await _households.CanAccessAsync(request.HouseholdId.Value, cancellationToken))
             throw new ForbiddenAccessException("You are not a member of this household");
 
-        var plan = Copy(template, userId, request);
+        var plan = Copy(template, userId, request.StartDate, request.Name, request.HouseholdId, PlanStatus.Active, authoredBy: null);
         _context.MealPlans.Add(plan);
         await _context.SaveChangesAsync(cancellationToken);
         await PlanAccess.InvalidateAsync(_cache, plan, cancellationToken);
         return new MealPlanCreatedResult(plan.Id, plan.Name, plan.Status.ToString(), plan.Entries.Count);
     }
 
-    /// <summary>A deep copy with new ids. Pure so a test can hold it to the template.</summary>
-    public static MealPlan Copy(MealPlan template, Guid userId, ApplyTemplateCommand request)
+    /// <summary>
+    /// A deep copy with new ids into a personal plan of <paramref name="ownerId"/>.
+    /// A person applying a template gets an active plan; a coach applying one for
+    /// a client gets a draft that names the coach as its author. Pure so a test
+    /// can hold it to the template.
+    /// </summary>
+    public static MealPlan Copy(
+        MealPlan template, Guid ownerId, DateOnly startDate, string? name, Guid? householdId, PlanStatus status, Guid? authoredBy)
     {
         var now = DateTime.UtcNow;
         var plan = new MealPlan
         {
             Id = Guid.NewGuid(),
-            UserId = userId,
-            HouseholdId = request.HouseholdId,
+            UserId = ownerId,
+            HouseholdId = householdId,
+            AuthoredByUserId = authoredBy,
             Kind = PlanKind.Personal,
-            Status = PlanStatus.Active,
-            Name = string.IsNullOrWhiteSpace(request.Name) ? template.Name : request.Name.Trim(),
+            Status = status,
+            Name = string.IsNullOrWhiteSpace(name) ? template.Name : name.Trim(),
             Description = template.Description,
-            StartDate = request.StartDate,
+            StartDate = startDate,
             DurationDays = template.DurationDays,
             Rules = PlanRulesMapping.ToDomain(PlanRulesMapping.ToDto(template.Rules)),
             CreatedAt = now,

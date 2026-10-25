@@ -124,3 +124,11 @@ public record ApplyTemplateRequest
     public Guid? HouseholdId { get; init; }
     public string? Name { get; init; }
 }
+
+/// <summary>Body of POST /api/Trainers/clients/{clientId}/meal-plans/from-template: a coach's template copied into a draft for the client.</summary>
+public record ApplyTemplateForClientRequest
+{
+    public Guid TemplateId { get; init; }
+    public DateOnly StartDate { get; init; }
+    public string? Name { get; init; }
+}
