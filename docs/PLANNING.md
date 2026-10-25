@@ -56,6 +56,7 @@ Entries use a day index, not a date. `Date = StartDate + DayIndex`. A template c
 | `EatingWindowStart`, `EatingWindowEnd` | time, nullable | Shown on the plan. `EatingWindowEnd` drives the evening reminder. |
 | `AllowedFoodIds`, `ForbiddenFoodIds` | Guid lists | A forbidden food in an entry is a violation. An allow list makes every other food a violation. |
 | `WeeklyBudget`, `Currency` | decimal, 3-letter code | The ceiling for costing. |
+| `DailyBudget` | decimal, in `Currency` | The ceiling for one day's cost. A day over it is marked and is a `daily_budget_over` violation. |
 | `PrepStyle`, `BatchDays` | `Daily`, `Batch`, plus day indexes | `Batch` groups entries into prep sessions on the given days. |
 
 `PlanRuleCheck` in Domain evaluates a plan and returns violations: day, slot, rule, message. The web page, the MCP tool result, and Telegram show the same list.
@@ -165,7 +166,7 @@ Administrators manage regions, sources, aliases, the review queue, and manual pr
 ### Where prices show
 
 - The food page (`/ingredients/[id]`) shows the price for the user's region as the API quotes it: the listed price and amount, the price per kg, the confidence (Estimated reads as a rough guess), the source and the date. **Report a wrong price** opens a dialog (price, quantity, unit, note).
-- The plan page shows the weekly cost against `WeeklyBudget` in the facts strip, marked when over budget, with the share priced and the confidence; each day shows its cost, and the unpriced items are listed below the plan.
+- The plan page shows the weekly cost against `WeeklyBudget` in the facts strip, marked when over budget, with the share priced and the confidence; each day shows its cost, against `DailyBudget` and marked when the API says it is over, and the unpriced items are listed below the plan.
 - The shopping list shows a cost after each item's amount and a total with its confidence and the count without a price.
 - The region is chosen under Prices on `/profile/settings`. When the API sends a null cost (a region without prices), no cost element shows. The web does no price arithmetic: `formatMoney` in `lib/prices/format.ts` only formats the API's numbers.
 
@@ -189,7 +190,7 @@ Where the implementation settled details the design left open:
 
 - An observation finds its alias by `productKey`, then by `productName`. The alias's quantity and unit win over the listing's. A mapped alias without a usable quantity, and an unknown product, are queued; an ignored alias or a price in another currency is ignored. Every sighting updates `lastSeen*`.
 - Costing runs `ShoppingAggregator` then `PlanCostCalculator` (`PlanCosting` in Domain) over the whole plan, each day and each entry, so the plan and its list agree. `weeklyCost` is the total over `durationDays` times seven. `overBudget` is null without a budget or when the budget is in another currency. A day or entry with nothing priced has a null cost.
-- `GET /api/MealPlans/{id}` adds `currency`, `totalCost`, `weeklyCost`, `overBudget`, `costCoverage`, `costConfidence` (the lowest used) and `unpricedItems`. The plan day adds `currency`. A shopping list adds `currency`, `totalCost`, `costCoverage`, `costConfidence`, `unpricedCount`, and per item `cost`, `costConfidence`, `unpricedReason`. These reads carry the `prices` cache tag, cleared by every price write, and the viewer's `price-region` tag, cleared when they switch.
+- `GET /api/MealPlans/{id}` adds `currency`, `totalCost`, `weeklyCost`, `overBudget`, `costCoverage`, `costConfidence` (the lowest used) and `unpricedItems`. The plan day adds `currency` and `overBudget`, true when the day's cost is over `DailyBudget` (null without one, without a cost, or in another currency). A shopping list adds `currency`, `totalCost`, `costCoverage`, `costConfidence`, `unpricedCount`, and per item `cost`, `costConfidence`, `unpricedReason`. These reads carry the `prices` cache tag, cleared by every price write, and the viewer's `price-region` tag, cleared when they switch.
 - There is no seed at migration time: the catalogue foods do not exist then. `POST /api/admin/prices/seed-staples` writes the 33 Addis Ababa staples in `AddisAbabaStaplePrices` as `Estimated` ETB prices for the catalogue foods whose names match, skips foods that already have an estimate, and returns the names it could not match.
 - MCP: `get_food_price`, `report_food_price` (nutrition scopes) and `admin_list_price_sources`, `admin_run_price_source`, `admin_list_price_review_queue`, `admin_update_price_alias`, `admin_add_manual_price`, `admin_list_price_reports`, `admin_resolve_price_report`. Telegram: `PlanCostText` formats the cost lines for `/plan` and `/shop`.
 
@@ -226,6 +227,7 @@ New chat tools, all through existing commands: `generate_meal_plan`, `get_plan_d
 Settled details:
 
 - Each budget ceiling is one draft named with its budget. With no ceiling, one draft is made against `Rules.WeeklyBudget`, in the rules' currency or the price region's.
+- `dailyBudget` on the request (or `Rules.DailyBudget`) applies to every draft, in the same currency as the ceilings. The prompt names it, and `PlanRuleCheck` marks each day of the draft over it as it checks the week against the weekly one. MCP `generate_meal_plan` and the chat tool take `dailyBudget`; the `/plan` card's cost line says when the day is over it.
 - A generated plan runs 1 to 14 days. A day keeps at most ten entries; grams are capped at 2,000 and servings at 0.25 to 20.
 - The draft's cost is in the person's price region (`ET-AA` by default). The weekly figure is checked against the budget only when the currencies agree. `PlanReadModel` costs every plan read, so `GET /api/MealPlans/{id}` of a saved draft returns the same `weeklyCost`, `overBudget`, coverage and day costs as the generate response.
 - The assistant's update and remove tools carry `DraftOnly`, so they cannot change a plan the person follows.

@@ -106,6 +106,8 @@ public sealed class PlanReadModel
             LoggedCount = dayEntries.Count(e => resolved.Logged.Contains(e.Id)),
             Violations = resolved.Violations.Where(v => v.DayIndex == dayIndex).Select(ToDto).ToList(),
             Cost = resolved.Cost.DayCosts.GetValueOrDefault(dayIndex),
+            OverBudget = PlanCosting.OverBudget(
+                resolved.Cost.DayCosts.GetValueOrDefault(dayIndex), plan.Rules.DailyBudget, plan.Rules.Currency, resolved.Currency),
         };
     }
 
@@ -198,11 +200,12 @@ public sealed class PlanReadModel
         var quotes = await _prices.QuotesAsync(foods.Values, region, cancellationToken);
         var cost = PlanCosting.Cost(entries, plan.DurationDays, fullRecipes, foods, quotes, region.Currency);
 
-        // The budget rule compares like with like: a budget in another currency is not checked.
-        var comparableWeeklyCost = string.Equals(plan.Rules.Currency, region.Currency, StringComparison.OrdinalIgnoreCase)
-            ? cost.WeeklyCost
-            : null;
-        var violations = PlanRuleCheck.Evaluate(plan.Rules, entries, days, foodIdsByEntry, foodNames, comparableWeeklyCost);
+        // The budget rules compare like with like: a budget in another currency is not checked.
+        var sameCurrency = string.Equals(plan.Rules.Currency, region.Currency, StringComparison.OrdinalIgnoreCase);
+        var violations = PlanRuleCheck.Evaluate(
+            plan.Rules, entries, days, foodIdsByEntry, foodNames,
+            sameCurrency ? cost.WeeklyCost : null,
+            sameCurrency ? cost.DayCosts : null);
 
         string? authorName = null;
         if (plan.AuthoredByUserId is { } authorId)

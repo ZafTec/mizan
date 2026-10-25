@@ -242,6 +242,7 @@ export function initialPlanning(
       prepStyle: "Batch",
       batchDays: [0],
       weeklyBudget: 600,
+      dailyBudget: 120,
       currency: "ETB",
     },
     prepSessions: [
@@ -565,6 +566,29 @@ function dayDto(
     return { slot, entries: slotEntries, totals: sumNutrition(slotEntries) };
   });
   const totals = sumNutrition(entries);
+  const cost = costSummary(
+    aggregate(
+      plan,
+      host,
+      plan.entries.filter((entry) => entry.dayIndex === dayIndex),
+    ),
+    host,
+  );
+  // PlanCosting.OverBudget for the day: null without a budget, a cost, or one currency.
+  const overBudget =
+    cost.total === null ||
+    plan.rules.dailyBudget == null ||
+    plan.rules.currency?.toUpperCase() !== cost.currency
+      ? null
+      : cost.total > plan.rules.dailyBudget;
+  const violations = violationsFor(plan, entries, totals, dayIndex);
+  if (overBudget)
+    violations.push({
+      dayIndex,
+      slot: null,
+      rule: "daily_budget_over",
+      message: `${cost.total?.toFixed(2)} ${cost.currency} this day is over the ${plan.rules.dailyBudget?.toFixed(2)} ${cost.currency} daily budget.`,
+    });
   return {
     dayIndex,
     date: plan.startDate ? addDays(plan.startDate, dayIndex) : null,
@@ -573,15 +597,9 @@ function dayDto(
     unresolvedCount: entries.filter((entry) => !entry.nutrition).length,
     entryCount: entries.length,
     loggedCount: entries.filter((entry) => entry.logged).length,
-    violations: violationsFor(plan, entries, totals, dayIndex),
-    cost: costSummary(
-      aggregate(
-        plan,
-        host,
-        plan.entries.filter((entry) => entry.dayIndex === dayIndex),
-      ),
-      host,
-    ).total,
+    violations,
+    cost: cost.total,
+    overBudget,
   };
 }
 

@@ -31,6 +31,9 @@ public class PlanRules
     /// <summary>The weekly ceiling for costing, in <see cref="Currency"/>.</summary>
     public decimal? WeeklyBudget { get; set; }
 
+    /// <summary>The ceiling for one day's cost, in <see cref="Currency"/>.</summary>
+    public decimal? DailyBudget { get; set; }
+
     /// <summary>ISO 4217 code, for example ETB.</summary>
     public string? Currency { get; set; }
 
@@ -47,7 +50,7 @@ public class PlanRules
         || TargetCalories.HasValue || TargetProtein.HasValue || MaxCarbs.HasValue || TargetFat.HasValue
         || EatingWindowStart.HasValue || EatingWindowEnd.HasValue
         || AllowedFoodIds.Count > 0 || ForbiddenFoodIds.Count > 0
-        || WeeklyBudget.HasValue
+        || WeeklyBudget.HasValue || DailyBudget.HasValue
         || PrepStyle != PrepStyle.Daily;
 
     /// <summary>
@@ -63,6 +66,8 @@ public class PlanRules
         if (TargetFat is < 0) problems.Add("Target fat cannot be negative.");
         if (WeeklyBudget is < 0) problems.Add("Weekly budget cannot be negative.");
         if (WeeklyBudget.HasValue && string.IsNullOrWhiteSpace(Currency)) problems.Add("A weekly budget needs a currency.");
+        if (DailyBudget is < 0) problems.Add("Daily budget cannot be negative.");
+        if (DailyBudget.HasValue && string.IsNullOrWhiteSpace(Currency)) problems.Add("A daily budget needs a currency.");
         if (Currency is { Length: not 3 }) problems.Add("Currency must be a three-letter code.");
         if (EatingWindowStart.HasValue != EatingWindowEnd.HasValue) problems.Add("An eating window needs both a start and an end.");
         if (EatingWindowStart.HasValue && EatingWindowEnd.HasValue && EatingWindowStart >= EatingWindowEnd) problems.Add("The eating window must end after it starts.");

@@ -18,6 +18,18 @@ public class TelegramPlanCostTextTests
     }
 
     [Theory]
+    [InlineData(true, "Cost: 245.50 ETB, over the 200.00 ETB daily budget")]
+    [InlineData(false, "Cost: 245.50 ETB")]
+    [InlineData(null, "Cost: 245.50 ETB")]
+    public void ADayTheApiMarkedOverItsDailyBudget_SaysSo(bool? over, string expected) =>
+        PlanCostText.Day(new PlanDayViewDto
+        {
+            Currency = "ETB",
+            Rules = new PlanRulesDto { DailyBudget = 200, Currency = "ETB" },
+            Day = new PlanDayDto { Cost = 245.5m, OverBudget = over },
+        }).Should().Be(expected);
+
+    [Theory]
     [InlineData(340.5, "Observed", 0, "Total: 340.50 ETB")]
     [InlineData(340.5, "Estimated", 1, "Total: 340.50 ETB (estimated), 1 item without a price")]
     [InlineData(12d, "Reported", 3, "Total: 12.00 ETB, 3 items without a price")]

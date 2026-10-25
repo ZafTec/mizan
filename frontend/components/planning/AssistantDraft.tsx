@@ -277,6 +277,24 @@ export default function AssistantDraft({ today }: { today: string }) {
             )}
           </div>
           <div>
+            <label htmlFor={`${id}-daily-budget`} className="label">
+              Daily budget (optional)
+            </label>
+            <input
+              id={`${id}-daily-budget`}
+              type="text"
+              inputMode="decimal"
+              className="input num w-full"
+              value={values.dailyBudget}
+              onChange={(event) => set("dailyBudget")(event.target.value)}
+              aria-describedby={`${id}-budget-hint`}
+              aria-invalid={errors.dailyBudget ? true : undefined}
+            />
+            {errors.dailyBudget && (
+              <p className="input-error mt-1 text-sm">{errors.dailyBudget}</p>
+            )}
+          </div>
+          <div>
             <label htmlFor={`${id}-preference`} className="label">
               What you would like (optional)
             </label>

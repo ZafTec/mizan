@@ -82,7 +82,8 @@ public static class AiPromptDefaults
         plan cheaper or simpler to cook; when the prep style is batch, put
         cooking in prep sessions on the batch days and point the entries at them.
 
-        Stay under the weekly budget using the listed prices. Do not write
+        Stay under the weekly budget, and under the daily budget on every day
+        when there is one, using the listed prices. Do not write
         calories, macros, prices or totals anywhere: code computes them from what
         you choose. Keep the note to one sentence about how the plan meets the
         request. Answer only with the JSON object.

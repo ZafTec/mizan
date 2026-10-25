@@ -42,13 +42,14 @@ public static class PlanCosting
     public static decimal? PricedTotal(CostSummary summary) => summary.PricedItems == 0 ? null : summary.Total;
 
     /// <summary>
-    /// Whether a weekly cost is over the plan's budget. Null when there is no
+    /// Whether a cost is over a budget for the same span: a week's cost against
+    /// the weekly budget, a day's against the daily one. Null when there is no
     /// budget, no cost, or the budget is in another currency: amounts in two
     /// currencies are not compared.
     /// </summary>
-    public static bool? OverBudget(decimal? weeklyCost, decimal? weeklyBudget, string? budgetCurrency, string currency)
+    public static bool? OverBudget(decimal? spanCost, decimal? spanBudget, string? budgetCurrency, string currency)
     {
-        if (weeklyCost is not { } cost || weeklyBudget is not { } budget) return null;
+        if (spanCost is not { } cost || spanBudget is not { } budget) return null;
         if (!string.Equals(budgetCurrency, currency, StringComparison.OrdinalIgnoreCase)) return null;
         return cost > budget;
     }

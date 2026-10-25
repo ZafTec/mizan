@@ -113,6 +113,7 @@ public sealed class PlanMeHandler
         var cost = draft.Cost;
         text.Append(CultureInfo.InvariantCulture, $"About <b>{cost.WeeklyTotal:#,0.##} {Escape(cost.Currency)}</b> a week");
         if (draft.BudgetCeiling is { } budget) text.Append(CultureInfo.InvariantCulture, $" (budget {budget:#,0.##})");
+        if (plan.Rules.DailyBudget is { } daily) text.Append(CultureInfo.InvariantCulture, $", at most {daily:#,0.##} a day");
         if (cost.TotalItems > 0) text.Append(CultureInfo.InvariantCulture, $", {cost.PricedItems} of {cost.TotalItems} items priced");
         text.Append('\n');
 

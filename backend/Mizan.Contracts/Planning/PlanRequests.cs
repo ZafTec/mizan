@@ -17,6 +17,9 @@ public record PlanRulesDto
     public List<Guid> AllowedFoodIds { get; init; } = [];
     public List<Guid> ForbiddenFoodIds { get; init; } = [];
     public decimal? WeeklyBudget { get; init; }
+
+    /// <summary>The ceiling for one day's cost, in <c>Currency</c> like the weekly budget.</summary>
+    public decimal? DailyBudget { get; init; }
     public string? Currency { get; init; }
     public string PrepStyle { get; init; } = "Daily";
     public List<int> BatchDays { get; init; } = [];

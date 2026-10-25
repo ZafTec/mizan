@@ -57,6 +57,8 @@ test("a person creates an empty plan from the form and lands on its detail", asy
   await page.getByLabel("Start date").fill(today);
   await page.getByLabel("Length (days)").fill("5");
   await page.getByLabel("Calories (kcal)").fill("1900");
+  await page.getByLabel("Daily budget").fill("150");
+  await page.getByLabel("Currency").fill("etb");
   await page.getByRole("button", { name: "Create plan" }).click();
 
   await page.waitForURL(/\/meal-plan\/[0-9a-f-]{36}$/);
@@ -73,7 +75,13 @@ test("a person creates an empty plan from the form and lands on its detail", asy
     name: "Cut week",
     startDate: today,
     durationDays: 5,
-    rules: { targetCalories: 1900, macroMode: "None", prepStyle: "Daily" },
+    rules: {
+      targetCalories: 1900,
+      macroMode: "None",
+      prepStyle: "Daily",
+      dailyBudget: 150,
+      currency: "ETB",
+    },
     entries: [],
   });
   expect(s.unhandled).toEqual([]);

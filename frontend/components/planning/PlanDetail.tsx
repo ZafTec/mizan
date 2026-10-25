@@ -381,6 +381,22 @@ export default function PlanDetail({
               <p className="num -mt-4 text-sm" data-testid="day-cost">
                 <span className="log-muted">Cost of the day </span>
                 {formatMoney(day.cost, plan.currency)}
+                {plan.rules.dailyBudget != null && (
+                  <span className="log-muted">
+                    {" "}
+                    of{" "}
+                    {formatMoney(
+                      plan.rules.dailyBudget,
+                      plan.rules.currency ?? plan.currency,
+                    )}
+                  </span>
+                )}
+                {day.overBudget === true && (
+                  <span className="font-medium text-destructive">
+                    {" "}
+                    · Over the daily budget
+                  </span>
+                )}
               </p>
             )}
             {day.entryCount === 0 ? (

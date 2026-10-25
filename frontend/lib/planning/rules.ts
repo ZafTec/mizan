@@ -27,6 +27,7 @@ export type RulesFormValues = {
   eatingWindowStart: string;
   eatingWindowEnd: string;
   weeklyBudget: string;
+  dailyBudget: string;
   currency: string;
   prepStyle: string;
   batchDays: number[];
@@ -64,6 +65,7 @@ export const rulesSchema = z
     eatingWindowStart: timeText,
     eatingWindowEnd: timeText,
     weeklyBudget: optionalNumber("Weekly budget", 1_000_000),
+    dailyBudget: optionalNumber("Daily budget", 1_000_000),
     currency: z
       .string()
       .trim()
@@ -84,7 +86,10 @@ export const rulesSchema = z
         path: ["eatingWindowEnd"],
         message: "An eating window needs both a start and an end",
       });
-    if (value.weeklyBudget !== null && value.currency === null)
+    if (
+      (value.weeklyBudget !== null || value.dailyBudget !== null) &&
+      value.currency === null
+    )
       context.addIssue({
         code: "custom",
         path: ["currency"],
@@ -134,6 +139,7 @@ export function parseRules(
       eatingWindowStart: value.eatingWindowStart,
       eatingWindowEnd: value.eatingWindowEnd,
       weeklyBudget: value.weeklyBudget,
+      dailyBudget: value.dailyBudget,
       currency: value.currency,
       prepStyle: value.prepStyle,
       batchDays: value.prepStyle === "Batch" ? value.batchDays : [],
@@ -153,6 +159,7 @@ export function emptyRulesForm(): RulesFormValues {
     eatingWindowStart: "",
     eatingWindowEnd: "",
     weeklyBudget: "",
+    dailyBudget: "",
     currency: "",
     prepStyle: "Daily",
     batchDays: [],
@@ -181,6 +188,7 @@ export function rulesToForm(
     eatingWindowStart: time(rules.eatingWindowStart),
     eatingWindowEnd: time(rules.eatingWindowEnd),
     weeklyBudget: text(rules.weeklyBudget),
+    dailyBudget: text(rules.dailyBudget),
     currency: rules.currency ?? "",
     prepStyle: rules.prepStyle,
     batchDays: rules.batchDays ?? [],

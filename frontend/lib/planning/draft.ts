@@ -5,13 +5,15 @@ import type { GenerateMealPlanRequest } from "@/lib/api/mealPlans";
  * The "Draft with the assistant" form as typed: strings from inputs, checked
  * here and shaped into the generate request. The API validates again and owns
  * every rule; this only names what is wrong before the metered round trip. A
- * weekly budget becomes the one budget ceiling, in the price region's currency.
+ * weekly budget becomes the one budget ceiling and a daily budget the ceiling
+ * for each day, both in the price region's currency.
  */
 export type DraftFormValues = {
   name: string;
   startDate: string;
   durationDays: string;
   weeklyBudget: string;
+  dailyBudget: string;
   preference: string;
 };
 
@@ -44,6 +46,18 @@ const draftSchema = z.object({
       (value) => value === null || (value > 0 && value <= 1_000_000),
       "Weekly budget must be above zero",
     ),
+  dailyBudget: z
+    .string()
+    .trim()
+    .transform((value) => (value === "" ? null : Number(value)))
+    .refine(
+      (value) => value === null || Number.isFinite(value),
+      "Daily budget must be a number",
+    )
+    .refine(
+      (value) => value === null || (value > 0 && value <= 1_000_000),
+      "Daily budget must be above zero",
+    ),
   preference: z
     .string()
     .trim()
@@ -56,6 +70,7 @@ export function emptyDraftForm(today: string): DraftFormValues {
     startDate: today,
     durationDays: "7",
     weeklyBudget: "",
+    dailyBudget: "",
     preference: "",
   };
 }
@@ -83,6 +98,7 @@ export function parseDraftForm(
       durationDays: value.durationDays,
       preference: value.preference || null,
       budgetCeilings: value.weeklyBudget === null ? [] : [value.weeklyBudget],
+      dailyBudget: value.dailyBudget,
     },
   };
 }

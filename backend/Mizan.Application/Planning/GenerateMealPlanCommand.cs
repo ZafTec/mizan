@@ -38,6 +38,7 @@ public class GenerateMealPlanCommandValidator : AbstractValidator<GenerateMealPl
         RuleFor(x => x.Preference).MaximumLength(1000);
         RuleFor(x => x.BudgetCeilings).Must(b => b.Count <= MaxBudgets).WithMessage($"Ask for at most {MaxBudgets} budgets at once.");
         RuleForEach(x => x.BudgetCeilings).GreaterThan(0).WithMessage("A budget must be above zero.");
+        RuleFor(x => x.DailyBudget).GreaterThan(0).When(x => x.DailyBudget.HasValue).WithMessage("A daily budget must be above zero.");
         RuleFor(x => x.Rules!).SetValidator(new PlanRulesDtoValidator()).When(x => x.Rules is not null);
     }
 }
@@ -124,10 +125,13 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
         Guid userId,
         CancellationToken cancellationToken)
     {
+        // A budget of either kind without a currency is in the price region's.
+        var daily = request.DailyBudget ?? baseRules.DailyBudget;
         var rulesDto = PlanRulesMapping.ToDto(baseRules) with
         {
             WeeklyBudget = ceiling,
-            Currency = ceiling is null ? baseRules.Currency : baseRules.Currency ?? context.Currency,
+            DailyBudget = daily,
+            Currency = ceiling is null && daily is null ? baseRules.Currency : baseRules.Currency ?? context.Currency,
         };
 
         var ask = Ask(request, rulesDto, ceiling, context);
@@ -288,7 +292,9 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
             : "- Cook daily.\n");
         text.Append(ceiling is { } budget
             ? string.Create(CultureInfo.InvariantCulture, $"- Weekly budget: {budget:0.##} {rules.Currency ?? context.Currency}.\n")
-            : "- No budget.\n");
+            : "- No weekly budget.\n");
+        if (rules.DailyBudget is { } perDay)
+            text.Append(CultureInfo.InvariantCulture, $"- Daily budget: {perDay:0.##} {rules.Currency ?? context.Currency}; keep each day's cost under it.\n");
 
         if (!string.IsNullOrWhiteSpace(request.Preference))
         {
