@@ -114,11 +114,18 @@ export const createTemplate = (body: CreateTemplateRequest) =>
 
 /** Name, description, length and rules. Entries and sessions use the plan routes with the template's id. */
 export const updateTemplate = (id: string, body: UpdateTemplateRequest) =>
-  clientApi<void>(`/api/MealPlans/templates/${id}`, { method: "PUT", body });
+  clientApi<void>(`/api/MealPlans/templates/${id}`, {
+    method: "PUT",
+    body,
+    headers: idempotent(),
+  });
 
 /** Plans already made from the template keep their copy. */
 export const deleteTemplate = (id: string) =>
-  clientApi<void>(`/api/MealPlans/templates/${id}`, { method: "DELETE" });
+  clientApi<void>(`/api/MealPlans/templates/${id}`, {
+    method: "DELETE",
+    headers: idempotent(),
+  });
 
 /** A coach drafts a client's plan from a template; the client accepts or declines it. */
 export const applyTemplateForClient = (
