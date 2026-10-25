@@ -43,7 +43,8 @@ public record PlanEntryDto
     public decimal? Cost { get; init; }
 }
 
-public record PlanSlotDto(string Slot, List<PlanEntryDto> Entries);
+/// <summary>One slot of a day: its entries in order and their total, which code computes like the day's.</summary>
+public record PlanSlotDto(string Slot, List<PlanEntryDto> Entries, EntryNutritionDto Totals);
 
 /// <summary>One day of a plan: its slots, its totals, and the violations that belong to it.</summary>
 public record PlanDayDto

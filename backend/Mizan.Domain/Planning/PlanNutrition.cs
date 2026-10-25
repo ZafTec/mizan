@@ -74,6 +74,22 @@ public static class PlanNutrition
         }
     }
 
+    /// <summary>
+    /// The total of some entries, rounded the way a day shows it: a slot's
+    /// total and a day's come from here, so they agree on every surface.
+    /// An entry without nutrition adds nothing.
+    /// </summary>
+    public static EntryNutrition Sum(
+        IEnumerable<PlanEntry> entries,
+        IReadOnlyDictionary<Guid, RecipeNutritionTotals> recipePerServing,
+        IReadOnlyDictionary<Guid, Food> foodsById)
+    {
+        var totals = EntryNutrition.Zero;
+        foreach (var entry in entries)
+            if (Of(entry, recipePerServing, foodsById) is { } nutrition) totals = totals.Add(nutrition);
+        return totals.Round();
+    }
+
     public static IReadOnlyList<PlanDayNutrition> ByDay(
         IEnumerable<PlanEntry> entries,
         int durationDays,
@@ -84,18 +100,9 @@ public static class PlanNutrition
         var grouped = entries.GroupBy(e => e.DayIndex).ToDictionary(g => g.Key, g => g.ToList());
         for (var day = 0; day < durationDays; day++)
         {
-            var totals = EntryNutrition.Zero;
-            var unresolved = new List<Guid>();
-            if (grouped.TryGetValue(day, out var dayEntries))
-            {
-                foreach (var entry in dayEntries)
-                {
-                    var nutrition = Of(entry, recipePerServing, foodsById);
-                    if (nutrition is null) unresolved.Add(entry.Id);
-                    else totals = totals.Add(nutrition.Value);
-                }
-            }
-            days.Add(new PlanDayNutrition(day, totals.Round(), unresolved));
+            var dayEntries = grouped.GetValueOrDefault(day) ?? [];
+            var unresolved = dayEntries.Where(e => Of(e, recipePerServing, foodsById) is null).Select(e => e.Id).ToList();
+            days.Add(new PlanDayNutrition(day, Sum(dayEntries, recipePerServing, foodsById), unresolved));
         }
         return days;
     }

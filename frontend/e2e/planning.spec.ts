@@ -8,6 +8,7 @@ import {
   TEMPLATE_ID,
   type PlanningOptions,
 } from "./fixture-planning";
+import type { components } from "../types/api.generated";
 
 const apiURL = process.env.PLAYWRIGHT_API_URL ?? "http://localhost:5100";
 
@@ -98,7 +99,7 @@ test("a person logs a planned entry from the day view", async ({
   page,
   context,
 }) => {
-  await signIn(context);
+  const { today } = await signIn(context);
   await page.goto(`/meal-plan/${ACTIVE_PLAN_ID}`);
   await expect(
     page.getByRole("heading", { name: "Steady week" }),
@@ -110,6 +111,17 @@ test("a person logs a planned entry from the day view", async ({
   await expect(panel).toContainText("Greek yogurt");
   await expect(panel).toContainText("150 g");
   await expect(panel.getByText("Not loggable")).toBeVisible();
+  // Each slot shows the total the API sent for it; the page adds nothing up.
+  const plan = (await (
+    await context.request.get(`${apiURL}/api/MealPlans/${ACTIVE_PLAN_ID}`)
+  ).json()) as components["schemas"]["MealPlanDetailDto"];
+  const day = plan.days.find((d) => d.date === today)!;
+  expect(day.slots.length).toBeGreaterThan(0);
+  await expect(panel.getByTestId("slot-calories")).toHaveText(
+    day.slots.map(
+      (slot) => `${Math.round(slot.totals.calories).toLocaleString()} kcal`,
+    ),
+  );
 
   await panel.getByRole("button", { name: "Log Greek yogurt" }).click();
   await expect(panel.getByLabel("Greek yogurt logged")).toBeVisible();

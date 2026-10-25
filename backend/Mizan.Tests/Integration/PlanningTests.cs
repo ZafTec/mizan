@@ -62,6 +62,8 @@ public class PlanningTests
         var day0 = plan.Days[0];
         day0.Date.Should().Be(new DateOnly(2026, 10, 12));
         day0.Slots.Select(s => s.Slot).Should().Equal("LUNCH", "DINNER", "SNACK");
+        // Each slot carries its own total, so no surface adds entries up.
+        day0.Slots.Select(s => s.Totals.Calories).Should().Equal(250m, 377.5m, 0m);
         // One serving of the recipe is half of 200 g rice and 300 g chicken; the bread is 100 g; the note has nothing to add.
         day0.Totals.Calories.Should().Be(377.5m + 250);
         day0.Totals.ProteinGrams.Should().Be(49.2m + 8);

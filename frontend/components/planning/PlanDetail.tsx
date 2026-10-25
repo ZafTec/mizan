@@ -390,15 +390,11 @@ export default function PlanDetail({
                 <div className="meal-group" key={slot.slot}>
                   <div className="meal-group-header">
                     <h3>{slotLabel(slot.slot)}</h3>
-                    <span className="num text-xs log-muted">
-                      {Math.round(
-                        slot.entries.reduce(
-                          (sum, entry) =>
-                            sum + (entry.nutrition?.calories ?? 0),
-                          0,
-                        ),
-                      ).toLocaleString()}{" "}
-                      kcal
+                    <span
+                      className="num text-xs log-muted"
+                      data-testid="slot-calories"
+                    >
+                      {Math.round(slot.totals.calories).toLocaleString()} kcal
                     </span>
                   </div>
                   <ul>

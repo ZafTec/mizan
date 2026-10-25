@@ -12227,6 +12227,7 @@ export interface components {
         PlanSlotDto: {
             slot: string;
             entries: components["schemas"]["PlanEntryDto"][];
+            totals: components["schemas"]["EntryNutritionDto"];
         };
         PlanViolationDto: {
             /** Format: int32 */
