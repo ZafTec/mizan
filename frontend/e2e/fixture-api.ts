@@ -24,6 +24,7 @@ import {
   type TelegramState,
 } from "./fixture-users";
 import { handleAdminOps, isAdminOps } from "./fixture-admin-ops";
+import { handleAdminFlags } from "./fixture-admin-flags";
 import {
   handleAiPlanning,
   initialAiPlanning,
@@ -768,6 +769,14 @@ const server = Bun.serve({
         503,
       );
     }
+    const flagged = await handleAdminFlags(
+      request,
+      url,
+      token!,
+      state.role,
+      json,
+    );
+    if (flagged) return flagged;
     const assisted = await handleAiPlanning(
       request,
       url,

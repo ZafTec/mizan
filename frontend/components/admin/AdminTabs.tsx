@@ -21,7 +21,7 @@ export default function AdminTabs() {
           const active =
             tab.href === "/admin"
               ? pathname === "/admin"
-              : pathname?.startsWith(tab.href);
+              : pathname === tab.href || pathname?.startsWith(`${tab.href}/`);
           return (
             <Link
               key={tab.href}

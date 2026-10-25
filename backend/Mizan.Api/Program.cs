@@ -339,7 +339,9 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(origins)
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowCredentials()
+            // The usage export names its file; a cross-origin page reads the name from here.
+            .WithExposedHeaders("Content-Disposition");
     });
     // Token, register, revoke and discovery are called by software and by
     // browser-based clients from any origin. They carry no cookie, so allowing
