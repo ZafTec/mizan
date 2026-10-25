@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ToggleRow } from "@/components/ui/toggle-row";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import { useProWall } from "@/components/billing/ProWall";
 import { isUpgradeRequired } from "@/lib/billing";
@@ -15,6 +16,11 @@ import {
   type TelegramLink,
   type TelegramLinkCode,
 } from "@/lib/api/telegram";
+import {
+  getMyProfile,
+  setNotifyByTelegram,
+  type UserProfile,
+} from "@/lib/api/users";
 
 /**
  * Connecting Telegram, as three steps and a page that watches.
@@ -23,6 +29,9 @@ import {
  * until the bot spends it, so the last step is "it says connected" rather than
  * "come back and refresh to find out". A code lasts five minutes, and the
  * countdown says so instead of letting it silently go stale.
+ *
+ * Below it, the switch that sends notifications to the chat as well. It is
+ * off until the person turns it on, and only works once a chat is linked.
  */
 export default function TelegramSettingsPage() {
   const [link, setLink] = useState<TelegramLink | null>(null);
@@ -32,6 +41,8 @@ export default function TelegramSettingsPage() {
   const [unlinking, setUnlinking] = useState(false);
   const [confirmUnlink, setConfirmUnlink] = useState(false);
   const [remaining, setRemaining] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [savingNotify, setSavingNotify] = useState(false);
   const { guard, openWall, wall } = useProWall({
     title: "The Telegram bot is part of Pro",
     message:
@@ -54,11 +65,14 @@ export default function TelegramSettingsPage() {
   useEffect(() => {
     let cancelled = false;
 
-    void load().then((next) => {
-      if (cancelled) return;
-      setLink(next);
-      setLoading(false);
-    });
+    void Promise.all([load(), getMyProfile().catch(() => null)]).then(
+      ([next, me]) => {
+        if (cancelled) return;
+        setLink(next);
+        setProfile(me);
+        setLoading(false);
+      },
+    );
 
     return () => {
       cancelled = true;
@@ -131,13 +145,38 @@ export default function TelegramSettingsPage() {
     try {
       await unlinkTelegram();
       setCode(null);
-      setLink(await load());
+      // Disconnecting turns Telegram notifications off on the server.
+      const [next, me] = await Promise.all([
+        load(),
+        getMyProfile().catch(() => null),
+      ]);
+      setLink(next);
+      setProfile(me);
       appToast.success("Telegram disconnected");
     } catch (error) {
       appToast.error(error, "Could not disconnect");
     } finally {
       setUnlinking(false);
       setConfirmUnlink(false);
+    }
+  }
+
+  async function onNotifyChange(on: boolean) {
+    setSavingNotify(true);
+    try {
+      await setNotifyByTelegram(on);
+      setProfile((current) =>
+        current ? { ...current, notifyByTelegram: on } : current,
+      );
+      appToast.success(
+        on
+          ? "Notifications will come to Telegram"
+          : "Telegram notifications off",
+      );
+    } catch (error) {
+      appToast.error(error, "Could not change Telegram notifications");
+    } finally {
+      setSavingNotify(false);
     }
   }
 
@@ -183,6 +222,15 @@ export default function TelegramSettingsPage() {
         />
       )}
 
+      {link?.botConfigured === true && profile && (
+        <NotificationsSetting
+          linked={link.linked}
+          on={profile.notifyByTelegram}
+          saving={savingNotify}
+          onChange={onNotifyChange}
+        />
+      )}
+
       {wall}
 
       <ConfirmationModal
@@ -196,6 +244,40 @@ export default function TelegramSettingsPage() {
         isDanger
       />
     </div>
+  );
+}
+
+function NotificationsSetting({
+  linked,
+  on,
+  saving,
+  onChange,
+}: {
+  linked: boolean;
+  on: boolean;
+  saving: boolean;
+  onChange: (on: boolean) => void;
+}) {
+  return (
+    <section aria-labelledby="telegram-notifications" className="space-y-3">
+      <h2
+        id="telegram-notifications"
+        className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50"
+      >
+        Notifications
+      </h2>
+      <ToggleRow
+        label="Send notifications to Telegram"
+        description={
+          linked
+            ? "Everything in your notifications also arrives in the chat. A meal plan opens in Telegram with one tap. You can also send /notifications to the bot."
+            : "Connect Telegram above first, then you can turn this on."
+        }
+        checked={linked && on}
+        disabled={!linked || saving}
+        onChange={onChange}
+      />
+    </section>
   );
 }
 

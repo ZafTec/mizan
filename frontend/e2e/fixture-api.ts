@@ -17,6 +17,12 @@ import {
 } from "./fixture-prices";
 import { handleTelegram } from "./fixture-tg";
 import {
+  handleUsers,
+  initialTelegram,
+  type TelegramOptions,
+  type TelegramState,
+} from "./fixture-users";
+import {
   handleAiPlanning,
   initialAiPlanning,
   type AiPlanningOptions,
@@ -211,6 +217,7 @@ type FixtureState = {
   planning: PlanningState;
   prices: PricesState;
   aiPlanning: AiPlanningState;
+  telegram: TelegramState;
 };
 type FixtureNotification = components["schemas"]["NotificationDto"];
 type FixtureThread = {
@@ -281,6 +288,7 @@ function initialState(empty = false): FixtureState {
     planning: initialPlanning(user.id, today, { none: empty }),
     prices: initialPrices(today),
     aiPlanning: initialAiPlanning(),
+    telegram: initialTelegram(),
     role: "user",
     pro: false,
     impersonating: false,
@@ -666,6 +674,7 @@ const server = Bun.serve({
         planning?: PlanningOptions;
         prices?: PricesOptions;
         aiPlanning?: AiPlanningOptions;
+        telegram?: TelegramOptions;
       };
       const token = crypto.randomUUID();
       const state = initialState(options.empty);
@@ -694,6 +703,7 @@ const server = Bun.serve({
       });
       state.prices = initialPrices(today, options.prices);
       state.aiPlanning = initialAiPlanning(options.aiPlanning);
+      state.telegram = initialTelegram(options.telegram);
       if (options.household)
         state.household = {
           otherMembers: 0,
@@ -1256,6 +1266,18 @@ const server = Bun.serve({
           isCurrent: true,
         },
       ]);
+    const profile = await handleUsers(
+      request,
+      url,
+      {
+        user: { ...user, id: state.userId },
+        prices: state.prices,
+        telegram: state.telegram,
+        writes: state.writes,
+      },
+      json,
+    );
+    if (profile) return profile;
     const priced = await handlePrices(
       request,
       url,
