@@ -231,6 +231,18 @@ function UsagePanel({ usage }: { usage: MyAiUsage }) {
         {resets.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}.
       </p>
 
+      {/* Its own allowance: drafting a plan never spends chat, nor chat a plan. */}
+      <div
+        className="mt-3 border-t border-charcoal-blue-200/70 pt-3 dark:border-white/10"
+        data-testid="ai-usage-planning"
+      >
+        <Meter
+          label="Meal plans drafted"
+          used={usage.planning.requestsUsed}
+          limit={usage.planning.requestLimit}
+        />
+      </div>
+
       {usage.byFeature.length > 0 && (
         <ul className="mt-3 space-y-1 border-t border-charcoal-blue-200/70 pt-3 dark:border-white/10">
           {usage.byFeature.map((feature) => (
