@@ -1,5 +1,9 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
-import { ACTIVE_PLAN_ID, LIST_ID } from "./fixture-planning";
+import {
+  ACTIVE_PLAN_ID,
+  LIST_ID,
+  type PlanningOptions,
+} from "./fixture-planning";
 import type { TelegramOpening, TelegramOutcome } from "./fixture-tg";
 
 /**
@@ -16,19 +20,30 @@ type State = {
 };
 type Opening = { initData: string; token: string; hash: string };
 
+type MainButtonState = {
+  text: string;
+  visible: boolean;
+  active: boolean;
+  progress: boolean;
+};
+
 /**
  * What Telegram's WebView provides: window.Telegram.WebApp with the signed
- * initData. The real script is answered with nothing, so no test reaches
- * telegram.org; `__telegram` records what the page asked of Telegram.
+ * initData and the main button. The real script is answered with nothing, so
+ * no test reaches telegram.org; `__telegram` records what the page asked of
+ * Telegram and presses the main button the way Telegram would.
  */
 async function openTelegram(
   page: Page,
   context: BrowserContext,
   outcome: TelegramOutcome,
-  { inTelegram = true }: { inTelegram?: boolean } = {},
+  {
+    inTelegram = true,
+    planning,
+  }: { inTelegram?: boolean; planning?: PlanningOptions } = {},
 ): Promise<Opening> {
   const result = await context.request.post(`${apiURL}/__fixture/telegram`, {
-    data: { outcome },
+    data: { outcome, session: planning ? { planning } : undefined },
   });
   expect(result.ok()).toBeTruthy();
   const { initData, token } = (await result.json()) as {
@@ -42,8 +57,39 @@ async function openTelegram(
     ({ initData }) => {
       const calls: string[] = [];
       const opened: string[] = [];
+      const handlers = new Set<() => void>();
+      const mainButton = {
+        text: "",
+        visible: false,
+        active: true,
+        progress: false,
+      };
+      const MainButton = {
+        setText: (text: string) => ((mainButton.text = text), MainButton),
+        show: () => ((mainButton.visible = true), MainButton),
+        hide: () => ((mainButton.visible = false), MainButton),
+        enable: () => ((mainButton.active = true), MainButton),
+        disable: () => ((mainButton.active = false), MainButton),
+        showProgress: () => ((mainButton.progress = true), MainButton),
+        hideProgress: () => ((mainButton.progress = false), MainButton),
+        onClick: (handler: () => void) => (handlers.add(handler), MainButton),
+        offClick: (handler: () => void) => (
+          handlers.delete(handler),
+          MainButton
+        ),
+      };
       Object.assign(window, {
-        __telegram: { calls, opened },
+        __telegram: {
+          calls,
+          opened,
+          mainButton,
+          // Telegram calls the handlers only for a visible, active button.
+          pressMainButton: () => {
+            if (!mainButton.visible || !mainButton.active) return false;
+            handlers.forEach((handler) => handler());
+            return true;
+          },
+        },
         Telegram: {
           WebApp: {
             initData,
@@ -52,6 +98,7 @@ async function openTelegram(
             ready: () => calls.push("ready"),
             expand: () => calls.push("expand"),
             openLink: (url: string) => opened.push(url),
+            MainButton,
           },
         },
       });
@@ -87,6 +134,21 @@ async function telegramCalls(page: Page) {
         }
       ).__telegram,
   );
+}
+type TelegramWindow = {
+  __telegram: { mainButton: MainButtonState; pressMainButton(): boolean };
+};
+async function mainButton(page: Page) {
+  return page.evaluate(() => ({
+    ...(window as unknown as TelegramWindow).__telegram.mainButton,
+  }));
+}
+async function pressMainButton(page: Page) {
+  expect(
+    await page.evaluate(() =>
+      (window as unknown as TelegramWindow).__telegram.pressMainButton(),
+    ),
+  ).toBe(true);
 }
 async function noOverflow(page: Page) {
   expect(
@@ -174,6 +236,73 @@ test("a person opens the shopping list from the bot's button and ticks an item",
   const toggles = s.writes.filter((write) => write.path.endsWith("/toggle"));
   expect(toggles).toHaveLength(1);
   expect(toggles[0].body).toEqual({ isChecked: true });
+  expect(s.unhandled).toEqual([]);
+});
+
+test("a person makes the day's shopping list from Telegram's main button", async ({
+  page,
+  context,
+}) => {
+  const opening = await openTelegram(page, context, "signed_in");
+  await page.goto(`/tg/plan?planId=${ACTIVE_PLAN_ID}`);
+  await expect(
+    page.getByRole("heading", { name: "Steady week" }),
+  ).toBeVisible();
+  await expect
+    .poll(() => mainButton(page))
+    .toEqual({
+      text: "Make shopping list",
+      visible: true,
+      active: true,
+      progress: false,
+    });
+
+  await pressMainButton(page);
+  await page.waitForURL(/\/tg\/shopping-list\?listId=/);
+  await expect(
+    page.getByRole("heading", { name: "Steady week shopping" }),
+  ).toBeVisible();
+
+  const s = await state(context, opening);
+  const made = s.writes.filter(
+    (write) => write.path === `/api/MealPlans/${ACTIVE_PLAN_ID}/shopping-list`,
+  );
+  expect(made).toHaveLength(1);
+  expect(made[0].body).toEqual({ name: "Steady week shopping" });
+  expect(s.unhandled).toEqual([]);
+});
+
+test("a person clears the ticked items from Telegram's main button", async ({
+  page,
+  context,
+}) => {
+  const opening = await openTelegram(page, context, "signed_in");
+  await page.goto(`/tg/shopping-list?listId=${LIST_ID}`);
+  await expect(page.getByTestId("shopping-list-page")).toHaveAttribute(
+    "data-hydrated",
+    "true",
+  );
+  await expect(
+    page.getByRole("checkbox", { name: "Rolled oats" }),
+  ).toBeChecked();
+  await expect
+    .poll(() => mainButton(page))
+    .toMatchObject({ text: "Clear checked", visible: true, active: true });
+
+  await pressMainButton(page);
+  await expect(page.getByRole("checkbox", { name: "Rolled oats" })).toHaveCount(
+    0,
+  );
+  // Nothing is ticked any more, so the button goes away.
+  await expect.poll(async () => (await mainButton(page)).visible).toBe(false);
+
+  const s = await state(context, opening);
+  const cleared = s.writes.filter((write) =>
+    write.path.endsWith("/clear-checked"),
+  );
+  expect(cleared.map((write) => write.path)).toEqual([
+    `/api/ShoppingLists/${LIST_ID}/clear-checked`,
+  ]);
   expect(s.unhandled).toEqual([]);
 });
 

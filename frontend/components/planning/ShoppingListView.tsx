@@ -18,6 +18,7 @@ import {
 } from "@/lib/api/shoppingLists";
 import { confidenceLabel, formatMoney, itemCount } from "@/lib/prices/format";
 import { appToast, getErrorMessage } from "@/lib/toast";
+import { useMainButton } from "@/lib/tg/useMainButton";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 
 type Group = { key: string; title: string; items: ShoppingListItem[] };
@@ -261,6 +262,13 @@ export default function ShoppingListView({
       setBusy(false);
     }
   };
+
+  // In Telegram, clearing the ticked items sits on the main button too.
+  useMainButton(
+    embedded && list.canEdit && checked > 0
+      ? { text: "Clear checked", busy, onClick: () => void clearChecked() }
+      : null,
+  );
 
   const rename = async (event: React.FormEvent) => {
     event.preventDefault();

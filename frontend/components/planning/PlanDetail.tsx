@@ -30,6 +30,7 @@ import {
 } from "@/lib/prices/format";
 import { DRAFTED_BY_ASSISTANT, isGenerated } from "@/lib/planning/draft";
 import { appToast } from "@/lib/toast";
+import { useMainButton } from "@/lib/tg/useMainButton";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import DraftActions from "./DraftActions";
 import LogPlanEntryButton from "./LogPlanEntryButton";
@@ -270,6 +271,18 @@ export default function PlanDetail({
       setBusy(null);
     }
   };
+
+  // In Telegram, the primary action sits on the main button too.
+  useMainButton(
+    embedded && plan.entryCount > 0
+      ? {
+          text: "Make shopping list",
+          disabled: busy !== null,
+          busy: busy === "list",
+          onClick: () => void makeList(),
+        }
+      : null,
+  );
 
   const remove = async () => {
     try {

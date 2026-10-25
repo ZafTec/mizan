@@ -12,6 +12,21 @@ export interface TelegramWebApp {
   expand(): void;
   openLink(url: string): void;
   close?(): void;
+  /** The bar at the bottom of the WebView. Older clients may not have it. */
+  MainButton?: TelegramMainButtonApi;
+}
+
+/** Telegram's `WebApp.MainButton`, as much of it as the Mini App uses. */
+export interface TelegramMainButtonApi {
+  setText(text: string): unknown;
+  show(): unknown;
+  hide(): unknown;
+  enable(): unknown;
+  disable(): unknown;
+  showProgress(leaveActive?: boolean): unknown;
+  hideProgress(): unknown;
+  onClick(handler: () => void): unknown;
+  offClick(handler: () => void): unknown;
 }
 
 declare global {
@@ -36,4 +51,37 @@ export function openExternal(url: string) {
   const app = telegramWebApp();
   if (app) app.openLink(url);
   else window.open(url, "_blank", "noopener,noreferrer");
+}
+
+/** A thin typed handle on Telegram's main button. */
+export interface MainButton {
+  show(): void;
+  hide(): void;
+  setText(text: string): void;
+  /** Greys the button out, or makes it pressable again. */
+  setEnabled(enabled: boolean): void;
+  /** A spinner on the button while its write runs; the button stays inactive. */
+  showProgress(busy: boolean): void;
+  /** Calls `handler` on each press; the returned function stops that. */
+  onClick(handler: () => void): () => void;
+}
+
+/** The main button inside Telegram, or null in a browser or an older client. */
+export function mainButton(): MainButton | null {
+  const app = telegramWebApp();
+  const button = app?.initData ? app.MainButton : undefined;
+  if (!button) return null;
+  return {
+    show: () => void button.show(),
+    hide: () => void button.hide(),
+    setText: (text) => void button.setText(text),
+    setEnabled: (enabled) =>
+      void (enabled ? button.enable() : button.disable()),
+    showProgress: (busy) =>
+      void (busy ? button.showProgress(false) : button.hideProgress()),
+    onClick: (handler) => {
+      button.onClick(handler);
+      return () => void button.offClick(handler);
+    },
+  };
 }

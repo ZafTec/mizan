@@ -262,7 +262,7 @@ The MCP App `meal-plan` renders `get_meal_plan` and `get_plan_day`. It calls `lo
 | --- | --- |
 | `/plan` or `/plan tomorrow` | The entries of the day with one **Log** button per entry (`pe:{entryId}`), **Open** button to the Mini App. Violations and the eating window at the end. |
 | `/shop` | The newest list, ten items per page, one toggle button per item (`sh:{itemId}`), **Open** button to the Mini App. |
-| Mini App | `/tg/plan?planId=&day=` (today's plan without `planId`) and `/tg/shopping-list?listId=` (the newest list without `listId`) render `PlanDetail` and `ShoppingListView` without the shell after the session exchange. A refusal shows one sentence and one action. |
+| Mini App | `/tg/plan?planId=&day=` (today's plan without `planId`) and `/tg/shopping-list?listId=` (the newest list without `listId`) render `PlanDetail` and `ShoppingListView` without the shell after the session exchange. Telegram's main button carries **Make shopping list** and **Clear checked**. A refusal shows one sentence and one action. |
 | Evening reminder | An outbox job at `EatingWindowEnd` minus 30 minutes in the person's zone, once a day: "Your window closes at 20:00. Today: 1,640 of 1,800 kcal." (the diary's calories against `TargetCalories`). Everyone who follows the plan that day gets one: the owner and, for a household plan, each member without an active personal plan of their own covering the day, each with their own zone and diary. In-app notification, push, and Telegram through the bot service. See [Telegram](TELEGRAM.md#evening-reminder). |
 
 Callback data stays under 64 bytes because it carries ids only.
