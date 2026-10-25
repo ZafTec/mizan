@@ -74,6 +74,11 @@ public class MealPlanGenerationTests
         withinBudget.Cost.Should().Match<PlanCostDto>(c =>
             c.Currency == "ETB" && c.Total == 100m && c.WeeklyTotal == 350m && c.PricedItems == 2 && c.TotalItems == 2);
         withinBudget.Plan.WeeklyCost.Should().Be(350m);
+        // A plain read of the saved draft costs it the same way, day by day.
+        var read = await PlanningWorld.PlanAsync(client, withinBudget.Plan.Id);
+        read.Should().Match<MealPlanDetailDto>(p =>
+            p.Currency == "ETB" && p.TotalCost == 100m && p.WeeklyCost == 350m && p.OverBudget == false && p.CostCoverage == 1m);
+        read.Days.Select(d => d.Cost).Should().Equal(withinBudget.Plan.Days.Select(d => d.Cost)).And.NotContainNulls();
         withinBudget.Violations.Select(v => v.Rule).Should().Equal(PlanRuleNames.ProteinUnder, PlanRuleNames.ProteinUnder);
         withinBudget.Unresolved.Should().BeEmpty();
 
