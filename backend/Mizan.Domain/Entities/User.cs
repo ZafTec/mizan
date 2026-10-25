@@ -31,6 +31,13 @@ public class User
     public string ThemePreference { get; set; } = "system";
     public bool CompactMode { get; set; }
     public bool ReduceAnimations { get; set; }
+
+    /// <summary>
+    /// Whether notifications also go to the linked Telegram chat. Off until the
+    /// person turns it on: linking the bot alone starts no messages, and
+    /// unlinking turns it off again (docs/TELEGRAM.md#notifications-in-telegram).
+    /// </summary>
+    public bool NotifyByTelegram { get; set; }
     public string Role { get; set; } = "user";
     public bool Banned { get; set; } = false;
     public string? BanReason { get; set; }

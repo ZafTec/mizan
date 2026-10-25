@@ -3913,6 +3913,10 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name");
 
+                    b.Property<bool>("NotifyByTelegram")
+                        .HasColumnType("boolean")
+                        .HasColumnName("notify_by_telegram");
+
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text")
                         .HasColumnName("password_hash");

@@ -233,6 +233,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.ThemePreference).HasColumnName("theme_preference");
             entity.Property(e => e.CompactMode).HasColumnName("compact_mode");
             entity.Property(e => e.ReduceAnimations).HasColumnName("reduce_animations");
+            entity.Property(e => e.NotifyByTelegram).HasColumnName("notify_by_telegram");
             entity.Property(e => e.Role).HasColumnName("role");
             entity.Property(e => e.Banned).HasColumnName("banned");
             entity.Property(e => e.BanReason).HasColumnName("ban_reason");
