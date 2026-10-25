@@ -196,12 +196,8 @@ function householdPreview(household: FixtureHousehold) {
     version: `v${household.version}`,
   };
 }
-/** A diary row as GET /api/Meals sends it; a logged recipe's rows share a group. */
-type DiaryRow = MealEntry & {
-  groupId?: string | null;
-  groupName?: string | null;
-  amountGrams?: number | null;
-};
+/** A diary row as GET /api/Meals sends it (FoodDiaryEntryDto); a logged recipe's rows share a group. */
+type DiaryRow = MealEntry;
 type DiaryTotals = components["schemas"]["DailyTotalsDto"];
 type MealPreviewLine = components["schemas"]["MealPreviewLine"];
 type MealPreviewResult = components["schemas"]["MealPreviewResult"];
