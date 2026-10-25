@@ -229,6 +229,29 @@ test("an administrator maps a queued alias", async ({ page, context }) => {
   expect(s.unhandled).toEqual([]);
 });
 
+test("an administrator opens a price report from the notifications", async ({
+  page,
+  context,
+}) => {
+  await signIn(context, { role: "admin" });
+  await page.goto("/notifications");
+  const row = page.getByRole("button", {
+    name: /Price report for Greek yogurt/,
+  });
+  await expect(row).toContainText("200 ETB for 500 g.");
+  await expect(row).toContainText("(unread)");
+  await row.click();
+
+  await page.waitForURL(/\/admin\/prices#reports$/);
+  const reports = page.getByRole("region", { name: "Reports" });
+  await expect(
+    reports.getByRole("listitem", { name: "Report on Greek yogurt" }),
+  ).toBeInViewport();
+  const s = await state(context);
+  expect(writesTo(s, /^\/api\/Notifications\/[^/]+\/read$/)).toHaveLength(1);
+  expect(s.unhandled).toEqual([]);
+});
+
 test("an administrator accepts a report", async ({ page, context }) => {
   await signIn(context, { role: "admin" });
   await page.goto("/admin/prices#reports");

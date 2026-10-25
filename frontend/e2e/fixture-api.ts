@@ -2,6 +2,7 @@ import type { BodyMeasurement } from "../data/bodyMeasurement";
 import type { Ingredient } from "../data/ingredient";
 import type { MealEntry } from "../data/meal";
 import type { WorkoutSummary } from "../data/workout";
+import type { components } from "../types/api.generated";
 import {
   handlePlanning,
   initialPlanning,
@@ -195,6 +196,7 @@ type FixtureState = {
   draft: { payload: string; updatedAt: string } | null;
   empty: boolean;
   unread: number;
+  notifications: FixtureNotification[];
   failures: string[];
   writeFailures: Record<string, number>;
   unhandled: string[];
@@ -210,6 +212,7 @@ type FixtureState = {
   prices: PricesState;
   aiPlanning: AiPlanningState;
 };
+type FixtureNotification = components["schemas"]["NotificationDto"];
 type FixtureThread = {
   id: string;
   title: string;
@@ -349,6 +352,7 @@ function initialState(empty = false): FixtureState {
     userId: user.id,
     empty,
     unread: 0,
+    notifications: [],
     draft: null,
     household: null,
     failures: [],
@@ -666,6 +670,19 @@ const server = Bun.serve({
       const token = crypto.randomUUID();
       const state = initialState(options.empty);
       state.unread = options.unread ?? 0;
+      // What CreatePriceReportCommand writes for every administrator.
+      if ((options.role ?? "user") === "admin")
+        state.notifications = [
+          {
+            id: "f4000000-0000-4000-8000-000000000001",
+            type: "price_report",
+            title: "Price report for Greek yogurt",
+            body: "200 ETB for 500 g.",
+            linkUrl: "/admin/prices#reports",
+            createdAt: `${today}T08:30:00Z`,
+            readAt: null,
+          },
+        ];
       state.failures = options.failures ?? [];
       state.writeFailures = options.writeFailures ?? {};
       state.userId = options.userId ?? user.id;
@@ -1205,6 +1222,24 @@ const server = Bun.serve({
     }
     if (path === "/api/Notifications/unread-count")
       return json({ unreadCount: state.unread });
+    if (path === "/api/Notifications" && method === "GET")
+      return json({
+        ...page(state.notifications, url),
+        unreadCount: state.notifications.filter((item) => !item.readAt).length,
+      });
+    const readNotification = path.match(
+      /^\/api\/Notifications\/([^/]+)\/read$/,
+    );
+    if (readNotification && method === "POST") {
+      const found = state.notifications.find(
+        (item) => item.id === readNotification[1],
+      );
+      if (!found)
+        return json({ errorCode: "not_found", error: "Not found" }, 404);
+      found.readAt ??= new Date().toISOString();
+      state.writes.push({ path, body: {} });
+      return json(null, 204);
+    }
     // The settings page reads these beside the price region.
     if (path === "/api/Auth/sessions" && method === "GET")
       return json([
