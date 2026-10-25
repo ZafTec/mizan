@@ -1167,6 +1167,15 @@ export async function handlePlanning(
         startDate: input.startDate,
         householdId: input.householdId ?? null,
       });
+      // PlanAccess.ActivateAsync: the person's other active plan is archived.
+      if (!copy.householdId)
+        for (const other of personal)
+          if (
+            other.status === "Active" &&
+            other.userId === copy.userId &&
+            !other.householdId
+          )
+            other.status = "Archived";
       record(input as unknown as Record<string, unknown>);
       return json(created(copy), 201);
     }

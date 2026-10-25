@@ -113,7 +113,7 @@ Where the implementation settled details the design left open:
 
 - Entries on a create or a template carry `prepSessionIndex` into the request's `prepSessions`; on add or update they carry `prepSessionId`. Templates reuse the entry and prep session routes with the template's id.
 - A plan's owner and the members of its household edit it. A coach edits a draft only while it is a draft, and the client cannot change a draft until accepting it. `canEdit` on the plan says which applies to the viewer.
-- Creating a plan leaves other plans alone. Setting a plan active and accepting a draft archive the owner's other active personal plan; household plans are never archived that way. Today's plan prefers the viewer's own plan over a household plan, then the most recently changed.
+- Creating a plan leaves other plans alone. Setting a plan active, accepting a draft and applying a template archive the owner's other active personal plan; household plans are never archived that way. Today's plan prefers the viewer's own plan over a household plan, then the most recently changed.
 - Each day and each of its slots carry `totals`, summed by `PlanNutrition.Sum`, so no surface adds entries up.
 - `logged` is the viewer's own diary: a row with the entry's `PlanEntryId` on the entry's date. Logging a day more than a day away from today fills the diary but does not move the streak.
 - A household plan may log a recipe shared in that household; a coach's draft may log the coach's own recipe.
