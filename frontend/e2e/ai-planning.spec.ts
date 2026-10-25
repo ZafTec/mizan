@@ -136,8 +136,10 @@ test("a person drafts with the keyboard on a phone and discards the draft", asyn
   await discard.focus();
   await page.keyboard.press("Enter");
 
-  await expect(section.getByRole("status")).toHaveText("Draft discarded.");
-  await expect(section.getByRole("status")).toBeFocused();
+  const status = section.getByRole("status");
+  await expect(status).toBeAttached();
+  await expect(status).toHaveText("Draft discarded.");
+  await expect(status).toBeFocused({ timeout: 10_000 });
   await expect(preview).toBeHidden();
   const s = await state(context);
   const [generated] = writesTo(s, /^\/api\/MealPlans\/generate$/);

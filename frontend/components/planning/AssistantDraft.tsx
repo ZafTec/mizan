@@ -66,6 +66,12 @@ export default function AssistantDraft({ today }: { today: string }) {
     if (result?.drafts.length) previewHeading.current?.focus();
   }, [result]);
 
+  // The notice takes focus once it is on screen. A frame scheduled from the
+  // discard handler could run before React committed it and find nothing.
+  useEffect(() => {
+    if (notice) noticeRef.current?.focus();
+  }, [notice]);
+
   const set = (key: keyof DraftFormValues) => (value: string) =>
     setValues((current) => ({ ...current, [key]: value }));
 
@@ -113,7 +119,6 @@ export default function AssistantDraft({ today }: { today: string }) {
     );
     if (rest.length > 0) return;
     setNotice("Draft discarded.");
-    requestAnimationFrame(() => noticeRef.current?.focus());
   };
 
   const heading = (
