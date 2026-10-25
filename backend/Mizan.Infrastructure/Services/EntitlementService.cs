@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
-using Microsoft.Extensions.Options;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
@@ -21,13 +20,13 @@ public class EntitlementService : IEntitlementService
 
     private readonly IMizanDbContext _context;
     private readonly HybridCache _cache;
-    private readonly PaddleOptions _options;
+    private readonly IRuntimeOptions<PaddleOptions> _settings;
 
-    public EntitlementService(IMizanDbContext context, HybridCache cache, IOptions<PaddleOptions> options)
+    public EntitlementService(IMizanDbContext context, HybridCache cache, IRuntimeOptions<PaddleOptions> settings)
     {
         _context = context;
         _cache = cache;
-        _options = options.Value;
+        _settings = settings;
     }
 
     public async Task<Entitlement> GetAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -65,10 +64,11 @@ public class EntitlementService : IEntitlementService
         }
 
         var now = DateTime.UtcNow;
+        var graceDays = (await _settings.GetAsync(cancellationToken)).GraceDays;
         var isPro = sub.Status switch
         {
             "active" or "trialing" => true,
-            "past_due" => sub.CurrentPeriodEnd is not null && now < sub.CurrentPeriodEnd.Value.AddDays(_options.GraceDays),
+            "past_due" => sub.CurrentPeriodEnd is not null && now < sub.CurrentPeriodEnd.Value.AddDays(graceDays),
             "canceled" => sub.CurrentPeriodEnd is not null && now < sub.CurrentPeriodEnd.Value,
             _ => false
         };

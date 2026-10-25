@@ -17,7 +17,7 @@ public enum PushOutcome
 public interface IPushSender
 {
     /// <summary>False when no provider credentials are set, so nothing is queued that can never be sent.</summary>
-    bool IsConfigured { get; }
+    Task<bool> IsConfiguredAsync(CancellationToken cancellationToken = default);
 
     Task<PushOutcome> SendAsync(PushMessage message, CancellationToken cancellationToken);
 }

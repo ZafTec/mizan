@@ -21,14 +21,16 @@ public sealed class MeteredAiClient : IAiMeteredClient
         _quota = quota;
     }
 
-    public bool IsConfigured => _provider.IsConfigured;
+    public async Task<bool> IsConfiguredAsync(CancellationToken cancellationToken = default) =>
+        (await _provider.GetStatusAsync(cancellationToken)).IsConfigured;
 
     public async Task<AiCompletionResponse> CompleteAsync(
         AiMeteredCall call, AiCompletionRequest request, CancellationToken cancellationToken = default)
     {
-        if (!_provider.IsConfigured)
+        var status = await _provider.GetStatusAsync(cancellationToken);
+        if (!status.IsConfigured)
         {
-            throw new AiUnavailableException("The assistant is not configured on this server.");
+            throw new AiUnavailableException("The assistant is not configured on this server.", "not_configured");
         }
 
         var lease = await _quota.ReserveAsync(
@@ -36,7 +38,7 @@ public sealed class MeteredAiClient : IAiMeteredClient
 
         var stopwatch = Stopwatch.StartNew();
         var usage = AiTokenUsage.None;
-        var model = _provider.Model;
+        var model = status.Model;
         var outcome = AiCallOutcome.ProviderError;
 
         try

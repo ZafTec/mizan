@@ -85,7 +85,7 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
     public async Task<GenerateMealPlanResult> Handle(GenerateMealPlanCommand request, CancellationToken cancellationToken)
     {
         var userId = _access.RequireUserId();
-        if (!_ai.IsConfigured) throw new AiUnavailableException("The assistant is not configured on this server.");
+        if (!await _ai.IsConfiguredAsync(cancellationToken)) throw new AiUnavailableException("The assistant is not configured on this server.");
 
         var rules = PlanRulesMapping.ToDomain(request.Rules);
         var context = await _contextBuilder.BuildAsync(userId, rules, request.Preference, cancellationToken);

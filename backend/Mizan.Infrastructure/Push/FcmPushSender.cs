@@ -5,7 +5,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Mizan.Application.Interfaces;
 
 namespace Mizan.Infrastructure.Push;
@@ -13,7 +12,9 @@ namespace Mizan.Infrastructure.Push;
 /// <summary>
 /// Sends push notifications through Firebase Cloud Messaging (HTTP v1). It signs its own
 /// service-account token, so no Google SDK is needed. Unconfigured, it reports so and the
-/// rest of the app carries on without push.
+/// rest of the app carries on without push. The project and key are read per send, so a change in
+/// the admin area applies without a restart; the access token is kept only for the key it was
+/// signed with.
 /// </summary>
 public sealed class FcmPushSender : IPushSender
 {
@@ -22,28 +23,46 @@ public sealed class FcmPushSender : IPushSender
 
     private readonly IHttpClientFactory _http;
     private readonly ILogger<FcmPushSender> _logger;
-    private readonly string _projectId;
-    private readonly ServiceAccount? _account;
+    private readonly IRuntimeOptions<PushOptions> _settings;
     private readonly SemaphoreSlim _tokenLock = new(1, 1);
+    private (string Json, ServiceAccount? Account) _parsed = (string.Empty, null);
+    private ServiceAccount? _tokenAccount;
     private string? _accessToken;
     private DateTime _accessTokenExpires;
 
-    public FcmPushSender(IHttpClientFactory http, IOptions<PushOptions> options, ILogger<FcmPushSender> logger)
+    public FcmPushSender(IHttpClientFactory http, IRuntimeOptions<PushOptions> settings, ILogger<FcmPushSender> logger)
     {
         _http = http;
         _logger = logger;
-        _projectId = options.Value.FcmProjectId;
-        _account = ServiceAccount.TryParse(options.Value.FcmServiceAccountJson);
+        _settings = settings;
     }
 
-    public bool IsConfigured => _account is not null && !string.IsNullOrWhiteSpace(_projectId);
+    public async Task<bool> IsConfiguredAsync(CancellationToken cancellationToken = default) =>
+        await CurrentAsync(cancellationToken) is not null;
+
+    /// <summary>The project and parsed key as the settings stand now, or null when push is off.</summary>
+    private async Task<(string ProjectId, ServiceAccount Account)?> CurrentAsync(CancellationToken cancellationToken)
+    {
+        var options = await _settings.GetAsync(cancellationToken);
+        var parsed = _parsed;
+        if (!string.Equals(parsed.Json, options.FcmServiceAccountJson, StringComparison.Ordinal))
+        {
+            parsed = (options.FcmServiceAccountJson, ServiceAccount.TryParse(options.FcmServiceAccountJson));
+            _parsed = parsed;
+        }
+
+        return parsed.Account is null || string.IsNullOrWhiteSpace(options.FcmProjectId)
+            ? null
+            : (options.FcmProjectId, parsed.Account);
+    }
 
     public async Task<PushOutcome> SendAsync(PushMessage message, CancellationToken cancellationToken)
     {
-        if (!IsConfigured) return PushOutcome.Failed;
+        if (await CurrentAsync(cancellationToken) is not { } current) return PushOutcome.Failed;
+        var projectId = current.ProjectId;
 
         string token;
-        try { token = await AccessTokenAsync(cancellationToken); }
+        try { token = await AccessTokenAsync(current.Account, cancellationToken); }
         catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or CryptographicException)
         {
             _logger.LogWarning(ex, "Could not get a Firebase access token");
@@ -54,7 +73,7 @@ public sealed class FcmPushSender : IPushSender
         if (message.LinkUrl is not null) data["linkUrl"] = message.LinkUrl;
         if (message.NotificationId is not null) data["notificationId"] = message.NotificationId;
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"https://fcm.googleapis.com/v1/projects/{_projectId}/messages:send")
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"https://fcm.googleapis.com/v1/projects/{projectId}/messages:send")
         {
             Content = JsonContent.Create(new
             {
@@ -118,16 +137,15 @@ public sealed class FcmPushSender : IPushSender
         return PushOutcome.Failed;
     }
 
-    private async Task<string> AccessTokenAsync(CancellationToken ct)
+    private async Task<string> AccessTokenAsync(ServiceAccount account, CancellationToken ct)
     {
-        if (_accessToken is not null && DateTime.UtcNow < _accessTokenExpires) return _accessToken;
+        if (Fresh(account)) return _accessToken!;
 
         await _tokenLock.WaitAsync(ct);
         try
         {
-            if (_accessToken is not null && DateTime.UtcNow < _accessTokenExpires) return _accessToken;
+            if (Fresh(account)) return _accessToken!;
 
-            var account = _account!;
             var now = DateTimeOffset.UtcNow;
             var assertion = Sign(account, now);
 
@@ -143,6 +161,7 @@ public sealed class FcmPushSender : IPushSender
                 ?? throw new InvalidOperationException("Google returned no access token.");
             // Renewed a few minutes early, so a token never expires mid-request.
             _accessTokenExpires = DateTime.UtcNow.AddSeconds(json.GetProperty("expires_in").GetInt32() - 300);
+            _tokenAccount = account;
             return _accessToken;
         }
         finally
@@ -150,6 +169,10 @@ public sealed class FcmPushSender : IPushSender
             _tokenLock.Release();
         }
     }
+
+    /// <summary>A token signed with this very key that has not run out; a replaced key needs a new one.</summary>
+    private bool Fresh(ServiceAccount account) =>
+        _accessToken is not null && DateTime.UtcNow < _accessTokenExpires && Equals(_tokenAccount, account);
 
     private static string Sign(ServiceAccount account, DateTimeOffset now)
     {

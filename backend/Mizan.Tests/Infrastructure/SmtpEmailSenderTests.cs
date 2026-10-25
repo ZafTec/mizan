@@ -212,7 +212,7 @@ public class SmtpEmailSenderTests
     };
 
     private static SmtpEmailSender CreateSender(SmtpOptions options, string environment = "Production") => new(
-        Options.Create(options),
+        new FixedRuntimeOptions<SmtpOptions>(options),
         Mock.Of<IHostEnvironment>(value => value.EnvironmentName == environment),
         NullLogger<SmtpEmailSender>.Instance);
 }

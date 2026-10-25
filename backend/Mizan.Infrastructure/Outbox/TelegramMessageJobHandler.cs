@@ -36,7 +36,7 @@ public sealed class TelegramMessageJobHandler : IOutboxHandler
         try { job = JsonSerializer.Deserialize<TelegramMessageJob>(payload, Json) ?? throw new OutboxPermanentException("The queued Telegram message was empty."); }
         catch (JsonException ex) { throw new OutboxPermanentException("The queued Telegram message could not be read.", ex); }
 
-        if (!_bot.IsConfigured) return;
+        if (!await _bot.IsConfiguredAsync(cancellationToken)) return;
 
         var telegramUserId = await _context.TelegramLinks.AsNoTracking()
             .Where(l => l.UserId == job.UserId)

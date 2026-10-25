@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Mizan.Application.Ai;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
@@ -24,7 +23,7 @@ public class AiEvalRunner : IAiEvalRunner
     private readonly IAiProvider _provider;
     private readonly IAiQuotaService _quota;
     private readonly IAiPromptResolver _prompts;
-    private readonly AiOptions _options;
+    private readonly IRuntimeOptions<AiOptions> _settings;
     private readonly ILogger<AiEvalRunner> _logger;
 
     public AiEvalRunner(
@@ -32,23 +31,23 @@ public class AiEvalRunner : IAiEvalRunner
         IAiProvider provider,
         IAiQuotaService quota,
         IAiPromptResolver prompts,
-        IOptions<AiOptions> options,
+        IRuntimeOptions<AiOptions> settings,
         ILogger<AiEvalRunner> logger)
     {
         _context = context;
         _provider = provider;
         _quota = quota;
         _prompts = prompts;
-        _options = options.Value;
+        _settings = settings;
         _logger = logger;
     }
 
     public async Task<EvalSummary> RunAsync(
         Guid versionId, Guid adminUserId, CancellationToken cancellationToken = default)
     {
-        if (!_provider.IsConfigured)
+        if (!(await _provider.GetStatusAsync(cancellationToken)).IsConfigured)
         {
-            throw new AiUnavailableException("The assistant is not configured on this server.");
+            throw new AiUnavailableException("The assistant is not configured on this server.", "not_configured");
         }
 
         var version = await _context.AiPromptVersions
@@ -112,7 +111,8 @@ public class AiEvalRunner : IAiEvalRunner
 
         var stopwatch = Stopwatch.StartNew();
         var usage = AiTokenUsage.None;
-        var model = _provider.Model;
+        var options = await _settings.GetAsync(cancellationToken);
+        var model = (await _provider.GetStatusAsync(cancellationToken)).Model;
         var callOutcome = AiCallOutcome.ProviderError;
         AiCompletionResponse? response = null;
         string? errorReason = null;
@@ -156,7 +156,7 @@ public class AiEvalRunner : IAiEvalRunner
             FailureReason = verdict.Reason,
             PromptTokens = usage.PromptTokens,
             CompletionTokens = usage.CompletionTokens,
-            CostMicros = CostOf(usage),
+            CostMicros = CostOf(options, usage),
             LatencyMs = (int)stopwatch.ElapsedMilliseconds,
             CreatedAt = DateTime.UtcNow,
         };
@@ -166,7 +166,7 @@ public class AiEvalRunner : IAiEvalRunner
     /// The ledger holds the same number; this copy is here so the eval matrix
     /// can show a cost delta between two versions without joining to it.
     /// </summary>
-    private long CostOf(AiTokenUsage usage) =>
-        (usage.PromptTokens * _options.PromptCostPerMillionMicros / 1_000_000)
-        + (usage.CompletionTokens * _options.CompletionCostPerMillionMicros / 1_000_000);
+    private static long CostOf(AiOptions options, AiTokenUsage usage) =>
+        (usage.PromptTokens * options.PromptCostPerMillionMicros / 1_000_000)
+        + (usage.CompletionTokens * options.CompletionCostPerMillionMicros / 1_000_000);
 }

@@ -46,7 +46,7 @@ public sealed class NotificationWriter : INotificationWriter
 
         // The push job is committed with the notification, so a notification that is saved is always
         // pushed and one that rolls back never is. Nothing is queued when there is nobody to send to.
-        if (_push.IsConfigured && await _context.DeviceTokens.AnyAsync(d => d.UserId == userId, cancellationToken))
+        if (await _push.IsConfiguredAsync(cancellationToken) && await _context.DeviceTokens.AnyAsync(d => d.UserId == userId, cancellationToken))
         {
             await _outbox.EnqueueAsync(
                 OutboxJobTypes.Push,

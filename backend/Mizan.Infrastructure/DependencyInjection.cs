@@ -1,7 +1,10 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Infrastructure.AI;
@@ -12,6 +15,7 @@ using Mizan.Infrastructure.Identity;
 using Mizan.Infrastructure.Outbox;
 using Mizan.Infrastructure.Push;
 using Mizan.Infrastructure.Services;
+using Mizan.Infrastructure.Settings;
 using Mizan.Infrastructure.Storage;
 using Mizan.Infrastructure.Telegram;
 
@@ -43,6 +47,30 @@ public static class DependencyInjection
         }
 
         services.AddHybridCache();
+
+        // Runtime settings: values an administrator sets in the admin area, laid over configuration
+        // and read per use (docs/ADMIN.md#runtime-settings). Their secrets are protected with Data
+        // Protection, whose key ring lives in the database so it survives restarts and every API
+        // instance shares it. DataProtection__KeysPath moves the ring to a directory instead (a volume
+        // every instance mounts), which keeps it out of database backups.
+        var dataProtection = services.AddDataProtection().SetApplicationName("Mizan");
+        var keysPath = configuration["DataProtection:KeysPath"];
+        if (string.IsNullOrWhiteSpace(keysPath))
+        {
+            dataProtection.PersistKeysToDbContext<MizanDbContext>();
+        }
+        else
+        {
+            dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keysPath));
+        }
+
+        services.AddSingleton<RuntimeSettingsCache>();
+        services.AddScoped<IRuntimeSettings, RuntimeSettings>();
+        AddRuntimeOptions<SmtpOptions>(services, SmtpOptions.SectionName);
+        AddRuntimeOptions<AiOptions>(services, AiOptions.SectionName);
+        AddRuntimeOptions<TelegramOptions>(services, TelegramOptions.SectionName);
+        AddRuntimeOptions<PushOptions>(services, PushOptions.SectionName);
+        AddRuntimeOptions<PaddleOptions>(services, PaddleOptions.SectionName);
 
         // Domain services
         services.TryAddSingleton(TimeProvider.System);
@@ -102,8 +130,7 @@ public static class DependencyInjection
         services.Configure<AiOptions>(configuration.GetSection(AiOptions.SectionName));
         services.AddHttpClient(OpenAiCompatibleProvider.HttpClientName);
         services.AddSingleton<IAiProvider, OpenAiCompatibleProvider>();
-        services.AddSingleton<IAiCeilings>(sp =>
-            sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<AiOptions>>().Value);
+        services.AddSingleton<IAiCeilings, AiCeilings>();
         services.AddScoped<IAiQuotaService, AiQuotaService>();
         services.AddScoped<IAiMeteredClient, MeteredAiClient>();
         services.AddScoped<IDataAccessPolicy, DataAccessPolicy>();
@@ -146,5 +173,21 @@ public static class DependencyInjection
         services.AddScoped<IPricesWorkerClient, PricesWorkerClient>();
 
         return services;
+    }
+
+    /// <summary>
+    /// One overlay per options type, registered as a singleton under both its interfaces, so the
+    /// settings list and every consumer read the same instance.
+    /// </summary>
+    private static void AddRuntimeOptions<TOptions>(IServiceCollection services, string section)
+        where TOptions : class
+    {
+        services.AddSingleton(sp => new RuntimeOptions<TOptions>(
+            section,
+            sp.GetRequiredService<IOptionsMonitor<TOptions>>(),
+            sp.GetRequiredService<RuntimeSettingsCache>(),
+            sp.GetRequiredService<ILogger<RuntimeOptions<TOptions>>>()));
+        services.AddSingleton<IRuntimeOptions<TOptions>>(sp => sp.GetRequiredService<RuntimeOptions<TOptions>>());
+        services.AddSingleton<IRuntimeOptionsSection>(sp => sp.GetRequiredService<RuntimeOptions<TOptions>>());
     }
 }

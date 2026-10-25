@@ -75,7 +75,16 @@ public sealed class AiQuotaExceededException : DomainException
 /// <summary>The provider is not configured, or answered with something unusable.</summary>
 public sealed class AiUnavailableException : DomainException
 {
-    public AiUnavailableException(string message) : base(message) { }
+    public AiUnavailableException(string message, string reason = "unavailable") : base(message)
+    {
+        Reason = reason;
+    }
+
+    /// <summary>
+    /// What went wrong, as a code the admin provider test reports: not_configured, timeout,
+    /// unreachable, http_{status}, empty_response or unavailable. Never the provider's body.
+    /// </summary>
+    public string Reason { get; }
 }
 
 /// <summary>The request is valid but the current state or configuration does not allow it. Answered with 409.</summary>

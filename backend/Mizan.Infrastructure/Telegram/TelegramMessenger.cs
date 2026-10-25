@@ -22,7 +22,7 @@ public sealed class TelegramMessenger : ITelegramMessenger
 
     public async Task QueueAsync(Guid userId, string text, string? openPath, string dedupeKey, CancellationToken cancellationToken = default)
     {
-        if (!_bot.IsConfigured) return;
+        if (!await _bot.IsConfiguredAsync(cancellationToken)) return;
         if (!await _context.TelegramLinks.AnyAsync(l => l.UserId == userId, cancellationToken)) return;
         if (!(await _entitlements.GetAsync(userId, cancellationToken)).IsPro) return;
 
