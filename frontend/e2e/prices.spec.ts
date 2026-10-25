@@ -155,12 +155,27 @@ test("switching region changes the currency shown", async ({
   context,
 }) => {
   await signIn(context);
+  // The settings page renders the same on the server and in the browser.
+  const hydration: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" && /hydrat/i.test(message.text()))
+      hydration.push(message.text());
+  });
+  page.on("pageerror", (error) => {
+    if (/hydrat/i.test(error.message)) hydration.push(error.message);
+  });
   await page.goto(`/ingredients/${YOGURT_ID}`);
   await expect(page.getByRole("region", { name: "Price" })).toContainText(
     "ETB 180.00",
   );
 
   await page.goto("/profile/settings");
+  const zone = page.getByLabel("Time zone");
+  await expect(zone).toHaveValue("UTC");
+  // The browser's own list arrives after hydration, with each zone's offset.
+  await expect(
+    zone.getByRole("option", { name: "Africa/Addis Ababa (GMT+3)" }),
+  ).toHaveCount(1);
   const select = page.getByLabel("Price region");
   await expect(select).toHaveValue("ET-AA");
   await expect(select.getByRole("option")).toHaveText([
@@ -181,6 +196,7 @@ test("switching region changes the currency shown", async ({
   expect(writesTo(s, /^\/api\/Users\/me$/).map((w) => w.body)).toEqual([
     { priceRegionCode: "KE-NBO" },
   ]);
+  expect(hydration).toEqual([]);
   expect(s.unhandled).toEqual([]);
 });
 

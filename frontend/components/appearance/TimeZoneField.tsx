@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { browserTimeZone } from "@/lib/auth-client";
 import { clientApi } from "@/lib/api.client";
 import { appToast } from "@/lib/toast";
@@ -31,6 +31,31 @@ function offsetLabel(zone: string): string {
   }
 }
 
+type DeviceZones = {
+  /** Every zone this browser knows, with its current offset. */
+  zones: { zone: string; offset: string }[];
+  /** The zone the device is set to, when it says. */
+  detected: string | null;
+};
+
+let device: DeviceZones | null = null;
+
+/**
+ * Read once in the browser. The server knows different zone names (its ICU
+ * lists Africa/Asmera where Chromium lists Africa/Asmara) and its own clock
+ * and zone, so none of this is read while rendering on the server or during
+ * hydration, which uses the server snapshot below.
+ */
+function deviceZones(): DeviceZones {
+  device ??= {
+    zones: zones().map((zone) => ({ zone, offset: offsetLabel(zone) })),
+    detected: browserTimeZone(),
+  };
+  return device;
+}
+
+const noSubscription = () => () => {};
+
 /**
  * Which midnight the user's day ends at.
  *
@@ -39,20 +64,26 @@ function offsetLabel(zone: string): string {
  * could log every single night and never advance their streak.
  */
 export default function TimeZoneField({ current }: { current: string | null }) {
-  const [value, setValue] = useState(current ?? browserTimeZone() ?? "UTC");
+  // Null on the server and while hydrating, so both render the same markup.
+  const local = useSyncExternalStore(noSubscription, deviceZones, () => null);
+  const [chosen, setValue] = useState(current);
   const [saving, setSaving] = useState(false);
+  const value = chosen ?? local?.detected ?? "UTC";
   const options = useMemo(() => {
-    const all = zones();
-    return all.length > 0
-      ? all
-      : [value, "UTC"].filter((v, i, a) => a.indexOf(v) === i);
-  }, [value]);
+    const known = local?.zones ?? [];
+    const listed = known.some((option) => option.zone === value)
+      ? known
+      : [{ zone: value, offset: local ? offsetLabel(value) : "" }, ...known];
+    return known.length > 0 || value === "UTC"
+      ? listed
+      : [...listed, { zone: "UTC", offset: local ? offsetLabel("UTC") : "" }];
+  }, [local, value]);
 
-  const detected = browserTimeZone();
+  const detected = local?.detected ?? null;
   const mismatch = detected !== null && detected !== value;
 
   async function save(next: string) {
-    const previous = value;
+    const previous = chosen;
     setValue(next);
     setSaving(true);
     try {
@@ -84,10 +115,9 @@ export default function TimeZoneField({ current }: { current: string | null }) {
         onChange={(e) => save(e.target.value)}
         className="input w-full"
       >
-        {options.map((zone) => (
+        {options.map(({ zone, offset }) => (
           <option key={zone} value={zone}>
-            {zone.replace(/_/g, " ")}{" "}
-            {offsetLabel(zone) && `(${offsetLabel(zone)})`}
+            {zone.replace(/_/g, " ")} {offset && `(${offset})`}
           </option>
         ))}
       </select>
