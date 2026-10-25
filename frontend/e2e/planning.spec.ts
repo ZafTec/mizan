@@ -270,6 +270,11 @@ test("a person starts a plan from a template", async ({ page, context }) => {
   await page.waitForURL(/\/meal-plan\/[0-9a-f-]{36}$/);
   await expect(page.getByRole("heading", { name: "Next week" })).toBeVisible();
   await expect(page.getByRole("tabpanel")).toContainText("Yogurt and oats");
+  // The plan followed until now moves to past plans.
+  await page.goto("/meal-plan");
+  await expect(page.getByRole("region", { name: "Past plans" })).toContainText(
+    "Steady week",
+  );
 
   const s = await state(context);
   const [applied] = writesTo(s, /\/templates\/[^/]+\/apply$/);

@@ -131,6 +131,8 @@ public class PlanningSharingTests
         (await admin.PostAsJsonAsync($"/api/MealPlans/{templateId}/entries", TextEntry("Water, two litres", day: 2))).StatusCode.Should().Be(HttpStatusCode.Created);
 
         // Anyone applies it and gets their own active plan with the entries re-pointed at the copied session.
+        var followed = await CreatePlanAsync(client, new CreateMealPlanRequest { Name = "What I follow now", StartDate = new DateOnly(2026, 10, 26), DurationDays = 7 });
+        (await PlanAsync(client, followed)).Status.Should().Be("Active");
         var applied = await client.PostAsJsonAsync($"/api/MealPlans/templates/{templateId}/apply", new ApplyTemplateRequest { StartDate = new DateOnly(2026, 11, 2) });
         applied.StatusCode.Should().Be(HttpStatusCode.Created, await applied.Content.ReadAsStringAsync());
         var planId = (await applied.Content.ReadFromJsonAsync<MealPlanCreatedResult>())!.Id;
@@ -146,6 +148,7 @@ public class PlanningSharingTests
         plan.PrepSessions.Should().ContainSingle().Which.Id.Should().NotBe((await PlanAsync(admin, templateId)).PrepSessions.Single().Id);
         Entries(plan.Days[1]).Single().PrepSessionId.Should().Be(plan.PrepSessions.Single().Id);
         plan.Days[0].Violations.Select(v => v.Rule).Should().Contain("carbs_over", "60 g of oats is over the keto ceiling of 30 g carbs");
+        (await PlanAsync(client, followed)).Status.Should().Be("Archived", "a person follows one plan at a time");
 
         // The copy is independent of the template.
         (await admin.DeleteAsync($"/api/MealPlans/templates/{templateId}")).StatusCode.Should().Be(HttpStatusCode.NoContent);

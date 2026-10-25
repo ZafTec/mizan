@@ -12,7 +12,8 @@ namespace Mizan.Application.Planning;
 /// <summary>
 /// Copies a template into a new active personal plan starting on a date: its
 /// rules, its sessions and its entries, with the entries re-pointed at the
-/// copied sessions. The template itself is never changed by the copy.
+/// copied sessions. Like any plan that becomes active, it archives the owner's
+/// other active personal plan. The template itself is never changed by the copy.
 /// </summary>
 public record ApplyTemplateCommand(Guid TemplateId, DateOnly StartDate, Guid? HouseholdId, string? Name) : IRequest<MealPlanCreatedResult>;
 
@@ -52,6 +53,8 @@ public class ApplyTemplateCommandHandler : IRequestHandler<ApplyTemplateCommand,
 
         var plan = Copy(template, userId, request.StartDate, request.Name, request.HouseholdId, PlanStatus.Active, authoredBy: null);
         _context.MealPlans.Add(plan);
+        // A person follows one plan at a time; a household plan leaves their own alone.
+        await _access.ActivateAsync(_cache, plan, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
         await PlanAccess.InvalidateAsync(_cache, plan, cancellationToken);
         return new MealPlanCreatedResult(plan.Id, plan.Name, plan.Status.ToString(), plan.Entries.Count);
