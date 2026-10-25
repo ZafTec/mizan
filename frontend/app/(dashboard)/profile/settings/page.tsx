@@ -25,6 +25,7 @@ import {
 } from "@/lib/api/profile";
 import { useTheme } from "@/lib/hooks/useTheme";
 import TimeZoneField from "@/components/appearance/TimeZoneField";
+import PriceRegionField from "@/components/prices/PriceRegionField";
 import { appToast } from "@/lib/toast";
 
 type SessionItem = SessionSummary;
@@ -449,6 +450,18 @@ export default function ProfileSettingsPage() {
 
             <div className="mt-6">
               <TimeZoneField current={session?.user?.timeZoneId ?? null} />
+            </div>
+          </section>
+
+          <section id="prices" className="card p-6 scroll-mt-6">
+            <SectionHeading
+              icon="cart"
+              title="Prices"
+              description="Where you shop, so plans and lists show what they cost there."
+            />
+
+            <div className="mt-6">
+              <PriceRegionField />
             </div>
           </section>
 
