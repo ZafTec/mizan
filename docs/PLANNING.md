@@ -196,7 +196,7 @@ Where the implementation settled details the design left open:
 
 ## AI planning
 
-`GenerateMealPlanCommand` is one metered command. Inputs: rules, `DurationDays`, `StartDate`, a free-text preference, and an optional list of budget ceilings. Steps:
+`GenerateMealPlanCommand` is one metered command, refused with `403 feature_disabled` on every surface when the `planning.generate` flag is off for the person's household ([administration](ADMIN.md#feature-flags)). Inputs: rules, `DurationDays`, `StartDate`, a free-text preference, and an optional list of budget ceilings. Steps:
 
 1. Build the context through `IDataAccessPolicy`. It holds the goal, the recipes of the user, the catalogue foods that match the allow list or the preference text, and the price book.
 2. Call the provider with the `meal_plan_v1` schema. The schema has days, entries, and prep sessions. An entry has slot, kind, food name or recipe id, grams or servings, and note.

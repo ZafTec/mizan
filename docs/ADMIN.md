@@ -66,3 +66,50 @@ Both detail pages carry support notes: notes administrators leave for each other
 **Tests.** **Send test email** (`POST /api/admin/settings/smtp/test`, MCP `admin_test_smtp`) queues one message to the signed-in administrator through the outbox with the settings as they stand and returns the job id; **Jobs** shows whether it was delivered. **Test provider** (`POST /api/admin/settings/ai/test`) makes one small call on the evaluation line, reserved and settled through `IAiQuotaService` like any other, and reports `reachable` with the model and latency, or an error class (`not_configured`, `quota_exceeded`, `timeout`, `unreachable`, `http_401` and so on) without the provider's body.
 
 MCP has `admin_list_settings`, `admin_set_setting`, `admin_clear_setting` and `admin_test_smtp`. Telegram has no admin surface; the bot serves end users.
+## Feature flags
+
+A flag switches one feature for everyone or for one household. The flags are listed in code (`Mizan.Domain/Features/FeatureFlags.cs`) and any other key is refused with 404:
+
+| Key | What it switches |
+| --- | --- |
+| `planning.generate` | Drafting meal plans with the assistant (`GenerateMealPlanCommand`: the web, MCP `generate_meal_plan`, Telegram `/planme`, the chat tool) |
+| `prices` | Food price lookups and price reports (`GetFoodPriceQuery`, `CreatePriceReportCommand`) |
+| `telegram.bot` | Every write the bot makes as a linked user, and the Mini App sign-in |
+| `ai.assistant` | Assistant chat (`SendAiChatMessageCommand`) and food analysis from a photo or a sentence |
+| `social.feed` | Reading the feed, posting, reactions and comments |
+
+A household gets its own override when it has one, then the default an administrator stored, then the default in the catalog. The table holds only what an administrator changed, so a new flag needs no seed. The household of a request is the caller's active household (or their first by name); someone in no household gets the default. Answers are cached for up to a minute and every flag write clears them.
+
+The check lives in one place, `FeatureGate`. A MediatR request marked `[RequiresFeature]` is checked by `FeatureGateBehavior`; the food analysis actions carry the same attribute and are checked by the API's `FeatureGateFilter`, which also holds every non-GET call that carries `X-Mizan-Surface: telegram` (the bot sends it on every call as a user) to `telegram.bot`. A feature that is off answers `403` with `errorCode: "feature_disabled"`, `feature`, and the message "This feature is turned off for your household." The web and the bot show that message as it is.
+
+| Route | Purpose |
+| --- | --- |
+| `GET /api/admin/feature-flags` | Every flag with its default, the catalog default and its override counts |
+| `PUT /api/admin/feature-flags/{key}` | Set the default (`{ enabled }`) |
+| `GET /api/admin/feature-flags/{key}/overrides` | The households with their own answer |
+| `PUT`, `DELETE /api/admin/feature-flags/{key}/overrides/{householdId}` | Set or remove one household's override |
+
+MCP: `admin_list_feature_flags`, `admin_set_feature_flag`, `admin_set_feature_flag_override`, `admin_clear_feature_flag_override`. The page `/admin/feature-flags` lists the flags with a default switch, the override count, and an override list per flag with a search by household name to add one. Telegram has no admin commands; the bot only shows the API's message.
+
+## Usage limits
+
+An override changes the AI allowance of one user, one household, or every subscriber of one billing plan. It sets any of four caps: requests a day, tokens a day, cost a day and cost a month (costs in millionths of the provider's currency unit). A cap left empty inherits. An override is for one allowance line (`Personal`, `Planning`, `Onboarding`, `TrainerClient`, `Eval`) or, with no line, for every line; one subject has at most one override per line.
+
+Each cap is composed field by field: the user's override, then their household's, then their plan's, then the tier default from `AiOptions` (see [AI](AI.md#metering)). Within one scope the override for the line wins over the one for every line. A plan override applies while the subscriber is Pro on that catalogue plan (matched by Paddle price). `IUsageLimits` does the composition and `IAiQuotaService` enforces the result in the same reservation every provider call makes; there is no second enforcement path.
+
+| Route | Purpose |
+| --- | --- |
+| `GET /api/admin/usage-limits?scope=Plan\|Household\|User` | Every plan, or every household or user with an override, with the limits in force per line and the scope each value came from |
+| `GET /api/admin/usage-limits/{scope}/{subjectId}` | One subject, with or without overrides |
+| `PUT /api/admin/usage-limits/{scope}/{subjectId}` | Create or replace the override for the line in the body |
+| `DELETE /api/admin/usage-limits/{scope}/{subjectId}?line=` | Remove one override (no line: the every-line row) |
+
+MCP: `admin_list_usage_limits`, `admin_set_usage_limit`, `admin_clear_usage_limit`. The page `/admin/usage-limits` has tabs Plans, Households and Users; a plan is shown against the Pro defaults, a household against the Free defaults, and a user against their own tier, household and plan.
+
+## Usage
+
+`GET /api/admin/usage` reads the AI usage ledger between two UTC dates, inclusive (default: this month), grouped by `household`, `user`, `plan` or `feature`, and optionally narrowed with `householdId` or `userId`. Each group has requests, tokens, cost and refusals; a refusal is a call an allowance or the global ceiling turned away, stored as a zero-cost `Refused` row that never counts as a request. The plan is the user's current one ("Free", a catalogue plan, or "Pro (other)"). At most 366 days are read at a time.
+
+`GET /api/admin/usage/export` takes the same filters and streams RFC 4180 CSV in UTF-8: the header `group,key,label,requests,tokens,cost_micros,refusals`, then one row per group. A label a spreadsheet would read as a formula is prefixed with an apostrophe.
+
+MCP: `admin_get_platform_usage`. The page `/admin/usage` has the date range, the grouping, the table and **Export CSV**, which downloads through the API with the session cookie. The household and user admin pages show a "Usage this month" block that links here with their filter set.
