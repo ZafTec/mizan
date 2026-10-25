@@ -24,6 +24,11 @@ public class AdminUsersController : ControllerBase
     public async Task<ActionResult<AdminOverviewDto>> Overview()
         => Ok(await _mediator.Send(new GetAdminOverviewQuery()));
 
+    /// <summary>One line per service: ok, degraded, down or notConfigured. Cached for 30 seconds.</summary>
+    [HttpGet("overview/health")]
+    public async Task<ActionResult<Mizan.Contracts.Admin.SystemHealthDto>> Health()
+        => Ok(await _mediator.Send(new GetSystemHealthQuery()));
+
     [HttpGet("users")]
     public async Task<ActionResult<PagedResult<AdminUserDto>>> ListUsers([FromQuery] ListAdminUsersQuery query)
         => Ok(await _mediator.Send(query));

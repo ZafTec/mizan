@@ -309,6 +309,45 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         (await CallAsync("admin_test_smtp", new { })).Should().Contain("jobId");
     }
 
+    [Fact]
+    public async Task AnAdminWorksTheMailLogContactInboxHealthAndSupportNotesFromMcp()
+    {
+        await _api.ResetDatabaseAsync();
+        await AuthenticateAsync(admin: true);
+        var subject = Guid.NewGuid();
+        await _api.SeedUserAsync(subject, $"subject-{subject:N}@example.com");
+        using (var anonymous = _api.CreateClient())
+        {
+            (await anonymous.PostAsJsonAsync("/api/Contact", new { name = "Ann", email = "ann@example.com", subject = "Hello", message = "From the form" }))
+                .EnsureSuccessStatusCode();
+        }
+
+        (await ToolNamesAsync()).Should().Contain(new[]
+        {
+            "admin_list_mail", "admin_retry_mail", "admin_send_announcement", "admin_list_contact",
+            "admin_reply_contact", "admin_mark_contact_handled", "admin_get_system_health",
+            "admin_list_support_notes", "admin_add_support_note",
+        });
+
+        (await CallAsync("admin_get_system_health", new { })).Should().Contain("\"name\":\"database\"");
+
+        var inbox = await CallAsync("admin_list_contact", new { status = "New" });
+        inbox.Should().Contain("From the form");
+        var contactId = System.Text.RegularExpressions.Regex.Match(inbox, "\"id\":\"([0-9a-f-]{36})\"").Groups[1].Value;
+        (await CallAsync("admin_reply_contact", new { id = contactId, body = "Thanks for writing." }))
+            .Should().Contain("\"status\":\"Handled\"");
+
+        (await CallAsync("admin_list_mail", new { kind = "contact.reply" })).Should().Contain("ann@example.com");
+
+        (await CallAsync("admin_send_announcement", new { subject = "Hi", body = "One person.", audience = $"user:{subject}" }))
+            .Should().Contain("\"queued\":1");
+
+        (await CallAsync("admin_add_support_note", new { subjectType = "User", subjectId = subject.ToString(), body = "Called about billing." }))
+            .Should().Contain("Called about billing.");
+        (await CallAsync("admin_list_support_notes", new { subjectType = "User", subjectId = subject.ToString() }))
+            .Should().Contain("Called about billing.");
+    }
+
     // ---- Helpers ----------------------------------------------------------
 
     /// <summary>A 1x1 transparent PNG. Small enough to inline, real enough to sniff.</summary>

@@ -224,7 +224,7 @@ public sealed class AdminTools
     public Task<string> DeleteJob(string id, CancellationToken ct = default) =>
         _api.DeleteAsync($"/api/Admin/Jobs/{ToolArguments.ParseId(id, "id")}", ct);
 
-    // ---- Mail and contact -------------------------------------------------
+    // ---- Mail, contact, health and support notes ------------------------
 
     [McpServerTool(Name = "admin_list_mail", ReadOnly = true, Idempotent = true)]
     [Description(
@@ -309,6 +309,31 @@ public sealed class AdminTools
     [Description("Admin only. Marks a contact message handled without replying.")]
     public Task<string> MarkContactHandled(string id, CancellationToken ct = default) =>
         _api.PostAsync($"/api/admin/contact/{ToolArguments.ParseId(id, "id")}/handled", null, ct);
+
+    [McpServerTool(Name = "admin_get_system_health", ReadOnly = true, Idempotent = true)]
+    [Description(
+        "Admin only. One line per service: database, redis, outbox, email, ai, telegram, push, prices "
+        + "and storage, each ok, degraded, down or notConfigured with a detail line. notConfigured means "
+        + "there is nothing set up to measure. Cached for 30 seconds.")]
+    public Task<string> SystemHealth(CancellationToken ct = default) =>
+        _api.GetAsync("/api/admin/overview/health", ct);
+
+    [McpServerTool(Name = "admin_list_support_notes", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. Administrators' notes on a user or a household, newest first. subjectType is User or Household.")]
+    public Task<string> ListSupportNotes(
+        [Description("User or Household")] string subjectType, string subjectId, CancellationToken ct = default) =>
+        _api.GetAsync(
+            $"/api/admin/support-notes{new QueryString().Add("subjectType", subjectType).Add("subjectId", ToolArguments.ParseId(subjectId, "subjectId").ToString())}",
+            ct);
+
+    [McpServerTool(Name = "admin_add_support_note")]
+    [Description("Admin only. Adds a note on a user or a household for other administrators. Never shown to the subject.")]
+    public Task<string> AddSupportNote(
+        [Description("User or Household")] string subjectType, string subjectId, string body, CancellationToken ct = default) =>
+        _api.PostAsync(
+            "/api/admin/support-notes",
+            new CreateSupportNoteRequest(subjectType, ToolArguments.ParseId(subjectId, "subjectId"), body),
+            ct);
 
     // ---- Prompt console ---------------------------------------------------
 

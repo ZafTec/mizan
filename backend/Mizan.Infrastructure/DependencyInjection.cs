@@ -159,6 +159,10 @@ public static class DependencyInjection
         services.Configure<PushOptions>(configuration.GetSection(PushOptions.SectionName));
         services.AddHttpClient(FcmPushSender.HttpClientName);
         services.AddSingleton<IPushSender, FcmPushSender>();
+
+        // The system health page's round trips (docs/ADMIN.md#overview-and-health).
+        services.AddHttpClient(SystemProbes.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(3));
+        services.AddScoped<ISystemProbes, SystemProbes>();
         services.AddHostedService<OutboxDispatcher>();
         services.AddHostedService<EveningReminderScheduler>();
 

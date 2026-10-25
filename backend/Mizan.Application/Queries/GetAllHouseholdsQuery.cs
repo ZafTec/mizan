@@ -8,9 +8,10 @@ using Mizan.Domain.Entities;
 namespace Mizan.Application.Queries;
 
 // Admin-only. Lists every household with counts for the /admin/households page.
+// Search matches the household's name or any member's email or name.
 public record GetAllHouseholdsQuery : IRequest<PagedResult<AdminHouseholdSummary>>, IPagedQuery, ISortableQuery
 {
-    public string? SearchTerm { get; init; }
+    public string? Search { get; init; }
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;
     public string? SortBy { get; init; }
@@ -33,7 +34,8 @@ public class GetAllHouseholdsQueryHandler : IRequestHandler<GetAllHouseholdsQuer
     private static readonly Dictionary<string, Expression<Func<Household, object>>> SortMappings = new(StringComparer.OrdinalIgnoreCase)
     {
         ["name"] = h => h.Name,
-        ["createdat"] = h => h.CreatedAt
+        ["createdat"] = h => h.CreatedAt,
+        ["members"] = h => h.Members.Count
     };
 
     private readonly IMizanDbContext _context;
@@ -47,10 +49,12 @@ public class GetAllHouseholdsQueryHandler : IRequestHandler<GetAllHouseholdsQuer
     {
         var query = _context.Households.AsNoTracking().AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+        if (!string.IsNullOrWhiteSpace(request.Search))
         {
-            var needle = request.SearchTerm.Trim().ToLower();
-            query = query.Where(h => h.Name.ToLower().Contains(needle));
+            var needle = request.Search.Trim().ToLower();
+            query = query.Where(h => h.Name.ToLower().Contains(needle)
+                || _context.HouseholdMembers.Any(m => m.HouseholdId == h.Id
+                    && (m.User.Email.ToLower().Contains(needle) || (m.User.Name != null && m.User.Name.ToLower().Contains(needle)))));
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -95,8 +99,8 @@ public class GetAllHouseholdsQueryHandler : IRequestHandler<GetAllHouseholdsQuer
         {
             Items = items,
             TotalCount = totalCount,
-            Page = request.Page,
-            PageSize = request.PageSize
+            Page = Math.Max(1, request.Page),
+            PageSize = Math.Clamp(request.PageSize, 1, 100)
         };
     }
 }
