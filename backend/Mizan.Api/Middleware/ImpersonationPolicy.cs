@@ -73,6 +73,7 @@ public static class ImpersonationPolicy
         [typeof(AdminPricesController)] = new("/api/admin/prices", ImpersonationAccess.Blocked),
         [typeof(AdminRelationshipsController)] = new("/api/Admin/Relationships", ImpersonationAccess.Blocked),
         [typeof(AdminSettingsController)] = new("/api/admin/settings", ImpersonationAccess.Blocked),
+        [typeof(AdminSupportNotesController)] = new("/api/admin/support-notes", ImpersonationAccess.Blocked),
         [typeof(AdminUsersController)] = new("/api/admin", ImpersonationAccess.Blocked),
         [typeof(AuditLogsController)] = new("/api/AuditLogs", ImpersonationAccess.Blocked),
         [typeof(InternalPricesController)] = new("/api/internal/prices", ImpersonationAccess.Blocked),
