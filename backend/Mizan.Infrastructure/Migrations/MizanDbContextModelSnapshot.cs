@@ -5186,6 +5186,8 @@ namespace Mizan.Infrastructure.Migrations
 
                             b1.Property<string>("Currency");
 
+                            b1.Property<decimal?>("DailyBudget");
+
                             b1.Property<TimeOnly?>("EatingWindowEnd");
 
                             b1.Property<TimeOnly?>("EatingWindowStart");

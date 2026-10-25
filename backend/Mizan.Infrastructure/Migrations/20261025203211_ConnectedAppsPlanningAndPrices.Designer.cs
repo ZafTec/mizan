@@ -13,11 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Mizan.Infrastructure.Migrations
 {
     [DbContext(typeof(MizanDbContext))]
-<<<<<<<< HEAD:backend/Mizan.Infrastructure/Migrations/20261025175141_ConnectedAppsPlanningAndPrices.Designer.cs
-    [Migration("20261025175141_ConnectedAppsPlanningAndPrices")]
-========
-    [Migration("20261025181218_ConnectedAppsPlanningAndPrices")]
->>>>>>>> d7d5c09 (feat(settings): runtime settings laid over configuration, secrets encrypted):backend/Mizan.Infrastructure/Migrations/20261025181218_ConnectedAppsPlanningAndPrices.Designer.cs
+    [Migration("20261025203211_ConnectedAppsPlanningAndPrices")]
     partial class ConnectedAppsPlanningAndPrices
     {
         /// <inheritdoc />
@@ -5192,6 +5188,8 @@ namespace Mizan.Infrastructure.Migrations
                                 .IsRequired();
 
                             b1.Property<string>("Currency");
+
+                            b1.Property<decimal?>("DailyBudget");
 
                             b1.Property<TimeOnly?>("EatingWindowEnd");
 
