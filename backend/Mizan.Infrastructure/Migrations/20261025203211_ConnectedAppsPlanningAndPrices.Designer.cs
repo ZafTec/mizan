@@ -13,11 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Mizan.Infrastructure.Migrations
 {
     [DbContext(typeof(MizanDbContext))]
-<<<<<<<< HEAD:backend/Mizan.Infrastructure/Migrations/20261025203211_ConnectedAppsPlanningAndPrices.Designer.cs
     [Migration("20261025203211_ConnectedAppsPlanningAndPrices")]
-========
-    [Migration("20261025180601_ConnectedAppsPlanningAndPrices")]
->>>>>>>> 24883c2 (refactor(email): send every email through one queue that keeps an email log):backend/Mizan.Infrastructure/Migrations/20261025180601_ConnectedAppsPlanningAndPrices.Designer.cs
     partial class ConnectedAppsPlanningAndPrices
     {
         /// <inheritdoc />
@@ -686,46 +682,6 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("ai_usage_logs", (string)null);
                 });
 
-            modelBuilder.Entity("Mizan.Domain.Entities.Announcement", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Audience")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("audience");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<Guid>("CreatedByUserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by_user_id");
-
-                    b.Property<int>("RecipientCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("recipient_count");
-
-                    b.Property<string>("Subject")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)")
-                        .HasColumnName("subject");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Audience", "CreatedAt");
-
-                    b.ToTable("announcements", (string)null);
-                });
-
             modelBuilder.Entity("Mizan.Domain.Entities.AuditLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1122,80 +1078,6 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("chat_messages", (string)null);
                 });
 
-            modelBuilder.Entity("Mizan.Domain.Entities.ContactSubmission", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(320)
-                        .HasColumnType("character varying(320)")
-                        .HasColumnName("email");
-
-                    b.Property<DateTime?>("HandledAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("handled_at");
-
-                    b.Property<Guid?>("HandledByUserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("handled_by_user_id");
-
-                    b.Property<string>("IpHash")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("ip_hash");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasMaxLength(5000)
-                        .HasColumnType("character varying(5000)")
-                        .HasColumnName("message");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)")
-                        .HasColumnName("name");
-
-                    b.Property<Guid?>("ReplyEmailMessageId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("reply_email_message_id");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)")
-                        .HasColumnName("status");
-
-                    b.Property<string>("Subject")
-                        .IsRequired()
-                        .HasMaxLength(160)
-                        .HasColumnType("character varying(160)")
-                        .HasColumnName("subject");
-
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IpHash", "CreatedAt");
-
-                    b.HasIndex("Status", "CreatedAt");
-
-                    b.ToTable("contact_submissions", (string)null);
-                });
-
             modelBuilder.Entity("Mizan.Domain.Entities.ContentReport", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1338,85 +1220,6 @@ namespace Mizan.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("device_tokens", (string)null);
-                });
-
-            modelBuilder.Entity("Mizan.Domain.Entities.EmailMessage", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<int>("Attempts")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0)
-                        .HasColumnName("attempts");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<Guid?>("CreatedByUserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by_user_id");
-
-                    b.Property<string>("Kind")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("kind");
-
-                    b.Property<string>("LastError")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("last_error");
-
-                    b.Property<Guid?>("OutboxJobId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("outbox_job_id");
-
-                    b.Property<DateTime?>("SentAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("sent_at");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)")
-                        .HasColumnName("status");
-
-                    b.Property<string>("Subject")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)")
-                        .HasColumnName("subject");
-
-                    b.Property<string>("ToAddress")
-                        .IsRequired()
-                        .HasMaxLength(320)
-                        .HasColumnType("character varying(320)")
-                        .HasColumnName("to_address");
-
-                    b.Property<Guid?>("ToUserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("to_user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedAt");
-
-                    b.HasIndex("OutboxJobId");
-
-                    b.HasIndex("ToUserId");
-
-                    b.HasIndex("Kind", "CreatedAt");
-
-                    b.HasIndex("Status", "CreatedAt");
-
-                    b.ToTable("email_messages", (string)null);
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.Exercise", b =>
@@ -3953,7 +3756,6 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("subscriptions", (string)null);
                 });
 
-<<<<<<<< HEAD:backend/Mizan.Infrastructure/Migrations/20261025203211_ConnectedAppsPlanningAndPrices.Designer.cs
             modelBuilder.Entity("Mizan.Domain.Entities.SystemSetting", b =>
                 {
                     b.Property<string>("Key")
@@ -3983,52 +3785,6 @@ namespace Mizan.Infrastructure.Migrations
                     b.HasIndex("UpdatedByUserId");
 
                     b.ToTable("system_settings", (string)null);
-========
-            modelBuilder.Entity("Mizan.Domain.Entities.SupportNote", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("AuthorUserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("author_user_id");
-
-                    b.Property<string>("Body")
-                        .IsRequired()
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)")
-                        .HasColumnName("body");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<Guid>("SubjectId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("subject_id");
-
-                    b.Property<string>("SubjectType")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)")
-                        .HasColumnName("subject_type");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SubjectType", "SubjectId", "CreatedAt");
-
-                    b.ToTable("support_notes", (string)null);
->>>>>>>> 24883c2 (refactor(email): send every email through one queue that keeps an email log):backend/Mizan.Infrastructure/Migrations/20261025180601_ConnectedAppsPlanningAndPrices.Designer.cs
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.TelegramLink", b =>

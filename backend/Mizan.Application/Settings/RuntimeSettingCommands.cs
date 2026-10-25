@@ -161,13 +161,13 @@ public sealed class SendTestEmailCommandHandler : IRequestHandler<SendTestEmailC
 {
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _user;
-    private readonly IOutbox _outbox;
+    private readonly IEmailQueue _emails;
 
-    public SendTestEmailCommandHandler(IMizanDbContext context, ICurrentUserService user, IOutbox outbox)
+    public SendTestEmailCommandHandler(IMizanDbContext context, ICurrentUserService user, IEmailQueue emails)
     {
         _context = context;
         _user = user;
-        _outbox = outbox;
+        _emails = emails;
     }
 
     public async Task<SmtpTestResult> Handle(SendTestEmailCommand request, CancellationToken cancellationToken)
@@ -180,14 +180,19 @@ public sealed class SendTestEmailCommandHandler : IRequestHandler<SendTestEmailC
             ?? throw new EntityNotFoundException("User", userId);
 
         var sentAt = DateTime.UtcNow.ToString("u");
-        var jobId = await _outbox.EnqueueAsync(
-            OutboxJobTypes.Email,
-            new EmailMessage(
+        // Through the email queue, so the message shows in the mail log like any other.
+        var messageId = await _emails.QueueAsync(
+            new OutgoingEmail(
                 email,
                 "Mizan test email",
                 $"<p>This is a test message from the Mizan admin area, sent {sentAt}. The SMTP settings work.</p>",
                 $"This is a test message from the Mizan admin area, sent {sentAt}. The SMTP settings work."),
+            EmailKinds.SettingsTest,
+            toUserId: userId,
+            createdByUserId: userId,
             cancellationToken: cancellationToken);
+        var jobId = _context.EmailMessages.Local.Single(m => m.Id == messageId).OutboxJobId
+            ?? throw new InvalidOperationException("The test email was staged without an outbox job.");
         await _context.SaveChangesAsync(cancellationToken);
 
         return new SmtpTestResult(jobId, email);

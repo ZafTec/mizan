@@ -13,12 +13,13 @@ public interface ISystemProbes
     Task<ProbeResult> DatabaseAsync(CancellationToken cancellationToken);
     Task<ProbeResult> RedisAsync(CancellationToken cancellationToken);
 
-    /// <summary>The bot service's own unauthenticated /health. Not configured without Telegram:BotServiceUrl.</summary>
+    /// <summary>The bot service's own unauthenticated /health. Not configured without the Telegram.BotServiceUrl setting.</summary>
     Task<ProbeResult> TelegramBotAsync(CancellationToken cancellationToken);
 
-    bool SmtpConfigured { get; }
-    bool AiConfigured { get; }
-    bool PushConfigured { get; }
+    /// <summary>These read the runtime settings, which an administrator can change without a restart.</summary>
+    Task<bool> SmtpConfiguredAsync(CancellationToken cancellationToken);
+    Task<bool> AiConfiguredAsync(CancellationToken cancellationToken);
+    Task<bool> PushConfiguredAsync(CancellationToken cancellationToken);
     bool PricesWorkerConfigured { get; }
     bool StorageConfigured { get; }
 }

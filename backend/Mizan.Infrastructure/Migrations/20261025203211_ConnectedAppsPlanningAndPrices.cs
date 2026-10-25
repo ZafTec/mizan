@@ -245,7 +245,6 @@ namespace Mizan.Infrastructure.Migrations
                 nullable: true);
 
             migrationBuilder.CreateTable(
-<<<<<<<< HEAD:backend/Mizan.Infrastructure/Migrations/20261025203211_ConnectedAppsPlanningAndPrices.cs
                 name: "data_protection_keys",
                 columns: table => new
                 {
@@ -257,43 +256,6 @@ namespace Mizan.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_data_protection_keys", x => x.id);
-========
-                name: "announcements",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    subject = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
-                    audience = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    recipient_count = table.Column<int>(type: "integer", nullable: false),
-                    created_by_user_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_announcements", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "contact_submissions",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    name = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
-                    email = table.Column<string>(type: "character varying(320)", maxLength: 320, nullable: false),
-                    subject = table.Column<string>(type: "character varying(160)", maxLength: 160, nullable: false),
-                    message = table.Column<string>(type: "character varying(5000)", maxLength: 5000, nullable: false),
-                    user_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    status = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
-                    handled_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    handled_by_user_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    reply_email_message_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    ip_hash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_contact_submissions", x => x.id);
->>>>>>>> 24883c2 (refactor(email): send every email through one queue that keeps an email log):backend/Mizan.Infrastructure/Migrations/20261025180601_ConnectedAppsPlanningAndPrices.cs
                 });
 
             migrationBuilder.CreateTable(
@@ -338,28 +300,6 @@ namespace Mizan.Infrastructure.Migrations
                         principalTable: "users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "email_messages",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    to_user_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    to_address = table.Column<string>(type: "character varying(320)", maxLength: 320, nullable: false),
-                    subject = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
-                    kind = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    status = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
-                    attempts = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
-                    last_error = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
-                    outbox_job_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
-                    sent_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    created_by_user_id = table.Column<Guid>(type: "uuid", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_email_messages", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -470,7 +410,6 @@ namespace Mizan.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-<<<<<<<< HEAD:backend/Mizan.Infrastructure/Migrations/20261025203211_ConnectedAppsPlanningAndPrices.cs
                 name: "system_settings",
                 columns: table => new
                 {
@@ -489,22 +428,6 @@ namespace Mizan.Infrastructure.Migrations
                         principalTable: "users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
-========
-                name: "support_notes",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    subject_type = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
-                    subject_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    body = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: false),
-                    author_user_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_support_notes", x => x.id);
->>>>>>>> 24883c2 (refactor(email): send every email through one queue that keeps an email log):backend/Mizan.Infrastructure/Migrations/20261025180601_ConnectedAppsPlanningAndPrices.cs
                 });
 
             migrationBuilder.CreateTable(
@@ -856,21 +779,6 @@ namespace Mizan.Infrastructure.Migrations
                 columns: new[] { "user_id", "updated_at" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_announcements_audience_created_at",
-                table: "announcements",
-                columns: new[] { "audience", "created_at" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_contact_submissions_ip_hash_created_at",
-                table: "contact_submissions",
-                columns: new[] { "ip_hash", "created_at" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_contact_submissions_status_created_at",
-                table: "contact_submissions",
-                columns: new[] { "status", "created_at" });
-
-            migrationBuilder.CreateIndex(
                 name: "IX_deleted_records_user_id_deleted_at",
                 table: "deleted_records",
                 columns: new[] { "user_id", "deleted_at" });
@@ -885,31 +793,6 @@ namespace Mizan.Infrastructure.Migrations
                 name: "IX_device_tokens_user_id",
                 table: "device_tokens",
                 column: "user_id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_email_messages_created_at",
-                table: "email_messages",
-                column: "created_at");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_email_messages_kind_created_at",
-                table: "email_messages",
-                columns: new[] { "kind", "created_at" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_email_messages_outbox_job_id",
-                table: "email_messages",
-                column: "outbox_job_id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_email_messages_status_created_at",
-                table: "email_messages",
-                columns: new[] { "status", "created_at" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_email_messages_to_user_id",
-                table: "email_messages",
-                column: "to_user_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_food_prices_food_region_observed",
@@ -1056,15 +939,9 @@ namespace Mizan.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-<<<<<<<< HEAD:backend/Mizan.Infrastructure/Migrations/20261025203211_ConnectedAppsPlanningAndPrices.cs
                 name: "IX_system_settings_updated_by_user_id",
                 table: "system_settings",
                 column: "updated_by_user_id");
-========
-                name: "IX_support_notes_subject_type_subject_id_created_at",
-                table: "support_notes",
-                columns: new[] { "subject_type", "subject_id", "created_at" });
->>>>>>>> 24883c2 (refactor(email): send every email through one queue that keeps an email log):backend/Mizan.Infrastructure/Migrations/20261025180601_ConnectedAppsPlanningAndPrices.cs
 
             migrationBuilder.AddForeignKey(
                 name: "FK_food_diary_entries_plan_entries_plan_entry_id",
@@ -1123,23 +1000,13 @@ namespace Mizan.Infrastructure.Migrations
                 table: "shopping_lists");
 
             migrationBuilder.DropTable(
-<<<<<<<< HEAD:backend/Mizan.Infrastructure/Migrations/20261025203211_ConnectedAppsPlanningAndPrices.cs
                 name: "data_protection_keys");
-========
-                name: "announcements");
-
-            migrationBuilder.DropTable(
-                name: "contact_submissions");
->>>>>>>> 24883c2 (refactor(email): send every email through one queue that keeps an email log):backend/Mizan.Infrastructure/Migrations/20261025180601_ConnectedAppsPlanningAndPrices.cs
 
             migrationBuilder.DropTable(
                 name: "deleted_records");
 
             migrationBuilder.DropTable(
                 name: "device_tokens");
-
-            migrationBuilder.DropTable(
-                name: "email_messages");
 
             migrationBuilder.DropTable(
                 name: "food_prices");
@@ -1166,11 +1033,7 @@ namespace Mizan.Infrastructure.Migrations
                 name: "price_source_aliases");
 
             migrationBuilder.DropTable(
-<<<<<<<< HEAD:backend/Mizan.Infrastructure/Migrations/20261025203211_ConnectedAppsPlanningAndPrices.cs
                 name: "system_settings");
-========
-                name: "support_notes");
->>>>>>>> 24883c2 (refactor(email): send every email through one queue that keeps an email log):backend/Mizan.Infrastructure/Migrations/20261025180601_ConnectedAppsPlanningAndPrices.cs
 
             migrationBuilder.DropTable(
                 name: "oauth_grants");
