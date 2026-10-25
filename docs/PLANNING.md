@@ -162,9 +162,10 @@ Administrators manage regions, sources, aliases, the review queue, and manual pr
 
 ### Where prices show
 
-- The food page (`/ingredients/[id]`) shows the current price for the region of the user, with its source and date. It has the **Report a wrong price** action.
-- The plan page shows cost per day and per week against `WeeklyBudget`.
-- The shopping list shows a cost per item and a total, with unpriced items listed.
+- The food page (`/ingredients/[id]`) shows the price for the user's region as the API quotes it: the listed price and amount, the price per kg, the confidence (Estimated reads as a rough guess), the source and the date. **Report a wrong price** opens a dialog (price, quantity, unit, note).
+- The plan page shows the weekly cost against `WeeklyBudget` in the facts strip, marked when over budget, with the share priced and the confidence; each day shows its cost, and the unpriced items are listed below the plan.
+- The shopping list shows a cost after each item's amount and a total with its confidence and the count without a price.
+- The region is chosen under Prices on `/profile/settings`. When the API sends a null cost (a region without prices), no cost element shows. The web does no price arithmetic: `formatMoney` in `lib/prices/format.ts` only formats the API's numbers.
 
 ### API (step 3, as built)
 
@@ -223,7 +224,8 @@ Pages follow [DESIGN](../DESIGN.md): `log-page`, `facts-strip`, `ledger-row`, on
 | `/meal-plan/shopping-list` and `/shopping-lists/[id]` | Items by category or prep session, add, edit, delete, toggle, clear checked, cost. |
 | `/today` | The plan entries for today with **Log**, when an active plan covers today. |
 | `/trainer/clients/[id]/plan` | Draft for a client when the client granted meal planning; the client grants it on `/trainers/my-trainer`. |
-| `/admin/prices` | Regions, sources, aliases, review queue, manual prices (step 3). |
+| `/admin/prices` | Regions (create, enable, disable), sources (create, edit, delete, **Run now** with the API's 202, 409 or 502 message), the review queue (map to a food or ignore), manual prices, **Seed Addis Ababa staples**, and reports (accept, reject, filter by status). |
+| `/ingredients/[id]`, `/profile/settings` | The food price and its report; the price region. |
 
 Global templates are managed through the admin MCP tools in step 2; an `/admin/meal-plans` page and coach-owned templates are not built.
 
