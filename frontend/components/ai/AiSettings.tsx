@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Loading from "@/components/Loading";
+import { ToggleRow } from "@/components/ui/toggle-row";
 import {
   getAiConsent,
   getMyAiUsage,
@@ -126,7 +127,7 @@ export function AiSettings() {
 
   return (
     <div className="mt-6 space-y-6">
-      <Toggle
+      <ToggleRow
         label="Let the assistant use my log"
         description={
           consent.enabled
@@ -140,7 +141,7 @@ export function AiSettings() {
 
       <div className={consent.enabled ? "space-y-3" : "space-y-3 opacity-50"}>
         {AXES.map((axis) => (
-          <Toggle
+          <ToggleRow
             key={axis.key}
             label={axis.label}
             description={axis.description}
@@ -158,7 +159,7 @@ export function AiSettings() {
       </p>
 
       <div className="space-y-6 border-t border-charcoal-blue-200/70 pt-6 dark:border-white/10">
-        <Toggle
+        <ToggleRow
           label="Let the assistant act on my log"
           description={
             consent.allowWrites
@@ -174,7 +175,7 @@ export function AiSettings() {
           className={consent.allowWrites ? "space-y-3" : "space-y-3 opacity-50"}
         >
           {WRITE_AXES.map((axis) => (
-            <Toggle
+            <ToggleRow
               key={axis.key}
               label={axis.label}
               description={axis.description}
@@ -296,53 +297,6 @@ function Meter({
         />
       </div>
     </div>
-  );
-}
-
-function Toggle({
-  label,
-  description,
-  checked,
-  disabled,
-  onChange,
-}: {
-  label: string;
-  description: string;
-  checked: boolean;
-  disabled?: boolean;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className="flex w-full items-center justify-between gap-4 rounded-3xl border border-charcoal-blue-200 bg-white p-4 text-left transition-colors hover:border-charcoal-blue-300 disabled:cursor-not-allowed dark:border-white/10 dark:bg-charcoal-blue-950 dark:hover:border-white/20"
-    >
-      <div className="min-w-0">
-        <p className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
-          {label}
-        </p>
-        <p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-          {description}
-        </p>
-      </div>
-      <span
-        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-          checked
-            ? "bg-brand-600"
-            : "bg-charcoal-blue-300 dark:bg-charcoal-blue-700"
-        }`}
-      >
-        <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
-            checked ? "translate-x-5" : "translate-x-0.5"
-          }`}
-        />
-      </span>
-    </button>
   );
 }
 

@@ -474,7 +474,8 @@ function sourceFor(
 
 /**
  * The prices routes of the fixture API: the food price and its report, the
- * regions, the viewer's profile with `priceRegionCode`, and /api/admin/prices.
+ * regions, and /api/admin/prices. The viewer's `priceRegionCode` is set
+ * through /api/Users/me in fixture-users.ts.
  * Answers null for a path it does not serve.
  */
 export async function handlePrices(
@@ -541,31 +542,6 @@ export async function handlePrices(
   }
   if (path === "/api/Prices/regions" && method === "GET")
     return json(prices.regions.filter((region) => region.enabled));
-  if (path === "/api/Users/me" && method === "GET")
-    return json({
-      id: host.user.id,
-      email: host.user.email,
-      name: host.user.name,
-      image: host.user.image,
-      createdAt: "2026-01-04T08:00:00Z",
-      currentGoal: undefined,
-      streakCount: 4,
-      priceRegionCode: prices.regionCode,
-    } satisfies Schemas["UserDto"]);
-  if (path === "/api/Users/me" && method === "PUT") {
-    const input = await body<Schemas["UpdateUserRequest"]>();
-    record(input);
-    if (input.priceRegionCode != null) {
-      const region = prices.regions.find(
-        (candidate) => candidate.code === input.priceRegionCode,
-      );
-      if (!region?.enabled)
-        return invalid("That price region does not exist or is disabled.");
-      prices.regionCode = region.code;
-    }
-    return json(null, 204);
-  }
-
   if (!path.startsWith("/api/admin/prices/")) return null;
   if (host.role !== "admin")
     return json({ errorCode: "forbidden", error: "Administrators only." }, 403);

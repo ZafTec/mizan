@@ -13329,6 +13329,7 @@ export interface components {
             compactMode?: boolean | null;
             reduceAnimations?: boolean | null;
             priceRegionCode?: string | null;
+            notifyByTelegram?: boolean | null;
         };
         UpdateWorkoutCommand: {
             name?: string | null;
@@ -13381,6 +13382,7 @@ export interface components {
             /** Format: int32 */
             streakCount: number;
             priceRegionCode?: string | null;
+            notifyByTelegram: boolean;
         };
         UserGoalDto: {
             /** Format: uuid */

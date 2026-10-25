@@ -25,7 +25,6 @@ export type CreatePriceRegionRequest = Schemas["CreatePriceRegionRequest"];
 export type UpdatePriceRegionRequest = Schemas["UpdatePriceRegionRequest"];
 export type SavePriceSourceRequest = Schemas["SavePriceSourceRequest"];
 export type UpdatePriceAliasRequest = Schemas["UpdatePriceAliasRequest"];
-export type UserProfile = Schemas["UserDto"];
 export type PriceAliasQuery = NonNullable<
   paths["/api/admin/prices/aliases"]["get"]["parameters"]["query"]
 >;
@@ -66,7 +65,7 @@ export const listPriceRegions = () =>
   clientApi<PriceRegion[]>("/api/Prices/regions");
 
 /** The viewer's profile; `priceRegionCode` is their region. */
-export const getMyProfile = () => clientApi<UserProfile>("/api/Users/me");
+export { getMyProfile, type UserProfile } from "@/lib/api/users";
 
 /** The API refuses a region that is missing or disabled. */
 export const setPriceRegion = (priceRegionCode: string) =>
