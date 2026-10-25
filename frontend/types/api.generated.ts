@@ -1621,6 +1621,185 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RuntimeSettingsDto"];
+                        "application/json": components["schemas"]["RuntimeSettingsDto"];
+                        "text/json": components["schemas"]["RuntimeSettingsDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/settings/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    key: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SetRuntimeSettingRequest"];
+                    "text/json": components["schemas"]["SetRuntimeSettingRequest"];
+                    "application/*+json": components["schemas"]["SetRuntimeSettingRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RuntimeSettingDto"];
+                        "application/json": components["schemas"]["RuntimeSettingDto"];
+                        "text/json": components["schemas"]["RuntimeSettingDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    key: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RuntimeSettingDto"];
+                        "application/json": components["schemas"]["RuntimeSettingDto"];
+                        "text/json": components["schemas"]["RuntimeSettingDto"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/settings/smtp/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SmtpTestResult"];
+                        "application/json": components["schemas"]["SmtpTestResult"];
+                        "text/json": components["schemas"]["SmtpTestResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/settings/ai/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiProviderTestResult"];
+                        "application/json": components["schemas"]["AiProviderTestResult"];
+                        "text/json": components["schemas"]["AiProviderTestResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/overview": {
         parameters: {
             query?: never;
@@ -10363,6 +10542,13 @@ export interface components {
             /** Format: date-time */
             publishedAt?: string | null;
         };
+        AiProviderTestResult: {
+            reachable: boolean;
+            errorClass?: string | null;
+            model?: string | null;
+            /** Format: int32 */
+            latencyMs: number;
+        };
         AiQuotaSnapshot: {
             /** Format: int32 */
             requestsUsed: number;
@@ -12673,6 +12859,36 @@ export interface components {
             /** Format: uuid */
             householdId?: string | null;
         };
+        RuntimeSettingDto: {
+            key: string;
+            group: string;
+            label: string;
+            description: string;
+            type: string;
+            format: string;
+            isSecret: boolean;
+            allowEmpty: boolean;
+            allowedValues: string[];
+            /** Format: int64 */
+            min?: number | null;
+            /** Format: int64 */
+            max?: number | null;
+            value?: string | null;
+            hasValue: boolean;
+            source: string;
+            /** Format: date-time */
+            updatedAt?: string | null;
+            /** Format: uuid */
+            updatedByUserId?: string | null;
+        };
+        RuntimeSettingGroupDto: {
+            id: string;
+            title: string;
+            settings: components["schemas"]["RuntimeSettingDto"][];
+        };
+        RuntimeSettingsDto: {
+            groups: components["schemas"]["RuntimeSettingGroupDto"][];
+        };
         SavePriceSourceRequest: {
             name: string;
             kind: string;
@@ -12772,6 +12988,9 @@ export interface components {
         };
         SetModelRequest: {
             modelUrl?: string | null;
+        };
+        SetRuntimeSettingRequest: {
+            value: string;
         };
         ShoppingListCardData: {
             /** Format: uuid */
@@ -12878,6 +13097,11 @@ export interface components {
             /** Format: double */
             budgetCeiling: number;
             reason: string;
+        };
+        SmtpTestResult: {
+            /** Format: uuid */
+            jobId: string;
+            to: string;
         };
         SocialAnalyticsDto: {
             /** Format: int32 */
