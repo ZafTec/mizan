@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { getAdminUser } from "@/data/admin/users";
+import SupportNotesPanel from "@/components/admin/SupportNotesPanel";
+import { listSupportNotesServer } from "@/lib/api/admin-ops.server";
 import { UserActions } from "./user-actions";
 
 export const metadata = {
@@ -30,11 +32,20 @@ export default async function UserDetailPage({
   if (!admin) redirect("/login");
   if (admin.role !== "admin") redirect("/");
 
-  const user = await getUser(id);
+  const [user, notes] = await Promise.all([
+    getUser(id),
+    listSupportNotesServer("User", id),
+  ]);
 
   if (!user) {
     notFound();
   }
+
+  const banEnded =
+    user.banned &&
+    user.banExpires !== null &&
+    user.banExpires !== undefined &&
+    new Date(user.banExpires) <= new Date();
 
   const isSelf = admin.id === user.id;
 
@@ -69,17 +80,13 @@ export default async function UserDetailPage({
               <InfoRow
                 label="Status"
                 value={
-                  user.banned
-                    ? `Banned - ${user.banReason || "No reason"}`
-                    : "Active"
+                  !user.banned
+                    ? "Active"
+                    : banEnded
+                      ? "Suspension ended"
+                      : "Suspended"
                 }
               />
-              {user.banExpires && (
-                <InfoRow
-                  label="Ban Expires"
-                  value={new Date(user.banExpires).toLocaleString()}
-                />
-              )}
               <InfoRow
                 label="Created"
                 value={
@@ -98,6 +105,46 @@ export default async function UserDetailPage({
               />
             </div>
           </div>
+
+          {user.banned && (
+            <section
+              aria-labelledby="suspension-title"
+              className="border border-burnt-peach-300 bg-burnt-peach-50 p-6 dark:border-burnt-peach-500/30 dark:bg-burnt-peach-500/10"
+            >
+              <h2
+                id="suspension-title"
+                className="mb-3 text-xl font-semibold text-burnt-peach-800 dark:text-burnt-peach-300"
+              >
+                {banEnded ? "Suspension ended" : "Suspended"}
+              </h2>
+              <dl className="space-y-2 text-sm">
+                <div>
+                  <dt className="font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300">
+                    Reason
+                  </dt>
+                  <dd className="break-words">
+                    {user.banReason || "No reason given"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-medium text-charcoal-blue-600 dark:text-charcoal-blue-300">
+                    Ends
+                  </dt>
+                  <dd>
+                    {user.banExpires
+                      ? `${new Date(user.banExpires).toLocaleString("en-GB", { timeZone: "UTC" })} UTC`
+                      : "When an administrator lifts it"}
+                  </dd>
+                </div>
+              </dl>
+            </section>
+          )}
+
+          <SupportNotesPanel
+            subjectType="User"
+            subjectId={user.id}
+            initialNotes={notes}
+          />
 
           <div className="bg-card rounded-lg border p-6">
             <h2 className="text-xl font-semibold mb-4">Recent Sessions</h2>
@@ -149,7 +196,7 @@ export default async function UserDetailPage({
               <StatItem label="Active Sessions" value={user.activeSessions} />
               <StatItem
                 label="Account Status"
-                value={user.banned ? "Banned" : "Active"}
+                value={user.banned ? "Suspended" : "Active"}
                 valueClassName={user.banned ? "text-red-600" : "text-green-600"}
               />
             </div>

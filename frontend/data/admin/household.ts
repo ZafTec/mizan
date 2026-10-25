@@ -28,7 +28,8 @@ export interface AdminHouseholdList {
 export interface AdminHouseholdListQuery {
   page?: number;
   pageSize?: number;
-  searchTerm?: string;
+  /** Household name, or any member's name or email. */
+  search?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }
@@ -41,7 +42,7 @@ export async function listHouseholdsAdmin(
       Page: String(query.page ?? 1),
       PageSize: String(query.pageSize ?? 20),
     });
-    if (query.searchTerm) params.set("SearchTerm", query.searchTerm);
+    if (query.search) params.set("Search", query.search);
     if (query.sortBy) params.set("SortBy", query.sortBy);
     if (query.sortOrder) params.set("SortOrder", query.sortOrder);
 

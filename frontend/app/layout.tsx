@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { cookies } from "next/headers";
@@ -145,6 +146,12 @@ async function LayoutContent({
                   >
                     Refunds
                   </a>
+                  <span className="hidden text-charcoal-blue-300 dark:text-charcoal-blue-600 sm:inline">
+                    |
+                  </span>
+                  <Link href="/contact" className="footer-link">
+                    Contact
+                  </Link>
                   <span className="hidden text-charcoal-blue-300 dark:text-charcoal-blue-600 sm:inline">
                     |
                   </span>

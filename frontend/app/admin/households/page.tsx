@@ -46,6 +46,7 @@ const columns: Column<AdminHouseholdSummary>[] = [
   {
     id: "members",
     header: "Members",
+    sortKey: "members",
     align: "center",
     cell: (h) => (
       <span className="tabular-nums font-medium">{h.memberCount}</span>
@@ -92,7 +93,7 @@ export default async function AdminHouseholdsPage({
   const { items, totalCount, totalPages } = await listHouseholdsAdmin({
     page,
     pageSize: PAGE_SIZE,
-    searchTerm: params.search || undefined,
+    search: params.search || undefined,
     sortBy: sort.sortBy ?? "createdAt",
     sortOrder: sort.sortBy ? sort.sortOrder : "desc",
   });
@@ -106,7 +107,7 @@ export default async function AdminHouseholdsPage({
         </h1>
       </header>
 
-      <TableToolbar searchPlaceholder="Search households…" />
+      <TableToolbar searchPlaceholder="Household, member name or email…" />
 
       <DataTable
         columns={columns}

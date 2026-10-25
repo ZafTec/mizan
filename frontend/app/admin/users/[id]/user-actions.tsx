@@ -35,17 +35,11 @@ export function UserActions({ user }: { user: User }) {
   const [showRevokeSessionsConfirm, setShowRevokeSessionsConfirm] =
     useState(false);
 
-  async function handleBanUser(reason: string, expiresInDays?: number) {
+  async function handleBanUser(reason: string, banExpires: string | null) {
     setIsLoading(true);
     setError(null);
 
     try {
-      const banExpires = expiresInDays
-        ? new Date(
-            Date.now() + expiresInDays * 24 * 60 * 60 * 1000,
-          ).toISOString()
-        : null;
-
       await updateAdminUser(user.id, {
         banned: true,
         banReason: reason,
@@ -53,11 +47,13 @@ export function UserActions({ user }: { user: User }) {
       });
 
       setShowBanDialog(false);
-      appToast.success("User banned");
+      appToast.success("Account suspended");
       router.refresh();
     } catch (err) {
-      appToast.error(err, "Failed to ban user");
-      setError(err instanceof Error ? err.message : "Failed to ban user");
+      appToast.error(err, "Could not suspend the account");
+      setError(
+        err instanceof Error ? err.message : "Could not suspend the account",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -70,11 +66,13 @@ export function UserActions({ user }: { user: User }) {
     try {
       await updateAdminUser(user.id, { banned: false });
 
-      appToast.success("User unbanned");
+      appToast.success("Suspension lifted");
       router.refresh();
     } catch (err) {
-      appToast.error(err, "Failed to unban user");
-      setError(err instanceof Error ? err.message : "Failed to unban user");
+      appToast.error(err, "Could not lift the suspension");
+      setError(
+        err instanceof Error ? err.message : "Could not lift the suspension",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -189,7 +187,7 @@ export function UserActions({ user }: { user: User }) {
           disabled={isLoading}
           className="btn-danger w-full"
         >
-          Ban user
+          Suspend account
         </button>
       ) : (
         <button
@@ -198,7 +196,7 @@ export function UserActions({ user }: { user: User }) {
           disabled={isLoading}
           className="btn-primary w-full"
         >
-          Unban user
+          Lift suspension
         </button>
       )}
 
@@ -301,11 +299,12 @@ function BanDialog({
 }: {
   open: boolean;
   isLoading: boolean;
-  onConfirm: (reason: string, expiresInDays?: number) => void;
+  onConfirm: (reason: string, banExpires: string | null) => void;
   onCancel: () => void;
 }) {
   const [reason, setReason] = useState("");
-  const [expiresInDays, setExpiresInDays] = useState<number | undefined>();
+  // A local date and time from the picker; empty means until lifted.
+  const [ends, setEnds] = useState("");
   // A disabled submit button with no explanation reads as "broken" - this is
   // what made the ban dialog look like it was not dismissing, when it was
   // actually just refusing an empty reason silently.
@@ -317,12 +316,12 @@ function BanDialog({
       setTouched(true);
       return;
     }
-    onConfirm(trimmed, expiresInDays);
+    onConfirm(trimmed, ends ? new Date(ends).toISOString() : null);
   }
 
   function close() {
     setReason("");
-    setExpiresInDays(undefined);
+    setEnds("");
     setTouched(false);
     onCancel();
   }
@@ -331,12 +330,18 @@ function BanDialog({
     <ModalShell open={open} onClose={close}>
       <div className="surface-panel w-full space-y-4 p-5">
         <h3 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-          Ban user
+          Suspend account
         </h3>
+        <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
+          The person cannot sign in until the suspension ends or is lifted.
+        </p>
         <div className="space-y-4">
           <div>
-            <label className="label">Reason</label>
+            <label className="label" htmlFor="suspend-reason">
+              Reason
+            </label>
             <textarea
+              id="suspend-reason"
               value={reason}
               onChange={(e) => {
                 setReason(e.target.value);
@@ -344,7 +349,7 @@ function BanDialog({
               }}
               className="input"
               rows={3}
-              placeholder="Why is this account being banned?"
+              placeholder="Why is this account being suspended?"
             />
             {touched && (
               <p className="mt-1.5 text-xs text-burnt-peach-700 dark:text-burnt-peach-400">
@@ -353,19 +358,23 @@ function BanDialog({
             )}
           </div>
           <div>
-            <label className="label">Expires in (days)</label>
+            <label className="label" htmlFor="suspend-ends">
+              Ends (optional)
+            </label>
             <input
-              type="number"
-              min={1}
-              value={expiresInDays ?? ""}
-              onChange={(e) =>
-                setExpiresInDays(
-                  e.target.value ? parseInt(e.target.value) : undefined,
-                )
-              }
+              id="suspend-ends"
+              type="datetime-local"
+              value={ends}
+              onChange={(e) => setEnds(e.target.value)}
               className="input"
-              placeholder="Leave empty for a permanent ban"
+              aria-describedby="suspend-ends-hint"
             />
+            <p
+              id="suspend-ends-hint"
+              className="mt-1 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400"
+            >
+              Leave empty to suspend until someone lifts it.
+            </p>
           </div>
           <div className="flex gap-2">
             <button
@@ -382,7 +391,7 @@ function BanDialog({
               disabled={isLoading}
               className="btn-danger flex-1"
             >
-              {isLoading ? "Banning…" : "Ban user"}
+              {isLoading ? "Suspending…" : "Suspend"}
             </button>
           </div>
         </div>
