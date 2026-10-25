@@ -56,17 +56,22 @@ public sealed class TelegramClient
     }
 
     public async Task SendMessageAsync(
+        long chatId, string text, object? replyMarkup = null, CancellationToken ct = default) =>
+        await TrySendMessageAsync(chatId, text, replyMarkup, ct);
+
+    /// <summary>The same send, saying whether Telegram took it, for a caller that retries.</summary>
+    public async Task<bool> TrySendMessageAsync(
         long chatId, string text, object? replyMarkup = null, CancellationToken ct = default)
     {
         var sent = await TrySendAsync(chatId, text, "HTML", replyMarkup, ct);
-        if (sent) return;
+        if (sent) return true;
 
         // Telegram rejects the whole message when the markup does not parse,
         // and PostAsync only logs that. Falling back to plain text means a
         // reply the converter mangled still reaches the user rather than
         // vanishing into a warning nobody reads.
         _logger.LogWarning("Telegram rejected an HTML message for chat {ChatId}; resending as plain text", chatId);
-        await TrySendAsync(chatId, StripTags(text), parseMode: null, replyMarkup, ct);
+        return await TrySendAsync(chatId, StripTags(text), parseMode: null, replyMarkup, ct);
     }
 
     private async Task<bool> TrySendAsync(

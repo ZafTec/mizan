@@ -11,12 +11,14 @@ public sealed class NotificationWriter : INotificationWriter
     private readonly IMizanDbContext _context;
     private readonly IOutbox _outbox;
     private readonly IPushSender _push;
+    private readonly TimeProvider _time;
 
-    public NotificationWriter(IMizanDbContext context, IOutbox outbox, IPushSender push)
+    public NotificationWriter(IMizanDbContext context, IOutbox outbox, IPushSender push, TimeProvider time)
     {
         _context = context;
         _outbox = outbox;
         _push = push;
+        _time = time;
     }
 
     public async Task AddAsync(Guid userId, string type, string title, string? body = null, string? linkUrl = null, CancellationToken cancellationToken = default)
@@ -29,7 +31,7 @@ public sealed class NotificationWriter : INotificationWriter
             Title = title,
             Body = body,
             LinkUrl = linkUrl,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = _time.GetUtcNow().UtcDateTime
         };
         _context.Notifications.Add(notification);
 

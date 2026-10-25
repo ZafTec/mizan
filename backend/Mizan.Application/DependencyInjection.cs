@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddScoped<Planning.PlanAccess>();
         services.AddScoped<Planning.PlanEntryBuilder>();
         services.AddScoped<Planning.PlanReadModel>();
+        services.AddScoped<Planning.EveningReminders>();
         services.AddScoped<Planning.PlanCostTable>();
         services.AddScoped<Planning.MealPlanContextBuilder>();
         services.AddScoped<Planning.ShoppingListAccess>();

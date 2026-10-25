@@ -53,7 +53,7 @@ Entries use a day index, not a date. `Date = StartDate + DayIndex`. A template c
 | --- | --- | --- |
 | `MacroMode` | `None`, `Keto`, `HighProtein`, `Custom` | Sets default targets. `Custom` uses the explicit targets. |
 | `TargetCalories`, `TargetProtein`, `MaxCarbs`, `TargetFat` | nullable numbers | Daily targets. `Keto` sets `MaxCarbs` to 30 g when empty. |
-| `EatingWindowStart`, `EatingWindowEnd` | time, nullable | Shown on the plan. Drives the evening reminder in Telegram. |
+| `EatingWindowStart`, `EatingWindowEnd` | time, nullable | Shown on the plan. `EatingWindowEnd` drives the evening reminder. |
 | `AllowedFoodIds`, `ForbiddenFoodIds` | Guid lists | A forbidden food in an entry is a violation. An allow list makes every other food a violation. |
 | `WeeklyBudget`, `Currency` | decimal, 3-letter code | The ceiling for costing. |
 | `PrepStyle`, `BatchDays` | `Daily`, `Batch`, plus day indexes | `Batch` groups entries into prep sessions on the given days. |
@@ -262,7 +262,7 @@ The MCP App `meal-plan` renders `get_meal_plan` and `get_plan_day`. It calls `lo
 | --- | --- |
 | `/plan` or `/plan tomorrow` | The entries of the day with one **Log** button per entry (`pe:{entryId}`), **Open** button to the Mini App. Violations and the eating window at the end. |
 | `/shop` | The newest list, ten items per page, one toggle button per item (`sh:{itemId}`), **Open** button to the Mini App. |
-| Evening reminder | An outbox job at `EatingWindowEnd` minus 30 minutes: "Your window closes at 20:00. Today: 1,640 of 1,800 kcal." Push and Telegram. |
+| Evening reminder | An outbox job at `EatingWindowEnd` minus 30 minutes in the person's zone, once a day: "Your window closes at 20:00. Today: 1,640 of 1,800 kcal." (the diary's calories against `TargetCalories`). In-app notification, push, and Telegram through the bot service. See [Telegram](TELEGRAM.md#evening-reminder). |
 
 Callback data stays under 64 bytes because it carries ids only.
 

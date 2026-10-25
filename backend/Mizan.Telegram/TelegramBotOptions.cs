@@ -49,4 +49,18 @@ public class TelegramBotOptions
     /// <summary>The Mini App's base URL without a trailing slash.</summary>
     public string MiniAppBaseUrl =>
         string.IsNullOrWhiteSpace(MiniAppUrl) ? $"{PublicUrl.TrimEnd('/')}/tg" : MiniAppUrl.TrimEnd('/');
+
+    /// <summary>A path under the Mini App base, such as <c>plan?planId=...</c>.</summary>
+    public string MiniAppPageUrl(string path = "") =>
+        path.Length == 0 ? MiniAppBaseUrl : $"{MiniAppBaseUrl}/{path.TrimStart('/')}";
+
+    /// <summary>
+    /// The page URL for a <c>web_app</c> button, or null when it is not HTTPS:
+    /// Telegram refuses such a button, and the whole message with it.
+    /// </summary>
+    public string? MiniAppButtonUrl(string path = "")
+    {
+        var url = MiniAppPageUrl(path);
+        return Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps ? url : null;
+    }
 }

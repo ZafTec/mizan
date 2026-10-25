@@ -29,3 +29,14 @@ public record MiniAppSessionRequest(string? InitData);
 /// token is also set as the <c>mizan_session</c> cookie on the response.
 /// </summary>
 public record MiniAppSessionResponse(string Token, DateTime ExpiresAt);
+
+/// <summary>
+/// Body of <c>POST /internal/notify</c> on the bot service, sent by the API's
+/// outbox with the shared service key: a plain-text line for one linked chat,
+/// and optionally a Mini App path for an <b>Open</b> button. The bot escapes the
+/// text and leaves the button out when the Mini App is not HTTPS.
+/// </summary>
+/// <param name="TelegramUserId">The linked Telegram user; in a private chat it is also the chat id.</param>
+/// <param name="Text">Plain text, not HTML.</param>
+/// <param name="OpenPath">A path under the Mini App base, such as <c>plan?planId=...&amp;day=...</c>.</param>
+public record TelegramNotifyRequest(long TelegramUserId, string Text, string? OpenPath = null);

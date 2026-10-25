@@ -19,6 +19,8 @@ using Mizan.Infrastructure.Data;
 using Mizan.Infrastructure.Billing;
 using Mizan.Infrastructure.Data.Seed;
 using Mizan.Infrastructure.Outbox;
+using Mizan.Infrastructure.Telegram;
+using Mizan.Contracts.Telegram;
 using Testcontainers.PostgreSql;
 using Xunit;
 
@@ -259,6 +261,14 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             services.RemoveAll<IPricesWorkerClient>();
             services.AddSingleton<IPricesWorkerClient>(PricesWorker);
 
+            // Scheduled work reads the time from here, so a test can stand at 19:30 in someone's zone.
+            services.RemoveAll<TimeProvider>();
+            services.AddSingleton<TimeProvider>(Clock);
+
+            // The API reaches Telegram only through the bot service; the fake records what it was asked to send.
+            services.RemoveAll<ITelegramBotNotifier>();
+            services.AddSingleton<ITelegramBotNotifier>(TelegramBot);
+
             // A controller the impersonation policy does not know about, so a test can show that a
             // new route is closed to an administrator viewing the site as a user until it is classified.
             services.AddControllers().AddApplicationPart(typeof(UnclassifiedTestController).Assembly);
@@ -349,6 +359,10 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
 
     public FakePricesWorker PricesWorker { get; } = new();
 
+    public SettableClock Clock { get; } = new();
+
+    public RecordingTelegramBot TelegramBot { get; } = new();
+
     public FakeOAuthMetadataFetcher OAuthMetadata { get; } = new();
     public const string PaddleWebhookSecret = "test-paddle-webhook-secret";
 
@@ -425,6 +439,8 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         }
 
         PricesWorker.Reset();
+        Clock.Reset();
+        TelegramBot.Reset();
         await ClearCacheAsync();
     }
 
@@ -891,6 +907,43 @@ public sealed class RecordingEmailSender : IEmailSender
         var match = System.Text.RegularExpressions.Regex.Match(
             message.Text, pathSegment + @"\?token=([A-Za-z0-9_\-%]+)");
         return match.Success ? Uri.UnescapeDataString(match.Groups[1].Value) : null;
+    }
+}
+
+/// <summary>The real time until a test sets one; <see cref="Reset"/> goes back to the real time.</summary>
+public sealed class SettableClock : TimeProvider
+{
+    private DateTimeOffset? _now;
+
+    public void Set(DateTimeOffset now) => _now = now;
+
+    public void Reset() => _now = null;
+
+    public override DateTimeOffset GetUtcNow() => _now ?? TimeProvider.System.GetUtcNow();
+}
+
+/// <summary>Captures what the API asks the bot service to send to Telegram.</summary>
+public sealed class RecordingTelegramBot : ITelegramBotNotifier
+{
+    private readonly List<TelegramNotifyRequest> _sent = new();
+
+    public bool IsConfigured { get; set; } = true;
+
+    public IReadOnlyList<TelegramNotifyRequest> Sent
+    {
+        get { lock (_sent) return _sent.ToList(); }
+    }
+
+    public void Reset()
+    {
+        lock (_sent) _sent.Clear();
+        IsConfigured = true;
+    }
+
+    public Task<TelegramNotifyOutcome> SendAsync(TelegramNotifyRequest request, CancellationToken cancellationToken)
+    {
+        lock (_sent) _sent.Add(request);
+        return Task.FromResult(TelegramNotifyOutcome.Sent);
     }
 }
 

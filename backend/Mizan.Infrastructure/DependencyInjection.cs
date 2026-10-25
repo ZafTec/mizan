@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Infrastructure.AI;
@@ -12,6 +13,7 @@ using Mizan.Infrastructure.Outbox;
 using Mizan.Infrastructure.Push;
 using Mizan.Infrastructure.Services;
 using Mizan.Infrastructure.Storage;
+using Mizan.Infrastructure.Telegram;
 
 namespace Mizan.Infrastructure;
 
@@ -43,6 +45,7 @@ public static class DependencyInjection
         services.AddHybridCache();
 
         // Domain services
+        services.TryAddSingleton(TimeProvider.System);
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<ITrainerAuthorizationService, TrainerAuthorizationService>();
@@ -116,12 +119,21 @@ public static class DependencyInjection
         services.AddScoped<IOutboxHandler, EmailJobHandler>();
         services.AddScoped<IOutboxHandler, EvalRunJobHandler>();
         services.AddScoped<IOutboxHandler, PushJobHandler>();
+        services.AddScoped<IOutboxHandler, EveningReminderJobHandler>();
+        services.AddScoped<IOutboxHandler, TelegramMessageJobHandler>();
+
+        // Messages to a linked Telegram chat go through the bot service, which alone holds the
+        // token (docs/TELEGRAM.md#evening-reminder). Off until Telegram:BotServiceUrl is set.
+        services.AddHttpClient(TelegramBotNotifier.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(15));
+        services.AddSingleton<ITelegramBotNotifier, TelegramBotNotifier>();
+        services.AddScoped<ITelegramMessenger, TelegramMessenger>();
 
         // Push to phones. Off until Firebase credentials are configured (docs/ARCHITECTURE.md#native-clients).
         services.Configure<PushOptions>(configuration.GetSection(PushOptions.SectionName));
         services.AddHttpClient(FcmPushSender.HttpClientName);
         services.AddSingleton<IPushSender, FcmPushSender>();
         services.AddHostedService<OutboxDispatcher>();
+        services.AddHostedService<EveningReminderScheduler>();
 
         // Billing
         services.Configure<PaddleOptions>(configuration.GetSection(PaddleOptions.SectionName));

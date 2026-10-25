@@ -161,6 +161,28 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
         return (context.Response.StatusCode, parsed, cookie);
     }
 
+    /// <summary>How many messages the bot has sent to Telegram.</summary>
+    public int MessagesSent => _telegramSends.Count(s => s.Url.EndsWith("/sendMessage"));
+
+    /// <summary>Runs <c>POST /internal/notify</c> with <paramref name="key"/> as the service key and returns the status.</summary>
+    public async Task<int> PostNotifyAsync(string body, string? key)
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Method = "POST";
+        context.Request.Path = "/internal/notify";
+        context.Request.ContentType = "application/json";
+        context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(body));
+        if (key is not null) context.Request.Headers["X-Api-Key"] = key;
+        context.Response.Body = new MemoryStream();
+
+        await new NotifyEndpoint(
+            new TelegramClient(new HttpClient(this), BotOptions, NullLogger<TelegramClient>.Instance),
+            BotOptions,
+            NullLogger<NotifyEndpoint>.Instance).HandleAsync(context, CancellationToken.None);
+
+        return context.Response.StatusCode;
+    }
+
     private sealed class FixedClock(TelegramFakeWorld world) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => world.Now;

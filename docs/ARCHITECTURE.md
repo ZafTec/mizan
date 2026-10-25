@@ -90,7 +90,7 @@ Date-only logs use the user's IANA timezone. Missing observations remain gaps in
 
 `HybridCache` caches session lookups and read models including nutrition ranges, recipes, and meal plans. Writes invalidate associated tags. Viewer-specific keys include the identity or household context needed to keep cached personal results private.
 
-Background work uses a transactional PostgreSQL outbox. Workers claim jobs with `FOR UPDATE SKIP LOCKED`, limit per-type concurrency, retry failures, and expose exhausted work through administrator jobs. Email, push, and prompt evaluations use the outbox. Redis is not its durable store.
+Background work uses a transactional PostgreSQL outbox. Workers claim jobs with `FOR UPDATE SKIP LOCKED`, limit per-type concurrency, retry failures, and expose exhausted work through administrator jobs. Email, push, prompt evaluations, the plan's evening reminder, and messages to a linked Telegram chat use the outbox; a job can wait for a `run_after` time. Redis is not its durable store.
 
 ## Native clients
 
