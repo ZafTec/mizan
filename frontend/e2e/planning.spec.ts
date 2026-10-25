@@ -506,10 +506,28 @@ test.describe("templates", () => {
       path: "test-results/admin-meal-plans.png",
       fullPage: true,
     });
-    await keto.getByRole("button", { name: "Delete Keto starter" }).click();
+    const deleteRow = keto.getByRole("button", {
+      name: "Delete Keto starter",
+    });
+    await deleteRow.click();
     const dialog = page.getByRole("dialog", { name: "Delete Keto starter?" });
-    await expect(dialog.getByRole("button", { name: "Cancel" })).toBeFocused();
-    await dialog.getByRole("button", { name: "Delete" }).click();
+    await expect(dialog).toHaveAttribute("aria-modal", "true");
+    const cancel = dialog.getByRole("button", { name: "Cancel" });
+    const confirm = dialog.getByRole("button", { name: "Delete" });
+    // Tab and Shift+Tab stay inside the dialog; Escape returns focus to the row.
+    await expect(cancel).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(confirm).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(cancel).toBeFocused();
+    await page.keyboard.press("Shift+Tab");
+    await expect(confirm).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(deleteRow).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(cancel).toBeFocused();
+    await confirm.click();
     await expect(keto).toHaveCount(0);
 
     const s = await state(context);
