@@ -4,6 +4,7 @@ using Mizan.Application.Planning;
 using Mizan.Contracts.Ai;
 using Mizan.Contracts.Planning;
 using Mizan.Domain.Ai;
+using Mizan.Domain.Pricing;
 
 namespace Mizan.Application.Ai.Tools;
 
@@ -209,8 +210,8 @@ public static class AiPlanningTools
             var plan = draft.Plan;
             text.Append(CultureInfo.InvariantCulture,
                 $"Drafted \"{plan.Name}\" (plan {plan.Id}, {plan.Status}): {plan.DurationDays} days, {plan.EntryCount} entries, "
-                + $"{draft.Cost.WeeklyTotal:0.##} {draft.Cost.Currency} a week ({draft.Cost.PricedItems} of {draft.Cost.TotalItems} lines priced)");
-            if (draft.BudgetCeiling is { } ceiling) text.Append(CultureInfo.InvariantCulture, $" against a {ceiling:0.##} budget");
+                + $"{Money.Format(draft.Cost.WeeklyTotal, draft.Cost.Currency)} a week ({draft.Cost.PricedItems} of {draft.Cost.TotalItems} lines priced)");
+            if (draft.BudgetCeiling is { } ceiling) text.Append(CultureInfo.InvariantCulture, $" against a {Money.Format(ceiling, plan.Rules.Currency ?? draft.Cost.Currency)} budget");
             text.Append(".\n");
             foreach (var day in plan.Days)
             {
@@ -226,7 +227,7 @@ public static class AiPlanningTools
                 text.Append(CultureInfo.InvariantCulture, $"To review, day {line.DayIndex} {line.Slot}: {line.Text} ({line.Reason})\n");
         }
         foreach (var skipped in result.Skipped)
-            text.Append(CultureInfo.InvariantCulture, $"No draft for the {skipped.BudgetCeiling:0.##} budget: {skipped.Reason}\n");
+            text.Append(CultureInfo.InvariantCulture, $"No draft for the {Money.Format(skipped.BudgetCeiling, null)} budget: {skipped.Reason}\n");
         text.Append("A draft is not active until the user accepts it in the app.");
         return text.ToString();
     }

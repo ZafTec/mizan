@@ -1,5 +1,6 @@
 import type { components } from "../types/api.generated";
 import type { MealEntry } from "../data/meal";
+import { formatMoney } from "../lib/prices/format";
 import {
   lowerConfidence,
   quoteFor,
@@ -587,7 +588,7 @@ function dayDto(
       dayIndex,
       slot: null,
       rule: "daily_budget_over",
-      message: `${cost.total?.toFixed(2)} ${cost.currency} this day is over the ${plan.rules.dailyBudget?.toFixed(2)} ${cost.currency} daily budget.`,
+      message: `${formatMoney(cost.total ?? 0, cost.currency)} this day is over the ${formatMoney(plan.rules.dailyBudget ?? 0, cost.currency)} daily budget.`,
     });
   return {
     dayIndex,

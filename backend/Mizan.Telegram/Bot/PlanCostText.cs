@@ -12,8 +12,8 @@ namespace Mizan.Telegram.Bot;
 public static class PlanCostText
 {
     /// <summary>
-    /// "Cost: 245.50 ETB" for a plan day, when the day has priced items, and
-    /// ", over the 200.00 ETB daily budget" when the API marked the day over it.
+    /// "Cost: ETB 245.50" for a plan day, when the day has priced items, and
+    /// ", over the ETB 200.00 daily budget" when the API marked the day over it.
     /// </summary>
     public static string? Day(PlanDayViewDto view)
     {
@@ -24,7 +24,7 @@ public static class PlanCostText
         return line;
     }
 
-    /// <summary>"Total: 1,234.00 ETB (estimated), 2 items without a price" for a shopping list.</summary>
+    /// <summary>"Total: ETB 1,234.00 (estimated), 2 items without a price" for a shopping list.</summary>
     public static string? List(ShoppingListDetailDto list)
     {
         if (list.TotalCost is not { } total) return null;
@@ -34,12 +34,9 @@ public static class PlanCostText
         return line;
     }
 
-    /// <summary>The price after an item's name, " · 120.00 ETB", or nothing.</summary>
+    /// <summary>The price after an item's name, " · ETB 120.00", or nothing.</summary>
     public static string Item(ShoppingListItemDto item, string currency) =>
         item.Cost is { } cost ? $" · {Money(cost, currency)}" : string.Empty;
 
-    private static string Money(decimal amount, string currency) =>
-        string.IsNullOrEmpty(currency)
-            ? amount.ToString("N2", CultureInfo.InvariantCulture)
-            : $"{amount.ToString("N2", CultureInfo.InvariantCulture)} {currency}";
+    private static string Money(decimal amount, string currency) => Mizan.Domain.Pricing.Money.Format(amount, currency);
 }

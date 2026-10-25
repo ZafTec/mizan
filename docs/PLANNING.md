@@ -169,6 +169,7 @@ Administrators manage regions, sources, aliases, the review queue, and manual pr
 - The plan page shows the weekly cost against `WeeklyBudget` in the facts strip, marked when over budget, with the share priced and the confidence; each day shows its cost, against `DailyBudget` and marked when the API says it is over, and the unpriced items are listed below the plan.
 - The shopping list shows a cost after each item's amount and a total with its confidence and the count without a price.
 - The region is chosen under Prices on `/profile/settings`. When the API sends a null cost (a region without prices), no cost element shows. The web does no price arithmetic: `formatMoney` in `lib/prices/format.ts` only formats the API's numbers.
+- One money format everywhere: the currency code, a space, then the amount with thousands separators and two decimals, as in `ETB 1,245.50`. `formatMoney` writes it on the web and `Money.Format` in Domain writes it in violation messages, plan names, prompts, the assistant's tool text, notifications and Telegram.
 
 ### API (step 3, as built)
 

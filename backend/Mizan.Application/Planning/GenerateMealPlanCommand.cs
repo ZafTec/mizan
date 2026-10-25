@@ -14,6 +14,7 @@ using Mizan.Domain.Entities;
 using Mizan.Domain.Planning;
 using Mizan.Application.Features;
 using Mizan.Domain.Features;
+using Mizan.Domain.Pricing;
 
 namespace Mizan.Application.Planning;
 
@@ -294,10 +295,10 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
             ? string.Create(CultureInfo.InvariantCulture, $"- Cook in batch on days {string.Join(", ", rules.BatchDays)}, with a prep session on each.\n")
             : "- Cook daily.\n");
         text.Append(ceiling is { } budget
-            ? string.Create(CultureInfo.InvariantCulture, $"- Weekly budget: {budget:0.##} {rules.Currency ?? context.Currency}.\n")
+            ? $"- Weekly budget: {Money.Format(budget, rules.Currency ?? context.Currency)}.\n"
             : "- No weekly budget.\n");
         if (rules.DailyBudget is { } perDay)
-            text.Append(CultureInfo.InvariantCulture, $"- Daily budget: {perDay:0.##} {rules.Currency ?? context.Currency}; keep each day's cost under it.\n");
+            text.Append($"- Daily budget: {Money.Format(perDay, rules.Currency ?? context.Currency)}; keep each day's cost under it.\n");
 
         if (!string.IsNullOrWhiteSpace(request.Preference))
         {
@@ -314,7 +315,7 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
     {
         var baseName = string.IsNullOrWhiteSpace(name) ? "Assistant plan" : name.Trim();
         var full = several && ceiling is { } c
-            ? string.Create(CultureInfo.InvariantCulture, $"{baseName} · {c:0.##} {currency}/week")
+            ? $"{baseName} · {Money.Format(c, currency)}/week"
             : baseName;
         return Cut(full, 255);
     }

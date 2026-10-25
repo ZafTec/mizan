@@ -145,7 +145,7 @@ public class CreatePriceReportCommandHandler : IRequestHandler<CreatePriceReport
                 admin,
                 "price_report",
                 $"Price report for {food.Name}",
-                $"{request.SuggestedPrice:0.##} {region.Currency} for {request.Quantity:0.###} {unit}.",
+                $"{Money.Format(request.SuggestedPrice, region.Currency)} for {request.Quantity.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)} {unit}.",
                 "/admin/prices#reports",
                 cancellationToken);
         }

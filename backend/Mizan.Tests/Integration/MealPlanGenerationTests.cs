@@ -84,7 +84,7 @@ public class MealPlanGenerationTests
 
         var tooTight = result.Drafts[1];
         tooTight.BudgetCeiling.Should().Be(300);
-        tooTight.Plan.Name.Should().Contain("300 ETB/week");
+        tooTight.Plan.Name.Should().Contain("ETB 300.00/week");
         tooTight.Violations.Select(v => v.Rule).Should().Contain(PlanRuleNames.BudgetOver);
 
         // Each ceiling was its own structured call on the planning line, and the model was shown prices, not asked for them.
@@ -119,7 +119,7 @@ public class MealPlanGenerationTests
 
         response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
         var draft = (await response.Content.ReadFromJsonAsync<GenerateMealPlanResult>())!.Drafts.Single();
-        _fixture.Ai.Calls.Single().Messages.Should().Contain(m => m.Content.Contains("Daily budget: 40 ETB"));
+        _fixture.Ai.Calls.Single().Messages.Should().Contain(m => m.Content.Contains("Daily budget: ETB 40.00"));
         draft.Plan.Rules.Should().Match<PlanRulesDto>(r => r.DailyBudget == 40 && r.Currency == "ETB");
         // 300 g eggs at 200 a kilo is 60; 200 g lentils at 100 a kilo is 20.
         draft.Plan.Days.Select(d => (d.Cost, d.OverBudget)).Should().Equal((60m, true), (20m, false));
@@ -128,7 +128,7 @@ public class MealPlanGenerationTests
         // The plan page reads the same mark.
         var read = await PlanningWorld.PlanAsync(client, draft.Plan.Id);
         read.Days[0].OverBudget.Should().BeTrue();
-        read.Days[0].Violations.Should().Contain(v => v.Rule == PlanRuleNames.DailyBudgetOver && v.Message.Contains("40.00 ETB daily budget"));
+        read.Days[0].Violations.Should().Contain(v => v.Rule == PlanRuleNames.DailyBudgetOver && v.Message.Contains("over the ETB 40.00 daily budget"));
     }
 
     [Fact]
