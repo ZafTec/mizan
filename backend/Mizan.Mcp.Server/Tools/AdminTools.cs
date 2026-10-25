@@ -224,6 +224,92 @@ public sealed class AdminTools
     public Task<string> DeleteJob(string id, CancellationToken ct = default) =>
         _api.DeleteAsync($"/api/Admin/Jobs/{ToolArguments.ParseId(id, "id")}", ct);
 
+    // ---- Mail and contact -------------------------------------------------
+
+    [McpServerTool(Name = "admin_list_mail", ReadOnly = true, Idempotent = true)]
+    [Description(
+        "Admin only. The email log: every email the system queued, newest first, with its status "
+        + "(Queued, Sent or Failed), attempts and last error. The body is never stored. kind is a dotted "
+        + "name such as auth.verify, admin.announcement or contact.reply; search matches the recipient; "
+        + "from/to are inclusive YYYY-MM-DD bounds.")]
+    public Task<string> ListMail(
+        [Description("Queued, Sent or Failed")] string? status = null,
+        string? kind = null,
+        string? search = null,
+        [Description("Inclusive lower bound, YYYY-MM-DD")] string? from = null,
+        [Description("Inclusive upper bound, YYYY-MM-DD")] string? to = null,
+        int page = 1,
+        int pageSize = 20,
+        CancellationToken ct = default)
+    {
+        var query = new QueryString()
+            .Add("status", status)
+            .Add("kind", kind)
+            .Add("search", search)
+            .Add("from", ToolArguments.ParseOptionalDate(from, "from")?.ToString("yyyy-MM-dd"))
+            .Add("to", ToolArguments.ParseOptionalDate(to, "to")?.ToString("yyyy-MM-dd"))
+            .Add("page", page)
+            .Add("pageSize", pageSize);
+
+        return _api.GetAsync($"/api/admin/mail{query}", ct);
+    }
+
+    [McpServerTool(Name = "admin_retry_mail")]
+    [Description(
+        "Admin only. Queues an email that did not go out once more. Refused for one that was sent, "
+        + "one already queued, and one whose job was deleted with its body.")]
+    public Task<string> RetryMail(string id, CancellationToken ct = default) =>
+        _api.PostAsync($"/api/admin/mail/{ToolArguments.ParseId(id, "id")}/retry", null, ct);
+
+    [McpServerTool(Name = "admin_send_announcement", Destructive = true)]
+    [Description(
+        "Admin only. Emails an announcement, one message per recipient. audience is all, pro, free, "
+        + "household:{id} or user:{id}; unconfirmed addresses and suspended accounts are left out. "
+        + "Pass the same announcementId to retry without sending anyone a second copy. An announcement "
+        + "to all is limited to one an hour. Returns how many were queued.")]
+    public Task<string> SendAnnouncement(
+        string subject,
+        [Description("Plain text. Blank lines separate paragraphs.")] string body,
+        string audience,
+        string? announcementId = null,
+        CancellationToken ct = default) =>
+        _api.PostAsync(
+            "/api/admin/mail/announcements",
+            new SendAnnouncementRequest(subject, body, audience, ToolArguments.ParseOptionalId(announcementId, "announcementId")),
+            ct);
+
+    [McpServerTool(Name = "admin_list_contact", ReadOnly = true, Idempotent = true)]
+    [Description(
+        "Admin only. Messages sent through the public contact form, newest first. status is New or "
+        + "Handled; search matches name, address, subject or message.")]
+    public Task<string> ListContact(
+        [Description("New or Handled")] string? status = null,
+        string? search = null,
+        int page = 1,
+        int pageSize = 20,
+        CancellationToken ct = default)
+    {
+        var query = new QueryString()
+            .Add("status", status)
+            .Add("search", search)
+            .Add("page", page)
+            .Add("pageSize", pageSize);
+
+        return _api.GetAsync($"/api/admin/contact{query}", ct);
+    }
+
+    [McpServerTool(Name = "admin_reply_contact", Destructive = true)]
+    [Description(
+        "Admin only. Emails a reply to the person who sent a contact message, from the site's sender "
+        + "address, and marks the message handled. One reply per message.")]
+    public Task<string> ReplyContact(string id, [Description("Plain text")] string body, CancellationToken ct = default) =>
+        _api.PostAsync($"/api/admin/contact/{ToolArguments.ParseId(id, "id")}/reply", new ContactReplyRequest(body), ct);
+
+    [McpServerTool(Name = "admin_mark_contact_handled")]
+    [Description("Admin only. Marks a contact message handled without replying.")]
+    public Task<string> MarkContactHandled(string id, CancellationToken ct = default) =>
+        _api.PostAsync($"/api/admin/contact/{ToolArguments.ParseId(id, "id")}/handled", null, ct);
+
     // ---- Prompt console ---------------------------------------------------
 
     [McpServerTool(Name = "admin_list_ai_prompts", ReadOnly = true, Idempotent = true)]

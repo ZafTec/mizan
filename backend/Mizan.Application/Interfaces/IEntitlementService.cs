@@ -14,4 +14,7 @@ public interface IEntitlementService
 {
     Task<Entitlement> GetAsync(Guid userId, CancellationToken cancellationToken = default);
     Task InvalidateAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    /// <summary>Which of these users are Pro right now, by the same rule as <see cref="GetAsync"/>, in one query.</summary>
+    Task<IReadOnlySet<Guid>> GetProUserIdsAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken = default);
 }
