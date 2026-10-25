@@ -5281,6 +5281,7 @@ export interface paths {
             parameters: {
                 query?: {
                     date?: string;
+                    planId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -5303,6 +5304,49 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/MealPlans/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["GenerateMealPlanCommand"];
+                    "text/json": components["schemas"]["GenerateMealPlanCommand"];
+                    "application/*+json": components["schemas"]["GenerateMealPlanCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GenerateMealPlanResult"];
+                        "application/json": components["schemas"]["GenerateMealPlanResult"];
+                        "text/json": components["schemas"]["GenerateMealPlanResult"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -8744,6 +8788,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Telegram/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["TelegramMiniAppSessionRequest"];
+                    "text/json": components["schemas"]["TelegramMiniAppSessionRequest"];
+                    "application/*+json": components["schemas"]["TelegramMiniAppSessionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TelegramMiniAppSessionResponse"];
+                        "application/json": components["schemas"]["TelegramMiniAppSessionResponse"];
+                        "text/json": components["schemas"]["TelegramMiniAppSessionResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Trainers/request": {
         parameters: {
             query?: never;
@@ -10089,6 +10176,10 @@ export interface components {
             /** Format: int32 */
             readonly totalPages: number;
         };
+        AiCardDto: {
+            type: string;
+            data: unknown;
+        };
         AiChatMessageDto: {
             /** Format: uuid */
             id: string;
@@ -10120,6 +10211,7 @@ export interface components {
             message: components["schemas"]["AiChatMessageDto"];
             reply: components["schemas"]["AiChatMessageDto"];
             performed: components["schemas"]["AiToolInvocation"][];
+            cards: components["schemas"]["AiCardDto"][];
         };
         AiConsentDto: {
             enabled: boolean;
@@ -10519,6 +10611,11 @@ export interface components {
             /** Format: int32 */
             pageSize: number;
         };
+        CostTableCardData: {
+            /** Format: uuid */
+            planId: string;
+            cost: components["schemas"]["PlanCostDto"];
+        };
         CreateAchievementCommand: {
             name: string;
             description?: string | null;
@@ -10831,6 +10928,12 @@ export interface components {
             /** Format: int32 */
             failureCount: number;
         };
+        DayPlanCardData: {
+            /** Format: uuid */
+            planId: string;
+            planName?: string | null;
+            day: components["schemas"]["PlanDayDto"];
+        };
         DecideAuthorizationResult: {
             redirectUrl: string;
         };
@@ -11119,6 +11222,20 @@ export interface components {
             sourceId?: string | null;
             sourceName?: string | null;
         };
+        GenerateMealPlanCommand: {
+            name?: string | null;
+            /** Format: date */
+            startDate: string;
+            /** Format: int32 */
+            durationDays: number;
+            rules?: components["schemas"]["PlanRulesDto"];
+            preference?: string | null;
+            budgetCeilings: number[];
+        };
+        GenerateMealPlanResult: {
+            drafts: components["schemas"]["GeneratedPlanDto"][];
+            skipped: components["schemas"]["SkippedBudgetDto"][];
+        };
         GenerateShoppingListRequest: {
             name?: string | null;
             /** Format: uuid */
@@ -11131,6 +11248,15 @@ export interface components {
             itemCount: number;
             /** Format: int32 */
             needsReviewCount: number;
+        };
+        GeneratedPlanDto: {
+            plan: components["schemas"]["MealPlanDetailDto"];
+            /** Format: double */
+            budgetCeiling?: number | null;
+            violations: components["schemas"]["PlanViolationDto"][];
+            cost: components["schemas"]["PlanCostDto"];
+            unresolved: components["schemas"]["UnresolvedPlanLineDto"][];
+            note?: string | null;
         };
         GetAchievementAnalyticsResult: {
             /** Format: int32 */
@@ -11588,6 +11714,7 @@ export interface components {
             costCoverage: number;
             costConfidence?: string | null;
             unpricedItems: components["schemas"]["UnpricedItemDto"][];
+            generatedFrom?: components["schemas"]["PlanGenerationDto"];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -11616,6 +11743,7 @@ export interface components {
             /** Format: int32 */
             entryCount: number;
             hasRules: boolean;
+            generatedFrom?: components["schemas"]["PlanGenerationDto"];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -11671,6 +11799,7 @@ export interface components {
             today: components["schemas"]["AiQuotaSnapshot"];
             history: components["schemas"]["AiUsageDayDto"][];
             byFeature: components["schemas"]["AiUsageFeatureDto"][];
+            planning: components["schemas"]["AiQuotaSnapshot"];
         };
         MyHouseholdInvitationSummary: {
             /** Format: uuid */
@@ -11875,6 +12004,35 @@ export interface components {
             /** Format: uuid */
             planId: string;
         };
+        PlanCostDto: {
+            regionCode: string;
+            currency: string;
+            /** Format: double */
+            total: number;
+            /** Format: double */
+            weeklyTotal: number;
+            /** Format: double */
+            weeklyBudget?: number | null;
+            /** Format: int32 */
+            pricedItems: number;
+            /** Format: int32 */
+            totalItems: number;
+            /** Format: double */
+            coverage: number;
+            lowestConfidence?: string | null;
+            items: components["schemas"]["PlanCostItemDto"][];
+        };
+        PlanCostItemDto: {
+            name: string;
+            /** Format: uuid */
+            foodId?: string | null;
+            /** Format: double */
+            grams?: number | null;
+            /** Format: double */
+            cost?: number | null;
+            confidence?: string | null;
+            reason?: string | null;
+        };
         PlanDayDto: {
             /** Format: int32 */
             dayIndex: number;
@@ -11958,6 +12116,39 @@ export interface components {
             prepSessionId?: string | null;
             /** Format: int32 */
             prepSessionIndex?: number | null;
+        };
+        PlanGenerationDto: {
+            promptKey: string;
+            /** Format: uuid */
+            promptVersionId?: string | null;
+            /** Format: int32 */
+            promptVersion?: number | null;
+            model: string;
+            /** Format: double */
+            budgetCeiling?: number | null;
+            currency?: string | null;
+            /** Format: date-time */
+            generatedAt: string;
+        };
+        PlanPreviewCardData: {
+            /** Format: uuid */
+            planId: string;
+            name?: string | null;
+            status: string;
+            /** Format: date */
+            startDate?: string | null;
+            /** Format: int32 */
+            durationDays: number;
+            /** Format: int32 */
+            entryCount: number;
+            /** Format: int32 */
+            unresolvedCount: number;
+            /** Format: double */
+            budgetCeiling?: number | null;
+            /** Format: double */
+            weeklyCost?: number | null;
+            currency?: string | null;
+            violations: components["schemas"]["PlanViolationDto"][];
         };
         PlanRulesDto: {
             macroMode: string;
@@ -12524,6 +12715,14 @@ export interface components {
         SetModelRequest: {
             modelUrl?: string | null;
         };
+        ShoppingListCardData: {
+            /** Format: uuid */
+            listId: string;
+            /** Format: int32 */
+            itemCount: number;
+            /** Format: int32 */
+            needsReviewCount: number;
+        };
         ShoppingListDetailDto: {
             /** Format: uuid */
             id: string;
@@ -12616,6 +12815,11 @@ export interface components {
             pageSize: number;
             /** Format: int32 */
             readonly totalPages: number;
+        };
+        SkippedBudgetDto: {
+            /** Format: double */
+            budgetCeiling: number;
+            reason: string;
         };
         SocialAnalyticsDto: {
             /** Format: int32 */
@@ -12751,6 +12955,19 @@ export interface components {
             userId: string;
             name?: string | null;
         };
+        TelegramMiniAppSessionRequest: {
+            /** Format: int64 */
+            telegramUserId: number;
+            ipAddress?: string | null;
+            userAgent?: string | null;
+        };
+        TelegramMiniAppSessionResponse: {
+            token: string;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: uuid */
+            userId: string;
+        };
         TemplateDto: {
             /** Format: uuid */
             id: string;
@@ -12875,6 +13092,13 @@ export interface components {
             name: string;
             /** Format: uuid */
             foodId?: string | null;
+            reason: string;
+        };
+        UnresolvedPlanLineDto: {
+            /** Format: int32 */
+            dayIndex: number;
+            slot: string;
+            text: string;
             reason: string;
         };
         UpdateAchievementCommand: {
