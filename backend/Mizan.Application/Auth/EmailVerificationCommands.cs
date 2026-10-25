@@ -52,16 +52,16 @@ public class ResendVerificationCommandValidator : AbstractValidator<ResendVerifi
 public class ResendVerificationCommandHandler : IRequestHandler<ResendVerificationCommand, Unit>
 {
     private readonly IMizanDbContext _context;
-    private readonly IOutbox _outbox;
+    private readonly IEmailQueue _emails;
     private readonly IAppUrls _urls;
 
     public ResendVerificationCommandHandler(
         IMizanDbContext context,
-        IOutbox outbox,
+        IEmailQueue emails,
         IAppUrls urls)
     {
         _context = context;
-        _outbox = outbox;
+        _emails = emails;
         _urls = urls;
     }
 
@@ -82,7 +82,7 @@ public class ResendVerificationCommandHandler : IRequestHandler<ResendVerificati
             cancellationToken);
 
         await AuthEmailDelivery.QueueAsync(
-            _outbox,
+            _emails,
             AuthEmails.Verification(user.Email, user.Name, _urls.VerifyEmail(token)),
             user.Id,
             "verify",

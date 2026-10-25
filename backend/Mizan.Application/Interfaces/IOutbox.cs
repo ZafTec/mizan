@@ -58,6 +58,13 @@ public interface IOutboxHandler
     int Concurrency => 1;
 
     Task HandleAsync(string payload, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Called once when the dispatcher gives up on a job: out of attempts, or a
+    /// permanent failure. Changes made here on the scope's context are saved
+    /// with the job's own final state. Most handlers have nothing to record.
+    /// </summary>
+    Task OnDeadLetteredAsync(string payload, string? error, CancellationToken cancellationToken) => Task.CompletedTask;
 }
 
 public sealed class OutboxPermanentException : Exception

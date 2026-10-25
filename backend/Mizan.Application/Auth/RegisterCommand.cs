@@ -38,18 +38,18 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Unit>
 
     private readonly IMizanDbContext _context;
     private readonly IPasswordHasher _passwordHasher;
-    private readonly IOutbox _outbox;
+    private readonly IEmailQueue _emails;
     private readonly IAppUrls _urls;
 
     public RegisterCommandHandler(
         IMizanDbContext context,
         IPasswordHasher passwordHasher,
-        IOutbox outbox,
+        IEmailQueue emails,
         IAppUrls urls)
     {
         _context = context;
         _passwordHasher = passwordHasher;
-        _outbox = outbox;
+        _emails = emails;
         _urls = urls;
     }
 
@@ -91,7 +91,7 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Unit>
         });
 
         await AuthEmailDelivery.QueueAsync(
-            _outbox,
+            _emails,
             AuthEmails.Verification(user.Email, user.Name, _urls.VerifyEmail(token)),
             user.Id,
             "verify",

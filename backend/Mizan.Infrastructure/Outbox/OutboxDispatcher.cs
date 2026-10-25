@@ -180,6 +180,7 @@ public class OutboxDispatcher : BackgroundService
             job.CompletedAt = DateTime.UtcNow;
 
             LogFailure(LogLevel.Error, job, ex, "failed permanently");
+            await NotifyDeadLetteredAsync(handler, job);
         }
         catch (Exception ex)
         {
@@ -197,9 +198,27 @@ public class OutboxDispatcher : BackgroundService
                 exhausted
                     ? $"failed on attempt {job.Attempts}; dead-lettered"
                     : $"failed on attempt {job.Attempts}");
+            if (exhausted) await NotifyDeadLetteredAsync(handler, job);
         }
 
         await db.SaveChangesAsync(CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Lets the handler record that its job gave up, for example the email log
+    /// marking a message Failed. A failure here must not lose the job's own
+    /// state, so it is logged and the save goes ahead.
+    /// </summary>
+    private async Task NotifyDeadLetteredAsync(IOutboxHandler handler, OutboxJob job)
+    {
+        try
+        {
+            await handler.OnDeadLetteredAsync(job.Payload, job.LastError, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Outbox job {JobId} ({Type}) dead-letter hook failed: {Exception}", job.Id, job.Type, ex.GetType().Name);
+        }
     }
 
     /// <summary>

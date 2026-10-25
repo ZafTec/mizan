@@ -76,6 +76,12 @@ public interface IMizanDbContext
     DbSet<DeletedRecord> DeletedRecords { get; }
     DbSet<DeviceToken> DeviceTokens { get; }
 
+    // Administration: the email log, the contact inbox and support notes
+    DbSet<EmailMessage> EmailMessages { get; }
+    DbSet<Announcement> Announcements { get; }
+    DbSet<ContactSubmission> ContactSubmissions { get; }
+    DbSet<SupportNote> SupportNotes { get; }
+
     // Billing
     DbSet<Subscription> Subscriptions { get; }
     DbSet<PaddleWebhookEvent> PaddleWebhookEvents { get; }

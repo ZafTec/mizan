@@ -113,10 +113,10 @@ public class AuthEmailDeliveryTests(ApiTestFixture fixture)
             .Where(j => j.Type == OutboxJobTypes.Email).ToListAsync();
     }
 
-    private static EmailMessage ReadMessage(OutboxJob job) =>
-        JsonSerializer.Deserialize<EmailMessage>(job.Payload, Json)!;
+    private static OutgoingEmail ReadMessage(OutboxJob job) =>
+        JsonSerializer.Deserialize<OutgoingEmail>(job.Payload, Json)!;
 
-    private static async Task<string> ReadTokenAsync(EmailMessage message, string tokenPath)
+    private static async Task<string> ReadTokenAsync(OutgoingEmail message, string tokenPath)
     {
         var recording = new RecordingEmailSender();
         await recording.SendAsync(message);

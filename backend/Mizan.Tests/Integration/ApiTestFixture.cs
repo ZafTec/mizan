@@ -33,6 +33,10 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         // ai_eval_cases is deliberately absent: the synthetic suite is seeded
         // by the migration and the publish gate has nothing to check without it.
         "ai_eval_runs",
+        "email_messages",
+        "announcements",
+        "contact_submissions",
+        "support_notes",
         "billing_discounts",
         "billing_plans",
         "recipe_nutrition_snapshots",
@@ -885,21 +889,42 @@ public sealed class ScriptedAiProvider : IAiProvider
 /// </summary>
 public sealed class RecordingEmailSender : IEmailSender
 {
-    private readonly List<EmailMessage> _sent = new();
+    private readonly List<OutgoingEmail> _sent = new();
 
-    public IReadOnlyList<EmailMessage> Sent
+    public IReadOnlyList<OutgoingEmail> Sent
     {
         get { lock (_sent) return _sent.ToList(); }
     }
 
+    private string? _failure;
+
     public void Clear()
     {
-        lock (_sent) _sent.Clear();
+        lock (_sent)
+        {
+            _sent.Clear();
+            _failure = null;
+        }
     }
 
-    public Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
+    /// <summary>Every send throws this until <see cref="Clear"/> or <see cref="Recover"/>, the way a refusing server would.</summary>
+    public void FailWith(string message)
     {
-        lock (_sent) _sent.Add(message);
+        lock (_sent) _failure = message;
+    }
+
+    public void Recover()
+    {
+        lock (_sent) _failure = null;
+    }
+
+    public Task SendAsync(OutgoingEmail message, CancellationToken cancellationToken = default)
+    {
+        lock (_sent)
+        {
+            if (_failure is not null) throw new InvalidOperationException(_failure);
+            _sent.Add(message);
+        }
         return Task.CompletedTask;
     }
 
