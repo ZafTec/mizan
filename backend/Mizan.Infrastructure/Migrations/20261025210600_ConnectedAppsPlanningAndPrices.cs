@@ -245,6 +245,44 @@ namespace Mizan.Infrastructure.Migrations
                 nullable: true);
 
             migrationBuilder.CreateTable(
+                name: "announcements",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    subject = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    audience = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    recipient_count = table.Column<int>(type: "integer", nullable: false),
+                    created_by_user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_announcements", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "contact_submissions",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
+                    email = table.Column<string>(type: "character varying(320)", maxLength: 320, nullable: false),
+                    subject = table.Column<string>(type: "character varying(160)", maxLength: 160, nullable: false),
+                    message = table.Column<string>(type: "character varying(5000)", maxLength: 5000, nullable: false),
+                    user_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    status = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
+                    handled_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    handled_by_user_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    reply_email_message_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    ip_hash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_contact_submissions", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "data_protection_keys",
                 columns: table => new
                 {
@@ -300,6 +338,65 @@ namespace Mizan.Infrastructure.Migrations
                         principalTable: "users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "email_messages",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    to_user_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    to_address = table.Column<string>(type: "character varying(320)", maxLength: 320, nullable: false),
+                    subject = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    kind = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    status = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
+                    attempts = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    last_error = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    outbox_job_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    sent_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    created_by_user_id = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_email_messages", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "feature_flag_overrides",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    flag_key = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    household_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    enabled = table.Column<bool>(type: "boolean", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    updated_by_user_id = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_feature_flag_overrides", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_feature_flag_overrides_households_household_id",
+                        column: x => x.household_id,
+                        principalTable: "households",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "feature_flags",
+                columns: table => new
+                {
+                    key = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    description = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    default_enabled = table.Column<bool>(type: "boolean", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    updated_by_user_id = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_feature_flags", x => x.key);
                 });
 
             migrationBuilder.CreateTable(
@@ -410,6 +507,23 @@ namespace Mizan.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "support_notes",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    subject_type = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
+                    subject_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    body = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: false),
+                    author_user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_support_notes", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "system_settings",
                 columns: table => new
                 {
@@ -428,6 +542,27 @@ namespace Mizan.Infrastructure.Migrations
                         principalTable: "users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "usage_limit_overrides",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    scope = table.Column<int>(type: "integer", nullable: false),
+                    subject_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    line = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
+                    daily_requests = table.Column<int>(type: "integer", nullable: true),
+                    daily_tokens = table.Column<long>(type: "bigint", nullable: true),
+                    daily_cost_micros = table.Column<long>(type: "bigint", nullable: true),
+                    monthly_cost_micros = table.Column<long>(type: "bigint", nullable: true),
+                    note = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    updated_by_user_id = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_usage_limit_overrides", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -779,6 +914,21 @@ namespace Mizan.Infrastructure.Migrations
                 columns: new[] { "user_id", "updated_at" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_announcements_audience_created_at",
+                table: "announcements",
+                columns: new[] { "audience", "created_at" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_contact_submissions_ip_hash_created_at",
+                table: "contact_submissions",
+                columns: new[] { "ip_hash", "created_at" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_contact_submissions_status_created_at",
+                table: "contact_submissions",
+                columns: new[] { "status", "created_at" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_deleted_records_user_id_deleted_at",
                 table: "deleted_records",
                 columns: new[] { "user_id", "deleted_at" });
@@ -793,6 +943,42 @@ namespace Mizan.Infrastructure.Migrations
                 name: "IX_device_tokens_user_id",
                 table: "device_tokens",
                 column: "user_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_email_messages_created_at",
+                table: "email_messages",
+                column: "created_at");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_email_messages_kind_created_at",
+                table: "email_messages",
+                columns: new[] { "kind", "created_at" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_email_messages_outbox_job_id",
+                table: "email_messages",
+                column: "outbox_job_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_email_messages_status_created_at",
+                table: "email_messages",
+                columns: new[] { "status", "created_at" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_email_messages_to_user_id",
+                table: "email_messages",
+                column: "to_user_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_feature_flag_overrides_flag_key_household_id",
+                table: "feature_flag_overrides",
+                columns: new[] { "flag_key", "household_id" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_feature_flag_overrides_household_id",
+                table: "feature_flag_overrides",
+                column: "household_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_food_prices_food_region_observed",
@@ -939,9 +1125,21 @@ namespace Mizan.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_support_notes_subject_type_subject_id_created_at",
+                table: "support_notes",
+                columns: new[] { "subject_type", "subject_id", "created_at" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_system_settings_updated_by_user_id",
                 table: "system_settings",
                 column: "updated_by_user_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_usage_limit_overrides_scope_subject_id_line",
+                table: "usage_limit_overrides",
+                columns: new[] { "scope", "subject_id", "line" },
+                unique: true)
+                .Annotation("Npgsql:NullsDistinct", false);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_food_diary_entries_plan_entries_plan_entry_id",
@@ -1000,6 +1198,12 @@ namespace Mizan.Infrastructure.Migrations
                 table: "shopping_lists");
 
             migrationBuilder.DropTable(
+                name: "announcements");
+
+            migrationBuilder.DropTable(
+                name: "contact_submissions");
+
+            migrationBuilder.DropTable(
                 name: "data_protection_keys");
 
             migrationBuilder.DropTable(
@@ -1007,6 +1211,15 @@ namespace Mizan.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "device_tokens");
+
+            migrationBuilder.DropTable(
+                name: "email_messages");
+
+            migrationBuilder.DropTable(
+                name: "feature_flag_overrides");
+
+            migrationBuilder.DropTable(
+                name: "feature_flags");
 
             migrationBuilder.DropTable(
                 name: "food_prices");
@@ -1033,7 +1246,13 @@ namespace Mizan.Infrastructure.Migrations
                 name: "price_source_aliases");
 
             migrationBuilder.DropTable(
+                name: "support_notes");
+
+            migrationBuilder.DropTable(
                 name: "system_settings");
+
+            migrationBuilder.DropTable(
+                name: "usage_limit_overrides");
 
             migrationBuilder.DropTable(
                 name: "oauth_grants");
