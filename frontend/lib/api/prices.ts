@@ -5,7 +5,7 @@ import type { components, paths } from "@/types/api.generated";
  * Browser calls for prices: the food price and its report, the viewer's
  * region, and the administrator's regions, sources, review queue, manual
  * prices and reports. Every type comes from the generated OpenAPI document.
- * Writes a person may retry carry an Idempotency-Key, like mealPlans.ts
+ * Every write carries an Idempotency-Key, like mealPlans.ts
  * (docs/PLANNING.md#api-step-3-as-built). Nothing here does price arithmetic.
  */
 type Schemas = components["schemas"];
@@ -73,6 +73,7 @@ export const setPriceRegion = (priceRegionCode: string) =>
   clientApi<void>("/api/Users/me", {
     method: "PUT",
     body: { priceRegionCode } satisfies Schemas["UpdateUserRequest"],
+    headers: idempotent(),
   });
 
 // ---- Administrators ------------------------------------------------------
@@ -81,6 +82,7 @@ export const createPriceRegion = (body: CreatePriceRegionRequest) =>
   clientApi<PriceRegion>("/api/admin/prices/regions", {
     method: "POST",
     body,
+    headers: idempotent(),
   });
 
 export const updatePriceRegion = (
@@ -89,20 +91,28 @@ export const updatePriceRegion = (
 ) =>
   clientApi<PriceRegion>(
     `/api/admin/prices/regions/${encodeURIComponent(code)}`,
-    { method: "PUT", body },
+    { method: "PUT", body, headers: idempotent() },
   );
 
 export const createPriceSource = (body: SavePriceSourceRequest) =>
   clientApi<Schemas["PriceSourceCreatedResult"]>("/api/admin/prices/sources", {
     method: "POST",
     body,
+    headers: idempotent(),
   });
 
 export const updatePriceSource = (id: string, body: SavePriceSourceRequest) =>
-  clientApi<void>(`/api/admin/prices/sources/${id}`, { method: "PUT", body });
+  clientApi<void>(`/api/admin/prices/sources/${id}`, {
+    method: "PUT",
+    body,
+    headers: idempotent(),
+  });
 
 export const deletePriceSource = (id: string) =>
-  clientApi<void>(`/api/admin/prices/sources/${id}`, { method: "DELETE" });
+  clientApi<void>(`/api/admin/prices/sources/${id}`, {
+    method: "DELETE",
+    headers: idempotent(),
+  });
 
 /**
  * Run now. 202 when the worker took the run; 409 when the API has no worker

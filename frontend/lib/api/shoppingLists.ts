@@ -3,10 +3,15 @@ import type { components } from "@/types/api.generated";
 
 /**
  * Browser calls for shopping lists and their items. Types come from the
- * generated OpenAPI document. The toggle is the one write a person repeats
- * in a shop aisle, so it carries an Idempotency-Key.
+ * generated OpenAPI document. Every write carries an Idempotency-Key, so a
+ * retry in a shop aisle with poor signal replays the first answer instead of
+ * adding an item twice.
  */
 type Schemas = components["schemas"];
+
+function idempotent(): Record<string, string> {
+  return { "Idempotency-Key": crypto.randomUUID() };
+}
 
 export type ShoppingListSummary = Schemas["ShoppingListSummaryDto"];
 export type ShoppingListDetail = Schemas["ShoppingListDetailDto"];
@@ -26,16 +31,25 @@ export const getShoppingList = (id: string) =>
 /** Answers with the new list's id. */
 export const createShoppingList = (
   body: Schemas["CreateShoppingListRequest"],
-) => clientApi<string>("/api/ShoppingLists", { method: "POST", body });
+) =>
+  clientApi<string>("/api/ShoppingLists", {
+    method: "POST",
+    body,
+    headers: idempotent(),
+  });
 
 export const renameShoppingList = (id: string, name: string) =>
   clientApi<void>(`/api/ShoppingLists/${id}`, {
     method: "PUT",
     body: { name } satisfies Schemas["UpdateShoppingListRequest"],
+    headers: idempotent(),
   });
 
 export const deleteShoppingList = (id: string) =>
-  clientApi<void>(`/api/ShoppingLists/${id}`, { method: "DELETE" });
+  clientApi<void>(`/api/ShoppingLists/${id}`, {
+    method: "DELETE",
+    headers: idempotent(),
+  });
 
 /** Answers with the new item's id. */
 export const addShoppingListItem = (
@@ -45,6 +59,7 @@ export const addShoppingListItem = (
   clientApi<string>(`/api/ShoppingLists/${listId}/items`, {
     method: "POST",
     body,
+    headers: idempotent(),
   });
 
 export const updateShoppingListItem = (
@@ -54,21 +69,26 @@ export const updateShoppingListItem = (
   clientApi<void>(`/api/ShoppingLists/items/${itemId}`, {
     method: "PUT",
     body,
+    headers: idempotent(),
   });
 
 export const deleteShoppingListItem = (itemId: string) =>
-  clientApi<void>(`/api/ShoppingLists/items/${itemId}`, { method: "DELETE" });
+  clientApi<void>(`/api/ShoppingLists/items/${itemId}`, {
+    method: "DELETE",
+    headers: idempotent(),
+  });
 
 export const toggleShoppingListItem = (itemId: string, isChecked: boolean) =>
   clientApi<void>(`/api/ShoppingLists/items/${itemId}/toggle`, {
     method: "PATCH",
     body: { isChecked } satisfies Schemas["ToggleShoppingListItemRequest"],
-    headers: { "Idempotency-Key": crypto.randomUUID() },
+    headers: idempotent(),
   });
 
 export const clearCheckedItems = (listId: string) =>
   clientApi<ClearCheckedResult>(`/api/ShoppingLists/${listId}/clear-checked`, {
     method: "POST",
+    headers: idempotent(),
   });
 
 /** "500 g" when the weight is known, otherwise the amount and unit as written. */
