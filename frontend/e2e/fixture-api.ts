@@ -769,6 +769,7 @@ const server = Bun.serve({
           foods,
           prices: state.prices,
         },
+        threads: state.threads,
       },
       today,
       json,

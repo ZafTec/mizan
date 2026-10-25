@@ -13,8 +13,10 @@ import {
  * its planning line, POST /api/MealPlans/generate and a chat turn that
  * carries typed cards. Typed from the generated OpenAPI schema; a generated
  * draft is saved into the planning fixture's plans, so the plan pages, the
- * list and the decline route treat it like the API's own. Every write lands
- * in `writes[]` with its Idempotency-Key.
+ * list and the decline route treat it like the API's own, and a chat turn is
+ * saved into the conversations, so the assistant lists it and opens it again.
+ * As in the API, a stored message keeps its text; the cards belong to the
+ * turn. Every write lands in `writes[]` with its Idempotency-Key.
  */
 type Schemas = components["schemas"];
 type AiConsent = Schemas["AiConsentDto"];
@@ -23,6 +25,8 @@ type GenerateRequest = Schemas["GenerateMealPlanCommand"];
 type GenerateResult = Schemas["GenerateMealPlanResult"];
 type PlanCost = Schemas["PlanCostDto"];
 type ChatTurn = Schemas["AiChatTurnDto"];
+/** A stored conversation, as GET /api/Ai/threads/{id} answers it. */
+type ChatThread = Schemas["AiChatThreadDetailDto"];
 
 export type AiPlanningOptions = {
   /** Whether the person let the assistant use their log (default false, like the API). */
@@ -38,7 +42,12 @@ export type AiPlanningState = {
   planLimit: number;
   providerDown: boolean;
 };
-export type AiPlanningHost = { ai: AiPlanningState; planning: PlanningHost };
+export type AiPlanningHost = {
+  ai: AiPlanningState;
+  planning: PlanningHost;
+  /** The fixture's conversations, newest first; a planning turn is saved into them like any other. */
+  threads: ChatThread[];
+};
 
 /** The words that make the fixture's chat answer with a drafted week and its cards. */
 export const PLAN_PROMPT = "plan my week";
@@ -321,24 +330,37 @@ export async function handleAiPlanning(
     );
     const read = detail(plan, planning);
     const now = new Date().toISOString();
-    return json({
-      threadId: input.threadId ?? crypto.randomUUID(),
+    const thread = host.threads.find((item) => item.id === input.threadId) ?? {
+      id: crypto.randomUUID(),
       title: "Plan my week",
-      message: {
-        id: crypto.randomUUID(),
-        fromUser: true,
-        content: input.message,
-        createdAt: now,
-        imageUrl: null,
-      },
-      reply: {
-        id: crypto.randomUUID(),
-        fromUser: false,
-        content:
-          "Here is a draft for next week. It stays a draft until you accept it.",
-        createdAt: now,
-        imageUrl: null,
-      },
+      updatedAt: now,
+      messages: [],
+    };
+    const message = {
+      id: crypto.randomUUID(),
+      fromUser: true,
+      content: input.message,
+      createdAt: now,
+      imageUrl: null,
+    };
+    const reply = {
+      id: crypto.randomUUID(),
+      fromUser: false,
+      content:
+        "Here is a draft for next week. It stays a draft until you accept it.",
+      createdAt: now,
+      imageUrl: null,
+    };
+    thread.messages.push(message, reply);
+    thread.updatedAt = now;
+    const known = host.threads.indexOf(thread);
+    if (known >= 0) host.threads.splice(known, 1);
+    host.threads.unshift(thread);
+    return json({
+      threadId: thread.id,
+      title: thread.title,
+      message,
+      reply,
       performed: [
         {
           tool: "generate_meal_plan",
