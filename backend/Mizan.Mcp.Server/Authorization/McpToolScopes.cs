@@ -104,7 +104,8 @@ public static class McpToolScopes
             "admin_get_global_ai_usage", "admin_create_template", "admin_update_template", "admin_delete_template",
             "admin_list_price_sources", "admin_run_price_source",
             "admin_list_price_review_queue", "admin_update_price_alias", "admin_add_manual_price",
-            "admin_list_price_reports", "admin_resolve_price_report");
+            "admin_list_price_reports", "admin_resolve_price_report",
+            "admin_list_settings", "admin_set_setting", "admin_clear_setting", "admin_test_smtp");
 
         return map;
     }

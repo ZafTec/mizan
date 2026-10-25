@@ -100,6 +100,8 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
             "admin_get_global_ai_usage",
             // Background queue
             "admin_list_jobs", "admin_get_job_stats", "admin_retry_job", "admin_delete_job",
+            // Runtime settings
+            "admin_list_settings", "admin_set_setting", "admin_clear_setting", "admin_test_smtp",
         });
     }
 
@@ -282,6 +284,29 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         (await CallAsync("admin_get_job_stats", new { })).Should().Contain("deadLettered");
         (await CallAsync("admin_list_ai_prompts", new { })).Should().NotBeNullOrWhiteSpace();
         (await CallAsync("admin_get_global_ai_usage", new { })).Should().NotBeNullOrWhiteSpace();
+    }
+
+    // ---- Runtime settings -------------------------------------------------
+
+    [Fact]
+    public async Task AnAdminSetsAndClearsASettingThroughMcp_AndASecretStaysHidden()
+    {
+        await _api.ResetDatabaseAsync();
+        await AuthenticateAsync(admin: true);
+
+        (await CallAsync("admin_set_setting", new { key = "Smtp.Host", value = "smtp.example.test" }))
+            .Should().Contain("\"source\":\"database\"").And.Contain("smtp.example.test");
+        (await CallAsync("admin_set_setting", new { key = "Smtp.Password", value = "mcp-secret-value" }))
+            .Should().NotContain("mcp-secret-value").And.Contain("\"hasValue\":true");
+        (await CallAsync("admin_set_setting", new { key = "Smtp.Port", value = "99999" }))
+            .Should().Contain("65535", "the catalog's message comes back to the caller");
+
+        var listing = await CallAsync("admin_list_settings", new { });
+        listing.Should().Contain("Smtp.Host").And.NotContain("mcp-secret-value");
+
+        (await CallAsync("admin_clear_setting", new { key = "Smtp.Host" }))
+            .Should().Contain("\"source\":\"unset\"", "the test configuration has no SMTP host to go back to");
+        (await CallAsync("admin_test_smtp", new { })).Should().Contain("jobId");
     }
 
     // ---- Helpers ----------------------------------------------------------
