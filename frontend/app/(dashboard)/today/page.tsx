@@ -7,6 +7,7 @@ import {
   getLogGoal,
   getLogMeasurements,
   getLogWorkouts,
+  type DayDiary,
   type LogMeal,
 } from "@/data/log";
 import { dateInTimeZone, formatLogDate, isLogDate } from "@/lib/log-date";
@@ -42,7 +43,14 @@ function MealRow({ entry }: { entry: LogMeal }) {
   );
 }
 
-function MealEntries({ entries }: { entries: LogMeal[] }) {
+/** The rows of one meal. A logged recipe folds its ingredient rows under the total the API sent for it. */
+function MealEntries({
+  entries,
+  groups,
+}: {
+  entries: LogMeal[];
+  groups: DayDiary["groups"];
+}) {
   const seen = new Set<string>();
   return entries.map((entry) => {
     if (!entry.groupId) return <MealRow key={entry.id} entry={entry} />;
@@ -58,9 +66,13 @@ function MealEntries({ entries }: { entries: LogMeal[] }) {
               {group.length} ingredients · Show details
             </span>
           </span>
-          <span className="num text-sm whitespace-nowrap">
+          <span
+            className="num text-sm whitespace-nowrap"
+            data-testid="recipe-group-calories"
+          >
             {Math.round(
-              group.reduce((sum, item) => sum + (item.calories ?? 0), 0),
+              groups.find((g) => g.groupId === entry.groupId)?.totals
+                .calories ?? 0,
             )}{" "}
             <span className="text-xs log-muted">kcal</span>
           </span>
@@ -241,17 +253,18 @@ export default async function TodayPage({
                   <div className="meal-group" key={type}>
                     <div className="meal-group-header">
                       <h3>{formatMealType(type)}</h3>
-                      <span className="num text-xs log-muted">
+                      <span
+                        className="num text-xs log-muted"
+                        data-testid="meal-calories"
+                      >
                         {Math.round(
-                          entries.reduce(
-                            (total, entry) => total + (entry.calories ?? 0),
-                            0,
-                          ),
+                          diary.meals.find((meal) => meal.mealType === type)
+                            ?.totals.calories ?? 0,
                         ).toLocaleString()}{" "}
                         kcal
                       </span>
                     </div>
-                    <MealEntries entries={entries} />
+                    <MealEntries entries={entries} groups={diary.groups} />
                     {entries.length >= 2 && (
                       <div className="pt-2">
                         <SaveMealAsRecipe

@@ -196,9 +196,18 @@ function householdPreview(household: FixtureHousehold) {
     version: `v${household.version}`,
   };
 }
+/** A diary row as GET /api/Meals sends it; a logged recipe's rows share a group. */
+type DiaryRow = MealEntry & {
+  groupId?: string | null;
+  groupName?: string | null;
+  amountGrams?: number | null;
+};
+type DiaryTotals = components["schemas"]["DailyTotalsDto"];
+type MealPreviewLine = components["schemas"]["MealPreviewLine"];
+type MealPreviewResult = components["schemas"]["MealPreviewResult"];
 type FixtureState = {
   userId: string;
-  meals: MealEntry[];
+  meals: DiaryRow[];
   measurements: BodyMeasurement[];
   workouts: WorkoutSummary[];
   recipes: Record<string, unknown>[];
@@ -569,6 +578,18 @@ function initialState(empty = false): FixtureState {
         })),
   };
 }
+/** EntryNutrition.Sum on the server: added up, then rounded to a tenth. */
+function subtotal(entries: MealEntry[]): DiaryTotals {
+  const sum = totals(entries);
+  const tenth = (value: number) => Math.round(value * 10) / 10;
+  return {
+    calories: tenth(sum.calories),
+    protein: tenth(sum.protein),
+    carbs: tenth(sum.carbs),
+    fat: tenth(sum.fat),
+    fiber: tenth(sum.fiber),
+  };
+}
 function totals(entries: MealEntry[]) {
   return entries.reduce(
     (sum, entry) => ({
@@ -678,6 +699,8 @@ const server = Bun.serve({
         prices?: PricesOptions;
         aiPlanning?: AiPlanningOptions;
         telegram?: TelegramOptions;
+        /** A recipe logged at dinner today, as two ingredient rows in one group. */
+        recipeGroup?: boolean;
       };
       const token = crypto.randomUUID();
       const state = initialState(options.empty);
@@ -707,6 +730,26 @@ const server = Bun.serve({
       state.prices = initialPrices(today, options.prices);
       state.aiPlanning = initialAiPlanning(options.aiPlanning);
       state.telegram = initialTelegram(options.telegram);
+      if (options.recipeGroup)
+        state.meals.push(
+          ...[
+            ["Red lentils", 180.25, 13],
+            ["Onion and berbere", 95.5, 2],
+          ].map(([name, calories, proteinGrams]) => ({
+            id: crypto.randomUUID(),
+            name: String(name),
+            mealType: "DINNER",
+            servings: 1,
+            calories: Number(calories),
+            proteinGrams: Number(proteinGrams),
+            carbsGrams: 0,
+            fatGrams: 0,
+            fiberGrams: 0,
+            loggedAt: `${today}T19:00:00Z`,
+            groupId: "9a000000-0000-4000-8000-000000000001",
+            groupName: "Misir wat",
+          })),
+        );
       if (options.household)
         state.household = {
           otherMembers: 0,
@@ -1555,7 +1598,87 @@ const server = Bun.serve({
       const entries = state.meals.filter((meal) =>
         meal.loggedAt.startsWith(date),
       );
-      return json({ date, entries, totals: totals(entries) });
+      const mealTypes = [
+        ...new Set(entries.map((entry) => entry.mealType.toUpperCase())),
+      ];
+      const groupIds = [
+        ...new Set(entries.flatMap((entry) => entry.groupId ?? [])),
+      ];
+      return json({
+        date,
+        entries,
+        totals: totals(entries),
+        meals: mealTypes.map((mealType) => ({
+          mealType,
+          totals: subtotal(
+            entries.filter(
+              (entry) => entry.mealType.toUpperCase() === mealType,
+            ),
+          ),
+        })),
+        groups: groupIds.map((groupId) => ({
+          groupId,
+          totals: subtotal(
+            entries.filter((entry) => entry.groupId === groupId),
+          ),
+        })),
+      });
+    }
+    // PreviewMealQuery: a food by grams, a recipe by servings, an estimate by
+    // its per-100 g figures, a custom line as typed. A read, so not a write.
+    if (path === "/api/Meals/preview" && method === "POST") {
+      const body = (await request.json()) as { lines: MealPreviewLine[] };
+      const cents = (value: number) => Math.round(value * 100) / 100;
+      const lines = body.lines.map((line) => {
+        const food = foods.find((item) => item.id === line.foodId);
+        const recipe = state.recipes.find((item) => item.id === line.recipeId);
+        const perServing = (
+          recipe?.nutrition as Record<string, number | null> | undefined
+        )?.caloriesPerServing;
+        const proteinPerServing = (
+          recipe?.nutrition as Record<string, number | null> | undefined
+        )?.proteinGrams;
+        if (line.foodId)
+          return food && line.grams != null
+            ? {
+                key: line.key,
+                calories: cents((food.caloriesPer100g * line.grams) / 100),
+                proteinGrams: cents((food.proteinPer100g * line.grams) / 100),
+              }
+            : { key: line.key, calories: null, proteinGrams: null };
+        if (line.recipeId)
+          return perServing != null && line.servings != null
+            ? {
+                key: line.key,
+                calories: cents(perServing * line.servings),
+                proteinGrams: cents((proteinPerServing ?? 0) * line.servings),
+              }
+            : { key: line.key, calories: null, proteinGrams: null };
+        if (line.per100g && line.grams != null)
+          return {
+            key: line.key,
+            calories: cents((line.per100g.calories * line.grams) / 100),
+            proteinGrams: cents((line.per100g.proteinGrams * line.grams) / 100),
+          };
+        return {
+          key: line.key,
+          calories: line.calories ?? null,
+          proteinGrams: line.calories != null ? (line.proteinGrams ?? 0) : null,
+        };
+      });
+      const known = lines.filter((line) => line.calories != null);
+      return json({
+        lines,
+        calories:
+          Math.round(
+            known.reduce((sum, l) => sum + (l.calories ?? 0), 0) * 10,
+          ) / 10,
+        proteinGrams:
+          Math.round(
+            known.reduce((sum, l) => sum + (l.proteinGrams ?? 0), 0) * 10,
+          ) / 10,
+        complete: known.length === lines.length,
+      } satisfies MealPreviewResult);
     }
     if (path === "/api/Meals" && method === "POST") {
       const body = (await request.json()) as Record<string, unknown>;

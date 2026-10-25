@@ -73,18 +73,3 @@ export type MealSelection = {
   item: PickerItem;
   amount: string;
 };
-
-export function nutritionForSelection(selection: MealSelection) {
-  const multiplier =
-    Number(selection.amount) / (selection.item.kind === "food" ? 100 : 1);
-  return {
-    calories:
-      selection.item.calories === null
-        ? null
-        : selection.item.calories * multiplier,
-    protein:
-      selection.item.protein === null
-        ? null
-        : selection.item.protein * multiplier,
-  };
-}

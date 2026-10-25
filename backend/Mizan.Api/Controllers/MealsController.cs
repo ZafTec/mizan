@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mizan.Application.Commands;
 using Mizan.Application.Queries;
+using Mizan.Contracts.Meals;
 
 namespace Mizan.Api.Controllers;
 
@@ -49,6 +50,11 @@ public class MealsController : ControllerBase
             return BadRequest(result.Message);
         return CreatedAtAction(nameof(GetMeals), new { id = result.Id }, result);
     }
+
+    /// <summary>What the meal form's lines come to, computed by the server. Writes nothing.</summary>
+    [HttpPost("preview")]
+    public async Task<ActionResult<MealPreviewResult>> PreviewMeal([FromBody] PreviewMealQuery query) =>
+        Ok(await _mediator.Send(query));
 
     [HttpDelete("{id}")]
     [Authorize]

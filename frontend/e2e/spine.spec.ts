@@ -1,4 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import type { components } from "../types/api.generated";
 
 const apiURL = process.env.PLAYWRIGHT_API_URL ?? "http://localhost:5100";
 async function signIn(
@@ -15,6 +16,7 @@ async function signIn(
       plans?: number;
       staleOnce?: boolean;
     };
+    recipeGroup?: boolean;
   } = {},
 ) {
   const result = await context.request.post(`${apiURL}/__fixture/session`, {
@@ -109,6 +111,37 @@ test("Today presents all three logs and the four spine destinations", async ({
   });
 });
 
+test("Today shows each meal's total and a logged recipe's total as the API sends them", async ({
+  context,
+  page,
+}) => {
+  const { today } = await signIn(context, { recipeGroup: true });
+  await page.goto("/today");
+  const diary = (await (
+    await context.request.get(`${apiURL}/api/Meals?date=${today}`)
+  ).json()) as components["schemas"]["FoodDiaryResult"];
+  const kcal = (value: number) => `${Math.round(value).toLocaleString()} kcal`;
+  const meals = page.getByRole("region", { name: "Meals" });
+  for (const meal of diary.meals)
+    await expect(
+      meals
+        .locator(".meal-group")
+        .filter({
+          has: page.getByRole("heading", {
+            name:
+              meal.mealType.charAt(0) + meal.mealType.slice(1).toLowerCase(),
+            exact: true,
+          }),
+        })
+        .getByTestId("meal-calories"),
+    ).toHaveText(kcal(meal.totals.calories));
+  expect(diary.groups).toHaveLength(1);
+  await expect(meals.getByTestId("recipe-group-calories")).toHaveText(
+    kcal(diary.groups[0].totals.calories),
+  );
+  expect((await fixtureState(context)).unhandled).toEqual([]);
+});
+
 test("History opens a dated log and logging preserves that date", async ({
   context,
   page,
@@ -167,7 +200,19 @@ test("a meal can be composed and saved over the current page", async ({
   await dialog
     .getByRole("button", { name: "Add Yogurt and oats", exact: true })
     .click();
+  // The running total is what the API's preview says the meal comes to.
+  const previewed = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/Meals/preview") &&
+      response.request().postData()?.includes('"servings":0.5') === true,
+  );
   await dialog.getByLabel("Yogurt and oats quantity in servings").fill("0.5");
+  const served = (await (
+    await previewed
+  ).json()) as components["schemas"]["MealPreviewResult"];
+  await expect(dialog.getByTestId("meal-form-total")).toHaveText(
+    `${Math.round(served.calories)} kcal`,
+  );
   await dialog.getByRole("button", { name: "Log meal", exact: true }).click();
   await expect(dialog).not.toBeVisible();
   await expect(page).toHaveURL(/\/today$/);

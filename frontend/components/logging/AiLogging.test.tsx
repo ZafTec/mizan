@@ -52,6 +52,42 @@ const recipe = (id: string, title: string, extra: object = {}) => ({
   ...extra,
 });
 
+type PreviewLine = {
+  key: string;
+  recipeId?: string;
+  servings?: number;
+  grams?: number;
+  per100g?: { calories: number; proteinGrams: number };
+  calories?: number;
+  proteinGrams?: number;
+};
+
+/** Plays POST /api/Meals/preview: every recipe here is 400 kcal a serving, estimates scale by grams. */
+function preview(body: unknown) {
+  const lines = (body as { lines: PreviewLine[] }).lines.map((line) => ({
+    key: line.key,
+    calories: line.per100g
+      ? (line.per100g.calories * (line.grams ?? 0)) / 100
+      : line.recipeId
+        ? 400 * (line.servings ?? 0)
+        : (line.calories ?? null),
+    proteinGrams: line.per100g
+      ? (line.per100g.proteinGrams * (line.grams ?? 0)) / 100
+      : line.recipeId
+        ? 30 * (line.servings ?? 0)
+        : (line.proteinGrams ?? null),
+  }));
+  return {
+    lines,
+    calories: lines.reduce((sum, line) => sum + (line.calories ?? 0), 0),
+    proteinGrams: lines.reduce(
+      (sum, line) => sum + (line.proteinGrams ?? 0),
+      0,
+    ),
+    complete: true,
+  };
+}
+
 let pro = true;
 let analyzed: unknown = analysis;
 
@@ -82,6 +118,7 @@ function respond(path: string, options?: { method?: string; body?: unknown }) {
     };
   if (path.startsWith("/api/Foods/search")) return { items: [] };
   if (path.startsWith("/api/Meals?")) return { entries: [] };
+  if (path === "/api/Meals/preview") return preview(options?.body);
   if (options?.method === "POST") return { id: "saved" };
   return {};
 }
@@ -182,6 +219,8 @@ describe("describing a meal to the assistant", () => {
     fireEvent.click(
       within(meal).getByRole("button", { name: "Remove Sourdough toast" }),
     );
+    // The screen shows the person what the row comes to at that weight, as the API previewed it.
+    await waitFor(() => expect(meal.textContent).toContain("300 kcal"));
     fireEvent.click(screen.getByRole("button", { name: "Log meal" }));
 
     await waitFor(() =>
@@ -212,8 +251,11 @@ describe("describing a meal to the assistant", () => {
     expect((posts[0][1] as { body: object }).body).not.toHaveProperty(
       "calories",
     );
-    // The screen still shows the person what the row comes to at that weight.
-    expect(meal.textContent).toContain("300 kcal");
+    expect(
+      vi
+        .mocked(clientApi)
+        .mock.calls.some(([path]) => path === "/api/Meals/preview"),
+    ).toBe(true);
   });
 
   it("keeps only the unsaved items after a failure, so a retry cannot log anything twice", async () => {

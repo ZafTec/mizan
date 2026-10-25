@@ -55,3 +55,36 @@ public record NutritionPer100g
     public decimal FatGrams { get; init; }
     public decimal? FiberGrams { get; init; }
 }
+
+/// <summary>
+/// Body of POST /api/Meals/preview: the meal form's lines as the person has typed them so far.
+/// Nothing is saved; the server answers what each line and the meal come to, by the same rules
+/// logging uses, so the form shows numbers and computes none.
+/// </summary>
+public record MealPreviewRequest
+{
+    public List<MealPreviewLine> Lines { get; init; } = [];
+}
+
+/// <summary>
+/// One line of the meal form, named by the caller's <c>Key</c>: a catalogue food with
+/// <c>Grams</c>, a recipe with <c>Servings</c>, an estimate with <c>Per100g</c> and
+/// <c>Grams</c>, or a custom line with the <c>Calories</c> and <c>ProteinGrams</c> typed.
+/// </summary>
+public record MealPreviewLine
+{
+    public string Key { get; init; } = string.Empty;
+    public Guid? FoodId { get; init; }
+    public Guid? RecipeId { get; init; }
+    public decimal? Grams { get; init; }
+    public decimal? Servings { get; init; }
+    public NutritionPer100g? Per100g { get; init; }
+    public decimal? Calories { get; init; }
+    public decimal? ProteinGrams { get; init; }
+}
+
+/// <summary>What one line comes to. Null when it cannot be known (a recipe without complete nutrition, a food the person cannot see).</summary>
+public record MealPreviewLineResult(string Key, decimal? Calories, decimal? ProteinGrams);
+
+/// <summary>Response of POST /api/Meals/preview. <c>Complete</c> is false when a line's nutrition is unknown, so the total is a floor.</summary>
+public record MealPreviewResult(List<MealPreviewLineResult> Lines, decimal Calories, decimal ProteinGrams, bool Complete);
