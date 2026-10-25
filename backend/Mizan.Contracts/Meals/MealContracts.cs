@@ -46,6 +46,25 @@ public record LogMealRequest
     public NutritionPer100g? Per100g { get; init; }
 }
 
+/// <summary>
+/// Body of POST /api/Nutrition/log: a catalogue food or a recipe, by what the person typed. A food
+/// takes <c>AmountGrams</c>, the weight eaten, or <c>Servings</c> of its serving size; a recipe
+/// takes <c>Servings</c>. The server turns grams into servings, so no client converts anything.
+/// </summary>
+public record LogFoodRequest
+{
+    public Guid? FoodId { get; init; }
+    public Guid? RecipeId { get; init; }
+
+    /// <summary>The diary day. Left out, it is today in the user's time zone, the day the streak counts.</summary>
+    public DateOnly? EntryDate { get; init; }
+    public string MealType { get; init; } = "SNACK";
+    public decimal Servings { get; init; } = 1;
+
+    /// <summary>The weight of a food eaten, in grams. When set, it wins over <c>Servings</c>.</summary>
+    public decimal? AmountGrams { get; init; }
+}
+
 /// <summary>Nutrition for 100 g of a food, as the AI proposal reports it and as a client logs it.</summary>
 public record NutritionPer100g
 {

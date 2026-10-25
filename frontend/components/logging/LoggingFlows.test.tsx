@@ -93,9 +93,9 @@ describe("in-place logging", () => {
           method: "POST",
           body: {
             foodId: "rice",
+            amountGrams: 150,
             entryDate: "2026-09-05",
             mealType: "DINNER",
-            servings: 1.5,
           },
         },
       ],

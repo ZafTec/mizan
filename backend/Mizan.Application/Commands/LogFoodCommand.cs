@@ -5,6 +5,7 @@ using Microsoft.Extensions.Caching.Hybrid;
 using Mizan.Application.Common;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Meals;
 using Mizan.Domain.Constants;
 using Mizan.Domain.Entities;
 using Mizan.Domain.Nutrition;
@@ -12,15 +13,8 @@ using Mizan.Domain.Recipes;
 
 namespace Mizan.Application.Commands;
 
-public record LogFoodCommand : IRequest<LogFoodResult>
-{
-    public Guid? FoodId { get; init; }
-    public Guid? RecipeId { get; init; }
-    /// <summary>The diary day. Left out, it is today in the user's time zone, the day the streak counts.</summary>
-    public DateOnly? EntryDate { get; init; }
-    public string MealType { get; init; } = MealTypes.Snack;
-    public decimal Servings { get; init; } = 1;
-}
+/// <summary>POST /api/Nutrition/log, with the wire shape in <see cref="LogFoodRequest"/>.</summary>
+public record LogFoodCommand : LogFoodRequest, IRequest<LogFoodResult>;
 
 public record LogFoodResult
 {
@@ -39,6 +33,10 @@ public class LogFoodCommandValidator : AbstractValidator<LogFoodCommand>
     public LogFoodCommandValidator()
     {
         RuleFor(x => x.Servings).GreaterThan(0).WithMessage("Servings must be greater than 0");
+        RuleFor(x => x.AmountGrams).GreaterThan(0).When(x => x.AmountGrams.HasValue)
+            .WithMessage("The weight eaten must be greater than 0 g");
+        RuleFor(x => x.AmountGrams).Null().When(x => x.RecipeId.HasValue)
+            .WithMessage("A recipe is logged by servings, not grams");
         RuleFor(x => x.MealType).Must(x => MealTypes.IsValid(x))
             .WithMessage($"Meal type must be one of: {string.Join(", ", MealTypes.All)}");
         RuleFor(x => x).Must(x => x.FoodId.HasValue != x.RecipeId.HasValue)
@@ -87,6 +85,7 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
         var entries = new List<FoodDiaryEntry>();
         var now = DateTime.UtcNow;
         string itemName;
+        string amount;
 
         if (request.FoodId.HasValue)
         {
@@ -94,7 +93,12 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
                 f => f.Id == request.FoodId && (f.UserId == null || f.UserId == userId), cancellationToken)
                 ?? throw new EntityNotFoundException("Food", request.FoodId.Value);
             itemName = food.Name;
-            entries.Add(DiaryEntryFactory.FromFood(food, food.ServingSize * request.Servings, userId, entryDate, request.MealType, now));
+            // The weight the person typed, or servings of the food's serving size: the server converts.
+            var grams = request.AmountGrams ?? food.ServingSize * request.Servings;
+            amount = request.AmountGrams.HasValue
+                ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{grams:0.##} g")
+                : $"{request.Servings} serving(s)";
+            entries.Add(DiaryEntryFactory.FromFood(food, grams, userId, entryDate, request.MealType, now));
         }
         else if (request.RecipeId.HasValue)
         {
@@ -103,6 +107,7 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
                 .FirstOrDefaultAsync(r => r.Id == request.RecipeId.Value && (r.IsPublic || r.UserId == userId), cancellationToken)
                 ?? throw new EntityNotFoundException("Recipe", request.RecipeId.Value);
             itemName = recipe.Title;
+            amount = $"{request.Servings} serving(s)";
             var retained = await _context.RecipeNutritionSnapshots.AsNoTracking().FirstOrDefaultAsync(s => s.RecipeId == recipe.Id, cancellationToken);
             entries.AddRange(DiaryEntryFactory.FromRecipe(recipe, request.Servings, userId, entryDate, request.MealType, now, retained));
         }
@@ -127,7 +132,7 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
             ProteinGrams = entries.Sum(e => e.ProteinGrams ?? 0),
             CarbsGrams = entries.Sum(e => e.CarbsGrams ?? 0),
             FatGrams = entries.Sum(e => e.FatGrams ?? 0),
-            Message = $"Logged {request.Servings} serving(s) of {itemName}",
+            Message = $"Logged {amount} of {itemName}",
             Streak = streak,
             UnlockedAchievements = unlocked
         };

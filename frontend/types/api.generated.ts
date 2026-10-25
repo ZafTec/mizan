@@ -11566,6 +11566,8 @@ export interface components {
             mealType: string;
             /** Format: double */
             servings: number;
+            /** Format: double */
+            amountGrams?: number | null;
         };
         LogFoodResult: {
             /** Format: uuid */

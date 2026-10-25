@@ -1436,16 +1436,30 @@ const server = Bun.serve({
       const selectedRecipe = state.recipes.find(
         (item) => item.id === body.recipeId,
       );
+      // LogFoodCommand: a food by amountGrams (or servings of its serving
+      // size), a recipe by servings. The fixture converts, as the API does.
+      const grams =
+        selectedFood && body.amountGrams != null
+          ? Number(body.amountGrams)
+          : null;
+      const servings =
+        grams !== null && selectedFood
+          ? grams / selectedFood.servingSize
+          : Number(body.servings ?? 1);
       if (
-        !(Number(body.servings) > 0) ||
+        !(servings > 0) ||
         !body.entryDate ||
-        (!selectedFood && !selectedRecipe)
+        (!selectedFood && !selectedRecipe) ||
+        (selectedRecipe && body.amountGrams != null)
       )
         return json(
           { error: "Choose a food or recipe and a positive quantity" },
           400,
         );
-      const multiplier = Number(body.servings);
+      // Per 100 g for a food, per serving for a recipe.
+      const multiplier = selectedFood
+        ? (grams ?? servings * selectedFood.servingSize) / 100
+        : servings;
       const nutrition = selectedRecipe?.nutrition as
         Record<string, number> | undefined;
       const entry: MealEntry = {
@@ -1453,7 +1467,10 @@ const server = Bun.serve({
         name: selectedFood?.name ?? String(selectedRecipe?.title),
         foodId: selectedFood?.id,
         recipeId: selectedRecipe ? String(selectedRecipe.id) : undefined,
-        servings: multiplier,
+        servings,
+        amountGrams: selectedFood
+          ? (grams ?? servings * selectedFood.servingSize)
+          : null,
         mealType: String(body.mealType),
         loggedAt: `${body.entryDate}T12:00:00Z`,
         calories:
