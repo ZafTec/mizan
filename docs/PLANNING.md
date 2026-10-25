@@ -226,7 +226,7 @@ Settled details:
 
 - Each budget ceiling is one draft named with its budget. With no ceiling, one draft is made against `Rules.WeeklyBudget`, in the rules' currency or the price region's.
 - A generated plan runs 1 to 14 days. A day keeps at most ten entries; grams are capped at 2,000 and servings at 0.25 to 20.
-- The draft's cost is in the person's price region (`ET-AA` by default). The weekly figure is checked against the budget only when the currencies agree. `weeklyCost` is filled on the generate response; a plain plan read leaves it null until plan costing is wired into `PlanReadModel`.
+- The draft's cost is in the person's price region (`ET-AA` by default). The weekly figure is checked against the budget only when the currencies agree. `PlanReadModel` costs every plan read, so `GET /api/MealPlans/{id}` of a saved draft returns the same `weeklyCost`, `overBudget`, coverage and day costs as the generate response.
 - The assistant's update and remove tools carry `DraftOnly`, so they cannot change a plan the person follows.
 
 ## Surfaces
