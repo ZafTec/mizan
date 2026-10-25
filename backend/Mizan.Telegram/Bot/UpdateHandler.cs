@@ -1120,19 +1120,14 @@ public sealed class UpdateHandler
         MiniAppLink(path) is { } url ? InlineKeyboardMarkup.Column(InlineKeyboardButton.OpenWebApp(text, url)) : null;
 
     /// <summary>The Mini App URL for <paramref name="path"/>, or null when it is not HTTPS and Telegram would refuse it.</summary>
-    internal string? MiniAppLink(string path = "")
-    {
-        var url = MiniAppUrl(path);
-        return Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps ? url : null;
-    }
+    internal string? MiniAppLink(string path = "") => _options.MiniAppButtonUrl(path);
 
     private string? ShoppingListLink(ShoppingListDetailDto list) => MiniAppLink($"shopping-list?listId={list.Id:D}");
 
     /// <summary>A <c>web_app</c> button in its own row, the shape the /help button has.</summary>
     private static object OpenButton(string url) => InlineKeyboardButton.OpenWebApp("Open", url);
 
-    internal string MiniAppUrl(string path = "") =>
-        path.Length == 0 ? _options.MiniAppBaseUrl : $"{_options.MiniAppBaseUrl}/{path.TrimStart('/')}";
+    internal string MiniAppUrl(string path = "") => _options.MiniAppPageUrl(path);
 
     /// <summary>
     /// Messages go out as HTML, and every one of them contains something a

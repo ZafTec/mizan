@@ -16,6 +16,10 @@ x-backend-environment: &backend-environment
   ASPNETCORE_URLS: http://+:8080
   App__PublicUrl: ${App__PublicUrl:?App__PublicUrl is required}
   Telegram__BotUsername: ${TELEGRAM_BOT_USERNAME:-}
+  # The bot service, for the evening reminder in Telegram. Empty sends the
+  # reminder in the app only; with COMPOSE_PROFILES=telegram set it to
+  # http://mizan-telegram:5002.
+  Telegram__BotServiceUrl: ${TELEGRAM_BOT_SERVICE_URL:-}
   # The prices worker, for the admin Run now action. Empty turns Run now off;
   # with COMPOSE_PROFILES=prices set it to http://mizan-prices:5003.
   Prices__WorkerUrl: ${Prices__WorkerUrl:-}

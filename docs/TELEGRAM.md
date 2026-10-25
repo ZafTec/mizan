@@ -41,9 +41,19 @@ The Mini App is the web app opened inside Telegram's WebView: Next.js serves `/t
 
 Refusals from the bot endpoint: `400 bad_request` (no `{ initData }` body), `401 invalid_init_data` (bad signature, stale, malformed), `404 not_linked` with `linkUrl` (the Telegram settings page), `402 upgrade_required` with `upgradeUrl`, `403 forbidden` or `429 account_locked` with the API's reason, and `502 api_unavailable`. The API endpoint itself answers `404 not_found`, `402 upgrade_required`, `403 forbidden` (banned) or `email_not_verified`, and `429 account_locked`. The frontend must call the bot endpoint on open, read the status, and show the link page on `not_linked`; it never sees or handles the bot token, and `Authorization: Bearer` is not a way to present a user session.
 
+## Evening reminder
+
+A person with an active plan whose rules set `EatingWindowEnd` gets one reminder per plan day, 30 minutes before the window closes in their time zone: "Your window closes at 20:00. Today: 1,640 of 1,800 kcal." Today's calories are the diary's total for that plan day; the target is the plan's `TargetCalories`, and without one the line ends at "Today: 1,640 kcal." It arrives as an in-app notification (type `evening_reminder`, linking to `/meal-plan/{planId}`), as a push where a phone is registered, and in Telegram when the account is linked and Pro, with an **Open** button to the plan day.
+
+- `EveningReminderScheduler` scans every 15 minutes and queues each person's next reminder that falls within two hours as an `evening-reminder` outbox job, keyed `evening-reminder:{userId}:{day}:{HHmm}`. A repeat scan finds the same key and adds nothing; a moved window gets a new key.
+- When the job runs, `EveningReminders` checks it again with `EveningReminderSchedule` (Application): the plan is still active and covers the day, the window has not closed, the job is still the next reminder, and no reminder went out on that local calendar day. The last one sent is read from the notifications table. A window ending before 00:30 is reminded about late the evening before. The text is `EveningReminderText` (Domain).
+- The API never holds the bot token. A `telegram-message` outbox job calls the bot service's `POST /internal/notify` with the service key in `X-Api-Key` and `{ telegramUserId, text, openPath }` (`TelegramNotifyRequest`). The bot escapes the text, adds the **Open** button when the Mini App is HTTPS, and answers 204, 401 for a wrong key, 400 for a bad body, or 502 when Telegram did not take it, which the outbox retries.
+
 ## Configure and run
 
 Set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `MCP_SERVICE_KEY`, and `PUBLIC_APP_URL` in the Compose environment. Keep the bot username consistent with the main API's `Telegram:BotUsername`, which builds account-link URLs. `TELEGRAM_MINIAPP_URL` (`TelegramBot__MiniAppUrl`) is optional and defaults to `{PUBLIC_APP_URL}/tg`; Telegram accepts `web_app` buttons over HTTPS only, so the bot leaves every `web_app` button out when the URL is plain HTTP, as in local development.
+
+The API reaches the bot at `Telegram__BotServiceUrl` (`TELEGRAM_BOT_SERVICE_URL`) for the evening reminder; empty, the reminder goes out in the app only. Compose defaults it to `http://telegram:5002` in development; in production set it to `http://mizan-telegram:5002`. Do not route `/internal/notify` through the reverse proxy.
 
 The production Compose file enables the optional bot with `COMPOSE_PROFILES=telegram`. It uses `Mcp__ServiceApiKey` for internal API authentication and `App__PublicUrl` (falling back to `PUBLIC_APP_URL`) for public links. The backend receives only the bot username through its Telegram configuration; the bot service receives the token and webhook secret. The image build workflow includes Telegram, and a manual run builds only that image from the default branch.
 
@@ -71,4 +81,4 @@ Photo analysis uses `/api/Nutrition/ai/analyze-image` and stores the image under
 
 ## Verify
 
-Backend integration tests cover account linking, the Mini App session endpoint, service authentication, and shared API behavior. `TelegramInitData` has unit tests over a fixture signed with a known fake token, and the bot's Mini App endpoint is tested through the fake HTTP world. Verify a configured bot separately in its selected mode, including linking, a read, a confirmed write, and opening the Mini App from the `/help` button. Browser fixture tests do not contact Telegram.
+Backend integration tests cover account linking, the Mini App session endpoint, the evening reminder through the outbox, service authentication, and shared API behavior. `TelegramInitData` has unit tests over a fixture signed with a known fake token, and the bot's Mini App endpoint is tested through the fake HTTP world. Verify a configured bot separately in its selected mode, including linking, a read, a confirmed write, and opening the Mini App from the `/help` button. Browser fixture tests do not contact Telegram.

@@ -23,6 +23,19 @@ public interface IOutbox
         T payload,
         string? dedupeKey = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Stages a job that waits until <paramref name="runAfter"/> (UTC). The same
+    /// staging and dedupe rules as <see cref="EnqueueAsync{T}"/>: enqueueing a
+    /// key that is already queued, run, or dead-lettered keeps the first job,
+    /// so a scan that finds the same work again adds nothing.
+    /// </summary>
+    Task<Guid> ScheduleAsync<T>(
+        string type,
+        T payload,
+        DateTime runAfter,
+        string dedupeKey,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>

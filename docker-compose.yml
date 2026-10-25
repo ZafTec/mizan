@@ -155,6 +155,9 @@ services:
       # The bot's @name, so the API can build a working t.me deep link. Empty
       # hides the Telegram settings page entirely.
       - Telegram__BotUsername=${TELEGRAM_BOT_USERNAME:-}
+      # The bot service, which sends the evening reminder to linked chats. The
+      # API never holds the bot token; it asks the bot over the internal network.
+      - Telegram__BotServiceUrl=${TELEGRAM_BOT_SERVICE_URL:-http://telegram:5002}
       - App__CookieDomain=${COOKIE_DOMAIN:-}
       - Smtp__Host=${SMTP_HOST:-}
       - Smtp__Port=${SMTP_PORT:-587}

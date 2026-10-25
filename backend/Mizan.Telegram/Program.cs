@@ -29,6 +29,7 @@ builder.Services.AddHttpClient<MizanApiClient>(client =>
 
 builder.Services.AddScoped<UpdateHandler>();
 builder.Services.AddScoped<MiniAppSessionEndpoint>();
+builder.Services.AddScoped<NotifyEndpoint>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddHostedService<LongPollWorker>();
 
@@ -85,6 +86,11 @@ app.MapGet("/health", () => Results.Ok(new
 /// calls it - and guarded by Telegram's signature on the body rather than by
 /// a header. See docs/TELEGRAM.md#mini-app.
 app.MapPost("/telegram/miniapp/session", (HttpContext context, MiniAppSessionEndpoint endpoint, CancellationToken ct) =>
+    endpoint.HandleAsync(context, ct));
+
+/// Messages the API asks the bot to send, such as the evening reminder. Internal:
+/// the proxy does not route it, and it requires the shared service key.
+app.MapPost("/internal/notify", (HttpContext context, NotifyEndpoint endpoint, CancellationToken ct) =>
     endpoint.HandleAsync(context, ct));
 
 /// The webhook. Telegram sends the secret in a header on every call; anything
