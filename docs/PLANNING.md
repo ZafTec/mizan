@@ -260,7 +260,7 @@ The MCP App `meal-plan` renders `get_meal_plan` and `get_plan_day`. It calls `lo
 
 | Input | Behavior |
 | --- | --- |
-| `/plan` or `/plan tomorrow` | The entries of the day with one **Log** button per entry (`pe:{entryId}`). Violations and the eating window at the end. |
+| `/plan` or `/plan tomorrow` | The entries of the day with one **Log** button per entry (`pe:{entryId}`), **Open** button to the Mini App. Violations and the eating window at the end. |
 | `/shop` | The newest list, ten items per page, one toggle button per item (`sh:{itemId}`), **Open** button to the Mini App. |
 | Evening reminder | An outbox job at `EatingWindowEnd` minus 30 minutes: "Your window closes at 20:00. Today: 1,640 of 1,800 kcal." Push and Telegram. |
 
@@ -268,7 +268,7 @@ Callback data stays under 64 bytes because it carries ids only.
 
 ### Telegram Mini App
 
-The Mini App is the web app. Next.js serves `/tg/plan` and `/tg/shopping-list`, which render the same components as `/meal-plan/[id]` and the shopping list without the shell. On open, the page sends `initData` to `POST /telegram/miniapp/session` on the bot service. The bot service verifies the HMAC with the bot token and checks that `auth_date` is within five minutes. It then calls `POST /api/Telegram/sessions` with the service key for the linked user. The API applies the sign-in and Pro checks and returns an ordinary session with a 24-hour sliding life, and the page receives the `mizan_session` cookie. A chat that is not linked gets the link page (`404 not_linked` with `linkUrl`). The `/help` reply carries a `web_app` button today; `/plan` and `/shop` carry one when they arrive. See [Telegram](TELEGRAM.md#mini-app) for the wire shapes.
+The Mini App is the web app. Next.js serves `/tg/plan` and `/tg/shopping-list`, which render the same components as `/meal-plan/[id]` and the shopping list without the shell. On open, the page sends `initData` to `POST /telegram/miniapp/session` on the bot service. The bot service verifies the HMAC with the bot token and checks that `auth_date` is within five minutes. It then calls `POST /api/Telegram/sessions` with the service key for the linked user. The API applies the sign-in and Pro checks and returns an ordinary session with a 24-hour sliding life, and the page receives the `mizan_session` cookie. A chat that is not linked gets the link page (`404 not_linked` with `linkUrl`). The `/help` reply, the `/plan` card, and the `/shop` card carry a `web_app` button. See [Telegram](TELEGRAM.md#mini-app) for the wire shapes.
 
 ## Tests
 

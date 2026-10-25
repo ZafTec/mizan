@@ -18,8 +18,8 @@ The bot is a Pro feature. Issuing a link code answers 402 for a Free account. A 
 | --- | --- |
 | `/today` | Daily totals against the user's targets |
 | `/weight 82.4` | Records a weigh-in |
-| `/plan`, `/plan tomorrow`, `/plan 2026-10-23` | The active plan's day: entries per slot with ✓ on logged ones, totals against the plan's rules, violations, the eating window. One **Log** button per unlogged recipe or food entry and a **Tomorrow** button. No active plan points at `/meal-plan`. |
-| `/shop` | The newest shopping list: up to ten unticked items grouped by prep session, with amounts and a "needs review" marker, "N left of M" at the end. One toggle button per item, **More** and **Back** to page. No list points at `/meal-plan`. |
+| `/plan`, `/plan tomorrow`, `/plan 2026-10-23` | The active plan's day: entries per slot with ✓ on logged ones, totals against the plan's rules, violations, the eating window. One **Log** button per unlogged recipe or food entry, a **Tomorrow** button, and **Open** to `{MiniAppUrl}/plan?planId=...&day=...`. No active plan points at `/meal-plan`. |
+| `/shop` | The newest shopping list: up to ten unticked items grouped by prep session, with amounts and a "needs review" marker, "N left of M" at the end. One toggle button per item, **More** and **Back** to page, and **Open** to `{MiniAppUrl}/shopping-list?listId=...`. No list points at `/meal-plan`. |
 | `/planme high protein, cheap` | Drafts a week from tomorrow with the assistant and replies with its summary, weekly cost and violations, and **Confirm** / **Discard** |
 | `/unlink` | Disconnects this chat |
 | `/help` | Lists commands |
@@ -32,7 +32,7 @@ The plan and shopping cards carry one id per button, because two guids do not fi
 
 ## Mini App
 
-The Mini App is the web app opened inside Telegram's WebView: Next.js serves `/tg/plan` and `/tg/shopping-list` without the shell, and `web_app` buttons in the chat open them (`/help` carries an **Open Mizan** button; `/plan` and `/shop` arrive with planning). Telegram hands the page a signed `initData` string naming the Telegram user and the moment it was opened. The page turns it into an ordinary Mizan session in one call, and the bot token never leaves the bot service:
+The Mini App is the web app opened inside Telegram's WebView: Next.js serves `/tg/plan` and `/tg/shopping-list` without the shell, and `web_app` buttons in the chat open them (`/help` carries an **Open Mizan** button, and the `/plan` and `/shop` cards end with an **Open** button to the day or list they show, each in a row of its own). Telegram hands the page a signed `initData` string naming the Telegram user and the moment it was opened. The page turns it into an ordinary Mizan session in one call, and the bot token never leaves the bot service:
 
 1. The page sends `POST /telegram/miniapp/session` to the bot service with `{ "initData": window.Telegram.WebApp.initData }`. The route lives on the app's public host next to `/telegram/webhook`.
 2. The bot verifies the signature (`TelegramInitData`): the data-check string is every field but `hash`, sorted by key and joined with newlines; the key is HMAC-SHA256(`WebAppData`, bot token); the hash comparison is constant-time. It refuses an `auth_date` older than five minutes (`TelegramBot__MiniAppMaxAge`) or more than a minute in the future, a repeated field, and a `user` field it cannot read.
@@ -43,7 +43,7 @@ Refusals from the bot endpoint: `400 bad_request` (no `{ initData }` body), `401
 
 ## Configure and run
 
-Set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `MCP_SERVICE_KEY`, and `PUBLIC_APP_URL` in the Compose environment. Keep the bot username consistent with the main API's `Telegram:BotUsername`, which builds account-link URLs. `TELEGRAM_MINIAPP_URL` (`TelegramBot__MiniAppUrl`) is optional and defaults to `{PUBLIC_APP_URL}/tg`; Telegram accepts `web_app` buttons over HTTPS only, so the bot leaves the button out when the URL is plain HTTP, as in local development.
+Set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `MCP_SERVICE_KEY`, and `PUBLIC_APP_URL` in the Compose environment. Keep the bot username consistent with the main API's `Telegram:BotUsername`, which builds account-link URLs. `TELEGRAM_MINIAPP_URL` (`TelegramBot__MiniAppUrl`) is optional and defaults to `{PUBLIC_APP_URL}/tg`; Telegram accepts `web_app` buttons over HTTPS only, so the bot leaves every `web_app` button out when the URL is plain HTTP, as in local development.
 
 The production Compose file enables the optional bot with `COMPOSE_PROFILES=telegram`. It uses `Mcp__ServiceApiKey` for internal API authentication and `App__PublicUrl` (falling back to `PUBLIC_APP_URL`) for public links. The backend receives only the bot username through its Telegram configuration; the bot service receives the token and webhook secret. The image build workflow includes Telegram, and a manual run builds only that image from the default branch.
 
