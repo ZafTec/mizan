@@ -40,6 +40,9 @@ const list: ShoppingListDetail = {
   checkedItems: 0,
   needsReviewCount: 1,
   canEdit: true,
+  currency: "ETB",
+  costCoverage: 0,
+  unpricedCount: 0,
   createdAt: "2026-10-20T08:00:00Z",
   updatedAt: "2026-10-20T08:00:00Z",
   items: [

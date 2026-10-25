@@ -1,5 +1,12 @@
 import type { components } from "../types/api.generated";
 import type { MealEntry } from "../data/meal";
+import {
+  lowerConfidence,
+  quoteFor,
+  regionFor,
+  type PricesState,
+  type StoredPrice,
+} from "./fixture-prices";
 
 /**
  * The planning half of the UI fixture: plans, templates, entries, cook
@@ -30,6 +37,7 @@ type ShoppingListDetail = Schemas["ShoppingListDetailDto"];
 type ShoppingListItem = Schemas["ShoppingListItemDto"];
 type TrainerClient = Schemas["TrainerClientDto"];
 type Nutrition = Schemas["EntryNutritionDto"];
+type UnpricedItem = Schemas["UnpricedItemDto"];
 
 export type StoredEntry = {
   id: string;
@@ -102,6 +110,7 @@ type Food = {
   carbsPer100g: number;
   fatPer100g: number;
   fiberPer100g?: number | null;
+  servingSize?: number | null;
 };
 type Recipe = {
   id: string;
@@ -129,6 +138,7 @@ export type PlanningHost = {
   recipes: Record<string, unknown>[];
   meals: MealEntry[];
   foods: Food[];
+  prices: PricesState;
 };
 
 export const COACH_ID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
@@ -222,6 +232,8 @@ export function initialPlanning(
       eatingWindowEnd: "20:00:00",
       prepStyle: "Batch",
       batchDays: [0],
+      weeklyBudget: 600,
+      currency: "ETB",
     },
     prepSessions: [
       {
@@ -453,7 +465,7 @@ function entryDto(
     prepSessionId: entry.prepSessionId,
     nutrition: nutritionFor(entry, host),
     logged: entry.logged,
-    cost: null,
+    cost: costSummary(aggregate(plan, host, [entry]), host).total,
   };
 }
 
@@ -528,7 +540,14 @@ function dayDto(
     entryCount: entries.length,
     loggedCount: entries.filter((entry) => entry.logged).length,
     violations: violationsFor(plan, entries, totals, dayIndex),
-    cost: null,
+    cost: costSummary(
+      aggregate(
+        plan,
+        host,
+        plan.entries.filter((entry) => entry.dayIndex === dayIndex),
+      ),
+      host,
+    ).total,
   };
 }
 
@@ -559,6 +578,9 @@ function detail(plan: StoredPlan, host: PlanningHost): MealPlanDetail {
   const days = Array.from({ length: plan.durationDays }, (_, index) =>
     dayDto(plan, index, host),
   );
+  const cost = costSummary(aggregate(plan, host), host);
+  const weekly =
+    cost.total === null ? null : round2((cost.total / plan.durationDays) * 7);
   const canEdit =
     plan.kind === "Template" ||
     (plan.status === "Draft" && plan.authoredByUserId
@@ -581,7 +603,84 @@ function detail(plan: StoredPlan, host: PlanningHost): MealPlanDetail {
     violations: days.flatMap((day) => day.violations),
     loggedCount: plan.entries.filter((entry) => entry.logged).length,
     canEdit,
-    weeklyCost: null,
+    currency: cost.currency,
+    totalCost: cost.total,
+    weeklyCost: weekly,
+    overBudget:
+      weekly === null ||
+      plan.rules.weeklyBudget == null ||
+      plan.rules.currency?.toUpperCase() !== cost.currency
+        ? null
+        : weekly > plan.rules.weeklyBudget,
+    costCoverage: cost.coverage,
+    costConfidence: cost.confidence,
+    unpricedItems: cost.unpriced,
+  };
+}
+
+type CostedLine = {
+  cost: number | null;
+  costConfidence: StoredPrice["confidence"] | null;
+  unpricedReason: string | null;
+};
+const round2 = (value: number) => Math.round(value * 100) / 100;
+
+/** PlanCostCalculator for one line: grams times price per gram, or why there is no cost. */
+function costLine(
+  item: Pick<ShoppingListItem, "foodId" | "grams">,
+  host: PlanningHost,
+): CostedLine {
+  const food = host.foods.find((candidate) => candidate.id === item.foodId);
+  if (!food)
+    return {
+      cost: null,
+      costConfidence: null,
+      unpricedReason: "No catalogue food is linked.",
+    };
+  if (!(item.grams != null && item.grams > 0))
+    return {
+      cost: null,
+      costConfidence: null,
+      unpricedReason: "The amount is not known in grams.",
+    };
+  const quote = quoteFor(host.prices, food);
+  if (!quote)
+    return {
+      cost: null,
+      costConfidence: null,
+      unpricedReason: "No price for this region yet.",
+    };
+  return {
+    cost: round2(item.grams * quote.pricePerGram),
+    costConfidence: quote.confidence,
+    unpricedReason: null,
+  };
+}
+
+/** The cost of a set of lines: a null total when nothing is priced, the share priced, the weakest confidence used. */
+function costSummary(items: ShoppingListItem[], host: PlanningHost) {
+  const lines = items.map((item) => ({ item, ...costLine(item, host) }));
+  const priced = lines.filter((line) => line.cost !== null);
+  const unpriced: UnpricedItem[] = lines
+    .filter((line) => line.cost === null)
+    .map((line) => ({
+      name: line.item.itemName,
+      foodId: line.item.foodId ?? null,
+      reason: line.unpricedReason ?? "",
+    }));
+  return {
+    currency: regionFor(host.prices).currency,
+    lines,
+    total:
+      priced.length === 0
+        ? null
+        : round2(priced.reduce((sum, line) => sum + line.cost!, 0)),
+    coverage: lines.length === 0 ? 0 : round2(priced.length / lines.length),
+    confidence: priced.reduce<StoredPrice["confidence"] | null>(
+      (lowest, line) => lowerConfidence(lowest, line.costConfidence!),
+      null,
+    ),
+    unpriced,
   };
 }
 
@@ -664,17 +763,26 @@ function listSummary(list: StoredList): ShoppingListSummary {
 
 function listDetail(list: StoredList, host: PlanningHost): ShoppingListDetail {
   const plan = host.planning.plans.find((item) => item.id === list.mealPlanId);
+  const cost = costSummary(list.items, host);
   return {
     ...listSummary(list),
     mealPlanName: plan?.name ?? null,
-    items: list.items,
+    items: cost.lines.map(({ item, ...line }) => ({ ...item, ...line })),
     canEdit: list.userId === host.userId || list.householdId !== null,
-    totalCost: null,
+    currency: cost.currency,
+    totalCost: cost.total,
+    costCoverage: cost.coverage,
+    costConfidence: cost.confidence,
+    unpricedCount: cost.unpriced.length,
   };
 }
 
 /** The ShoppingAggregator of the fixture: recipes scale by servings, foods keep grams, text needs review. */
-function aggregate(plan: StoredPlan, host: PlanningHost): ShoppingListItem[] {
+function aggregate(
+  plan: StoredPlan,
+  host: PlanningHost,
+  entries: StoredEntry[] = plan.entries,
+): ShoppingListItem[] {
   const items = new Map<string, ShoppingListItem>();
   const sessionTitle = (id: string | null) =>
     plan.prepSessions.find((session) => session.id === id)?.title ?? null;
@@ -693,7 +801,7 @@ function aggregate(plan: StoredPlan, host: PlanningHost): ShoppingListItem[] {
         isChecked: false,
       });
   };
-  for (const entry of plan.entries) {
+  for (const entry of entries) {
     if (entry.kind === "Food" && entry.foodId) {
       const food = host.foods.find((item) => item.id === entry.foodId);
       put(`food:${entry.foodId}:${entry.prepSessionId ?? ""}`, {
@@ -888,6 +996,7 @@ export async function handlePlanning(
         host,
       ),
       rules: plan.rules,
+      currency: regionFor(host.prices).currency,
     };
     return json(view);
   }
