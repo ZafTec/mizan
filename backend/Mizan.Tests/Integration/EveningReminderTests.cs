@@ -95,13 +95,13 @@ public class EveningReminderTests
         var reminder = notifications.GetProperty("items").EnumerateArray().Should().ContainSingle().Subject;
         reminder.GetProperty("type").GetString().Should().Be("evening_reminder");
         reminder.GetProperty("body").GetString().Should().Be(Text);
-        reminder.GetProperty("linkUrl").GetString().Should().Be($"/meal-plan/{planId}");
+        reminder.GetProperty("linkUrl").GetString().Should().Be($"/meal-plan/{planId}?day={today:yyyy-MM-dd}");
 
         _fixture.Push.Sent.Should().ContainSingle().Which.Body.Should().Be(Text);
         var telegram = _fixture.TelegramBot.Sent.Should().ContainSingle().Subject;
         telegram.TelegramUserId.Should().Be(4242);
         telegram.Text.Should().Be($"Eating window\n{Text}");
-        telegram.OpenPath.Should().Be($"plan?planId={planId:D}");
+        telegram.OpenPath.Should().Be($"plan?planId={planId:D}&day={today:yyyy-MM-dd}");
         (await ReminderJobsAsync()).Should().Be(1);
     }
 
@@ -119,7 +119,9 @@ public class EveningReminderTests
         await world.DbAsync(async db =>
         {
             (await db.Users.SingleAsync(u => u.Id == ownerId)).TimeZoneId = "Africa/Addis_Ababa";
-            (await db.Users.SingleAsync(u => u.Id == tokyoId)).TimeZoneId = "Asia/Tokyo";
+            var tokyoUser = await db.Users.SingleAsync(u => u.Id == tokyoId);
+            tokyoUser.TimeZoneId = "Asia/Tokyo";
+            tokyoUser.NotifyByTelegram = true;
             (await db.Users.SingleAsync(u => u.Id == ownPlanId)).TimeZoneId = "Africa/Addis_Ababa";
             db.TelegramLinks.Add(new TelegramLink { Id = Guid.NewGuid(), UserId = tokyoId, TelegramUserId = 777, LinkedAt = DateTime.UtcNow });
             return await db.SaveChangesAsync();
@@ -183,15 +185,15 @@ public class EveningReminderTests
 
         var owner = await ReminderOf(ownerClient);
         owner.GetProperty("body").GetString().Should().Be("Your window closes at 20:00. Today: 0 of 1,800 kcal.");
-        owner.GetProperty("linkUrl").GetString().Should().Be($"/meal-plan/{householdPlan}");
+        owner.GetProperty("linkUrl").GetString().Should().Be($"/meal-plan/{householdPlan}?day={addisToday:yyyy-MM-dd}");
 
         var tokyo = await ReminderOf(tokyoClient);
         tokyo.GetProperty("body").GetString().Should().Be("Your window closes at 20:00. Today: 1,200 of 1,800 kcal.");
-        tokyo.GetProperty("linkUrl").GetString().Should().Be($"/meal-plan/{householdPlan}");
+        tokyo.GetProperty("linkUrl").GetString().Should().Be($"/meal-plan/{householdPlan}?day={tokyoToday:yyyy-MM-dd}");
 
         var own = await ReminderOf(ownPlanClient);
         own.GetProperty("body").GetString().Should().Be("Your window closes at 23:00. Today: 0 of 2,000 kcal.");
-        own.GetProperty("linkUrl").GetString().Should().Be($"/meal-plan/{ownPlan}");
+        own.GetProperty("linkUrl").GetString().Should().Be($"/meal-plan/{ownPlan}?day={addisToday:yyyy-MM-dd}");
 
         var telegram = _fixture.TelegramBot.Sent.Should().ContainSingle().Subject;
         telegram.TelegramUserId.Should().Be(777);
