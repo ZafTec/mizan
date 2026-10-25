@@ -159,7 +159,8 @@ public class PricesTests
             .StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
         (await _world.DbAsync(db => db.Notifications.Where(n => n.UserId == adminId && n.Type == "price_report").ToListAsync()))
-            .Should().ContainSingle().Which.LinkUrl.Should().Be("/admin/prices");
+            .Should().ContainSingle().Which.Should().Match<Mizan.Domain.Entities.Notification>(n =>
+                n.Title == "Price report for Onion" && n.LinkUrl == "/admin/prices#reports", "the row opens the reports on the prices page");
 
         var open = await admin.GetFromJsonAsync<Paged<PriceReportDto>>("/api/admin/prices/reports");
         open!.Items.Should().ContainSingle().Which.Should().Match<PriceReportDto>(r =>

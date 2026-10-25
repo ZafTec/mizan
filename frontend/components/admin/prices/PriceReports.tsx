@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -31,6 +31,15 @@ export default function PriceReports({
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
+  const section = useRef<HTMLElement>(null);
+
+  // A notification links to /admin/prices#reports. The page streams in after
+  // its loading state, so the router's own jump to the fragment finds nothing;
+  // the section brings itself into view once it is there.
+  useEffect(() => {
+    if (window.location.hash === "#reports")
+      section.current?.scrollIntoView({ block: "start" });
+  }, []);
 
   const resolve = async (report: PriceReport, accept: boolean) => {
     setBusy(report.id);
@@ -50,6 +59,7 @@ export default function PriceReports({
 
   return (
     <section
+      ref={section}
       id="reports"
       aria-labelledby="reports-title"
       className="scroll-mt-6"

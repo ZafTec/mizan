@@ -175,7 +175,7 @@ Records live in `Mizan.Contracts/Prices`; handlers in `Application/Prices`. `Pri
 | --- | --- |
 | `GET /api/internal/prices/sources`, `POST /observations`, `POST /sources/{id}/runs` | `GetWorkerPriceSourcesQuery`, `RecordPriceObservationsCommand`, `RecordPriceSourceRunCommand`. Policy `PricesWorker`: the service key with no `X-Impersonate-User`. |
 | `GET /api/Foods/{id}/price` | `GetFoodPriceQuery`. `priced: false` and null price fields when the region has none. |
-| `POST /api/Foods/{id}/price-reports` | `CreatePriceReportCommand`. Records the shown price, notifies every administrator (`price_report`). Takes `Idempotency-Key`. |
+| `POST /api/Foods/{id}/price-reports` | `CreatePriceReportCommand`. Records the shown price, notifies every administrator (`price_report`, opening `/admin/prices#reports`). Takes `Idempotency-Key`. |
 | `GET /api/Prices/regions`; `PUT /api/Users/me` with `priceRegionCode` | `GetPriceRegionsQuery`; `UpdateUserCommand` refuses a region that is missing or disabled. `GET /api/Users/me` returns the region. |
 | `GET|POST /api/admin/prices/regions`, `PUT /regions/{code}` | `GetPriceRegionsQuery`, `CreatePriceRegionCommand`, `UpdatePriceRegionCommand`. |
 | `GET|POST /api/admin/prices/sources`, `PUT|DELETE /sources/{id}`, `POST /sources/{id}/run` | `GetPriceSourcesQuery`, `SavePriceSourceCommand`, `DeletePriceSourceCommand`, `RunPriceSourceCommand`. Run now calls the worker at `Prices:WorkerUrl` and answers 202; 409 when that is unset, 502 when the worker does not answer. |

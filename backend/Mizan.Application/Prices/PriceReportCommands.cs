@@ -142,7 +142,7 @@ public class CreatePriceReportCommandHandler : IRequestHandler<CreatePriceReport
                 "price_report",
                 $"Price report for {food.Name}",
                 $"{request.SuggestedPrice:0.##} {region.Currency} for {request.Quantity:0.###} {unit}.",
-                "/admin/prices",
+                "/admin/prices#reports",
                 cancellationToken);
         }
 
