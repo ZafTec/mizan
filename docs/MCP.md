@@ -110,6 +110,6 @@ On claude.ai, zip the `plugin` folder and add it under **Customize â†’ Plugins â
 
 Compose starts `mcp` with the backend URL, the internal service keys, `Mcp__PublicUrl`, and `Mcp__AuthorizationServer`. `App__PublicUrl` names the web app for the billing link in limit and upgrade messages; without it the service uses `Mcp__PublicUrl` minus its trailing `/mcp`. `/health` reports transport availability. A healthy check alone does not prove token validation, permissions, or a write path; integration tests cover those separately.
 
-Behind the proxy the service trusts `X-Forwarded-*` so the advertised metadata uses the public address. Check this after a deploy: a wrong host in the 401 challenge is the usual reason a client cannot start sign-in.
+The advertised metadata comes from `Mcp__PublicUrl`, not from request headers. Check it after a deploy: a wrong host in the 401 challenge is the usual reason a client cannot start sign-in. The service trusts `X-Forwarded-For` and `X-Forwarded-Proto` only from the loopback address, or from the one proxy named in `ReverseProxy__KnownProxy` (an IP address or a resolvable hostname such as a Compose service name), the same rule the API applies. Set it when the proxy runs on another host so the recorded client address is the caller's and not the proxy's.
 
 Usage is recorded per connection, tool, resource, and prompt. A failed write should be checked in the log before blindly resubmitting, especially when a connection drops after the API may have committed it.
