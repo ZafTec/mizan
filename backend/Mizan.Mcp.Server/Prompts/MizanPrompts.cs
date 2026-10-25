@@ -36,7 +36,7 @@ public sealed class MizanPrompts
         $"""
         Plan my meals in Mizan for the next 7 days{(string.IsNullOrWhiteSpace(startDate) ? ", starting today" : $", starting {startDate}")}.
 
-        Draft it with generate_meal_plan, passing my words below as the preference and any budget as budgetCeilings. Mizan picks the foods and recipes against my goal and computes the nutrition and the cost; do not add them up yourself.
+        Draft it with generate_meal_plan, passing my words below as the preference, any weekly budget as budgetCeilings and any limit per day as dailyBudget. Mizan picks the foods and recipes against my goal and computes the nutrition and the cost; do not add them up yourself.
 
         {(string.IsNullOrWhiteSpace(preferences) ? "" : $"My preference: {preferences}")}
 

@@ -119,6 +119,13 @@ public class PlanRuleCheckTests
             []
         },
         {
+            "a daily budget alone needs a day's cost to judge",
+            new PlanRules { DailyBudget = 100, Currency = "ETB" },
+            [Day(0, 1000, 50, 50)],
+            1200m,
+            []
+        },
+        {
             "no cost yet means no budget verdict",
             new PlanRules { WeeklyBudget = 1000, Currency = "ETB" },
             [Day(0, 1000, 50, 50)],
@@ -134,6 +141,28 @@ public class PlanRuleCheckTests
         var violations = PlanRuleCheck.Evaluate(rules, [BreadEntry, ChickenEntry], days, FoodsByEntry, Names, weeklyCost);
 
         violations.Select(v => v.Rule).Should().BeEquivalentTo(expectedRules);
+    }
+
+    public static TheoryData<string, decimal?, decimal?[], int[]> DailyBudgetCases => new()
+    {
+        { "no daily budget, no verdict", null, [500m, 90m], [] },
+        { "a day over the daily budget", 100m, [120m, 90m], [0] },
+        { "a day on the daily budget is fine", 100m, [100m, 100m], [] },
+        { "a day with nothing priced is not judged", 100m, [null, 130m], [1] },
+    };
+
+    [Theory]
+    [MemberData(nameof(DailyBudgetCases))]
+    public void Evaluate_MarksEachDayOverTheDailyBudget(string _, decimal? dailyBudget, decimal?[] costs, int[] overDays)
+    {
+        var days = costs.Select((_, i) => Day(i, 1000, 50, 50)).ToArray();
+        var dayCosts = costs.Select((c, i) => (i, c)).ToDictionary(x => x.i, x => x.c);
+
+        var violations = PlanRuleCheck.Evaluate(
+            new PlanRules { DailyBudget = dailyBudget, Currency = "ETB" }, [], days,
+            new Dictionary<Guid, IReadOnlyList<Guid>>(), Names, dayCosts: dayCosts);
+
+        violations.Where(v => v.Rule == PlanRuleNames.DailyBudgetOver).Select(v => v.DayIndex).Should().Equal(overDays.Cast<int?>());
     }
 
     [Fact]

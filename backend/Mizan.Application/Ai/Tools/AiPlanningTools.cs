@@ -51,7 +51,8 @@ public static class AiPlanningTools
                 "weeklyBudget": { "type": "number" },
                 "currency": { "type": "string", "description": "Three letters, e.g. ETB" },
                 "prepStyle": { "type": "string", "enum": ["Daily", "Batch"] },
-                "budgetCeilings": { "type": "array", "items": { "type": "number" }, "maxItems": 3 }
+                "budgetCeilings": { "type": "array", "items": { "type": "number" }, "maxItems": 3 },
+                "dailyBudget": { "type": "number", "description": "A ceiling for each day's cost, in the budgets' currency" }
               },
               "required": ["startDate"]
             }
@@ -65,6 +66,7 @@ public static class AiPlanningTools
                 Name = AiToolArgs.OptionalString(args, "name"),
                 Rules = AiToolArgs.Planning.Rules(args),
                 BudgetCeilings = AiToolArgs.DecimalList(args, "budgetCeilings"),
+                DailyBudget = AiToolArgs.OptionalDecimal(args, "dailyBudget"),
             },
             result => result is GenerateMealPlanResult generated ? DescribeGenerated(generated) : "Drafted a plan.",
             DataAxis.Planning, AiToolAccess.Write,

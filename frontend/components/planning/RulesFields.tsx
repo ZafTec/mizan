@@ -127,7 +127,7 @@ export default function RulesFields({
           {error("eatingWindowEnd")}
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <div>
           <label htmlFor={field("weeklyBudget")} className="label">
             Weekly budget
@@ -142,6 +142,25 @@ export default function RulesFields({
             onChange={(event) => set("weeklyBudget", event.target.value)}
           />
           {error("weeklyBudget")}
+        </div>
+        <div>
+          <label htmlFor={field("dailyBudget")} className="label">
+            Daily budget
+          </label>
+          <input
+            id={field("dailyBudget")}
+            type="number"
+            inputMode="decimal"
+            min={0}
+            className="input num w-full"
+            value={values.dailyBudget}
+            onChange={(event) => set("dailyBudget", event.target.value)}
+            aria-invalid={errors.dailyBudget ? true : undefined}
+            aria-describedby={
+              errors.dailyBudget ? `${field("dailyBudget")}-error` : undefined
+            }
+          />
+          {error("dailyBudget")}
         </div>
         <div>
           <label htmlFor={field("currency")} className="label">

@@ -11,9 +11,18 @@ namespace Mizan.Telegram.Bot;
 /// </summary>
 public static class PlanCostText
 {
-    /// <summary>"Cost: 245.50 ETB" for a plan day, when the day has priced items.</summary>
-    public static string? Day(PlanDayViewDto view) =>
-        view.Day.Cost is { } cost ? $"Cost: {Money(cost, view.Currency)}" : null;
+    /// <summary>
+    /// "Cost: 245.50 ETB" for a plan day, when the day has priced items, and
+    /// ", over the 200.00 ETB daily budget" when the API marked the day over it.
+    /// </summary>
+    public static string? Day(PlanDayViewDto view)
+    {
+        if (view.Day.Cost is not { } cost) return null;
+        var line = $"Cost: {Money(cost, view.Currency)}";
+        if (view.Day.OverBudget == true && view.Rules.DailyBudget is { } budget)
+            line += $", over the {Money(budget, view.Rules.Currency ?? view.Currency)} daily budget";
+        return line;
+    }
 
     /// <summary>"Total: 1,234.00 ETB (estimated), 2 items without a price" for a shopping list.</summary>
     public static string? List(ShoppingListDetailDto list)

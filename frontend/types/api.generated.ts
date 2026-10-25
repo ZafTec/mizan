@@ -11283,6 +11283,8 @@ export interface components {
             rules?: components["schemas"]["PlanRulesDto"];
             preference?: string | null;
             budgetCeilings: number[];
+            /** Format: double */
+            dailyBudget?: number | null;
         };
         GenerateMealPlanResult: {
             drafts: components["schemas"]["GeneratedPlanDto"][];
@@ -12101,6 +12103,7 @@ export interface components {
             violations: components["schemas"]["PlanViolationDto"][];
             /** Format: double */
             cost?: number | null;
+            overBudget?: boolean | null;
         };
         PlanDayViewDto: {
             /** Format: uuid */
@@ -12220,6 +12223,8 @@ export interface components {
             forbiddenFoodIds: string[];
             /** Format: double */
             weeklyBudget?: number | null;
+            /** Format: double */
+            dailyBudget?: number | null;
             currency?: string | null;
             prepStyle: string;
             batchDays: number[];

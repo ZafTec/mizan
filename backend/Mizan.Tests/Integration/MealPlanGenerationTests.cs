@@ -101,6 +101,37 @@ public class MealPlanGenerationTests
     }
 
     [Fact]
+    public async Task ADailyBudgetIsToldToTheModel_AndTheDayOverItIsMarked()
+    {
+        var (_, client) = await StartAsync();
+        var eggs = await _world.FoodAsync("Eggs", 143, 12.6m, 0.7m, 9.5m);
+        var lentils = await _world.FoodAsync("Lentils", 116, 9, 20, 0.4m);
+        await PriceAsync(eggs, 200);
+        await PriceAsync(lentils, 100);
+        _fixture.Ai.Reply("""
+            {"name":"Two days","note":"Simple.","prepSessions":[],"days":[
+              {"dayIndex":0,"entries":[{"slot":"LUNCH","kind":"food","foodName":"Eggs","recipeId":null,"grams":300,"servings":null,"note":null,"prepSessionIndex":null}]},
+              {"dayIndex":1,"entries":[{"slot":"LUNCH","kind":"food","foodName":"Lentils","recipeId":null,"grams":200,"servings":null,"note":null,"prepSessionIndex":null}]}
+            ]}
+            """);
+
+        var response = await client.PostAsJsonAsync("/api/MealPlans/generate", Request() with { DailyBudget = 40 });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        var draft = (await response.Content.ReadFromJsonAsync<GenerateMealPlanResult>())!.Drafts.Single();
+        _fixture.Ai.Calls.Single().Messages.Should().Contain(m => m.Content.Contains("Daily budget: 40 ETB"));
+        draft.Plan.Rules.Should().Match<PlanRulesDto>(r => r.DailyBudget == 40 && r.Currency == "ETB");
+        // 300 g eggs at 200 a kilo is 60; 200 g lentils at 100 a kilo is 20.
+        draft.Plan.Days.Select(d => (d.Cost, d.OverBudget)).Should().Equal((60m, true), (20m, false));
+        draft.Violations.Where(v => v.Rule == PlanRuleNames.DailyBudgetOver).Select(v => v.DayIndex).Should().Equal(0);
+
+        // The plan page reads the same mark.
+        var read = await PlanningWorld.PlanAsync(client, draft.Plan.Id);
+        read.Days[0].OverBudget.Should().BeTrue();
+        read.Days[0].Violations.Should().Contain(v => v.Rule == PlanRuleNames.DailyBudgetOver && v.Message.Contains("40.00 ETB daily budget"));
+    }
+
+    [Fact]
     public async Task AFoodTheCatalogueDoesNotHave_BecomesATextEntryForReview()
     {
         var (_, client) = await StartAsync();

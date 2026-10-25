@@ -42,6 +42,7 @@ describe("the rules form", () => {
         eatingWindowStart: "08:00",
         eatingWindowEnd: "20:00",
         weeklyBudget: "2500",
+        dailyBudget: "400",
         currency: "etb",
         prepStyle: "Batch",
         batchDays: [0, 3],
@@ -59,6 +60,7 @@ describe("the rules form", () => {
       eatingWindowStart: "08:00",
       eatingWindowEnd: "20:00",
       weeklyBudget: 2500,
+      dailyBudget: 400,
       currency: "ETB",
       prepStyle: "Batch",
       batchDays: [0, 3],
@@ -84,6 +86,12 @@ describe("the rules form", () => {
     [
       "a budget without a currency",
       { weeklyBudget: "100" },
+      "currency",
+      /currency/,
+    ],
+    [
+      "a daily budget without a currency",
+      { dailyBudget: "80" },
       "currency",
       /currency/,
     ],

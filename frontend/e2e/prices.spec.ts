@@ -91,9 +91,13 @@ test("a plan shows its weekly cost over budget and its unpriced items", async ({
   await expect(cost).toContainText("Over budget");
   await expect(cost.getByTestId("plan-cost-coverage")).toContainText("80%");
   await expect(cost).toContainText("Estimated, a rough guess");
-  // Today is day 3 of the plan: breakfast, the yogurt lunch and a meal out.
+  // Today is day 3 of the plan: breakfast, the yogurt lunch and a meal out,
+  // over the 120 daily budget, which the API marks on the day.
   await expect(page.getByRole("tabpanel").getByTestId("day-cost")).toHaveText(
-    "Cost of the day ETB 138.50",
+    "Cost of the day ETB 138.50 of ETB 120.00 · Over the daily budget",
+  );
+  await expect(page.getByRole("tabpanel")).toContainText(
+    "138.50 ETB this day is over the 120.00 ETB daily budget.",
   );
   const unpriced = page.getByRole("region", { name: "Without a price" });
   await expect(unpriced.getByRole("listitem")).toHaveCount(1);

@@ -15,6 +15,13 @@ public record GenerateMealPlanRequest
 
     /// <summary>Weekly budgets in the rules' currency, or the price region's when the rules name none. At most three.</summary>
     public List<decimal> BudgetCeilings { get; init; } = [];
+
+    /// <summary>
+    /// A ceiling for each day's cost, in the same currency as the budget ceilings. It overrides
+    /// <c>Rules.DailyBudget</c>, applies to every draft, and is told to the model and checked on
+    /// each day of the draft.
+    /// </summary>
+    public decimal? DailyBudget { get; init; }
 }
 
 /// <summary>Where a generated plan came from. Null on a plan a person or a coach wrote.</summary>

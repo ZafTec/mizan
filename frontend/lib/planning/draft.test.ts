@@ -16,6 +16,7 @@ describe("parseDraftForm", () => {
         durationDays: 7,
         preference: null,
         budgetCeilings: [],
+        dailyBudget: null,
       },
     });
   });
@@ -26,6 +27,7 @@ describe("parseDraftForm", () => {
         name: " Lean week ",
         durationDays: "5",
         weeklyBudget: " 1500.5 ",
+        dailyBudget: " 250 ",
         preference: " no pork ",
       }),
     );
@@ -35,6 +37,7 @@ describe("parseDraftForm", () => {
       durationDays: 5,
       preference: "no pork",
       budgetCeilings: [1500.5],
+      dailyBudget: 250,
     });
   });
 
@@ -63,6 +66,7 @@ describe("parseDraftForm", () => {
       "weeklyBudget",
       "Weekly budget must be above zero",
     ],
+    [{ dailyBudget: "0" }, "dailyBudget", "Daily budget must be above zero"],
     [{ name: "x".repeat(121) }, "name", "Keep the name under 120 characters"],
     [
       { preference: "x".repeat(1001) },

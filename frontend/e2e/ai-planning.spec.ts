@@ -57,6 +57,7 @@ test("a person drafts a week with the assistant and keeps it", async ({
   const section = assistant(page);
   await section.getByLabel("Days").fill("5");
   await section.getByLabel("Weekly budget (optional)").fill("1500");
+  await section.getByLabel("Daily budget (optional)").fill("250");
   await section.getByLabel("What you would like (optional)").fill("no pork");
   await section.getByRole("button", { name: "Draft plan" }).click();
 
@@ -79,12 +80,14 @@ test("a person drafts a week with the assistant and keeps it", async ({
 
   const s = await state(context);
   const [write] = writesTo(s, /^\/api\/MealPlans\/generate$/);
-  // The form sends what was typed; the budget is the one ceiling.
+  // The form sends what was typed; the weekly budget is the one ceiling and
+  // the daily one goes with it for the API to check each day against.
   expect(write.body).toMatchObject({
     startDate: today,
     durationDays: 5,
     preference: "no pork",
     budgetCeilings: [1500],
+    dailyBudget: 250,
   });
   expect(write.key).toEqual(expect.any(String));
 

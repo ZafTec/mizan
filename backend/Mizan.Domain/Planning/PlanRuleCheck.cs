@@ -14,6 +14,7 @@ public static class PlanRuleNames
     public const string ProteinUnder = "protein_under";
     public const string CarbsOver = "carbs_over";
     public const string BudgetOver = "budget_over";
+    public const string DailyBudgetOver = "daily_budget_over";
     public const string Unresolved = "unresolved";
 }
 
@@ -22,7 +23,8 @@ public static class PlanRuleNames
 /// totals and the foods each entry reaches (its own food, or its recipe's
 /// ingredient foods). A day over its calorie target by more than a tenth, or
 /// under its protein target by more than a tenth, is a violation; a carb
-/// ceiling is absolute.
+/// ceiling and a budget are absolute. The caller passes only costs in the
+/// rules' currency: an amount in another currency is not compared.
 /// </summary>
 public static class PlanRuleCheck
 {
@@ -34,7 +36,8 @@ public static class PlanRuleCheck
         IReadOnlyList<PlanDayNutrition> days,
         IReadOnlyDictionary<Guid, IReadOnlyList<Guid>> foodIdsByEntry,
         IReadOnlyDictionary<Guid, string> foodNames,
-        decimal? weeklyCost = null)
+        decimal? weeklyCost = null,
+        IReadOnlyDictionary<int, decimal?>? dayCosts = null)
     {
         var violations = new List<PlanViolation>();
         var forbidden = rules.ForbiddenFoodIds.ToHashSet();
@@ -71,12 +74,20 @@ public static class PlanRuleCheck
             if (maxCarbs is { } carbs && day.Totals.CarbsGrams > carbs)
                 violations.Add(new PlanViolation(day.DayIndex, null, PlanRuleNames.CarbsOver,
                     $"{day.Totals.CarbsGrams:0} g carbs is over the {carbs:0} g ceiling."));
+
+            if (OverBudget(dayCosts?.GetValueOrDefault(day.DayIndex), rules.DailyBudget) is { } dayCost)
+                violations.Add(new PlanViolation(day.DayIndex, null, PlanRuleNames.DailyBudgetOver,
+                    $"{dayCost:0.00} {rules.Currency} this day is over the {rules.DailyBudget:0.00} {rules.Currency} daily budget."));
         }
 
-        if (rules.WeeklyBudget is { } budget && weeklyCost is { } cost && cost > budget)
+        if (OverBudget(weeklyCost, rules.WeeklyBudget) is { } cost)
             violations.Add(new PlanViolation(null, null, PlanRuleNames.BudgetOver,
-                $"{cost:0.00} {rules.Currency} a week is over the {budget:0.00} {rules.Currency} budget."));
+                $"{cost:0.00} {rules.Currency} a week is over the {rules.WeeklyBudget:0.00} {rules.Currency} budget."));
 
         return violations;
     }
+
+    /// <summary>The cost when it is over the budget, else null.</summary>
+    private static decimal? OverBudget(decimal? cost, decimal? budget) =>
+        cost is { } c && budget is { } b && c > b ? c : null;
 }

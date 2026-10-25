@@ -16,6 +16,8 @@ public class PlanRulesTests
         { "negative fat", new PlanRules { TargetFat = -5 }, "Target fat cannot be negative." },
         { "negative budget", new PlanRules { WeeklyBudget = -10, Currency = "ETB" }, "Weekly budget cannot be negative." },
         { "budget without currency", new PlanRules { WeeklyBudget = 500 }, "A weekly budget needs a currency." },
+        { "negative daily budget", new PlanRules { DailyBudget = -1, Currency = "ETB" }, "Daily budget cannot be negative." },
+        { "daily budget without currency", new PlanRules { DailyBudget = 80 }, "A daily budget needs a currency." },
         { "two-letter currency", new PlanRules { Currency = "ET" }, "Currency must be a three-letter code." },
         { "window with only a start", new PlanRules { EatingWindowStart = new TimeOnly(12, 0) }, "An eating window needs both a start and an end." },
         { "window that ends first", new PlanRules { EatingWindowStart = new TimeOnly(20, 0), EatingWindowEnd = new TimeOnly(12, 0) }, "The eating window must end after it starts." },

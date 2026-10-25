@@ -207,7 +207,7 @@ public class PricesTests
             Name = "Week",
             StartDate = new DateOnly(2026, 10, 12),
             DurationDays = 7,
-            Rules = new PlanRulesDto { WeeklyBudget = 300, Currency = "ETB" },
+            Rules = new PlanRulesDto { WeeklyBudget = 300, DailyBudget = 150, Currency = "ETB" },
             Entries =
             [
                 RecipeEntry(chickenRice.Id, 1, day: 0),
@@ -226,6 +226,9 @@ public class PricesTests
         plan.Days[3].Cost.Should().Be(227);
         plan.Days[1].Cost.Should().BeNull("nothing is planned that day");
         plan.Days[4].Cost.Should().BeNull("a note is never priced");
+        // The daily budget marks the day over it, and only that day.
+        plan.Days.Select(d => d.OverBudget).Should().Equal(false, null, null, true, null, null, null);
+        plan.Days[3].Violations.Should().ContainSingle(v => v.Rule == "daily_budget_over");
         plan.TotalCost.Should().Be(340.5m);
         plan.WeeklyCost.Should().Be(340.5m, "the plan is a week long");
         plan.OverBudget.Should().BeTrue();

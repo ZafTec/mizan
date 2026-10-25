@@ -16,7 +16,7 @@ namespace Mizan.Mcp.Server.Tools;
 public sealed class MealPlanTools
 {
     private const string RulesHelp = "rulesJson is an object {macroMode?: None|Keto|HighProtein|Custom, targetCalories?, targetProtein?, maxCarbs?, targetFat?, " +
-        "eatingWindowStart?: \"HH:mm\", eatingWindowEnd?: \"HH:mm\", allowedFoodIds?: [], forbiddenFoodIds?: [], weeklyBudget?, currency?, prepStyle?: Daily|Batch, batchDays?: [dayIndex]}.";
+        "eatingWindowStart?: \"HH:mm\", eatingWindowEnd?: \"HH:mm\", allowedFoodIds?: [], forbiddenFoodIds?: [], weeklyBudget?, dailyBudget?, currency?, prepStyle?: Daily|Batch, batchDays?: [dayIndex]}.";
 
     private const string EntriesHelp = "entriesJson is an array of {dayIndex, slot: BREAKFAST|LUNCH|DINNER|SNACK|DRINK|MEAL, kind: Recipe|Food|Text, recipeId?, servings?, foodId?, grams?, text?, notes?, prepSessionIndex?}; " +
         "a Recipe entry needs recipeId and servings, a Food entry foodId and grams, a Text entry text. prepSessionsJson is an array of {dayIndex, title, notes?}, and prepSessionIndex points into it.";
@@ -56,6 +56,7 @@ public sealed class MealPlanTools
         [Description("Daily protein target in grams")] decimal? targetProtein = null,
         [Description("Daily carb ceiling in grams")] decimal? maxCarbs = null,
         [Description("Weekly budgets to draft against, at most three; one draft each")] decimal[]? budgetCeilings = null,
+        [Description("A ceiling for each day's cost, in the budgets' currency; a day over it is a violation")] decimal? dailyBudget = null,
         [Description("Three-letter currency of the budgets; defaults to the user's price region")] string? currency = null,
         CancellationToken ct = default)
     {
@@ -74,6 +75,7 @@ public sealed class MealPlanTools
                 Currency = string.IsNullOrWhiteSpace(currency) ? null : currency.Trim(),
             },
             BudgetCeilings = budgetCeilings?.ToList() ?? [],
+            DailyBudget = dailyBudget,
         };
         return await _api.PostAsync("/api/MealPlans/generate", request, ct);
     }

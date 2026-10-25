@@ -60,6 +60,9 @@ public record PlanDayDto
 
     /// <summary>The day's priced items added up, in the viewer's region currency; null when nothing is priced.</summary>
     public decimal? Cost { get; init; }
+
+    /// <summary>True when <c>Cost</c> is over <c>Rules.DailyBudget</c>; null without a daily budget, a cost, or when the budget is in another currency.</summary>
+    public bool? OverBudget { get; init; }
 }
 
 /// <summary>A shopping line that has no cost, and why: no food linked, no weight, or no price in the region.</summary>
