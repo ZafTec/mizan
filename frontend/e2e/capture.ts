@@ -13,6 +13,7 @@ type Capture = {
   empty?: boolean;
   dialog?: "meal" | "measurement";
   workout?: boolean;
+  admin?: boolean;
 };
 const captures: Capture[] = matrix
   ? [
@@ -70,6 +71,7 @@ const captures: Capture[] = matrix
         mobile: process.argv.includes("--mobile"),
         dark: process.argv.includes("--dark"),
         empty: process.argv.includes("--empty"),
+        admin: process.argv.includes("--admin"),
       },
     ];
 const browser = await chromium.launch();
@@ -91,7 +93,10 @@ for (const capture of captures) {
     timezoneId: "UTC",
   });
   await context.request.post(`${apiURL}/__fixture/session`, {
-    data: { empty: capture.empty },
+    data: {
+      empty: capture.empty,
+      role: capture.admin ? "admin" : undefined,
+    },
   });
   const page = await context.newPage();
   const errors: string[] = [];
