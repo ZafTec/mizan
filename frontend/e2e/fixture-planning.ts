@@ -76,6 +76,8 @@ export type StoredPlan = {
   rules: PlanRules;
   entries: StoredEntry[];
   prepSessions: StoredSession[];
+  /** Set on a draft the assistant generated (fixture-ai-planning.ts). */
+  generatedFrom?: Schemas["PlanGenerationDto"];
   createdAt: string;
   updatedAt: string;
 };
@@ -134,7 +136,7 @@ type Recipe = {
 export type PlanningHost = {
   userId: string;
   planning: PlanningState;
-  writes: { path: string; body: Record<string, unknown> }[];
+  writes: { path: string; body: Record<string, unknown>; key?: string }[];
   recipes: Record<string, unknown>[];
   meals: MealEntry[];
   foods: Food[];
@@ -569,12 +571,13 @@ function summary(plan: StoredPlan): MealPlanSummary {
     authoredByName: plan.authoredByName,
     entryCount: plan.entries.length,
     hasRules: plan.rules.macroMode !== "None",
+    ...(plan.generatedFrom ? { generatedFrom: plan.generatedFrom } : {}),
     createdAt: plan.createdAt,
     updatedAt: plan.updatedAt,
   };
 }
 
-function detail(plan: StoredPlan, host: PlanningHost): MealPlanDetail {
+export function detail(plan: StoredPlan, host: PlanningHost): MealPlanDetail {
   const days = Array.from({ length: plan.durationDays }, (_, index) =>
     dayDto(plan, index, host),
   );
@@ -890,7 +893,11 @@ export async function handlePlanning(
     ((await request.text().then((text) => (text ? JSON.parse(text) : {}))) ??
       {}) as T;
   const record = (data: Record<string, unknown>) =>
-    writes.push({ path, body: data });
+    writes.push({
+      path,
+      body: data,
+      key: request.headers.get("Idempotency-Key") ?? undefined,
+    });
   const personal = planning.plans.filter((plan) => plan.kind === "Personal");
   const templates = planning.plans.filter((plan) => plan.kind === "Template");
   const created = (plan: StoredPlan): MealPlanCreatedResult => ({
