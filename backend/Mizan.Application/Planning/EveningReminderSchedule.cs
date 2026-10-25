@@ -5,13 +5,18 @@ namespace Mizan.Application.Planning;
 /// <summary>The next evening reminder: the plan day whose window it is for, when it is due, and when that window closes.</summary>
 public readonly record struct EveningReminderDue(DateOnly Day, DateTimeOffset At, DateTimeOffset ClosesAt);
 
+/// <summary>A plan a person follows, as the evening reminder reads it.</summary>
+public sealed record FollowedPlan(Guid PlanId, DateOnly? Start, int DurationDays, TimeOnly? WindowEnd, decimal? TargetCalories);
+
 /// <summary>
 /// When the evening reminder is due. It goes out <see cref="Lead"/> before the
 /// plan's <c>EatingWindowEnd</c> on each plan day, in the person's time zone, at
 /// most once per local calendar day. A day is skipped when the plan does not
 /// cover it, when its window has already closed, or when a reminder already
 /// went out on the calendar day this one would be sent. A window that ends
-/// before 00:30 is reminded about late on the evening before.
+/// before 00:30 is reminded about late on the evening before. A person who
+/// follows several plans (their own and their households') is reminded about
+/// each day from the plan that day is read from.
 /// </summary>
 public static class EveningReminderSchedule
 {
@@ -35,24 +40,33 @@ public static class EveningReminderSchedule
         DateTimeOffset now,
         DateTimeOffset? lastSentAt)
     {
-        if (windowEnd is not { } end || planStart is not { } start) return null;
-
-        var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(now, zone).DateTime);
-        DateOnly? sentOn = lastSentAt is { } sent ? DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(sent, zone).DateTime) : null;
+        if (windowEnd is null || planStart is null) return null;
 
         // Today's window, then tomorrow's: a window ending just after midnight
         // is reminded about tonight, and nothing later is ever due sooner.
-        for (var day = today; day <= today.AddDays(1); day = day.AddDays(1))
+        foreach (var day in Days(zone, now))
         {
-            if (!PlanSchedule.Covers(start, durationDays, day)) continue;
+            if (DueOn(day, windowEnd, planStart, durationDays, zone, now, lastSentAt) is { } due) return due;
+        }
 
-            var closes = LocalInstant(day, end, zone);
-            if (closes <= now) continue;
+        return null;
+    }
 
-            var at = closes - Lead;
-            if (sentOn == DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(at, zone).DateTime)) continue;
-
-            return new EveningReminderDue(day, at, closes);
+    /// <summary>
+    /// The next reminder of a person who can follow several plans: their own and their
+    /// households'. <paramref name="followed"/> is in the order the day's plan is picked
+    /// (their own personal plan first, then their own household plan, then another member's,
+    /// each newest first), and each day is reminded about from the first plan that covers it.
+    /// A plan without a window still takes its days, so a person whose own plan is active is
+    /// never reminded about a household plan's window.
+    /// </summary>
+    public static (FollowedPlan Plan, EveningReminderDue Due)? NextFor(
+        IReadOnlyList<FollowedPlan> followed, TimeZoneInfo zone, DateTimeOffset now, DateTimeOffset? lastSentAt)
+    {
+        foreach (var day in Days(zone, now))
+        {
+            if (followed.FirstOrDefault(p => p.Start is { } start && PlanSchedule.Covers(start, p.DurationDays, day)) is not { } plan) continue;
+            if (DueOn(day, plan.WindowEnd, plan.Start, plan.DurationDays, zone, now, lastSentAt) is { } due) return (plan, due);
         }
 
         return null;
@@ -68,6 +82,29 @@ public static class EveningReminderSchedule
         && due.Day == day
         && (due.At - scheduledAt).Duration() < Tolerance
         && now >= due.At - Tolerance;
+
+    private static DateOnly[] Days(TimeZoneInfo zone, DateTimeOffset now)
+    {
+        var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(now, zone).DateTime);
+        return [today, today.AddDays(1)];
+    }
+
+    /// <summary>The reminder for one plan day, or null when the plan does not cover it, its window closed, or one already went out on the calendar day it would be sent.</summary>
+    private static EveningReminderDue? DueOn(
+        DateOnly day, TimeOnly? windowEnd, DateOnly? planStart, int durationDays, TimeZoneInfo zone, DateTimeOffset now, DateTimeOffset? lastSentAt)
+    {
+        if (windowEnd is not { } end || planStart is not { } start || !PlanSchedule.Covers(start, durationDays, day)) return null;
+
+        var closes = LocalInstant(day, end, zone);
+        if (closes <= now) return null;
+
+        var at = closes - Lead;
+        if (lastSentAt is { } sent
+            && DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(sent, zone).DateTime) == DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(at, zone).DateTime))
+            return null;
+
+        return new EveningReminderDue(day, at, closes);
+    }
 
     /// <summary>
     /// A local wall-clock time as an instant. A time inside a spring-forward gap does not exist,

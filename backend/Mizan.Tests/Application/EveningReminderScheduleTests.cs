@@ -76,4 +76,44 @@ public class EveningReminderScheduleTests
         EveningReminderSchedule.IsDue(next, DateOnly.Parse(jobDay), DateTimeOffset.Parse(jobAt), DateTimeOffset.Parse(now))
             .Should().Be(expected);
     }
+
+    [Theory]
+    // Plans in the order they are followed, each "name window start days" ("-" for no window); now is 13:00 in Addis Ababa.
+    // A household plan alone: its window.
+    [InlineData("home 20:00 2026-10-20 7", "home", "2026-10-22", "2026-10-22T16:30Z")]
+    // The person's own plan comes first, with its own window.
+    [InlineData("own 21:00 2026-10-20 7;home 20:00 2026-10-20 7", "own", "2026-10-22", "2026-10-22T17:30Z")]
+    // Their own plan without a window still takes the day: no household reminder.
+    [InlineData("own - 2026-10-20 7;home 20:00 2026-10-20 7", null, null, null)]
+    // Their own plan ended yesterday: the household plan's.
+    [InlineData("own - 2026-10-15 7;home 20:00 2026-10-20 7", "home", "2026-10-22", "2026-10-22T16:30Z")]
+    // Their own plan ends today: tonight nothing, tomorrow the household plan's.
+    [InlineData("own - 2026-10-16 7;home 20:00 2026-10-20 7", "home", "2026-10-23", "2026-10-23T16:30Z")]
+    // No plan covers today or tomorrow.
+    [InlineData("home 20:00 2026-10-25 7", null, null, null)]
+    public void APersonIsRemindedAboutThePlanTheyFollowThatDay(string plans, string? expectedPlan, string? expectedDay, string? expectedAt)
+    {
+        var names = new Dictionary<Guid, string>();
+        var followed = plans.Split(';').Select(text =>
+        {
+            var parts = text.Split(' ');
+            var id = Guid.NewGuid();
+            names[id] = parts[0];
+            return new FollowedPlan(id, DateOnly.Parse(parts[2]), int.Parse(parts[3]), parts[1] == "-" ? null : TimeOnly.Parse(parts[1]), null);
+        }).ToList();
+
+        var next = EveningReminderSchedule.NextFor(
+            followed, Mizan.Domain.Streaks.StreakClock.Zone(Addis), DateTimeOffset.Parse("2026-10-22T10:00Z"), null);
+
+        if (expectedPlan is null)
+        {
+            next.Should().BeNull();
+            return;
+        }
+
+        next.Should().NotBeNull();
+        names[next!.Value.Plan.PlanId].Should().Be(expectedPlan);
+        next.Value.Due.Day.Should().Be(DateOnly.Parse(expectedDay!));
+        next.Value.Due.At.Should().Be(DateTimeOffset.Parse(expectedAt!));
+    }
 }
