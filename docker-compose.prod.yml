@@ -220,6 +220,9 @@ services:
       TelegramBot__PublicUrl: ${App__PublicUrl:-${PUBLIC_APP_URL:-http://localhost:3000}}
       # Where the Mini App pages live. Empty means {PublicUrl}/tg.
       TelegramBot__MiniAppUrl: ${TELEGRAM_MINIAPP_URL:-}
+      # The subnet of proxy-net, where nginx and the frontend forward the
+      # browser's address. Empty records the proxy's address instead.
+      TelegramBot__TrustedProxies: ${TELEGRAM_TRUSTED_PROXIES:-}
     depends_on:
       mizan-backend:
         condition: service_healthy

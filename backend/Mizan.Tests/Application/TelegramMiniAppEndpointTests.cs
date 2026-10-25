@@ -41,6 +41,34 @@ public class TelegramMiniAppEndpointTests
         asked.GetProperty("ipAddress").GetString().Should().Be("203.0.113.9");
     }
 
+    [Theory]
+    // The web app's route handler, inside a trusted range, forwards the browser's address.
+    [InlineData("172.18.0.0/16", "172.18.0.7", "198.51.100.23", "198.51.100.23")]
+    // Behind the reverse proxy and the web app, both trusted, a forged entry on the left stays unread.
+    [InlineData("172.18.0.5, 172.18.0.7", "172.18.0.7", "6.6.6.6, 198.51.100.23, 172.18.0.5", "198.51.100.23")]
+    // A caller outside the trusted hops cannot name another address.
+    [InlineData("172.18.0.0/16", "203.0.113.9", "198.51.100.23", "203.0.113.9")]
+    // Nothing configured trusts loopback alone.
+    [InlineData(null, "172.18.0.7", "198.51.100.23", "172.18.0.7")]
+    public async Task TheSessionRecordsTheBrowsersAddress_ForwardedOnlyByTrustedProxies(
+        string? trustedProxies, string remoteIp, string forwardedFor, string recorded)
+    {
+        _world.BotOptions.Value.TrustedProxies = trustedProxies;
+
+        var (status, _, _) = await _world.PostMiniAppSessionAsync(Body(SignedInitData.Valid()), remoteIp: remoteIp, forwardedFor: forwardedFor);
+
+        status.Should().Be(200);
+        _world.SessionsPosted.Should().ContainSingle().Which.GetProperty("ipAddress").GetString().Should().Be(recorded);
+    }
+
+    [Fact]
+    public void ATrustedProxyThatIsNeitherAnAddressNorARange_StopsTheBotAtStartup()
+    {
+        var configure = () => telegram::Mizan.Telegram.TrustedProxies.Configure(new Microsoft.AspNetCore.Builder.ForwardedHeadersOptions(), "frontend");
+
+        configure.Should().Throw<InvalidOperationException>().WithMessage("*frontend*");
+    }
+
     [Fact]
     public async Task InDevelopment_TheCookieIsNotMarkedSecure_SoPlainHttpWorks()
     {

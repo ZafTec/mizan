@@ -274,6 +274,10 @@ services:
       - TelegramBot__PublicUrl=${PUBLIC_APP_URL:-http://localhost:3000}
       # Where the Mini App pages live. Empty means {PublicUrl}/tg.
       - TelegramBot__MiniAppUrl=${TELEGRAM_MINIAPP_URL:-}
+      # Whose X-Forwarded-For the Mini App session believes: the frontend's
+      # route handler forwards the browser's address from inside Docker's
+      # default bridge range. See docs/TELEGRAM.md#configure-and-run.
+      - TelegramBot__TrustedProxies=${TELEGRAM_TRUSTED_PROXIES:-172.16.0.0/12}
     depends_on:
       backend:
         condition: service_started

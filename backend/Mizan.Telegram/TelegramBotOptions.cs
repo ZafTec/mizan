@@ -43,6 +43,13 @@ public class TelegramBotOptions
     /// </summary>
     public TimeSpan MiniAppMaxAge { get; set; } = TimeSpan.FromMinutes(5);
 
+    /// <summary>
+    /// The hops whose <c>X-Forwarded-For</c> the bot believes: IP addresses or CIDR ranges,
+    /// separated by commas, such as the Docker network the reverse proxy and the web app
+    /// share. Empty trusts loopback only. See <see cref="Mizan.Telegram.TrustedProxies"/>.
+    /// </summary>
+    public string? TrustedProxies { get; set; }
+
     public bool IsConfigured => !string.IsNullOrWhiteSpace(BotToken)
         && !string.IsNullOrWhiteSpace(ServiceApiKey);
 

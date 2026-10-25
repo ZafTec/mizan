@@ -2,7 +2,9 @@ extern alias telegram;
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -138,10 +140,13 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
             NullLogger<MiniAppSessionEndpoint>.Instance);
 
     /// <summary>
-    /// Runs the endpoint against a bare HttpContext carrying <paramref name="body"/>, and returns what the page would
-    /// see: the status, the parsed body and the Set-Cookie header, if any.
+    /// Runs the endpoint against a bare HttpContext carrying <paramref name="body"/>, behind the bot's forwarded
+    /// headers middleware as configured by <see cref="TelegramBotOptions.TrustedProxies"/>, and returns what the page
+    /// would see: the status, the parsed body and the Set-Cookie header, if any. The request comes from
+    /// <paramref name="remoteIp"/>, with <paramref name="forwardedFor"/> as its <c>X-Forwarded-For</c> when given.
     /// </summary>
-    public async Task<(int Status, JsonElement Body, string? SetCookie)> PostMiniAppSessionAsync(string body, string contentType = "application/json")
+    public async Task<(int Status, JsonElement Body, string? SetCookie)> PostMiniAppSessionAsync(
+        string body, string contentType = "application/json", string remoteIp = "203.0.113.9", string? forwardedFor = null)
     {
         var context = new DefaultHttpContext();
         context.Request.Method = "POST";
@@ -149,10 +154,15 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
         context.Request.ContentType = contentType;
         context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(body));
         context.Request.Headers.UserAgent = "Telegram-Android/11.0";
-        context.Connection.RemoteIpAddress = IPAddress.Parse("203.0.113.9");
+        context.Connection.RemoteIpAddress = IPAddress.Parse(remoteIp);
+        if (forwardedFor is not null) context.Request.Headers["X-Forwarded-For"] = forwardedFor;
         context.Response.Body = new MemoryStream();
 
-        await MiniAppEndpoint().HandleAsync(context, CancellationToken.None);
+        var forwarded = new ForwardedHeadersOptions();
+        TrustedProxies.Configure(forwarded, BotOptions.Value.TrustedProxies);
+        var endpoint = MiniAppEndpoint();
+        await new ForwardedHeadersMiddleware(c => endpoint.HandleAsync(c, CancellationToken.None), NullLoggerFactory.Instance, Options.Create(forwarded))
+            .Invoke(context);
 
         context.Response.Body.Position = 0;
         var text = await new StreamReader(context.Response.Body).ReadToEndAsync();

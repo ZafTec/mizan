@@ -27,6 +27,11 @@ builder.Services.AddHttpClient<TelegramClient>(client =>
 builder.Services.AddHttpClient<MizanApiClient>(client =>
     client.Timeout = TimeSpan.FromSeconds(120));
 
+// The Mini App session records the browser's address, which only the proxy and the web
+// app's route handler can tell; see docs/TELEGRAM.md#configure-and-run.
+builder.Services.Configure<ForwardedHeadersOptions>(forwarded =>
+    TrustedProxies.Configure(forwarded, builder.Configuration[$"{TelegramBotOptions.SectionName}:TrustedProxies"]));
+
 builder.Services.AddScoped<UpdateHandler>();
 builder.Services.AddScoped<MiniAppSessionEndpoint>();
 builder.Services.AddScoped<NotifyEndpoint>();
@@ -34,6 +39,8 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddHostedService<LongPollWorker>();
 
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 var options = app.Services.GetRequiredService<IOptions<TelegramBotOptions>>().Value;
 
