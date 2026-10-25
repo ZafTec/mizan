@@ -106,5 +106,5 @@ public class LoginPasswordMigrationTests
         db,
         new PasswordHasherAdapter(),
         new SessionService(db, services.GetRequiredService<HybridCache>()),
-        Mock.Of<IOutbox>());
+        Mock.Of<IEmailQueue>());
 }

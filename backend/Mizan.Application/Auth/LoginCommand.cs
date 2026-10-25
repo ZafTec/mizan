@@ -33,18 +33,18 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResult>
     private readonly IMizanDbContext _context;
     private readonly IPasswordHasher _passwordHasher;
     private readonly ISessionService _sessions;
-    private readonly IOutbox _outbox;
+    private readonly IEmailQueue _emails;
 
     public LoginCommandHandler(
         IMizanDbContext context,
         IPasswordHasher passwordHasher,
         ISessionService sessions,
-        IOutbox outbox)
+        IEmailQueue emails)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _sessions = sessions;
-        _outbox = outbox;
+        _emails = emails;
     }
 
     public async Task<LoginResult> Handle(LoginCommand request, CancellationToken cancellationToken)
@@ -101,7 +101,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResult>
         var token = await _sessions.CreateAsync(user.Id, request.IpAddress, request.UserAgent, cancellationToken);
 
         await AuthEmailDelivery.QueueAsync(
-            _outbox,
+            _emails,
             AuthEmails.SignInNotification(user.Email, user.Name, request.IpAddress, request.UserAgent),
             user.Id,
             // The IP is part of the key: a sign-in from a new place is worth

@@ -16,7 +16,7 @@ namespace Mizan.Tests.Infrastructure;
 
 public class SmtpEmailSenderTests
 {
-    private static readonly EmailMessage Message = new(
+    private static readonly OutgoingEmail Message = new(
         "recipient@example.test", "Synthetic SMTP message", "<p>Synthetic message</p>", "Synthetic message");
 
     [Theory]

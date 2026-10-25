@@ -31,6 +31,7 @@ public static class DependencyInjection
         services.AddScoped<Planning.MealPlanContextBuilder>();
         services.AddScoped<Planning.ShoppingListAccess>();
         services.AddScoped<Prices.PriceBookReader>();
+        services.AddScoped<Interfaces.IEmailQueue, Mail.EmailQueue>();
 
         return services;
     }

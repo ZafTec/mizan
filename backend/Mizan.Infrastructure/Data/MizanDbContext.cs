@@ -96,6 +96,10 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
     public DbSet<IdempotencyKey> IdempotencyKeys => Set<IdempotencyKey>();
     public DbSet<DeletedRecord> DeletedRecords => Set<DeletedRecord>();
     public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
+    public DbSet<EmailMessage> EmailMessages => Set<EmailMessage>();
+    public DbSet<Announcement> Announcements => Set<Announcement>();
+    public DbSet<ContactSubmission> ContactSubmissions => Set<ContactSubmission>();
+    public DbSet<SupportNote> SupportNotes => Set<SupportNote>();
     public DbSet<PriceRegion> PriceRegions => Set<PriceRegion>();
     public DbSet<PriceSource> PriceSources => Set<PriceSource>();
     public DbSet<PriceSourceAlias> PriceSourceAliases => Set<PriceSourceAlias>();
@@ -1293,6 +1297,76 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.FriendlyName).HasColumnName("friendly_name");
             entity.Property(e => e.Xml).HasColumnName("xml");
+        });
+
+        modelBuilder.Entity<EmailMessage>(entity =>
+        {
+            entity.ToTable("email_messages");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.ToUserId).HasColumnName("to_user_id");
+            entity.Property(e => e.ToAddress).HasColumnName("to_address").HasMaxLength(320).IsRequired();
+            entity.Property(e => e.Subject).HasColumnName("subject").HasMaxLength(300).IsRequired();
+            entity.Property(e => e.Kind).HasColumnName("kind").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(16);
+            entity.Property(e => e.Attempts).HasColumnName("attempts").HasDefaultValue(0);
+            entity.Property(e => e.LastError).HasColumnName("last_error").HasMaxLength(2000);
+            entity.Property(e => e.OutboxJobId).HasColumnName("outbox_job_id");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.SentAt).HasColumnName("sent_at");
+            entity.Property(e => e.CreatedByUserId).HasColumnName("created_by_user_id");
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => new { e.Status, e.CreatedAt });
+            entity.HasIndex(e => new { e.Kind, e.CreatedAt });
+            entity.HasIndex(e => e.OutboxJobId);
+            entity.HasIndex(e => e.ToUserId);
+        });
+
+        modelBuilder.Entity<Announcement>(entity =>
+        {
+            entity.ToTable("announcements");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Subject).HasColumnName("subject").HasMaxLength(300).IsRequired();
+            entity.Property(e => e.Audience).HasColumnName("audience").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.RecipientCount).HasColumnName("recipient_count");
+            entity.Property(e => e.CreatedByUserId).HasColumnName("created_by_user_id");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.Audience, e.CreatedAt });
+        });
+
+        modelBuilder.Entity<ContactSubmission>(entity =>
+        {
+            entity.ToTable("contact_submissions");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(ContactSubmission.NameMax).IsRequired();
+            entity.Property(e => e.Email).HasColumnName("email").HasMaxLength(ContactSubmission.EmailMax).IsRequired();
+            entity.Property(e => e.Subject).HasColumnName("subject").HasMaxLength(ContactSubmission.SubjectMax).IsRequired();
+            entity.Property(e => e.Message).HasColumnName("message").HasMaxLength(ContactSubmission.MessageMax).IsRequired();
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(16);
+            entity.Property(e => e.HandledAt).HasColumnName("handled_at");
+            entity.Property(e => e.HandledByUserId).HasColumnName("handled_by_user_id");
+            entity.Property(e => e.ReplyEmailMessageId).HasColumnName("reply_email_message_id");
+            entity.Property(e => e.IpHash).HasColumnName("ip_hash").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.Status, e.CreatedAt });
+            entity.HasIndex(e => new { e.IpHash, e.CreatedAt });
+        });
+
+        modelBuilder.Entity<SupportNote>(entity =>
+        {
+            entity.ToTable("support_notes");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.SubjectType).HasColumnName("subject_type").HasConversion<string>().HasMaxLength(16);
+            entity.Property(e => e.SubjectId).HasColumnName("subject_id");
+            entity.Property(e => e.Body).HasColumnName("body").HasMaxLength(SupportNote.BodyMax).IsRequired();
+            entity.Property(e => e.AuthorUserId).HasColumnName("author_user_id");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.SubjectType, e.SubjectId, e.CreatedAt });
         });
 
         modelBuilder.Entity<UserActivityCounters>(entity =>

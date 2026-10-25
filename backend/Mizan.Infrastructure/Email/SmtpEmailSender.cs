@@ -31,7 +31,7 @@ public class SmtpEmailSender : IEmailSender
         _logger = logger;
     }
 
-    public async Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
+    public async Task SendAsync(OutgoingEmail message, CancellationToken cancellationToken = default)
     {
         // Read per message: a host or password changed in the admin area applies to the next send.
         var options = await _settings.GetAsync(cancellationToken);
@@ -85,7 +85,7 @@ public class SmtpEmailSender : IEmailSender
         }
     }
 
-    private void NotConfigured(EmailMessage message)
+    private void NotConfigured(OutgoingEmail message)
     {
         if (!_environment.IsDevelopment())
         {
