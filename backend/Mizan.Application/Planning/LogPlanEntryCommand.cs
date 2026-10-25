@@ -52,17 +52,15 @@ public class LogPlanEntryCommandHandler : IRequestHandler<LogPlanEntryCommand, L
     private readonly PlanAccess _access;
     private readonly IStreakService _streaks;
     private readonly IAchievementEvaluator _achievements;
-    private readonly IUserClock _clock;
     private readonly HybridCache _cache;
 
     public LogPlanEntryCommandHandler(
-        IMizanDbContext context, PlanAccess access, IStreakService streaks, IAchievementEvaluator achievements, IUserClock clock, HybridCache cache)
+        IMizanDbContext context, PlanAccess access, IStreakService streaks, IAchievementEvaluator achievements, HybridCache cache)
     {
         _context = context;
         _access = access;
         _streaks = streaks;
         _achievements = achievements;
-        _clock = clock;
         _cache = cache;
     }
 
@@ -118,11 +116,8 @@ public class LogPlanEntryCommandHandler : IRequestHandler<LogPlanEntryCommand, L
             await _cache.RemoveByTagAsync(CacheTags.Recipes, cancellationToken);
 
         // A streak is about today. Logging a planned day in the past or the
-        // future fills the diary but does not move the streak.
-        var today = await _clock.TodayAsync(userId, cancellationToken);
-        var streak = Math.Abs(date.DayNumber - today.DayNumber) <= 1
-            ? await _streaks.RecordActivityAsync("nutrition", date, cancellationToken)
-            : null;
+        // future fills the diary but does not move the streak (StreakClock.Counts).
+        var streak = await _streaks.RecordActivityAsync("nutrition", date, cancellationToken);
         var unlocked = await _achievements.EvaluateAsync(cancellationToken, ["meals_logged", "streak_nutrition"]);
 
         return new LogPlanEntryResult

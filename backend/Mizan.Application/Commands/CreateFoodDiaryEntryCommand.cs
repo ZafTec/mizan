@@ -55,6 +55,10 @@ public class CreateFoodDiaryEntryCommandValidator : AbstractValidator<CreateFood
             RuleFor(x => x.Per100g!.FatGrams).GreaterThanOrEqualTo(0);
             RuleFor(x => x.Per100g!.FiberGrams).GreaterThanOrEqualTo(0).When(x => x.Per100g!.FiberGrams.HasValue);
         });
+        RuleFor(x => x.EntryDate)
+            .Must(date => DiaryDates.Problem(date!.Value, DateOnly.FromDateTime(DateTime.UtcNow)) is null)
+            .When(x => x.EntryDate.HasValue)
+            .WithMessage(x => DiaryDates.Problem(x.EntryDate!.Value, DateOnly.FromDateTime(DateTime.UtcNow)) ?? string.Empty);
         RuleFor(x => x.LoggedAt)
             .LessThanOrEqualTo(_ => DateTime.UtcNow.AddMinutes(5))
             .When(x => x.LoggedAt.HasValue)

@@ -29,7 +29,7 @@ public class StreakService : IStreakService
         _notifications = notifications;
     }
 
-    public async Task<StreakUpdate> RecordActivityAsync(
+    public async Task<StreakUpdate?> RecordActivityAsync(
         string streakType,
         DateOnly? activityDate = null,
         CancellationToken cancellationToken = default)
@@ -41,16 +41,12 @@ public class StreakService : IStreakService
             throw new ArgumentException("streakType is required", nameof(streakType));
         }
 
-        // The user's day, not the server's. A backdated entry is accepted
-        // within a day of it either way, which covers a clock skew or a
-        // request that crossed local midnight in flight.
+        // The user's day, not the server's. The caller has already saved the
+        // activity, so a day too far from today to count is no error: the
+        // streak is left as it is and the caller reports no streak change.
         var localToday = await _clock.TodayAsync(userId, cancellationToken);
         var today = activityDate ?? localToday;
-        if (Math.Abs(today.DayNumber - localToday.DayNumber) > 1)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(activityDate), "Activity date must be within one day of today");
-        }
+        if (!StreakClock.Counts(today, localToday)) return null;
 
         var streak = await _context.Streaks
             .FirstOrDefaultAsync(s => s.UserId == userId && s.StreakType == streakType, cancellationToken);
