@@ -22,6 +22,12 @@ import {
   slotLabel,
   STATUS_LABELS,
 } from "@/lib/planning/rules";
+import {
+  confidenceLabel,
+  formatCoverage,
+  formatMoney,
+  itemCount,
+} from "@/lib/prices/format";
 import { appToast } from "@/lib/toast";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import DraftActions from "./DraftActions";
@@ -92,6 +98,52 @@ export function DayTotals({ day, rules }: { day: PlanDay; rules: PlanRules }) {
           </p>
         </div>
       ))}
+    </section>
+  );
+}
+
+/**
+ * The week's cost against the budget, how much of the plan has a price and
+ * how sure that price is. Every number is the API's; nothing shows when the
+ * region has no prices (`weeklyCost` is null).
+ */
+export function PlanCost({ plan }: { plan: MealPlanDetail }) {
+  if (plan.weeklyCost == null) return null;
+  const budget = plan.rules.weeklyBudget;
+  return (
+    <section aria-label="Plan cost" className="facts-strip">
+      <div data-testid="plan-weekly-cost">
+        <p className="text-sm log-muted">Cost a week</p>
+        <p className="num nutrition-value text-xl! break-words sm:text-2xl!">
+          {formatMoney(plan.weeklyCost, plan.currency)}
+        </p>
+        {budget != null && (
+          <p className="num mt-1 text-sm log-muted">
+            of {formatMoney(budget, plan.rules.currency ?? plan.currency)}{" "}
+            budget
+          </p>
+        )}
+        {plan.overBudget === true && (
+          <p className="mt-1 text-sm font-medium text-destructive">
+            Over budget
+          </p>
+        )}
+      </div>
+      <div data-testid="plan-cost-coverage">
+        <p className="text-sm log-muted">Priced</p>
+        <p className="num nutrition-value">
+          {formatCoverage(plan.costCoverage)}
+        </p>
+        {plan.costConfidence && (
+          <p className="mt-1 text-sm log-muted">
+            {confidenceLabel(plan.costConfidence)}
+          </p>
+        )}
+      </div>
+      <div>
+        <p className="text-sm log-muted">Without a price</p>
+        <p className="num nutrition-value">{plan.unpricedItems.length}</p>
+      </div>
     </section>
   );
 }
@@ -263,6 +315,8 @@ export default function PlanDetail({
         </div>
       </header>
 
+      <PlanCost plan={plan} />
+
       <TabsPrimitive.Root value={dayIndex} onValueChange={setDayIndex}>
         <TabsPrimitive.List
           aria-label="Days"
@@ -291,6 +345,12 @@ export default function PlanDetail({
             className="space-y-8 focus-visible:outline-none"
           >
             <DayTotals day={day} rules={plan.rules} />
+            {day.cost != null && (
+              <p className="num -mt-4 text-sm" data-testid="day-cost">
+                <span className="log-muted">Cost of the day </span>
+                {formatMoney(day.cost, plan.currency)}
+              </p>
+            )}
             {day.entryCount === 0 ? (
               <p className="log-empty">Nothing planned for this day.</p>
             ) : (
@@ -383,6 +443,41 @@ export default function PlanDetail({
                 <span className="num whitespace-nowrap text-sm log-muted">
                   {session.entryCount}{" "}
                   {session.entryCount === 1 ? "entry" : "entries"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {plan.totalCost != null && plan.unpricedItems.length > 0 && (
+        <section aria-labelledby="unpriced-title">
+          <header className="log-section-header">
+            <h2 id="unpriced-title">Without a price</h2>
+            <span className="num text-sm log-muted">
+              {itemCount(plan.unpricedItems.length)}
+            </span>
+          </header>
+          <ul>
+            {plan.unpricedItems.map((item, index) => (
+              <li
+                key={`${item.foodId ?? item.name}-${index}`}
+                className="ledger-row text-sm"
+              >
+                <span className="min-w-0 flex-1 font-medium break-words">
+                  {item.foodId ? (
+                    <Link
+                      href={`/ingredients/${item.foodId}`}
+                      className="text-link"
+                    >
+                      {item.name}
+                    </Link>
+                  ) : (
+                    item.name
+                  )}
+                </span>
+                <span className="min-w-0 text-right text-xs log-muted">
+                  {item.reason}
                 </span>
               </li>
             ))}
