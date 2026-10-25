@@ -197,14 +197,23 @@ export default function PlanDetail({
   plan,
   today,
   viewerId,
+  initialDay,
+  embedded = false,
 }: {
   plan: MealPlanDetail;
   today: string;
   viewerId: string;
+  /** The date whose tab opens first; today when absent. */
+  initialDay?: string;
+  /**
+   * Inside the Telegram Mini App: no way back to the plan list and no
+   * editing, and a new shopping list opens in the Mini App too.
+   */
+  embedded?: boolean;
 }) {
   const router = useRouter();
   const [dayIndex, setDayIndex] = useState(() =>
-    String(dayIndexFor(plan, today)),
+    String(dayIndexFor(plan, initialDay ?? today)),
   );
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -247,7 +256,11 @@ export default function PlanDetail({
       appToast.success(
         `${result.itemCount} items${result.needsReviewCount ? `, ${result.needsReviewCount} to check` : ""}`,
       );
-      router.push(`/shopping-lists/${result.listId}`);
+      router.push(
+        embedded
+          ? `/tg/shopping-list?listId=${result.listId}`
+          : `/shopping-lists/${result.listId}`,
+      );
     } catch (error) {
       appToast.error(error, "Could not make the shopping list");
       setBusy(null);
@@ -268,11 +281,13 @@ export default function PlanDetail({
   return (
     <div className="log-page space-y-8" data-testid="meal-plan-detail-page">
       <header className="log-page-header block!">
-        <p className="text-sm">
-          <Link href="/meal-plan" className="text-link">
-            Meal plans
-          </Link>
-        </p>
+        {!embedded && (
+          <p className="text-sm">
+            <Link href="/meal-plan" className="text-link">
+              Meal plans
+            </Link>
+          </p>
+        )}
         <h1 className="mt-1">{name}</h1>
         <p className="log-muted mt-2" data-testid="plan-facts">
           {facts.join(" · ")}
@@ -280,7 +295,7 @@ export default function PlanDetail({
         {plan.description && <p className="mt-2 text-sm">{plan.description}</p>}
         <div className="mt-4 flex flex-wrap items-center gap-2">
           {canAnswerDraft && <DraftActions planId={plan.id} planName={name} />}
-          {plan.canEdit && (
+          {plan.canEdit && !embedded && (
             <>
               <Link
                 href={`/meal-plan/${plan.id}/edit`}

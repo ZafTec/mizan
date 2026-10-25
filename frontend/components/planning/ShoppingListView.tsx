@@ -155,8 +155,14 @@ function ItemForm({
  */
 export default function ShoppingListView({
   list: initialList,
+  embedded = false,
 }: {
   list: ShoppingListDetail;
+  /**
+   * Inside the Telegram Mini App: no way back to the lists, no print or
+   * delete, and the plan link opens the plan in the Mini App.
+   */
+  embedded?: boolean;
 }) {
   const router = useRouter();
   const id = useId();
@@ -300,11 +306,13 @@ export default function ShoppingListView({
       data-hydrated={hydrated || undefined}
     >
       <header className="log-page-header block!">
-        <p className="text-sm print:hidden">
-          <Link href="/meal-plan/shopping-list" className="text-link">
-            Shopping lists
-          </Link>
-        </p>
+        {!embedded && (
+          <p className="text-sm print:hidden">
+            <Link href="/meal-plan/shopping-list" className="text-link">
+              Shopping lists
+            </Link>
+          </p>
+        )}
         {renaming ? (
           <form onSubmit={rename} className="mt-1 flex flex-wrap gap-2">
             <label htmlFor={`${id}-rename`} className="sr-only">
@@ -344,7 +352,11 @@ export default function ShoppingListView({
             <>
               From{" "}
               <Link
-                href={`/meal-plan/${list.mealPlanId}`}
+                href={
+                  embedded
+                    ? `/tg/plan?planId=${list.mealPlanId}`
+                    : `/meal-plan/${list.mealPlanId}`
+                }
                 className="text-link"
               >
                 {list.mealPlanName}
@@ -396,20 +408,24 @@ export default function ShoppingListView({
             >
               Clear checked
             </button>
-            <button
-              type="button"
-              className="btn-ghost btn-sm min-h-9"
-              onClick={() => window.print()}
-            >
-              Print
-            </button>
-            <button
-              type="button"
-              className="btn-ghost btn-sm min-h-9 text-destructive"
-              onClick={() => setConfirmDelete(true)}
-            >
-              Delete list
-            </button>
+            {!embedded && (
+              <>
+                <button
+                  type="button"
+                  className="btn-ghost btn-sm min-h-9"
+                  onClick={() => window.print()}
+                >
+                  Print
+                </button>
+                <button
+                  type="button"
+                  className="btn-ghost btn-sm min-h-9 text-destructive"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  Delete list
+                </button>
+              </>
+            )}
           </div>
         )}
       </header>
