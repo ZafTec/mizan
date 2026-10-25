@@ -17,7 +17,9 @@ export default function LiveAuditLog() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshInterval, setRefreshInterval] = useState(10000); // Default 10s
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  // Set after the first load on the client, so the server and the first paint
+  // render the same text.
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [countdown, setCountdown] = useState(10);
 
   const loadLogs = useCallback(async () => {
@@ -156,7 +158,9 @@ export default function LiveAuditLog() {
 
       <div className="p-3 border-t bg-charcoal-blue-50/30 dark:bg-charcoal-blue-800/30 flex justify-between items-center">
         <span className="text-[10px] text-muted-foreground">
-          Last updated: {lastUpdated.toLocaleTimeString()}
+          {lastUpdated
+            ? `Last updated: ${lastUpdated.toLocaleTimeString()}`
+            : "Not loaded yet"}
         </span>
       </div>
     </div>
