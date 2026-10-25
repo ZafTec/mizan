@@ -306,6 +306,55 @@ test("a person clears the ticked items from Telegram's main button", async ({
   expect(s.unhandled).toEqual([]);
 });
 
+test("the shopping list button without a list opens the newest list", async ({
+  page,
+  context,
+}) => {
+  const opening = await openTelegram(page, context, "signed_in", {
+    planning: { olderList: true },
+  });
+  await page.goto("/tg/shopping-list");
+  const list = page.getByTestId("shopping-list-page");
+  await expect(list).toHaveAttribute("data-hydrated", "true");
+  await expect(
+    page.getByRole("heading", { name: "Steady week shopping" }),
+  ).toBeVisible();
+  await expect(page.getByText("Brown rice")).toHaveCount(0);
+
+  await page.getByRole("checkbox", { name: "Greek yogurt" }).check();
+  await expect(
+    page.getByRole("checkbox", { name: "Greek yogurt" }),
+  ).toBeChecked();
+
+  const s = await state(context, opening);
+  const toggles = s.writes.filter((write) => write.path.endsWith("/toggle"));
+  expect(toggles.map(({ path, body }) => ({ path, body }))).toEqual([
+    {
+      path: "/api/ShoppingLists/items/i1000000-0000-4000-8000-000000000001/toggle",
+      body: { isChecked: true },
+    },
+  ]);
+  expect(s.unhandled).toEqual([]);
+});
+
+test("a person without a shopping list is told so", async ({
+  page,
+  context,
+}) => {
+  const opening = await openTelegram(page, context, "signed_in", {
+    planning: { none: true },
+  });
+  await page.goto("/tg/shopping-list");
+  await expect(page.getByText("No shopping list yet.")).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Shopping lists" }),
+  ).toHaveAttribute("href", "/meal-plan/shopping-list");
+  expect((await mainButton(page)).visible).toBe(false);
+  const s = await state(context, opening);
+  expect(s.writes).toEqual([]);
+  expect(s.unhandled).toEqual([]);
+});
+
 test("a chat that is not linked is told to link the account", async ({
   page,
   context,
