@@ -270,6 +270,47 @@ test("a planning chat turn shows its plan, day, cost and list as cards", async (
   expect((await state(context)).unhandled).toEqual([]);
 });
 
+test("a week drafted in chat is listed as a conversation after a reload", async ({
+  page,
+  context,
+}) => {
+  await signIn(context, { consented: true });
+  await page.goto("/ai");
+  await page.getByLabel("Message the assistant").fill(`Please ${PLAN_PROMPT}`);
+  await page.keyboard.press("Enter");
+  await expect(
+    page.getByRole("region", { name: "Plan High-protein week" }),
+  ).toBeVisible();
+
+  await page.reload();
+  const conversations = page.getByRole("complementary", {
+    name: "Conversations",
+  });
+  const thread = conversations.getByRole("button", {
+    name: "Plan my week",
+    exact: true,
+  });
+  // Newest first, above the conversation the person already had.
+  await expect(conversations.getByRole("listitem").first()).toContainText(
+    "Plan my week",
+  );
+  await thread.click();
+  await expect(thread).toHaveAttribute("aria-current", "true");
+  await expect(
+    page.getByRole("article", { name: "You said" }).last(),
+  ).toContainText(`Please ${PLAN_PROMPT}`);
+  await expect(
+    page.getByRole("article", { name: "The assistant replied" }).last(),
+  ).toContainText("Here is a draft for next week.");
+
+  // The draft the turn made waits on the plans page.
+  await page.goto("/meal-plan");
+  await expect(
+    page.getByRole("link", { name: /High-protein week/ }),
+  ).toContainText("Drafted by the assistant");
+  expect((await state(context)).unhandled).toEqual([]);
+});
+
 test("the usage panel shows the planning allowance", async ({
   page,
   context,
