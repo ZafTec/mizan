@@ -160,8 +160,9 @@ public class StreakCorrectnessTests
     public async Task AMealLoggedDaysLateIsSaved_AndADateYearsAwayIsRefusedWithAReason()
     {
         await _fixture.ResetDatabaseAsync();
-        var (client, userId) = await UserAsync();
+        var (client, userId) = await UserAsync(timeZone: "Pacific/Kiritimati"); // UTC+14
         await SeedStreakAsync(userId, count: 4, daysAgo: 0, relativeToUsersZone: true);
+        var food = await _fixture.SeedFoodAsync($"Lentils {Guid.NewGuid():N}", 116, 9, 20, 0.4m);
         var lateDay = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-3);
 
         var late = await client.PostAsJsonAsync("/api/Meals", new
@@ -194,10 +195,18 @@ public class StreakCorrectnessTests
             problem.GetProperty("error").GetString().Should().Contain(reason).And.Contain(date);
         }
 
+        // The food log takes the same range, and without a date it is today in the user's zone, the streak's day.
+        var farFood = await client.PostAsJsonAsync("/api/Nutrition/log", new { foodId = food.Id, entryDate = "2500-01-01", mealType = "LUNCH", servings = 1 });
+        farFood.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await farFood.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("error").GetString().Should().Contain("2500-01-01");
+        (await client.PostAsJsonAsync("/api/Nutrition/log", new { foodId = food.Id, mealType = "LUNCH", servings = 1 }))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+
         using var scope = _fixture.Services.CreateScope();
+        var theirToday = await scope.ServiceProvider.GetRequiredService<IUserClock>().TodayAsync(userId);
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
         (await db.FoodDiaryEntries.Where(e => e.UserId == userId).Select(e => e.EntryDate).ToListAsync())
-            .Should().Equal(lateDay);
+            .Should().BeEquivalentTo([lateDay, theirToday]);
         (await db.Streaks.SingleAsync(s => s.UserId == userId)).CurrentCount.Should().Be(4);
     }
 

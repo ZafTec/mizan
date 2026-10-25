@@ -78,7 +78,7 @@ v1 stored per-serving nutrition for imported recipes; v2 calculates it instead. 
 
 `Data/Legacy/ImportLegacyRecipeNutrition.sql` loads v1 values from the pre-upgrade backup. Restore that backup's `recipes`, `recipe_ingredients`, and `recipe_nutrition` tables into a `legacy_v1` schema, back up the database, run the script, and drop the schema. It imports a value only when the recipe's lines and servings are unchanged since v1 and the value is plausible (macro energy within 25% of stated calories). It is idempotent. Recipe detail responses are cached for up to an hour, so imported values can take that long to appear.
 
-Date-only logs use the user's IANA timezone. Missing observations remain gaps in trends. `StreakClock` shares the decay rule, and activity counters avoid recounting all history on each write. A meal or workout on a day more than one day from the user's today is saved and leaves the streak alone. `DiaryDates` refuses a meal date more than ten years back or a year ahead with a 400 that names the date.
+Date-only logs use the user's IANA timezone. Missing observations remain gaps in trends. `StreakClock` shares the decay rule, and activity counters avoid recounting all history on each write. A meal or workout on a day more than one day from the user's today is saved and leaves the streak alone. `DiaryDates` refuses a meal date more than ten years back or a year ahead with a 400 that names the date. A meal logged without a date, on either `POST /api/Meals` or `POST /api/Nutrition/log`, lands on today in the user's zone, the day the streak counts.
 
 ## Consent and AI
 

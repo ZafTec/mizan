@@ -16,7 +16,8 @@ public record LogFoodCommand : IRequest<LogFoodResult>
 {
     public Guid? FoodId { get; init; }
     public Guid? RecipeId { get; init; }
-    public DateOnly EntryDate { get; init; }
+    /// <summary>The diary day. Left out, it is today in the user's time zone, the day the streak counts.</summary>
+    public DateOnly? EntryDate { get; init; }
     public string MealType { get; init; } = MealTypes.Snack;
     public decimal Servings { get; init; } = 1;
 }
@@ -43,8 +44,9 @@ public class LogFoodCommandValidator : AbstractValidator<LogFoodCommand>
         RuleFor(x => x).Must(x => x.FoodId.HasValue != x.RecipeId.HasValue)
             .WithMessage("Exactly one of FoodId or RecipeId must be provided");
         RuleFor(x => x.EntryDate)
-            .Must(date => DiaryDates.Problem(date, DateOnly.FromDateTime(DateTime.UtcNow)) is null)
-            .WithMessage(x => DiaryDates.Problem(x.EntryDate, DateOnly.FromDateTime(DateTime.UtcNow)) ?? string.Empty);
+            .Must(date => DiaryDates.Problem(date!.Value, DateOnly.FromDateTime(DateTime.UtcNow)) is null)
+            .When(x => x.EntryDate.HasValue)
+            .WithMessage(x => DiaryDates.Problem(x.EntryDate!.Value, DateOnly.FromDateTime(DateTime.UtcNow)) ?? string.Empty);
     }
 }
 
@@ -55,14 +57,17 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
     private readonly IStreakService _streakService;
     private readonly IAchievementEvaluator _achievements;
     private readonly HybridCache _cache;
+    private readonly IUserClock _clock;
 
     public LogFoodCommandHandler(
         IMizanDbContext context,
         ICurrentUserService currentUser,
         IStreakService streakService,
         IAchievementEvaluator achievements,
-        HybridCache cache)
+        HybridCache cache,
+        IUserClock clock)
     {
+        _clock = clock;
         _context = context;
         _currentUser = currentUser;
         _streakService = streakService;
@@ -78,6 +83,7 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
         }
 
         var userId = _currentUser.UserId.Value;
+        var entryDate = request.EntryDate ?? await _clock.TodayAsync(userId, cancellationToken);
         var entries = new List<FoodDiaryEntry>();
         var now = DateTime.UtcNow;
         string itemName;
@@ -88,7 +94,7 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
                 f => f.Id == request.FoodId && (f.UserId == null || f.UserId == userId), cancellationToken)
                 ?? throw new EntityNotFoundException("Food", request.FoodId.Value);
             itemName = food.Name;
-            entries.Add(DiaryEntryFactory.FromFood(food, food.ServingSize * request.Servings, userId, request.EntryDate, request.MealType, now));
+            entries.Add(DiaryEntryFactory.FromFood(food, food.ServingSize * request.Servings, userId, entryDate, request.MealType, now));
         }
         else if (request.RecipeId.HasValue)
         {
@@ -98,7 +104,7 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
                 ?? throw new EntityNotFoundException("Recipe", request.RecipeId.Value);
             itemName = recipe.Title;
             var retained = await _context.RecipeNutritionSnapshots.AsNoTracking().FirstOrDefaultAsync(s => s.RecipeId == recipe.Id, cancellationToken);
-            entries.AddRange(DiaryEntryFactory.FromRecipe(recipe, request.Servings, userId, request.EntryDate, request.MealType, now, retained));
+            entries.AddRange(DiaryEntryFactory.FromRecipe(recipe, request.Servings, userId, entryDate, request.MealType, now, retained));
         }
         else throw new DomainValidationException("Exactly one of FoodId or RecipeId must be provided");
 
@@ -111,7 +117,7 @@ public class LogFoodCommandHandler : IRequestHandler<LogFoodCommand, LogFoodResu
         if (request.RecipeId.HasValue)
             await _cache.RemoveByTagAsync(CacheTags.Recipes, cancellationToken);
 
-        var streak = await _streakService.RecordActivityAsync("nutrition", request.EntryDate, cancellationToken);
+        var streak = await _streakService.RecordActivityAsync("nutrition", entryDate, cancellationToken);
         var unlocked = await _achievements.EvaluateAsync(cancellationToken, ["meals_logged", "streak_nutrition"]);
 
         return new LogFoodResult
