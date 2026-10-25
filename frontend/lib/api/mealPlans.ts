@@ -31,6 +31,12 @@ export type PrepSessionCreatedResult = Schemas["PrepSessionCreatedResult"];
 export type GenerateShoppingListResult = Schemas["GenerateShoppingListResult"];
 export type LogPlanEntryResult = Schemas["LogPlanEntryResult"];
 export type MealPlanPage = Schemas["MealPlanSummaryDtoPagedResult"];
+export type GenerateMealPlanRequest = Schemas["GenerateMealPlanCommand"];
+export type GenerateMealPlanResult = Schemas["GenerateMealPlanResult"];
+export type GeneratedPlan = Schemas["GeneratedPlanDto"];
+export type PlanCost = Schemas["PlanCostDto"];
+export type PlanCostItem = Schemas["PlanCostItemDto"];
+export type PlanGeneration = Schemas["PlanGenerationDto"];
 export type MealPlanListQuery = NonNullable<
   paths["/api/MealPlans"]["get"]["parameters"]["query"]
 >;
@@ -63,6 +69,24 @@ export const getPlanDay = (date?: string) =>
     { expectedStatuses: [404] },
   );
 
+/**
+ * The assistant drafts a plan: one saved Draft per budget ceiling, each with
+ * its violations and cost table. 429 `ai_quota_exceeded` when the planning
+ * allowance is spent, 503 `ai_unavailable` when the provider fails. The key is
+ * the caller's, so trying again after a lost answer replays the draft that was
+ * made instead of spending the allowance twice.
+ */
+export const generateMealPlan = (
+  body: GenerateMealPlanRequest,
+  idempotencyKey: string,
+) =>
+  clientApi<GenerateMealPlanResult>("/api/MealPlans/generate", {
+    method: "POST",
+    body,
+    headers: { "Idempotency-Key": idempotencyKey },
+    expectedStatuses: [429, 503],
+  });
+
 export const listTemplates = () =>
   clientApi<Template[]>("/api/MealPlans/templates");
 
@@ -94,6 +118,13 @@ export const updateMealPlan = (id: string, body: UpdateMealPlanRequest) =>
 
 export const deleteMealPlan = (id: string) =>
   clientApi<void>(`/api/MealPlans/${id}`, { method: "DELETE" });
+
+/** Throws away an assistant's draft the person did not keep: the plan is deleted. */
+export const discardDraft = (id: string) =>
+  clientApi<void>(`/api/MealPlans/${id}`, {
+    method: "DELETE",
+    headers: idempotent(),
+  });
 
 export const setMealPlanStatus = (
   id: string,

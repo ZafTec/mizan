@@ -51,6 +51,7 @@ const turn = (
   },
   reply: reply(content),
   performed,
+  cards: [],
 });
 
 beforeEach(() => {
