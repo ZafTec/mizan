@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using Mizan.Contracts.Planning;
 using Mizan.Telegram.Backend;
+using Mizan.Domain.Pricing;
 
 namespace Mizan.Telegram.Bot;
 
@@ -111,9 +112,10 @@ public sealed class PlanMeHandler
             text.Append(CultureInfo.InvariantCulture, $"{start:ddd d MMM} to {end:ddd d MMM}, {plan.EntryCount} meals\n");
 
         var cost = draft.Cost;
-        text.Append(CultureInfo.InvariantCulture, $"About <b>{cost.WeeklyTotal:#,0.##} {Escape(cost.Currency)}</b> a week");
-        if (draft.BudgetCeiling is { } budget) text.Append(CultureInfo.InvariantCulture, $" (budget {budget:#,0.##})");
-        if (plan.Rules.DailyBudget is { } daily) text.Append(CultureInfo.InvariantCulture, $", at most {daily:#,0.##} a day");
+        var currency = plan.Rules.Currency ?? cost.Currency;
+        text.Append("About <b>").Append(Escape(Money.Format(cost.WeeklyTotal, cost.Currency))).Append("</b> a week");
+        if (draft.BudgetCeiling is { } budget) text.Append(" (budget ").Append(Escape(Money.Format(budget, currency))).Append(')');
+        if (plan.Rules.DailyBudget is { } daily) text.Append(", at most ").Append(Escape(Money.Format(daily, currency))).Append(" a day");
         if (cost.TotalItems > 0) text.Append(CultureInfo.InvariantCulture, $", {cost.PricedItems} of {cost.TotalItems} items priced");
         text.Append('\n');
 

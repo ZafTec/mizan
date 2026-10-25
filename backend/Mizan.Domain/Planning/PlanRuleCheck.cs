@@ -1,4 +1,5 @@
 using Mizan.Domain.Entities;
+using Mizan.Domain.Pricing;
 
 namespace Mizan.Domain.Planning;
 
@@ -77,12 +78,12 @@ public static class PlanRuleCheck
 
             if (OverBudget(dayCosts?.GetValueOrDefault(day.DayIndex), rules.DailyBudget) is { } dayCost)
                 violations.Add(new PlanViolation(day.DayIndex, null, PlanRuleNames.DailyBudgetOver,
-                    $"{dayCost:0.00} {rules.Currency} this day is over the {rules.DailyBudget:0.00} {rules.Currency} daily budget."));
+                    $"{Money.Format(dayCost, rules.Currency)} this day is over the {Money.Format(rules.DailyBudget!.Value, rules.Currency)} daily budget."));
         }
 
         if (OverBudget(weeklyCost, rules.WeeklyBudget) is { } cost)
             violations.Add(new PlanViolation(null, null, PlanRuleNames.BudgetOver,
-                $"{cost:0.00} {rules.Currency} a week is over the {rules.WeeklyBudget:0.00} {rules.Currency} budget."));
+                $"{Money.Format(cost, rules.Currency)} a week is over the {Money.Format(rules.WeeklyBudget!.Value, rules.Currency)} budget."));
 
         return violations;
     }

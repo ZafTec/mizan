@@ -41,7 +41,7 @@ public class TelegramPlanMeTests
         DateOnly.Parse(posted.GetProperty("startDate").GetString()!).Should().Be(DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1));
 
         _world.LastText.Should().StartWith("<b>High protein week</b> (draft)")
-            .And.Contain("About <b>1,240 ETB</b> a week (budget 1,500), 9 of 11 items priced")
+            .And.Contain("About <b>ETB 1,240.00</b> a week (budget ETB 1,500.00), 9 of 11 items priced")
             .And.Contain("Day 1: Eggs, Shiro &amp; injera")
             .And.Contain("95 g protein is under the 120 g target.")
             .And.Contain("1 line(s) to review");

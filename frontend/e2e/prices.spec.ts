@@ -97,7 +97,7 @@ test("a plan shows its weekly cost over budget and its unpriced items", async ({
     "Cost of the day ETB 138.50 of ETB 120.00 · Over the daily budget",
   );
   await expect(page.getByRole("tabpanel")).toContainText(
-    "138.50 ETB this day is over the 120.00 ETB daily budget.",
+    "ETB 138.50 this day is over the ETB 120.00 daily budget.",
   );
   const unpriced = page.getByRole("region", { name: "Without a price" });
   await expect(unpriced.getByRole("listitem")).toHaveCount(1);

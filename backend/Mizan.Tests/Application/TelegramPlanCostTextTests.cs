@@ -13,14 +13,14 @@ public class TelegramPlanCostTextTests
     [Fact]
     public void ADayWithACost_SaysItInTheRegionsCurrency_AndADayWithoutOneSaysNothing()
     {
-        PlanCostText.Day(new PlanDayViewDto { Currency = "ETB", Day = new PlanDayDto { Cost = 1245.5m } }).Should().Be("Cost: 1,245.50 ETB");
+        PlanCostText.Day(new PlanDayViewDto { Currency = "ETB", Day = new PlanDayDto { Cost = 1245.5m } }).Should().Be("Cost: ETB 1,245.50");
         PlanCostText.Day(new PlanDayViewDto { Currency = "ETB", Day = new PlanDayDto() }).Should().BeNull();
     }
 
     [Theory]
-    [InlineData(true, "Cost: 245.50 ETB, over the 200.00 ETB daily budget")]
-    [InlineData(false, "Cost: 245.50 ETB")]
-    [InlineData(null, "Cost: 245.50 ETB")]
+    [InlineData(true, "Cost: ETB 245.50, over the ETB 200.00 daily budget")]
+    [InlineData(false, "Cost: ETB 245.50")]
+    [InlineData(null, "Cost: ETB 245.50")]
     public void ADayTheApiMarkedOverItsDailyBudget_SaysSo(bool? over, string expected) =>
         PlanCostText.Day(new PlanDayViewDto
         {
@@ -30,9 +30,9 @@ public class TelegramPlanCostTextTests
         }).Should().Be(expected);
 
     [Theory]
-    [InlineData(340.5, "Observed", 0, "Total: 340.50 ETB")]
-    [InlineData(340.5, "Estimated", 1, "Total: 340.50 ETB (estimated), 1 item without a price")]
-    [InlineData(12d, "Reported", 3, "Total: 12.00 ETB, 3 items without a price")]
+    [InlineData(340.5, "Observed", 0, "Total: ETB 340.50")]
+    [InlineData(340.5, "Estimated", 1, "Total: ETB 340.50 (estimated), 1 item without a price")]
+    [InlineData(12d, "Reported", 3, "Total: ETB 12.00, 3 items without a price")]
     [InlineData(null, null, 4, null)]
     public void AListTotal_NamesTheGaps(double? total, string? confidence, int unpriced, string? expected) =>
         PlanCostText.List(new ShoppingListDetailDto
