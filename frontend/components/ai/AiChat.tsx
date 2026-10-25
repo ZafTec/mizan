@@ -24,6 +24,7 @@ import {
   X,
 } from "lucide-react";
 import AiMarkdown from "@/components/ai/AiMarkdown";
+import AiCardList from "@/components/ai/cards/AiCardView";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import {
   deleteAiChatThread,
@@ -31,6 +32,7 @@ import {
   listAiChatThreads,
   sendAiChatImage,
   sendAiChatMessage,
+  type AiCard,
   type AiChatMessage,
   type AiChatThread,
   type AiToolInvocation,
@@ -76,6 +78,9 @@ export default function AiChat({
   const [performed, setPerformed] = useState<
     Record<string, AiToolInvocation[]>
   >({});
+  // The typed cards each reply carried (a plan, a day, a cost table, a list), keyed the same way and for the
+  // same reason: they come with the turn, not with the stored transcript.
+  const [cards, setCards] = useState<Record<string, AiCard[]>>({});
   const [attachment, setAttachment] = useState<{
     file: File;
     url: string;
@@ -222,6 +227,8 @@ export default function AiChat({
           turn.reply,
         ]);
         if (photo) release(photo.url);
+        if (turn.cards?.length)
+          setCards((current) => ({ ...current, [turn.reply.id]: turn.cards }));
         if (turn.performed?.length) {
           setPerformed((current) => ({
             ...current,
@@ -367,6 +374,7 @@ export default function AiChat({
                 key={message.id}
                 message={message}
                 actions={performed[message.id]}
+                cards={cards[message.id]}
                 onOpenImage={(src) =>
                   setLightbox({
                     src,
@@ -688,10 +696,12 @@ function EmptyState({
 function MessageView({
   message,
   actions,
+  cards,
   onOpenImage,
 }: {
   message: AiChatMessage;
   actions?: AiToolInvocation[];
+  cards?: AiCard[];
   onOpenImage: (src: string) => void;
 }) {
   const [copied, setCopied] = useState(false);
@@ -765,6 +775,7 @@ function MessageView({
           {copied ? "Copied" : "Copy"}
         </button>
       )}
+      {cards && <AiCardList cards={cards} />}
       {actions && actions.length > 0 && (
         <ul className="space-y-1">
           {actions.map((action, index) => (
