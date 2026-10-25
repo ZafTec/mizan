@@ -975,6 +975,567 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/prices/regions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PriceRegionDto"][];
+                        "application/json": components["schemas"]["PriceRegionDto"][];
+                        "text/json": components["schemas"]["PriceRegionDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreatePriceRegionRequest"];
+                    "text/json": components["schemas"]["CreatePriceRegionRequest"];
+                    "application/*+json": components["schemas"]["CreatePriceRegionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PriceRegionDto"];
+                        "application/json": components["schemas"]["PriceRegionDto"];
+                        "text/json": components["schemas"]["PriceRegionDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prices/regions/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    code: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdatePriceRegionRequest"];
+                    "text/json": components["schemas"]["UpdatePriceRegionRequest"];
+                    "application/*+json": components["schemas"]["UpdatePriceRegionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PriceRegionDto"];
+                        "application/json": components["schemas"]["PriceRegionDto"];
+                        "text/json": components["schemas"]["PriceRegionDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prices/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    regionCode?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PriceSourceAdminDto"][];
+                        "application/json": components["schemas"]["PriceSourceAdminDto"][];
+                        "text/json": components["schemas"]["PriceSourceAdminDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SavePriceSourceRequest"];
+                    "text/json": components["schemas"]["SavePriceSourceRequest"];
+                    "application/*+json": components["schemas"]["SavePriceSourceRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PriceSourceCreatedResult"];
+                        "application/json": components["schemas"]["PriceSourceCreatedResult"];
+                        "text/json": components["schemas"]["PriceSourceCreatedResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prices/sources/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SavePriceSourceRequest"];
+                    "text/json": components["schemas"]["SavePriceSourceRequest"];
+                    "application/*+json": components["schemas"]["SavePriceSourceRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prices/sources/{id}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PriceSourceRunStartedDto"];
+                        "application/json": components["schemas"]["PriceSourceRunStartedDto"];
+                        "text/json": components["schemas"]["PriceSourceRunStartedDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prices/aliases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    sourceId?: string;
+                    queue?: boolean;
+                    search?: string;
+                    page?: number;
+                    pageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PriceSourceAliasDtoPagedResult"];
+                        "application/json": components["schemas"]["PriceSourceAliasDtoPagedResult"];
+                        "text/json": components["schemas"]["PriceSourceAliasDtoPagedResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prices/aliases/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdatePriceAliasRequest"];
+                    "text/json": components["schemas"]["UpdatePriceAliasRequest"];
+                    "application/*+json": components["schemas"]["UpdatePriceAliasRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prices/prices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateManualPriceRequest"];
+                    "text/json": components["schemas"]["CreateManualPriceRequest"];
+                    "application/*+json": components["schemas"]["CreateManualPriceRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FoodPriceCreatedResult"];
+                        "application/json": components["schemas"]["FoodPriceCreatedResult"];
+                        "text/json": components["schemas"]["FoodPriceCreatedResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prices/seed-staples": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SeedStaplePricesResult"];
+                        "application/json": components["schemas"]["SeedStaplePricesResult"];
+                        "text/json": components["schemas"]["SeedStaplePricesResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prices/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    status?: string;
+                    page?: number;
+                    pageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PriceReportDtoPagedResult"];
+                        "application/json": components["schemas"]["PriceReportDtoPagedResult"];
+                        "text/json": components["schemas"]["PriceReportDtoPagedResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prices/reports/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ResolvePriceReportRequest"];
+                    "text/json": components["schemas"]["ResolvePriceReportRequest"];
+                    "application/*+json": components["schemas"]["ResolvePriceReportRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prices/reports/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ResolvePriceReportRequest"];
+                    "text/json": components["schemas"]["ResolvePriceReportRequest"];
+                    "application/*+json": components["schemas"]["ResolvePriceReportRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Admin/Relationships": {
         parameters: {
             query?: never;
@@ -3270,6 +3831,90 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Foods/{id}/price": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FoodPriceQuoteDto"];
+                        "application/json": components["schemas"]["FoodPriceQuoteDto"];
+                        "text/json": components["schemas"]["FoodPriceQuoteDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Foods/{id}/price-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreatePriceReportRequest"];
+                    "text/json": components["schemas"]["CreatePriceReportRequest"];
+                    "application/*+json": components["schemas"]["CreatePriceReportRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PriceReportCreatedResult"];
+                        "application/json": components["schemas"]["PriceReportCreatedResult"];
+                        "text/json": components["schemas"]["PriceReportCreatedResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Goals": {
         parameters: {
             query?: never;
@@ -4024,6 +4669,127 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/prices/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PriceSourceDto"][];
+                        "application/json": components["schemas"]["PriceSourceDto"][];
+                        "text/json": components["schemas"]["PriceSourceDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/prices/observations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PriceObservationBatch"];
+                    "text/json": components["schemas"]["PriceObservationBatch"];
+                    "application/*+json": components["schemas"]["PriceObservationBatch"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PriceObservationReceipt"];
+                        "application/json": components["schemas"]["PriceObservationReceipt"];
+                        "text/json": components["schemas"]["PriceObservationReceipt"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/prices/sources/{id}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PriceSourceRunResult"];
+                    "text/json": components["schemas"]["PriceSourceRunResult"];
+                    "application/*+json": components["schemas"]["PriceSourceRunResult"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -6049,6 +6815,43 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Prices/regions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PriceRegionDto"][];
+                        "application/json": components["schemas"]["PriceRegionDto"][];
+                        "text/json": components["schemas"]["PriceRegionDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -9861,6 +10664,19 @@ export interface components {
         CreateHouseholdRequest: {
             name: string;
         };
+        CreateManualPriceRequest: {
+            /** Format: uuid */
+            foodId: string;
+            regionCode: string;
+            /** Format: double */
+            price: number;
+            /** Format: double */
+            quantity: number;
+            unit: string;
+            confidence?: string | null;
+            /** Format: date-time */
+            observedAt?: string | null;
+        };
         CreateMealPlanCommand: {
             name?: string | null;
             description?: string | null;
@@ -9886,6 +10702,20 @@ export interface components {
             rules?: components["schemas"]["PlanRulesDto"];
             entries: components["schemas"]["PlanEntryRequest"][];
             prepSessions: components["schemas"]["PrepSessionRequest"][];
+        };
+        CreatePriceRegionRequest: {
+            code: string;
+            name: string;
+            currency: string;
+            enabled: boolean;
+        };
+        CreatePriceReportRequest: {
+            /** Format: double */
+            suggestedPrice: number;
+            /** Format: double */
+            quantity: number;
+            unit: string;
+            note?: string | null;
         };
         CreateRecipeIngredientDto: {
             /** Format: uuid */
@@ -10262,6 +11092,32 @@ export interface components {
             fat: number;
             /** Format: date-time */
             loggedAt: string;
+        };
+        FoodPriceCreatedResult: {
+            /** Format: uuid */
+            id: string;
+        };
+        FoodPriceQuoteDto: {
+            /** Format: uuid */
+            foodId: string;
+            regionCode: string;
+            currency: string;
+            priced: boolean;
+            /** Format: double */
+            pricePerGram?: number | null;
+            /** Format: double */
+            pricePerKg?: number | null;
+            /** Format: double */
+            price?: number | null;
+            /** Format: double */
+            quantity?: number | null;
+            unit?: string | null;
+            confidence?: string | null;
+            /** Format: date-time */
+            observedAt?: string | null;
+            /** Format: uuid */
+            sourceId?: string | null;
+            sourceName?: string | null;
         };
         GenerateShoppingListRequest: {
             name?: string | null;
@@ -10722,8 +11578,16 @@ export interface components {
             /** Format: int32 */
             loggedCount: number;
             canEdit: boolean;
+            currency: string;
+            /** Format: double */
+            totalCost?: number | null;
             /** Format: double */
             weeklyCost?: number | null;
+            overBudget?: boolean | null;
+            /** Format: double */
+            costCoverage: number;
+            costConfidence?: string | null;
+            unpricedItems: components["schemas"]["UnpricedItemDto"][];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -11036,6 +11900,7 @@ export interface components {
             date: string;
             day: components["schemas"]["PlanDayDto"];
             rules: components["schemas"]["PlanRulesDto"];
+            currency: string;
         };
         PlanEntryCreatedResult: {
             /** Format: uuid */
@@ -11160,6 +12025,179 @@ export interface components {
             dayIndex: number;
             title: string;
             notes?: string | null;
+        };
+        PriceObservation: {
+            productName: string;
+            productKey?: string | null;
+            /** Format: double */
+            price: number;
+            currency: string;
+            /** Format: double */
+            quantity?: number | null;
+            unit?: string | null;
+            /** Format: date-time */
+            observedAt: string;
+            url?: string | null;
+        };
+        PriceObservationBatch: {
+            /** Format: uuid */
+            sourceId: string;
+            observations: components["schemas"]["PriceObservation"][];
+        };
+        PriceObservationReceipt: {
+            /** Format: int32 */
+            stored: number;
+            /** Format: int32 */
+            queued: number;
+            /** Format: int32 */
+            ignored: number;
+        };
+        PriceRegionDto: {
+            code: string;
+            name: string;
+            currency: string;
+            enabled: boolean;
+        };
+        PriceReportCreatedResult: {
+            /** Format: uuid */
+            id: string;
+        };
+        PriceReportDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            userId: string;
+            userName?: string | null;
+            /** Format: uuid */
+            foodId: string;
+            foodName?: string | null;
+            regionCode: string;
+            currency: string;
+            /** Format: double */
+            suggestedPrice: number;
+            /** Format: double */
+            quantity: number;
+            unit: string;
+            note?: string | null;
+            /** Format: double */
+            shownPricePerKg?: number | null;
+            /** Format: double */
+            suggestedPricePerKg?: number | null;
+            status: string;
+            /** Format: uuid */
+            resolvedByUserId?: string | null;
+            /** Format: date-time */
+            resolvedAt?: string | null;
+            resolutionNote?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        PriceReportDtoPagedResult: {
+            items: components["schemas"]["PriceReportDto"][];
+            /** Format: int32 */
+            totalCount: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            readonly totalPages: number;
+        };
+        PriceSourceAdminDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            kind: string;
+            url?: string | null;
+            scraperKey?: string | null;
+            regionCode: string;
+            currency: string;
+            enabled: boolean;
+            schedule?: string | null;
+            /** Format: date-time */
+            lastRunAt?: string | null;
+            lastStatus?: string | null;
+            lastError?: string | null;
+            /** Format: int32 */
+            lastObservations: number;
+            /** Format: int32 */
+            aliasCount: number;
+            /** Format: int32 */
+            unresolvedCount: number;
+            /** Format: int32 */
+            priceCount: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        PriceSourceAliasDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            sourceId: string;
+            sourceName: string;
+            regionCode: string;
+            currency: string;
+            productName: string;
+            productKey?: string | null;
+            /** Format: uuid */
+            foodId?: string | null;
+            foodName?: string | null;
+            /** Format: double */
+            quantity?: number | null;
+            unit?: string | null;
+            ignored: boolean;
+            /** Format: double */
+            lastSeenPrice?: number | null;
+            /** Format: date-time */
+            lastSeenAt?: string | null;
+            lastSeenUrl?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        PriceSourceAliasDtoPagedResult: {
+            items: components["schemas"]["PriceSourceAliasDto"][];
+            /** Format: int32 */
+            totalCount: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            readonly totalPages: number;
+        };
+        PriceSourceCreatedResult: {
+            /** Format: uuid */
+            id: string;
+        };
+        PriceSourceDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            kind: string;
+            url?: string | null;
+            scraperKey?: string | null;
+            regionCode: string;
+            currency: string;
+            schedule?: string | null;
+            /** Format: date-time */
+            lastRunAt?: string | null;
+        };
+        PriceSourceRunResult: {
+            status: string;
+            error?: string | null;
+            /** Format: int32 */
+            observations: number;
+            /** Format: date-time */
+            finishedAt: string;
+        };
+        PriceSourceRunStartedDto: {
+            /** Format: uuid */
+            sourceId: string;
+            status: string;
         };
         PromoteMealToRecipeCommand: {
             /** Format: date */
@@ -11357,6 +12395,9 @@ export interface components {
             token: string;
             password: string;
         };
+        ResolvePriceReportRequest: {
+            note?: string | null;
+        };
         ResolveReportRequest: {
             action: string;
             note?: string | null;
@@ -11382,6 +12423,15 @@ export interface components {
             message?: string | null;
             /** Format: uuid */
             householdId?: string | null;
+        };
+        SavePriceSourceRequest: {
+            name: string;
+            kind: string;
+            regionCode: string;
+            url?: string | null;
+            scraperKey?: string | null;
+            schedule?: string | null;
+            enabled: boolean;
         };
         SaveSocialProfileCommand: {
             displayName: string;
@@ -11412,6 +12462,13 @@ export interface components {
             hasWrite: boolean;
             readScope: string;
             writeScope?: string | null;
+        };
+        SeedStaplePricesResult: {
+            /** Format: int32 */
+            stored: number;
+            /** Format: int32 */
+            alreadyPriced: number;
+            missing: string[];
         };
         SendAiChatMessageCommand: {
             /** Format: uuid */
@@ -11488,8 +12545,14 @@ export interface components {
             /** Format: int32 */
             needsReviewCount: number;
             canEdit: boolean;
+            currency: string;
             /** Format: double */
             totalCost?: number | null;
+            /** Format: double */
+            costCoverage: number;
+            costConfidence?: string | null;
+            /** Format: int32 */
+            unpricedCount: number;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -11517,6 +12580,8 @@ export interface components {
             isChecked: boolean;
             /** Format: double */
             cost?: number | null;
+            costConfidence?: string | null;
+            unpricedReason?: string | null;
         };
         ShoppingListSummaryDto: {
             /** Format: uuid */
@@ -11806,6 +12871,12 @@ export interface components {
             points: number;
             category?: string | null;
         };
+        UnpricedItemDto: {
+            name: string;
+            /** Format: uuid */
+            foodId?: string | null;
+            reason: string;
+        };
         UpdateAchievementCommand: {
             /** Format: uuid */
             id: string;
@@ -11913,6 +12984,19 @@ export interface components {
             durationDays: number;
             rules?: components["schemas"]["PlanRulesDto"];
         };
+        UpdatePriceAliasRequest: {
+            /** Format: uuid */
+            foodId?: string | null;
+            /** Format: double */
+            quantity?: number | null;
+            unit?: string | null;
+            ignored: boolean;
+        };
+        UpdatePriceRegionRequest: {
+            name: string;
+            currency: string;
+            enabled: boolean;
+        };
         UpdateRecipeCommand: {
             /** Format: uuid */
             id: string;
@@ -11962,6 +13046,7 @@ export interface components {
             themePreference?: string | null;
             compactMode?: boolean | null;
             reduceAnimations?: boolean | null;
+            priceRegionCode?: string | null;
         };
         UpdateWorkoutCommand: {
             name?: string | null;
@@ -12013,6 +13098,7 @@ export interface components {
             currentGoal?: components["schemas"]["UserGoalSummaryDto"];
             /** Format: int32 */
             streakCount: number;
+            priceRegionCode?: string | null;
         };
         UserGoalDto: {
             /** Format: uuid */

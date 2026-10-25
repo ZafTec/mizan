@@ -8,6 +8,11 @@ import {
   type PlanningOptions,
   type PlanningState,
 } from "./fixture-planning";
+import {
+  initialPrices,
+  type PricesOptions,
+  type PricesState,
+} from "./fixture-prices";
 
 const port = Number(process.env.PLAYWRIGHT_API_PORT ?? 5100);
 const webOrigin = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3100";
@@ -194,6 +199,7 @@ type FixtureState = {
   threads: FixtureThread[];
   exercises: FixtureExercise[];
   planning: PlanningState;
+  prices: PricesState;
 };
 type FixtureThread = {
   id: string;
@@ -261,6 +267,7 @@ const states = new Map<string, FixtureState>();
 function initialState(empty = false): FixtureState {
   return {
     planning: initialPlanning(user.id, today, { none: empty }),
+    prices: initialPrices(today),
     role: "user",
     pro: false,
     impersonating: false,
@@ -643,6 +650,7 @@ const server = Bun.serve({
         writeFailures?: Record<string, number>;
         household?: Partial<FixtureHousehold>;
         planning?: PlanningOptions;
+        prices?: PricesOptions;
       };
       const token = crypto.randomUUID();
       const state = initialState(options.empty);
@@ -656,6 +664,7 @@ const server = Bun.serve({
         none: options.empty,
         ...options.planning,
       });
+      state.prices = initialPrices(today, options.prices);
       if (options.household)
         state.household = {
           otherMembers: 0,
@@ -1168,6 +1177,7 @@ const server = Bun.serve({
         recipes: state.recipes,
         meals: state.meals,
         foods,
+        prices: state.prices,
       },
       today,
       json,
