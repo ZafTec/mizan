@@ -91,5 +91,13 @@ public class DiaryTotalsTests
         })).EnsureSuccessStatusCode();
         (await _world.DbAsync(db => db.FoodDiaryEntries.Where(e => e.UserId == me).Select(e => e.Calories).SingleAsync()))
             .Should().Be(297.59m);
+
+        // The form sends the grams typed for a food; the server turns them into servings and stores the preview's figure.
+        var byWeight = await client.PostAsJsonAsync("/api/Nutrition/log", new LogFoodRequest { FoodId = rice.Id, MealType = "LUNCH", AmountGrams = 150 });
+        byWeight.StatusCode.Should().Be(HttpStatusCode.OK, await byWeight.Content.ReadAsStringAsync());
+        (await _world.DbAsync(db => db.FoodDiaryEntries.Where(e => e.UserId == me && e.FoodId == rice.Id).SingleAsync()))
+            .Should().Match<Mizan.Domain.Entities.FoodDiaryEntry>(e => e.AmountGrams == 150 && e.Servings == 1.5m && e.Calories == 195m);
+        (await client.PostAsJsonAsync("/api/Nutrition/log", new LogFoodRequest { RecipeId = chickenRice.Id, MealType = "LUNCH", AmountGrams = 300 }))
+            .StatusCode.Should().Be(HttpStatusCode.BadRequest, "a recipe is logged by servings");
     }
 }

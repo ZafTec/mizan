@@ -254,15 +254,13 @@ export default function MealLogForm({
           "/api/Nutrition/log",
           {
             method: "POST",
+            // What the person typed: grams of a food, servings of a recipe. The server converts.
             body: {
               ...(entry.item.kind === "food"
-                ? { foodId: entry.item.id }
-                : { recipeId: entry.item.id }),
+                ? { foodId: entry.item.id, amountGrams: Number(entry.amount) }
+                : { recipeId: entry.item.id, servings: Number(entry.amount) }),
               entryDate: date,
               mealType,
-              servings:
-                Number(entry.amount) /
-                (entry.item.kind === "food" ? entry.item.servingSize : 1),
             },
           },
         );

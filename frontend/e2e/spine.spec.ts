@@ -227,10 +227,12 @@ test("a meal can be composed and saved over the current page", async ({
   ).toBeVisible();
   const state = await fixtureState(context);
   expect(state.writes).toHaveLength(2);
+  // The grams typed go to the API as they are; the server turns them into servings.
   expect(state.writes[0]).toMatchObject({
     path: "/api/Nutrition/log",
-    body: { servings: 1.5, mealType: "LUNCH", entryDate: today },
+    body: { amountGrams: 150, mealType: "LUNCH", entryDate: today },
   });
+  expect(state.writes[0].body).not.toHaveProperty("servings");
   expect(state.writes[1]).toMatchObject({
     path: "/api/Nutrition/log",
     body: { servings: 0.5, mealType: "LUNCH", entryDate: today },
