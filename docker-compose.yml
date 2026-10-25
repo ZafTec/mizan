@@ -100,6 +100,9 @@ services:
 
       # Backend API (internal network - server-side)
       - API_URL=${SERVER_API_URL:-http://backend:8080}
+      # The bot service, for the Mini App's POST /telegram/miniapp/session
+      # (server-side; production routes that path to the bot at the proxy).
+      - TELEGRAM_BOT_URL=${TELEGRAM_BOT_URL:-http://telegram:5002}
 
       # Public URLs
       - NEXT_PUBLIC_APP_URL=${PUBLIC_APP_URL:-http://localhost:3000}

@@ -47,22 +47,37 @@ const nextConfig: NextConfig = {
 
   // Headers for security
   async headers() {
+    const shared = [
+      {
+        key: "X-Content-Type-Options",
+        value: "nosniff",
+      },
+      {
+        key: "Referrer-Policy",
+        value: "strict-origin-when-cross-origin",
+      },
+    ];
     return [
       {
-        source: "/(.*)",
+        // Everything but the Telegram Mini App.
+        source: "/((?!tg$|tg/).*)",
         headers: [
           {
             key: "X-Frame-Options",
             value: "DENY",
           },
+          ...shared,
+        ],
+      },
+      {
+        // Telegram Web shows a Mini App in an iframe; the apps use a WebView.
+        source: "/tg/:path*",
+        headers: [
           {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
+            key: "Content-Security-Policy",
+            value: "frame-ancestors 'self' https://web.telegram.org",
           },
-          {
-            key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin",
-          },
+          ...shared,
         ],
       },
     ];
