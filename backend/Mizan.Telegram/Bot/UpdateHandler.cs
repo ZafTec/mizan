@@ -7,6 +7,7 @@ using Mizan.Contracts.Meals;
 using Mizan.Contracts.Measurements;
 using Mizan.Contracts.Nutrition;
 using Mizan.Contracts.Planning;
+using Mizan.Contracts.Users;
 using Mizan.Domain.Nutrition;
 using Mizan.Telegram.Backend;
 
@@ -195,6 +196,10 @@ public sealed class UpdateHandler
                 await _planMe.HandleCommandAsync(chatId, user, argument, ct);
                 return;
 
+            case "/notifications":
+                await OnNotificationsAsync(chatId, user, argument, ct);
+                return;
+
             case "/unlink":
                 await _api.UnlinkAsync(telegramUserId, ct);
                 await _telegram.SendMessageAsync(
@@ -350,6 +355,63 @@ public sealed class UpdateHandler
             ct: ct);
     }
 
+    // ---- Notifications ----------------------------------------------------
+
+    /// <summary>
+    /// Whether the app's notifications also come to this chat. Bare, it says
+    /// which and offers one button to flip it; <c>on</c> and <c>off</c> set it.
+    /// Both read and write <c>/api/Users/me</c>, the switch the settings page
+    /// uses, so the API decides and the bot only reports.
+    /// </summary>
+    private async Task OnNotificationsAsync(long chatId, ResolvedUser user, string argument, CancellationToken ct)
+    {
+        switch (argument.ToLowerInvariant())
+        {
+            case "on":
+                await SetNotificationsAsync(chatId, user, on: true, ct);
+                return;
+            case "off":
+                await SetNotificationsAsync(chatId, user, on: false, ct);
+                return;
+            case "":
+                break;
+            default:
+                await _telegram.SendMessageAsync(
+                    chatId, "Send <code>/notifications on</code> or <code>/notifications off</code>.", ct: ct);
+                return;
+        }
+
+        var me = await _api.SendForResultAsync<UserDto>(user.UserId, HttpMethod.Get, "api/Users/me", null, ct);
+        if (me is not { Ok: true, Value: { } profile })
+        {
+            await _telegram.SendMessageAsync(chatId, Escape(ExplainFailure(me)), ct: ct);
+            return;
+        }
+
+        await _telegram.SendMessageAsync(
+            chatId,
+            profile.NotifyByTelegram
+                ? "Notifications are <b>on</b>: what the app notifies you about comes to this chat too."
+                : "Notifications are <b>off</b>: they stay in the app.",
+            InlineKeyboardMarkup.Column(profile.NotifyByTelegram
+                ? InlineKeyboardButton.Callback("Turn off", "nt:off")
+                : InlineKeyboardButton.Callback("Turn on", "nt:on")),
+            ct);
+    }
+
+    private async Task SetNotificationsAsync(long chatId, ResolvedUser user, bool on, CancellationToken ct)
+    {
+        var result = await _api.SendForResultAsync<object>(
+            user.UserId, HttpMethod.Put, "api/Users/me", new UpdateUserRequest(null, null, NotifyByTelegram: on), ct);
+
+        await _telegram.SendMessageAsync(
+            chatId,
+            !result.Ok ? Escape(ExplainFailure(result))
+            : on ? "Notifications are on. You will get them here as well as in the app. <b>/notifications off</b> stops them."
+            : "Notifications are off. They stay in the app. <b>/notifications on</b> brings them back.",
+            ct: ct);
+    }
+
     // ---- Inline keyboards -------------------------------------------------
 
     private async Task OnCallbackAsync(CallbackQuery callback, CancellationToken ct)
@@ -441,6 +503,12 @@ public sealed class UpdateHandler
             }
 
             await OnShopAsync(chatId, user, page, ct);
+            return;
+        }
+
+        if (data is "nt:on" or "nt:off")
+        {
+            await SetNotificationsAsync(chatId, user, on: data == "nt:on", ct);
             return;
         }
 
@@ -1068,6 +1136,7 @@ public sealed class UpdateHandler
         + "<b>/plan</b> - today's meal plan, with a Log button per entry (<b>/plan tomorrow</b> works too)\n"
         + "<b>/shop</b> - your shopping list, tick items off as you go\n"
         + "<b>/planme high protein, cheap</b> - draft a week of meals to confirm\n"
+        + "<b>/notifications</b> - get the app's notifications here too (<b>on</b> or <b>off</b>)\n"
         + "<b>/unlink</b> - disconnect this chat";
 
     private static string AnalysisCard(FoodAnalysisResult analysis)

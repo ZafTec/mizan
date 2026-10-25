@@ -147,6 +147,7 @@ public sealed class TelegramClient
                 new { command = "plan", description = "Today's meal plan, or /plan tomorrow" },
                 new { command = "shop", description = "Your shopping list, ten items at a time" },
                 new { command = "planme", description = "Draft a week of meals, e.g. /planme high protein, cheap" },
+                new { command = "notifications", description = "Get the app's notifications here too, /notifications on or off" },
                 new { command = "help", description = "What this bot can do" },
                 new { command = "unlink", description = "Disconnect this chat from your account" },
             },

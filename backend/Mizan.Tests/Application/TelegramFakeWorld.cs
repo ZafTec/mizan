@@ -41,6 +41,8 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
     public string ChatReply { get; set; } = "Hello.";
     public string PerformedJson { get; set; } = "[]";
     public HttpStatusCode GenerateStatus { get; set; } = HttpStatusCode.OK;
+    /// <summary>The profile's <c>notifyByTelegram</c>; a PUT to <c>api/Users/me</c> changes it the way the API would.</summary>
+    public bool NotifyByTelegram { get; set; }
     public string GenerateJson { get; set; } = "{}";
 
     // ---- the meal plan the API holds ----
@@ -93,6 +95,7 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
     public List<JsonElement> PlansGenerated { get; } = [];
     public List<string> PlanDecisions { get; } = [];
     public List<JsonElement> SessionsPosted { get; } = [];
+    public List<JsonElement> ProfilePuts { get; } = [];
 
     public JsonElement LastSend => JsonDocument.Parse(_telegramSends.Last(s => s.Url.EndsWith("/sendMessage")).Body).RootElement.Clone();
 
@@ -282,6 +285,21 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
             return LinkProblem is null
                 ? Json($$"""{"userId":"{{User}}","name":"Tester"}""")
                 : Json($$"""{"errorCode":"invalid_code","error":"{{LinkProblem}}"}""", HttpStatusCode.BadRequest);
+        }
+        if (url.EndsWith("api/Users/me"))
+        {
+            if (request.Method == HttpMethod.Put)
+            {
+                var put = JsonDocument.Parse(body).RootElement.Clone();
+                ProfilePuts.Add(put);
+                if (put.TryGetProperty("notifyByTelegram", out var notify) && notify.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                    NotifyByTelegram = notify.GetBoolean();
+                return new HttpResponseMessage(HttpStatusCode.NoContent);
+            }
+            return Json($$"""
+                {"id":"{{User}}","email":"t@example.com","name":"Tester","image":null,"createdAt":"2026-10-01T00:00:00Z",
+                 "currentGoal":null,"streakCount":0,"priceRegionCode":"ET-AA","notifyByTelegram":{{NotifyByTelegram.ToString().ToLowerInvariant()}}}
+                """);
         }
         if (url.Contains("api/Nutrition/daily")) return Json(DailyJson);
         if (url.Contains("api/Nutrition/ai/analyze-image"))
