@@ -252,13 +252,12 @@ export default function TemplateManager({
         )}
       </section>
 
-      <ModalShell open={deleting !== null} onClose={() => setDeleting(null)}>
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={`${id}-delete`}
-          className="surface-panel w-full max-w-md space-y-4 p-5"
-        >
+      <ModalShell
+        open={deleting !== null}
+        onClose={() => setDeleting(null)}
+        labelledBy={`${id}-delete`}
+      >
+        <div className="surface-panel w-full max-w-md space-y-4 p-5">
           <h2 id={`${id}-delete`} className="text-base font-semibold">
             Delete {deleting?.name ?? "this template"}?
           </h2>
