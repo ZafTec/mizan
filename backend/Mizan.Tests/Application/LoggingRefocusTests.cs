@@ -234,6 +234,6 @@ public class LoggingRefocusTests
         recipe.Ingredients.Single(i => i.IngredientText == "Photo meal").Amount.Should().Be(175);
     }
 
-    private LogFoodCommandHandler FoodHandler() => new(_db, User, _streak.Object, _achievements.Object, _cache);
+    private LogFoodCommandHandler FoodHandler() => new(_db, User, _streak.Object, _achievements.Object, _cache, Mock.Of<IUserClock>());
     private CreateFoodDiaryEntryCommandHandler CustomHandler() => new(_db, User, _streak.Object, _achievements.Object, _cache, Mock.Of<IUserClock>());
 }

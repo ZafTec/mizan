@@ -11562,7 +11562,7 @@ export interface components {
             /** Format: uuid */
             recipeId?: string | null;
             /** Format: date */
-            entryDate: string;
+            entryDate?: string | null;
             mealType: string;
             /** Format: double */
             servings: number;
