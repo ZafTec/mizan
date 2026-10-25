@@ -15,7 +15,7 @@ namespace Mizan.Tests.Integration;
 
 /// <summary>
 /// The evening reminder of a plan with an eating window: the scan queues it, the outbox sends it
-/// as a notification, a push and a Telegram message, once. Times are set on the test clock, on
+/// as a notification, a push and, for a person who opted in, a Telegram message, once. Times are set on the test clock, on
 /// today's date in the person's zone, because the diary only takes meals for about today.
 /// </summary>
 [Collection("ApiIntegration")]
@@ -41,7 +41,9 @@ public class EveningReminderTests
         await _fixture.GrantProAsync(userId);
         await world.DbAsync(async db =>
         {
-            (await db.Users.SingleAsync(u => u.Id == userId)).TimeZoneId = "Africa/Addis_Ababa";
+            var user = await db.Users.SingleAsync(u => u.Id == userId);
+            user.TimeZoneId = "Africa/Addis_Ababa";
+            user.NotifyByTelegram = true;
             db.TelegramLinks.Add(new TelegramLink { Id = Guid.NewGuid(), UserId = userId, TelegramUserId = 4242, LinkedAt = DateTime.UtcNow });
             return await db.SaveChangesAsync();
         });
@@ -98,8 +100,8 @@ public class EveningReminderTests
         _fixture.Push.Sent.Should().ContainSingle().Which.Body.Should().Be(Text);
         var telegram = _fixture.TelegramBot.Sent.Should().ContainSingle().Subject;
         telegram.TelegramUserId.Should().Be(4242);
-        telegram.Text.Should().Be(Text);
-        telegram.OpenPath.Should().Be($"plan?planId={planId:D}&day={today:yyyy-MM-dd}");
+        telegram.Text.Should().Be($"Eating window\n{Text}");
+        telegram.OpenPath.Should().Be($"plan?planId={planId:D}");
         (await ReminderJobsAsync()).Should().Be(1);
     }
 
