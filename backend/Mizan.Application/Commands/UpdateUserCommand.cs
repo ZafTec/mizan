@@ -12,7 +12,8 @@ namespace Mizan.Application.Commands;
 /// BetterAuth's updateUser. Since v2 they come through here - null means
 /// "leave alone", so a name change cannot silently reset a theme.
 /// <c>PriceRegionCode</c> picks the region whose prices the person sees; it
-/// must be an enabled region.
+/// must be an enabled region. <c>NotifyByTelegram</c> can only be turned on
+/// while a Telegram chat is linked; turning it off always works.
 /// </summary>
 public record UpdateUserCommand(
     Guid UserId,
@@ -22,10 +23,11 @@ public record UpdateUserCommand(
     bool? CompactMode = null,
     bool? ReduceAnimations = null,
     string? TimeZoneId = null,
-    string? PriceRegionCode = null) : IRequest<bool>, IRedactedAudit
+    string? PriceRegionCode = null,
+    bool? NotifyByTelegram = null) : IRequest<bool>, IRedactedAudit
 {
     /// <summary>The region code names a market, not a credential; the details list every field so nothing else is hidden.</summary>
-    object IRedactedAudit.AuditDetails => new { UserId, Name, Image, ThemePreference, CompactMode, ReduceAnimations, TimeZoneId, PriceRegionCode };
+    object IRedactedAudit.AuditDetails => new { UserId, Name, Image, ThemePreference, CompactMode, ReduceAnimations, TimeZoneId, PriceRegionCode, NotifyByTelegram };
 }
 
 public class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>
@@ -82,6 +84,13 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, bool>
                 throw new DomainValidationException($"There is no enabled price region '{regionCode}'.");
             user.PriceRegionCode = regionCode;
         }
+
+        if (request.NotifyByTelegram is true
+            && !await _context.TelegramLinks.AnyAsync(l => l.UserId == user.Id, cancellationToken))
+        {
+            throw new DomainValidationException("Connect a Telegram chat before turning on Telegram notifications.");
+        }
+        if (request.NotifyByTelegram is { } notify) user.NotifyByTelegram = notify;
 
         user.UpdatedAt = DateTime.UtcNow;
 

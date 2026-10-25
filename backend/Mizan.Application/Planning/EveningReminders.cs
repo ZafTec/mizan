@@ -17,8 +17,8 @@ public sealed record EveningReminderJob(Guid UserId, Guid PlanId, DateOnly Day, 
 /// that day. A scan schedules each person's next reminder as an outbox job keyed
 /// by person, day and time, so scanning again adds nothing and a moved window
 /// gets a job of its own. When the job runs, the reminder is checked again
-/// against the plans as they are now and sent as an in-app notification (with
-/// push where a phone is registered) and to Telegram when the account is linked.
+/// against the plans as they are now and sent as an in-app notification, which
+/// carries it to push and, when the person has opted in, to Telegram.
 /// </summary>
 public sealed class EveningReminders
 {
@@ -28,16 +28,14 @@ public sealed class EveningReminders
     private readonly IMizanDbContext _context;
     private readonly IOutbox _outbox;
     private readonly INotificationWriter _notifications;
-    private readonly ITelegramMessenger _telegram;
     private readonly TimeProvider _time;
 
     public EveningReminders(
-        IMizanDbContext context, IOutbox outbox, INotificationWriter notifications, ITelegramMessenger telegram, TimeProvider time)
+        IMizanDbContext context, IOutbox outbox, INotificationWriter notifications, TimeProvider time)
     {
         _context = context;
         _outbox = outbox;
         _notifications = notifications;
-        _telegram = telegram;
         _time = time;
     }
 
@@ -127,13 +125,8 @@ public sealed class EveningReminders
             .SumAsync(e => e.Calories ?? 0m, cancellationToken);
         var text = EveningReminderText.Build(plan.WindowEnd!.Value, calories, plan.TargetCalories);
 
-        await _notifications.AddAsync(job.UserId, NotificationType, NotificationTitle, text, $"/meal-plan/{plan.PlanId}", cancellationToken);
-        await _telegram.QueueAsync(
-            job.UserId,
-            text,
-            $"plan?planId={plan.PlanId:D}&day={job.Day:yyyy-MM-dd}",
-            dedupeKey: $"telegram:evening-reminder:{job.UserId:N}:{job.Day:yyyyMMdd}",
-            cancellationToken);
+        // The day is named so a reminder sent the evening before opens the right day.
+        await _notifications.AddAsync(job.UserId, NotificationType, NotificationTitle, text, $"/meal-plan/{plan.PlanId}?day={job.Day:yyyy-MM-dd}", cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
         return true;
     }
