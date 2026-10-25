@@ -655,7 +655,10 @@ public sealed class UpdateHandler
         }
 
         await _telegram.SendMessageAsync(
-            chatId, (prefix ?? string.Empty) + PlanDayCard(result.Value), PlanDayKeyboard(result.Value), ct);
+            chatId,
+            (prefix ?? string.Empty) + PlanDayCard(result.Value),
+            PlanDayKeyboard(result.Value, MiniAppLink($"plan?planId={result.Value.PlanId:D}&day={result.Value.Date:yyyy-MM-dd}")),
+            ct);
     }
 
     private Task<ApiResult<PlanDayViewDto>> GetPlanDayAsync(ResolvedUser user, DateOnly? date, CancellationToken ct) =>
@@ -820,8 +823,11 @@ public sealed class UpdateHandler
     internal static bool CanLog(PlanEntryDto entry) =>
         !entry.Logged && !string.Equals(entry.Kind, "Text", StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>A Log row per loggable entry, then Tomorrow. Each payload is a prefix and one id: well under 64 bytes.</summary>
-    internal static object PlanDayKeyboard(PlanDayViewDto view)
+    /// <summary>
+    /// A Log row per loggable entry, then Tomorrow, then Open when the Mini App is reachable.
+    /// Each payload is a prefix and one id: well under 64 bytes. Open carries a URL, not callback data.
+    /// </summary>
+    internal static object PlanDayKeyboard(PlanDayViewDto view, string? openUrl = null)
     {
         var rows = new List<object[]>();
 
@@ -831,6 +837,7 @@ public sealed class UpdateHandler
         }
 
         rows.Add([new { text = "Tomorrow", callback_data = $"pd:{view.Date.AddDays(1):yyyy-MM-dd}" }]);
+        if (openUrl is not null) rows.Add([OpenButton(openUrl)]);
 
         return new { inline_keyboard = rows };
     }
@@ -863,7 +870,7 @@ public sealed class UpdateHandler
             return;
         }
 
-        await _telegram.SendMessageAsync(chatId, ShoppingCard(list, page), ShoppingKeyboard(list, page), ct);
+        await _telegram.SendMessageAsync(chatId, ShoppingCard(list, page), ShoppingKeyboard(list, page, ShoppingListLink(list)), ct);
     }
 
     /// <summary>
@@ -907,7 +914,7 @@ public sealed class UpdateHandler
         }
 
         var page = index / ShopPageSize;
-        await _telegram.SendMessageAsync(chatId, ShoppingCard(updated, page), ShoppingKeyboard(updated, page), ct);
+        await _telegram.SendMessageAsync(chatId, ShoppingCard(updated, page), ShoppingKeyboard(updated, page, ShoppingListLink(updated)), ct);
     }
 
     /// <summary>The most recently changed list, in full. Null when there is none.</summary>
@@ -996,8 +1003,11 @@ public sealed class UpdateHandler
         return item.NeedsReview ? line + " (needs review)" : line;
     }
 
-    /// <summary>One toggle per shown item, then Back and More as the pages allow. More re-resolves the newest list: a list id does not fit beside a page.</summary>
-    internal static object ShoppingKeyboard(ShoppingListDetailDto list, int page)
+    /// <summary>
+    /// One toggle per shown item, then Back and More as the pages allow, then Open when the Mini App
+    /// is reachable. More re-resolves the newest list: a list id does not fit beside a page.
+    /// </summary>
+    internal static object ShoppingKeyboard(ShoppingListDetailDto list, int page, string? openUrl = null)
     {
         var (shown, current, _, more) = ShopPage(list, page);
         var rows = new List<object[]>();
@@ -1011,6 +1021,7 @@ public sealed class UpdateHandler
         if (current > 0) paging.Add(new { text = "Back", callback_data = $"sp:{current - 1}" });
         if (more) paging.Add(new { text = "More", callback_data = $"sp:{current + 1}" });
         if (paging.Count > 0) rows.Add(paging.ToArray());
+        if (openUrl is not null) rows.Add([OpenButton(openUrl)]);
 
         return new { inline_keyboard = rows };
     }
@@ -1105,13 +1116,20 @@ public sealed class UpdateHandler
     /// refuses the whole message otherwise, so a plain-HTTP development setup
     /// gets the text without the button rather than no text at all.
     /// </summary>
-    internal InlineKeyboardMarkup? MiniAppKeyboard(string text, string path = "")
+    internal InlineKeyboardMarkup? MiniAppKeyboard(string text, string path = "") =>
+        MiniAppLink(path) is { } url ? InlineKeyboardMarkup.Column(InlineKeyboardButton.OpenWebApp(text, url)) : null;
+
+    /// <summary>The Mini App URL for <paramref name="path"/>, or null when it is not HTTPS and Telegram would refuse it.</summary>
+    internal string? MiniAppLink(string path = "")
     {
         var url = MiniAppUrl(path);
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps) return null;
-
-        return InlineKeyboardMarkup.Column(InlineKeyboardButton.OpenWebApp(text, url));
+        return Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps ? url : null;
     }
+
+    private string? ShoppingListLink(ShoppingListDetailDto list) => MiniAppLink($"shopping-list?listId={list.Id:D}");
+
+    /// <summary>A <c>web_app</c> button in its own row, the shape the /help button has.</summary>
+    private static object OpenButton(string url) => InlineKeyboardButton.OpenWebApp("Open", url);
 
     internal string MiniAppUrl(string path = "") =>
         path.Length == 0 ? _options.MiniAppBaseUrl : $"{_options.MiniAppBaseUrl}/{path.TrimStart('/')}";

@@ -96,9 +96,20 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
 
     public string LastText => LastSend.GetProperty("text").GetString()!;
 
+    /// <summary>The callback buttons of the last message. A <c>web_app</c> button has no callback data; see <see cref="LastWebAppButtons"/>.</summary>
     public List<(string Text, string Data)> LastKeyboard() =>
-        LastSend.GetProperty("reply_markup").GetProperty("inline_keyboard").EnumerateArray().SelectMany(row => row.EnumerateArray())
+        LastButtons().Where(b => b.TryGetProperty("callback_data", out _))
             .Select(b => (b.GetProperty("text").GetString()!, b.GetProperty("callback_data").GetString()!)).ToList();
+
+    /// <summary>The <c>web_app</c> buttons of the last message, as text and URL.</summary>
+    public List<(string Text, string Url)> LastWebAppButtons() =>
+        LastButtons().Where(b => b.TryGetProperty("web_app", out _))
+            .Select(b => (b.GetProperty("text").GetString()!, b.GetProperty("web_app").GetProperty("url").GetString()!)).ToList();
+
+    private IEnumerable<JsonElement> LastButtons() =>
+        LastSend.TryGetProperty("reply_markup", out var markup)
+            ? markup.GetProperty("inline_keyboard").EnumerateArray().SelectMany(row => row.EnumerateArray())
+            : [];
 
     public IOptions<TelegramBotOptions> BotOptions { get; } = Options.Create(new TelegramBotOptions
     {

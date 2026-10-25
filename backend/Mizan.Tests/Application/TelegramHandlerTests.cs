@@ -132,4 +132,49 @@ public class TelegramHandlerTests
             .GetProperty("web_app").GetProperty("url").GetString().Should().Be("https://tg.mizan.test");
         _world.Handler().MiniAppUrl("shopping-list").Should().Be("https://tg.mizan.test/shopping-list");
     }
+
+    [Fact]
+    public async Task ThePlanCard_EndsWithAnOpenButtonToThatPlanDayInTheMiniApp()
+    {
+        await _world.Handler().HandleAsync(Text("/plan"), CancellationToken.None);
+
+        var rows = _world.LastSend.GetProperty("reply_markup").GetProperty("inline_keyboard");
+        var open = rows[rows.GetArrayLength() - 1].EnumerateArray().Should().ContainSingle("Open has a row of its own, like /help").Subject;
+        open.GetProperty("text").GetString().Should().Be("Open");
+        open.GetProperty("web_app").GetProperty("url").GetString()
+            .Should().Be($"https://mizan.test/tg/plan?planId={_world.PlanId:D}&day=2026-10-22");
+        open.TryGetProperty("callback_data", out _).Should().BeFalse();
+        _world.LastKeyboard().Should().OnlyContain(b => System.Text.Encoding.UTF8.GetByteCount(b.Data) <= 64);
+
+        await _world.Handler().HandleAsync(Press("pd:2026-10-23"), CancellationToken.None);
+        _world.LastWebAppButtons().Should().ContainSingle()
+            .Which.Url.Should().Be($"https://mizan.test/tg/plan?planId={_world.PlanId:D}&day=2026-10-23", "the Tomorrow card opens tomorrow");
+    }
+
+    [Fact]
+    public async Task TheShoppingCard_EndsWithAnOpenButtonToThatListInTheMiniApp()
+    {
+        await _world.Handler().HandleAsync(Text("/shop"), CancellationToken.None);
+
+        var rows = _world.LastSend.GetProperty("reply_markup").GetProperty("inline_keyboard");
+        var open = rows[rows.GetArrayLength() - 1].EnumerateArray().Should().ContainSingle().Subject;
+        open.GetProperty("text").GetString().Should().Be("Open");
+        open.GetProperty("web_app").GetProperty("url").GetString()
+            .Should().Be($"https://mizan.test/tg/shopping-list?listId={_world.ShoppingListId:D}");
+        _world.LastKeyboard().Should().OnlyContain(b => System.Text.Encoding.UTF8.GetByteCount(b.Data) <= 64);
+    }
+
+    [Fact]
+    public async Task ThePlanAndShoppingCards_LeaveOpenOutOverPlainHttp_AndKeepTheirOtherButtons()
+    {
+        _world.BotOptions.Value.PublicUrl = "http://localhost:3000";
+
+        await _world.Handler().HandleAsync(Text("/plan"), CancellationToken.None);
+        _world.LastWebAppButtons().Should().BeEmpty();
+        _world.LastKeyboard().Select(b => b.Text).Should().Contain("Tomorrow");
+
+        await _world.Handler().HandleAsync(Text("/shop"), CancellationToken.None);
+        _world.LastWebAppButtons().Should().BeEmpty();
+        _world.LastKeyboard().Should().Contain(("More", "sp:1"));
+    }
 }
