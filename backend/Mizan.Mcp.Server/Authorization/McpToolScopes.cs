@@ -110,6 +110,12 @@ public static class McpToolScopes
             "admin_reply_contact", "admin_mark_contact_handled", "admin_get_system_health",
             "admin_list_support_notes", "admin_add_support_note");
 
+        // Feature flags, allowance overrides and platform usage (docs/ADMIN.md).
+        Add(McpScopes.Admin,
+            "admin_list_feature_flags", "admin_set_feature_flag", "admin_set_feature_flag_override",
+            "admin_clear_feature_flag_override", "admin_list_usage_limits", "admin_set_usage_limit",
+            "admin_clear_usage_limit", "admin_get_platform_usage");
+
         return map;
     }
 }

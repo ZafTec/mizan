@@ -1,6 +1,8 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
+using Mizan.Application.Features;
+using Mizan.Domain.Features;
 
 namespace Mizan.Application.Queries;
 
@@ -51,6 +53,7 @@ public record FeedCommentDto(Guid Id, Guid UserId, string DisplayName, string Bo
 public record FeedItemDto(Guid Id, Guid UserId, string DisplayName, string? AvatarUrl, string Type, string? Caption, DateTime CreatedAt,
     WorkoutFeedSummaryDto? Workout, IReadOnlyList<FeedReactionDto> Reactions, IReadOnlyList<FeedCommentDto> Comments);
 public record SocialFeedResult(IReadOnlyList<FeedItemDto> Items, int TotalCount, int Page, int PageSize);
+[RequiresFeature(FeatureFlags.SocialFeed)]
 public record GetSocialFeedQuery(int Page = 1, int PageSize = 20) : IRequest<SocialFeedResult>;
 public sealed class GetSocialFeedQueryHandler : IRequestHandler<GetSocialFeedQuery, SocialFeedResult>
 {

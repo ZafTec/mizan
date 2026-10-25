@@ -24,15 +24,18 @@ public class AiQuotaService : IAiQuotaService
     private readonly IMizanDbContext _context;
     private readonly IEntitlementService _entitlements;
     private readonly IRuntimeOptions<AiOptions> _settings;
+    private readonly IUsageLimits _usageLimits;
 
     public AiQuotaService(
         IMizanDbContext context,
         IEntitlementService entitlements,
-        IRuntimeOptions<AiOptions> settings)
+        IRuntimeOptions<AiOptions> settings,
+        IUsageLimits usageLimits)
     {
         _context = context;
         _entitlements = entitlements;
         _settings = settings;
+        _usageLimits = usageLimits;
     }
 
     public async Task<AiQuotaLease> ReserveAsync(
@@ -48,18 +51,22 @@ public class AiQuotaService : IAiQuotaService
         var options = await _settings.GetAsync(cancellationToken);
         var (windowStart, windowEnd) = Today();
         var line = AiQuotaLines.For(feature);
-        var limits = await LimitsForAsync(options, userId, line, cancellationToken);
+        var limits = await LimitsForAsync(userId, householdId, line, cancellationToken);
+        householdId = limits.HouseholdId;
 
         var mine = await UsageSinceAsync(userId, windowStart, line, cancellationToken);
-        if (mine.Requests >= limits.DailyRequests || mine.Tokens + estimatedTokens > limits.DailyTokens)
+        var (cap, resetsAt) = await CapReachedAsync(userId, line, limits, mine, estimatedTokens, windowEnd, cancellationToken);
+        if (cap is { } reached)
         {
-            throw new AiQuotaExceededException(AiQuotaScope.User, windowEnd);
+            await RecordRefusalAsync(userId, householdId, feature, promptVersionId, cancellationToken);
+            throw new AiQuotaExceededException(AiQuotaScope.User, resetsAt, reached);
         }
 
         var everyone = await GlobalUsageSinceAsync(windowStart, cancellationToken);
         if (everyone.Tokens + estimatedTokens > options.GlobalDailyTokens
             || everyone.CostMicros >= options.GlobalDailyCostMicros)
         {
+            await RecordRefusalAsync(userId, householdId, feature, promptVersionId, cancellationToken);
             throw new AiQuotaExceededException(AiQuotaScope.Global, windowEnd);
         }
 
@@ -116,16 +123,15 @@ public class AiQuotaService : IAiQuotaService
         Guid userId, AiQuotaLine line, CancellationToken cancellationToken = default)
     {
         var (windowStart, windowEnd) = Today();
-        var options = await _settings.GetAsync(cancellationToken);
         var entitlement = await _entitlements.GetAsync(userId, cancellationToken);
-        var limits = await LimitsForAsync(options, userId, line, cancellationToken);
+        var limits = await LimitsForAsync(userId, null, line, cancellationToken);
         var mine = await UsageSinceAsync(userId, windowStart, line, cancellationToken);
 
         return new AiQuotaSnapshot(
             mine.Requests,
             limits.DailyRequests,
             mine.Tokens,
-            limits.DailyTokens,
+            (int)Math.Min(limits.DailyTokens, int.MaxValue),
             windowEnd,
             entitlement.Plan);
     }
@@ -137,27 +143,73 @@ public class AiQuotaService : IAiQuotaService
         return (start, start.AddDays(1));
     }
 
-    private async Task<AiTierLimits> LimitsForAsync(
-        AiOptions options, Guid userId, AiQuotaLine line, CancellationToken cancellationToken)
-    {
-        if (line == AiQuotaLine.Eval) return options.Eval;
-        if (line == AiQuotaLine.Onboarding) return options.Onboarding;
-        if (line == AiQuotaLine.TrainerClient) return options.Trainer;
+    /// <summary>
+    /// The caps in force: the tier defaults (<see cref="AiOptions.For"/>) with any
+    /// user, household or plan override composed on top, field by field
+    /// (docs/AI.md#metering). This is the only place the overrides are enforced.
+    /// </summary>
+    private Task<EffectiveUsageLimits> LimitsForAsync(
+        Guid userId, Guid? householdId, AiQuotaLine line, CancellationToken cancellationToken) =>
+        _usageLimits.ResolveAsync(userId, householdId, line, cancellationToken);
 
-        var entitlement = await _entitlements.GetAsync(userId, cancellationToken);
-        if (line == AiQuotaLine.Planning) return entitlement.IsPro ? options.PlanningPro : options.PlanningFree;
-        return entitlement.IsPro ? options.Pro : options.Free;
+    /// <summary>
+    /// The first of the caller's caps this call would break, and when it resets.
+    /// The daily caps are checked first; the month is read only when a monthly
+    /// cap is set.
+    /// </summary>
+    private async Task<(AiQuotaCap? Cap, DateTime ResetsAt)> CapReachedAsync(
+        Guid userId,
+        AiQuotaLine line,
+        EffectiveUsageLimits limits,
+        (int Requests, int Tokens, long CostMicros) today,
+        int estimatedTokens,
+        DateTime dayEnd,
+        CancellationToken cancellationToken)
+    {
+        if (today.Requests >= limits.DailyRequests) return (AiQuotaCap.DailyRequests, dayEnd);
+        if (today.Tokens + estimatedTokens > limits.DailyTokens) return (AiQuotaCap.DailyTokens, dayEnd);
+        if (limits.DailyCostMicros is { } dailyCost && today.CostMicros >= dailyCost) return (AiQuotaCap.DailyCost, dayEnd);
+
+        if (limits.MonthlyCostMicros is { } monthlyCost)
+        {
+            var monthStart = new DateTime(dayEnd.AddDays(-1).Year, dayEnd.AddDays(-1).Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            var month = await UsageSinceAsync(userId, monthStart, line, cancellationToken);
+            if (month.CostMicros >= monthlyCost) return (AiQuotaCap.MonthlyCost, monthStart.AddMonths(1));
+        }
+
+        return (null, dayEnd);
+    }
+
+    /// <summary>
+    /// A refusal is a ledger row with no tokens and no cost, so the usage view
+    /// can count limit hits. It is never counted as a request.
+    /// </summary>
+    private async Task RecordRefusalAsync(
+        Guid userId, Guid? householdId, string feature, Guid? promptVersionId, CancellationToken cancellationToken)
+    {
+        _context.AiUsageLogs.Add(new AiUsageLog
+        {
+            Id = Guid.CreateVersion7(),
+            UserId = userId,
+            HouseholdId = householdId,
+            Feature = feature,
+            Model = (await _settings.GetAsync(cancellationToken)).Model,
+            PromptVersionId = promptVersionId,
+            Outcome = AiCallOutcome.Refused,
+            CreatedAt = DateTime.UtcNow,
+        });
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     /// <summary>
     /// Usage on the same line the limit came from, so an eval run or a setup
     /// conversation cannot spend the caller's chat allowance, or the reverse.
     /// </summary>
-    private async Task<(int Requests, int Tokens)> UsageSinceAsync(
+    private async Task<(int Requests, int Tokens, long CostMicros)> UsageSinceAsync(
         Guid userId, DateTime since, AiQuotaLine line, CancellationToken cancellationToken)
     {
         var query = _context.AiUsageLogs.AsNoTracking()
-            .Where(log => log.UserId == userId && log.CreatedAt >= since);
+            .Where(log => log.UserId == userId && log.CreatedAt >= since && log.Outcome != AiCallOutcome.Refused);
 
         query = line switch
         {
@@ -178,10 +230,11 @@ public class AiQuotaService : IAiQuotaService
             {
                 Requests = g.Count(),
                 Tokens = g.Sum(log => log.PromptTokens + log.CompletionTokens),
+                Cost = g.Sum(log => log.EstimatedCostMicros),
             })
             .FirstOrDefaultAsync(cancellationToken);
 
-        return (totals?.Requests ?? 0, totals?.Tokens ?? 0);
+        return (totals?.Requests ?? 0, totals?.Tokens ?? 0, totals?.Cost ?? 0);
     }
 
     private async Task<(long Tokens, long CostMicros)> GlobalUsageSinceAsync(
@@ -192,7 +245,7 @@ public class AiQuotaService : IAiQuotaService
             .GroupBy(_ => 1)
             .Select(g => new
             {
-                Tokens = g.Sum(log => (long)log.PromptTokens + log.CompletionTokens),
+                Tokens = g.Sum(log => log.PromptTokens + log.CompletionTokens),
                 Cost = g.Sum(log => log.EstimatedCostMicros),
             })
             .FirstOrDefaultAsync(cancellationToken);

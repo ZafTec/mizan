@@ -58,7 +58,11 @@ builder.Host.UseSerilog();
 
 Log.Information("Starting Mizan API - Environment: {Environment}", environment);
 
-builder.Services.AddControllers(options => options.Filters.Add<ErrorShapeFilter>())
+builder.Services.AddControllers(options =>
+    {
+        options.Filters.Add<ErrorShapeFilter>();
+        options.Filters.Add<FeatureGateFilter>();
+    })
     // A body that cannot be read (bad JSON, a string where a number belongs) answers in the same shape as every
     // other error, so a client has one thing to parse (docs/ARCHITECTURE.md#errors).
     .ConfigureApiBehaviorOptions(options =>
@@ -473,6 +477,7 @@ app.UseExceptionHandler(errorApp =>
                 errorCode = "ai_quota_exceeded",
                 error = quotaEx.Message,
                 scope = quotaEx.Scope.ToString().ToLowerInvariant(),
+                cap = System.Text.Json.JsonNamingPolicy.SnakeCaseLower.ConvertName(quotaEx.Cap.ToString()),
                 resetsAt = quotaEx.ResetsAt,
             });
         }
@@ -536,6 +541,13 @@ app.UseExceptionHandler(errorApp =>
 
             context.Response.StatusCode = 404;
             await context.Response.WriteAsJsonAsync(new { errorCode = "not_found", error = notFoundEx.Message });
+        }
+        else if (exception is FeatureDisabledException featureEx)
+        {
+            // Switched off for the caller's household (docs/ADMIN.md#feature-flags). Every surface shows
+            // the message as it is, so none of them needs to know which flag or why.
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await context.Response.WriteAsJsonAsync(new { errorCode = "feature_disabled", error = featureEx.Message, feature = featureEx.FeatureKey });
         }
         else if (exception is UpgradeRequiredException upgradeEx)
         {

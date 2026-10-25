@@ -37,6 +37,9 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         "announcements",
         "contact_submissions",
         "support_notes",
+        "feature_flag_overrides",
+        "feature_flags",
+        "usage_limit_overrides",
         "billing_discounts",
         "billing_plans",
         "recipe_nutrition_snapshots",
@@ -450,6 +453,9 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         Clock.Reset();
         TelegramBot.Reset();
         await ClearCacheAsync();
+        // Redis is flushed above, but each node also keeps an in-process copy. Flags and allowance
+        // overrides are global reads, so a value cached by the test before must not reach this one.
+        await scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Caching.Hybrid.HybridCache>().RemoveByTagAsync("*");
     }
 
     /// <summary>

@@ -6,6 +6,8 @@ using Mizan.Application.Interfaces;
 using Mizan.Application.Queries;
 using Mizan.Contracts.Nutrition;
 using Mizan.Domain.Media;
+using Mizan.Application.Features;
+using Mizan.Domain.Features;
 
 namespace Mizan.Api.Controllers;
 
@@ -55,6 +57,7 @@ public class NutritionController : ControllerBase
 
     [HttpPost("ai/analyze-image")]
     [Authorize(Policy = "RequirePro")]
+    [RequiresFeature(FeatureFlags.AiAssistant)]
     [RequestSizeLimit(10_000_000)]
     public async Task<ActionResult<FoodAnalysisResult>> AnalyzeFoodImage(IFormFile image)
     {
@@ -97,6 +100,7 @@ public class NutritionController : ControllerBase
     /// <summary>A sentence becomes a proposal, the way a photo does. Nothing is logged until the person confirms it.</summary>
     [HttpPost("ai/analyze-text")]
     [Authorize(Policy = "RequirePro")]
+    [RequiresFeature(FeatureFlags.AiAssistant)]
     public async Task<ActionResult<FoodAnalysisResult>> AnalyzeFoodText([FromBody] AnalyzeFoodTextRequest request)
     {
         var description = request.Description?.Trim() ?? string.Empty;

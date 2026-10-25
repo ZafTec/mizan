@@ -89,6 +89,11 @@ public interface IMizanDbContext
     DbSet<BillingPlan> BillingPlans { get; }
     DbSet<BillingDiscount> BillingDiscounts { get; }
 
+    // Platform administration
+    DbSet<FeatureFlag> FeatureFlags { get; }
+    DbSet<FeatureFlagOverride> FeatureFlagOverrides { get; }
+    DbSet<UsageLimitOverride> UsageLimitOverrides { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<T> ExecuteInTransactionAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken = default);
 

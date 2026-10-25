@@ -1,8 +1,10 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Exceptions;
+using Mizan.Application.Features;
 using Mizan.Application.Interfaces;
 using Mizan.Contracts.Telegram;
+using Mizan.Domain.Features;
 
 namespace Mizan.Application.Telegram;
 
@@ -27,17 +29,20 @@ public class CreateTelegramMiniAppSessionCommandHandler
     private readonly ISessionService _sessions;
     private readonly IEntitlementService _entitlements;
     private readonly ITelegramSettings _settings;
+    private readonly FeatureGate _features;
 
     public CreateTelegramMiniAppSessionCommandHandler(
         IMizanDbContext context,
         ISessionService sessions,
         IEntitlementService entitlements,
-        ITelegramSettings settings)
+        ITelegramSettings settings,
+        FeatureGate features)
     {
         _context = context;
         _sessions = sessions;
         _entitlements = entitlements;
         _settings = settings;
+        _features = features;
     }
 
     public async Task<TelegramMiniAppSessionResponse> Handle(
@@ -70,6 +75,9 @@ public class CreateTelegramMiniAppSessionCommandHandler
         {
             throw new UpgradeRequiredException("The Telegram bot is part of Pro. Upgrade to open Mizan from Telegram.");
         }
+
+        // The request is the service's, not the user's, so the household is the linked user's.
+        await _features.EnsureEnabledForUserAsync(FeatureFlags.TelegramBot, user.Id, cancellationToken);
 
         // Same courtesy as resolving a message: the settings page can say the
         // chat was used today, not only that it was linked once.

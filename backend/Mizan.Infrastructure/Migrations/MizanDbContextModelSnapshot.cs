@@ -1423,6 +1423,80 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("favorite_recipes", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.FeatureFlag", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("key");
+
+                    b.Property<bool>("DefaultEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("default_enabled");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("description");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by_user_id");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("feature_flags", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.FeatureFlagOverride", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("enabled");
+
+                    b.Property<string>("FlagKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("flag_key");
+
+                    b.Property<Guid>("HouseholdId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("household_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by_user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HouseholdId");
+
+                    b.HasIndex("FlagKey", "HouseholdId")
+                        .IsUnique();
+
+                    b.ToTable("feature_flag_overrides", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.FeedComment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3910,6 +3984,68 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("trainer_client_relationships", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.UsageLimitOverride", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<long?>("DailyCostMicros")
+                        .HasColumnType("bigint")
+                        .HasColumnName("daily_cost_micros");
+
+                    b.Property<int?>("DailyRequests")
+                        .HasColumnType("integer")
+                        .HasColumnName("daily_requests");
+
+                    b.Property<long?>("DailyTokens")
+                        .HasColumnType("bigint")
+                        .HasColumnName("daily_tokens");
+
+                    b.Property<string>("Line")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("line");
+
+                    b.Property<long?>("MonthlyCostMicros")
+                        .HasColumnType("bigint")
+                        .HasColumnName("monthly_cost_micros");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("note");
+
+                    b.Property<int>("Scope")
+                        .HasColumnType("integer")
+                        .HasColumnName("scope");
+
+                    b.Property<Guid>("SubjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("subject_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by_user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Scope", "SubjectId", "Line")
+                        .IsUnique();
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("Scope", "SubjectId", "Line"), false);
+
+                    b.ToTable("usage_limit_overrides", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4852,6 +4988,17 @@ namespace Mizan.Infrastructure.Migrations
                     b.Navigation("Recipe");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.FeatureFlagOverride", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.Household", "Household")
+                        .WithMany()
+                        .HasForeignKey("HouseholdId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Household");
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.FeedComment", b =>

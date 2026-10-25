@@ -15,6 +15,7 @@ public static class DependencyInjection
         {
             cfg.RegisterServicesFromAssembly(assembly);
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(FeatureGateBehavior<,>));
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(AuditBehavior<,>));
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         });
@@ -33,6 +34,12 @@ public static class DependencyInjection
         services.AddScoped<Prices.PriceBookReader>();
         services.AddScoped<Interfaces.IEmailQueue, Mail.EmailQueue>();
         services.AddScoped<Mail.AnnouncementRecipients>();
+        services.AddScoped<Features.ActiveHousehold>();
+        services.AddScoped<Interfaces.IFeatureFlags, Features.FeatureFlagService>();
+        services.AddScoped<Features.FeatureGate>();
+        services.AddScoped<Usage.UsageLimitService>();
+        services.AddScoped<Interfaces.IUsageLimits>(sp => sp.GetRequiredService<Usage.UsageLimitService>());
+        services.AddScoped<Usage.UsageLimitSubjects>();
 
         return services;
     }

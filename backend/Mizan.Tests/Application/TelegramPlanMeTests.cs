@@ -72,6 +72,18 @@ public class TelegramPlanMeTests
     }
 
     [Fact]
+    public async Task PlanMe_WhenTheFeatureIsOffForTheHousehold_ShowsTheApisMessage()
+    {
+        _world.FeatureOff = true;
+
+        await _world.Handler().HandleAsync(Text("/planme anything"), CancellationToken.None);
+
+        _world.LastText.Should().Be("This feature is turned off for your household.");
+        // The bot names itself on every call as the user, which is what lets the API hold it to telegram.bot.
+        _world.SurfacesSent.Should().NotBeEmpty().And.OnlyContain(s => s == "telegram");
+    }
+
+    [Fact]
     public async Task PlanMe_WithNoWords_AsksForThem_AndCallsNothing()
     {
         await _world.Handler().HandleAsync(Text("/planme"), CancellationToken.None);
