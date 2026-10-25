@@ -7,6 +7,7 @@ using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Constants;
 using Mizan.Domain.Entities;
+using Mizan.Domain.Nutrition;
 using Mizan.Domain.Recipes;
 
 namespace Mizan.Application.Commands;
@@ -41,6 +42,9 @@ public class LogFoodCommandValidator : AbstractValidator<LogFoodCommand>
             .WithMessage($"Meal type must be one of: {string.Join(", ", MealTypes.All)}");
         RuleFor(x => x).Must(x => x.FoodId.HasValue != x.RecipeId.HasValue)
             .WithMessage("Exactly one of FoodId or RecipeId must be provided");
+        RuleFor(x => x.EntryDate)
+            .Must(date => DiaryDates.Problem(date, DateOnly.FromDateTime(DateTime.UtcNow)) is null)
+            .WithMessage(x => DiaryDates.Problem(x.EntryDate, DateOnly.FromDateTime(DateTime.UtcNow)) ?? string.Empty);
     }
 }
 
