@@ -49,7 +49,7 @@ public class StreakServiceTests
     {
         var (db, svc, userId) = Make();
 
-        var result = await svc.RecordActivityAsync("nutrition");
+        var result = (await svc.RecordActivityAsync("nutrition"))!;
 
         result.CurrentCount.Should().Be(1);
         result.LongestCount.Should().Be(1);
@@ -69,7 +69,7 @@ public class StreakServiceTests
         var (db, svc, userId) = Make();
 
         await svc.RecordActivityAsync("nutrition");
-        var second = await svc.RecordActivityAsync("nutrition");
+        var second = (await svc.RecordActivityAsync("nutrition"))!;
 
         second.CurrentCount.Should().Be(1);
         second.Extended.Should().BeFalse();
@@ -94,7 +94,7 @@ public class StreakServiceTests
         });
         await db.SaveChangesAsync();
 
-        var result = await svc.RecordActivityAsync("nutrition");
+        var result = (await svc.RecordActivityAsync("nutrition"))!;
 
         result.CurrentCount.Should().Be(4);
         result.LongestCount.Should().Be(5); // unchanged, still below record
@@ -119,7 +119,7 @@ public class StreakServiceTests
         });
         await db.SaveChangesAsync();
 
-        var result = await svc.RecordActivityAsync("nutrition");
+        var result = (await svc.RecordActivityAsync("nutrition"))!;
 
         result.CurrentCount.Should().Be(1);
         result.LongestCount.Should().Be(10); // record preserved across reset
@@ -144,7 +144,7 @@ public class StreakServiceTests
         });
         await db.SaveChangesAsync();
 
-        var result = await svc.RecordActivityAsync("nutrition");
+        var result = (await svc.RecordActivityAsync("nutrition"))!;
 
         result.CurrentCount.Should().Be(8);
         result.LongestCount.Should().Be(8);
@@ -156,8 +156,8 @@ public class StreakServiceTests
     {
         var (db, svc, userId) = Make();
 
-        var n = await svc.RecordActivityAsync("nutrition");
-        var w = await svc.RecordActivityAsync("workout");
+        var n = (await svc.RecordActivityAsync("nutrition"))!;
+        var w = (await svc.RecordActivityAsync("workout"))!;
 
         n.CurrentCount.Should().Be(1);
         w.CurrentCount.Should().Be(1);
