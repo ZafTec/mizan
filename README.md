@@ -142,7 +142,7 @@ Production Compose currently follows `latest`. To pin a release, use its version
 - [Design](DESIGN.md)
 - [MCP setup, OAuth, and the Claude plugin](docs/MCP.md)
 - [AI consent, limits, and administration](docs/AI.md)
-- [Administration and runtime settings](docs/ADMIN.md)
+- [Administration: health, mail, contact, households, runtime settings, feature flags, usage limits, and usage](docs/ADMIN.md)
 - [Telegram setup](docs/TELEGRAM.md)
 - [Meal planning, shopping lists, and prices](docs/PLANNING.md)
 - [Administration](docs/ADMIN.md)
