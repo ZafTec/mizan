@@ -142,6 +142,8 @@ services:
     environment:
       API_URL: http://mizan-backend:8080
       BACKEND_API_URL: http://mizan-backend:8080
+      # Used only if the proxy sends /telegram/miniapp/session to Next.js.
+      TELEGRAM_BOT_URL: http://mizan-telegram:5002
       NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:?NEXT_SERVER_ACTIONS_ENCRYPTION_KEY is required}
     depends_on:
       mizan-backend:

@@ -28,7 +28,19 @@ const PROTECTED_PATTERNS = [/^\/recipes\/add/, /^\/recipes\/[^/]+\/edit/];
 
 const SESSION_COOKIE = "mizan_session";
 
+// The Telegram Mini App and its session exchange. A /tg page opens signed out
+// and signs itself in from Telegram's initData (docs/TELEGRAM.md#mini-app), so
+// it is never sent to /login, whatever the prefixes above come to include.
+const SELF_SIGNED_PREFIXES = ["/tg", "/telegram"];
+
+function isSelfSignedRoute(pathname: string): boolean {
+  return SELF_SIGNED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
 function isProtectedRoute(pathname: string): boolean {
+  if (isSelfSignedRoute(pathname)) return false;
   if (PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return true;
   }
