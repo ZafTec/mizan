@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Text.Json;
+using Mizan.Contracts.Admin;
 using Mizan.Mcp.Server.Services;
 using ModelContextProtocol.Server;
 
@@ -291,6 +292,39 @@ public sealed class AdminTools
         + "that gate is in the handler, not only in the console.")]
     public Task<string> PublishVersion(string id, CancellationToken ct = default) =>
         _api.PostAsync($"/api/Admin/Ai/Prompts/versions/{ToolArguments.ParseId(id, "id")}/publish", null, ct);
+
+    // ---- Runtime settings -------------------------------------------------
+
+    [McpServerTool(Name = "admin_list_settings", ReadOnly = true, Idempotent = true)]
+    [Description(
+        "Admin only. The runtime settings (SMTP, AI provider and limits, Telegram bot service, push, "
+        + "Paddle) with each current value and its source: database, configuration or unset. A secret "
+        + "shows only hasValue, never its value.")]
+    public Task<string> ListSettings(CancellationToken ct = default) =>
+        _api.GetAsync("/api/admin/settings", ct);
+
+    [McpServerTool(Name = "admin_set_setting", Destructive = true)]
+    [Description(
+        "Admin only. Sets one runtime setting, such as Smtp.Host or Ai.Free.DailyRequests, overriding "
+        + "configuration from the next use. The value is checked against the catalog (port range, URL "
+        + "shape and so on). Booleans are true or false.")]
+    public Task<string> SetSetting(
+        [Description("A key from admin_list_settings, such as Smtp.Port")] string key,
+        string value,
+        CancellationToken ct = default) =>
+        _api.PutAsync($"/api/admin/settings/{Uri.EscapeDataString(key)}", new SetRuntimeSettingRequest(value), ct);
+
+    [McpServerTool(Name = "admin_clear_setting", Destructive = true)]
+    [Description("Admin only. Removes a runtime setting's database value so configuration applies again.")]
+    public Task<string> ClearSetting(string key, CancellationToken ct = default) =>
+        _api.DeleteAsync($"/api/admin/settings/{Uri.EscapeDataString(key)}", ct);
+
+    [McpServerTool(Name = "admin_test_smtp")]
+    [Description(
+        "Admin only. Queues a test email to your own address with the SMTP settings as they stand, "
+        + "and returns the outbox job id; admin_list_jobs shows whether it was delivered.")]
+    public Task<string> TestSmtp(CancellationToken ct = default) =>
+        _api.PostAsync("/api/admin/settings/smtp/test", null, ct);
 
     [McpServerTool(Name = "admin_get_global_ai_usage", ReadOnly = true, Idempotent = true)]
     [Description(
