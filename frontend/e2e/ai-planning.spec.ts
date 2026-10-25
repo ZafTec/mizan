@@ -35,6 +35,23 @@ async function noOverflow(page: Page) {
     ),
   ).toBe(true);
 }
+// Every page here renders the same on the server and in the browser: a
+// hydration error in the console or on the page fails the story.
+let hydration: string[] = [];
+test.beforeEach(({ page }) => {
+  hydration = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" && /hydrat/i.test(message.text()))
+      hydration.push(message.text());
+  });
+  page.on("pageerror", (error) => {
+    if (/hydrat/i.test(error.message)) hydration.push(error.message);
+  });
+});
+test.afterEach(() => {
+  expect(hydration).toEqual([]);
+});
+
 const writesTo = (s: State, pattern: RegExp) =>
   s.writes.filter((w) => pattern.test(w.path));
 const assistant = (page: Page) =>
