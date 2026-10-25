@@ -1,6 +1,46 @@
 # Administration
 
-The admin area (`/admin`, administrators only) runs the service: users, content, jobs, prices, billing, and the settings below. Its API lives under `/api/admin` and its MCP tools are named `admin_*` and need the `admin` scope.
+The admin area at `/admin` is for administrators only: every page and every `/api/admin` route requires the `admin` role, and an administrator viewing the site as a user cannot reach it. Its MCP tools are named `admin_*` and need the `admin` scope. Each section below names its page, its API, and its MCP tools; admin features have no Telegram commands, because the bot serves end users.
+
+## Overview and health
+
+`/admin` shows the account counts and a system health grid from `GET /api/admin/overview/health` (MCP `admin_get_system_health`). Each check is `ok`, `degraded`, `down` or `notConfigured`, with a detail line, and the result is cached for 30 seconds.
+
+| Check | What is measured | Degraded or down when |
+| --- | --- | --- |
+| `database` | A `SELECT 1` round trip | Slower than one second, or no answer |
+| `redis` | A ping, when `ConnectionStrings:Redis` is set | Slower than one second, or no answer |
+| `outbox` | Pending and dead-lettered jobs, oldest due job | Any dead-lettered job or work waiting over 10 minutes; down after an hour |
+| `email` | `Smtp:Host` set, failed messages in 24 hours | Any failure in the last day |
+| `ai` | Provider set, today's tokens and cost | 80% of a global daily ceiling; down at the ceiling |
+| `telegram` | The bot service's own `GET /health`, when `Telegram:BotServiceUrl` is set | No answer |
+| `push` | Firebase credentials set | |
+| `prices` | `Prices:WorkerUrl` set, last successful source run | No success yet, or none in 48 hours |
+| `storage` | `Storage:ServiceUrl` set | |
+
+`notConfigured` means there is nothing to measure. The tile says "Not configured" and links to the page where it is set up, never a number. The thresholds live in `SystemHealthRules` (Domain).
+
+## Mail
+
+Every email the system sends goes through `IEmailQueue`, which writes an `email_messages` row (recipient, subject, kind, status, attempts, last error, outbox job) and the outbox job in the caller's unit of work. The body stays in the job only, because it can hold a sign-in link. The email handler marks the row `Sent`, or records the attempt and the redacted error and leaves it `Queued` while it retries; when the job gives up the row turns `Failed`. Kinds include `auth.verify`, `auth.reset`, `auth.signin`, `admin.announcement`, `contact.received` and `contact.reply`.
+
+`/admin/mail` lists the log with recipient search and status, kind and date filters (`GET /api/admin/mail`, `GET /api/admin/mail/stats`, `GET /api/admin/mail/{id}`). A row opens its detail with the error. **Retry** (`POST /api/admin/mail/{id}/retry`) resets the message's outbox job; it is refused with 409 for a sent message, one already queued, and one whose job was deleted with its body.
+
+**Compose announcement** takes a subject, a plain-text body and an audience: `all`, `pro`, `free`, `household:{id}` or `user:{id}`. Unconfirmed addresses and suspended accounts are always left out. The confirmation step shows the recipient count from `GET /api/admin/mail/announcements/audience` before anything is queued. `POST /api/admin/mail/announcements` queues one email per recipient with the dedupe key `announcement:{announcementId}:{userId}`; sending the same announcement id again answers with the first count and queues nothing. An announcement to `all` is limited to one an hour (429 with `Retry-After`). MCP: `admin_list_mail`, `admin_retry_mail`, `admin_send_announcement`.
+
+## Contact
+
+The public page `/contact`, linked from the footer, posts to `POST /api/Contact`. Signed out is fine; a signed-in sender is linked to their account from the session, never from the form. Fields are capped (name 120, email 320, subject 160, message 5,000 characters), one address may send five messages an hour (counted by a hash of the IP address, which is never stored), and a filled hidden `website` field is answered as usual and dropped. The submission and one `contact.received` email to every administrator are saved in one transaction.
+
+`/admin/contact` lists messages with a status filter (`New`, `Handled`) and search (`GET /api/admin/contact`, `GET /api/admin/contact/{id}`). **Send reply** (`POST /api/admin/contact/{id}/reply`) queues a `contact.reply` email to the sender from the configured sender address and marks the message handled; a message takes one reply. **Mark handled** (`POST /api/admin/contact/{id}/handled`) closes it without one. MCP: `admin_list_contact`, `admin_reply_contact`, `admin_mark_contact_handled`.
+
+## Households, users and support notes
+
+`/admin/households` searches by household name or any member's name or email (`GET /api/Households/admin/all?search=`, with paging and sorting by name, members or creation). The detail page reads `GET /api/Households/admin/{id}`: the owner (by the same rule as deletion), members with roles and join dates, pending invitations, and meal plan and shopping list counts.
+
+The user detail page shows a suspension with its reason and end. **Suspend account** takes a reason and an optional end; **Lift suspension** clears it. Both use `PATCH /api/admin/users/{id}`.
+
+Both detail pages carry support notes: notes administrators leave for each other about a user or a household (`GET /api/admin/support-notes?subjectType=User|Household&subjectId=`, `POST`, `PUT /{id}`, `DELETE /{id}`). Only administrators can read or write them, any administrator may edit or delete one, and every write is audited. MCP: `admin_list_support_notes`, `admin_add_support_note`.
 
 ## Runtime settings
 
