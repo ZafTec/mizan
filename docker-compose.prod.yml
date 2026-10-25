@@ -34,6 +34,10 @@ x-backend-environment: &backend-environment
   # Push to the Android app. Empty keeps push off; Firebase credentials turn it on.
   Push__FcmProjectId: ${FCM_PROJECT_ID:-}
   Push__FcmServiceAccountJson: ${FCM_SERVICE_ACCOUNT_JSON:-}
+  # The Data Protection key ring that encrypts secrets set in the admin area
+  # (docs/ADMIN.md#runtime-settings). Empty keeps it in the database; a path
+  # keeps it in that directory, which every API instance must mount.
+  DataProtection__KeysPath: ${DATA_PROTECTION_KEYS_PATH:-}
   # Serve /swagger/v1/swagger.json so the web and Android clients can generate types. Off by default.
   OpenApi__Enabled: ${OPENAPI_ENABLED:-false}
   Smtp__Host: ${SMTP_HOST:-}

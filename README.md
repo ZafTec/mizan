@@ -23,6 +23,18 @@ cp .env.example .env
 
 Set `DB_PASSWORD`, `REDIS_PASSWORD`, `MCP_SERVICE_KEY`, `MCP_ADMIN_SERVICE_KEY`, `STORAGE_ACCESS_KEY_ID`, and `STORAGE_SECRET_ACCESS_KEY` to local development values. Set `PUBLIC_APP_URL=http://localhost:3000`. These service credentials are required by Compose; SMTP, OAuth, Paddle, AI, and Telegram are optional for basic logging.
 
+Some optional settings can also be set by an administrator under **Admin → Settings**; a value set there wins over the environment until it is cleared ([runtime settings](docs/ADMIN.md#runtime-settings)):
+
+| Variables | In the admin area |
+| --- | --- |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM_ADDRESS`, `SMTP_FROM_NAME`, `Smtp__Security`, `Smtp__LocalDomain` | Yes |
+| `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`, `AI_SUPPORTS_TEMPERATURE`, `AI_REASONING_EFFORT`, `AI_GLOBAL_DAILY_TOKENS`, `AI_GLOBAL_DAILY_COST_MICROS`, `Ai__<line>__Daily*` | Yes |
+| `TELEGRAM_BOT_SERVICE_URL`, `FCM_PROJECT_ID`, `FCM_SERVICE_ACCOUNT_JSON` | Yes |
+| `PADDLE_ENVIRONMENT`, `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`, `PADDLE_GRACE_DAYS`, `PADDLE_PRICE_LIFETIME_LEGACY` | Yes |
+| Database, Redis, storage, MCP service keys, `PUBLIC_APP_URL`, OAuth, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` | No |
+
+Secrets set there are encrypted with a Data Protection key ring kept in the database; `DATA_PROTECTION_KEYS_PATH` keeps it in a mounted directory instead.
+
 ```sh
 docker compose up -d
 docker compose ps
@@ -130,6 +142,7 @@ Production Compose currently follows `latest`. To pin a release, use its version
 - [Design](DESIGN.md)
 - [MCP setup, OAuth, and the Claude plugin](docs/MCP.md)
 - [AI consent, limits, and administration](docs/AI.md)
+- [Administration and runtime settings](docs/ADMIN.md)
 - [Telegram setup](docs/TELEGRAM.md)
 - [Meal planning, shopping lists, and prices](docs/PLANNING.md)
 - [Contributor and agent guidance](CLAUDE.md)
