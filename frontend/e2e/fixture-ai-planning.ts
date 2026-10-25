@@ -13,7 +13,7 @@ import {
  * its planning line, POST /api/MealPlans/generate and a chat turn that
  * carries typed cards. Typed from the generated OpenAPI schema; a generated
  * draft is saved into the planning fixture's plans, so the plan pages, the
- * list and the delete route treat it like the API's own. Every write lands
+ * list and the decline route treat it like the API's own. Every write lands
  * in `writes[]` with its Idempotency-Key.
  */
 type Schemas = components["schemas"];

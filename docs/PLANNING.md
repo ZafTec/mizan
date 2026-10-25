@@ -239,7 +239,7 @@ Pages follow [DESIGN](../DESIGN.md): `log-page`, `facts-strip`, `ledger-row`, on
 | `/meal-plan` | Active plan first, then drafts and past plans. A draft from a coach or the assistant shows **Accept** and **Decline**; the assistant's says "Drafted by the assistant" (`generatedFrom`). |
 | `/meal-plan/[id]` | Day tabs, entries per slot, nutrition per day against targets, violations, cost. **Log** on each entry. **Make shopping list**. A generated draft is labelled and can be accepted or declined. |
 | `/meal-plan/[id]/edit` | Rules, entries, prep sessions. |
-| `/meal-plan/new` | From a template or empty; a coach sends the same form as a draft from `/trainer/clients/[id]/plan`. **Draft with the assistant** calls the generate route and previews the draft, which the person keeps (opens it) or discards (deletes it). |
+| `/meal-plan/new` | From a template or empty; a coach sends the same form as a draft from `/trainer/clients/[id]/plan`. **Draft with the assistant** calls the generate route and previews the draft, which the person keeps (opens it) or discards (declines it, so it moves to past plans). |
 | `/meal-plan/shopping-list` and `/shopping-lists/[id]` | Items by category or prep session, add, edit, delete, toggle, clear checked, cost. |
 | `/today` | The plan entries for today with **Log**, when an active plan covers today. |
 | `/trainer/clients/[id]/plan` | Draft for a client when the client granted meal planning; the client grants it on `/trainers/my-trainer`. |
