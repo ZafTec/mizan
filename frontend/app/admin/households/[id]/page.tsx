@@ -5,6 +5,7 @@ import {
   getAdminHouseholdServer,
   listSupportNotesServer,
 } from "@/lib/api/admin-ops.server";
+import UsageThisMonth from "@/components/admin/platform/UsageThisMonth";
 import AdminMemberRow from "./AdminMemberRow";
 
 export const dynamic = "force-dynamic";
@@ -109,6 +110,8 @@ export default async function AdminHouseholdDetail({
           ))}
         </ul>
       </section>
+
+      <UsageThisMonth householdId={detail.id} />
 
       {detail.pendingInvitations.length > 0 && (
         <section className="card p-5 sm:p-6" aria-labelledby="invites-title">

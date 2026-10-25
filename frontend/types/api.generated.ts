@@ -989,6 +989,193 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/feature-flags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FeatureFlagDto"][];
+                        "application/json": components["schemas"]["FeatureFlagDto"][];
+                        "text/json": components["schemas"]["FeatureFlagDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/feature-flags/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    key: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SetFeatureFlagRequest"];
+                    "text/json": components["schemas"]["SetFeatureFlagRequest"];
+                    "application/*+json": components["schemas"]["SetFeatureFlagRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FeatureFlagDto"];
+                        "application/json": components["schemas"]["FeatureFlagDto"];
+                        "text/json": components["schemas"]["FeatureFlagDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/feature-flags/{key}/overrides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    key: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FeatureFlagOverrideDto"][];
+                        "application/json": components["schemas"]["FeatureFlagOverrideDto"][];
+                        "text/json": components["schemas"]["FeatureFlagOverrideDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/feature-flags/{key}/overrides/{householdId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    key: string;
+                    householdId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SetFeatureFlagRequest"];
+                    "text/json": components["schemas"]["SetFeatureFlagRequest"];
+                    "application/*+json": components["schemas"]["SetFeatureFlagRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FeatureFlagOverrideDto"];
+                        "application/json": components["schemas"]["FeatureFlagOverrideDto"];
+                        "text/json": components["schemas"]["FeatureFlagOverrideDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    key: string;
+                    householdId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Admin/Jobs": {
         parameters: {
             query?: never;
@@ -2029,7 +2216,6 @@ export interface paths {
         trace?: never;
     };
     "/api/admin/settings": {
-    "/api/admin/support-notes": {
         parameters: {
             query?: never;
             header?: never;
@@ -2039,10 +2225,6 @@ export interface paths {
         get: {
             parameters: {
                 query?: never;
-                query?: {
-                    subjectType?: string;
-                    subjectId?: string;
-                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -2058,43 +2240,12 @@ export interface paths {
                         "text/plain": components["schemas"]["RuntimeSettingsDto"];
                         "application/json": components["schemas"]["RuntimeSettingsDto"];
                         "text/json": components["schemas"]["RuntimeSettingsDto"];
-                        "text/plain": components["schemas"]["SupportNoteDto"][];
-                        "application/json": components["schemas"]["SupportNoteDto"][];
-                        "text/json": components["schemas"]["SupportNoteDto"][];
                     };
                 };
             };
         };
         put?: never;
         post?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["CreateSupportNoteRequest"];
-                    "text/json": components["schemas"]["CreateSupportNoteRequest"];
-                    "application/*+json": components["schemas"]["CreateSupportNoteRequest"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["SupportNoteDto"];
-                        "application/json": components["schemas"]["SupportNoteDto"];
-                        "text/json": components["schemas"]["SupportNoteDto"];
-                    };
-                };
-            };
-        };
         delete?: never;
         options?: never;
         head?: never;
@@ -2102,7 +2253,6 @@ export interface paths {
         trace?: never;
     };
     "/api/admin/settings/{key}": {
-    "/api/admin/support-notes/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -2116,7 +2266,6 @@ export interface paths {
                 header?: never;
                 path: {
                     key: string;
-                    id: string;
                 };
                 cookie?: never;
             };
@@ -2125,9 +2274,6 @@ export interface paths {
                     "application/json": components["schemas"]["SetRuntimeSettingRequest"];
                     "text/json": components["schemas"]["SetRuntimeSettingRequest"];
                     "application/*+json": components["schemas"]["SetRuntimeSettingRequest"];
-                    "application/json": components["schemas"]["UpdateSupportNoteRequest"];
-                    "text/json": components["schemas"]["UpdateSupportNoteRequest"];
-                    "application/*+json": components["schemas"]["UpdateSupportNoteRequest"];
                 };
             };
             responses: {
@@ -2140,9 +2286,6 @@ export interface paths {
                         "text/plain": components["schemas"]["RuntimeSettingDto"];
                         "application/json": components["schemas"]["RuntimeSettingDto"];
                         "text/json": components["schemas"]["RuntimeSettingDto"];
-                        "text/plain": components["schemas"]["SupportNoteDto"];
-                        "application/json": components["schemas"]["SupportNoteDto"];
-                        "text/json": components["schemas"]["SupportNoteDto"];
                     };
                 };
             };
@@ -2154,7 +2297,6 @@ export interface paths {
                 header?: never;
                 path: {
                     key: string;
-                    id: string;
                 };
                 cookie?: never;
             };
@@ -2170,7 +2312,6 @@ export interface paths {
                         "application/json": components["schemas"]["RuntimeSettingDto"];
                         "text/json": components["schemas"]["RuntimeSettingDto"];
                     };
-                    content?: never;
                 };
             };
         };
@@ -2248,6 +2389,352 @@ export interface paths {
             };
         };
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/support-notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    subjectType?: string;
+                    subjectId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SupportNoteDto"][];
+                        "application/json": components["schemas"]["SupportNoteDto"][];
+                        "text/json": components["schemas"]["SupportNoteDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateSupportNoteRequest"];
+                    "text/json": components["schemas"]["CreateSupportNoteRequest"];
+                    "application/*+json": components["schemas"]["CreateSupportNoteRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SupportNoteDto"];
+                        "application/json": components["schemas"]["SupportNoteDto"];
+                        "text/json": components["schemas"]["SupportNoteDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/support-notes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateSupportNoteRequest"];
+                    "text/json": components["schemas"]["UpdateSupportNoteRequest"];
+                    "application/*+json": components["schemas"]["UpdateSupportNoteRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SupportNoteDto"];
+                        "application/json": components["schemas"]["SupportNoteDto"];
+                        "text/json": components["schemas"]["SupportNoteDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    From?: string;
+                    To?: string;
+                    GroupBy?: string;
+                    HouseholdId?: string;
+                    UserId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PlatformUsageDto"];
+                        "application/json": components["schemas"]["PlatformUsageDto"];
+                        "text/json": components["schemas"]["PlatformUsageDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/usage/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    From?: string;
+                    To?: string;
+                    GroupBy?: string;
+                    HouseholdId?: string;
+                    UserId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/csv": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/usage-limits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    scope?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UsageLimitSubjectDto"][];
+                        "application/json": components["schemas"]["UsageLimitSubjectDto"][];
+                        "text/json": components["schemas"]["UsageLimitSubjectDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/usage-limits/{scope}/{subjectId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    scope: string;
+                    subjectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UsageLimitSubjectDto"];
+                        "application/json": components["schemas"]["UsageLimitSubjectDto"];
+                        "text/json": components["schemas"]["UsageLimitSubjectDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    scope: string;
+                    subjectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SetUsageLimitRequest"];
+                    "text/json": components["schemas"]["SetUsageLimitRequest"];
+                    "application/*+json": components["schemas"]["SetUsageLimitRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UsageLimitSubjectDto"];
+                        "application/json": components["schemas"]["UsageLimitSubjectDto"];
+                        "text/json": components["schemas"]["UsageLimitSubjectDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: {
+                    line?: string;
+                };
+                header?: never;
+                path: {
+                    scope: string;
+                    subjectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -11190,12 +11677,6 @@ export interface components {
         AnalyzeFoodTextRequest: {
             description?: string | null;
         };
-        ApplyTemplateForClientRequest: {
-            /** Format: uuid */
-            templateId: string;
-            /** Format: date */
-            startDate: string;
-            name?: string | null;
         AnnouncementAudienceDto: {
             audience: string;
             label: string;
@@ -11208,6 +11689,13 @@ export interface components {
             audience: string;
             /** Format: int32 */
             queued: number;
+        };
+        ApplyTemplateForClientRequest: {
+            /** Format: uuid */
+            templateId: string;
+            /** Format: date */
+            startDate: string;
+            name?: string | null;
         };
         ApplyTemplateRequest: {
             /** Format: date */
@@ -11865,6 +12353,13 @@ export interface components {
             /** Format: date-time */
             lastSeenAt: string;
         };
+        EffectiveUsageLimitDto: {
+            line: string;
+            dailyRequests: components["schemas"]["SourcedLimitDto"];
+            dailyTokens: components["schemas"]["SourcedLimitDto"];
+            dailyCostMicros: components["schemas"]["SourcedLimitDto"];
+            monthlyCostMicros: components["schemas"]["SourcedLimitDto"];
+        };
         EmailMessageDto: {
             /** Format: uuid */
             id: string;
@@ -11976,6 +12471,31 @@ export interface components {
             scopes: string[];
             householdMode: string;
             householdIds: string[];
+        };
+        FeatureFlagDto: {
+            key: string;
+            description: string;
+            defaultEnabled: boolean;
+            catalogDefault: boolean;
+            /** Format: int32 */
+            overrideCount: number;
+            /** Format: int32 */
+            enabledOverrides: number;
+            /** Format: int32 */
+            disabledOverrides: number;
+            /** Format: date-time */
+            updatedAt?: string | null;
+        };
+        FeatureFlagOverrideDto: {
+            /** Format: uuid */
+            householdId: string;
+            householdName: string;
+            /** Format: int32 */
+            memberCount: number;
+            enabled: boolean;
+            /** Format: date-time */
+            updatedAt: string;
+            updatedByName?: string | null;
         };
         FeedCommentDto: {
             /** Format: uuid */
@@ -13139,6 +13659,29 @@ export interface components {
             /** Format: double */
             targetDistanceMeters?: number | null;
         };
+        PlatformUsageDto: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            groupBy: string;
+            rows: components["schemas"]["PlatformUsageRowDto"][];
+            total: components["schemas"]["PlatformUsageRowDto"];
+        };
+        PlatformUsageRowDto: {
+            key?: string | null;
+            label: string;
+            /** Format: int32 */
+            requests: number;
+            /** Format: int64 */
+            tokens: number;
+            /** Format: int64 */
+            costMicros: number;
+            /** Format: double */
+            cost: number;
+            /** Format: int32 */
+            refusals: number;
+        };
         PrepSessionCreatedResult: {
             /** Format: uuid */
             id: string;
@@ -13690,6 +14233,9 @@ export interface components {
             /** Format: uuid */
             activeHouseholdId?: string | null;
         };
+        SetFeatureFlagRequest: {
+            enabled: boolean;
+        };
         SetMealPlanStatusRequest: {
             status: string;
         };
@@ -13698,6 +14244,18 @@ export interface components {
         };
         SetRuntimeSettingRequest: {
             value: string;
+        };
+        SetUsageLimitRequest: {
+            line?: string | null;
+            /** Format: int32 */
+            dailyRequests?: number | null;
+            /** Format: int64 */
+            dailyTokens?: number | null;
+            /** Format: int64 */
+            dailyCostMicros?: number | null;
+            /** Format: int64 */
+            monthlyCostMicros?: number | null;
+            note?: string | null;
         };
         ShoppingListCardData: {
             /** Format: uuid */
@@ -13841,6 +14399,11 @@ export interface components {
             avatarUrl?: string | null;
             defaultPublishWorkouts: boolean;
             shareToken?: string | null;
+        };
+        SourcedLimitDto: {
+            /** Format: int64 */
+            value?: number | null;
+            source: string;
         };
         /**
          * Format: int32
@@ -14317,6 +14880,35 @@ export interface components {
         UploadedImageDto: {
             key: string;
             url: string;
+        };
+        UsageLimitOverrideDto: {
+            /** Format: uuid */
+            id: string;
+            scope: string;
+            /** Format: uuid */
+            subjectId: string;
+            line?: string | null;
+            /** Format: int32 */
+            dailyRequests?: number | null;
+            /** Format: int64 */
+            dailyTokens?: number | null;
+            /** Format: int64 */
+            dailyCostMicros?: number | null;
+            /** Format: int64 */
+            monthlyCostMicros?: number | null;
+            note?: string | null;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        UsageLimitSubjectDto: {
+            scope: string;
+            /** Format: uuid */
+            subjectId: string;
+            name: string;
+            detail?: string | null;
+            tier: string;
+            overrides: components["schemas"]["UsageLimitOverrideDto"][];
+            effective: components["schemas"]["EffectiveUsageLimitDto"][];
         };
         UsageOverview: {
             /** Format: int32 */

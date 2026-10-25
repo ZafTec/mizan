@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getAdminUser } from "@/data/admin/users";
 import SupportNotesPanel from "@/components/admin/SupportNotesPanel";
 import { listSupportNotesServer } from "@/lib/api/admin-ops.server";
+import UsageThisMonth from "@/components/admin/platform/UsageThisMonth";
 import { UserActions } from "./user-actions";
 
 export const metadata = {
@@ -145,6 +146,8 @@ export default async function UserDetailPage({
             subjectId={user.id}
             initialNotes={notes}
           />
+
+          <UsageThisMonth userId={user.id} />
 
           <div className="bg-card rounded-lg border p-6">
             <h2 className="text-xl font-semibold mb-4">Recent Sessions</h2>
