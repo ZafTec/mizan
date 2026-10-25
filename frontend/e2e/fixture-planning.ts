@@ -102,6 +102,8 @@ export type PlanningOptions = {
   none?: boolean;
   /** Whether the coach's client has granted meal planning (default true). */
   clientGrantsPlanning?: boolean;
+  /** A second, older list beside the plan's, so "the newest list" picks one of two. */
+  olderList?: boolean;
 };
 
 type Food = {
@@ -150,6 +152,7 @@ export const DRAFT_PLAN_ID = "a1000000-0000-4000-8000-000000000002";
 export const PAST_PLAN_ID = "a1000000-0000-4000-8000-000000000003";
 export const TEMPLATE_ID = "a1000000-0000-4000-8000-000000000010";
 export const LIST_ID = "b1000000-0000-4000-8000-000000000001";
+export const OLDER_LIST_ID = "b1000000-0000-4000-8000-000000000009";
 const RECIPE_ID = "33333333-3333-4333-8333-333333333333";
 const YOGURT_ID = "11111111-1111-4111-8111-111111111111";
 const OATS_ID = "22222222-2222-4222-8222-222222222222";
@@ -400,9 +403,29 @@ export function initialPlanning(
     createdAt: stamp(1),
     updatedAt: stamp(1),
   };
+  const older: StoredList = {
+    id: OLDER_LIST_ID,
+    name: "Last week shopping",
+    userId,
+    householdId: null,
+    mealPlanId: null,
+    generatedAt: null,
+    items: [
+      {
+        id: "i1000000-0000-4000-8000-000000000009",
+        itemName: "Brown rice",
+        grams: 1000,
+        needsReview: false,
+        sortOrder: 0,
+        isChecked: false,
+      },
+    ],
+    createdAt: stamp(9),
+    updatedAt: stamp(9),
+  };
   return {
     plans: [active, draft, past, template],
-    lists: [list],
+    lists: options.olderList ? [older, list] : [list],
     trainerClients,
   };
 }
