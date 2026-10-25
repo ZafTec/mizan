@@ -15,6 +15,12 @@ import {
   type PricesState,
 } from "./fixture-prices";
 import { handleTelegram } from "./fixture-tg";
+import {
+  handleAiPlanning,
+  initialAiPlanning,
+  type AiPlanningOptions,
+  type AiPlanningState,
+} from "./fixture-ai-planning";
 
 const port = Number(process.env.PLAYWRIGHT_API_PORT ?? 5100);
 const webOrigin = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3100";
@@ -202,6 +208,7 @@ type FixtureState = {
   exercises: FixtureExercise[];
   planning: PlanningState;
   prices: PricesState;
+  aiPlanning: AiPlanningState;
 };
 type FixtureThread = {
   id: string;
@@ -270,6 +277,7 @@ function initialState(empty = false): FixtureState {
   return {
     planning: initialPlanning(user.id, today, { none: empty }),
     prices: initialPrices(today),
+    aiPlanning: initialAiPlanning(),
     role: "user",
     pro: false,
     impersonating: false,
@@ -653,6 +661,7 @@ const server = Bun.serve({
         household?: Partial<FixtureHousehold>;
         planning?: PlanningOptions;
         prices?: PricesOptions;
+        aiPlanning?: AiPlanningOptions;
       };
       const token = crypto.randomUUID();
       const state = initialState(options.empty);
@@ -667,6 +676,7 @@ const server = Bun.serve({
         ...options.planning,
       });
       state.prices = initialPrices(today, options.prices);
+      state.aiPlanning = initialAiPlanning(options.aiPlanning);
       if (options.household)
         state.household = {
           otherMembers: 0,
@@ -728,6 +738,25 @@ const server = Bun.serve({
         503,
       );
     }
+    const assisted = await handleAiPlanning(
+      request,
+      url,
+      {
+        ai: state.aiPlanning,
+        planning: {
+          userId: state.userId,
+          planning: state.planning,
+          writes: state.writes,
+          recipes: state.recipes,
+          meals: state.meals,
+          foods,
+          prices: state.prices,
+        },
+      },
+      today,
+      json,
+    );
+    if (assisted) return assisted;
     if (path === "/api/Auth/me")
       return json({
         ...user,
@@ -1189,31 +1218,6 @@ const server = Bun.serve({
           isCurrent: true,
         },
       ]);
-    if (path === "/api/Ai/consent" && method === "GET")
-      return json({
-        enabled: false,
-        shareNutrition: false,
-        shareTraining: false,
-        shareBody: false,
-        allowWrites: false,
-        writeNutrition: false,
-        writeTraining: false,
-        writeBody: false,
-        updatedAt: null,
-      });
-    if (path === "/api/Ai/usage" && method === "GET")
-      return json({
-        today: {
-          requestsUsed: 0,
-          requestLimit: 20,
-          tokensUsed: 0,
-          tokenLimit: 50000,
-          resetsAt: `${today}T23:59:59Z`,
-          plan: "Free",
-        },
-        history: [],
-        byFeature: [],
-      });
     const priced = await handlePrices(
       request,
       url,
