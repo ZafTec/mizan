@@ -16,6 +16,7 @@ import {
   type PricesState,
 } from "./fixture-prices";
 import { handleTelegram } from "./fixture-tg";
+import { handleAdminSettings } from "./fixture-admin-settings";
 import {
   handleUsers,
   initialTelegram,
@@ -1278,6 +1279,8 @@ const server = Bun.serve({
       json,
     );
     if (profile) return profile;
+    if (path.startsWith("/api/admin/settings"))
+      return handleAdminSettings(request, url, state, json);
     const priced = await handlePrices(
       request,
       url,
