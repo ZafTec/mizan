@@ -103,6 +103,100 @@ public class EveningReminderTests
         (await ReminderJobsAsync()).Should().Be(1);
     }
 
+    [Fact]
+    public async Task EveryMemberFollowingAHouseholdPlan_IsRemindedInTheirOwnZone_UnlessTheyFollowTheirOwnPlan()
+    {
+        await _fixture.ResetDatabaseAsync();
+        _fixture.Push.Reset();
+        var world = new PlanningWorld(_fixture);
+        var (ownerId, ownerClient) = await world.PersonAsync("household-owner");
+        var (tokyoId, tokyoClient) = await world.PersonAsync("household-tokyo");
+        var (ownPlanId, ownPlanClient) = await world.PersonAsync("household-own-plan");
+        await _fixture.GrantProAsync(tokyoId);
+        var household = await world.HouseholdAsync(ownerId, (tokyoId, true), (ownPlanId, true));
+        await world.DbAsync(async db =>
+        {
+            (await db.Users.SingleAsync(u => u.Id == ownerId)).TimeZoneId = "Africa/Addis_Ababa";
+            (await db.Users.SingleAsync(u => u.Id == tokyoId)).TimeZoneId = "Asia/Tokyo";
+            (await db.Users.SingleAsync(u => u.Id == ownPlanId)).TimeZoneId = "Africa/Addis_Ababa";
+            db.TelegramLinks.Add(new TelegramLink { Id = Guid.NewGuid(), UserId = tokyoId, TelegramUserId = 777, LinkedAt = DateTime.UtcNow });
+            return await db.SaveChangesAsync();
+        });
+
+        var addisToday = Mizan.Domain.Streaks.StreakClock.Today("Africa/Addis_Ababa", DateTimeOffset.UtcNow);
+        var tokyoToday = Mizan.Domain.Streaks.StreakClock.Today("Asia/Tokyo", DateTimeOffset.UtcNow);
+        var householdPlan = await PlanningWorld.CreatePlanAsync(ownerClient, new CreateMealPlanRequest
+        {
+            Name = "Family week",
+            StartDate = addisToday.AddDays(-1),
+            DurationDays = 7,
+            HouseholdId = household,
+            Rules = new PlanRulesDto { TargetCalories = 1800, EatingWindowStart = new TimeOnly(8, 0), EatingWindowEnd = new TimeOnly(20, 0) },
+        });
+        var ownPlan = await PlanningWorld.CreatePlanAsync(ownPlanClient, new CreateMealPlanRequest
+        {
+            Name = "My week",
+            StartDate = addisToday.AddDays(-1),
+            DurationDays = 7,
+            Rules = new PlanRulesDto { TargetCalories = 2000, EatingWindowStart = new TimeOnly(8, 0), EatingWindowEnd = new TimeOnly(23, 0) },
+        });
+        var meal = await tokyoClient.PostAsJsonAsync("/api/Meals", new
+        {
+            name = "Lunch",
+            mealType = "LUNCH",
+            servings = 1,
+            calories = 1200,
+            entryDate = tokyoToday.ToString("yyyy-MM-dd"),
+        });
+        meal.StatusCode.Should().Be(HttpStatusCode.Created, await meal.Content.ReadAsStringAsync());
+
+        // Each reminder's time, half an hour before its window closes in its person's zone. They
+        // lie hours apart, so each scan queues only the one due then; run them in order.
+        var times = new[]
+        {
+            new DateTimeOffset(tokyoToday.ToDateTime(new TimeOnly(19, 30)), TimeSpan.FromHours(9)),
+            new DateTimeOffset(addisToday.ToDateTime(new TimeOnly(19, 30)), AddisOffset),
+            new DateTimeOffset(addisToday.ToDateTime(new TimeOnly(22, 30)), AddisOffset),
+        }.Order().ToList();
+        try
+        {
+            foreach (var at in times)
+            {
+                _fixture.Clock.Set(at);
+                await ScanAsync();
+                await RunDueJobsAsync();
+                _fixture.Clock.Set(at.AddMinutes(10));
+                await ScanAsync();
+                await RunDueJobsAsync();
+            }
+        }
+        finally
+        {
+            _fixture.Clock.Reset();
+        }
+
+        async Task<JsonElement> ReminderOf(HttpClient client) =>
+            (await client.GetFromJsonAsync<JsonElement>("/api/Notifications")).GetProperty("items").EnumerateArray()
+                .Should().ContainSingle(n => n.GetProperty("type").GetString() == "evening_reminder").Subject;
+
+        var owner = await ReminderOf(ownerClient);
+        owner.GetProperty("body").GetString().Should().Be("Your window closes at 20:00. Today: 0 of 1,800 kcal.");
+        owner.GetProperty("linkUrl").GetString().Should().Be($"/meal-plan/{householdPlan}");
+
+        var tokyo = await ReminderOf(tokyoClient);
+        tokyo.GetProperty("body").GetString().Should().Be("Your window closes at 20:00. Today: 1,200 of 1,800 kcal.");
+        tokyo.GetProperty("linkUrl").GetString().Should().Be($"/meal-plan/{householdPlan}");
+
+        var own = await ReminderOf(ownPlanClient);
+        own.GetProperty("body").GetString().Should().Be("Your window closes at 23:00. Today: 0 of 2,000 kcal.");
+        own.GetProperty("linkUrl").GetString().Should().Be($"/meal-plan/{ownPlan}");
+
+        var telegram = _fixture.TelegramBot.Sent.Should().ContainSingle().Subject;
+        telegram.TelegramUserId.Should().Be(777);
+        telegram.OpenPath.Should().Be($"plan?planId={householdPlan:D}&day={tokyoToday:yyyy-MM-dd}");
+        (await ReminderJobsAsync()).Should().Be(3);
+    }
+
     private Task ScanAsync() =>
         _fixture.Services.GetServices<IHostedService>().OfType<EveningReminderScheduler>().Single().RunOnceAsync(CancellationToken.None);
 
