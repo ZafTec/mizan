@@ -64,6 +64,13 @@ namespace Mizan.Infrastructure.Migrations
                 nullable: false,
                 defaultValueSql: "NOW()");
 
+            migrationBuilder.AddColumn<bool>(
+                name: "notify_by_telegram",
+                table: "users",
+                type: "boolean",
+                nullable: false,
+                defaultValue: false);
+
             migrationBuilder.AddColumn<string>(
                 name: "price_region_code",
                 table: "users",
@@ -1043,6 +1050,10 @@ namespace Mizan.Infrastructure.Migrations
             migrationBuilder.DropColumn(
                 name: "updated_at",
                 table: "workouts");
+
+            migrationBuilder.DropColumn(
+                name: "notify_by_telegram",
+                table: "users");
 
             migrationBuilder.DropColumn(
                 name: "price_region_code",

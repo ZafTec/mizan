@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Mizan.Infrastructure.Migrations
 {
     [DbContext(typeof(MizanDbContext))]
-    [Migration("20261022094614_ConnectedAppsPlanningAndPrices")]
+    [Migration("20261025175141_ConnectedAppsPlanningAndPrices")]
     partial class ConnectedAppsPlanningAndPrices
     {
         /// <inheritdoc />
@@ -3915,6 +3915,10 @@ namespace Mizan.Infrastructure.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("text")
                         .HasColumnName("name");
+
+                    b.Property<bool>("NotifyByTelegram")
+                        .HasColumnType("boolean")
+                        .HasColumnName("notify_by_telegram");
 
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text")
