@@ -28,6 +28,7 @@ import {
   formatMoney,
   itemCount,
 } from "@/lib/prices/format";
+import { DRAFTED_BY_ASSISTANT, isGenerated } from "@/lib/planning/draft";
 import { appToast } from "@/lib/toast";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import DraftActions from "./DraftActions";
@@ -223,12 +224,15 @@ export default function PlanDetail({
   );
   const fromCoach =
     plan.authoredByUserId != null && plan.authoredByUserId !== viewerId;
-  const canAnswerDraft = plan.status === "Draft" && fromCoach;
+  const generated = isGenerated(plan);
+  // A coach's draft and the assistant's are both the person's to accept or decline.
+  const canAnswerDraft = plan.status === "Draft" && (fromCoach || generated);
   const facts = [
     STATUS_LABELS[plan.status] ?? plan.status,
     planDates(plan),
     fromCoach ? `From ${plan.authoredByName ?? "your coach"}` : null,
     plan.householdId ? "Household plan" : null,
+    generated ? DRAFTED_BY_ASSISTANT : null,
   ].filter(Boolean);
   const planViolations = plan.violations.filter((v) => v.dayIndex == null);
 

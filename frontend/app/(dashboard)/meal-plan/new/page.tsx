@@ -6,6 +6,7 @@ import {
   listTemplatesServer,
 } from "@/lib/api/mealPlans.server";
 import NewPlanForm from "@/components/planning/NewPlanForm";
+import AssistantDraft from "@/components/planning/AssistantDraft";
 import { logger } from "@/lib/logger";
 
 const log = logger.createModuleLogger("meal-plan-new");
@@ -35,9 +36,11 @@ export default async function NewMealPlanPage() {
         </p>
         <h1 className="mt-1">New plan</h1>
         <p className="log-muted mt-2">
-          Start from a template or set your own rules and fill the days later.
+          Start from a template, set your own rules and fill the days later, or
+          let the assistant draft them.
         </p>
       </header>
+      <AssistantDraft today={today} />
       <NewPlanForm templates={templates} household={household} today={today} />
     </div>
   );

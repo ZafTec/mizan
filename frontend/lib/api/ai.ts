@@ -1,45 +1,34 @@
 import { clientApi } from "@/lib/api.client";
 import { resolvePublicApiOrigin } from "@/lib/api-base";
+import type { components } from "@/types/api.generated";
 
-export interface AiConsent {
-  enabled: boolean;
-  shareNutrition: boolean;
-  shareTraining: boolean;
-  shareBody: boolean;
-  /** Whether the assistant may act, not just answer. Separate from reading. */
-  allowWrites: boolean;
-  writeNutrition: boolean;
-  writeTraining: boolean;
-  writeBody: boolean;
-  updatedAt?: string | null;
-}
+/**
+ * Browser calls for the assistant. Every type is the generated OpenAPI one;
+ * nothing here declares a response shape of its own (docs/AI.md).
+ */
+type Schemas = components["schemas"];
 
-export interface AiQuotaSnapshot {
-  requestsUsed: number;
-  requestLimit: number;
-  tokensUsed: number;
-  tokenLimit: number;
-  resetsAt: string;
-  plan: string;
-}
-
-export interface AiUsageDay {
-  date: string;
-  requests: number;
-  tokens: number;
-}
-
-export interface AiUsageFeature {
-  feature: string;
-  requests: number;
-  tokens: number;
-}
-
-export interface MyAiUsage {
-  today: AiQuotaSnapshot;
-  history: AiUsageDay[];
-  byFeature: AiUsageFeature[];
-}
+export type AiConsent = Schemas["AiConsentDto"];
+export type AiQuotaSnapshot = Schemas["AiQuotaSnapshot"];
+export type AiUsageDay = Schemas["AiUsageDayDto"];
+export type AiUsageFeature = Schemas["AiUsageFeatureDto"];
+/** Personal usage today, with the meal planning line under `planning`. */
+export type MyAiUsage = Schemas["MyAiUsageDto"];
+export type AiChatMessage = Schemas["AiChatMessageDto"];
+export type AiChatThread = Schemas["AiChatThreadDto"];
+export type AiChatThreadDetail = Schemas["AiChatThreadDetailDto"];
+/** One turn: the stored messages, what it wrote (`performed`) and its typed `cards`. */
+export type AiChatTurn = Schemas["AiChatTurnDto"];
+export type AiToolInvocation = Schemas["AiToolInvocation"];
+export type AiOnboardingTurn = Schemas["AiOnboardingTurnDto"];
+export type AiToolSummary = Schemas["AiToolSummary"];
+export type AiTrainerAnswer = Schemas["AiTrainerAnswerDto"];
+/** A typed card of a chat turn: `type` names the record its `data` holds. */
+export type AiCard = Schemas["AiCardDto"];
+export type PlanPreviewCardData = Schemas["PlanPreviewCardData"];
+export type DayPlanCardData = Schemas["DayPlanCardData"];
+export type CostTableCardData = Schemas["CostTableCardData"];
+export type ShoppingListCardData = Schemas["ShoppingListCardData"];
 
 export const getAiConsent = () => clientApi<AiConsent>("/api/Ai/consent");
 
@@ -48,35 +37,6 @@ export const updateAiConsent = (consent: Omit<AiConsent, "updatedAt">) =>
 
 export const getMyAiUsage = (days = 14) =>
   clientApi<MyAiUsage>(`/api/Ai/usage?days=${days}`);
-
-export interface AiChatMessage {
-  id: string;
-  fromUser: boolean;
-  content: string;
-  createdAt: string;
-  /** A photo sent with this turn, kept so the transcript still makes sense later. */
-  imageUrl?: string | null;
-}
-
-export interface AiChatThread {
-  id: string;
-  title: string;
-  updatedAt: string;
-}
-
-export interface AiChatThreadDetail extends AiChatThread {
-  messages: AiChatMessage[];
-}
-
-export interface AiChatTurn {
-  threadId: string;
-  title: string;
-  /** The person's message as stored, with the address of any photo they sent. */
-  message: AiChatMessage;
-  reply: AiChatMessage;
-  /** What the turn wrote, if anything. Shown, never silent. */
-  performed: AiToolInvocation[];
-}
 
 export const sendAiChatMessage = (threadId: string | null, message: string) =>
   clientApi<AiChatTurn>("/api/Ai/chat", {
@@ -126,24 +86,6 @@ export const getAiChatThread = (id: string) =>
 export const deleteAiChatThread = (id: string) =>
   clientApi<void>(`/api/Ai/threads/${id}`, { method: "DELETE" });
 
-export interface AiToolInvocation {
-  tool: string;
-  summary: string;
-  succeeded: boolean;
-  error?: string | null;
-}
-
-export interface AiOnboardingTurn {
-  threadId: string;
-  reply: AiChatMessage;
-  performed: AiToolInvocation[];
-}
-
-export interface AiToolSummary {
-  name: string;
-  description: string;
-}
-
 export const sendOnboardingMessage = (
   threadId: string | null,
   message: string,
@@ -163,12 +105,6 @@ export const listOnboardingTools = () =>
  */
 export const getOnboardingThread = () =>
   clientApi<AiChatThreadDetail | null>("/api/Ai/onboarding");
-
-export interface AiTrainerAnswer {
-  threadId: string;
-  reply: AiChatMessage;
-  axesSeen: string[];
-}
 
 export const askAboutClient = (
   clientId: string,

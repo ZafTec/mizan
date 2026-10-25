@@ -9,6 +9,7 @@ import {
 import { listShoppingListsServer } from "@/lib/api/shoppingLists.server";
 import type { MealPlanSummary } from "@/lib/api/mealPlans";
 import { planDates } from "@/lib/planning/rules";
+import { DRAFTED_BY_ASSISTANT, isGenerated } from "@/lib/planning/draft";
 import DraftActions from "@/components/planning/DraftActions";
 import { logger } from "@/lib/logger";
 
@@ -48,6 +49,7 @@ function PlanRow({
       ? "draft for a client"
       : null,
     plan.householdId ? "household" : null,
+    isGenerated(plan) ? DRAFTED_BY_ASSISTANT : null,
   ].filter(Boolean);
   return (
     <li className="ledger-row">
@@ -201,8 +203,9 @@ export default async function MealPlanPage() {
                         today={today}
                         viewerId={user.id}
                       >
-                        {plan.authoredByUserId &&
-                        plan.authoredByUserId !== user.id ? (
+                        {(plan.authoredByUserId &&
+                          plan.authoredByUserId !== user.id) ||
+                        isGenerated(plan) ? (
                           <DraftActions
                             planId={plan.id}
                             planName={plan.name || "Meal plan"}
