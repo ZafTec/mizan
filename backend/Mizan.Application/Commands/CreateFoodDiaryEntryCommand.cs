@@ -9,6 +9,7 @@ using Mizan.Application.Services;
 using Mizan.Domain.Constants;
 using Mizan.Domain.Entities;
 using Mizan.Domain.Nutrition;
+using Mizan.Domain.Planning;
 using Mizan.Contracts.Meals;
 
 namespace Mizan.Application.Commands;
@@ -127,12 +128,14 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
             // The server owns the arithmetic: the same rounding the food path
             // uses, from the per-100 g figures and the grams the person
             // confirmed. Totals a client sent alongside are not trusted.
-            var scale = grams / 100m;
-            calories = Math.Round(per100g.Calories * scale, 2);
-            protein = Math.Round(per100g.ProteinGrams * scale, 2);
-            carbs = Math.Round(per100g.CarbsGrams * scale, 2);
-            fat = Math.Round(per100g.FatGrams * scale, 2);
-            fiber = per100g.FiberGrams.HasValue ? Math.Round(per100g.FiberGrams.Value * scale, 2) : null;
+            // MealScale is also what the meal form's preview shows.
+            var scaled = MealScale.ForGrams(
+                new EntryNutrition(per100g.Calories, per100g.ProteinGrams, per100g.CarbsGrams, per100g.FatGrams, per100g.FiberGrams ?? 0), grams);
+            calories = scaled.Calories;
+            protein = scaled.ProteinGrams;
+            carbs = scaled.CarbsGrams;
+            fat = scaled.FatGrams;
+            fiber = per100g.FiberGrams.HasValue ? scaled.FiberGrams : null;
         }
         if (request.FoodId.HasValue)
         {

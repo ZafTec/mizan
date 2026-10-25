@@ -1,6 +1,8 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
+using Mizan.Domain.Constants;
+using Mizan.Domain.Planning;
 
 namespace Mizan.Application.Queries;
 
@@ -14,7 +16,19 @@ public record FoodDiaryResult
     public DateOnly Date { get; init; }
     public List<FoodDiaryEntryDto> Entries { get; init; } = new();
     public DailyTotalsDto Totals { get; init; } = new();
+
+    /// <summary>Each meal type that has entries, in diary order, with its total.</summary>
+    public List<DiaryMealTotalsDto> Meals { get; init; } = new();
+
+    /// <summary>Each logged recipe (entries sharing a <c>GroupId</c>) with its total.</summary>
+    public List<DiaryGroupTotalsDto> Groups { get; init; } = new();
 }
+
+/// <summary>One meal type's entries added up by the server, rounded like a plan slot.</summary>
+public record DiaryMealTotalsDto(string MealType, DailyTotalsDto Totals);
+
+/// <summary>One logged recipe's ingredient rows added up by the server, rounded like a plan slot.</summary>
+public record DiaryGroupTotalsDto(Guid GroupId, DailyTotalsDto Totals);
 
 public record FoodDiaryEntryDto
 {
@@ -102,7 +116,30 @@ public class GetFoodDiaryQueryHandler : IRequestHandler<GetFoodDiaryQuery, FoodD
         {
             Date = request.Date,
             Entries = entries,
-            Totals = totals
+            Totals = totals,
+            Meals = entries
+                .GroupBy(e => MealTypes.Normalize(e.MealType))
+                .Select(g => new DiaryMealTotalsDto(g.Key, Sum(g)))
+                .ToList(),
+            Groups = entries
+                .Where(e => e.GroupId.HasValue)
+                .GroupBy(e => e.GroupId!.Value)
+                .Select(g => new DiaryGroupTotalsDto(g.Key, Sum(g)))
+                .ToList(),
+        };
+    }
+
+    private static DailyTotalsDto Sum(IEnumerable<FoodDiaryEntryDto> entries)
+    {
+        var total = EntryNutrition.Sum(entries.Select(e => new EntryNutrition(
+            e.Calories ?? 0, e.ProteinGrams ?? 0, e.CarbsGrams ?? 0, e.FatGrams ?? 0, e.FiberGrams ?? 0)));
+        return new DailyTotalsDto
+        {
+            Calories = total.Calories,
+            Protein = total.ProteinGrams,
+            Carbs = total.CarbsGrams,
+            Fat = total.FatGrams,
+            Fiber = total.FiberGrams,
         };
     }
 }

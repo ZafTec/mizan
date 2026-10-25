@@ -20,6 +20,14 @@ public readonly record struct EntryNutrition(
         FatGrams + other.FatGrams,
         FiberGrams + other.FiberGrams);
 
+    /// <summary>
+    /// The total of some parts, rounded to one decimal. Every subtotal a surface
+    /// shows (a plan slot, a plan day, a diary meal, a logged recipe) comes from
+    /// here, so no client adds entries up.
+    /// </summary>
+    public static EntryNutrition Sum(IEnumerable<EntryNutrition> parts) =>
+        parts.Aggregate(Zero, (total, part) => total.Add(part)).Round();
+
     public EntryNutrition Round() => new(
         Math.Round(Calories, 1),
         Math.Round(ProteinGrams, 1),
@@ -84,10 +92,10 @@ public static class PlanNutrition
         IReadOnlyDictionary<Guid, RecipeNutritionTotals> recipePerServing,
         IReadOnlyDictionary<Guid, Food> foodsById)
     {
-        var totals = EntryNutrition.Zero;
-        foreach (var entry in entries)
-            if (Of(entry, recipePerServing, foodsById) is { } nutrition) totals = totals.Add(nutrition);
-        return totals.Round();
+        return EntryNutrition.Sum(entries
+            .Select(entry => Of(entry, recipePerServing, foodsById))
+            .Where(nutrition => nutrition.HasValue)
+            .Select(nutrition => nutrition!.Value));
     }
 
     public static IReadOnlyList<PlanDayNutrition> ByDay(

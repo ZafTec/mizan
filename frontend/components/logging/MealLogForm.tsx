@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { BookOpen, Search, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
@@ -14,11 +21,15 @@ import {
   formatMealType,
 } from "@/lib/utils/mealType";
 import type { FoodAnalysis, NutritionPer100g } from "@/lib/api/food-photo";
+import {
+  previewMeal,
+  type MealPreviewLine,
+  type MealPreviewResult,
+} from "@/lib/api/meals";
 import AiMealInput from "./AiMealInput";
 import FoodPicker from "./FoodPicker";
 import RecipePicker from "./RecipePicker";
 import {
-  nutritionForSelection,
   recipeItem,
   type RecipeResult,
   type MealSelection,
@@ -47,15 +58,19 @@ type ProposedItem = {
   per100g: NutritionPer100g;
 };
 
-/**
- * A preview for the screen only - what the row will roughly come to at the weight typed so far. Nothing from
- * here is sent; the saved numbers are the server's.
- */
-function preview(item: ProposedItem) {
-  const factor = (Number(item.grams) || 0) / 100;
+/** How long typing pauses before the form asks the server what the meal comes to. */
+const PREVIEW_DELAY_MS = 150;
+
+/** A line's calories and protein as the preview reports them, or a mark while it is on its way. */
+function lineFigures(
+  result: MealPreviewResult | null,
+  key: string,
+): { calories: number | null; protein: number | null } | "pending" {
+  const line = result?.lines.find((item) => item.key === key);
+  if (!line) return "pending";
   return {
-    calories: item.per100g.calories * factor,
-    protein: item.per100g.proteinGrams * factor,
+    calories: line.calories ?? null,
+    protein: line.proteinGrams ?? null,
   };
 }
 
@@ -123,16 +138,54 @@ export default function MealLogForm({
     if (proposal) mealList.current?.scrollIntoView?.({ block: "start" });
   }, [proposal]);
   const totalCount = selected.length + manual.length + proposed.length;
-  const calories =
-    selected.reduce(
-      (sum, entry) => sum + (nutritionForSelection(entry).calories ?? 0),
-      0,
-    ) +
-    manual.reduce((sum, entry) => sum + entry.calories, 0) +
-    proposed.reduce((sum, entry) => sum + preview(entry).calories, 0);
-  const hasUnknownNutrition = selected.some(
-    (entry) => entry.item.calories === null,
+  // What the meal comes to is the server's arithmetic (POST /api/Meals/preview), by the rules logging uses.
+  const previewLines = useMemo<MealPreviewLine[]>(
+    () => [
+      ...selected.map((entry) =>
+        entry.item.kind === "food"
+          ? {
+              key: entry.key,
+              foodId: entry.item.id,
+              grams: Number(entry.amount) || 0,
+            }
+          : {
+              key: entry.key,
+              recipeId: entry.item.id,
+              servings: Number(entry.amount) || 0,
+            },
+      ),
+      ...proposed.map((entry) => ({
+        key: entry.key,
+        per100g: entry.per100g,
+        grams: Number(entry.grams) || 0,
+      })),
+      ...manual.map((entry) => ({
+        key: entry.key,
+        calories: entry.calories,
+        proteinGrams: entry.proteinGrams,
+      })),
+    ],
+    [selected, proposed, manual],
   );
+  const [preview, setPreview] = useState<MealPreviewResult | null>(null);
+  const previewRequest = useRef(0);
+  useEffect(() => {
+    const request = ++previewRequest.current;
+    if (previewLines.length === 0) {
+      setPreview(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      previewMeal(previewLines)
+        .then((result) => {
+          if (request === previewRequest.current) setPreview(result);
+        })
+        .catch(() => {
+          // The preview is a convenience; logging still works without it.
+        });
+    }, PREVIEW_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [previewLines]);
 
   function addProposal(analysis: FoodAnalysis, source: "text" | "photo") {
     setError("");
@@ -349,7 +402,7 @@ export default function MealLogForm({
                 )}
                 <ul className="divide-y divide-border border-y border-border">
                   {proposed.map((entry) => {
-                    const nutrition = preview(entry);
+                    const nutrition = lineFigures(preview, entry.key);
                     return (
                       <li
                         key={entry.key}
@@ -379,8 +432,10 @@ export default function MealLogForm({
                             className="input min-h-11 w-full !py-1.5 text-sm font-medium"
                           />
                           <p className="mt-0.5 text-xs text-charcoal-blue-700 dark:text-charcoal-blue-300">
-                            {Math.round(nutrition.calories)} kcal ·{" "}
-                            {Math.round(nutrition.protein * 10) / 10} g protein
+                            {nutrition === "pending" ||
+                            nutrition.calories === null
+                              ? "…"
+                              : `${Math.round(nutrition.calories)} kcal · ${Math.round((nutrition.protein ?? 0) * 10) / 10} g protein`}{" "}
                             · Estimated
                           </p>
                         </div>
@@ -436,7 +491,7 @@ export default function MealLogForm({
                     );
                   })}
                   {selected.map((entry) => {
-                    const nutrition = nutritionForSelection(entry);
+                    const nutrition = lineFigures(preview, entry.key);
                     return (
                       <li
                         key={entry.key}
@@ -447,10 +502,13 @@ export default function MealLogForm({
                             {entry.item.name}
                           </p>
                           <p className="mt-0.5 text-xs text-charcoal-blue-700 dark:text-charcoal-blue-300">
-                            {nutrition.calories === null
-                              ? "Nutrition unavailable"
-                              : `${Math.round(nutrition.calories)} kcal`}
-                            {nutrition.protein !== null &&
+                            {nutrition === "pending"
+                              ? "…"
+                              : nutrition.calories === null
+                                ? "Nutrition unavailable"
+                                : `${Math.round(nutrition.calories)} kcal`}
+                            {nutrition !== "pending" &&
+                              nutrition.protein !== null &&
                               ` · ${Math.round(nutrition.protein * 10) / 10} g protein`}
                           </p>
                         </div>
@@ -603,10 +661,15 @@ export default function MealLogForm({
           )}
           <div className="flex items-center justify-between gap-4">
             <div aria-live="polite" className="text-sm">
-              <span className="font-semibold tabular-nums">
-                {totalCount
-                  ? `${Math.round(calories)}${hasUnknownNutrition ? "+" : ""} kcal`
-                  : "Build your meal"}
+              <span
+                className="font-semibold tabular-nums"
+                data-testid="meal-form-total"
+              >
+                {!totalCount
+                  ? "Build your meal"
+                  : preview
+                    ? `${Math.round(preview.calories)}${preview.complete ? "" : "+"} kcal`
+                    : "… kcal"}
               </span>
               <p className="mt-0.5 text-xs text-charcoal-blue-700 dark:text-charcoal-blue-300">
                 {totalCount
