@@ -30,6 +30,8 @@ Production routes one public host by path: `/api` and `/hubs` to the API, `/mcp`
 | `Mizan.Mcp.Server` | MCP transport and adapters calling the API |
 | `Mizan.Telegram` | Account linking, Telegram transport, API adapters |
 
+SMTP, the AI provider and limits, the Telegram bot service URL, push and Paddle are read at use time through `IRuntimeOptions<T>`, which lays values an administrator stored in `system_settings` (secrets encrypted with Data Protection) over configuration ([runtime settings](ADMIN.md#runtime-settings)).
+
 Writes use MediatR commands. Controllers and tools translate their transport into those commands; they do not get independent permission or nutrition rules. OpenAPI generates frontend TypeScript contracts. Form validators remain local Zod schemas.
 
 ## Identity
