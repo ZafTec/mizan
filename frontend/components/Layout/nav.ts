@@ -77,6 +77,8 @@ export const ADMIN_TABS: NavItem[] = [
   { href: "/admin/billing", label: "Billing", icon: "sparkles" },
   { href: "/admin/sessions", label: "Sessions", icon: "lock" },
   { href: "/admin/jobs", label: "Jobs", icon: "activity" },
+  { href: "/admin/mail", label: "Mail", icon: "bell" },
+  { href: "/admin/contact", label: "Contact", icon: "messageCircle" },
   { href: "/admin/prices", label: "Prices", icon: "cart" },
   { href: "/admin/meal-plans", label: "Meal plans", icon: "calendarCheck" },
   { href: "/admin/settings", label: "Settings", icon: "settings" },

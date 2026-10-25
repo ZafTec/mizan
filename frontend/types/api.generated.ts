@@ -824,6 +824,171 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Page?: number;
+                    PageSize?: number;
+                    Status?: string;
+                    Search?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ContactSubmissionDtoPagedResult"];
+                        "application/json": components["schemas"]["ContactSubmissionDtoPagedResult"];
+                        "text/json": components["schemas"]["ContactSubmissionDtoPagedResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/contact/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ContactSubmissionDto"];
+                        "application/json": components["schemas"]["ContactSubmissionDto"];
+                        "text/json": components["schemas"]["ContactSubmissionDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/contact/{id}/handled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ContactSubmissionDto"];
+                        "application/json": components["schemas"]["ContactSubmissionDto"];
+                        "text/json": components["schemas"]["ContactSubmissionDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/contact/{id}/reply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ContactReplyRequest"];
+                    "text/json": components["schemas"]["ContactReplyRequest"];
+                    "application/*+json": components["schemas"]["ContactReplyRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ContactSubmissionDto"];
+                        "application/json": components["schemas"]["ContactSubmissionDto"];
+                        "text/json": components["schemas"]["ContactSubmissionDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Admin/Jobs": {
         parameters: {
             query?: never;
@@ -970,6 +1135,248 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/mail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Page?: number;
+                    PageSize?: number;
+                    Status?: string;
+                    Kind?: string;
+                    Search?: string;
+                    From?: string;
+                    To?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EmailMessageDtoPagedResult"];
+                        "application/json": components["schemas"]["EmailMessageDtoPagedResult"];
+                        "text/json": components["schemas"]["EmailMessageDtoPagedResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/mail/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MailStatsDto"];
+                        "application/json": components["schemas"]["MailStatsDto"];
+                        "text/json": components["schemas"]["MailStatsDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/mail/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EmailMessageDto"];
+                        "application/json": components["schemas"]["EmailMessageDto"];
+                        "text/json": components["schemas"]["EmailMessageDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/mail/{id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EmailMessageDto"];
+                        "application/json": components["schemas"]["EmailMessageDto"];
+                        "text/json": components["schemas"]["EmailMessageDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/mail/announcements/audience": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    audience?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AnnouncementAudienceDto"];
+                        "application/json": components["schemas"]["AnnouncementAudienceDto"];
+                        "text/json": components["schemas"]["AnnouncementAudienceDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/mail/announcements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SendAnnouncementRequest"];
+                    "text/json": components["schemas"]["SendAnnouncementRequest"];
+                    "application/*+json": components["schemas"]["SendAnnouncementRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AnnouncementResultDto"];
+                        "application/json": components["schemas"]["AnnouncementResultDto"];
+                        "text/json": components["schemas"]["AnnouncementResultDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1622,6 +2029,7 @@ export interface paths {
         trace?: never;
     };
     "/api/admin/settings": {
+    "/api/admin/support-notes": {
         parameters: {
             query?: never;
             header?: never;
@@ -1631,6 +2039,10 @@ export interface paths {
         get: {
             parameters: {
                 query?: never;
+                query?: {
+                    subjectType?: string;
+                    subjectId?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -1646,12 +2058,43 @@ export interface paths {
                         "text/plain": components["schemas"]["RuntimeSettingsDto"];
                         "application/json": components["schemas"]["RuntimeSettingsDto"];
                         "text/json": components["schemas"]["RuntimeSettingsDto"];
+                        "text/plain": components["schemas"]["SupportNoteDto"][];
+                        "application/json": components["schemas"]["SupportNoteDto"][];
+                        "text/json": components["schemas"]["SupportNoteDto"][];
                     };
                 };
             };
         };
         put?: never;
         post?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateSupportNoteRequest"];
+                    "text/json": components["schemas"]["CreateSupportNoteRequest"];
+                    "application/*+json": components["schemas"]["CreateSupportNoteRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SupportNoteDto"];
+                        "application/json": components["schemas"]["SupportNoteDto"];
+                        "text/json": components["schemas"]["SupportNoteDto"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -1659,6 +2102,7 @@ export interface paths {
         trace?: never;
     };
     "/api/admin/settings/{key}": {
+    "/api/admin/support-notes/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1672,6 +2116,7 @@ export interface paths {
                 header?: never;
                 path: {
                     key: string;
+                    id: string;
                 };
                 cookie?: never;
             };
@@ -1680,6 +2125,9 @@ export interface paths {
                     "application/json": components["schemas"]["SetRuntimeSettingRequest"];
                     "text/json": components["schemas"]["SetRuntimeSettingRequest"];
                     "application/*+json": components["schemas"]["SetRuntimeSettingRequest"];
+                    "application/json": components["schemas"]["UpdateSupportNoteRequest"];
+                    "text/json": components["schemas"]["UpdateSupportNoteRequest"];
+                    "application/*+json": components["schemas"]["UpdateSupportNoteRequest"];
                 };
             };
             responses: {
@@ -1692,6 +2140,9 @@ export interface paths {
                         "text/plain": components["schemas"]["RuntimeSettingDto"];
                         "application/json": components["schemas"]["RuntimeSettingDto"];
                         "text/json": components["schemas"]["RuntimeSettingDto"];
+                        "text/plain": components["schemas"]["SupportNoteDto"];
+                        "application/json": components["schemas"]["SupportNoteDto"];
+                        "text/json": components["schemas"]["SupportNoteDto"];
                     };
                 };
             };
@@ -1703,6 +2154,7 @@ export interface paths {
                 header?: never;
                 path: {
                     key: string;
+                    id: string;
                 };
                 cookie?: never;
             };
@@ -1718,6 +2170,7 @@ export interface paths {
                         "application/json": components["schemas"]["RuntimeSettingDto"];
                         "text/json": components["schemas"]["RuntimeSettingDto"];
                     };
+                    content?: never;
                 };
             };
         };
@@ -1825,6 +2278,43 @@ export interface paths {
                         "text/plain": components["schemas"]["AdminOverviewDto"];
                         "application/json": components["schemas"]["AdminOverviewDto"];
                         "text/json": components["schemas"]["AdminOverviewDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/overview/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SystemHealthDto"];
+                        "application/json": components["schemas"]["SystemHealthDto"];
+                        "text/json": components["schemas"]["SystemHealthDto"];
                     };
                 };
             };
@@ -3522,6 +4012,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ContactRequest"];
+                    "text/json": components["schemas"]["ContactRequest"];
+                    "application/*+json": components["schemas"]["ContactRequest"];
+                };
+            };
+            responses: {
+                /** @description Accepted */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ContactAcceptedDto"];
+                        "application/json": components["schemas"]["ContactAcceptedDto"];
+                        "text/json": components["schemas"]["ContactAcceptedDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Devices": {
         parameters: {
             query?: never;
@@ -4741,7 +5274,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    SearchTerm?: string;
+                    Search?: string;
                     Page?: number;
                     PageSize?: number;
                     SortBy?: string;
@@ -4781,7 +5314,30 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AdminHouseholdDetailDto"];
+                        "application/json": components["schemas"]["AdminHouseholdDetailDto"];
+                        "text/json": components["schemas"]["AdminHouseholdDetailDto"];
+                    };
+                };
+            };
+        };
         put?: never;
         post?: never;
         delete: {
@@ -10227,6 +10783,44 @@ export interface components {
             success: boolean;
             message?: string | null;
         };
+        AdminHouseholdDetailDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            createdBy: string;
+            /** Format: uuid */
+            ownerUserId?: string | null;
+            ownerName?: string | null;
+            ownerEmail?: string | null;
+            members: components["schemas"]["AdminHouseholdMemberDto"][];
+            pendingInvitations: components["schemas"]["AdminHouseholdInvitationDto"][];
+            /** Format: int32 */
+            mealPlanCount: number;
+            /** Format: int32 */
+            shoppingListCount: number;
+        };
+        AdminHouseholdInvitationDto: {
+            /** Format: uuid */
+            id: string;
+            invitedName?: string | null;
+            invitedEmail: string;
+            role: string;
+            /** Format: date-time */
+            expiresAt: string;
+        };
+        AdminHouseholdMemberDto: {
+            /** Format: uuid */
+            userId: string;
+            name?: string | null;
+            email: string;
+            role: string;
+            /** Format: date-time */
+            joinedAt: string;
+            isOwner: boolean;
+        };
         AdminHouseholdSummary: {
             /** Format: uuid */
             id: string;
@@ -10602,6 +11196,18 @@ export interface components {
             /** Format: date */
             startDate: string;
             name?: string | null;
+        AnnouncementAudienceDto: {
+            audience: string;
+            label: string;
+            /** Format: int32 */
+            recipientCount: number;
+        };
+        AnnouncementResultDto: {
+            /** Format: uuid */
+            announcementId: string;
+            audience: string;
+            /** Format: int32 */
+            queued: number;
         };
         ApplyTemplateRequest: {
             /** Format: date */
@@ -10821,6 +11427,51 @@ export interface components {
             /** Format: int64 */
             telegramUserId: number;
             telegramUsername?: string | null;
+        };
+        ContactAcceptedDto: {
+            accepted: boolean;
+        };
+        ContactReplyRequest: {
+            body: string;
+        };
+        ContactRequest: {
+            name: string;
+            email: string;
+            subject: string;
+            message: string;
+            website?: string | null;
+        };
+        ContactSubmissionDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            email: string;
+            subject: string;
+            message: string;
+            /** Format: uuid */
+            userId?: string | null;
+            status: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            handledAt?: string | null;
+            /** Format: uuid */
+            handledByUserId?: string | null;
+            handledByName?: string | null;
+            /** Format: uuid */
+            replyEmailMessageId?: string | null;
+            replyStatus?: string | null;
+        };
+        ContactSubmissionDtoPagedResult: {
+            items: components["schemas"]["ContactSubmissionDto"][];
+            /** Format: int32 */
+            totalCount: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            readonly totalPages: number;
         };
         ContentReportDto: {
             /** Format: uuid */
@@ -11065,6 +11716,12 @@ export interface components {
             /** Format: uuid */
             householdId?: string | null;
         };
+        CreateSupportNoteRequest: {
+            subjectType: string;
+            /** Format: uuid */
+            subjectId: string;
+            body: string;
+        };
         CreateTemplateCommand: {
             name: string;
             description?: string | null;
@@ -11207,6 +11864,40 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             lastSeenAt: string;
+        };
+        EmailMessageDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            toUserId?: string | null;
+            toAddress: string;
+            subject: string;
+            kind: string;
+            status: string;
+            /** Format: int32 */
+            attempts: number;
+            lastError?: string | null;
+            /** Format: uuid */
+            outboxJobId?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            sentAt?: string | null;
+            /** Format: uuid */
+            createdByUserId?: string | null;
+            createdByName?: string | null;
+            canRetry: boolean;
+        };
+        EmailMessageDtoPagedResult: {
+            items: components["schemas"]["EmailMessageDto"][];
+            /** Format: int32 */
+            totalCount: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            readonly totalPages: number;
         };
         EmailRequest: {
             email: string;
@@ -11858,6 +12549,15 @@ export interface components {
         LoginRequest: {
             email: string;
             password: string;
+        };
+        MailStatsDto: {
+            /** Format: int32 */
+            queued: number;
+            /** Format: int32 */
+            sent: number;
+            /** Format: int32 */
+            failed: number;
+            kinds: string[];
         };
         McpConnectionDto: {
             /** Format: uuid */
@@ -12947,6 +13647,13 @@ export interface components {
             threadId?: string | null;
             message: string;
         };
+        SendAnnouncementRequest: {
+            subject: string;
+            body: string;
+            audience: string;
+            /** Format: uuid */
+            announcementId?: string | null;
+        };
         SendMessageRequest: {
             /** Format: uuid */
             conversationId: string;
@@ -13154,6 +13861,22 @@ export interface components {
             /** Format: int32 */
             freezesAvailable: number;
         };
+        SupportNoteDto: {
+            /** Format: uuid */
+            id: string;
+            subjectType: string;
+            /** Format: uuid */
+            subjectId: string;
+            body: string;
+            /** Format: uuid */
+            authorUserId: string;
+            authorName?: string | null;
+            authorEmail?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         SyncChangesResult: {
             /** Format: date-time */
             serverTime: string;
@@ -13208,6 +13931,18 @@ export interface components {
             loggedAt: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        SystemHealthCheckDto: {
+            name: string;
+            status: string;
+            detail: string;
+            /** Format: date-time */
+            measuredAt: string;
+        };
+        SystemHealthDto: {
+            checks: components["schemas"]["SystemHealthCheckDto"][];
+            /** Format: date-time */
+            measuredAt: string;
         };
         SystemInfoDto: {
             environment: string;
@@ -13538,6 +14273,9 @@ export interface components {
         };
         UpdateShoppingListRequest: {
             name: string;
+        };
+        UpdateSupportNoteRequest: {
+            body: string;
         };
         UpdateTemplateRequest: {
             name: string;
