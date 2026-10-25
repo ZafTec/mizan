@@ -27,10 +27,20 @@ builder.Services.AddHttpClient<TelegramClient>(client =>
 builder.Services.AddHttpClient<MizanApiClient>(client =>
     client.Timeout = TimeSpan.FromSeconds(120));
 
+// The Mini App session records the browser's address, which only the proxy and the web
+// app's route handler can tell; see docs/TELEGRAM.md#configure-and-run.
+builder.Services.Configure<ForwardedHeadersOptions>(forwarded =>
+    TrustedProxies.Configure(forwarded, builder.Configuration[$"{TelegramBotOptions.SectionName}:TrustedProxies"]));
+
 builder.Services.AddScoped<UpdateHandler>();
+builder.Services.AddScoped<MiniAppSessionEndpoint>();
+builder.Services.AddScoped<NotifyEndpoint>();
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddHostedService<LongPollWorker>();
 
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 var options = app.Services.GetRequiredService<IOptions<TelegramBotOptions>>().Value;
 
@@ -79,9 +89,20 @@ app.MapGet("/health", () => Results.Ok(new
     mode = options.UseWebhook ? "webhook" : "long-poll",
 }));
 
-/// The only public surface. Telegram sends the secret in a header on every
-/// call; anything without it is not Telegram, and gets nothing back that would
-/// confirm the endpoint exists.
+/// The Mini App's sign-in. Public by nature - the page in Telegram's WebView
+/// calls it - and guarded by Telegram's signature on the body rather than by
+/// a header. See docs/TELEGRAM.md#mini-app.
+app.MapPost("/telegram/miniapp/session", (HttpContext context, MiniAppSessionEndpoint endpoint, CancellationToken ct) =>
+    endpoint.HandleAsync(context, ct));
+
+/// Messages the API asks the bot to send, such as the evening reminder. Internal:
+/// the proxy does not route it, and it requires the shared service key.
+app.MapPost("/internal/notify", (HttpContext context, NotifyEndpoint endpoint, CancellationToken ct) =>
+    endpoint.HandleAsync(context, ct));
+
+/// The webhook. Telegram sends the secret in a header on every call; anything
+/// without it is not Telegram, and gets nothing back that would confirm the
+/// endpoint exists.
 app.MapPost("/telegram/webhook", async (
     HttpContext context,
     Update update,

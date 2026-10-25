@@ -1,180 +1,249 @@
-import { getUserServer } from "@/helper/session";
 import Link from "next/link";
-import { getMealPlans } from "@/data/mealPlan";
-import Pagination from "@/components/Pagination";
-import { parseListParams, buildListUrl } from "@/lib/utils/list-params";
-import MealPlanListItem from "./MealPlanListItem";
-import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
-
+import { ChevronRight } from "lucide-react";
+import { getUserServer } from "@/helper/session";
+import { dateInTimeZone, shiftDate } from "@/lib/log-date";
+import {
+  getMealPlanServer,
+  listMealPlansServer,
+} from "@/lib/api/mealPlans.server";
+import { listShoppingListsServer } from "@/lib/api/shoppingLists.server";
+import type { MealPlanSummary } from "@/lib/api/mealPlans";
+import { planDates } from "@/lib/planning/rules";
+import { DRAFTED_BY_ASSISTANT, isGenerated } from "@/lib/planning/draft";
+import DraftActions from "@/components/planning/DraftActions";
 import { logger } from "@/lib/logger";
-const mealLogger = logger.createModuleLogger("meal-plan-page");
+
+const log = logger.createModuleLogger("meal-plan-page");
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Meal plans · Mizan" };
 
-export default async function MealPlanPage({
-	searchParams,
+function covers(plan: MealPlanSummary, date: string) {
+  return (
+    !!plan.startDate &&
+    !!plan.endDate &&
+    plan.startDate <= date &&
+    date <= plan.endDate
+  );
+}
+
+function PlanRow({
+  plan,
+  today,
+  viewerId,
+  children,
 }: {
-	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  plan: MealPlanSummary;
+  today: string;
+  viewerId: string;
+  children?: React.ReactNode;
 }) {
-	const user = await getUserServer();
-	const params = await searchParams;
-	const { page, sortBy, sortOrder } = parseListParams(params);
-	const baseUrl = buildListUrl("/meal-plan", { sortBy, sortOrder });
+  const name = plan.name || "Meal plan";
+  const notes = [
+    planDates(plan),
+    covers(plan, today) ? "this week" : null,
+    plan.authoredByUserId && plan.authoredByUserId !== viewerId
+      ? `from ${plan.authoredByName ?? "your coach"}`
+      : null,
+    plan.authoredByUserId === viewerId && plan.userId !== viewerId
+      ? "draft for a client"
+      : null,
+    plan.householdId ? "household" : null,
+    isGenerated(plan) ? DRAFTED_BY_ASSISTANT : null,
+  ].filter(Boolean);
+  return (
+    <li className="ledger-row">
+      <Link
+        href={`/meal-plan/${plan.id}`}
+        className="flex min-w-0 flex-1 items-center gap-3"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block font-medium">{name}</span>
+          <span className="mt-0.5 block text-sm log-muted">
+            {notes.join(" · ")}
+          </span>
+        </span>
+        <span className="num whitespace-nowrap text-sm log-muted">
+          <span className="text-base font-semibold text-foreground">
+            {plan.entryCount}
+          </span>{" "}
+          {plan.entryCount === 1 ? "entry" : "entries"}
+        </span>
+        {!children && (
+          <ChevronRight
+            aria-hidden="true"
+            size={17}
+            strokeWidth={1.7}
+            className="log-muted"
+          />
+        )}
+      </Link>
+      {children}
+    </li>
+  );
+}
 
-	let mealPlans: Awaited<ReturnType<typeof getMealPlans>>["mealPlans"] = [];
-	let totalCount = 0;
-	let totalPages = 0;
-	let loadError: string | null = null;
+export default async function MealPlanPage() {
+  const user = await getUserServer();
+  const today = dateInTimeZone(user.timeZoneId || "UTC");
+  let plans: MealPlanSummary[] = [];
+  let listCount = 0;
+  let failed = false;
+  try {
+    const [planPage, listPage] = await Promise.all([
+      listMealPlansServer({ PageSize: 100 }),
+      listShoppingListsServer(1),
+    ]);
+    plans = planPage.items;
+    listCount = listPage.totalCount;
+  } catch (error) {
+    log.error("Failed to load meal plans", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    failed = true;
+  }
 
-	try {
-		const result = await getMealPlans(page, 20, sortBy ?? undefined, sortOrder);
-		mealPlans = result.mealPlans;
-		totalCount = result.totalCount;
-		totalPages = result.totalPages;
-	} catch (error) {
-		mealLogger.error("Failed to load meal plans", {
-			error: error instanceof Error ? error.message : String(error),
-			userID: user.id,
-		});
-		loadError = "Failed to load meal plans";
-	}
+  const active = plans
+    .filter((plan) => plan.status === "Active")
+    .sort((a, b) => Number(covers(b, today)) - Number(covers(a, today)));
+  const drafts = plans.filter((plan) => plan.status === "Draft");
+  const past = plans.filter((plan) => plan.status === "Archived");
+  const current = active.find((plan) => covers(plan, today)) ?? null;
+  const weekEnd = shiftDate(today, 6);
+  let entriesThisWeek = 0;
+  if (current) {
+    const detail = await getMealPlanServer(current.id).catch(() => null);
+    entriesThisWeek =
+      detail?.days
+        .filter((day) => day.date && day.date >= today && day.date <= weekEnd)
+        .reduce((sum, day) => sum + day.entryCount, 0) ?? 0;
+  }
 
-	if (loadError) {
-		return (
-			<div className="space-y-6" data-testid="meal-plan-page">
-				<header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-					<div className="space-y-2">
-						<p className="eyebrow">Planner</p>
-						<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-							Meal planning
-						</h1>
-					</div>
-					<Link href="/meal-plan/create" className="btn-primary">
-						<i className="ri-add-line" />
-						Create Meal Plan
-					</Link>
-				</header>
+  return (
+    <div className="log-page space-y-8" data-testid="meal-plan-page">
+      <header className="log-page-header block!">
+        <h1>Meal plans</h1>
+        <p className="log-muted mt-2">
+          What you plan to eat, and the list it needs.
+        </p>
+      </header>
 
-				<div className="card p-6">
-					<div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400">
-						<i className="ri-error-warning-line text-xl" />
-						<p>An error occurred loading your meal plans. Please try again later.</p>
-					</div>
-				</div>
-			</div>
-		);
-	}
+      {failed ? (
+        <p className="log-empty">Your plans could not be loaded.</p>
+      ) : (
+        <>
+          {plans.length > 0 && (
+            <section aria-label="Plan summary" className="facts-strip">
+              <div>
+                <p className="text-sm log-muted">Active plan</p>
+                <p className="nutrition-value truncate text-xl!">
+                  {current ? current.name || "Meal plan" : "None"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm log-muted">This week</p>
+                <p className="num nutrition-value">
+                  {entriesThisWeek}
+                  <span className="text-sm font-normal log-muted">
+                    {" "}
+                    {entriesThisWeek === 1 ? "entry" : "entries"}
+                  </span>
+                </p>
+              </div>
+              <div>
+                <p className="text-sm log-muted">Lists</p>
+                <p className="num nutrition-value">
+                  <Link href="/meal-plan/shopping-list" className="text-link">
+                    {listCount}
+                  </Link>
+                </p>
+              </div>
+            </section>
+          )}
 
-	return (
-		<div className="space-y-6" data-testid="meal-plan-page">
-			{/* Page Header */}
-			<header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-				<div className="space-y-2">
-					<p className="eyebrow">Planner</p>
-					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-						Meal planning
-					</h1>
-				</div>
-				<div className="flex gap-3">
-					<Link href="/meal-plan/shopping-list" className="btn-secondary">
-						<i className="ri-shopping-cart-line" />
-						Shopping List
-					</Link>
-					<Link href="/meal-plan/create" className="btn-primary">
-						<i className="ri-add-line" />
-						Create Meal Plan
-					</Link>
-				</div>
-			</header>
+          {plans.length === 0 ? (
+            <p className="log-empty">No plans yet.</p>
+          ) : (
+            <>
+              {active.length > 0 && (
+                <section aria-labelledby="active-title">
+                  <header className="log-section-header">
+                    <h2 id="active-title">Active</h2>
+                  </header>
+                  <ul>
+                    {active.map((plan) => (
+                      <PlanRow
+                        key={plan.id}
+                        plan={plan}
+                        today={today}
+                        viewerId={user.id}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              )}
+              {drafts.length > 0 && (
+                <section aria-labelledby="drafts-title">
+                  <header className="log-section-header">
+                    <h2 id="drafts-title">
+                      {drafts.some(
+                        (plan) =>
+                          plan.authoredByUserId &&
+                          plan.authoredByUserId !== user.id,
+                      )
+                        ? "From your coach"
+                        : "Drafts"}
+                    </h2>
+                  </header>
+                  <ul>
+                    {drafts.map((plan) => (
+                      <PlanRow
+                        key={plan.id}
+                        plan={plan}
+                        today={today}
+                        viewerId={user.id}
+                      >
+                        {(plan.authoredByUserId &&
+                          plan.authoredByUserId !== user.id) ||
+                        isGenerated(plan) ? (
+                          <DraftActions
+                            planId={plan.id}
+                            planName={plan.name || "Meal plan"}
+                          />
+                        ) : undefined}
+                      </PlanRow>
+                    ))}
+                  </ul>
+                </section>
+              )}
+              {past.length > 0 && (
+                <section aria-labelledby="past-title">
+                  <header className="log-section-header">
+                    <h2 id="past-title">Past plans</h2>
+                  </header>
+                  <ul>
+                    {past.map((plan) => (
+                      <PlanRow
+                        key={plan.id}
+                        plan={plan}
+                        today={today}
+                        viewerId={user.id}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </>
+          )}
 
-			{/* Quick Stats */}
-			<div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-				{[
-					{
-						label: "Meal Plans",
-						value: mealPlans.length,
-						icon: "ri-calendar-check-line",
-						color: "bg-brand-600",
-					},
-					{
-						label: "This Week",
-						value: mealPlans.filter((p) => p.recipes?.length > 0).length,
-						icon: "ri-calendar-line",
-						color: "bg-accent-600",
-					},
-					{
-						label: "Total Meals",
-						value: mealPlans.reduce((acc, p) => acc + (p.recipes?.length || 0), 0),
-						icon: "ri-restaurant-line",
-						color: "bg-charcoal-blue-900 dark:bg-charcoal-blue-100 dark:text-charcoal-blue-900",
-					},
-					{
-						label: "Recipes",
-						value: new Set(mealPlans.flatMap((p) => p.recipes?.map((m) => m.recipeId) || [])).size,
-						icon: "ri-book-3-line",
-						color: "bg-charcoal-blue-700",
-					},
-				].map((stat) => (
-					<div key={stat.label} className="card p-4">
-						<div className="flex items-center gap-3">
-							<div
-								className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center text-white`}
-							>
-								<i className={`${stat.icon} text-current`} />
-							</div>
-							<div>
-								<p className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-									{stat.value}
-								</p>
-								<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-									{stat.label}
-								</p>
-							</div>
-						</div>
-					</div>
-				))}
-			</div>
-
-			{/* Meal Plans */}
-			<div className="card p-6">
-				<h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2 mb-4">
-					<i className="ri-calendar-2-line text-brand-500 dark:text-brand-400" />
-					Your Meal Plans
-				</h2>
-				{mealPlans.length > 0 ? (
-					<div className="space-y-4">
-						{mealPlans.map((plan) => (
-							<MealPlanListItem key={plan.id} plan={plan} />
-						))}
-					</div>
-				) : (
-					<div className="text-center py-12 flex flex-col items-center">
-						<div className="mb-6 w-full max-w-[18rem] opacity-95">
-							<AppFeatureIllustration variant="meal-plan" className="h-auto w-full" />
-						</div>
-						<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
-							No meal plans yet
-						</h3>
-						<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-4">
-							No meal plans yet.
-						</p>
-						<Link href="/meal-plan/create" className="btn-primary">
-							<i className="ri-add-line" />
-							Create Meal Plan
-						</Link>
-					</div>
-				)}
-			</div>
-
-			{totalPages > 1 && (
-				<Pagination
-					currentPage={page}
-					totalPages={totalPages}
-					totalCount={totalCount}
-					pageSize={20}
-					baseUrl={baseUrl}
-				/>
-			)}
-		</div>
-	);
+          <Link
+            href="/meal-plan/new"
+            className="btn-primary min-h-11 w-full sm:w-auto"
+          >
+            New plan
+          </Link>
+        </>
+      )}
+    </div>
+  );
 }

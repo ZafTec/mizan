@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronRight } from "lucide-react";
 import { clientApi } from "@/lib/api.client";
 import { appToast } from "@/lib/toast";
 import type { components } from "@/types/api.generated";
@@ -16,6 +16,7 @@ export default function NotificationList({
 }) {
   const router = useRouter();
   const [items, setItems] = useState(initial);
+  const unread = items.filter((item) => !item.readAt).length;
 
   async function open(item: NotificationDto) {
     try {
@@ -50,51 +51,77 @@ export default function NotificationList({
     }
   }
 
-  if (items.length === 0)
-    return (
-      <div className="card p-10 text-center">
-        <Image
-          src="/illustrations/empty-notifications.svg"
-          alt=""
-          width={240}
-          height={190}
-          className="mx-auto h-auto w-60"
-        />
-        <h2 className="mt-4 text-xl font-semibold">All caught up</h2>
-        <p className="mt-1 text-sm text-charcoal-blue-500">
-          New activity will appear here.
-        </p>
-      </div>
-    );
   return (
-    <div className="space-y-3">
-      <div className="flex justify-end">
-        <button className="btn-ghost btn-sm" onClick={readAll}>
-          Mark all read
-        </button>
-      </div>
-      {items.map((item) => (
-        <button
-          key={item.id}
-          onClick={() => open(item)}
-          className={`card press-feedback w-full p-4 text-left ${item.readAt ? "" : "border-brand-400 bg-brand-50 dark:border-brand-500/30 dark:bg-brand-950/30"}`}
-        >
-          <div className="flex items-start gap-3">
-            <span className="mt-1 size-2 rounded-full bg-brand-600" />
-            <span className="flex-1">
-              <strong className="block">{item.title}</strong>
-              {item.body && (
-                <span className="mt-1 block text-sm text-charcoal-blue-500">
-                  {item.body}
+    <section aria-labelledby="inbox-title">
+      <header className="log-section-header">
+        <h2 id="inbox-title">
+          {unread === 0 ? "All read" : `${unread} unread`}
+        </h2>
+        {unread > 0 && (
+          <button type="button" className="text-link text-sm" onClick={readAll}>
+            Mark all read
+          </button>
+        )}
+      </header>
+      {items.length === 0 ? (
+        <div className="log-empty">
+          <p>Nothing yet.</p>
+          <p className="log-muted mt-2 text-sm">
+            Achievements, coach messages and household invites land here.
+          </p>
+        </div>
+      ) : (
+        <ul>
+          {items.map((item) => (
+            <li key={item.id}>
+              <button
+                type="button"
+                onClick={() => open(item)}
+                className="ledger-row w-full text-left transition-colors hover:bg-muted"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`h-2 w-2 shrink-0 rounded-full ${item.readAt ? "bg-transparent" : "bg-brand-700 dark:bg-brand-300"}`}
+                />
+                <span className="min-w-0 flex-1">
+                  <span
+                    className={`block ${item.readAt ? "" : "font-semibold"}`}
+                  >
+                    {item.title}
+                    {!item.readAt && <span className="sr-only"> (unread)</span>}
+                  </span>
+                  {item.body && (
+                    <span className="mt-0.5 block text-sm log-muted">
+                      {item.body}
+                    </span>
+                  )}
                 </span>
-              )}
-              <span className="mt-2 block text-xs text-charcoal-blue-400">
-                {new Date(item.createdAt).toLocaleString()}
-              </span>
-            </span>
-          </div>
-        </button>
-      ))}
-    </div>
+                {/* The browser's zone differs from the server's; the first paint is corrected on the client. */}
+                <time
+                  dateTime={item.createdAt}
+                  suppressHydrationWarning
+                  className="num shrink-0 text-xs log-muted"
+                >
+                  {new Date(item.createdAt).toLocaleString(undefined, {
+                    day: "numeric",
+                    month: "short",
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </time>
+                {item.linkUrl && (
+                  <ChevronRight
+                    aria-hidden="true"
+                    size={17}
+                    strokeWidth={1.7}
+                    className="log-muted shrink-0"
+                  />
+                )}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

@@ -11,7 +11,7 @@ Recipes, meal plans, shopping lists, trainers, households, messaging, billing, a
 - PostgreSQL 18 owns all application and identity data. Next.js has no database connection.
 - Redis provides distributed caching and the SignalR backplane.
 - S3-compatible storage supports MinIO and Cloudflare R2.
-- Backend session cookies authenticate browsers. User MCP tokens authenticate external MCP clients.
+- Backend session cookies authenticate browsers. OAuth grants authenticate connected MCP clients and the native app.
 
 ## Run with Docker
 
@@ -22,6 +22,18 @@ cp .env.example .env
 ```
 
 Set `DB_PASSWORD`, `REDIS_PASSWORD`, `MCP_SERVICE_KEY`, `MCP_ADMIN_SERVICE_KEY`, `STORAGE_ACCESS_KEY_ID`, and `STORAGE_SECRET_ACCESS_KEY` to local development values. Set `PUBLIC_APP_URL=http://localhost:3000`. These service credentials are required by Compose; SMTP, OAuth, Paddle, AI, and Telegram are optional for basic logging.
+
+Some optional settings can also be set by an administrator under **Admin → Settings**; a value set there wins over the environment until it is cleared ([runtime settings](docs/ADMIN.md#runtime-settings)):
+
+| Variables | In the admin area |
+| --- | --- |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM_ADDRESS`, `SMTP_FROM_NAME`, `Smtp__Security`, `Smtp__LocalDomain` | Yes |
+| `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`, `AI_SUPPORTS_TEMPERATURE`, `AI_REASONING_EFFORT`, `AI_GLOBAL_DAILY_TOKENS`, `AI_GLOBAL_DAILY_COST_MICROS`, `Ai__<line>__Daily*` | Yes |
+| `TELEGRAM_BOT_SERVICE_URL`, `FCM_PROJECT_ID`, `FCM_SERVICE_ACCOUNT_JSON` | Yes |
+| `PADDLE_ENVIRONMENT`, `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`, `PADDLE_GRACE_DAYS`, `PADDLE_PRICE_LIFETIME_LEGACY` | Yes |
+| Database, Redis, storage, MCP service keys, `PUBLIC_APP_URL`, OAuth, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` | No |
+
+Secrets set there are encrypted with a Data Protection key ring kept in the database; `DATA_PROTECTION_KEYS_PATH` keeps it in a mounted directory instead.
 
 ```sh
 docker compose up -d
@@ -81,7 +93,7 @@ bunx playwright install chromium
 bun run test:e2e
 ```
 
-If Windows fork workers fail to start, use `bunx vitest run --pool=threads --maxWorkers=1`. Playwright starts the real Next.js UI on port 3100 and a synthetic API on port 5100. It checks browser navigation, forms, persisted fixture writes, keyboard interaction, and layout. **It does not verify the .NET API, PostgreSQL, or external services.**
+If Windows fork workers fail to start, use `bunx vitest run --pool=threads --maxWorkers=1`. Playwright starts the real Next.js UI on port 3100 and a synthetic API on port 5100; with `CI` set it builds the app and serves the standalone output instead of `next dev`. It checks browser navigation, forms, persisted fixture writes, keyboard interaction, and layout. **It does not verify the .NET API, PostgreSQL, or external services.**
 
 Set `PLAYWRIGHT_BASE_URL` and `PLAYWRIGHT_API_URL` to change ports. `PLAYWRIGHT_EXTERNAL=1` disables service startup; the suite still needs its fixture session endpoints. With the fixture services running, capture a synthetic screenshot using `bun e2e/capture.ts /today`; add `--mobile --empty` or `--dark` as needed. Reports and screenshots are Git-ignored.
 
@@ -93,15 +105,24 @@ docker compose --profile test run --rm test
 
 The integration fixture truncates its database between tests. Use only a disposable database whose name contains `test`; `TEST_DB_CONNECTION` can select one for a host run. With no connection configured, the fixture creates a PostgreSQL Testcontainer. Never target a development or production database.
 
-After API contract changes, run the API and `bun run codegen` in `frontend` to regenerate `types/api.generated.ts`. Zod form validation is maintained separately; there is no `codegen:zod` script.
+After API contract changes, run the API and `bun run codegen` in `frontend` to regenerate `types/api.generated.ts`. Zod form validation is maintained separately; there is no `codegen:zod` script. CI regenerates the types from the built API's `/swagger/v1/swagger.json` and fails when the result differs from the committed file. Commit the regenerated `types/api.generated.ts` with every contract change.
 
 ## Maintain the database
 
-Keep the current EF migration history and add migrations for schema changes. Do not regenerate or reset `InitialCreate`. After entity or DbContext changes, check model agreement from `backend`:
+Keep the EF migration history on `master` and add migrations for schema changes. Do not regenerate or reset `InitialCreate`. After entity or DbContext changes, check model agreement from `backend`:
 
 ```sh
 dotnet ef migrations has-pending-model-changes --project Mizan.Infrastructure --startup-project Mizan.Api
 ```
+
+An unmerged branch carries one migration. After a model change on such a branch, remove that migration and generate it again with the EF tools, from `backend`:
+
+```sh
+dotnet ef migrations remove --project Mizan.Infrastructure --startup-project Mizan.Api
+dotnet ef migrations add <Name> --project Mizan.Infrastructure --startup-project Mizan.Api
+```
+
+Never edit a migration file by hand.
 
 ## Releases
 
@@ -119,9 +140,12 @@ Production Compose currently follows `latest`. To pin a release, use its version
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Design](DESIGN.md)
-- [MCP setup and tools](docs/MCP.md)
+- [MCP setup, OAuth, and the Claude plugin](docs/MCP.md)
 - [AI consent, limits, and administration](docs/AI.md)
+- [Administration: health, mail, contact, households, runtime settings, feature flags, usage limits, and usage](docs/ADMIN.md)
 - [Telegram setup](docs/TELEGRAM.md)
+- [Meal planning, shopping lists, and prices](docs/PLANNING.md)
+- [Administration](docs/ADMIN.md)
 - [Contributor and agent guidance](CLAUDE.md)
 - [Security policy](SECURITY.md)
 

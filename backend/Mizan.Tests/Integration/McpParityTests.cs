@@ -81,7 +81,7 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
     public async Task TheNewSurfacesAreAllListed()
     {
         await _api.ResetDatabaseAsync();
-        await AuthenticateAsync();
+        await AuthenticateAsync(admin: true);
 
         var names = await ToolNamesAsync();
 
@@ -98,9 +98,43 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
             "admin_update_ai_prompt_draft", "admin_run_ai_prompt_evals",
             "admin_get_ai_prompt_evals", "admin_publish_ai_prompt_version",
             "admin_get_global_ai_usage",
+            // Feature flags, allowance overrides and platform usage
+            "admin_list_feature_flags", "admin_set_feature_flag", "admin_set_feature_flag_override",
+            "admin_clear_feature_flag_override", "admin_list_usage_limits", "admin_set_usage_limit",
+            "admin_clear_usage_limit", "admin_get_platform_usage",
             // Background queue
             "admin_list_jobs", "admin_get_job_stats", "admin_retry_job", "admin_delete_job",
+            // Runtime settings
+            "admin_list_settings", "admin_set_setting", "admin_clear_setting", "admin_test_smtp",
         });
+    }
+
+    [Fact]
+    public async Task AdminToolsAreNotEvenListedForAPlainUser()
+    {
+        await _api.ResetDatabaseAsync();
+        await AuthenticateAsync();
+
+        (await ToolNamesAsync()).Should().NotContain(name => name.StartsWith("admin_"));
+    }
+
+    // ---- Planning ---------------------------------------------------------
+
+    [Fact]
+    public async Task GenerateMealPlanDraftsThroughTheApi_AndTheDraftIsListed()
+    {
+        await _api.ResetDatabaseAsync();
+        _api.Ai.Reset();
+        await AuthenticateAsync();
+        _api.Ai.Reply("""
+            {"name":"Connected week","note":null,"prepSessions":[],"days":[{"dayIndex":0,"entries":[
+              {"slot":"LUNCH","kind":"text","foodName":"Market salad","recipeId":null,"grams":null,"servings":null,"note":null,"prepSessionIndex":null}]}]}
+            """);
+
+        var generated = await CallAsync("generate_meal_plan", new { startDate = "2026-11-02", durationDays = 1, preference = "salad" });
+
+        generated.Should().Contain("\"status\":\"Draft\"").And.Contain("Connected week").And.Contain("Market salad");
+        (await CallAsync("list_meal_plans", new { status = "Draft" })).Should().Contain("Connected week");
     }
 
     // ---- Consent ----------------------------------------------------------
@@ -238,9 +272,8 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         await _api.ResetDatabaseAsync();
         await AuthenticateAsync();
 
-        // The tool is listed - the catalogue is the same for everyone - but the
-        // backend is what decides, so calling it fails rather than the MCP layer
-        // keeping a second copy of the rule.
+        // The tool is not listed for a plain user, and calling it anyway is refused
+        // before it reaches the API. The API refuses it too, as a second line.
         var result = await CallAsync("admin_list_jobs", new { });
 
         result.Should().NotContain("\"deadLettered\"");
@@ -257,6 +290,91 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         (await CallAsync("admin_get_global_ai_usage", new { })).Should().NotBeNullOrWhiteSpace();
     }
 
+    // ---- Runtime settings -------------------------------------------------
+
+    [Fact]
+    public async Task AnAdminSetsAndClearsASettingThroughMcp_AndASecretStaysHidden()
+    {
+        await _api.ResetDatabaseAsync();
+        await AuthenticateAsync(admin: true);
+
+        (await CallAsync("admin_set_setting", new { key = "Smtp.Host", value = "smtp.example.test" }))
+            .Should().Contain("\"source\":\"database\"").And.Contain("smtp.example.test");
+        (await CallAsync("admin_set_setting", new { key = "Smtp.Password", value = "mcp-secret-value" }))
+            .Should().NotContain("mcp-secret-value").And.Contain("\"hasValue\":true");
+        (await CallAsync("admin_set_setting", new { key = "Smtp.Port", value = "99999" }))
+            .Should().Contain("65535", "the catalog's message comes back to the caller");
+
+        var listing = await CallAsync("admin_list_settings", new { });
+        listing.Should().Contain("Smtp.Host").And.NotContain("mcp-secret-value");
+
+        (await CallAsync("admin_clear_setting", new { key = "Smtp.Host" }))
+            .Should().Contain("\"source\":\"unset\"", "the test configuration has no SMTP host to go back to");
+        (await CallAsync("admin_test_smtp", new { })).Should().Contain("jobId");
+    }
+
+    [Fact]
+    public async Task AnAdminWorksTheMailLogContactInboxHealthAndSupportNotesFromMcp()
+    {
+        await _api.ResetDatabaseAsync();
+        await AuthenticateAsync(admin: true);
+        var subject = Guid.NewGuid();
+        await _api.SeedUserAsync(subject, $"subject-{subject:N}@example.com");
+        using (var anonymous = _api.CreateClient())
+        {
+            (await anonymous.PostAsJsonAsync("/api/Contact", new { name = "Ann", email = "ann@example.com", subject = "Hello", message = "From the form" }))
+                .EnsureSuccessStatusCode();
+        }
+
+        (await ToolNamesAsync()).Should().Contain(new[]
+        {
+            "admin_list_mail", "admin_retry_mail", "admin_send_announcement", "admin_list_contact",
+            "admin_reply_contact", "admin_mark_contact_handled", "admin_get_system_health",
+            "admin_list_support_notes", "admin_add_support_note",
+        });
+
+        (await CallAsync("admin_get_system_health", new { })).Should().Contain("\"name\":\"database\"");
+
+        var inbox = await CallAsync("admin_list_contact", new { status = "New" });
+        inbox.Should().Contain("From the form");
+        var contactId = System.Text.RegularExpressions.Regex.Match(inbox, "\"id\":\"([0-9a-f-]{36})\"").Groups[1].Value;
+        (await CallAsync("admin_reply_contact", new { id = contactId, body = "Thanks for writing." }))
+            .Should().Contain("\"status\":\"Handled\"");
+
+        (await CallAsync("admin_list_mail", new { kind = "contact.reply" })).Should().Contain("ann@example.com");
+
+        (await CallAsync("admin_send_announcement", new { subject = "Hi", body = "One person.", audience = $"user:{subject}" }))
+            .Should().Contain("\"queued\":1");
+
+        (await CallAsync("admin_add_support_note", new { subjectType = "User", subjectId = subject.ToString(), body = "Called about billing." }))
+            .Should().Contain("Called about billing.");
+        (await CallAsync("admin_list_support_notes", new { subjectType = "User", subjectId = subject.ToString() }))
+            .Should().Contain("Called about billing.");
+    }
+
+    [Fact]
+    public async Task AnAdminSwitchesAFeatureOffForAHousehold_CapsAUser_AndReadsUsage_ThroughTools()
+    {
+        await _api.ResetDatabaseAsync();
+        await AuthenticateAsync(admin: true);
+        var world = new PlatformAdminWorld(_api);
+        var (person, _) = await world.PersonAsync("member");
+        var home = await world.HouseholdAsync("Home", person);
+
+        (await CallAsync("admin_set_feature_flag_override", new { key = "social.feed", householdId = home.ToString(), enabled = false }))
+            .Should().Contain("\"enabled\":false");
+        (await CallAsync("admin_list_feature_flags", new { })).Should().Contain("\"disabledOverrides\":1");
+        (await CallAsync("admin_set_usage_limit", new { scope = "User", subjectId = person.ToString(), line = "Personal", dailyRequests = 2 }))
+            .Should().Contain("\"source\":\"User\"");
+        (await CallAsync("admin_list_usage_limits", new { scope = "User" })).Should().Contain(person.ToString());
+        (await CallAsync("admin_get_platform_usage", new { groupBy = "feature" })).Should().Contain("\"groupBy\":\"feature\"");
+        (await CallAsync("admin_clear_usage_limit", new { scope = "User", subjectId = person.ToString(), line = "Personal" }))
+            .Should().NotContain("error");
+        (await CallAsync("admin_clear_feature_flag_override", new { key = "social.feed", householdId = home.ToString() }))
+            .Should().NotContain("error");
+        (await CallAsync("admin_set_feature_flag", new { key = "social.feed", enabled = true })).Should().Contain("\"defaultEnabled\":true");
+    }
+
     // ---- Helpers ----------------------------------------------------------
 
     /// <summary>A 1x1 transparent PNG. Small enough to inline, real enough to sniff.</summary>
@@ -269,11 +387,7 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         var email = $"parity-{id:N}@example.com";
         await _api.SeedUserAsync(id, email, role: admin ? "admin" : "user");
 
-        using var client = _api.CreateAuthenticatedClient(id, email, admin ? "admin" : "user");
-        var created = await client.PostAsJsonAsync("/api/McpTokens", new { Name = "Parity" });
-        created.StatusCode.Should().Be(HttpStatusCode.Created);
-
-        var token = (await created.Content.ReadFromJsonAsync<CreateMcpTokenResult>())!.PlaintextToken;
+        var token = (await _api.CreateMcpAccessAsync(id)).Token;
 
         _mcp.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);

@@ -16,6 +16,8 @@ export type RecipeResult = {
   title: string;
   isFavorited?: boolean;
   lastUsedAt?: string | null;
+  /** How many times this person has logged it. */
+  timesLogged?: number;
   nutrition?: {
     caloriesPerServing?: number | null;
     proteinGrams?: number | null;
@@ -71,18 +73,3 @@ export type MealSelection = {
   item: PickerItem;
   amount: string;
 };
-
-export function nutritionForSelection(selection: MealSelection) {
-  const multiplier =
-    Number(selection.amount) / (selection.item.kind === "food" ? 100 : 1);
-  return {
-    calories:
-      selection.item.calories === null
-        ? null
-        : selection.item.calories * multiplier,
-    protein:
-      selection.item.protein === null
-        ? null
-        : selection.item.protein * multiplier,
-  };
-}

@@ -95,11 +95,20 @@ public class BillingTests(ApiTestFixture fixture)
         // A deal on yearly only, and a code that must never be advertised.
         (await admin.PostAsJsonAsync("/api/admin/billing/discounts", new
         {
-            label = "Launch offer", type = "percentage", amount = 25, recurring = false, planIds = new[] { yearly }
+            label = "Launch offer",
+            type = "percentage",
+            amount = 25,
+            recurring = false,
+            planIds = new[] { yearly }
         })).StatusCode.Should().Be(HttpStatusCode.OK);
         (await admin.PostAsJsonAsync("/api/admin/billing/discounts", new
         {
-            label = "Friends", code = "friends10", type = "percentage", amount = 90, recurring = true, maximumRecurringIntervals = 3
+            label = "Friends",
+            code = "friends10",
+            type = "percentage",
+            amount = 90,
+            recurring = true,
+            maximumRecurringIntervals = 3
         })).StatusCode.Should().Be(HttpStatusCode.OK);
 
         var yearlyPriceId = fixture.Paddle.Prices.Values.Single(p => p.Interval == "year").Id;
@@ -129,7 +138,10 @@ public class BillingTests(ApiTestFixture fixture)
         var oldPriceId = fixture.Paddle.Prices.Values.Single().Id;
         (await admin.PostAsJsonAsync("/api/admin/billing/discounts", new
         {
-            label = "Half off", type = "percentage", amount = 50, planIds = new[] { monthly }
+            label = "Half off",
+            type = "percentage",
+            amount = 50,
+            planIds = new[] { monthly }
         })).StatusCode.Should().Be(HttpStatusCode.OK);
 
         var (subscriberId, _) = await SignInUserAsync("existing");
@@ -298,7 +310,7 @@ public class BillingTests(ApiTestFixture fixture)
         // Free: meal plans, shopping lists, and household invites are not capped.
         for (var i = 0; i < 2; i++)
         {
-            (await free.PostAsJsonAsync("/api/MealPlans", new { name = $"Week {i}", startDate = "2030-01-01", endDate = "2030-01-07" }))
+            (await free.PostAsJsonAsync("/api/MealPlans", new { name = $"Week {i}", startDate = "2030-01-01", durationDays = 7 }))
                 .IsSuccessStatusCode.Should().BeTrue();
             (await free.PostAsJsonAsync("/api/ShoppingLists", new { name = $"List {i}" }))
                 .IsSuccessStatusCode.Should().BeTrue();

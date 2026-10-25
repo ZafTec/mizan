@@ -8,192 +8,198 @@ import Loading from "@/components/Loading";
 import { PasswordInput } from "@/components/PasswordInput";
 
 export default function ResetPasswordPage() {
-	const router = useRouter();
-	const searchParams = useSearchParams();
-	const [password, setPassword] = useState("");
-	const [confirmPassword, setConfirmPassword] = useState("");
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState("");
-	const [success, setSuccess] = useState(false);
-	const [tokenError, setTokenError] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [tokenError, setTokenError] = useState("");
 
-	const token = searchParams.get("token");
+  const token = searchParams.get("token");
 
-	useEffect(() => {
-		const errorParam = searchParams.get("error");
-		if (errorParam === "INVALID_TOKEN") {
-			setTokenError("This password reset link is invalid or has expired.");
-		} else if (!token && !errorParam) {
-			setTokenError("No reset token provided. Please request a new password reset.");
-		}
-	}, [token, searchParams]);
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    if (errorParam === "INVALID_TOKEN") {
+      setTokenError("This password reset link is invalid or has expired.");
+    } else if (!token && !errorParam) {
+      setTokenError(
+        "No reset token provided. Please request a new password reset.",
+      );
+    }
+  }, [token, searchParams]);
 
-	async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-		e.preventDefault();
-		setLoading(true);
-		setError("");
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
-		if (password !== confirmPassword) {
-			setError("Passwords do not match");
-			setLoading(false);
-			return;
-		}
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
 
-		if (password.length < 10) {
-			setError("Password must be at least 10 characters long");
-			setLoading(false);
-			return;
-		}
+    if (password.length < 10) {
+      setError("Password must be at least 10 characters long");
+      setLoading(false);
+      return;
+    }
 
-		if (!token) {
-			setError("No reset token provided");
-			setLoading(false);
-			return;
-		}
+    if (!token) {
+      setError("No reset token provided");
+      setLoading(false);
+      return;
+    }
 
-		try {
-			await resetPassword(token, password);
-			setSuccess(true);
-			setTimeout(() => router.push("/login"), 2000);
-		} catch (caught) {
-			setError((caught as AuthError).message || "Failed to reset password. Please try again.");
-		} finally {
-			setLoading(false);
-		}
-	}
+    try {
+      await resetPassword(token, password);
+      setSuccess(true);
+      setTimeout(() => router.push("/login"), 2000);
+    } catch (caught) {
+      setError(
+        (caught as AuthError).message ||
+          "Failed to reset password. Please try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
-	return (
-		<div className="min-h-[70vh] flex items-center justify-center">
-			<div className="w-full max-w-md">
-				{/* Header */}
-				<div className="text-center mb-8">
-					<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-						Set new password
-					</h1>
-					<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
-						Your new password must be different from previous passwords
-					</p>
-				</div>
+  return (
+    <div className="min-h-[70vh] flex items-center justify-center">
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
+            Set new password
+          </h1>
+          <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1">
+            Your new password must be different from previous passwords
+          </p>
+        </div>
 
-				{/* Form Card */}
-				<div className="card p-6 sm:p-8">
-					{tokenError ? (
-						<div className="text-center space-y-4">
-							<div className="w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto">
-								<i className="ri-error-warning-line text-3xl text-red-600 dark:text-red-400" />
-							</div>
-							<div>
-								<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
-									Invalid or expired link
-								</h3>
-								<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-sm">
-									{tokenError}
-								</p>
-							</div>
-							<div className="space-y-3 pt-4">
-								<Link href="/forgot-password" className="btn-primary w-full py-3">
-									Request new reset link
-								</Link>
-								<Link href="/login" className="btn-secondary w-full py-3">
-									<i className="ri-arrow-left-line" />
-									Back to login
-								</Link>
-							</div>
-						</div>
-					) : success ? (
-						<div className="text-center space-y-4">
-							<div className="w-16 h-16 rounded-2xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto">
-								<i className="ri-checkbox-circle-line text-3xl text-green-600 dark:text-green-400" />
-							</div>
-							<div>
-								<h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
-									Password reset successful!
-								</h3>
-								<p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-sm">
-									Your password has been updated. Redirecting to login...
-								</p>
-							</div>
-							<div className="pt-4">
-								<Link href="/login" className="btn-primary w-full py-3">
-									Continue to login
-								</Link>
-							</div>
-						</div>
-					) : (
-						<form data-testid="reset-password-form" onSubmit={handleSubmit} className="space-y-5">
-							<div>
-								<label htmlFor="password" className="label">
-									New Password
-								</label>
-								<PasswordInput
-									required
-									id="password"
-									name="password"
-									className="input pr-10"
-									placeholder="••••••••"
-									value={password}
-									onChange={(e) => setPassword(e.target.value)}
-									minLength={10}
-									showStrength
-								/>
-								<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1.5">
-									Must be at least 10 characters
-								</p>
-							</div>
+        {/* Form Card */}
+        <div className="card p-6 sm:p-8">
+          {tokenError ? (
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto"></div>
+              <div>
+                <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
+                  Invalid or expired link
+                </h3>
+                <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-sm">
+                  {tokenError}
+                </p>
+              </div>
+              <div className="space-y-3 pt-4">
+                <Link
+                  href="/forgot-password"
+                  className="btn-primary w-full py-3"
+                >
+                  Request new reset link
+                </Link>
+                <Link href="/login" className="btn-secondary w-full py-3">
+                  Back to login
+                </Link>
+              </div>
+            </div>
+          ) : success ? (
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto"></div>
+              <div>
+                <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
+                  Password reset successful!
+                </h3>
+                <p className="text-charcoal-blue-500 dark:text-charcoal-blue-400 text-sm">
+                  Your password has been updated. Redirecting to login...
+                </p>
+              </div>
+              <div className="pt-4">
+                <Link href="/login" className="btn-primary w-full py-3">
+                  Continue to login
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <form
+              data-testid="reset-password-form"
+              onSubmit={handleSubmit}
+              className="space-y-5"
+            >
+              <div>
+                <label htmlFor="password" className="label">
+                  New Password
+                </label>
+                <PasswordInput
+                  required
+                  id="password"
+                  name="password"
+                  className="input pr-10"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  minLength={10}
+                  showStrength
+                />
+                <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400 mt-1.5">
+                  Must be at least 10 characters
+                </p>
+              </div>
 
-							<div>
-								<label htmlFor="confirmPassword" className="label">
-									Confirm Password
-								</label>
-								<PasswordInput
-									required
-									id="confirmPassword"
-									name="confirmPassword"
-									className="input pr-10"
-									placeholder="••••••••"
-									value={confirmPassword}
-									onChange={(e) => setConfirmPassword(e.target.value)}
-									minLength={10}
-								/>
-							</div>
+              <div>
+                <label htmlFor="confirmPassword" className="label">
+                  Confirm Password
+                </label>
+                <PasswordInput
+                  required
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  className="input pr-10"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  minLength={10}
+                />
+              </div>
 
-							{error && (
-								<div
-									data-testid="error-message"
-									className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm"
-								>
-									<i className="ri-error-warning-line text-lg" />
-									<span>{error}</span>
-								</div>
-							)}
+              {error && (
+                <div
+                  data-testid="error-message"
+                  className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-sm"
+                >
+                  <span>{error}</span>
+                </div>
+              )}
 
-							<button type="submit" disabled={loading} className="btn-primary w-full py-3">
-								{loading ? (
-									<>
-										<Loading size="sm" />
-										Resetting password...
-									</>
-								) : (
-									<>
-										Reset password
-										<i className="ri-check-line" />
-									</>
-								)}
-							</button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-primary w-full py-3"
+              >
+                {loading ? (
+                  <>
+                    <Loading size="sm" />
+                    Resetting password...
+                  </>
+                ) : (
+                  <>Reset password</>
+                )}
+              </button>
 
-							<div className="text-center">
-								<Link
-									href="/login"
-									className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 hover:text-charcoal-blue-900 dark:hover:text-charcoal-blue-100 inline-flex items-center gap-1"
-								>
-									<i className="ri-arrow-left-line" />
-									Back to login
-								</Link>
-							</div>
-						</form>
-					)}
-				</div>
-			</div>
-		</div>
-	);
+              <div className="text-center">
+                <Link
+                  href="/login"
+                  className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400 hover:text-charcoal-blue-900 dark:hover:text-charcoal-blue-100 inline-flex items-center gap-1"
+                >
+                  Back to login
+                </Link>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -40,7 +40,7 @@ public class AdminBillingController : ControllerBase
     [HttpPut("plans/{id:guid}")]
     public async Task<IActionResult> UpdatePlan(Guid id, [FromBody] UpdateBillingPlanCommand command)
     {
-        if (id != command.Id) return BadRequest("Route id and body id must match.");
+        if (id != command.Id) return BadRequest(new { errorCode = "id_mismatch", error = "Route and body IDs must match" });
         await _mediator.Send(command);
         return NoContent();
     }
@@ -49,7 +49,7 @@ public class AdminBillingController : ControllerBase
     [HttpPost("plans/{id:guid}/price")]
     public async Task<ActionResult<CreateBillingPlanResult>> ReplacePrice(Guid id, [FromBody] ReplaceBillingPlanPriceCommand command)
     {
-        if (id != command.Id) return BadRequest("Route id and body id must match.");
+        if (id != command.Id) return BadRequest(new { errorCode = "id_mismatch", error = "Route and body IDs must match" });
         var result = await _mediator.Send(command);
         return Ok(result);
     }

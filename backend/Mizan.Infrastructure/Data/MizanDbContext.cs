@@ -1,10 +1,11 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 
 namespace Mizan.Infrastructure.Data;
 
-public class MizanDbContext : DbContext, IMizanDbContext
+public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyContext
 {
     public MizanDbContext(DbContextOptions<MizanDbContext> options) : base(options)
     {
@@ -35,7 +36,8 @@ public class MizanDbContext : DbContext, IMizanDbContext
 
     // Meal Planning
     public DbSet<MealPlan> MealPlans => Set<MealPlan>();
-    public DbSet<MealPlanRecipe> MealPlanRecipes => Set<MealPlanRecipe>();
+    public DbSet<PlanEntry> PlanEntries => Set<PlanEntry>();
+    public DbSet<PrepSession> PrepSessions => Set<PrepSession>();
     public DbSet<ShoppingList> ShoppingLists => Set<ShoppingList>();
     public DbSet<ShoppingListItem> ShoppingListItems => Set<ShoppingListItem>();
 
@@ -85,8 +87,24 @@ public class MizanDbContext : DbContext, IMizanDbContext
     public DbSet<AiEvalRun> AiEvalRuns => Set<AiEvalRun>();
 
     // MCP Integration
-    public DbSet<McpToken> McpTokens => Set<McpToken>();
     public DbSet<McpUsageLog> McpUsageLogs => Set<McpUsageLog>();
+    public DbSet<OAuthClient> OAuthClients => Set<OAuthClient>();
+    public DbSet<OAuthGrant> OAuthGrants => Set<OAuthGrant>();
+    public DbSet<OAuthAuthorizationRequest> OAuthAuthorizationRequests => Set<OAuthAuthorizationRequest>();
+    public DbSet<OAuthToken> OAuthTokens => Set<OAuthToken>();
+    public DbSet<McpTask> McpTasks => Set<McpTask>();
+    public DbSet<IdempotencyKey> IdempotencyKeys => Set<IdempotencyKey>();
+    public DbSet<DeletedRecord> DeletedRecords => Set<DeletedRecord>();
+    public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
+    public DbSet<EmailMessage> EmailMessages => Set<EmailMessage>();
+    public DbSet<Announcement> Announcements => Set<Announcement>();
+    public DbSet<ContactSubmission> ContactSubmissions => Set<ContactSubmission>();
+    public DbSet<SupportNote> SupportNotes => Set<SupportNote>();
+    public DbSet<PriceRegion> PriceRegions => Set<PriceRegion>();
+    public DbSet<PriceSource> PriceSources => Set<PriceSource>();
+    public DbSet<PriceSourceAlias> PriceSourceAliases => Set<PriceSourceAlias>();
+    public DbSet<FoodPrice> FoodPrices => Set<FoodPrice>();
+    public DbSet<PriceReport> PriceReports => Set<PriceReport>();
 
     // Billing
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
@@ -94,6 +112,17 @@ public class MizanDbContext : DbContext, IMizanDbContext
     public DbSet<RecipeNutritionSnapshot> RecipeNutritionSnapshots => Set<RecipeNutritionSnapshot>();
     public DbSet<BillingPlan> BillingPlans => Set<BillingPlan>();
     public DbSet<BillingDiscount> BillingDiscounts => Set<BillingDiscount>();
+
+    // Runtime settings and the Data Protection key ring that encrypts their secrets
+    // (docs/ADMIN.md#runtime-settings). Not on IMizanDbContext: Application reads settings through
+    // IRuntimeSettings, which never hands it a decrypted secret.
+    public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
+
+    // Platform administration: feature flags and allowance overrides (docs/ADMIN.md)
+    public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
+    public DbSet<FeatureFlagOverride> FeatureFlagOverrides => Set<FeatureFlagOverride>();
+    public DbSet<UsageLimitOverride> UsageLimitOverrides => Set<UsageLimitOverride>();
 
     public async Task<T> ExecuteInTransactionAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken = default)
     {
@@ -128,6 +157,79 @@ public class MizanDbContext : DbContext, IMizanDbContext
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        StampChanges();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        StampChanges();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    private static readonly IReadOnlyDictionary<Type, string> TombstoneTypes = new Dictionary<Type, string>
+    {
+        [typeof(FoodDiaryEntry)] = DeletedRecord.DiaryEntry,
+        [typeof(Workout)] = DeletedRecord.Workout,
+        [typeof(BodyMeasurement)] = DeletedRecord.BodyMeasurement,
+    };
+
+    /// <summary>
+    /// What lets an app ask "what changed since I last looked". Every saved change to a tracked record stamps
+    /// its UpdatedAt, a delete leaves a tombstone, and a change to the exercises of a workout counts as a
+    /// change to the workout, since that is the thing the app holds a copy of.
+    /// </summary>
+    private void StampChanges()
+    {
+        var now = DateTime.UtcNow;
+        var bumpWorkouts = new HashSet<Guid>();
+
+        foreach (var entry in ChangeTracker.Entries().ToList())
+        {
+            if (entry.Entity is IChangeTracked tracked)
+            {
+                if (entry.State is EntityState.Added or EntityState.Modified)
+                {
+                    tracked.UpdatedAt = now;
+                }
+                else if (entry.State == EntityState.Deleted && TombstoneTypes.TryGetValue(entry.Entity.GetType(), out var type))
+                {
+                    DeletedRecords.Add(new DeletedRecord
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = tracked.UserId,
+                        EntityType = type,
+                        EntityId = tracked.Id,
+                        DeletedAt = now,
+                    });
+                }
+            }
+            else if (entry.Entity is WorkoutExercise exercise && entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+            {
+                bumpWorkouts.Add(exercise.WorkoutId);
+            }
+        }
+
+        foreach (var id in bumpWorkouts)
+        {
+            var workout = Workouts.Local.FirstOrDefault(w => w.Id == id);
+            if (workout is not null && Entry(workout).State is EntityState.Deleted) continue;
+
+            if (workout is null)
+            {
+                // Only the stamp is written; nothing else about the workout is loaded or touched.
+                workout = new Workout { Id = id };
+                Attach(workout);
+            }
+
+            workout.UpdatedAt = now;
+            var state = Entry(workout).State;
+            if (state is EntityState.Unchanged or EntityState.Modified) Entry(workout).Property(w => w.UpdatedAt).IsModified = true;
+        }
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -143,9 +245,11 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.Name).HasColumnName("name");
             entity.Property(e => e.Image).HasColumnName("image");
             entity.Property(e => e.TimeZoneId).HasColumnName("time_zone_id").HasMaxLength(64);
+            entity.Property(e => e.PriceRegionCode).HasColumnName("price_region_code").HasMaxLength(16);
             entity.Property(e => e.ThemePreference).HasColumnName("theme_preference");
             entity.Property(e => e.CompactMode).HasColumnName("compact_mode");
             entity.Property(e => e.ReduceAnimations).HasColumnName("reduce_animations");
+            entity.Property(e => e.NotifyByTelegram).HasColumnName("notify_by_telegram");
             entity.Property(e => e.Role).HasColumnName("role");
             entity.Property(e => e.Banned).HasColumnName("banned");
             entity.Property(e => e.BanReason).HasColumnName("ban_reason");
@@ -287,7 +391,9 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.LastSeenAt).HasColumnName("last_seen_at").HasDefaultValueSql("NOW()");
             entity.Property(e => e.IpAddress).HasColumnName("ip_address").HasMaxLength(64);
             entity.Property(e => e.UserAgent).HasColumnName("user_agent").HasMaxLength(512);
+            entity.Property(e => e.ImpersonatorId).HasColumnName("impersonator_id");
             entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity.HasIndex(e => e.ImpersonatorId);
             entity.HasIndex(e => e.UserId);
             entity.HasOne(e => e.User).WithMany(u => u.Sessions)
                 .HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
@@ -509,10 +615,14 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.ProteinCalorieRatio).HasColumnName("protein_calorie_ratio").HasPrecision(8, 2);
             entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(255).HasDefaultValue("");
             entity.Property(e => e.LoggedAt).HasColumnName("logged_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
             entity.HasIndex(e => new { e.UserId, e.EntryDate });
+            entity.HasIndex(e => new { e.UserId, e.UpdatedAt });
             entity.HasOne(e => e.User).WithMany(u => u.FoodDiaryEntries).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Food).WithMany(f => f.DiaryEntries).HasForeignKey(e => e.FoodId).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(e => e.Recipe).WithMany(r => r.DiaryEntries).HasForeignKey(e => e.RecipeId).OnDelete(DeleteBehavior.SetNull);
+            entity.Property(e => e.PlanEntryId).HasColumnName("plan_entry_id");
+            entity.HasOne(e => e.PlanEntry).WithMany().HasForeignKey(e => e.PlanEntryId).OnDelete(DeleteBehavior.SetNull);
         });
 
         // MealPlan configuration
@@ -523,28 +633,172 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.HouseholdId).HasColumnName("household_id");
+            entity.Property(e => e.AuthoredByUserId).HasColumnName("authored_by_user_id");
+            entity.Property(e => e.Kind).HasColumnName("kind").HasConversion<string>().HasMaxLength(20).HasDefaultValue(Mizan.Domain.Planning.PlanKind.Personal);
+            entity.Property(e => e.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(20).HasDefaultValue(Mizan.Domain.Planning.PlanStatus.Active);
             entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(255);
-            entity.Property(e => e.StartDate).HasColumnName("start_date").IsRequired();
-            entity.Property(e => e.EndDate).HasColumnName("end_date").IsRequired();
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(2000);
+            entity.Property(e => e.StartDate).HasColumnName("start_date");
+            entity.Property(e => e.DurationDays).HasColumnName("duration_days").HasDefaultValue(7);
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.Ignore(e => e.EndDate);
+            entity.OwnsOne(e => e.Rules, rules =>
+            {
+                rules.ToJson("rules");
+                rules.Ignore(r => r.EffectiveMaxCarbs);
+                rules.Ignore(r => r.HasAnyRule);
+            });
+            entity.OwnsOne(e => e.GeneratedFrom, generated => generated.ToJson("generated_from"));
+            entity.HasIndex(e => new { e.UserId, e.Status, e.StartDate }).HasDatabaseName("ix_meal_plans_user_status_start");
+            entity.HasIndex(e => new { e.Kind, e.UserId }).HasDatabaseName("ix_meal_plans_kind_user");
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Household).WithMany().HasForeignKey(e => e.HouseholdId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.AuthoredBy).WithMany().HasForeignKey(e => e.AuthoredByUserId).OnDelete(DeleteBehavior.SetNull);
         });
 
-        // MealPlanRecipe configuration
-        modelBuilder.Entity<MealPlanRecipe>(entity =>
+        // PrepSession configuration
+        modelBuilder.Entity<PrepSession>(entity =>
         {
-            entity.ToTable("meal_plan_recipes");
+            entity.ToTable("prep_sessions");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
             entity.Property(e => e.MealPlanId).HasColumnName("meal_plan_id");
+            entity.Property(e => e.DayIndex).HasColumnName("day_index");
+            entity.Property(e => e.Title).HasColumnName("title").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Notes).HasColumnName("notes").HasMaxLength(2000);
+            entity.HasIndex(e => e.MealPlanId).HasDatabaseName("ix_prep_sessions_meal_plan");
+            entity.HasOne(e => e.MealPlan).WithMany(m => m.PrepSessions).HasForeignKey(e => e.MealPlanId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // PlanEntry configuration
+        modelBuilder.Entity<PlanEntry>(entity =>
+        {
+            entity.ToTable("plan_entries");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.MealPlanId).HasColumnName("meal_plan_id");
+            entity.Property(e => e.DayIndex).HasColumnName("day_index");
+            entity.Property(e => e.Slot).HasColumnName("slot").HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Kind).HasColumnName("kind").HasConversion<string>().HasMaxLength(20);
             entity.Property(e => e.RecipeId).HasColumnName("recipe_id");
-            entity.Property(e => e.Date).HasColumnName("date").IsRequired();
-            entity.Property(e => e.MealType).HasColumnName("meal_type").HasMaxLength(20);
-            entity.Property(e => e.Servings).HasColumnName("servings").HasPrecision(6, 2).HasDefaultValue(1m);
-            entity.HasOne(e => e.MealPlan).WithMany(m => m.MealPlanRecipes).HasForeignKey(e => e.MealPlanId).OnDelete(DeleteBehavior.Cascade);
-            entity.HasOne(e => e.Recipe).WithMany(r => r.MealPlanRecipes).HasForeignKey(e => e.RecipeId).OnDelete(DeleteBehavior.Cascade);
+            entity.Property(e => e.Servings).HasColumnName("servings").HasPrecision(6, 2);
+            entity.Property(e => e.FoodId).HasColumnName("food_id");
+            entity.Property(e => e.Grams).HasColumnName("grams").HasPrecision(10, 2);
+            entity.Property(e => e.Text).HasColumnName("text").HasMaxLength(255);
+            entity.Property(e => e.Notes).HasColumnName("notes").HasMaxLength(1000);
+            entity.Property(e => e.SortOrder).HasColumnName("sort_order").HasDefaultValue(0);
+            entity.Property(e => e.PrepSessionId).HasColumnName("prep_session_id");
+            entity.HasIndex(e => new { e.MealPlanId, e.DayIndex }).HasDatabaseName("ix_plan_entries_plan_day");
+            entity.HasOne(e => e.MealPlan).WithMany(m => m.Entries).HasForeignKey(e => e.MealPlanId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Recipe).WithMany(r => r.PlanEntries).HasForeignKey(e => e.RecipeId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.Food).WithMany().HasForeignKey(e => e.FoodId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.PrepSession).WithMany(p => p.Entries).HasForeignKey(e => e.PrepSessionId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Prices: regions, sources, aliases, observations and reports (docs/PLANNING.md#prices)
+        modelBuilder.Entity<PriceRegion>(entity =>
+        {
+            entity.ToTable("price_regions");
+            entity.HasKey(e => e.Code);
+            entity.Property(e => e.Code).HasColumnName("code").HasMaxLength(16);
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Currency).HasColumnName("currency").HasMaxLength(3).IsRequired();
+            entity.Property(e => e.Enabled).HasColumnName("enabled").HasDefaultValue(true);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.HasData(new PriceRegion { Code = "ET-AA", Name = "Addis Ababa", Currency = "ETB", Enabled = true, CreatedAt = new DateTime(2026, 10, 22, 0, 0, 0, DateTimeKind.Utc) });
+        });
+
+        modelBuilder.Entity<PriceSource>(entity =>
+        {
+            entity.ToTable("price_sources");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Kind).HasColumnName("kind").HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.Url).HasColumnName("url").HasMaxLength(512);
+            entity.Property(e => e.ScraperKey).HasColumnName("scraper_key").HasMaxLength(50);
+            entity.Property(e => e.RegionCode).HasColumnName("region_code").HasMaxLength(16).IsRequired();
+            entity.Property(e => e.Enabled).HasColumnName("enabled").HasDefaultValue(true);
+            entity.Property(e => e.Schedule).HasColumnName("schedule").HasMaxLength(100);
+            entity.Property(e => e.LastRunAt).HasColumnName("last_run_at");
+            entity.Property(e => e.LastStatus).HasColumnName("last_status").HasMaxLength(50);
+            entity.Property(e => e.LastError).HasColumnName("last_error").HasMaxLength(2000);
+            entity.Property(e => e.LastObservations).HasColumnName("last_observations").HasDefaultValue(0);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.RegionCode, e.Name }).IsUnique().HasDatabaseName("ux_price_sources_region_name");
+            entity.HasOne(e => e.Region).WithMany(r => r.Sources).HasForeignKey(e => e.RegionCode).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PriceSourceAlias>(entity =>
+        {
+            entity.ToTable("price_source_aliases");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.SourceId).HasColumnName("source_id");
+            entity.Property(e => e.ProductName).HasColumnName("product_name").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.ProductKey).HasColumnName("product_key").HasMaxLength(512);
+            entity.Property(e => e.FoodId).HasColumnName("food_id");
+            entity.Property(e => e.Quantity).HasColumnName("quantity").HasPrecision(10, 3);
+            entity.Property(e => e.Unit).HasColumnName("unit").HasMaxLength(10);
+            entity.Property(e => e.Ignored).HasColumnName("ignored").HasDefaultValue(false);
+            entity.Property(e => e.LastSeenPrice).HasColumnName("last_seen_price").HasPrecision(12, 2);
+            entity.Property(e => e.LastSeenAt).HasColumnName("last_seen_at");
+            entity.Property(e => e.LastSeenUrl).HasColumnName("last_seen_url").HasMaxLength(1024);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.SourceId, e.ProductName }).IsUnique().HasDatabaseName("ux_price_source_aliases_source_product");
+            entity.HasIndex(e => e.FoodId).HasDatabaseName("ix_price_source_aliases_food");
+            entity.HasOne(e => e.Source).WithMany(s => s.Aliases).HasForeignKey(e => e.SourceId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Food).WithMany().HasForeignKey(e => e.FoodId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<FoodPrice>(entity =>
+        {
+            entity.ToTable("food_prices");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.FoodId).HasColumnName("food_id");
+            entity.Property(e => e.RegionCode).HasColumnName("region_code").HasMaxLength(16).IsRequired();
+            entity.Property(e => e.SourceId).HasColumnName("source_id");
+            entity.Property(e => e.Price).HasColumnName("price").HasPrecision(12, 2);
+            entity.Property(e => e.Quantity).HasColumnName("quantity").HasPrecision(10, 3).HasDefaultValue(1m);
+            entity.Property(e => e.Unit).HasColumnName("unit").HasMaxLength(10).IsRequired();
+            entity.Property(e => e.Confidence).HasColumnName("confidence").HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.ObservedAt).HasColumnName("observed_at");
+            entity.Property(e => e.SourceUrl).HasColumnName("source_url").HasMaxLength(1024);
+            entity.Property(e => e.ReportedByUserId).HasColumnName("reported_by_user_id");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.FoodId, e.RegionCode, e.ObservedAt }).HasDatabaseName("ix_food_prices_food_region_observed");
+            entity.HasOne(e => e.Food).WithMany().HasForeignKey(e => e.FoodId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Region).WithMany().HasForeignKey(e => e.RegionCode).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.Source).WithMany(s => s.Prices).HasForeignKey(e => e.SourceId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<PriceReport>(entity =>
+        {
+            entity.ToTable("price_reports");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.FoodId).HasColumnName("food_id");
+            entity.Property(e => e.RegionCode).HasColumnName("region_code").HasMaxLength(16).IsRequired();
+            entity.Property(e => e.SuggestedPrice).HasColumnName("suggested_price").HasPrecision(12, 2);
+            entity.Property(e => e.Quantity).HasColumnName("quantity").HasPrecision(10, 3).HasDefaultValue(1m);
+            entity.Property(e => e.Unit).HasColumnName("unit").HasMaxLength(10).IsRequired();
+            entity.Property(e => e.Note).HasColumnName("note").HasMaxLength(1000);
+            entity.Property(e => e.ShownPricePerGram).HasColumnName("shown_price_per_gram").HasPrecision(14, 6);
+            entity.Property(e => e.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.ResolvedByUserId).HasColumnName("resolved_by_user_id");
+            entity.Property(e => e.ResolvedAt).HasColumnName("resolved_at");
+            entity.Property(e => e.ResolutionNote).HasColumnName("resolution_note").HasMaxLength(1000);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.Status, e.CreatedAt }).HasDatabaseName("ix_price_reports_status_created");
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Food).WithMany().HasForeignKey(e => e.FoodId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Region).WithMany().HasForeignKey(e => e.RegionCode).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.ResolvedBy).WithMany().HasForeignKey(e => e.ResolvedByUserId).OnDelete(DeleteBehavior.SetNull);
         });
 
         // ShoppingList configuration
@@ -560,6 +814,10 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Household).WithMany(h => h.ShoppingLists).HasForeignKey(e => e.HouseholdId).OnDelete(DeleteBehavior.SetNull);
+            entity.Property(e => e.MealPlanId).HasColumnName("meal_plan_id");
+            entity.Property(e => e.GeneratedAt).HasColumnName("generated_at");
+            entity.HasIndex(e => new { e.UserId, e.UpdatedAt }).HasDatabaseName("ix_shopping_lists_user_updated");
+            entity.HasOne(e => e.MealPlan).WithMany().HasForeignKey(e => e.MealPlanId).OnDelete(DeleteBehavior.SetNull);
         });
 
         // ShoppingListItem configuration
@@ -575,6 +833,11 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.Unit).HasColumnName("unit").HasMaxLength(50);
             entity.Property(e => e.Category).HasColumnName("category").HasMaxLength(100);
             entity.Property(e => e.IsChecked).HasColumnName("is_checked").HasDefaultValue(false);
+            entity.Property(e => e.Grams).HasColumnName("grams").HasPrecision(10, 2);
+            entity.Property(e => e.NeedsReview).HasColumnName("needs_review").HasDefaultValue(false);
+            entity.Property(e => e.PrepSessionId).HasColumnName("prep_session_id");
+            entity.Property(e => e.SortOrder).HasColumnName("sort_order").HasDefaultValue(0);
+            entity.HasIndex(e => e.ShoppingListId).HasDatabaseName("ix_shopping_list_items_list");
             entity.HasOne(e => e.ShoppingList).WithMany(s => s.Items).HasForeignKey(e => e.ShoppingListId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Food).WithMany().HasForeignKey(e => e.FoodId).OnDelete(DeleteBehavior.SetNull);
         });
@@ -640,6 +903,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.Equipment).HasColumnName("equipment").HasMaxLength(100);
             entity.Property(e => e.VideoUrl).HasColumnName("video_url");
             entity.Property(e => e.ImageUrl).HasColumnName("image_url");
+            entity.Property(e => e.ModelUrl).HasColumnName("model_url").HasMaxLength(500);
             entity.Property(e => e.IsCustom).HasColumnName("is_custom").HasDefaultValue(false);
             entity.Property(e => e.IsApproved).HasColumnName("is_approved").HasDefaultValue(true);
             entity.Property(e => e.CreatedByUserId).HasColumnName("created_by_user_id");
@@ -664,6 +928,8 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.CaloriesBurned).HasColumnName("calories_burned");
             entity.Property(e => e.Notes).HasColumnName("notes");
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.UserId, e.UpdatedAt });
             entity.HasOne(e => e.User).WithMany(u => u.Workouts).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Template).WithMany(t => t.Workouts).HasForeignKey(e => e.TemplateId).OnDelete(DeleteBehavior.SetNull);
         });
@@ -777,6 +1043,8 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.RightThighCm).HasColumnName("right_thigh_cm").HasPrecision(6, 2);
             entity.Property(e => e.Notes).HasColumnName("notes");
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.UserId, e.UpdatedAt });
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -794,6 +1062,7 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.CanViewMeasurements).HasColumnName("can_view_measurements").HasDefaultValue(false);
             entity.Property(e => e.CanMessage).HasColumnName("can_message").HasDefaultValue(true);
             entity.Property(e => e.CanAwardAchievements).HasColumnName("can_award_achievements").HasDefaultValue(false);
+            entity.Property(e => e.CanPlanMeals).HasColumnName("can_plan_meals").HasDefaultValue(false);
             entity.Property(e => e.StartedAt).HasColumnName("started_at");
             entity.Property(e => e.EndedAt).HasColumnName("ended_at");
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
@@ -1014,6 +1283,97 @@ public class MizanDbContext : DbContext, IMizanDbContext
                 .HasDatabaseName("ix_outbox_jobs_dedupe");
         });
 
+        modelBuilder.Entity<SystemSetting>(entity =>
+        {
+            entity.ToTable("system_settings");
+            entity.HasKey(e => e.Key);
+            entity.Property(e => e.Key).HasColumnName("key").HasMaxLength(128);
+            entity.Property(e => e.Value).HasColumnName("value").IsRequired();
+            entity.Property(e => e.IsSecret).HasColumnName("is_secret");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+            entity.Property(e => e.UpdatedByUserId).HasColumnName("updated_by_user_id");
+            entity.HasOne<User>().WithMany().HasForeignKey(e => e.UpdatedByUserId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<DataProtectionKey>(entity =>
+        {
+            entity.ToTable("data_protection_keys");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.FriendlyName).HasColumnName("friendly_name");
+            entity.Property(e => e.Xml).HasColumnName("xml");
+        });
+
+        modelBuilder.Entity<EmailMessage>(entity =>
+        {
+            entity.ToTable("email_messages");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.ToUserId).HasColumnName("to_user_id");
+            entity.Property(e => e.ToAddress).HasColumnName("to_address").HasMaxLength(320).IsRequired();
+            entity.Property(e => e.Subject).HasColumnName("subject").HasMaxLength(300).IsRequired();
+            entity.Property(e => e.Kind).HasColumnName("kind").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(16);
+            entity.Property(e => e.Attempts).HasColumnName("attempts").HasDefaultValue(0);
+            entity.Property(e => e.LastError).HasColumnName("last_error").HasMaxLength(2000);
+            entity.Property(e => e.OutboxJobId).HasColumnName("outbox_job_id");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.SentAt).HasColumnName("sent_at");
+            entity.Property(e => e.CreatedByUserId).HasColumnName("created_by_user_id");
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => new { e.Status, e.CreatedAt });
+            entity.HasIndex(e => new { e.Kind, e.CreatedAt });
+            entity.HasIndex(e => e.OutboxJobId);
+            entity.HasIndex(e => e.ToUserId);
+        });
+
+        modelBuilder.Entity<Announcement>(entity =>
+        {
+            entity.ToTable("announcements");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Subject).HasColumnName("subject").HasMaxLength(300).IsRequired();
+            entity.Property(e => e.Audience).HasColumnName("audience").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.RecipientCount).HasColumnName("recipient_count");
+            entity.Property(e => e.CreatedByUserId).HasColumnName("created_by_user_id");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.Audience, e.CreatedAt });
+        });
+
+        modelBuilder.Entity<ContactSubmission>(entity =>
+        {
+            entity.ToTable("contact_submissions");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(ContactSubmission.NameMax).IsRequired();
+            entity.Property(e => e.Email).HasColumnName("email").HasMaxLength(ContactSubmission.EmailMax).IsRequired();
+            entity.Property(e => e.Subject).HasColumnName("subject").HasMaxLength(ContactSubmission.SubjectMax).IsRequired();
+            entity.Property(e => e.Message).HasColumnName("message").HasMaxLength(ContactSubmission.MessageMax).IsRequired();
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(16);
+            entity.Property(e => e.HandledAt).HasColumnName("handled_at");
+            entity.Property(e => e.HandledByUserId).HasColumnName("handled_by_user_id");
+            entity.Property(e => e.ReplyEmailMessageId).HasColumnName("reply_email_message_id");
+            entity.Property(e => e.IpHash).HasColumnName("ip_hash").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.Status, e.CreatedAt });
+            entity.HasIndex(e => new { e.IpHash, e.CreatedAt });
+        });
+
+        modelBuilder.Entity<SupportNote>(entity =>
+        {
+            entity.ToTable("support_notes");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.SubjectType).HasColumnName("subject_type").HasConversion<string>().HasMaxLength(16);
+            entity.Property(e => e.SubjectId).HasColumnName("subject_id");
+            entity.Property(e => e.Body).HasColumnName("body").HasMaxLength(SupportNote.BodyMax).IsRequired();
+            entity.Property(e => e.AuthorUserId).HasColumnName("author_user_id");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.SubjectType, e.SubjectId, e.CreatedAt });
+        });
+
         modelBuilder.Entity<UserActivityCounters>(entity =>
         {
             entity.ToTable("user_activity_counters");
@@ -1076,26 +1436,9 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.EntityId).HasColumnName("entity_id").HasMaxLength(100).IsRequired();
             entity.Property(e => e.Details).HasColumnName("details");
             entity.Property(e => e.IpAddress).HasColumnName("ip_address").HasMaxLength(45);
+            entity.Property(e => e.ImpersonatorId).HasColumnName("impersonator_id");
             entity.Property(e => e.Timestamp).HasColumnName("timestamp").HasDefaultValueSql("NOW()");
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.SetNull);
-        });
-
-        // McpToken configuration
-        modelBuilder.Entity<McpToken>(entity =>
-        {
-            entity.ToTable("mcp_tokens");
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
-            entity.Property(e => e.UserId).HasColumnName("user_id").IsRequired();
-            entity.Property(e => e.TokenHash).HasColumnName("token_hash").HasMaxLength(64).IsRequired();
-            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
-            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
-            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
-            entity.Property(e => e.LastUsedAt).HasColumnName("last_used_at");
-            entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
-            entity.HasIndex(e => e.TokenHash).IsUnique();
-            entity.HasIndex(e => new { e.UserId, e.IsActive });
-            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // McpUsageLog configuration
@@ -1104,7 +1447,8 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.ToTable("mcp_usage_logs");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
-            entity.Property(e => e.McpTokenId).HasColumnName("mcp_token_id").IsRequired();
+            entity.Property(e => e.GrantId).HasColumnName("grant_id");
+            entity.Property(e => e.Kind).HasColumnName("kind").HasMaxLength(10).HasDefaultValue("tool").IsRequired();
             entity.Property(e => e.UserId).HasColumnName("user_id").IsRequired();
             entity.Property(e => e.ToolName).HasColumnName("tool_name").HasMaxLength(100).IsRequired();
             entity.Property(e => e.Parameters).HasColumnName("parameters").HasColumnType("jsonb");
@@ -1113,9 +1457,157 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.ExecutionTimeMs).HasColumnName("execution_time_ms").IsRequired();
             entity.Property(e => e.Timestamp).HasColumnName("timestamp").HasDefaultValueSql("NOW()");
             entity.HasIndex(e => new { e.UserId, e.Timestamp });
-            entity.HasIndex(e => e.McpTokenId);
+            entity.HasIndex(e => e.GrantId);
             entity.HasIndex(e => e.ToolName);
-            entity.HasOne(e => e.McpToken).WithMany().HasForeignKey(e => e.McpTokenId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Grant).WithMany().HasForeignKey(e => e.GrantId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // OAuth authorization server (docs/MCP.md#connect-with-oauth)
+        modelBuilder.Entity<OAuthClient>(entity =>
+        {
+            entity.ToTable("oauth_clients");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.ClientId).HasColumnName("client_id").HasMaxLength(512).IsRequired();
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.LogoUri).HasColumnName("logo_uri").HasMaxLength(512);
+            entity.Property(e => e.ClientUri).HasColumnName("client_uri").HasMaxLength(512);
+            entity.Property(e => e.RedirectUris).HasColumnName("redirect_uris").HasColumnType("text[]").IsRequired();
+            entity.Property(e => e.Source).HasColumnName("source").HasMaxLength(20).IsRequired();
+            entity.Property(e => e.VerifiedHost).HasColumnName("verified_host").HasMaxLength(255);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.MetadataFetchedAt).HasColumnName("metadata_fetched_at");
+            entity.Ignore(e => e.IsFirstParty);
+            entity.HasIndex(e => e.ClientId).IsUnique();
+        });
+
+        modelBuilder.Entity<OAuthGrant>(entity =>
+        {
+            entity.ToTable("oauth_grants");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.UserId).HasColumnName("user_id").IsRequired();
+            entity.Property(e => e.ClientId).HasColumnName("client_id").IsRequired();
+            entity.Property(e => e.Scopes).HasColumnName("scopes").HasColumnType("text[]").IsRequired();
+            entity.Property(e => e.HouseholdMode).HasColumnName("household_mode").HasMaxLength(10).IsRequired();
+            entity.Property(e => e.HouseholdIds).HasColumnName("household_ids").HasColumnType("uuid[]").IsRequired();
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.LastUsedAt).HasColumnName("last_used_at");
+            entity.Property(e => e.RevokedAt).HasColumnName("revoked_at");
+            entity.Ignore(e => e.IsActive);
+            // One live grant per user and client. A new consent replaces it.
+            entity.HasIndex(e => new { e.UserId, e.ClientId }).IsUnique().HasFilter("revoked_at IS NULL");
+            entity.HasIndex(e => e.ClientId);
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Client).WithMany().HasForeignKey(e => e.ClientId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<OAuthAuthorizationRequest>(entity =>
+        {
+            entity.ToTable("oauth_authorization_requests");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.RequestHash).HasColumnName("request_hash").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.ClientId).HasColumnName("client_id").IsRequired();
+            entity.Property(e => e.RedirectUri).HasColumnName("redirect_uri").HasMaxLength(512).IsRequired();
+            entity.Property(e => e.RequestedScopes).HasColumnName("requested_scopes").HasColumnType("text[]").IsRequired();
+            entity.Property(e => e.State).HasColumnName("state").HasMaxLength(512);
+            entity.Property(e => e.CodeChallenge).HasColumnName("code_challenge").HasMaxLength(128).IsRequired();
+            entity.Property(e => e.Audience).HasColumnName("audience").HasMaxLength(10).IsRequired();
+            entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(10).IsRequired();
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.GrantId).HasColumnName("grant_id");
+            entity.Property(e => e.CodeHash).HasColumnName("code_hash").HasMaxLength(64);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at").IsRequired();
+            entity.HasIndex(e => e.RequestHash).IsUnique();
+            entity.HasIndex(e => e.CodeHash).IsUnique().HasFilter("code_hash IS NOT NULL");
+            entity.HasIndex(e => e.ExpiresAt);
+            entity.HasOne(e => e.Client).WithMany().HasForeignKey(e => e.ClientId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<OAuthToken>(entity =>
+        {
+            entity.ToTable("oauth_tokens");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.GrantId).HasColumnName("grant_id").IsRequired();
+            entity.Property(e => e.FamilyId).HasColumnName("family_id").IsRequired();
+            entity.Property(e => e.Kind).HasColumnName("kind").HasMaxLength(10).IsRequired();
+            entity.Property(e => e.Audience).HasColumnName("audience").HasMaxLength(10).IsRequired();
+            entity.Property(e => e.TokenHash).HasColumnName("token_hash").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at").IsRequired();
+            entity.Property(e => e.UsedAt).HasColumnName("used_at");
+            entity.Property(e => e.RevokedAt).HasColumnName("revoked_at");
+            entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity.HasIndex(e => e.FamilyId);
+            entity.HasIndex(e => e.GrantId);
+            entity.HasOne(e => e.Grant).WithMany().HasForeignKey(e => e.GrantId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<McpTask>(entity =>
+        {
+            entity.ToTable("mcp_tasks");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasMaxLength(64);
+            entity.Property(e => e.UserId).HasColumnName("user_id").IsRequired();
+            entity.Property(e => e.GrantId).HasColumnName("grant_id");
+            entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(16).IsRequired();
+            entity.Property(e => e.StatusMessage).HasColumnName("status_message").HasMaxLength(500);
+            entity.Property(e => e.ResultJson).HasColumnName("result_json").HasColumnType("jsonb");
+            entity.Property(e => e.ErrorJson).HasColumnName("error_json").HasColumnType("jsonb");
+            entity.Property(e => e.TtlSeconds).HasColumnName("ttl_seconds").IsRequired();
+            entity.Property(e => e.PollIntervalMs).HasColumnName("poll_interval_ms").IsRequired();
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.UserId, e.CreatedAt });
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<DeletedRecord>(entity =>
+        {
+            entity.ToTable("deleted_records");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.UserId).HasColumnName("user_id").IsRequired();
+            entity.Property(e => e.EntityType).HasColumnName("entity_type").HasMaxLength(32).IsRequired();
+            entity.Property(e => e.EntityId).HasColumnName("entity_id").IsRequired();
+            entity.Property(e => e.DeletedAt).HasColumnName("deleted_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => new { e.UserId, e.DeletedAt });
+            entity.HasOne<User>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<IdempotencyKey>(entity =>
+        {
+            entity.ToTable("idempotency_keys");
+            entity.HasKey(e => new { e.UserId, e.Key });
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Key).HasColumnName("key").HasMaxLength(128);
+            entity.Property(e => e.RequestHash).HasColumnName("request_hash").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.StatusCode).HasColumnName("status_code");
+            entity.Property(e => e.ContentType).HasColumnName("content_type").HasMaxLength(200);
+            entity.Property(e => e.ResponseBody).HasColumnName("response_body");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.CompletedAt).HasColumnName("completed_at");
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<DeviceToken>(entity =>
+        {
+            entity.ToTable("device_tokens");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.UserId).HasColumnName("user_id").IsRequired();
+            entity.Property(e => e.Platform).HasColumnName("platform").HasMaxLength(16).IsRequired();
+            entity.Property(e => e.Token).HasColumnName("token").HasMaxLength(1024).IsRequired();
+            entity.Property(e => e.DeviceName).HasColumnName("device_name").HasMaxLength(100);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.LastSeenAt).HasColumnName("last_seen_at").HasDefaultValueSql("NOW()");
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.HasIndex(e => e.UserId);
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -1223,6 +1715,55 @@ public class MizanDbContext : DbContext, IMizanDbContext
             entity.Property(e => e.EventType).HasColumnName("event_type").HasMaxLength(100).IsRequired();
             entity.Property(e => e.ReceivedAt).HasColumnName("received_at").HasDefaultValueSql("NOW()");
             entity.HasIndex(e => e.EventId).IsUnique();
+        });
+
+        // Feature flags: only an administrator's changes are stored; the catalog carries the defaults.
+        modelBuilder.Entity<FeatureFlag>(entity =>
+        {
+            entity.ToTable("feature_flags");
+            entity.HasKey(e => e.Key);
+            entity.Property(e => e.Key).HasColumnName("key").HasMaxLength(64);
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(256).IsRequired();
+            entity.Property(e => e.DefaultEnabled).HasColumnName("default_enabled");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedByUserId).HasColumnName("updated_by_user_id");
+        });
+
+        modelBuilder.Entity<FeatureFlagOverride>(entity =>
+        {
+            entity.ToTable("feature_flag_overrides");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.FlagKey).HasColumnName("flag_key").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.HouseholdId).HasColumnName("household_id");
+            entity.Property(e => e.Enabled).HasColumnName("enabled");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedByUserId).HasColumnName("updated_by_user_id");
+            entity.HasIndex(e => new { e.FlagKey, e.HouseholdId }).IsUnique();
+            entity.HasIndex(e => e.HouseholdId);
+            entity.HasOne(e => e.Household).WithMany()
+                .HasForeignKey(e => e.HouseholdId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Allowance overrides by user, household or billing plan. One row per subject and line;
+        // a null line covers every line, so nulls must not be distinct in the unique index.
+        modelBuilder.Entity<UsageLimitOverride>(entity =>
+        {
+            entity.ToTable("usage_limit_overrides");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.Scope).HasColumnName("scope").HasConversion<int>();
+            entity.Property(e => e.SubjectId).HasColumnName("subject_id");
+            entity.Property(e => e.Line).HasColumnName("line").HasMaxLength(32);
+            entity.Property(e => e.DailyRequests).HasColumnName("daily_requests");
+            entity.Property(e => e.DailyTokens).HasColumnName("daily_tokens");
+            entity.Property(e => e.DailyCostMicros).HasColumnName("daily_cost_micros");
+            entity.Property(e => e.MonthlyCostMicros).HasColumnName("monthly_cost_micros");
+            entity.Property(e => e.Note).HasColumnName("note").HasMaxLength(500);
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedByUserId).HasColumnName("updated_by_user_id");
+            entity.Ignore(e => e.Values);
+            entity.HasIndex(e => new { e.Scope, e.SubjectId, e.Line }).IsUnique().AreNullsDistinct(false);
         });
 
         SeedAchievements(modelBuilder);

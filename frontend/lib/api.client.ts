@@ -22,10 +22,15 @@ async function handleSessionExpired(): Promise<void> {
  */
 export async function clientApi<T>(
   path: string,
-  options: ApiRequestOptions = {}
+  options: ApiRequestOptions = {},
 ): Promise<T> {
   try {
-    return await request<T>(resolvePublicApiOrigin(), path, { mode: "browser" }, options);
+    return await request<T>(
+      resolvePublicApiOrigin(),
+      path,
+      { mode: "browser" },
+      options,
+    );
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) {
       await handleSessionExpired();

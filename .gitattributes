@@ -1,0 +1,5 @@
+# Generated files: collapsed in code review.
+backend/Mizan.Infrastructure/Migrations/*.Designer.cs linguist-generated=true
+backend/Mizan.Infrastructure/Migrations/MizanDbContextModelSnapshot.cs linguist-generated=true
+frontend/types/api.generated.ts linguist-generated=true
+frontend/bun.lock linguist-generated=true

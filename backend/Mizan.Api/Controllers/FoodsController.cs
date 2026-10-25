@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mizan.Application.Commands;
 using Mizan.Application.Common;
+using Mizan.Application.Prices;
 using Mizan.Application.Queries;
+using Mizan.Contracts.Prices;
 
 namespace Mizan.Api.Controllers;
 
@@ -55,7 +57,7 @@ public class FoodsController : ControllerBase
     public async Task<ActionResult<UpdateFoodResult>> UpdateFood(Guid id, [FromBody] UpdateFoodCommand command)
     {
         if (id != command.Id)
-            return BadRequest("ID mismatch");
+            return BadRequest(new { errorCode = "id_mismatch", error = "Route and body IDs must match" });
 
         var result = await _mediator.Send(command);
 
@@ -75,5 +77,20 @@ public class FoodsController : ControllerBase
             return NotFound(result);
 
         return Ok(result);
+    }
+
+    /// <summary>The price in force for the viewer's region. <c>priced</c> is false when there is none.</summary>
+    [HttpGet("{id:guid}/price")]
+    [Authorize(Policy = "UserOrMcp")]
+    public async Task<ActionResult<FoodPriceQuoteDto>> GetPrice(Guid id) =>
+        Ok(await _mediator.Send(new GetFoodPriceQuery(id)));
+
+    /// <summary>Report a wrong price. Send an <c>Idempotency-Key</c> to make a retry safe.</summary>
+    [HttpPost("{id:guid}/price-reports")]
+    [Authorize(Policy = "UserOrMcp")]
+    public async Task<ActionResult<PriceReportCreatedResult>> ReportPrice(Guid id, [FromBody] CreatePriceReportRequest request)
+    {
+        var reportId = await _mediator.Send(new CreatePriceReportCommand(id, request.SuggestedPrice, request.Quantity, request.Unit ?? string.Empty, request.Note));
+        return StatusCode(StatusCodes.Status201Created, new PriceReportCreatedResult(reportId));
     }
 }

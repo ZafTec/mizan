@@ -1,6 +1,10 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Infrastructure.AI;
@@ -9,8 +13,11 @@ using Mizan.Infrastructure.Data;
 using Mizan.Infrastructure.Email;
 using Mizan.Infrastructure.Identity;
 using Mizan.Infrastructure.Outbox;
+using Mizan.Infrastructure.Push;
 using Mizan.Infrastructure.Services;
+using Mizan.Infrastructure.Settings;
 using Mizan.Infrastructure.Storage;
+using Mizan.Infrastructure.Telegram;
 
 namespace Mizan.Infrastructure;
 
@@ -41,7 +48,32 @@ public static class DependencyInjection
 
         services.AddHybridCache();
 
+        // Runtime settings: values an administrator sets in the admin area, laid over configuration
+        // and read per use (docs/ADMIN.md#runtime-settings). Their secrets are protected with Data
+        // Protection, whose key ring lives in the database so it survives restarts and every API
+        // instance shares it. DataProtection__KeysPath moves the ring to a directory instead (a volume
+        // every instance mounts), which keeps it out of database backups.
+        var dataProtection = services.AddDataProtection().SetApplicationName("Mizan");
+        var keysPath = configuration["DataProtection:KeysPath"];
+        if (string.IsNullOrWhiteSpace(keysPath))
+        {
+            dataProtection.PersistKeysToDbContext<MizanDbContext>();
+        }
+        else
+        {
+            dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keysPath));
+        }
+
+        services.AddSingleton<RuntimeSettingsCache>();
+        services.AddScoped<IRuntimeSettings, RuntimeSettings>();
+        AddRuntimeOptions<SmtpOptions>(services, SmtpOptions.SectionName);
+        AddRuntimeOptions<AiOptions>(services, AiOptions.SectionName);
+        AddRuntimeOptions<TelegramOptions>(services, TelegramOptions.SectionName);
+        AddRuntimeOptions<PushOptions>(services, PushOptions.SectionName);
+        AddRuntimeOptions<PaddleOptions>(services, PaddleOptions.SectionName);
+
         // Domain services
+        services.TryAddSingleton(TimeProvider.System);
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<ITrainerAuthorizationService, TrainerAuthorizationService>();
@@ -63,6 +95,19 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, PasswordHasherAdapter>();
         services.AddSingleton<IAppUrls, AppUrls>();
         services.AddScoped<ISessionService, SessionService>();
+
+        // OAuth authorization server for MCP clients and our own apps (docs/MCP.md#connect-with-oauth).
+        services.Configure<AuthorizationServerOptions>(configuration.GetSection(AuthorizationServerOptions.SectionName));
+        services.AddSingleton<IOAuthSettings, OAuthSettings>();
+        services.AddHttpClient(OAuthClientMetadataFetcher.HttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+            {
+                AllowAutoRedirect = false,
+                ConnectTimeout = TimeSpan.FromSeconds(4),
+                UseProxy = false,
+                ConnectCallback = OAuthClientMetadataFetcher.GuardedConnectAsync,
+            });
+        services.AddScoped<IOAuthClientMetadataFetcher, OAuthClientMetadataFetcher>();
         services.AddScoped<IUserCacheInvalidator, UserCacheInvalidator>();
         services.AddScoped<IEmailSender, SmtpEmailSender>();
 
@@ -85,9 +130,10 @@ public static class DependencyInjection
         services.Configure<AiOptions>(configuration.GetSection(AiOptions.SectionName));
         services.AddHttpClient(OpenAiCompatibleProvider.HttpClientName);
         services.AddSingleton<IAiProvider, OpenAiCompatibleProvider>();
-        services.AddSingleton<IAiCeilings>(sp =>
-            sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<AiOptions>>().Value);
+        services.AddSingleton<IAiCeilings, AiCeilings>();
+        services.AddSingleton<IAiTierDefaults, AiTierDefaults>();
         services.AddScoped<IAiQuotaService, AiQuotaService>();
+        services.AddScoped<IAiMeteredClient, MeteredAiClient>();
         services.AddScoped<IDataAccessPolicy, DataAccessPolicy>();
         services.AddScoped<IAiContextBuilder, AiContextBuilder>();
         services.AddScoped<IAiPromptResolver, AiPromptResolver>();
@@ -100,7 +146,26 @@ public static class DependencyInjection
         services.AddScoped<IOutbox, Outbox.Outbox>();
         services.AddScoped<IOutboxHandler, EmailJobHandler>();
         services.AddScoped<IOutboxHandler, EvalRunJobHandler>();
+        services.AddScoped<IOutboxHandler, PushJobHandler>();
+        services.AddScoped<IOutboxHandler, EveningReminderJobHandler>();
+        services.AddScoped<IOutboxHandler, TelegramMessageJobHandler>();
+
+        // Messages to a linked Telegram chat go through the bot service, which alone holds the
+        // token (docs/TELEGRAM.md#evening-reminder). Off until Telegram:BotServiceUrl is set.
+        services.AddHttpClient(TelegramBotNotifier.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(15));
+        services.AddSingleton<ITelegramBotNotifier, TelegramBotNotifier>();
+        services.AddScoped<ITelegramMessenger, TelegramMessenger>();
+
+        // Push to phones. Off until Firebase credentials are configured (docs/ARCHITECTURE.md#native-clients).
+        services.Configure<PushOptions>(configuration.GetSection(PushOptions.SectionName));
+        services.AddHttpClient(FcmPushSender.HttpClientName);
+        services.AddSingleton<IPushSender, FcmPushSender>();
+
+        // The system health page's round trips (docs/ADMIN.md#overview-and-health).
+        services.AddHttpClient(SystemProbes.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(3));
+        services.AddScoped<ISystemProbes, SystemProbes>();
         services.AddHostedService<OutboxDispatcher>();
+        services.AddHostedService<EveningReminderScheduler>();
 
         // Billing
         services.Configure<PaddleOptions>(configuration.GetSection(PaddleOptions.SectionName));
@@ -108,6 +173,26 @@ public static class DependencyInjection
         services.AddHttpClient(Billing.PaddleApiClient.HttpClientName);
         services.AddScoped<IPaddleApiClient, Billing.PaddleApiClient>();
 
+        // The prices worker's Run now endpoint (docs/PLANNING.md#prices).
+        services.AddHttpClient(PricesWorkerClient.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(15));
+        services.AddScoped<IPricesWorkerClient, PricesWorkerClient>();
+
         return services;
+    }
+
+    /// <summary>
+    /// One overlay per options type, registered as a singleton under both its interfaces, so the
+    /// settings list and every consumer read the same instance.
+    /// </summary>
+    private static void AddRuntimeOptions<TOptions>(IServiceCollection services, string section)
+        where TOptions : class
+    {
+        services.AddSingleton(sp => new RuntimeOptions<TOptions>(
+            section,
+            sp.GetRequiredService<IOptionsMonitor<TOptions>>(),
+            sp.GetRequiredService<RuntimeSettingsCache>(),
+            sp.GetRequiredService<ILogger<RuntimeOptions<TOptions>>>()));
+        services.AddSingleton<IRuntimeOptions<TOptions>>(sp => sp.GetRequiredService<RuntimeOptions<TOptions>>());
+        services.AddSingleton<IRuntimeOptionsSection>(sp => sp.GetRequiredService<RuntimeOptions<TOptions>>());
     }
 }

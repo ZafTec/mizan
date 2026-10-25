@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
+using Mizan.Application.Features;
+using Mizan.Domain.Features;
 
 namespace Mizan.Application.Commands;
 
@@ -120,7 +122,10 @@ public sealed class DeleteSocialProfileCommandHandler : IRequestHandler<DeleteSo
     }
 }
 
-public record RequestFollowCommand(string ShareToken) : IRequest<Guid>;
+public record RequestFollowCommand(string ShareToken) : IRequest<Guid>, IRedactedAudit
+{
+    object IRedactedAudit.AuditDetails => new { Requested = true };
+}
 
 public sealed class RequestFollowCommandHandler : IRequestHandler<RequestFollowCommand, Guid>
 {
@@ -248,6 +253,7 @@ public sealed class DeleteFollowCommandHandler : IRequestHandler<DeleteFollowCom
     }
 }
 
+[RequiresFeature(FeatureFlags.SocialFeed)]
 public record PublishFeedItemCommand(
     string Type,
     Guid? WorkoutId,
@@ -353,6 +359,7 @@ public sealed class DeleteFeedItemCommandHandler : IRequestHandler<DeleteFeedIte
     }
 }
 
+[RequiresFeature(FeatureFlags.SocialFeed)]
 public record AddFeedReactionCommand(Guid FeedItemId, string Emoji) : IRequest<Guid>;
 
 public sealed class AddFeedReactionCommandHandler : IRequestHandler<AddFeedReactionCommand, Guid>
@@ -438,6 +445,7 @@ public sealed class RemoveFeedReactionCommandHandler : IRequestHandler<RemoveFee
     }
 }
 
+[RequiresFeature(FeatureFlags.SocialFeed)]
 public record AddFeedCommentCommand(Guid FeedItemId, string Body) : IRequest<Guid>;
 
 public sealed class AddFeedCommentCommandValidator : AbstractValidator<AddFeedCommentCommand>

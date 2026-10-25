@@ -55,7 +55,10 @@ public sealed class UpdateWorkoutCommandHandler : IRequestHandler<UpdateWorkoutC
         var valid = await _context.Exercises.CountAsync(e => ids.Contains(e.Id) && (!e.IsCustom || e.CreatedByUserId == userId), ct);
         if (valid != ids.Length) throw new DomainValidationException("One or more exercises are invalid");
 
-        _context.WorkoutExercises.RemoveRange(workout.Exercises);
+        // The old exercises (and their sets) are removed and the new ones added as rows of their own. Swapping
+        // the navigation collection as well made EF delete the old rows twice, which failed every edit of a
+        // workout that already had exercises.
+        _context.WorkoutExercises.RemoveRange(workout.Exercises.ToList());
         workout.Name = request.Name;
         workout.WorkoutDate = request.WorkoutDate;
         workout.TemplateId = request.TemplateId;
@@ -65,7 +68,7 @@ public sealed class UpdateWorkoutCommandHandler : IRequestHandler<UpdateWorkoutC
         workout.DurationMinutes = request.DurationMinutes;
         workout.CaloriesBurned = request.CaloriesBurned;
         workout.Notes = request.Notes;
-        workout.Exercises = request.Exercises.Select((exercise, index) => new WorkoutExercise
+        var replacement = request.Exercises.Select((exercise, index) => new WorkoutExercise
         {
             Id = Guid.NewGuid(),
             WorkoutId = workout.Id,
@@ -88,6 +91,7 @@ public sealed class UpdateWorkoutCommandHandler : IRequestHandler<UpdateWorkoutC
                 CompletedAt = set.CompletedAt
             }).ToList()
         }).ToList();
+        _context.WorkoutExercises.AddRange(replacement);
         await _context.SaveChangesAsync(ct);
     }
 }

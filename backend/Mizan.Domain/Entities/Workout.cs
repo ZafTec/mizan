@@ -1,6 +1,6 @@
 namespace Mizan.Domain.Entities;
 
-public class Workout
+public class Workout : IChangeTracked
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
@@ -14,6 +14,7 @@ public class Workout
     public int? CaloriesBurned { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
     // Navigation properties
     public virtual User User { get; set; } = null!;

@@ -27,11 +27,23 @@ public class LogHistoryRangeTests
 
         var workouts = await new GetWorkoutsQueryHandler(db).Handle(new GetWorkoutsQuery
         {
-            UserId = userId, From = first.AddDays(1), To = first.AddDays(3), PageSize = 2, Page = 2, SortBy = "date", SortOrder = "asc"
+            UserId = userId,
+            From = first.AddDays(1),
+            To = first.AddDays(3),
+            PageSize = 2,
+            Page = 2,
+            SortBy = "date",
+            SortOrder = "asc"
         }, default);
         var measurements = await new GetBodyMeasurementsQueryHandler(db).Handle(new GetBodyMeasurementsQuery
         {
-            UserId = userId, From = first.AddDays(1), To = first.AddDays(3), PageSize = 2, Page = 2, SortBy = "date", SortOrder = "asc"
+            UserId = userId,
+            From = first.AddDays(1),
+            To = first.AddDays(3),
+            PageSize = 2,
+            Page = 2,
+            SortBy = "date",
+            SortOrder = "asc"
         }, default);
 
         workouts.TotalCount.Should().Be(3);

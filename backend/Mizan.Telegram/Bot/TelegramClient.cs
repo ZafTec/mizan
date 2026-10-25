@@ -56,17 +56,22 @@ public sealed class TelegramClient
     }
 
     public async Task SendMessageAsync(
+        long chatId, string text, object? replyMarkup = null, CancellationToken ct = default) =>
+        await TrySendMessageAsync(chatId, text, replyMarkup, ct);
+
+    /// <summary>The same send, saying whether Telegram took it, for a caller that retries.</summary>
+    public async Task<bool> TrySendMessageAsync(
         long chatId, string text, object? replyMarkup = null, CancellationToken ct = default)
     {
         var sent = await TrySendAsync(chatId, text, "HTML", replyMarkup, ct);
-        if (sent) return;
+        if (sent) return true;
 
         // Telegram rejects the whole message when the markup does not parse,
         // and PostAsync only logs that. Falling back to plain text means a
         // reply the converter mangled still reaches the user rather than
         // vanishing into a warning nobody reads.
         _logger.LogWarning("Telegram rejected an HTML message for chat {ChatId}; resending as plain text", chatId);
-        await TrySendAsync(chatId, StripTags(text), parseMode: null, replyMarkup, ct);
+        return await TrySendAsync(chatId, StripTags(text), parseMode: null, replyMarkup, ct);
     }
 
     private async Task<bool> TrySendAsync(
@@ -139,6 +144,10 @@ public sealed class TelegramClient
             {
                 new { command = "today", description = "Today's totals against your targets" },
                 new { command = "weight", description = "Log a weigh-in, e.g. /weight 82.4" },
+                new { command = "plan", description = "Today's meal plan, or /plan tomorrow" },
+                new { command = "shop", description = "Your shopping list, ten items at a time" },
+                new { command = "planme", description = "Draft a week of meals, e.g. /planme high protein, cheap" },
+                new { command = "notifications", description = "Get the app's notifications here too, /notifications on or off" },
                 new { command = "help", description = "What this bot can do" },
                 new { command = "unlink", description = "Disconnect this chat from your account" },
             },

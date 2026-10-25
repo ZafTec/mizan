@@ -189,9 +189,9 @@ describe("workout draft persistence", () => {
     await elapse();
 
     fireEvent.click(screen.getByRole("button", { name: "Finish workout" }));
-    expect(screen.getByLabelText("Weight (kg) for set 1").matches(":disabled")).toBe(
-      true,
-    );
+    expect(
+      screen.getByLabelText("Weight (kg) for set 1").matches(":disabled"),
+    ).toBe(true);
     expect(screen.getByLabelText("Workout name").matches(":disabled")).toBe(
       true,
     );
@@ -200,9 +200,9 @@ describe("workout draft persistence", () => {
 
     await act(async () => api.saves[0].response.resolve());
     expect(api.operations).toEqual(["PUT", "POST"]);
-    expect(screen.getByLabelText("Weight (kg) for set 1").matches(":disabled")).toBe(
-      true,
-    );
+    expect(
+      screen.getByLabelText("Weight (kg) for set 1").matches(":disabled"),
+    ).toBe(true);
     const finishCall = vi
       .mocked(clientApi)
       .mock.calls.find(

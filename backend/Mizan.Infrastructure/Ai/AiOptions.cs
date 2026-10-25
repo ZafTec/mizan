@@ -1,8 +1,13 @@
-using Mizan.Application.Interfaces;
+using Mizan.Application.Ai;
+using Mizan.Domain.Usage;
 
 namespace Mizan.Infrastructure.Ai;
 
-public class AiOptions : IAiCeilings
+/// <summary>
+/// The AI provider and its limits, bound from <c>Ai</c>. Most of it can be overridden in the admin
+/// area; read it through <c>IRuntimeOptions&lt;AiOptions&gt;</c> (docs/ADMIN.md#runtime-settings).
+/// </summary>
+public class AiOptions
 {
     public const string SectionName = "Ai";
 
@@ -56,6 +61,14 @@ public class AiOptions : IAiCeilings
     public AiTierLimits Trainer { get; set; } = new() { DailyRequests = 300, DailyTokens = 600_000 };
 
     /// <summary>
+    /// Generating a meal plan, by tier. One request is one draft for one budget ceiling. Its own
+    /// line, so a plan does not spend the day's chat and a day of chat does not block the plan.
+    /// </summary>
+    public AiTierLimits PlanningFree { get; set; } = new() { DailyRequests = 1, DailyTokens = 30_000 };
+
+    public AiTierLimits PlanningPro { get; set; } = new() { DailyRequests = 20, DailyTokens = 400_000 };
+
+    /// <summary>
     /// The circuit breaker on the whole provider bill. Not optional: a loop or
     /// an abusive account stops here rather than at the invoice.
     /// </summary>
@@ -67,6 +80,24 @@ public class AiOptions : IAiCeilings
     public long PromptCostPerMillionMicros { get; set; } = 150_000;
 
     public long CompletionCostPerMillionMicros { get; set; } = 600_000;
+
+    /// <summary>
+    /// The tier allowance for a line, before any administrator override
+    /// (IUsageLimits composes those on top). The tiers set no cost caps.
+    /// </summary>
+    /// <summary>The tier allowance for a line, before any override; <c>AiTierDefaults</c> reads it per call.</summary>
+    public UsageLimitValues For(AiQuotaLine line, bool isPro)
+    {
+        var tier = line switch
+        {
+            AiQuotaLine.Eval => Eval,
+            AiQuotaLine.Onboarding => Onboarding,
+            AiQuotaLine.TrainerClient => Trainer,
+            AiQuotaLine.Planning => isPro ? PlanningPro : PlanningFree,
+            _ => isPro ? Pro : Free,
+        };
+        return new UsageLimitValues(tier.DailyRequests, tier.DailyTokens, null, null);
+    }
 }
 
 public class AiTierLimits

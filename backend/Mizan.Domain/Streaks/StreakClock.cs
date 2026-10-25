@@ -110,6 +110,15 @@ public static class StreakClock
     }
 
     /// <summary>
+    /// Whether activity on <paramref name="activityDate"/> can move a streak. A streak is about
+    /// today: a day within one of the user's today counts, which covers a clock skew or a
+    /// request that crossed local midnight. A meal or a workout logged further away is saved
+    /// and leaves the streak alone.
+    /// </summary>
+    public static bool Counts(DateOnly activityDate, DateOnly today) =>
+        Math.Abs(activityDate.DayNumber - today.DayNumber) <= 1;
+
+    /// <summary>
     /// What recording activity on <paramref name="today"/> does to a streak.
     /// Pure, so the interesting cases - a gap, a freeze, a same-day repeat -
     /// are testable without a database.

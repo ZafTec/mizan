@@ -12,7 +12,9 @@ public record AiUsageFeatureDto(string Feature, int Requests, int Tokens);
 public record MyAiUsageDto(
     AiQuotaSnapshot Today,
     IReadOnlyList<AiUsageDayDto> History,
-    IReadOnlyList<AiUsageFeatureDto> ByFeature);
+    IReadOnlyList<AiUsageFeatureDto> ByFeature,
+    /// <summary>The meal planning line: plans generated today against the tier's daily allowance.</summary>
+    AiQuotaSnapshot Planning);
 
 public record GetMyAiUsageQuery(int Days = 14) : IRequest<MyAiUsageDto>;
 
@@ -54,7 +56,10 @@ public class GetMyAiUsageQueryHandler : IRequestHandler<GetMyAiUsageQuery, MyAiU
             .ToList();
 
         return new MyAiUsageDto(
-            await _quota.GetUserSnapshotAsync(userId, cancellationToken), history, byFeature);
+            await _quota.GetUserSnapshotAsync(userId, cancellationToken),
+            history,
+            byFeature,
+            await _quota.GetUserSnapshotAsync(userId, AiQuotaLine.Planning, cancellationToken));
     }
 }
 
@@ -102,11 +107,13 @@ public class GetGlobalAiUsageQueryHandler : IRequestHandler<GetGlobalAiUsageQuer
             })
             .ToListAsync(cancellationToken);
 
+        var ceilings = await _ceilings.GetAsync(cancellationToken);
+
         return new GlobalAiUsageDto(
             rows.Sum(r => (long)r.PromptTokens + r.CompletionTokens),
-            _ceilings.GlobalDailyTokens,
+            ceilings.GlobalDailyTokens,
             rows.Sum(r => r.EstimatedCostMicros),
-            _ceilings.GlobalDailyCostMicros,
+            ceilings.GlobalDailyCostMicros,
             rows.Count,
             rows.Count(r => r.Outcome is not AiCallOutcome.Succeeded and not AiCallOutcome.Pending),
             rows.Select(r => r.UserId).Distinct().Count(),

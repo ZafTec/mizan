@@ -44,18 +44,20 @@ public class CreateRecipeCommandValidator : AbstractValidator<CreateRecipeComman
 public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, CreateRecipeResult>
 {
     private readonly IMizanDbContext _context;
+    private readonly IHouseholdAccess _households;
     private readonly ICurrentUserService _currentUser;
     private readonly ILogger<CreateRecipeCommandHandler> _logger;
     private readonly IAchievementEvaluator? _achievements;
     private readonly HybridCache _cache;
 
     public CreateRecipeCommandHandler(
-        IMizanDbContext context,
+        IMizanDbContext context, IHouseholdAccess households,
         ICurrentUserService currentUser,
         ILogger<CreateRecipeCommandHandler> logger,
         HybridCache cache,
         IAchievementEvaluator? achievements = null)
     {
+        _households = households;
         _context = context;
         _currentUser = currentUser;
         _logger = logger;
@@ -76,8 +78,7 @@ public class CreateRecipeCommandHandler : IRequestHandler<CreateRecipeCommand, C
             f => foodIds.Contains(f.Id) && (f.UserId == null || f.UserId == userId), cancellationToken);
         if (accessible != foodIds.Count)
             throw new ForbiddenAccessException("One or more ingredients are unavailable to you");
-        if (request.HouseholdId.HasValue && !await _context.HouseholdMembers.AnyAsync(
-                m => m.HouseholdId == request.HouseholdId && m.UserId == userId, cancellationToken))
+        if (request.HouseholdId.HasValue && !await _households.CanAccessAsync(request.HouseholdId.Value, cancellationToken))
             throw new ForbiddenAccessException("You are not a member of this household");
 
         var recipe = new Recipe

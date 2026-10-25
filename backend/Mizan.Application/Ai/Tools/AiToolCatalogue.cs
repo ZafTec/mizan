@@ -3,6 +3,7 @@ using Mizan.Application.Commands;
 using Mizan.Application.Queries;
 using Mizan.Domain.Ai;
 using Mizan.Domain.Constants;
+using Mizan.Domain.Nutrition;
 
 namespace Mizan.Application.Ai.Tools;
 
@@ -20,8 +21,11 @@ namespace Mizan.Application.Ai.Tools;
 ///    any other field that says whose record this is. Ownership comes from
 ///    <see cref="AiToolContext"/>, which comes from the session. A model that
 ///    writes someone else's id into its arguments changes nothing.
-/// 3. Nothing destructive is here, ever. Every tool creates or records; none
-///    deletes, and none overwrites something the user cannot see afterwards.
+/// 3. Nothing destructive is here. Every tool creates or records; none deletes
+///    a record, and none overwrites something the user cannot see afterwards.
+///    The one exception is a draft meal plan: its entries may be changed and
+///    removed, because the person reviews the draft before accepting it, and
+///    the commands refuse the same change on a plan that is no longer a draft.
 ///
 /// Shared with <c>Mizan.Mcp.Server</c> in spirit and in shape: MCP proved the
 /// tool-to-command pattern and this is the same one, so the two do not drift
@@ -158,7 +162,7 @@ public static class AiToolCatalogue
 
         new AiToolDefinition(
             "create_meal_plan",
-            "Create an empty meal plan over a date range. Recipes are added later, by the user.",
+            "Create an empty meal plan starting on a date and running for a number of days (default 7). Entries are added later, by the user.",
             """
             {
               "type": "object",
@@ -166,23 +170,22 @@ public static class AiToolCatalogue
               "properties": {
                 "name": { "type": "string" },
                 "startDate": { "type": "string", "description": "YYYY-MM-DD" },
-                "endDate": { "type": "string", "description": "YYYY-MM-DD" }
+                "durationDays": { "type": "integer", "minimum": 1, "maximum": 31 }
               },
-              "required": ["startDate", "endDate"]
+              "required": ["startDate"]
             }
             """,
-            (args, _) => new CreateMealPlanCommand
+            (args, _) => new Planning.CreateMealPlanCommand
             {
                 Name = AiToolArgs.OptionalString(args, "name"),
                 StartDate = AiToolArgs.OptionalDate(args, "startDate")
                     ?? throw new Exceptions.DomainValidationException("'startDate' is required."),
-                EndDate = AiToolArgs.OptionalDate(args, "endDate")
-                    ?? throw new Exceptions.DomainValidationException("'endDate' is required."),
+                DurationDays = AiToolArgs.OptionalInt(args, "durationDays") ?? 7,
                 // Never from the model: a household id it guessed would be an
                 // attempt to write into someone else's household.
                 HouseholdId = null,
             },
-            result => result is CreateMealPlanResult plan && !string.IsNullOrWhiteSpace(plan.Name)
+            result => result is Mizan.Contracts.Planning.MealPlanCreatedResult plan && !string.IsNullOrWhiteSpace(plan.Name)
                 ? $"Created the plan \"{plan.Name}\"."
                 : "Created your meal plan.",
             DataAxis.Nutrition, AiToolAccess.Write),
@@ -296,7 +299,7 @@ public static class AiToolCatalogue
             },
             result => result is Common.PagedResult<FoodDto> foods && foods.Items.Count > 0
                 ? string.Join("\n", foods.Items.Select(f =>
-                    $"{f.Name} (per 100g) - {f.CaloriesPer100g} kcal, "
+                    $"{f.Id} — {f.Name} (per 100g) - {f.CaloriesPer100g} kcal, "
                     + $"P{f.ProteinPer100g} C{f.CarbsPer100g} F{f.FatPer100g}"))
                 : "No foods matched that.",
             DataAxis.Nutrition, AiToolAccess.Read),
@@ -317,9 +320,9 @@ public static class AiToolCatalogue
                 Date = AiToolArgs.OptionalDate(args, "date") ?? DateOnly.FromDateTime(DateTime.UtcNow),
             },
             result => result is DailyNutritionResult day
-                ? $"{day.Date:yyyy-MM-dd}: {day.TotalCalories} kcal "
-                  + $"(target {day.TargetCalories?.ToString() ?? "none"}), "
-                  + $"P{day.TotalProtein} C{day.TotalCarbs} F{day.TotalFat}"
+                ? $"{day.Date:yyyy-MM-dd}: " + NutritionText.Summary(NutritionText.Daily(
+                    day.TotalCalories, day.TotalProtein, day.TotalCarbs, day.TotalFat,
+                    day.TargetCalories, day.TargetProtein, day.TargetCarbs, day.TargetFat))
                 : "No totals for that day.",
             DataAxis.Nutrition, AiToolAccess.Read),
 
@@ -369,8 +372,8 @@ public static class AiToolCatalogue
               "required": ["name"]
             }
             """,
-            (args, ctx) => new CreateShoppingListCommand(
-                AiToolArgs.RequiredString(args, "name"), ctx.UserId, null),
+            (args, _) => new Planning.CreateShoppingListCommand(
+                AiToolArgs.RequiredString(args, "name"), null),
             _ => "Created that shopping list.",
             DataAxis.Nutrition, AiToolAccess.Write),
 
@@ -391,14 +394,17 @@ public static class AiToolCatalogue
               "required": ["shoppingListId", "itemName"]
             }
             """,
-            (args, _) => new AddShoppingListItemCommand(
+            (args, _) => new Planning.AddShoppingListItemCommand(
                 AiToolArgs.RequiredGuid(args, "shoppingListId"),
-                AiToolArgs.RequiredString(args, "itemName"),
-                AiToolArgs.OptionalDecimal(args, "amount"),
-                AiToolArgs.OptionalString(args, "unit"),
-                AiToolArgs.OptionalString(args, "category")),
+                new Mizan.Contracts.Planning.AddShoppingListItemRequest(
+                    AiToolArgs.RequiredString(args, "itemName"),
+                    AiToolArgs.OptionalDecimal(args, "amount"),
+                    AiToolArgs.OptionalString(args, "unit"),
+                    AiToolArgs.OptionalString(args, "category"))),
             _ => "Added that to the list.",
             DataAxis.Nutrition, AiToolAccess.Write),
+
+        .. AiPlanningTools.All,
     ];
 
     public static AiToolDefinition? Find(string name) =>

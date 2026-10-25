@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mizan.Application.Telegram;
+using Mizan.Contracts.Telegram;
 
 namespace Mizan.Api.Controllers;
 
@@ -73,4 +74,16 @@ public class TelegramController : ControllerBase
         var removed = await _mediator.Send(new UnlinkTelegramCommand(telegramUserId));
         return removed ? NoContent() : NotFound();
     }
+
+    /// <summary>
+    /// A session for the Mini App. The bot calls this after verifying Telegram's
+    /// signed <c>initData</c>; the token comes back to the page as the ordinary
+    /// <c>mizan_session</c> cookie. 404 when the chat is not linked, 403 when
+    /// the account cannot sign in, 402 when it is not Pro.
+    /// </summary>
+    [HttpPost("sessions")]
+    [Authorize(Policy = "McpService")]
+    public async Task<ActionResult<TelegramMiniAppSessionResponse>> CreateSession([FromBody] TelegramMiniAppSessionRequest request)
+        => Ok(await _mediator.Send(new CreateTelegramMiniAppSessionCommand(
+            request.TelegramUserId, request.IpAddress, request.UserAgent)));
 }

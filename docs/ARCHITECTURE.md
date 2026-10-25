@@ -16,7 +16,7 @@ Telegram ────> Telegram service ──┤
                                   └── metered AI provider
 ```
 
-Production routes one public host by path: `/api` and `/hubs` to the API, `/mcp` to MCP, `/telegram/webhook` to the bot, and pages to Next.js. Development uses ports 3000, 5000, 5001, and 5002. Browser API calls go directly to the configured API origin. Next.js does not own authentication endpoints.
+Production routes one public host by path: `/api` and `/hubs` to the API, `/mcp` to MCP, `/telegram/webhook` and `/telegram/miniapp/session` to the bot, and pages to Next.js. Development uses ports 3000, 5000, 5001, and 5002. Browser API calls go directly to the configured API origin. Next.js does not own authentication endpoints.
 
 ## Backend layers
 
@@ -25,24 +25,34 @@ Production routes one public host by path: `/api` and `/hubs` to the API, `/mcp`
 | `Mizan.Domain` | Entities, identity records, and domain rules |
 | `Mizan.Application` | Commands, queries, validation, interfaces |
 | `Mizan.Infrastructure` | EF Core, sessions, storage, email, AI, caching, outbox |
-| `Mizan.Contracts` | Request records shared by service clients |
+| `Mizan.Contracts` | Request and response records shared by the API and its service clients; no adapter declares its own copy |
 | `Mizan.Api` | HTTP controllers, authentication, authorization, SignalR |
 | `Mizan.Mcp.Server` | MCP transport and adapters calling the API |
 | `Mizan.Telegram` | Account linking, Telegram transport, API adapters |
+
+SMTP, the AI provider and limits, the Telegram bot service URL, push and Paddle are read at use time through `IRuntimeOptions<T>`, which lays values an administrator stored in `system_settings` (secrets encrypted with Data Protection) over configuration ([runtime settings](ADMIN.md#runtime-settings)).
 
 Writes use MediatR commands. Controllers and tools translate their transport into those commands; they do not get independent permission or nutrition rules. OpenAPI generates frontend TypeScript contracts. Form validators remain local Zod schemas.
 
 ## Identity
 
-`POST /api/Auth/login` verifies a PBKDF2 password and creates a session. The browser receives an opaque, httpOnly `mizan_session` cookie. The backend resolves the token through its session service and checks account status. Sessions have a seven-day sliding lifetime; deleting one revokes it. Email confirmation and password reset use single-use, hashed tokens.
+`POST /api/Auth/login` verifies a PBKDF2 password and creates a session. The browser receives an opaque, httpOnly `mizan_session` cookie. The backend resolves the token through its session service and checks account status. A browser session has a seven-day lifetime and a Telegram Mini App session ([Telegram](TELEGRAM.md#mini-app)) a 24-hour one; each slides by its own lifetime when used, and deleting one revokes it. Email confirmation and password reset use single-use, hashed tokens.
 
 `GET /api/Auth/me` returns the current user. Next.js resolves it once per render pass and forwards the cookie for server API calls. Client components receive the user through `SessionProvider`; there is no browser JWT. OAuth callbacks, email, account deletion, and session management belong to the backend.
 
 The backend sends email through MailKit and the durable outbox. Compose maps the `SMTP_*` credentials and sender settings into `Smtp:*`; credentials never belong in frontend variables. `Smtp__Security=Auto` requires STARTTLS except on port 465, where it uses implicit TLS. `StartTls` and `SslOnConnect` select those modes on other ports; use `None` only for an explicitly trusted plaintext relay. The legacy `Smtp__UseStartTls=false` setting retains opportunistic TLS in Auto mode; prefer explicit modes for new configurations. Authentication is optional when no SMTP username is supplied. The EHLO/HELO hostname defaults to the sender address's domain, with `Smtp__LocalDomain` available as an override. Certificate validation remains enabled.
 
-Each newly issued verification or reset token queues its own message. Retrying that exact message preserves its deduplication key. Missing SMTP configuration fails delivery outside Development, and a connection-close error after SMTP acceptance does not retry an already accepted message. SMTP acceptance does not guarantee inbox delivery. Sign-in alerts and household invitation emails are separate notification features; the current household invitation path creates in-app notifications.
+Every email goes through `IEmailQueue`, which writes an `email_messages` row and the outbox job in the caller's unit of work; the row records recipient, subject, kind and delivery status but never the body, and administrators read it at `/admin/mail` ([admin](ADMIN.md#mail)). Each newly issued verification or reset token queues its own message. Retrying that exact message preserves its deduplication key. Missing SMTP configuration fails delivery outside Development, and a connection-close error after SMTP acceptance does not retry an already accepted message. SMTP acceptance does not guarantee inbox delivery. Sign-in alerts and household invitation emails are separate notification features; the current household invitation path creates in-app notifications.
 
-External MCP clients send a user token as `Authorization: Bearer <token>`. MCP validates it through the API, then calls internal endpoints with its service key and `X-Impersonate-User`. Internal credentials are distinct from user tokens. Backend policies determine accepted authentication methods, ownership, and roles.
+The API is also an OAuth 2.1 authorization server (`/api/oauth/*`, [MCP](MCP.md#connect-with-oauth)). It issues opaque tokens, `mza_` access tokens and rotating `mzr_` refresh tokens, each tied to a grant and an audience. An MCP client's token is validated by the MCP service through introspection; MCP then calls internal endpoints with its service key, `X-Impersonate-User`, and `X-Mcp-Grant`, and the API loads the grant from its database. `IHouseholdAccess` makes household access the intersection of membership and the grant, and `IDataAccessPolicy` intersects readable axes with it. Internal credentials are distinct from user tokens. Backend policies determine accepted authentication methods, ownership, and roles.
+
+Audit entries for commands that carry passwords, codes, or tokens are redacted before they are stored (`IRedactedAudit`).
+
+### Viewing the site as a user
+
+An administrator can open a one-hour session as another user (`POST /api/admin/users/{id}/impersonate`, from the user's admin page). It is refused for another administrator, for oneself, for an account that cannot sign in, and from inside another view. The new session is an ordinary `user_sessions` row with `impersonator_id` set and a fixed one-hour life that never slides. The administrator's own session cookie is kept aside in `mizan_admin_session`, and `POST /api/Auth/impersonation/stop` revokes the view and puts it back, but only if it is still valid and belongs to the administrator who opened the view. Otherwise the person is signed out.
+
+The user the server sees is the target, with the target's role, so the admin area is closed while viewing. `ImpersonationGuardMiddleware` also refuses changes that would last or take the account over: credentials and sessions (`/api/Auth`), billing (`/api/Subscriptions`), Telegram links, connected apps (`/api/oauth`, `/api/McpConnections`) and push devices. Every audited action in the view records the administrator in `audit_logs.impersonator_id`, and starting a view is itself audited. `GET /api/Auth/me` carries `impersonation`, which the app uses to show a banner on every screen with the time left and one way back.
 
 ## Data and migrations
 
@@ -54,7 +64,9 @@ Migrations ship inside the backend image. Development applies them on startup. I
 
 Permanent navigation is Today, History, Progress, More, and Log entry. `/today?date=YYYY-MM-DD` reviews a day. `/history` lists days with nutrition, training, and measurements. `/progress` combines nutrition, bodyweight, exercise volume, and estimated one-rep max.
 
-Meal and measurement forms open over the current route. Workouts open `/workout/active`, with drafts saved locally and through `/api/Workouts/draft`. A resume banner appears when a draft exists. Trainer, household, and notification surfaces depend on the user's data. Secondary features remain under `/more`.
+Meal and measurement forms open over the current route. The browser adds up no nutrition: `GET /api/Meals` returns each meal type's and each logged recipe's totals (`meals`, `groups`, rounded like plan subtotals by `EntryNutrition.Sum`), and the meal form shows what `POST /api/Meals/preview` says its lines come to, by the same `MealScale` rule that stores an estimate logged by weight. The form logs what the person typed, grams of a food (`amountGrams` on `POST /api/Nutrition/log`) or servings of a recipe, and the server converts grams into servings. Workouts open `/workout/active`, with drafts saved locally and through `/api/Workouts/draft`. A resume banner appears when a draft exists. Trainer, household, and notification surfaces depend on the user's data. Secondary features remain under `/more`.
+
+A meal plan holds day-indexed entries, each a recipe with servings, a food with grams, or a line of text, under rules that Domain code checks and every surface reports the same way. `/today` shows the active plan's day; logging an entry writes ordinary diary rows that record their origin in `FoodDiaryEntry.PlanEntryId`. A shopping list is generated from a plan by the Domain aggregator and edited by its owner or a household member allowed to edit lists. Coaches draft plans that clients accept, and templates are copied into plans. See [planning](PLANNING.md).
 
 A household's owner is the member with the `owner` role or, when none has it, its creator while still a member. Only the owner can delete a household, and only after every other member is gone. Deletion previews its household shopping lists and meal plans, with their entries, on the server; the owner confirms them explicitly, and a confirmation made before members, lists, or plans changed is refused. Deletion locks the household row, removes those plans, memberships, and invitations in one transaction, and clears household links from recipes and active-household preferences without deleting them.
 
@@ -66,21 +78,35 @@ v1 stored per-serving nutrition for imported recipes; v2 calculates it instead. 
 
 `Data/Legacy/ImportLegacyRecipeNutrition.sql` loads v1 values from the pre-upgrade backup. Restore that backup's `recipes`, `recipe_ingredients`, and `recipe_nutrition` tables into a `legacy_v1` schema, back up the database, run the script, and drop the schema. It imports a value only when the recipe's lines and servings are unchanged since v1 and the value is plausible (macro energy within 25% of stated calories). It is idempotent. Recipe detail responses are cached for up to an hour, so imported values can take that long to appear.
 
-Date-only logs use the user's IANA timezone. Missing observations remain gaps in trends. `StreakClock` shares the decay rule, and activity counters avoid recounting all history on each write.
+Date-only logs use the user's IANA timezone. Missing observations remain gaps in trends. `StreakClock` shares the decay rule, and activity counters avoid recounting all history on each write. A meal or workout on a day more than one day from the user's today is saved and leaves the streak alone. `DiaryDates` refuses a meal or workout date more than ten years back or a year ahead with a 400 that names the date. A meal logged without a date, on either `POST /api/Meals` or `POST /api/Nutrition/log`, lands on today in the user's zone, the day the streak counts.
 
 ## Consent and AI
 
 `IDataAccessPolicy` governs nutrition, training, and body axes. Reading one's own product data and sending it to AI are separate permissions. A trainer's AI access is the intersection of client grants and client AI consent. Omitted axes are never fetched into model context.
 
-`IAiQuotaService` reserves usage before provider calls and settles afterward. Personal, onboarding, trainer, and evaluation allowances share a global daily ceiling. Structured outputs are validated before use. Chat, photos, onboarding, and prompt evaluations share this platform; neither MCP nor Telegram has a separate provider path. See [AI](AI.md).
+`IAiQuotaService` reserves usage before provider calls and settles afterward. Personal, onboarding, trainer, and evaluation allowances share a global daily ceiling. Structured outputs are validated before use. Chat, photos, onboarding, and prompt evaluations share this platform; neither MCP nor Telegram has a separate provider path. See [AI](AI.md). Administrators can override allowances per user, household or billing plan and switch features per household; both are decided in the API ([administration](ADMIN.md)).
 
 ## Storage, caching, and jobs
 
-`IStorageService` supports S3-compatible MinIO and R2 configuration. A public media base URL defines upload URLs and Next.js's image hostname allowlist.
+`IStorageService` supports S3-compatible MinIO and R2 configuration. A public media base URL defines upload URLs and Next.js's image hostname allowlist. Assets that ship with a release, such as the default achievement badges under `frontend/public/badges`, are stored as site-relative paths and are not uploaded; `IAppUrls.Asset` turns them into absolute URLs on the app origin when the API returns them, so every client fetches a default and an upload the same way.
 
 `HybridCache` caches session lookups and read models including nutrition ranges, recipes, and meal plans. Writes invalidate associated tags. Viewer-specific keys include the identity or household context needed to keep cached personal results private.
 
-Background work uses a transactional PostgreSQL outbox. Workers claim jobs with `FOR UPDATE SKIP LOCKED`, limit per-type concurrency, retry failures, and expose exhausted work through administrator jobs. Email and prompt evaluations use the outbox. Redis is not its durable store.
+Background work uses a transactional PostgreSQL outbox. Workers claim jobs with `FOR UPDATE SKIP LOCKED`, limit per-type concurrency, retry failures, and expose exhausted work through administrator jobs. Email (identity mail, announcements, contact notices and replies), push, prompt evaluations, the plan's evening reminder, and messages to a linked Telegram chat use the outbox; a job can wait for a `run_after` time. A handler can record that its job gave up through `OnDeadLetteredAsync`, which is how the email log marks a message Failed. `INotificationWriter` is the one place a notification fans out: it stages the row, a push job, and a Telegram message for a person who opted in ([Telegram](TELEGRAM.md#notifications-in-telegram)), all in the caller's unit of work. Redis is not its durable store.
+
+## Native clients
+
+The Android app signs in as the first-party OAuth client `mizan-android` (Authorization Code with PKCE, `resource` set to the API issuer), through a browser tab so the web consent and sign-in screens are reused. Its access token is sent as `Authorization: Bearer`; SignalR may also pass it as `access_token` on `/hubs`. A token issued for MCP is refused here. Disconnecting the app under Connected apps ends its access at once.
+
+- **OpenAPI**: `/swagger/v1/swagger.json` is served in development, and in production only when `OpenApi__Enabled=true`. Generate client types from it.
+- **Retrying writes**: send an `Idempotency-Key` header (up to 128 printable characters) on a write. A retry with the same key and request gets the first answer back with `Idempotent-Replayed: true`; the same key with a different request is `422 idempotency_key_reused`; a duplicate arriving while the first runs is `409 idempotency_in_progress`. Server errors are not remembered, and keys expire after 24 hours.
+- **Staying current**: `GET /api/Sync/changes?since=` returns diary entries, workouts, body measurements, and notifications changed since a cursor, plus tombstones for deleted diary entries, workouts, and measurements. Omit `since` the first time, send back `nextSince`, and repeat while `hasMore`. Items are upserts, so redelivery is harmless. An app away longer than 90 days gets `resyncRequired` and starts again. Recipes, meal plans, and shopping lists are not in the feed yet.
+- **Push**: `POST /api/Devices` registers an FCM token (an upsert; a token moves to whoever registers it last) and `DELETE /api/Devices/{id}` removes it on sign-out. Creating a notification queues a `push` outbox job when Firebase is configured (`Push__FcmProjectId`, `Push__FcmServiceAccountJson`); a device the provider no longer knows is forgotten. Unconfigured, nothing is queued.
+- **3D models**: administrators upload `.glb` files to `POST /api/Uploads/model` (glTF 2 binary, checked by its bytes, up to `Storage__MaxModelBytes`, default 30 MB) into the `models/` folder, then attach one with `PUT /api/Exercises/{id}/model`. Exercises expose `modelUrl`. In the app, an administrator does both from **Admin → Exercises**: the edit form (and **New exercise**, which creates a system exercise in one step) uploads the picture and the `.glb` and attaches them on save, so assets made later can be added to any exercise without a deploy.
+
+## Errors
+
+Every error from our code has the body `{ "errorCode": "...", "error": "..." }`, with extra fields where useful (`errors` for field messages). That includes unreadable request bodies (`invalid_request`), failed validation (`validation_failed`), and the framework's own `401`, `403`, `404`, and `405`. Result objects such as `{ success: false, message }` keep their fields and gain the two standard ones. The OAuth endpoints are the exception: they use `error` and `error_description` as RFC 6749 requires.
 
 ## Telemetry
 

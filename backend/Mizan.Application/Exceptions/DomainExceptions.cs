@@ -59,21 +59,88 @@ public sealed class AccountLockedException : DomainException
 /// </summary>
 public sealed class AiQuotaExceededException : DomainException
 {
-    public AiQuotaExceededException(Interfaces.AiQuotaScope scope, DateTime resetsAt)
-        : base(scope == Interfaces.AiQuotaScope.User
-            ? $"You have used your AI allowance for now. It resets at {resetsAt:HH:mm} UTC."
-            : $"The assistant is at capacity right now. Try again after {resetsAt:HH:mm} UTC.")
+    public AiQuotaExceededException(
+        Interfaces.AiQuotaScope scope, DateTime resetsAt, Interfaces.AiQuotaCap cap = Interfaces.AiQuotaCap.Allowance)
+        : base(MessageFor(scope, resetsAt, cap))
     {
         Scope = scope;
         ResetsAt = resetsAt;
+        Cap = cap;
     }
 
     public Interfaces.AiQuotaScope Scope { get; }
     public DateTime ResetsAt { get; }
+
+    /// <summary>Which of the caller's caps tripped, so the message and the response can name it.</summary>
+    public Interfaces.AiQuotaCap Cap { get; }
+
+    private static string MessageFor(Interfaces.AiQuotaScope scope, DateTime resetsAt, Interfaces.AiQuotaCap cap)
+    {
+        if (scope == Interfaces.AiQuotaScope.Global)
+            return $"The assistant is at capacity right now. Try again after {resetsAt:HH:mm} UTC.";
+
+        return cap switch
+        {
+            Interfaces.AiQuotaCap.DailyRequests => $"You have reached your daily limit of AI requests. It resets at {resetsAt:HH:mm} UTC.",
+            Interfaces.AiQuotaCap.DailyTokens => $"You have used your daily AI token allowance. It resets at {resetsAt:HH:mm} UTC.",
+            Interfaces.AiQuotaCap.DailyCost => $"You have reached your daily AI spending cap. It resets at {resetsAt:HH:mm} UTC.",
+            Interfaces.AiQuotaCap.MonthlyCost => $"You have reached your monthly AI spending cap. It resets on {resetsAt:yyyy-MM-dd} UTC.",
+            _ => $"You have used your AI allowance for now. It resets at {resetsAt:HH:mm} UTC.",
+        };
+    }
+}
+
+/// <summary>
+/// The feature is switched off for the caller's household, by its own override
+/// or by the default (docs/ADMIN.md#feature-flags). Answered with 403
+/// <c>feature_disabled</c>; every surface shows this message as it is.
+/// </summary>
+public sealed class FeatureDisabledException : ForbiddenAccessException
+{
+    public const string DefaultMessage = "This feature is turned off for your household.";
+
+    public FeatureDisabledException(string featureKey) : base(DefaultMessage)
+    {
+        FeatureKey = featureKey;
+    }
+
+    public string FeatureKey { get; }
 }
 
 /// <summary>The provider is not configured, or answered with something unusable.</summary>
 public sealed class AiUnavailableException : DomainException
 {
-    public AiUnavailableException(string message) : base(message) { }
+    public AiUnavailableException(string message, string reason = "unavailable") : base(message)
+    {
+        Reason = reason;
+    }
+
+    /// <summary>
+    /// What went wrong, as a code the admin provider test reports: not_configured, timeout,
+    /// unreachable, http_{status}, empty_response or unavailable. Never the provider's body.
+    /// </summary>
+    public string Reason { get; }
+}
+
+/// <summary>The request is valid but the current state or configuration does not allow it. Answered with 409.</summary>
+public sealed class ConflictException : DomainException
+{
+    public ConflictException(string message) : base(message) { }
+}
+
+/// <summary>A service the API depends on did not answer, or answered with an error. Answered with 502.</summary>
+public sealed class UpstreamUnavailableException : DomainException
+{
+    public UpstreamUnavailableException(string message) : base(message) { }
+}
+
+/// <summary>Too many of these in too short a time. Answered 429 with Retry-After.</summary>
+public sealed class RateLimitedException : DomainException
+{
+    public RateLimitedException(string message, TimeSpan retryAfter) : base(message)
+    {
+        RetryAfter = retryAfter;
+    }
+
+    public TimeSpan RetryAfter { get; }
 }

@@ -17,6 +17,7 @@ public record MyTrainerDto(
     bool CanViewWorkouts,
     bool CanViewMeasurements,
     bool CanMessage,
+    bool CanPlanMeals,
     DateTime StartedAt,
     DateTime? EndedAt
 );
@@ -63,6 +64,7 @@ public class GetMyTrainerQueryHandler : IRequestHandler<GetMyTrainerQuery, MyTra
             relationship.CanViewWorkouts,
             relationship.CanViewMeasurements,
             relationship.CanMessage,
+            relationship.CanPlanMeals,
             relationship.StartedAt ?? relationship.CreatedAt,
             relationship.EndedAt
         );

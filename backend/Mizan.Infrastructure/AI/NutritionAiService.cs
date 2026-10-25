@@ -1,10 +1,11 @@
-using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Mizan.Application.Ai;
 using Mizan.Application.Ai.Tools;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Ai;
+using Mizan.Contracts.Nutrition;
 using Mizan.Domain.Entities;
 
 namespace Mizan.Infrastructure.AI;
@@ -86,23 +87,20 @@ public class NutritionAiService : INutritionAiService
 
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
 
-    private readonly IAiProvider _provider;
-    private readonly IAiQuotaService _quota;
+    private readonly IAiMeteredClient _metered;
     private readonly IAiContextBuilder _contextBuilder;
     private readonly IAiPromptResolver _prompts;
     private readonly IAiToolRunner _tools;
     private readonly ILogger<NutritionAiService> _logger;
 
     public NutritionAiService(
-        IAiProvider provider,
-        IAiQuotaService quota,
+        IAiMeteredClient metered,
         IAiContextBuilder contextBuilder,
         IAiPromptResolver prompts,
         IAiToolRunner tools,
         ILogger<NutritionAiService> logger)
     {
-        _provider = provider;
-        _quota = quota;
+        _metered = metered;
         _contextBuilder = contextBuilder;
         _prompts = prompts;
         _tools = tools;
@@ -159,6 +157,7 @@ public class NutritionAiService : INutritionAiService
             .ToList();
 
         var performed = new List<AiToolInvocation>();
+        var cards = new List<AiCardDto>();
         var toolContext = new AiToolContext(userId);
 
         for (var round = 0; round <= MaxToolRounds; round++)
@@ -181,7 +180,7 @@ public class NutritionAiService : INutritionAiService
 
             if (response.ToolCalls.Count == 0)
             {
-                return new AiChatTurn(response.Content, prompt.VersionId, performed);
+                return new AiChatTurn(response.Content, prompt.VersionId, performed, cards);
             }
 
             messages.Add(new AiMessage(AiRole.Assistant, response.Content)
@@ -191,8 +190,10 @@ public class NutritionAiService : INutritionAiService
 
             foreach (var call in response.ToolCalls)
             {
-                var invocation = await _tools.RunAsync(call, toolContext, cancellationToken);
+                var run = await _tools.RunWithCardsAsync(call, toolContext, cancellationToken);
+                var invocation = run.Invocation;
                 performed.Add(invocation);
+                cards.AddRange(run.Cards);
 
                 messages.Add(new AiMessage(
                     AiRole.Tool,
@@ -284,6 +285,39 @@ public class NutritionAiService : INutritionAiService
 
         return Parse<FoodAnalysisResult>(
             response.Content, "food analysis", "The assistant could not read that photo. Try another.");
+    }
+
+    public async Task<FoodAnalysisResult> AnalyzeFoodTextAsync(
+        Guid userId,
+        string description,
+        CancellationToken cancellationToken = default)
+    {
+        var prompt = await _prompts.ResolveAsync(AiPromptKeys.FoodAnalysis, cancellationToken);
+
+        // The photo prompt does the work; this only says the meal arrives as words. Quantities the person gave are
+        // kept, and a food with no quantity gets an ordinary portion rather than a guess dressed up as fact.
+        const string fromWords =
+            "There is no photo. The user describes the meal in words. Split it into separate foods, use any quantity "
+            + "they gave, and use an ordinary portion for a food they gave none for. Say in the note which portions you assumed.";
+
+        var request = new AiCompletionRequest
+        {
+            Messages =
+            [
+                new AiMessage(AiRole.System, prompt.SystemPrompt),
+                new AiMessage(AiRole.System, fromWords),
+                new AiMessage(AiRole.User, description),
+            ],
+            ResponseSchema = new AiJsonSchema("food_analysis_v1", AnalysisSchemaV1),
+            Temperature = 0.2,
+        };
+
+        var response = await CallAsync(
+            userId, householdId: null, AiFeatures.FoodAnalysis, request,
+            EstimateTokens(description.Length) + 600, prompt.VersionId, cancellationToken);
+
+        return Parse<FoodAnalysisResult>(
+            response.Content, "food analysis", "The assistant could not read that description. Try rewording it.");
     }
 
     /// <summary>
@@ -461,53 +495,21 @@ public class NutritionAiService : INutritionAiService
     }
 
     /// <summary>
-    /// The one path to the provider: reserve, call, settle. Settling happens in
-    /// a finally, so a failed or cancelled call still costs what it cost.
+    /// The one path to the provider: reserve, call, settle, through the shared
+    /// metered client, so this service holds no second copy of the billing rule.
     /// </summary>
-    private async Task<AiCompletionResponse> CallAsync(
+    private Task<AiCompletionResponse> CallAsync(
         Guid userId,
         Guid? householdId,
         string feature,
         AiCompletionRequest request,
         int estimatedTokens,
         Guid? promptVersionId,
-        CancellationToken cancellationToken)
-    {
-        if (!_provider.IsConfigured)
-        {
-            throw new AiUnavailableException("The assistant is not configured on this server.");
-        }
-
-        var lease = await _quota.ReserveAsync(
-            userId, householdId, feature, estimatedTokens, promptVersionId, cancellationToken);
-
-        var stopwatch = Stopwatch.StartNew();
-        var usage = AiTokenUsage.None;
-        var model = _provider.Model;
-        var outcome = AiCallOutcome.ProviderError;
-
-        try
-        {
-            var response = await _provider.CompleteAsync(request, cancellationToken);
-            usage = response.Usage;
-            model = response.Model;
-            outcome = AiCallOutcome.Succeeded;
-            return response;
-        }
-        catch (OperationCanceledException)
-        {
-            outcome = AiCallOutcome.Timeout;
-            throw;
-        }
-        finally
-        {
-            stopwatch.Stop();
-            // The reservation must be settled even when the caller is gone, so
-            // this deliberately does not observe the request's cancellation.
-            await _quota.SettleAsync(
-                lease, usage, model, (int)stopwatch.ElapsedMilliseconds, outcome, CancellationToken.None);
-        }
-    }
+        CancellationToken cancellationToken) =>
+        _metered.CompleteAsync(
+            new AiMeteredCall(userId, householdId, feature, estimatedTokens, promptVersionId),
+            request,
+            cancellationToken);
 
     /// <summary>Four characters to a token is close enough for a reservation the settle corrects.</summary>
     private static int EstimateTokens(int characters) => Math.Max(256, characters / 4);

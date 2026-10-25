@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Plus, Dumbbell, Ruler, ArrowRight } from "lucide-react";
+import { Plus, ArrowRight } from "lucide-react";
 import { getUserServer } from "@/helper/session";
 import {
   getDayDiary,
   getLogGoal,
   getLogMeasurements,
   getLogWorkouts,
+  type DayDiary,
   type LogMeal,
 } from "@/data/log";
 import { dateInTimeZone, formatLogDate, isLogDate } from "@/lib/log-date";
@@ -17,6 +18,7 @@ import { LogEntryButton } from "@/components/logging/LogEntryButton";
 import SaveMealAsRecipe from "@/components/logging/SaveMealAsRecipe";
 import ResumeWorkoutBanner from "@/components/context/ResumeWorkoutBanner";
 import TrainerStrip from "@/components/context/TrainerStrip";
+import TodayPlan from "@/components/planning/TodayPlan";
 
 export const metadata = { title: "Today · Mizan" };
 
@@ -41,7 +43,14 @@ function MealRow({ entry }: { entry: LogMeal }) {
   );
 }
 
-function MealEntries({ entries }: { entries: LogMeal[] }) {
+/** The rows of one meal. A logged recipe folds its ingredient rows under the total the API sent for it. */
+function MealEntries({
+  entries,
+  groups,
+}: {
+  entries: LogMeal[];
+  groups: DayDiary["groups"];
+}) {
   const seen = new Set<string>();
   return entries.map((entry) => {
     if (!entry.groupId) return <MealRow key={entry.id} entry={entry} />;
@@ -57,9 +66,13 @@ function MealEntries({ entries }: { entries: LogMeal[] }) {
               {group.length} ingredients · Show details
             </span>
           </span>
-          <span className="num text-sm whitespace-nowrap">
+          <span
+            className="num text-sm whitespace-nowrap"
+            data-testid="recipe-group-calories"
+          >
             {Math.round(
-              group.reduce((sum, item) => sum + (item.calories ?? 0), 0),
+              groups.find((g) => g.groupId === entry.groupId)?.totals
+                .calories ?? 0,
             )}{" "}
             <span className="text-xs log-muted">kcal</span>
           </span>
@@ -202,19 +215,23 @@ export default async function TodayPage({
           </Link>
         </p>
       )}
+      <Suspense fallback={null}>
+        <TodayPlan date={date} />
+      </Suspense>
       <div className="day-log-grid">
         <section aria-labelledby="meals-title">
           <header className="log-section-header">
             <h2 id="meals-title">Meals</h2>
             <LogEntryButton kind="meal" date={date} className="text-link">
-              <Plus size={16} /> Add meal
+              Add meal
             </LogEntryButton>
           </header>
           {diary.entries.length === 0 ? (
             <div className="log-empty">
               <p>Your meals go here.</p>
               <p className="log-muted text-sm mt-2">
-                Search for a food, reuse a recipe, or add a quick entry.
+                Say what you ate, add a photo, or search. You check it before it
+                is saved.
               </p>
               <LogEntryButton
                 kind="meal"
@@ -236,17 +253,18 @@ export default async function TodayPage({
                   <div className="meal-group" key={type}>
                     <div className="meal-group-header">
                       <h3>{formatMealType(type)}</h3>
-                      <span className="num text-xs log-muted">
+                      <span
+                        className="num text-xs log-muted"
+                        data-testid="meal-calories"
+                      >
                         {Math.round(
-                          entries.reduce(
-                            (total, entry) => total + (entry.calories ?? 0),
-                            0,
-                          ),
+                          diary.meals.find((meal) => meal.mealType === type)
+                            ?.totals.calories ?? 0,
                         ).toLocaleString()}{" "}
                         kcal
                       </span>
                     </div>
-                    <MealEntries entries={entries} />
+                    <MealEntries entries={entries} groups={diary.groups} />
                     {entries.length >= 2 && (
                       <div className="pt-2">
                         <SaveMealAsRecipe
@@ -265,7 +283,6 @@ export default async function TodayPage({
           <section aria-labelledby="training-title">
             <header className="log-section-header">
               <h2 id="training-title">Training</h2>
-              <Dumbbell size={18} className="log-muted" />
             </header>
             {workouts.length ? (
               workouts.map((workout) => (
@@ -326,7 +343,6 @@ export default async function TodayPage({
           <section aria-labelledby="measurements-title">
             <header className="log-section-header">
               <h2 id="measurements-title">Measurements</h2>
-              <Ruler size={18} className="log-muted" />
             </header>
             {measurements.length ? (
               measurements.map((measurement) => (
@@ -380,7 +396,7 @@ export default async function TodayPage({
               date={date}
               className="text-link mt-3"
             >
-              <Plus size={14} /> Add measurement
+              Add measurement
             </LogEntryButton>
           </section>
         </div>

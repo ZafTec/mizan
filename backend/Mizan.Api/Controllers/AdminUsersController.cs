@@ -24,6 +24,11 @@ public class AdminUsersController : ControllerBase
     public async Task<ActionResult<AdminOverviewDto>> Overview()
         => Ok(await _mediator.Send(new GetAdminOverviewQuery()));
 
+    /// <summary>One line per service: ok, degraded, down or notConfigured. Cached for 30 seconds.</summary>
+    [HttpGet("overview/health")]
+    public async Task<ActionResult<Mizan.Contracts.Admin.SystemHealthDto>> Health()
+        => Ok(await _mediator.Send(new GetSystemHealthQuery()));
+
     [HttpGet("users")]
     public async Task<ActionResult<PagedResult<AdminUserDto>>> ListUsers([FromQuery] ListAdminUsersQuery query)
         => Ok(await _mediator.Send(query));
@@ -53,6 +58,24 @@ public class AdminUsersController : ControllerBase
     {
         await _mediator.Send(new DeleteAdminUserCommand(userId));
         return NoContent();
+    }
+
+    /// <summary>
+    /// Opens a one-hour session as the user. The administrator's own session is kept aside and comes back when they
+    /// leave. The page that called this should load the app afresh.
+    /// </summary>
+    [HttpPost("users/{userId:guid}/impersonate")]
+    public async Task<ActionResult<Mizan.Application.Auth.AuthUserDto>> Impersonate(
+        Guid userId, [FromServices] Mizan.Api.Authentication.SessionCookie cookie)
+    {
+        Request.Cookies.TryGetValue(Mizan.Api.Authentication.SessionCookie.Name, out var ownToken);
+        var result = await _mediator.Send(new Mizan.Application.Auth.StartImpersonationCommand(
+            userId, HttpContext.Connection.RemoteIpAddress?.ToString(), Request.Headers.UserAgent.ToString()));
+
+        if (!string.IsNullOrEmpty(ownToken))
+            cookie.WriteAdmin(Response, ownToken, DateTimeOffset.UtcNow.Add(Mizan.Infrastructure.Identity.SessionService.Lifetime));
+        cookie.Write(Response, result.SessionToken, DateTimeOffset.UtcNow.Add(Mizan.Infrastructure.Identity.SessionService.ImpersonationLifetime));
+        return Ok(result.User);
     }
 
     [HttpDelete("users/{userId:guid}/sessions")]

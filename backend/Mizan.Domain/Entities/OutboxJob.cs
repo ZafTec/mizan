@@ -62,6 +62,9 @@ public static class OutboxJobTypes
 {
     public const string Email = "email";
     public const string EvalRun = "eval-run";
+    public const string Push = "push";
+    public const string EveningReminder = "evening-reminder";
+    public const string TelegramMessage = "telegram-message";
 }
 
 /// <summary>

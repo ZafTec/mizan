@@ -5,32 +5,32 @@ import { getUserOptionalServer } from "@/helper/session";
 import NavbarContent from "./NavbarContent";
 
 export default async function Navbar() {
-	const user = await getUserOptionalServer();
+  const user = await getUserOptionalServer();
 
-	return (
-		<nav className="sticky top-0 z-50 px-3 pt-3 sm:px-4 lg:px-6">
-			<div className="max-w-7xl mx-auto">
-				<div className="nav-glass relative flex h-16 items-center justify-between rounded-3xl px-4 sm:px-6">
-					<Link href="/" className="flex items-center gap-3">
-						<Image
-							src={logoTransparent}
-							alt="Mizan"
-							width={42}
-							height={42}
-							className="rounded-2xl"
-						/>
-						<div className="flex flex-col">
-							<span className="text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-								Mizan
-							</span>
-							<span className="hidden items-center gap-1 text-[10px] uppercase tracking-[0.18em] text-charcoal-blue-500 dark:text-charcoal-blue-400 sm:inline-flex">
-								ሚዛን • Balance
-							</span>
-						</div>
-					</Link>
-					<NavbarContent user={user} />
-				</div>
-			</div>
-		</nav>
-	);
+  return (
+    <nav className="sticky top-0 z-50 px-3 pt-3 sm:px-4 lg:px-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="nav-glass relative flex h-16 items-center justify-between rounded-3xl px-4 sm:px-6">
+          <Link href="/" className="flex items-center gap-3">
+            <Image
+              src={logoTransparent}
+              alt="Mizan"
+              width={42}
+              height={42}
+              className="rounded-2xl"
+            />
+            <div className="flex flex-col">
+              <span className="text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+                Mizan
+              </span>
+              <span className="hidden items-center gap-1 text-[10px] uppercase tracking-[0.18em] text-charcoal-blue-500 dark:text-charcoal-blue-400 sm:inline-flex">
+                ሚዛን • Balance
+              </span>
+            </div>
+          </Link>
+          <NavbarContent user={user} />
+        </div>
+      </div>
+    </nav>
+  );
 }

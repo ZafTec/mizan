@@ -14,9 +14,14 @@ public static class DiaryEntryFactory
         var scale = grams / 100m;
         return new FoodDiaryEntry
         {
-            Id = Guid.NewGuid(), UserId = userId, FoodId = food.Id,
-            EntryDate = date, MealType = MealTypes.Normalize(mealType),
-            Name = food.Name, AmountGrams = grams, Servings = grams / food.ServingSize,
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            FoodId = food.Id,
+            EntryDate = date,
+            MealType = MealTypes.Normalize(mealType),
+            Name = food.Name,
+            AmountGrams = grams,
+            Servings = grams / food.ServingSize,
             Calories = Math.Round(food.CaloriesPer100g * scale, 2),
             ProteinGrams = Math.Round(food.ProteinPer100g * scale, 2),
             CarbsGrams = Math.Round(food.CarbsPer100g * scale, 2),
@@ -77,10 +82,15 @@ public static class DiaryEntryFactory
         var perServing = retained.PerServing;
         return new FoodDiaryEntry
         {
-            Id = Guid.NewGuid(), UserId = userId, RecipeId = recipe.Id,
-            GroupId = Guid.NewGuid(), GroupName = recipe.Title,
-            EntryDate = date, MealType = MealTypes.Normalize(mealType),
-            Name = recipe.Title, Servings = servings,
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            RecipeId = recipe.Id,
+            GroupId = Guid.NewGuid(),
+            GroupName = recipe.Title,
+            EntryDate = date,
+            MealType = MealTypes.Normalize(mealType),
+            Name = recipe.Title,
+            Servings = servings,
             Calories = Math.Round(perServing.Calories * servings, 2),
             ProteinGrams = Math.Round(perServing.ProteinGrams * servings, 2),
             CarbsGrams = Math.Round(perServing.CarbsGrams * servings, 2),

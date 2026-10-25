@@ -4,15 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Dumbbell,
-  Ruler,
-  Utensils,
-  X,
-} from "lucide-react";
-import FoodPhotoSheet from "@/components/ai/FoodPhotoSheet";
+import { ArrowRight, Dumbbell, Ruler, Utensils, X } from "lucide-react";
 import MealLogForm from "@/components/logging/MealLogForm";
 import MeasurementLogForm from "@/components/logging/MeasurementLogForm";
 import { type LogKind } from "@/components/logging/LogEntryButton";
@@ -46,9 +38,7 @@ function OpenLogSheet({
   const router = useRouter();
   const { data: session } = useSession();
   const timeZone = session?.user.timeZoneId || "UTC";
-  const [kind, setKind] = useState<LogKind | "photo" | null>(
-    initialKind ?? null,
-  );
+  const [kind, setKind] = useState<LogKind | null>(initialKind ?? null);
   const [busy, setBusy] = useState(false);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -59,19 +49,15 @@ function OpenLogSheet({
         ? "Log a measurement"
         : kind === "workout"
           ? "Log a workout"
-          : kind === "photo"
-            ? "Log from a photo"
-            : "What would you like to log?";
+          : "What would you like to log?";
   const description =
     kind === "meal"
-      ? "Find a food or recipe, adjust the amount, and add it to your day."
+      ? "Say what you ate, show it, or search. You check everything before it is saved."
       : kind === "measurement"
         ? "A quick check-in. Add only the measurements you took."
         : kind === "workout"
           ? "Start a session or pick up where you left off."
-          : kind === "photo"
-            ? "Review the food and portions before saving."
-            : "A meal, a training session, or a body measurement.";
+          : "A meal, a training session, or a body measurement.";
 
   useEffect(() => {
     titleRef.current?.focus();
@@ -122,7 +108,6 @@ function OpenLogSheet({
                   disabled={busy}
                   className="flex min-h-11 items-center gap-2 text-sm text-charcoal-blue-700 disabled:opacity-50 dark:text-charcoal-blue-300"
                 >
-                  <ArrowLeft aria-hidden="true" size={16} strokeWidth={1.7} />
                   All entries
                 </button>
               ) : (
@@ -154,7 +139,7 @@ function OpenLogSheet({
                   {
                     kind: "meal",
                     title: "Meal",
-                    detail: "Foods, recipes, and quick entries",
+                    detail: "Describe it, snap it, or search",
                     icon: Utensils,
                   },
                   {
@@ -202,7 +187,6 @@ function OpenLogSheet({
               timeZone={timeZone}
               onSaved={saved}
               onBusyChange={setBusy}
-              onUsePhoto={() => setKind("photo")}
             />
           )}
           {kind === "measurement" && (
@@ -229,20 +213,8 @@ function OpenLogSheet({
                 className="btn-primary min-h-11 w-full"
               >
                 Open workout
-                <ArrowRight aria-hidden="true" size={17} strokeWidth={1.7} />
               </Link>
             </div>
-          )}
-          {kind === "photo" && (
-            <FoodPhotoSheet
-              initialDate={initialDate}
-              initialMealType={initialMealType}
-              onBusyChange={setBusy}
-              onLogged={() => {
-                router.refresh();
-                onClose();
-              }}
-            />
           )}
         </Dialog.Content>
       </Dialog.Portal>

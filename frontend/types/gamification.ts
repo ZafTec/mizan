@@ -3,22 +3,22 @@
 // of truth for shape; runtime backend already guarantees camelCase keys.
 
 import type {
-    StreakUpdateDto,
-    UnlockedAchievementDto,
+  StreakUpdateDto,
+  UnlockedAchievementDto,
 } from "@/types/api-contracts";
 
 export type StreakUpdate = StreakUpdateDto;
 export type UnlockedAchievement = UnlockedAchievementDto;
 
 export interface GamificationFeedback {
-    streak?: StreakUpdate | null;
-    unlockedAchievements?: UnlockedAchievement[] | null;
+  streak?: StreakUpdate | null;
+  unlockedAchievements?: UnlockedAchievement[] | null;
 }
 
 export interface LevelInfo {
-    level: number;
-    levelName: string;
-    levelFloor: number;
-    nextLevelAt: number | null;
-    totalPoints: number;
+  level: number;
+  levelName: string;
+  levelFloor: number;
+  nextLevelAt: number | null;
+  totalPoints: number;
 }

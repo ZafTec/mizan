@@ -66,7 +66,10 @@ public class LoggingRefocusTests
         _db.Foods.AddRange(oats, milk);
         var recipe = new Recipe
         {
-            Id = Guid.NewGuid(), UserId = _userId, Title = "Porridge", Servings = 2,
+            Id = Guid.NewGuid(),
+            UserId = _userId,
+            Title = "Porridge",
+            Servings = 2,
             Ingredients =
             {
                 new RecipeIngredient { Id = Guid.NewGuid(), FoodId = oats.Id, IngredientText = "Oats", Amount = 80, Unit = "g", SortOrder = 0 },
@@ -102,7 +105,9 @@ public class LoggingRefocusTests
         _db.Foods.Add(food);
         var recipe = new Recipe
         {
-            Id = Guid.NewGuid(), UserId = _userId, Title = "Unknown quantity",
+            Id = Guid.NewGuid(),
+            UserId = _userId,
+            Title = "Unknown quantity",
             Ingredients = { new RecipeIngredient { Id = Guid.NewGuid(), FoodId = food.Id, IngredientText = "A cup of milk", Amount = 1, Unit = "cup" } }
         };
         _db.Recipes.Add(recipe);
@@ -113,9 +118,9 @@ public class LoggingRefocusTests
             : () => FoodHandler().Handle(new LogFoodCommand { RecipeId = recipe.Id, EntryDate = _day }, default);
         await act.Should().ThrowAsync<DomainValidationException>();
         _db.FoodDiaryEntries.Should().BeEmpty();
-        var detail = await new GetRecipeByIdQueryHandler(_db, User, _cache).Handle(new GetRecipeByIdQuery(recipe.Id), default);
+        var detail = await new GetRecipeByIdQueryHandler(_db, User, _cache, new Mizan.Application.Services.HouseholdAccess(_db, User)).Handle(new GetRecipeByIdQuery(recipe.Id), default);
         detail!.Nutrition.Should().BeNull();
-        var list = await new GetRecipesQueryHandler(_db, User, _cache).Handle(new GetRecipesQuery(), default);
+        var list = await new GetRecipesQueryHandler(_db, User, _cache, new Mizan.Application.Services.HouseholdAccess(_db, User)).Handle(new GetRecipesQuery(), default);
         list.Items.Single(r => r.Id == recipe.Id).Nutrition.Should().BeNull();
     }
 
@@ -126,7 +131,10 @@ public class LoggingRefocusTests
         _db.Foods.Add(food);
         var recipe = new Recipe
         {
-            Id = Guid.NewGuid(), UserId = _userId, Title = "Porridge", Servings = 2,
+            Id = Guid.NewGuid(),
+            UserId = _userId,
+            Title = "Porridge",
+            Servings = 2,
             Ingredients = { new RecipeIngredient { Id = Guid.NewGuid(), FoodId = food.Id, IngredientText = "Oats", Amount = 80, Unit = "g" } }
         };
         _db.Recipes.Add(recipe);
@@ -135,7 +143,11 @@ public class LoggingRefocusTests
 
         await CustomHandler().Handle(new CreateFoodDiaryEntryCommand
         {
-            RecipeId = recipe.Id, EntryDate = _day, LoggedAt = loggedAt, Servings = 1.5m, AmountGrams = 123
+            RecipeId = recipe.Id,
+            EntryDate = _day,
+            LoggedAt = loggedAt,
+            Servings = 1.5m,
+            AmountGrams = 123
         }, default);
 
         var entry = await _db.FoodDiaryEntries.SingleAsync();
@@ -155,7 +167,9 @@ public class LoggingRefocusTests
 
         await handler.Handle(new CreateFoodDiaryEntryCommand
         {
-            Name = "Late dinner", Calories = 300, LoggedAt = new DateTime(2026, 9, 3, 2, 0, 0, DateTimeKind.Utc)
+            Name = "Late dinner",
+            Calories = 300,
+            LoggedAt = new DateTime(2026, 9, 3, 2, 0, 0, DateTimeKind.Utc)
         }, default);
 
         (await _db.FoodDiaryEntries.SingleAsync()).EntryDate.Should().Be(_day);
@@ -183,8 +197,14 @@ public class LoggingRefocusTests
     {
         var request = new CreateFoodDiaryEntryCommand
         {
-            Name = "Photo meal", EntryDate = _day, Servings = 2,
-            AmountGrams = 175, Calories = 300, ProteinGrams = 20, CarbsGrams = 30, FatGrams = 8
+            Name = "Photo meal",
+            EntryDate = _day,
+            Servings = 2,
+            AmountGrams = 175,
+            Calories = 300,
+            ProteinGrams = 20,
+            CarbsGrams = 30,
+            FatGrams = 8
         };
         new CreateFoodDiaryEntryCommandValidator().Validate(request).IsValid.Should().BeTrue();
 
@@ -200,15 +220,20 @@ public class LoggingRefocusTests
 
         await CustomHandler().Handle(request with
         {
-            Name = "Bread", Servings = 1, AmountGrams = 50,
-            Calories = 100, ProteinGrams = 3, CarbsGrams = 17, FatGrams = 1
+            Name = "Bread",
+            Servings = 1,
+            AmountGrams = 50,
+            Calories = 100,
+            ProteinGrams = 3,
+            CarbsGrams = 17,
+            FatGrams = 1
         }, default);
-        var recipeId = await new PromoteMealToRecipeCommandHandler(_db, User, _cache).Handle(
+        var recipeId = await new PromoteMealToRecipeCommandHandler(_db, new Mizan.Application.Services.HouseholdAccess(_db, User), User, _cache).Handle(
             new PromoteMealToRecipeCommand(_day, request.MealType, "Photo meal and bread"), default);
         var recipe = await _db.Recipes.Include(r => r.Ingredients).SingleAsync(r => r.Id == recipeId);
         recipe.Ingredients.Single(i => i.IngredientText == "Photo meal").Amount.Should().Be(175);
     }
 
-    private LogFoodCommandHandler FoodHandler() => new(_db, User, _streak.Object, _achievements.Object, _cache);
+    private LogFoodCommandHandler FoodHandler() => new(_db, User, _streak.Object, _achievements.Object, _cache, Mock.Of<IUserClock>());
     private CreateFoodDiaryEntryCommandHandler CustomHandler() => new(_db, User, _streak.Object, _achievements.Object, _cache, Mock.Of<IUserClock>());
 }

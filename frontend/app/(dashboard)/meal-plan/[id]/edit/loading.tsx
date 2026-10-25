@@ -1,5 +1,5 @@
-import { FormSkeleton } from "@/components/ui/skeletons";
+import { DetailSkeleton } from "@/components/ui/skeletons";
 
 export default function Loading() {
-	return <FormSkeleton />;
+  return <DetailSkeleton />;
 }

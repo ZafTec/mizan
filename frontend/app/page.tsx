@@ -18,88 +18,97 @@ export const dynamic = "force-dynamic";
 const siteUrl = "https://mizan.zaftech.co";
 
 export const metadata: Metadata = {
-	title: "Mizan | The tracker you actually keep using.",
-	description:
-		"Mizan by Zaftech logs meals, workouts and measurements from the web, Telegram, or your AI assistant. Free forever, Pro from $2.99/mo, or self-host it yourself.",
-	alternates: { canonical: siteUrl },
-	openGraph: {
-		type: "website",
-		siteName: "Mizan",
-		title: "Mizan | The tracker you actually keep using.",
-		description: "One log, three doors in: the web app, Telegram, or your AI assistant. Free forever, Pro from $2.99/mo, or self-host it.",
-		url: siteUrl,
-	},
-	twitter: {
-		card: "summary_large_image",
-		site: "@ZaftechS",
-		creator: "@ZaftechS",
-		title: "Mizan | The tracker you actually keep using.",
-		description: "One log, three doors in: the web app, Telegram, or your AI assistant.",
-	},
+  title: "Mizan | The tracker you actually keep using.",
+  description:
+    "Mizan by Zaftech logs meals, workouts and measurements from the web, Telegram, or your AI assistant. Free forever, Pro from $2.99/mo, or self-host it yourself.",
+  alternates: { canonical: siteUrl },
+  openGraph: {
+    type: "website",
+    siteName: "Mizan",
+    title: "Mizan | The tracker you actually keep using.",
+    description:
+      "One log, three doors in: the web app, Telegram, or your AI assistant. Free forever, Pro from $2.99/mo, or self-host it.",
+    url: siteUrl,
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@ZaftechS",
+    creator: "@ZaftechS",
+    title: "Mizan | The tracker you actually keep using.",
+    description:
+      "One log, three doors in: the web app, Telegram, or your AI assistant.",
+  },
 };
 
 function structuredData(proPrice: string) {
-	return {
-	"@context": "https://schema.org",
-	"@graph": [
-		{
-			"@type": "Organization",
-			"@id": "https://zaftech.co/#organization",
-			name: "Zaftech",
-			url: "https://zaftech.co",
-			sameAs: ["https://x.com/ZaftechS", "https://www.youtube.com/@Zaftec"],
-		},
-		{
-			"@type": "SoftwareApplication",
-			name: "Mizan",
-			applicationCategory: "HealthApplication",
-			operatingSystem: "Web",
-			url: siteUrl,
-			publisher: { "@id": "https://zaftech.co/#organization" },
-			offers: [
-				{ "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
-				{
-					"@type": "Offer",
-					name: "Pro",
-					price: proPrice,
-					priceCurrency: "USD",
-					priceSpecification: {
-						"@type": "UnitPriceSpecification",
-						price: proPrice,
-						priceCurrency: "USD",
-						billingDuration: "P1M",
-					},
-				},
-				{ "@type": "Offer", name: "Self-hosted", price: "0", priceCurrency: "USD" },
-			],
-		},
-	],
-	};
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://zaftech.co/#organization",
+        name: "Zaftech",
+        url: "https://zaftech.co",
+        sameAs: ["https://x.com/ZaftechS", "https://www.youtube.com/@Zaftec"],
+      },
+      {
+        "@type": "SoftwareApplication",
+        name: "Mizan",
+        applicationCategory: "HealthApplication",
+        operatingSystem: "Web",
+        url: siteUrl,
+        publisher: { "@id": "https://zaftech.co/#organization" },
+        offers: [
+          { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
+          {
+            "@type": "Offer",
+            name: "Pro",
+            price: proPrice,
+            priceCurrency: "USD",
+            priceSpecification: {
+              "@type": "UnitPriceSpecification",
+              price: proPrice,
+              priceCurrency: "USD",
+              billingDuration: "P1M",
+            },
+          },
+          {
+            "@type": "Offer",
+            name: "Self-hosted",
+            price: "0",
+            priceCurrency: "USD",
+          },
+        ],
+      },
+    ],
+  };
 }
 
 export default async function Home() {
-	const user = await getUserOptionalServer();
-	if (user) redirect("/dashboard");
+  const user = await getUserOptionalServer();
+  if (user) redirect("/dashboard");
 
-	// What admins have on sale; the landing copy's $2.99 until the API answers.
-	const plans = await getBillingPlans();
-	const { monthly } = pickPlans(plans);
-	const proPrice = monthly ? (monthly.amountCents / 100).toFixed(2) : "2.99";
+  // What admins have on sale; the landing copy's $2.99 until the API answers.
+  const plans = await getBillingPlans();
+  const { monthly } = pickPlans(plans);
+  const proPrice = monthly ? (monthly.amountCents / 100).toFixed(2) : "2.99";
 
-	return (
-		<>
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData(proPrice)) }}
-			/>
-			<div>
-				<HeroSection />
-				<ThreeDoorsSection />
-				<FaqSection />
-				<CoachingSection />
-				<PricingSection plans={plans} />
-				<CTASection />
-			</div>
-		</>
-	);
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData(proPrice)),
+        }}
+      />
+      <div>
+        <HeroSection />
+        <ThreeDoorsSection />
+        <FaqSection />
+        <CoachingSection />
+        <PricingSection plans={plans} />
+        <CTASection />
+      </div>
+    </>
+  );
 }

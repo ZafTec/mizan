@@ -1,23 +1,17 @@
 import { resolvePublicApiOrigin } from "@/lib/api-base";
 import { clientApi } from "@/lib/api.client";
 import type { GamificationFeedback } from "@/types/gamification";
+import type { components } from "@/types/api.generated";
 
-export interface RecognizedFood {
-  name: string;
-  portionGrams: number;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-}
-
-export interface FoodAnalysis {
-  foods: RecognizedFood[];
-  totalCalories: number;
-  /** 0 to 1. Shown, not hidden: the numbers below it are estimates. */
-  confidence: number;
-  note?: string | null;
-}
+/**
+ * One food the assistant recognized: its guessed portion with totals, and the
+ * same nutrition per 100 g so the server can scale to the grams the person
+ * confirms.
+ */
+export type RecognizedFood = components["schemas"]["RecognizedFood"];
+export type NutritionPer100g = components["schemas"]["NutritionPer100g"];
+/** A proposal. The confidence is shown, not hidden: the numbers below it are estimates. */
+export type FoodAnalysis = components["schemas"]["FoodAnalysisResult"];
 
 /**
  * Multipart, so this goes through fetch rather than the JSON client. The
@@ -44,20 +38,22 @@ export async function analyzeFoodPhoto(file: File): Promise<FoodAnalysis> {
   return (await response.json()) as FoodAnalysis;
 }
 
-export interface LogMealBody {
-  name: string;
-  entryDate: string;
-  mealType: string;
-  servings: number;
-  amountGrams?: number;
-  calories: number;
-  proteinGrams: number;
-  carbsGrams: number;
-  fatGrams: number;
-}
+/** A sentence becomes a proposal the way a photo does. Nothing is logged until the person confirms it. */
+export const analyzeFoodText = (description: string) =>
+  clientApi<FoodAnalysis>("/api/Nutrition/ai/analyze-text", {
+    method: "POST",
+    body: { description },
+  });
 
-export const logMeal = (body: LogMealBody) =>
+export type LogMealBody = components["schemas"]["CreateFoodDiaryEntryCommand"];
+
+/**
+ * A write the person may retry, so it carries an Idempotency-Key: the same key
+ * sent twice logs one meal and answers with the first result.
+ */
+export const logMeal = (body: LogMealBody, idempotencyKey: string) =>
   clientApi<{ id: string } & GamificationFeedback>("/api/Meals", {
     method: "POST",
     body,
+    headers: { "Idempotency-Key": idempotencyKey },
   });

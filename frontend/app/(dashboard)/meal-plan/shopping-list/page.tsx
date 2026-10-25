@@ -1,211 +1,107 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { clientApi } from "@/lib/api.client";
-import Loading from "@/components/Loading";
-import { AppFeatureIllustration } from "@/components/illustrations/AppFeatureIllustration";
+import { ChevronRight } from "lucide-react";
+import { listShoppingListsServer } from "@/lib/api/shoppingLists.server";
+import type { ShoppingListSummary } from "@/lib/api/shoppingLists";
+import NewListButton from "@/components/planning/NewListButton";
+import { logger } from "@/lib/logger";
 
-interface ShoppingListItem {
-	id: string;
-	ingredientText: string;
-	quantity: number;
-	unit: string;
-	isChecked: boolean;
-}
+const log = logger.createModuleLogger("shopping-lists-page");
 
-interface ShoppingList {
-	id: string;
-	name: string;
-	createdAt: string;
-	items: ShoppingListItem[];
-}
+export const dynamic = "force-dynamic";
+export const metadata = { title: "Shopping lists · Mizan" };
 
-export default function ShoppingListPage() {
-	const router = useRouter();
-	const [shoppingLists, setShoppingLists] = useState<ShoppingList[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState("");
-	const [showCompleted, setShowCompleted] = useState(false);
+const when = (iso: string) =>
+  new Date(iso).toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+  });
 
-	useEffect(() => {
-		loadShoppingLists();
-	}, []);
-
-	const loadShoppingLists = async () => {
-		try {
-			setLoading(true);
-			const data = await clientApi<{ items: ShoppingList[] }>("/api/ShoppingLists");
-			setShoppingLists(data.items || []);
-		} catch (err) {
-			setError("Failed to load shopping lists");
-			console.error("Error loading shopping lists:", err);
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	const toggleItemChecked = async (itemId: string, currentIsChecked: boolean) => {
-		try {
-			await clientApi(`/api/ShoppingLists/items/${itemId}/toggle`, {
-				method: "PATCH",
-				body: { IsChecked: !currentIsChecked },
-			});
-
-			setShoppingLists((prevLists) =>
-				prevLists.map((list) => ({
-					...list,
-					items: list.items.map((item) =>
-						item.id === itemId ? { ...item, isChecked: !item.isChecked } : item,
-					),
-				})),
-			);
-		} catch (err) {
-			console.error("Error toggling item:", err);
-		}
-	};
-
-	const allItems = shoppingLists.flatMap((list) => list.items);
-	const displayedItems = showCompleted ? allItems : allItems.filter((item) => !item.isChecked);
-
-	return (
-		<div className="flex flex-col gap-6">
-			<div className="flex justify-between items-center">
-				<h1 className="text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-4xl">
-					Shopping List
-				</h1>
-				<Link href="/meal-plan" className="btn-primary">
-					Back to Meal Plan
-				</Link>
-			</div>
-
-			{error && (
-				<div className="card border border-red-200 bg-red-50 p-4 dark:border-red-500/30 dark:bg-red-500/10">
-					<div className="flex items-center gap-2 text-red-700 dark:text-red-300">
-						<i className="ri-error-warning-line" />
-						<span>{error}</span>
-					</div>
-				</div>
-			)}
-
-			<div className="card p-6">
-				<div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-					<h2 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100">
-						Your Shopping Items
-					</h2>
-					<div className="flex flex-col sm:flex-row gap-2">
-						<button
-							onClick={loadShoppingLists}
-							className="btn-secondary flex items-center gap-2"
-							disabled={loading}
-						>
-							{loading ? (
-								<>
-									<i className="ri-loader-4-line animate-spin"></i>
-									Loading...
-								</>
-							) : (
-								<>
-									<i className="ri-refresh-line"></i>
-									Refresh List
-								</>
-							)}
-						</button>
-						<label className="flex items-center gap-2 text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300">
-							<input
-								type="checkbox"
-								checked={showCompleted}
-								onChange={() => setShowCompleted(!showCompleted)}
-								className="h-4 w-4"
-							/>
-							Show completed items
-						</label>
-					</div>
-				</div>
-
-				{loading && allItems.length === 0 ? (
-					<div className="flex justify-center items-center py-10">
-						<Loading />
-					</div>
-				) : allItems.length === 0 ? (
-					<div className="text-center py-10 flex flex-col items-center">
-						<div className="mb-6 w-full max-w-[18rem] opacity-95">
-							<AppFeatureIllustration variant="shopping" className="h-auto w-full" />
-						</div>
-						<p className="mb-4 text-charcoal-blue-600 dark:text-charcoal-blue-300">
-							No items in your shopping list
-						</p>
-						<p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-							Add meals to your meal plan to generate a shopping list
-						</p>
-						<Link href="/meal-plan/add" className="mt-4 inline-block btn-primary">
-							Add Meals to Plan
-						</Link>
-					</div>
-				) : (
-					<div>
-						{displayedItems.length === 0 && (
-							<p className="py-4 text-center text-charcoal-blue-500 dark:text-charcoal-blue-400">
-								All items have been checked off!
-							</p>
-						)}
-
-						{displayedItems.length > 0 && (
-							<ul className="space-y-2">
-								{displayedItems.map((item) => (
-									<li
-										key={item.id}
-										className="flex items-center gap-3 rounded-lg p-2 transition hover:bg-charcoal-blue-50 dark:hover:bg-charcoal-blue-900/60"
-									>
-										<input
-											type="checkbox"
-											checked={item.isChecked}
-											onChange={() => toggleItemChecked(item.id, item.isChecked)}
-											className="h-5 w-5 cursor-pointer"
-										/>
-										<span
-											className={
-												item.isChecked
-													? "line-through text-charcoal-blue-400 dark:text-charcoal-blue-500"
-													: "text-charcoal-blue-900 dark:text-charcoal-blue-100"
-											}
-										>
-											{item.ingredientText}
-											{item.quantity && item.unit && (
-												<span className="ml-2 text-charcoal-blue-500 dark:text-charcoal-blue-400">
-													- {item.quantity} {item.unit}
-												</span>
-											)}
-										</span>
-									</li>
-								))}
-							</ul>
-						)}
-
-						<div className="mt-6 border-t border-charcoal-blue-200 pt-4 dark:border-white/10">
-							<div className="flex justify-between items-center">
-								<div>
-									<span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-										{allItems.length} total items
-									</span>
-									<span className="mx-2 text-charcoal-blue-300 dark:text-charcoal-blue-600">|</span>
-									<span className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-										{allItems.filter((item) => item.isChecked).length} checked off
-									</span>
-								</div>
-								<button
-									onClick={() => window.print()}
-									className="btn-secondary flex items-center gap-2"
-								>
-									<i className="ri-printer-line"></i>
-									Print List
-								</button>
-							</div>
-						</div>
-					</div>
-				)}
-			</div>
-		</div>
-	);
+export default async function ShoppingListsPage() {
+  let lists: ShoppingListSummary[] = [];
+  let failed = false;
+  try {
+    lists = (await listShoppingListsServer(100)).items.sort((a, b) =>
+      b.createdAt.localeCompare(a.createdAt),
+    );
+  } catch (error) {
+    log.error("Failed to load shopping lists", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    failed = true;
+  }
+  const open = lists.reduce(
+    (sum, list) => sum + (list.totalItems - list.checkedItems),
+    0,
+  );
+  return (
+    <div className="log-page space-y-8" data-testid="shopping-lists-page">
+      <header className="log-page-header block!">
+        <h1>Shopping lists</h1>
+        <p className="log-muted mt-2">What your plans need you to buy.</p>
+      </header>
+      {failed ? (
+        <p className="log-empty">Your lists could not be loaded.</p>
+      ) : (
+        <>
+          {lists.length > 0 && (
+            <section aria-label="List summary" className="facts-strip">
+              <div>
+                <p className="text-sm log-muted">Lists</p>
+                <p className="num nutrition-value">{lists.length}</p>
+              </div>
+              <div>
+                <p className="text-sm log-muted">Left to buy</p>
+                <p className="num nutrition-value">{open}</p>
+              </div>
+              <div>
+                <p className="text-sm log-muted">To check</p>
+                <p className="num nutrition-value">
+                  {lists.reduce((sum, list) => sum + list.needsReviewCount, 0)}
+                </p>
+              </div>
+            </section>
+          )}
+          {lists.length === 0 ? (
+            <p className="log-empty">No lists yet.</p>
+          ) : (
+            <ul>
+              {lists.map((list) => (
+                <li key={list.id}>
+                  <Link
+                    href={`/shopping-lists/${list.id}`}
+                    className="ledger-row transition-colors hover:bg-muted"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-medium">
+                        {list.name || "Shopping list"}
+                      </span>
+                      <span className="mt-0.5 block text-sm log-muted">
+                        {list.mealPlanId
+                          ? `From a plan · ${when(list.generatedAt ?? list.createdAt)}`
+                          : when(list.createdAt)}
+                        {list.householdId ? " · household" : ""}
+                      </span>
+                    </span>
+                    <span className="num whitespace-nowrap text-sm log-muted">
+                      <span className="text-base font-semibold text-foreground">
+                        {list.totalItems - list.checkedItems}
+                      </span>{" "}
+                      left of {list.totalItems}
+                    </span>
+                    <ChevronRight
+                      aria-hidden="true"
+                      size={17}
+                      strokeWidth={1.7}
+                      className="log-muted"
+                    />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          <NewListButton />
+        </>
+      )}
+    </div>
+  );
 }
