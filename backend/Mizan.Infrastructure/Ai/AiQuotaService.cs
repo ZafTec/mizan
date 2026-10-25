@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Mizan.Application.Ai;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
@@ -24,16 +23,16 @@ public class AiQuotaService : IAiQuotaService
 {
     private readonly IMizanDbContext _context;
     private readonly IEntitlementService _entitlements;
-    private readonly AiOptions _options;
+    private readonly IRuntimeOptions<AiOptions> _settings;
 
     public AiQuotaService(
         IMizanDbContext context,
         IEntitlementService entitlements,
-        IOptions<AiOptions> options)
+        IRuntimeOptions<AiOptions> settings)
     {
         _context = context;
         _entitlements = entitlements;
-        _options = options.Value;
+        _settings = settings;
     }
 
     public async Task<AiQuotaLease> ReserveAsync(
@@ -44,9 +43,12 @@ public class AiQuotaService : IAiQuotaService
         Guid? promptVersionId = null,
         CancellationToken cancellationToken = default)
     {
+        // Ceilings and tier limits are read per call, so a limit changed in the admin area holds
+        // from the next reservation.
+        var options = await _settings.GetAsync(cancellationToken);
         var (windowStart, windowEnd) = Today();
         var line = AiQuotaLines.For(feature);
-        var limits = await LimitsForAsync(userId, line, cancellationToken);
+        var limits = await LimitsForAsync(options, userId, line, cancellationToken);
 
         var mine = await UsageSinceAsync(userId, windowStart, line, cancellationToken);
         if (mine.Requests >= limits.DailyRequests || mine.Tokens + estimatedTokens > limits.DailyTokens)
@@ -55,8 +57,8 @@ public class AiQuotaService : IAiQuotaService
         }
 
         var everyone = await GlobalUsageSinceAsync(windowStart, cancellationToken);
-        if (everyone.Tokens + estimatedTokens > _options.GlobalDailyTokens
-            || everyone.CostMicros >= _options.GlobalDailyCostMicros)
+        if (everyone.Tokens + estimatedTokens > options.GlobalDailyTokens
+            || everyone.CostMicros >= options.GlobalDailyCostMicros)
         {
             throw new AiQuotaExceededException(AiQuotaScope.Global, windowEnd);
         }
@@ -67,10 +69,10 @@ public class AiQuotaService : IAiQuotaService
             UserId = userId,
             HouseholdId = householdId,
             Feature = feature,
-            Model = _options.Model,
+            Model = options.Model,
             PromptTokens = estimatedTokens,
             CompletionTokens = 0,
-            EstimatedCostMicros = CostMicros(estimatedTokens, 0),
+            EstimatedCostMicros = CostMicros(options, estimatedTokens, 0),
             PromptVersionId = promptVersionId,
             Outcome = AiCallOutcome.Pending,
             CreatedAt = DateTime.UtcNow,
@@ -90,7 +92,8 @@ public class AiQuotaService : IAiQuotaService
         AiCallOutcome outcome,
         CancellationToken cancellationToken = default)
     {
-        var cost = CostMicros(usage.PromptTokens, usage.CompletionTokens);
+        var options = await _settings.GetAsync(cancellationToken);
+        var cost = CostMicros(options, usage.PromptTokens, usage.CompletionTokens);
 
         // Settling a row that is no longer Pending is a no-op, so a retried
         // settle cannot double-count.
@@ -113,8 +116,9 @@ public class AiQuotaService : IAiQuotaService
         Guid userId, AiQuotaLine line, CancellationToken cancellationToken = default)
     {
         var (windowStart, windowEnd) = Today();
+        var options = await _settings.GetAsync(cancellationToken);
         var entitlement = await _entitlements.GetAsync(userId, cancellationToken);
-        var limits = await LimitsForAsync(userId, line, cancellationToken);
+        var limits = await LimitsForAsync(options, userId, line, cancellationToken);
         var mine = await UsageSinceAsync(userId, windowStart, line, cancellationToken);
 
         return new AiQuotaSnapshot(
@@ -134,15 +138,15 @@ public class AiQuotaService : IAiQuotaService
     }
 
     private async Task<AiTierLimits> LimitsForAsync(
-        Guid userId, AiQuotaLine line, CancellationToken cancellationToken)
+        AiOptions options, Guid userId, AiQuotaLine line, CancellationToken cancellationToken)
     {
-        if (line == AiQuotaLine.Eval) return _options.Eval;
-        if (line == AiQuotaLine.Onboarding) return _options.Onboarding;
-        if (line == AiQuotaLine.TrainerClient) return _options.Trainer;
+        if (line == AiQuotaLine.Eval) return options.Eval;
+        if (line == AiQuotaLine.Onboarding) return options.Onboarding;
+        if (line == AiQuotaLine.TrainerClient) return options.Trainer;
 
         var entitlement = await _entitlements.GetAsync(userId, cancellationToken);
-        if (line == AiQuotaLine.Planning) return entitlement.IsPro ? _options.PlanningPro : _options.PlanningFree;
-        return entitlement.IsPro ? _options.Pro : _options.Free;
+        if (line == AiQuotaLine.Planning) return entitlement.IsPro ? options.PlanningPro : options.PlanningFree;
+        return entitlement.IsPro ? options.Pro : options.Free;
     }
 
     /// <summary>
@@ -196,7 +200,7 @@ public class AiQuotaService : IAiQuotaService
         return (totals?.Tokens ?? 0, totals?.Cost ?? 0);
     }
 
-    private long CostMicros(int promptTokens, int completionTokens) =>
-        (promptTokens * _options.PromptCostPerMillionMicros / 1_000_000)
-        + (completionTokens * _options.CompletionCostPerMillionMicros / 1_000_000);
+    private static long CostMicros(AiOptions options, int promptTokens, int completionTokens) =>
+        (promptTokens * options.PromptCostPerMillionMicros / 1_000_000)
+        + (completionTokens * options.CompletionCostPerMillionMicros / 1_000_000);
 }

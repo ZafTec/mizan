@@ -17,7 +17,7 @@ public record AiMeteredCall(
 public interface IAiMeteredClient
 {
     /// <summary>False when no endpoint is configured; the call then refuses before reserving.</summary>
-    bool IsConfigured { get; }
+    Task<bool> IsConfiguredAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Throws <see cref="Exceptions.AiQuotaExceededException"/> before the call when a ceiling is

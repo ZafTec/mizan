@@ -1,6 +1,5 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Mizan.Application.Billing;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
@@ -15,16 +14,17 @@ public class GetAdminBillingCatalogQueryHandler : IRequestHandler<GetAdminBillin
     private static readonly string[] BilledStatuses = { "active", "trialing", "past_due", "paused" };
 
     private readonly IMizanDbContext _context;
-    private readonly PaddleOptions _options;
+    private readonly IRuntimeOptions<PaddleOptions> _options;
 
-    public GetAdminBillingCatalogQueryHandler(IMizanDbContext context, IOptions<PaddleOptions> options)
+    public GetAdminBillingCatalogQueryHandler(IMizanDbContext context, IRuntimeOptions<PaddleOptions> options)
     {
         _context = context;
-        _options = options.Value;
+        _options = options;
     }
 
     public async Task<AdminBillingCatalogDto> Handle(GetAdminBillingCatalogQuery request, CancellationToken cancellationToken)
     {
+        var options = await _options.GetAsync(cancellationToken);
         var subscribers = await _context.Subscriptions.AsNoTracking()
             .Where(s => s.PaddlePriceId != null && BilledStatuses.Contains(s.Status))
             .GroupBy(s => s.PaddlePriceId!)
@@ -41,8 +41,8 @@ public class GetAdminBillingCatalogQueryHandler : IRequestHandler<GetAdminBillin
 
         return new AdminBillingCatalogDto
         {
-            Environment = _options.Environment,
-            Configured = !string.IsNullOrWhiteSpace(_options.ApiKey),
+            Environment = options.Environment,
+            Configured = !string.IsNullOrWhiteSpace(options.ApiKey),
             Plans = plans.Select(p => new AdminBillingPlanDto
             {
                 Id = p.Id,

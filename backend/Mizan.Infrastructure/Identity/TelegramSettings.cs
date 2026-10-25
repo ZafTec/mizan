@@ -15,6 +15,12 @@ public class TelegramOptions
     /// a TimeSpan such as <c>1.00:00:00</c>). A day by default.
     /// </summary>
     public TimeSpan MiniAppSessionLifetime { get; set; } = TimeSpan.FromHours(24);
+
+    /// <summary>
+    /// Where the API reaches the bot service's <c>/internal/notify</c>. Empty sends reminders in the
+    /// app only. An administrator can override it at runtime (docs/ADMIN.md#runtime-settings).
+    /// </summary>
+    public string? BotServiceUrl { get; set; }
 }
 
 /// <summary>

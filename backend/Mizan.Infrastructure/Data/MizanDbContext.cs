@@ -1,10 +1,11 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 
 namespace Mizan.Infrastructure.Data;
 
-public class MizanDbContext : DbContext, IMizanDbContext
+public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyContext
 {
     public MizanDbContext(DbContextOptions<MizanDbContext> options) : base(options)
     {
@@ -107,6 +108,12 @@ public class MizanDbContext : DbContext, IMizanDbContext
     public DbSet<RecipeNutritionSnapshot> RecipeNutritionSnapshots => Set<RecipeNutritionSnapshot>();
     public DbSet<BillingPlan> BillingPlans => Set<BillingPlan>();
     public DbSet<BillingDiscount> BillingDiscounts => Set<BillingDiscount>();
+
+    // Runtime settings and the Data Protection key ring that encrypts their secrets
+    // (docs/ADMIN.md#runtime-settings). Not on IMizanDbContext: Application reads settings through
+    // IRuntimeSettings, which never hands it a decrypted secret.
+    public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     public async Task<T> ExecuteInTransactionAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken = default)
     {
@@ -1265,6 +1272,27 @@ public class MizanDbContext : DbContext, IMizanDbContext
                 .IsUnique()
                 .HasFilter("dedupe_key IS NOT NULL")
                 .HasDatabaseName("ix_outbox_jobs_dedupe");
+        });
+
+        modelBuilder.Entity<SystemSetting>(entity =>
+        {
+            entity.ToTable("system_settings");
+            entity.HasKey(e => e.Key);
+            entity.Property(e => e.Key).HasColumnName("key").HasMaxLength(128);
+            entity.Property(e => e.Value).HasColumnName("value").IsRequired();
+            entity.Property(e => e.IsSecret).HasColumnName("is_secret");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+            entity.Property(e => e.UpdatedByUserId).HasColumnName("updated_by_user_id");
+            entity.HasOne<User>().WithMany().HasForeignKey(e => e.UpdatedByUserId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<DataProtectionKey>(entity =>
+        {
+            entity.ToTable("data_protection_keys");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.FriendlyName).HasColumnName("friendly_name");
+            entity.Property(e => e.Xml).HasColumnName("xml");
         });
 
         modelBuilder.Entity<UserActivityCounters>(entity =>

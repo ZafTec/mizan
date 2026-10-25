@@ -13,7 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Mizan.Infrastructure.Migrations
 {
     [DbContext(typeof(MizanDbContext))]
+<<<<<<<< HEAD:backend/Mizan.Infrastructure/Migrations/20261025175141_ConnectedAppsPlanningAndPrices.Designer.cs
     [Migration("20261025175141_ConnectedAppsPlanningAndPrices")]
+========
+    [Migration("20261025181218_ConnectedAppsPlanningAndPrices")]
+>>>>>>>> d7d5c09 (feat(settings): runtime settings laid over configuration, secrets encrypted):backend/Mizan.Infrastructure/Migrations/20261025181218_ConnectedAppsPlanningAndPrices.Designer.cs
     partial class ConnectedAppsPlanningAndPrices
     {
         /// <inheritdoc />
@@ -25,6 +29,28 @@ namespace Mizan.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FriendlyName")
+                        .HasColumnType("text")
+                        .HasColumnName("friendly_name");
+
+                    b.Property<string>("Xml")
+                        .HasColumnType("text")
+                        .HasColumnName("xml");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("data_protection_keys", (string)null);
+                });
 
             modelBuilder.Entity("Mizan.Domain.Entities.Achievement", b =>
                 {
@@ -3734,6 +3760,37 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("subscriptions", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.SystemSetting", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("key");
+
+                    b.Property<bool>("IsSecret")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_secret");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by_user_id");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("value");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.ToTable("system_settings", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.TelegramLink", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5457,6 +5514,14 @@ namespace Mizan.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.SystemSetting", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.TelegramLink", b =>

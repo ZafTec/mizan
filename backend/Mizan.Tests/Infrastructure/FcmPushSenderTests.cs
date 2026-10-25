@@ -28,12 +28,12 @@ public class FcmPushSenderTests
     }
 
     [Fact]
-    public void WithoutCredentials_PushIsOff()
+    public async Task WithoutCredentials_PushIsOff()
     {
-        Sender(new FakeFcm(), serviceAccount: "").IsConfigured.Should().BeFalse();
-        Sender(new FakeFcm(), serviceAccount: "{not json").IsConfigured.Should().BeFalse();
-        Sender(new FakeFcm(), projectId: "").IsConfigured.Should().BeFalse();
-        Sender(new FakeFcm()).IsConfigured.Should().BeTrue();
+        (await Sender(new FakeFcm(), serviceAccount: "").IsConfiguredAsync()).Should().BeFalse();
+        (await Sender(new FakeFcm(), serviceAccount: "{not json").IsConfiguredAsync()).Should().BeFalse();
+        (await Sender(new FakeFcm(), projectId: "").IsConfiguredAsync()).Should().BeFalse();
+        (await Sender(new FakeFcm()).IsConfiguredAsync()).Should().BeTrue();
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class FcmPushSenderTests
         });
         return new FcmPushSender(
             new FakeFactory(fcm),
-            Options.Create(new PushOptions { FcmProjectId = projectId, FcmServiceAccountJson = account }),
+            new FixedRuntimeOptions<PushOptions>(new PushOptions { FcmProjectId = projectId, FcmServiceAccountJson = account }),
             NullLogger<FcmPushSender>.Instance);
     }
 

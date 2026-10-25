@@ -5,7 +5,6 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Mizan.Application.Billing;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
@@ -19,26 +18,28 @@ public class PaddleApiClient : IPaddleApiClient
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly PaddleOptions _options;
+    private readonly IRuntimeOptions<PaddleOptions> _settings;
     private readonly ILogger<PaddleApiClient> _logger;
 
     public PaddleApiClient(
-        IHttpClientFactory httpClientFactory, IOptions<PaddleOptions> options, ILogger<PaddleApiClient> logger)
+        IHttpClientFactory httpClientFactory, IRuntimeOptions<PaddleOptions> settings, ILogger<PaddleApiClient> logger)
     {
         _httpClientFactory = httpClientFactory;
-        _options = options.Value;
+        _settings = settings;
         _logger = logger;
     }
 
     public async Task<PaddlePortalSession?> CreatePortalSessionAsync(
         string customerId, string? subscriptionId, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(_options.ApiKey))
+        // Read per call: a key or environment changed in the admin area applies to the next request.
+        var options = await _settings.GetAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(options.ApiKey))
         {
             return null;
         }
 
-        var client = CreateClient();
+        var client = CreateClient(options);
 
         object body = subscriptionId is null
             ? new { }
@@ -298,22 +299,23 @@ public class PaddleApiClient : IPaddleApiClient
         ["proration_billing_mode"] = "prorated_immediately"
     };
 
-    private HttpClient CreateClient()
+    private HttpClient CreateClient(PaddleOptions options)
     {
         var client = _httpClientFactory.CreateClient(HttpClientName);
-        client.BaseAddress = new Uri(BaseUrl());
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
+        client.BaseAddress = new Uri(BaseUrl(options));
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.ApiKey);
         return client;
     }
 
     private async Task<JsonDocument> SendAsync(HttpMethod method, string path, JsonNode? body, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(_options.ApiKey))
+        var options = await _settings.GetAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(options.ApiKey))
         {
             throw new PaddleRequestException(null, "not_configured", "Billing is not configured on this server.");
         }
 
-        var client = CreateClient();
+        var client = CreateClient(options);
         using var request = new HttpRequestMessage(method, path);
         if (body is not null)
         {
@@ -399,7 +401,7 @@ public class PaddleApiClient : IPaddleApiClient
             ? (int)Math.Clamp(cents, int.MinValue, int.MaxValue)
             : 0;
 
-    private string BaseUrl() => _options.Environment.Equals("production", StringComparison.OrdinalIgnoreCase)
+    private static string BaseUrl(PaddleOptions options) => options.Environment.Equals("production", StringComparison.OrdinalIgnoreCase)
         ? "https://api.paddle.com/"
         : "https://sandbox-api.paddle.com/";
 

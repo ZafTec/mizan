@@ -72,6 +72,8 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         "subscriptions",
         "audit_logs",
         "outbox_jobs",
+        // Runtime settings an admin test set; data_protection_keys stays, like a real key ring.
+        "system_settings",
         "user_activity_counters",
 
         // The seeded catalogs. They are truncated deliberately and then put
@@ -438,6 +440,8 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
 #pragma warning restore EF1002
         }
 
+        // The settings cache would otherwise keep a value from the table just truncated.
+        Services.GetRequiredService<Mizan.Infrastructure.Settings.RuntimeSettingsCache>().Invalidate();
         PricesWorker.Reset();
         Clock.Reset();
         TelegramBot.Reset();
@@ -788,6 +792,9 @@ public sealed class ScriptedAiProvider : IAiProvider
 
     public bool IsConfigured { get; set; } = true;
 
+    public Task<AiProviderStatus> GetStatusAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult(new AiProviderStatus(IsConfigured, Model));
+
     public IReadOnlyList<AiCompletionRequest> Calls
     {
         get { lock (_calls) return _calls.ToList(); }
@@ -929,6 +936,8 @@ public sealed class RecordingTelegramBot : ITelegramBotNotifier
 
     public bool IsConfigured { get; set; } = true;
 
+    public Task<bool> IsConfiguredAsync(CancellationToken cancellationToken = default) => Task.FromResult(IsConfigured);
+
     public IReadOnlyList<TelegramNotifyRequest> Sent
     {
         get { lock (_sent) return _sent.ToList(); }
@@ -954,6 +963,8 @@ public sealed class RecordingPushSender : IPushSender
     private readonly Dictionary<string, PushOutcome> _answers = new();
 
     public bool IsConfigured { get; set; } = true;
+
+    public Task<bool> IsConfiguredAsync(CancellationToken cancellationToken = default) => Task.FromResult(IsConfigured);
 
     public IReadOnlyList<PushMessage> Sent
     {

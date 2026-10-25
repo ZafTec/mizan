@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -244,6 +245,20 @@ namespace Mizan.Infrastructure.Migrations
                 nullable: true);
 
             migrationBuilder.CreateTable(
+                name: "data_protection_keys",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    friendly_name = table.Column<string>(type: "text", nullable: true),
+                    xml = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_data_protection_keys", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "deleted_records",
                 columns: table => new
                 {
@@ -392,6 +407,27 @@ namespace Mizan.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_price_regions", x => x.code);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "system_settings",
+                columns: table => new
+                {
+                    key = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    value = table.Column<string>(type: "text", nullable: false),
+                    is_secret = table.Column<bool>(type: "boolean", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    updated_by_user_id = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_system_settings", x => x.key);
+                    table.ForeignKey(
+                        name: "FK_system_settings_users_updated_by_user_id",
+                        column: x => x.updated_by_user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -902,6 +938,11 @@ namespace Mizan.Infrastructure.Migrations
                 columns: new[] { "region_code", "name" },
                 unique: true);
 
+            migrationBuilder.CreateIndex(
+                name: "IX_system_settings_updated_by_user_id",
+                table: "system_settings",
+                column: "updated_by_user_id");
+
             migrationBuilder.AddForeignKey(
                 name: "FK_food_diary_entries_plan_entries_plan_entry_id",
                 table: "food_diary_entries",
@@ -959,6 +1000,9 @@ namespace Mizan.Infrastructure.Migrations
                 table: "shopping_lists");
 
             migrationBuilder.DropTable(
+                name: "data_protection_keys");
+
+            migrationBuilder.DropTable(
                 name: "deleted_records");
 
             migrationBuilder.DropTable(
@@ -987,6 +1031,9 @@ namespace Mizan.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "price_source_aliases");
+
+            migrationBuilder.DropTable(
+                name: "system_settings");
 
             migrationBuilder.DropTable(
                 name: "oauth_grants");

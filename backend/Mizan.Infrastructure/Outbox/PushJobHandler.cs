@@ -35,7 +35,7 @@ public sealed class PushJobHandler : IOutboxHandler
         try { job = JsonSerializer.Deserialize<PushJob>(payload, Json) ?? throw new OutboxPermanentException("The queued push was empty."); }
         catch (JsonException ex) { throw new OutboxPermanentException("The queued push could not be read.", ex); }
 
-        if (!_sender.IsConfigured) return;
+        if (!await _sender.IsConfiguredAsync(cancellationToken)) return;
 
         var devices = await _context.DeviceTokens.Where(d => d.UserId == job.UserId).ToListAsync(cancellationToken);
         if (devices.Count == 0) return;

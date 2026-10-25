@@ -2,7 +2,6 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.Extensions.Options;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 
@@ -22,37 +21,43 @@ public class OpenAiCompatibleProvider : IAiProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
-    private readonly AiOptions _options;
+    private readonly IRuntimeOptions<AiOptions> _settings;
     private readonly IHttpClientFactory _clients;
 
-    public OpenAiCompatibleProvider(IOptions<AiOptions> options, IHttpClientFactory clients)
+    public OpenAiCompatibleProvider(IRuntimeOptions<AiOptions> settings, IHttpClientFactory clients)
     {
-        _options = options.Value;
+        _settings = settings;
         _clients = clients;
     }
 
-    public string Model => _options.Model;
+    public async Task<AiProviderStatus> GetStatusAsync(CancellationToken cancellationToken = default)
+    {
+        var options = await _settings.GetAsync(cancellationToken);
+        return new AiProviderStatus(IsConfigured(options), options.Model);
+    }
 
-    public bool IsConfigured =>
-        !string.IsNullOrWhiteSpace(_options.BaseUrl) && !string.IsNullOrWhiteSpace(_options.ApiKey);
+    private static bool IsConfigured(AiOptions options) =>
+        !string.IsNullOrWhiteSpace(options.BaseUrl) && !string.IsNullOrWhiteSpace(options.ApiKey);
 
     public async Task<AiCompletionResponse> CompleteAsync(
         AiCompletionRequest request,
         CancellationToken cancellationToken = default)
     {
-        if (!IsConfigured)
+        // Read per call: an endpoint, key or model changed in the admin area applies to the next call.
+        var options = await _settings.GetAsync(cancellationToken);
+        if (!IsConfigured(options))
         {
-            throw new AiUnavailableException("The assistant is not configured on this server.");
+            throw new AiUnavailableException("The assistant is not configured on this server.", "not_configured");
         }
 
         var payload = new ChatCompletionRequest
         {
-            Model = _options.Model,
-            MaxCompletionTokens = request.MaxOutputTokens ?? _options.MaxOutputTokens,
-            Temperature = _options.SupportsTemperature ? request.Temperature : null,
-            ReasoningEffort = string.IsNullOrWhiteSpace(_options.ReasoningEffort)
+            Model = options.Model,
+            MaxCompletionTokens = request.MaxOutputTokens ?? options.MaxOutputTokens,
+            Temperature = options.SupportsTemperature ? request.Temperature : null,
+            ReasoningEffort = string.IsNullOrWhiteSpace(options.ReasoningEffort)
                 ? null
-                : _options.ReasoningEffort.Trim(),
+                : options.ReasoningEffort.Trim(),
             Messages = request.Messages.Select(ToWire).ToList(),
             ResponseFormat = request.ResponseSchema is { } schema
                 ? new ResponseFormat
@@ -80,13 +85,13 @@ public class OpenAiCompatibleProvider : IAiProvider
         };
 
         using var client = _clients.CreateClient(HttpClientName);
-        client.BaseAddress = new Uri(_options.BaseUrl.TrimEnd('/') + "/");
-        client.Timeout = TimeSpan.FromSeconds(_options.TimeoutSeconds);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
+        client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
+        client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.ApiKey);
         // Azure OpenAI's key-based auth ignores Bearer (that slot is reserved for
         // Entra ID tokens) and reads this header instead; every other
         // OpenAI-compatible provider just ignores it.
-        client.DefaultRequestHeaders.Add("api-key", _options.ApiKey);
+        client.DefaultRequestHeaders.Add("api-key", options.ApiKey);
 
         HttpResponseMessage response;
         try
@@ -95,11 +100,11 @@ public class OpenAiCompatibleProvider : IAiProvider
         }
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new AiUnavailableException("The assistant took too long to answer. Try again.");
+            throw new AiUnavailableException("The assistant took too long to answer. Try again.", "timeout");
         }
         catch (HttpRequestException)
         {
-            throw new AiUnavailableException("The assistant could not be reached. Try again shortly.");
+            throw new AiUnavailableException("The assistant could not be reached. Try again shortly.", "unreachable");
         }
 
         if (!response.IsSuccessStatusCode)
@@ -107,11 +112,12 @@ public class OpenAiCompatibleProvider : IAiProvider
             // The provider's own body can quote the prompt back, so it is not
             // relayed to the caller. The status is enough to act on.
             throw new AiUnavailableException(
-                $"The assistant returned an error ({(int)response.StatusCode}). Try again shortly.");
+                $"The assistant returned an error ({(int)response.StatusCode}). Try again shortly.",
+                $"http_{(int)response.StatusCode}");
         }
 
         var body = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(Json, cancellationToken)
-            ?? throw new AiUnavailableException("The assistant returned an empty response.");
+            ?? throw new AiUnavailableException("The assistant returned an empty response.", "empty_response");
 
         var choice = body.Choices?.FirstOrDefault()?.Message;
         var content = choice?.Content;
@@ -125,14 +131,14 @@ public class OpenAiCompatibleProvider : IAiProvider
         // answer rather than an empty one.
         if (string.IsNullOrWhiteSpace(content) && toolCalls.Count == 0)
         {
-            throw new AiUnavailableException("The assistant returned an empty response.");
+            throw new AiUnavailableException("The assistant returned an empty response.", "empty_response");
         }
 
         var usage = body.Usage is null
             ? AiTokenUsage.None
             : new AiTokenUsage(body.Usage.PromptTokens, body.Usage.CompletionTokens);
 
-        return new AiCompletionResponse(content ?? string.Empty, usage, body.Model ?? _options.Model)
+        return new AiCompletionResponse(content ?? string.Empty, usage, body.Model ?? options.Model)
         {
             ToolCalls = toolCalls,
         };

@@ -195,7 +195,7 @@ public class OpenAiCompatibleProviderTests
         var clients = new Mock<IHttpClientFactory>();
         clients.Setup(factory => factory.CreateClient(OpenAiCompatibleProvider.HttpClientName))
             .Returns(() => new HttpClient(handler, disposeHandler: false));
-        return new OpenAiCompatibleProvider(Options.Create(options), clients.Object);
+        return new OpenAiCompatibleProvider(new FixedRuntimeOptions<AiOptions>(options), clients.Object);
     }
 
     private sealed class RecordingHandler(string response) : HttpMessageHandler

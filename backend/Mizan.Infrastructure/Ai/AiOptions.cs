@@ -1,8 +1,10 @@
-using Mizan.Application.Interfaces;
-
 namespace Mizan.Infrastructure.Ai;
 
-public class AiOptions : IAiCeilings
+/// <summary>
+/// The AI provider and its limits, bound from <c>Ai</c>. Most of it can be overridden in the admin
+/// area; read it through <c>IRuntimeOptions&lt;AiOptions&gt;</c> (docs/ADMIN.md#runtime-settings).
+/// </summary>
+public class AiOptions
 {
     public const string SectionName = "Ai";
 
