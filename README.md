@@ -145,6 +145,7 @@ Production Compose currently follows `latest`. To pin a release, use its version
 - [Administration and runtime settings](docs/ADMIN.md)
 - [Telegram setup](docs/TELEGRAM.md)
 - [Meal planning, shopping lists, and prices](docs/PLANNING.md)
+- [Administration](docs/ADMIN.md)
 - [Contributor and agent guidance](CLAUDE.md)
 - [Security policy](SECURITY.md)
 
