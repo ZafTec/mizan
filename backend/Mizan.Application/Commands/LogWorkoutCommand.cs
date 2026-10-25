@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
+using Mizan.Domain.Nutrition;
 using Mizan.Contracts.Workouts;
 
 namespace Mizan.Application.Commands;
@@ -30,6 +31,10 @@ public abstract class LogWorkoutRequestValidator<T> : AbstractValidator<T> where
     protected LogWorkoutRequestValidator()
     {
         RuleFor(x => x.WorkoutDate).NotEmpty();
+        RuleFor(x => x.WorkoutDate)
+            .Must(date => DiaryDates.Problem(date, DateOnly.FromDateTime(DateTime.UtcNow), DiaryDates.Workout) is null)
+            .When(x => x.WorkoutDate != default)
+            .WithMessage(x => DiaryDates.Problem(x.WorkoutDate, DateOnly.FromDateTime(DateTime.UtcNow), DiaryDates.Workout) ?? string.Empty);
         RuleFor(x => x.Name).MaximumLength(100);
         RuleFor(x => x.Notes).MaximumLength(500);
         RuleFor(x => x.DurationMinutes).InclusiveBetween(1, 1_440).When(x => x.DurationMinutes.HasValue);

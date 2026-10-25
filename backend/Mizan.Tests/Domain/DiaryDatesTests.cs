@@ -26,6 +26,10 @@ public class DiaryDatesTests
         else problem.Should().Contain(reason).And.Contain(date);
     }
 
+    [Fact]
+    public void Problem_NamesTheEntry() =>
+        DiaryDates.Problem(new DateOnly(2500, 1, 1), Today, DiaryDates.Workout).Should().StartWith("A workout can be logged");
+
     [Theory]
     [InlineData("2026-10-25", true)]
     [InlineData("2026-10-24", true)]
