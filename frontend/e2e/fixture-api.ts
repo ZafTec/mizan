@@ -14,6 +14,7 @@ import {
   type PricesOptions,
   type PricesState,
 } from "./fixture-prices";
+import { handleTelegram } from "./fixture-tg";
 
 const port = Number(process.env.PLAYWRIGHT_API_PORT ?? 5100);
 const webOrigin = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3100";
@@ -680,6 +681,13 @@ const server = Bun.serve({
         "Set-Cookie": `mizan_session=${token}; Path=/; HttpOnly; SameSite=Lax`,
       });
     }
+    const telegram = await handleTelegram(
+      request,
+      url,
+      { self: `http://127.0.0.1:${port}`, webOrigin },
+      json,
+    );
+    if (telegram) return telegram;
     // Public, like the real endpoint: the landing page reads it signed out.
     if (method === "GET" && path === "/api/Subscriptions/plans")
       return json(plans);

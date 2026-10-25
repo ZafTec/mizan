@@ -53,6 +53,8 @@ export default defineConfig({
             API_URL: apiURL,
             NEXT_PUBLIC_API_URL: apiURL,
             NEXT_PUBLIC_APP_URL: baseURL,
+            // The Mini App's session route forwards to the bot; the fixture plays it.
+            TELEGRAM_BOT_URL: apiURL,
             NEXT_TELEMETRY_DISABLED: "1",
           },
         },
