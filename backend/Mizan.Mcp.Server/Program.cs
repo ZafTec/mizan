@@ -466,14 +466,11 @@ Log.Information("Mizan MCP Server v2.0.0 starting on {Urls}", string.Join(", ", 
 Log.Information("[MCP] Detailed logging enabled: {Enabled}", showMcpLogs);
 Log.Information("[MCP] Environment: {Environment}", builder.Configuration["ASPNETCORE_ENVIRONMENT"]);
 
-// Behind the reverse proxy the request says http and an internal host. Without these
-// headers the protected resource metadata would advertise the wrong address.
-var forwarded = new ForwardedHeadersOptions
-{
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost,
-};
-forwarded.KnownIPNetworks.Clear();
-forwarded.KnownProxies.Clear();
+// The advertised metadata comes from Mcp:PublicUrl, so forwarded headers only decide the
+// client address and scheme the server records. Trust them from the loopback address, or
+// from the one proxy named in ReverseProxy:KnownProxy, and from nobody else.
+var forwarded = new ForwardedHeadersOptions();
+ReverseProxyHeaders.Configure(forwarded, app.Configuration);
 app.UseForwardedHeaders(forwarded);
 
 app.UseAuthentication();
