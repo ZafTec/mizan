@@ -86,12 +86,12 @@ public sealed class PlanReadModel
     {
         var dayEntries = plan.Entries.Where(e => e.DayIndex == dayIndex).ToList();
         var slots = PlanSlots.All
-            .Select(slot => new PlanSlotDto(slot, dayEntries
-                .Where(e => PlanSlots.Normalize(e.Slot) == slot)
-                .OrderBy(e => e.SortOrder)
-                .Select(e => ToDto(plan, e, resolved))
-                .ToList()))
-            .Where(s => s.Entries.Count > 0)
+            .Select(slot => dayEntries.Where(e => PlanSlots.Normalize(e.Slot) == slot).OrderBy(e => e.SortOrder).ToList())
+            .Where(entries => entries.Count > 0)
+            .Select(entries => new PlanSlotDto(
+                PlanSlots.Normalize(entries[0].Slot),
+                entries.Select(e => ToDto(plan, e, resolved)).ToList(),
+                ToDto(PlanNutrition.Sum(entries, resolved.RecipePerServing, resolved.Foods))))
             .ToList();
         var nutrition = resolved.Days.FirstOrDefault(d => d.DayIndex == dayIndex);
         var totals = nutrition?.Totals ?? EntryNutrition.Zero;
@@ -100,7 +100,7 @@ public sealed class PlanReadModel
             DayIndex = dayIndex,
             Date = DateOf(plan, dayIndex),
             Slots = slots,
-            Totals = new EntryNutritionDto(totals.Calories, totals.ProteinGrams, totals.CarbsGrams, totals.FatGrams, totals.FiberGrams),
+            Totals = ToDto(totals),
             UnresolvedCount = nutrition?.UnresolvedEntryIds.Count ?? 0,
             EntryCount = dayEntries.Count,
             LoggedCount = dayEntries.Count(e => resolved.Logged.Contains(e.Id)),
@@ -139,6 +139,8 @@ public sealed class PlanReadModel
             Cost = resolved.Cost.EntryCosts.GetValueOrDefault(entry.Id),
         };
     }
+
+    private static EntryNutritionDto ToDto(EntryNutrition n) => new(n.Calories, n.ProteinGrams, n.CarbsGrams, n.FatGrams, n.FiberGrams);
 
     private static PlanViolationDto ToDto(PlanViolation v) => new(v.DayIndex, v.Slot, v.Rule, v.Message);
 

@@ -533,22 +533,8 @@ function violationsFor(
   return violations;
 }
 
-function dayDto(
-  plan: StoredPlan,
-  dayIndex: number,
-  host: PlanningHost,
-): PlanDayDto {
-  const entries = plan.entries
-    .filter((entry) => entry.dayIndex === dayIndex)
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map((entry) => entryDto(plan, entry, host));
-  const slots = SLOT_ORDER.filter((slot) =>
-    entries.some((entry) => entry.slot === slot),
-  ).map((slot) => ({
-    slot,
-    entries: entries.filter((entry) => entry.slot === slot),
-  }));
-  const totals = entries.reduce<Nutrition>(
+function sumNutrition(entries: PlanEntryDto[]): Nutrition {
+  return entries.reduce<Nutrition>(
     (sum, entry) => ({
       calories: sum.calories + (entry.nutrition?.calories ?? 0),
       proteinGrams: sum.proteinGrams + (entry.nutrition?.proteinGrams ?? 0),
@@ -558,6 +544,25 @@ function dayDto(
     }),
     { calories: 0, proteinGrams: 0, carbsGrams: 0, fatGrams: 0, fiberGrams: 0 },
   );
+}
+
+function dayDto(
+  plan: StoredPlan,
+  dayIndex: number,
+  host: PlanningHost,
+): PlanDayDto {
+  const entries = plan.entries
+    .filter((entry) => entry.dayIndex === dayIndex)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((entry) => entryDto(plan, entry, host));
+  // The API sums a slot and a day; the page shows its numbers and adds nothing.
+  const slots = SLOT_ORDER.filter((slot) =>
+    entries.some((entry) => entry.slot === slot),
+  ).map((slot) => {
+    const slotEntries = entries.filter((entry) => entry.slot === slot);
+    return { slot, entries: slotEntries, totals: sumNutrition(slotEntries) };
+  });
+  const totals = sumNutrition(entries);
   return {
     dayIndex,
     date: plan.startDate ? addDays(plan.startDate, dayIndex) : null,
