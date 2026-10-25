@@ -84,7 +84,7 @@ public class GetSystemHealthQueryHandler : IRequestHandler<GetSystemHealthQuery,
             var dayAgo = now.AddDays(-1);
             var failedMail = await _context.EmailMessages.AsNoTracking()
                 .CountAsync(m => m.Status == EmailMessageStatus.Failed && m.CreatedAt >= dayAgo, cancellationToken);
-            Add("email", SystemHealthRules.Email(_probes.SmtpConfigured, failedMail));
+            Add("email", SystemHealthRules.Email(await _probes.SmtpConfiguredAsync(cancellationToken), failedMail));
 
             var today = now.Date;
             var usage = await _context.AiUsageLogs.AsNoTracking()
@@ -96,18 +96,19 @@ public class GetSystemHealthQueryHandler : IRequestHandler<GetSystemHealthQuery,
                     Cost = g.Sum(l => l.EstimatedCostMicros),
                 })
                 .FirstOrDefaultAsync(cancellationToken);
+            var ceilings = await _ceilings.GetAsync(cancellationToken);
             Add("ai", SystemHealthRules.Ai(
-                _probes.AiConfigured,
+                await _probes.AiConfiguredAsync(cancellationToken),
                 usage?.Tokens ?? 0,
-                _ceilings.GlobalDailyTokens,
+                ceilings.GlobalDailyTokens,
                 usage?.Cost ?? 0,
-                _ceilings.GlobalDailyCostMicros));
+                ceilings.GlobalDailyCostMicros));
         }
 
         var telegram = await _probes.TelegramBotAsync(cancellationToken);
         Add("telegram", SystemHealthRules.Reachable(telegram.Configured, telegram.Configured ? telegram.Elapsed is not null : null, "bot service"));
 
-        Add("push", SystemHealthRules.Configured(_probes.PushConfigured, "Push"));
+        Add("push", SystemHealthRules.Configured(await _probes.PushConfiguredAsync(cancellationToken), "Push"));
 
         DateTime? lastPriceRun = null;
         if (_probes.PricesWorkerConfigured && database.Elapsed is not null)

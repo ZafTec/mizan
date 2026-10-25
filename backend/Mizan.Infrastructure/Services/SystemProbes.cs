@@ -2,10 +2,10 @@ using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Mizan.Application.Interfaces;
 using Mizan.Infrastructure.Data;
 using Mizan.Infrastructure.Email;
+using Mizan.Infrastructure.Identity;
 using StackExchange.Redis;
 
 namespace Mizan.Infrastructure.Services;
@@ -24,7 +24,8 @@ public sealed class SystemProbes : ISystemProbes
     private readonly IServiceProvider _services;
     private readonly IConfiguration _configuration;
     private readonly IHttpClientFactory _http;
-    private readonly IOptions<SmtpOptions> _smtp;
+    private readonly IRuntimeOptions<SmtpOptions> _smtp;
+    private readonly IRuntimeOptions<TelegramOptions> _telegram;
     private readonly IAiProvider _ai;
     private readonly IPushSender _push;
     private readonly IPricesWorkerClient _prices;
@@ -34,7 +35,8 @@ public sealed class SystemProbes : ISystemProbes
         IServiceProvider services,
         IConfiguration configuration,
         IHttpClientFactory http,
-        IOptions<SmtpOptions> smtp,
+        IRuntimeOptions<SmtpOptions> smtp,
+        IRuntimeOptions<TelegramOptions> telegram,
         IAiProvider ai,
         IPushSender push,
         IPricesWorkerClient prices)
@@ -44,14 +46,17 @@ public sealed class SystemProbes : ISystemProbes
         _configuration = configuration;
         _http = http;
         _smtp = smtp;
+        _telegram = telegram;
         _ai = ai;
         _push = push;
         _prices = prices;
     }
 
-    public bool SmtpConfigured => !string.IsNullOrWhiteSpace(_smtp.Value.Host);
-    public bool AiConfigured => _ai.IsConfigured;
-    public bool PushConfigured => _push.IsConfigured;
+    public async Task<bool> SmtpConfiguredAsync(CancellationToken cancellationToken) =>
+        !string.IsNullOrWhiteSpace((await _smtp.GetAsync(cancellationToken)).Host);
+    public async Task<bool> AiConfiguredAsync(CancellationToken cancellationToken) =>
+        (await _ai.GetStatusAsync(cancellationToken)).IsConfigured;
+    public Task<bool> PushConfiguredAsync(CancellationToken cancellationToken) => _push.IsConfiguredAsync(cancellationToken);
     public bool PricesWorkerConfigured => _prices.IsConfigured;
     public bool StorageConfigured => !string.IsNullOrWhiteSpace(_configuration["Storage:ServiceUrl"]);
 
@@ -71,12 +76,12 @@ public sealed class SystemProbes : ISystemProbes
         }, cancellationToken);
     }
 
-    public Task<ProbeResult> TelegramBotAsync(CancellationToken cancellationToken)
+    public async Task<ProbeResult> TelegramBotAsync(CancellationToken cancellationToken)
     {
-        var url = _configuration["Telegram:BotServiceUrl"];
-        if (string.IsNullOrWhiteSpace(url)) return Task.FromResult(new ProbeResult(false, null, null));
+        var url = (await _telegram.GetAsync(cancellationToken)).BotServiceUrl;
+        if (string.IsNullOrWhiteSpace(url)) return new ProbeResult(false, null, null);
 
-        return TimeAsync(async ct =>
+        return await TimeAsync(async ct =>
         {
             var client = _http.CreateClient(HttpClientName);
             using var response = await client.GetAsync(new Uri(new Uri(url.TrimEnd('/') + "/"), "health"), ct);
