@@ -218,6 +218,68 @@ public class PlanningSharingTests
     }
 
     [Fact]
+    public async Task ACoachKeepsATemplate_AndDraftsAClientsPlanFromIt()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (coachId, coach) = await _world.PersonAsync("coach", role: "trainer");
+        var (otherCoachId, otherCoach) = await _world.PersonAsync("other-coach", role: "trainer");
+        var (clientId, client) = await _world.PersonAsync("client");
+        var (otherClientId, _) = await _world.PersonAsync("other-client");
+        await _world.CoachingAsync(coachId, clientId, canPlanMeals: true);
+        await _world.CoachingAsync(otherCoachId, otherClientId, canPlanMeals: true);
+        var eggs = await _world.FoodAsync("Eggs", 143, 13, 1, 10);
+
+        var created = await coach.PostAsJsonAsync("/api/MealPlans/templates", new CreateTemplateRequest
+        {
+            Name = "Cut, week one",
+            DurationDays = 2,
+            Rules = new PlanRulesDto { MacroMode = "HighProtein", TargetProtein = 150 },
+            PrepSessions = [new PrepSessionRequest { DayIndex = 0, Title = "Sunday batch" }],
+            Entries = [FoodEntry(eggs.Id, 120, day: 0, slot: "BREAKFAST") with { PrepSessionIndex = 0 }, TextEntry("Grilled fish", day: 1)],
+        });
+        created.StatusCode.Should().Be(HttpStatusCode.Created, await created.Content.ReadAsStringAsync());
+        var templateId = (await created.Content.ReadFromJsonAsync<MealPlanCreatedResult>())!.Id;
+
+        // The template is the coach's alone, and they change it like a plan.
+        (await coach.PutAsJsonAsync($"/api/MealPlans/templates/{templateId}", new UpdateTemplateRequest { Name = "Cut, week one (eggs)", DurationDays = 2 }))
+            .StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await coach.GetFromJsonAsync<List<TemplateDto>>("/api/MealPlans/templates"))!.Should().ContainSingle()
+            .Which.Should().Match<TemplateDto>(t => t.Id == templateId && !t.Global && t.OwnerId == coachId && t.EntryCount == 2);
+        (await otherCoach.GetFromJsonAsync<List<TemplateDto>>("/api/MealPlans/templates"))!.Should().BeEmpty();
+        (await client.GetFromJsonAsync<List<TemplateDto>>("/api/MealPlans/templates"))!.Should().BeEmpty();
+        (await otherCoach.DeleteAsync($"/api/MealPlans/templates/{templateId}")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        // Another coach cannot draft from it, and a client is not a coach.
+        var apply = new ApplyTemplateForClientRequest { TemplateId = templateId, StartDate = new DateOnly(2026, 11, 2) };
+        (await otherCoach.PostAsJsonAsync($"/api/Trainers/clients/{otherClientId}/meal-plans/from-template", apply))
+            .StatusCode.Should().Be(HttpStatusCode.NotFound, "the template is not theirs");
+        (await client.PostAsJsonAsync($"/api/Trainers/clients/{clientId}/meal-plans/from-template", apply))
+            .StatusCode.Should().Be(HttpStatusCode.Forbidden);
+
+        // The coach drafts the client's plan from it: the client's draft, with the sessions copied.
+        var drafted = await coach.PostAsJsonAsync($"/api/Trainers/clients/{clientId}/meal-plans/from-template", apply);
+        drafted.StatusCode.Should().Be(HttpStatusCode.Created, await drafted.Content.ReadAsStringAsync());
+        var draftId = (await drafted.Content.ReadFromJsonAsync<MealPlanCreatedResult>())!.Id;
+        var draft = await PlanAsync(client, draftId);
+        draft.Kind.Should().Be("Personal");
+        draft.Status.Should().Be("Draft");
+        draft.UserId.Should().Be(clientId);
+        draft.AuthoredByUserId.Should().Be(coachId);
+        draft.Name.Should().Be("Cut, week one (eggs)");
+        draft.StartDate.Should().Be(new DateOnly(2026, 11, 2));
+        draft.Rules.TargetProtein.Should().Be(150);
+        draft.EntryCount.Should().Be(2);
+        Entries(draft.Days[0]).Single().PrepSessionId.Should().Be(draft.PrepSessions.Single().Id);
+        (await client.GetFromJsonAsync<NotificationsOf>("/api/Notifications"))!.Items
+            .Should().ContainSingle(n => n.Type == "meal_plan_drafted" && n.LinkUrl == $"/meal-plan/{draftId}");
+
+        // Deleting the template leaves the draft alone.
+        (await coach.DeleteAsync($"/api/MealPlans/templates/{templateId}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await client.GetAsync($"/api/MealPlans/{draftId}")).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await coach.GetFromJsonAsync<List<TemplateDto>>("/api/MealPlans/templates"))!.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task ACoachWithoutTheGrant_IsRefused()
     {
         await _fixture.ResetDatabaseAsync();

@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using McpServer::Mizan.Mcp.Server.Authorization;
 using McpServer::Mizan.Mcp.Server.Services;
 using Mizan.Contracts.Mcp;
+using Mizan.Contracts.Planning;
 using ModelContextProtocol.Server;
 using Moq;
 using Xunit;
@@ -227,12 +228,12 @@ public class McpOAuthTransportTests : IClassFixture<WebApplicationFactory<McpSer
         using var writer = Authorized("w", "planning:write");
         var written = await ToolNamesAsync(writer);
         written.Should().Contain(new[] { "get_meal_plan", "create_meal_plan", "add_plan_entry", "remove_plan_entry", "log_plan_entry", "generate_shopping_list", "apply_template", "clear_checked_items" });
-        written.Should().NotContain(new[] { "create_plan_for_client", "admin_create_template", "admin_update_template", "admin_delete_template" },
+        written.Should().NotContain(new[] { "create_plan_for_client", "apply_template_for_client", "create_template", "admin_create_template", "admin_update_template", "admin_delete_template" },
             "a coach's draft needs the trainer scope and global templates the admin scope");
     }
 
     [Fact]
-    public async Task TheCoachsDraftTool_NeedsTheTrainerScope_AndTemplateAdminTheAdminScope()
+    public async Task TheCoachsDraftAndTemplateTools_NeedTheTrainerScope_AndGlobalTemplatesTheAdminScope()
     {
         using var planner = Authorized("p", "planning:write");
         var draft = await CallAsync(planner, "create_plan_for_client", new { clientId = Guid.NewGuid(), name = "Week", startDate = "2026-10-12" });
@@ -245,11 +246,30 @@ public class McpOAuthTransportTests : IClassFixture<WebApplicationFactory<McpSer
         _backend.Verify(b => b.PostAsync(It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<CancellationToken>()), Times.Never);
 
         using var coach = Authorized("c", "trainer:write");
-        (await ToolNamesAsync(coach)).Should().Contain("create_plan_for_client").And.NotContain("create_meal_plan");
+        (await ToolNamesAsync(coach)).Should().Contain(new[] { "create_plan_for_client", "apply_template_for_client", "create_template", "update_template", "delete_template" })
+            .And.NotContain("create_meal_plan");
+
+        // A coach's template and a draft from it go to the same routes the web uses.
+        var clientId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        _backend.Setup(b => b.PostAsync(It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<CancellationToken>())).ReturnsAsync("""{"id":"x"}""");
+        var kept = await CallAsync(coach, "create_template", new { name = "Cut" });
+        (kept.TryGetProperty("isError", out var failed) && failed.GetBoolean()).Should().BeFalse();
+        _backend.Verify(b => b.PostAsync("/api/MealPlans/templates",
+            It.Is<object?>(o => IsKeptTemplate(o, "Cut")), It.IsAny<CancellationToken>()), Times.Once);
+        await CallAsync(coach, "apply_template_for_client", new { clientId, templateId, startDate = "2026-11-02" });
+        _backend.Verify(b => b.PostAsync($"/api/Trainers/clients/{clientId}/meal-plans/from-template",
+            It.Is<object?>(o => IsDraftFrom(o, templateId, new DateOnly(2026, 11, 2))),
+            It.IsAny<CancellationToken>()), Times.Once);
 
         using var admin = Authorized("a", "planning:read", "admin");
         (await ToolNamesAsync(admin)).Should().Contain(new[] { "admin_create_template", "admin_update_template", "admin_delete_template" });
     }
+
+    private static bool IsKeptTemplate(object? body, string name) => body is CreateTemplateRequest { Global: false } r && r.Name == name;
+
+    private static bool IsDraftFrom(object? body, Guid templateId, DateOnly startDate) =>
+        body is ApplyTemplateForClientRequest r && r.TemplateId == templateId && r.StartDate == startDate;
 
     [Fact]
     public async Task GetPlanDay_TurnsNoActivePlanIntoPlainText_NotAnError()

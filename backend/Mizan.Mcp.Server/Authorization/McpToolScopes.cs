@@ -83,7 +83,8 @@ public static class McpToolScopes
         // Coaching
         Add(McpScopes.TrainerRead, "list_available_trainers", "get_my_trainer", "get_my_trainer_requests",
             "list_trainer_clients", "list_trainer_pending_requests", "get_client_nutrition");
-        Add(McpScopes.TrainerWrite, "send_trainer_request", "respond_to_trainer_request", "create_plan_for_client");
+        Add(McpScopes.TrainerWrite, "send_trainer_request", "respond_to_trainer_request", "create_plan_for_client",
+            "apply_template_for_client", "create_template", "update_template", "delete_template");
 
         // The assistant. Each call spends the user's daily AI allowance.
         Add(McpScopes.AiUse, "ask_ai", "suggest_meals", "analyze_food_image", "get_ai_usage", "list_ai_threads",

@@ -51,4 +51,6 @@ A plan or list can belong to a household so other members see it. This connectio
 
 A coach drafts for a client with `create_plan_for_client`. It takes the same arguments as `create_meal_plan` and needs the client to have allowed meal planning; the client is notified and chooses to accept or decline.
 
+A coach keeps templates of their own with `create_template`, `update_template` and `delete_template` (entries through the entry tools, with the template id as `mealPlanId`), and drafts a client's plan from one with `apply_template_for_client`. That draft also waits for the client.
+
 Do not try to work around a refusal. The permission is the person's choice.

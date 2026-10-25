@@ -354,6 +354,57 @@ public sealed class MealPlanTools
         return await _api.PostAsync($"/api/Trainers/clients/{ToolArguments.ParseId(clientId, "clientId")}/meal-plans", body, ct);
     }
 
+    [McpServerTool(Name = "apply_template_for_client", Idempotent = false)]
+    [Description("Coach only. Draft a client's meal plan from a template (one of your own or a global one, see list_templates), starting on a date. " +
+        "The copy is the client's draft, as with create_plan_for_client: it needs the client to have allowed meal planning, and the client is notified.")]
+    public async Task<string> ApplyTemplateForClient(
+        [Description("Client's user UUID")] string clientId,
+        [Description("Template UUID")] string templateId,
+        [Description("First day of the plan, YYYY-MM-DD")] string startDate,
+        [Description("Plan name (defaults to the template's name)")] string? name = null,
+        CancellationToken ct = default)
+    {
+        var body = new ApplyTemplateForClientRequest
+        {
+            TemplateId = ToolArguments.ParseId(templateId, "templateId"),
+            StartDate = ToolArguments.ParseDate(startDate, "startDate"),
+            Name = name,
+        };
+        return await _api.PostAsync($"/api/Trainers/clients/{ToolArguments.ParseId(clientId, "clientId")}/meal-plans/from-template", body, ct);
+    }
+
+    [McpServerTool(Name = "create_template", Idempotent = false)]
+    [Description("Coach only. Keep a meal plan template of your own, to draft client plans from with apply_template_for_client. Only you see it. " + RulesHelp + " " + EntriesHelp)]
+    public async Task<string> CreateTemplate(
+        [Description("Template name")] string name,
+        [Description("How many days the template covers (default 7)")] int durationDays = 7,
+        [Description("Description (optional)")] string? description = null,
+        [Description("Optional JSON object with the template's rules")] string? rulesJson = null,
+        [Description("Optional JSON array of entries")] string? entriesJson = null,
+        [Description("Optional JSON array of prep sessions")] string? prepSessionsJson = null,
+        CancellationToken ct = default)
+        => await _api.PostAsync("/api/MealPlans/templates",
+            TemplateBody(name, durationDays, description, global: false, rulesJson, entriesJson, prepSessionsJson), ct);
+
+    [McpServerTool(Name = "update_template", Idempotent = true)]
+    [Description("Coach only. Change one of your own templates: name, description, duration or rules. Its entries are changed with the entry tools, passing the template id as mealPlanId. " + RulesHelp)]
+    public async Task<string> UpdateTemplate(
+        [Description("Template UUID")] string id,
+        [Description("Template name")] string name,
+        [Description("How many days the template covers (default 7)")] int durationDays = 7,
+        [Description("Description (optional)")] string? description = null,
+        [Description("Optional JSON object with the template's rules")] string? rulesJson = null,
+        CancellationToken ct = default)
+        => await _api.PutAsync($"/api/MealPlans/templates/{ToolArguments.ParseId(id, "id")}",
+            UpdateTemplateBody(name, durationDays, description, rulesJson), ct);
+
+    [McpServerTool(Name = "delete_template", Destructive = true)]
+    [Description("Coach only. Delete one of your own templates. Plans already drafted from it are not affected. This is permanent.")]
+    public async Task<string> DeleteTemplate(
+        [Description("Template UUID")] string id,
+        CancellationToken ct = default)
+        => await _api.DeleteAsync($"/api/MealPlans/templates/{ToolArguments.ParseId(id, "id")}", ct);
+
     // ---- administration --------------------------------------------------
 
     [McpServerTool(Name = "admin_create_template", Idempotent = false)]
@@ -367,17 +418,8 @@ public sealed class MealPlanTools
         [Description("Optional JSON array of prep sessions")] string? prepSessionsJson = null,
         CancellationToken ct = default)
     {
-        var body = new CreateTemplateRequest
-        {
-            Name = name,
-            Description = description,
-            DurationDays = durationDays,
-            Global = true,
-            Rules = ParseJson<PlanRulesDto>(rulesJson, "rulesJson"),
-            Entries = ParseJson<List<PlanEntryRequest>>(entriesJson, "entriesJson") ?? [],
-            PrepSessions = ParseJson<List<PrepSessionRequest>>(prepSessionsJson, "prepSessionsJson") ?? [],
-        };
-        return await _api.PostAsync("/api/MealPlans/templates", body, ct);
+        return await _api.PostAsync("/api/MealPlans/templates",
+            TemplateBody(name, durationDays, description, global: true, rulesJson, entriesJson, prepSessionsJson), ct);
     }
 
     [McpServerTool(Name = "admin_update_template", Idempotent = true)]
@@ -390,14 +432,8 @@ public sealed class MealPlanTools
         [Description("Optional JSON object with the template's rules")] string? rulesJson = null,
         CancellationToken ct = default)
     {
-        var body = new UpdateTemplateRequest
-        {
-            Name = name,
-            Description = description,
-            DurationDays = durationDays,
-            Rules = ParseJson<PlanRulesDto>(rulesJson, "rulesJson"),
-        };
-        return await _api.PutAsync($"/api/MealPlans/templates/{ToolArguments.ParseId(id, "id")}", body, ct);
+        return await _api.PutAsync($"/api/MealPlans/templates/{ToolArguments.ParseId(id, "id")}",
+            UpdateTemplateBody(name, durationDays, description, rulesJson), ct);
     }
 
     [McpServerTool(Name = "admin_delete_template", Destructive = true)]
@@ -410,6 +446,26 @@ public sealed class MealPlanTools
     }
 
     // ---- helpers ---------------------------------------------------------
+
+    private static CreateTemplateRequest TemplateBody(string name, int durationDays, string? description, bool global,
+        string? rulesJson, string? entriesJson, string? prepSessionsJson) => new()
+        {
+            Name = name,
+            Description = description,
+            DurationDays = durationDays,
+            Global = global,
+            Rules = ParseJson<PlanRulesDto>(rulesJson, "rulesJson"),
+            Entries = ParseJson<List<PlanEntryRequest>>(entriesJson, "entriesJson") ?? [],
+            PrepSessions = ParseJson<List<PrepSessionRequest>>(prepSessionsJson, "prepSessionsJson") ?? [],
+        };
+
+    private static UpdateTemplateRequest UpdateTemplateBody(string name, int durationDays, string? description, string? rulesJson) => new()
+    {
+        Name = name,
+        Description = description,
+        DurationDays = durationDays,
+        Rules = ParseJson<PlanRulesDto>(rulesJson, "rulesJson"),
+    };
 
     private static CreateMealPlanRequest CreateBody(string name, string startDate, int durationDays, string? description, string? householdId,
         string? rulesJson, string? entriesJson, string? prepSessionsJson) => new()

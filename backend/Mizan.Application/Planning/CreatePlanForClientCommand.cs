@@ -5,6 +5,7 @@ using Microsoft.Extensions.Caching.Hybrid;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Contracts.Planning;
+using Mizan.Domain.Entities;
 using Mizan.Domain.Planning;
 
 namespace Mizan.Application.Planning;
@@ -56,26 +57,47 @@ public class CreatePlanForClientCommandHandler : IRequestHandler<CreatePlanForCl
 
     public async Task<MealPlanCreatedResult> Handle(CreatePlanForClientCommand request, CancellationToken cancellationToken)
     {
-        await _trainers.EnsureTrainerAccessAsync(cancellationToken);
-        var trainerId = _trainers.GetCurrentUserId();
-        var relationship = await _trainers.GetRelationshipForCurrentTrainerAndClientAsync(request.ClientId, requireActive: true, cancellationToken);
+        var trainerId = await CoachDrafts.RequirePlanningGrantAsync(_trainers, request.ClientId, cancellationToken);
+        var plan = await PlanFactory.BuildAsync(_entries, request.Plan, request.ClientId, householdId: null, authoredBy: trainerId, PlanStatus.Draft, cancellationToken);
+        return await CoachDrafts.SaveAsync(_context, _notifications, _cache, trainerId, plan, cancellationToken);
+    }
+}
+
+/// <summary>
+/// What every draft a coach makes for a client shares, however it was filled:
+/// the grant it needs, and the notice the client gets when it is saved.
+/// </summary>
+public static class CoachDrafts
+{
+    /// <summary>The coach's id, once the relationship is active and the client allows meal planning.</summary>
+    public static async Task<Guid> RequirePlanningGrantAsync(ITrainerAuthorizationService trainers, Guid clientId, CancellationToken cancellationToken)
+    {
+        await trainers.EnsureTrainerAccessAsync(cancellationToken);
+        var trainerId = trainers.GetCurrentUserId();
+        var relationship = await trainers.GetRelationshipForCurrentTrainerAndClientAsync(clientId, requireActive: true, cancellationToken);
         if (!relationship.CanPlanMeals)
             throw new ForbiddenAccessException("This client has not allowed you to plan their meals.");
+        return trainerId;
+    }
 
-        var plan = await PlanFactory.BuildAsync(_entries, request.Plan, request.ClientId, householdId: null, authoredBy: trainerId, PlanStatus.Draft, cancellationToken);
-        _context.MealPlans.Add(plan);
+    /// <summary>Saves the draft and tells its owner, the client, that it waits for them.</summary>
+    public static async Task<MealPlanCreatedResult> SaveAsync(
+        IMizanDbContext context, INotificationWriter notifications, HybridCache cache, Guid trainerId, MealPlan plan, CancellationToken cancellationToken)
+    {
+        var clientId = plan.UserId ?? throw new InvalidOperationException("A coach's draft belongs to the client.");
+        context.MealPlans.Add(plan);
 
-        var coachName = await _context.Users.AsNoTracking().Where(u => u.Id == trainerId).Select(u => u.Name).FirstOrDefaultAsync(cancellationToken);
-        await _notifications.AddAsync(
-            request.ClientId,
+        var coachName = await context.Users.AsNoTracking().Where(u => u.Id == trainerId).Select(u => u.Name).FirstOrDefaultAsync(cancellationToken);
+        await notifications.AddAsync(
+            clientId,
             "meal_plan_drafted",
             $"{coachName ?? "Your coach"} drafted a meal plan for you",
             string.IsNullOrWhiteSpace(plan.Name) ? "Open it to accept or decline." : $"\"{plan.Name}\" is waiting for you to accept or decline.",
             $"/meal-plan/{plan.Id}",
             cancellationToken);
 
-        await _context.SaveChangesAsync(cancellationToken);
-        await PlanAccess.InvalidateAsync(_cache, plan, cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
+        await PlanAccess.InvalidateAsync(cache, plan, cancellationToken);
         return new MealPlanCreatedResult(plan.Id, plan.Name, plan.Status.ToString(), plan.Entries.Count);
     }
 }
