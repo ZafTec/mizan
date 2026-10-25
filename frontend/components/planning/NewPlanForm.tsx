@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   applyTemplate,
+  applyTemplateForClient,
   createMealPlan,
   createPlanForClient,
   type Template,
@@ -22,8 +23,9 @@ import RulesFields from "./RulesFields";
 
 /**
  * A new plan: from a template with a start date, or empty with its own rules.
- * The same form drafts a plan for a client when `clientId` is set; templates
- * and households do not apply there, since the draft belongs to the client.
+ * The same form drafts a plan for a client when `clientId` is set, from the
+ * coach's templates (their own and the global ones) or empty; households do
+ * not apply there, since the draft belongs to the client.
  */
 export default function NewPlanForm({
   templates,
@@ -42,7 +44,7 @@ export default function NewPlanForm({
   const id = useId();
   const forClient = Boolean(clientId);
   const [mode, setMode] = useState<"template" | "empty">(
-    templates.length > 0 && !forClient ? "template" : "empty",
+    templates.length > 0 ? "template" : "empty",
   );
   const [templateId, setTemplateId] = useState(templates[0]?.id ?? "");
   const [name, setName] = useState("");
@@ -72,6 +74,16 @@ export default function NewPlanForm({
       }
       setBusy(true);
       try {
+        if (clientId) {
+          await applyTemplateForClient(clientId, {
+            templateId: template.id,
+            startDate: parsed.plan.startDate,
+            name: parsed.plan.name || null,
+          });
+          appToast.success(`Draft sent to ${clientName ?? "your client"}`);
+          setSent(true);
+          return;
+        }
         const created = await applyTemplate(template.id, {
           startDate: parsed.plan.startDate,
           householdId: shared && household ? household.id : null,
@@ -129,7 +141,7 @@ export default function NewPlanForm({
 
   return (
     <form onSubmit={submit} className="space-y-8" noValidate>
-      {!forClient && templates.length > 0 && (
+      {templates.length > 0 && (
         <div
           role="radiogroup"
           aria-label="Start from"

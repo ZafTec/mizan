@@ -382,9 +382,11 @@ test.describe("a coach drafts for a client", () => {
     });
     await page.goto(`/trainer/clients/${CLIENT_ID}/plan`);
     await expect(page.getByTestId("trainer-client-plan-page")).toBeVisible();
+    // The global template is offered first; this draft starts empty.
     await expect(
-      page.getByRole("radiogroup", { name: "Start from" }),
-    ).toHaveCount(0);
+      page.getByRole("radio", { name: "From a template" }),
+    ).toBeChecked();
+    await page.getByRole("radio", { name: "Empty plan" }).check();
     await page.getByLabel("Name").fill("Sam's cut");
     await page.getByLabel("Length (days)").fill("10");
     await page.getByRole("button", { name: "Send draft" }).click();
@@ -420,5 +422,162 @@ test.describe("a coach drafts for a client", () => {
     );
     const s = await state(context);
     expect(s.unhandled).toEqual([]);
+  });
+});
+
+test.describe("templates", () => {
+  test("an administrator creates and deletes a global template", async ({
+    page,
+    context,
+  }) => {
+    await signIn(context, { role: "admin" });
+    await page.goto("/admin/meal-plans");
+    await expect(
+      page.getByRole("link", { name: "Meal plans", exact: true }).first(),
+    ).toHaveAttribute("href", "/admin/meal-plans");
+    const list = page.getByRole("region", { name: "Templates" });
+    await expect(
+      list.getByRole("listitem", { name: "Simple week" }),
+    ).toContainText("7 days · 7 entries");
+
+    await page.getByRole("button", { name: "New template" }).click();
+    const form = page.getByRole("form", { name: "New template" });
+    await expect(form.getByLabel("Name")).toBeFocused();
+    await form.getByRole("button", { name: "Create template" }).click();
+    await expect(form.getByText("Give the template a name")).toBeVisible();
+    await form.getByLabel("Name").fill("Keto starter");
+    await form.getByLabel("Length (days)").fill("5");
+    await form.getByRole("button", { name: "Create template" }).click();
+
+    await page.waitForURL(/\/admin\/meal-plans\/[0-9a-f-]{36}$/);
+    await expect(
+      page.getByRole("heading", { name: "Edit Keto starter" }),
+    ).toBeVisible();
+    await expect(page.getByLabel("Start date")).toHaveCount(0);
+    await page.getByRole("button", { name: "Add entry" }).click();
+    const entry = page.getByRole("form", { name: "New entry" });
+    await entry.getByRole("radio", { name: "Just text" }).check();
+    await entry.getByLabel("What to eat").fill("Eggs and greens");
+    await entry.getByRole("button", { name: "Save entry" }).click();
+    await expect(page.getByText("Eggs and greens")).toBeVisible();
+    await page.getByLabel("Description").fill("Five low-carb days.");
+    await page.getByRole("button", { name: "Save template" }).click();
+    await expect(page.getByText("Template saved")).toBeVisible();
+
+    await page
+      .getByRole("link", { name: "Meal plans", exact: true })
+      .last()
+      .click();
+    await page.waitForURL(/\/admin\/meal-plans$/);
+    const keto = list.getByRole("listitem", { name: "Keto starter" });
+    await expect(keto).toContainText("Five low-carb days.");
+    await expect(keto).toContainText("5 days · 1 entry");
+    await page.screenshot({
+      path: "test-results/admin-meal-plans.png",
+      fullPage: true,
+    });
+    await keto.getByRole("button", { name: "Delete Keto starter" }).click();
+    const dialog = page.getByRole("dialog", { name: "Delete Keto starter?" });
+    await expect(dialog.getByRole("button", { name: "Cancel" })).toBeFocused();
+    await dialog.getByRole("button", { name: "Delete" }).click();
+    await expect(keto).toHaveCount(0);
+
+    const s = await state(context);
+    const [created] = writesTo(s, /^\/api\/MealPlans\/templates$/);
+    expect(created.body).toMatchObject({
+      name: "Keto starter",
+      durationDays: 5,
+      global: true,
+    });
+    const id = s.writes
+      .map((w) => w.path.match(/^\/api\/MealPlans\/([0-9a-f-]{36})\/entries$/))
+      .find(Boolean)?.[1];
+    expect(id).toEqual(expect.any(String));
+    expect(
+      writesTo(s, new RegExp(`^/api/MealPlans/templates/${id}$`)).map(
+        (w) => w.body,
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        name: "Keto starter",
+        description: "Five low-carb days.",
+      }),
+      {},
+    ]);
+    expect(s.unhandled).toEqual([]);
+  });
+
+  test("a coach creates a template and drafts a client's plan from it", async ({
+    page,
+    context,
+  }) => {
+    const { today } = await signIn(context, {
+      role: "trainer",
+      userId: COACH_ID,
+    });
+    await page.goto("/trainer");
+    await page.getByRole("link", { name: "Meal plan templates" }).click();
+    await page.waitForURL(/\/trainer\/templates$/);
+    await expect(page.getByText("You have no templates yet.")).toBeVisible();
+    await page.getByRole("button", { name: "New template" }).click();
+    const form = page.getByRole("form", { name: "New template" });
+    await form.getByLabel("Name").fill("Lean three days");
+    await form.getByLabel("Length (days)").fill("3");
+    await form.getByLabel("Calories (kcal)").fill("2100");
+    await form.getByRole("button", { name: "Create template" }).click();
+
+    await page.waitForURL(/\/trainer\/templates\/[0-9a-f-]{36}$/);
+    await page.getByRole("button", { name: "Add entry" }).click();
+    const entry = page.getByRole("form", { name: "New entry" });
+    await entry.getByRole("radio", { name: "Just text" }).check();
+    await entry.getByLabel("What to eat").fill("Chicken and rice");
+    await entry.getByRole("button", { name: "Save entry" }).click();
+    await expect(page.getByText("Chicken and rice")).toBeVisible();
+    await page.getByRole("link", { name: "Templates", exact: true }).click();
+    await expect(
+      page.getByRole("listitem", { name: "Lean three days" }),
+    ).toContainText("3 days · 1 entry");
+
+    await page.goto(`/trainer/clients/${CLIENT_ID}/plan`);
+    const templates = page.getByRole("radiogroup", { name: "Templates" });
+    await expect(templates.getByRole("radio")).toHaveCount(2);
+    await templates.getByRole("radio", { name: /Lean three days/ }).check();
+    await page.getByLabel("Start date").fill(today);
+    await page.getByRole("button", { name: "Send draft" }).click();
+    await expect(page.getByRole("status")).toContainText(
+      "Draft sent to Sam Rivera",
+    );
+
+    const s = await state(context);
+    const [kept] = writesTo(s, /^\/api\/MealPlans\/templates$/);
+    expect(kept.body).toMatchObject({
+      name: "Lean three days",
+      durationDays: 3,
+      global: false,
+      rules: expect.objectContaining({ targetCalories: 2100 }),
+    });
+    const [draft] = writesTo(s, /\/meal-plans\/from-template$/);
+    expect(draft.path).toBe(
+      `/api/Trainers/clients/${CLIENT_ID}/meal-plans/from-template`,
+    );
+    expect(draft.body).toMatchObject({ startDate: today, name: null });
+    expect(draft.body.templateId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(s.unhandled).toEqual([]);
+  });
+
+  test("a coach's templates fit a phone", async ({ page, context }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await signIn(context, { role: "trainer", userId: COACH_ID });
+    await page.goto("/trainer/templates");
+    await page.getByRole("button", { name: "New template" }).click();
+    await expect(
+      page.getByRole("form", { name: "New template" }).getByLabel("Name"),
+    ).toBeFocused();
+    await noOverflow(page);
+    await page.screenshot({
+      path: "test-results/trainer-templates-phone.png",
+      fullPage: true,
+    });
+    expect((await state(context)).unhandled).toEqual([]);
   });
 });

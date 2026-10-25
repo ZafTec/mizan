@@ -25,6 +25,10 @@ export type PrepSessionRequest = Schemas["PrepSessionRequest"];
 export type CreateMealPlanRequest = Schemas["CreateMealPlanRequest"];
 export type UpdateMealPlanRequest = Schemas["UpdateMealPlanRequest"];
 export type ApplyTemplateRequest = Schemas["ApplyTemplateRequest"];
+export type ApplyTemplateForClientRequest =
+  Schemas["ApplyTemplateForClientRequest"];
+export type CreateTemplateRequest = Schemas["CreateTemplateCommand"];
+export type UpdateTemplateRequest = Schemas["UpdateTemplateRequest"];
 export type MealPlanCreatedResult = Schemas["MealPlanCreatedResult"];
 export type PlanEntryCreatedResult = Schemas["PlanEntryCreatedResult"];
 export type PrepSessionCreatedResult = Schemas["PrepSessionCreatedResult"];
@@ -93,6 +97,35 @@ export const listTemplates = () =>
 export const applyTemplate = (templateId: string, body: ApplyTemplateRequest) =>
   clientApi<MealPlanCreatedResult>(
     `/api/MealPlans/templates/${templateId}/apply`,
+    { method: "POST", body, headers: idempotent() },
+  );
+
+/**
+ * Keeps a template: a global one (administrators only) or one of the
+ * caller's own (coaches and administrators). The API refuses anyone else.
+ */
+export const createTemplate = (body: CreateTemplateRequest) =>
+  clientApi<MealPlanCreatedResult>("/api/MealPlans/templates", {
+    method: "POST",
+    body,
+    headers: idempotent(),
+  });
+
+/** Name, description, length and rules. Entries and sessions use the plan routes with the template's id. */
+export const updateTemplate = (id: string, body: UpdateTemplateRequest) =>
+  clientApi<void>(`/api/MealPlans/templates/${id}`, { method: "PUT", body });
+
+/** Plans already made from the template keep their copy. */
+export const deleteTemplate = (id: string) =>
+  clientApi<void>(`/api/MealPlans/templates/${id}`, { method: "DELETE" });
+
+/** A coach drafts a client's plan from a template; the client accepts or declines it. */
+export const applyTemplateForClient = (
+  clientId: string,
+  body: ApplyTemplateForClientRequest,
+) =>
+  clientApi<MealPlanCreatedResult>(
+    `/api/Trainers/clients/${clientId}/meal-plans/from-template`,
     { method: "POST", body, headers: idempotent() },
   );
 

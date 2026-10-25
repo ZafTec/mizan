@@ -762,6 +762,7 @@ const server = Bun.serve({
         ai: state.aiPlanning,
         planning: {
           userId: state.userId,
+          role: state.role,
           planning: state.planning,
           writes: state.writes,
           recipes: state.recipes,
@@ -1272,6 +1273,7 @@ const server = Bun.serve({
       url,
       {
         userId: state.userId,
+        role: state.role,
         planning: state.planning,
         writes: state.writes,
         recipes: state.recipes,

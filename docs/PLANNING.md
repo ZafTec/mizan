@@ -88,7 +88,7 @@ Lists have full CRUD: create, rename, delete, add item, update item, delete item
 
 ### Templates
 
-A template is a plan with `Kind = Template`. Administrators manage global templates under `/admin/meal-plans`. A coach manages their own under `/trainer/templates`. `ApplyTemplateCommand(templateId, startDate, householdId?)` copies entries, prep sessions and rules into a new personal plan. Global templates are visible to everyone. Templates of a coach are visible to the coach and, when applied, to the client.
+A template is a plan with `Kind = Template`. Administrators manage global templates under `/admin/meal-plans`. A coach manages their own under `/trainer/templates`. `ApplyTemplateCommand(templateId, startDate, householdId?)` copies entries, prep sessions and rules into a new personal plan. `ApplyTemplateForClientCommand(clientId, templateId, startDate)` makes the same copy as a coach's draft for a client. Global templates are visible to everyone. Templates of a coach are visible to the coach and, when applied, to the client.
 
 ### API (step 2, as built)
 
@@ -105,6 +105,7 @@ Request and response records live in `Mizan.Contracts/Planning`. Enumerations tr
 | `POST /api/MealPlans/{id}/prep-sessions`, `PUT|DELETE /prep-sessions/{sessionId}` | `AddPrepSessionCommand`, `UpdatePrepSessionCommand`, `RemovePrepSessionCommand`. |
 | `POST /api/MealPlans/{id}/shopping-list` | `GenerateShoppingListCommand`, creating a list or replacing one's items. |
 | `POST /api/Trainers/clients/{clientId}/meal-plans` | `CreatePlanForClientCommand`: a draft for a client who granted `canPlanMeals`. |
+| `POST /api/Trainers/clients/{clientId}/meal-plans/from-template` | `ApplyTemplateForClientCommand`: the same draft, copied from a template the coach can read (their own or a global one). |
 | `GET /api/ShoppingLists`, `GET|PUT|DELETE /{id}`, `POST`, `POST /{id}/items`, `PUT|DELETE /items/{itemId}`, `PATCH /items/{itemId}/toggle`, `POST /{id}/clear-checked` | The shopping list commands and queries in `Application/Planning`. |
 
 Where the implementation settled details the design left open:
@@ -239,20 +240,22 @@ Pages follow [DESIGN](../DESIGN.md): `log-page`, `facts-strip`, `ledger-row`, on
 | `/meal-plan` | Active plan first, then drafts and past plans. A draft from a coach or the assistant shows **Accept** and **Decline**; the assistant's says "Drafted by the assistant" (`generatedFrom`). |
 | `/meal-plan/[id]` | Day tabs, entries per slot, nutrition per day against targets, violations, cost. **Log** on each entry. **Make shopping list**. A generated draft is labelled and can be accepted or declined. |
 | `/meal-plan/[id]/edit` | Rules, entries, prep sessions. |
-| `/meal-plan/new` | From a template or empty; a coach sends the same form as a draft from `/trainer/clients/[id]/plan`. **Draft with the assistant** calls the generate route and previews the draft, which the person keeps (opens it) or discards (declines it, so it moves to past plans). |
+| `/meal-plan/new` | From a template or empty; a coach sends the same form as a draft from `/trainer/clients/[id]/plan`, from their own templates, a global one, or empty. **Draft with the assistant** calls the generate route and previews the draft, which the person keeps (opens it) or discards (declines it, so it moves to past plans). |
 | `/meal-plan/shopping-list` and `/shopping-lists/[id]` | Items by category or prep session, add, edit, delete, toggle, clear checked, cost. |
 | `/today` | The plan entries for today with **Log**, when an active plan covers today. |
 | `/trainer/clients/[id]/plan` | Draft for a client when the client granted meal planning; the client grants it on `/trainers/my-trainer`. |
+| `/admin/meal-plans`, `/admin/meal-plans/[id]` | Global templates: count and entries in the facts strip, the list (each row opens the plan editor, **Delete** asks first), and **New template** (name, length, description, rules), which opens the new template in the editor. The editor is the plan editor without a start date: rules, entries, prep sessions. |
+| `/trainer/templates`, `/trainer/templates/[id]` | A coach's own templates, the same list and editor. Linked from the trainer dashboard. |
 | `/admin/prices` | Regions (create, enable, disable), sources (create, edit, delete, **Run now** with the API's 202, 409 or 502 message), the review queue (map to a food or ignore), manual prices, **Seed Addis Ababa staples**, and reports (accept, reject, filter by status). |
 | `/ingredients/[id]`, `/profile/settings` | The food price and its report; the price region. |
 
-Global templates are managed through the admin MCP tools in step 2; an `/admin/meal-plans` page and coach-owned templates are not built.
+Global templates are managed on `/admin/meal-plans` and through the admin MCP tools; a coach manages their own on `/trainer/templates` and through the coach's MCP tools.
 
 All API calls go through `lib/api/*` modules typed from `types/api.generated.ts`. Pages do not declare their own response types.
 
 ### MCP
 
-Tools: `list_meal_plans`, `get_meal_plan`, `get_plan_day`, `create_meal_plan`, `update_meal_plan`, `delete_meal_plan`, `add_plan_entry`, `update_plan_entry`, `remove_plan_entry`, `generate_shopping_list`, `log_plan_entry`, `list_templates`, `apply_template`, `generate_meal_plan`, and the shopping list CRUD. Entry tools take the entry id and say so. Admin tools manage templates and prices. Trainer tools draft for a client under `trainer` scope.
+Tools: `list_meal_plans`, `get_meal_plan`, `get_plan_day`, `create_meal_plan`, `update_meal_plan`, `delete_meal_plan`, `add_plan_entry`, `update_plan_entry`, `remove_plan_entry`, `generate_shopping_list`, `log_plan_entry`, `list_templates`, `apply_template`, `generate_meal_plan`, and the shopping list CRUD. Entry tools take the entry id and say so. Admin tools manage global templates and prices. Trainer tools under `trainer:write` draft for a client (`create_plan_for_client`, `apply_template_for_client`) and keep the coach's own templates (`create_template`, `update_template`, `delete_template`).
 
 The MCP App `meal-plan` renders `get_meal_plan` and `get_plan_day`. It calls `log_plan_entry` and `generate_shopping_list` through the host. The prompt `plan_my_week` builds a plan through `create_meal_plan` and `add_plan_entry` (and `generate_meal_plan` from step 4); `grocery_run` calls `generate_shopping_list`. Neither asks the model to aggregate.
 
@@ -266,6 +269,8 @@ The MCP App `meal-plan` renders `get_meal_plan` and `get_plan_day`. It calls `lo
 | Evening reminder | An outbox job at `EatingWindowEnd` minus 30 minutes in the person's zone, once a day: "Your window closes at 20:00. Today: 1,640 of 1,800 kcal." (the diary's calories against `TargetCalories`). Everyone who follows the plan that day gets one: the owner and, for a household plan, each member without an active personal plan of their own covering the day, each with their own zone and diary. In-app notification, push, and Telegram through the bot service. See [Telegram](TELEGRAM.md#evening-reminder). |
 
 Callback data stays under 64 bytes because it carries ids only.
+
+Templates are not managed in Telegram: building one needs the plan editor, so administrators and coaches use the web or MCP. A plan made from a template shows in `/plan` like any other.
 
 ### Telegram Mini App
 

@@ -137,6 +137,8 @@ type Recipe = {
 };
 export type PlanningHost = {
   userId: string;
+  /** The signed-in role: only an administrator keeps global templates, and a coach their own. */
+  role: string;
   planning: PlanningState;
   writes: { path: string; body: Record<string, unknown>; key?: string }[];
   recipes: Record<string, unknown>[];
@@ -608,10 +610,13 @@ export function detail(plan: StoredPlan, host: PlanningHost): MealPlanDetail {
   const weekly =
     cost.total === null ? null : round2((cost.total / plan.durationDays) * 7);
   const canEdit =
-    plan.kind === "Template" ||
-    (plan.status === "Draft" && plan.authoredByUserId
-      ? plan.authoredByUserId === host.userId
-      : plan.userId === host.userId || plan.householdId !== null);
+    plan.kind === "Template"
+      ? plan.global
+        ? host.role === "admin"
+        : plan.userId === host.userId
+      : plan.status === "Draft" && plan.authoredByUserId
+        ? plan.authoredByUserId === host.userId
+        : plan.userId === host.userId || plan.householdId !== null;
   return {
     ...summary(plan),
     rules: plan.rules,
@@ -922,7 +927,16 @@ export async function handlePlanning(
       key: request.headers.get("Idempotency-Key") ?? undefined,
     });
   const personal = planning.plans.filter((plan) => plan.kind === "Personal");
-  const templates = planning.plans.filter((plan) => plan.kind === "Template");
+  // PlanAccess: a template is read when it is global or the viewer's own,
+  // and changed by an administrator (global) or its owner.
+  const templates = planning.plans.filter(
+    (plan) =>
+      plan.kind === "Template" && (plan.global || plan.userId === host.userId),
+  );
+  const forbidden = (error: string) =>
+    json({ errorCode: "forbidden", error }, 403);
+  const editableTemplate = (plan: StoredPlan) =>
+    plan.global ? host.role === "admin" : plan.userId === host.userId;
   const created = (plan: StoredPlan): MealPlanCreatedResult => ({
     id: plan.id,
     name: plan.name,
@@ -962,6 +976,46 @@ export async function handlePlanning(
       storedEntry(crypto.randomUUID(), entry, plan),
     );
     return plan;
+  };
+
+  /** ApplyTemplateCommand.Copy: the template's rules, sessions and entries in a new personal plan. */
+  const copyTemplate = (
+    plan: StoredPlan,
+    into: {
+      name: string | null;
+      startDate: string;
+      householdId: string | null;
+    },
+  ): StoredPlan => {
+    const copy = newPlan(
+      {
+        name: into.name,
+        description: plan.description,
+        startDate: into.startDate,
+        durationDays: plan.durationDays,
+        householdId: into.householdId,
+        rules: plan.rules,
+        entries: [],
+        prepSessions: plan.prepSessions.map((session) => ({
+          dayIndex: session.dayIndex,
+          title: session.title,
+          notes: session.notes,
+        })),
+      },
+      {},
+    );
+    copy.entries = plan.entries.map((entry) => ({
+      ...entry,
+      id: crypto.randomUUID(),
+      logged: false,
+      prepSessionId: entry.prepSessionId
+        ? (copy.prepSessions[
+            plan.prepSessions.findIndex((s) => s.id === entry.prepSessionId)
+          ]?.id ?? null)
+        : null,
+    }));
+    planning.plans.push(copy);
+    return copy;
   };
 
   if (path === "/api/MealPlans" && method === "GET") {
@@ -1031,9 +1085,26 @@ export async function handlePlanning(
     return json(view);
   }
   if (path === "/api/MealPlans/templates" && method === "GET")
-    return json(templates.map(templateDto));
+    return json(
+      [...templates]
+        .sort(
+          (a, b) =>
+            Number(b.global) - Number(a.global) ||
+            (a.name ?? "").localeCompare(b.name ?? ""),
+        )
+        .map(templateDto),
+    );
   if (path === "/api/MealPlans/templates" && method === "POST") {
     const input = await body<Schemas["CreateTemplateCommand"]>();
+    if (input.global && host.role !== "admin")
+      return forbidden("Only an administrator publishes a global template.");
+    if (!input.global && host.role !== "admin" && host.role !== "trainer")
+      return forbidden("Templates are kept by coaches and administrators.");
+    if (!input.name?.trim())
+      return json(
+        { errorCode: "validation", error: "A template needs a name." },
+        400,
+      );
     const plan = newPlan(
       {
         ...input,
@@ -1065,37 +1136,16 @@ export async function handlePlanning(
           { errorCode: "validation", error: "A start date is required." },
           400,
         );
-      const copy = newPlan(
-        {
-          name: input.name ?? plan.name,
-          description: plan.description,
-          startDate: input.startDate,
-          durationDays: plan.durationDays,
-          householdId: input.householdId ?? null,
-          rules: plan.rules,
-          entries: [],
-          prepSessions: plan.prepSessions.map((session) => ({
-            dayIndex: session.dayIndex,
-            title: session.title,
-            notes: session.notes,
-          })),
-        },
-        {},
-      );
-      copy.entries = plan.entries.map((entry) => ({
-        ...entry,
-        id: crypto.randomUUID(),
-        logged: false,
-        prepSessionId: entry.prepSessionId
-          ? (copy.prepSessions[
-              plan.prepSessions.findIndex((s) => s.id === entry.prepSessionId)
-            ]?.id ?? null)
-          : null,
-      }));
-      planning.plans.push(copy);
+      const copy = copyTemplate(plan, {
+        name: input.name ?? plan.name,
+        startDate: input.startDate,
+        householdId: input.householdId ?? null,
+      });
       record(input as unknown as Record<string, unknown>);
       return json(created(copy), 201);
     }
+    if (!template[2] && !editableTemplate(plan))
+      return forbidden("Only the template's owner can change it.");
     if (!template[2] && method === "PUT") {
       const input = await body<Schemas["UpdateTemplateRequest"]>();
       Object.assign(plan, {
@@ -1121,6 +1171,20 @@ export async function handlePlanning(
     const plan = planning.plans.find((item) => item.id === planRoute[1]);
     if (!plan) return notFound(json, "Plan");
     const [, , action, childId, log] = planRoute;
+    if (plan.kind === "Template") {
+      if (!templates.includes(plan)) return notFound(json, "Plan");
+      if (method !== "GET" && !action)
+        return json(
+          {
+            errorCode: "validation",
+            error:
+              "This is a template. Change it through the templates routes.",
+          },
+          400,
+        );
+      if (method !== "GET" && !editableTemplate(plan))
+        return forbidden("Only the template's owner can change it.");
+    }
     if (!action && method === "GET") return json(detail(plan, host));
     if (!action && method === "PUT") {
       const input = await body<UpdateMealPlanRequest>();
@@ -1354,6 +1418,37 @@ export async function handlePlanning(
 
   if (path === "/api/Trainers/clients" && method === "GET")
     return json(paged(planning.trainerClients, url));
+  // The coach's dashboard lists requests beside the clients; none are waiting.
+  if (path === "/api/Trainers/requests" && method === "GET")
+    return json(paged([], url));
+  const fromTemplate = path.match(
+    /^\/api\/Trainers\/clients\/([^/]+)\/meal-plans\/from-template$/,
+  );
+  if (fromTemplate && method === "POST") {
+    if (host.role !== "trainer") return forbidden("Coaches only.");
+    const client = planning.trainerClients.find(
+      (item) => item.clientId === fromTemplate[1],
+    );
+    if (!client) return notFound(json, "Client");
+    if (!client.canPlanMeals)
+      return forbidden("This client has not allowed you to plan their meals.");
+    const input = await body<Schemas["ApplyTemplateForClientRequest"]>();
+    const source = templates.find((item) => item.id === input.templateId);
+    if (!source) return notFound(json, "Template");
+    const copy = copyTemplate(source, {
+      name: input.name ?? source.name,
+      startDate: input.startDate,
+      householdId: null,
+    });
+    Object.assign(copy, {
+      status: "Draft",
+      userId: client.clientId,
+      authoredByUserId: host.userId,
+      authoredByName: "You",
+    });
+    record(input as unknown as Record<string, unknown>);
+    return json(created(copy), 201);
+  }
   const clientPlan = path.match(
     /^\/api\/Trainers\/clients\/([^/]+)\/meal-plans$/,
   );
