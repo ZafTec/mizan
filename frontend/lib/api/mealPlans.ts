@@ -119,10 +119,13 @@ export const updateMealPlan = (id: string, body: UpdateMealPlanRequest) =>
 export const deleteMealPlan = (id: string) =>
   clientApi<void>(`/api/MealPlans/${id}`, { method: "DELETE" });
 
-/** Throws away an assistant's draft the person did not keep: the plan is deleted. */
+/**
+ * Throws away an assistant's draft the person did not keep. It declines the
+ * draft, as Telegram's Discard does, so the plan is kept under past plans.
+ */
 export const discardDraft = (id: string) =>
-  clientApi<void>(`/api/MealPlans/${id}`, {
-    method: "DELETE",
+  clientApi<void>(`/api/MealPlans/${id}/decline`, {
+    method: "POST",
     headers: idempotent(),
   });
 

@@ -13,7 +13,7 @@ import PlanDayEntries from "./PlanDayEntries";
  * One draft the assistant made, as the generate call answered it: the days
  * and what is in them, what breaks the rules, the lines it could not turn
  * into a food, and the cost table. The draft is already saved; **Keep** opens
- * it, **Discard** deletes it.
+ * it, **Discard** declines it.
  */
 export default function DraftPreview({
   draft,

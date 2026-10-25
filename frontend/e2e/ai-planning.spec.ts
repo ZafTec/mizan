@@ -139,12 +139,18 @@ test("a person drafts with the keyboard on a phone and discards the draft", asyn
   const s = await state(context);
   const [generated] = writesTo(s, /^\/api\/MealPlans\/generate$/);
   expect(generated.body).toMatchObject({ durationDays: 3, budgetCeilings: [] });
-  const deletes = writesTo(s, /^\/api\/MealPlans\/[0-9a-f-]{36}$/);
-  expect(deletes).toHaveLength(1);
-  expect(deletes[0].key).toEqual(expect.any(String));
+  const declines = writesTo(s, /^\/api\/MealPlans\/[0-9a-f-]{36}\/decline$/);
+  expect(declines).toHaveLength(1);
+  expect(declines[0].key).toEqual(expect.any(String));
 
   await page.goto("/meal-plan");
-  await expect(page.getByText("High-protein week")).toHaveCount(0);
+  const list = page.getByTestId("meal-plan-page");
+  await expect(list.getByRole("heading", { name: "Drafts" })).toHaveCount(0);
+  await expect(
+    list
+      .getByRole("region", { name: "Past plans" })
+      .getByText("High-protein week"),
+  ).toBeVisible();
   expect((await state(context)).unhandled).toEqual([]);
 });
 
