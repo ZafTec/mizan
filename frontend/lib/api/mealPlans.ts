@@ -4,8 +4,9 @@ import type { components, paths } from "@/types/api.generated";
 /**
  * Browser calls for plans, templates, entries and cook sessions. Every type
  * comes from the generated OpenAPI document; nothing here declares a response
- * shape of its own. Writes a person may retry carry an Idempotency-Key so a
- * double tap cannot log a meal twice (docs/PLANNING.md#api-step-2-as-built).
+ * shape of its own. Every write carries an Idempotency-Key, so a retry after a
+ * lost answer replays the first one instead of logging a meal twice or failing
+ * on a plan the first try already changed (docs/PLANNING.md#api-step-2-as-built).
  */
 type Schemas = components["schemas"];
 
@@ -147,10 +148,17 @@ export const createPlanForClient = (
   );
 
 export const updateMealPlan = (id: string, body: UpdateMealPlanRequest) =>
-  clientApi<void>(`/api/MealPlans/${id}`, { method: "PUT", body });
+  clientApi<void>(`/api/MealPlans/${id}`, {
+    method: "PUT",
+    body,
+    headers: idempotent(),
+  });
 
 export const deleteMealPlan = (id: string) =>
-  clientApi<void>(`/api/MealPlans/${id}`, { method: "DELETE" });
+  clientApi<void>(`/api/MealPlans/${id}`, {
+    method: "DELETE",
+    headers: idempotent(),
+  });
 
 /**
  * Throws away an assistant's draft the person did not keep. It declines the
@@ -169,13 +177,20 @@ export const setMealPlanStatus = (
   clientApi<void>(`/api/MealPlans/${id}/status`, {
     method: "POST",
     body: { status } satisfies Schemas["SetMealPlanStatusRequest"],
+    headers: idempotent(),
   });
 
 export const acceptPlan = (id: string) =>
-  clientApi<void>(`/api/MealPlans/${id}/accept`, { method: "POST" });
+  clientApi<void>(`/api/MealPlans/${id}/accept`, {
+    method: "POST",
+    headers: idempotent(),
+  });
 
 export const declinePlan = (id: string) =>
-  clientApi<void>(`/api/MealPlans/${id}/decline`, { method: "POST" });
+  clientApi<void>(`/api/MealPlans/${id}/decline`, {
+    method: "POST",
+    headers: idempotent(),
+  });
 
 export const addPlanEntry = (planId: string, body: PlanEntryRequest) =>
   clientApi<PlanEntryCreatedResult>(`/api/MealPlans/${planId}/entries`, {
@@ -192,11 +207,13 @@ export const updatePlanEntry = (
   clientApi<void>(`/api/MealPlans/${planId}/entries/${entryId}`, {
     method: "PUT",
     body,
+    headers: idempotent(),
   });
 
 export const removePlanEntry = (planId: string, entryId: string) =>
   clientApi<void>(`/api/MealPlans/${planId}/entries/${entryId}`, {
     method: "DELETE",
+    headers: idempotent(),
   });
 
 /** Writes the entry to the diary on its own date and slot. */
@@ -213,7 +230,7 @@ export const logPlanEntry = (
 export const addPrepSession = (planId: string, body: PrepSessionRequest) =>
   clientApi<PrepSessionCreatedResult>(
     `/api/MealPlans/${planId}/prep-sessions`,
-    { method: "POST", body },
+    { method: "POST", body, headers: idempotent() },
   );
 
 export const updatePrepSession = (
@@ -224,11 +241,13 @@ export const updatePrepSession = (
   clientApi<void>(`/api/MealPlans/${planId}/prep-sessions/${sessionId}`, {
     method: "PUT",
     body,
+    headers: idempotent(),
   });
 
 export const removePrepSession = (planId: string, sessionId: string) =>
   clientApi<void>(`/api/MealPlans/${planId}/prep-sessions/${sessionId}`, {
     method: "DELETE",
+    headers: idempotent(),
   });
 
 export const generateShoppingList = (

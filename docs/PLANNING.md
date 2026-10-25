@@ -252,7 +252,7 @@ Pages follow [DESIGN](../DESIGN.md): `log-page`, `facts-strip`, `ledger-row`, on
 
 Global templates are managed on `/admin/meal-plans` and through the admin MCP tools; a coach manages their own on `/trainer/templates` and through the coach's MCP tools.
 
-All API calls go through `lib/api/*` modules typed from `types/api.generated.ts`. Pages do not declare their own response types.
+All API calls go through `lib/api/*` modules typed from `types/api.generated.ts`. Pages do not declare their own response types. Every plan, shopping list and price write sends an `Idempotency-Key`, so `IdempotencyMiddleware` replays a retry instead of running it twice; the Playwright fixture reports a planning or price write without one as unhandled.
 
 ### MCP
 

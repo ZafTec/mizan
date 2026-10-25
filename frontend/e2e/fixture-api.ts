@@ -765,6 +765,7 @@ const server = Bun.serve({
           role: state.role,
           planning: state.planning,
           writes: state.writes,
+          unhandled: state.unhandled,
           recipes: state.recipes,
           meals: state.meals,
           foods,
@@ -1264,6 +1265,7 @@ const server = Bun.serve({
         prices: state.prices,
         foods,
         writes: state.writes,
+        unhandled: state.unhandled,
       },
       json,
     );
@@ -1276,6 +1278,7 @@ const server = Bun.serve({
         role: state.role,
         planning: state.planning,
         writes: state.writes,
+        unhandled: state.unhandled,
         recipes: state.recipes,
         meals: state.meals,
         foods,

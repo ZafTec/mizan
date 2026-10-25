@@ -20,7 +20,7 @@ type Options = {
 };
 type State = {
   unhandled: string[];
-  writes: { path: string; body: Record<string, unknown> }[];
+  writes: { path: string; body: Record<string, unknown>; key?: string }[];
 };
 
 async function signIn(context: BrowserContext, options: Options = {}) {
@@ -305,8 +305,13 @@ test("a coach's draft offers Accept, and accepting makes it the active plan", as
   ).toHaveCount(0);
 
   const s = await state(context);
+  // Accepting is a write a person may retry, so it carries an Idempotency-Key.
   expect(writesTo(s, /\/accept$/)).toEqual([
-    { path: `/api/MealPlans/${DRAFT_PLAN_ID}/accept`, body: {} },
+    {
+      path: `/api/MealPlans/${DRAFT_PLAN_ID}/accept`,
+      body: {},
+      key: expect.any(String),
+    },
   ]);
   expect(s.unhandled).toEqual([]);
 });

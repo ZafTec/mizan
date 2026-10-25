@@ -141,6 +141,8 @@ export type PlanningHost = {
   role: string;
   planning: PlanningState;
   writes: { path: string; body: Record<string, unknown>; key?: string }[];
+  /** Calls the fixture refuses to count as handled, as `METHOD path`. A write without an Idempotency-Key lands here. */
+  unhandled: string[];
   recipes: Record<string, unknown>[];
   meals: MealEntry[];
   foods: Food[];
@@ -925,12 +927,13 @@ export async function handlePlanning(
   const body = async <T>() =>
     ((await request.text().then((text) => (text ? JSON.parse(text) : {}))) ??
       {}) as T;
-  const record = (data: Record<string, unknown>) =>
-    writes.push({
-      path,
-      body: data,
-      key: request.headers.get("Idempotency-Key") ?? undefined,
-    });
+  // Every planning write is one a person may retry, so each must carry a key;
+  // one without is reported as unhandled, which every spec asserts is empty.
+  const record = (data: Record<string, unknown>) => {
+    const key = request.headers.get("Idempotency-Key") ?? undefined;
+    if (!key) host.unhandled.push(`${method} ${path} without Idempotency-Key`);
+    writes.push({ path, body: data, key });
+  };
   const personal = planning.plans.filter((plan) => plan.kind === "Personal");
   // PlanAccess: a template is read when it is global or the viewer's own,
   // and changed by an administrator (global) or its owner.

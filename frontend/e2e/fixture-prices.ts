@@ -360,6 +360,8 @@ export type PricesHost = {
   prices: PricesState;
   foods: HostFood[];
   writes: { path: string; body: Record<string, unknown>; key?: string }[];
+  /** Calls the fixture refuses to count as handled. A write without an Idempotency-Key lands here. */
+  unhandled: string[];
 };
 
 const UNITS = ["g", "kg", "ml", "l", "piece"];
@@ -488,12 +490,12 @@ export async function handlePrices(
   const body = async <T>() =>
     ((await request.text().then((text) => (text ? JSON.parse(text) : {}))) ??
       {}) as T;
-  const record = (data: Record<string, unknown>) =>
-    writes.push({
-      path,
-      body: data,
-      key: request.headers.get("Idempotency-Key") ?? undefined,
-    });
+  // Every price write carries a key, as the planning ones do (fixture-planning.ts).
+  const record = (data: Record<string, unknown>) => {
+    const key = request.headers.get("Idempotency-Key") ?? undefined;
+    if (!key) host.unhandled.push(`${method} ${path} without Idempotency-Key`);
+    writes.push({ path, body: data, key });
+  };
   const invalid = (error: string) =>
     json({ errorCode: "domain_validation_failed", error }, 400);
   const foodById = (id: string | null | undefined) =>
