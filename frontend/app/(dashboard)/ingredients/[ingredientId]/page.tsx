@@ -1,6 +1,8 @@
 import { getIngredientById } from "@/data/ingredient";
 import { getUserOptionalServer } from "@/helper/session";
 import Link from "next/link";
+import FoodPriceBlock from "@/components/prices/FoodPriceBlock";
+import { getFoodPriceServer } from "@/lib/api/prices.server";
 import DeleteIngredientButton from "./DeleteIngredientButton";
 
 export default async function Page({
@@ -9,9 +11,10 @@ export default async function Page({
   params: Promise<{ ingredientId: string }>;
 }) {
   const { ingredientId } = await params;
-  const [ingredient, user] = await Promise.all([
+  const [ingredient, user, price] = await Promise.all([
     getIngredientById(ingredientId),
     getUserOptionalServer(),
+    getFoodPriceServer(ingredientId),
   ]);
   const isAdmin = user?.role === "admin";
 
@@ -189,6 +192,8 @@ export default async function Page({
           ))}
         </div>
       </div>
+
+      {price && <FoodPriceBlock quote={price} foodName={ingredient.name} />}
 
       {isAdmin && (
         <div className="card p-6">
