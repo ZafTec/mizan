@@ -60,11 +60,16 @@ public static class ImpersonationPolicy
         [typeof(SubscriptionsController)] = new("/api/Subscriptions", ImpersonationAccess.Blocked),
         [typeof(TelegramController)] = new("/api/Telegram", ImpersonationAccess.Blocked),
 
+        // A message to the administrators in the user's name would be one the user never wrote.
+        [typeof(ContactController)] = new("/api/Contact", ImpersonationAccess.Blocked),
+
         // Service and administrator surfaces. The view holds no administrator role and no service key,
         // so these are closed to it anyway; saying so here keeps the map complete.
         [typeof(AdminAiPromptsController)] = new("/api/Admin/Ai/Prompts", ImpersonationAccess.Blocked),
         [typeof(AdminBillingController)] = new("/api/admin/billing", ImpersonationAccess.Blocked),
+        [typeof(AdminContactController)] = new("/api/admin/contact", ImpersonationAccess.Blocked),
         [typeof(AdminJobsController)] = new("/api/Admin/Jobs", ImpersonationAccess.Blocked),
+        [typeof(AdminMailController)] = new("/api/admin/mail", ImpersonationAccess.Blocked),
         [typeof(AdminPricesController)] = new("/api/admin/prices", ImpersonationAccess.Blocked),
         [typeof(AdminRelationshipsController)] = new("/api/Admin/Relationships", ImpersonationAccess.Blocked),
         [typeof(AdminSettingsController)] = new("/api/admin/settings", ImpersonationAccess.Blocked),

@@ -98,3 +98,14 @@ public sealed class UpstreamUnavailableException : DomainException
 {
     public UpstreamUnavailableException(string message) : base(message) { }
 }
+
+/// <summary>Too many of these in too short a time. Answered 429 with Retry-After.</summary>
+public sealed class RateLimitedException : DomainException
+{
+    public RateLimitedException(string message, TimeSpan retryAfter) : base(message)
+    {
+        RetryAfter = retryAfter;
+    }
+
+    public TimeSpan RetryAfter { get; }
+}

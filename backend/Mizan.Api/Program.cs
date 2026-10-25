@@ -482,6 +482,12 @@ app.UseExceptionHandler(errorApp =>
             context.Response.StatusCode = 503;
             await context.Response.WriteAsJsonAsync(new { errorCode = "ai_unavailable", error = aiUnavailableEx.Message });
         }
+        else if (exception is RateLimitedException rateLimitedEx)
+        {
+            context.Response.StatusCode = 429;
+            context.Response.Headers.RetryAfter = ((int)Math.Max(1, rateLimitedEx.RetryAfter.TotalSeconds)).ToString();
+            await context.Response.WriteAsJsonAsync(new { errorCode = "rate_limited", error = rateLimitedEx.Message });
+        }
         else if (exception is InvalidCredentialsException)
         {
             Log.Warning("Failed sign-in attempt at {Path}", context.Request.Path);
