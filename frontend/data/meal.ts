@@ -7,36 +7,18 @@ import {
   createSuccessState,
   FormState,
 } from "@/helper/FormErrorHandler";
-import type { GamificationFeedback } from "@/types/gamification";
+import type { components } from "@/types/api.generated";
 
 const mealLogger = logger.createModuleLogger("meal-data");
 
-export interface MealEntry {
-  id: string;
-  foodId?: string;
-  recipeId?: string;
-  name: string;
-  mealType: string;
-  servings: number;
-  calories?: number;
-  proteinGrams?: number;
-  carbsGrams?: number;
-  fatGrams?: number;
-  fiberGrams?: number;
-  loggedAt: string;
-}
-
-export interface FoodDiaryResult {
-  date: string;
-  entries: MealEntry[];
-  totals: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-    fiber: number;
-  };
-}
+/**
+ * The diary as GET /api/Meals sends it and a day of GET /api/Meals/range,
+ * from the generated OpenAPI document; nothing here declares its own shape.
+ */
+type Schemas = components["schemas"];
+export type MealEntry = Schemas["FoodDiaryEntryDto"];
+export type FoodDiaryResult = Schemas["FoodDiaryResult"];
+export type DailyNutritionSummary = Schemas["DailyNutritionSummaryDto"];
 
 /**
  * Get today's meals from the backend API
@@ -86,15 +68,6 @@ export async function getDailyTotals(
   }
 }
 
-export interface DailyNutritionSummary {
-  date: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  fiber: number;
-}
-
 export async function getNutritionRange(
   days: number = 7,
   endDate?: string,
@@ -102,7 +75,7 @@ export async function getNutritionRange(
   try {
     const params = new URLSearchParams({ days: days.toString() });
     if (endDate) params.append("endDate", endDate);
-    const result = await serverApi<{ days: DailyNutritionSummary[] }>(
+    const result = await serverApi<Schemas["DailyNutritionRangeResult"]>(
       `/api/Meals/range?${params}`,
     );
     return result.days || [];
@@ -133,29 +106,25 @@ export async function addMeal(
     const fat = parseFloat(formData.get("fat") as string);
     const fiber = parseFloat(formData.get("fiber") as string);
 
-    const result = await serverApi<
+    const result = await serverApi<Schemas["CreateFoodDiaryEntryResult"]>(
+      "/api/Meals",
       {
-        id: string;
-        success: boolean;
-        message?: string;
-        warnings?: string[];
-      } & GamificationFeedback
-    >("/api/Meals", {
-      method: "POST",
-      body: {
-        recipeId: recipeId || null,
-        foodId: foodId || null,
-        entryDate: date,
-        mealType,
-        servings,
-        name: (formData.get("name") as string) || "Unknown",
-        calories: isNaN(calories) ? null : calories,
-        proteinGrams: isNaN(protein) ? null : protein,
-        carbsGrams: isNaN(carbs) ? null : carbs,
-        fatGrams: isNaN(fat) ? null : fat,
-        fiberGrams: isNaN(fiber) ? null : fiber,
+        method: "POST",
+        body: {
+          recipeId: recipeId || null,
+          foodId: foodId || null,
+          entryDate: date,
+          mealType,
+          servings,
+          name: (formData.get("name") as string) || "Unknown",
+          calories: isNaN(calories) ? null : calories,
+          proteinGrams: isNaN(protein) ? null : protein,
+          carbsGrams: isNaN(carbs) ? null : carbs,
+          fatGrams: isNaN(fat) ? null : fat,
+          fiberGrams: isNaN(fiber) ? null : fiber,
+        },
       },
-    });
+    );
 
     mealLogger.info("Meal logged successfully", { mealType, servings, date });
     return {
