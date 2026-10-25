@@ -9,6 +9,7 @@ import {
   type PlanningState,
 } from "./fixture-planning";
 import {
+  handlePrices,
   initialPrices,
   type PricesOptions,
   type PricesState,
@@ -191,7 +192,7 @@ type FixtureState = {
   writeFailures: Record<string, number>;
   unhandled: string[];
   household: FixtureHousehold | null;
-  writes: { path: string; body: Record<string, unknown> }[];
+  writes: { path: string; body: Record<string, unknown>; key?: string }[];
   connections: FixtureConnection[];
   role: string;
   pro: boolean;
@@ -1167,6 +1168,57 @@ const server = Bun.serve({
     }
     if (path === "/api/Notifications/unread-count")
       return json({ unreadCount: state.unread });
+    // The settings page reads these beside the price region.
+    if (path === "/api/Auth/sessions" && method === "GET")
+      return json([
+        {
+          id: "session-current",
+          createdAt: `${dateAgo(2)}T08:00:00Z`,
+          lastSeenAt: `${today}T08:00:00Z`,
+          expiresAt: `${today}T23:00:00Z`,
+          ipAddress: "127.0.0.1",
+          userAgent: "Playwright",
+          isCurrent: true,
+        },
+      ]);
+    if (path === "/api/Ai/consent" && method === "GET")
+      return json({
+        enabled: false,
+        shareNutrition: false,
+        shareTraining: false,
+        shareBody: false,
+        allowWrites: false,
+        writeNutrition: false,
+        writeTraining: false,
+        writeBody: false,
+        updatedAt: null,
+      });
+    if (path === "/api/Ai/usage" && method === "GET")
+      return json({
+        today: {
+          requestsUsed: 0,
+          requestLimit: 20,
+          tokensUsed: 0,
+          tokenLimit: 50000,
+          resetsAt: `${today}T23:59:59Z`,
+          plan: "Free",
+        },
+        history: [],
+        byFeature: [],
+      });
+    const priced = await handlePrices(
+      request,
+      url,
+      {
+        user: { ...user, id: state.userId },
+        role: state.role,
+        prices: state.prices,
+        foods,
+        writes: state.writes,
+      },
+      json,
+    );
+    if (priced) return priced;
     const planned = await handlePlanning(
       request,
       url,
