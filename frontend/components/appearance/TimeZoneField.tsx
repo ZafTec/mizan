@@ -122,7 +122,7 @@ export default function TimeZoneField({ current }: { current: string | null }) {
         ))}
       </select>
       <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-        Decides when your day ends — streaks reset and daily totals roll over at
+        Decides when your day ends. Streaks reset and daily totals roll over at
         midnight here.
       </p>
       {mismatch && (
@@ -131,7 +131,7 @@ export default function TimeZoneField({ current }: { current: string | null }) {
           onClick={() => save(detected)}
           className="text-xs text-verdigris-600 underline-offset-2 hover:underline dark:text-verdigris-400"
         >
-          This device says {detected.replace(/_/g, " ")} — use that instead
+          This device says {detected.replace(/_/g, " ")}. Use that instead
         </button>
       )}
     </div>

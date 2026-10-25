@@ -270,7 +270,9 @@ export default function NewPlanForm({
             <div>
               <p className="label">Length</p>
               <p className="num py-3 text-sm">
-                {template ? `${template.durationDays} days` : "—"}
+                {template
+                  ? `${template.durationDays} days`
+                  : "Choose a template"}
               </p>
             </div>
           )}
