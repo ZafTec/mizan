@@ -23,6 +23,7 @@ import {
   type TelegramOptions,
   type TelegramState,
 } from "./fixture-users";
+import { handleAdminOps, isAdminOps } from "./fixture-admin-ops";
 import {
   handleAiPlanning,
   initialAiPlanning,
@@ -726,6 +727,7 @@ const server = Bun.serve({
       json,
     );
     if (telegram) return telegram;
+    if (isAdminOps(request, url)) return handleAdminOps(request, url, json);
     // Public, like the real endpoint: the landing page reads it signed out.
     if (method === "GET" && path === "/api/Subscriptions/plans")
       return json(plans);
