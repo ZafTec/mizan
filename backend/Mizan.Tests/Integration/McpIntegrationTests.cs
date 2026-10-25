@@ -1305,6 +1305,33 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
     #endregion
 
+    #region Telegram notifications
+
+    [Fact]
+    public async Task APersonTurnsOnTelegramNotifications_ThroughMcp_OnlyOnceAChatIsLinked()
+    {
+        var world = new PlanningWorld(_apiFixture);
+        var (userId, _) = await world.PersonAsync("mcp-telegram");
+        var token = await CreateMcpTokenAsync(userId);
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        var turnOn = new { body = """{"notifyByTelegram":true}""" };
+
+        var refused = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "update_my_profile", turnOn));
+        ExtractErrorMessage(await refused.Content.ReadFromJsonAsync<JsonRpcResponse>())
+            .Should().Contain("Connect a Telegram chat before turning on Telegram notifications.");
+
+        await world.DbAsync(db =>
+        {
+            db.TelegramLinks.Add(new TelegramLink { Id = Guid.NewGuid(), UserId = userId, TelegramUserId = 3003, LinkedAt = DateTime.UtcNow });
+            return db.SaveChangesAsync();
+        });
+        await CallToolAsync("update_my_profile", turnOn, raw: true);
+
+        (await CallToolAsync("get_my_profile", null)).GetProperty("notifyByTelegram").GetBoolean().Should().BeTrue();
+    }
+
+    #endregion
+
     #region Helper Methods
 
     /// <summary>Calls a tool and parses its text as JSON, failing on an error result; <paramref name="raw"/> returns the text itself.</summary>
