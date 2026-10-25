@@ -16,6 +16,7 @@ import {
   type ShoppingListDetail,
   type ShoppingListItem,
 } from "@/lib/api/shoppingLists";
+import { confidenceLabel, formatMoney, itemCount } from "@/lib/prices/format";
 import { appToast, getErrorMessage } from "@/lib/toast";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 
@@ -358,6 +359,26 @@ export default function ShoppingListView({
             <> · {list.needsReviewCount} to check</>
           )}
         </p>
+        {list.totalCost != null && (
+          <p className="mt-1" data-testid="list-cost">
+            <span className="log-muted">Total </span>
+            <span className="num font-medium">
+              {formatMoney(list.totalCost, list.currency)}
+            </span>
+            {list.costConfidence && (
+              <span className="log-muted">
+                {" · "}
+                {confidenceLabel(list.costConfidence)}
+              </span>
+            )}
+            {list.unpricedCount > 0 && (
+              <span className="log-muted">
+                {" · "}
+                {itemCount(list.unpricedCount)} without a price
+              </span>
+            )}
+          </p>
+        )}
         {list.canEdit && (
           <div className="mt-4 flex flex-wrap items-center gap-2 print:hidden">
             <button
@@ -437,9 +458,17 @@ export default function ShoppingListView({
                       )}
                     </label>
                     <span
-                      className={`num whitespace-nowrap text-sm ${item.isChecked ? "log-muted" : ""}`}
+                      className={`num whitespace-nowrap text-right text-sm ${item.isChecked ? "log-muted" : ""}`}
                     >
                       {formatAmount(item)}
+                      {item.cost != null && (
+                        <span
+                          className="block text-xs log-muted"
+                          data-testid="item-cost"
+                        >
+                          {formatMoney(item.cost, list.currency)}
+                        </span>
+                      )}
                     </span>
                     {list.canEdit && (
                       <span className="flex shrink-0 gap-1 print:hidden">
