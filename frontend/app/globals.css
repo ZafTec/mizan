@@ -1140,6 +1140,36 @@ html.dark .ring-track {
   padding: 10px 0;
   border-bottom: 1px solid var(--border);
 }
+/* A setting: its name on the left, the control on the right; stacked on a phone. */
+.setting-row {
+  display: grid;
+  gap: 8px 24px;
+  align-items: center;
+  min-height: 56px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+@media (min-width: 640px) {
+  .setting-row {
+    grid-template-columns: minmax(140px, 220px) minmax(0, 1fr);
+  }
+}
+.setting-row > .setting-label {
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+.setting-section {
+  scroll-margin-top: 24px;
+}
+.setting-section > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--foreground);
+}
 .nutrition-value {
   font-size: 29px;
   font-weight: 500;

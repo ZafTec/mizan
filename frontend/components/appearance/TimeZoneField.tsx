@@ -102,38 +102,37 @@ export default function TimeZoneField({ current }: { current: string | null }) {
   }
 
   return (
-    <div className="space-y-2">
-      <label
-        htmlFor="time-zone"
-        className="block text-sm font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100"
-      >
+    <div className="setting-row">
+      <label htmlFor="time-zone" className="setting-label">
         Time zone
       </label>
-      <Select
-        id="time-zone"
-        searchable
-        value={value}
-        disabled={saving}
-        onChange={save}
-        options={options.map(({ zone, offset }) => ({
-          value: zone,
-          label: zone.replace(/_/g, " "),
-          hint: offset || undefined,
-        }))}
-      />
-      <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-        Decides when your day ends. Streaks reset and daily totals roll over at
-        midnight here.
-      </p>
-      {mismatch && (
-        <button
-          type="button"
-          onClick={() => save(detected)}
-          className="text-xs text-verdigris-600 underline-offset-2 hover:underline dark:text-verdigris-400"
-        >
-          This device says {detected.replace(/_/g, " ")}. Use that instead
-        </button>
-      )}
+      <div className="space-y-2">
+        <Select
+          id="time-zone"
+          searchable
+          value={value}
+          disabled={saving}
+          onChange={save}
+          options={options.map(({ zone, offset }) => ({
+            value: zone,
+            label: zone.replace(/_/g, " "),
+            hint: offset || undefined,
+          }))}
+        />
+        <p className="text-xs log-muted">
+          Decides when your day ends. Streaks reset and daily totals roll over
+          at midnight here.
+        </p>
+        {mismatch && (
+          <button
+            type="button"
+            onClick={() => save(detected)}
+            className="text-link min-h-11 text-left text-sm"
+          >
+            This device says {detected.replace(/_/g, " ")}. Use that instead
+          </button>
+        )}
+      </div>
     </div>
   );
 }

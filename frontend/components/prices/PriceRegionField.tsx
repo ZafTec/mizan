@@ -57,29 +57,37 @@ export default function PriceRegionField() {
   }
 
   if (failed)
-    return <p className="text-sm log-muted">Regions could not be loaded.</p>;
+    return (
+      <div id="prices" className="setting-row setting-section">
+        <span className="setting-label">Price region</span>
+        <p className="text-sm log-muted">Regions could not be loaded.</p>
+      </div>
+    );
 
   return (
-    <div className="space-y-2">
-      <label htmlFor="price-region" className="label">
+    <div id="prices" className="setting-row setting-section">
+      <label htmlFor="price-region" className="setting-label">
         Price region
       </label>
-      <Select
-        id="price-region"
-        searchable
-        value={value}
-        disabled={saving || regions === null}
-        onChange={save}
-        placeholder="Loading regions"
-        options={(regions ?? []).map((region) => ({
-          value: region.code,
-          label: region.name,
-          hint: region.currency,
-        }))}
-      />
-      <p className="text-xs log-muted">
-        Plans and shopping lists are costed with this region&apos;s prices.
-      </p>
+      <div className="space-y-2">
+        <Select
+          id="price-region"
+          searchable
+          value={value}
+          disabled={saving || regions === null}
+          onChange={save}
+          placeholder="Loading regions"
+          options={(regions ?? []).map((region) => ({
+            value: region.code,
+            label: region.name,
+            hint: region.currency,
+          }))}
+        />
+        <p className="text-xs log-muted">
+          Where you shop. Plans and shopping lists are costed with this
+          region&apos;s prices.
+        </p>
+      </div>
     </div>
   );
 }
