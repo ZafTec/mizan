@@ -6,7 +6,9 @@ import { getAiConsent, type AiConsent } from "@/lib/api/ai";
 import {
   discardDraft,
   generateMealPlan,
+  readPlanNeedsFoods,
   type GenerateMealPlanResult,
+  type PlanNeedsFoodsError,
 } from "@/lib/api/mealPlans";
 import { readAiProblem, type AiProblem } from "@/lib/ai/problem";
 import {
@@ -18,6 +20,7 @@ import {
 } from "@/lib/planning/draft";
 import { getErrorMessage } from "@/lib/toast";
 import DraftPreview from "./DraftPreview";
+import PlanRefusal from "./PlanRefusal";
 
 function resetTime(iso: string | null): string | null {
   if (!iso) return null;
@@ -31,7 +34,8 @@ function resetTime(iso: string | null): string | null {
  * person gives the dates, the length, a weekly budget and what they would
  * like; the API drafts and saves the plan, and the preview shows exactly what
  * it answered. A spent allowance and an unavailable provider are said here,
- * in the API's words. Without consent to use the log the action is replaced
+ * in the API's words, and a refusal for want of foods replaces the form with
+ * the ways forward (PlanRefusal). Without consent to use the log the action is replaced
  * by the assistant's own way to grant it (docs/PLANNING.md#web).
  */
 export default function AssistantDraft({ today }: { today: string }) {
@@ -47,6 +51,7 @@ export default function AssistantDraft({ today }: { today: string }) {
   const [problem, setProblem] = useState<AiProblem | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GenerateMealPlanResult | null>(null);
+  const [refusal, setRefusal] = useState<PlanNeedsFoodsError | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   // One key per request body: trying the same draft again after a lost answer
   // or a 503 reuses it, a changed form gets a new one.
@@ -94,6 +99,13 @@ export default function AssistantDraft({ today }: { today: string }) {
       attempt.current = null;
       setResult(answer);
     } catch (caught) {
+      const needsFoods = readPlanNeedsFoods(caught);
+      if (needsFoods) {
+        // A refusal is an answer: the same request would be refused again.
+        attempt.current = null;
+        setRefusal(needsFoods);
+        return;
+      }
       const known = readAiProblem(caught);
       // A spent allowance is an answer, not a lost one: asking again later is a new request.
       if (known?.kind === "quota") attempt.current = null;
@@ -136,7 +148,7 @@ export default function AssistantDraft({ today }: { today: string }) {
         <p className="mt-3 text-sm log-muted" data-testid="ai-consent-prompt">
           The assistant can draft a plan from your goal, recipes and local
           prices once you let it use your log.{" "}
-          <Link href="/profile/settings" className="text-link">
+          <Link href="/profile/settings#assistant" className="text-link">
             Choose what the assistant can see
           </Link>
         </p>
@@ -192,6 +204,15 @@ export default function AssistantDraft({ today }: { today: string }) {
             </p>
           )}
         </div>
+      ) : refusal ? (
+        <PlanRefusal
+          refusal={refusal}
+          request={values}
+          onChange={() => {
+            setRefusal(null);
+            requestAnimationFrame(() => firstField.current?.focus());
+          }}
+        />
       ) : !open ? (
         <div className="space-y-3">
           <p className="text-sm log-muted">

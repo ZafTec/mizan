@@ -1,3 +1,4 @@
+import { ApiError } from "@/lib/api";
 import { clientApi } from "@/lib/api.client";
 import type { components, paths } from "@/types/api.generated";
 
@@ -39,6 +40,8 @@ export type MealPlanPage = Schemas["MealPlanSummaryDtoPagedResult"];
 export type GenerateMealPlanRequest = Schemas["GenerateMealPlanCommand"];
 export type GenerateMealPlanResult = Schemas["GenerateMealPlanResult"];
 export type GeneratedPlan = Schemas["GeneratedPlanDto"];
+/** The 422 when the draft would leave days with no food or recipe; nothing was saved. */
+export type PlanNeedsFoodsError = Schemas["PlanNeedsFoodsError"];
 export type PlanCost = Schemas["PlanCostDto"];
 export type PlanCostItem = Schemas["PlanCostItemDto"];
 export type PlanGeneration = Schemas["PlanGenerationDto"];
@@ -89,8 +92,21 @@ export const generateMealPlan = (
     method: "POST",
     body,
     headers: { "Idempotency-Key": idempotencyKey },
-    expectedStatuses: [429, 503],
+    expectedStatuses: [422, 429, 503],
   });
+
+/** The refusal body when the catalogue lacks the foods the draft needed, else null. */
+export function readPlanNeedsFoods(error: unknown): PlanNeedsFoodsError | null {
+  if (!(error instanceof ApiError) || error.status !== 422) return null;
+  const body = error.body as Partial<PlanNeedsFoodsError> | null;
+  if (body?.errorCode !== "plan_needs_foods") return null;
+  return {
+    errorCode: body.errorCode,
+    error: body.error ?? "",
+    missingFoods: body.missingFoods ?? [],
+    emptyDays: body.emptyDays ?? [],
+  };
+}
 
 export const listTemplates = () =>
   clientApi<Template[]>("/api/MealPlans/templates");

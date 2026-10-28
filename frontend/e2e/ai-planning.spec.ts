@@ -238,7 +238,7 @@ test("without consent the assistant's way to grant it replaces the action", asyn
   await section
     .getByRole("link", { name: "Choose what the assistant can see" })
     .click();
-  await page.waitForURL(/\/profile\/settings$/);
+  await page.waitForURL(/\/profile\/settings#assistant$/);
   expect(
     writesTo(await state(context), /^\/api\/MealPlans\/generate$/),
   ).toHaveLength(0);
@@ -348,5 +348,91 @@ test("the usage panel shows the planning allowance", async ({
   const line = page.getByTestId("ai-usage-planning");
   await expect(line).toContainText("Meal plans drafted");
   await expect(line).toContainText("1 / 1");
+  expect((await state(context)).unhandled).toEqual([]);
+});
+
+test("a draft refused for want of foods shows the ways forward and the request", async ({
+  page,
+  context,
+}) => {
+  await signIn(context, { consented: true, needsFoods: true });
+  await openDraftForm(page);
+  const section = assistant(page);
+  await section.getByLabel("Days").fill("3");
+  await section.getByLabel("What you would like (optional)").fill("Keto");
+  await section.getByRole("button", { name: "Draft plan" }).click();
+
+  const refusal = section.getByTestId("plan-refusal");
+  await expect(
+    refusal.getByRole("heading", { name: "Not enough foods for this plan" }),
+  ).toBeFocused();
+  await expect(refusal.getByRole("alert")).toContainText(
+    "Days 2 and 3 of the draft have no food from your catalogue.",
+  );
+  await expect(refusal).toContainText("Day 2, Day 3");
+  await expect(refusal).toContainText("Tilapia, Gouda");
+  await expect(
+    refusal.getByRole("link", { name: /Add foods/ }),
+  ).toHaveAttribute("href", "/ingredients");
+  await expect(
+    refusal.getByRole("link", { name: /Build the plan by hand/ }),
+  ).toHaveAttribute("href", "#manual-plan");
+  const asked = refusal.getByRole("complementary", { name: "Your request" });
+  await expect(asked).toContainText("Keto");
+  await expect(asked).toContainText("3");
+  await page.setViewportSize({ width: 360, height: 800 });
+  await noOverflow(page);
+
+  // Back to the same form, with what was typed, by keyboard.
+  await asked.getByRole("button", { name: "Change request" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(section.getByLabel("Start date")).toBeFocused();
+  await expect(section.getByLabel("What you would like (optional)")).toHaveValue(
+    "Keto",
+  );
+  expect(
+    writesTo(await state(context), /^\/api\/MealPlans\/generate$/),
+  ).toHaveLength(1);
+  expect((await state(context)).unhandled).toEqual([]);
+});
+
+test("a person lets the assistant see meals from settings and sees it saved", async ({
+  page,
+  context,
+}) => {
+  await signIn(context, { consented: false });
+  await page.goto("/profile/settings#assistant");
+  const meals = page.getByRole("switch", { name: /See meals and meal plans/ });
+  await expect(meals).toHaveAttribute("aria-checked", "false");
+  await meals.focus();
+  await page.keyboard.press("Space");
+  await expect(meals).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("status").filter({ hasText: "Saved" })).toBeVisible();
+
+  const writes = writesTo(await state(context), /^\/api\/Ai\/consent$/);
+  expect(writes).toHaveLength(1);
+  expect(writes[0].body).toMatchObject({
+    enabled: true,
+    shareNutrition: true,
+    shareTraining: false,
+    shareBody: false,
+    allowWrites: false,
+  });
+
+  await page
+    .getByRole("switch", { name: /Log and plan when I ask/ })
+    .click();
+  await expect
+    .poll(async () => writesTo(await state(context), /^\/api\/Ai\/consent$/).length)
+    .toBe(2);
+  const last = writesTo(await state(context), /^\/api\/Ai\/consent$/)[1];
+  expect(last.body).toMatchObject({
+    allowWrites: true,
+    writeNutrition: true,
+    writeTraining: true,
+    writeBody: true,
+  });
+  await page.setViewportSize({ width: 360, height: 800 });
+  await noOverflow(page);
   expect((await state(context)).unhandled).toEqual([]);
 });

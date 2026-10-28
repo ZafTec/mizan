@@ -140,7 +140,12 @@ export default function NewPlanForm({
     );
 
   return (
-    <form onSubmit={submit} className="space-y-8" noValidate>
+    <form
+      id="manual-plan"
+      onSubmit={submit}
+      className="scroll-mt-6 space-y-8"
+      noValidate
+    >
       {templates.length > 0 && (
         <div
           role="radiogroup"

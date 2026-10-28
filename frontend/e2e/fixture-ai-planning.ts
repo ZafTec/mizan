@@ -35,12 +35,15 @@ export type AiPlanningOptions = {
   plansUsed?: number;
   /** The provider fails every call: generate answers 503 `ai_unavailable`. */
   providerDown?: boolean;
+  /** The catalogue lacks the foods: generate answers 422 `plan_needs_foods`. */
+  needsFoods?: boolean;
 };
 export type AiPlanningState = {
   consent: AiConsent;
   plansUsed: number;
   planLimit: number;
   providerDown: boolean;
+  needsFoods: boolean;
 };
 export type AiPlanningHost = {
   ai: AiPlanningState;
@@ -76,6 +79,7 @@ export function initialAiPlanning(
     plansUsed: options.plansUsed ?? 0,
     planLimit: 1,
     providerDown: options.providerDown ?? false,
+    needsFoods: options.needsFoods ?? false,
   };
 }
 
@@ -291,6 +295,17 @@ export async function handleAiPlanning(
           error: "The assistant could not draft a plan right now.",
         },
         503,
+      );
+    if (ai.needsFoods)
+      return json(
+        {
+          errorCode: "plan_needs_foods",
+          error:
+            "Days 2 and 3 of the draft have no food from your catalogue. Add foods such as tilapia and gouda, or ask for something else.",
+          missingFoods: ["Tilapia", "Gouda"],
+          emptyDays: [1, 2],
+        } satisfies Schemas["PlanNeedsFoodsError"],
+        422,
       );
     const budget = input.budgetCeilings[0] ?? null;
     const plan = saveDraft(host, input, budget);
