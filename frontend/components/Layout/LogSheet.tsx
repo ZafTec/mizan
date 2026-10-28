@@ -77,9 +77,9 @@ function OpenLogSheet({
       }}
     >
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-[100] bg-charcoal-blue-950/45" />
+        <Dialog.Overlay className="fixed inset-0 z-[100] animate-overlay-in bg-charcoal-blue-950/45 data-[state=closed]:animate-overlay-out" />
         <Dialog.Content
-          className={`fixed inset-x-0 bottom-0 z-[101] max-h-[92dvh] overscroll-contain rounded-t-md border border-border bg-background px-5 pt-5 text-foreground sm:left-1/2 sm:right-auto sm:top-1/2 sm:bottom-auto sm:w-[calc(100%-2rem)] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-md sm:px-6 sm:pt-6 ${kind === "meal" ? "flex h-[92dvh] flex-col overflow-hidden sm:h-auto" : "overflow-y-auto pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:pb-6"}`}
+          className={`fixed inset-x-0 bottom-0 z-[101] animate-sheet-in data-[state=closed]:animate-sheet-out sm:animate-modal-in sm:data-[state=closed]:animate-modal-out max-h-[92dvh] overscroll-contain rounded-t-md border border-border bg-background px-5 pt-5 text-foreground sm:left-1/2 sm:right-auto sm:top-1/2 sm:bottom-auto sm:w-[calc(100%-2rem)] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-md sm:px-6 sm:pt-6 ${kind === "meal" ? "flex h-[92dvh] flex-col overflow-hidden sm:h-auto" : "overflow-y-auto pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:pb-6"}`}
           onOpenAutoFocus={(event) => {
             returnFocusRef.current =
               document.activeElement instanceof HTMLElement

@@ -147,6 +147,10 @@
   --animate-modal-in: modal-pop 200ms var(--ease-out) both;
   --animate-dialog-in: dialog-pop-in 200ms var(--ease-out) both;
   --animate-dialog-out: dialog-pop-out 150ms var(--ease-out) both;
+  --animate-modal-out: modal-pop-out 150ms var(--ease-out) both;
+  --animate-enter: fade-up 200ms var(--ease-out) both;
+  --animate-sheet-in: sheet-up 280ms var(--ease-drawer) both;
+  --animate-sheet-out: sheet-down 200ms var(--ease-out) both;
 }
 
 /*
@@ -536,6 +540,32 @@ html {
     transform: scale(1);
   }
 }
+@keyframes modal-pop-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes sheet-down {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
 /* Radix dialogs are centered with a translate, so their scale keeps it. */
 @keyframes dialog-pop-in {
   from {
@@ -556,6 +586,74 @@ html {
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.98);
   }
+}
+
+/*
+ * View transitions (React <ViewTransition>, see DESIGN.md "Motion").
+ * nav-forward and nav-back slide page content a short way in the direction
+ * of travel; row-exit fades a list row that left, and the rows below it
+ * move up with the default group morph. Clicks pass through to the new page.
+ */
+::view-transition {
+  pointer-events: none;
+}
+::view-transition-group(*) {
+  animation-duration: var(--duration-medium);
+  animation-timing-function: var(--ease-out);
+}
+::view-transition-old(.nav-forward),
+::view-transition-old(.nav-back) {
+  animation:
+    120ms var(--ease-out) both fade-out,
+    var(--duration-medium) var(--ease-out) both vt-slide-out;
+}
+::view-transition-new(.nav-forward),
+::view-transition-new(.nav-back) {
+  animation:
+    180ms var(--ease-out) 60ms both fade-in,
+    var(--duration-medium) var(--ease-out) both vt-slide-in;
+}
+::view-transition-old(.nav-forward),
+::view-transition-new(.nav-back) {
+  --vt-offset: -24px;
+}
+::view-transition-new(.nav-forward),
+::view-transition-old(.nav-back) {
+  --vt-offset: 24px;
+}
+::view-transition-old(.row-exit) {
+  animation: 150ms var(--ease-out) both fade-out;
+}
+@keyframes vt-slide-in {
+  from {
+    translate: var(--vt-offset) 0;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+@keyframes vt-slide-out {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: var(--vt-offset) 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
+:root.reduce-motion::view-transition-group(*),
+:root.reduce-motion::view-transition-old(*),
+:root.reduce-motion::view-transition-new(*) {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

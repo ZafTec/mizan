@@ -430,7 +430,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                 if (triggerRef.current?.contains(event.target as Node))
                   event.preventDefault();
               }}
-              className="z-[150] flex max-h-[min(20rem,var(--radix-popover-content-available-height))] min-w-(--radix-popover-trigger-width) max-w-[calc(100vw-16px)] flex-col rounded-[3px] border border-border bg-card text-foreground outline-none"
+              className="z-[150] flex origin-(--radix-popover-content-transform-origin) animate-pop-in data-[state=closed]:animate-pop-out max-h-[min(20rem,var(--radix-popover-content-available-height))] min-w-(--radix-popover-trigger-width) max-w-[calc(100vw-16px)] flex-col rounded-[3px] border border-border bg-card text-foreground outline-none"
             >
               {searchable && (
                 <div className="flex min-h-11 shrink-0 items-center gap-2 border-b border-border px-3 focus-within:border-b-foreground">
