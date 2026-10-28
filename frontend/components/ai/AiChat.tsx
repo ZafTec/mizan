@@ -11,47 +11,82 @@ import {
   type FormEvent,
   type KeyboardEvent,
   type MouseEvent,
+  type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
+  ArrowLeft,
   ArrowUp,
   Check,
+  ChevronDown,
   CircleAlert,
   Copy,
   History,
+  Lock,
   Plus,
+  SquarePen,
   X,
 } from "lucide-react";
 import AiMarkdown from "@/components/ai/AiMarkdown";
 import AiCardList from "@/components/ai/cards/AiCardView";
+import AiPermissionGate, {
+  consentMissing,
+  describeRequirement,
+  grantRequirement,
+} from "@/components/ai/AiPermissionGate";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import {
   deleteAiChatThread,
   getAiChatThread,
+  getAiConsent,
   listAiChatThreads,
   sendAiChatImage,
   sendAiChatMessage,
+  updateAiConsent,
   type AiCard,
   type AiChatMessage,
   type AiChatThread,
+  type AiConsent,
+  type AiConsentRequirement,
   type AiToolInvocation,
 } from "@/lib/api/ai";
 import { getErrorMessage } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
-/**
- * Icons are named, not passed. The suggestions come from a server component, and a component cannot cross to the
- * browser, only data can.
- */
+const QUICK_PROMPTS = [
+  {
+    id: "fit-remaining",
+    label: "Ideas for my remaining macros today",
+    prompt:
+      "What are 3 quick meal ideas that fit my remaining macros for today?",
+  },
+  {
+    id: "weekly-review",
+    label: "Review my last 7 days",
+    prompt:
+      "Summarise my nutrition and training over the past 7 days and flag any trends.",
+  },
+  {
+    id: "protein-gap",
+    label: "High-protein snack ideas",
+    prompt:
+      "Give me 5 high-protein snacks under 250 calories I can keep on hand.",
+  },
+  {
+    id: "workout-plan",
+    label: "What to focus on in my next workout",
+    prompt:
+      "Based on my recent workouts, what should I focus on in my next session?",
+  },
+];
 
-export interface QuickPrompt {
-  id: string;
-  label: string;
-  prompt: string;
-}
+/** Said once the person chose Not now, so the assistant's silence about their log has a reason. */
+export const NO_ACCESS_LINE =
+  "I can't see your log yet. Allow access to get answers about your data.";
 
 const MAX_ROWS = 6;
+const NOT_NOW_KEY = "mizan.assistant.permission-later";
 
 function timeLabel(iso: string) {
   const date = new Date(iso);
@@ -59,19 +94,79 @@ function timeLabel(iso: string) {
   return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
+function sameDay(iso: string, now: Date) {
+  const date = new Date(iso);
+  return (
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+  );
+}
+
+function readNotNow() {
+  try {
+    return window.localStorage.getItem(NOT_NOW_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function writeNotNow(value: boolean) {
+  try {
+    if (value) window.localStorage.setItem(NOT_NOW_KEY, "1");
+    else window.localStorage.removeItem(NOT_NOW_KEY);
+  } catch {
+    // Without storage the step simply asks again next time.
+  }
+}
+
+/** Whether the consent the person holds now already allows what a refusal asked for. */
+function allows(consent: AiConsent | null, requirement: AiConsentRequirement) {
+  if (!consent) return false;
+  const axis = requirement.axis;
+  if (requirement.access === "write")
+    return (
+      consent.allowWrites &&
+      (axis === "training"
+        ? consent.writeTraining
+        : axis === "body"
+          ? consent.writeBody
+          : consent.writeNutrition)
+    );
+  return (
+    consent.enabled &&
+    (axis === "training"
+      ? consent.shareTraining
+      : axis === "body"
+        ? consent.shareBody
+        : consent.shareNutrition)
+  );
+}
+
 /**
- * The assistant, as a conversation. The list of past conversations sits beside the transcript on a wide screen and
- * behind a button on a narrow one; the composer stays at the bottom either way. A photo is a thumbnail that opens
- * full size, in the transcript and before it is sent.
+ * The assistant's conversation, as the shell's panel holds it (components/ai/Assistant.tsx). The
+ * header switches between the transcript and the list of past conversations. Until the person has
+ * chosen what it may use, the permission step stands where the suggestions would. A reply whose
+ * tool call was refused for consent carries one button that turns on just that switch, then offers
+ * to send the question again.
  */
 export default function AiChat({
-  quickPrompts,
+  threadId,
+  onThreadChange,
+  onClose,
+  phone = false,
+  focusToken = 0,
 }: {
-  quickPrompts: QuickPrompt[];
+  threadId: string | null;
+  onThreadChange: (id: string | null) => void;
+  onClose: () => void;
+  phone?: boolean;
+  /** Changes each time the panel opens, asking for focus once there is something to focus. */
+  focusToken?: number;
 }) {
   const router = useRouter();
+  const [view, setView] = useState<"chat" | "history">("chat");
   const [threads, setThreads] = useState<AiChatThread[]>([]);
-  const [threadId, setThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<AiChatMessage[]>([]);
   // What each reply did, keyed by message id. Only for this visit: tool invocations are echoes of a turn, not part
   // of the transcript.
@@ -81,6 +176,14 @@ export default function AiChat({
   // The typed cards each reply carried (a plan, a day, a cost table, a list), keyed the same way and for the
   // same reason: they come with the turn, not with the stored transcript.
   const [cards, setCards] = useState<Record<string, AiCard[]>>({});
+  // The switches a reply's tool calls were refused for, keyed the same way.
+  const [refusals, setRefusals] = useState<
+    Record<string, AiConsentRequirement[]>
+  >({});
+  const [consent, setConsent] = useState<AiConsent | null>(null);
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [notNow, setNotNow] = useState(false);
+  const [granting, setGranting] = useState<string | null>(null);
   const [attachment, setAttachment] = useState<{
     file: File;
     url: string;
@@ -92,19 +195,66 @@ export default function AiChat({
     src: string;
     label: string;
   } | null>(null);
-  const [listOpen, setListOpen] = useState(false);
   const [deleting, setDeleting] = useState<AiChatThread | null>(null);
+  const [search, setSearch] = useState("");
   const transcript = useRef<HTMLDivElement>(null);
   const textarea = useRef<HTMLTextAreaElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const historyButton = useRef<HTMLButtonElement>(null);
   const stickToBottom = useRef(true);
+  // The conversation on screen. A thread the shell names that is not this one is loaded.
+  const loaded = useRef<string | null>(null);
 
   useEffect(() => {
-    // Past conversations, so the screen opens on something rather than pretending nothing was ever said.
     listAiChatThreads()
       .then(setThreads)
       .catch(() => setThreads([]));
+    getAiConsent()
+      .then(setConsent)
+      .catch(() => setConsent(null))
+      .finally(() => setConsentChecked(true));
+    setNotNow(readNotNow());
   }, []);
+
+  // A thread named from outside (a reload, a `/ai?thread=` link) opens here. It counts as loaded
+  // only once its messages arrive, so an interrupted load is tried again.
+  useEffect(() => {
+    if (threadId === loaded.current) return;
+    if (!threadId) {
+      loaded.current = null;
+      setMessages([]);
+      return;
+    }
+    let current = true;
+    getAiChatThread(threadId)
+      .then((thread) => {
+        if (!current) return;
+        loaded.current = thread.id;
+        setMessages(thread.messages);
+        stickToBottom.current = true;
+      })
+      .catch(() => {
+        // Deleted elsewhere, or never this person's: start fresh rather than show an error.
+        if (current) onThreadChange(null);
+      });
+    return () => {
+      current = false;
+    };
+  }, [threadId, onThreadChange]);
+
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!focusToken || !consentChecked) return;
+    const frame = requestAnimationFrame(() => {
+      const panel = root.current;
+      panel
+        ?.querySelector<HTMLElement>(
+          "#ai-message:not([disabled]), [data-autofocus]",
+        )
+        ?.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [focusToken, consentChecked]);
 
   // A thumbnail's address is a handle on memory. It is released when the photo is removed, when the server's
   // stored address replaces it in the transcript, or when the screen goes - never while something still shows it.
@@ -147,15 +297,31 @@ export default function AiChat({
     el.style.height = `${Math.min(el.scrollHeight, line * MAX_ROWS + 24)}px`;
   }, [input]);
 
+  // The composer takes focus back once it can: it is disabled while a turn or a thread loads.
+  const [focusRequest, setFocusRequest] = useState(0);
+  const focusServed = useRef(0);
+  useEffect(() => {
+    if (focusServed.current === focusRequest || pending || view !== "chat")
+      return;
+    focusServed.current = focusRequest;
+    requestAnimationFrame(() => textarea.current?.focus());
+  }, [focusRequest, pending, view]);
+
+  function showChat() {
+    setView("chat");
+    setFocusRequest((count) => count + 1);
+  }
+
   function openThread(id: string) {
     setError(null);
-    setListOpen(false);
     startTransition(async () => {
       try {
         const thread = await getAiChatThread(id);
-        setThreadId(thread.id);
+        loaded.current = thread.id;
+        onThreadChange(thread.id);
         setMessages(thread.messages);
         stickToBottom.current = true;
+        showChat();
       } catch (cause) {
         setError(getErrorMessage(cause, "Could not open that conversation."));
       }
@@ -163,11 +329,11 @@ export default function AiChat({
   }
 
   function startNew() {
-    setThreadId(null);
+    loaded.current = null;
+    onThreadChange(null);
     setMessages([]);
     setError(null);
-    setListOpen(false);
-    textarea.current?.focus();
+    showChat();
   }
 
   function confirmDelete() {
@@ -178,7 +344,11 @@ export default function AiChat({
       try {
         await deleteAiChatThread(thread.id);
         setThreads((current) => current.filter((t) => t.id !== thread.id));
-        if (threadId === thread.id) startNew();
+        if (threadId === thread.id) {
+          loaded.current = null;
+          onThreadChange(null);
+          setMessages([]);
+        }
       } catch (cause) {
         setError(getErrorMessage(cause, "Could not delete that conversation."));
       }
@@ -188,6 +358,32 @@ export default function AiChat({
   function attach(file: File | null) {
     if (attachment) release(attachment.url);
     setAttachment(file ? { file, url: preview(file) } : null);
+  }
+
+  function chooseNotNow() {
+    writeNotNow(true);
+    setNotNow(true);
+    showChat();
+  }
+
+  function granted(next: AiConsent) {
+    setConsent(next);
+    writeNotNow(false);
+    setNotNow(false);
+    showChat();
+  }
+
+  async function allow(key: string, requirement: AiConsentRequirement) {
+    setGranting(key);
+    setError(null);
+    try {
+      const current = consent ?? (await getAiConsent());
+      setConsent(await updateAiConsent(grantRequirement(current, requirement)));
+    } catch (cause) {
+      setError(getErrorMessage(cause, "Could not change the permission."));
+    } finally {
+      setGranting(null);
+    }
   }
 
   async function send(prompt: string) {
@@ -219,7 +415,8 @@ export default function AiChat({
         const turn = photo
           ? await sendAiChatImage(threadId, text, photo.file)
           : await sendAiChatMessage(threadId, text);
-        setThreadId(turn.threadId);
+        loaded.current = turn.threadId;
+        onThreadChange(turn.threadId);
         // The stored message takes the optimistic one's place, so the photo now comes from its stored address
         // and the local preview can go.
         setMessages((current) => [
@@ -229,14 +426,19 @@ export default function AiChat({
         if (photo) release(photo.url);
         if (turn.cards?.length)
           setCards((current) => ({ ...current, [turn.reply.id]: turn.cards }));
-        if (turn.performed?.length) {
+        if (turn.consentRequired?.length)
+          setRefusals((current) => ({
+            ...current,
+            [turn.reply.id]: turn.consentRequired,
+          }));
+        if (turn.performed?.some((action) => action.succeeded))
+          // Something was written, so anything on screen behind this is stale.
+          router.refresh();
+        if (turn.performed?.length)
           setPerformed((current) => ({
             ...current,
             [turn.reply.id]: turn.performed,
           }));
-          // Something was written, so anything on screen behind this is stale.
-          router.refresh();
-        }
         setThreads((current) => [
           {
             id: turn.threadId,
@@ -258,6 +460,14 @@ export default function AiChat({
     });
   }
 
+  /** The question a reply answered, so a refused one can be asked again once allowed. */
+  function questionBefore(replyId: string) {
+    const index = messages.findIndex((m) => m.id === replyId);
+    for (let i = index - 1; i >= 0; i--)
+      if (messages[i].fromUser) return messages[i].content;
+    return "";
+  }
+
   function onSubmit(event: FormEvent) {
     event.preventDefault();
     void send(input);
@@ -275,243 +485,301 @@ export default function AiChat({
     }
   }
 
-  const list = (
-    <ConversationList
-      threads={threads}
-      activeId={threadId}
-      onNew={startNew}
-      onOpen={openThread}
-      onDelete={setDeleting}
-    />
-  );
+  const missing = consentMissing(consent);
+  const asking = missing && !notNow;
+  const title = threads.find((t) => t.id === threadId)?.title;
 
   return (
-    <div className="grid h-[calc(100dvh-17.5rem-env(safe-area-inset-bottom,0px))] min-h-[26rem] gap-6 lg:h-[calc(100dvh-13rem)] lg:grid-cols-[16rem_minmax(0,1fr)]">
-      <aside
-        aria-label="Conversations"
-        className="hidden min-h-0 flex-col lg:flex"
-      >
-        {list}
-      </aside>
-
-      <section
-        aria-label="Assistant"
-        className="flex min-h-0 flex-col border-y border-border bg-card max-sm:-mx-5 sm:rounded-md sm:border"
-      >
-        <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-          <div className="min-w-0">
-            <h2 className="truncate text-base font-semibold">
-              {threads.find((t) => t.id === threadId)?.title ??
-                "New conversation"}
-            </h2>
-            <p className="hidden text-xs text-muted-foreground sm:block">
-              Answers use only what you chose to share.
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center lg:hidden">
+    <div ref={root} className="flex h-full min-h-0 flex-col">
+      {phone && (
+        <div aria-hidden="true" className="flex justify-center pt-2">
+          <span className="h-1 w-9 rounded-full bg-border" />
+        </div>
+      )}
+      <header className="flex items-center gap-1 border-b border-border py-2 pl-4 pr-2">
+        {view === "history" ? (
+          <>
             <button
               type="button"
-              onClick={startNew}
-              aria-label="New conversation"
-              title="New conversation"
-              className="flex h-11 w-11 items-center justify-center rounded-sm hover:bg-muted"
+              onClick={showChat}
+              aria-label="Back to the conversation"
+              title="Back to the conversation"
+              className="-ml-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-sm hover:bg-muted"
             >
-              <Plus aria-hidden="true" size={20} strokeWidth={1.7} />
+              <ArrowLeft aria-hidden="true" size={19} strokeWidth={1.7} />
             </button>
-            <Dialog.Root open={listOpen} onOpenChange={setListOpen}>
-              <Dialog.Trigger
-                aria-label="Conversations"
-                title="Conversations"
-                className="flex h-11 w-11 items-center justify-center rounded-sm hover:bg-muted"
-              >
-                <History aria-hidden="true" size={20} strokeWidth={1.7} />
-              </Dialog.Trigger>
-              <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 z-[100] bg-charcoal-blue-950/45" />
-                <Dialog.Content className="fixed inset-x-0 bottom-0 z-[101] flex max-h-[80dvh] flex-col rounded-t-md border border-border bg-background p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]">
-                  <div className="mb-3 flex items-center justify-between">
-                    <Dialog.Title className="text-lg font-semibold">
-                      Conversations
-                    </Dialog.Title>
-                    <Dialog.Close
-                      aria-label="Close conversations"
-                      className="-mr-2 flex h-11 w-11 items-center justify-center rounded-sm hover:bg-muted"
-                    >
-                      <X aria-hidden="true" size={20} strokeWidth={1.7} />
-                    </Dialog.Close>
-                  </div>
-                  <Dialog.Description className="sr-only">
-                    Open an earlier conversation or start a new one.
-                  </Dialog.Description>
-                  {list}
-                </Dialog.Content>
-              </Dialog.Portal>
-            </Dialog.Root>
-          </div>
-        </header>
-
-        <div
-          ref={transcript}
-          role="log"
-          aria-label="Conversation"
-          aria-live="polite"
-          onScroll={(event) => {
-            const el = event.currentTarget;
-            stickToBottom.current =
-              el.scrollHeight - el.scrollTop - el.clientHeight < 80;
-          }}
-          className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-5"
-        >
-          {messages.length === 0 ? (
-            <EmptyState
-              quickPrompts={quickPrompts}
-              onPick={(prompt) => void send(prompt)}
-              disabled={pending}
-            />
-          ) : (
-            messages.map((message) => (
-              <MessageView
-                key={message.id}
-                message={message}
-                actions={performed[message.id]}
-                cards={cards[message.id]}
-                onOpenImage={(src) =>
-                  setLightbox({
-                    src,
-                    label: message.fromUser
-                      ? "Photo you sent"
-                      : "Photo from the assistant",
-                  })
-                }
-              />
-            ))
-          )}
-
-          {pending && (
-            <div
-              role="status"
-              className="flex items-center gap-2 text-sm text-muted-foreground"
+            <h2
+              id="assistant-title"
+              className="min-w-0 flex-1 truncate text-base font-semibold"
             >
-              <span className="flex gap-1" aria-hidden="true">
-                {[0, 1, 2].map((dot) => (
-                  <span
-                    key={dot}
-                    className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-600 motion-reduce:animate-none"
-                    style={{ animationDelay: `${dot * 120}ms` }}
-                  />
-                ))}
-              </span>
-              The assistant is writing
-            </div>
-          )}
-
-          {error && (
-            <p
-              role="alert"
-              className="flex items-start gap-2 text-sm text-burnt-peach-700 dark:text-burnt-peach-300"
+              Conversations
+            </h2>
+          </>
+        ) : (
+          <div className="min-w-0 flex-1">
+            <h2
+              id="assistant-title"
+              className="text-base font-semibold leading-tight"
             >
-              <CircleAlert
-                aria-hidden="true"
-                size={16}
-                strokeWidth={1.7}
-                className="mt-0.5 shrink-0"
-              />
-              {error}
+              Mizan
+            </h2>
+            <p className="truncate text-xs text-muted-foreground">
+              {title ?? "New conversation"}
             </p>
-          )}
-        </div>
-
-        <form
-          onSubmit={onSubmit}
-          className="space-y-2 border-t border-border p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:p-4"
-        >
-          {attachment && (
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() =>
-                  setLightbox({ src: attachment.url, label: "Photo to send" })
-                }
-                aria-label="Preview the photo to send"
-                className="relative h-14 w-14 shrink-0 overflow-hidden rounded-sm border border-border"
-              >
-                <PictureImage
-                  src={attachment.url}
-                  alt=""
-                  className="object-cover"
-                />
-              </button>
-              <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
-                {attachment.file.name}
-              </span>
-              <button
-                type="button"
-                onClick={() => attach(null)}
-                aria-label="Remove photo"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm hover:bg-muted"
-              >
-                <X aria-hidden="true" size={18} strokeWidth={1.7} />
-              </button>
-            </div>
-          )}
-
-          <div className="rounded-md border border-border bg-background transition-colors focus-within:border-foreground">
-            <input
-              ref={fileInput}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-              aria-label="Choose a photo"
-              onChange={(event) => {
-                const picked = event.target.files?.[0] ?? null;
-                event.target.value = "";
-                if (picked) attach(picked);
-              }}
-            />
-            <label htmlFor="ai-message" className="sr-only">
-              Message the assistant
-            </label>
-            <textarea
-              id="ai-message"
-              ref={textarea}
-              value={input}
-              rows={1}
-              onChange={(event) => setInput(event.target.value)}
-              onKeyDown={onKeyDown}
-              disabled={pending}
-              placeholder={
-                attachment
-                  ? "Say something about it (optional)"
-                  : "Ask the assistant"
-              }
-              className="block w-full resize-none bg-transparent px-4 pb-1 pt-3 leading-6 text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-60"
-            />
-            <div className="flex items-center justify-between px-2 pb-2">
-              <button
-                type="button"
-                onClick={() => fileInput.current?.click()}
-                disabled={pending}
-                aria-label="Attach a photo"
-                title="Attach a photo"
-                className="flex h-10 w-10 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-60"
-              >
-                <Plus aria-hidden="true" size={20} strokeWidth={1.7} />
-              </button>
-              <button
-                type="submit"
-                disabled={pending || (!input.trim() && !attachment)}
-                aria-label="Send"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-700 text-white transition-colors hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-brand-300 dark:text-charcoal-blue-950 dark:hover:bg-brand-200"
-              >
-                <ArrowUp aria-hidden="true" size={18} strokeWidth={2} />
-              </button>
-            </div>
           </div>
-          <p className="hidden text-xs text-muted-foreground sm:block">
-            Enter sends. Shift and Enter start a new line.
-          </p>
-        </form>
-      </section>
+        )}
+        {view === "chat" && (
+          <button
+            ref={historyButton}
+            type="button"
+            onClick={() => setView("history")}
+            aria-pressed={false}
+            aria-label="Past conversations"
+            title="Past conversations"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm hover:bg-muted"
+          >
+            <History aria-hidden="true" size={19} strokeWidth={1.7} />
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={startNew}
+          aria-label="New conversation"
+          title="New conversation"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm hover:bg-muted"
+        >
+          <SquarePen aria-hidden="true" size={18} strokeWidth={1.7} />
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close assistant"
+          title="Close assistant"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm hover:bg-muted"
+        >
+          {phone ? (
+            <ChevronDown aria-hidden="true" size={20} strokeWidth={1.7} />
+          ) : (
+            <X aria-hidden="true" size={19} strokeWidth={1.7} />
+          )}
+        </button>
+      </header>
+
+      {!consentChecked ? (
+        <div className="flex-1" />
+      ) : view === "history" ? (
+        <ConversationList
+          threads={threads}
+          activeId={threadId}
+          search={search}
+          onSearch={setSearch}
+          onOpen={openThread}
+          onDelete={setDeleting}
+        />
+      ) : asking && consent ? (
+        <AiPermissionGate
+          consent={consent}
+          onGranted={granted}
+          onNotNow={chooseNotNow}
+        />
+      ) : (
+        <>
+          <div
+            ref={transcript}
+            role="log"
+            aria-label="Conversation"
+            aria-live="polite"
+            onScroll={(event) => {
+              const el = event.currentTarget;
+              stickToBottom.current =
+                el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+            }}
+            className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-5"
+          >
+            {missing && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border pb-4 text-sm">
+                <p className="text-muted-foreground">{NO_ACCESS_LINE}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    writeNotNow(false);
+                    setNotNow(false);
+                  }}
+                  className="text-link font-medium underline underline-offset-4"
+                >
+                  Allow access
+                </button>
+              </div>
+            )}
+
+            {messages.length === 0 ? (
+              <EmptyState
+                onPick={(prompt) => void send(prompt)}
+                disabled={pending}
+              />
+            ) : (
+              messages.map((message) => (
+                <MessageView
+                  key={message.id}
+                  message={message}
+                  actions={performed[message.id]}
+                  cards={cards[message.id]}
+                  onOpenImage={(src) =>
+                    setLightbox({
+                      src,
+                      label: message.fromUser
+                        ? "Photo you sent"
+                        : "Photo from the assistant",
+                    })
+                  }
+                >
+                  {refusals[message.id]?.map((requirement) => {
+                    const key = `${message.id}-${requirement.axis}-${requirement.access}`;
+                    return (
+                      <PermissionNeeded
+                        key={key}
+                        requirement={requirement}
+                        allowed={allows(consent, requirement)}
+                        busy={granting === key || pending}
+                        onAllow={() => void allow(key, requirement)}
+                        onSendAgain={() =>
+                          void send(questionBefore(message.id))
+                        }
+                      />
+                    );
+                  })}
+                </MessageView>
+              ))
+            )}
+
+            {pending && (
+              <div
+                role="status"
+                className="flex items-center gap-2 text-sm text-muted-foreground"
+              >
+                <span className="flex gap-1" aria-hidden="true">
+                  {[0, 1, 2].map((dot) => (
+                    <span
+                      key={dot}
+                      className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-600 motion-reduce:animate-none"
+                      style={{ animationDelay: `${dot * 120}ms` }}
+                    />
+                  ))}
+                </span>
+                The assistant is writing
+              </div>
+            )}
+
+            {error && (
+              <p
+                role="alert"
+                className="flex items-start gap-2 text-sm text-burnt-peach-700 dark:text-burnt-peach-300"
+              >
+                <CircleAlert
+                  aria-hidden="true"
+                  size={16}
+                  strokeWidth={1.7}
+                  className="mt-0.5 shrink-0"
+                />
+                {error}
+              </p>
+            )}
+          </div>
+
+          <form
+            onSubmit={onSubmit}
+            className="space-y-2 border-t border-border p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]"
+          >
+            {attachment && (
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setLightbox({ src: attachment.url, label: "Photo to send" })
+                  }
+                  aria-label="Preview the photo to send"
+                  className="relative h-14 w-14 shrink-0 overflow-hidden rounded-sm border border-border"
+                >
+                  <PictureImage
+                    src={attachment.url}
+                    alt=""
+                    className="object-cover"
+                  />
+                </button>
+                <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+                  {attachment.file.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => attach(null)}
+                  aria-label="Remove photo"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm hover:bg-muted"
+                >
+                  <X aria-hidden="true" size={18} strokeWidth={1.7} />
+                </button>
+              </div>
+            )}
+
+            <div className="rounded-md border border-border bg-background transition-colors focus-within:border-foreground">
+              <input
+                ref={fileInput}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                aria-label="Choose a photo"
+                onChange={(event) => {
+                  const picked = event.target.files?.[0] ?? null;
+                  event.target.value = "";
+                  if (picked) attach(picked);
+                }}
+              />
+              <label htmlFor="ai-message" className="sr-only">
+                Message the assistant
+              </label>
+              <textarea
+                id="ai-message"
+                ref={textarea}
+                value={input}
+                rows={1}
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={onKeyDown}
+                disabled={pending}
+                placeholder={
+                  attachment
+                    ? "Say something about it (optional)"
+                    : "Ask, log or plan…"
+                }
+                className="block w-full resize-none bg-transparent px-4 pb-1 pt-3 leading-6 text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-60"
+              />
+              <div className="flex items-center justify-between px-2 pb-2">
+                <button
+                  type="button"
+                  onClick={() => fileInput.current?.click()}
+                  disabled={pending}
+                  aria-label="Attach a photo"
+                  title="Attach a photo"
+                  className="flex h-10 w-10 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-60"
+                >
+                  <Plus aria-hidden="true" size={20} strokeWidth={1.7} />
+                </button>
+                <button
+                  type="submit"
+                  disabled={pending || (!input.trim() && !attachment)}
+                  aria-label="Send"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-700 text-white transition-colors hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-brand-300 dark:text-charcoal-blue-950 dark:hover:bg-brand-200"
+                >
+                  <ArrowUp aria-hidden="true" size={18} strokeWidth={2} />
+                </button>
+              </div>
+            </div>
+            {!phone && (
+              <p className="text-xs text-muted-foreground">
+                Enter sends. Shift and Enter start a new line.
+              </p>
+            )}
+          </form>
+        </>
+      )}
 
       <Lightbox image={lightbox} onClose={() => setLightbox(null)} />
 
@@ -535,57 +803,148 @@ export default function AiChat({
 function ConversationList({
   threads,
   activeId,
-  onNew,
+  search,
+  onSearch,
   onOpen,
   onDelete,
 }: {
   threads: AiChatThread[];
   activeId: string | null;
-  onNew: () => void;
+  search: string;
+  onSearch: (value: string) => void;
   onOpen: (id: string) => void;
   onDelete: (thread: AiChatThread) => void;
 }) {
+  const query = search.trim().toLowerCase();
+  const shown = query
+    ? threads.filter((t) => t.title.toLowerCase().includes(query))
+    : threads;
+  const now = new Date();
+  const groups = [
+    { label: "Today", items: shown.filter((t) => sameDay(t.updatedAt, now)) },
+    {
+      label: "Earlier",
+      items: shown.filter((t) => !sameDay(t.updatedAt, now)),
+    },
+  ].filter((group) => group.items.length > 0);
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <button
-        type="button"
-        onClick={onNew}
-        className="btn-secondary min-h-11 w-full"
-      >
-        New conversation
-      </button>
+    <section
+      aria-label="Conversations"
+      className="flex min-h-0 flex-1 flex-col"
+    >
+      <div className="px-4 pb-2 pt-3">
+        <label htmlFor="assistant-search" className="sr-only">
+          Search conversations
+        </label>
+        <input
+          id="assistant-search"
+          type="search"
+          value={search}
+          onChange={(event) => onSearch(event.target.value)}
+          placeholder="Search conversations"
+          className="input min-h-11 w-full"
+        />
+      </div>
       {threads.length === 0 ? (
-        <p className="px-1 text-sm text-muted-foreground">
+        <p className="px-4 py-3 text-sm text-muted-foreground">
           Your conversations will be listed here.
         </p>
+      ) : groups.length === 0 ? (
+        <p className="px-4 py-3 text-sm text-muted-foreground">
+          No conversation matches that.
+        </p>
       ) : (
-        <ul className="min-h-0 flex-1 divide-y divide-border overflow-y-auto border-y border-border">
-          {threads.map((thread) => (
-            <li key={thread.id} className="flex items-center">
-              <button
-                type="button"
-                onClick={() => onOpen(thread.id)}
-                aria-current={thread.id === activeId ? "true" : undefined}
-                className={cn(
-                  "min-h-11 min-w-0 flex-1 truncate px-2 py-2.5 text-left text-sm transition-colors hover:bg-muted",
-                  thread.id === activeId
-                    ? "bg-muted font-semibold"
-                    : "text-muted-foreground",
-                )}
-              >
-                {thread.title}
-              </button>
-              <button
-                type="button"
-                onClick={() => onDelete(thread)}
-                aria-label={`Delete ${thread.title}`}
-                className="min-h-11 shrink-0 px-2 text-xs text-muted-foreground hover:text-destructive"
-              >
-                Delete
-              </button>
-            </li>
+        <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
+          {groups.map((group) => (
+            <div key={group.label} className="pt-3">
+              <h3 className="eyebrow px-2 pb-1">{group.label}</h3>
+              <ul className="divide-y divide-border border-y border-border">
+                {group.items.map((thread) => (
+                  <li key={thread.id} className="flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => onOpen(thread.id)}
+                      aria-current={thread.id === activeId ? "true" : undefined}
+                      className={cn(
+                        "min-h-11 min-w-0 flex-1 truncate px-2 py-2.5 text-left text-sm transition-colors hover:bg-muted",
+                        thread.id === activeId
+                          ? "bg-muted font-semibold"
+                          : "text-foreground",
+                      )}
+                    >
+                      {thread.title}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDelete(thread)}
+                      aria-label={`Delete ${thread.title}`}
+                      className="min-h-11 shrink-0 px-2 text-xs text-muted-foreground hover:text-destructive"
+                    >
+                      Delete
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/**
+ * A reply whose tool call the person's consent refused. One button turns on the switch it named
+ * and nothing else; once on, the question can go again.
+ */
+function PermissionNeeded({
+  requirement,
+  allowed,
+  busy,
+  onAllow,
+  onSendAgain,
+}: {
+  requirement: AiConsentRequirement;
+  allowed: boolean;
+  busy: boolean;
+  onAllow: () => void;
+  onSendAgain: () => void;
+}) {
+  const words = describeRequirement(requirement);
+  return (
+    <div
+      role="group"
+      aria-label="Permission needed"
+      className="w-full max-w-[92%] space-y-2 rounded-md border border-border bg-muted/40 px-3.5 py-3 text-sm"
+    >
+      <p className="flex items-center gap-2 font-medium">
+        <Lock aria-hidden="true" size={14} strokeWidth={1.8} />
+        {allowed ? "Allowed" : words.title}
+      </p>
+      <p className="text-muted-foreground">
+        {allowed
+          ? "Send the question again and it can do it now."
+          : "Turn on just this, and ask again. You can change it any time in Settings."}
+      </p>
+      {allowed ? (
+        <button
+          type="button"
+          onClick={onSendAgain}
+          disabled={busy}
+          className="btn-secondary min-h-10"
+        >
+          Send again
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={onAllow}
+          disabled={busy}
+          className="btn-primary min-h-10"
+        >
+          {words.action}
+        </button>
       )}
     </div>
   );
@@ -645,18 +1004,16 @@ function PictureImage({
 }
 
 function EmptyState({
-  quickPrompts,
   onPick,
   disabled,
 }: {
-  quickPrompts: QuickPrompt[];
   onPick: (prompt: string) => void;
   disabled: boolean;
 }) {
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-4 py-3 sm:py-10">
+    <div className="flex flex-col gap-4 py-2">
       <div className="space-y-2">
-        <h3 className="text-xl font-semibold tracking-tight sm:text-2xl">
+        <h3 className="text-xl font-semibold tracking-tight">
           What would you like to know?
         </h3>
         <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
@@ -669,7 +1026,7 @@ function EmptyState({
           Try asking
         </p>
         <ul className="divide-y divide-border">
-          {quickPrompts.map((quick, index) => (
+          {QUICK_PROMPTS.map((quick, index) => (
             <li key={quick.id}>
               <button
                 type="button"
@@ -698,11 +1055,13 @@ function MessageView({
   actions,
   cards,
   onOpenImage,
+  children,
 }: {
   message: AiChatMessage;
   actions?: AiToolInvocation[];
   cards?: AiCard[];
   onOpenImage: (src: string) => void;
+  children?: ReactNode;
 }) {
   const [copied, setCopied] = useState(false);
   const mine = message.fromUser;
@@ -736,7 +1095,7 @@ function MessageView({
       </p>
       <div
         className={cn(
-          "max-w-[92%] space-y-2 rounded-md px-3.5 py-2.5 text-sm leading-relaxed sm:max-w-[80%]",
+          "max-w-[92%] space-y-2 rounded-md px-3.5 py-2.5 text-sm leading-relaxed",
           mine
             ? "whitespace-pre-wrap bg-primary text-primary-foreground"
             : "border border-border bg-background",
@@ -808,6 +1167,7 @@ function MessageView({
           ))}
         </ul>
       )}
+      {children}
     </article>
   );
 }

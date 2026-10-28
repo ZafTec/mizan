@@ -1255,6 +1255,56 @@ html.dark .ring-track {
 .mobile-navigation {
   display: none;
 }
+/* The assistant: docked beside the page on wide screens, a full-height sheet on a phone. */
+.assistant-launcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--foreground);
+  transition: background-color 160ms ease-out;
+}
+.assistant-launcher[aria-expanded="true"] {
+  background: var(--muted);
+}
+.assistant-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 420px;
+  min-width: 0;
+  height: 100%;
+  border-left: 1px solid var(--border);
+  background: var(--background);
+}
+.assistant-panel[hidden] {
+  display: none;
+}
+.assistant-panel:focus {
+  outline: none;
+}
+.assistant-sheet {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  top: 0;
+  height: 100dvh;
+  border-left: 0;
+}
+.assistant-backdrop {
+  position: fixed;
+  z-index: 59;
+  inset: 0;
+  background: color-mix(
+    in oklab,
+    var(--color-charcoal-blue-950) 45%,
+    transparent
+  );
+}
 .skip-link {
   position: fixed;
   left: 16px;
@@ -1280,6 +1330,7 @@ summary {
   cursor: pointer;
 }
 @media (hover: hover) and (pointer: fine) {
+  .assistant-launcher:hover,
   .sidebar-link:hover,
   .account-link:hover,
   .icon-button:not(:disabled):hover,
@@ -1397,9 +1448,26 @@ summary {
     border-radius: 3px;
   }
 }
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* The bottom bar belongs to the page, so a docked panel keeps it off its composer. */
+  .app-shell:has(> .assistant-panel:not([hidden])) .mobile-navigation {
+    inset-inline-end: 420px;
+  }
+}
 @media (max-width: 639px) {
   .app-topbar {
     padding: 0 18px;
+  }
+  .assistant-launcher {
+    padding: 0 11px;
+  }
+  .assistant-launcher-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
   .account-name {
     display: none;

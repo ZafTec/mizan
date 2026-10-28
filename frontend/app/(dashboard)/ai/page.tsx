@@ -1,54 +1,19 @@
-import Link from "next/link";
-import AiChat, { type QuickPrompt } from "@/components/ai/AiChat";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-const QUICK_PROMPTS: QuickPrompt[] = [
-  {
-    id: "fit-remaining",
-    label: "Ideas for my remaining macros today",
-    prompt:
-      "What are 3 quick meal ideas that fit my remaining macros for today?",
-  },
-  {
-    id: "weekly-review",
-    label: "Review my last 7 days",
-    prompt:
-      "Summarise my nutrition and training over the past 7 days and flag any trends.",
-  },
-  {
-    id: "protein-gap",
-    label: "High-protein snack ideas",
-    prompt:
-      "Give me 5 high-protein snacks under 250 calories I can keep on hand.",
-  },
-  {
-    id: "workout-plan",
-    label: "What to focus on in my next workout",
-    prompt:
-      "Based on my recent workouts, what should I focus on in my next session?",
-  },
-];
-
-export default function AiHubPage() {
-  return (
-    <div className="space-y-4">
-      <header className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-1">
-          <p className="eyebrow hidden sm:block">Assistant</p>
-          <h1 className="text-2xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50 sm:text-3xl">
-            Ask about your day
-          </h1>
-        </div>
-        <Link
-          href="/profile/settings"
-          className="text-sm underline underline-offset-4"
-        >
-          Choose what the assistant can see
-        </Link>
-      </header>
-
-      <AiChat quickPrompts={QUICK_PROMPTS} />
-    </div>
-  );
+/**
+ * The assistant is a panel in the app shell now, not a page. `/ai` stays a working link: it opens
+ * the panel over Today, on the named conversation when `?thread=` says which.
+ */
+export default async function AiPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ thread?: string | string[] }>;
+}) {
+  const { thread } = await searchParams;
+  const id = Array.isArray(thread) ? thread[0] : thread;
+  const query = new URLSearchParams({ assistant: "open" });
+  if (id) query.set("thread", id);
+  redirect(`/today?${query}`);
 }

@@ -304,8 +304,13 @@ test("a week drafted in chat is listed as a conversation after a reload", async 
     page.getByRole("region", { name: "Plan High-protein week" }),
   ).toBeVisible();
 
+  // The panel and its conversation come back after a reload.
   await page.reload();
-  const conversations = page.getByRole("complementary", {
+  await expect(
+    page.getByRole("article", { name: "You said" }).last(),
+  ).toContainText(`Please ${PLAN_PROMPT}`);
+  await page.getByRole("button", { name: "Past conversations" }).click();
+  const conversations = page.getByRole("region", {
     name: "Conversations",
   });
   const thread = conversations.getByRole("button", {
@@ -316,8 +321,9 @@ test("a week drafted in chat is listed as a conversation after a reload", async 
   await expect(conversations.getByRole("listitem").first()).toContainText(
     "Plan my week",
   );
-  await thread.click();
+  // The conversation the reload restored is the one marked current.
   await expect(thread).toHaveAttribute("aria-current", "true");
+  await thread.click();
   await expect(
     page.getByRole("article", { name: "You said" }).last(),
   ).toContainText(`Please ${PLAN_PROMPT}`);

@@ -20,6 +20,8 @@ export type AiChatThreadDetail = Schemas["AiChatThreadDetailDto"];
 /** One turn: the stored messages, what it wrote (`performed`) and its typed `cards`. */
 export type AiChatTurn = Schemas["AiChatTurnDto"];
 export type AiToolInvocation = Schemas["AiToolInvocation"];
+/** A tool call the person's consent refused, naming the one switch that would allow it. */
+export type AiConsentRequirement = Schemas["AiConsentRequirement"];
 export type AiOnboardingTurn = Schemas["AiOnboardingTurnDto"];
 export type AiToolSummary = Schemas["AiToolSummary"];
 export type AiTrainerAnswer = Schemas["AiTrainerAnswerDto"];
@@ -38,10 +40,15 @@ export const updateAiConsent = (consent: Omit<AiConsent, "updatedAt">) =>
 export const getMyAiUsage = (days = 14) =>
   clientApi<MyAiUsage>(`/api/Ai/usage?days=${days}`);
 
+/**
+ * A turn can write to the log, so each attempt carries an idempotency key: a resend after a lost
+ * response replays the stored answer instead of logging twice.
+ */
 export const sendAiChatMessage = (threadId: string | null, message: string) =>
   clientApi<AiChatTurn>("/api/Ai/chat", {
     method: "POST",
     body: { threadId, message },
+    headers: { "Idempotency-Key": crypto.randomUUID() },
   });
 
 /**
@@ -63,6 +70,7 @@ export async function sendAiChatImage(
     {
       method: "POST",
       credentials: "include",
+      headers: { "Idempotency-Key": crypto.randomUUID() },
       body,
     },
   );

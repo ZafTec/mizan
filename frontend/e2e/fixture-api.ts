@@ -1138,12 +1138,22 @@ const server = Bun.serve({
         messages: [],
       };
       if (!state.threads.includes(target)) state.threads.unshift(target);
+      // "log ..." asks for a write; without the switch on, the turn comes back with the typed
+      // refusal, as AiToolRunner answers it.
+      const consent = state.aiPlanning.consent;
+      const refused =
+        /^log /i.test(message) &&
+        !(consent.allowWrites && consent.writeNutrition);
       const reply = {
         id: crypto.randomUUID(),
         fromUser: false,
-        content: image
-          ? "That looks like **rice and chicken**."
-          : `You asked: ${message}`,
+        content: refused
+          ? "Logging meals is switched off, so I could not add that."
+          : image
+            ? "That looks like **rice and chicken**."
+            : /^log /i.test(message)
+              ? `Logged: ${message.slice(4)}`
+              : `You asked: ${message}`,
         createdAt: now,
       };
       const stored = {
@@ -1160,8 +1170,28 @@ const server = Bun.serve({
         title: target.title,
         message: stored,
         reply,
-        performed: [],
-      });
+        performed: refused
+          ? [
+              {
+                tool: "log_food",
+                summary: "",
+                succeeded: false,
+                error:
+                  "The user has not given permission to change their food and goals.",
+              },
+            ]
+          : [],
+        cards: [],
+        consentRequired: refused
+          ? [
+              {
+                errorCode: "ai_consent_required",
+                axis: "nutrition",
+                access: "write",
+              },
+            ]
+          : [],
+      } satisfies components["schemas"]["AiChatTurnDto"]);
     }
     if (path === "/api/Uploads/image" && method === "POST") {
       state.writes.push({ path, body: {} });

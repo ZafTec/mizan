@@ -420,6 +420,7 @@ export async function handleAiPlanning(
         // A type this web build does not know: the reply's text stands alone.
         { type: "recipe_card", data: { title: "Not rendered" } },
       ],
+      consentRequired: [],
     } satisfies ChatTurn);
   }
   return null;

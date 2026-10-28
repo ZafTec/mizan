@@ -14,7 +14,9 @@ import {
   type AiToolInvocation,
   type AiToolSummary,
 } from "@/lib/api/ai";
-import AiPermissionGate from "@/components/ai/AiPermissionGate";
+import AiPermissionGate, {
+  consentMissing,
+} from "@/components/ai/AiPermissionGate";
 import { cn } from "@/lib/utils";
 
 const OPENER =
@@ -146,14 +148,15 @@ export default function OnboardingAgent() {
 
   // Never asked, and never granted anything: ask before the first turn rather
   // than letting every tool call come back refused.
-  const needsPermission =
-    consent !== null &&
-    !consent.allowWrites &&
-    !consent.enabled &&
-    entries.length === 0;
-
-  if (needsPermission) {
-    return <AiPermissionGate consent={consent} onGranted={setConsent} />;
+  if (consent && consentMissing(consent) && entries.length === 0) {
+    return (
+      <AiPermissionGate
+        consent={consent}
+        onGranted={setConsent}
+        lead="Setup records your goal and first entries for you. It only sees what you switch on, and you can change this at any time in Settings."
+        className="glass-panel overflow-hidden"
+      />
+    );
   }
 
   return (

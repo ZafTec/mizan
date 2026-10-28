@@ -82,6 +82,10 @@ A planning request is one meal plan draft for one budget ceiling, so Free gets o
 
 Structured responses must pass their declared schema before use.
 
+### The web panel
+
+On the web the assistant is a panel in the app shell (`components/ai/Assistant.tsx`), opened by **Ask Mizan** in the top bar on every signed-in screen. From 768px it docks on the right and leaves the page usable; below that it is a full-height sheet that holds focus. Escape closes it and focus returns to the launcher. The shell keeps the panel and its conversation across client navigation, and remembers both per person in the browser. `/ai` redirects to `/today?assistant=open`, and `/ai?thread=<id>` opens that conversation. Until the person has chosen what it may use (both master switches off), the panel asks in place of the suggestions with the same step onboarding uses (`AiPermissionGate`); **Not now** leaves everything off and keeps chat open with a line saying it cannot see the log. A chat turn may write, so each attempt sends a new `Idempotency-Key`.
+
 ### Planning tools and typed cards
 
 Chat has six planning tools, each an existing command on `DataAxis.Planning`: `generate_meal_plan`, `get_plan_day` (the active plan's day, or a named plan's, drafts included), `add_plan_entry`, `update_plan_entry`, `remove_plan_entry`, and `generate_shopping_list`. Update and remove refuse a plan that is not a draft. The tool result the model reads is plain text with the ids it needs for the next call.

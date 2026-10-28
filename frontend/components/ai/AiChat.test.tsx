@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -7,7 +8,8 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import AiChat from "./AiChat";
+import { useState } from "react";
+import AiChat, { NO_ACCESS_LINE } from "./AiChat";
 import * as api from "@/lib/api/ai";
 
 const { refresh } = vi.hoisted(() => ({ refresh: vi.fn() }));
@@ -18,16 +20,10 @@ vi.mock("@/lib/api/ai", () => ({
   deleteAiChatThread: vi.fn(),
   sendAiChatMessage: vi.fn(),
   sendAiChatImage: vi.fn(),
+  getAiConsent: vi.fn(),
+  updateAiConsent: vi.fn(),
 }));
 
-const prompts = [
-  {
-    id: "p1",
-    label: "Ideas for today",
-    prompt: "What fits my macros?",
-    icon: "flame" as const,
-  },
-];
 const reply = (content: string, extra: object = {}) => ({
   id: crypto.randomUUID(),
   fromUser: false,
@@ -52,10 +48,55 @@ const turn = (
   reply: reply(content),
   performed,
   cards: [],
+  consentRequired: [],
 });
+
+const consent = (overrides: Partial<api.AiConsent> = {}): api.AiConsent => ({
+  enabled: true,
+  shareNutrition: true,
+  shareTraining: true,
+  shareBody: true,
+  allowWrites: true,
+  writeNutrition: true,
+  writeTraining: true,
+  writeBody: true,
+  updatedAt: "2026-10-01T09:00:00Z",
+  ...overrides,
+});
+const nothingChosen = consent({
+  enabled: false,
+  shareNutrition: false,
+  shareTraining: false,
+  shareBody: false,
+  allowWrites: false,
+  writeNutrition: false,
+  writeTraining: false,
+  writeBody: false,
+});
+
+/** The panel holds the open conversation; this stands in for it. */
+function Panel({ initial = null }: { initial?: string | null }) {
+  const [threadId, setThreadId] = useState<string | null>(initial);
+  return (
+    <AiChat threadId={threadId} onThreadChange={setThreadId} onClose={close} />
+  );
+}
+const close = vi.fn();
+/** Renders the panel's conversation and lets its first reads (threads, consent) settle. */
+async function chat() {
+  render(<Panel />);
+  await act(async () => {});
+}
+
+async function openPast(title: string) {
+  fireEvent.click(screen.getByRole("button", { name: "Past conversations" }));
+  fireEvent.click(await screen.findByRole("button", { name: title }));
+}
 
 beforeEach(() => {
   vi.clearAllMocks();
+  window.localStorage.clear();
+  vi.mocked(api.getAiConsent).mockResolvedValue(consent());
   vi.mocked(api.listAiChatThreads).mockResolvedValue([
     { id: "t0", title: "Last week", updatedAt: "2026-09-24T10:00:00Z" },
   ]);
@@ -96,14 +137,16 @@ describe("the assistant conversation", () => {
     vi.mocked(api.sendAiChatMessage).mockResolvedValue(
       turn("Try a chicken wrap."),
     );
-    render(<AiChat quickPrompts={prompts} />);
+    await chat();
 
-    fireEvent.click(screen.getByRole("button", { name: /Ideas for today/ }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: /remaining macros today/ }),
+    );
 
     await screen.findByText("Try a chicken wrap.");
     expect(api.sendAiChatMessage).toHaveBeenCalledWith(
       null,
-      "What fits my macros?",
+      "What are 3 quick meal ideas that fit my remaining macros for today?",
     );
     const log = screen.getByRole("log", { name: "Conversation" });
     expect(within(log).getByRole("article", { name: "You said" })).toBeTruthy();
@@ -114,7 +157,7 @@ describe("the assistant conversation", () => {
 
   it("sends on Enter, keeps a new line on Shift and Enter, and ignores an empty box", async () => {
     vi.mocked(api.sendAiChatMessage).mockResolvedValue(turn("Sure."));
-    render(<AiChat quickPrompts={prompts} />);
+    await chat();
 
     fireEvent.keyDown(box(), { key: "Enter" });
     expect(api.sendAiChatMessage).not.toHaveBeenCalled();
@@ -135,7 +178,7 @@ describe("the assistant conversation", () => {
     vi.mocked(api.sendAiChatMessage).mockRejectedValue(
       new Error("You have used today's assistant allowance."),
     );
-    render(<AiChat quickPrompts={prompts} />);
+    await chat();
 
     fireEvent.change(box(), { target: { value: "a long question" } });
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
@@ -157,7 +200,7 @@ describe("the assistant conversation", () => {
         },
       ]),
     );
-    render(<AiChat quickPrompts={prompts} />);
+    await chat();
 
     fireEvent.change(box(), { target: { value: "log yogurt" } });
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
@@ -170,7 +213,7 @@ describe("the assistant conversation", () => {
     vi.mocked(api.sendAiChatMessage).mockResolvedValue(
       turn("You are **on track**.", [], { content: "is *this* fine" }),
     );
-    render(<AiChat quickPrompts={prompts} />);
+    await chat();
 
     fireEvent.change(box(), { target: { value: "is *this* fine" } });
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
@@ -186,8 +229,8 @@ describe("photos", () => {
       type: "image/jpeg",
     });
 
-  it("shows a thumbnail before sending, which can be previewed full size or removed", () => {
-    render(<AiChat quickPrompts={prompts} />);
+  it("shows a thumbnail before sending, which can be previewed full size or removed", async () => {
+    await chat();
 
     fireEvent.change(screen.getByLabelText("Choose a photo"), {
       target: { files: [photo()] },
@@ -214,7 +257,7 @@ describe("photos", () => {
     vi.mocked(api.sendAiChatImage).mockResolvedValue(
       turn("That looks like rice and beans."),
     );
-    render(<AiChat quickPrompts={prompts} />);
+    await chat();
 
     fireEvent.change(screen.getByLabelText("Choose a photo"), {
       target: { files: [photo()] },
@@ -236,7 +279,7 @@ describe("photos", () => {
         answer = resolve;
       }),
     );
-    render(<AiChat quickPrompts={prompts} />);
+    await chat();
 
     fireEvent.change(screen.getByLabelText("Choose a photo"), {
       target: { files: [photo()] },
@@ -280,7 +323,7 @@ describe("photos", () => {
     vi.mocked(api.sendAiChatImage).mockRejectedValue(
       new Error("The assistant is unavailable."),
     );
-    render(<AiChat quickPrompts={prompts} />);
+    await chat();
 
     fireEvent.change(screen.getByLabelText("Choose a photo"), {
       target: { files: [photo()] },
@@ -313,8 +356,8 @@ describe("photos", () => {
         reply("I cannot see that.", { id: "m2" }),
       ],
     });
-    render(<AiChat quickPrompts={prompts} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Last week" }));
+    await chat();
+    await openPast("Last week");
     await screen.findByText("I cannot see that.");
 
     expect(
@@ -323,8 +366,8 @@ describe("photos", () => {
   });
 
   it("opens a photo in a past conversation full size, and closes it with Escape", async () => {
-    render(<AiChat quickPrompts={prompts} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Last week" }));
+    await chat();
+    await openPast("Last week");
     await screen.findByText("It looks balanced.");
 
     fireEvent.click(screen.getByRole("button", { name: "Open photo" }));
@@ -344,27 +387,24 @@ describe("photos", () => {
 
 describe("conversations", () => {
   it("lists earlier ones, opens one, and starts a new one", async () => {
-    render(<AiChat quickPrompts={prompts} />);
+    await chat();
 
-    fireEvent.click(
-      (await screen.findAllByRole("button", { name: "Last week" }))[0],
-    );
+    await openPast("Last week");
     await screen.findByText("It looks balanced.");
     expect(api.getAiChatThread).toHaveBeenCalledWith("t0");
 
-    fireEvent.click(
-      screen.getAllByRole("button", { name: "New conversation" })[0],
-    );
+    fireEvent.click(screen.getByRole("button", { name: "New conversation" }));
     expect(screen.queryByText("It looks balanced.")).toBeNull();
     expect(screen.getByText("What would you like to know?")).toBeTruthy();
   });
 
   it("asks before deleting a conversation, and only deletes when confirmed", async () => {
     vi.mocked(api.deleteAiChatThread).mockResolvedValue(undefined);
-    render(<AiChat quickPrompts={prompts} />);
+    await chat();
 
+    fireEvent.click(screen.getByRole("button", { name: "Past conversations" }));
     fireEvent.click(
-      (await screen.findAllByRole("button", { name: "Delete Last week" }))[0],
+      await screen.findByRole("button", { name: "Delete Last week" }),
     );
     expect(api.deleteAiChatThread).not.toHaveBeenCalled();
     fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
@@ -382,10 +422,8 @@ describe("conversations", () => {
   it("copies a reply", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.assign(navigator, { clipboard: { writeText } });
-    render(<AiChat quickPrompts={prompts} />);
-    fireEvent.click(
-      (await screen.findAllByRole("button", { name: "Last week" }))[0],
-    );
+    await chat();
+    await openPast("Last week");
     await screen.findByText("It looks balanced.");
 
     fireEvent.click(screen.getByRole("button", { name: /Copy/ }));
@@ -394,5 +432,106 @@ describe("conversations", () => {
       expect(writeText).toHaveBeenCalledWith("It looks balanced."),
     );
     expect(await screen.findByText("Copied")).toBeTruthy();
+  });
+});
+
+describe("permission", () => {
+  it("asks what it may use before the first turn, and Not now keeps it usable", async () => {
+    vi.mocked(api.getAiConsent).mockResolvedValue(nothingChosen);
+    vi.mocked(api.sendAiChatMessage).mockResolvedValue(
+      turn("In general, yes."),
+    );
+    await chat();
+
+    await screen.findByRole("heading", { name: "What can the assistant use?" });
+    expect(screen.queryByLabelText("Message the assistant")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Not now" }));
+
+    expect(screen.getByText(NO_ACCESS_LINE)).toBeTruthy();
+    fireEvent.change(box(), { target: { value: "is oats ok" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await screen.findByText("In general, yes.");
+    expect(api.updateAiConsent).not.toHaveBeenCalled();
+  });
+
+  it("saves the switches chosen, then opens on the suggestions", async () => {
+    vi.mocked(api.getAiConsent).mockResolvedValue(nothingChosen);
+    vi.mocked(api.updateAiConsent).mockResolvedValue(
+      consent({ shareBody: false }),
+    );
+    await chat();
+
+    await screen.findByRole("heading", { name: "What can the assistant use?" });
+    fireEvent.click(screen.getByRole("switch", { name: /Workouts/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Allow and start" }));
+
+    await screen.findByText("What would you like to know?");
+    expect(api.updateAiConsent).toHaveBeenCalledWith({
+      enabled: true,
+      shareNutrition: true,
+      shareTraining: false,
+      shareBody: false,
+      allowWrites: true,
+      writeNutrition: true,
+      writeTraining: true,
+      writeBody: true,
+    });
+  });
+
+  it("offers to allow just the switch a refusal named, then to send the question again", async () => {
+    const reads = consent({
+      allowWrites: false,
+      writeNutrition: false,
+      writeTraining: false,
+      writeBody: false,
+    });
+    vi.mocked(api.getAiConsent).mockResolvedValue(reads);
+    vi.mocked(api.sendAiChatMessage).mockResolvedValue({
+      ...turn("Logging is switched off.", [], { content: "log eggs" }),
+      consentRequired: [
+        {
+          errorCode: "ai_consent_required",
+          axis: "nutrition",
+          access: "write",
+        },
+      ],
+    });
+    vi.mocked(api.updateAiConsent).mockResolvedValue(
+      consent({
+        allowWrites: true,
+        writeNutrition: true,
+        writeTraining: false,
+        writeBody: false,
+      }),
+    );
+    await chat();
+
+    fireEvent.change(box(), { target: { value: "log eggs" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    const needed = await screen.findByRole("group", {
+      name: "Permission needed",
+    });
+    fireEvent.click(
+      within(needed).getByRole("button", {
+        name: "Allow logging meals and plans",
+      }),
+    );
+    await waitFor(() =>
+      expect(api.updateAiConsent).toHaveBeenCalledWith({
+        ...reads,
+        updatedAt: undefined,
+        allowWrites: true,
+        writeNutrition: true,
+      }),
+    );
+
+    fireEvent.click(
+      await within(needed).findByRole("button", { name: "Send again" }),
+    );
+    await waitFor(() =>
+      expect(api.sendAiChatMessage).toHaveBeenLastCalledWith("t1", "log eggs"),
+    );
   });
 });

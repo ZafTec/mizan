@@ -2,9 +2,15 @@ import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 
 const apiURL = process.env.PLAYWRIGHT_API_URL ?? "http://localhost:5100";
 
-type Options = { empty?: boolean; role?: "admin" | "user"; pro?: boolean };
+type Options = {
+  empty?: boolean;
+  role?: "admin" | "user";
+  pro?: boolean;
+  aiPlanning?: { consented?: boolean };
+};
 type State = {
   writes: { path: string; body: Record<string, unknown> }[];
+  unhandled: string[];
   impersonating: boolean;
 };
 
@@ -160,17 +166,30 @@ test.describe("logging a meal with the assistant", () => {
 });
 
 test.describe("the assistant conversation", () => {
-  test("a past photo opens full size and closes with Escape", async ({
+  const consented = { aiPlanning: { consented: true } };
+  const panel = (page: Page) =>
+    page.getByRole("complementary", { name: "Mizan assistant" });
+
+  async function openPast(page: Page, title: string) {
+    await page.getByRole("button", { name: "Past conversations" }).click();
+    await page
+      .getByRole("region", { name: "Conversations" })
+      .getByRole("button", { name: title, exact: true })
+      .click();
+  }
+
+  test.afterEach(async ({ context }) => {
+    expect((await state(context)).unhandled).toEqual([]);
+  });
+
+  test("a past photo opens full size and closes with Escape, leaving the panel open", async ({
     context,
     page,
   }) => {
-    await signIn(context);
+    await signIn(context, consented);
     await page.goto("/ai");
 
-    await page
-      .getByRole("complementary", { name: "Conversations" })
-      .getByRole("button", { name: "Protein ideas", exact: true })
-      .click();
+    await openPast(page, "Protein ideas");
     await expect(page.getByText("You averaged")).toBeVisible();
     await page.getByRole("button", { name: "Open photo" }).click();
 
@@ -180,13 +199,14 @@ test.describe("the assistant conversation", () => {
     ).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
+    await expect(panel(page)).toBeVisible();
   });
 
   test("a message gets an answer, and a refused one gives the words back", async ({
     context,
     page,
   }) => {
-    await signIn(context);
+    await signIn(context, consented);
     await page.goto("/ai");
     const box = page.getByLabel("Message the assistant");
 
@@ -204,7 +224,7 @@ test.describe("the assistant conversation", () => {
     context,
     page,
   }) => {
-    await signIn(context);
+    await signIn(context, consented);
     await page.goto("/ai");
 
     await page.getByLabel("Choose a photo").setInputFiles({
@@ -224,34 +244,10 @@ test.describe("the assistant conversation", () => {
     ).toBeVisible();
   });
 
-  test("on a phone the list is behind a button, the composer stays in view, and nothing overflows", async ({
-    context,
-    page,
-  }) => {
-    await page.setViewportSize({ width: 375, height: 700 });
-    await signIn(context);
-    await page.goto("/ai");
-
-    await expect(
-      page.getByRole("complementary", { name: "Conversations" }),
-    ).toBeHidden();
-    await expect(page.getByLabel("Message the assistant")).toBeInViewport();
-    await noOverflow(page);
-
-    await page.getByRole("button", { name: "Conversations" }).click();
-    await page
-      .getByRole("dialog")
-      .getByRole("button", { name: "Protein ideas", exact: true })
-      .click();
-    await expect(page.getByText("You averaged")).toBeVisible();
-    await expect(page.getByRole("dialog")).toBeHidden();
-    await noOverflow(page);
-    await page.screenshot({ path: "test-results/ai-phone.png" });
-  });
-
   test("deleting a conversation asks first", async ({ context, page }) => {
-    await signIn(context);
+    await signIn(context, consented);
     await page.goto("/ai");
+    await page.getByRole("button", { name: "Past conversations" }).click();
 
     await page.getByRole("button", { name: "Delete Protein ideas" }).click();
     await page
@@ -261,6 +257,7 @@ test.describe("the assistant conversation", () => {
     expect(
       writesTo(await state(context), "/api/Ai/threads/thread-1"),
     ).toHaveLength(0);
+    await expect(panel(page)).toBeVisible();
 
     await page.getByRole("button", { name: "Delete Protein ideas" }).click();
     await page

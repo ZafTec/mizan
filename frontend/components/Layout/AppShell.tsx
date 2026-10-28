@@ -30,6 +30,11 @@ import logoTransparent from "@/public/logo_transparent.png";
 import HouseholdSwitcher from "./HouseholdSwitcher";
 import LogSheet from "./LogSheet";
 import ImpersonationBanner from "./ImpersonationBanner";
+import {
+  AssistantLauncher,
+  AssistantPanel,
+  AssistantProvider,
+} from "@/components/ai/Assistant";
 import { SPINE, USER_MENU, isActive, type NavItem } from "./nav";
 import {
   LOG_ENTRY_EVENT,
@@ -139,166 +144,174 @@ export default function AppShell({
   }
 
   return (
-    <div
-      className={`shell-fullbleed app-shell${collapsed ? " sidebar-collapsed" : ""}${activeSession ? " active-session-shell" : ""}`}
-    >
-      <a className="skip-link" href="#app-content">
-        Skip to content
-      </a>
-      <aside className="app-sidebar">
-        <div className="sidebar-brand">
-          <Link href="/today" aria-label="Mizan Today">
-            <Image
-              src={logoTransparent}
-              alt=""
-              width={32}
-              height={32}
-              priority
-            />
-            {!collapsed && <span>Mizan</span>}
-          </Link>
-          <button
-            className="icon-button"
-            onClick={() => setCollapsed(!collapsed)}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {collapsed ? (
-              <PanelLeftOpen size={17} />
-            ) : (
-              <PanelLeftClose size={17} />
-            )}
-          </button>
-        </div>
-        <div className="sidebar-log">
-          <button
-            className="btn-primary w-full"
-            onClick={openLog}
-            aria-label="Log an entry"
-          >
-            <Plus size={20} />
-            {!collapsed && "Log entry"}
-          </button>
-        </div>
-        <nav aria-label="Primary" className="sidebar-navigation">
-          {SPINE.map((item) => (
-            <NavigationLink key={item.href} item={item} collapsed={collapsed} />
-          ))}
-        </nav>
-        <div className="sidebar-footer">
-          {!collapsed && (
-            <p className="text-xs log-muted">Meals. Lifts. Measurements.</p>
-          )}
-          <Link
-            href="/profile"
-            className="sidebar-profile"
-            aria-label="Your profile"
-          >
-            <span className="user-initial" aria-hidden="true">
-              {(user.name || user.email).charAt(0).toUpperCase()}
-            </span>
-            {!collapsed && (
-              <span className="truncate text-sm">
-                {user.name || user.email}
-              </span>
-            )}
-          </Link>
-        </div>
-      </aside>
-      <div className="app-column">
-        {user.impersonation && (
-          <ImpersonationBanner
-            impersonation={user.impersonation}
-            userName={user.name || user.email}
-          />
-        )}
-        <header className="app-topbar">
-          <Link href="/today" className="mobile-brand">
-            <Image src={logoTransparent} alt="" width={28} height={28} />
-            <span>Mizan</span>
-          </Link>
-          <span className="desktop-context log-muted">
-            {variant === "admin" ? "Administration" : "Your daily log"}
-          </span>
-          <div className="ml-auto flex items-center gap-2">
-            <HouseholdSwitcher />
-            <NotificationBell />
-            <Popover open={accountOpen} onOpenChange={setAccountOpen}>
-              <PopoverTrigger asChild>
-                <button className="account-trigger" aria-label="Account">
-                  <span className="user-initial" aria-hidden="true">
-                    {(user.name || user.email).charAt(0).toUpperCase()}
-                  </span>
-                  <span className="account-name">
-                    {user.name?.split(" ")[0] || "Account"}
-                  </span>
-                  <ChevronDown size={14} />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="account-popover">
-                <div className="px-3 py-3 border-b mb-1">
-                  <p className="font-medium text-sm truncate">
-                    {user.name || "Your account"}
-                  </p>
-                  <p className="text-xs log-muted mt-1 break-all">
-                    {user.email}
-                  </p>
-                </div>
-                {USER_MENU.filter(
-                  (item) => !item.adminOnly || user.role === "admin",
-                ).map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setAccountOpen(false)}
-                    className="account-link"
-                  >
-                    <Icon name={item.icon} size={16} />
-                    {item.label}
-                  </Link>
-                ))}
-                <button
-                  onClick={logout}
-                  disabled={signingOut}
-                  className="account-link text-destructive border-t mt-1"
-                >
-                  <LogOut size={16} />
-                  {signingOut ? "Signing out…" : "Sign out"}
-                </button>
-              </PopoverContent>
-            </Popover>
+    <AssistantProvider userId={user.id}>
+      <div
+        className={`shell-fullbleed app-shell${collapsed ? " sidebar-collapsed" : ""}${activeSession ? " active-session-shell" : ""}`}
+      >
+        <a className="skip-link" href="#app-content">
+          Skip to content
+        </a>
+        <aside className="app-sidebar">
+          <div className="sidebar-brand">
+            <Link href="/today" aria-label="Mizan Today">
+              <Image
+                src={logoTransparent}
+                alt=""
+                width={32}
+                height={32}
+                priority
+              />
+              {!collapsed && <span>Mizan</span>}
+            </Link>
+            <button
+              className="icon-button"
+              onClick={() => setCollapsed(!collapsed)}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {collapsed ? (
+                <PanelLeftOpen size={17} />
+              ) : (
+                <PanelLeftClose size={17} />
+              )}
+            </button>
           </div>
-        </header>
-        <div id="app-content" tabIndex={-1} className="app-content">
-          <div className="app-content-inner">{children}</div>
-        </div>
-        <nav aria-label="Primary mobile" className="mobile-navigation">
-          {SPINE.slice(0, 2).map((item) => (
-            <NavigationLink key={item.href} item={item} mobile />
-          ))}
-          <button
-            className="mobile-log"
-            onClick={openLog}
-            aria-label="Log an entry"
-          >
-            <span>
-              <Plus size={24} />
+          <div className="sidebar-log">
+            <button
+              className="btn-primary w-full"
+              onClick={openLog}
+              aria-label="Log an entry"
+            >
+              <Plus size={20} />
+              {!collapsed && "Log entry"}
+            </button>
+          </div>
+          <nav aria-label="Primary" className="sidebar-navigation">
+            {SPINE.map((item) => (
+              <NavigationLink
+                key={item.href}
+                item={item}
+                collapsed={collapsed}
+              />
+            ))}
+          </nav>
+          <div className="sidebar-footer">
+            {!collapsed && (
+              <p className="text-xs log-muted">Meals. Lifts. Measurements.</p>
+            )}
+            <Link
+              href="/profile"
+              className="sidebar-profile"
+              aria-label="Your profile"
+            >
+              <span className="user-initial" aria-hidden="true">
+                {(user.name || user.email).charAt(0).toUpperCase()}
+              </span>
+              {!collapsed && (
+                <span className="truncate text-sm">
+                  {user.name || user.email}
+                </span>
+              )}
+            </Link>
+          </div>
+        </aside>
+        <div className="app-column">
+          {user.impersonation && (
+            <ImpersonationBanner
+              impersonation={user.impersonation}
+              userName={user.name || user.email}
+            />
+          )}
+          <header className="app-topbar">
+            <Link href="/today" className="mobile-brand">
+              <Image src={logoTransparent} alt="" width={28} height={28} />
+              <span>Mizan</span>
+            </Link>
+            <span className="desktop-context log-muted">
+              {variant === "admin" ? "Administration" : "Your daily log"}
             </span>
-            <span className="sr-only">Log</span>
-          </button>
-          {SPINE.slice(2).map((item) => (
-            <NavigationLink key={item.href} item={item} mobile />
-          ))}
-        </nav>
+            <div className="ml-auto flex items-center gap-2">
+              <AssistantLauncher />
+              <HouseholdSwitcher />
+              <NotificationBell />
+              <Popover open={accountOpen} onOpenChange={setAccountOpen}>
+                <PopoverTrigger asChild>
+                  <button className="account-trigger" aria-label="Account">
+                    <span className="user-initial" aria-hidden="true">
+                      {(user.name || user.email).charAt(0).toUpperCase()}
+                    </span>
+                    <span className="account-name">
+                      {user.name?.split(" ")[0] || "Account"}
+                    </span>
+                    <ChevronDown size={14} />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="account-popover">
+                  <div className="px-3 py-3 border-b mb-1">
+                    <p className="font-medium text-sm truncate">
+                      {user.name || "Your account"}
+                    </p>
+                    <p className="text-xs log-muted mt-1 break-all">
+                      {user.email}
+                    </p>
+                  </div>
+                  {USER_MENU.filter(
+                    (item) => !item.adminOnly || user.role === "admin",
+                  ).map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setAccountOpen(false)}
+                      className="account-link"
+                    >
+                      <Icon name={item.icon} size={16} />
+                      {item.label}
+                    </Link>
+                  ))}
+                  <button
+                    onClick={logout}
+                    disabled={signingOut}
+                    className="account-link text-destructive border-t mt-1"
+                  >
+                    <LogOut size={16} />
+                    {signingOut ? "Signing out…" : "Sign out"}
+                  </button>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </header>
+          <div id="app-content" tabIndex={-1} className="app-content">
+            <div className="app-content-inner">{children}</div>
+          </div>
+          <nav aria-label="Primary mobile" className="mobile-navigation">
+            {SPINE.slice(0, 2).map((item) => (
+              <NavigationLink key={item.href} item={item} mobile />
+            ))}
+            <button
+              className="mobile-log"
+              onClick={openLog}
+              aria-label="Log an entry"
+            >
+              <span>
+                <Plus size={24} />
+              </span>
+              <span className="sr-only">Log</span>
+            </button>
+            {SPINE.slice(2).map((item) => (
+              <NavigationLink key={item.href} item={item} mobile />
+            ))}
+          </nav>
+        </div>
+        <AssistantPanel />
+        <GamificationToaster {...feedback} />
+        <LogSheet
+          open={logOpen || legacyMeal}
+          onClose={closeLog}
+          initialKind={legacyMeal ? "meal" : logOptions.kind}
+          initialDate={legacyMeal ? logDate : (logOptions.date ?? logDate)}
+          initialMealType={logOptions.mealType}
+          initialRecipe={logOptions.recipe}
+        />
       </div>
-      <GamificationToaster {...feedback} />
-      <LogSheet
-        open={logOpen || legacyMeal}
-        onClose={closeLog}
-        initialKind={legacyMeal ? "meal" : logOptions.kind}
-        initialDate={legacyMeal ? logDate : (logOptions.date ?? logDate)}
-        initialMealType={logOptions.mealType}
-        initialRecipe={logOptions.recipe}
-      />
-    </div>
+    </AssistantProvider>
   );
 }
