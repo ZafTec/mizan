@@ -36,7 +36,7 @@ export default async function AdminUsageLimitsPage({
       <header className="log-page-header block!">
         <p className="eyebrow">Administration</p>
         <h1 className="mt-1">Usage limits</h1>
-        <p className="log-muted mt-2">
+        <p className="text-muted-foreground mt-2">
           Each cap comes from the user, then the household, then the plan, then
           the tier default. The assistant enforces exactly these.
         </p>
@@ -55,7 +55,7 @@ export default async function AdminUsageLimitsPage({
               "-mb-px min-h-11 border-b-2 px-3 py-2.5 text-sm font-medium",
               value === scope
                 ? "border-charcoal-blue-900 text-charcoal-blue-900 dark:border-charcoal-blue-50 dark:text-charcoal-blue-50"
-                : "border-transparent log-muted hover:text-charcoal-blue-800 dark:hover:text-charcoal-blue-100",
+                : "border-transparent text-muted-foreground",
             )}
           >
             {TAB_LABEL[value]}

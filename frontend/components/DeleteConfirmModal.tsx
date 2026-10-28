@@ -49,12 +49,12 @@ export function DeleteConfirmModal({
 
   const modal = (
     <div
-      className="modal-overlay-in fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4"
+      className="animate-overlay-in fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4"
       data-testid="delete-confirm-modal"
       onClick={onClose}
     >
       <div
-        className="modal-pop-in my-auto w-full max-w-md rounded-xl bg-white p-6 dark:bg-charcoal-blue-900"
+        className="animate-modal-in my-auto w-full max-w-md rounded-xl bg-white p-6 dark:bg-charcoal-blue-900"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 mb-4">

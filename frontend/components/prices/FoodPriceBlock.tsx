@@ -42,7 +42,7 @@ export default function FoodPriceBlock({
       </h2>
       {quote.priced && quote.price != null ? (
         <>
-          <p className="num text-3xl font-semibold tracking-tight text-foreground">
+          <p className="tabular-nums text-3xl font-semibold tracking-tight text-foreground">
             {formatMoney(quote.price, quote.currency)}
             {quote.quantity != null && quote.unit && (
               <span className="text-sm font-normal text-muted-foreground">
@@ -52,7 +52,7 @@ export default function FoodPriceBlock({
             )}
           </p>
           {quote.pricePerKg != null && (
-            <p className="num mt-1 text-sm text-muted-foreground">
+            <p className="tabular-nums mt-1 text-sm text-muted-foreground">
               {formatMoney(quote.pricePerKg, quote.currency)} per kg
             </p>
           )}

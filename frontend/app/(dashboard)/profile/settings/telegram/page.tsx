@@ -283,7 +283,7 @@ function NotificationsSetting({
 
 function NotConfigured() {
   return (
-    <div className="surface-panel space-y-2 p-6">
+    <div className="card space-y-2 p-6">
       <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
         Not available on this server
       </h2>
@@ -311,7 +311,7 @@ function Connected({
 }) {
   return (
     <div className="space-y-4">
-      <div className="surface-panel flex flex-wrap items-center justify-between gap-4 p-6">
+      <div className="card flex flex-wrap items-center justify-between gap-4 p-6">
         <div className="space-y-1">
           <p className="flex items-center gap-2 font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
             <span className="h-2 w-2 rounded-full bg-verdigris-500" />
@@ -332,13 +332,13 @@ function Connected({
         <button
           type="button"
           onClick={onDisconnect}
-          className="btn-ghost btn-sm text-red-600 dark:text-red-400"
+          className="btn-ghost btn-sm"
         >
           Disconnect
         </button>
       </div>
 
-      <div className="surface-panel space-y-3 p-6">
+      <div className="card space-y-3 p-6">
         <h2 className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
           What to send it
         </h2>
@@ -391,7 +391,7 @@ function Connect({
 }) {
   if (code === null) {
     return (
-      <div className="surface-panel space-y-4 p-6">
+      <div className="card space-y-4 p-6">
         <div className="space-y-1">
           <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
             Connect your Telegram
@@ -424,7 +424,7 @@ function Connect({
   }
 
   return (
-    <div className="surface-panel space-y-5 p-6">
+    <div className="card space-y-5 p-6">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
           <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">

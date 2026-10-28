@@ -69,7 +69,7 @@ export function CoachingSection() {
             <span className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
               Clients
             </span>
-            <span className="num text-[11.5px] text-charcoal-blue-500 dark:text-charcoal-blue-500">
+            <span className="tabular-nums text-[11.5px] text-charcoal-blue-500 dark:text-charcoal-blue-500">
               4 active
             </span>
           </div>

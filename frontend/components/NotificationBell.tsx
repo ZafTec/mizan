@@ -31,7 +31,7 @@ export function NotificationBell() {
   return (
     <Link
       href="/notifications"
-      className="press-feedback relative flex h-10 w-10 items-center justify-center rounded-2xl border border-charcoal-blue-200 text-charcoal-blue-600 hover:text-charcoal-blue-900 dark:border-white/10 dark:text-charcoal-blue-200"
+      className="transition-transform duration-120 ease-out active:scale-[0.985] relative flex h-10 w-10 items-center justify-center rounded-2xl border border-charcoal-blue-200 text-charcoal-blue-600 hover:text-charcoal-blue-900 dark:border-white/10 dark:text-charcoal-blue-200"
       aria-label={count ? `${count} unread notifications` : "Notifications"}
     >
       <Icon name="bell" size={18} />

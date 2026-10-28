@@ -116,7 +116,7 @@ export default function IngredientForm({
           <div>
             <label
               htmlFor="calories"
-              className="label font-bold text-orange-600"
+              className="label"
             >
               Calories
             </label>
@@ -131,7 +131,7 @@ export default function IngredientForm({
             />
           </div>
           <div>
-            <label htmlFor="protein" className="label font-bold text-red-600">
+            <label htmlFor="protein" className="label">
               Protein (g)
             </label>
             <input
@@ -146,7 +146,7 @@ export default function IngredientForm({
             />
           </div>
           <div>
-            <label htmlFor="carbs" className="label font-bold text-amber-600">
+            <label htmlFor="carbs" className="label">
               Carbs (g)
             </label>
             <input
@@ -161,7 +161,7 @@ export default function IngredientForm({
             />
           </div>
           <div>
-            <label htmlFor="fat" className="label font-bold text-yellow-600">
+            <label htmlFor="fat" className="label">
               Fat (g)
             </label>
             <input
@@ -176,7 +176,7 @@ export default function IngredientForm({
             />
           </div>
           <div>
-            <label htmlFor="fiber" className="label font-bold text-emerald-600">
+            <label htmlFor="fiber" className="label">
               Fiber (g)
             </label>
             <input
@@ -208,7 +208,7 @@ export default function IngredientForm({
         <button
           type="submit"
           disabled={isPending}
-          className="btn-primary flex-1 py-3"
+          className="btn-primary flex-1"
         >
           {isPending ? (
             <>

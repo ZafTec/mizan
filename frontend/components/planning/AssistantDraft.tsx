@@ -145,7 +145,7 @@ export default function AssistantDraft({ today }: { today: string }) {
     return (
       <section aria-labelledby={`${id}-title`} data-testid="assistant-draft">
         {heading}
-        <p className="mt-3 text-sm log-muted" data-testid="ai-consent-prompt">
+        <p className="mt-3 text-sm text-muted-foreground" data-testid="ai-consent-prompt">
           The assistant can draft a plan from your goal, recipes and local
           prices once you let it use your log.{" "}
           <Link href="/profile/settings#assistant" className="text-link">
@@ -188,10 +188,10 @@ export default function AssistantDraft({ today }: { today: string }) {
             <ul aria-label="Budgets not drafted" className="text-sm">
               {result.skipped.map((skipped, index) => (
                 <li key={index} className="ledger-row min-h-0!">
-                  <span className="num whitespace-nowrap font-medium">
+                  <span className="tabular-nums whitespace-nowrap font-medium">
                     {skipped.budgetCeiling.toLocaleString()}
                   </span>
-                  <span className="min-w-0 flex-1 log-muted">
+                  <span className="min-w-0 flex-1 text-muted-foreground">
                     {skipped.reason}
                   </span>
                 </li>
@@ -215,7 +215,7 @@ export default function AssistantDraft({ today }: { today: string }) {
         />
       ) : !open ? (
         <div className="space-y-3">
-          <p className="text-sm log-muted">
+          <p className="text-sm text-muted-foreground">
             Give the dates and a budget, and the assistant drafts the days for
             you to keep or discard.
           </p>
@@ -269,7 +269,7 @@ export default function AssistantDraft({ today }: { today: string }) {
                 inputMode="numeric"
                 min={1}
                 max={MAX_DRAFT_DAYS}
-                className="input num w-full"
+                className="input tabular-nums w-full"
                 value={values.durationDays}
                 onChange={(event) => set("durationDays")(event.target.value)}
                 aria-invalid={errors.durationDays ? true : undefined}
@@ -289,13 +289,13 @@ export default function AssistantDraft({ today }: { today: string }) {
               id={`${id}-budget`}
               type="text"
               inputMode="decimal"
-              className="input num w-full"
+              className="input tabular-nums w-full"
               value={values.weeklyBudget}
               onChange={(event) => set("weeklyBudget")(event.target.value)}
               aria-describedby={`${id}-budget-hint`}
               aria-invalid={errors.weeklyBudget ? true : undefined}
             />
-            <p id={`${id}-budget-hint`} className="mt-1 text-xs log-muted">
+            <p id={`${id}-budget-hint`} className="mt-1 text-xs text-muted-foreground">
               In your price region&apos;s currency.
             </p>
             {errors.weeklyBudget && (
@@ -310,7 +310,7 @@ export default function AssistantDraft({ today }: { today: string }) {
               id={`${id}-daily-budget`}
               type="text"
               inputMode="decimal"
-              className="input num w-full"
+              className="input tabular-nums w-full"
               value={values.dailyBudget}
               onChange={(event) => set("dailyBudget")(event.target.value)}
               aria-describedby={`${id}-budget-hint`}
@@ -355,7 +355,7 @@ export default function AssistantDraft({ today }: { today: string }) {
           </div>
 
           {pending && (
-            <p role="status" className="text-sm log-muted">
+            <p role="status" className="text-sm text-muted-foreground">
               The assistant is drafting your plan. This can take a minute.
             </p>
           )}
@@ -364,13 +364,13 @@ export default function AssistantDraft({ today }: { today: string }) {
             <div role="alert" className="space-y-1 text-sm">
               <p className="input-error">{problem.message}</p>
               {problem.kind === "quota" && resetTime(problem.resetsAt) && (
-                <p className="log-muted">
+                <p className="text-muted-foreground">
                   Your planning allowance resets at{" "}
                   {resetTime(problem.resetsAt)}.
                 </p>
               )}
               {problem.kind === "unavailable" && (
-                <p className="log-muted">
+                <p className="text-muted-foreground">
                   Nothing was saved. Try again in a moment.
                 </p>
               )}

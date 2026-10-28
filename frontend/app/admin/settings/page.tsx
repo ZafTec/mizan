@@ -22,7 +22,7 @@ export default async function AdminSettingsPage() {
       <header className="log-page-header block!">
         <p className="eyebrow">Administration</p>
         <h1 className="mt-1">Settings</h1>
-        <p className="log-muted mt-2">
+        <p className="text-muted-foreground mt-2">
           A value set here replaces the environment&apos;s from the next email,
           call or webhook, on every server. Clear it to go back to
           configuration. Secrets are stored encrypted and never shown.

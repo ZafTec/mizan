@@ -110,7 +110,7 @@ export default function RecipeActions({
           className="mt-5 border-y py-5 max-w-lg"
         >
           <p className="font-medium">Save a preparation</p>
-          <p className="text-sm log-muted mt-2">
+          <p className="text-sm text-muted-foreground mt-2">
             Weigh the finished batch so its nutrition per gram is accurate. You
             can then log a portion or use it in another meal.
           </p>
@@ -133,7 +133,7 @@ export default function RecipeActions({
         </form>
       )}
       {ingredientId && (
-        <p className="text-sm log-muted mt-4">
+        <p className="text-sm text-muted-foreground mt-4">
           Saved as an ingredient. Find it by name when logging a meal.
         </p>
       )}

@@ -64,7 +64,7 @@ export function ProWallDialog({
   return (
     <ModalShell open={open} onClose={onClose}>
       <div className="rounded-2xl border border-charcoal-blue-200 bg-white p-6 dark:border-white/10 dark:bg-charcoal-blue-950 sm:p-8">
-        <span className="icon-chip h-12 w-12 text-brand-700 dark:text-brand-300">
+        <span className="inline-flex items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300 h-12 w-12">
           <Icon name="lock" size={20} />
         </span>
         <h2 className="mt-4 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -112,7 +112,7 @@ export function ProWall({
       <button
         type="button"
         onClick={openWall}
-        className="btn-secondary !rounded-2xl text-sm"
+        className="btn-secondary !rounded-2xl"
       >
         <Icon name="lock" size={14} />
         {lockedLabel}

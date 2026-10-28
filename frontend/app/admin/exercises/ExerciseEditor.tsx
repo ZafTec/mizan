@@ -137,7 +137,7 @@ export default function ExerciseEditor({
     >
       <form
         onSubmit={submit}
-        className="surface-panel max-h-[90dvh] w-full space-y-4 overflow-y-auto p-5"
+        className="card max-h-[90dvh] w-full space-y-4 overflow-y-auto p-5"
         aria-label={creating ? "New exercise" : `Edit ${exercise.name}`}
       >
         <h3 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">

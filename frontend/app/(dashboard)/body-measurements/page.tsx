@@ -214,25 +214,25 @@ export default async function BodyMeasurementsPage({
     <div className="log-page space-y-8" data-testid="body-measurements-page">
       <header className="log-page-header block!">
         <h1>Body</h1>
-        <p className="log-muted mt-2">Weight and measurements over time.</p>
+        <p className="text-muted-foreground mt-2">Weight and measurements over time.</p>
       </header>
 
       {all.length > 0 && (
         <section aria-label="Latest measurements" className="facts-strip">
           {facts.map((fact) => (
             <div key={fact.label}>
-              <p className="text-sm log-muted">{fact.label}</p>
-              <p className="num nutrition-value">
+              <p className="text-sm text-muted-foreground">{fact.label}</p>
+              <p className="tabular-nums nutrition-value">
                 {fact.value ?? "—"}
                 {fact.value !== null && (
-                  <span className="text-sm font-normal log-muted">
+                  <span className="text-sm font-normal text-muted-foreground">
                     {" "}
                     {fact.unit}
                   </span>
                 )}
               </p>
               {fact.note && (
-                <p className="mt-1 text-xs log-muted">{fact.note}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{fact.note}</p>
               )}
             </div>
           ))}

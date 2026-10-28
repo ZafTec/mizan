@@ -31,7 +31,7 @@ export default function DeleteIngredientButton({ id }: { id: string }) {
       <button
         onClick={() => setConfirmOpen(true)}
         disabled={isDeleting}
-        className="btn-secondary text-sm px-3 py-1.5 text-red-600 hover:bg-red-50 disabled:opacity-50"
+        className="btn-secondary"
       >
         <i
           className={

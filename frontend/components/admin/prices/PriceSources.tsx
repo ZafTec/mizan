@@ -157,7 +157,7 @@ function SourceFields({
           </label>
           <input
             id={`${id}-schedule`}
-            className="input num w-full"
+            className="input tabular-nums w-full"
             value={form.schedule}
             onChange={(event) => set("schedule", event.target.value)}
             placeholder="0 5 * * *"
@@ -343,7 +343,7 @@ export default function PriceSources({
                     <span className="block font-medium break-words">
                       {source.name}
                     </span>
-                    <span className="mt-0.5 block text-xs log-muted">
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
                       {[
                         source.kind,
                         source.regionCode,
@@ -353,7 +353,7 @@ export default function PriceSources({
                         .filter(Boolean)
                         .join(" · ")}
                     </span>
-                    <span className="num mt-0.5 block text-xs log-muted">
+                    <span className="tabular-nums mt-0.5 block text-xs text-muted-foreground">
                       {lastRun(source)}
                     </span>
                     {source.lastError && (
@@ -384,7 +384,7 @@ export default function PriceSources({
                     </button>
                     <button
                       type="button"
-                      className="btn-ghost btn-sm min-h-9 text-destructive"
+                      className="btn-ghost btn-sm min-h-9"
                       aria-label={`Delete ${source.name}`}
                       onClick={() => setDeleting(source)}
                     >

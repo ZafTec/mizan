@@ -96,11 +96,11 @@ export default function ResetPasswordPage() {
               <div className="space-y-3 pt-4">
                 <Link
                   href="/forgot-password"
-                  className="btn-primary w-full py-3"
+                  className="btn-primary w-full"
                 >
                   Request new reset link
                 </Link>
-                <Link href="/login" className="btn-secondary w-full py-3">
+                <Link href="/login" className="btn-secondary w-full">
                   Back to login
                 </Link>
               </div>
@@ -117,7 +117,7 @@ export default function ResetPasswordPage() {
                 </p>
               </div>
               <div className="pt-4">
-                <Link href="/login" className="btn-primary w-full py-3">
+                <Link href="/login" className="btn-primary w-full">
                   Continue to login
                 </Link>
               </div>
@@ -176,7 +176,7 @@ export default function ResetPasswordPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary w-full py-3"
+                className="btn-primary w-full"
               >
                 {loading ? (
                   <>

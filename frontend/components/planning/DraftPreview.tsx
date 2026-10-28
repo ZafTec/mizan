@@ -57,7 +57,7 @@ export default function DraftPreview({
         >
           {name}
         </h2>
-        <p className="log-muted mt-1 text-sm" data-testid="draft-facts">
+        <p className="text-muted-foreground mt-1 text-sm" data-testid="draft-facts">
           {["Draft", planDates(plan), DRAFTED_BY_ASSISTANT].join(" · ")}
         </p>
         {draft.note && <p className="mt-2 text-sm">{draft.note}</p>}
@@ -81,7 +81,7 @@ export default function DraftPreview({
                 className="ledger-row min-h-0! text-sm"
               >
                 <span className="min-w-0 flex-1">{violation.message}</span>
-                <span className="text-xs log-muted">{violation.rule}</span>
+                <span className="text-xs text-muted-foreground">{violation.rule}</span>
               </li>
             ))}
           </ul>
@@ -101,7 +101,7 @@ export default function DraftPreview({
               >
                 <span className="min-w-0 flex-1">
                   <span className="block break-words">{line.text}</span>
-                  <span className="mt-0.5 block text-xs log-muted">
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
                     {[
                       dayOf(line.dayIndex),
                       slotLabel(line.slot),

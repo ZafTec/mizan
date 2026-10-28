@@ -58,7 +58,7 @@ export default function RulesFields({
             label: MACRO_MODE_LABELS[mode],
           }))}
         />
-        <p className="mt-1 text-xs log-muted">
+        <p className="mt-1 text-xs text-muted-foreground">
           {values.macroMode === "Keto"
             ? "Carbs are capped at 30 g a day unless you set a cap."
             : values.macroMode === "HighProtein"
@@ -86,7 +86,7 @@ export default function RulesFields({
               type="number"
               inputMode="decimal"
               min={0}
-              className="input num w-full"
+              className="input tabular-nums w-full"
               value={values[key]}
               onChange={(event) => set(key, event.target.value)}
               aria-invalid={errors[key] ? true : undefined}
@@ -135,7 +135,7 @@ export default function RulesFields({
             type="number"
             inputMode="decimal"
             min={0}
-            className="input num w-full"
+            className="input tabular-nums w-full"
             value={values.weeklyBudget}
             onChange={(event) => set("weeklyBudget", event.target.value)}
           />
@@ -150,7 +150,7 @@ export default function RulesFields({
             type="number"
             inputMode="decimal"
             min={0}
-            className="input num w-full"
+            className="input tabular-nums w-full"
             value={values.dailyBudget}
             onChange={(event) => set("dailyBudget", event.target.value)}
             aria-invalid={errors.dailyBudget ? true : undefined}

@@ -141,7 +141,7 @@ export function ConsentScreen() {
         <p role="alert" className="text-sm text-destructive">
           {shownProblem}
         </p>
-        <Link href="/profile/mcp" className="btn-secondary inline-flex">
+        <Link href="/profile/mcp" className="btn-secondary">
           Go to connected apps
         </Link>
       </div>

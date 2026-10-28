@@ -119,7 +119,7 @@ export default function MiniAppHome() {
     );
   if (!home)
     return (
-      <p role="status" className="log-muted">
+      <p role="status" className="text-muted-foreground">
         Loading today…
       </p>
     );
@@ -149,7 +149,7 @@ export default function MiniAppHome() {
   return (
     <div className="flex flex-col gap-6" data-testid="tg-home">
       <header className="flex flex-col gap-1">
-        <p className="text-[10px] font-semibold tracking-[0.14em] uppercase log-muted">
+        <p className="text-[10px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">
           {longDate(home.date)}
         </p>
         <h1 className="text-2xl font-semibold">
@@ -163,14 +163,14 @@ export default function MiniAppHome() {
           className="border-y border-t-foreground border-b-border py-4"
         >
           <p className="flex items-baseline gap-2">
-            <span className="num text-[34px] leading-none font-semibold">
+            <span className="tabular-nums text-[34px] leading-none font-semibold">
               {Math.round(totals.calories).toLocaleString()}
             </span>
-            <span className="text-sm log-muted">
+            <span className="text-sm text-muted-foreground">
               {target ? `kcal of ${target.toLocaleString()}` : "kcal"}
             </span>
           </p>
-          <p className="num mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+          <p className="tabular-nums mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
             <span>Protein {Math.round(totals.protein)} g</span>
             <span>Carbs {Math.round(totals.carbs)} g</span>
             <span>Fat {Math.round(totals.fat)} g</span>
@@ -184,7 +184,7 @@ export default function MiniAppHome() {
           className="flex items-center gap-3 border-b border-border pb-4"
         >
           <span className="min-w-0 flex-1">
-            <span className="block text-[10px] font-semibold tracking-[0.14em] uppercase log-muted">
+            <span className="block text-[10px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">
               Next on your plan · {formatMealType(next.slot)}
             </span>
             <span className="mt-1 block text-[17px] font-medium break-words">
@@ -234,7 +234,7 @@ export default function MiniAppHome() {
 
       <button
         type="button"
-        className="text-link min-h-11 self-start text-sm"
+        className="text-link self-start"
         onClick={() => openExternal(`${window.location.origin}/today`)}
       >
         Open in browser
@@ -257,13 +257,13 @@ function Action({
       <Link href={href} className="ledger-row transition-colors hover:bg-muted">
         <span className="min-w-0 flex-1">
           <span className="block text-[15px] font-medium">{title}</span>
-          <span className="mt-0.5 block text-[13px] log-muted">{detail}</span>
+          <span className="mt-0.5 block text-[13px] text-muted-foreground">{detail}</span>
         </span>
         <ChevronRight
           aria-hidden="true"
           size={18}
           strokeWidth={1.6}
-          className="log-muted"
+          className="text-muted-foreground"
         />
       </Link>
     </li>

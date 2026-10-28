@@ -65,7 +65,7 @@ export default function AdminMemberRow({
         type="button"
         onClick={handleRemove}
         disabled={pending}
-        className="btn-ghost h-8 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+        className="btn-ghost h-8"
       >
         <Icon name="logout" size={14} aria-hidden="true" />
         Remove

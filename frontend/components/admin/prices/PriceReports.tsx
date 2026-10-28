@@ -77,7 +77,7 @@ export default function PriceReports({
               }
               scroll={false}
               aria-current={value === status ? "page" : undefined}
-              className={`flex min-h-9 items-center px-2 ${value === status ? "font-semibold text-foreground" : "log-muted hover:text-foreground"}`}
+              className={`flex min-h-9 items-center px-2 ${value === status ? "font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
               {FILTER_LABELS[value]}
             </Link>
@@ -102,11 +102,11 @@ export default function PriceReports({
                 <span className="min-w-0 flex-1 basis-56">
                   <Link
                     href={`/ingredients/${report.foodId}`}
-                    className="block font-medium break-words text-link"
+                    className="break-words text-link"
                   >
                     {report.foodName ?? "Food"}
                   </Link>
-                  <span className="mt-0.5 block text-xs log-muted">
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
                     {[
                       report.userName,
                       report.regionCode,
@@ -115,18 +115,18 @@ export default function PriceReports({
                       .filter(Boolean)
                       .join(" · ")}
                   </span>
-                  <span className="num mt-2 block text-sm">
-                    <span className="log-muted">Shown </span>
+                  <span className="tabular-nums mt-2 block text-sm">
+                    <span className="text-muted-foreground">Shown </span>
                     {report.shownPricePerKg != null
                       ? `${formatMoney(report.shownPricePerKg, report.currency)} per kg`
                       : "no price"}
-                    <span className="log-muted"> · Suggested </span>
+                    <span className="text-muted-foreground"> · Suggested </span>
                     {report.suggestedPricePerKg != null
                       ? `${formatMoney(report.suggestedPricePerKg, report.currency)} per kg`
                       : `${formatMoney(report.suggestedPrice, report.currency)} for ${report.quantity} ${report.unit}`}
                   </span>
                   {report.suggestedPricePerKg != null && (
-                    <span className="num block text-xs log-muted">
+                    <span className="tabular-nums block text-xs text-muted-foreground">
                       {formatMoney(report.suggestedPrice, report.currency)} for{" "}
                       {report.quantity} {report.unit}
                     </span>
@@ -137,7 +137,7 @@ export default function PriceReports({
                     </span>
                   )}
                   {report.status !== "Open" && (
-                    <span className="mt-1 block text-xs log-muted">
+                    <span className="mt-1 block text-xs text-muted-foreground">
                       {report.status}
                       {report.resolvedAt
                         ? ` ${formatPriceDate(report.resolvedAt)}`

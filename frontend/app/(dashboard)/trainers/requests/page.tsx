@@ -80,7 +80,7 @@ export default function TrainerRequestsPage() {
           </p>
           <Link
             href="/trainers"
-            className="btn-primary inline-flex items-center gap-2"
+            className="btn-primary"
           >
             Find a Trainer
           </Link>
@@ -155,7 +155,7 @@ export default function TrainerRequestsPage() {
       )}
 
       {/* Info Card */}
-      <div className="card p-6 border border-blue-200 dark:border-blue-800">
+      <div className="card p-6">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shrink-0"></div>
           <div>

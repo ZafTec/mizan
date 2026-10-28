@@ -204,7 +204,7 @@ export default async function Page({
             <div className="flex gap-2">
               <Link
                 href={`/ingredients/${ingredientId}/edit`}
-                className="btn-secondary text-sm px-3 py-1.5"
+                className="btn-secondary"
               >
                 Edit
               </Link>

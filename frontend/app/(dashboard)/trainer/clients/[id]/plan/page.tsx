@@ -47,7 +47,7 @@ export default async function ClientPlanPage({
           </Link>
         </p>
         <h1 className="mt-1">Draft a plan</h1>
-        <p className="log-muted mt-2">
+        <p className="text-muted-foreground mt-2">
           The draft reaches {name} to accept or decline. Start from one of{" "}
           <Link href="/trainer/templates" className="text-link">
             your templates

@@ -251,7 +251,7 @@ test.describe("the assistant conversation", () => {
 
     await page.getByRole("button", { name: "Delete Protein ideas" }).click();
     await page
-      .locator(".modal-pop-in")
+      .getByRole("alertdialog")
       .getByRole("button", { name: "Cancel" })
       .click();
     expect(
@@ -261,7 +261,7 @@ test.describe("the assistant conversation", () => {
 
     await page.getByRole("button", { name: "Delete Protein ideas" }).click();
     await page
-      .locator(".modal-pop-in")
+      .getByRole("alertdialog")
       .getByRole("button", { name: "Delete" })
       .click();
     await expect(

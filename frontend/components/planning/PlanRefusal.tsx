@@ -55,7 +55,7 @@ export default function PlanRefusal({
               Not enough foods for this plan
             </h3>
             <p className="text-sm">{refusal.error}</p>
-            <p className="text-sm log-muted">Nothing was saved.</p>
+            <p className="text-sm text-muted-foreground">Nothing was saved.</p>
           </div>
         </div>
 
@@ -63,17 +63,17 @@ export default function PlanRefusal({
           <dl className="space-y-3 text-sm">
             {refusal.emptyDays.length > 0 && (
               <div>
-                <dt className="text-[10px] font-semibold tracking-[0.14em] uppercase log-muted">
+                <dt className="text-[10px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">
                   Days without a food
                 </dt>
-                <dd className="num mt-1">
+                <dd className="tabular-nums mt-1">
                   {refusal.emptyDays.map((day) => `Day ${day + 1}`).join(", ")}
                 </dd>
               </div>
             )}
             {refusal.missingFoods.length > 0 && (
               <div>
-                <dt className="text-[10px] font-semibold tracking-[0.14em] uppercase log-muted">
+                <dt className="text-[10px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">
                   Not in your foods
                 </dt>
                 <dd className="mt-1">{refusal.missingFoods.join(", ")}</dd>
@@ -83,7 +83,7 @@ export default function PlanRefusal({
         )}
 
         <nav aria-label="Ways forward">
-          <p className="text-[10px] font-semibold tracking-[0.14em] uppercase log-muted">
+          <p className="text-[10px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">
             Ways forward
           </p>
           <ul className="mt-1">
@@ -125,7 +125,7 @@ export default function PlanRefusal({
         aria-label="Your request"
         className="self-start border-t border-foreground pt-3"
       >
-        <p className="text-[10px] font-semibold tracking-[0.14em] uppercase log-muted">
+        <p className="text-[10px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">
           You asked for
         </p>
         <dl className="mt-1 text-sm">
@@ -134,7 +134,7 @@ export default function PlanRefusal({
               key={label}
               className="flex justify-between gap-3 border-b border-border py-2"
             >
-              <dt className="log-muted">{label}</dt>
+              <dt className="text-muted-foreground">{label}</dt>
               <dd className="min-w-0 text-right break-words">{value}</dd>
             </div>
           ))}
@@ -156,13 +156,13 @@ function WayText({ title, detail }: { title: string; detail: string }) {
     <>
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-medium">{title}</span>
-        <span className="mt-0.5 block text-[13px] log-muted">{detail}</span>
+        <span className="mt-0.5 block text-[13px] text-muted-foreground">{detail}</span>
       </span>
       <ChevronRight
         aria-hidden="true"
         size={18}
         strokeWidth={1.6}
-        className="log-muted"
+        className="text-muted-foreground"
       />
     </>
   );

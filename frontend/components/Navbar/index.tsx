@@ -10,7 +10,7 @@ export default async function Navbar() {
   return (
     <nav className="sticky top-0 z-50 px-3 pt-3 sm:px-4 lg:px-6">
       <div className="max-w-7xl mx-auto">
-        <div className="nav-glass relative flex h-16 items-center justify-between rounded-3xl px-4 sm:px-6">
+        <div className="border-b border-charcoal-blue-200 bg-charcoal-blue-50 dark:border-charcoal-blue-700 dark:bg-charcoal-blue-950 relative flex h-16 items-center justify-between rounded-3xl px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-3">
             <Image
               src={logoTransparent}

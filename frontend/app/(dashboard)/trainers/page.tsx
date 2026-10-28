@@ -133,7 +133,7 @@ export default function TrainersPage() {
       {filteredTrainers.length === 0 ? (
         <div className="log-empty border-t border-foreground">
           <p>No trainers match.</p>
-          <p className="log-muted mt-2 text-sm">
+          <p className="text-muted-foreground mt-2 text-sm">
             Coaches appear here once they have joined Mizan as trainers.
           </p>
         </div>
@@ -142,7 +142,7 @@ export default function TrainersPage() {
           {filteredTrainers.map((trainer) => (
             <div
               key={trainer.id || trainer.email || "trainer-card"}
-              className="card p-6 transition-shadow"
+              className="card p-6"
             >
               <div className="flex flex-col items-center text-center mb-4">
                 {trainer.image ? (

@@ -285,7 +285,7 @@ export default function PromptConsole({ prompt, initialMatrix }: Props) {
           constraints={prompt.hardConstraints}
         />
 
-        <section className="glass-panel space-y-4 p-5">
+        <section className="card overflow-visible space-y-4 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">

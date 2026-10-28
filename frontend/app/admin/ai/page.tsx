@@ -41,7 +41,7 @@ export default async function AdminAiPage() {
         </p>
       </header>
 
-      <section className="glass-panel space-y-4 p-5">
+      <section className="card overflow-visible space-y-4 p-5">
         <div className="flex items-baseline justify-between">
           <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
             Today
@@ -107,7 +107,7 @@ export default async function AdminAiPage() {
             <li key={prompt.key}>
               <Link
                 href={`/admin/ai/${encodeURIComponent(prompt.key)}`}
-                className="glass-panel block h-full space-y-2 p-5 transition-all hover:-translate-y-0.5 "
+                className="card overflow-visible block h-full space-y-2 p-5 hover:-translate-y-0.5"
               >
                 <div className="flex items-center justify-between gap-3">
                   <code className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">

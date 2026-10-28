@@ -160,14 +160,14 @@ export default function BillingAdmin({
                         {plan.paddlePriceId}
                       </p>
                     </td>
-                    <td className="num px-3 py-3">
+                    <td className="tabular-nums px-3 py-3">
                       {formatMoney(plan.amountCents, plan.currency)}
                       {plan.interval === "year" ? "/yr" : "/mo"}
                     </td>
                     <td className="px-3 py-3">
                       {plan.trialDays ? `${plan.trialDays} days` : "—"}
                     </td>
-                    <td className="num px-3 py-3">{plan.subscribers}</td>
+                    <td className="tabular-nums px-3 py-3">{plan.subscribers}</td>
                     <td className="px-3 py-3">
                       {plan.isActive ? (
                         <Pill tone="good">On sale</Pill>
@@ -194,7 +194,7 @@ export default function BillingAdmin({
                           </button>
                           <button
                             type="button"
-                            className="btn-ghost btn-sm text-red-700 dark:text-red-400"
+                            className="btn-ghost btn-sm"
                             onClick={() => setArchivePlan(plan)}
                           >
                             Archive
@@ -266,7 +266,7 @@ export default function BillingAdmin({
                 {d.isActive && (
                   <button
                     type="button"
-                    className="btn-ghost btn-sm text-red-700 dark:text-red-400"
+                    className="btn-ghost btn-sm"
                     onClick={() => setArchiveDiscount(d)}
                   >
                     Archive

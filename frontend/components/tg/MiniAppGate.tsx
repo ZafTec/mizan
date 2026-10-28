@@ -99,7 +99,7 @@ export default function MiniAppGate({
   const session = useMiniAppSession();
   if (!session)
     return (
-      <p role="status" className="log-muted">
+      <p role="status" className="text-muted-foreground">
         Signing in…
       </p>
     );

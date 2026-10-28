@@ -186,7 +186,7 @@ export function AiSettings() {
           onChange={(checked) => void act(checked)}
         />
         <details className="group border-t border-border">
-          <summary className="flex min-h-11 cursor-pointer items-center text-sm text-link">
+          <summary className="cursor-pointer text-link">
             Choose what it may log
           </summary>
           <div className="pb-3 pl-4">
@@ -258,7 +258,7 @@ function UsagePanel({ usage }: { usage: MyAiUsage }) {
           {usage.byFeature.map((feature) => (
             <li
               key={feature.feature}
-              className="num flex items-center justify-between gap-3 py-1 text-xs text-muted-foreground"
+              className="tabular-nums flex items-center justify-between gap-3 py-1 text-xs text-muted-foreground"
             >
               <span>{feature.feature}</span>
               <span>
@@ -294,7 +294,7 @@ function Meter({
     <div>
       <div className="flex items-baseline justify-between text-xs">
         <span className="text-muted-foreground">{label}</span>
-        <span className="num font-medium">
+        <span className="tabular-nums font-medium">
           {used.toLocaleString()} / {limit.toLocaleString()}
         </span>
       </div>

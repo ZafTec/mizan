@@ -224,7 +224,7 @@ export default function AddMealFromRecipe({
           <div>
             <label
               htmlFor="calories"
-              className="label text-charcoal-blue-900 dark:text-charcoal-blue-100"
+              className="label"
             >
               Calories (kcal)
             </label>
@@ -245,7 +245,7 @@ export default function AddMealFromRecipe({
           <div>
             <label
               htmlFor="protein"
-              className="label text-charcoal-blue-900 dark:text-charcoal-blue-100"
+              className="label"
             >
               Protein (g)
             </label>
@@ -267,7 +267,7 @@ export default function AddMealFromRecipe({
           <div>
             <label
               htmlFor="carbs"
-              className="label text-charcoal-blue-900 dark:text-charcoal-blue-100"
+              className="label"
             >
               Carbs (g)
             </label>
@@ -289,7 +289,7 @@ export default function AddMealFromRecipe({
           <div>
             <label
               htmlFor="fat"
-              className="label text-charcoal-blue-900 dark:text-charcoal-blue-100"
+              className="label"
             >
               Fat (g)
             </label>
@@ -309,7 +309,7 @@ export default function AddMealFromRecipe({
           <div>
             <label
               htmlFor="fiber"
-              className="label text-charcoal-blue-900 dark:text-charcoal-blue-100"
+              className="label"
             >
               Fiber (g)
             </label>
@@ -369,7 +369,7 @@ export default function AddMealFromRecipe({
         {formState.status === "success" && formState.warnings?.length ? (
           <Link
             href="/meals"
-            className="btn-primary w-full py-3 flex items-center justify-center gap-2"
+            className="btn-primary w-full"
           >
             Continue to Diary
           </Link>
@@ -377,7 +377,7 @@ export default function AddMealFromRecipe({
           <button
             type="submit"
             disabled={isPending}
-            className="btn-primary w-full py-3.5 text-lg"
+            className="btn-primary w-full"
           >
             {isPending ? (
               <>

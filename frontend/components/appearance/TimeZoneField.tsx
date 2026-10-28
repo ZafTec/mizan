@@ -119,7 +119,7 @@ export default function TimeZoneField({ current }: { current: string | null }) {
             hint: offset || undefined,
           }))}
         />
-        <p className="text-xs log-muted">
+        <p className="text-xs text-muted-foreground">
           Decides when your day ends. Streaks reset and daily totals roll over
           at midnight here.
         </p>
@@ -127,7 +127,7 @@ export default function TimeZoneField({ current }: { current: string | null }) {
           <button
             type="button"
             onClick={() => save(detected)}
-            className="text-link min-h-11 text-left text-sm"
+            className="text-link text-left"
           >
             This device says {detected.replace(/_/g, " ")}. Use that instead
           </button>

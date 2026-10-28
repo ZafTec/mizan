@@ -22,9 +22,9 @@ export default function TrainerDashboard() {
         </Link>
       </header>
 
-      <section className="glass-panel p-6 sm:p-8">
+      <section className="card overflow-visible p-6 sm:p-8">
         <header className="mb-4 flex items-center gap-3">
-          <span className="icon-chip h-10 w-10 text-sandy-brown-700 dark:text-sandy-brown-300"></span>
+          <span className="inline-flex items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300 h-10 w-10"></span>
           <div>
             <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
               Pending requests
@@ -34,9 +34,9 @@ export default function TrainerDashboard() {
         <TrainerPendingRequests />
       </section>
 
-      <section className="glass-panel p-6 sm:p-8">
+      <section className="card overflow-visible p-6 sm:p-8">
         <header className="mb-4 flex items-center gap-3">
-          <span className="icon-chip h-10 w-10 text-verdigris-700 dark:text-verdigris-300"></span>
+          <span className="inline-flex items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300 h-10 w-10"></span>
           <div>
             <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
               Your clients

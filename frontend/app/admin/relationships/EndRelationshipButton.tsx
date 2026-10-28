@@ -51,7 +51,7 @@ export default function EndRelationshipButton({
       </button>
 
       <ModalShell open={open} onClose={() => setOpen(false)}>
-        <div className="surface-panel w-full max-w-md space-y-4 p-5">
+        <div className="card w-full max-w-md space-y-4 p-5">
           <div className="space-y-1">
             <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
               End this relationship?

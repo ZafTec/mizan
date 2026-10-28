@@ -56,7 +56,7 @@ export default function EvalMatrix({
 
   if (loading) {
     return (
-      <section className="glass-panel p-5 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+      <section className="card overflow-visible p-5 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
         Loading evals…
       </section>
     );
@@ -64,7 +64,7 @@ export default function EvalMatrix({
 
   if (!matrix) {
     return (
-      <section className="glass-panel p-5 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+      <section className="card overflow-visible p-5 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
         {editable
           ? "No results for this text yet. Run the suite."
           : "No results recorded for this version."}
@@ -79,7 +79,7 @@ export default function EvalMatrix({
       : matrix.costMicros - matrix.publishedCostMicros;
 
   return (
-    <section className="glass-panel space-y-4 p-5">
+    <section className="card overflow-visible space-y-4 p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
           Evals

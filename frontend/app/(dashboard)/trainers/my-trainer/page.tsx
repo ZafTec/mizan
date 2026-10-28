@@ -136,7 +136,7 @@ export default function MyTrainerPage() {
           </p>
           <Link
             href="/trainers"
-            className="btn-primary inline-flex items-center gap-2"
+            className="btn-primary"
           >
             Find a trainer
           </Link>

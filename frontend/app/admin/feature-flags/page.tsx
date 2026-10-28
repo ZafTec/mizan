@@ -22,7 +22,7 @@ export default async function AdminFeatureFlagsPage() {
       <header className="log-page-header block!">
         <p className="eyebrow">Administration</p>
         <h1 className="mt-1">Feature flags</h1>
-        <p className="log-muted mt-2">
+        <p className="text-muted-foreground mt-2">
           A household&apos;s override wins over the default. A feature that is
           off answers every surface with the same message.
         </p>
@@ -30,16 +30,16 @@ export default async function AdminFeatureFlagsPage() {
 
       <section aria-label="Flag summary" className="facts-strip">
         <div>
-          <p className="text-sm log-muted">Flags</p>
-          <p className="num nutrition-value">{flags.length}</p>
+          <p className="text-sm text-muted-foreground">Flags</p>
+          <p className="tabular-nums nutrition-value">{flags.length}</p>
         </div>
         <div>
-          <p className="text-sm log-muted">Off by default</p>
-          <p className="num nutrition-value">{changed}</p>
+          <p className="text-sm text-muted-foreground">Off by default</p>
+          <p className="tabular-nums nutrition-value">{changed}</p>
         </div>
         <div>
-          <p className="text-sm log-muted">Household overrides</p>
-          <p className="num nutrition-value">{overrides}</p>
+          <p className="text-sm text-muted-foreground">Household overrides</p>
+          <p className="tabular-nums nutrition-value">{overrides}</p>
         </div>
       </section>
 

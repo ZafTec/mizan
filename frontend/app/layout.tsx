@@ -71,13 +71,13 @@ async function LayoutContent({
           <ConsentGate gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
           <Navbar />
           <main className="grow pb-8">
-            <div className="page-transition max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+            <div className="animate-page-enter max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
               {children}
             </div>
           </main>
 
           <footer className="px-4 pb-4 sm:px-6 lg:px-8 lg:pb-6">
-            <div className="surface-panel max-w-7xl mx-auto px-5 py-6 sm:px-6 sm:py-7">
+            <div className="card max-w-7xl mx-auto px-5 py-6 sm:px-6 sm:py-7">
               <div className="grid grid-cols-1 gap-6 text-center sm:grid-cols-3 sm:text-left">
                 <div className="flex items-center justify-center gap-3 sm:justify-start">
                   <div className="relative h-11 w-11 overflow-hidden rounded-2xl ring-1 ring-brand-500/20">
@@ -107,7 +107,7 @@ async function LayoutContent({
                       href="https://zaftech.co"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="footer-link font-medium"
+                      className="text-sm text-charcoal-blue-600 transition-[color] duration-160 ease-out hover:text-charcoal-blue-900 dark:text-charcoal-blue-500 dark:hover:text-charcoal-blue-100 font-medium"
                     >
                       Zaftech
                     </a>{" "}
@@ -120,7 +120,7 @@ async function LayoutContent({
                     href="https://zaftech.co/privacy"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="footer-link"
+                    className="text-sm text-charcoal-blue-600 transition-[color] duration-160 ease-out hover:text-charcoal-blue-900 dark:text-charcoal-blue-500 dark:hover:text-charcoal-blue-100"
                   >
                     Privacy
                   </a>
@@ -131,7 +131,7 @@ async function LayoutContent({
                     href="https://zaftech.co/terms"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="footer-link"
+                    className="text-sm text-charcoal-blue-600 transition-[color] duration-160 ease-out hover:text-charcoal-blue-900 dark:text-charcoal-blue-500 dark:hover:text-charcoal-blue-100"
                   >
                     Terms
                   </a>
@@ -142,14 +142,14 @@ async function LayoutContent({
                     href="https://zaftech.co/refunds"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="footer-link"
+                    className="text-sm text-charcoal-blue-600 transition-[color] duration-160 ease-out hover:text-charcoal-blue-900 dark:text-charcoal-blue-500 dark:hover:text-charcoal-blue-100"
                   >
                     Refunds
                   </a>
                   <span className="hidden text-charcoal-blue-300 dark:text-charcoal-blue-600 sm:inline">
                     |
                   </span>
-                  <Link href="/contact" className="footer-link">
+                  <Link href="/contact" className="text-sm text-charcoal-blue-600 transition-[color] duration-160 ease-out hover:text-charcoal-blue-900 dark:text-charcoal-blue-500 dark:hover:text-charcoal-blue-100">
                     Contact
                   </Link>
                   <span className="hidden text-charcoal-blue-300 dark:text-charcoal-blue-600 sm:inline">
@@ -159,7 +159,7 @@ async function LayoutContent({
                     href="https://github.com/ZafTec/mizan"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="footer-link"
+                    className="text-sm text-charcoal-blue-600 transition-[color] duration-160 ease-out hover:text-charcoal-blue-900 dark:text-charcoal-blue-500 dark:hover:text-charcoal-blue-100"
                   >
                     Source
                   </a>
@@ -170,7 +170,7 @@ async function LayoutContent({
                     href="https://www.youtube.com/@Zaftec"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="icon-chip h-11 w-11 text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:text-charcoal-blue-400 dark:hover:text-white"
+                    className="inline-flex items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300 h-11 w-11"
                     aria-label="Zaftech on YouTube"
                   >
                     <i className="ri-youtube-fill text-lg" aria-hidden="true" />
@@ -179,7 +179,7 @@ async function LayoutContent({
                     href="https://x.com/ZaftechS"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="icon-chip h-11 w-11 text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:text-charcoal-blue-400 dark:hover:text-white"
+                    className="inline-flex items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300 h-11 w-11"
                     aria-label="Zaftech on X"
                   >
                     <Icon name="twitter" size={18} aria-hidden="true" />
@@ -188,7 +188,7 @@ async function LayoutContent({
                     href="https://zaftech.co"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="icon-chip h-11 w-11 text-charcoal-blue-500 hover:text-charcoal-blue-900 dark:text-charcoal-blue-400 dark:hover:text-white"
+                    className="inline-flex items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300 h-11 w-11"
                     aria-label="Zaftech website"
                   >
                     <i className="ri-global-line text-lg" aria-hidden="true" />

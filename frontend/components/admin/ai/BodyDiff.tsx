@@ -43,7 +43,7 @@ export default function BodyDiff({
   const changed = rows.some((r) => r.kind !== "same");
 
   return (
-    <section className="glass-panel space-y-3 p-5">
+    <section className="card overflow-visible space-y-3 p-5">
       <h2 className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
         {liveLabel} → {draftLabel}
       </h2>

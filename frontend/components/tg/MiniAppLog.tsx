@@ -20,7 +20,7 @@ export default function MiniAppLog() {
   return (
     <div className="flex flex-col gap-5" data-testid="tg-log">
       <header className="flex flex-col gap-1">
-        <Link href="/tg" className="text-link min-h-11 self-start text-sm">
+        <Link href="/tg" className="text-link self-start">
           Today
         </Link>
         <h1 className="text-2xl font-semibold">Log a meal</h1>
@@ -50,7 +50,7 @@ export default function MiniAppLog() {
           onBusyChange={setBusy}
         />
       ) : (
-        <p role="status" className="log-muted">
+        <p role="status" className="text-muted-foreground">
           Loading…
         </p>
       )}

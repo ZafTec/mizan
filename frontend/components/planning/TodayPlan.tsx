@@ -18,7 +18,7 @@ export default async function TodayPlan({ date }: { date: string }) {
     <section aria-labelledby="plan-title" className="mb-10">
       <header className="log-section-header">
         <h2 id="plan-title">Today&apos;s plan</h2>
-        <Link href={`/meal-plan/${view.planId}`} className="text-link text-sm">
+        <Link href={`/meal-plan/${view.planId}`} className="text-link">
           {view.planName || "Open plan"}
         </Link>
       </header>
@@ -29,23 +29,23 @@ export default async function TodayPlan({ date }: { date: string }) {
               <span className="block font-medium break-words">
                 {entryTitle(entry)}
               </span>
-              <span className="mt-0.5 block text-xs log-muted">
+              <span className="mt-0.5 block text-xs text-muted-foreground">
                 {[slotLabel(slot), entryQuantity(entry)]
                   .filter(Boolean)
                   .join(" · ")}
               </span>
             </span>
             {entry.nutrition && (
-              <span className="num whitespace-nowrap text-sm">
+              <span className="tabular-nums whitespace-nowrap text-sm">
                 {Math.round(entry.nutrition.calories).toLocaleString()}{" "}
-                <span className="text-xs log-muted">kcal</span>
+                <span className="text-xs text-muted-foreground">kcal</span>
               </span>
             )}
             <LogPlanEntryButton planId={view.planId} entry={entry} />
           </li>
         ))}
       </ul>
-      <p className="num mt-2 text-xs log-muted">
+      <p className="tabular-nums mt-2 text-xs text-muted-foreground">
         {view.day.loggedCount} of {view.day.entryCount} logged
         {view.rules.eatingWindowEnd
           ? ` · eating window closes at ${view.rules.eatingWindowEnd.slice(0, 5)}`

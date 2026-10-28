@@ -88,7 +88,7 @@ export default function FoodSearch({
           aria-hidden="true"
           size={16}
           strokeWidth={1.7}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 log-muted"
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
         />
         <input
           id={id}
@@ -110,7 +110,7 @@ export default function FoodSearch({
       {results && (
         <ul className="divide-y divide-border border-b border-border">
           {results.length === 0 ? (
-            <li className="py-2 text-sm log-muted">No foods match.</li>
+            <li className="py-2 text-sm text-muted-foreground">No foods match.</li>
           ) : (
             results.map((food) => (
               <li key={food.id}>

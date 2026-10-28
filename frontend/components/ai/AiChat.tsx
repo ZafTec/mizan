@@ -605,7 +605,7 @@ export default function AiChat({
                     writeNotNow(false);
                     setNotNow(false);
                   }}
-                  className="text-link font-medium underline underline-offset-4"
+                  className="text-link underline underline-offset-4"
                 >
                   Allow access
                 </button>
@@ -1036,7 +1036,7 @@ function EmptyState({
               >
                 <span
                   aria-hidden="true"
-                  className="num w-6 shrink-0 text-xs text-muted-foreground"
+                  className="tabular-nums w-6 shrink-0 text-xs text-muted-foreground"
                 >
                   {String(index + 1).padStart(2, "0")}
                 </span>

@@ -30,7 +30,7 @@ export default function AuditDetails({ details }: { details: string }) {
       </button>
 
       <ModalShell open={open} onClose={() => setOpen(false)}>
-        <div className="surface-panel w-full max-w-2xl space-y-3 p-5">
+        <div className="card w-full max-w-2xl space-y-3 p-5">
           <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
             Audit entry
           </h2>

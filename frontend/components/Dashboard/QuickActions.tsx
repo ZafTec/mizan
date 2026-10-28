@@ -41,7 +41,7 @@ export default function QuickActions() {
           key={a.href}
           href={a.href}
           className={cn(
-            "glass-panel press-feedback group flex items-center justify-between gap-3 p-4 transition-[transform,box-shadow,border-color] duration-[220ms] ease-[cubic-bezier(0.23,1,0.32,1)] md:hover:-translate-y-0.5 md:hover:shadow-[0_18px_40px_-22px_rgba(15,23,42,0.32)]",
+            "card overflow-visible transition-transform duration-120 ease-out active:scale-[0.985] group flex items-center justify-between gap-3 p-4 md:hover:-translate-y-0.5 md:hover:shadow-[0_18px_40px_-22px_rgba(15,23,42,0.32)]",
             toneClass[a.tone],
           )}
         >

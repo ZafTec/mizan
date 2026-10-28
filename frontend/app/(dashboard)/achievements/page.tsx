@@ -96,11 +96,11 @@ function Row({
         <span className="block font-medium">
           {achievement.name || "Achievement"}
         </span>
-        <span className="num mt-0.5 block text-sm log-muted">
+        <span className="tabular-nums mt-0.5 block text-sm text-muted-foreground">
           {detail.filter(Boolean).join(" · ")}
         </span>
       </span>
-      <span className="num whitespace-nowrap text-sm log-muted">
+      <span className="tabular-nums whitespace-nowrap text-sm text-muted-foreground">
         <span className="text-base font-semibold text-foreground">
           {achievement.points}
         </span>{" "}
@@ -128,26 +128,26 @@ export default async function AchievementsPage() {
     <div className="log-page space-y-8" data-testid="achievements-page">
       <header className="log-page-header block!">
         <h1>Achievements</h1>
-        <p className="log-muted mt-2">Your streak and what it has earned.</p>
+        <p className="text-muted-foreground mt-2">Your streak and what it has earned.</p>
       </header>
 
       <section aria-label="Streak and level" className="facts-strip">
         <div>
-          <p className="text-sm log-muted">Streak</p>
-          <p className="num nutrition-value">
+          <p className="text-sm text-muted-foreground">Streak</p>
+          <p className="tabular-nums nutrition-value">
             {streak?.currentStreak || 0}
-            <span className="text-sm font-normal log-muted"> days</span>
+            <span className="text-sm font-normal text-muted-foreground"> days</span>
           </p>
         </div>
         <div>
-          <p className="text-sm log-muted">Longest</p>
-          <p className="num nutrition-value">
+          <p className="text-sm text-muted-foreground">Longest</p>
+          <p className="tabular-nums nutrition-value">
             {streak?.longestStreak || 0}
-            <span className="text-sm font-normal log-muted"> days</span>
+            <span className="text-sm font-normal text-muted-foreground"> days</span>
           </p>
         </div>
         <div>
-          <p className="text-sm log-muted">Level</p>
+          <p className="text-sm text-muted-foreground">Level</p>
           <p className="nutrition-value facts-level flex items-center gap-1.5">
             {LEVEL_MARK[levelName] && (
               <Image
@@ -163,19 +163,19 @@ export default async function AchievementsPage() {
           </p>
         </div>
       </section>
-      <p className="num -mt-4 text-sm log-muted">
+      <p className="tabular-nums -mt-4 text-sm text-muted-foreground">
         {totalPoints} points · {toNext}
       </p>
 
       <section aria-labelledby="earned-title">
         <header className="log-section-header">
           <h2 id="earned-title">Earned</h2>
-          <span className="num text-sm log-muted">{earnedCount}</span>
+          <span className="tabular-nums text-sm text-muted-foreground">{earnedCount}</span>
         </header>
         {earned.length === 0 ? (
           <div className="log-empty">
             <p>Nothing earned yet.</p>
-            <p className="log-muted mt-2 text-sm">
+            <p className="text-muted-foreground mt-2 text-sm">
               The first one is a single logged meal. The rest are listed below
               so you know what counts.
             </p>
@@ -193,7 +193,7 @@ export default async function AchievementsPage() {
         <section aria-labelledby="to-earn-title">
           <header className="log-section-header">
             <h2 id="to-earn-title">Still to earn</h2>
-            <span className="num text-sm log-muted">{unearned.length}</span>
+            <span className="tabular-nums text-sm text-muted-foreground">{unearned.length}</span>
           </header>
           <ul>
             {unearned.map((achievement) => (

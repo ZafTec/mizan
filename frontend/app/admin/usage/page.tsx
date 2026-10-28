@@ -85,7 +85,7 @@ export default async function AdminUsagePage({
       <header className="log-page-header block!">
         <p className="eyebrow">Administration</p>
         <h1 className="mt-1">Usage</h1>
-        <p className="log-muted mt-2">
+        <p className="text-muted-foreground mt-2">
           AI requests, tokens and cost from {usage.from} to {usage.to} (UTC).
           Refused calls cost nothing and are counted apart.
         </p>
@@ -163,20 +163,20 @@ export default async function AdminUsagePage({
 
       <section aria-label="Usage totals" className="facts-strip">
         <div>
-          <p className="text-sm log-muted">Requests</p>
-          <p className="num nutrition-value">
+          <p className="text-sm text-muted-foreground">Requests</p>
+          <p className="tabular-nums nutrition-value">
             {usage.total.requests.toLocaleString()}
           </p>
         </div>
         <div>
-          <p className="text-sm log-muted">Tokens</p>
-          <p className="num nutrition-value">
+          <p className="text-sm text-muted-foreground">Tokens</p>
+          <p className="tabular-nums nutrition-value">
             {usage.total.tokens.toLocaleString()}
           </p>
         </div>
         <div>
-          <p className="text-sm log-muted">Refused</p>
-          <p className="num nutrition-value">
+          <p className="text-sm text-muted-foreground">Refused</p>
+          <p className="tabular-nums nutrition-value">
             {usage.total.refusals.toLocaleString()}
           </p>
         </div>

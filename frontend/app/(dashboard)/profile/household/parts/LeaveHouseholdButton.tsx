@@ -39,7 +39,7 @@ export function LeaveHouseholdButton({
       type="button"
       onClick={handleClick}
       disabled={disabled || pending}
-      className="btn-ghost h-9 text-sm"
+      className="btn-ghost h-9"
     >
       Leave
     </button>

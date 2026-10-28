@@ -35,7 +35,7 @@ export default async function NewMealPlanPage() {
           </Link>
         </p>
         <h1 className="mt-1">New plan</h1>
-        <p className="log-muted mt-2">
+        <p className="text-muted-foreground mt-2">
           Start from a template, set your own rules and fill the days later, or
           let the assistant draft them.
         </p>

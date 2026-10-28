@@ -110,12 +110,12 @@ export function PricingSection({ plans = [] }: { plans?: BillingPlan[] }) {
                   {tier.name}
                 </h3>
                 {tier.highlight && (
-                  <span className="eyebrow text-verdigris-700 dark:text-verdigris-400">
+                  <span className="eyebrow">
                     Most people
                   </span>
                 )}
               </div>
-              <div className="num mt-1.5 text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">
+              <div className="tabular-nums mt-1.5 text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">
                 {tier.price}
                 {tier.cadence && (
                   <span className="text-sm font-normal text-charcoal-blue-500 dark:text-charcoal-blue-500">

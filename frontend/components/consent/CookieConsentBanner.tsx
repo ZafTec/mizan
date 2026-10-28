@@ -81,14 +81,14 @@ export function CookieConsentBanner({
           <button
             type="button"
             onClick={() => decide("accepted")}
-            className="btn-primary h-10 px-5 text-sm"
+            className="btn-primary h-10"
           >
             Accept
           </button>
           <button
             type="button"
             onClick={() => decide("declined")}
-            className="btn-ghost h-10 px-4 text-sm"
+            className="btn-ghost h-10"
           >
             Decline
           </button>

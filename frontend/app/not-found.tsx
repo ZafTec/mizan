@@ -21,10 +21,10 @@ export default function NotFound() {
         {/* Action Card */}
         <div className="card p-6 sm:p-8 space-y-4">
           <div className="space-y-3">
-            <Link href="/" className="btn-primary w-full py-3">
+            <Link href="/" className="btn-primary w-full">
               Go to Dashboard
             </Link>
-            <Link href="/recipes" className="btn-secondary w-full py-3">
+            <Link href="/recipes" className="btn-secondary w-full">
               Browse Recipes
             </Link>
           </div>

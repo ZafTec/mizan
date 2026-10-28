@@ -37,7 +37,7 @@ export default function HouseholdRowActions({
 
   return (
     <div className="flex items-center justify-end gap-2">
-      <Link href={`/admin/households/${id}`} className="btn-ghost h-8 text-xs">
+      <Link href={`/admin/households/${id}`} className="btn-ghost h-8">
         <Icon name="search" size={14} aria-hidden="true" />
         Inspect
       </Link>
@@ -45,7 +45,7 @@ export default function HouseholdRowActions({
         type="button"
         onClick={handleDelete}
         disabled={pending}
-        className="btn-ghost h-8 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+        className="btn-ghost h-8"
       >
         <Icon name="logout" size={14} aria-hidden="true" />
         Delete

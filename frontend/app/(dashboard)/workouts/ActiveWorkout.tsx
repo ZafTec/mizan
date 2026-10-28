@@ -165,7 +165,7 @@ export default function ActiveWorkout({
                 </button>
               )}
               <button
-                className="btn-ghost btn-sm text-red-600"
+                className="btn-ghost btn-sm"
                 onClick={() =>
                   dispatch({
                     type: "remove-exercise",
@@ -251,7 +251,7 @@ export default function ActiveWorkout({
                   />
                   <button
                     aria-label={`Cycle set ${index + 1}`}
-                    className={`press-feedback flex h-11 w-11 items-center justify-center rounded-2xl ${set.completedAt ? "bg-brand-600 text-white" : "bg-charcoal-blue-100 text-muted-foreground dark:bg-charcoal-blue-900"}`}
+                    className={`transition-transform duration-120 ease-out active:scale-[0.985] flex h-11 w-11 items-center justify-center rounded-2xl ${set.completedAt ? "bg-brand-600 text-white" : "bg-charcoal-blue-100 text-muted-foreground dark:bg-charcoal-blue-900"}`}
                     onClick={() =>
                       dispatch({
                         type: "cycle-reps",

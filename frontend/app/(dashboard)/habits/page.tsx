@@ -97,7 +97,7 @@ export default async function HabitsPage() {
         </div>
         <div className="flex items-center gap-2">
           {streak && streak.currentStreak > 0 && (
-            <div className="streak-gradient inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white">
+            <div className="bg-transparent text-burnt-peach-700 dark:text-burnt-peach-400 inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold">
               <span>{streak.currentStreak}-day streak</span>
             </div>
           )}
@@ -105,7 +105,7 @@ export default async function HabitsPage() {
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <section className="glass-panel p-6 sm:p-8">
+        <section className="card overflow-visible p-6 sm:p-8">
           <header className="mb-4 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -126,7 +126,7 @@ export default async function HabitsPage() {
                   cy="24"
                   r="20"
                   fill="transparent"
-                  className="ring-track"
+                  className="stroke-charcoal-blue-200 dark:stroke-charcoal-blue-700"
                   strokeWidth="5"
                 />
                 <circle

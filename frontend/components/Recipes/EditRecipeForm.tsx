@@ -307,7 +307,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
       </div>
 
       {/* Ingredients Card */}
-      <div className="card p-6 space-y-4 relative overflow-visible z-20">
+      <div className="card p-6 space-y-4 relative z-20">
         <h2 className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 flex items-center gap-2">
           Ingredients
         </h2>
@@ -517,7 +517,7 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="btn-primary w-full py-4 text-lg"
+        className="btn-primary w-full"
       >
         {isSubmitting ? (
           <>

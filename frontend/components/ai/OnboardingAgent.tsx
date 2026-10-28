@@ -154,7 +154,7 @@ export default function OnboardingAgent() {
         consent={consent}
         onGranted={setConsent}
         lead="Setup records your goal and first entries for you. It only sees what you switch on, and you can change this at any time in Settings."
-        className="glass-panel overflow-hidden"
+        className="card overflow-visible overflow-hidden"
       />
     );
   }
@@ -163,7 +163,7 @@ export default function OnboardingAgent() {
     <div className="space-y-4">
       <div
         ref={scroller}
-        className="glass-panel max-h-[60vh] space-y-4 overflow-y-auto p-5"
+        className="card overflow-visible max-h-[60vh] space-y-4 overflow-y-auto p-5"
       >
         <Bubble fromUser={false}>{OPENER}</Bubble>
 

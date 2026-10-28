@@ -115,7 +115,7 @@ export default function MessagingThread({
   const messages = conversation?.messages ?? [];
 
   return (
-    <section className="glass-panel flex min-h-[600px] flex-col overflow-hidden p-0">
+    <section className="card overflow-visible flex min-h-[600px] flex-col overflow-hidden p-0">
       <header className="flex items-center gap-3 border-b border-charcoal-blue-200/70 p-4 dark:border-white/10">
         <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-verdigris-600 text-sm font-semibold text-white">
           {otherPartyName.charAt(0).toUpperCase()}
@@ -142,7 +142,7 @@ export default function MessagingThread({
           </div>
         ) : messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-            <span className="icon-chip h-12 w-12 text-charcoal-blue-400"></span>
+            <span className="inline-flex items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300 h-12 w-12"></span>
             <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
               No messages yet. Say hello.
             </p>

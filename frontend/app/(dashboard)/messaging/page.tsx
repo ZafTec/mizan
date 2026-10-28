@@ -100,8 +100,8 @@ export default async function MessagingPage({
       </header>
 
       {conversations.length === 0 ? (
-        <section className="glass-panel flex flex-col items-center justify-center gap-3 p-12 text-center">
-          <span className="icon-chip h-14 w-14 text-verdigris-700 dark:text-verdigris-300"></span>
+        <section className="card overflow-visible flex flex-col items-center justify-center gap-3 p-12 text-center">
+          <span className="inline-flex items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300 h-14 w-14"></span>
           <p className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
             No conversations yet
           </p>
@@ -113,7 +113,7 @@ export default async function MessagingPage({
           {!isTrainer && (
             <Link
               href="/trainers"
-              className="btn-primary !rounded-2xl !py-2 text-sm"
+              className="btn-primary !rounded-2xl !py-2"
             >
               Find a coach
             </Link>
@@ -121,10 +121,10 @@ export default async function MessagingPage({
         </section>
       ) : (
         <div className="grid min-h-[calc(100vh-260px)] gap-4 lg:grid-cols-[320px_1fr]">
-          <aside className="glass-panel flex flex-col overflow-hidden p-0">
+          <aside className="card overflow-visible flex flex-col overflow-hidden p-0">
             <header className="border-b border-charcoal-blue-200/70 p-4 dark:border-white/10">
               <div className="flex items-center gap-2">
-                <span className="icon-chip h-9 w-9 text-verdigris-700 dark:text-verdigris-300"></span>
+                <span className="inline-flex items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300 h-9 w-9"></span>
                 <div>
                   <p className="text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
                     Conversations
@@ -172,7 +172,7 @@ export default async function MessagingPage({
               canMessage={active.canMessage}
             />
           ) : (
-            <section className="glass-panel flex items-center justify-center p-12 text-center">
+            <section className="card overflow-visible flex items-center justify-center p-12 text-center">
               <p className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
                 Pick a conversation to start messaging.
               </p>

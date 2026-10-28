@@ -315,7 +315,7 @@ export default function WorkoutDashboard({
           <h1 className="text-3xl font-semibold tracking-tight">
             {sessionOnly ? "Workout" : "Workouts"}
           </h1>
-          <p className="mt-2 text-sm log-muted" role="status">
+          <p className="mt-2 text-sm text-muted-foreground" role="status">
             {saveState === "saving"
               ? "Saving session…"
               : saveState === "saved"

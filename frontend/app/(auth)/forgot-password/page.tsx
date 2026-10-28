@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
                 </p>
               </div>
               <div className="pt-4">
-                <Link href="/login" className="btn-primary w-full py-3">
+                <Link href="/login" className="btn-primary w-full">
                   Back to login
                 </Link>
               </div>
@@ -119,7 +119,7 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full py-3"
+              className="btn-primary w-full"
             >
               {loading ? (
                 <>

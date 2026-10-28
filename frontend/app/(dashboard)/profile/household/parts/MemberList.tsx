@@ -69,7 +69,7 @@ export function MemberList({
             {canManage && m.role !== "owner" && (
               <button
                 type="button"
-                className="btn-ghost h-8 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                className="btn-ghost h-8"
                 onClick={() => handleRemove(m.userId, m.name)}
                 disabled={pending}
               >
@@ -103,7 +103,7 @@ export function MemberList({
                 {canManage && (
                   <button
                     type="button"
-                    className="btn-ghost h-8 text-xs"
+                    className="btn-ghost h-8"
                     onClick={() => handleRevoke(inv.id)}
                     disabled={pending}
                   >

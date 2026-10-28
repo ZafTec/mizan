@@ -65,7 +65,7 @@ export default function ImpersonationBanner({
         type="button"
         onClick={leave}
         disabled={leaving}
-        className="btn-secondary min-h-9 shrink-0 px-3 py-1"
+        className="btn-secondary min-h-9 shrink-0"
       >
         {leaving ? "Leaving…" : "Back to admin"}
       </button>

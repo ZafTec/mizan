@@ -33,7 +33,7 @@ export default async function TrainerStrip() {
           />
         </div>
       ) : (
-        <span className="icon-chip h-10 w-10 shrink-0 text-brand-700 dark:text-brand-300"></span>
+        <span className="inline-flex items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300 h-10 w-10 shrink-0"></span>
       )}
 
       <div className="min-w-0 flex-1">
@@ -51,14 +51,14 @@ export default async function TrainerStrip() {
         {trainer.canMessage && (
           <Link
             href="/messaging"
-            className="btn-ghost !rounded-2xl !py-2 text-xs"
+            className="btn-ghost !rounded-2xl !py-2"
           >
             Message
           </Link>
         )}
         <Link
           href="/trainers/my-trainer"
-          className="btn-secondary !rounded-2xl !py-2 text-xs"
+          className="btn-secondary !rounded-2xl !py-2"
         >
           Manage access
         </Link>

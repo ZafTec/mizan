@@ -192,7 +192,7 @@ export default function BillingView({ plans }: { plans: BillingPlan[] }) {
           href="https://zaftech.co/refunds"
           target="_blank"
           rel="noopener noreferrer"
-          className="footer-link underline"
+          className="text-sm text-charcoal-blue-600 transition-[color] duration-160 ease-out hover:text-charcoal-blue-900 dark:text-charcoal-blue-500 dark:hover:text-charcoal-blue-100 underline"
         >
           Refund policy
         </a>
@@ -201,7 +201,7 @@ export default function BillingView({ plans }: { plans: BillingPlan[] }) {
           href="https://zaftech.co/terms"
           target="_blank"
           rel="noopener noreferrer"
-          className="footer-link underline"
+          className="text-sm text-charcoal-blue-600 transition-[color] duration-160 ease-out hover:text-charcoal-blue-900 dark:text-charcoal-blue-500 dark:hover:text-charcoal-blue-100 underline"
         >
           Terms
         </a>
@@ -270,15 +270,15 @@ function ChoosePlan({
       <div className="mt-2 flex flex-wrap items-baseline gap-2">
         {deal ? (
           <>
-            <span className="num text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">
+            <span className="tabular-nums text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">
               {formatMoney(deal.discountedAmountCents, plan.currency)}
             </span>
-            <span className="num text-base text-charcoal-blue-400 line-through dark:text-charcoal-blue-500">
+            <span className="tabular-nums text-base text-charcoal-blue-400 line-through dark:text-charcoal-blue-500">
               {formatMoney(plan.amountCents, plan.currency)}
             </span>
           </>
         ) : (
-          <span className="num text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">
+          <span className="tabular-nums text-3xl font-semibold tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">
             {formatMoney(plan.amountCents, plan.currency)}
           </span>
         )}
@@ -318,7 +318,7 @@ function ChoosePlan({
         Rather run it yourself?{" "}
         <a
           href="https://github.com/ZafTec/mizan#self-hosting"
-          className="footer-link underline"
+          className="text-sm text-charcoal-blue-600 transition-[color] duration-160 ease-out hover:text-charcoal-blue-900 dark:text-charcoal-blue-500 dark:hover:text-charcoal-blue-100 underline"
         >
           Read the setup guide
         </a>
@@ -479,7 +479,7 @@ function Subscribed({
             </span>
           </div>
           {subscription.amountCents != null && (
-            <p className="num mt-1 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
+            <p className="tabular-nums mt-1 text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
               {formatMoney(
                 subscription.amountCents,
                 subscription.currency ?? "USD",
@@ -608,7 +608,7 @@ function Subscribed({
                     ? "Credit toward later bills"
                     : "Charged now"}
                 </dt>
-                <dd className="num font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
+                <dd className="tabular-nums font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
                   {formatMoney(
                     Math.abs(preview.preview.dueNowCents),
                     preview.preview.currency,
@@ -623,7 +623,7 @@ function Subscribed({
                       ? ` from ${formatDate(preview.preview.nextBilledAt)}`
                       : ""}
                   </dt>
-                  <dd className="num font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
+                  <dd className="tabular-nums font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
                     {formatMoney(
                       preview.preview.nextAmountCents,
                       preview.preview.currency,
@@ -717,7 +717,7 @@ function History() {
               className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
             >
               <div>
-                <p className="num font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
+                <p className="tabular-nums font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">
                   {formatMoney(t.totalCents, t.currency)}
                 </p>
                 <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">

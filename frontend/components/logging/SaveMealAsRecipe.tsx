@@ -200,7 +200,7 @@ export function SaveMealAsRecipe({
             <button
               type="submit"
               disabled={busy}
-              className="btn-primary min-h-11 w-full disabled:opacity-50"
+              className="btn-primary min-h-11 w-full"
             >
               {busy ? "Saving…" : "Save recipe"}
             </button>

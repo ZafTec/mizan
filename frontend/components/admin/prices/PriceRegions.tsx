@@ -170,7 +170,7 @@ export default function PriceRegions({ regions }: { regions: PriceRegion[] }) {
                 <span className="block font-medium break-words">
                   {region.name}
                 </span>
-                <span className="mt-0.5 block text-xs log-muted">
+                <span className="mt-0.5 block text-xs text-muted-foreground">
                   {region.code} · {region.currency}
                   {region.enabled ? "" : " · Disabled"}
                 </span>

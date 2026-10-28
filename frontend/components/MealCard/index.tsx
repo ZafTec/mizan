@@ -118,7 +118,7 @@ export default function MealCard({ meal }: MealCardProps) {
                   Cancel
                 </button>
                 <button
-                  className="btn-danger flex items-center"
+                  className="btn-danger"
                   onClick={handleDelete}
                   disabled={isLoading}
                 >

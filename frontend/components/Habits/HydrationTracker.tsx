@@ -40,7 +40,7 @@ export default function HydrationTracker() {
   const ml = glasses * GLASS_ML;
 
   return (
-    <section className="glass-panel flex flex-col gap-4 p-6 sm:p-8">
+    <section className="card overflow-visible flex flex-col gap-4 p-6 sm:p-8">
       <header>
         <h2 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
           Hydration
@@ -75,7 +75,7 @@ export default function HydrationTracker() {
           type="button"
           onClick={() => persist(Math.max(0, glasses - 1))}
           disabled={!mounted || glasses === 0}
-          className="btn-ghost rounded-2xl! py-2! text-sm"
+          className="btn-ghost rounded-2xl! py-2!"
           aria-label="Remove a glass"
         >
           -
@@ -84,7 +84,7 @@ export default function HydrationTracker() {
           type="button"
           onClick={() => persist(glasses + 1)}
           disabled={!mounted}
-          className="btn-primary rounded-2xl! py-2! text-sm"
+          className="btn-primary rounded-2xl! py-2!"
         >
           + Glass
         </button>
@@ -92,7 +92,7 @@ export default function HydrationTracker() {
           type="button"
           onClick={() => persist(0)}
           disabled={!mounted || glasses === 0}
-          className="btn-ghost rounded-2xl! py-2! text-sm"
+          className="btn-ghost rounded-2xl! py-2!"
           aria-label="Reset hydration"
         >
           Reset

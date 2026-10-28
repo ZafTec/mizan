@@ -64,15 +64,15 @@ function FlagRow({ flag }: { flag: FeatureFlag }) {
           <p className="font-mono text-sm font-semibold break-words">
             {flag.key}
           </p>
-          <p className="mt-0.5 text-sm log-muted">{flag.description}</p>
-          <p className="mt-1 text-xs log-muted">
+          <p className="mt-0.5 text-sm text-muted-foreground">{flag.description}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
             {differs}
             {flag.defaultEnabled !== flag.catalogDefault &&
               ` · ships ${flag.catalogDefault ? "on" : "off"}`}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs log-muted">Default</span>
+          <span className="text-xs text-muted-foreground">Default</span>
           <Switch
             checked={flag.defaultEnabled}
             label={`Default for ${flag.key}`}
@@ -186,9 +186,9 @@ function Overrides({ flag }: { flag: FeatureFlag }) {
         </p>
       )}
       {overrides === null && !loadError ? (
-        <p className="text-sm log-muted">Loading overrides…</p>
+        <p className="text-sm text-muted-foreground">Loading overrides…</p>
       ) : overrides && overrides.length === 0 ? (
-        <p className="text-sm log-muted">
+        <p className="text-sm text-muted-foreground">
           Every household follows the default.
         </p>
       ) : (
@@ -196,13 +196,13 @@ function Overrides({ flag }: { flag: FeatureFlag }) {
           {overrides?.map((override) => (
             <li
               key={override.householdId}
-              className="ledger-row flex-wrap gap-y-1"
+              className="ledger-row flex-wrap"
             >
               <span className="min-w-0 flex-1 basis-40">
                 <span className="block font-medium break-words">
                   {override.householdName}
                 </span>
-                <span className="mt-0.5 block text-xs log-muted">
+                <span className="mt-0.5 block text-xs text-muted-foreground">
                   {override.memberCount} member
                   {override.memberCount === 1 ? "" : "s"}
                   {override.updatedByName
@@ -263,15 +263,15 @@ function Overrides({ flag }: { flag: FeatureFlag }) {
       {results && (
         <ul aria-label="Households found">
           {results.items.length === 0 ? (
-            <li className="text-sm log-muted">No household matches.</li>
+            <li className="text-sm text-muted-foreground">No household matches.</li>
           ) : (
             results.items.map((household) => (
-              <li key={household.id} className="ledger-row flex-wrap gap-y-1">
+              <li key={household.id} className="ledger-row flex-wrap">
                 <span className="min-w-0 flex-1 basis-40">
                   <span className="block font-medium break-words">
                     {household.name}
                   </span>
-                  <span className="mt-0.5 block text-xs log-muted">
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
                     {household.memberCount} member
                     {household.memberCount === 1 ? "" : "s"}
                   </span>

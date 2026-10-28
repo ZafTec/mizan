@@ -36,7 +36,7 @@ export default async function ExercisesPage({
     <div className="log-page space-y-8" data-testid="exercises-page">
       <header className="log-page-header block!">
         <h1>Exercises</h1>
-        <p className="log-muted mt-2">
+        <p className="text-muted-foreground mt-2">
           The movements you can put in a workout.
         </p>
       </header>
@@ -51,7 +51,7 @@ export default async function ExercisesPage({
           <h2 id="exercises-title">
             {filtered ? "Matching" : "All exercises"}
           </h2>
-          <span className="num text-sm log-muted">{totalCount}</span>
+          <span className="tabular-nums text-sm text-muted-foreground">{totalCount}</span>
         </header>
         {exercises.length === 0 ? (
           <div className="log-empty">
@@ -59,7 +59,7 @@ export default async function ExercisesPage({
             {filtered && (
               <Link
                 href="/exercises"
-                className="text-link mt-3 inline-block text-sm"
+                className="text-link mt-3"
               >
                 Clear the search
               </Link>
@@ -82,7 +82,7 @@ export default async function ExercisesPage({
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block font-medium">{exercise.name}</span>
-                  <span className="mt-0.5 block text-sm log-muted">
+                  <span className="mt-0.5 block text-sm text-muted-foreground">
                     {[
                       exercise.category,
                       exercise.muscleGroup,
@@ -97,7 +97,7 @@ export default async function ExercisesPage({
                     href={exercise.videoUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-link shrink-0 text-sm"
+                    className="text-link shrink-0"
                   >
                     Video
                   </a>

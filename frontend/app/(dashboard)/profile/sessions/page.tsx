@@ -236,7 +236,7 @@ export default function ProfileSessionsPage() {
         )}
       </div>
 
-      <div className="card border-blue-200 bg-blue-50 p-6 dark:border-blue-500/30 dark:bg-blue-500/10">
+      <div className="card p-6">
         <div className="flex gap-3">
           <div>
             <h3 className="mb-1 font-semibold text-blue-900 dark:text-blue-100">

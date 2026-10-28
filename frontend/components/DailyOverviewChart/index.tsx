@@ -201,7 +201,7 @@ export default function DailyOverviewChart() {
           </div>
           <Link
             href="/meals"
-            className="btn-secondary w-full justify-center sm:w-auto"
+            className="btn-secondary w-full sm:w-auto"
           >
             Log meal
           </Link>
@@ -258,7 +258,7 @@ export default function DailyOverviewChart() {
                   : "Set calorie and macro goals to turn this into a real pacing view."}
               </p>
             </div>
-            <span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300"></span>
+            <span className="inline-flex items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300 h-11 w-11"></span>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             {macroDistribution.map((item) => (
@@ -279,7 +279,7 @@ export default function DailyOverviewChart() {
 
       <div className="card p-6 sm:p-7">
         <div className="flex items-center gap-3">
-          <span className="icon-chip h-10 w-10 text-brand-600 dark:text-brand-300"></span>
+          <span className="inline-flex items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300 h-10 w-10"></span>
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-charcoal-blue-500 dark:text-charcoal-blue-400">
               Breakdown
@@ -330,7 +330,7 @@ export default function DailyOverviewChart() {
               ? "Use the goal dashboard to compare today against your trend and tighten any weak macro."
               : "Set daily targets to unlock progress tracking and make this section actually useful."}
           </p>
-          <Link href="/goal" className="btn-primary mt-4 w-full justify-center">
+          <Link href="/goal" className="btn-primary mt-4 w-full">
             {hasGoals ? "Review goals" : "Set goals"}
           </Link>
         </div>

@@ -196,12 +196,12 @@ export default function NewPlanForm({
                   <span className="min-w-0 flex-1">
                     <span className="block font-medium">{item.name}</span>
                     {item.description && (
-                      <span className="mt-0.5 block text-sm log-muted">
+                      <span className="mt-0.5 block text-sm text-muted-foreground">
                         {item.description}
                       </span>
                     )}
                   </span>
-                  <span className="num whitespace-nowrap text-sm log-muted">
+                  <span className="tabular-nums whitespace-nowrap text-sm text-muted-foreground">
                     {item.durationDays} days · {item.entryCount} entries
                   </span>
                 </label>
@@ -260,7 +260,7 @@ export default function NewPlanForm({
                 inputMode="numeric"
                 min={1}
                 max={31}
-                className="input num w-full"
+                className="input tabular-nums w-full"
                 value={durationDays}
                 onChange={(event) => setDurationDays(event.target.value)}
                 aria-invalid={planErrors.durationDays ? true : undefined}
@@ -274,7 +274,7 @@ export default function NewPlanForm({
           ) : (
             <div>
               <p className="label">Length</p>
-              <p className="num py-3 text-sm">
+              <p className="tabular-nums py-3 text-sm">
                 {template
                   ? `${template.durationDays} days`
                   : "Choose a template"}

@@ -63,7 +63,7 @@ export function CreateUserForm() {
       )}
 
       <div>
-        <label htmlFor="email" className="label mb-2">
+        <label htmlFor="email" className="label">
           Email <span className="text-red-500">*</span>
         </label>
         <input
@@ -79,7 +79,7 @@ export function CreateUserForm() {
       </div>
 
       <div>
-        <label htmlFor="name" className="label mb-2">
+        <label htmlFor="name" className="label">
           Full Name <span className="text-red-500">*</span>
         </label>
         <input
@@ -95,7 +95,7 @@ export function CreateUserForm() {
       </div>
 
       <div>
-        <label htmlFor="role" className="label mb-2">
+        <label htmlFor="role" className="label">
           Role <span className="text-red-500">*</span>
         </label>
         <Select
@@ -121,7 +121,7 @@ export function CreateUserForm() {
       </div>
 
       <div>
-        <label htmlFor="password" className="label mb-2">
+        <label htmlFor="password" className="label">
           Password <span className="text-red-500">*</span>
         </label>
         <input
@@ -140,7 +140,7 @@ export function CreateUserForm() {
       </div>
 
       <div>
-        <label htmlFor="confirmPassword" className="label mb-2">
+        <label htmlFor="confirmPassword" className="label">
           Confirm Password <span className="text-red-500">*</span>
         </label>
         <input
@@ -169,7 +169,7 @@ export function CreateUserForm() {
         <button
           type="submit"
           disabled={isLoading || formData.password !== formData.confirmPassword}
-          className="btn-primary flex-1 py-3"
+          className="btn-primary flex-1"
         >
           {isLoading ? "Creating..." : "Create User"}
         </button>

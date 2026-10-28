@@ -146,7 +146,7 @@ test.describe("Connected apps", () => {
       page.getByText("It loses access on its next request."),
     ).toBeVisible();
     await page
-      .locator(".modal-pop-in")
+      .getByRole("alertdialog")
       .getByRole("button", { name: "Disconnect" })
       .click();
 

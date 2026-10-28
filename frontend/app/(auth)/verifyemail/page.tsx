@@ -102,7 +102,7 @@ export default function Page() {
                 <div className="text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400 mb-3">
                   Redirecting to login in {countdown} seconds...
                 </div>
-                <Link href="/login" className="btn-primary w-full py-3">
+                <Link href="/login" className="btn-primary w-full">
                   Continue to login
                 </Link>
               </div>
@@ -119,10 +119,10 @@ export default function Page() {
                 </p>
               </div>
               <div className="space-y-3 pt-4">
-                <Link href="/register" className="btn-primary w-full py-3">
+                <Link href="/register" className="btn-primary w-full">
                   Create new account
                 </Link>
-                <Link href="/login" className="btn-secondary w-full py-3">
+                <Link href="/login" className="btn-secondary w-full">
                   Back to login
                 </Link>
               </div>

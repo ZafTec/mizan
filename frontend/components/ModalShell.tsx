@@ -148,7 +148,7 @@ export function ModalShell({
 
   return createPortal(
     <div
-      className="modal-overlay-in fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm"
+      className="animate-overlay-in fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm"
       onClick={closeOnOverlayClick ? onClose : undefined}
     >
       <div
@@ -158,7 +158,7 @@ export function ModalShell({
         aria-label={label}
         aria-labelledby={label ? undefined : (labelledBy ?? headingId)}
         tabIndex={-1}
-        className="modal-pop-in my-auto w-full max-w-md outline-none"
+        className="animate-modal-in my-auto w-full max-w-md outline-none"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={trapTab}
       >

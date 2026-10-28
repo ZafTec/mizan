@@ -37,7 +37,7 @@ export default async function ShoppingListsPage() {
     <div className="log-page space-y-8" data-testid="shopping-lists-page">
       <header className="log-page-header block!">
         <h1>Shopping lists</h1>
-        <p className="log-muted mt-2">What your plans need you to buy.</p>
+        <p className="text-muted-foreground mt-2">What your plans need you to buy.</p>
       </header>
       {failed ? (
         <p className="log-empty">Your lists could not be loaded.</p>
@@ -46,16 +46,16 @@ export default async function ShoppingListsPage() {
           {lists.length > 0 && (
             <section aria-label="List summary" className="facts-strip">
               <div>
-                <p className="text-sm log-muted">Lists</p>
-                <p className="num nutrition-value">{lists.length}</p>
+                <p className="text-sm text-muted-foreground">Lists</p>
+                <p className="tabular-nums nutrition-value">{lists.length}</p>
               </div>
               <div>
-                <p className="text-sm log-muted">Left to buy</p>
-                <p className="num nutrition-value">{open}</p>
+                <p className="text-sm text-muted-foreground">Left to buy</p>
+                <p className="tabular-nums nutrition-value">{open}</p>
               </div>
               <div>
-                <p className="text-sm log-muted">To check</p>
-                <p className="num nutrition-value">
+                <p className="text-sm text-muted-foreground">To check</p>
+                <p className="tabular-nums nutrition-value">
                   {lists.reduce((sum, list) => sum + list.needsReviewCount, 0)}
                 </p>
               </div>
@@ -75,14 +75,14 @@ export default async function ShoppingListsPage() {
                       <span className="block font-medium">
                         {list.name || "Shopping list"}
                       </span>
-                      <span className="mt-0.5 block text-sm log-muted">
+                      <span className="mt-0.5 block text-sm text-muted-foreground">
                         {list.mealPlanId
                           ? `From a plan · ${when(list.generatedAt ?? list.createdAt)}`
                           : when(list.createdAt)}
                         {list.householdId ? " · household" : ""}
                       </span>
                     </span>
-                    <span className="num whitespace-nowrap text-sm log-muted">
+                    <span className="tabular-nums whitespace-nowrap text-sm text-muted-foreground">
                       <span className="text-base font-semibold text-foreground">
                         {list.totalItems - list.checkedItems}
                       </span>{" "}
@@ -92,7 +92,7 @@ export default async function ShoppingListsPage() {
                       aria-hidden="true"
                       size={17}
                       strokeWidth={1.7}
-                      className="log-muted"
+                      className="text-muted-foreground"
                     />
                   </Link>
                 </li>

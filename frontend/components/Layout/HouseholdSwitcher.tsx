@@ -108,7 +108,7 @@ export default function HouseholdSwitcher() {
       {open && (
         <div
           role="menu"
-          className="menu-pop absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-charcoal-blue-200 bg-white p-1.5 dark:border-white/10 dark:bg-charcoal-blue-950"
+          className="origin-top-right animate-menu-pop absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-charcoal-blue-200 bg-white p-1.5 dark:border-white/10 dark:bg-charcoal-blue-950"
         >
           {households.map((household) => (
             <button

@@ -144,7 +144,7 @@ export default function ReportPriceDialog({
                   inputMode="decimal"
                   min={0}
                   step="any"
-                  className="input num w-full"
+                  className="input tabular-nums w-full"
                   value={form.price}
                   onChange={(event) => change("price", event.target.value)}
                 />
@@ -160,7 +160,7 @@ export default function ReportPriceDialog({
                   inputMode="decimal"
                   min={0}
                   step="any"
-                  className="input num w-full"
+                  className="input tabular-nums w-full"
                   value={form.quantity}
                   onChange={(event) => change("quantity", event.target.value)}
                 />

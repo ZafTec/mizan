@@ -166,7 +166,7 @@ export default function AchievementForm({
             ) : (
               <span
                 aria-hidden="true"
-                className="flex h-14 w-14 items-center justify-center rounded-sm border border-dashed border-border text-xs log-muted"
+                className="flex h-14 w-14 items-center justify-center rounded-sm border border-dashed border-border text-xs text-muted-foreground"
               >
                 28px
               </span>
@@ -186,7 +186,7 @@ export default function AchievementForm({
             {draft.iconUrl && (
               <button
                 type="button"
-                className="text-link text-sm"
+                className="text-link"
                 onClick={() => set("iconUrl", "")}
                 disabled={pending}
               >

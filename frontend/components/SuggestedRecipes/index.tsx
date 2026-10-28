@@ -61,7 +61,7 @@ export default function SuggestedRecipes({
       ) : (
         <div className="space-y-4">
           {suggestions.map((recipe) => (
-            <article key={recipe.title} className="card overflow-hidden p-6">
+            <article key={recipe.title} className="card p-6">
               <div className="mb-4">
                 <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-2">
                   {recipe.title}
@@ -93,7 +93,7 @@ export default function SuggestedRecipes({
 							    inventing one would render a link that 404s. */}
               <Link
                 href={`/recipes?search=${encodeURIComponent(recipe.title)}`}
-                className="btn-ghost btn-sm mt-4 inline-flex"
+                className="btn-ghost btn-sm mt-4"
               >
                 Find a recipe for this
               </Link>

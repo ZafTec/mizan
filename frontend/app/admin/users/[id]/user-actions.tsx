@@ -329,7 +329,7 @@ function BanDialog({
 
   return (
     <ModalShell open={open} onClose={close}>
-      <div className="surface-panel w-full space-y-4 p-5">
+      <div className="card w-full space-y-4 p-5">
         <h3 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
           Suspend account
         </h3>
@@ -420,7 +420,7 @@ function RoleDialog({
 
   return (
     <ModalShell open={open} onClose={onCancel}>
-      <div className="surface-panel w-full space-y-4 p-5">
+      <div className="card w-full space-y-4 p-5">
         <h3 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
           Change role
         </h3>
@@ -488,7 +488,7 @@ function PasswordDialog({
 
   return (
     <ModalShell open={open} onClose={close}>
-      <div className="surface-panel w-full space-y-4 p-5">
+      <div className="card w-full space-y-4 p-5">
         <h3 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
           Set password
         </h3>
@@ -557,7 +557,7 @@ function DeleteConfirmDialog({
 }) {
   return (
     <ModalShell open={open} onClose={onCancel}>
-      <div className="surface-panel w-full space-y-4 p-5">
+      <div className="card w-full space-y-4 p-5">
         <h3 className="text-base font-semibold text-burnt-peach-700 dark:text-burnt-peach-400">
           Delete user
         </h3>

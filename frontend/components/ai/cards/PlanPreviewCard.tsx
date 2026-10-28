@@ -27,14 +27,14 @@ export default function PlanPreviewCard({
     >
       <div>
         <p className="font-semibold break-words">{name}</p>
-        <p className="mt-0.5 text-xs log-muted">{facts.join(" · ")}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{facts.join(" · ")}</p>
       </div>
       {data.weeklyCost != null && data.currency && (
-        <p className="num">
-          <span className="log-muted">Cost a week </span>
+        <p className="tabular-nums">
+          <span className="text-muted-foreground">Cost a week </span>
           {formatMoney(data.weeklyCost, data.currency)}
           {data.budgetCeiling != null && (
-            <span className="log-muted">
+            <span className="text-muted-foreground">
               {" "}
               of {formatMoney(data.budgetCeiling, data.currency)} budget
             </span>

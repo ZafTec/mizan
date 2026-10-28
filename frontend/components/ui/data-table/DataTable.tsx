@@ -26,7 +26,7 @@ interface DataTableProps<T> {
   /**
    * A wash, not a badge, for urgency (Main.dc.html rule 04) - a dead row
    * tints its whole background rather than growing a second coloured object.
-   * Return `"wash-danger"` (defined in globals.css) or undefined.
+   * Return `"bg-danger-wash"` or undefined.
    */
   rowClassName?: (row: T) => string | undefined;
 
@@ -128,7 +128,7 @@ export default function DataTable<T>({
                       ALIGN[column.align ?? "left"],
                       // Numbers right, tabular (rule 01) - a column of counts
                       // scans vertically or it is decoration.
-                      column.align === "right" && "num",
+                      column.align === "right" && "tabular-nums",
                       column.secondary && "hidden sm:table-cell",
                     )}
                   >
@@ -216,7 +216,7 @@ function Pager({
 }) {
   if (page.totalPages <= 1) {
     return (
-      <p className="num px-1 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-500">
+      <p className="tabular-nums px-1 text-xs text-charcoal-blue-500 dark:text-charcoal-blue-500">
         {page.totalCount} {page.totalCount === 1 ? "row" : "rows"}
       </p>
     );
@@ -227,7 +227,7 @@ function Pager({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 px-1">
-      <p className="num text-xs text-charcoal-blue-500 dark:text-charcoal-blue-500">
+      <p className="tabular-nums text-xs text-charcoal-blue-500 dark:text-charcoal-blue-500">
         {from}–{to} of {page.totalCount}
       </p>
 
@@ -239,7 +239,7 @@ function Pager({
           disabled={page.page <= 1}
           label="Previous"
         />
-        <span className="num px-2 text-xs text-charcoal-blue-700 dark:text-charcoal-blue-300">
+        <span className="tabular-nums px-2 text-xs text-charcoal-blue-700 dark:text-charcoal-blue-300">
           {page.page} / {page.totalPages}
         </span>
         <PageLink

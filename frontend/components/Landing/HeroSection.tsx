@@ -55,7 +55,7 @@ export function HeroSection() {
         <div className="flex flex-col gap-3 border-b border-charcoal-blue-100 px-5 py-4 dark:border-charcoal-blue-800">
           <div className="flex items-baseline justify-between">
             <span className="eyebrow">Calories</span>
-            <span className="num text-[13px] text-charcoal-blue-600 dark:text-charcoal-blue-400">
+            <span className="tabular-nums text-[13px] text-charcoal-blue-600 dark:text-charcoal-blue-400">
               <b className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
                 1,840
               </b>{" "}
@@ -90,7 +90,7 @@ export function HeroSection() {
             <div className="min-w-0 flex-1 text-[13px] text-verdigris-700 dark:text-verdigris-400">
               From Telegram — photo of dinner, confirmed
             </div>
-            <div className="num text-xs text-verdigris-700 dark:text-verdigris-400">
+            <div className="tabular-nums text-xs text-verdigris-700 dark:text-verdigris-400">
               7s ago
             </div>
           </div>
@@ -112,7 +112,7 @@ function MacroReadout({
   return (
     <div>
       <div className="eyebrow">{label}</div>
-      <div className="num mt-0.5 text-[13px]">
+      <div className="tabular-nums mt-0.5 text-[13px]">
         <b className="font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
           {value}
         </b>{" "}
@@ -143,7 +143,7 @@ function MealRow({
           {meta}
         </div>
       </div>
-      <div className="num text-[13px] text-charcoal-blue-600 dark:text-charcoal-blue-400">
+      <div className="tabular-nums text-[13px] text-charcoal-blue-600 dark:text-charcoal-blue-400">
         {kcal}
       </div>
     </div>

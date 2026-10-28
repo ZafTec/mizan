@@ -119,12 +119,12 @@ export default function TemplateManager({
                       {template.name}
                     </span>
                     {template.description && (
-                      <span className="mt-0.5 block text-sm log-muted">
+                      <span className="mt-0.5 block text-sm text-muted-foreground">
                         {template.description}
                       </span>
                     )}
                   </span>
-                  <span className="num whitespace-nowrap text-sm log-muted">
+                  <span className="tabular-nums whitespace-nowrap text-sm text-muted-foreground">
                     {template.durationDays} days · {template.entryCount}{" "}
                     {template.entryCount === 1 ? "entry" : "entries"}
                   </span>
@@ -132,13 +132,13 @@ export default function TemplateManager({
                     aria-hidden="true"
                     size={17}
                     strokeWidth={1.7}
-                    className="log-muted shrink-0"
+                    className="text-muted-foreground shrink-0"
                   />
                   <span className="sr-only">Edit {template.name}</span>
                 </Link>
                 <button
                   type="button"
-                  className="btn-ghost btn-sm min-h-11 text-destructive"
+                  className="btn-ghost btn-sm min-h-11"
                   aria-label={`Delete ${template.name ?? "template"}`}
                   onClick={() => setDeleting(template)}
                 >
@@ -197,7 +197,7 @@ export default function TemplateManager({
                   inputMode="numeric"
                   min={1}
                   max={31}
-                  className="input num w-full"
+                  className="input tabular-nums w-full"
                   value={durationDays}
                   onChange={(event) => setDurationDays(event.target.value)}
                   aria-invalid={errors.durationDays ? true : undefined}
@@ -257,11 +257,11 @@ export default function TemplateManager({
         onClose={() => setDeleting(null)}
         labelledBy={`${id}-delete`}
       >
-        <div className="surface-panel w-full max-w-md space-y-4 p-5">
+        <div className="card w-full max-w-md space-y-4 p-5">
           <h2 id={`${id}-delete`} className="text-base font-semibold">
             Delete {deleting?.name ?? "this template"}?
           </h2>
-          <p className="text-sm log-muted">
+          <p className="text-sm text-muted-foreground">
             Plans already made from it keep their copy.
           </p>
           <div className="flex justify-end gap-2">

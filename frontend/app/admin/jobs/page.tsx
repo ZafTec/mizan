@@ -153,7 +153,7 @@ function Stat({
         : "text-charcoal-blue-900 dark:text-charcoal-blue-50";
 
   return (
-    <div className="surface-panel px-4 py-3">
+    <div className="card px-4 py-3">
       <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
         {label}
       </p>
@@ -233,7 +233,7 @@ export default async function AdminJobsPage({
         rows={result.items}
         rowKey={(j) => j.id}
         rowClassName={(j) =>
-          j.status === "DeadLettered" ? "wash-danger" : undefined
+          j.status === "DeadLettered" ? "bg-danger-wash" : undefined
         }
         pathname="/admin/jobs"
         searchParams={params}

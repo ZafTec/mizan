@@ -93,7 +93,7 @@ function MapForm({
             inputMode="decimal"
             min={0}
             step="any"
-            className="input num w-full"
+            className="input tabular-nums w-full"
             value={quantity}
             onChange={(event) => setQuantity(event.target.value)}
             aria-invalid={errors.quantity ? true : undefined}
@@ -255,7 +255,7 @@ export default function PriceReviewQueue({
     <section id="queue" aria-labelledby="queue-title" className="scroll-mt-6">
       <header className="log-section-header">
         <h2 id="queue-title">Review queue</h2>
-        <span className="num text-sm log-muted">{total} to review</span>
+        <span className="tabular-nums text-sm text-muted-foreground">{total} to review</span>
       </header>
 
       {report && (
@@ -271,7 +271,7 @@ export default function PriceReviewQueue({
           </p>
           {report.skipped.length > 0 && (
             <>
-              <p className="mt-1 log-muted">
+              <p className="mt-1 text-muted-foreground">
                 {report.skipped.length === 1
                   ? "1 was not:"
                   : `${report.skipped.length} were not:`}
@@ -282,7 +282,7 @@ export default function PriceReviewQueue({
                     <span className="font-medium">
                       {sent.get(skip.aliasId) ?? "A product"}
                     </span>{" "}
-                    <span className="log-muted">
+                    <span className="text-muted-foreground">
                       {SKIP_REASONS[skip.reason] ?? skip.reason}
                     </span>
                   </li>
@@ -320,7 +320,7 @@ export default function PriceReviewQueue({
                   )}
                 >
                   {option.label}
-                  <span className="num text-xs log-muted">
+                  <span className="tabular-nums text-xs text-muted-foreground">
                     {counts[option.key]}
                   </span>
                 </button>
@@ -377,7 +377,7 @@ export default function PriceReviewQueue({
                     <span className="block font-medium break-words">
                       {alias.productName}
                     </span>
-                    <span className="num mt-0.5 block text-xs log-muted">
+                    <span className="tabular-nums mt-0.5 block text-xs text-muted-foreground">
                       {[
                         alias.sourceName,
                         alias.lastSeenPrice != null
@@ -393,11 +393,11 @@ export default function PriceReviewQueue({
                     <span className="mt-1 block text-sm">
                       {hasSuggestion(alias) ? (
                         <>
-                          <span className="log-muted">Suggested: </span>
-                          <span className="num">{suggestionText(alias)}</span>
+                          <span className="text-muted-foreground">Suggested: </span>
+                          <span className="tabular-nums">{suggestionText(alias)}</span>
                         </>
                       ) : (
-                        <span className="log-muted">No match</span>
+                        <span className="text-muted-foreground">No match</span>
                       )}
                     </span>
                   </span>
@@ -407,7 +407,7 @@ export default function PriceReviewQueue({
                         href={alias.lastSeenUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-link px-2 text-sm"
+                        className="text-link px-2"
                         aria-label={`Listing for ${alias.productName}`}
                       >
                         Listing
@@ -440,7 +440,7 @@ export default function PriceReviewQueue({
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-xs log-muted">
+          <p className="mt-3 text-xs text-muted-foreground">
             Suggestions match product names to catalogue foods and read the
             package size from the name. Nothing is mapped until you accept.
           </p>

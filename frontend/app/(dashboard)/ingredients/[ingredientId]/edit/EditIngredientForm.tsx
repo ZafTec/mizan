@@ -251,7 +251,7 @@ export default function EditIngredientForm({
       <button
         type="submit"
         disabled={isPending}
-        className="btn-primary w-full py-3"
+        className="btn-primary w-full"
       >
         {isPending ? (
           <>

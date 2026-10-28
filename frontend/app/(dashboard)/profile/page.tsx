@@ -155,13 +155,13 @@ export default function ProfilePage() {
           </span>
         )}
         <div className="flex min-w-0 flex-[1_1_240px] flex-col gap-1.5">
-          <p className="text-xs font-semibold tracking-[0.14em] uppercase log-muted">
+          <p className="text-xs font-semibold tracking-[0.14em] uppercase text-muted-foreground">
             Profile
           </p>
           <h1 className="truncate text-[30px] leading-tight font-semibold tracking-tight sm:text-[34px]">
             {user.name || user.email}
           </h1>
-          <p className="text-sm log-muted">
+          <p className="text-sm text-muted-foreground">
             {since.length > 0 ? since.join(" · ") : user.email}
           </p>
         </div>
@@ -175,24 +175,24 @@ export default function ProfilePage() {
         className="grid grid-cols-1 border-b border-border sm:grid-cols-3"
       >
         <Fact label="Streak" first>
-          <span className="num text-[30px] leading-none">
+          <span className="tabular-nums text-[30px] leading-none">
             {facts ? plural(facts.streakCount, "day") : "—"}
           </span>
-          <span className="text-[13px] log-muted">Log today to keep it</span>
+          <span className="text-[13px] text-muted-foreground">Log today to keep it</span>
         </Fact>
         <Fact label="Goal">
           <span className="text-lg leading-snug">
             {facts?.goalSummary || "—"}
           </span>
-          <Link href="/progress" className="text-link text-[13px]">
+          <Link href="/progress" className="text-link">
             See progress
           </Link>
         </Fact>
         <Fact label="Achievements">
-          <span className="num text-[30px] leading-none">
+          <span className="tabular-nums text-[30px] leading-none">
             {facts ? facts.achievementCount : "—"}
           </span>
-          <Link href="/achievements" className="text-link text-[13px]">
+          <Link href="/achievements" className="text-link">
             All achievements
           </Link>
         </Fact>
@@ -201,7 +201,7 @@ export default function ProfilePage() {
       <section aria-labelledby="manage-title">
         <h2
           id="manage-title"
-          className="mb-1.5 text-xs font-semibold tracking-[0.14em] uppercase log-muted"
+          className="mb-1.5 text-xs font-semibold tracking-[0.14em] uppercase text-muted-foreground"
         >
           Manage
         </h2>
@@ -216,7 +216,7 @@ export default function ProfilePage() {
                   <span className="block text-[15px] font-medium">
                     {link.title}
                   </span>
-                  <span className="mt-0.5 block text-[13px] log-muted">
+                  <span className="mt-0.5 block text-[13px] text-muted-foreground">
                     {link.detail}
                   </span>
                 </span>
@@ -224,7 +224,7 @@ export default function ProfilePage() {
                   aria-hidden="true"
                   size={18}
                   strokeWidth={1.6}
-                  className="log-muted"
+                  className="text-muted-foreground"
                 />
               </Link>
             </li>
@@ -236,7 +236,7 @@ export default function ProfilePage() {
         type="button"
         onClick={logout}
         disabled={signingOut}
-        className="text-link min-h-11 self-start text-sm"
+        className="text-link self-start"
       >
         {signingOut ? "Signing out…" : "Sign out"}
       </button>
@@ -261,7 +261,7 @@ function Fact({
           : "flex flex-col gap-1.5 border-t border-border py-5 sm:border-t-0 sm:border-l sm:pt-1 sm:pr-5 sm:pl-5"
       }
     >
-      <span className="text-[10px] font-semibold tracking-[0.14em] uppercase log-muted">
+      <span className="text-[10px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">
         {label}
       </span>
       {children}

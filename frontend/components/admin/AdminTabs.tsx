@@ -27,7 +27,7 @@ export default function AdminTabs() {
               key={tab.href}
               href={tab.href}
               className={cn(
-                "press-feedback flex items-center gap-2 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
+                "transition-transform duration-120 ease-out active:scale-[0.985] flex items-center gap-2 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium",
                 active
                   ? "border-charcoal-blue-900 text-charcoal-blue-900 dark:border-charcoal-blue-50 dark:text-charcoal-blue-50"
                   : "border-transparent text-charcoal-blue-500 hover:text-charcoal-blue-800 dark:text-charcoal-blue-400 dark:hover:text-charcoal-blue-100",

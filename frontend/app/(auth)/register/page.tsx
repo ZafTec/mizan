@@ -157,7 +157,7 @@ export default function Page() {
               type="submit"
               disabled={isPending}
               data-testid="register-submit"
-              className="btn-primary w-full py-3"
+              className="btn-primary w-full"
             >
               {isPending ? (
                 <>

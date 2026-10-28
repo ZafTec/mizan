@@ -35,38 +35,38 @@ export default async function UsageThisMonth({
       {usage ? (
         <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <div>
-            <dt className="log-muted">Requests</dt>
-            <dd className="num font-medium">
+            <dt className="text-muted-foreground">Requests</dt>
+            <dd className="tabular-nums font-medium">
               {usage.total.requests.toLocaleString()}
             </dd>
           </div>
           <div>
-            <dt className="log-muted">Tokens</dt>
-            <dd className="num font-medium">
+            <dt className="text-muted-foreground">Tokens</dt>
+            <dd className="tabular-nums font-medium">
               {usage.total.tokens.toLocaleString()}
             </dd>
           </div>
           <div>
-            <dt className="log-muted">Cost</dt>
-            <dd className="num font-medium">
+            <dt className="text-muted-foreground">Cost</dt>
+            <dd className="tabular-nums font-medium">
               {usage.total.cost.toLocaleString(undefined, {
                 maximumFractionDigits: 4,
               })}
             </dd>
           </div>
           <div>
-            <dt className="log-muted">Refused</dt>
-            <dd className="num font-medium">
+            <dt className="text-muted-foreground">Refused</dt>
+            <dd className="tabular-nums font-medium">
               {usage.total.refusals.toLocaleString()}
             </dd>
           </div>
         </dl>
       ) : (
-        <p className="text-sm log-muted">Usage could not be loaded.</p>
+        <p className="text-sm text-muted-foreground">Usage could not be loaded.</p>
       )}
       <Link
         href={`/admin/usage?${usageQuery(filters)}`}
-        className="text-link mt-3 inline-block text-sm"
+        className="text-link mt-3"
       >
         See usage in detail
       </Link>

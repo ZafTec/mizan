@@ -105,7 +105,7 @@ function ItemForm({
           inputMode="decimal"
           min={0}
           step="any"
-          className="input num w-full"
+          className="input tabular-nums w-full"
           value={value.amount}
           onChange={(event) =>
             setValue({ ...value, amount: event.target.value })
@@ -355,7 +355,7 @@ export default function ShoppingListView({
         ) : (
           <h1 className="mt-1">{title}</h1>
         )}
-        <p className="log-muted mt-2">
+        <p className="text-muted-foreground mt-2">
           {list.mealPlanName && list.mealPlanId ? (
             <>
               From{" "}
@@ -372,7 +372,7 @@ export default function ShoppingListView({
               {" · "}
             </>
           ) : null}
-          <span className="num" data-testid="items-left">
+          <span className="tabular-nums" data-testid="items-left">
             {left} left of {list.items.length}
           </span>
           {list.needsReviewCount > 0 && (
@@ -381,18 +381,18 @@ export default function ShoppingListView({
         </p>
         {list.totalCost != null && (
           <p className="mt-1" data-testid="list-cost">
-            <span className="log-muted">Total </span>
-            <span className="num font-medium">
+            <span className="text-muted-foreground">Total </span>
+            <span className="tabular-nums font-medium">
               {formatMoney(list.totalCost, list.currency)}
             </span>
             {list.costConfidence && (
-              <span className="log-muted">
+              <span className="text-muted-foreground">
                 {" · "}
                 {confidenceLabel(list.costConfidence)}
               </span>
             )}
             {list.unpricedCount > 0 && (
-              <span className="log-muted">
+              <span className="text-muted-foreground">
                 {" · "}
                 {itemCount(list.unpricedCount)} without a price
               </span>
@@ -427,7 +427,7 @@ export default function ShoppingListView({
                 </button>
                 <button
                   type="button"
-                  className="btn-ghost btn-sm min-h-9 text-destructive"
+                  className="btn-ghost btn-sm min-h-9"
                   onClick={() => setConfirmDelete(true)}
                 >
                   Delete list
@@ -445,7 +445,7 @@ export default function ShoppingListView({
           <section key={group.key} aria-label={group.title}>
             <header className="log-section-header">
               <h2>{group.title}</h2>
-              <span className="num text-sm log-muted">
+              <span className="tabular-nums text-sm text-muted-foreground">
                 {group.items.filter((item) => !item.isChecked).length} left
               </span>
             </header>
@@ -472,7 +472,7 @@ export default function ShoppingListView({
                     />
                     <label
                       htmlFor={`${id}-${item.id}`}
-                      className={`min-w-0 flex-1 cursor-pointer ${item.isChecked ? "log-muted line-through" : ""}`}
+                      className={`min-w-0 flex-1 cursor-pointer ${item.isChecked ? "text-muted-foreground line-through" : ""}`}
                     >
                       {item.itemName}
                       {item.needsReview && (
@@ -482,12 +482,12 @@ export default function ShoppingListView({
                       )}
                     </label>
                     <span
-                      className={`num whitespace-nowrap text-right text-sm ${item.isChecked ? "log-muted" : ""}`}
+                      className={`tabular-nums whitespace-nowrap text-right text-sm ${item.isChecked ? "text-muted-foreground" : ""}`}
                     >
                       {formatAmount(item)}
                       {item.cost != null && (
                         <span
-                          className="block text-xs log-muted"
+                          className="block text-xs text-muted-foreground"
                           data-testid="item-cost"
                         >
                           {formatMoney(item.cost, list.currency)}
@@ -506,7 +506,7 @@ export default function ShoppingListView({
                         </button>
                         <button
                           type="button"
-                          className="btn-ghost btn-sm min-h-9 text-destructive"
+                          className="btn-ghost btn-sm min-h-9"
                           aria-label={`Delete ${item.itemName}`}
                           onClick={() => remove(item)}
                         >

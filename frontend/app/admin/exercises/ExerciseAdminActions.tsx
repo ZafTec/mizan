@@ -41,7 +41,7 @@ export default function ExerciseAdminActions({
         </button>
       )}
       <button
-        className="btn-ghost btn-sm text-red-600"
+        className="btn-ghost btn-sm"
         onClick={() => run(`/api/Exercises/${exercise.id}`, "DELETE")}
       >
         Delete

@@ -125,7 +125,7 @@ export default function GoalForm() {
       </header>
 
       {/* TDEE Calculator */}
-      <div className="card overflow-hidden">
+      <div className="card">
         <button
           type="button"
           onClick={() => setTdeeOpen((o) => !o)}
@@ -617,7 +617,7 @@ export default function GoalForm() {
         <button
           type="submit"
           disabled={isPending}
-          className="btn-primary w-full py-3"
+          className="btn-primary w-full"
         >
           {isPending ? (
             <>

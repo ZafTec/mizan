@@ -44,7 +44,7 @@ export function WorkoutHistory({
                 <strong className="block truncate">
                   {workout.name || "Workout"}
                 </strong>
-                <span className="num text-sm log-muted">
+                <span className="tabular-nums text-sm text-muted-foreground">
                   {new Date(
                     `${workout.workoutDate}T00:00:00`,
                   ).toLocaleDateString(undefined, {
@@ -56,11 +56,11 @@ export function WorkoutHistory({
                   {sets} sets
                 </span>
               </span>
-              <span className="num hidden text-sm sm:block">
+              <span className="tabular-nums hidden text-sm sm:block">
                 <span className="font-semibold">
                   {Math.round(volume).toLocaleString()}
                 </span>{" "}
-                <span className="log-muted">kg</span>
+                <span className="text-muted-foreground">kg</span>
               </span>
               <button
                 className="btn-ghost btn-sm"
@@ -79,7 +79,7 @@ export function WorkoutHistory({
                   className="flex items-baseline justify-between gap-4 py-2 text-sm"
                 >
                   <span className="font-medium">{exercise.exerciseName}</span>
-                  <span className="num text-right log-muted">
+                  <span className="tabular-nums text-right text-muted-foreground">
                     {exercise.sets
                       .map(
                         (set) => `${set.weightKg ?? 0} kg × ${set.reps ?? 0}`,
@@ -106,9 +106,9 @@ export function TemplateList({
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {templates.map((template) => (
-        <article key={template.id} className="card-hover p-5">
+        <article key={template.id} className="card hover:border-charcoal-blue-400 dark:hover:border-charcoal-blue-600 p-5">
           <div className="flex items-start justify-between">
-            <span className="icon-chip h-11 w-11 text-brand-700">
+            <span className="inline-flex items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300 h-11 w-11">
               <WorkoutIcon id="wi-template" />
             </span>
             {template.isBuiltIn && (
@@ -191,7 +191,7 @@ export function WorkoutStats({ stats }: { stats: WorkoutStatsDto }) {
         </div>
       )}
       <div className="card p-6">
-        <h2 className="section-title">Weekly muscle coverage</h2>
+        <h2 className="text-2xl font-medium tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">Weekly muscle coverage</h2>
         <div className="mt-5 space-y-3">
           {stats.perMuscleGroup.map((group) => (
             <div key={group.muscleGroup}>

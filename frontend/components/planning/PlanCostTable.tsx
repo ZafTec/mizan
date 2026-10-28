@@ -32,33 +32,33 @@ export default function PlanCostTable({
       {!bare && (
         <header className="log-section-header">
           <Heading>{title}</Heading>
-          <span className="num text-sm log-muted">{cost.regionCode}</span>
+          <span className="tabular-nums text-sm text-muted-foreground">{cost.regionCode}</span>
         </header>
       )}
       <dl className="facts-strip">
         <div>
-          <dt className="text-sm log-muted">Cost a week</dt>
-          <dd className="num nutrition-value text-base! break-words whitespace-normal! sm:text-xl!">
+          <dt className="text-sm text-muted-foreground">Cost a week</dt>
+          <dd className="tabular-nums nutrition-value text-base! break-words whitespace-normal! sm:text-xl!">
             {formatMoney(cost.weeklyTotal, cost.currency)}
           </dd>
           {cost.weeklyBudget != null && (
-            <dd className="num mt-1 text-sm log-muted">
+            <dd className="tabular-nums mt-1 text-sm text-muted-foreground">
               of {formatMoney(cost.weeklyBudget, cost.currency)} budget
             </dd>
           )}
         </div>
         <div>
-          <dt className="text-sm log-muted">Whole plan</dt>
-          <dd className="num nutrition-value text-base! break-words whitespace-normal! sm:text-xl!">
+          <dt className="text-sm text-muted-foreground">Whole plan</dt>
+          <dd className="tabular-nums nutrition-value text-base! break-words whitespace-normal! sm:text-xl!">
             {formatMoney(cost.total, cost.currency)}
           </dd>
         </div>
         <div>
-          <dt className="text-sm log-muted">Priced</dt>
-          <dd className="num nutrition-value">
+          <dt className="text-sm text-muted-foreground">Priced</dt>
+          <dd className="tabular-nums nutrition-value">
             {formatCoverage(cost.coverage)}
           </dd>
-          <dd className="num mt-1 text-sm log-muted">
+          <dd className="tabular-nums mt-1 text-sm text-muted-foreground">
             {cost.pricedItems} of {itemCount(cost.totalItems)}
             {cost.lowestConfidence
               ? ` · ${confidenceLabel(cost.lowestConfidence)}`
@@ -87,7 +87,7 @@ export default function PlanCostTable({
                   )}
                 </span>
                 {(item.grams != null || item.reason) && (
-                  <span className="mt-0.5 block text-xs log-muted">
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
                     {[
                       item.grams != null
                         ? `${Math.round(item.grams).toLocaleString()} g`
@@ -99,11 +99,11 @@ export default function PlanCostTable({
                   </span>
                 )}
               </span>
-              <span className="num whitespace-nowrap">
+              <span className="tabular-nums whitespace-nowrap">
                 {item.cost != null ? (
                   formatMoney(item.cost, cost.currency)
                 ) : (
-                  <span className="log-muted">No price</span>
+                  <span className="text-muted-foreground">No price</span>
                 )}
               </span>
             </li>

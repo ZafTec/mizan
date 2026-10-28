@@ -143,7 +143,7 @@ function TimeRangePicker({
           type="button"
           onClick={() => onChange(r.value)}
           aria-pressed={range === r.value}
-          className={`num min-h-11 text-sm transition-colors ${range === r.value ? "font-semibold text-foreground" : "log-muted hover:text-foreground"}`}
+          className={`tabular-nums min-h-11 text-sm transition-colors ${range === r.value ? "font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"}`}
         >
           {r.label}
         </button>
@@ -386,7 +386,7 @@ function ToggleGroup({
             type="button"
             aria-pressed={on}
             onClick={() => onToggle(s.key)}
-            className={`inline-flex min-h-9 items-center gap-1.5 text-xs transition-colors ${on ? "font-medium text-foreground" : "log-muted hover:text-foreground"}`}
+            className={`inline-flex min-h-9 items-center gap-1.5 text-xs transition-colors ${on ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}
           >
             <span
               aria-hidden="true"
@@ -483,7 +483,7 @@ export default function MeasurementChart({
         <header className="log-section-header">
           <h2 id="trend-title">Trend</h2>
         </header>
-        <p className="log-empty log-muted text-sm">
+        <p className="log-empty text-muted-foreground text-sm">
           A second measurement draws the first line.
         </p>
       </section>
@@ -507,7 +507,7 @@ export default function MeasurementChart({
               aria-selected={tab === item.id}
               onClick={() => setTab(item.id)}
               id={item.id === "composition" ? "trend-title" : undefined}
-              className={`min-h-11 text-xl font-semibold transition-colors ${tab === item.id ? "text-foreground" : "log-muted hover:text-foreground"}`}
+              className={`min-h-11 text-xl font-semibold transition-colors ${tab === item.id ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
               {item.label}
             </button>
@@ -517,7 +517,7 @@ export default function MeasurementChart({
       <TimeRangePicker range={range} onChange={setRange} />
 
       {tab === "composition" && (
-        <p className="text-xs log-muted">
+        <p className="text-xs text-muted-foreground">
           Weight and muscle on the left axis in kg, body fat on the right in
           percent. A dashed line is a goal.
         </p>

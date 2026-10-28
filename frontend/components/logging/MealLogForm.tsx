@@ -677,7 +677,7 @@ export default function MealLogForm({
               type="submit"
               form={`${id}-meal`}
               disabled={busy || totalCount === 0 || manualOpen}
-              className="btn-primary min-h-11 shrink-0 disabled:cursor-not-allowed disabled:opacity-50"
+              className="btn-primary min-h-11 shrink-0"
             >
               {busy ? "Saving…" : "Log meal"}
             </button>

@@ -39,7 +39,7 @@ export default function MacroRing({
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="-rotate-90">
           <circle
-            className="ring-track"
+            className="stroke-charcoal-blue-200 dark:stroke-charcoal-blue-700"
             cx={size / 2}
             cy={size / 2}
             r={radius}

@@ -189,15 +189,15 @@ function AddSubject({
       {results && (
         <ul aria-label={`${scope === "User" ? "Users" : "Households"} found`}>
           {results.length === 0 ? (
-            <li className="mt-2 text-sm log-muted">Nothing matches.</li>
+            <li className="mt-2 text-sm text-muted-foreground">Nothing matches.</li>
           ) : (
             results.map((result) => (
-              <li key={result.id} className="ledger-row flex-wrap gap-y-1">
+              <li key={result.id} className="ledger-row flex-wrap">
                 <span className="min-w-0 flex-1 basis-40">
                   <span className="block font-medium break-words">
                     {result.name}
                   </span>
-                  <span className="mt-0.5 block text-xs log-muted break-all">
+                  <span className="mt-0.5 block text-xs text-muted-foreground break-all">
                     {result.detail}
                   </span>
                 </span>
@@ -237,7 +237,7 @@ function SubjectRow({
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <div className="min-w-0 flex-1 basis-56">
           <p className="font-medium break-words">{subject.name}</p>
-          <p className="mt-0.5 text-xs log-muted break-words">
+          <p className="mt-0.5 text-xs text-muted-foreground break-words">
             {[
               subject.detail,
               `${subject.tier === "pro" ? "Pro" : "Free"} defaults`,
@@ -275,7 +275,7 @@ function EffectiveTable({ subject }: { subject: UsageLimitSubject }) {
   return (
     <div className="overflow-x-auto border border-border">
       <table className="w-full min-w-[34rem] border-collapse text-sm">
-        <caption className="caption-bottom px-3 py-2 text-left text-xs log-muted">
+        <caption className="caption-bottom px-3 py-2 text-left text-xs text-muted-foreground">
           Limits in force for {subject.name}. Under each value, where it comes
           from: an override for the user, the household or the plan, or the tier
           default.
@@ -308,9 +308,9 @@ function EffectiveTable({ subject }: { subject: UsageLimitSubject }) {
               {FIELDS.map((field) => {
                 const limit = row[field.key] as SourcedLimit;
                 return (
-                  <td key={field.key} className="num px-3 py-2 text-right">
+                  <td key={field.key} className="tabular-nums px-3 py-2 text-right">
                     <span className="block">{show(limit.value)}</span>
-                    <span className="block text-[11px] log-muted">
+                    <span className="block text-[11px] text-muted-foreground">
                       {limit.source}
                     </span>
                   </td>
@@ -395,12 +395,12 @@ function OverrideEditor({
       {subject.overrides.length > 0 && (
         <ul aria-label={`Overrides for ${subject.name}`}>
           {subject.overrides.map((override) => (
-            <li key={override.id} className="ledger-row flex-wrap gap-y-1">
+            <li key={override.id} className="ledger-row flex-wrap">
               <span className="min-w-0 flex-1 basis-48">
                 <span className="block font-medium">
                   {lineLabel(override.line)}
                 </span>
-                <span className="mt-0.5 block text-xs log-muted break-words">
+                <span className="mt-0.5 block text-xs text-muted-foreground break-words">
                   {FIELDS.filter(
                     (field) =>
                       override[field.key] !== null &&
@@ -488,7 +488,7 @@ function OverrideEditor({
             onChange={(event) => setForm({ ...form, note: event.target.value })}
           />
         </div>
-        <p className="text-xs log-muted sm:col-span-2 lg:col-span-3">
+        <p className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-3">
           An empty box inherits. Saving a line that already has an override
           replaces it.
         </p>

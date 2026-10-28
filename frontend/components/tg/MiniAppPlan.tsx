@@ -82,7 +82,7 @@ export default function MiniAppPlan({
 
   if (!loaded)
     return (
-      <p role="status" className="log-muted">
+      <p role="status" className="text-muted-foreground">
         Loading the plan…
       </p>
     );

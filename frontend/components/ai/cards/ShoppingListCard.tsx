@@ -15,10 +15,10 @@ export default function ShoppingListCard({
       href={`/shopping-lists/${data.listId}`}
       linkText="Open the list"
     >
-      <p className="num">
+      <p className="tabular-nums">
         {itemCount(data.itemCount)}
         {data.needsReviewCount > 0 && (
-          <span className="log-muted"> · {data.needsReviewCount} to check</span>
+          <span className="text-muted-foreground"> · {data.needsReviewCount} to check</span>
         )}
       </p>
     </CardFrame>

@@ -191,7 +191,7 @@ export default function SocialFeed({
                   <button
                     key={emoji}
                     aria-pressed={selected}
-                    className={`press-feedback rounded-xl border px-2 py-1 ${selected ? "border-brand-500 bg-brand-50 text-brand-800 dark:bg-brand-950/40 dark:text-brand-200" : "border-charcoal-blue-200 dark:border-white/10"}`}
+                    className={`transition-transform duration-120 ease-out active:scale-[0.985] rounded-xl border px-2 py-1 ${selected ? "border-brand-500 bg-brand-50 text-brand-800 dark:bg-brand-950/40 dark:text-brand-200" : "border-charcoal-blue-200 dark:border-white/10"}`}
                     onClick={() => toggleReaction(item.id, emoji)}
                   >
                     {emoji}{" "}

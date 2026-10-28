@@ -29,7 +29,7 @@ export default async function ResumeWorkoutBanner() {
       href="/workout/active"
       className="flex items-center gap-3 rounded-3xl border border-verdigris-500/30 bg-verdigris-500/10 p-4 transition-colors hover:border-verdigris-500/50 dark:bg-verdigris-500/10"
     >
-      <span className="icon-chip h-10 w-10 shrink-0 text-verdigris-700 dark:text-verdigris-300"></span>
+      <span className="inline-flex items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300 h-10 w-10 shrink-0"></span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
           {draft.name} in progress
@@ -38,7 +38,7 @@ export default async function ResumeWorkoutBanner() {
           {progress} · saved {relativeTime(draft.updatedAt)}
         </p>
       </div>
-      <span className="btn-primary shrink-0 !rounded-2xl !py-2 text-xs">
+      <span className="btn-primary shrink-0 !rounded-2xl !py-2">
         Resume
       </span>
     </Link>

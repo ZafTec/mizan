@@ -178,7 +178,7 @@ export default async function AdminMailPage({
         }}
         href={(m) => withParams("/admin/mail", params, { open: m.id })}
         rowClassName={(m) =>
-          m.status === "Failed" ? "wash-danger" : undefined
+          m.status === "Failed" ? "bg-danger-wash" : undefined
         }
         empty={{
           title: "No email matches",

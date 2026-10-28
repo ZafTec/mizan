@@ -73,14 +73,16 @@ function NavLink({
       )}
     >
       <span
-        className={cn(
+        className={
           mobile
-            ? "icon-chip h-9 w-9 text-charcoal-blue-500 dark:text-charcoal-blue-300"
-            : "flex h-5 w-5 items-center justify-center text-charcoal-blue-400 dark:text-charcoal-blue-500",
-          isActive
-            ? "text-brand-600 dark:text-brand-300"
-            : "group-hover:text-charcoal-blue-900 dark:group-hover:text-white",
-        )}
+            ? "inline-flex h-9 w-9 items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300"
+            : cn(
+                "flex h-5 w-5 items-center justify-center text-charcoal-blue-400 dark:text-charcoal-blue-500",
+                isActive
+                  ? "text-brand-600 dark:text-brand-300"
+                  : "group-hover:text-charcoal-blue-900 dark:group-hover:text-white",
+              )
+        }
       >
         <Icon name={item.icon} size={16} aria-hidden="true" />
       </span>
@@ -213,15 +215,15 @@ export default function NavbarContent({ user }: NavbarContentProps) {
       {showLogoutModal &&
         createPortal(
           <div
-            className="modal-overlay-in fixed inset-0 z-100 flex items-center justify-center bg-charcoal-blue-950/35 p-4 backdrop-blur-sm"
+            className="animate-overlay-in fixed inset-0 z-100 flex items-center justify-center bg-charcoal-blue-950/35 p-4 backdrop-blur-sm"
             onClick={() => setShowLogoutModal(false)}
           >
             <div
-              className="modal-pop-in surface-panel w-full max-w-sm p-6"
+              className="animate-modal-in card w-full max-w-sm p-6"
               onClick={(event) => event.stopPropagation()}
             >
               <div className="mb-5 flex items-start gap-4">
-                <span className="icon-chip h-12 w-12 text-red-500 dark:text-red-400"></span>
+                <span className="inline-flex items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300 h-12 w-12"></span>
                 <div className="space-y-1">
                   <h3 className="text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
                     Sign out
@@ -295,7 +297,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
                 <div
                   ref={userMenuRef}
                   data-testid="nav-user-menu"
-                  className="absolute right-0 top-[calc(100%+0.5rem)] z-70 mt-0 w-60 overflow-hidden rounded-2xl border border-charcoal-blue-200 bg-white p-1.5 animate-fade-in dark:border-white/10 dark:bg-charcoal-blue-950"
+                  className="absolute right-0 top-[calc(100%+0.5rem)] z-70 mt-0 w-60 overflow-hidden rounded-2xl border border-charcoal-blue-200 bg-white p-1.5 animate-fade-up dark:border-white/10 dark:bg-charcoal-blue-950"
                 >
                   <div className="mb-1 rounded-2xl px-3 py-2.5">
                     <p className="truncate text-sm font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
@@ -360,14 +362,14 @@ export default function NavbarContent({ user }: NavbarContentProps) {
         {menuOpen && (
           <>
             <div
-              className="modal-overlay-in fixed inset-0 z-80 bg-charcoal-blue-950/30 backdrop-blur-[2px] md:hidden"
+              className="animate-overlay-in fixed inset-0 z-80 bg-charcoal-blue-950/30 backdrop-blur-[2px] md:hidden"
               onClick={closeMenu}
             />
             <div
               ref={menuRef}
               id="mobile-nav-menu"
               data-testid="nav-mobile-menu"
-              className="fixed inset-x-3 top-24 z-90 overflow-hidden rounded-2xl border border-charcoal-blue-200 bg-white p-4 animate-fade-in md:hidden dark:border-white/10 dark:bg-charcoal-blue-950"
+              className="fixed inset-x-3 top-24 z-90 overflow-hidden rounded-2xl border border-charcoal-blue-200 bg-white p-4 animate-fade-up md:hidden dark:border-white/10 dark:bg-charcoal-blue-950"
             >
               <nav className="space-y-1">
                 {primaryItems.map((item) => (
@@ -407,7 +409,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
                         closeAllMenus();
                         setShowLogoutModal(true);
                       }}
-                      className="btn-ghost text-red-600 dark:text-red-400"
+                      className="btn-ghost"
                     >
                       Sign out
                     </button>
@@ -417,14 +419,14 @@ export default function NavbarContent({ user }: NavbarContentProps) {
                     <Link
                       href="/login"
                       onClick={closeAllMenus}
-                      className="btn-secondary flex-1 justify-center"
+                      className="btn-secondary flex-1"
                     >
                       Sign In
                     </Link>
                     <Link
                       href="/register"
                       onClick={closeAllMenus}
-                      className="btn-primary flex-1 justify-center"
+                      className="btn-primary flex-1"
                     >
                       Get Started
                     </Link>

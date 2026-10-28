@@ -59,11 +59,11 @@ function PlanRow({
       >
         <span className="min-w-0 flex-1">
           <span className="block font-medium">{name}</span>
-          <span className="mt-0.5 block text-sm log-muted">
+          <span className="mt-0.5 block text-sm text-muted-foreground">
             {notes.join(" · ")}
           </span>
         </span>
-        <span className="num whitespace-nowrap text-sm log-muted">
+        <span className="tabular-nums whitespace-nowrap text-sm text-muted-foreground">
           <span className="text-base font-semibold text-foreground">
             {plan.entryCount}
           </span>{" "}
@@ -74,7 +74,7 @@ function PlanRow({
             aria-hidden="true"
             size={17}
             strokeWidth={1.7}
-            className="log-muted"
+            className="text-muted-foreground"
           />
         )}
       </Link>
@@ -123,7 +123,7 @@ export default async function MealPlanPage() {
     <div className="log-page space-y-8" data-testid="meal-plan-page">
       <header className="log-page-header block!">
         <h1>Meal plans</h1>
-        <p className="log-muted mt-2">
+        <p className="text-muted-foreground mt-2">
           What you plan to eat, and the list it needs.
         </p>
       </header>
@@ -135,24 +135,24 @@ export default async function MealPlanPage() {
           {plans.length > 0 && (
             <section aria-label="Plan summary" className="facts-strip">
               <div>
-                <p className="text-sm log-muted">Active plan</p>
+                <p className="text-sm text-muted-foreground">Active plan</p>
                 <p className="nutrition-value truncate text-xl!">
                   {current ? current.name || "Meal plan" : "None"}
                 </p>
               </div>
               <div>
-                <p className="text-sm log-muted">This week</p>
-                <p className="num nutrition-value">
+                <p className="text-sm text-muted-foreground">This week</p>
+                <p className="tabular-nums nutrition-value">
                   {entriesThisWeek}
-                  <span className="text-sm font-normal log-muted">
+                  <span className="text-sm font-normal text-muted-foreground">
                     {" "}
                     {entriesThisWeek === 1 ? "entry" : "entries"}
                   </span>
                 </p>
               </div>
               <div>
-                <p className="text-sm log-muted">Lists</p>
-                <p className="num nutrition-value">
+                <p className="text-sm text-muted-foreground">Lists</p>
+                <p className="tabular-nums nutrition-value">
                   <Link href="/meal-plan/shopping-list" className="text-link">
                     {listCount}
                   </Link>

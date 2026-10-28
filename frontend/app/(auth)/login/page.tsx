@@ -184,7 +184,7 @@ export default function Page() {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label htmlFor="password" className="label mb-0">
+                <label htmlFor="password" className="label">
                   Password
                 </label>
                 <Link
@@ -241,7 +241,7 @@ export default function Page() {
               type="submit"
               disabled={loading}
               data-testid="login-submit"
-              className="btn-primary w-full py-3"
+              className="btn-primary w-full"
             >
               {loading ? (
                 <>

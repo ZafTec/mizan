@@ -67,7 +67,7 @@ export default function ProfileSettingsPage() {
   return (
     <div className="mx-auto max-w-[1120px]" data-testid="settings-page">
       <header className="mb-8 border-b border-foreground pb-5">
-        <Link href="/profile" className="text-link text-sm">
+        <Link href="/profile" className="text-link">
           Profile
         </Link>
         <h1 className="mt-1 text-[30px] font-semibold leading-tight tracking-tight sm:text-[34px]">
@@ -107,7 +107,7 @@ export default function ProfileSettingsPage() {
             id="assistant"
             title="Assistant"
             aside={
-              <a href="#assistant-usage" className="text-link text-sm">
+              <a href="#assistant-usage" className="text-link">
                 Usage today
               </a>
             }
@@ -179,7 +179,7 @@ function Section({
         </h2>
         {aside}
       </header>
-      {lead && <p className="pt-3 text-sm log-muted">{lead}</p>}
+      {lead && <p className="pt-3 text-sm text-muted-foreground">{lead}</p>}
       <div className={lead ? "pt-3" : undefined}>{children}</div>
     </section>
   );
@@ -249,7 +249,7 @@ function AccountSection() {
     <Section
       id="account"
       title="Account"
-      aside={<span className="text-xs log-muted">Changes save as you go</span>}
+      aside={<span className="text-xs text-muted-foreground">Changes save as you go</span>}
     >
       <form
         className="setting-row"
@@ -280,7 +280,7 @@ function AccountSection() {
         <span className="setting-label">Email</span>
         <div className="min-w-0">
           <p className="truncate text-[15px]">{user.email}</p>
-          <p className="text-xs log-muted">
+          <p className="text-xs text-muted-foreground">
             Email changes are not available yet.
           </p>
         </div>
@@ -360,11 +360,11 @@ function LinkRow({
     <div className="ledger-row">
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-medium">{title}</span>
-        <span className="mt-0.5 block text-[13px] log-muted">{detail}</span>
+        <span className="mt-0.5 block text-[13px] text-muted-foreground">{detail}</span>
       </span>
       <Link
         href={href}
-        className="text-link inline-flex min-h-11 items-center gap-1 text-sm"
+        className="text-link"
         aria-label={`${action}: ${title}`}
       >
         {action}
@@ -588,7 +588,7 @@ function SecuritySection() {
           >
             {changing ? "Updating…" : "Change password"}
           </button>
-          <p className="text-xs log-muted">
+          <p className="text-xs text-muted-foreground">
             At least 10 characters. Your other sessions are signed out.
           </p>
         </div>
@@ -646,7 +646,7 @@ function DataSection() {
           <span className="block text-[15px]">
             Download everything you have logged
           </span>
-          <span className="mt-0.5 block text-[13px] log-muted">
+          <span className="mt-0.5 block text-[13px] text-muted-foreground">
             One JSON file: profile, goals, meals, plans, measurements, workouts,
             recipes and connected-app usage.
           </span>
@@ -668,7 +668,7 @@ function DataSection() {
           <button
             type="button"
             onClick={() => setConfirming(true)}
-            className="btn-ghost min-h-11 text-destructive"
+            className="btn-ghost min-h-11"
           >
             Delete account
           </button>
@@ -698,7 +698,7 @@ function DataSection() {
             <button
               type="submit"
               disabled={deleting || typed !== DELETE_CONFIRMATION_TEXT}
-              className="btn-primary min-h-11 bg-destructive hover:bg-destructive"
+              className="btn-primary min-h-11"
             >
               {deleting ? "Deleting…" : "Delete permanently"}
             </button>

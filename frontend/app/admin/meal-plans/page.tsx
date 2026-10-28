@@ -26,19 +26,19 @@ export default async function AdminMealPlansPage() {
       <header className="log-page-header block!">
         <p className="eyebrow">Administration</p>
         <h1 className="mt-1">Meal plans</h1>
-        <p className="log-muted mt-2">
+        <p className="text-muted-foreground mt-2">
           Templates everyone can start a plan from.
         </p>
       </header>
 
       <section aria-label="Template summary" className="facts-strip">
         <div>
-          <p className="text-sm log-muted">Global templates</p>
-          <p className="num nutrition-value">{templates.length}</p>
+          <p className="text-sm text-muted-foreground">Global templates</p>
+          <p className="tabular-nums nutrition-value">{templates.length}</p>
         </div>
         <div>
-          <p className="text-sm log-muted">Entries</p>
-          <p className="num nutrition-value">{entries}</p>
+          <p className="text-sm text-muted-foreground">Entries</p>
+          <p className="tabular-nums nutrition-value">{entries}</p>
         </div>
       </section>
 

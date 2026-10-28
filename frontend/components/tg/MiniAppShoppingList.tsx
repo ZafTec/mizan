@@ -61,7 +61,7 @@ export default function MiniAppShoppingList({ listId }: { listId?: string }) {
 
   if (!loaded)
     return (
-      <p role="status" className="log-muted">
+      <p role="status" className="text-muted-foreground">
         Loading the list…
       </p>
     );

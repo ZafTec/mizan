@@ -136,7 +136,7 @@ export default function AiMealInput({
           type="button"
           disabled={disabled || busy !== null || description.length === 0}
           onClick={estimate}
-          className="btn-primary min-h-11 flex-1 disabled:cursor-not-allowed disabled:opacity-50"
+          className="btn-primary min-h-11 flex-1"
         >
           {busy === "text" ? "Estimating…" : "Estimate meal"}
         </button>

@@ -43,7 +43,7 @@ export default async function AdminPricesPage({
       <header className="log-page-header block!">
         <p className="eyebrow">Administration</p>
         <h1 className="mt-1">Prices</h1>
-        <p className="log-muted mt-2">
+        <p className="text-muted-foreground mt-2">
           Where prices come from, the products waiting for a food, and what
           people report.
         </p>
@@ -51,16 +51,16 @@ export default async function AdminPricesPage({
 
       <section aria-label="Price summary" className="facts-strip">
         <div>
-          <p className="text-sm log-muted">Sources</p>
-          <p className="num nutrition-value">{sources.length}</p>
+          <p className="text-sm text-muted-foreground">Sources</p>
+          <p className="tabular-nums nutrition-value">{sources.length}</p>
         </div>
         <div>
-          <p className="text-sm log-muted">To review</p>
-          <p className="num nutrition-value">{queue.totalCount}</p>
+          <p className="text-sm text-muted-foreground">To review</p>
+          <p className="tabular-nums nutrition-value">{queue.totalCount}</p>
         </div>
         <div>
-          <p className="text-sm log-muted">{status} reports</p>
-          <p className="num nutrition-value">{reports.totalCount}</p>
+          <p className="text-sm text-muted-foreground">{status} reports</p>
+          <p className="tabular-nums nutrition-value">{reports.totalCount}</p>
         </div>
       </section>
 

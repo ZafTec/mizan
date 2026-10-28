@@ -58,7 +58,7 @@ export default function NotificationList({
           {unread === 0 ? "All read" : `${unread} unread`}
         </h2>
         {unread > 0 && (
-          <button type="button" className="text-link text-sm" onClick={readAll}>
+          <button type="button" className="text-link" onClick={readAll}>
             Mark all read
           </button>
         )}
@@ -66,7 +66,7 @@ export default function NotificationList({
       {items.length === 0 ? (
         <div className="log-empty">
           <p>Nothing yet.</p>
-          <p className="log-muted mt-2 text-sm">
+          <p className="text-muted-foreground mt-2 text-sm">
             Achievements, coach messages and household invites land here.
           </p>
         </div>
@@ -91,7 +91,7 @@ export default function NotificationList({
                     {!item.readAt && <span className="sr-only"> (unread)</span>}
                   </span>
                   {item.body && (
-                    <span className="mt-0.5 block text-sm log-muted">
+                    <span className="mt-0.5 block text-sm text-muted-foreground">
                       {item.body}
                     </span>
                   )}
@@ -100,7 +100,7 @@ export default function NotificationList({
                 <time
                   dateTime={item.createdAt}
                   suppressHydrationWarning
-                  className="num shrink-0 text-xs log-muted"
+                  className="tabular-nums shrink-0 text-xs text-muted-foreground"
                 >
                   {new Date(item.createdAt).toLocaleString(undefined, {
                     day: "numeric",
@@ -114,7 +114,7 @@ export default function NotificationList({
                     aria-hidden="true"
                     size={17}
                     strokeWidth={1.7}
-                    className="log-muted shrink-0"
+                    className="text-muted-foreground shrink-0"
                   />
                 )}
               </button>

@@ -53,7 +53,7 @@ export default function StreakChip({
         "inline-flex items-center gap-2 text-sm font-semibold",
         atRisk
           ? "text-tuscan-sun-700 dark:text-tuscan-sun-400"
-          : "streak-gradient",
+          : "bg-transparent text-burnt-peach-700 dark:text-burnt-peach-400",
       )}
       title={
         isActiveToday
@@ -63,7 +63,7 @@ export default function StreakChip({
     >
       <span>{count}-day streak</span>
       {atRisk && left && (
-        <span className="num text-xs font-medium opacity-80">{left} left</span>
+        <span className="tabular-nums text-xs font-medium opacity-80">{left} left</span>
       )}
     </div>
   );

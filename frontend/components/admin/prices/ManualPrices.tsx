@@ -54,19 +54,19 @@ function ImportStarterFoods() {
       >
         {busy ? "Importing…" : "Import starter foods"}
       </button>
-      <p className="text-xs log-muted">
+      <p className="text-xs text-muted-foreground">
         Adds generic foods and estimated Ethiopian staples to the shared
         catalogue. Foods already there are left as they are, so it is safe to
         repeat.
       </p>
       {result && (
         <div role="status" className="text-sm">
-          <p className="num">
+          <p className="tabular-nums">
             {result.created} added, {result.existing} already in the catalogue.
           </p>
           {result.createdNames.length > 0 && (
             <p className="mt-1 break-words">
-              <span className="log-muted">Added: </span>
+              <span className="text-muted-foreground">Added: </span>
               {result.createdNames.join(", ")}
             </p>
           )}
@@ -110,7 +110,7 @@ function SeedStaples() {
       >
         Seed Addis Ababa staples
       </button>
-      <p className="text-xs log-muted">
+      <p className="text-xs text-muted-foreground">
         Writes the staple prices as Estimated for the catalogue foods whose
         names match. Foods with an estimate keep it.
       </p>
@@ -121,7 +121,7 @@ function SeedStaples() {
           </p>
           {result.missing.length > 0 && (
             <p className="mt-1 break-words">
-              <span className="log-muted">No food matched: </span>
+              <span className="text-muted-foreground">No food matched: </span>
               {result.missing.join(", ")}
             </p>
           )}
@@ -222,7 +222,7 @@ export default function ManualPrices({ regions }: { regions: PriceRegion[] }) {
               inputMode="decimal"
               min={0}
               step="any"
-              className="input num w-full"
+              className="input tabular-nums w-full"
               value={form.price}
               onChange={(event) => set("price", event.target.value)}
               aria-invalid={errors.price ? true : undefined}
@@ -238,7 +238,7 @@ export default function ManualPrices({ regions }: { regions: PriceRegion[] }) {
               inputMode="decimal"
               min={0}
               step="any"
-              className="input num w-full"
+              className="input tabular-nums w-full"
               value={form.quantity}
               onChange={(event) => set("quantity", event.target.value)}
               aria-invalid={errors.quantity ? true : undefined}

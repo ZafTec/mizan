@@ -12,7 +12,7 @@ export default async function NotificationsPage() {
     <div className="log-page space-y-8">
       <header className="log-page-header block!">
         <h1>Notifications</h1>
-        <p className="log-muted mt-2">What happened while you were away.</p>
+        <p className="text-muted-foreground mt-2">What happened while you were away.</p>
       </header>
       <NotificationList initial={result.items} />
     </div>
