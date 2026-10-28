@@ -513,11 +513,12 @@ describe("permission", () => {
     const needed = await screen.findByRole("group", {
       name: "Permission needed",
     });
-    fireEvent.click(
-      within(needed).getByRole("button", {
-        name: "Allow logging meals and plans",
-      }),
-    );
+    const allowButton = within(needed).getByRole("button", {
+      name: "Allow logging meals and plans",
+    });
+    // The card can render a moment before the send settles and the button is enabled.
+    await waitFor(() => expect(allowButton).not.toHaveProperty("disabled", true));
+    fireEvent.click(allowButton);
     await waitFor(() =>
       expect(api.updateAiConsent).toHaveBeenCalledWith({
         ...reads,

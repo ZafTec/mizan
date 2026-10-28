@@ -23,7 +23,6 @@ import {
   CircleAlert,
   Copy,
   History,
-  Lock,
   Plus,
   SquarePen,
   X,
@@ -673,14 +672,8 @@ export default function AiChat({
             {error && (
               <p
                 role="alert"
-                className="flex items-start gap-2 text-sm text-burnt-peach-700 dark:text-burnt-peach-300"
+                className="text-sm text-burnt-peach-700 dark:text-burnt-peach-300"
               >
-                <CircleAlert
-                  aria-hidden="true"
-                  size={16}
-                  strokeWidth={1.7}
-                  className="mt-0.5 shrink-0"
-                />
                 {error}
               </p>
             )}
@@ -918,8 +911,7 @@ function PermissionNeeded({
       aria-label="Permission needed"
       className="w-full max-w-[92%] space-y-2 rounded-md border border-border bg-muted/40 px-3.5 py-3 text-sm transition-opacity duration-200 ease-out starting:opacity-0"
     >
-      <p className="flex items-center gap-2 font-medium">
-        <Lock aria-hidden="true" size={14} strokeWidth={1.8} />
+      <p className="font-medium">
         {allowed ? "Allowed" : words.title}
       </p>
       <p className="text-muted-foreground">
