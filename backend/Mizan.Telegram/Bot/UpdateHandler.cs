@@ -1171,6 +1171,11 @@ public sealed class UpdateHandler
     /// </summary>
     private string ExplainFailure<T>(ApiResult<T> result) => result.Status switch
     {
+        // The API would not act for this account: suspended, deleted, or the bot's own key is wrong.
+        // "Unauthorized" tells the person nothing they can do.
+        HttpStatusCode.Unauthorized =>
+            $"I could not act for your Mizan account just now. Check that you can sign in at {_options.PublicUrl.TrimEnd('/')}, "
+            + $"then reconnect this chat at {SettingsUrl()} if it keeps happening.",
         HttpStatusCode.Forbidden => result.Problem
             ?? $"That needs a Pro plan. Manage it at {_options.PublicUrl.TrimEnd('/')}/billing.",
         HttpStatusCode.TooManyRequests => result.Problem

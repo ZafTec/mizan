@@ -109,7 +109,7 @@ public class AuthFlowTests
     }
 
     [Fact]
-    public async Task RegularMcpKey_CannotReachAdminEndpoint()
+    public async Task RegularServiceKey_ActsForAnAdminAsAnOrdinaryUser_AndCannotReachAdminEndpoints()
     {
         await _fixture.ResetDatabaseAsync();
         var adminId = Guid.NewGuid();
@@ -118,9 +118,8 @@ public class AuthFlowTests
         client.DefaultRequestHeaders.Add("X-Api-Key", "test-api-key");
         client.DefaultRequestHeaders.Add("X-Impersonate-User", adminId.ToString());
 
-        var response = await client.GetAsync("/api/admin/social/analytics");
-
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        (await client.GetAsync("/api/Users/me")).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await client.GetAsync("/api/admin/social/analytics")).StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
     /// <summary>

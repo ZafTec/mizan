@@ -62,8 +62,9 @@ public class UpdateRecipeCommandHandler : IRequestHandler<UpdateRecipeCommand, U
             return new UpdateRecipeResult { Success = false, Message = "Recipe not found" };
         }
 
-        var user = await _context.Users.FindAsync(new object[] { _currentUser.UserId.Value }, cancellationToken);
-        var isAdmin = user?.Role == "admin";
+        // The role the request carries, not the account row: a service acting for an administrator
+        // without the admin key acts as an ordinary user (docs/ARCHITECTURE.md).
+        var isAdmin = _currentUser.IsInRole("admin");
 
         if (recipe.UserId != _currentUser.UserId && !isAdmin)
         {
