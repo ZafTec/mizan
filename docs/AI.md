@@ -18,11 +18,11 @@ On the web, **Draft with the assistant** on `/meal-plan/new` sends the start dat
 
 ## Configuration
 
-The provider speaks the OpenAI-compatible chat-completions protocol. Set the Compose variables `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL`, or the equivalent backend `Ai:BaseUrl`, `Ai:ApiKey`, and `Ai:Model` configuration. An empty endpoint disables AI while basic logging remains available. An administrator can override the provider, prices and every limit below under **Admin → Settings** and check the endpoint with **Test provider** ([runtime settings](ADMIN.md#runtime-settings)).
+The provider speaks the OpenAI-compatible chat-completions protocol. An administrator sets `Ai.BaseUrl`, `Ai.ApiKey` and `Ai.Model` under **Admin → Settings → AI provider** and checks the endpoint with **Test provider** ([runtime settings](ADMIN.md#runtime-settings)); a change applies to the next call without a restart. They are not read from the environment. An empty endpoint disables AI while basic logging remains available, and the page says so.
 
-`AI_SUPPORTS_TEMPERATURE=false` omits temperature for providers that reject it. Optional `AI_REASONING_EFFORT` sets the provider's reasoning effort; Azure GPT-5.6 chat-completion tool calls require `none`. Leave it empty for providers that do not accept this field.
+`Ai.SupportsTemperature=false` omits temperature for providers that reject it. Optional `Ai.ReasoningEffort` sets the provider's reasoning effort; Azure GPT-5.6 chat-completion tool calls require `none`. Leave it empty for providers that do not accept this field.
 
-`AI_GLOBAL_DAILY_TOKENS` and `AI_GLOBAL_DAILY_COST_MICROS` cap provider use across the application. Configure provider prices accurately when relying on the cost ceiling. Token and cost ceilings are enforced by code, not prompt text.
+`Ai.GlobalDailyTokens` and `Ai.GlobalDailyCostMicros` (**AI limits**) cap provider use across the application, and each tier's daily requests and tokens sit beside them. Configure provider prices accurately when relying on the cost ceiling. Token and cost ceilings are enforced by code, not prompt text.
 
 ### Provider errors
 

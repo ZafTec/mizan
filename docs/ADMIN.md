@@ -11,12 +11,12 @@ The admin area at `/admin` is for administrators only: every page and every `/ap
 | `database` | A `SELECT 1` round trip | Slower than one second, or no answer |
 | `redis` | A ping, when `ConnectionStrings:Redis` is set | Slower than one second, or no answer |
 | `outbox` | Pending and dead-lettered jobs, oldest due job | Any dead-lettered job or work waiting over 10 minutes; down after an hour |
-| `email` | `Smtp:Host` set, failed messages in 24 hours | Any failure in the last day |
+| `email` | `Smtp.Host` set, failed messages in 24 hours | Any failure in the last day |
 | `ai` | Provider set, today's tokens and cost | 80% of a global daily ceiling; down at the ceiling |
-| `telegram` | The bot service's own `GET /health`, when `Telegram:BotServiceUrl` is set | No answer |
+| `telegram` | The bot service's own `GET /health`, when `Telegram.BotServiceUrl` is set | No answer |
 | `push` | Firebase credentials set | |
 | `prices` | `Prices:WorkerUrl` set, last successful source run | No success yet, or none in 48 hours |
-| `storage` | `Storage:ServiceUrl` set | |
+| `storage` | `Storage.ServiceUrl` set | |
 
 `notConfigured` means there is nothing to measure. The tile says "Not configured" and links to the page where it is set up, never a number. The thresholds live in `SystemHealthRules` (Domain).
 
@@ -44,28 +44,58 @@ Both detail pages carry support notes: notes administrators leave for each other
 
 ## Runtime settings
 
-`/admin/settings` changes some configuration without a redeploy. `RuntimeSettingDefinitions` (Domain) lists every key that can move, with its type and rules; the API, the page, the MCP tools and the overlay all read that one catalog. A key is the configuration path with dots: `Smtp.Host` overrides `Smtp:Host` (`Smtp__Host`).
+`/admin/settings` holds every setting that is not needed before the API can reach its database, and a change applies without a redeploy. `RuntimeSettingDefinitions` (Domain) lists each key with its type, rules, built-in default, page section and whether it is a secret; the API, the page, the MCP tools and `IRuntimeOptions<T>` all read that one catalog. A key is the options path with dots: `Smtp.Host` fills `SmtpOptions.Host`.
 
-| Section | Keys | Environment they override |
-| --- | --- | --- |
-| Email | `Smtp.Host`, `Port`, `Security`, `Username`, `Password`, `FromAddress`, `FromName`, `LocalDomain` | `SMTP_*`, `Smtp__*` |
-| AI provider | `Ai.BaseUrl`, `ApiKey`, `Model`, `MaxOutputTokens`, `TimeoutSeconds`, `SupportsTemperature`, `ReasoningEffort`, prompt and completion prices | `AI_*`, `Ai__*` |
-| AI limits | `Ai.GlobalDailyTokens`, `Ai.GlobalDailyCostMicros`, and `DailyRequests` and `DailyTokens` for `Free`, `Pro`, `PlanningFree`, `PlanningPro`, `Onboarding`, `Trainer`, `Eval` | `AI_GLOBAL_*`, `Ai__*` |
-| Telegram | `Telegram.BotServiceUrl` | `TELEGRAM_BOT_SERVICE_URL` |
-| Push | `Push.FcmProjectId`, `Push.FcmServiceAccountJson` | `FCM_*`, `Push__*` |
-| Billing | `Paddle.Environment`, `ApiKey`, `WebhookSecret`, `GraceDays`, `LifetimePriceId` | `PADDLE_*`, `Paddle__*` |
+| Section | Keys |
+| --- | --- |
+| Email | `Smtp.Host`, `Port`, `Security`, `Username`, `Password`, `FromAddress`, `FromName`, `LocalDomain` |
+| AI provider | `Ai.BaseUrl`, `ApiKey`, `Model`, `MaxOutputTokens`, `TimeoutSeconds`, `SupportsTemperature`, `ReasoningEffort`, prompt and completion prices |
+| AI limits | `Ai.GlobalDailyTokens`, `Ai.GlobalDailyCostMicros`, and `DailyRequests` and `DailyTokens` for `Free`, `Pro`, `PlanningFree`, `PlanningPro`, `Onboarding`, `Trainer`, `Eval` |
+| Storage | `Storage.ServiceUrl`, `Region`, `AccessKeyId`, `SecretAccessKey`, `Bucket`, `ForcePathStyle`, `PublicBaseUrl`, `PresignedUrlMinutes`, `MaxUploadBytes`, `MaxModelBytes` |
+| Telegram | `Telegram.BotToken`, `BotUsername`, `UseWebhook`, `WebhookSecret`, `MiniAppUrl`, `MiniAppMaxAgeSeconds`, `MiniAppSessionHours`, `BotServiceUrl` |
+| Push | `Push.FcmProjectId`, `Push.FcmServiceAccountJson` |
+| Billing | `Paddle.Environment`, `ApiKey`, `WebhookSecret`, `GraceDays`, `LifetimePriceId` |
+| Price crawler | `Prices.UserAgent`, `RequestDelayMs`, `MaxProductsPerRun` |
+| Connected apps | `OAuth.AccessTokenMinutes`, `RefreshTokenDays`, `RequestMinutes`, `CodeSeconds`, `AllowMetadataClients` |
+| Background jobs | `Outbox.PollSeconds`, `MaxAttempts`, `BackoffSeconds`, `StaleAfterMinutes` |
 
-**Precedence.** A value stored in `system_settings` wins; without one, configuration applies, and without that, the built-in default. `GET /api/admin/settings` reports each key's value and its source (`database`, `configuration` or `unset`). `PUT /api/admin/settings/{key}` stores a value after the catalog checks it (port range, URL or host shape, enum, number range) and answers 400 `validation_failed` with the catalog's message otherwise. `DELETE` removes the stored value, so configuration applies again. Each set and clear is audited with the key as the entity id; a secret's value is stored in the audit row as `[redacted]`.
+A section whose feature is off says so at its top ("Storage is not configured. Image uploads are refused."), from `RuntimeSettingGroupDto.Notice`, until the keys it names are set. The OAuth issuer and MCP resource follow `App__PublicUrl`; `Outbox__Enabled` stays in the environment.
 
-**Use time.** Consumers read `IRuntimeOptions<T>` on every call: the SMTP sender, the AI provider, `IAiQuotaService` (ceilings and tier limits), the eval runner, the Telegram notifier, the push sender, the Paddle client, entitlements (grace days) and webhook verification. Each instance keeps the table in memory; a write drops that copy and publishes on the Redis channel `mizan:runtime-settings:changed`, so the other instances drop theirs within moments. The copy also expires after 30 seconds while subscribed, and after one second when Redis is absent.
+**Precedence.** A value stored in `system_settings` wins; without one, the catalog's built-in default applies. The environment and `appsettings*.json` are never read for these keys. `GET /api/admin/settings` reports each key's value and its source (`database`, `default` or `unset`). `PUT /api/admin/settings/{key}` stores a value after the catalog checks it (port range, URL or host shape, token characters, enum, number range) and answers 400 `validation_failed` with the catalog's message otherwise. `DELETE` removes the stored value, so the default applies again. Each set and clear is audited with the key as the entity id; a secret's value is stored in the audit row as `[redacted]`.
 
-**Secrets.** `Smtp.Password`, `Ai.ApiKey`, `Push.FcmServiceAccountJson`, `Paddle.ApiKey` and `Paddle.WebhookSecret` are encrypted with ASP.NET Core Data Protection before they are stored. The API returns only `hasValue` for them, and `IRuntimeSettings` refuses to hand one to Application code as text; only the options overlay in Infrastructure decrypts them. The key ring lives in the `data_protection_keys` table, so it survives restarts and every instance shares it. A database backup therefore carries the keys with the secrets: the encryption keeps secrets out of API responses, logs, the audit log and casual queries, not away from someone holding the whole database. To keep the ring elsewhere, set `DataProtection__KeysPath` (`DATA_PROTECTION_KEYS_PATH` in production Compose) to a directory that every API instance mounts. Losing the ring makes stored secrets unreadable; each then falls back to configuration until it is entered again.
+**Use time.** Consumers read `IRuntimeOptions<T>` when they act: the SMTP sender, the AI provider, `IAiQuotaService` (ceilings and tier limits), the eval runner, the storage service (it builds a new S3 client when the storage settings change), OAuth token issue, the Mini App session, the outbox dispatcher, the Telegram notifier, the push sender, the Paddle client, entitlements and webhook verification. Each instance keeps the table in memory; a write drops that copy and publishes on the Redis channel `mizan:runtime-settings:changed`, so the other instances drop theirs within moments. The copy also expires after 30 seconds while subscribed, and after one second when Redis is absent.
 
-**Stays in configuration.** Anything needed before the database is reachable, built once at startup, or shared with another service: connection strings, `App__PublicUrl`, cookie and CORS settings, OAuth issuer and clients, external sign-in providers, `Storage__*` (the S3 client is built once), the MCP service keys (shared with the MCP and Telegram services), `Telegram__BotUsername` (must match the bot service) and the bot token (the API never holds it), the prices worker, the outbox, rate limits and OpenAPI exposure.
+**Other services.** The Telegram bot reads its token, webhook switch and secret, and Mini App settings from `GET /api/internal/settings/telegram-bot` with the service key, at startup and every five minutes. A change to a `Telegram.*` key also calls the bot's `POST /internal/settings-changed` when `Telegram.BotServiceUrl` is set, so the bot reads them again and registers its webhook at once ([Telegram](TELEGRAM.md#configure-and-run)). The prices worker reads `GET /api/internal/settings/prices` before each run, and **Run now** sends them with the request. Both routes refuse a call that acts for a user. Anyone holding the shared service key (`Mcp__ServiceApiKey`) can read the bot token through the first route; that key already lets its holder act as any linked user, so keep it on the internal network like the token itself.
+
+**Secrets.** `Smtp.Password`, `Ai.ApiKey`, `Storage.SecretAccessKey`, `Telegram.BotToken`, `Telegram.WebhookSecret`, `Push.FcmServiceAccountJson`, `Paddle.ApiKey` and `Paddle.WebhookSecret` are encrypted with ASP.NET Core Data Protection before they are stored. The API returns only `hasValue` for them, and `IRuntimeSettings` refuses to hand one to Application code as text; only the options overlay in Infrastructure and the internal settings routes decrypt them. The key ring lives in the `data_protection_keys` table, so it survives restarts and every instance shares it. A database backup therefore carries the keys with the secrets: the encryption keeps secrets out of API responses, logs, the audit log and casual queries, not away from someone holding the whole database. To keep the ring elsewhere, set `DataProtection__KeysPath` (`DATA_PROTECTION_KEYS_PATH` in production Compose) to a directory that every API instance mounts. Losing the ring makes stored secrets unreadable; each must then be entered again.
+
+**Stays in the environment.** Only what is needed before the database is reachable, or what a service needs to reach the API; [README](../README.md#environment) lists each with its reason. `ConfigurationAllowlistTests` fails when the API, the bot or the prices worker binds an options section from configuration that is not on its allowlist.
 
 **Tests.** **Send test email** (`POST /api/admin/settings/smtp/test`, MCP `admin_test_smtp`) queues one message to the signed-in administrator through the outbox with the settings as they stand and returns the job id; **Jobs** shows whether it was delivered. **Test provider** (`POST /api/admin/settings/ai/test`) makes one small call on the evaluation line, reserved and settled through `IAiQuotaService` like any other, and reports `reachable` with the model and latency, or an error class (`not_configured`, `quota_exceeded`, `timeout`, `unreachable`, `http_401` and so on) with `providerMessage`, the provider's reason cut to 300 characters with secrets removed. When the plain reply works it sends a second request with a trivial `ping` tool and reports it as `toolCall` (`passed`, `errorClass`, `providerMessage`, `latencyMs`), because the chat sends tools and some configurations refuse them ([provider errors](AI.md#provider-errors)).
 
 MCP has `admin_list_settings`, `admin_set_setting`, `admin_clear_setting` and `admin_test_smtp`. Telegram has no admin surface; the bot serves end users.
+
+### First administrator
+
+There is no default administrator. On a new deployment, after the migration, run:
+
+```sh
+docker compose -f docker-compose.prod.yml run --rm --no-deps mizan-backend --create-admin you@example.com
+```
+
+`Mizan.Api --create-admin <email>` creates a verified account with the `admin` role, or promotes an existing one, and prints a link that sets its password. The link works once, for 24 hours, and goes to the terminal only, never to the log. It needs no email settings, so the administrator can then sign in and fill in the rest of this page.
+
+### Moving settings out of the environment
+
+Earlier releases read email, storage, AI, Telegram, push and billing from environment variables. Those variables are now ignored. To keep a running deployment's values, copy them into the settings once, before the new release serves traffic:
+
+```sh
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml run --rm --no-deps mizan-backend --import-env-settings
+docker compose -f docker-compose.prod.yml up -d
+```
+
+`Mizan.Api --import-env-settings` reads each key from its old configuration path (`Smtp__Host`) and from the `.env` names the Compose files used to map (`SMTP_HOST`, `STORAGE_SECRET_ACCESS_KEY`, `AI_API_KEY`, `TELEGRAM_BOT_TOKEN`, `PADDLE_API_KEY`, `TelegramBot__BotToken` and the rest), so the container must still see them. The production backend loads `.env`, so keep the old lines there until the import has run. The command encrypts secrets, never prints a value, leaves a key that already has a stored value alone, and may be run again. A value the catalog refuses is skipped and named, and the command then exits with 1. Afterwards remove the old variables from `.env`.
 ## Feature flags
 
 A flag switches one feature for everyone or for one household. The flags are listed in code (`Mizan.Domain/Features/FeatureFlags.cs`) and any other key is refused with 404:

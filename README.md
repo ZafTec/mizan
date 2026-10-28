@@ -21,19 +21,7 @@ Install Docker with Compose, then:
 cp .env.example .env
 ```
 
-Set `DB_PASSWORD`, `REDIS_PASSWORD`, `MCP_SERVICE_KEY`, `MCP_ADMIN_SERVICE_KEY`, `STORAGE_ACCESS_KEY_ID`, and `STORAGE_SECRET_ACCESS_KEY` to local development values. Set `PUBLIC_APP_URL=http://localhost:3000`. These service credentials are required by Compose; SMTP, OAuth, Paddle, AI, and Telegram are optional for basic logging.
-
-Some optional settings can also be set by an administrator under **Admin → Settings**; a value set there wins over the environment until it is cleared ([runtime settings](docs/ADMIN.md#runtime-settings)):
-
-| Variables | In the admin area |
-| --- | --- |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM_ADDRESS`, `SMTP_FROM_NAME`, `Smtp__Security`, `Smtp__LocalDomain` | Yes |
-| `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`, `AI_SUPPORTS_TEMPERATURE`, `AI_REASONING_EFFORT`, `AI_GLOBAL_DAILY_TOKENS`, `AI_GLOBAL_DAILY_COST_MICROS`, `Ai__<line>__Daily*` | Yes |
-| `TELEGRAM_BOT_SERVICE_URL`, `FCM_PROJECT_ID`, `FCM_SERVICE_ACCOUNT_JSON` | Yes |
-| `PADDLE_ENVIRONMENT`, `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`, `PADDLE_GRACE_DAYS`, `PADDLE_PRICE_LIFETIME_LEGACY` | Yes |
-| Database, Redis, storage, MCP service keys, `PUBLIC_APP_URL`, OAuth, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` | No |
-
-Secrets set there are encrypted with a Data Protection key ring kept in the database; `DATA_PROTECTION_KEYS_PATH` keeps it in a mounted directory instead.
+Set `DB_PASSWORD`, `REDIS_PASSWORD`, `MCP_SERVICE_KEY`, `MCP_ADMIN_SERVICE_KEY`, `STORAGE_ACCESS_KEY_ID`, and `STORAGE_SECRET_ACCESS_KEY` to local development values. Set `PUBLIC_APP_URL=http://localhost:3000`. The two storage values are the local MinIO container's credentials. Email, storage, AI, Telegram, push and billing are set by an administrator under **Admin → Settings** ([runtime settings](docs/ADMIN.md#runtime-settings)); basic logging needs none of them.
 
 ```sh
 docker compose up -d
@@ -51,12 +39,43 @@ docker compose ps
 
 An untracked `docker-compose.override.yml` may change local ports; `docker compose ps` shows actual addresses. Development startup applies EF migrations. Production configuration lives in `docker-compose.prod.yml`; each deploy backs up the database and applies migrations before the app starts (see [migrations](docs/ARCHITECTURE.md#data-and-migrations)).
 
-Register through the app and confirm your email. With SMTP unset in Development, the backend prints the verification message to its console. There is no default administrator password. Verification links are credentials; keep them out of shared reports.
+Register through the app and confirm your email. With email unset in Development, the backend prints the verification message to its console. There is no default administrator password: make your account an administrator with `dotnet run --project backend/Mizan.Api -- --create-admin you@example.com` against the same database, and open the link it prints ([first administrator](docs/ADMIN.md#first-administrator)). Verification and password links are credentials; keep them out of shared reports.
 
 ```sh
 docker compose logs -f backend frontend
 docker compose down
 ```
+
+## Environment
+
+Each service reads only what it needs before it can reach its database or the API. Everything else is a runtime setting stored by the API; `ConfigurationAllowlistTests` fails when code binds another options section from configuration.
+
+| Variable | Service | Why it stays in the environment |
+| --- | --- | --- |
+| `ConnectionStrings__PostgreSQL` | backend, MCP | The settings live in this database. |
+| `ConnectionStrings__Redis` | backend | Caching and the settings-changed signal; read before the settings. |
+| `DataProtection__KeysPath` | backend | Where the key ring that decrypts stored secrets lives. Empty keeps it in the database. |
+| `App__PublicUrl`, `Mcp__PublicUrl`, `Mcp__AuthorizationServer` | backend, MCP | Links, cookies, the OAuth issuer and the MCP resource; fixed per deployment. |
+| `App__CookieDomain` | backend | Session cookie scope; fixed per deployment. Usually empty. |
+| `Cors__Origins__*` | backend | Built into the CORS policy at startup. |
+| `ReverseProxy__KnownProxy` | backend | Whose forwarded headers to believe, needed for the very first request. |
+| `Mcp__ServiceApiKey`, `Mcp__AdminServiceApiKey` | backend, MCP, Telegram, prices | How the other services prove themselves to the API before they can read settings. |
+| `Prices__WorkerUrl`, `TelegramBot__ApiUrl`, `Prices__ApiUrl`, `API_URL`, `BACKEND_API_URL`, `TELEGRAM_BOT_URL` | all | Addresses on the internal network. |
+| `TelegramBot__PublicUrl`, `TelegramBot__TrustedProxies` | Telegram | The webhook address and the forwarded-headers middleware, set before the bot reads its settings. |
+| `Prices__Redis` | prices | The per-source crawl lock. |
+| `Outbox__Enabled` | backend | Whether this instance runs background jobs at all; differs per instance. |
+| `Authentication__Google__*`, `Authentication__GitHub__*` | backend | External sign-in schemes are registered once at startup. |
+| `OpenApi__Enabled`, `OTLP_ENDPOINT_URL`, `LOKI_OTLP_ENDPOINT` | backend | Startup wiring for Swagger and telemetry. |
+| `ASPNETCORE_*` | .NET services | Environment name and listen address. |
+| `NEXT_PUBLIC_*`, `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` | frontend | Baked into the build, or needed by Next.js itself. |
+
+`Smtp__*`, `Ai__*`, `Storage__*`, `Push__*`, `Paddle__*`, `OAuth__*`, `Telegram__*`, `TelegramBot__BotToken`, `TelegramBot__UseWebhook`, `TelegramBot__WebhookSecret`, `TelegramBot__MiniAppUrl` and the crawler's `Prices__UserAgent`, `Prices__RequestDelayMs` and `Prices__MaxProductsPerRun` are no longer read. Operator commands, each run once against the deployment's database:
+
+| Command | What it does |
+| --- | --- |
+| `Mizan.Api --create-admin <email>` | Creates or promotes a verified administrator and prints a one-time link that sets the password ([first administrator](docs/ADMIN.md#first-administrator)). |
+| `Mizan.Api --import-env-settings` | Copies the old variables above into the runtime settings, encrypting secrets, before an upgrade ([moving settings](docs/ADMIN.md#moving-settings-out-of-the-environment)). |
+| `Mizan.Api --migrate` | Applies pending EF migrations and exits. |
 
 ## Run on the host
 
