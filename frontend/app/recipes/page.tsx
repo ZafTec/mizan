@@ -42,7 +42,7 @@ export default async function RecipesPage({
       <header className="log-page-header">
         <div>
           <h1>Recipes</h1>
-          <p className="log-muted mt-2">Meals worth making again.</p>
+          <p className="text-muted-foreground mt-2">Meals worth making again.</p>
         </div>
         {user && (
           <LogEntryButton kind="meal" className="btn-primary">
@@ -81,12 +81,15 @@ export default async function RecipesPage({
         </nav>
       )}
       {result.items.length ? (
-        <div className="recipe-library">
+        <div className="border-t border-foreground">
           {result.items.map((recipe) => (
-            <article className="recipe-library-row" key={recipe.id}>
+            <article
+              className="flex items-center gap-6 border-b border-border px-1 py-6"
+              key={recipe.id}
+            >
               <Link href={`/recipes/${recipe.id}`} className="min-w-0 flex-1">
                 <h2 className="text-base!">{recipe.title}</h2>
-                <p className="log-muted text-sm mt-2">
+                <p className="text-muted-foreground text-sm mt-2">
                   {recipe.nutrition?.caloriesPerServing != null
                     ? `${Math.round(recipe.nutrition.caloriesPerServing)} kcal · ${Math.round(recipe.nutrition.proteinGrams ?? 0)} g protein per serving`
                     : "View ingredients and nutrition"}
@@ -111,7 +114,7 @@ export default async function RecipesPage({
                 ? "Your pinned recipes will appear here"
                 : "Your recipe collection starts with a meal"}
           </h2>
-          <p className="log-muted mt-3 max-w-lg text-sm">
+          <p className="text-muted-foreground mt-3 max-w-lg text-sm">
             {params.search
               ? "Try another name or clear the search."
               : "Log two or more foods together, then choose Save as recipe in your daily log."}
@@ -134,7 +137,7 @@ export default async function RecipesPage({
         baseUrl={`/recipes${paging.size ? `?${paging}` : ""}`}
       />
       {result.items.length > 0 && user && (
-        <p className="text-sm log-muted mt-6">
+        <p className="text-sm text-muted-foreground mt-6">
           To save a new recipe, log a meal with at least two items and choose{" "}
           <Link href="/today" className="text-link">
             Save as recipe

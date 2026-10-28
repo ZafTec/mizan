@@ -236,7 +236,7 @@ function EntryForm({
                 <span className="block font-medium">{draft.item.name}</span>
                 <button
                   type="button"
-                  className="text-link text-xs"
+                  className="text-link"
                   onClick={() => set("item", null)}
                 >
                   Choose another
@@ -252,7 +252,7 @@ function EntryForm({
                   inputMode="decimal"
                   min={0}
                   step="any"
-                  className="input num w-28"
+                  className="input tabular-nums w-28"
                   value={draft.amount}
                   onChange={(event) => set("amount", event.target.value)}
                 />
@@ -663,7 +663,7 @@ export default function PlanEditor({
               inputMode="numeric"
               min={1}
               max={31}
-              className="input num w-full"
+              className="input tabular-nums w-full"
               value={durationDays}
               onChange={(event) => setDurationDays(event.target.value)}
               aria-invalid={planErrors.durationDays ? true : undefined}
@@ -700,7 +700,7 @@ export default function PlanEditor({
           <h2 id="entries-title">Entries</h2>
           <button
             type="button"
-            className="text-link text-sm"
+            className="text-link"
             onClick={() => setEditing({ kind: "new" })}
           >
             Add entry
@@ -717,7 +717,7 @@ export default function PlanEditor({
               type="button"
               role="tab"
               aria-selected={candidate.dayIndex === dayIndex}
-              className={`min-h-11 shrink-0 whitespace-nowrap border-b-2 px-3 text-sm ${candidate.dayIndex === dayIndex ? "border-foreground font-semibold" : "border-transparent log-muted"}`}
+              className={`min-h-11 shrink-0 whitespace-nowrap border-b-2 px-3 text-sm ${candidate.dayIndex === dayIndex ? "border-foreground font-semibold" : "border-transparent text-muted-foreground"}`}
               onClick={() => setDayIndex(candidate.dayIndex)}
             >
               {dayLabel(candidate)}
@@ -747,7 +747,7 @@ export default function PlanEditor({
           <p className="log-empty">Nothing planned for this day.</p>
         )}
         {day?.slots.map((slot) => (
-          <div className="meal-group" key={slot.slot}>
+          <div className="mt-6" key={slot.slot}>
             <div className="meal-group-header">
               <h3>{slotLabel(slot.slot)}</h3>
             </div>
@@ -770,7 +770,7 @@ export default function PlanEditor({
                       <span className="block font-medium break-words">
                         {entryTitle(entry)}
                       </span>
-                      <span className="mt-0.5 block text-xs log-muted">
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
                         {[
                           entryQuantity(entry),
                           entry.nutrition
@@ -792,7 +792,7 @@ export default function PlanEditor({
                     </button>
                     <button
                       type="button"
-                      className="btn-ghost btn-sm min-h-9 text-destructive"
+                      className="btn-ghost btn-sm min-h-9"
                       aria-label={`Remove ${entryTitle(entry)}`}
                       onClick={() => removeEntry(entry)}
                     >
@@ -811,7 +811,7 @@ export default function PlanEditor({
           <h2 id="sessions-title">Cooking sessions</h2>
           <button
             type="button"
-            className="text-link text-sm"
+            className="text-link"
             onClick={() => setSessionEditing({ kind: "new" })}
           >
             Add session
@@ -852,7 +852,7 @@ export default function PlanEditor({
               <li key={session.id} className="ledger-row">
                 <span className="min-w-0 flex-1">
                   <span className="block font-medium">{session.title}</span>
-                  <span className="mt-0.5 block text-xs log-muted">
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
                     {session.date
                       ? formatPlanDate(session.date, {
                           weekday: "short",
@@ -876,7 +876,7 @@ export default function PlanEditor({
                 </button>
                 <button
                   type="button"
-                  className="btn-ghost btn-sm min-h-9 text-destructive"
+                  className="btn-ghost btn-sm min-h-9"
                   aria-label={`Remove ${session.title}`}
                   onClick={() => removeSession(session)}
                 >

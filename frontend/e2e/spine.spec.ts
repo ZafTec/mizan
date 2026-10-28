@@ -126,13 +126,9 @@ test("Today shows each meal's total and a logged recipe's total as the API sends
   for (const meal of diary.meals)
     await expect(
       meals
-        .locator(".meal-group")
-        .filter({
-          has: page.getByRole("heading", {
-            name:
-              meal.mealType.charAt(0) + meal.mealType.slice(1).toLowerCase(),
-            exact: true,
-          }),
+        .getByRole("group", {
+          name: meal.mealType.charAt(0) + meal.mealType.slice(1).toLowerCase(),
+          exact: true,
         })
         .getByTestId("meal-calories"),
     ).toHaveText(kcal(meal.totals.calories));

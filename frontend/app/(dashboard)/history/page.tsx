@@ -36,16 +36,16 @@ export default async function HistoryPage({
       <header className="log-page-header">
         <div>
           <h1>History</h1>
-          <p className="log-muted mt-2">
+          <p className="text-muted-foreground mt-2">
             Your meals, training, and measurements. Day by day.
           </p>
         </div>
         <div>
-          <p className="text-xs log-muted mb-2">Jump to a day</p>
+          <p className="text-xs text-muted-foreground mb-2">Jump to a day</p>
           <DateNavigator date={end} today={today} />
         </div>
       </header>
-      <div className="history-period">
+      <div className="flex items-center justify-between border-b border-foreground pb-3.5 [&_h2]:text-[18px] max-sm:[&_h2]:text-[15px]">
         <h2>
           {formatLogDate(start, { month: "short", day: "numeric" })} –{" "}
           {formatLogDate(end, {
@@ -81,7 +81,7 @@ export default async function HistoryPage({
           )}
         </div>
       </div>
-      <div className="history-column-labels">
+      <div className="grid grid-cols-[1.1fr_1fr_1fr_20px] items-center gap-6 border-b border-border px-4 pt-4 pb-3 text-[12px] text-muted-foreground max-sm:hidden">
         <span>Day</span>
         <span>Nutrition</span>
         <span>Activity</span>
@@ -98,7 +98,7 @@ export default async function HistoryPage({
           );
           return (
             <Link
-              className="history-row"
+              className="grid grid-cols-[1.1fr_1fr_1fr_20px] items-center gap-6 border-b border-border px-4 py-[18px] transition-[background-color] duration-160 ease-[ease-out] hover:bg-muted hover:text-foreground max-sm:grid-cols-[1fr_1fr_16px] max-sm:gap-x-3 max-sm:gap-y-2 max-sm:px-1 max-sm:[&>svg]:col-[3] max-sm:[&>svg]:row-[1/3]"
               href={`/today?date=${date}`}
               key={date}
               aria-label={`View log for ${formatLogDate(date)}`}
@@ -109,26 +109,26 @@ export default async function HistoryPage({
                     ? "Today"
                     : formatLogDate(date, { weekday: "long" })}
                 </p>
-                <p className="text-xs log-muted mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {formatLogDate(date, { month: "short", day: "numeric" })}
                 </p>
               </div>
               <div>
                 {food ? (
                   <>
-                    <p className="num text-sm">
+                    <p className="tabular-nums text-sm">
                       {Math.round(food.calories).toLocaleString()}{" "}
-                      <span className="log-muted">kcal</span>
+                      <span className="text-muted-foreground">kcal</span>
                     </p>
-                    <p className="text-xs log-muted mt-1 num">
+                    <p className="text-xs text-muted-foreground mt-1 tabular-nums">
                       {Math.round(food.protein)} g protein
                     </p>
                   </>
                 ) : (
-                  <p className="text-sm log-muted">No meals logged</p>
+                  <p className="text-sm text-muted-foreground">No meals logged</p>
                 )}
               </div>
-              <div className="history-activity text-sm">
+              <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm max-sm:col-[2] max-sm:text-[12px]">
                 {training.length > 0 && (
                   <span>
                     {training.length}{" "}
@@ -136,22 +136,22 @@ export default async function HistoryPage({
                   </span>
                 )}
                 {body.length > 0 && (
-                  <span className="num">
+                  <span className="tabular-nums">
                     {body[0].weightKg != null
                       ? `${body[0].weightKg.toLocaleString(undefined, { maximumFractionDigits: 1 })} kg`
                       : "Measurements logged"}
                   </span>
                 )}
                 {!training.length && !body.length && (
-                  <span className="log-muted">—</span>
+                  <span className="text-muted-foreground">—</span>
                 )}
               </div>
-              <ArrowRight size={16} className="log-muted" />
+              <ArrowRight size={16} className="text-muted-foreground" />
             </Link>
           );
         })}
       </div>
-      <p className="text-xs log-muted mt-5">
+      <p className="text-xs text-muted-foreground mt-5">
         Open any day to review or add to its log.
       </p>
     </div>

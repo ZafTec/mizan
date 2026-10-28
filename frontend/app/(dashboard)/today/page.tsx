@@ -24,19 +24,19 @@ export const metadata = { title: "Today · Mizan" };
 
 function MealRow({ entry }: { entry: LogMeal }) {
   return (
-    <div className="meal-row">
+    <div className="grid min-h-[78px] grid-cols-[minmax(0,1fr)_auto_36px] items-center gap-3 border-b border-border py-2.5 pr-0 pl-3 text-[14px] max-sm:gap-2 max-sm:pl-1 [&_.icon-button]:w-9">
       <div className="min-w-0">
         <p className="font-medium break-words">{entry.name}</p>
-        <p className="log-muted text-xs mt-1">
+        <p className="text-muted-foreground text-xs mt-1">
           {entry.amountGrams != null
             ? `${Math.round(entry.amountGrams * 10) / 10} g`
             : `${entry.servings} ${entry.servings === 1 ? "serving" : "servings"}`}{" "}
           · {Math.round(entry.proteinGrams ?? 0)} g protein
         </p>
       </div>
-      <p className="num text-sm whitespace-nowrap">
+      <p className="tabular-nums text-sm whitespace-nowrap">
         {Math.round(entry.calories ?? 0).toLocaleString()}{" "}
-        <span className="log-muted text-xs">kcal</span>
+        <span className="text-muted-foreground text-xs">kcal</span>
       </p>
       <DeleteLogEntry id={entry.id} name={entry.name} />
     </div>
@@ -58,23 +58,23 @@ function MealEntries({
     seen.add(entry.groupId);
     const group = entries.filter((item) => item.groupId === entry.groupId);
     return (
-      <details className="recipe-log-group" key={entry.groupId}>
-        <summary>
+      <details className="border-b border-border" key={entry.groupId}>
+        <summary className="flex cursor-pointer items-center justify-between gap-4 px-3 py-4 text-[14px]">
           <span className="min-w-0 break-words font-medium">
             {entry.groupName || "Recipe"}
-            <span className="block text-xs font-normal log-muted mt-1">
+            <span className="block text-xs font-normal text-muted-foreground mt-1">
               {group.length} ingredients · Show details
             </span>
           </span>
           <span
-            className="num text-sm whitespace-nowrap"
+            className="tabular-nums text-sm whitespace-nowrap"
             data-testid="recipe-group-calories"
           >
             {Math.round(
               groups.find((g) => g.groupId === entry.groupId)?.totals
                 .calories ?? 0,
             )}{" "}
-            <span className="text-xs log-muted">kcal</span>
+            <span className="text-xs text-muted-foreground">kcal</span>
           </span>
         </summary>
         <div className="pl-4">
@@ -147,7 +147,7 @@ export default async function TodayPage({
               ? "Today"
               : formatLogDate(date, { weekday: "long" })}
           </h1>
-          <p className="log-muted mt-2">
+          <p className="text-muted-foreground mt-2">
             {formatLogDate(date, {
               weekday: date === today ? "long" : undefined,
               month: "long",
@@ -172,10 +172,10 @@ export default async function TodayPage({
       <section aria-label="Daily nutrition" className="nutrition-strip">
         {nutrients.map((nutrient) => (
           <div className="nutrition-readout" key={nutrient.name}>
-            <p className="text-sm log-muted">{nutrient.name}</p>
-            <p className="num nutrition-value">
+            <p className="text-sm text-muted-foreground">{nutrient.name}</p>
+            <p className="tabular-nums nutrition-value">
               {Math.round(nutrient.value).toLocaleString()}
-              <span className="text-sm font-normal log-muted">
+              <span className="text-sm font-normal text-muted-foreground">
                 {" "}
                 {nutrient.target
                   ? `/ ${nutrient.target.toLocaleString()} `
@@ -208,7 +208,7 @@ export default async function TodayPage({
         ))}
       </section>
       {!goal && (
-        <p className="text-sm log-muted -mt-3 mb-8">
+        <p className="text-sm text-muted-foreground -mt-3 mb-8">
           A daily target gives your log some context.{" "}
           <Link href="/goal" className="text-link">
             Set your targets <ArrowRight size={13} />
@@ -218,7 +218,7 @@ export default async function TodayPage({
       <Suspense fallback={null}>
         <TodayPlan date={date} />
       </Suspense>
-      <div className="day-log-grid">
+      <div className="grid grid-cols-[minmax(0,1.8fr)_minmax(240px,1fr)] gap-12 max-xl:gap-7 max-sm:grid-cols-1 max-sm:gap-9">
         <section aria-labelledby="meals-title">
           <header className="log-section-header">
             <h2 id="meals-title">Meals</h2>
@@ -229,7 +229,7 @@ export default async function TodayPage({
           {diary.entries.length === 0 ? (
             <div className="log-empty">
               <p>Your meals go here.</p>
-              <p className="log-muted text-sm mt-2">
+              <p className="text-muted-foreground text-sm mt-2">
                 Say what you ate, add a photo, or search. You check it before it
                 is saved.
               </p>
@@ -250,11 +250,16 @@ export default async function TodayPage({
                 );
                 if (!entries.length) return null;
                 return (
-                  <div className="meal-group" key={type}>
+                  <div
+                    role="group"
+                    aria-label={formatMealType(type)}
+                    className="mt-6"
+                    key={type}
+                  >
                     <div className="meal-group-header">
                       <h3>{formatMealType(type)}</h3>
                       <span
-                        className="num text-xs log-muted"
+                        className="tabular-nums text-xs text-muted-foreground"
                         data-testid="meal-calories"
                       >
                         {Math.round(
@@ -279,7 +284,7 @@ export default async function TodayPage({
               })
           )}
         </section>
-        <div className="day-side-log">
+        <div className="grid content-start gap-8 max-sm:gap-7">
           <section aria-labelledby="training-title">
             <header className="log-section-header">
               <h2 id="training-title">Training</h2>
@@ -295,7 +300,7 @@ export default async function TodayPage({
                       name={workout.name || "workout"}
                     />
                   </div>
-                  <p className="log-muted text-sm mt-1">
+                  <p className="text-muted-foreground text-sm mt-1">
                     {workout.exercises.length} exercise
                     {workout.exercises.length === 1 ? "" : "s"}
                     {workout.durationMinutes
@@ -310,7 +315,7 @@ export default async function TodayPage({
                           <span className="font-medium">
                             {exercise.exerciseName}
                           </span>
-                          <p className="log-muted text-xs mt-1">
+                          <p className="text-muted-foreground text-xs mt-1">
                             {exercise.sets
                               .filter((set) => set.completed)
                               .map(
@@ -327,7 +332,7 @@ export default async function TodayPage({
               ))
             ) : (
               <div className="py-5">
-                <p className="log-muted text-sm">
+                <p className="text-muted-foreground text-sm">
                   No workout logged for this day.
                 </p>
                 <LogEntryButton
@@ -350,9 +355,9 @@ export default async function TodayPage({
                   <div className="flex justify-between gap-2">
                     <div>
                       {measurement.weightKg != null && (
-                        <p className="num text-2xl font-medium">
+                        <p className="tabular-nums text-2xl font-medium">
                           {measurement.weightKg}{" "}
-                          <span className="text-sm font-normal log-muted">
+                          <span className="text-sm font-normal text-muted-foreground">
                             kg
                           </span>
                         </p>
@@ -380,14 +385,14 @@ export default async function TodayPage({
                     />
                   </div>
                   {measurement.notes && (
-                    <p className="text-sm log-muted mt-2 break-words">
+                    <p className="text-sm text-muted-foreground mt-2 break-words">
                       {measurement.notes}
                     </p>
                   )}
                 </div>
               ))
             ) : (
-              <p className="log-muted text-sm py-5">
+              <p className="text-muted-foreground text-sm py-5">
                 No measurements logged for this day.
               </p>
             )}

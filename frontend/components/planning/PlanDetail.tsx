@@ -87,10 +87,10 @@ export function DayTotals({ day, rules }: { day: PlanDay; rules: PlanRules }) {
     <section aria-label="Day totals" className="nutrition-strip">
       {rows.map((row) => (
         <div className="nutrition-readout" key={row.name}>
-          <p className="text-sm log-muted">{row.name}</p>
-          <p className="num nutrition-value">
+          <p className="text-sm text-muted-foreground">{row.name}</p>
+          <p className="tabular-nums nutrition-value">
             {Math.round(row.value).toLocaleString()}
-            <span className="text-sm font-normal log-muted">
+            <span className="text-sm font-normal text-muted-foreground">
               {" "}
               {row.target != null
                 ? `${row.ceiling ? "of max" : "/"} ${Math.round(row.target).toLocaleString()} `
@@ -115,12 +115,12 @@ export function PlanCost({ plan }: { plan: MealPlanDetail }) {
   return (
     <section aria-label="Plan cost" className="facts-strip">
       <div data-testid="plan-weekly-cost">
-        <p className="text-sm log-muted">Cost a week</p>
-        <p className="num nutrition-value text-xl! break-words sm:text-2xl!">
+        <p className="text-sm text-muted-foreground">Cost a week</p>
+        <p className="tabular-nums nutrition-value text-xl! break-words sm:text-2xl!">
           {formatMoney(plan.weeklyCost, plan.currency)}
         </p>
         {budget != null && (
-          <p className="num mt-1 text-sm log-muted">
+          <p className="tabular-nums mt-1 text-sm text-muted-foreground">
             of {formatMoney(budget, plan.rules.currency ?? plan.currency)}{" "}
             budget
           </p>
@@ -132,19 +132,19 @@ export function PlanCost({ plan }: { plan: MealPlanDetail }) {
         )}
       </div>
       <div data-testid="plan-cost-coverage">
-        <p className="text-sm log-muted">Priced</p>
-        <p className="num nutrition-value">
+        <p className="text-sm text-muted-foreground">Priced</p>
+        <p className="tabular-nums nutrition-value">
           {formatCoverage(plan.costCoverage)}
         </p>
         {plan.costConfidence && (
-          <p className="mt-1 text-sm log-muted">
+          <p className="mt-1 text-sm text-muted-foreground">
             {confidenceLabel(plan.costConfidence)}
           </p>
         )}
       </div>
       <div>
-        <p className="text-sm log-muted">Without a price</p>
-        <p className="num nutrition-value">{plan.unpricedItems.length}</p>
+        <p className="text-sm text-muted-foreground">Without a price</p>
+        <p className="tabular-nums nutrition-value">{plan.unpricedItems.length}</p>
       </div>
     </section>
   );
@@ -176,7 +176,7 @@ function EntryRow({
           {entryTitle(entry)}
         </span>
         {details.length > 0 && (
-          <span className="mt-0.5 block text-xs log-muted">
+          <span className="mt-0.5 block text-xs text-muted-foreground">
             {details.join(" · ")}
           </span>
         )}
@@ -185,9 +185,9 @@ function EntryRow({
         )}
       </span>
       {entry.nutrition && (
-        <span className="num whitespace-nowrap text-sm">
+        <span className="tabular-nums whitespace-nowrap text-sm">
           {Math.round(entry.nutrition.calories).toLocaleString()}{" "}
-          <span className="text-xs log-muted">kcal</span>
+          <span className="text-xs text-muted-foreground">kcal</span>
         </span>
       )}
       <LogPlanEntryButton planId={planId} entry={entry} />
@@ -306,7 +306,7 @@ export default function PlanDetail({
           </p>
         )}
         <h1 className="mt-1">{name}</h1>
-        <p className="log-muted mt-2" data-testid="plan-facts">
+        <p className="text-muted-foreground mt-2" data-testid="plan-facts">
           {facts.join(" · ")}
         </p>
         {plan.description && <p className="mt-2 text-sm">{plan.description}</p>}
@@ -336,7 +336,7 @@ export default function PlanDetail({
               )}
               <button
                 type="button"
-                className="btn-ghost btn-sm min-h-9 text-destructive"
+                className="btn-ghost btn-sm min-h-9"
                 disabled={busy !== null}
                 onClick={() => setConfirmDelete(true)}
               >
@@ -358,7 +358,7 @@ export default function PlanDetail({
             <TabsPrimitive.Trigger
               key={day.dayIndex}
               value={String(day.dayIndex)}
-              className="flex min-h-11 shrink-0 items-center gap-1 whitespace-nowrap border-b-2 border-transparent px-3 pb-3 text-sm log-muted data-[state=active]:border-foreground data-[state=active]:font-semibold data-[state=active]:text-foreground"
+              className="flex min-h-11 shrink-0 items-center gap-1 whitespace-nowrap border-b-2 border-transparent px-3 pb-3 text-sm text-muted-foreground data-[state=active]:border-foreground data-[state=active]:font-semibold"
               aria-label={`${dayLabel(day)}${day.date === today ? ", today" : ""}`}
             >
               {dayLabel(day)}
@@ -378,11 +378,11 @@ export default function PlanDetail({
           >
             <DayTotals day={day} rules={plan.rules} />
             {day.cost != null && (
-              <p className="num -mt-4 text-sm" data-testid="day-cost">
-                <span className="log-muted">Cost of the day </span>
+              <p className="tabular-nums -mt-4 text-sm" data-testid="day-cost">
+                <span className="text-muted-foreground">Cost of the day </span>
                 {formatMoney(day.cost, plan.currency)}
                 {plan.rules.dailyBudget != null && (
-                  <span className="log-muted">
+                  <span className="text-muted-foreground">
                     {" "}
                     of{" "}
                     {formatMoney(
@@ -403,11 +403,11 @@ export default function PlanDetail({
               <p className="log-empty">Nothing planned for this day.</p>
             ) : (
               sortedSlots(day).map((slot) => (
-                <div className="meal-group" key={slot.slot}>
+                <div className="mt-6" key={slot.slot}>
                   <div className="meal-group-header">
                     <h3>{slotLabel(slot.slot)}</h3>
                     <span
-                      className="num text-xs log-muted"
+                      className="tabular-nums text-xs text-muted-foreground"
                       data-testid="slot-calories"
                     >
                       {Math.round(slot.totals.calories).toLocaleString()} kcal
@@ -444,13 +444,13 @@ export default function PlanDetail({
                       >
                         <span className="min-w-0 flex-1">
                           {violation.slot && (
-                            <span className="log-muted">
+                            <span className="text-muted-foreground">
                               {slotLabel(violation.slot)} ·{" "}
                             </span>
                           )}
                           {violation.message}
                         </span>
-                        <span className="text-xs log-muted">
+                        <span className="text-xs text-muted-foreground">
                           {violation.rule}
                         </span>
                       </li>
@@ -473,7 +473,7 @@ export default function PlanDetail({
               <li key={session.id} className="ledger-row">
                 <span className="min-w-0 flex-1">
                   <span className="block font-medium">{session.title}</span>
-                  <span className="mt-0.5 block text-xs log-muted">
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
                     {session.date
                       ? formatPlanDate(session.date, {
                           weekday: "long",
@@ -484,7 +484,7 @@ export default function PlanDetail({
                     {session.notes ? ` · ${session.notes}` : ""}
                   </span>
                 </span>
-                <span className="num whitespace-nowrap text-sm log-muted">
+                <span className="tabular-nums whitespace-nowrap text-sm text-muted-foreground">
                   {session.entryCount}{" "}
                   {session.entryCount === 1 ? "entry" : "entries"}
                 </span>
@@ -498,7 +498,7 @@ export default function PlanDetail({
         <section aria-labelledby="unpriced-title">
           <header className="log-section-header">
             <h2 id="unpriced-title">Without a price</h2>
-            <span className="num text-sm log-muted">
+            <span className="tabular-nums text-sm text-muted-foreground">
               {itemCount(plan.unpricedItems.length)}
             </span>
           </header>
@@ -520,7 +520,7 @@ export default function PlanDetail({
                     item.name
                   )}
                 </span>
-                <span className="min-w-0 text-right text-xs log-muted">
+                <span className="min-w-0 text-right text-xs text-muted-foreground">
                   {item.reason}
                 </span>
               </li>

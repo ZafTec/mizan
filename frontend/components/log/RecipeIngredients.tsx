@@ -6,6 +6,9 @@ import { clientApi } from "@/lib/api.client";
 import { appToast, getErrorMessage } from "@/lib/toast";
 import type { Recipe } from "@/data/recipe";
 
+const INGREDIENT_ROW =
+  "flex items-center justify-between gap-5 border-b border-border px-1 py-4 text-[14px]";
+
 export default function RecipeIngredients({ recipe }: { recipe: Recipe }) {
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -75,7 +78,7 @@ export default function RecipeIngredients({ recipe }: { recipe: Recipe }) {
               </label>
               <input
                 id="recipe-servings"
-                className="input max-w-28 num"
+                className="input max-w-28 tabular-nums"
                 type="number"
                 name="servings"
                 min={1}
@@ -85,14 +88,14 @@ export default function RecipeIngredients({ recipe }: { recipe: Recipe }) {
               />
             </div>
             {ingredients.map((ingredient, index) => (
-              <div key={index} className="recipe-ingredient-row">
+              <div key={index} className={INGREDIENT_ROW}>
                 <label className="min-w-0" htmlFor={`recipe-amount-${index}`}>
                   {ingredient.foodName || ingredient.ingredientText}
                 </label>
                 <div className="flex items-center gap-2">
                   <input
                     id={`recipe-amount-${index}`}
-                    className="input w-28! num"
+                    className="input w-28! tabular-nums"
                     type="number"
                     min="0.01"
                     step="any"
@@ -100,7 +103,7 @@ export default function RecipeIngredients({ recipe }: { recipe: Recipe }) {
                     defaultValue={ingredient.amount ?? ""}
                     required={!!ingredient.foodId}
                   />
-                  <span className="text-xs log-muted">{ingredient.unit}</span>
+                  <span className="text-xs text-muted-foreground">{ingredient.unit}</span>
                 </div>
               </div>
             ))}
@@ -129,11 +132,11 @@ export default function RecipeIngredients({ recipe }: { recipe: Recipe }) {
       ) : (
         <ul>
           {ingredients.map((ingredient, index) => (
-            <li className="recipe-ingredient-row" key={index}>
+            <li className={INGREDIENT_ROW} key={index}>
               <span className="min-w-0">
                 {ingredient.foodName || ingredient.ingredientText}
               </span>
-              <span className="num shrink-0 log-muted">
+              <span className="tabular-nums shrink-0 text-muted-foreground">
                 {ingredient.amount != null
                   ? `${ingredient.amount} ${ingredient.unit}`
                   : "To taste"}

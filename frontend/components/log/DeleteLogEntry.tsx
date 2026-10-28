@@ -44,7 +44,7 @@ export default function DeleteLogEntry({
       }}
     >
       <button
-        className="icon-button delete-log"
+        className="icon-button"
         onClick={() => setOpen(true)}
         aria-label={`Delete ${name}`}
       >

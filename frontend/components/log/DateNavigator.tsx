@@ -14,7 +14,7 @@ export default function DateNavigator({
 }) {
   const router = useRouter();
   return (
-    <div className="date-navigator">
+    <div className="inline-flex items-center rounded-[3px] border border-border bg-card">
       <Link
         href={`/today?date=${shiftDate(date, -1)}`}
         className="icon-button"
@@ -30,6 +30,7 @@ export default function DateNavigator({
         type="date"
         value={date}
         max={today}
+        className="min-h-11 w-[140px] min-w-0 bg-transparent px-2 text-[13px]"
         onChange={(event) => {
           if (event.target.value && event.target.value <= today)
             router.push(`/today?date=${event.target.value}`);
