@@ -1,3 +1,4 @@
+import DirectionalTransition from "@/components/motion/DirectionalTransition";
 import MiniAppGate from "@/components/tg/MiniAppGate";
 import MiniAppShoppingList from "@/components/tg/MiniAppShoppingList";
 
@@ -14,8 +15,10 @@ export default async function MiniAppShoppingListPage({
 }) {
   const params = await searchParams;
   return (
-    <MiniAppGate>
-      <MiniAppShoppingList listId={one(params.listId)} />
-    </MiniAppGate>
+    <DirectionalTransition>
+      <MiniAppGate>
+        <MiniAppShoppingList listId={one(params.listId)} />
+      </MiniAppGate>
+    </DirectionalTransition>
   );
 }

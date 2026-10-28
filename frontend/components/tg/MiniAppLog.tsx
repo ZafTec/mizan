@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getSession } from "@/lib/auth-client";
 import MealLogForm from "@/components/logging/MealLogForm";
+import { NAV_BACK } from "@/components/motion/DirectionalTransition";
 
 /** The meal form in the Mini App; saving says so and leads back to /tg. */
 export default function MiniAppLog() {
@@ -20,7 +21,11 @@ export default function MiniAppLog() {
   return (
     <div className="flex flex-col gap-5" data-testid="tg-log">
       <header className="flex flex-col gap-1">
-        <Link href="/tg" className="text-link self-start">
+        <Link
+          href="/tg"
+          transitionTypes={NAV_BACK}
+          className="text-link self-start"
+        >
           Today
         </Link>
         <h1 className="text-2xl font-semibold">Log a meal</h1>
@@ -31,7 +36,11 @@ export default function MiniAppLog() {
             {saved}
           </p>
           <div className="flex flex-wrap gap-3">
-            <Link href="/tg" className="btn-primary min-h-11">
+            <Link
+              href="/tg"
+              transitionTypes={NAV_BACK}
+              className="btn-primary min-h-11"
+            >
               Back to today
             </Link>
             <button

@@ -1,4 +1,7 @@
 import Link from "next/link";
+import DirectionalTransition, {
+  NAV_FORWARD,
+} from "@/components/motion/DirectionalTransition";
 import { ChevronRight } from "lucide-react";
 import { getUserServer } from "@/helper/session";
 import { dateInTimeZone, shiftDate } from "@/lib/log-date";
@@ -55,6 +58,7 @@ function PlanRow({
     <li className="ledger-row">
       <Link
         href={`/meal-plan/${plan.id}`}
+        transitionTypes={NAV_FORWARD}
         className="flex min-w-0 flex-1 items-center gap-3"
       >
         <span className="min-w-0 flex-1">
@@ -120,130 +124,132 @@ export default async function MealPlanPage() {
   }
 
   return (
-    <div className="log-page space-y-8" data-testid="meal-plan-page">
-      <header className="log-page-header block!">
-        <h1>Meal plans</h1>
-        <p className="text-muted-foreground mt-2">
-          What you plan to eat, and the list it needs.
-        </p>
-      </header>
+    <DirectionalTransition>
+      <div className="log-page space-y-8" data-testid="meal-plan-page">
+        <header className="log-page-header block!">
+          <h1>Meal plans</h1>
+          <p className="text-muted-foreground mt-2">
+            What you plan to eat, and the list it needs.
+          </p>
+        </header>
 
-      {failed ? (
-        <p className="log-empty">Your plans could not be loaded.</p>
-      ) : (
-        <>
-          {plans.length > 0 && (
-            <section aria-label="Plan summary" className="facts-strip">
-              <div>
-                <p className="text-sm text-muted-foreground">Active plan</p>
-                <p className="nutrition-value truncate text-xl!">
-                  {current ? current.name || "Meal plan" : "None"}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">This week</p>
-                <p className="tabular-nums nutrition-value">
-                  {entriesThisWeek}
-                  <span className="text-sm font-normal text-muted-foreground">
-                    {" "}
-                    {entriesThisWeek === 1 ? "entry" : "entries"}
-                  </span>
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Lists</p>
-                <p className="tabular-nums nutrition-value">
-                  <Link href="/meal-plan/shopping-list" className="text-link">
-                    {listCount}
-                  </Link>
-                </p>
-              </div>
-            </section>
-          )}
+        {failed ? (
+          <p className="log-empty">Your plans could not be loaded.</p>
+        ) : (
+          <>
+            {plans.length > 0 && (
+              <section aria-label="Plan summary" className="facts-strip">
+                <div>
+                  <p className="text-sm text-muted-foreground">Active plan</p>
+                  <p className="nutrition-value truncate text-xl!">
+                    {current ? current.name || "Meal plan" : "None"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">This week</p>
+                  <p className="tabular-nums nutrition-value">
+                    {entriesThisWeek}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      {" "}
+                      {entriesThisWeek === 1 ? "entry" : "entries"}
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Lists</p>
+                  <p className="tabular-nums nutrition-value">
+                    <Link href="/meal-plan/shopping-list" className="text-link">
+                      {listCount}
+                    </Link>
+                  </p>
+                </div>
+              </section>
+            )}
 
-          {plans.length === 0 ? (
-            <p className="log-empty">No plans yet.</p>
-          ) : (
-            <>
-              {active.length > 0 && (
-                <section aria-labelledby="active-title">
-                  <header className="log-section-header">
-                    <h2 id="active-title">Active</h2>
-                  </header>
-                  <ul>
-                    {active.map((plan) => (
-                      <PlanRow
-                        key={plan.id}
-                        plan={plan}
-                        today={today}
-                        viewerId={user.id}
-                      />
-                    ))}
-                  </ul>
-                </section>
-              )}
-              {drafts.length > 0 && (
-                <section aria-labelledby="drafts-title">
-                  <header className="log-section-header">
-                    <h2 id="drafts-title">
-                      {drafts.some(
-                        (plan) =>
-                          plan.authoredByUserId &&
-                          plan.authoredByUserId !== user.id,
-                      )
-                        ? "From your coach"
-                        : "Drafts"}
-                    </h2>
-                  </header>
-                  <ul>
-                    {drafts.map((plan) => (
-                      <PlanRow
-                        key={plan.id}
-                        plan={plan}
-                        today={today}
-                        viewerId={user.id}
-                      >
-                        {(plan.authoredByUserId &&
-                          plan.authoredByUserId !== user.id) ||
-                        isGenerated(plan) ? (
-                          <DraftActions
-                            planId={plan.id}
-                            planName={plan.name || "Meal plan"}
-                          />
-                        ) : undefined}
-                      </PlanRow>
-                    ))}
-                  </ul>
-                </section>
-              )}
-              {past.length > 0 && (
-                <section aria-labelledby="past-title">
-                  <header className="log-section-header">
-                    <h2 id="past-title">Past plans</h2>
-                  </header>
-                  <ul>
-                    {past.map((plan) => (
-                      <PlanRow
-                        key={plan.id}
-                        plan={plan}
-                        today={today}
-                        viewerId={user.id}
-                      />
-                    ))}
-                  </ul>
-                </section>
-              )}
-            </>
-          )}
+            {plans.length === 0 ? (
+              <p className="log-empty">No plans yet.</p>
+            ) : (
+              <>
+                {active.length > 0 && (
+                  <section aria-labelledby="active-title">
+                    <header className="log-section-header">
+                      <h2 id="active-title">Active</h2>
+                    </header>
+                    <ul>
+                      {active.map((plan) => (
+                        <PlanRow
+                          key={plan.id}
+                          plan={plan}
+                          today={today}
+                          viewerId={user.id}
+                        />
+                      ))}
+                    </ul>
+                  </section>
+                )}
+                {drafts.length > 0 && (
+                  <section aria-labelledby="drafts-title">
+                    <header className="log-section-header">
+                      <h2 id="drafts-title">
+                        {drafts.some(
+                          (plan) =>
+                            plan.authoredByUserId &&
+                            plan.authoredByUserId !== user.id,
+                        )
+                          ? "From your coach"
+                          : "Drafts"}
+                      </h2>
+                    </header>
+                    <ul>
+                      {drafts.map((plan) => (
+                        <PlanRow
+                          key={plan.id}
+                          plan={plan}
+                          today={today}
+                          viewerId={user.id}
+                        >
+                          {(plan.authoredByUserId &&
+                            plan.authoredByUserId !== user.id) ||
+                          isGenerated(plan) ? (
+                            <DraftActions
+                              planId={plan.id}
+                              planName={plan.name || "Meal plan"}
+                            />
+                          ) : undefined}
+                        </PlanRow>
+                      ))}
+                    </ul>
+                  </section>
+                )}
+                {past.length > 0 && (
+                  <section aria-labelledby="past-title">
+                    <header className="log-section-header">
+                      <h2 id="past-title">Past plans</h2>
+                    </header>
+                    <ul>
+                      {past.map((plan) => (
+                        <PlanRow
+                          key={plan.id}
+                          plan={plan}
+                          today={today}
+                          viewerId={user.id}
+                        />
+                      ))}
+                    </ul>
+                  </section>
+                )}
+              </>
+            )}
 
-          <Link
-            href="/meal-plan/new"
-            className="btn-primary min-h-11 w-full sm:w-auto"
-          >
-            New plan
-          </Link>
-        </>
-      )}
-    </div>
+            <Link
+              href="/meal-plan/new"
+              className="btn-primary min-h-11 w-full sm:w-auto"
+            >
+              New plan
+            </Link>
+          </>
+        )}
+      </div>
+    </DirectionalTransition>
   );
 }

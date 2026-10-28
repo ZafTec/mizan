@@ -1,3 +1,4 @@
+import DirectionalTransition from "@/components/motion/DirectionalTransition";
 import MiniAppGate from "@/components/tg/MiniAppGate";
 import MiniAppPlan from "@/components/tg/MiniAppPlan";
 
@@ -14,8 +15,10 @@ export default async function MiniAppPlanPage({
 }) {
   const params = await searchParams;
   return (
-    <MiniAppGate>
-      <MiniAppPlan planId={one(params.planId)} day={one(params.day)} />
-    </MiniAppGate>
+    <DirectionalTransition>
+      <MiniAppGate>
+        <MiniAppPlan planId={one(params.planId)} day={one(params.day)} />
+      </MiniAppGate>
+    </DirectionalTransition>
   );
 }

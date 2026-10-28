@@ -18,6 +18,7 @@ import { dateInTimeZone } from "@/lib/log-date";
 import { formatMealType } from "@/lib/utils/mealType";
 import { getErrorMessage } from "@/lib/toast";
 import { useMainButton } from "@/lib/tg/useMainButton";
+import { NAV_FORWARD } from "@/components/motion/DirectionalTransition";
 import { openExternal } from "@/lib/tg/webApp";
 import type { components } from "@/types/api.generated";
 
@@ -100,7 +101,10 @@ export default function MiniAppHome() {
     void refresh();
   }, [refresh]);
 
-  useMainButton({ text: "Log a meal", onClick: () => router.push("/tg/log") });
+  useMainButton({
+    text: "Log a meal",
+    onClick: () => router.push("/tg/log", { transitionTypes: NAV_FORWARD }),
+  });
 
   if (failure)
     return (
@@ -254,10 +258,16 @@ function Action({
 }) {
   return (
     <li>
-      <Link href={href} className="ledger-row transition-colors hover:bg-muted">
+      <Link
+        href={href}
+        transitionTypes={NAV_FORWARD}
+        className="ledger-row transition-colors hover:bg-muted"
+      >
         <span className="min-w-0 flex-1">
           <span className="block text-[15px] font-medium">{title}</span>
-          <span className="mt-0.5 block text-[13px] text-muted-foreground">{detail}</span>
+          <span className="mt-0.5 block text-[13px] text-muted-foreground">
+            {detail}
+          </span>
         </span>
         <ChevronRight
           aria-hidden="true"

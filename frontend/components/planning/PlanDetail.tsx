@@ -34,6 +34,7 @@ import { useMainButton } from "@/lib/tg/useMainButton";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import DraftActions from "./DraftActions";
 import LogPlanEntryButton from "./LogPlanEntryButton";
+import { NAV_BACK } from "@/components/motion/DirectionalTransition";
 
 const SLOT_ORDER = ["BREAKFAST", "LUNCH", "DINNER", "SNACK"];
 
@@ -144,7 +145,9 @@ export function PlanCost({ plan }: { plan: MealPlanDetail }) {
       </div>
       <div>
         <p className="text-sm text-muted-foreground">Without a price</p>
-        <p className="tabular-nums nutrition-value">{plan.unpricedItems.length}</p>
+        <p className="tabular-nums nutrition-value">
+          {plan.unpricedItems.length}
+        </p>
       </div>
     </section>
   );
@@ -300,7 +303,11 @@ export default function PlanDetail({
       <header className="log-page-header block!">
         {!embedded && (
           <p className="text-sm">
-            <Link href="/meal-plan" className="text-link">
+            <Link
+              href="/meal-plan"
+              transitionTypes={NAV_BACK}
+              className="text-link"
+            >
               Meal plans
             </Link>
           </p>
