@@ -1,5 +1,3 @@
-import loaderStyle from "./index.module.css";
-
 interface LoadingProps {
   size?: "sm" | "md" | "lg";
   className?: string;
@@ -12,6 +10,8 @@ const sizeMap = {
   lg: { size: "70px", gap: "5px" },
 };
 
+const DELAYS = [0, 200, 300, 400, 500, 600];
+
 export default function Loading({
   size = "lg",
   className,
@@ -21,7 +21,7 @@ export default function Loading({
   return (
     <div
       data-testid="loading"
-      className={`${loaderStyle.loader} ${className ? ` ${className}` : ""}`}
+      className={`grid size-(--size) grid-cols-3 gap-(--gap) [--color:oklch(0.55_0.16_155)] ${className ?? ""}`}
       style={
         {
           "--size": resolvedSize,
@@ -30,12 +30,13 @@ export default function Loading({
         } as React.CSSProperties
       }
     >
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
+      {DELAYS.map((delay) => (
+        <span
+          key={delay}
+          className="size-full animate-loader-blink bg-(--color)"
+          style={{ animationDelay: `${delay}ms` }}
+        />
+      ))}
     </div>
   );
 }
