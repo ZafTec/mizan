@@ -84,6 +84,15 @@ At (1024px), navigation changes from a bottom bar to a sidebar. Below (640px), c
 
 Dialogs use a dimmed backdrop and a defined border. Interaction feedback changes color or opacity; button presses briefly scale to (0.985). Respect reduced motion.
 
+## Motion
+
+Motion explains a change; it never decorates. A surface moves only when it would otherwise appear, vanish or swap without a bridge, and data the person is reading (totals, charts, tabs) changes in place.
+
+- **Values:** `transform` and `opacity` only, 120–250ms, `--ease-out` on entering, a few pixels of travel and never from `scale(0)`. The phone sheets use `--ease-drawer` (280ms in, 200ms out). The keyframes and `animate-*` tokens live in [the stylesheet](frontend/app/globals.css).
+- **Where:** the Select list and popovers grow from their trigger; dialogs and the log sheet fade in centered on a wide screen and rise from the bottom on a phone; the docked assistant fades in from its edge and closes at once; the phone assistant sheet rises and falls; messages, the permission card, a plan refusal, a price accept report and **Saved** fade in. Prefer `@starting-style` (`starting:`) transitions for things that enter, so a repeated action retargets instead of restarting.
+- **View transitions:** React `<ViewTransition>` only. [DirectionalTransition](frontend/components/motion/DirectionalTransition.tsx) wraps a page and its `loading.tsx` where a list leads to one item (recipes, meal plans, the Telegram Mini App); links into the item carry `NAV_FORWARD`, links back up carry `NAV_BACK`, and every other navigation swaps without motion. Price review rows fade as they leave and the rows below move up.
+- **Reduced motion:** the system setting and the **Reduce animations** appearance setting both end every animation, transition and view transition at once.
+
 ## Shapes
 
 Controls and panels use the shared corner token; structural rules are (1px). Circles remain appropriate for avatars and status dots, and switches retain their sliding pill shape. Static Lucide line icons use the shared [Icon component](frontend/components/ui/icon.tsx); avoid decorative icon containers.
