@@ -65,7 +65,7 @@ export default function MealCard({ meal }: MealCardProps) {
       <div className="flex flex-row justify-between items-center">
         <h2 className="text-lg font-semibold">{meal.name}</h2>
         <button
-          className="text-red-500 hover:text-red-700 transition-colors duration-200 focus:outline-none"
+          className="text-red-500 hover:text-red-700 transition-colors duration-200"
           onClick={() => setShowConfirm(true)}
           disabled={isLoading}
         >

@@ -302,6 +302,14 @@ html {
   select {
     transition-timing-function: var(--ease-emphasized);
   }
+
+  /* The default keyboard focus ring. It lives in the base layer so a
+     component's own focus style (an `outline-none` with a border or ring
+     utility) replaces it instead of drawing a second outline. */
+  :where(button, a, input, select, textarea, summary):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+  }
 }
 
 /* Tabular figures. A column of counts scans vertically or it is decoration. */
@@ -1254,10 +1262,6 @@ html.dark .ring-track {
 }
 .skip-link:focus {
   top: 12px;
-}
-:where(button, a, input, select, textarea, summary):focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 3px;
 }
 input,
 textarea {
