@@ -14,8 +14,14 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-builder.Services.Configure<TelegramBotOptions>(
-    builder.Configuration.GetSection(TelegramBotOptions.SectionName));
+// Only what the bot needs to reach the API comes from the environment. The token, the webhook switch
+// and secret and the Mini App are runtime settings the bot reads from the API (BotSettings), and every
+// consumer of IOptions<TelegramBotOptions> gets the latest of them when it is created.
+builder.Services.Configure<TelegramBotEnvironment>(
+    builder.Configuration.GetSection(TelegramBotEnvironment.SectionName));
+builder.Services.AddSingleton<BotSettings>();
+builder.Services.AddTransient<IOptions<TelegramBotOptions>>(sp =>
+    Options.Create(sp.GetRequiredService<BotSettings>().Current));
 
 // Two clients with different lifetimes of trust: one talks to Telegram over
 // the public internet, the other to the API over the Docker network. Keeping
@@ -30,7 +36,7 @@ builder.Services.AddHttpClient<MizanApiClient>(client =>
 // The Mini App session records the browser's address, which only the proxy and the web
 // app's route handler can tell; see docs/TELEGRAM.md#configure-and-run.
 builder.Services.Configure<ForwardedHeadersOptions>(forwarded =>
-    TrustedProxies.Configure(forwarded, builder.Configuration[$"{TelegramBotOptions.SectionName}:TrustedProxies"]));
+    TrustedProxies.Configure(forwarded, builder.Configuration[$"{TelegramBotEnvironment.SectionName}:TrustedProxies"]));
 
 builder.Services.AddScoped<UpdateHandler>();
 builder.Services.AddScoped<MiniAppSessionEndpoint>();
@@ -38,53 +44,30 @@ builder.Services.AddScoped<NotifyEndpoint>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddHostedService<LongPollWorker>();
 builder.Services.AddSingleton<WebhookState>();
-builder.Services.AddHostedService<WebhookRegistrar>();
+builder.Services.AddSingleton<WebhookRegistrar>();
+builder.Services.AddSingleton<BotSettingsRefresher>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<BotSettingsRefresher>());
 
 var app = builder.Build();
 
 app.UseForwardedHeaders();
 
-var options = app.Services.GetRequiredService<IOptions<TelegramBotOptions>>().Value;
-
-if (!options.IsConfigured)
+foreach (var retired in TelegramBotEnvironment.RetiredKeys)
 {
-    // Same posture as the AI service: missing configuration disables the
-    // feature and the process still starts. A bot that refuses to boot takes
-    // its health check with it.
-    Log.Warning("Telegram bot is not configured; the service is running but idle");
-}
-else
-{
-    // Telegram, not LongPollWorker, decides which mode is live: it will not
-    // deliver getUpdates while a webhook is registered, so switching modes
-    // has to touch Telegram's side too, not just this app's config.
-    var telegram = app.Services.GetRequiredService<TelegramClient>();
-
-    if (options.UseWebhook)
+    if (!string.IsNullOrWhiteSpace(app.Configuration[$"{TelegramBotEnvironment.SectionName}:{retired}"]))
     {
-        if (string.IsNullOrWhiteSpace(options.WebhookSecret))
-        {
-            // Every request would 404 out of the handler above with no secret
-            // to check against - registering the webhook anyway would just
-            // point Telegram at a dead end.
-            Log.Error("TelegramBot:UseWebhook is true but WebhookSecret is empty; not registering a webhook");
-        }
-        // Otherwise WebhookRegistrar registers it in the background and retries until Telegram
-        // accepts it; /health reports how that stands.
+        Log.Warning(
+            "TelegramBot:{Key} is set in the environment and ignored; it is a runtime setting now (docs/ADMIN.md#runtime-settings)",
+            retired);
     }
-    else
-    {
-        await telegram.DeleteWebhookAsync(CancellationToken.None);
-    }
-
-    await BotProfile.ApplyAsync(telegram, options, CancellationToken.None);
 }
 
-app.MapGet("/health", (WebhookState webhook) => Results.Ok(new
+app.MapGet("/health", (WebhookState webhook, BotSettings settings) => Results.Ok(new
 {
     status = "healthy",
-    configured = options.IsConfigured,
-    mode = options.UseWebhook ? "webhook" : "long-poll",
+    settingsLoaded = settings.Loaded,
+    configured = settings.Current.IsConfigured,
+    mode = settings.Current.UseWebhook ? "webhook" : "long-poll",
     webhook = new { state = webhook.Current.State, lastError = webhook.Current.LastError, attempts = webhook.Current.Attempts },
 }));
 
@@ -98,6 +81,21 @@ app.MapPost("/telegram/miniapp/session", (HttpContext context, MiniAppSessionEnd
 /// the proxy does not route it, and it requires the shared service key.
 app.MapPost("/internal/notify", (HttpContext context, NotifyEndpoint endpoint, CancellationToken ct) =>
     endpoint.HandleAsync(context, ct));
+
+/// The API's signal that a Telegram setting changed in the admin area. Internal, and requires the
+/// shared service key; answers once the new settings are read and Telegram is being brought in line.
+app.MapPost("/internal/settings-changed", async (
+    HttpContext context, BotSettingsRefresher refresher, IOptions<TelegramBotEnvironment> environment, CancellationToken ct) =>
+{
+    var expected = environment.Value.ServiceApiKey;
+    if (string.IsNullOrWhiteSpace(expected)
+        || !CryptographicEquals(context.Request.Headers["X-Api-Key"].ToString(), expected))
+    {
+        return Results.Unauthorized();
+    }
+
+    return await refresher.RefreshAsync(ct) ? Results.NoContent() : Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+});
 
 /// The webhook. Telegram sends the secret in a header on every call; anything
 /// without it is not Telegram, and gets nothing back that would confirm the

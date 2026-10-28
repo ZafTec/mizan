@@ -32,6 +32,35 @@ public sealed class MizanApiClient
         _http.BaseAddress = new Uri(options.Value.ApiUrl.TrimEnd('/') + "/");
     }
 
+    // ---- Settings ---------------------------------------------------------
+
+    /// <summary>
+    /// The bot's runtime settings (docs/TELEGRAM.md#configure-and-run), or null when the API cannot be
+    /// reached or refuses the key. Never logged: the answer holds the bot token and the webhook secret.
+    /// </summary>
+    public async Task<TelegramBotSettings?> GetBotSettingsAsync(CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(_serviceKey)) return null;
+
+        try
+        {
+            using var request = Service(HttpMethod.Get, "api/internal/settings/telegram-bot");
+            using var response = await _http.SendAsync(request, ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Reading the bot settings returned {Status}", (int)response.StatusCode);
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<TelegramBotSettings>(Json, ct);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException || (ex is TaskCanceledException && !ct.IsCancellationRequested))
+        {
+            _logger.LogWarning("Reading the bot settings failed: {Error}", ex.Message);
+            return null;
+        }
+    }
+
     // ---- Linking ----------------------------------------------------------
 
     public async Task<ResolvedUser?> ResolveAsync(long telegramUserId, CancellationToken ct)
