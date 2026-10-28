@@ -35,7 +35,7 @@ export default function PlanRefusal({
 
   return (
     <div
-      className="grid gap-6 md:grid-cols-[minmax(0,1fr)_260px]"
+      className="grid animate-enter gap-6 md:grid-cols-[minmax(0,1fr)_260px]"
       data-testid="plan-refusal"
     >
       <div className="space-y-5 border-l-2 border-tuscan-sun-700 pl-4 dark:border-tuscan-sun-400">
@@ -156,7 +156,9 @@ function WayText({ title, detail }: { title: string; detail: string }) {
     <>
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-medium">{title}</span>
-        <span className="mt-0.5 block text-[13px] text-muted-foreground">{detail}</span>
+        <span className="mt-0.5 block text-[13px] text-muted-foreground">
+          {detail}
+        </span>
       </span>
       <ChevronRight
         aria-hidden="true"

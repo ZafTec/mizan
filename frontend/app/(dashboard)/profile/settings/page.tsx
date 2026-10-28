@@ -191,7 +191,12 @@ function SavedNote({ text }: { text: string }) {
       role="status"
       className="min-w-12 shrink-0 text-xs whitespace-nowrap text-brand-700 dark:text-brand-300"
     >
-      {text}
+      <span
+        key={text}
+        className="inline-block transition-opacity duration-160 ease-out starting:opacity-0"
+      >
+        {text}
+      </span>
     </span>
   );
 }
@@ -249,7 +254,11 @@ function AccountSection() {
     <Section
       id="account"
       title="Account"
-      aside={<span className="text-xs text-muted-foreground">Changes save as you go</span>}
+      aside={
+        <span className="text-xs text-muted-foreground">
+          Changes save as you go
+        </span>
+      }
     >
       <form
         className="setting-row"
@@ -360,7 +369,9 @@ function LinkRow({
     <div className="ledger-row">
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-medium">{title}</span>
-        <span className="mt-0.5 block text-[13px] text-muted-foreground">{detail}</span>
+        <span className="mt-0.5 block text-[13px] text-muted-foreground">
+          {detail}
+        </span>
       </span>
       <Link
         href={href}

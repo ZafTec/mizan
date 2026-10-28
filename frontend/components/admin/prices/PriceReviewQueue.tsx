@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useState, ViewTransition } from "react";
 import { useRouter } from "next/navigation";
 import FoodSearch from "@/components/planning/FoodSearch";
 import {
@@ -255,13 +255,15 @@ export default function PriceReviewQueue({
     <section id="queue" aria-labelledby="queue-title" className="scroll-mt-6">
       <header className="log-section-header">
         <h2 id="queue-title">Review queue</h2>
-        <span className="tabular-nums text-sm text-muted-foreground">{total} to review</span>
+        <span className="tabular-nums text-sm text-muted-foreground">
+          {total} to review
+        </span>
       </header>
 
       {report && (
         <div
           role="status"
-          className="mt-3 border-l-2 border-brand-700 pl-3 text-sm dark:border-brand-300"
+          className="mt-3 animate-enter border-l-2 border-brand-700 pl-3 text-sm dark:border-brand-300"
           data-testid="accept-report"
         >
           <p>
@@ -353,91 +355,100 @@ export default function PriceReviewQueue({
                   : "Every product here has a suggestion."}
               </li>
             )}
+            {/* A row that leaves on refresh (accepted, mapped or ignored)
+                fades, and the rows below it move up into its place. */}
             {shown.map((alias) => (
-              <li
-                key={alias.id}
-                className="border-b border-border py-3"
-                aria-label={alias.productName}
-              >
-                <div className="flex flex-wrap items-center gap-3">
-                  {hasSuggestion(alias) ? (
-                    <input
-                      type="checkbox"
-                      className="h-5 w-5 shrink-0 accent-brand-700"
-                      aria-label={`Select ${alias.productName}`}
-                      checked={selected.has(alias.id)}
-                      onChange={(event) =>
-                        toggle(alias.id, event.target.checked)
-                      }
-                    />
-                  ) : (
-                    <span aria-hidden="true" className="w-5 shrink-0" />
-                  )}
-                  <span className="min-w-0 flex-1 basis-48">
-                    <span className="block font-medium break-words">
-                      {alias.productName}
-                    </span>
-                    <span className="tabular-nums mt-0.5 block text-xs text-muted-foreground">
-                      {[
-                        alias.sourceName,
-                        alias.lastSeenPrice != null
-                          ? formatMoney(alias.lastSeenPrice, alias.currency)
-                          : null,
-                        alias.lastSeenAt
-                          ? `seen ${formatPriceDate(alias.lastSeenAt)}`
-                          : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </span>
-                    <span className="mt-1 block text-sm">
-                      {hasSuggestion(alias) ? (
-                        <>
-                          <span className="text-muted-foreground">Suggested: </span>
-                          <span className="tabular-nums">{suggestionText(alias)}</span>
-                        </>
-                      ) : (
-                        <span className="text-muted-foreground">No match</span>
-                      )}
-                    </span>
-                  </span>
-                  <span className="flex shrink-0 flex-wrap items-center gap-1">
-                    {alias.lastSeenUrl && (
-                      <a
-                        href={alias.lastSeenUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-link px-2"
-                        aria-label={`Listing for ${alias.productName}`}
-                      >
-                        Listing
-                      </a>
+              <ViewTransition key={alias.id} exit="row-exit">
+                <li
+                  className="border-b border-border py-3"
+                  aria-label={alias.productName}
+                >
+                  <div className="flex flex-wrap items-center gap-3">
+                    {hasSuggestion(alias) ? (
+                      <input
+                        type="checkbox"
+                        className="h-5 w-5 shrink-0 accent-brand-700"
+                        aria-label={`Select ${alias.productName}`}
+                        checked={selected.has(alias.id)}
+                        onChange={(event) =>
+                          toggle(alias.id, event.target.checked)
+                        }
+                      />
+                    ) : (
+                      <span aria-hidden="true" className="w-5 shrink-0" />
                     )}
-                    {mapping !== alias.id && (
+                    <span className="min-w-0 flex-1 basis-48">
+                      <span className="block font-medium break-words">
+                        {alias.productName}
+                      </span>
+                      <span className="tabular-nums mt-0.5 block text-xs text-muted-foreground">
+                        {[
+                          alias.sourceName,
+                          alias.lastSeenPrice != null
+                            ? formatMoney(alias.lastSeenPrice, alias.currency)
+                            : null,
+                          alias.lastSeenAt
+                            ? `seen ${formatPriceDate(alias.lastSeenAt)}`
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </span>
+                      <span className="mt-1 block text-sm">
+                        {hasSuggestion(alias) ? (
+                          <>
+                            <span className="text-muted-foreground">
+                              Suggested:{" "}
+                            </span>
+                            <span className="tabular-nums">
+                              {suggestionText(alias)}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            No match
+                          </span>
+                        )}
+                      </span>
+                    </span>
+                    <span className="flex shrink-0 flex-wrap items-center gap-1">
+                      {alias.lastSeenUrl && (
+                        <a
+                          href={alias.lastSeenUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-link px-2"
+                          aria-label={`Listing for ${alias.productName}`}
+                        >
+                          Listing
+                        </a>
+                      )}
+                      {mapping !== alias.id && (
+                        <button
+                          type="button"
+                          className="btn-secondary btn-sm min-h-9"
+                          aria-label={`Map ${alias.productName}`}
+                          onClick={() => setMapping(alias.id)}
+                        >
+                          {hasSuggestion(alias) ? "Change" : "Map"}
+                        </button>
+                      )}
                       <button
                         type="button"
-                        className="btn-secondary btn-sm min-h-9"
-                        aria-label={`Map ${alias.productName}`}
-                        onClick={() => setMapping(alias.id)}
+                        className="btn-ghost btn-sm min-h-9"
+                        aria-label={`Ignore ${alias.productName}`}
+                        disabled={busy !== null}
+                        onClick={() => ignore(alias)}
                       >
-                        {hasSuggestion(alias) ? "Change" : "Map"}
+                        Ignore
                       </button>
-                    )}
-                    <button
-                      type="button"
-                      className="btn-ghost btn-sm min-h-9"
-                      aria-label={`Ignore ${alias.productName}`}
-                      disabled={busy !== null}
-                      onClick={() => ignore(alias)}
-                    >
-                      Ignore
-                    </button>
-                  </span>
-                </div>
-                {mapping === alias.id && (
-                  <MapForm alias={alias} onDone={() => setMapping(null)} />
-                )}
-              </li>
+                    </span>
+                  </div>
+                  {mapping === alias.id && (
+                    <MapForm alias={alias} onDone={() => setMapping(null)} />
+                  )}
+                </li>
+              </ViewTransition>
             ))}
           </ul>
           <p className="mt-3 text-xs text-muted-foreground">

@@ -59,7 +59,12 @@ export function ToggleRow({
           role="status"
           className="w-12 shrink-0 text-right text-xs text-brand-700 dark:text-brand-300"
         >
-          {status}
+          <span
+            key={status ?? ""}
+            className="inline-block transition-opacity duration-160 ease-out starting:opacity-0"
+          >
+            {status}
+          </span>
         </span>
       )}
     </div>
