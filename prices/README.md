@@ -11,9 +11,14 @@ Section `Prices`, as environment variables `Prices__<Key>`:
 | `ApiUrl` | | The API on the internal network, for example `http://backend:8080`. Empty keeps the worker idle. |
 | `ServiceApiKey` | | The non-admin service key (`MCP_SERVICE_KEY`). Sent as `X-Api-Key`; also required on `POST /run/{sourceId}`. |
 | `Redis` | | StackExchange.Redis connection string for the per-source run lock. Empty uses an in-process lock, which is only safe with one instance. |
-| `UserAgent` | `MizanPriceBot/1.0 (+https://mizan.zaftech.co; prices@zaftech.co)` | Sent on every request to a shop and matched against its `robots.txt`. |
-| `RequestDelayMs` | `1000` | Minimum gap between requests to one host. A longer `Crawl-delay` wins. |
-| `MaxProductsPerRun` | `500` | Product pages one run may fetch. |
+
+How it crawls is a runtime setting in **Admin → Settings → Price crawler** ([runtime settings](../docs/ADMIN.md#runtime-settings)), not configuration. The worker reads it from `GET /api/internal/settings/prices` before each scheduled run, and **Run now** sends it in the body of `POST /run/{sourceId}`, so a change applies to the next run without a restart:
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `Prices.UserAgent` | `MizanPriceBot/1.0 (+https://mizan.zaftech.co; prices@zaftech.co)` | Sent on every request to a shop and matched against its `robots.txt`. |
+| `Prices.RequestDelayMs` | `1000` | Minimum gap between requests to one host. A longer `Crawl-delay` wins. |
+| `Prices.MaxProductsPerRun` | `500` | Product pages one run may fetch. |
 
 HTTP surface, port 5003: `GET /health` returns `{ status, configured, sources }`; `POST /run/{sourceId}` with the service key in `X-Api-Key` starts a run now and answers `202`, `401` without the key, `404` for a source the API does not list as enabled, and `502` when the API cannot be reached.
 

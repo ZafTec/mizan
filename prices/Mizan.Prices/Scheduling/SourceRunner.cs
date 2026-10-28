@@ -43,7 +43,15 @@ public sealed class SourceRunner
 
     public static string LockKey(Guid sourceId) => $"prices:run:{sourceId}";
 
-    public async Task<RunOutcome> RunAsync(PriceSourceDto source, CancellationToken ct)
+    /// <summary>Runs with the crawl settings read from the API now.</summary>
+    public async Task<RunOutcome> RunAsync(PriceSourceDto source, CancellationToken ct) =>
+        await RunAsync(source, null, ct);
+
+    /// <summary>
+    /// Runs with <paramref name="settings"/>, as sent with a Run now request or read once per scheduler
+    /// tick, or with the API's current ones when null.
+    /// </summary>
+    public async Task<RunOutcome> RunAsync(PriceSourceDto source, PriceCrawlSettings? settings, CancellationToken ct)
     {
         var scraper = _registry.Find(source.ScraperKey);
         if (scraper is null)
@@ -81,7 +89,7 @@ public sealed class SourceRunner
             try
             {
                 _logger.LogInformation("{Source}: run started with scraper {Key}", source.Name, scraper.Key);
-                var ctx = _contexts.Create();
+                var ctx = _contexts.Create(settings ?? await _api.GetCrawlSettingsAsync(ct));
 
                 await foreach (var observation in scraper.ScrapeAsync(source, ctx, ct).WithCancellation(ct))
                 {

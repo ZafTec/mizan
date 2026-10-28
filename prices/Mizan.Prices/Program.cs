@@ -91,6 +91,15 @@ app.MapPost("/run/{sourceId:guid}", async (
     var provided = context.Request.Headers["X-Api-Key"].ToString();
     if (!CryptographicEquals(provided, expected)) return Results.Unauthorized();
 
+    // The API sends the crawl settings with the request; an older API that sends none leaves the
+    // runner to read them itself.
+    PriceCrawlSettings? crawl = null;
+    if (context.Request.ContentLength is > 0 || context.Request.Headers.TransferEncoding.Count > 0)
+    {
+        try { crawl = await context.Request.ReadFromJsonAsync<PriceCrawlSettings>(ct); }
+        catch (System.Text.Json.JsonException) { return Results.BadRequest(new { error = "The body must be the crawl settings" }); }
+    }
+
     PriceSourceDto? source;
     using (var scope = scopes.CreateScope())
     {
@@ -117,7 +126,7 @@ app.MapPost("/run/{sourceId:guid}", async (
         using var scope = scopes.CreateScope();
         try
         {
-            await scope.ServiceProvider.GetRequiredService<SourceRunner>().RunAsync(source, lifetime.ApplicationStopping);
+            await scope.ServiceProvider.GetRequiredService<SourceRunner>().RunAsync(source, crawl, lifetime.ApplicationStopping);
         }
         catch (Exception ex)
         {

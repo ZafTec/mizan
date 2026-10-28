@@ -106,6 +106,10 @@ public sealed class ScrapeScheduler : BackgroundService
 
         var sources = await api.GetSourcesAsync(ct);
         var due = SelectDue(sources, _registry, _clock.UtcNow.UtcDateTime, _logger);
+        if (due.Count == 0) return;
+
+        // Read once per tick, so a change in the admin area applies from the next tick on.
+        var settings = await api.GetCrawlSettingsAsync(ct);
 
         foreach (var source in due)
         {
@@ -113,7 +117,7 @@ public sealed class ScrapeScheduler : BackgroundService
 
             try
             {
-                await runner.RunAsync(source, ct);
+                await runner.RunAsync(source, settings, ct);
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {

@@ -28,7 +28,6 @@ public class SourceRunnerTests
         new ScraperRegistry([_scraper]),
         new ScrapeContextFactory(
             new SingleClientFactory(new FakeHttpMessageHandler().CreateClient()),
-            Options.Create(new PricesOptions()),
             new FakeClock(Now),
             NullLoggerFactory.Instance),
         _lock,
@@ -174,6 +173,9 @@ public class SourceRunnerTests
 
         public Task<IReadOnlyList<PriceSourceDto>> GetSourcesAsync(CancellationToken ct) =>
             Task.FromResult<IReadOnlyList<PriceSourceDto>>(Sources);
+
+        public Task<PriceCrawlSettings> GetCrawlSettingsAsync(CancellationToken ct) =>
+            Task.FromResult(new PriceCrawlSettings(ScrapeContextFactory.DefaultUserAgent, 0, 500));
 
         public Task<PriceObservationReceipt> PostObservationsAsync(PriceObservationBatch batch, CancellationToken ct)
         {

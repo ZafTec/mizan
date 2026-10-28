@@ -12,6 +12,9 @@ public interface IPricesApi
 {
     Task<IReadOnlyList<PriceSourceDto>> GetSourcesAsync(CancellationToken ct);
 
+    /// <summary>The crawl settings an administrator set in the admin area (Prices.*).</summary>
+    Task<PriceCrawlSettings> GetCrawlSettingsAsync(CancellationToken ct);
+
     Task<PriceObservationReceipt> PostObservationsAsync(PriceObservationBatch batch, CancellationToken ct);
 
     Task PostRunAsync(Guid sourceId, PriceSourceRunResult result, CancellationToken ct);
@@ -53,6 +56,16 @@ public sealed class PricesApiClient : IPricesApi
         response.EnsureSuccessStatusCode();
 
         return await response.Content.ReadFromJsonAsync<List<PriceSourceDto>>(Json, ct) ?? [];
+    }
+
+    public async Task<PriceCrawlSettings> GetCrawlSettingsAsync(CancellationToken ct)
+    {
+        using var request = Service(HttpMethod.Get, "api/internal/settings/prices");
+        using var response = await _http.SendAsync(request, ct);
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadFromJsonAsync<PriceCrawlSettings>(Json, ct)
+            ?? throw new HttpRequestException("The API answered the crawl settings with an empty body.");
     }
 
     public async Task<PriceObservationReceipt> PostObservationsAsync(PriceObservationBatch batch, CancellationToken ct)

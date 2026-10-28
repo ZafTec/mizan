@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Mizan.Contracts.Prices;
 
 namespace Mizan.Prices.Scraping;
 
@@ -8,29 +8,29 @@ public sealed class ScrapeContextFactory
 {
     public const string HttpClientName = "scraper";
 
+    /// <summary>Used only when the API answers with no user agent at all, so no request goes out anonymous.</summary>
+    public const string DefaultUserAgent = "MizanPriceBot/1.0 (+https://mizan.zaftech.co; prices@zaftech.co)";
+
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IOptions<PricesOptions> _options;
     private readonly IClock _clock;
     private readonly ILoggerFactory _loggerFactory;
 
     public ScrapeContextFactory(
         IHttpClientFactory httpClientFactory,
-        IOptions<PricesOptions> options,
         IClock clock,
         ILoggerFactory loggerFactory)
     {
         _httpClientFactory = httpClientFactory;
-        _options = options;
         _clock = clock;
         _loggerFactory = loggerFactory;
     }
 
-    public ScrapeContext Create()
+    /// <summary>A context for one run, with the crawl settings the API gave for it.</summary>
+    public ScrapeContext Create(PriceCrawlSettings options)
     {
-        var options = _options.Value;
         return new ScrapeContext(
             _httpClientFactory.CreateClient(HttpClientName),
-            options.UserAgent,
+            string.IsNullOrWhiteSpace(options.UserAgent) ? DefaultUserAgent : options.UserAgent,
             TimeSpan.FromMilliseconds(Math.Max(0, options.RequestDelayMs)),
             Math.Max(1, options.MaxProductsPerRun),
             _clock,

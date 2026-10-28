@@ -16,14 +16,8 @@ public class PricesOptions
     /// </summary>
     public string? Redis { get; set; }
 
-    /// <summary>Sent on every request to a scraped site, and matched against its robots.txt groups.</summary>
-    public string UserAgent { get; set; } = "MizanPriceBot/1.0 (+https://mizan.zaftech.co; prices@zaftech.co)";
-
-    /// <summary>Minimum gap between two requests to the same host. A larger robots.txt Crawl-delay wins.</summary>
-    public int RequestDelayMs { get; set; } = 1000;
-
-    /// <summary>Product pages one run may fetch. A sitemap larger than this is read in part, newest first.</summary>
-    public int MaxProductsPerRun { get; set; } = 500;
+    // The user agent, the request delay and the product cap are runtime settings in the admin area
+    // (Prices.*). The API sends them with each Run now request; the scheduler reads them before each tick.
 
     public bool IsConfigured => !string.IsNullOrWhiteSpace(ApiUrl)
         && !string.IsNullOrWhiteSpace(ServiceApiKey);
