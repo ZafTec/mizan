@@ -93,11 +93,8 @@ public sealed class BackendApiClient : IBackendApiClient
 
     private HttpRequestMessage CreateRequest(HttpMethod method, string endpoint, object? body = null)
     {
-        var request = new HttpRequestMessage(method, endpoint);
         var user = McpCallIdentity.Of(_httpContextAccessor.HttpContext);
-        var isAdmin = user?.IsInRole("admin") == true || string.Equals(user?.FindFirst("role")?.Value, "admin", StringComparison.OrdinalIgnoreCase);
-        request.Headers.Add("X-Api-Key", isAdmin ? _adminServiceApiKey : _serviceApiKey);
-        request.Headers.Add("X-Impersonate-User", GetUserId().ToString());
+        var request = ActingFor(method, endpoint, GetUserId(), user);
 
         // Names the connection, so the API applies what the user allowed it. The API
         // reads the grant from its own database and never trusts anything in this header.
@@ -105,6 +102,26 @@ public sealed class BackendApiClient : IBackendApiClient
         if (body != null) request.Content = JsonContent.Create(body);
         return request;
     }
+
+    /// <summary>
+    /// The service headers for a call made on <paramref name="userId"/>'s behalf. Every call that
+    /// acts for a person goes through here, so the key choice cannot drift between paths: the admin
+    /// key only for an administrator's own connection, the regular key otherwise. The API serves
+    /// the regular key as an ordinary user even for an administrator.
+    /// </summary>
+    private HttpRequestMessage ActingFor(HttpMethod method, string endpoint, Guid userId, ClaimsPrincipal? caller)
+    {
+        var request = new HttpRequestMessage(method, endpoint);
+        var isAdmin = caller is not null
+            && (caller.IsInRole("admin") || string.Equals(caller.FindFirst("role")?.Value, "admin", StringComparison.OrdinalIgnoreCase))
+            && GetCallerId(caller) == userId;
+        request.Headers.Add("X-Api-Key", isAdmin ? _adminServiceApiKey : _serviceApiKey);
+        request.Headers.Add("X-Impersonate-User", userId.ToString());
+        return request;
+    }
+
+    private static Guid? GetCallerId(ClaimsPrincipal caller) =>
+        Guid.TryParse(caller.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? caller.FindFirst("sub")?.Value, out var id) ? id : null;
 
     private async Task<string> SendAsync(HttpRequestMessage request, CancellationToken ct)
     {
@@ -211,11 +228,13 @@ public sealed class BackendApiClient : IBackendApiClient
     {
         try
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, "/api/McpConnections/usage")
-            { Content = JsonContent.Create(new { GrantId = grantId, Kind = kind, ToolName = name, Success = success, ErrorMessage = error, ExecutionTimeMs = elapsedMs }) };
-            request.Headers.Add("X-Api-Key", _serviceApiKey);
-            request.Headers.Add("X-Impersonate-User", userId.ToString());
-            await _http.SendAsync(request);
+            using var request = ActingFor(HttpMethod.Post, "/api/McpConnections/usage", userId, McpCallIdentity.Of(_httpContextAccessor.HttpContext));
+            request.Content = JsonContent.Create(new { GrantId = grantId, Kind = kind, ToolName = name, Success = success, ErrorMessage = error, ExecutionTimeMs = elapsedMs });
+            using var response = await _http.SendAsync(request);
+
+            // Best effort, but never silent: a refused usage call is a hole in the person's Usage page.
+            if (!response.IsSuccessStatusCode)
+                _logger.LogWarning("The API refused the usage record for {Name} with {Status}", name, (int)response.StatusCode);
         }
         catch (Exception ex) { _logger.LogWarning(ex, "Failed to log MCP usage for {Name}", name); }
     }

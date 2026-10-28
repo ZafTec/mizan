@@ -1177,11 +1177,14 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
     #region Backend Integration Tests
 
-    [Fact]
-    public async Task BackendIntegration_LogsMcpUsage()
+    [Theory]
+    [InlineData("user")]
+    [InlineData("admin")]
+    public async Task AToolCallThroughAConnection_AppearsUnderUsage_ForAdminsAndOrdinaryUsersAlike(string role)
     {
         var userId = Guid.NewGuid();
-        await _apiFixture.SeedUserAsync(userId, "integration@example.com", emailVerified: true);
+        var email = $"usage-{role}@example.com";
+        await _apiFixture.SeedUserAsync(userId, email, emailVerified: true, role: role);
         var token = await CreateMcpTokenAsync(userId);
 
         var food = await _apiFixture.SeedFoodAsync("Usage Food", 120, 10, 15, 5);
@@ -1200,13 +1203,15 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var jsonResponse = await response.Content.ReadFromJsonAsync<JsonRpcResponse>();
-        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse.Result.ToString());
+        var result = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse!.Result.ToString()!);
         result.Should().ContainKey("content");
 
-        // The tool filter in Program.cs awaits LogUsageAsync before it answers, so the row is there by now.
+        // The tool filter in Program.cs awaits LogUsageAsync before it answers, so the call is on the Usage page by now.
+        using var browser = _apiFixture.CreateAuthenticatedClient(userId, email, role);
+        var analytics = await browser.GetFromJsonAsync<JsonElement>("/api/McpConnections/analytics");
+        analytics.GetProperty("overview").GetProperty("totalCalls").GetInt32().Should().Be(1);
         var logs = await _apiFixture.GetMcpUsageLogsByUserId(userId);
-        logs.Should().HaveCount(1);
-        logs.Should().OnlyContain(l => l.ToolName == "log_food");
+        logs.Should().ContainSingle().Which.ToolName.Should().Be("log_food");
     }
 
     [Fact]
