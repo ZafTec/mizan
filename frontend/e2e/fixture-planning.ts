@@ -39,6 +39,21 @@ type ShoppingListItem = Schemas["ShoppingListItemDto"];
 type TrainerClient = Schemas["TrainerClientDto"];
 type Nutrition = Schemas["EntryNutritionDto"];
 type UnpricedItem = Schemas["UnpricedItemDto"];
+type PlanTargets = Schemas["PlanTargetsDto"];
+
+// The fixture echoes typed rules as typed targets; the backend owns the macro-mode fill.
+function effectiveTargets(rules: PlanRules): PlanTargets {
+  const typed = (value?: number | null) =>
+    value == null ? { value: null, source: null } : { value, source: "typed" };
+  return {
+    macroMode: rules.macroMode,
+    calories: typed(rules.targetCalories),
+    protein: typed(rules.targetProtein),
+    maxCarbs: typed(rules.maxCarbs),
+    fat: typed(rules.targetFat),
+    goalMissing: false,
+  };
+}
 
 export type StoredEntry = {
   id: string;
@@ -646,6 +661,7 @@ export function detail(plan: StoredPlan, host: PlanningHost): MealPlanDetail {
   return {
     ...summary(plan),
     rules: plan.rules,
+    effectiveTargets: effectiveTargets(plan.rules),
     days,
     prepSessions: plan.prepSessions.map((session) => ({
       id: session.id,
@@ -1107,6 +1123,7 @@ export async function handlePlanning(
         host,
       ),
       rules: plan.rules,
+      effectiveTargets: effectiveTargets(plan.rules),
       currency: regionFor(host.prices).currency,
     };
     return json(view);

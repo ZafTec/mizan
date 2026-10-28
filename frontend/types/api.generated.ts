@@ -1927,6 +1927,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/prices/aliases/accept-suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AcceptPriceAliasSuggestionsRequest"];
+                    "text/json": components["schemas"]["AcceptPriceAliasSuggestionsRequest"];
+                    "application/*+json": components["schemas"]["AcceptPriceAliasSuggestionsRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AcceptPriceAliasSuggestionsResult"];
+                        "application/json": components["schemas"]["AcceptPriceAliasSuggestionsResult"];
+                        "text/json": components["schemas"]["AcceptPriceAliasSuggestionsResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/prices/prices": {
         parameters: {
             query?: never;
@@ -1960,6 +2003,43 @@ export interface paths {
                         "text/plain": components["schemas"]["FoodPriceCreatedResult"];
                         "application/json": components["schemas"]["FoodPriceCreatedResult"];
                         "text/json": components["schemas"]["FoodPriceCreatedResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/prices/import-starter-foods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ImportStarterFoodsResult"];
+                        "application/json": components["schemas"]["ImportStarterFoodsResult"];
+                        "text/json": components["schemas"]["ImportStarterFoodsResult"];
                     };
                 };
             };
@@ -6575,6 +6655,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/MealPlans/rules/defaults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    MacroMode?: string | null;
+                    TargetCalories?: number | null;
+                    TargetProtein?: number | null;
+                    MaxCarbs?: number | null;
+                    TargetFat?: number | null;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PlanTargetsDto"];
+                        "application/json": components["schemas"]["PlanTargetsDto"];
+                        "text/json": components["schemas"]["PlanTargetsDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/MealPlans/templates": {
         parameters: {
             query?: never;
@@ -7694,6 +7817,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Nutrition/ai/analyze-image-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ImageUrlRequest"];
+                    "text/json": components["schemas"]["ImageUrlRequest"];
+                    "application/*+json": components["schemas"]["ImageUrlRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FoodAnalysisResult"];
+                        "application/json": components["schemas"]["FoodAnalysisResult"];
+                        "text/json": components["schemas"]["FoodAnalysisResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Nutrition/ai/analyze-text": {
         parameters: {
             query?: never;
@@ -7737,7 +7903,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/.well-known/openid-configuration": {
+    "/.well-known/oauth-authorization-server/api": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/.well-known/openid-configuration/api": {
         parameters: {
             query?: never;
             header?: never;
@@ -7771,6 +7970,39 @@ export interface paths {
         trace?: never;
     };
     "/api/.well-known/oauth-authorization-server": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/.well-known/openid-configuration": {
         parameters: {
             query?: never;
             header?: never;
@@ -10640,6 +10872,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Uploads/image-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: {
+                    folder?: components["schemas"]["StorageFolder"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ImageUrlRequest"];
+                    "text/json": components["schemas"]["ImageUrlRequest"];
+                    "application/*+json": components["schemas"]["ImageUrlRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UploadedImageDto"];
+                        "application/json": components["schemas"]["UploadedImageDto"];
+                        "text/json": components["schemas"]["UploadedImageDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Uploads/model": {
         parameters: {
             query?: never;
@@ -11213,6 +11490,23 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AcceptPriceAliasSuggestionsRequest: {
+            aliasIds: string[];
+        };
+        AcceptPriceAliasSuggestionsResult: {
+            accepted: components["schemas"]["AcceptedPriceAliasDto"][];
+            skipped: components["schemas"]["SkippedPriceAliasDto"][];
+        };
+        AcceptedPriceAliasDto: {
+            /** Format: uuid */
+            aliasId: string;
+            /** Format: uuid */
+            foodId: string;
+            foodName: string;
+            /** Format: double */
+            quantity?: number | null;
+            unit?: string | null;
+        };
         AchievementAnalyticsRow: {
             /** Format: uuid */
             id: string;
@@ -11666,12 +11960,21 @@ export interface components {
             /** Format: date-time */
             publishedAt?: string | null;
         };
+        AiProviderCheckResult: {
+            passed: boolean;
+            errorClass?: string | null;
+            providerMessage?: string | null;
+            /** Format: int32 */
+            latencyMs: number;
+        };
         AiProviderTestResult: {
             reachable: boolean;
             errorClass?: string | null;
             model?: string | null;
             /** Format: int32 */
             latencyMs: number;
+            providerMessage?: string | null;
+            toolCall?: components["schemas"]["AiProviderCheckResult"];
         };
         AiQuotaSnapshot: {
             /** Format: int32 */
@@ -12968,6 +13271,9 @@ export interface components {
             /** Format: date-time */
             joinedAt: string;
         };
+        ImageUrlRequest: {
+            imageUrl: string;
+        };
         ImpersonationDto: {
             /** Format: uuid */
             impersonatorId: string;
@@ -12978,6 +13284,13 @@ export interface components {
         ImportBillingPlansResult: {
             /** Format: int32 */
             imported: number;
+        };
+        ImportStarterFoodsResult: {
+            /** Format: int32 */
+            created: number;
+            /** Format: int32 */
+            existing: number;
+            createdNames: string[];
         };
         IntrospectBody: {
             token?: string | null;
@@ -13212,6 +13525,7 @@ export interface components {
             authoredByUserId?: string | null;
             authoredByName?: string | null;
             rules: components["schemas"]["PlanRulesDto"];
+            effectiveTargets: components["schemas"]["PlanTargetsDto"];
             days: components["schemas"]["PlanDayDto"][];
             prepSessions: components["schemas"]["PrepSessionDto"][];
             violations: components["schemas"]["PlanViolationDto"][];
@@ -13606,6 +13920,7 @@ export interface components {
             date: string;
             day: components["schemas"]["PlanDayDto"];
             rules: components["schemas"]["PlanRulesDto"];
+            effectiveTargets: components["schemas"]["PlanTargetsDto"];
             currency: string;
         };
         PlanEntryCreatedResult: {
@@ -13726,6 +14041,19 @@ export interface components {
             slot: string;
             entries: components["schemas"]["PlanEntryDto"][];
             totals: components["schemas"]["EntryNutritionDto"];
+        };
+        PlanTargetDto: {
+            /** Format: double */
+            value?: number | null;
+            source?: string | null;
+        };
+        PlanTargetsDto: {
+            macroMode: string;
+            calories: components["schemas"]["PlanTargetDto"];
+            protein: components["schemas"]["PlanTargetDto"];
+            maxCarbs: components["schemas"]["PlanTargetDto"];
+            fat: components["schemas"]["PlanTargetDto"];
+            goalMissing: boolean;
         };
         PlanViolationDto: {
             /** Format: int32 */
@@ -13925,6 +14253,12 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+            /** Format: uuid */
+            suggestedFoodId?: string | null;
+            suggestedFoodName?: string | null;
+            /** Format: double */
+            suggestedQuantity?: number | null;
+            suggestedUnit?: string | null;
         };
         PriceSourceAliasDtoPagedResult: {
             items: components["schemas"]["PriceSourceAliasDto"][];
@@ -14451,6 +14785,11 @@ export interface components {
         SkippedBudgetDto: {
             /** Format: double */
             budgetCeiling: number;
+            reason: string;
+        };
+        SkippedPriceAliasDto: {
+            /** Format: uuid */
+            aliasId: string;
             reason: string;
         };
         SmtpTestResult: {
