@@ -32,6 +32,8 @@ public class OAuthFlowTests
     [Theory]
     [InlineData("/api/.well-known/openid-configuration")]
     [InlineData("/api/.well-known/oauth-authorization-server")]
+    [InlineData("/.well-known/oauth-authorization-server/api")]
+    [InlineData("/.well-known/openid-configuration/api")]
     public async Task Discovery_AdvertisesEndpointsAndPkce(string path)
     {
         using var client = _fixture.CreateClient();

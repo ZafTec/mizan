@@ -24,7 +24,8 @@ public sealed class ErrorShapeFilter : IAlwaysRunResultFilter
     {
         if (context.Result is not ObjectResult { StatusCode: >= 400 and < 500 } result) return;
         if (context.HttpContext.Request.Path.StartsWithSegments("/api/oauth")
-            || context.HttpContext.Request.Path.StartsWithSegments("/api/.well-known")) return;
+            || context.HttpContext.Request.Path.StartsWithSegments("/api/.well-known")
+            || context.HttpContext.Request.Path.StartsWithSegments("/.well-known")) return;
 
         var code = CodeFor(result.StatusCode!.Value);
 

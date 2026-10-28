@@ -490,17 +490,28 @@ app.Use(async (context, next) =>
 
 app.MapMcp("/mcp").RequireAuthorization();
 
-// Where the 401 points clients. Under /mcp, which production already routes to this
-// service, so signing in needs no extra proxy route. The SDK also serves the standard
-// root /.well-known path for clients that look there.
-app.MapGet("/mcp/.well-known/oauth-protected-resource", () => Results.Json(new Dictionary<string, object>
+// The protected resource metadata (RFC 9728). The 401 points clients at /mcp/.well-known/..., which production
+// already routes to this service. Clients that build the URL themselves use RFC 9728's form, the well-known
+// segment at the root followed by the resource's path (/.well-known/oauth-protected-resource/mcp), and some try
+// the bare root. All three answer the same document; the proxy routes the root two here (docs/MCP.md).
+var resourcePath = new Uri(publicUrl).AbsolutePath.TrimEnd('/');
+IResult ProtectedResource() => Results.Json(new Dictionary<string, object>
 {
     ["resource"] = publicUrl,
     ["authorization_servers"] = new[] { authorizationServer },
     ["scopes_supported"] = McpScopes.All.Where(scope => scope != McpScopes.Admin).ToArray(),
     ["bearer_methods_supported"] = new[] { "header" },
     ["resource_name"] = "Mizan",
-})).AllowAnonymous();
+});
+foreach (var path in new[]
+{
+    $"{resourcePath}/.well-known/oauth-protected-resource",
+    $"/.well-known/oauth-protected-resource{resourcePath}",
+    "/.well-known/oauth-protected-resource",
+}.Distinct())
+{
+    app.MapGet(path, ProtectedResource).AllowAnonymous();
+}
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "mizan-mcp", version = "2.0.0" }));
 app.MapPrometheusScrapingEndpoint();
 

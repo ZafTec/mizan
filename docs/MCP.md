@@ -25,10 +25,19 @@ Tokens are opaque and issued for one audience (RFC 8707). A token for `/mcp` is 
 
 | Document | Address |
 | --- | --- |
-| Protected resource | `/mcp/.well-known/oauth-protected-resource` |
-| Authorization server | `/api/.well-known/oauth-authorization-server` and `/api/.well-known/openid-configuration` |
+| Protected resource (RFC 9728) | `/mcp/.well-known/oauth-protected-resource` (named in the 401), `/.well-known/oauth-protected-resource/mcp`, `/.well-known/oauth-protected-resource` |
+| Authorization server (RFC 8414) | `/.well-known/oauth-authorization-server/api`, `/.well-known/openid-configuration/api`, `/api/.well-known/oauth-authorization-server`, `/api/.well-known/openid-configuration` |
 
-Both live under paths production already routes. If a client insists on the root `/.well-known/...` paths, add those two routes to the reverse proxy.
+Each row answers one document at every address. The MCP service serves the first row and the API the second, so a client that derives the address from the resource or issuer URL, as the RFCs say, finds it. Paths under `/mcp` and `/api` reach their service already; the root `/.well-known` paths need their own proxy routes, ahead of the frontend's `location /`:
+
+```nginx
+location ~ ^/\.well-known/oauth-protected-resource(/mcp)?$ {
+    proxy_pass http://$mizan_mcp$uri;
+}
+location ~ ^/\.well-known/(oauth-authorization-server|openid-configuration)/api$ {
+    proxy_pass http://$mizan_backend;
+}
+```
 
 ## What a connection can see and call
 

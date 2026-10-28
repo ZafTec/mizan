@@ -31,9 +31,13 @@ public class OAuthController : ControllerBase
         _settings = settings;
     }
 
-    // Both paths exist because clients try the OAuth name first and the OpenID name as a fallback.
-    [HttpGet("/api/.well-known/openid-configuration")]
+    // The issuer is {PublicUrl}/api. RFC 8414 puts its metadata at /.well-known/oauth-authorization-server/api,
+    // with the issuer's path after the well-known segment; OpenID Connect appends /.well-known/openid-configuration
+    // to the issuer. Clients try both names in both places, so every combination answers the same document.
+    [HttpGet("/.well-known/oauth-authorization-server/api")]
+    [HttpGet("/.well-known/openid-configuration/api")]
     [HttpGet("/api/.well-known/oauth-authorization-server")]
+    [HttpGet("/api/.well-known/openid-configuration")]
     [AllowAnonymous]
     [EnableCors(PublicCorsPolicy)]
     public IActionResult Discovery()

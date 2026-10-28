@@ -71,12 +71,15 @@ public class McpOAuthTransportTests : IClassFixture<WebApplicationFactory<McpSer
         challenge.Parameter.Should().Contain("resource_metadata=").And.Contain("/mcp/.well-known/oauth-protected-resource");
     }
 
-    [Fact]
-    public async Task TheResourceMetadata_NamesTheResourceAndTheAuthorizationServer()
+    [Theory]
+    [InlineData("/mcp/.well-known/oauth-protected-resource")]
+    [InlineData("/.well-known/oauth-protected-resource/mcp")]
+    [InlineData("/.well-known/oauth-protected-resource")]
+    public async Task TheResourceMetadata_NamesTheResourceAndTheAuthorizationServer_WhereverAClientLooks(string path)
     {
         using var client = _factory.CreateClient();
 
-        var response = await client.GetAsync("/mcp/.well-known/oauth-protected-resource");
+        var response = await client.GetAsync(path);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var doc = await response.Content.ReadFromJsonAsync<JsonElement>();
