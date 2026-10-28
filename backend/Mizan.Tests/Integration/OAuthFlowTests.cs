@@ -39,10 +39,10 @@ public class OAuthFlowTests
         using var client = _fixture.CreateClient();
         var doc = await client.GetFromJsonAsync<JsonElement>(path);
 
-        doc.GetProperty("issuer").GetString().Should().Be("http://localhost/api");
-        doc.GetProperty("authorization_endpoint").GetString().Should().Be("http://localhost/api/oauth/authorize");
-        doc.GetProperty("token_endpoint").GetString().Should().Be("http://localhost/api/oauth/token");
-        doc.GetProperty("registration_endpoint").GetString().Should().Be("http://localhost/api/oauth/register");
+        doc.GetProperty("issuer").GetString().Should().Be("http://localhost:3000/api");
+        doc.GetProperty("authorization_endpoint").GetString().Should().Be("http://localhost:3000/api/oauth/authorize");
+        doc.GetProperty("token_endpoint").GetString().Should().Be("http://localhost:3000/api/oauth/token");
+        doc.GetProperty("registration_endpoint").GetString().Should().Be("http://localhost:3000/api/oauth/register");
         doc.GetProperty("code_challenge_methods_supported").EnumerateArray().Select(e => e.GetString())
             .Should().BeEquivalentTo(new[] { "S256" });
         doc.GetProperty("scopes_supported").EnumerateArray().Select(e => e.GetString())
@@ -482,7 +482,7 @@ public class OAuthFlowTests
         using var noRedirect = NoRedirectClient();
         var authorize = await noRedirect.GetAsync(AuthorizeUrl(clientId, Pkce.New(), "profile:read", redirect: "http://127.0.0.1:61234/cb"));
         authorize.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        authorize.Headers.Location!.ToString().Should().StartWith("http://localhost/oauth/consent?request=");
+        authorize.Headers.Location!.ToString().Should().StartWith("http://localhost:3000/oauth/consent?request=");
     }
 
     // ---- metadata and first-party clients ----
@@ -521,11 +521,11 @@ public class OAuthFlowTests
     {
         var (_, browser) = await SignedInAsync();
         var pkce = Pkce.New();
-        const string appRedirect = "com.zaftech.mizan.test:/oauth2redirect";
+        const string appRedirect = "com.zaftech.mizan:/oauth2redirect";
 
-        var secret = await AuthorizeAsync("test-first-party", pkce, "full", redirect: appRedirect, resource: "http://localhost/api");
+        var secret = await AuthorizeAsync("mizan-android", pkce, "full", redirect: appRedirect, resource: "http://localhost:3000/api");
         var code = await ApproveAsync(browser, secret, new[] { "full" });
-        var tokens = await ExchangeAsync("test-first-party", code, pkce.Verifier, redirect: appRedirect);
+        var tokens = await ExchangeAsync("mizan-android", code, pkce.Verifier, redirect: appRedirect);
 
         tokens.GetProperty("scope").GetString().Should().Be("full");
         var firstParty = await IntrospectAsync(tokens.GetProperty("access_token").GetString()!, audience: "api");
@@ -535,7 +535,7 @@ public class OAuthFlowTests
         // A dynamically registered client may not ask for the API audience.
         var clientId = await RegisterAsync();
         using var http = NoRedirectClient();
-        var denied = await http.GetAsync(AuthorizeUrl(clientId, Pkce.New(), "profile:read", resource: "http://localhost/api"));
+        var denied = await http.GetAsync(AuthorizeUrl(clientId, Pkce.New(), "profile:read", resource: "http://localhost:3000/api"));
         HttpUtility.ParseQueryString(new Uri(denied.Headers.Location!.ToString()).Query)["error"].Should().Be("invalid_target");
     }
 
@@ -632,7 +632,7 @@ public class OAuthFlowTests
         var response = await http.GetAsync(AuthorizeUrl(clientId, pkce, scope, redirect, resource: resource));
         response.StatusCode.Should().Be(HttpStatusCode.Redirect, await response.Content.ReadAsStringAsync());
         var location = response.Headers.Location!.ToString();
-        location.Should().StartWith("http://localhost/oauth/consent?request=");
+        location.Should().StartWith("http://localhost:3000/oauth/consent?request=");
         return HttpUtility.ParseQueryString(new Uri(location).Query)["request"]!;
     }
 
@@ -651,7 +651,7 @@ public class OAuthFlowTests
         var url = (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("redirectUrl").GetString()!;
         var query = HttpUtility.ParseQueryString(new Uri(url).Query);
         query["state"].Should().Be("s1");
-        query["iss"].Should().Be("http://localhost/api");
+        query["iss"].Should().Be("http://localhost:3000/api");
         return query["code"]!;
     }
 

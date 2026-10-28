@@ -98,7 +98,7 @@ public class AdminSettingsTests
     }
 
     [Fact]
-    public async Task ClearingASetting_ReturnsItToConfiguration()
+    public async Task ClearingASetting_ReturnsItToTheBuiltInDefault()
     {
         await _fixture.ResetDatabaseAsync();
         var (admin, _) = await AdminAsync();
@@ -106,7 +106,7 @@ public class AdminSettingsTests
         await _fixture.SeedUserAsync(userId, $"free-{userId:N}@example.com");
         var user = _fixture.CreateAuthenticatedClient(userId, $"free-{userId:N}@example.com");
 
-        // The fixture's configuration gives Free three requests a day.
+        // The fixture stores three requests a day for Free, as an administrator would.
         (await FreeLimitAsync(user)).Should().Be(3);
 
         await PutAsync(admin, "Ai.Free.DailyRequests", "7");
@@ -118,9 +118,9 @@ public class AdminSettingsTests
         var cleared = await admin.DeleteAsync("/api/admin/settings/Ai.Free.DailyRequests");
         cleared.StatusCode.Should().Be(HttpStatusCode.OK);
         var after = await cleared.Content.ReadFromJsonAsync<JsonElement>();
-        after.GetProperty("source").GetString().Should().Be("configuration");
-        after.GetProperty("value").GetString().Should().Be("3");
-        (await FreeLimitAsync(user)).Should().Be(3);
+        after.GetProperty("source").GetString().Should().Be("default");
+        after.GetProperty("value").GetString().Should().Be("5");
+        (await FreeLimitAsync(user)).Should().Be(5);
     }
 
     [Fact]
@@ -136,7 +136,7 @@ public class AdminSettingsTests
         body.GetProperty("errorCode").GetString().Should().Be("validation_failed");
         body.GetProperty("error").GetString().Should().Be("SMTP port must be a whole number from 1 to 65535.");
         var port = Setting(await admin.GetFromJsonAsync<JsonElement>("/api/admin/settings"), "Smtp.Port");
-        port.GetProperty("source").GetString().Should().Be("configuration", "nothing was stored");
+        port.GetProperty("source").GetString().Should().Be("default", "nothing was stored");
 
         (await admin.PutAsJsonAsync("/api/admin/settings/Smtp.Nowhere", new { value = "1" }))
             .StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -157,7 +157,7 @@ public class AdminSettingsTests
         (await user.PostAsync("/api/admin/settings/ai/test", null)).StatusCode.Should().Be(HttpStatusCode.Forbidden);
 
         using var scope = _fixture.Services.CreateScope();
-        (await scope.ServiceProvider.GetRequiredService<MizanDbContext>().SystemSettings.AnyAsync()).Should().BeFalse();
+        (await scope.ServiceProvider.GetRequiredService<MizanDbContext>().SystemSettings.AnyAsync(s => s.Key == "Smtp.Host")).Should().BeFalse();
     }
 
     [Fact]

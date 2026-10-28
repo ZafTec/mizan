@@ -158,6 +158,9 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     }
 
 
+    /// <summary>The API's service registrations as Program made them, before the test replacements.</summary>
+    public IReadOnlyList<ServiceDescriptor> Registrations { get; private set; } = [];
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
@@ -178,33 +181,10 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
                 ["Mcp:AdminServiceApiKey"] = "test-admin-api-key",
                 ["RateLimits:AuthCredentials:PermitLimit"] = "10000",
                 ["RateLimits:AuthEmail:PermitLimit"] = "10000",
-                // Small AI ceilings so quota tests exercise the limits in a
-                // handful of calls instead of hundreds.
-                ["Ai:Free:DailyRequests"] = "3",
-                ["Ai:Free:DailyTokens"] = "1000",
-                ["Ai:Pro:DailyRequests"] = "10",
-                ["Ai:Pro:DailyTokens"] = "5000",
-                // Its own line, so a setup conversation's several calls do not
-                // land against the tiny free allowance above.
-                ["Ai:Onboarding:DailyRequests"] = "20",
-                ["Ai:Onboarding:DailyTokens"] = "20000",
-                ["Ai:GlobalDailyTokens"] = "4000",
-                ["Ai:GlobalDailyCostMicros"] = "1000000000",
                 // The dispatcher's own loop is off in tests. A background timer
                 // would make every assertion about queued work a race; the
                 // tests drive it themselves through DrainOutboxAsync.
                 ["Outbox:Enabled"] = "false",
-                // A bot name, so the link endpoints are live. The API never
-                // calls Telegram, so nothing here reaches the network.
-                ["Telegram:BotUsername"] = "mizan_test_bot",
-                // Webhook tests sign their own payloads with this.
-                ["Paddle:WebhookSecret"] = PaddleWebhookSecret,
-                ["OAuth:Issuer"] = "http://localhost/api",
-                ["OAuth:McpResource"] = "http://localhost/mcp",
-                ["OAuth:ConsentUrl"] = "http://localhost/oauth/consent",
-                ["OAuth:FirstPartyClients:0:ClientId"] = "test-first-party",
-                ["OAuth:FirstPartyClients:0:Name"] = "Mizan Test App",
-                ["OAuth:FirstPartyClients:0:RedirectUris:0"] = "com.zaftech.mizan.test:/oauth2redirect",
                 ["RateLimits:OAuth:PermitLimit"] = "100000",
                 ["RateLimits:OAuthRegister:PermitLimit"] = "100000"
             };
@@ -214,6 +194,9 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
 
         builder.ConfigureTestServices(services =>
         {
+            // As the API registered them, before this fixture replaces any (ConfigurationAllowlistTests).
+            Registrations = services.ToList();
+
             // Remove existing DbContext registration
             var dbDescriptor = services.SingleOrDefault(
                 d => d.ServiceType == typeof(DbContextOptions<MizanDbContext>));
@@ -456,6 +439,9 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
 
         // The settings cache would otherwise keep a value from the table just truncated.
         Services.GetRequiredService<Mizan.Infrastructure.Settings.RuntimeSettingsCache>().Invalidate();
+        // A bot a previous test wired to the settings signal is gone by now.
+        TelegramBot.OnSettingsChanged = null;
+        await SeedRuntimeSettingsAsync(scope.ServiceProvider);
         PricesWorker.Reset();
         Clock.Reset();
         TelegramBot.Reset();
@@ -463,6 +449,37 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         // Redis is flushed above, but each node also keeps an in-process copy. Flags and allowance
         // overrides are global reads, so a value cached by the test before must not reach this one.
         await scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Caching.Hybrid.HybridCache>().RemoveByTagAsync("*");
+    }
+
+    /// <summary>
+    /// The runtime settings every test starts from, as an administrator would set them in the admin area.
+    /// None of them come from configuration any more (docs/ADMIN.md#runtime-settings).
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, string> BaselineSettings = new Dictionary<string, string>
+    {
+        // Small AI ceilings so quota tests exercise the limits in a handful of calls instead of hundreds.
+        ["Ai.Free.DailyRequests"] = "3",
+        ["Ai.Free.DailyTokens"] = "1000",
+        ["Ai.Pro.DailyRequests"] = "10",
+        ["Ai.Pro.DailyTokens"] = "5000",
+        // Its own line, so a setup conversation's several calls do not land against the tiny free allowance above.
+        ["Ai.Onboarding.DailyRequests"] = "20",
+        ["Ai.Onboarding.DailyTokens"] = "20000",
+        ["Ai.GlobalDailyTokens"] = "4000",
+        ["Ai.GlobalDailyCostMicros"] = "1000000000",
+        // A bot name, so the link endpoints are live. The API never calls Telegram, so nothing here reaches the network.
+        ["Telegram.BotUsername"] = "mizan_test_bot",
+        // Webhook tests sign their own payloads with this.
+        ["Paddle.WebhookSecret"] = PaddleWebhookSecret,
+    };
+
+    private static async Task SeedRuntimeSettingsAsync(IServiceProvider services)
+    {
+        var settings = services.GetRequiredService<IRuntimeSettings>();
+        foreach (var (key, value) in BaselineSettings)
+        {
+            await settings.SetAsync(key, value, null);
+        }
     }
 
     /// <summary>
@@ -739,7 +756,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         };
         db.OAuthClients.Add(client);
         db.OAuthGrants.Add(grant);
-        var issued = Mizan.Application.OAuth.OAuthTokens.Issue(db, settings, grant.Id, Guid.NewGuid(), audience, now);
+        var issued = Mizan.Application.OAuth.OAuthTokens.Issue(db, await settings.GetLifetimesAsync(), grant.Id, Guid.NewGuid(), audience, now);
         await db.SaveChangesAsync();
         return new McpAccess(issued.AccessToken, grant.Id);
     }
@@ -991,12 +1008,26 @@ public sealed class RecordingTelegramBot : ITelegramBotNotifier
     {
         lock (_sent) _sent.Clear();
         IsConfigured = true;
+        SettingsChanges = 0;
+        OnSettingsChanged = null;
     }
 
     public Task<TelegramNotifyOutcome> SendAsync(TelegramNotifyRequest request, CancellationToken cancellationToken)
     {
         lock (_sent) _sent.Add(request);
         return Task.FromResult(TelegramNotifyOutcome.Sent);
+    }
+
+    /// <summary>How many times the API signalled a Telegram settings change.</summary>
+    public int SettingsChanges { get; private set; }
+
+    /// <summary>What the signal reaches, such as a bot service a test runs; nothing when null.</summary>
+    public Func<CancellationToken, Task>? OnSettingsChanged { get; set; }
+
+    public async Task SettingsChangedAsync(CancellationToken cancellationToken = default)
+    {
+        SettingsChanges++;
+        if (OnSettingsChanged is { } changed) await changed(cancellationToken);
     }
 }
 

@@ -4,7 +4,6 @@ using System.Text;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using telegram::Mizan.Telegram;
 using telegram::Mizan.Telegram.Bot;
 using Xunit;
@@ -27,15 +26,14 @@ public class TelegramWebhookTests
         var logs = new ListLogger();
         var waits = new List<TimeSpan>();
         var states = new List<WebhookStatus>();
-        var registrar = Registrar(telegram, state, logs, (wait, _) =>
+        var registrar = new WebhookRegistrar(state, logs, (wait, _) =>
         {
             waits.Add(wait);
             states.Add(state.Current);
             return Task.CompletedTask;
         });
 
-        await registrar.StartAsync(CancellationToken.None);
-        await registrar.ExecuteTask!;
+        await registrar.RegisterAsync(Client(telegram), Options, CancellationToken.None);
 
         states.Should().AllSatisfy(s =>
         {
@@ -56,7 +54,8 @@ public class TelegramWebhookTests
         var state = new WebhookState();
         var logs = new ListLogger();
 
-        var registered = await Registrar(telegram, state, logs, (_, _) => Task.CompletedTask).TryRegisterAsync(CancellationToken.None);
+        var registered = await new WebhookRegistrar(state, logs, (_, _) => Task.CompletedTask)
+            .TryRegisterAsync(Client(telegram), Options, 1, CancellationToken.None);
 
         registered.Should().BeFalse();
         state.Current.State.Should().Be("failed");
@@ -64,20 +63,17 @@ public class TelegramWebhookTests
         logs.Lines.Should().NotContain(l => l.Contains("webhook registered"));
     }
 
-    private static WebhookRegistrar Registrar(ScriptedTelegram telegram, WebhookState state, ILogger<WebhookRegistrar> logs, Func<TimeSpan, CancellationToken, Task> delay)
+    private static readonly TelegramBotOptions Options = new()
     {
-        var options = Options.Create(new TelegramBotOptions
-        {
-            BotToken = "123:test",
-            ServiceApiKey = "key",
-            UseWebhook = true,
-            WebhookSecret = "secret",
-            PublicUrl = "https://mizan.test",
-        });
-        return new WebhookRegistrar(
-            new TelegramClient(new HttpClient(telegram), options, NullLogger<TelegramClient>.Instance),
-            options, state, logs, delay);
-    }
+        BotToken = "123:test",
+        ServiceApiKey = "key",
+        UseWebhook = true,
+        WebhookSecret = "secret",
+        PublicUrl = "https://mizan.test",
+    };
+
+    private static TelegramClient Client(ScriptedTelegram telegram) =>
+        new(new HttpClient(telegram), Microsoft.Extensions.Options.Options.Create(Options), NullLogger<TelegramClient>.Instance);
 
     /// <summary>Answers setWebhook from a script, one answer per call, the last repeating; everything else is ok.</summary>
     private sealed class ScriptedTelegram(params (HttpStatusCode Status, string Body)[] answers) : HttpMessageHandler

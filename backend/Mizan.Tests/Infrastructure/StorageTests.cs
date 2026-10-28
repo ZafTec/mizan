@@ -1,7 +1,6 @@
 using System.Text;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Media;
 using Mizan.Infrastructure.Storage;
@@ -97,7 +96,7 @@ public class StorageKeyTests
 public class StorageUrlTests
 {
     private static S3StorageService Create(string? publicBase = "https://media.example.test/assets/mizan", bool forcePathStyle = true)
-        => new(Options.Create(new StorageOptions
+        => new(new FixedRuntimeOptions<StorageOptions>(new StorageOptions
         {
             ServiceUrl = "https://s3.example.test/storage",
             PublicBaseUrl = publicBase,
@@ -114,21 +113,21 @@ public class StorageUrlTests
     [InlineData("https://media.example.test/public/images/current")]
     public async Task TryGetKey_RoundTripsTheCompletePublicBasePath(string publicBase)
     {
-        using var storage = Create(publicBase);
+        var storage = Create(publicBase);
         const string key = "avatars/2026/09/avatar.png";
 
-        storage.TryGetKey(await storage.GetUrlAsync(key)).Should().Be(key);
+        (await storage.TryGetKeyAsync(await storage.GetUrlAsync(key), CancellationToken.None)).Should().Be(key);
     }
 
     [Theory]
     [InlineData("https://media.example.test/assets/mizan/recipes/2026/09/photo.png")]
     [InlineData("https://MEDIA.example.test:443/assets/mizan/recipes/2026/09/photo.png")]
     [InlineData("https://s3.example.test/storage/mizan/recipes/2026/09/photo.png?X-Amz-Signature=test&X-Amz-Expires=3600")]
-    public void TryGetKey_AcceptsPublicAndSignedServiceUrls(string url)
+    public async Task TryGetKey_AcceptsPublicAndSignedServiceUrls(string url)
     {
-        using var storage = Create();
+        var storage = Create();
 
-        storage.TryGetKey(url).Should().Be("recipes/2026/09/photo.png");
+        (await storage.TryGetKeyAsync(url, CancellationToken.None)).Should().Be("recipes/2026/09/photo.png");
     }
 
     [Theory]
@@ -149,22 +148,22 @@ public class StorageUrlTests
     [InlineData("https://media.example.test/assets/mizan/avatars/photo%00.png")]
     [InlineData("avatars/photo.png")]
     [InlineData(null)]
-    public void TryGetKey_RejectsForeignOriginsAndObjectsOutsideConfiguredBoundaries(string? url)
+    public async Task TryGetKey_RejectsForeignOriginsAndObjectsOutsideConfiguredBoundaries(string? url)
     {
-        using var storage = Create();
+        var storage = Create();
 
-        storage.TryGetKey(url).Should().BeNull();
+        (await storage.TryGetKeyAsync(url, CancellationToken.None)).Should().BeNull();
     }
 
     [Theory]
     [InlineData("https://mizan.s3.example.test/storage/meals/2026/09/photo.png?X-Amz-Signature=test", "meals/2026/09/photo.png")]
     [InlineData("https://another.s3.example.test/storage/meals/2026/09/photo.png", null)]
     [InlineData("https://s3.example.test/storage/mizan/meals/2026/09/photo.png", null)]
-    public void TryGetKey_UsesTheBucketHostForVirtualHostedServiceUrls(string url, string? expected)
+    public async Task TryGetKey_UsesTheBucketHostForVirtualHostedServiceUrls(string url, string? expected)
     {
-        using var storage = Create(publicBase: null, forcePathStyle: false);
+        var storage = Create(publicBase: null, forcePathStyle: false);
 
-        storage.TryGetKey(url).Should().Be(expected);
+        (await storage.TryGetKeyAsync(url, CancellationToken.None)).Should().Be(expected);
     }
 }
 
