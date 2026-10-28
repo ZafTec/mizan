@@ -160,7 +160,7 @@ export function AssistantLauncher() {
       onClick={toggle}
       aria-expanded={open}
       aria-controls={ASSISTANT_PANEL_ID}
-      className="assistant-launcher"
+      className="inline-flex min-h-10 items-center rounded-md border border-border px-3.5 text-[13px] font-medium text-foreground transition-[background-color] duration-160 ease-[ease-out] hover:bg-muted aria-expanded:bg-muted max-sm:px-3"
     >
       Ask Mizan
     </button>
@@ -250,7 +250,7 @@ export function AssistantPanel() {
       {open && phone && (
         <div
           aria-hidden="true"
-          className="assistant-backdrop"
+          className="fixed inset-0 z-[59] bg-charcoal-blue-950/45"
           onClick={close}
         />
       )}
@@ -263,7 +263,10 @@ export function AssistantPanel() {
         aria-modal={phone ? true : undefined}
         aria-label="Mizan assistant"
         onKeyDown={onKeyDown}
-        className={cn("assistant-panel", phone && "assistant-sheet")}
+        className={cn(
+          "flex h-full min-w-0 flex-[0_0_420px] flex-col border-l border-border bg-background focus:outline-none [&[hidden]]:hidden",
+          phone && "fixed inset-0 z-60 h-dvh border-l-0",
+        )}
       >
         {mounted && (
           <AiChat

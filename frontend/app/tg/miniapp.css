@@ -54,13 +54,9 @@ body:has(.tg-shell) > footer {
 }
 
 body:has(.tg-shell) > main,
-body:has(.tg-shell) > main > div.page-transition {
+body:has(.tg-shell) > main > div {
   padding: 0 !important;
   margin: 0 !important;
   max-width: none !important;
 }
 
-.tg-shell {
-  padding: 16px max(16px, env(safe-area-inset-right))
-    max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-}

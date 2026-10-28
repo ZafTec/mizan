@@ -32,7 +32,7 @@ export default function MiniAppShell({
         // to open it from the bot instead of waiting forever.
         onError={() => setScriptReady(true)}
       />
-      <div className="tg-shell">{children}</div>
+      <div className="tg-shell pt-4 pr-[max(16px,env(safe-area-inset-right))] pb-[max(24px,env(safe-area-inset-bottom))] pl-[max(16px,env(safe-area-inset-left))]">{children}</div>
     </MiniAppScriptContext.Provider>
   );
 }
