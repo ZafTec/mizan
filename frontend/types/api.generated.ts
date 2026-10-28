@@ -6647,6 +6647,17 @@ export interface paths {
                         "text/json": components["schemas"]["GenerateMealPlanResult"];
                     };
                 };
+                /** @description Unprocessable Content */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PlanNeedsFoodsError"];
+                        "application/json": components["schemas"]["PlanNeedsFoodsError"];
+                        "text/json": components["schemas"]["PlanNeedsFoodsError"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -13998,6 +14009,12 @@ export interface components {
             currency?: string | null;
             /** Format: date-time */
             generatedAt: string;
+        };
+        PlanNeedsFoodsError: {
+            errorCode: string;
+            error: string;
+            missingFoods: string[];
+            emptyDays: number[];
         };
         PlanPreviewCardData: {
             /** Format: uuid */

@@ -46,6 +46,8 @@ public class MealPlansController : ControllerBase
     /// violations and cost. Metered on the planning allowance line; 429 when it is spent.
     /// </summary>
     [HttpPost("generate")]
+    [ProducesResponseType(typeof(GenerateMealPlanResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PlanNeedsFoodsError), StatusCodes.Status422UnprocessableEntity)]
     public async Task<ActionResult<GenerateMealPlanResult>> Generate([FromBody] GenerateMealPlanCommand command)
         => Ok(await _mediator.Send(command));
 
