@@ -14,11 +14,13 @@ public sealed class MeteredAiClient : IAiMeteredClient
 {
     private readonly IAiProvider _provider;
     private readonly IAiQuotaService _quota;
+    private readonly IAiProviderIncidents _incidents;
 
-    public MeteredAiClient(IAiProvider provider, IAiQuotaService quota)
+    public MeteredAiClient(IAiProvider provider, IAiQuotaService quota, IAiProviderIncidents incidents)
     {
         _provider = provider;
         _quota = quota;
+        _incidents = incidents;
     }
 
     public async Task<bool> IsConfiguredAsync(CancellationToken cancellationToken = default) =>
@@ -52,6 +54,12 @@ public sealed class MeteredAiClient : IAiMeteredClient
         catch (OperationCanceledException)
         {
             outcome = AiCallOutcome.Timeout;
+            throw;
+        }
+        catch (AiProviderRejectedException refusal) when (refusal.IsConfigurationError)
+        {
+            // Retrying never fixes a refused configuration, so the administrators hear of it.
+            await _incidents.ReportAsync(refusal, CancellationToken.None);
             throw;
         }
         finally

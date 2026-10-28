@@ -130,6 +130,7 @@ public static class DependencyInjection
         services.Configure<AiOptions>(configuration.GetSection(AiOptions.SectionName));
         services.AddHttpClient(OpenAiCompatibleProvider.HttpClientName);
         services.AddSingleton<IAiProvider, OpenAiCompatibleProvider>();
+        services.AddSingleton<IAiProviderIncidents, AiProviderIncidents>();
         services.AddSingleton<IAiCeilings, AiCeilings>();
         services.AddSingleton<IAiTierDefaults, AiTierDefaults>();
         services.AddScoped<IAiQuotaService, AiQuotaService>();

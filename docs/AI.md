@@ -24,6 +24,15 @@ The provider speaks the OpenAI-compatible chat-completions protocol. Set the Com
 
 `AI_GLOBAL_DAILY_TOKENS` and `AI_GLOBAL_DAILY_COST_MICROS` cap provider use across the application. Configure provider prices accurately when relying on the cost ceiling. Token and cost ceilings are enforced by code, not prompt text.
 
+### Provider errors
+
+A non-success status from the provider is logged at warning level with the status and the provider's error `type`, `code`, `param` and `message`; the message is cut to 300 characters, and the configured key and anything shaped like a key or a bearer token are replaced. The request (the prompt) is never logged, a body that is not an error object keeps no message, and the caller never receives the body. The client throws `AiProviderRejectedException`, answered as `503 ai_unavailable`:
+
+- 400, 401, 403, 404 and 422 are configuration errors that retrying does not fix. The person reads "The assistant is misconfigured. An administrator has been told.", and every administrator gets one `ai_misconfigured` notification per provider message an hour, linking to **Admin → Settings → AI**, with the status and the provider's message.
+- 429 and 5xx keep "Try again shortly"; timeouts and unreachable endpoints keep their own messages.
+
+Reasoning models on Azure refuse function tools on `/chat/completions` together with their default reasoning ("Function tools with reasoning_effort are not supported … set reasoning_effort to 'none'"). Set `AI_REASONING_EFFORT=none` (or `Ai.ReasoningEffort` in the admin area) for such a deployment. When it is unset, a tool request that the provider refuses for `reasoning_effort` is sent again once, inside the same metered call, with `reasoning_effort: none`, and later tool requests to that endpoint and model start with it until the process restarts; a warning names the setting to change. Requests without tools are unchanged. The Responses API (`/v1/responses`) is not supported. **Test provider** checks a tool call as well as a plain reply ([administration](ADMIN.md#runtime-settings)).
+
 ## Consent
 
 `GET` and `PUT /api/Ai/consent` expose the current user's consent. Three read axes start off: nutrition, training, and body measurements. Write permission is separately controlled by the global `allowWrites` switch plus per-axis write flags. A fourth axis, `DataAxis.Planning` (meal plans and shopping lists), has no flag of its own: reading it follows the nutrition share flag and writing it the nutrition write flag. A trainer grant never covers it, and a connected app needs `planning:read` or `planning:write`.

@@ -852,6 +852,12 @@ public sealed class ScriptedAiProvider : IAiProvider
         lock (_calls) _scripted.Enqueue(_ => throw new AiUnavailableException(message));
     }
 
+    /// <summary>The next call is refused the way the real client reports a non-success status.</summary>
+    public void Reject(int status, string providerMessage, string? param = null)
+    {
+        lock (_calls) _scripted.Enqueue(_ => throw new AiProviderRejectedException(status, "invalid_request_error", null, param, providerMessage));
+    }
+
     public Task<AiCompletionResponse> CompleteAsync(
         AiCompletionRequest request, CancellationToken cancellationToken = default)
     {

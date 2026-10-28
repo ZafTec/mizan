@@ -108,7 +108,7 @@ public sealed class FeatureDisabledException : ForbiddenAccessException
 }
 
 /// <summary>The provider is not configured, or answered with something unusable.</summary>
-public sealed class AiUnavailableException : DomainException
+public class AiUnavailableException : DomainException
 {
     public AiUnavailableException(string message, string reason = "unavailable") : base(message)
     {
@@ -120,6 +120,42 @@ public sealed class AiUnavailableException : DomainException
     /// unreachable, http_{status}, empty_response or unavailable. Never the provider's body.
     /// </summary>
     public string Reason { get; }
+}
+
+/// <summary>
+/// The provider answered a non-success status (docs/AI.md#provider-errors). The person sees
+/// <see cref="Exception.Message"/>: a configuration error (400, 401, 403, 404, 422) says the
+/// assistant is misconfigured, because retrying never fixes it; 429 and 5xx say to try again.
+/// <see cref="ProviderMessage"/> is the provider's own explanation, cut short and with secrets
+/// removed, for the log and the administrators, never for the person.
+/// </summary>
+public sealed class AiProviderRejectedException : AiUnavailableException
+{
+    public const string MisconfiguredMessage = "The assistant is misconfigured. An administrator has been told.";
+
+    public AiProviderRejectedException(int status, string? providerType, string? providerCode, string? providerParam, string? providerMessage)
+        : base(IsConfiguration(status)
+                ? MisconfiguredMessage
+                : $"The assistant returned an error ({status}). Try again shortly.",
+            $"http_{status}")
+    {
+        Status = status;
+        ProviderType = providerType;
+        ProviderCode = providerCode;
+        ProviderParam = providerParam;
+        ProviderMessage = providerMessage;
+    }
+
+    public int Status { get; }
+    public string? ProviderType { get; }
+    public string? ProviderCode { get; }
+    public string? ProviderParam { get; }
+    public string? ProviderMessage { get; }
+
+    /// <summary>A status that retrying does not change: the request or the configuration is wrong.</summary>
+    public bool IsConfigurationError => IsConfiguration(Status);
+
+    public static bool IsConfiguration(int status) => status is 400 or 401 or 403 or 404 or 422;
 }
 
 /// <summary>The request is valid but the current state or configuration does not allow it. Answered with 409.</summary>

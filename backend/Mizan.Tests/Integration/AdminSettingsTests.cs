@@ -201,23 +201,52 @@ public class AdminSettingsTests
         var reachable = await (await admin.PostAsync("/api/admin/settings/ai/test", null)).Content.ReadFromJsonAsync<JsonElement>();
         reachable.GetProperty("reachable").GetBoolean().Should().BeTrue();
         reachable.GetProperty("model").GetString().Should().Be("test-model");
-        _fixture.Ai.Calls.Should().HaveCount(1);
+        reachable.GetProperty("toolCall").GetProperty("passed").GetBoolean().Should().BeTrue();
+        _fixture.Ai.Calls.Should().HaveCount(2, "a plain reply, then one request with a trivial tool");
+        _fixture.Ai.Calls[1].Tools.Should().ContainSingle().Which.Name.Should().Be("ping");
 
         _fixture.Ai.Fail("The assistant returned an error (401). Try again shortly.");
         var failed = await (await admin.PostAsync("/api/admin/settings/ai/test", null)).Content.ReadFromJsonAsync<JsonElement>();
         failed.GetProperty("reachable").GetBoolean().Should().BeFalse();
         failed.GetProperty("errorClass").GetString().Should().Be("unavailable");
+        failed.GetProperty("toolCall").ValueKind.Should().Be(JsonValueKind.Null, "the tool check runs only when a plain reply works");
 
         using (var scope = _fixture.Services.CreateScope())
         {
             var ledger = await scope.ServiceProvider.GetRequiredService<MizanDbContext>().AiUsageLogs.AsNoTracking().ToListAsync();
-            ledger.Should().HaveCount(2).And.OnlyContain(l => l.Feature == "eval", "both calls were reserved on the evaluation line");
-            ledger.Select(l => l.Outcome).Should().BeEquivalentTo([AiCallOutcome.Succeeded, AiCallOutcome.ProviderError], "each was settled, the failure too");
+            ledger.Should().HaveCount(3).And.OnlyContain(l => l.Feature == "eval", "every call was reserved on the evaluation line");
+            ledger.Select(l => l.Outcome).Should().BeEquivalentTo(
+                [AiCallOutcome.Succeeded, AiCallOutcome.Succeeded, AiCallOutcome.ProviderError], "each was settled, the failure too");
         }
 
         _fixture.Ai.IsConfigured = false;
         var off = await (await admin.PostAsync("/api/admin/settings/ai/test", null)).Content.ReadFromJsonAsync<JsonElement>();
         off.GetProperty("errorClass").GetString().Should().Be("not_configured");
+        _fixture.Ai.Reset();
+    }
+
+    [Fact]
+    public async Task AProviderThatRefusesTools_FailsTheToolCheck_AndTheAdministratorsAreTold()
+    {
+        await _fixture.ResetDatabaseAsync();
+        _fixture.Ai.Reset();
+        var (admin, _) = await AdminAsync();
+        const string refusal = "Function tools with reasoning_effort are not supported for gpt-6-luna in /v1/chat/completions.";
+        _fixture.Ai.Reply("ok");
+        _fixture.Ai.Reject(400, refusal, param: "reasoning_effort");
+
+        var result = await (await admin.PostAsync("/api/admin/settings/ai/test", null)).Content.ReadFromJsonAsync<JsonElement>();
+
+        result.GetProperty("reachable").GetBoolean().Should().BeTrue("the plain reply worked");
+        var tool = result.GetProperty("toolCall");
+        tool.GetProperty("passed").GetBoolean().Should().BeFalse();
+        tool.GetProperty("errorClass").GetString().Should().Be("http_400");
+        tool.GetProperty("providerMessage").GetString().Should().Be(refusal);
+
+        using var scope = _fixture.Services.CreateScope();
+        var notes = await scope.ServiceProvider.GetRequiredService<MizanDbContext>().Notifications.AsNoTracking()
+            .Where(n => n.Type == "ai_misconfigured").ToListAsync();
+        notes.Should().ContainSingle().Which.Body.Should().Be($"400 (param reasoning_effort): {refusal}");
         _fixture.Ai.Reset();
     }
 

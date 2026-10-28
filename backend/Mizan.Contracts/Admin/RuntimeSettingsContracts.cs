@@ -64,8 +64,19 @@ public record SetRuntimeSettingRequest(string Value);
 public record SmtpTestResult(Guid JobId, string To);
 
 /// <summary>
-/// What POST /api/admin/settings/ai/test found. <see cref="ErrorClass"/> names the failure
-/// (not_configured, quota_exceeded, timeout, unreachable, http_401 and so on) without the
-/// provider's body.
+/// What POST /api/admin/settings/ai/test found: a plain reply first, then, when that worked, one
+/// request with a trivial tool, because the chat sends tools and some configurations refuse them
+/// (docs/AI.md#provider-errors). <see cref="ErrorClass"/> names the failure (not_configured,
+/// quota_exceeded, timeout, unreachable, http_400 and so on). <see cref="ProviderMessage"/> is the
+/// provider's own reason, cut short and with secrets removed, or null.
 /// </summary>
-public record AiProviderTestResult(bool Reachable, string? ErrorClass, string? Model, int LatencyMs);
+public record AiProviderTestResult(
+    bool Reachable,
+    string? ErrorClass,
+    string? Model,
+    int LatencyMs,
+    string? ProviderMessage = null,
+    AiProviderCheckResult? ToolCall = null);
+
+/// <summary>One check of the provider test. <c>Passed</c> false carries the error class and the provider's reason.</summary>
+public record AiProviderCheckResult(bool Passed, string? ErrorClass, string? ProviderMessage, int LatencyMs);

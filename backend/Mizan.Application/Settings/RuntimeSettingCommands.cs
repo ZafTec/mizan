@@ -221,27 +221,50 @@ public sealed class TestAiProviderCommandHandler : IRequestHandler<TestAiProvide
             return new AiProviderTestResult(false, "not_configured", null, 0);
         }
 
+        var plain = await CheckAsync(userId, new AiCompletionRequest
+        {
+            Messages = [new AiMessage(AiRole.User, "Reply with the single word: ok")],
+            MaxOutputTokens = MaxOutputTokens,
+            Temperature = 0,
+        }, cancellationToken);
+        if (!plain.Check.Passed)
+        {
+            return new AiProviderTestResult(false, plain.Check.ErrorClass, null, plain.Check.LatencyMs, plain.Check.ProviderMessage);
+        }
+
+        // The chat sends tools, and a configuration can answer plain requests yet refuse tools.
+        var tool = await CheckAsync(userId, new AiCompletionRequest
+        {
+            Messages = [new AiMessage(AiRole.User, "Call the ping tool.")],
+            Tools = [new AiToolSpec("ping", "Answers pong. Used to check that tool calls work.", PingSchema)],
+            MaxOutputTokens = MaxOutputTokens,
+            Temperature = 0,
+        }, cancellationToken);
+        return new AiProviderTestResult(true, null, plain.Model, plain.Check.LatencyMs, null, tool.Check);
+    }
+
+    private const string PingSchema = """{"type":"object","properties":{},"additionalProperties":false}""";
+
+    private async Task<(AiProviderCheckResult Check, string? Model)> CheckAsync(
+        Guid userId, AiCompletionRequest request, CancellationToken cancellationToken)
+    {
         var stopwatch = Stopwatch.StartNew();
         try
         {
             var response = await _ai.CompleteAsync(
-                new AiMeteredCall(userId, null, AiFeatures.Eval, EstimatedTokens: 40 + MaxOutputTokens, PromptVersionId: null),
-                new AiCompletionRequest
-                {
-                    Messages = [new AiMessage(AiRole.User, "Reply with the single word: ok")],
-                    MaxOutputTokens = MaxOutputTokens,
-                    Temperature = 0,
-                },
+                new AiMeteredCall(userId, null, AiFeatures.Eval, EstimatedTokens: 80 + MaxOutputTokens, PromptVersionId: null),
+                request,
                 cancellationToken);
-            return new AiProviderTestResult(true, null, response.Model, (int)stopwatch.ElapsedMilliseconds);
+            return (new AiProviderCheckResult(true, null, null, (int)stopwatch.ElapsedMilliseconds), response.Model);
         }
         catch (AiQuotaExceededException)
         {
-            return new AiProviderTestResult(false, "quota_exceeded", null, (int)stopwatch.ElapsedMilliseconds);
+            return (new AiProviderCheckResult(false, "quota_exceeded", null, (int)stopwatch.ElapsedMilliseconds), null);
         }
         catch (AiUnavailableException ex)
         {
-            return new AiProviderTestResult(false, ex.Reason, null, (int)stopwatch.ElapsedMilliseconds);
+            var providerMessage = (ex as AiProviderRejectedException)?.ProviderMessage;
+            return (new AiProviderCheckResult(false, ex.Reason, providerMessage, (int)stopwatch.ElapsedMilliseconds), null);
         }
     }
 }
