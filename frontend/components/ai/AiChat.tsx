@@ -655,7 +655,7 @@ export default function AiChat({
             {pending && (
               <div
                 role="status"
-                className="flex items-center gap-2 text-sm text-muted-foreground"
+                className="flex items-center gap-2 text-sm text-muted-foreground transition-opacity duration-200 ease-out starting:opacity-0"
               >
                 <span className="flex gap-1" aria-hidden="true">
                   {[0, 1, 2].map((dot) => (
@@ -831,7 +831,7 @@ function ConversationList({
   return (
     <section
       aria-label="Conversations"
-      className="flex min-h-0 flex-1 flex-col"
+      className="flex min-h-0 flex-1 animate-overlay-in flex-col"
     >
       <div className="px-4 pb-2 pt-3">
         <label htmlFor="assistant-search" className="sr-only">
@@ -916,7 +916,7 @@ function PermissionNeeded({
     <div
       role="group"
       aria-label="Permission needed"
-      className="w-full max-w-[92%] space-y-2 rounded-md border border-border bg-muted/40 px-3.5 py-3 text-sm"
+      className="w-full max-w-[92%] space-y-2 rounded-md border border-border bg-muted/40 px-3.5 py-3 text-sm transition-opacity duration-200 ease-out starting:opacity-0"
     >
       <p className="flex items-center gap-2 font-medium">
         <Lock aria-hidden="true" size={14} strokeWidth={1.8} />
@@ -1079,7 +1079,10 @@ function MessageView({
   return (
     <article
       aria-label={mine ? "You said" : "The assistant replied"}
-      className={cn("flex flex-col gap-1", mine ? "items-end" : "items-start")}
+      className={cn(
+        "flex flex-col gap-1 transition-[opacity,translate] duration-200 ease-out starting:translate-y-1 starting:opacity-0",
+        mine ? "items-end" : "items-start",
+      )}
     >
       <p className="text-xs text-muted-foreground">
         {mine ? "You" : "Assistant"}

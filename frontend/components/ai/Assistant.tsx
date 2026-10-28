@@ -250,7 +250,7 @@ export function AssistantPanel() {
       {open && phone && (
         <div
           aria-hidden="true"
-          className="fixed inset-0 z-[59] bg-charcoal-blue-950/45"
+          className="fixed inset-0 z-[59] animate-overlay-in bg-charcoal-blue-950/45"
           onClick={close}
         />
       )}
@@ -265,7 +265,13 @@ export function AssistantPanel() {
         onKeyDown={onKeyDown}
         className={cn(
           "flex h-full min-w-0 flex-[0_0_420px] flex-col border-l border-border bg-background focus:outline-none [&[hidden]]:hidden",
-          phone && "fixed inset-0 z-60 h-dvh border-l-0",
+          // Docked, it fades in a few pixels from the edge it sits on and
+          // closes at once, so the page never waits on an empty column.
+          !phone &&
+            "transition-[opacity,translate] duration-200 ease-out starting:translate-x-3 starting:opacity-0",
+          // On a phone it is a sheet: up from the bottom, and back down.
+          phone &&
+            "fixed inset-0 z-60 h-dvh border-l-0 transition-[translate,display] transition-discrete duration-280 ease-(--ease-drawer) starting:translate-y-full [&[hidden]]:translate-y-full [&[hidden]]:duration-200 [&[hidden]]:ease-out",
         )}
       >
         {mounted && (
