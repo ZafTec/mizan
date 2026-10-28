@@ -72,9 +72,10 @@ function renderRows() {
 }
 
 window.onToolResult = (result) => {
-  const data = jsonOf(result);
   const status = document.getElementById("status");
-  if (result.isError || !data || !Array.isArray(data.foods)) { status.className = "err"; status.textContent = textOf(result) || "Nothing was recognized in that photo."; return; }
+  if (result.isError) { status.className = "err"; status.textContent = textOf(result) || "Could not analyze that photo."; return; }
+  const data = dataOf(result);
+  if (!data || !Array.isArray(data.foods)) { status.className = "muted"; status.textContent = "Nothing was recognized in that photo."; return; }
   // A food without a weight or per-100 g figures cannot be scaled by the server, so it is not offered.
   foods = data.foods.filter((f) => f && f.per100g && Number(f.portionGrams) > 0).map((f) => ({ name: f.name || "Food", grams: Number(f.portionGrams), per100g: f.per100g, include: true, logged: false }));
   if (foods.length === 0) { status.className = "err"; status.textContent = "Nothing in that photo could be weighed."; return; }

@@ -2,6 +2,7 @@ extern alias McpServer;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -575,6 +576,28 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
         summary.Should().ContainKey("totalProtein");
         summary.Should().ContainKey("totalCarbs");
         summary.Should().ContainKey("totalFat");
+    }
+
+    [Fact]
+    public async Task AWidgetsTool_AnswersWithStructuredContent_ThatMatchesItsText()
+    {
+        var userId = Guid.NewGuid();
+        await _apiFixture.SeedUserAsync(userId, "widget@example.com", emailVerified: true);
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await CreateMcpTokenAsync(userId));
+
+        var widget = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "get_nutrition_summary", new { date = DateTime.UtcNow.ToString("yyyy-MM-dd") }));
+        var widgetResponse = await widget.Content.ReadFromJsonAsync<JsonRpcResponse>();
+        var result = JsonSerializer.Deserialize<JsonElement>(widgetResponse!.Result!.ToString()!);
+
+        (result.TryGetProperty("isError", out var isError) && isError.GetBoolean()).Should().BeFalse(ExtractToolResultText(widgetResponse));
+        var structured = result.GetProperty("structuredContent");
+        structured.GetProperty("totalCalories").ValueKind.Should().Be(JsonValueKind.Number);
+        JsonNode.DeepEquals(JsonNode.Parse(structured.GetRawText()), JsonNode.Parse(ExtractToolResultText(widgetResponse)!)).Should().BeTrue();
+
+        // A tool with no widget keeps its text-only answer.
+        var plain = await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "get_daily_nutrition", new { date = DateTime.UtcNow.ToString("yyyy-MM-dd") }));
+        var plainResult = JsonSerializer.Deserialize<JsonElement>((await plain.Content.ReadFromJsonAsync<JsonRpcResponse>())!.Result!.ToString()!);
+        plainResult.TryGetProperty("structuredContent", out var none).Should().BeFalse(none.ToString());
     }
 
     #endregion

@@ -95,15 +95,18 @@ async function go(days) {
   message.className = "muted"; message.textContent = "Loading…";
   try {
     const result = await callTool("get_nutrition_summary", { date: shiftDate(current.date, days) });
-    const data = jsonOf(result);
-    if (result.isError || !data) throw new Error(textOf(result) || "Could not load that day");
+    if (result.isError) throw new Error(textOf(result) || "Could not load that day");
+    const data = dataOf(result);
+    if (!data) throw new Error("Nothing came back for that day");
     render(data);
   } catch (error) { message.className = "err"; message.textContent = error.message; }
 }
 
 window.onToolResult = (result) => {
-  const data = jsonOf(result);
-  if (result.isError || !data) { const m = document.getElementById("message"); m.className = "err"; m.textContent = textOf(result) || "No data."; return; }
+  const m = document.getElementById("message");
+  if (result.isError) { m.className = "err"; m.textContent = textOf(result) || "Could not load the day."; return; }
+  const data = dataOf(result);
+  if (!data || Array.isArray(data)) { m.className = "muted"; m.textContent = "No data for this day yet."; return; }
   render(data);
 };
 document.getElementById("prev").addEventListener("click", () => go(-1));

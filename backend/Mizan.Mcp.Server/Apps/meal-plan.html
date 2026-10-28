@@ -161,7 +161,7 @@ async function log(entry) {
     day.loggedCount = (day.loggedCount || 0) + 1;
     renderDay();
     renderSummary();
-    const data = jsonOf(result);
+    const data = dataOf(result);
     say("muted", `Logged ${entryName(entry)}${data && data.date ? ` on ${data.date}` : ""}.`);
   } catch (error) { say("err", error.message); }
 }
@@ -172,18 +172,18 @@ async function shop() {
   say("muted", "Building the shopping list…");
   try {
     const result = await callTool("generate_shopping_list", { mealPlanId: plan.id });
-    const data = jsonOf(result);
-    if (result.isError || !data) throw new Error(textOf(result) || "Could not build the list");
-    say("muted", `Shopping list ready: ${data.itemCount} item${data.itemCount === 1 ? "" : "s"}${data.needsReviewCount ? `, ${data.needsReviewCount} to check` : ""}.`);
+    if (result.isError) throw new Error(textOf(result) || "Could not build the list");
+    const data = dataOf(result) || {};
+    say("muted", typeof data.itemCount !== "number" ? "Shopping list ready." : `Shopping list ready: ${data.itemCount} item${data.itemCount === 1 ? "" : "s"}${data.needsReviewCount ? `, ${data.needsReviewCount} to check` : ""}.`);
   } catch (error) { say("err", error.message); }
   finally { button.disabled = false; }
 }
 
 window.onToolResult = (result) => {
-  const data = jsonOf(result);
-  const normalized = data && typeof data === "object" ? normalize(data) : null;
-  if (result.isError) { say("err", textOf(result) || "No data."); return; }
-  if (!normalized) { say("muted", textOf(result) || "No plan."); return; }
+  if (result.isError) { say("err", textOf(result) || "Could not load the plan."); return; }
+  const data = dataOf(result);
+  const normalized = data && !Array.isArray(data) ? normalize(data) : null;
+  if (!normalized) { say("muted", "No plan."); return; }
   render(normalized);
 };
 document.getElementById("shop").addEventListener("click", shop);

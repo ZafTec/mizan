@@ -409,7 +409,7 @@ builder.Services.AddMcpServer(options =>
 
         try
         {
-            var result = await next(context, cancellationToken);
+            var result = WidgetResults.WithStructuredContent(toolName, await next(context, cancellationToken));
             sw.Stop();
 
             activity?.SetTag("mcp.tool.success", result.IsError != true);

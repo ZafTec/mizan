@@ -11,8 +11,19 @@ const request = (method, params) => new Promise((resolve, reject) => {
 });
 const notify = (method, params) => send({ jsonrpc: "2.0", method, params: params || {} });
 const callTool = (name, args) => request("tools/call", { name, arguments: args || {} });
-const textOf = (result) => ((result && result.content) || []).filter((c) => c.type === "text").map((c) => c.text).join("\n");
-const jsonOf = (result) => { try { return JSON.parse(textOf(result)); } catch { return null; } };
+// The host may add text blocks of its own after the tool's (a note that a widget was shown), so a result is never
+// read as its joined text. The tool's data is structuredContent, or failing that the first text block that parses
+// as a JSON object or array; the tool's message is its first text block.
+const textBlocks = (result) => ((result && result.content) || []).filter((c) => c && c.type === "text" && typeof c.text === "string").map((c) => c.text);
+const textOf = (result) => textBlocks(result)[0] || "";
+const parsed = (text) => { try { const value = JSON.parse(text); return value !== null && typeof value === "object" ? value : undefined; } catch { return undefined; } };
+const dataOf = (result) => {
+  if (!result || result.isError) return null;
+  const structured = result.structuredContent;
+  if (structured !== null && typeof structured === "object") return structured;
+  for (const text of textBlocks(result)) { const value = parsed(text); if (value !== undefined) return value; }
+  return null;
+};
 const el = (tag, props, ...kids) => {
   const node = document.createElement(tag);
   for (const [key, value] of Object.entries(props || {})) {

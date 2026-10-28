@@ -74,9 +74,11 @@ function tabs() {
 }
 
 window.onToolResult = (result) => {
-  const data = jsonOf(result);
-  const items = data && (data.items || data);
-  if (result.isError || !Array.isArray(items)) { const m = document.getElementById("message"); m.className = "err"; m.textContent = textOf(result) || "No measurements."; return; }
+  const m = document.getElementById("message");
+  if (result.isError) { m.className = "err"; m.textContent = textOf(result) || "Could not load the measurements."; return; }
+  const data = dataOf(result);
+  const items = Array.isArray(data) ? data : data && data.items;
+  if (!Array.isArray(items) || items.length === 0) { m.className = "muted"; m.textContent = "No measurements yet."; return; }
   points = items;
   metric = metrics.find(([key]) => points.some((p) => p[key] !== null && p[key] !== undefined))?.[0] || "weightKg";
   tabs(); draw();
