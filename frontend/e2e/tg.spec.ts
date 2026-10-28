@@ -425,6 +425,76 @@ test("the page opened outside Telegram says to open it from the bot", async ({
   expect((await state(context, opening)).unhandled).toEqual([]);
 });
 
+test("a person opens the Mini App home and sees today, the next planned meal and the list", async ({
+  page,
+  context,
+}) => {
+  const opening = await openTelegram(page, context, "signed_in");
+  await page.goto("/tg");
+  const home = page.getByTestId("tg-home");
+  await expect(home.getByRole("heading", { level: 1 })).toHaveText(/^Hi /);
+  await expect(home.getByRole("region", { name: "Today" })).toContainText(
+    "kcal of 2,200",
+  );
+  const next = home.getByRole("region", { name: "Next on your plan" });
+  await expect(next).toBeVisible();
+  await expect(home.getByRole("link", { name: /Today's plan/ })).toHaveAttribute(
+    "href",
+    "/tg/plan",
+  );
+  await expect(home.getByRole("link", { name: /Shopping list/ })).toHaveAttribute(
+    "href",
+    "/tg/shopping-list",
+  );
+  await expect(home.getByRole("link", { name: /Shopping list/ })).toContainText(
+    /\d+ items? · \d+ ticked/,
+  );
+  // Every link stays inside the Mini App; the full app opens in the browser.
+  for (const href of await home
+    .getByRole("link")
+    .evaluateAll((links) => links.map((link) => link.getAttribute("href"))))
+    expect(href).toMatch(/^\/tg(\/|$)/);
+  await page.setViewportSize({ width: 360, height: 780 });
+  await noOverflow(page);
+  await home.getByRole("button", { name: "Open in browser" }).click();
+  expect((await telegramCalls(page)).opened).toEqual([
+    expect.stringMatching(/\/today$/),
+  ]);
+
+  // Log the next planned meal from the home.
+  await next.getByRole("button", { name: /^Log / }).click();
+  await expect(home.getByRole("status").filter({ hasText: "logged." })).toBeVisible();
+  const s = await state(context, opening);
+  expect(
+    s.writes.filter((write) => /\/entries\/[^/]+\/log$/.test(write.path)),
+  ).toHaveLength(1);
+
+  expect(await mainButton(page)).toMatchObject({
+    text: "Log a meal",
+    visible: true,
+  });
+  await pressMainButton(page);
+  await page.waitForURL(/\/tg\/log$/);
+  await expect(page.getByRole("heading", { name: "Log a meal" })).toBeVisible();
+  expect((await mainButton(page)).visible).toBe(false);
+  expect((await state(context, opening)).unhandled).toEqual([]);
+});
+
+test("a /tg link that leads nowhere says so and goes back home", async ({
+  page,
+  context,
+}) => {
+  const opening = await openTelegram(page, context, "signed_in");
+  const response = await page.goto("/tg/no-such-page");
+  expect(response?.status()).toBe(404);
+  const missing = page.getByTestId("tg-not-found");
+  await expect(missing).toContainText("This page is not in the Mini App.");
+  await missing.getByRole("link", { name: "Back to today" }).click();
+  await page.waitForURL(/\/tg$/);
+  await expect(page.getByTestId("tg-home")).toBeVisible();
+  expect((await state(context, opening)).unhandled).toEqual([]);
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 

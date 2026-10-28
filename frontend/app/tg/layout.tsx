@@ -8,7 +8,8 @@ export const metadata: Metadata = {
 };
 
 /**
- * The Telegram Mini App: /tg/plan and /tg/shopping-list without the shell.
+ * The Telegram Mini App without the shell: /tg (home), /tg/log, /tg/plan,
+ * /tg/shopping-list, and not-found.tsx for any other /tg path.
  * The pages sign themselves in from Telegram's initData (docs/TELEGRAM.md#mini-app).
  */
 export default function MiniAppLayout({
