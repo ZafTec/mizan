@@ -192,6 +192,7 @@ public class MealPlanGenerationTests
     public async Task AFailedProviderCallStillSettlesItsReservation_AndSavesNoDraft()
     {
         var (me, client) = await StartAsync();
+        await _world.FoodAsync("Eggs", 143, 12.6m, 0.7m, 9.5m);
         _fixture.Ai.Fail("The provider is down.");
 
         var response = await client.PostAsJsonAsync("/api/MealPlans/generate", Request());
@@ -208,6 +209,7 @@ public class MealPlanGenerationTests
     public async Task AnAnswerThatBreaksTheSchemaIsAFailedCall_NotAScrapedPlan()
     {
         var (_, client) = await StartAsync();
+        await _world.FoodAsync("Eggs", 143, 12.6m, 0.7m, 9.5m);
         _fixture.Ai.Reply("Here is a lovely plan: eggs on Monday, lentils on Tuesday.");
 
         var response = await client.PostAsJsonAsync("/api/MealPlans/generate", Request());
@@ -290,6 +292,82 @@ public class MealPlanGenerationTests
 
         turn.Performed.Should().ContainSingle().Which.Succeeded.Should().BeFalse();
         (await PlanningWorld.PlanAsync(client, active)).EntryCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task AnEmptyCatalogueRefusesThePlanWithPlanNeedsFoods_BeforeTheAssistantIsAsked()
+    {
+        var (_, client) = await StartAsync();
+
+        var response = await client.PostAsJsonAsync("/api/MealPlans/generate", Request());
+
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        var problem = (await response.Content.ReadFromJsonAsync<PlanNeedsFoodsError>())!;
+        problem.ErrorCode.Should().Be("plan_needs_foods");
+        problem.EmptyDays.Should().Equal(0, 1);
+        problem.Error.Should().Contain("import the starter foods");
+        _fixture.Ai.Calls.Should().BeEmpty("nothing is spent on a plan that cannot have foods");
+        (await LedgerAsync()).Should().BeEmpty();
+        (await _world.DbAsync(db => db.MealPlans.CountAsync())).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ADraftWithADayOfFoodsTheCatalogueLacks_IsRefused_NamingTheFoodsAndTheDay()
+    {
+        var (_, client) = await StartAsync();
+        await _world.FoodAsync("Eggs", 143, 12.6m, 0.7m, 9.5m);
+        _fixture.Ai.Reply("""
+            {"name":"Week","note":null,"prepSessions":[],"days":[
+              {"dayIndex":0,"entries":[{"slot":"BREAKFAST","kind":"food","foodName":"Eggs","recipeId":null,"grams":120,"servings":null,"note":null,"prepSessionIndex":null}]},
+              {"dayIndex":1,"entries":[{"slot":"LUNCH","kind":"food","foodName":"Dragonfruit salad","recipeId":null,"grams":200,"servings":null,"note":null,"prepSessionIndex":null}]}
+            ]}
+            """);
+
+        var response = await client.PostAsJsonAsync("/api/MealPlans/generate", Request());
+
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity, await response.Content.ReadAsStringAsync());
+        var problem = (await response.Content.ReadFromJsonAsync<PlanNeedsFoodsError>())!;
+        problem.ErrorCode.Should().Be("plan_needs_foods");
+        problem.EmptyDays.Should().Equal(1);
+        problem.MissingFoods.Should().Equal("Dragonfruit salad");
+        problem.Error.Should().StartWith("No draft was saved: the catalogue has no foods for day 2 of the plan. Not in the catalogue: Dragonfruit salad.");
+        (await _world.DbAsync(db => db.MealPlans.CountAsync())).Should().Be(0);
+        (await LedgerAsync()).Should().ContainSingle().Which.Outcome.Should().NotBe(AiCallOutcome.Pending);
+    }
+
+    [Fact]
+    public async Task AfterTheStarterFoodsAndStaplePrices_AKetoWeekHasFoodsEveryDay_StaysUnderItsCarbs_AndIsPriced()
+    {
+        var (_, client) = await StartAsync();
+        var (_, admin) = await _world.PersonAsync("admin", role: "admin");
+        (await admin.PostAsync("/api/admin/prices/import-starter-foods", null)).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await admin.PostAsync("/api/admin/prices/seed-staples", null)).StatusCode.Should().Be(HttpStatusCode.OK);
+        var days = string.Join(",", Enumerable.Range(0, 7).Select(d => $$"""
+            {"dayIndex":{{d}},"entries":[
+              {"slot":"BREAKFAST","kind":"food","foodName":"Eggs","recipeId":null,"grams":150,"servings":null,"note":null,"prepSessionIndex":null},
+              {"slot":"LUNCH","kind":"food","foodName":"Chicken breast","recipeId":null,"grams":250,"servings":null,"note":null,"prepSessionIndex":null},
+              {"slot":"DINNER","kind":"food","foodName":"Kale","recipeId":null,"grams":100,"servings":null,"note":null,"prepSessionIndex":null},
+              {"slot":"DINNER","kind":"food","foodName":"Niter kibbeh","recipeId":null,"grams":20,"servings":null,"note":null,"prepSessionIndex":null},
+              {"slot":"SNACK","kind":"food","foodName":"Avocado","recipeId":null,"grams":100,"servings":null,"note":null,"prepSessionIndex":null}]}
+            """));
+        // A fenced reply with a sentence before it is still read: the JSON object inside is the answer.
+        _fixture.Ai.Reply($"Here is your keto week.\n```json\n{{\"name\":\"Keto week\",\"note\":null,\"prepSessions\":[],\"days\":[{days}]}}\n```");
+
+        var response = await client.PostAsJsonAsync("/api/MealPlans/generate", new GenerateMealPlanRequest
+        {
+            StartDate = Monday,
+            DurationDays = 7,
+            Rules = new PlanRulesDto { MacroMode = "Keto" },
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        var draft = (await response.Content.ReadFromJsonAsync<GenerateMealPlanResult>())!.Drafts.Single();
+        draft.Plan.Days.Should().HaveCount(7).And.OnlyContain(d => PlanningWorld.Entries(d).Any(e => e.Kind == "Food"));
+        draft.Unresolved.Should().BeEmpty();
+        draft.Plan.EffectiveTargets.MaxCarbs.Should().Be(new PlanTargetDto(30, "mode"));
+        draft.Violations.Select(v => v.Rule).Should().NotContain(PlanRuleNames.CarbsOver);
+        draft.Plan.CostCoverage.Should().BeGreaterThan(0);
+        _fixture.Ai.LastCall.Messages.Last().Content.Should().Contain("At most 30 g carbs a day.");
     }
 
     // ---- helpers ----

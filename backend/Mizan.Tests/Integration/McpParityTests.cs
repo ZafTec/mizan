@@ -126,8 +126,10 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         await _api.ResetDatabaseAsync();
         _api.Ai.Reset();
         await AuthenticateAsync();
+        await _api.SeedFoodAsync("Eggs", 143, 12.6m, 0.7m, 9.5m);
         _api.Ai.Reply("""
             {"name":"Connected week","note":null,"prepSessions":[],"days":[{"dayIndex":0,"entries":[
+              {"slot":"BREAKFAST","kind":"food","foodName":"Eggs","recipeId":null,"grams":120,"servings":null,"note":null,"prepSessionIndex":null},
               {"slot":"LUNCH","kind":"text","foodName":"Market salad","recipeId":null,"grams":null,"servings":null,"note":null,"prepSessionIndex":null}]}]}
             """);
 

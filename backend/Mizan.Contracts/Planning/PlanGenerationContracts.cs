@@ -85,3 +85,11 @@ public record GenerateMealPlanResult
     public List<GeneratedPlanDto> Drafts { get; init; } = [];
     public List<SkippedBudgetDto> Skipped { get; init; } = [];
 }
+
+/// <summary>
+/// The 422 body of POST /api/MealPlans/generate when the draft would have days with no food or
+/// recipe: <c>errorCode</c> is <c>plan_needs_foods</c>, <c>emptyDays</c> are day indexes from 0,
+/// and <c>missingFoods</c> the names the assistant used that the catalogue does not have.
+/// Nothing is saved.
+/// </summary>
+public record PlanNeedsFoodsError(string ErrorCode, string Error, List<string> MissingFoods, List<int> EmptyDays);

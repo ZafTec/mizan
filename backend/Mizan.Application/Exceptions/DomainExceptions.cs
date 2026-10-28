@@ -180,3 +180,22 @@ public sealed class RateLimitedException : DomainException
 
     public TimeSpan RetryAfter { get; }
 }
+
+/// <summary>
+/// A generated draft would have days without a food or recipe, so it is not saved. Answered as
+/// 422 <c>plan_needs_foods</c> with the empty days and the missing food names.
+/// </summary>
+public sealed class PlanNeedsFoodsException : DomainException
+{
+    public const string Code = "plan_needs_foods";
+
+    public PlanNeedsFoodsException(string message, IReadOnlyList<string> missingFoods, IReadOnlyList<int> emptyDays)
+        : base(message)
+    {
+        MissingFoods = missingFoods;
+        EmptyDays = emptyDays;
+    }
+
+    public IReadOnlyList<string> MissingFoods { get; }
+    public IReadOnlyList<int> EmptyDays { get; }
+}

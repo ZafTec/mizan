@@ -93,6 +93,14 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
 
         var rules = PlanRulesMapping.ToDomain(request.Rules);
         var context = await _contextBuilder.BuildAsync(userId, rules, request.Preference, cancellationToken);
+
+        // Nothing to plan with: refused before the allowance is spent on a draft of notes.
+        if (context.Recipes.Count == 0 && context.Foods.Count == 0
+            && !await _context.Foods.AsNoTracking().AnyAsync(f => f.UserId == null || f.UserId == userId, cancellationToken))
+        {
+            throw new PlanNeedsFoodsException(
+                DraftFoodCoverage.NothingToPlanWith, [], Enumerable.Range(0, request.DurationDays).ToList());
+        }
         var prompt = await _prompts.ResolveAsync(AiPromptKeys.MealPlan, cancellationToken);
 
         // No ceiling asked for is one draft against whatever budget the rules carry.
@@ -106,6 +114,11 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
             try
             {
                 result.Drafts.Add(await GenerateOneAsync(request, rules, ceilings[i], ceilings.Count > 1, context, prompt, userId, cancellationToken));
+            }
+            catch (PlanNeedsFoodsException ex) when (i > 0)
+            {
+                // An earlier draft stands; this budget's draft had empty days and was not saved.
+                result.Skipped.Add(new SkippedBudgetDto(ceilings[i] ?? 0, ex.Message));
             }
             catch (AiQuotaExceededException ex) when (i > 0)
             {
@@ -159,6 +172,18 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
         var foods = await ResolveFoodsAsync(userId, draft, context, cancellationToken);
         var read = MealPlanDraftReader.Read(draft, request.DurationDays, context.Recipes, foods);
 
+        // A day without a food or recipe is held to nothing, so the draft is refused, not saved.
+        var emptyDays = DraftFoodCoverage.EmptyDays(
+            read.Entries.Select(e => (e.DayIndex, PlanRulesMapping.ParseEnum(e.Kind, PlanEntryKind.Text))), request.DurationDays);
+        if (emptyDays.Count > 0)
+        {
+            var missing = read.Unresolved.Select(u => u.Text).Distinct(StringComparer.OrdinalIgnoreCase).Take(20).ToList();
+            _logger.LogInformation("A generated plan had {EmptyDays} days without foods; {Missing} names were not in the catalogue",
+                emptyDays.Count, missing.Count);
+            throw new PlanNeedsFoodsException(
+                DraftFoodCoverage.Message(emptyDays, request.DurationDays, missing), missing, emptyDays);
+        }
+
         var plan = await PlanFactory.BuildAsync(
             _entries,
             new CreateMealPlanRequest
@@ -205,14 +230,15 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
     }
 
     /// <summary>
-    /// A response that does not match the schema is a failed call, never scraped for a shape
-    /// (docs/AI.md). The reservation is already settled by then.
+    /// A response that does not match the schema is a failed call (docs/AI.md). A code fence or
+    /// a sentence around the JSON object is dropped first (<see cref="StructuredReply"/>); nothing
+    /// else is scraped. The reservation is already settled by then.
     /// </summary>
     private MealPlanDraftV1 Parse(string content)
     {
         try
         {
-            var draft = JsonSerializer.Deserialize<MealPlanDraftV1>(content, Json);
+            var draft = JsonSerializer.Deserialize<MealPlanDraftV1>(StructuredReply.Unwrap(content), Json);
             if (draft?.Days is not null) return draft;
         }
         catch (JsonException ex)

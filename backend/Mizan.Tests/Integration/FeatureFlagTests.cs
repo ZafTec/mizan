@@ -32,6 +32,7 @@ public class FeatureFlagTests
     {
         await _fixture.ResetDatabaseAsync();
         _fixture.Ai.Reset();
+        await _fixture.SeedFoodAsync("Eggs", 143, 12.6m, 0.7m, 9.5m);
         var (_, admin) = await _world.AdminAsync();
         var (owner, ownerClient) = await _world.PersonAsync("owner");
         var (member, memberClient) = await _world.PersonAsync("member");
@@ -124,6 +125,7 @@ public class FeatureFlagTests
 
     private const string OneDay = """
         {"name":"One day","note":null,"prepSessions":[],"days":[{"dayIndex":0,"entries":[
+          {"slot":"BREAKFAST","kind":"food","foodName":"Eggs","recipeId":null,"grams":120,"servings":null,"note":null,"prepSessionIndex":null},
           {"slot":"LUNCH","kind":"text","foodName":"Market salad","recipeId":null,"grams":null,"servings":null,"note":null,"prepSessionIndex":null}]}]}
         """;
 }

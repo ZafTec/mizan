@@ -69,7 +69,27 @@ public record PriceSourceAliasDto
     public string? LastSeenUrl { get; init; }
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; init; }
+
+    /// <summary>For a product waiting for review: the shared food its name matches, when one does.</summary>
+    public Guid? SuggestedFoodId { get; init; }
+    public string? SuggestedFoodName { get; init; }
+
+    /// <summary>For a product with no quantity yet: the package size read from its name, when there is one.</summary>
+    public decimal? SuggestedQuantity { get; init; }
+    public string? SuggestedUnit { get; init; }
 }
+
+/// <summary>Body of POST /api/admin/prices/aliases/accept-suggestions: up to 200 alias ids.</summary>
+public record AcceptPriceAliasSuggestionsRequest(List<Guid> AliasIds);
+
+/// <summary>One product mapped from its suggestion.</summary>
+public record AcceptedPriceAliasDto(Guid AliasId, Guid FoodId, string FoodName, decimal? Quantity, string? Unit);
+
+/// <summary>One product left as it was. <c>Reason</c> is not_found, already_reviewed or no_suggestion.</summary>
+public record SkippedPriceAliasDto(Guid AliasId, string Reason);
+
+/// <summary>Response of POST /api/admin/prices/aliases/accept-suggestions.</summary>
+public record AcceptPriceAliasSuggestionsResult(List<AcceptedPriceAliasDto> Accepted, List<SkippedPriceAliasDto> Skipped);
 
 /// <summary>
 /// Body of PUT /api/admin/prices/aliases/{id}. Every field is written as sent;
@@ -146,3 +166,9 @@ public record ResolvePriceReportRequest(string? Note = null);
 
 /// <summary>What POST /api/admin/prices/seed-staples did: prices written, staples already priced, and staples with no catalogue food of that name.</summary>
 public record SeedStaplePricesResult(int Stored, int AlreadyPriced, List<string> Missing);
+
+/// <summary>
+/// Response of POST /api/admin/prices/import-starter-foods. <c>Created</c> lists the names added;
+/// <c>Existing</c> counts the starter foods the catalogue already had.
+/// </summary>
+public record ImportStarterFoodsResult(int Created, int Existing, List<string> CreatedNames);

@@ -517,6 +517,12 @@ app.UseExceptionHandler(errorApp =>
             context.Response.StatusCode = 400;
             await context.Response.WriteAsJsonAsync(new { errorCode = "promotion_weights_required", error = weightsEx.Message, items = weightsEx.Items });
         }
+        else if (exception is PlanNeedsFoodsException needsFoodsEx)
+        {
+            context.Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
+            await context.Response.WriteAsJsonAsync(new Mizan.Contracts.Planning.PlanNeedsFoodsError(
+                PlanNeedsFoodsException.Code, needsFoodsEx.Message, [.. needsFoodsEx.MissingFoods], [.. needsFoodsEx.EmptyDays]));
+        }
         else if (exception is ConflictException conflictEx)
         {
             context.Response.StatusCode = 409;

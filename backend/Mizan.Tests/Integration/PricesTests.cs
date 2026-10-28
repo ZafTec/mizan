@@ -301,6 +301,80 @@ public class PricesTests
         (await PlanAsync(client, planId)).Currency.Should().Be("ETB");
     }
 
+    [Fact]
+    public async Task AnAdminImportsTheStarterFoodsTwice_AndTheCatalogueHasEachOnce()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (_, admin) = await _world.PersonAsync("admin", role: "admin");
+        var (_, person) = await _world.PersonAsync("person");
+        await _world.FoodAsync("Butter", 700, 1, 0, 80);
+
+        var first = await admin.PostAsync("/api/admin/prices/import-starter-foods", null);
+        first.StatusCode.Should().Be(HttpStatusCode.OK, await first.Content.ReadAsStringAsync());
+        var imported = (await first.Content.ReadFromJsonAsync<ImportStarterFoodsResult>())!;
+        imported.Existing.Should().Be(1, "the catalogue already had a shared Butter");
+        imported.CreatedNames.Should().Contain(["Injera", "Teff", "Berbere", "Niter kibbeh", "Lentils", "Shiro wat"]).And.NotContain("Butter");
+
+        var again = (await (await admin.PostAsync("/api/admin/prices/import-starter-foods", null)).Content.ReadFromJsonAsync<ImportStarterFoodsResult>())!;
+        again.Should().Match<ImportStarterFoodsResult>(r => r.Created == 0 && r.Existing == imported.Created + 1);
+
+        var foods = await _world.DbAsync(db => db.Foods.AsNoTracking().Where(f => f.UserId == null).ToListAsync());
+        foods.GroupBy(f => f.Name.ToLower()).Should().OnlyContain(g => g.Count() == 1);
+        // The ids are the ones PostgreSQL derives, as the catalogue seeds derive theirs.
+        var injeraId = await _world.DbAsync(db => db.Database.SqlQueryRaw<Guid>("SELECT md5('mizan-food:Injera')::uuid AS \"Value\"").SingleAsync());
+        foods.Single(f => f.Name == "Injera").Should().Match<Domain.Entities.Food>(f => f.Id == injeraId && !f.IsVerified && f.CaloriesPer100g > 0);
+        foods.Single(f => f.Name == "Teff").IsVerified.Should().BeTrue("USDA values are sourced");
+
+        (await person.PostAsync("/api/admin/prices/import-starter-foods", null)).StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task TheReviewQueueSuggestsAFoodAndPackageSize_AndAnAdminAcceptsThemInBulk()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (_, admin) = await _world.PersonAsync("admin", role: "admin");
+        var teff = await _world.FoodAsync("Teff", 367, 13, 73, 2.4m);
+        var milk = await _world.FoodAsync("Whole milk", 61, 3.2m, 4.8m, 3.3m);
+        var eggs = await _world.FoodAsync("Eggs", 143, 12.6m, 0.7m, 9.5m);
+        var created = await admin.PostAsJsonAsync("/api/admin/prices/sources",
+            new SavePriceSourceRequest("Arada Mart", "Scraper", "ET-AA", "https://aradamart.net", "aradamart", "0 3 * * *"));
+        var sourceId = (await created.Content.ReadFromJsonAsync<PriceSourceCreatedResult>())!.Id;
+        await Receipt(Worker(), new PriceObservationBatch(sourceId,
+        [
+            new PriceObservation("Teff Magna 500gm", "sku-teff", 95, "ETB", null, null, Seen, null),
+            new PriceObservation("Whole Milk 1L", "sku-milk", 90, "ETB", null, null, Seen, null),
+            new PriceObservation("Farm eggs 6pc", "sku-eggs", 80, "ETB", null, null, Seen, null),
+            new PriceObservation("Carrier bag", "sku-bag", 5, "ETB", null, null, Seen, null),
+        ]));
+
+        var queue = (await admin.GetFromJsonAsync<Paged<PriceSourceAliasDto>>("/api/admin/prices/aliases?queue=true"))!.Items;
+        queue.Should().HaveCount(4);
+        queue.Single(a => a.ProductName == "Teff Magna 500gm").Should().Match<PriceSourceAliasDto>(a =>
+            a.SuggestedFoodId == teff.Id && a.SuggestedFoodName == "Teff" && a.SuggestedQuantity == 500 && a.SuggestedUnit == "g");
+        queue.Single(a => a.ProductName == "Whole Milk 1L").Should().Match<PriceSourceAliasDto>(a =>
+            a.SuggestedFoodId == milk.Id && a.SuggestedQuantity == 1 && a.SuggestedUnit == "l");
+        queue.Single(a => a.ProductName == "Farm eggs 6pc").Should().Match<PriceSourceAliasDto>(a =>
+            a.SuggestedFoodId == eggs.Id && a.SuggestedQuantity == 6 && a.SuggestedUnit == "piece");
+        queue.Single(a => a.ProductName == "Carrier bag").SuggestedFoodId.Should().BeNull();
+
+        var response = await admin.PostAsJsonAsync("/api/admin/prices/aliases/accept-suggestions",
+            new AcceptPriceAliasSuggestionsRequest([.. queue.Select(a => a.Id), Guid.NewGuid()]));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        var result = (await response.Content.ReadFromJsonAsync<AcceptPriceAliasSuggestionsResult>())!;
+        result.Accepted.Select(a => a.FoodId).Should().BeEquivalentTo([teff.Id, milk.Id, eggs.Id]);
+        result.Skipped.Select(s => s.Reason).Should().BeEquivalentTo(["no_suggestion", "not_found"]);
+        var left = (await admin.GetFromJsonAsync<Paged<PriceSourceAliasDto>>("/api/admin/prices/aliases?queue=true"))!.Items;
+        left.Should().ContainSingle().Which.ProductName.Should().Be("Carrier bag");
+        var teffAlias = (await admin.GetFromJsonAsync<Paged<PriceSourceAliasDto>>("/api/admin/prices/aliases?search=teff"))!.Items.Single();
+        teffAlias.Should().Match<PriceSourceAliasDto>(a => a.FoodId == teff.Id && a.Quantity == 500 && a.Unit == "g" && a.SuggestedFoodId == null);
+
+        // Accepting again changes nothing: they are reviewed now.
+        var again = (await (await admin.PostAsJsonAsync("/api/admin/prices/aliases/accept-suggestions",
+            new AcceptPriceAliasSuggestionsRequest([teffAlias.Id]))).Content.ReadFromJsonAsync<AcceptPriceAliasSuggestionsResult>())!;
+        again.Skipped.Should().ContainSingle().Which.Reason.Should().Be("already_reviewed");
+    }
+
     private HttpClient Worker()
     {
         var client = _fixture.CreateClient();

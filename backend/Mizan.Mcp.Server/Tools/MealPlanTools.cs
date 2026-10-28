@@ -46,6 +46,7 @@ public sealed class MealPlanTools
     [McpServerTool(Name = "generate_meal_plan")]
     [Description("Draft a meal plan with the assistant from rules, the user's recipes, catalogue foods and prices. "
         + "One draft per budget in budgetCeilings, each saved with status Draft and returned with its violations and cost table. "
+        + "When the catalogue has no foods for some days, nothing is saved and the reply names the missing foods and days. "
         + "Nutrition and cost are computed by Mizan, not written by the model. Spends the daily planning allowance (Free: one plan a day). "
         + "The user confirms a draft in the app, or it can be read with get_meal_plan.")]
     public async Task<string> GenerateMealPlan(
@@ -79,7 +80,15 @@ public sealed class MealPlanTools
             BudgetCeilings = budgetCeilings?.ToList() ?? [],
             DailyBudget = dailyBudget,
         };
-        return await _api.PostAsync("/api/MealPlans/generate", request, ct);
+        try
+        {
+            return await _api.PostAsync("/api/MealPlans/generate", request, ct);
+        }
+        catch (BackendApiException error) when (error.ErrorCode == "plan_needs_foods")
+        {
+            // Not a fault: the catalogue lacks foods for some days, and the message names them.
+            return error.Message;
+        }
     }
 
     [McpServerTool(Name = "get_meal_plan", ReadOnly = true, Idempotent = true)]

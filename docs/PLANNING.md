@@ -192,7 +192,9 @@ Records live in `Mizan.Contracts/Prices`; handlers in `Application/Prices`. `Pri
 | `GET /api/Prices/regions`; `PUT /api/Users/me` with `priceRegionCode` | `GetPriceRegionsQuery`; `UpdateUserCommand` refuses a region that is missing or disabled. `GET /api/Users/me` returns the region. |
 | `GET|POST /api/admin/prices/regions`, `PUT /regions/{code}` | `GetPriceRegionsQuery`, `CreatePriceRegionCommand`, `UpdatePriceRegionCommand`. |
 | `GET|POST /api/admin/prices/sources`, `PUT|DELETE /sources/{id}`, `POST /sources/{id}/run` | `GetPriceSourcesQuery`, `SavePriceSourceCommand`, `DeletePriceSourceCommand`, `RunPriceSourceCommand`. Run now calls the worker at `Prices:WorkerUrl` and answers 202; 409 when that is unset, 502 when the worker does not answer. |
-| `GET /api/admin/prices/aliases?queue=&sourceId=&search=`, `PUT /aliases/{id}` | `GetPriceAliasesQuery`, `UpdatePriceAliasCommand`. `queue=true` is the review queue. |
+| `GET /api/admin/prices/aliases?queue=&sourceId=&search=`, `PUT /aliases/{id}` | `GetPriceAliasesQuery`, `UpdatePriceAliasCommand`. `queue=true` is the review queue. A product waiting for review carries `suggestedFoodId`, `suggestedFoodName`, `suggestedQuantity`, `suggestedUnit`. |
+| `POST /api/admin/prices/aliases/accept-suggestions` | `AcceptPriceAliasSuggestionsCommand` (body `{aliasIds}`, at most 200): maps each product to its suggestion, worked out again on the server; returns `accepted` and `skipped` (`not_found`, `already_reviewed`, `no_suggestion`). |
+| `POST /api/admin/prices/import-starter-foods` | `ImportStarterFoodsCommand`: adds the starter foods to the shared catalogue; returns `created`, `existing`, `createdNames`. |
 | `POST /api/admin/prices/prices`, `POST /seed-staples` | `CreateManualPriceCommand` (Estimated or Observed, under the region's `Manual` source, created on first use); `SeedStaplePricesCommand`. |
 | `GET /api/admin/prices/reports?status=`, `POST /reports/{id}/accept|reject` | `GetPriceReportsQuery`, `ResolvePriceReportCommand`. Accepting writes a `Reported` price under the region's `User reports` source; the reporter is notified either way. |
 
@@ -201,8 +203,10 @@ Where the implementation settled details the design left open:
 - An observation finds its alias by `productKey`, then by `productName`. The alias's quantity and unit win over the listing's. A mapped alias without a usable quantity, and an unknown product, are queued; an ignored alias or a price in another currency is ignored. Every sighting updates `lastSeen*`.
 - Costing runs `ShoppingAggregator` then `PlanCostCalculator` (`PlanCosting` in Domain) over the whole plan, each day and each entry, so the plan and its list agree. `weeklyCost` is the total over `durationDays` times seven. `overBudget` is null without a budget or when the budget is in another currency. A day or entry with nothing priced has a null cost.
 - `GET /api/MealPlans/{id}` adds `currency`, `totalCost`, `weeklyCost`, `overBudget`, `costCoverage`, `costConfidence` (the lowest used) and `unpricedItems`. The plan day adds `currency` and `overBudget`, true when the day's cost is over `DailyBudget` (null without one, without a cost, or in another currency). A shopping list adds `currency`, `totalCost`, `costCoverage`, `costConfidence`, `unpricedCount`, and per item `cost`, `costConfidence`, `unpricedReason`. These reads carry the `prices` cache tag, cleared by every price write, and the viewer's `price-region` tag, cleared when they switch.
+- `StarterFoods` holds about 40 shared foods per 100 g: generic foods with USDA SR Legacy values (stored verified) and Ethiopian staples (injera, berbere, niter kibbeh, ayib, shiro, misir wat, gomen, doro wat, kitfo, tibs, kolo) with estimated values (stored unverified, for an administrator to correct). Their ids are `md5('mizan-food:' || name)::uuid`, as `CatalogSeed` derives exercise ids. An import skips a food whose id exists or whose name a shared food already has. Run it before seeding the staples on a fresh deployment; the names match `AddisAbabaStaplePrices`.
+- Review queue suggestions: `PackageSize` in Domain reads the size anywhere in the product name (`500gm`, `1kg`, `1L`, `6pc`, `6 x 500ml`), with the worker's unit spellings; the rest of the name is matched to a shared food by `FoodNameMatch`, as the planner resolves names. A suggestion is only a suggestion until accepted.
 - There is no seed at migration time: the catalogue foods do not exist then. `POST /api/admin/prices/seed-staples` writes the 33 Addis Ababa staples in `AddisAbabaStaplePrices` as `Estimated` ETB prices for the catalogue foods whose names match, skips foods that already have an estimate, and returns the names it could not match.
-- MCP: `get_food_price`, `report_food_price` (nutrition scopes) and `admin_list_price_sources`, `admin_run_price_source`, `admin_list_price_review_queue`, `admin_update_price_alias`, `admin_add_manual_price`, `admin_list_price_reports`, `admin_resolve_price_report`. Telegram: `PlanCostText` formats the cost lines for `/plan` and `/shop`.
+- MCP: `get_food_price`, `report_food_price` (nutrition scopes) and `admin_list_price_sources`, `admin_run_price_source`, `admin_list_price_review_queue`, `admin_update_price_alias`, `admin_accept_price_alias_suggestions`, `admin_import_starter_foods`, `admin_add_manual_price`, `admin_list_price_reports`, `admin_resolve_price_report`. Telegram: `PlanCostText` formats the cost lines for `/plan` and `/shop`.
 
 ## AI planning
 
@@ -211,8 +215,9 @@ Where the implementation settled details the design left open:
 1. Build the context through `IDataAccessPolicy`. It holds the goal, the recipes of the user, the catalogue foods that match the allow list or the preference text, and the price book.
 2. Call the provider with the `meal_plan_v1` schema. The schema has days, entries, and prep sessions. An entry has slot, kind, food name or recipe id, grams or servings, and note.
 3. Resolve food names to catalogue foods by exact name, then by search. An unresolved name becomes a text entry marked for review.
-4. Run `PlanRuleCheck` and `PlanCostCalculator`.
-5. Save the plan as `Draft`. Return the plan, the violations, and the cost table. One draft per budget ceiling.
+4. Refuse a draft with a day that has no food or recipe entry (`DraftFoodCoverage`): `422 plan_needs_foods` names the empty days and the missing foods, and nothing is saved. With no recipes and no usable foods at all, this refusal comes before the call.
+5. Run `PlanRuleCheck` and `PlanCostCalculator`.
+6. Save the plan as `Draft`. Return the plan, the violations, and the cost table. One draft per budget ceiling.
 
 The person confirms a draft to make it `Active`. Chat turns edit a draft through the entry commands. The model never writes nutrition or prices into the plan. Code computes both.
 

@@ -85,6 +85,11 @@ public sealed class AdminPricesController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Maps each product to its suggested food and package size. Skipped products come back with a reason.</summary>
+    [HttpPost("aliases/accept-suggestions")]
+    public async Task<ActionResult<AcceptPriceAliasSuggestionsResult>> AcceptSuggestions([FromBody] AcceptPriceAliasSuggestionsRequest request) =>
+        Ok(await _mediator.Send(new AcceptPriceAliasSuggestionsCommand(request.AliasIds ?? [])));
+
     // ---- Manual prices ----------------------------------------------------
 
     [HttpPost("prices")]
@@ -94,6 +99,11 @@ public sealed class AdminPricesController : ControllerBase
             request.FoodId, request.RegionCode, request.Price, request.Quantity, request.Unit, request.Confidence, request.ObservedAt));
         return StatusCode(StatusCodes.Status201Created, new FoodPriceCreatedResult(id));
     }
+
+    /// <summary>Adds the starter foods (USDA SR Legacy generics and estimated Ethiopian staples) to the shared catalogue. Safe to repeat.</summary>
+    [HttpPost("import-starter-foods")]
+    public async Task<ActionResult<ImportStarterFoodsResult>> ImportStarterFoods() =>
+        Ok(await _mediator.Send(new ImportStarterFoodsCommand()));
 
     /// <summary>Writes the Addis Ababa staples as Estimated prices for the catalogue foods that match. Safe to repeat.</summary>
     [HttpPost("seed-staples")]

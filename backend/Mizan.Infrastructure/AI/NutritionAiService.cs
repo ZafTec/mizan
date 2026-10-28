@@ -321,15 +321,15 @@ public class NutritionAiService : INutritionAiService
     }
 
     /// <summary>
-    /// A response that does not match its declared schema is a failed call.
-    /// There is no regex fallback: scraping a shape out of prose is how a
-    /// half-parsed answer ends up looking like a real one (docs/AI.md).
+    /// A response that does not match its declared schema is a failed call. A code fence or a
+    /// sentence around the one JSON object is dropped (<see cref="StructuredReply"/>); nothing
+    /// else is scraped: a half-parsed answer must not look like a real one (docs/AI.md).
     /// </summary>
     private T Parse<T>(string content, string what, string failure)
     {
         try
         {
-            return JsonSerializer.Deserialize<T>(content, Json)
+            return JsonSerializer.Deserialize<T>(StructuredReply.Unwrap(content), Json)
                 ?? throw new AiUnavailableException(failure);
         }
         catch (JsonException ex)

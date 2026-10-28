@@ -53,7 +53,8 @@ public sealed class PriceTools
         _api.PostAsync($"/api/admin/prices/sources/{ToolArguments.ParseId(sourceId, "sourceId")}/run", null, ct);
 
     [McpServerTool(Name = "admin_list_price_review_queue", ReadOnly = true, Idempotent = true)]
-    [Description("Admin only. Products the price sources showed that are not mapped to a food or ignored yet, newest first, with the last price seen.")]
+    [Description("Admin only. Products the price sources showed that are not mapped to a food or ignored yet, newest first, with the last price seen, "
+        + "the suggested shared food (suggestedFoodId, suggestedFoodName) and the package size read from the name (suggestedQuantity, suggestedUnit).")]
     public Task<string> ReviewQueue(
         [Description("Price source UUID, optional")] string? sourceId = null,
         [Description("Part of the product name, optional")] string? search = null,
@@ -85,6 +86,24 @@ public sealed class PriceTools
             $"/api/admin/prices/aliases/{ToolArguments.ParseId(aliasId, "aliasId")}",
             new { foodId = ToolArguments.ParseOptionalId(foodId, "foodId"), quantity, unit, ignored },
             ct);
+
+    [McpServerTool(Name = "admin_accept_price_alias_suggestions")]
+    [Description("Admin only. Maps up to 200 products from the review queue to their suggested food and package size, as the queue shows them. "
+        + "Products already mapped or ignored, or with no suggested food, are skipped and listed with the reason.")]
+    public Task<string> AcceptAliasSuggestions(
+        [Description("Alias UUIDs from the review queue")] string[] aliasIds,
+        CancellationToken ct = default) =>
+        _api.PostAsync(
+            "/api/admin/prices/aliases/accept-suggestions",
+            new { aliasIds = aliasIds.Select(id => ToolArguments.ParseId(id, "aliasIds")).ToList() },
+            ct);
+
+    [McpServerTool(Name = "admin_import_starter_foods", Idempotent = true)]
+    [Description("Admin only. Adds the starter foods to the shared catalogue: generic foods with USDA SR Legacy values per 100 g (verified) and "
+        + "Ethiopian staples such as injera, shiro, berbere and niter kibbeh with estimated values (unverified). Safe to repeat; existing foods are left alone. "
+        + "Seeding the staple prices afterwards (Admin, Prices) prices them in Addis Ababa.")]
+    public Task<string> ImportStarterFoods(CancellationToken ct = default) =>
+        _api.PostAsync("/api/admin/prices/import-starter-foods", null, ct);
 
     [McpServerTool(Name = "admin_add_manual_price")]
     [Description(
