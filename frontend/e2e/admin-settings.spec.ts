@@ -36,6 +36,7 @@ test("an administrator edits a setting, is told why a value is refused, and clea
   for (const section of [
     "AI provider",
     "AI limits",
+    "Storage",
     "Telegram",
     "Push",
     "Billing",
@@ -44,7 +45,10 @@ test("an administrator edits a setting, is told why a value is refused, and clea
 
   const port = row(page, "Smtp.Port");
   await expect(port.getByTestId("setting-value")).toHaveText("587");
-  await expect(port).toContainText("Configuration");
+  await expect(port).toContainText("Default");
+  await expect(page.getByTestId("settings-notice-storage")).toHaveText(
+    "Storage is not configured. Image uploads are refused.",
+  );
 
   await port.getByRole("button", { name: "Edit SMTP port" }).click();
   const field = port.getByLabel("SMTP port", { exact: true });
@@ -64,7 +68,8 @@ test("an administrator edits a setting, is told why a value is refused, and clea
 
   await port.getByRole("button", { name: "Clear SMTP port" }).click();
   await expect(port.getByTestId("setting-value")).toHaveText("587");
-  await expect(port).toContainText("Configuration");
+  await expect(port).toContainText("Default");
+  await expect(page.getByText("SMTP port uses the default again")).toBeVisible();
 
   const s = await state(context);
   expect(settingsWrites(s).map((w) => [w.path, w.body])).toEqual([
@@ -96,7 +101,7 @@ test("a secret is entered masked and never shown, and the test buttons report ba
 
   const key = row(page, "Ai.ApiKey");
   await expect(key.getByTestId("setting-value")).toHaveText("Set");
-  await expect(key).toContainText("Configuration");
+  await expect(key).toContainText("Set here");
 
   const email = page.getByRole("region", { name: "Email" });
   await email.getByRole("button", { name: "Send test email" }).click();
@@ -131,6 +136,11 @@ test("the page works from the keyboard on a narrow screen", async ({
   await signIn(context);
   await page.goto("/admin/settings");
 
+  const notice = page.getByTestId("settings-notice-email");
+  await expect(notice).toHaveText(
+    "Email is not configured. Verification and password emails are not sent.",
+  );
+
   const host = row(page, "Smtp.Host");
   await host.getByRole("button", { name: "Edit SMTP host" }).focus();
   await page.keyboard.press("Enter");
@@ -148,6 +158,8 @@ test("the page works from the keyboard on a narrow screen", async ({
   await expect(host.getByTestId("setting-value")).toHaveText(
     "smtp.example.test",
   );
+  // With a host set, the section no longer says email is off.
+  await expect(notice).toHaveCount(0);
 
   const security = row(page, "Smtp.Security");
   await security.getByRole("button", { name: "Edit Security" }).click();

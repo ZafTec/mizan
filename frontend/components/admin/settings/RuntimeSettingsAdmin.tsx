@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Pill, type PillTone } from "@/components/ui/data-table";
 import {
   clearRuntimeSetting,
@@ -16,7 +17,7 @@ import { Select } from "@/components/ui/select";
 
 const SOURCE: Record<string, { label: string; tone: PillTone }> = {
   database: { label: "Set here", tone: "info" },
-  configuration: { label: "Configuration", tone: "neutral" },
+  default: { label: "Default", tone: "neutral" },
   unset: { label: "Unset", tone: "warn" },
 };
 
@@ -31,7 +32,9 @@ function shown(setting: RuntimeSetting): string {
  * /admin/settings: the runtime settings in their sections
  * (docs/ADMIN.md#runtime-settings). The rows, rules and messages come from
  * the API's catalog; a value the API refuses shows its message under the
- * field. Saving or clearing replaces the row with what the API answered.
+ * field. Saving or clearing replaces the row with what the API answered, and
+ * refreshes the page so a section's notice (such as "Email is not
+ * configured") follows what is now set. The notice text is the API's.
  */
 export default function RuntimeSettingsAdmin({
   settings,
@@ -45,8 +48,11 @@ export default function RuntimeSettingsAdmin({
       ),
     ),
   );
-  const replace = (setting: RuntimeSetting) =>
+  const router = useRouter();
+  const replace = (setting: RuntimeSetting) => {
     setRows((current) => ({ ...current, [setting.key]: setting }));
+    router.refresh();
+  };
 
   return (
     <div className="space-y-10">
@@ -61,6 +67,15 @@ export default function RuntimeSettingsAdmin({
             {group.id === "email" && <SmtpTest />}
             {group.id === "ai-provider" && <AiTest />}
           </header>
+          {group.notice && (
+            <p
+              role="status"
+              data-testid={`settings-notice-${group.id}`}
+              className="mb-3 rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground"
+            >
+              {group.notice}
+            </p>
+          )}
           <ul>
             {group.settings.map((setting) => (
               <SettingRow
@@ -119,7 +134,7 @@ function SettingRow({
     setBusy(true);
     try {
       onChange(await clearRuntimeSetting(setting.key));
-      appToast.success(`${setting.label} uses configuration again`);
+      appToast.success(`${setting.label} uses the default again`);
       close();
     } catch (caught) {
       appToast.error(caught, `Could not clear ${setting.label}`);

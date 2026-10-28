@@ -6097,6 +6097,80 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/internal/settings/telegram-bot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TelegramBotSettings"];
+                        "application/json": components["schemas"]["TelegramBotSettings"];
+                        "text/json": components["schemas"]["TelegramBotSettings"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/internal/settings/prices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PriceCrawlSettings"];
+                        "application/json": components["schemas"]["PriceCrawlSettings"];
+                        "text/json": components["schemas"]["PriceCrawlSettings"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/McpConnections": {
         parameters: {
             query?: never;
@@ -14145,6 +14219,13 @@ export interface components {
         PreviewMealQuery: {
             lines: components["schemas"]["MealPreviewLine"][];
         };
+        PriceCrawlSettings: {
+            userAgent: string;
+            /** Format: int32 */
+            requestDelayMs: number;
+            /** Format: int32 */
+            maxProductsPerRun: number;
+        };
         PriceObservation: {
             productName: string;
             productKey?: string | null;
@@ -14575,6 +14656,7 @@ export interface components {
             id: string;
             title: string;
             settings: components["schemas"]["RuntimeSettingDto"][];
+            notice?: string | null;
         };
         RuntimeSettingsDto: {
             groups: components["schemas"]["RuntimeSettingGroupDto"][];
@@ -14965,6 +15047,15 @@ export interface components {
             memoryUsageBytes: number;
             /** Format: double */
             uptimeSeconds: number;
+        };
+        TelegramBotSettings: {
+            botToken?: string | null;
+            botUsername?: string | null;
+            useWebhook: boolean;
+            webhookSecret?: string | null;
+            miniAppUrl?: string | null;
+            /** Format: int32 */
+            miniAppMaxAgeSeconds: number;
         };
         TelegramLinkCodeDto: {
             code: string;

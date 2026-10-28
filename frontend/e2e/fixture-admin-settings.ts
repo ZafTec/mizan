@@ -4,7 +4,7 @@ import type { components } from "../types/api.generated";
  * The runtime settings half of the UI fixture: GET, PUT and DELETE
  * /api/admin/settings and the two test buttons, typed from the generated
  * OpenAPI schema. A few settings per section stand in for the catalog; the
- * refusal messages are worded as the API words them. Settings live per
+ * refusal messages and section notices are worded as the API words them. Settings live per
  * session (keyed by the session's state object), and every write lands in the
  * session's `writes[]` with its Idempotency-Key.
  */
@@ -44,7 +44,7 @@ function initialGroups(): Group[] {
   const configured = (value: string) => ({
     value,
     hasValue: true,
-    source: "configuration",
+    source: "default",
   });
   return [
     {
@@ -55,6 +55,7 @@ function initialGroups(): Group[] {
           key: "Smtp.Host",
           group: "email",
           label: "SMTP host",
+          allowEmpty: true,
           format: "host",
         }),
         setting({
@@ -100,7 +101,7 @@ function initialGroups(): Group[] {
           label: "API key",
           isSecret: true,
           hasValue: true,
-          source: "configuration",
+          source: "database",
         }),
       ],
     },
@@ -116,6 +117,25 @@ function initialGroups(): Group[] {
           min: 0,
           max: 1000000,
           ...configured("5"),
+        }),
+      ],
+    },
+    {
+      id: "storage",
+      title: "Storage",
+      settings: [
+        setting({
+          key: "Storage.ServiceUrl",
+          group: "storage",
+          label: "Endpoint",
+          format: "url",
+          allowEmpty: true,
+        }),
+        setting({
+          key: "Storage.Bucket",
+          group: "storage",
+          label: "Bucket",
+          ...configured("mizan"),
         }),
       ],
     },
@@ -171,7 +191,7 @@ function check(
     return item.allowEmpty
       ? { value: "" }
       : {
-          error: `${item.label} cannot be empty. Clear the setting to use the configuration value.`,
+          error: `${item.label} cannot be empty. Clear the setting to use the default.`,
         };
   if (item.type === "int") {
     const number = Number(text);
@@ -199,6 +219,30 @@ function check(
     };
   return { value: text };
 }
+
+/** What a section says while the keys it needs have no value, as the API's catalog words it. */
+const NOTICES: Record<string, { keys: string[]; message: string }> = {
+  email: {
+    keys: ["Smtp.Host"],
+    message:
+      "Email is not configured. Verification and password emails are not sent.",
+  },
+  storage: {
+    keys: ["Storage.ServiceUrl"],
+    message: "Storage is not configured. Image uploads are refused.",
+  },
+};
+
+const withNotices = (groups: Group[]): Group[] =>
+  groups.map((group) => {
+    const notice = NOTICES[group.id];
+    const set = (key: string) =>
+      group.settings.some((s) => s.key === key && s.source === "database" && s.hasValue);
+    return {
+      ...group,
+      notice: notice && !notice.keys.every(set) ? notice.message : null,
+    };
+  });
 
 const sessions = new WeakMap<Host, Group[]>();
 
@@ -237,7 +281,7 @@ export async function handleAdminSettings(
     });
 
   if (path === "/api/admin/settings" && method === "GET")
-    return json({ groups });
+    return json({ groups: withNotices(groups) });
   if (path === "/api/admin/settings/smtp/test" && method === "POST") {
     record({});
     return json({ jobId: SMTP_TEST_JOB_ID, to: ADMIN_EMAIL });
