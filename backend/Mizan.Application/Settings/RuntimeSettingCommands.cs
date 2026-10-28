@@ -33,7 +33,7 @@ public record SetRuntimeSettingCommand(string Key, string Value) : IRequest<Runt
     };
 }
 
-/// <summary>Clears one runtime setting, so the configuration value applies again.</summary>
+/// <summary>Clears one runtime setting, so its default applies again.</summary>
 public record ClearRuntimeSettingCommand(string Key) : IRequest<RuntimeSettingDto>, IRedactedAudit
 {
     /// <summary>The key again, so the audit row's entity id names the setting.</summary>
@@ -111,11 +111,13 @@ public sealed class GetRuntimeSettingsQueryHandler : IRequestHandler<GetRuntimeS
     public async Task<RuntimeSettingsDto> Handle(GetRuntimeSettingsQuery request, CancellationToken cancellationToken)
     {
         var all = await _settings.ListAsync(cancellationToken);
+        var set = all.Where(s => s.HasValue).Select(s => s.Definition.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var groups = RuntimeSettingGroups.All
             .Select(g => new RuntimeSettingGroupDto(
                 g.Id,
                 g.Title,
-                all.Where(s => s.Definition.Group == g.Id).Select(RuntimeSettingMapping.ToDto).ToList()))
+                all.Where(s => s.Definition.Group == g.Id).Select(RuntimeSettingMapping.ToDto).ToList(),
+                g.NoticeFor(set.Contains)))
             .ToList();
         return new RuntimeSettingsDto(groups);
     }

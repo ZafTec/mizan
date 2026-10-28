@@ -4,7 +4,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Infrastructure.AI;
@@ -49,8 +48,9 @@ public static class DependencyInjection
 
         services.AddHybridCache();
 
-        // Runtime settings: values an administrator sets in the admin area, laid over configuration
-        // and read per use (docs/ADMIN.md#runtime-settings). Their secrets are protected with Data
+        // Runtime settings: values an administrator sets in the admin area, read per use. The
+        // environment never sets them; each key is its stored value or its built-in default
+        // (docs/ADMIN.md#runtime-settings). Their secrets are protected with Data
         // Protection, whose key ring lives in the database so it survives restarts and every API
         // instance shares it. DataProtection__KeysPath moves the ring to a directory instead (a volume
         // every instance mounts), which keeps it out of database backups.
@@ -72,6 +72,11 @@ public static class DependencyInjection
         AddRuntimeOptions<TelegramOptions>(services, TelegramOptions.SectionName);
         AddRuntimeOptions<PushOptions>(services, PushOptions.SectionName);
         AddRuntimeOptions<PaddleOptions>(services, PaddleOptions.SectionName);
+        AddRuntimeOptions<StorageOptions>(services, StorageOptions.SectionName);
+        AddRuntimeOptions<AuthorizationServerOptions>(services, AuthorizationServerOptions.SectionName);
+        AddRuntimeOptions<OutboxOptions>(services, OutboxOptions.SectionName);
+        AddRuntimeOptions<PriceCrawlOptions>(services, PriceCrawlOptions.SectionName);
+        services.AddSingleton<IServiceSettings, ServiceSettings>();
 
         // Domain services
         services.TryAddSingleton(TimeProvider.System);
@@ -88,17 +93,16 @@ public static class DependencyInjection
         services.AddScoped<IAchievementEvaluator, AchievementEvaluator>();
         services.AddScoped<INotificationWriter, NotificationWriter>();
 
-        // Identity - the backend owns auth end to end since v2 (docs/ARCHITECTURE.md#identity)
+        // Identity - the backend owns auth end to end since v2 (docs/ARCHITECTURE.md#identity).
+        // App is the one options section bound from the environment: the public URL and cookie
+        // domain must be known before the database is.
         services.Configure<AppOptions>(configuration.GetSection(AppOptions.SectionName));
-        services.Configure<TelegramOptions>(configuration.GetSection(TelegramOptions.SectionName));
         services.AddSingleton<ITelegramSettings, TelegramSettings>();
-        services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
         services.AddSingleton<IPasswordHasher, PasswordHasherAdapter>();
         services.AddSingleton<IAppUrls, AppUrls>();
         services.AddScoped<ISessionService, SessionService>();
 
         // OAuth authorization server for MCP clients and our own apps (docs/MCP.md#connect-with-oauth).
-        services.Configure<AuthorizationServerOptions>(configuration.GetSection(AuthorizationServerOptions.SectionName));
         services.AddSingleton<IOAuthSettings, OAuthSettings>();
         services.AddHttpClient(OAuthClientMetadataFetcher.HttpClientName)
             .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
@@ -126,20 +130,11 @@ public static class DependencyInjection
         // Object storage - one S3 client covers MinIO and Cloudflare R2
         // (docs/ARCHITECTURE.md#storage-caching-and-jobs). Unconfigured is a supported state: the API
         // starts and only uploads refuse.
-        services.Configure<StorageOptions>(configuration.GetSection(StorageOptions.SectionName));
-        if (string.IsNullOrWhiteSpace(configuration[$"{StorageOptions.SectionName}:ServiceUrl"]))
-        {
-            services.AddSingleton<IStorageService, UnconfiguredStorageService>();
-        }
-        else
-        {
-            services.AddSingleton<IStorageService, S3StorageService>();
-        }
+        services.AddSingleton<IStorageService, S3StorageService>();
 
         // AI platform. Quota and consent are registered with the provider, not
         // after it: an unmetered or unconsented call must not be constructible
         // (docs/AI.md).
-        services.Configure<AiOptions>(configuration.GetSection(AiOptions.SectionName));
         services.AddHttpClient(OpenAiCompatibleProvider.HttpClientName);
         services.AddSingleton<IAiProvider, OpenAiCompatibleProvider>();
         services.AddSingleton<IAiProviderIncidents, AiProviderIncidents>();
@@ -155,7 +150,6 @@ public static class DependencyInjection
 
         // Outbox: reliable work that must not run inside the request that
         // asked for it (docs/ARCHITECTURE.md#storage-caching-and-jobs).
-        services.Configure<OutboxOptions>(configuration.GetSection(OutboxOptions.SectionName));
         services.AddScoped<IOutbox, Outbox.Outbox>();
         services.AddScoped<IOutboxHandler, EmailJobHandler>();
         services.AddScoped<IOutboxHandler, EvalRunJobHandler>();
@@ -164,13 +158,12 @@ public static class DependencyInjection
         services.AddScoped<IOutboxHandler, TelegramMessageJobHandler>();
 
         // Messages to a linked Telegram chat go through the bot service, which alone holds the
-        // token (docs/TELEGRAM.md#evening-reminder). Off until Telegram:BotServiceUrl is set.
+        // token (docs/TELEGRAM.md#evening-reminder). Off until Telegram.BotServiceUrl is set.
         services.AddHttpClient(TelegramBotNotifier.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(15));
         services.AddSingleton<ITelegramBotNotifier, TelegramBotNotifier>();
         services.AddScoped<ITelegramMessenger, TelegramMessenger>();
 
         // Push to phones. Off until Firebase credentials are configured (docs/ARCHITECTURE.md#native-clients).
-        services.Configure<PushOptions>(configuration.GetSection(PushOptions.SectionName));
         services.AddHttpClient(FcmPushSender.HttpClientName);
         services.AddSingleton<IPushSender, FcmPushSender>();
 
@@ -181,7 +174,6 @@ public static class DependencyInjection
         services.AddHostedService<EveningReminderScheduler>();
 
         // Billing
-        services.Configure<PaddleOptions>(configuration.GetSection(PaddleOptions.SectionName));
         services.AddScoped<IEntitlementService, EntitlementService>();
         services.AddHttpClient(Billing.PaddleApiClient.HttpClientName);
         services.AddScoped<IPaddleApiClient, Billing.PaddleApiClient>();
@@ -193,19 +185,13 @@ public static class DependencyInjection
         return services;
     }
 
-    /// <summary>
-    /// One overlay per options type, registered as a singleton under both its interfaces, so the
-    /// settings list and every consumer read the same instance.
-    /// </summary>
+    /// <summary>One options object per section, shared by every consumer so it is built once per settings change.</summary>
     private static void AddRuntimeOptions<TOptions>(IServiceCollection services, string section)
-        where TOptions : class
+        where TOptions : class, new()
     {
-        services.AddSingleton(sp => new RuntimeOptions<TOptions>(
+        services.AddSingleton<IRuntimeOptions<TOptions>>(sp => new RuntimeOptions<TOptions>(
             section,
-            sp.GetRequiredService<IOptionsMonitor<TOptions>>(),
             sp.GetRequiredService<RuntimeSettingsCache>(),
             sp.GetRequiredService<ILogger<RuntimeOptions<TOptions>>>()));
-        services.AddSingleton<IRuntimeOptions<TOptions>>(sp => sp.GetRequiredService<RuntimeOptions<TOptions>>());
-        services.AddSingleton<IRuntimeOptionsSection>(sp => sp.GetRequiredService<RuntimeOptions<TOptions>>());
     }
 }

@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
 using Mizan.Application.Planning;
 
 namespace Mizan.Infrastructure.Outbox;
@@ -18,19 +18,19 @@ public sealed class EveningReminderScheduler : BackgroundService
     public static readonly TimeSpan Interval = TimeSpan.FromMinutes(15);
 
     private readonly IServiceScopeFactory _scopes;
-    private readonly OutboxOptions _options;
+    private readonly bool _enabled;
     private readonly ILogger<EveningReminderScheduler> _logger;
 
-    public EveningReminderScheduler(IServiceScopeFactory scopes, IOptions<OutboxOptions> options, ILogger<EveningReminderScheduler> logger)
+    public EveningReminderScheduler(IServiceScopeFactory scopes, IConfiguration configuration, ILogger<EveningReminderScheduler> logger)
     {
         _scopes = scopes;
-        _options = options.Value;
+        _enabled = OutboxOptions.IsEnabled(configuration);
         _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (!_options.Enabled) return;
+        if (!_enabled) return;
 
         await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
         using var timer = new PeriodicTimer(Interval);

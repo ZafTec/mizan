@@ -80,6 +80,7 @@ public static class ImpersonationPolicy
         [typeof(AdminUsersController)] = new("/api/admin", ImpersonationAccess.Blocked),
         [typeof(AuditLogsController)] = new("/api/AuditLogs", ImpersonationAccess.Blocked),
         [typeof(InternalPricesController)] = new("/api/internal/prices", ImpersonationAccess.Blocked),
+        [typeof(InternalSettingsController)] = new("/api/internal/settings", ImpersonationAccess.Blocked),
         [typeof(McpTasksController)] = new("/api/McpTasks", ImpersonationAccess.Blocked),
         [typeof(PaddleWebhooksController)] = new("/api/webhooks/paddle", ImpersonationAccess.Blocked),
         [typeof(SocialAdminController)] = new("/api/admin/social", ImpersonationAccess.Blocked),

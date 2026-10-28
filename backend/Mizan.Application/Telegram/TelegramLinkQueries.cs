@@ -38,13 +38,14 @@ public class GetTelegramLinkQueryHandler : IRequestHandler<GetTelegramLinkQuery,
             .Select(l => new { l.TelegramUsername, l.LinkedAt, l.LastSeenAt })
             .FirstOrDefaultAsync(cancellationToken);
 
+        var telegram = await _settings.GetAsync(cancellationToken);
         return new TelegramLinkDto(
             link is not null,
             link?.TelegramUsername,
             link?.LinkedAt,
             link?.LastSeenAt,
-            _settings.BotUsername,
-            _settings.IsConfigured);
+            telegram.BotUsername,
+            telegram.IsConfigured);
     }
 }
 

@@ -108,7 +108,7 @@ public class StartAuthorizationCommandHandler : IRequestHandler<StartAuthorizati
             CodeChallenge = request.CodeChallenge,
             Audience = audience,
             CreatedAt = now,
-            ExpiresAt = now + _settings.RequestLifetime,
+            ExpiresAt = now + (await _settings.GetLifetimesAsync(cancellationToken)).Request,
         });
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -297,7 +297,7 @@ public class DecideAuthorizationCommandHandler : IRequestHandler<DecideAuthoriza
         request.UserId = userId;
         request.GrantId = grant.Id;
         request.CodeHash = SecureToken.Hash(code);
-        request.ExpiresAt = now + _settings.CodeLifetime;
+        request.ExpiresAt = now + (await _settings.GetLifetimesAsync(cancellationToken)).Code;
         await _context.SaveChangesAsync(cancellationToken);
 
         return new DecideAuthorizationResult(BuildRedirect(request, ("code", code)));

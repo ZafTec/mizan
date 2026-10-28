@@ -440,7 +440,7 @@ public sealed class AdminTools
     [McpServerTool(Name = "admin_get_global_ai_usage", ReadOnly = true, Idempotent = true)]
     [Description(
         "Admin only. Today's provider spend against the global ceilings, by feature. "
-        + "This is the number to look at before anyone raises Ai__GlobalDailyTokens.")]
+        + "This is the number to look at before anyone raises the Ai.GlobalDailyTokens setting.")]
     public Task<string> GlobalAiUsage(CancellationToken ct = default) =>
         _api.GetAsync("/api/Ai/usage/global", ct);
 }

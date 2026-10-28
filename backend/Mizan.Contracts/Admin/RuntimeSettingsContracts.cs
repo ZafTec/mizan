@@ -3,11 +3,11 @@ namespace Mizan.Contracts.Admin;
 /// <summary>Where a setting's current value comes from.</summary>
 public static class RuntimeSettingSources
 {
-    /// <summary>An administrator set it in the admin area; it overrides configuration.</summary>
+    /// <summary>An administrator set it in the admin area.</summary>
     public const string Database = "database";
 
-    /// <summary>Environment or appsettings, or the built-in default when neither sets it.</summary>
-    public const string Configuration = "configuration";
+    /// <summary>Nothing is stored, so the built-in default applies.</summary>
+    public const string Default = "default";
 
     /// <summary>Nothing sets it.</summary>
     public const string Unset = "unset";
@@ -19,7 +19,7 @@ public static class RuntimeSettingSources
 /// </summary>
 public record RuntimeSettingDto
 {
-    /// <summary>The dotted key, such as <c>Smtp.Host</c>: the configuration path with dots for colons.</summary>
+    /// <summary>The dotted key, such as <c>Smtp.Host</c>.</summary>
     public string Key { get; init; } = string.Empty;
 
     public string Group { get; init; } = string.Empty;
@@ -29,7 +29,7 @@ public record RuntimeSettingDto
     /// <summary>string, int, bool or enum.</summary>
     public string Type { get; init; } = "string";
 
-    /// <summary>text, host, url, email or json.</summary>
+    /// <summary>text, host, url, email, json or token.</summary>
     public string Format { get; init; } = "text";
 
     public bool IsSecret { get; init; }
@@ -43,16 +43,20 @@ public record RuntimeSettingDto
 
     public bool HasValue { get; init; }
 
-    /// <summary>database, configuration or unset (<see cref="RuntimeSettingSources"/>).</summary>
+    /// <summary>database, default or unset (<see cref="RuntimeSettingSources"/>).</summary>
     public string Source { get; init; } = RuntimeSettingSources.Unset;
 
-    /// <summary>When the database value was set. Null when the value comes from configuration.</summary>
+    /// <summary>When the database value was set. Null when the value is the default.</summary>
     public DateTime? UpdatedAt { get; init; }
 
     public Guid? UpdatedByUserId { get; init; }
 }
 
-public record RuntimeSettingGroupDto(string Id, string Title, IReadOnlyList<RuntimeSettingDto> Settings);
+/// <summary>
+/// One section of the settings page. <see cref="Notice"/> says what is off while the section's
+/// required settings have no value, such as "Email is not configured", and is null otherwise.
+/// </summary>
+public record RuntimeSettingGroupDto(string Id, string Title, IReadOnlyList<RuntimeSettingDto> Settings, string? Notice = null);
 
 /// <summary>Every runtime setting, in the sections of the admin settings page.</summary>
 public record RuntimeSettingsDto(IReadOnlyList<RuntimeSettingGroupDto> Groups);

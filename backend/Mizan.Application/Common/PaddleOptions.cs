@@ -14,5 +14,5 @@ public class PaddleOptions
     public int GraceDays { get; set; } = 3;
 
     /// <summary>Price id for the one-time Lifetime purchase, used to detect lifetime grants from transaction.completed.</summary>
-    public string LifetimePriceId { get; set; } = string.Empty;
+    public string LifetimePriceId { get; set; } = "pri_01kwa2qt2c0q0ntgp0ntrn3tbt";
 }

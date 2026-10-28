@@ -85,7 +85,7 @@ public sealed class SetExerciseModelCommandHandler : IRequestHandler<SetExercise
             ?? throw new EntityNotFoundException("Exercise not found");
 
         if (!string.IsNullOrWhiteSpace(request.ModelUrl)
-            && (_storage.TryGetKey(request.ModelUrl) is not { } key || !key.StartsWith("models/", StringComparison.Ordinal)))
+            && (await _storage.TryGetKeyAsync(request.ModelUrl, ct) is not { } key || !key.StartsWith("models/", StringComparison.Ordinal)))
             throw new DomainValidationException("The model must be a file uploaded through the models endpoint.");
 
         exercise.ModelUrl = string.IsNullOrWhiteSpace(request.ModelUrl) ? null : request.ModelUrl;

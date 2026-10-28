@@ -19,20 +19,25 @@ public enum TelegramNotifyOutcome
     Refused,
 }
 
-/// <summary>The bot service's <c>POST /internal/notify</c>. A seam so tests do not need a bot.</summary>
+/// <summary>The bot service's <c>POST /internal/*</c>. A seam so tests do not need a bot.</summary>
 public interface ITelegramBotNotifier
 {
     Task<bool> IsConfiguredAsync(CancellationToken cancellationToken = default);
 
     Task<TelegramNotifyOutcome> SendAsync(TelegramNotifyRequest request, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Tells the bot service a Telegram setting changed, so it reads them again at once. Best effort:
+    /// the bot also reads them every few minutes, so a missed signal only delays the change.
+    /// </summary>
+    Task SettingsChangedAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>
 /// Calls the bot service over the internal network with the same service key
-/// the bot sends to us, so neither side holds a second secret, and the bot
-/// token stays in the bot service. The base address is
-/// <c>Telegram:BotServiceUrl</c>, which the admin area can override and which is read per send;
-/// without it nothing is sent to Telegram. The key stays in configuration.
+/// the bot sends to us, so neither side holds a second secret. The base address is
+/// <c>Telegram.BotServiceUrl</c>, a runtime setting read per send; without it
+/// nothing is sent to Telegram. The key stays in configuration.
 /// </summary>
 public sealed class TelegramBotNotifier : ITelegramBotNotifier
 {
@@ -56,19 +61,13 @@ public sealed class TelegramBotNotifier : ITelegramBotNotifier
 
     public async Task<TelegramNotifyOutcome> SendAsync(TelegramNotifyRequest request, CancellationToken cancellationToken)
     {
-        var botUrl = (await _settings.GetAsync(cancellationToken)).BotServiceUrl;
-        if (string.IsNullOrWhiteSpace(botUrl) || string.IsNullOrWhiteSpace(_serviceKey)) return TelegramNotifyOutcome.Refused;
-
-        var client = _httpClientFactory.CreateClient(HttpClientName);
-        using var message = new HttpRequestMessage(HttpMethod.Post, new Uri(new Uri(botUrl.TrimEnd('/') + "/"), "internal/notify"))
-        {
-            Content = JsonContent.Create(request),
-        };
-        message.Headers.Add("X-Api-Key", _serviceKey);
+        using var message = await RequestAsync("internal/notify", cancellationToken);
+        if (message is null) return TelegramNotifyOutcome.Refused;
+        message.Content = JsonContent.Create(request);
 
         try
         {
-            using var response = await client.SendAsync(message, cancellationToken);
+            using var response = await _httpClientFactory.CreateClient(HttpClientName).SendAsync(message, cancellationToken);
             if (response.IsSuccessStatusCode) return TelegramNotifyOutcome.Sent;
             return response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Unauthorized
                 ? TelegramNotifyOutcome.Refused
@@ -78,5 +77,30 @@ public sealed class TelegramBotNotifier : ITelegramBotNotifier
         {
             return TelegramNotifyOutcome.Failed;
         }
+    }
+
+    public async Task SettingsChangedAsync(CancellationToken cancellationToken = default)
+    {
+        using var message = await RequestAsync("internal/settings-changed", cancellationToken);
+        if (message is null) return;
+
+        try
+        {
+            using var response = await _httpClientFactory.CreateClient(HttpClientName).SendAsync(message, cancellationToken);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
+        {
+            // The bot's periodic read picks the change up instead.
+        }
+    }
+
+    private async Task<HttpRequestMessage?> RequestAsync(string path, CancellationToken cancellationToken)
+    {
+        var botUrl = (await _settings.GetAsync(cancellationToken)).BotServiceUrl;
+        if (string.IsNullOrWhiteSpace(botUrl) || string.IsNullOrWhiteSpace(_serviceKey)) return null;
+
+        var message = new HttpRequestMessage(HttpMethod.Post, new Uri(new Uri(botUrl.TrimEnd('/') + "/"), path));
+        message.Headers.Add("X-Api-Key", _serviceKey);
+        return message;
     }
 }

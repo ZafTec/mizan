@@ -6,6 +6,7 @@ using Mizan.Application.Interfaces;
 using Mizan.Infrastructure.Data;
 using Mizan.Infrastructure.Email;
 using Mizan.Infrastructure.Identity;
+using Mizan.Infrastructure.Storage;
 using StackExchange.Redis;
 
 namespace Mizan.Infrastructure.Services;
@@ -26,6 +27,7 @@ public sealed class SystemProbes : ISystemProbes
     private readonly IHttpClientFactory _http;
     private readonly IRuntimeOptions<SmtpOptions> _smtp;
     private readonly IRuntimeOptions<TelegramOptions> _telegram;
+    private readonly IRuntimeOptions<StorageOptions> _storage;
     private readonly IAiProvider _ai;
     private readonly IPushSender _push;
     private readonly IPricesWorkerClient _prices;
@@ -37,6 +39,7 @@ public sealed class SystemProbes : ISystemProbes
         IHttpClientFactory http,
         IRuntimeOptions<SmtpOptions> smtp,
         IRuntimeOptions<TelegramOptions> telegram,
+        IRuntimeOptions<StorageOptions> storage,
         IAiProvider ai,
         IPushSender push,
         IPricesWorkerClient prices)
@@ -47,6 +50,7 @@ public sealed class SystemProbes : ISystemProbes
         _http = http;
         _smtp = smtp;
         _telegram = telegram;
+        _storage = storage;
         _ai = ai;
         _push = push;
         _prices = prices;
@@ -58,7 +62,8 @@ public sealed class SystemProbes : ISystemProbes
         (await _ai.GetStatusAsync(cancellationToken)).IsConfigured;
     public Task<bool> PushConfiguredAsync(CancellationToken cancellationToken) => _push.IsConfiguredAsync(cancellationToken);
     public bool PricesWorkerConfigured => _prices.IsConfigured;
-    public bool StorageConfigured => !string.IsNullOrWhiteSpace(_configuration["Storage:ServiceUrl"]);
+    public async Task<bool> StorageConfiguredAsync(CancellationToken cancellationToken) =>
+        !string.IsNullOrWhiteSpace((await _storage.GetAsync(cancellationToken)).ServiceUrl);
 
     public Task<ProbeResult> DatabaseAsync(CancellationToken cancellationToken) =>
         TimeAsync(async ct => await _db.Database.ExecuteSqlRawAsync("SELECT 1", ct), cancellationToken);

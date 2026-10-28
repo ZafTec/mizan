@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Configuration;
+
 namespace Mizan.Infrastructure.Outbox;
 
 public class OutboxOptions
@@ -28,6 +30,9 @@ public class OutboxOptions
     /// </summary>
     public int StaleAfterMinutes { get; set; } = 30;
 
-    /// <summary>Set false in tests that drive the dispatcher by hand.</summary>
-    public bool Enabled { get; set; } = true;
+    /// <summary>
+    /// <c>Outbox:Enabled</c> stays in the environment as an operations switch, read once at startup.
+    /// False in tests that drive the dispatcher by hand. The other values are runtime settings.
+    /// </summary>
+    public static bool IsEnabled(IConfiguration configuration) => configuration.GetValue("Outbox:Enabled", true);
 }

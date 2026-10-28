@@ -43,7 +43,8 @@ public class IssueTelegramLinkCodeCommandHandler
     {
         var userId = _currentUser.UserId ?? throw new UnauthorizedAccessException();
 
-        if (!_settings.IsConfigured)
+        var telegram = await _settings.GetAsync(cancellationToken);
+        if (!telegram.IsConfigured)
         {
             throw new DomainValidationException("Telegram is not set up on this server.");
         }
@@ -60,7 +61,7 @@ public class IssueTelegramLinkCodeCommandHandler
 
         return new TelegramLinkCodeDto(
             code,
-            $"https://t.me/{_settings.BotUsername}?start={code}",
+            $"https://t.me/{telegram.BotUsername}?start={code}",
             DateTime.UtcNow.Add(Lifetime));
     }
 }

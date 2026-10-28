@@ -87,7 +87,7 @@ public class CreateTelegramMiniAppSessionCommandHandler
                 l => l.SetProperty(x => x.LastSeenAt, DateTime.UtcNow),
                 cancellationToken);
 
-        var lifetime = _settings.MiniAppSessionLifetime;
+        var lifetime = (await _settings.GetAsync(cancellationToken)).MiniAppSessionLifetime;
         var token = await _sessions.CreateAsync(user.Id, lifetime, request.IpAddress, request.UserAgent, cancellationToken);
 
         return new TelegramMiniAppSessionResponse(token, DateTime.UtcNow.Add(lifetime), user.Id);

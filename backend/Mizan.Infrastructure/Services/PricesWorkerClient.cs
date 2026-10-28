@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -9,21 +10,26 @@ namespace Mizan.Infrastructure.Services;
 
 /// <summary>
 /// Calls the prices worker's <c>POST /run/{sourceId}</c> with the same service
-/// key the worker sends to us, so neither side holds a second secret. The base
-/// address is <c>Prices:WorkerUrl</c>; without it Run now is off.
+/// key the worker sends to us, so neither side holds a second secret, and with
+/// the crawl settings as they stand in the body. The base address is
+/// <c>Prices:WorkerUrl</c>, an internal URL that stays in the environment;
+/// without it Run now is off.
 /// </summary>
 public sealed class PricesWorkerClient : IPricesWorkerClient
 {
     public const string HttpClientName = "prices-worker";
 
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IServiceSettings _settings;
     private readonly ILogger<PricesWorkerClient> _logger;
     private readonly string? _workerUrl;
     private readonly string? _serviceKey;
 
-    public PricesWorkerClient(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<PricesWorkerClient> logger)
+    public PricesWorkerClient(
+        IHttpClientFactory httpClientFactory, IServiceSettings settings, IConfiguration configuration, ILogger<PricesWorkerClient> logger)
     {
         _httpClientFactory = httpClientFactory;
+        _settings = settings;
         _logger = logger;
         _workerUrl = configuration["Prices:WorkerUrl"];
         _serviceKey = configuration["Mcp:ServiceApiKey"];
@@ -36,6 +42,7 @@ public sealed class PricesWorkerClient : IPricesWorkerClient
         var client = _httpClientFactory.CreateClient(HttpClientName);
         using var request = new HttpRequestMessage(HttpMethod.Post, new Uri(new Uri(_workerUrl!.TrimEnd('/') + "/"), $"run/{sourceId}"));
         request.Headers.Add("X-Api-Key", _serviceKey);
+        request.Content = JsonContent.Create(await _settings.GetPriceCrawlAsync(cancellationToken));
 
         HttpResponseMessage response;
         try

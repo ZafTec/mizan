@@ -4,25 +4,27 @@ using Mizan.Application.Interfaces;
 using Mizan.Contracts.Admin;
 using Mizan.Domain.Settings;
 using Mizan.Infrastructure.Data;
+using Mizan.Infrastructure.Telegram;
 
 namespace Mizan.Infrastructure.Settings;
 
 /// <summary>
 /// Reads and writes <c>system_settings</c>. A secret is protected with ASP.NET Core Data Protection
 /// before it is stored and is reported only as set or not set; the decrypted value goes no further
-/// than <see cref="RuntimeOptions{TOptions}"/> (docs/ADMIN.md#runtime-settings).
+/// than <see cref="RuntimeOptions{TOptions}"/>, and for the bot's token and webhook secret the
+/// service-key-only <see cref="ServiceSettings"/> (docs/ADMIN.md#runtime-settings).
 /// </summary>
 internal sealed class RuntimeSettings : IRuntimeSettings
 {
     private readonly MizanDbContext _db;
     private readonly RuntimeSettingsCache _cache;
-    private readonly Dictionary<string, IRuntimeOptionsSection> _sections;
+    private readonly ITelegramBotNotifier _bot;
 
-    public RuntimeSettings(MizanDbContext db, RuntimeSettingsCache cache, IEnumerable<IRuntimeOptionsSection> sections)
+    public RuntimeSettings(MizanDbContext db, RuntimeSettingsCache cache, ITelegramBotNotifier bot)
     {
         _db = db;
         _cache = cache;
-        _sections = sections.ToDictionary(s => s.Section, StringComparer.OrdinalIgnoreCase);
+        _bot = bot;
     }
 
     public async Task<string?> GetAsync(string key, CancellationToken cancellationToken = default)
@@ -34,7 +36,7 @@ internal sealed class RuntimeSettings : IRuntimeSettings
         }
 
         var snapshot = await _cache.GetAsync(cancellationToken);
-        return snapshot.Rows.TryGetValue(definition.Key, out var row) ? row.Value : ConfigurationValue(definition);
+        return snapshot.Rows.TryGetValue(definition.Key, out var row) ? row.Value : definition.Default;
     }
 
     public async Task<IReadOnlyList<RuntimeSettingState>> ListAsync(CancellationToken cancellationToken = default)
@@ -55,13 +57,12 @@ internal sealed class RuntimeSettings : IRuntimeSettings
                 continue;
             }
 
-            var configured = ConfigurationValue(definition);
-            var hasValue = !string.IsNullOrEmpty(configured);
+            var hasValue = !string.IsNullOrEmpty(definition.Default);
             states.Add(new RuntimeSettingState(
                 definition,
-                definition.IsSecret || !hasValue ? null : configured,
+                definition.IsSecret || !hasValue ? null : definition.Default,
                 hasValue,
-                hasValue ? RuntimeSettingSources.Configuration : RuntimeSettingSources.Unset,
+                hasValue ? RuntimeSettingSources.Default : RuntimeSettingSources.Unset,
                 null,
                 null));
         }
@@ -87,19 +88,26 @@ internal sealed class RuntimeSettings : IRuntimeSettings
             """,
             cancellationToken);
 
-        await _cache.PublishChangeAsync();
+        await ChangedAsync(definition, cancellationToken);
     }
 
     public async Task<bool> ClearAsync(string key, CancellationToken cancellationToken = default)
     {
         var definition = Require(key);
         var removed = await _db.SystemSettings.Where(s => s.Key == definition.Key).ExecuteDeleteAsync(cancellationToken);
-        await _cache.PublishChangeAsync();
+        await ChangedAsync(definition, cancellationToken);
         return removed > 0;
     }
 
-    private string? ConfigurationValue(RuntimeSettingDefinition definition) =>
-        _sections.TryGetValue(definition.Section, out var section) ? section.ConfigurationValue(definition) : null;
+    /// <summary>
+    /// Every API instance reloads within a second. The bot service holds no database, so it is told
+    /// directly when one of its settings changes, and re-registers its webhook if it needs to.
+    /// </summary>
+    private async Task ChangedAsync(RuntimeSettingDefinition definition, CancellationToken cancellationToken)
+    {
+        await _cache.PublishChangeAsync();
+        if (definition.Group == RuntimeSettingGroups.Telegram) await _bot.SettingsChangedAsync(cancellationToken);
+    }
 
     private static RuntimeSettingDefinition Require(string key) =>
         RuntimeSettingDefinitions.Find(key)

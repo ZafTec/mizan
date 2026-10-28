@@ -79,7 +79,7 @@ public class ExchangeOAuthTokenCommandHandler : IRequestHandler<ExchangeOAuthTok
         if (grant is null || grant.RevokedAt is not null)
             throw new OAuthException("invalid_grant", "The connection was removed.");
 
-        var issued = OAuthTokens.Issue(_context, _settings, grant.Id, Guid.CreateVersion7(), request.Audience, now);
+        var issued = OAuthTokens.Issue(_context, await _settings.GetLifetimesAsync(cancellationToken), grant.Id, Guid.CreateVersion7(), request.Audience, now);
         await _context.SaveChangesAsync(cancellationToken);
         return Response(issued, grant);
     }
@@ -120,13 +120,13 @@ public class ExchangeOAuthTokenCommandHandler : IRequestHandler<ExchangeOAuthTok
             throw new OAuthException("invalid_grant", "The refresh token was already used. Connect again.");
         }
 
-        var issued = OAuthTokens.Issue(_context, _settings, token.GrantId, token.FamilyId, token.Audience, now);
+        var issued = OAuthTokens.Issue(_context, await _settings.GetLifetimesAsync(cancellationToken), token.GrantId, token.FamilyId, token.Audience, now);
         await _context.SaveChangesAsync(cancellationToken);
         return Response(issued, token.Grant);
     }
 
     private OAuthTokenResponse Response(OAuthTokens.Issued issued, OAuthGrant grant) =>
-        new(issued.AccessToken, "Bearer", (int)_settings.AccessTokenLifetime.TotalSeconds, issued.RefreshToken,
+        new(issued.AccessToken, "Bearer", (int)issued.AccessLifetime.TotalSeconds, issued.RefreshToken,
             string.Join(' ', grant.Scopes));
 
     private static bool VerifyPkce(string verifier, string challenge)

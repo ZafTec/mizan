@@ -119,7 +119,7 @@ public class GetSystemHealthQueryHandler : IRequestHandler<GetSystemHealthQuery,
         }
         Add("prices", SystemHealthRules.Prices(_probes.PricesWorkerConfigured, lastPriceRun, DateTime.UtcNow));
 
-        Add("storage", SystemHealthRules.Configured(_probes.StorageConfigured, "Object storage"));
+        Add("storage", SystemHealthRules.Configured(await _probes.StorageConfiguredAsync(cancellationToken), "Object storage"));
 
         return new SystemHealthDto(checks, DateTime.UtcNow);
     }

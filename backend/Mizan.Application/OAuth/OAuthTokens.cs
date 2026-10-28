@@ -12,15 +12,15 @@ public static class OAuthTokens
 
     public static string Hash(string token) => SecureToken.Hash(token);
 
-    public sealed record Issued(string AccessToken, string RefreshToken, DateTime AccessExpiresAt);
+    public sealed record Issued(string AccessToken, string RefreshToken, DateTime AccessExpiresAt, TimeSpan AccessLifetime);
 
     /// <summary>Stages a new access and refresh token. The caller saves.</summary>
     public static Issued Issue(
-        IMizanDbContext context, IOAuthSettings settings, Guid grantId, Guid familyId, string audience, DateTime now)
+        IMizanDbContext context, OAuthLifetimes lifetimes, Guid grantId, Guid familyId, string audience, DateTime now)
     {
         var access = AccessPrefix + SecureToken.Generate();
         var refresh = RefreshPrefix + SecureToken.Generate();
-        var accessExpires = now + settings.AccessTokenLifetime;
+        var accessExpires = now + lifetimes.AccessToken;
 
         context.OAuthTokens.Add(new OAuthToken
         {
@@ -42,9 +42,9 @@ public static class OAuthTokens
             Audience = audience,
             TokenHash = Hash(refresh),
             CreatedAt = now,
-            ExpiresAt = now + settings.RefreshTokenLifetime,
+            ExpiresAt = now + lifetimes.RefreshToken,
         });
 
-        return new Issued(access, refresh, accessExpires);
+        return new Issued(access, refresh, accessExpires, lifetimes.AccessToken);
     }
 }

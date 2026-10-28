@@ -44,3 +44,10 @@ public static class PriceRunStatus
     public const string Failed = "failed";
     public const string Skipped = "skipped";
 }
+
+/// <summary>
+/// How the prices worker crawls: runtime settings an administrator changes in the admin area. The API
+/// sends them with every Run now request, and the scheduler reads them from
+/// GET /api/internal/settings/prices before each tick's runs (docs/PLANNING.md#prices).
+/// </summary>
+public sealed record PriceCrawlSettings(string UserAgent, int RequestDelayMs, int MaxProductsPerRun);

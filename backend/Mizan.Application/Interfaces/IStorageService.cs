@@ -37,9 +37,9 @@ public record StorageUpload(
 public record StoredObject(string Key, string Url);
 
 /// <summary>
-/// Object storage behind one interface - docs/ARCHITECTURE.md#storage-caching-and-jobs. The v2
-/// implementation speaks S3, which covers self-hosted MinIO and Cloudflare R2
-/// with nothing but configuration between them.
+/// Object storage behind one interface - docs/ARCHITECTURE.md#storage-caching-and-jobs. The
+/// implementation speaks S3, which covers self-hosted MinIO and Cloudflare R2 with nothing but the
+/// Storage runtime settings between them. Without an endpoint every upload is refused.
 /// </summary>
 public interface IStorageService
 {
@@ -58,5 +58,5 @@ public interface IStorageService
     /// The key a stored URL refers to, or null when the URL is not ours -
     /// an OAuth avatar on googleusercontent, say. Deleting needs this.
     /// </summary>
-    string? TryGetKey(string? url);
+    Task<string?> TryGetKeyAsync(string? url, CancellationToken cancellationToken = default);
 }

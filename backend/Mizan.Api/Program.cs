@@ -201,6 +201,12 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser()
         .RequireClaim("type", "service"));
 
+    // The bot service and the prices worker reading their runtime settings: the same rule.
+    options.AddPolicy("InternalService", policy => policy
+        .AddAuthenticationSchemes(ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .RequireAuthenticatedUser()
+        .RequireClaim("type", "service"));
+
     options.AddPolicy("UserOrMcp", policy => policy
         .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, OAuthBearerAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser());
@@ -644,6 +650,12 @@ app.MapPrometheusScrapingEndpoint();
 if (args.Contains("--migrate"))
 {
     Environment.Exit(await DatabaseMigrations.ApplyAsync(app.Services));
+}
+
+// `--create-admin <email>` and `--import-env-settings` run once against a migrated database and exit.
+if (AdminCommandLine.Handles(args))
+{
+    Environment.Exit(await AdminCommandLine.RunAsync(app.Services, args));
 }
 
 if (app.Environment.IsDevelopment())

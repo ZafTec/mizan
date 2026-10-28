@@ -21,5 +21,5 @@ public interface ISystemProbes
     Task<bool> AiConfiguredAsync(CancellationToken cancellationToken);
     Task<bool> PushConfiguredAsync(CancellationToken cancellationToken);
     bool PricesWorkerConfigured { get; }
-    bool StorageConfigured { get; }
+    Task<bool> StorageConfiguredAsync(CancellationToken cancellationToken);
 }

@@ -12,53 +12,26 @@
 # `docker compose logs mizan-db-backup mizan-db-migrate` says why.
 
 x-backend-environment: &backend-environment
+  # Only what the API needs before it can read its own database stays here
+  # (README "Environment"). Email, storage, AI, Telegram, push, billing and
+  # the rest are runtime settings in Admin, Settings. Moving from an older
+  # deployment: run --import-env-settings once (docs/ADMIN.md).
   ASPNETCORE_ENVIRONMENT: Production
   ASPNETCORE_URLS: http://+:8080
   App__PublicUrl: ${App__PublicUrl:?App__PublicUrl is required}
-  Telegram__BotUsername: ${TELEGRAM_BOT_USERNAME:-}
-  # The bot service, for the evening reminder in Telegram. Empty sends the
-  # reminder in the app only; with COMPOSE_PROFILES=telegram set it to
-  # http://mizan-telegram:5002.
-  Telegram__BotServiceUrl: ${TELEGRAM_BOT_SERVICE_URL:-}
   # The prices worker, for the admin Run now action. Empty turns Run now off;
   # with COMPOSE_PROFILES=prices set it to http://mizan-prices:5003.
   Prices__WorkerUrl: ${Prices__WorkerUrl:-}
-  Storage__ServiceUrl: ${STORAGE_SERVICE_URL:?STORAGE_SERVICE_URL is required}
-  Storage__Region: ${STORAGE_REGION:-us-east-1}
-  Storage__AccessKeyId: ${STORAGE_ACCESS_KEY_ID:?STORAGE_ACCESS_KEY_ID is required}
-  Storage__SecretAccessKey: ${STORAGE_SECRET_ACCESS_KEY:?STORAGE_SECRET_ACCESS_KEY is required}
-  Storage__Bucket: ${STORAGE_BUCKET:-mizan}
-  Storage__PublicBaseUrl: ${STORAGE_PUBLIC_BASE_URL:?STORAGE_PUBLIC_BASE_URL is required}
-  # AI photo requests permit 8 MB; the storage limit must accommodate them.
-  Storage__MaxUploadBytes: 8388608
-  # Push to the Android app. Empty keeps push off; Firebase credentials turn it on.
-  Push__FcmProjectId: ${FCM_PROJECT_ID:-}
-  Push__FcmServiceAccountJson: ${FCM_SERVICE_ACCOUNT_JSON:-}
   # The Data Protection key ring that encrypts secrets set in the admin area
   # (docs/ADMIN.md#runtime-settings). Empty keeps it in the database; a path
   # keeps it in that directory, which every API instance must mount.
   DataProtection__KeysPath: ${DATA_PROTECTION_KEYS_PATH:-}
   # Serve /swagger/v1/swagger.json so the web and Android clients can generate types. Off by default.
   OpenApi__Enabled: ${OPENAPI_ENABLED:-false}
-  Smtp__Host: ${SMTP_HOST:-}
-  Smtp__Port: ${SMTP_PORT:-587}
-  Smtp__Username: ${SMTP_USER:-}
-  Smtp__Password: ${SMTP_PASS:-}
-  Smtp__FromAddress: ${SMTP_FROM_ADDRESS:-${SMTP_FROM:-noreply@mizan.local}}
-  Smtp__FromName: ${SMTP_FROM_NAME:-Mizan}
-  Smtp__Security: ${Smtp__Security:-Auto}
-  Smtp__LocalDomain: ${Smtp__LocalDomain:-}
   Authentication__Google__ClientId: ${GOOGLE_CLIENT_ID:-}
   Authentication__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
   Authentication__GitHub__ClientId: ${GITHUB_CLIENT_ID:-}
   Authentication__GitHub__ClientSecret: ${GITHUB_CLIENT_SECRET:-}
-  Ai__BaseUrl: ${AI_BASE_URL:-}
-  Ai__ApiKey: ${AI_API_KEY:-}
-  Ai__Model: ${AI_MODEL:-gpt-5.6-luna}
-  Ai__SupportsTemperature: ${AI_SUPPORTS_TEMPERATURE:-true}
-  Ai__ReasoningEffort: ${AI_REASONING_EFFORT:-}
-  Ai__GlobalDailyTokens: ${AI_GLOBAL_DAILY_TOKENS:-5000000}
-  Ai__GlobalDailyCostMicros: ${AI_GLOBAL_DAILY_COST_MICROS:-20000000}
 
 services:
   mizan-db-backup:
@@ -216,14 +189,11 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:5002
-      TelegramBot__BotToken: ${TELEGRAM_BOT_TOKEN:-}
-      TelegramBot__UseWebhook: ${TELEGRAM_USE_WEBHOOK:-false}
-      TelegramBot__WebhookSecret: ${TELEGRAM_WEBHOOK_SECRET:-}
+      # The token, webhook switch and secret and the Mini App URL are runtime
+      # settings the bot reads from the API (docs/TELEGRAM.md#configure-and-run).
       TelegramBot__ApiUrl: http://mizan-backend:8080
       TelegramBot__ServiceApiKey: ${Mcp__ServiceApiKey:?Mcp__ServiceApiKey is required}
       TelegramBot__PublicUrl: ${App__PublicUrl:-${PUBLIC_APP_URL:-http://localhost:3000}}
-      # Where the Mini App pages live. Empty means {PublicUrl}/tg.
-      TelegramBot__MiniAppUrl: ${TELEGRAM_MINIAPP_URL:-}
       # The subnet of proxy-net, where nginx and the frontend forward the
       # browser's address. Empty records the proxy's address instead.
       TelegramBot__TrustedProxies: ${TELEGRAM_TRUSTED_PROXIES:-}
@@ -261,9 +231,6 @@ services:
       Prices__ApiUrl: http://mizan-backend:8080
       Prices__ServiceApiKey: ${Mcp__ServiceApiKey:?Mcp__ServiceApiKey is required}
       Prices__Redis: ${Prices__Redis:-${ConnectionStrings__Redis:?ConnectionStrings__Redis is required}}
-      Prices__UserAgent: ${Prices__UserAgent:-MizanPriceBot/1.0 (+https://mizan.zaftech.co; prices@zaftech.co)}
-      Prices__RequestDelayMs: ${Prices__RequestDelayMs:-1000}
-      Prices__MaxProductsPerRun: ${Prices__MaxProductsPerRun:-500}
     depends_on:
       mizan-backend:
         condition: service_healthy

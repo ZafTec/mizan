@@ -57,7 +57,7 @@ public sealed class OAuthClientResolver
 
     private async Task<OAuthClient?> ResolveMetadataClientAsync(string clientId, CancellationToken cancellationToken)
     {
-        if (!_settings.AllowMetadataClients) return null;
+        if (!(await _settings.GetLifetimesAsync(cancellationToken)).AllowMetadataClients) return null;
 
         var row = await _context.OAuthClients.FirstOrDefaultAsync(c => c.ClientId == clientId, cancellationToken);
         var now = DateTime.UtcNow;
