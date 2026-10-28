@@ -103,6 +103,19 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
     public List<JsonElement> SessionsPosted { get; } = [];
     public List<JsonElement> ProfilePuts { get; } = [];
 
+    /// <summary>Every Telegram Bot API call, by method name, with its JSON body.</summary>
+    public List<(string Method, JsonElement Body)> TelegramCalls { get; } = [];
+
+    /// <summary>Every <c>web_app</c> button sent in any message, as text and URL.</summary>
+    public List<(string Text, string Url)> AllWebAppButtons() =>
+        _telegramSends.Select(s => JsonDocument.Parse(s.Body).RootElement)
+            .Where(m => m.TryGetProperty("reply_markup", out _))
+            .SelectMany(m => m.GetProperty("reply_markup").GetProperty("inline_keyboard").EnumerateArray().SelectMany(row => row.EnumerateArray()))
+            .Where(b => b.TryGetProperty("web_app", out _))
+            .Select(b => (b.GetProperty("text").GetString()!, b.GetProperty("web_app").GetProperty("url").GetString()!)).ToList();
+
+    public TelegramClient Telegram() => new(new HttpClient(this), BotOptions, NullLogger<TelegramClient>.Instance);
+
     public JsonElement LastSend => JsonDocument.Parse(_telegramSends.Last(s => s.Url.EndsWith("/sendMessage")).Body).RootElement.Clone();
 
     public string LastText => LastSend.GetProperty("text").GetString()!;
@@ -267,6 +280,7 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
         {
             if (url.EndsWith("/getFile")) return Json("""{"ok":true,"result":{"file_path":"photos/a.jpg","file_size":3}}""");
             if (url.EndsWith("/sendMessage")) _telegramSends.Add((url, body));
+            TelegramCalls.Add((url[(url.LastIndexOf('/') + 1)..], body.Length == 0 ? default : JsonDocument.Parse(body).RootElement.Clone()));
             return Json("""{"ok":true,"result":{}}""");
         }
 

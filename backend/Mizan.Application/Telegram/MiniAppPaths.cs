@@ -1,4 +1,5 @@
 using System.Globalization;
+using Mizan.Contracts.Telegram;
 
 namespace Mizan.Application.Telegram;
 
@@ -23,9 +24,9 @@ public static class MiniAppPaths
         return page switch
         {
             "meal-plan" => Day(query < 0 ? string.Empty : linkUrl[(query + 1)..]) is { } day
-                ? $"plan?planId={guid:D}&day={day:yyyy-MM-dd}"
-                : $"plan?planId={guid:D}",
-            "shopping-lists" => $"shopping-list?listId={guid:D}",
+                ? $"{MiniAppPages.Plan}?planId={guid:D}&day={day:yyyy-MM-dd}"
+                : $"{MiniAppPages.Plan}?planId={guid:D}",
+            "shopping-lists" => $"{MiniAppPages.ShoppingList}?listId={guid:D}",
             _ => null,
         };
     }

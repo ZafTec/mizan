@@ -161,6 +161,19 @@ public sealed class TelegramClient
     public Task DeleteWebhookAsync(CancellationToken ct = default) =>
         PostAsync("deleteWebhook", new { }, ct);
 
+    /// <summary>
+    /// The button beside the chat input in every private chat with the bot. A <c>web_app</c> button
+    /// opens the Mini App in one tap; without an HTTPS URL, which Telegram requires, the button is
+    /// the commands menu again, so an earlier deployment's Mini App button does not linger.
+    /// </summary>
+    public Task SetMenuButtonAsync(string? miniAppUrl, CancellationToken ct = default) =>
+        PostAsync("setChatMenuButton", new
+        {
+            menu_button = miniAppUrl is null
+                ? (object)new { type = "commands" }
+                : new { type = "web_app", text = "Open Mizan", web_app = new { url = miniAppUrl } },
+        }, ct);
+
     public Task SetCommandsAsync(CancellationToken ct = default) =>
         PostAsync("setMyCommands", new
         {

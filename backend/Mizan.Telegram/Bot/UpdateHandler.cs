@@ -7,6 +7,7 @@ using Mizan.Contracts.Meals;
 using Mizan.Contracts.Measurements;
 using Mizan.Contracts.Nutrition;
 using Mizan.Contracts.Planning;
+using Mizan.Contracts.Telegram;
 using Mizan.Contracts.Users;
 using Mizan.Domain.Nutrition;
 using Mizan.Telegram.Backend;
@@ -140,7 +141,7 @@ public sealed class UpdateHandler
             if (existing is not null)
             {
                 await _telegram.SendMessageAsync(
-                    message.Chat.Id, Greeting(existing.Name), ct: ct);
+                    message.Chat.Id, Greeting(existing.Name), MiniAppKeyboard("Open Mizan"), ct);
                 return;
             }
 
@@ -160,7 +161,7 @@ public sealed class UpdateHandler
             return;
         }
 
-        await _telegram.SendMessageAsync(message.Chat.Id, Greeting(outcome.Name), ct: ct);
+        await _telegram.SendMessageAsync(message.Chat.Id, Greeting(outcome.Name), MiniAppKeyboard("Open Mizan"), ct);
     }
 
     private async Task OnCommandAsync(
@@ -725,7 +726,7 @@ public sealed class UpdateHandler
         await _telegram.SendMessageAsync(
             chatId,
             (prefix ?? string.Empty) + PlanDayCard(result.Value),
-            PlanDayKeyboard(result.Value, MiniAppLink($"plan?planId={result.Value.PlanId:D}&day={result.Value.Date:yyyy-MM-dd}")),
+            PlanDayKeyboard(result.Value, MiniAppLink($"{MiniAppPages.Plan}?planId={result.Value.PlanId:D}&day={result.Value.Date:yyyy-MM-dd}")),
             ct);
     }
 
@@ -1191,13 +1192,13 @@ public sealed class UpdateHandler
     /// refuses the whole message otherwise, so a plain-HTTP development setup
     /// gets the text without the button rather than no text at all.
     /// </summary>
-    internal InlineKeyboardMarkup? MiniAppKeyboard(string text, string path = "") =>
+    internal InlineKeyboardMarkup? MiniAppKeyboard(string text, string path = MiniAppPages.Home) =>
         MiniAppLink(path) is { } url ? InlineKeyboardMarkup.Column(InlineKeyboardButton.OpenWebApp(text, url)) : null;
 
     /// <summary>The Mini App URL for <paramref name="path"/>, or null when it is not HTTPS and Telegram would refuse it.</summary>
     internal string? MiniAppLink(string path = "") => _options.MiniAppButtonUrl(path);
 
-    private string? ShoppingListLink(ShoppingListDetailDto list) => MiniAppLink($"shopping-list?listId={list.Id:D}");
+    private string? ShoppingListLink(ShoppingListDetailDto list) => MiniAppLink($"{MiniAppPages.ShoppingList}?listId={list.Id:D}");
 
     /// <summary>A <c>web_app</c> button in its own row, the shape the /help button has.</summary>
     private static object OpenButton(string url) => InlineKeyboardButton.OpenWebApp("Open", url);

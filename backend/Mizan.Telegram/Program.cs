@@ -77,7 +77,7 @@ else
         await telegram.DeleteWebhookAsync(CancellationToken.None);
     }
 
-    await telegram.SetCommandsAsync(CancellationToken.None);
+    await BotProfile.ApplyAsync(telegram, options, CancellationToken.None);
 }
 
 app.MapGet("/health", (WebhookState webhook) => Results.Ok(new

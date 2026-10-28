@@ -77,6 +77,7 @@ public class TelegramHandlerTests
         link.GetProperty("telegramUserId").GetInt64().Should().Be(42);
         link.GetProperty("telegramUsername").GetString().Should().Be("tester");
         _world.LastText.Should().StartWith("Connected. Hello Tester.").And.Contain("/today");
+        _world.LastWebAppButtons().Should().Equal(("Open Mizan", "https://mizan.test/tg"));
     }
 
     [Fact]
