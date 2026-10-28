@@ -68,6 +68,19 @@ public class TelegramHandlerTests
     }
 
     [Fact]
+    public async Task ARefusedPermission_EndsTheReplyWithWhereToAllowIt()
+    {
+        _world.ChatReply = "Logging is switched off, so I could not add that.";
+        _world.ConsentRequiredJson = """[{"errorCode":"ai_consent_required","axis":"nutrition","access":"write"}]""";
+
+        await _world.Handler().HandleAsync(Text("log two eggs"), CancellationToken.None);
+
+        _world.LastText.Should().Be(
+            "Logging is switched off, so I could not add that."
+            + "\n\nTo let the assistant record your meals and meal plans, allow it at https://mizan.test/profile/settings#assistant");
+    }
+
+    [Fact]
     public async Task StartWithACode_LinksTheChat_AndGreetsByName()
     {
         await _world.Handler().HandleAsync(Text("/start abc123"), CancellationToken.None);

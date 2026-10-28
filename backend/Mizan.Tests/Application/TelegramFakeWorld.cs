@@ -40,6 +40,7 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
     public string ThreadsJson { get; set; } = "[]";
     public string ChatReply { get; set; } = "Hello.";
     public string PerformedJson { get; set; } = "[]";
+    public string ConsentRequiredJson { get; set; } = "[]";
     public HttpStatusCode GenerateStatus { get; set; } = HttpStatusCode.OK;
     /// <summary>The profile's <c>notifyByTelegram</c>; a PUT to <c>api/Users/me</c> changes it the way the API would.</summary>
     public bool NotifyByTelegram { get; set; }
@@ -342,7 +343,7 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
             return Json($$"""
                 {"threadId":"22222222-2222-4222-8222-222222222222","title":"Chat",
                  "reply":{"id":"33333333-3333-4333-8333-333333333333","fromUser":false,"content":{{reply}},"createdAt":"2026-10-22T10:00:00Z"},
-                 "performed":{{PerformedJson}}}
+                 "performed":{{PerformedJson}},"consentRequired":{{ConsentRequiredJson}}}
                 """);
         }
         if (url.Contains("api/MealPlans/generate"))

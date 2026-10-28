@@ -28,7 +28,26 @@ public record AiChatTurnDto(
     /// list. Built by code from command results and checked against their records; see
     /// <see cref="AiCardTypes"/>.
     /// </summary>
-    IReadOnlyList<AiCardDto> Cards);
+    IReadOnlyList<AiCardDto> Cards,
+    /// <summary>
+    /// The permissions the turn's tool calls were refused for, one per axis and access, so a
+    /// surface can offer to grant exactly that. Empty when nothing was refused. The reply still
+    /// carries the model's own explanation.
+    /// </summary>
+    IReadOnlyList<AiConsentRequirement> ConsentRequired);
+
+/// <summary>
+/// A tool call the person's AI consent did not allow. <c>ErrorCode</c> is always
+/// <see cref="AiErrorCodes.ConsentRequired"/>; <c>Axis</c> is the switch to turn on
+/// (<c>nutrition</c>, <c>training</c> or <c>body</c>; meal plans and shopping lists report
+/// <c>nutrition</c>, whose switches they share), and <c>Access</c> is <c>read</c> or <c>write</c>.
+/// </summary>
+public record AiConsentRequirement(string ErrorCode, string Axis, string Access);
+
+public static class AiErrorCodes
+{
+    public const string ConsentRequired = "ai_consent_required";
+}
 
 /// <summary>One row of GET /api/Ai/threads, newest first.</summary>
 public record AiChatThreadDto(Guid Id, string Title, DateTime UpdatedAt);

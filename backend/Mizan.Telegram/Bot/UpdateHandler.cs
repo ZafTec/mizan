@@ -243,7 +243,9 @@ public sealed class UpdateHandler
             // The model answers in markdown, same as it does on the website.
             // Escaping it raw showed people literal asterisks.
             await _telegram.SendMessageAsync(
-                chatId, TelegramMarkdown.ToHtml(reply) + PerformedLines(turn.Performed), ct: ct);
+                chatId,
+                TelegramMarkdown.ToHtml(reply) + PerformedLines(turn.Performed) + ConsentLine(turn.ConsentRequired),
+                ct: ct);
             return;
         }
 
@@ -270,6 +272,25 @@ public sealed class UpdateHandler
         }
 
         return text.ToString();
+    }
+
+    /// <summary>
+    /// A tool call the person's consent refused (<c>ai_consent_required</c>), as one line with the
+    /// settings link. The reply above already says why in the model's words; this says where.
+    /// </summary>
+    internal string ConsentLine(IReadOnlyList<AiConsentRequirement>? required)
+    {
+        if (required is not { Count: > 0 }) return string.Empty;
+
+        var wanted = string.Join(" and ", required.Select(r =>
+            (r.Access == "write" ? "record " : "see ") + r.Axis switch
+            {
+                "training" => "your workouts",
+                "body" => "your body measurements",
+                _ => "your meals and meal plans",
+            }));
+        var url = $"{_options.PublicUrl.TrimEnd('/')}/profile/settings#assistant";
+        return $"\n\nTo let the assistant {Escape(wanted)}, allow it at {Escape(url)}";
     }
 
     // ---- Logging ----------------------------------------------------------

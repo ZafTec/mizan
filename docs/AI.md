@@ -41,6 +41,10 @@ Reasoning models on Azure refuse function tools on `/chat/completions` together 
 
 Normal chat and food analysis produce responses or proposals for review. Onboarding is a distinct tool-enabled flow: it can perform allowlisted setup writes when the user granted the relevant write permission. Its tools run existing MediatR commands with normal validation and audit behavior, and cannot supply arbitrary user IDs or call arbitrary endpoints. Do not describe all AI as read-only, and do not broaden the allowlist through editable prompts.
 
+### Consent refusals
+
+A chat tool call the person's consent does not allow is refused by `AiToolRunner` before it runs. The model still reads a one-line reason, so its reply can explain, and the turn carries the typed refusal in `AiChatTurnDto.consentRequired`: one `AiConsentRequirement` `{ errorCode: "ai_consent_required", axis, access }` per switch, where `axis` is `nutrition`, `training` or `body` and `access` is `read` or `write`. Planning has no switch of its own, so a plan or shopping list refusal names `nutrition` (`UserAiConsent.SwitchFor`). The list is empty when nothing was refused. A connected app's grant refusal is a different thing and stays text. The web panel shows an **Allow** button under the reply that turns on that one switch and offers to send the message again; MCP `ask_ai` returns the turn as `structuredContent` with a text line naming the setting (`/profile/settings#assistant`); the Telegram chat ends the reply with the same link. `/planme` drafts through `POST /api/MealPlans/generate`, which reads under `IDataAccessPolicy` and has no tool call to refuse.
+
 Weight writes require body-axis permission and belong to the measurement tool; goal tools cannot bypass that consent. Render model-supplied Markdown images as links so a reply cannot trigger automatic requests to external image hosts.
 
 ## Metering

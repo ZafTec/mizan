@@ -1,5 +1,8 @@
 using System.ComponentModel;
+using System.Text.Json;
+using Mizan.Contracts.Ai;
 using Mizan.Mcp.Server.Services;
+using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 
 namespace Mizan.Mcp.Server.Tools;
@@ -18,8 +21,13 @@ namespace Mizan.Mcp.Server.Tools;
 public sealed class AiTools
 {
     private readonly IBackendApiClient _api;
+    private readonly McpLinks _links;
 
-    public AiTools(IBackendApiClient api) => _api = api;
+    public AiTools(IBackendApiClient api, McpLinks links)
+    {
+        _api = api;
+        _links = links;
+    }
 
     // ---- Consent ----------------------------------------------------------
 
@@ -58,12 +66,53 @@ public sealed class AiTools
     [Description(
         "One turn with the assistant, on the same threads the website uses. "
         + "Omit threadId to start a new one. Costs against your daily allowance "
-        + "and answers only from the axes you have consented to share.")]
-    public Task<string> Ask(string message, string? threadId = null, CancellationToken ct = default) =>
-        _api.PostAsync(
+        + "and answers only from the axes you have consented to share. "
+        + "consentRequired lists any permission a tool call was refused for; tell the person where to allow it.")]
+    public async Task<CallToolResult> Ask(string message, string? threadId = null, CancellationToken ct = default)
+    {
+        var json = await _api.PostAsync(
             "/api/Ai/chat",
             new { threadId = ToolArguments.ParseOptionalId(threadId, "threadId"), message },
             ct);
+        return AskResult(json, _links);
+    }
+
+    /// <summary>
+    /// The turn as JSON text and as <c>structuredContent</c>, and, when a tool call was refused for
+    /// consent, one line naming the switch and where to turn it on. The API decides the refusal;
+    /// this only words it.
+    /// </summary>
+    internal static CallToolResult AskResult(string json, McpLinks links)
+    {
+        var result = new CallToolResult { Content = [new TextContentBlock { Text = json }] };
+
+        JsonElement turn;
+        try { turn = JsonSerializer.Deserialize<JsonElement>(json); }
+        catch (JsonException) { return result; }
+        if (turn.ValueKind != JsonValueKind.Object) return result;
+        result.StructuredContent = turn;
+
+        if (!turn.TryGetProperty("consentRequired", out var refused) || refused.ValueKind != JsonValueKind.Array)
+            return result;
+        var required = refused.Deserialize<List<AiConsentRequirement>>(JsonSerializerOptions.Web) ?? [];
+        if (required.Count == 0) return result;
+
+        var wanted = string.Join(" and ", required.Select(r =>
+            $"{(r.Access == "write" ? "record" : "see")} {AxisWords(r.Axis)}"));
+        result.Content.Add(new TextContentBlock
+        {
+            Text = $"[{AiErrorCodes.ConsentRequired}] The assistant needs permission to {wanted}. "
+                + $"The person can allow it in Mizan under Settings, Assistant: {links.AppUrl}/profile/settings#assistant",
+        });
+        return result;
+    }
+
+    private static string AxisWords(string axis) => axis switch
+    {
+        "training" => "their workouts",
+        "body" => "their body measurements",
+        _ => "their meals and meal plans",
+    };
 
     [McpServerTool(Name = "list_ai_threads", ReadOnly = true, Idempotent = true)]
     [Description("Your assistant conversations, most recent first.")]

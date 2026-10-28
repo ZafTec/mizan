@@ -226,6 +226,22 @@ public class McpAppsAndTasksTests : IClassFixture<WebApplicationFactory<McpServe
     }
 
     [Fact]
+    public async Task AskAi_WithARefusedPermission_SaysWhereToAllowIt()
+    {
+        _api.Reply("POST", "/api/Ai/chat", 200,
+            """{"reply":{"content":"Logging is off."},"consentRequired":[{"errorCode":"ai_consent_required","axis":"nutrition","access":"write"}]}""");
+        using var client = Authorized();
+
+        var (_, body) = await SendAsync(client, "tools/call", new { name = "ask_ai", arguments = new { message = "log eggs" } }, withTasks: false);
+
+        var result = JsonDocument.Parse(body).RootElement.GetProperty("result");
+        result.GetProperty("structuredContent").GetProperty("consentRequired")[0].GetProperty("axis").GetString()
+            .Should().Be("nutrition");
+        result.GetProperty("content")[1].GetProperty("text").GetString()
+            .Should().StartWith("[ai_consent_required]").And.Contain("/profile/settings#assistant");
+    }
+
+    [Fact]
     public async Task AToolNotMeantForTasks_RunsInline_EvenForAClientThatAsksForOne()
     {
         _api.Reply("GET", "/api/Nutrition/daily", 200, """{"calories":1200}""");

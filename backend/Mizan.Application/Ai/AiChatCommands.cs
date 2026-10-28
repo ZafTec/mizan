@@ -103,7 +103,8 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
             new AiChatMessageDto(stored.Id, true, stored.Content, stored.CreatedAt, stored.ImageUrl),
             new AiChatMessageDto(reply.Id, false, reply.Content, reply.CreatedAt),
             turn.Performed,
-            turn.Cards);
+            turn.Cards,
+            turn.ConsentRequired);
     }
 
     /// <summary>

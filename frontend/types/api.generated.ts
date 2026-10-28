@@ -11854,6 +11854,7 @@ export interface components {
             reply: components["schemas"]["AiChatMessageDto"];
             performed: components["schemas"]["AiToolInvocation"][];
             cards: components["schemas"]["AiCardDto"][];
+            consentRequired: components["schemas"]["AiConsentRequirement"][];
         };
         AiConsentDto: {
             enabled: boolean;
@@ -11866,6 +11867,11 @@ export interface components {
             writeBody: boolean;
             /** Format: date-time */
             updatedAt?: string | null;
+        };
+        AiConsentRequirement: {
+            errorCode: string;
+            axis: string;
+            access: string;
         };
         AiEvalCaseDto: {
             /** Format: uuid */

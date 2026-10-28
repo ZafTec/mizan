@@ -158,6 +158,7 @@ public class NutritionAiService : INutritionAiService
 
         var performed = new List<AiToolInvocation>();
         var cards = new List<AiCardDto>();
+        var consentRequired = new List<AiConsentRequirement>();
         var toolContext = new AiToolContext(userId);
 
         for (var round = 0; round <= MaxToolRounds; round++)
@@ -180,7 +181,7 @@ public class NutritionAiService : INutritionAiService
 
             if (response.ToolCalls.Count == 0)
             {
-                return new AiChatTurn(response.Content, prompt.VersionId, performed, cards);
+                return new AiChatTurn(response.Content, prompt.VersionId, performed, cards, consentRequired);
             }
 
             messages.Add(new AiMessage(AiRole.Assistant, response.Content)
@@ -194,6 +195,11 @@ public class NutritionAiService : INutritionAiService
                 var invocation = run.Invocation;
                 performed.Add(invocation);
                 cards.AddRange(run.Cards);
+                // One requirement per switch, however many calls it refused.
+                if (run.ConsentRequired is { } required && !consentRequired.Contains(required))
+                {
+                    consentRequired.Add(required);
+                }
 
                 messages.Add(new AiMessage(
                     AiRole.Tool,

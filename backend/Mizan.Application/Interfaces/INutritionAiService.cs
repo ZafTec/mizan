@@ -129,7 +129,8 @@ public record AiChatTurn(
     string Content,
     Guid? PromptVersionId,
     IReadOnlyList<AiToolInvocation> Performed,
-    IReadOnlyList<AiCardDto> Cards);
+    IReadOnlyList<AiCardDto> Cards,
+    IReadOnlyList<AiConsentRequirement> ConsentRequired);
 
 /// <summary>An image already read into memory, on its way to the model.</summary>
 public record AiImageRef(byte[] Bytes, string ContentType);

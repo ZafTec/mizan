@@ -206,6 +206,29 @@ public class AiChatTests
         _fixture.Ai.Calls.Count.Should().Be(before);
     }
 
+    /// <summary>
+    /// #119: a plan write while writes are off is a typed refusal naming the switch, not a failed
+    /// turn. Planning has no switch of its own, so the refusal names nutrition.
+    /// </summary>
+    [Fact]
+    public async Task AWriteWithoutWriteConsentIsRefusedNamingTheAxis()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, userId) = await UserAsync();
+        await _fixture.GrantAiConsentAsync(userId, read: true, write: false);
+        _fixture.Ai.CallTools((
+            "add_plan_entry",
+            $$"""{"planId":"{{Guid.NewGuid()}}","dayIndex":0,"slot":"Breakfast","kind":"text","text":"Eggs"}"""));
+        _fixture.Ai.Reply("Adding to your plan is switched off.");
+
+        var turn = await SendAsync(client, null, "Add eggs to tomorrow's breakfast");
+
+        turn.Reply.Content.Should().Be("Adding to your plan is switched off.");
+        turn.Performed.Should().ContainSingle().Which.Succeeded.Should().BeFalse();
+        turn.ConsentRequired.Should().Equal(
+            new AiConsentRequirement(AiErrorCodes.ConsentRequired, "nutrition", "write"));
+    }
+
     private async Task<(HttpClient Client, Guid UserId)> UserAsync()
     {
         _fixture.Ai.Reset();

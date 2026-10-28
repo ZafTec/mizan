@@ -83,11 +83,14 @@ public class AiToolRunner : IAiToolRunner
 
         if (!permitted)
         {
+            // The model still reads why, so it can explain; the surface gets the typed requirement
+            // and offers to grant exactly that switch.
             var verb = tool.Access == AiToolAccess.Write ? "change" : "read";
-            return Failed(
+            var refused = Failed(
                 call.Name,
                 $"The user has not given permission to {verb} their {Describe(tool.Axis)}. "
-                + "Tell them, and say they can grant it in Settings.");
+                + "Tell them in one sentence; they are shown a way to allow it.");
+            return refused with { ConsentRequired = AiConsentRequirements.For(tool.Axis, tool.Access) };
         }
 
         JsonElement args;
