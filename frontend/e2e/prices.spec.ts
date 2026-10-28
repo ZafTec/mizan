@@ -1,8 +1,11 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 import { ACTIVE_PLAN_ID, LIST_ID } from "./fixture-planning";
 import {
+  BAG_ALIAS_ID,
   OATS_ALIAS_ID,
   OPEN_REPORT_ID,
+  STARTER_FOODS,
+  YOGURT_ALIAS_ID,
   type PricesOptions,
 } from "./fixture-prices";
 
@@ -261,6 +264,81 @@ test("an administrator maps a queued alias", async ({ page, context }) => {
   ]);
   expect(updates[0].path).toBe(`/api/admin/prices/aliases/${OATS_ALIAS_ID}`);
   expect(updates.every((w) => w.key)).toBe(true);
+  expect(s.unhandled).toEqual([]);
+});
+
+test("an administrator accepts suggested mappings together and sees the one skipped", async ({
+  page,
+  context,
+}) => {
+  await signIn(context, { role: "admin", prices: { secondSuggestion: true } });
+  await page.goto("/admin/prices");
+  const queue = page.getByRole("region", { name: "Review queue" });
+  const oats = queue.getByRole("listitem", { name: "Quaker oats 500g" });
+  await expect(oats).toContainText("Suggested: Rolled oats · 500 g");
+  const accept = queue.getByRole("button", { name: /^Accept \d+ suggestions?$/ });
+  await expect(accept).toBeDisabled();
+
+  await queue.getByRole("tab", { name: /Has a suggestion/ }).click();
+  await expect(
+    queue.getByRole("listitem", { name: "Reusable shopping bag" }),
+  ).toHaveCount(0);
+  await queue.getByRole("checkbox", { name: "Select Quaker oats 500g" }).check();
+  await queue.getByRole("checkbox", { name: "Select Greek yogurt 1kg" }).check();
+  await expect(accept).toHaveText("Accept 2 suggestions");
+
+  // Another administrator ignores the yogurt before this one accepts.
+  const other = await context.request.put(
+    `${apiURL}/api/admin/prices/aliases/${YOGURT_ALIAS_ID}`,
+    {
+      headers: { "Idempotency-Key": crypto.randomUUID() },
+      data: { foodId: null, quantity: null, unit: null, ignored: true },
+    },
+  );
+  expect(other.ok()).toBeTruthy();
+  await accept.click();
+
+  const report = queue.getByTestId("accept-report");
+  await expect(report).toContainText("1 product mapped.");
+  await expect(report).toContainText(
+    "Greek yogurt 1kg Someone mapped or ignored it already.",
+  );
+  await expect(
+    queue.getByRole("listitem", { name: "Quaker oats 500g" }),
+  ).toHaveCount(0);
+  await queue.getByRole("tab", { name: /No match/ }).click();
+  await expect(
+    queue.getByRole("listitem", { name: "Reusable shopping bag" }),
+  ).toBeVisible();
+
+  const s = await state(context);
+  const sent = writesTo(s, /accept-suggestions$/);
+  expect(sent.map((w) => w.body)).toEqual([
+    { aliasIds: [OATS_ALIAS_ID, YOGURT_ALIAS_ID] },
+  ]);
+  expect(sent[0].key).toBeTruthy();
+  expect(sent[0].body.aliasIds).not.toContain(BAG_ALIAS_ID);
+  expect(s.unhandled).toEqual([]);
+});
+
+test("an administrator imports the starter foods and sees what was added", async ({
+  page,
+  context,
+}) => {
+  await signIn(context, { role: "admin" });
+  await page.goto("/admin/prices");
+  const button = page.getByRole("button", { name: "Import starter foods" });
+  await button.click();
+  const result = page.getByRole("status").filter({ hasText: "added" });
+  await expect(result).toContainText("2 added, 3 already in the catalogue.");
+  await expect(result).toContainText(STARTER_FOODS.join(", "));
+  await button.click();
+  await expect(result).toContainText("0 added, 5 already in the catalogue.");
+
+  const s = await state(context);
+  const imports = writesTo(s, /import-starter-foods$/);
+  expect(imports).toHaveLength(2);
+  expect(imports.every((w) => w.key)).toBe(true);
   expect(s.unhandled).toEqual([]);
 });
 

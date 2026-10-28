@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import FoodSearch from "@/components/planning/FoodSearch";
 import {
   createManualPrice,
+  importStarterFoods,
   seedStaplePrices,
+  type ImportStarterFoodsResult,
   type PriceRegion,
   type SeedStaplePricesResult,
 } from "@/lib/api/prices";
@@ -21,6 +23,63 @@ import { getErrorMessage } from "@/lib/toast";
 import { Select } from "@/components/ui/select";
 
 type Errors = Partial<Record<keyof ManualPriceForm, string>>;
+
+/** Adds the starter foods to the shared catalogue, so plans and the staple prices have foods to use. */
+function ImportStarterFoods() {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<ImportStarterFoodsResult | null>(null);
+  const [failure, setFailure] = useState<string | null>(null);
+
+  const run = async () => {
+    setBusy(true);
+    setFailure(null);
+    try {
+      setResult(await importStarterFoods());
+      router.refresh();
+    } catch (error) {
+      setFailure(getErrorMessage(error, "Could not import the starter foods"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2 border-b border-border py-4">
+      <button
+        type="button"
+        className="btn-secondary btn-sm min-h-11"
+        disabled={busy}
+        onClick={run}
+      >
+        {busy ? "Importing…" : "Import starter foods"}
+      </button>
+      <p className="text-xs log-muted">
+        Adds generic foods and estimated Ethiopian staples to the shared
+        catalogue. Foods already there are left as they are, so it is safe to
+        repeat.
+      </p>
+      {result && (
+        <div role="status" className="text-sm">
+          <p className="num">
+            {result.created} added, {result.existing} already in the catalogue.
+          </p>
+          {result.createdNames.length > 0 && (
+            <p className="mt-1 break-words">
+              <span className="log-muted">Added: </span>
+              {result.createdNames.join(", ")}
+            </p>
+          )}
+        </div>
+      )}
+      {failure && (
+        <p role="alert" className="text-sm text-destructive">
+          {failure}
+        </p>
+      )}
+    </div>
+  );
+}
 
 function SeedStaples() {
   const router = useRouter();
@@ -136,6 +195,7 @@ export default function ManualPrices({ regions }: { regions: PriceRegion[] }) {
       <header className="log-section-header">
         <h2 id="manual-title">Manual prices</h2>
       </header>
+      <ImportStarterFoods />
       <SeedStaples />
       <form
         onSubmit={submit}

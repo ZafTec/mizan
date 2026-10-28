@@ -19,6 +19,9 @@ export type PriceReport = Schemas["PriceReportDto"];
 export type PriceReportPage = Schemas["PriceReportDtoPagedResult"];
 export type PriceSourceRunStarted = Schemas["PriceSourceRunStartedDto"];
 export type SeedStaplePricesResult = Schemas["SeedStaplePricesResult"];
+export type AcceptPriceAliasSuggestionsResult =
+  Schemas["AcceptPriceAliasSuggestionsResult"];
+export type ImportStarterFoodsResult = Schemas["ImportStarterFoodsResult"];
 export type CreatePriceReportRequest = Schemas["CreatePriceReportRequest"];
 export type CreateManualPriceRequest = Schemas["CreateManualPriceRequest"];
 export type CreatePriceRegionRequest = Schemas["CreatePriceRegionRequest"];
@@ -140,6 +143,20 @@ export const createManualPrice = (body: CreateManualPriceRequest) =>
     body,
     headers: idempotent(),
   });
+
+/** Maps each product to its suggested food and size; the ones it could not map come back with a reason. */
+export const acceptPriceAliasSuggestions = (aliasIds: string[]) =>
+  clientApi<AcceptPriceAliasSuggestionsResult>(
+    "/api/admin/prices/aliases/accept-suggestions",
+    { method: "POST", body: { aliasIds }, headers: idempotent() },
+  );
+
+/** Adds the starter foods to the shared catalogue; safe to repeat. */
+export const importStarterFoods = () =>
+  clientApi<ImportStarterFoodsResult>(
+    "/api/admin/prices/import-starter-foods",
+    { method: "POST", headers: idempotent() },
+  );
 
 /** Writes the Addis Ababa staples as Estimated prices; answers the names it could not match. */
 export const seedStaplePrices = () =>

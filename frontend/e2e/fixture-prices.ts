@@ -52,6 +52,10 @@ export type StoredAlias = {
   lastSeenUrl: string | null;
   createdAt: string;
   updatedAt: string;
+  /** What the API's matcher proposes; accepted only by an administrator. */
+  suggestedFoodId?: string | null;
+  suggestedQuantity?: number | null;
+  suggestedUnit?: string | null;
 };
 export type StoredReport = {
   id: string;
@@ -79,12 +83,16 @@ export type PricesState = {
   aliases: StoredAlias[];
   reports: StoredReport[];
   runOutcome: RunOutcome;
+  /** Whether the starter foods were imported this session; a second import adds none. */
+  starterImported: boolean;
 };
 export type PricesOptions = {
   /** The viewer's region (default `ET-AA`). */
   regionCode?: string;
   /** What Run now answers this session (default `started`). */
   runOutcome?: RunOutcome;
+  /** A second suggested product in the queue, so a bulk accept can skip one. */
+  secondSuggestion?: boolean;
 };
 export type PriceQuote = {
   pricePerGram: number;
@@ -101,6 +109,9 @@ export const REPORTS_AA_ID = "f1000000-0000-4000-8000-000000000004";
 export const MANUAL_NBO_ID = "f1000000-0000-4000-8000-000000000005";
 export const OATS_ALIAS_ID = "f2000000-0000-4000-8000-000000000001";
 export const BAG_ALIAS_ID = "f2000000-0000-4000-8000-000000000002";
+export const YOGURT_ALIAS_ID = "f2000000-0000-4000-8000-000000000004";
+/** What POST import-starter-foods adds the first time. */
+export const STARTER_FOODS = ["Teff flour", "Red lentils"];
 export const OPEN_REPORT_ID = "f3000000-0000-4000-8000-000000000001";
 const YOGURT_ID = "11111111-1111-4111-8111-111111111111";
 const OATS_ID = "22222222-2222-4222-8222-222222222222";
@@ -136,6 +147,7 @@ export function initialPrices(
   return {
     regionCode: options.regionCode ?? "ET-AA",
     runOutcome: options.runOutcome ?? "started",
+    starterImported: false,
     aliases: [
       {
         id: OATS_ALIAS_ID,
@@ -151,7 +163,32 @@ export function initialPrices(
         lastSeenUrl: "https://aradamart.net/product-page/quaker-oats-500g",
         createdAt: stamp(5),
         updatedAt: stamp(1),
+        suggestedFoodId: OATS_ID,
+        suggestedQuantity: 500,
+        suggestedUnit: "g",
       },
+      ...(options.secondSuggestion
+        ? [
+            {
+              id: YOGURT_ALIAS_ID,
+              sourceId: ARADA_ID,
+              productName: "Greek yogurt 1kg",
+              productKey: "SKU-YOG-1000",
+              foodId: null,
+              quantity: 1,
+              unit: "kg",
+              ignored: false,
+              lastSeenPrice: 340,
+              lastSeenAt: stamp(1),
+              lastSeenUrl: null,
+              createdAt: stamp(5),
+              updatedAt: stamp(1),
+              suggestedFoodId: YOGURT_ID,
+              suggestedQuantity: 1,
+              suggestedUnit: "kg",
+            },
+          ]
+        : []),
       {
         id: BAG_ALIAS_ID,
         sourceId: ARADA_ID,
@@ -697,9 +734,53 @@ export async function handlePrices(
           regionCode,
           currency: currencyOf(prices, regionCode),
           foodName: foodById(alias.foodId)?.name ?? null,
+          suggestedFoodId: alias.suggestedFoodId ?? null,
+          suggestedFoodName: foodById(alias.suggestedFoodId)?.name ?? null,
+          suggestedQuantity: alias.suggestedQuantity ?? null,
+          suggestedUnit: alias.suggestedUnit ?? null,
         };
       });
     return json(paged(items, url));
+  }
+  if (
+    path === "/api/admin/prices/aliases/accept-suggestions" &&
+    method === "POST"
+  ) {
+    const input = await body<Schemas["AcceptPriceAliasSuggestionsRequest"]>();
+    record(input);
+    const result: Schemas["AcceptPriceAliasSuggestionsResult"] = {
+      accepted: [],
+      skipped: [],
+    };
+    for (const aliasId of input.aliasIds ?? []) {
+      const alias = prices.aliases.find((item) => item.id === aliasId);
+      if (!alias) {
+        result.skipped.push({ aliasId, reason: "not_found" });
+        continue;
+      }
+      if (alias.foodId || alias.ignored) {
+        result.skipped.push({ aliasId, reason: "already_reviewed" });
+        continue;
+      }
+      if (!alias.suggestedFoodId) {
+        result.skipped.push({ aliasId, reason: "no_suggestion" });
+        continue;
+      }
+      Object.assign(alias, {
+        foodId: alias.suggestedFoodId,
+        quantity: alias.suggestedQuantity ?? null,
+        unit: alias.suggestedUnit ?? null,
+        updatedAt: now,
+      });
+      result.accepted.push({
+        aliasId,
+        foodId: alias.suggestedFoodId,
+        foodName: foodById(alias.suggestedFoodId)?.name ?? "",
+        quantity: alias.quantity,
+        unit: alias.unit,
+      });
+    }
+    return json(result);
   }
   const aliasPath = path.match(/^\/api\/admin\/prices\/aliases\/([^/]+)$/);
   if (aliasPath && method === "PUT") {
@@ -741,6 +822,16 @@ export async function handlePrices(
     };
     prices.prices.push(price);
     return json({ id: price.id }, 201);
+  }
+  if (path === "/api/admin/prices/import-starter-foods" && method === "POST") {
+    record({});
+    const first = !prices.starterImported;
+    prices.starterImported = true;
+    return json({
+      created: first ? STARTER_FOODS.length : 0,
+      existing: first ? 3 : 3 + STARTER_FOODS.length,
+      createdNames: first ? STARTER_FOODS : [],
+    } satisfies Schemas["ImportStarterFoodsResult"]);
   }
   if (path === "/api/admin/prices/seed-staples" && method === "POST") {
     record({});
