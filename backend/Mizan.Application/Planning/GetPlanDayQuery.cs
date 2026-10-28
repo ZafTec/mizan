@@ -93,6 +93,7 @@ public class GetPlanDayQueryHandler : IRequestHandler<GetPlanDayQuery, PlanDayVi
             Day = built.Day,
             Currency = built.Currency,
             Rules = PlanRulesMapping.ToDto(plan.Rules),
+            EffectiveTargets = built.Targets,
         };
     }
 
@@ -111,7 +112,7 @@ public class GetPlanDayQueryHandler : IRequestHandler<GetPlanDayQuery, PlanDayVi
         var plan = candidates.FirstOrDefault(p => p.Covers(date));
         if (plan is null) return null;
         var dayIndex = PlanSchedule.DayIndexOf(plan.StartDate!.Value, plan.DurationDays, date)!.Value;
-        var (day, currency) = await _readModel.BuildDayAsync(plan, dayIndex, userId, cancellationToken);
+        var (day, currency, targets) = await _readModel.BuildDayAsync(plan, dayIndex, userId, cancellationToken);
         return new PlanDayViewDto
         {
             PlanId = plan.Id,
@@ -119,6 +120,7 @@ public class GetPlanDayQueryHandler : IRequestHandler<GetPlanDayQuery, PlanDayVi
             Date = date,
             Day = day,
             Rules = PlanRulesMapping.ToDto(plan.Rules),
+            EffectiveTargets = targets,
             Currency = currency,
         };
     }

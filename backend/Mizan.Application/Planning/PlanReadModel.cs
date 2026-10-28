@@ -22,11 +22,13 @@ public sealed class PlanReadModel
 {
     private readonly IMizanDbContext _context;
     private readonly PriceBookReader _prices;
+    private readonly PlanTargetsReader _targets;
 
-    public PlanReadModel(IMizanDbContext context, PriceBookReader prices)
+    public PlanReadModel(IMizanDbContext context, PriceBookReader prices, PlanTargetsReader targets)
     {
         _context = context;
         _prices = prices;
+        _targets = targets;
     }
 
     public async Task<MealPlanDetailDto> BuildAsync(MealPlan plan, Guid viewerId, bool canEdit, CancellationToken cancellationToken)
@@ -51,6 +53,7 @@ public sealed class PlanReadModel
             AuthoredByUserId = plan.AuthoredByUserId,
             AuthoredByName = resolved.AuthoredByName,
             Rules = PlanRulesMapping.ToDto(plan.Rules),
+            EffectiveTargets = PlanTargetsReader.ToDto(plan.Rules, resolved.Targets),
             Days = days,
             PrepSessions = plan.PrepSessions
                 .OrderBy(s => s.DayIndex)
@@ -75,11 +78,11 @@ public sealed class PlanReadModel
         };
     }
 
-    /// <summary>One day of the plan and the currency its costs are in.</summary>
-    public async Task<(PlanDayDto Day, string Currency)> BuildDayAsync(MealPlan plan, int dayIndex, Guid viewerId, CancellationToken cancellationToken)
+    /// <summary>One day of the plan, the currency its costs are in, and the targets it is held to.</summary>
+    public async Task<(PlanDayDto Day, string Currency, PlanTargetsDto Targets)> BuildDayAsync(MealPlan plan, int dayIndex, Guid viewerId, CancellationToken cancellationToken)
     {
         var resolved = await ResolveAsync(plan, viewerId, cancellationToken);
-        return (BuildDay(plan, dayIndex, resolved), resolved.Currency);
+        return (BuildDay(plan, dayIndex, resolved), resolved.Currency, PlanTargetsReader.ToDto(plan.Rules, resolved.Targets));
     }
 
     private static PlanDayDto BuildDay(MealPlan plan, int dayIndex, Resolved resolved)
@@ -202,16 +205,18 @@ public sealed class PlanReadModel
 
         // The budget rules compare like with like: a budget in another currency is not checked.
         var sameCurrency = string.Equals(plan.Rules.Currency, region.Currency, StringComparison.OrdinalIgnoreCase);
+        var targets = await _targets.ForPlanAsync(plan, viewerId, cancellationToken);
         var violations = PlanRuleCheck.Evaluate(
             plan.Rules, entries, days, foodIdsByEntry, foodNames,
             sameCurrency ? cost.WeeklyCost : null,
-            sameCurrency ? cost.DayCosts : null);
+            sameCurrency ? cost.DayCosts : null,
+            targets);
 
         string? authorName = null;
         if (plan.AuthoredByUserId is { } authorId)
             authorName = await _context.Users.AsNoTracking().Where(u => u.Id == authorId).Select(u => u.Name).FirstOrDefaultAsync(cancellationToken);
 
-        return new Resolved(recipes, perServing, foods, logged, days, violations, authorName, cost, region.Currency);
+        return new Resolved(recipes, perServing, foods, logged, days, violations, authorName, cost, region.Currency, targets);
     }
 
     private sealed record RecipeHead(Guid Id, string Title, string? ImageUrl, List<Guid> FoodIds);
@@ -225,5 +230,6 @@ public sealed class PlanReadModel
         IReadOnlyList<PlanViolation> Violations,
         string? AuthoredByName,
         PlanCost Cost,
-        string Currency);
+        string Currency,
+        PlanTargets Targets);
 }

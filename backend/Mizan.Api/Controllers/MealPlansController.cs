@@ -49,6 +49,14 @@ public class MealPlansController : ControllerBase
     public async Task<ActionResult<GenerateMealPlanResult>> Generate([FromBody] GenerateMealPlanCommand command)
         => Ok(await _mediator.Send(command));
 
+    /// <summary>
+    /// The targets a macro mode gives the signed-in person, with any values already typed:
+    /// a typed value wins, Keto caps carbs, HighProtein derives protein from calories.
+    /// </summary>
+    [HttpGet("rules/defaults")]
+    public async Task<ActionResult<PlanTargetsDto>> GetRuleDefaults([FromQuery] GetPlanTargetsQuery query)
+        => Ok(await _mediator.Send(query));
+
     [HttpGet("templates")]
     public async Task<ActionResult<List<TemplateDto>>> GetTemplates()
         => Ok(await _mediator.Send(new GetTemplatesQuery()));

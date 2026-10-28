@@ -49,7 +49,7 @@ public static class McpToolScopes
             "delete_recipe", "toggle_favorite_recipe", "upload_image");
 
         // Meal plans and shopping
-        Add(McpScopes.PlanningRead, "list_meal_plans", "get_meal_plan", "get_plan_day", "list_templates",
+        Add(McpScopes.PlanningRead, "list_meal_plans", "get_meal_plan", "get_plan_day", "get_plan_targets", "list_templates",
             "list_shopping_lists", "get_shopping_list");
         Add(McpScopes.PlanningWrite, "create_meal_plan", "update_meal_plan", "delete_meal_plan", "set_meal_plan_status",
             "accept_meal_plan", "decline_meal_plan", "add_plan_entry", "update_plan_entry", "remove_plan_entry",

@@ -446,6 +446,15 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
                 eatingWindowEnd = "20:00:00",
                 prepStyle = "Batch",
             },
+            effectiveTargets = new
+            {
+                macroMode = "Custom",
+                calories = new { value = 1800m, source = "typed" },
+                protein = new { value = 140m, source = "typed" },
+                maxCarbs = new { value = 120m, source = "typed" },
+                fat = new { value = (decimal?)null, source = (string?)null },
+                goalMissing = false,
+            },
         }, Web);
     }
 

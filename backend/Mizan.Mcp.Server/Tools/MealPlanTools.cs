@@ -16,7 +16,9 @@ namespace Mizan.Mcp.Server.Tools;
 public sealed class MealPlanTools
 {
     private const string RulesHelp = "rulesJson is an object {macroMode?: None|Keto|HighProtein|Custom, targetCalories?, targetProtein?, maxCarbs?, targetFat?, " +
-        "eatingWindowStart?: \"HH:mm\", eatingWindowEnd?: \"HH:mm\", allowedFoodIds?: [], forbiddenFoodIds?: [], weeklyBudget?, dailyBudget?, currency?, prepStyle?: Daily|Batch, batchDays?: [dayIndex]}.";
+        "eatingWindowStart?: \"HH:mm\", eatingWindowEnd?: \"HH:mm\", allowedFoodIds?: [], forbiddenFoodIds?: [], weeklyBudget?, dailyBudget?, currency?, prepStyle?: Daily|Batch, batchDays?: [dayIndex]}. " +
+        "Keto caps carbs at 30 g and takes calories, protein and fat from the user's goal; HighProtein takes calories from the goal and asks for at least 30% of them as protein. " +
+        "A typed target always wins; the plan's effectiveTargets show what it is held to, and get_plan_targets previews them.";
 
     private const string EntriesHelp = "entriesJson is an array of {dayIndex, slot: BREAKFAST|LUNCH|DINNER|SNACK|DRINK|MEAL, kind: Recipe|Food|Text, recipeId?, servings?, foodId?, grams?, text?, notes?, prepSessionIndex?}; " +
         "a Recipe entry needs recipeId and servings, a Food entry foodId and grams, a Text entry text. prepSessionsJson is an array of {dayIndex, title, notes?}, and prepSessionIndex points into it.";
@@ -82,12 +84,31 @@ public sealed class MealPlanTools
 
     [McpServerTool(Name = "get_meal_plan", ReadOnly = true, Idempotent = true)]
     [McpAppUi(ResourceUri = Mizan.Mcp.Server.Apps.MizanApps.MealPlan)]
-    [Description("Get a meal plan with its days, slots and entries (each with its id, nutrition and whether it is logged), per-day totals, prep sessions, rules and rule violations.")]
+    [Description("Get a meal plan with its days, slots and entries (each with its id, nutrition and whether it is logged), per-day totals, prep sessions, rules, the effective targets the plan is held to, and rule violations.")]
     public async Task<string> GetMealPlan(
         [Description("Meal plan UUID")] string id,
         CancellationToken ct = default)
     {
         return await _api.GetAsync($"/api/MealPlans/{ToolArguments.ParseId(id, "id")}", ct);
+    }
+
+    [McpServerTool(Name = "get_plan_targets", ReadOnly = true, Idempotent = true)]
+    [Description("Preview the daily targets a macro mode gives the user, with any targets already chosen: each comes back with its value and source (typed, mode, goal or derived), and goalMissing says the mode needs a goal the user has not set.")]
+    public async Task<string> GetPlanTargets(
+        [Description("None, Keto, HighProtein or Custom")] string? macroMode = null,
+        [Description("Daily calories, if chosen")] decimal? targetCalories = null,
+        [Description("Daily protein grams, if chosen")] decimal? targetProtein = null,
+        [Description("Daily carb ceiling in grams, if chosen")] decimal? maxCarbs = null,
+        [Description("Daily fat grams, if chosen")] decimal? targetFat = null,
+        CancellationToken ct = default)
+    {
+        var query = new QueryString()
+            .Add("macroMode", string.IsNullOrWhiteSpace(macroMode) ? null : macroMode.Trim())
+            .Add("targetCalories", targetCalories?.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            .Add("targetProtein", targetProtein?.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            .Add("maxCarbs", maxCarbs?.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            .Add("targetFat", targetFat?.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        return await _api.GetAsync($"/api/MealPlans/rules/defaults{query}", ct);
     }
 
     [McpServerTool(Name = "get_plan_day", ReadOnly = true, Idempotent = true)]

@@ -138,7 +138,7 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
             Currency = ceiling is null && daily is null ? baseRules.Currency : baseRules.Currency ?? context.Currency,
         };
 
-        var ask = Ask(request, rulesDto, ceiling, context);
+        var ask = Ask(request, rulesDto, MacroTargets.Resolve(baseRules, context.Goal), ceiling, context);
         var completion = new AiCompletionRequest
         {
             Messages = string.IsNullOrWhiteSpace(context.Text)
@@ -276,18 +276,18 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
     }
 
     /// <summary>The request in words. The preference is quoted as the person's own words, which the model treats as data.</summary>
-    private static string Ask(GenerateMealPlanCommand request, PlanRulesDto rules, decimal? ceiling, MealPlanContext context)
+    private static string Ask(GenerateMealPlanCommand request, PlanRulesDto rules, PlanTargets targets, decimal? ceiling, MealPlanContext context)
     {
         var text = new StringBuilder();
         text.Append(CultureInfo.InvariantCulture,
             $"Write a {request.DurationDays}-day plan. Day 0 is {request.StartDate:yyyy-MM-dd}; dayIndex runs from 0 to {request.DurationDays - 1}.\n");
         text.Append("Rules:\n");
         text.Append(CultureInfo.InvariantCulture, $"- Macro mode: {rules.MacroMode}.\n");
-        if (rules.TargetCalories is { } kcal) text.Append(CultureInfo.InvariantCulture, $"- About {kcal:0} kcal a day.\n");
-        if (rules.TargetProtein is { } protein) text.Append(CultureInfo.InvariantCulture, $"- At least {protein:0} g protein a day.\n");
-        var carbs = rules.MaxCarbs ?? (rules.MacroMode == nameof(MacroMode.Keto) ? PlanRules.KetoMaxCarbsGrams : null);
-        if (carbs is { } c) text.Append(CultureInfo.InvariantCulture, $"- At most {c:0} g carbs a day.\n");
-        if (rules.TargetFat is { } fat) text.Append(CultureInfo.InvariantCulture, $"- About {fat:0} g fat a day.\n");
+        // The targets the draft is held to: typed values, then the mode's defaults and the goal (MacroTargets).
+        if (targets.Calories.Value is { } kcal) text.Append(CultureInfo.InvariantCulture, $"- About {kcal:0} kcal a day.\n");
+        if (targets.Protein.Value is { } protein) text.Append(CultureInfo.InvariantCulture, $"- At least {protein:0} g protein a day.\n");
+        if (targets.MaxCarbs.Value is { } c) text.Append(CultureInfo.InvariantCulture, $"- At most {c:0} g carbs a day.\n");
+        if (targets.Fat.Value is { } fat) text.Append(CultureInfo.InvariantCulture, $"- About {fat:0} g fat a day.\n");
         if (rules.EatingWindowStart is { } from && rules.EatingWindowEnd is { } to)
             text.Append(CultureInfo.InvariantCulture, $"- Meals between {from:HH\\:mm} and {to:HH\\:mm}.\n");
         if (rules.AllowedFoodIds.Count > 0) text.Append("- Use only the catalogue foods listed.\n");

@@ -51,13 +51,21 @@ Entries use a day index, not a date. `Date = StartDate + DayIndex`. A template c
 
 | Rule | Type | Effect |
 | --- | --- | --- |
-| `MacroMode` | `None`, `Keto`, `HighProtein`, `Custom` | Sets default targets. `Custom` uses the explicit targets. |
-| `TargetCalories`, `TargetProtein`, `MaxCarbs`, `TargetFat` | nullable numbers | Daily targets. `Keto` sets `MaxCarbs` to 30 g when empty. |
+| `MacroMode` | `None`, `Keto`, `HighProtein`, `Custom` | Sets default targets; see effective targets below. `None` and `Custom` use only the typed targets. |
+| `TargetCalories`, `TargetProtein`, `MaxCarbs`, `TargetFat` | nullable numbers | Typed daily targets. A typed value always wins over a mode default. |
 | `EatingWindowStart`, `EatingWindowEnd` | time, nullable | Shown on the plan. `EatingWindowEnd` drives the evening reminder. |
 | `AllowedFoodIds`, `ForbiddenFoodIds` | Guid lists | A forbidden food in an entry is a violation. An allow list makes every other food a violation. |
 | `WeeklyBudget`, `Currency` | decimal, 3-letter code | The ceiling for costing. |
 | `DailyBudget` | decimal, in `Currency` | The ceiling for one day's cost. A day over it is marked and is a `daily_budget_over` violation. |
 | `PrepStyle`, `BatchDays` | `Daily`, `Batch`, plus day indexes | `Batch` groups entries into prep sessions on the given days. |
+
+`MacroTargets.Resolve` in Domain turns the rules and the owner's goal into the effective targets. Each has a value and a source: `typed`, `mode`, `goal` or `derived`.
+
+- `Keto`: carbs at most 30 g (`mode`); calories, protein and fat from the goal.
+- `HighProtein`: calories from the goal; protein is the larger of the goal's protein and 30% of the calories at 4 kcal a gram, rounded to whole grams (`derived` when the share wins).
+- `goalMissing` is true when the mode reads a goal and there is none the viewer may read.
+
+The goal is the plan owner's active goal, read through `IDataAccessPolicy` on the nutrition axis (`Display` on reads, `AiContext` for the generator). Templates have no owner's goal. Body weight is not used. The plan, the plan day and `GET /api/MealPlans/rules/defaults` return `effectiveTargets`; violations, the generator's prompt and Telegram use the same values.
 
 `PlanRuleCheck` in Domain evaluates a plan and returns violations: day, slot, rule, message. The web page, the MCP tool result, and Telegram show the same list.
 
@@ -98,6 +106,7 @@ Request and response records live in `Mizan.Contracts/Planning`. Enumerations tr
 | Route | Command or query |
 | --- | --- |
 | `GET /api/MealPlans?status=&page=&pageSize=` | `GetMealPlansQuery`: owned plans, household plans, drafts the viewer authored. Templates are not listed here. |
+| `GET /api/MealPlans/rules/defaults?macroMode=&targetCalories=&targetProtein=&maxCarbs=&targetFat=` | `GetPlanTargetsQuery`: the signed-in person's effective targets for those rules (`PlanTargetsDto`). |
 | `GET /api/MealPlans/day?date=` | `GetPlanDayQuery`: the active plan's day, today by default. `404 no_active_plan` when none covers the date. |
 | `GET /api/MealPlans/templates`, `POST`, `PUT|DELETE /templates/{id}`, `POST /templates/{id}/apply` | `GetTemplatesQuery`, `CreateTemplateCommand`, `UpdateTemplateCommand`, `DeleteTemplateCommand`, `ApplyTemplateCommand`. |
 | `GET|PUT|DELETE /api/MealPlans/{id}`, `POST /api/MealPlans` | `GetMealPlanByIdQuery`, `UpdateMealPlanCommand`, `DeleteMealPlanCommand`, `CreateMealPlanCommand`. |
@@ -259,7 +268,7 @@ All API calls go through `lib/api/*` modules typed from `types/api.generated.ts`
 
 ### MCP
 
-Tools: `list_meal_plans`, `get_meal_plan`, `get_plan_day`, `create_meal_plan`, `update_meal_plan`, `delete_meal_plan`, `add_plan_entry`, `update_plan_entry`, `remove_plan_entry`, `generate_shopping_list`, `log_plan_entry`, `list_templates`, `apply_template`, `generate_meal_plan`, and the shopping list CRUD. Entry tools take the entry id and say so. Admin tools manage global templates and prices. Trainer tools under `trainer:write` draft for a client (`create_plan_for_client`, `apply_template_for_client`) and keep the coach's own templates (`create_template`, `update_template`, `delete_template`).
+Tools: `list_meal_plans`, `get_meal_plan`, `get_plan_day`, `get_plan_targets`, `create_meal_plan`, `update_meal_plan`, `delete_meal_plan`, `add_plan_entry`, `update_plan_entry`, `remove_plan_entry`, `generate_shopping_list`, `log_plan_entry`, `list_templates`, `apply_template`, `generate_meal_plan`, and the shopping list CRUD. Entry tools take the entry id and say so. Admin tools manage global templates and prices. Trainer tools under `trainer:write` draft for a client (`create_plan_for_client`, `apply_template_for_client`) and keep the coach's own templates (`create_template`, `update_template`, `delete_template`).
 
 The MCP App `meal-plan` renders `get_meal_plan` and `get_plan_day`. It calls `log_plan_entry` and `generate_shopping_list` through the host. The prompt `plan_my_week` builds a plan through `create_meal_plan` and `add_plan_entry` (and `generate_meal_plan` from step 4); `grocery_run` calls `generate_shopping_list`. Neither asks the model to aggregate.
 

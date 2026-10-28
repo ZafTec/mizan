@@ -108,6 +108,9 @@ public record MealPlanDetailDto
     public Guid? AuthoredByUserId { get; init; }
     public string? AuthoredByName { get; init; }
     public PlanRulesDto Rules { get; init; } = new();
+
+    /// <summary>The daily targets the plan is held to: the typed rules after the macro mode and the owner's goal.</summary>
+    public PlanTargetsDto EffectiveTargets { get; init; } = new();
     public List<PlanDayDto> Days { get; init; } = [];
     public List<PrepSessionDto> PrepSessions { get; init; } = [];
     public List<PlanViolationDto> Violations { get; init; } = [];
@@ -154,6 +157,9 @@ public record PlanDayViewDto
     public PlanDayDto Day { get; init; } = new();
     public PlanRulesDto Rules { get; init; } = new();
 
+    /// <summary>The daily targets the day is held to, as on the plan.</summary>
+    public PlanTargetsDto EffectiveTargets { get; init; } = new();
+
     /// <summary>The currency of <c>Day.Cost</c> and the entry costs.</summary>
     public string Currency { get; init; } = string.Empty;
 }
@@ -180,3 +186,26 @@ public record PlanEntryCreatedResult(Guid Id);
 public record PrepSessionCreatedResult(Guid Id);
 
 public record GenerateShoppingListResult(Guid ListId, int ItemCount, int NeedsReviewCount);
+
+/// <summary>
+/// One effective daily target. <c>Source</c> is <c>typed</c> (the person's value), <c>mode</c>
+/// (the macro mode's default, such as Keto's 30 g carbs), <c>goal</c> (the current goal) or
+/// <c>derived</c> (HighProtein's share of calories); both are null without a target.
+/// </summary>
+public record PlanTargetDto(decimal? Value, string? Source);
+
+/// <summary>
+/// The daily targets a plan is held to (docs/PLANNING.md#rules), returned on the plan, on its
+/// day, and by <c>GET /api/MealPlans/rules/defaults</c> for the rules form. Surfaces show these;
+/// they do not compute them. <c>GoalMissing</c> is true when the mode takes targets from a goal
+/// and there is none.
+/// </summary>
+public record PlanTargetsDto
+{
+    public string MacroMode { get; init; } = "None";
+    public PlanTargetDto Calories { get; init; } = new(null, null);
+    public PlanTargetDto Protein { get; init; } = new(null, null);
+    public PlanTargetDto MaxCarbs { get; init; } = new(null, null);
+    public PlanTargetDto Fat { get; init; } = new(null, null);
+    public bool GoalMissing { get; init; }
+}

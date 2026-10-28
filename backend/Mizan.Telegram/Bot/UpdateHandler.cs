@@ -824,12 +824,13 @@ public sealed class UpdateHandler
             text.AppendLine().AppendLine("Nothing is planned for this day.");
         }
 
-        // The words are the domain's; only the bold is ours. The plan's rules
-        // are the targets here, because that is what the plan is held to.
+        // The words are the domain's; only the bold is ours. The plan's effective
+        // targets are shown, because that is what the plan is held to.
         text.AppendLine();
+        var targets = view.EffectiveTargets;
         foreach (var amount in NutritionText.Daily(
             day.Totals.Calories, day.Totals.ProteinGrams, day.Totals.CarbsGrams, day.Totals.FatGrams,
-            view.Rules.TargetCalories, view.Rules.TargetProtein, view.Rules.MaxCarbs, view.Rules.TargetFat))
+            targets.Calories.Value, targets.Protein.Value, targets.MaxCarbs.Value, targets.Fat.Value))
         {
             text.AppendLine(NutritionText.Describe(amount, actual => $"<b>{actual}</b>"));
         }

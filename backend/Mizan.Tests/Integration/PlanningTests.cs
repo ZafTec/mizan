@@ -353,6 +353,67 @@ public class PlanningTests
             .Should().Be(0, "the temporary copies are dropped");
     }
 
+    [Fact]
+    public async Task AKetoPlanWithNoTypedTargets_IsHeldToThirtyGramsOfCarbs_AndSaysTheGoalIsMissing()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (_, client) = await _world.PersonAsync("keto");
+        var bread = await _world.FoodAsync("Bread", 250, 8, 50, 2);
+
+        var planId = await CreatePlanAsync(client, new CreateMealPlanRequest
+        {
+            Name = "Keto week",
+            StartDate = new DateOnly(2026, 10, 12),
+            DurationDays = 1,
+            Rules = new PlanRulesDto { MacroMode = "Keto" },
+            Entries = [FoodEntry(bread.Id, 100, day: 0)],
+        });
+
+        var plan = await PlanAsync(client, planId);
+        plan.EffectiveTargets.MaxCarbs.Should().Be(new PlanTargetDto(30, "mode"));
+        plan.EffectiveTargets.Calories.Value.Should().BeNull();
+        plan.EffectiveTargets.GoalMissing.Should().BeTrue();
+        plan.Days[0].Violations.Select(v => v.Rule).Should().Equal(PlanRuleNames.CarbsOver);
+
+        var defaults = await client.GetFromJsonAsync<PlanTargetsDto>("/api/MealPlans/rules/defaults?macroMode=Keto&maxCarbs=40");
+        defaults!.MaxCarbs.Should().Be(new PlanTargetDto(40, "typed"));
+        defaults.GoalMissing.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task AHighProteinPlanTakesItsTargetsFromTheGoal_AndFollowsTheGoalWhenItChanges()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (_, client) = await _world.PersonAsync("lifter");
+        var chicken = await _world.FoodAsync("Chicken", 165, 31, 0, 3.6m);
+        (await client.PostAsJsonAsync("/api/Goals", new { GoalType = "general", TargetCalories = 2000, TargetProteinGrams = 100m }))
+            .StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var planId = await CreatePlanAsync(client, new CreateMealPlanRequest
+        {
+            Name = "Strength block",
+            StartDate = new DateOnly(2026, 10, 12),
+            DurationDays = 1,
+            Rules = new PlanRulesDto { MacroMode = "HighProtein" },
+            Entries = [FoodEntry(chicken.Id, 300, day: 0)],
+        });
+
+        var plan = await PlanAsync(client, planId);
+        plan.EffectiveTargets.Calories.Should().Be(new PlanTargetDto(2000, "goal"));
+        plan.EffectiveTargets.Protein.Should().Be(new PlanTargetDto(150, "derived"), "30% of 2000 kcal at 4 kcal a gram beats the goal's 100 g");
+        plan.EffectiveTargets.GoalMissing.Should().BeFalse();
+        plan.Days[0].Violations.Select(v => v.Rule).Should().Contain(PlanRuleNames.ProteinUnder, "300 g of chicken is 93 g protein");
+
+        (await client.PostAsJsonAsync("/api/Goals", new { GoalType = "general", TargetCalories = 1200, TargetProteinGrams = 80m }))
+            .StatusCode.Should().Be(HttpStatusCode.Created);
+        var after = await PlanAsync(client, planId);
+        after.EffectiveTargets.Protein.Should().Be(new PlanTargetDto(90, "derived"));
+        after.Days[0].Violations.Select(v => v.Rule).Should().NotContain(PlanRuleNames.ProteinUnder);
+
+        var defaults = await client.GetFromJsonAsync<PlanTargetsDto>("/api/MealPlans/rules/defaults?macroMode=HighProtein");
+        defaults!.Protein.Should().Be(new PlanTargetDto(90, "derived"));
+    }
+
     private sealed record PagedResultOf<T>(List<T> Items, int TotalCount);
 
     private sealed record LogPlanEntryResultView(List<Guid> DiaryEntryIds, decimal Calories, DateOnly Date, string MealType);

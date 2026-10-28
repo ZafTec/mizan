@@ -18,7 +18,8 @@ public sealed record MealPlanContext(
     IReadOnlyList<Food> Foods,
     string Region,
     string Currency,
-    IReadOnlyList<string> IncludedAxes);
+    IReadOnlyList<string> IncludedAxes,
+    GoalTargets? Goal = null);
 
 /// <summary>
 /// Builds the context of a plan generation. What is personal comes through
@@ -54,6 +55,7 @@ public sealed class MealPlanContextBuilder
         var currency = region.Currency;
         var text = new StringBuilder();
         var included = new List<string>();
+        GoalTargets? goalTargets = null;
 
         if (axes.Contains(DataAxis.Nutrition))
         {
@@ -64,6 +66,7 @@ public sealed class MealPlanContextBuilder
                 .FirstOrDefaultAsync(cancellationToken);
             if (goal is not null)
             {
+                goalTargets = new GoalTargets(goal.TargetCalories, goal.TargetProteinGrams, goal.TargetCarbsGrams, goal.TargetFatGrams);
                 text.Append("## Goal\n").Append(CultureInfo.InvariantCulture,
                     $"Daily targets: {Num(goal.TargetCalories)} kcal, protein {Num(goal.TargetProteinGrams)} g, carbs {Num(goal.TargetCarbsGrams)} g, fat {Num(goal.TargetFatGrams)} g.\n\n");
             }
@@ -127,7 +130,7 @@ public sealed class MealPlanContextBuilder
                 text.Append("## Never use\n").Append(string.Join("\n", forbidden.Select(Clean))).Append("\n\n");
         }
 
-        return new MealPlanContext(text.ToString(), recipes, foods, region.Code, currency, included);
+        return new MealPlanContext(text.ToString(), recipes, foods, region.Code, currency, included, goalTargets);
     }
 
     /// <summary>

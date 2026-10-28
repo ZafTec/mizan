@@ -25,7 +25,9 @@ public static class PlanRuleNames
 /// ingredient foods). A day over its calorie target by more than a tenth, or
 /// under its protein target by more than a tenth, is a violation; a carb
 /// ceiling and a budget are absolute. The caller passes only costs in the
-/// rules' currency: an amount in another currency is not compared.
+/// rules' currency: an amount in another currency is not compared. The
+/// targets are the ones <see cref="MacroTargets"/> resolves; without them, the
+/// rules and their mode alone.
 /// </summary>
 public static class PlanRuleCheck
 {
@@ -38,8 +40,11 @@ public static class PlanRuleCheck
         IReadOnlyDictionary<Guid, IReadOnlyList<Guid>> foodIdsByEntry,
         IReadOnlyDictionary<Guid, string> foodNames,
         decimal? weeklyCost = null,
-        IReadOnlyDictionary<int, decimal?>? dayCosts = null)
+        IReadOnlyDictionary<int, decimal?>? dayCosts = null,
+        PlanTargets? targets = null)
     {
+        // The targets in force: the rules after the macro mode and the goal (MacroTargets).
+        targets ??= MacroTargets.Resolve(rules, goal: null);
         var violations = new List<PlanViolation>();
         var forbidden = rules.ForbiddenFoodIds.ToHashSet();
         var allowed = rules.AllowedFoodIds.ToHashSet();
@@ -57,18 +62,18 @@ public static class PlanRuleCheck
             }
         }
 
-        var maxCarbs = rules.EffectiveMaxCarbs;
+        var maxCarbs = targets.MaxCarbs.Value;
         foreach (var day in days)
         {
             if (day.UnresolvedEntryIds.Count > 0)
                 violations.Add(new PlanViolation(day.DayIndex, null, PlanRuleNames.Unresolved,
                     $"{day.UnresolvedEntryIds.Count} {(day.UnresolvedEntryIds.Count == 1 ? "entry has" : "entries have")} no nutrition yet, so the day's totals are incomplete."));
 
-            if (rules.TargetCalories is { } kcal && day.Totals.Calories > kcal * (1 + Tolerance))
+            if (targets.Calories.Value is { } kcal && day.Totals.Calories > kcal * (1 + Tolerance))
                 violations.Add(new PlanViolation(day.DayIndex, null, PlanRuleNames.CaloriesOver,
                     $"{day.Totals.Calories:0} kcal is over the {kcal:0} kcal target."));
 
-            if (rules.TargetProtein is { } protein && protein > 0 && day.Totals.ProteinGrams < protein * (1 - Tolerance) && day.UnresolvedEntryIds.Count == 0)
+            if (targets.Protein.Value is { } protein && protein > 0 && day.Totals.ProteinGrams < protein * (1 - Tolerance) && day.UnresolvedEntryIds.Count == 0)
                 violations.Add(new PlanViolation(day.DayIndex, null, PlanRuleNames.ProteinUnder,
                     $"{day.Totals.ProteinGrams:0} g protein is under the {protein:0} g target."));
 

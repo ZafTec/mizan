@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
@@ -21,9 +22,11 @@ public class GetMealPlanByIdQueryHandler : IRequestHandler<GetMealPlanByIdQuery,
     private readonly PlanReadModel _readModel;
     private readonly ICurrentUserService _currentUser;
     private readonly HybridCache _cache;
+    private readonly IMizanDbContext _context;
 
-    public GetMealPlanByIdQueryHandler(PlanAccess access, PlanReadModel readModel, ICurrentUserService currentUser, HybridCache cache)
+    public GetMealPlanByIdQueryHandler(PlanAccess access, PlanReadModel readModel, ICurrentUserService currentUser, HybridCache cache, IMizanDbContext context)
     {
+        _context = context;
         _access = access;
         _readModel = readModel;
         _currentUser = currentUser;
@@ -39,12 +42,17 @@ public class GetMealPlanByIdQueryHandler : IRequestHandler<GetMealPlanByIdQuery,
         // resolves through, and the viewer's diary, so an edit by anyone, a
         // recipe change, or a log by the viewer clears this copy. Costs are in
         // the viewer's region, so a stored price or a region switch clears it too.
+        // The targets follow the owner's goal, so the owner's nutrition tag clears it as well.
+        var ownerId = await _context.MealPlans.AsNoTracking()
+            .Where(p => p.Id == request.Id).Select(p => p.UserId).FirstOrDefaultAsync(cancellationToken);
+        List<string> tags = [CacheTags.MealPlan(request.Id), CacheTags.Recipes, CacheTags.Foods, CacheTags.Nutrition(userId), CacheTags.Prices, CacheTags.PriceRegion(userId)];
+        if (ownerId is { } owner && owner != userId) tags.Add(CacheTags.Nutrition(owner));
         return await _cache.GetOrCreateAsync(
             $"mealplan:{request.Id}:{userId}:{GrantContext.KeyFor(_currentUser.Grant)}",
             (self: this, request, userId),
             static (state, ct) => state.self.LoadAsync(state.request, state.userId, ct),
             CacheOptions,
-            tags: [CacheTags.MealPlan(request.Id), CacheTags.Recipes, CacheTags.Foods, CacheTags.Nutrition(userId), CacheTags.Prices, CacheTags.PriceRegion(userId)],
+            tags: tags,
             cancellationToken: cancellationToken);
     }
 
