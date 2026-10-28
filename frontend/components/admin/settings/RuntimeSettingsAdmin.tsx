@@ -158,10 +158,10 @@ function SettingRow({
     >
       <div className="min-w-0 flex-1 basis-64">
         <p className="font-medium break-words">{setting.label}</p>
-        <p id={`${id}-help`} className="mt-0.5 text-xs log-muted">
+        <p id={`${id}-help`} className="mt-0.5 text-xs text-muted-foreground">
           {setting.description}
         </p>
-        <p className="mt-0.5 text-xs log-muted">
+        <p className="mt-0.5 text-xs text-muted-foreground">
           <code>{setting.key}</code>
         </p>
       </div>
@@ -353,7 +353,7 @@ function TestButton({
 }) {
   return (
     <div className="flex min-w-0 flex-wrap items-center justify-end gap-3">
-      <p role="status" className="min-w-0 text-sm log-muted break-words">
+      <p role="status" className="min-w-0 text-sm text-muted-foreground break-words">
         {busy ? "Testing…" : children}
       </p>
       <button
