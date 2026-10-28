@@ -137,9 +137,7 @@ describe("global logging date context", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Log this recipe" }));
     expectDate("2026-09-01");
-    expect((screen.getByLabelText("Meal") as HTMLSelectElement).value).toBe(
-      "LUNCH",
-    );
+    expect(screen.getByLabelText("Meal").textContent).toBe("Lunch");
     expect(
       screen.getByLabelText("Chicken bowl quantity in servings"),
     ).toBeTruthy();

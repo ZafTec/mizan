@@ -1,4 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { choose } from "./select";
 import type { components } from "../types/api.generated";
 
 const apiURL = process.env.PLAYWRIGHT_API_URL ?? "http://localhost:5100";
@@ -189,7 +190,7 @@ test("a meal can be composed and saved over the current page", async ({
   await page.goto("/today");
   await page.getByRole("button", { name: "Add meal", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Log a meal", exact: true });
-  await dialog.getByLabel("Meal", { exact: true }).selectOption("LUNCH");
+  await choose(dialog.getByLabel("Meal", { exact: true }), "Lunch");
   await dialog
     .getByRole("button", { name: "Search foods", exact: true })
     .click();
@@ -277,8 +278,8 @@ test("Progress offers nutrition, bodyweight and exercise trends with readable da
     await expect(
       page.getByRole("heading", { name, exact: true }),
     ).toBeVisible();
-  await expect(page.getByLabel("Exercise", { exact: true })).toHaveValue(
-    "exercise-bench",
+  await expect(page.getByLabel("Exercise", { exact: true })).toHaveText(
+    "Bench press",
   );
   await page.getByText("View data", { exact: true }).first().click();
   await expect(

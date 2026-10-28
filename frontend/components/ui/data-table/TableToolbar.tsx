@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import { withParamsResettingPage } from "./url";
+import { Select } from "@/components/ui/select";
 
 export interface SelectFilter {
   name: string;
@@ -100,20 +101,14 @@ export default function TableToolbar({
       )}
 
       {filters.map((filter) => (
-        <select
+        <Select
           key={filter.name}
           value={params.get(filter.name) ?? ""}
-          onChange={(e) => setFilter(filter.name, e.target.value)}
+          onChange={(next) => setFilter(filter.name, next)}
           aria-label={filter.label}
-          className="input !w-auto !rounded-2xl !py-2 text-sm"
-        >
-          <option value="">{filter.label}</option>
-          {filter.options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+          className="w-auto text-sm"
+          options={[{ value: "", label: filter.label }, ...filter.options]}
+        />
       ))}
 
       {active && (

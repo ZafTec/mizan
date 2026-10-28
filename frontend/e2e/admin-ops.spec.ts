@@ -1,4 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { choose } from "./select";
 import {
   BLUE_DOOR_ID,
   FAILED_MAIL_ID,
@@ -88,7 +89,7 @@ test("the mail log filters, shows why a message failed, retries it, and sends an
   await expect(page.getByRole("heading", { name: "Mail" })).toBeVisible();
   await expect(page.getByText("Confirm your email")).toBeVisible();
 
-  await page.getByLabel("Any status").selectOption("Failed");
+  await choose(page.getByLabel("Any status"), "Failed");
   await expect(page).toHaveURL(/status=Failed/);
   await expect(page.getByText("Confirm your email")).toHaveCount(0);
 
@@ -139,7 +140,7 @@ test("the mail log filters, shows why a message failed, retries it, and sends an
   });
   expect(sent.body.announcementId).toBeTruthy();
 
-  await page.getByLabel("Any status").selectOption("Queued");
+  await choose(page.getByLabel("Any status"), "Queued");
   await expect(page.getByRole("link", { name: /Kitchen closed/ })).toHaveCount(
     2,
   );

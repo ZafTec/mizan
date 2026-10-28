@@ -5,6 +5,7 @@ import Loading from "@/components/Loading";
 import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
 import { useActionState, useState, useEffect } from "react";
 import { createGoal, getCurrentGoal } from "@/data/goal";
+import { Select } from "@/components/ui/select";
 
 const ACTIVITY_FACTORS = {
   sedentary: { label: "Sedentary (desk job, little/no exercise)", value: 1.2 },
@@ -275,18 +276,17 @@ export default function GoalForm() {
 
             {/* Activity Level */}
             <div>
-              <label className="label">Activity Level</label>
-              <select
-                className="input"
+              <label htmlFor="activity" className="label">
+                Activity Level
+              </label>
+              <Select
+                id="activity"
                 value={activity}
-                onChange={(e) => setActivity(e.target.value as ActivityKey)}
-              >
-                {Object.entries(ACTIVITY_FACTORS).map(([key, { label }]) => (
-                  <option key={key} value={key}>
-                    {label}
-                  </option>
-                ))}
-              </select>
+                onChange={(next) => setActivity(next as ActivityKey)}
+                options={Object.entries(ACTIVITY_FACTORS).map(
+                  ([key, { label }]) => ({ value: key, label }),
+                )}
+              />
             </div>
 
             {/* Result */}
@@ -339,19 +339,19 @@ export default function GoalForm() {
             <label htmlFor="goalType" className="label">
               Goal type
             </label>
-            <select
+            <Select
               id="goalType"
               name="goalType"
-              className="input"
               value={goalType}
-              onChange={(e) => setGoalType(e.target.value)}
-            >
-              <option value="">Select a goal type</option>
-              <option value="weight_loss">Weight Loss</option>
-              <option value="muscle_gain">Muscle Gain</option>
-              <option value="maintenance">Maintenance</option>
-              <option value="general">General Health</option>
-            </select>
+              onChange={setGoalType}
+              placeholder="Select a goal type"
+              options={[
+                { value: "weight_loss", label: "Weight Loss" },
+                { value: "muscle_gain", label: "Muscle Gain" },
+                { value: "maintenance", label: "Maintenance" },
+                { value: "general", label: "General Health" },
+              ]}
+            />
             <FieldError formState={formState} name="goalType" />
           </div>
         </div>

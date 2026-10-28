@@ -13,6 +13,7 @@ import {
   type ExerciseDetails,
 } from "@/lib/api/admin-exercises";
 import { appToast } from "@/lib/toast";
+import { Select } from "@/components/ui/select";
 
 const CATEGORIES = ["Strength", "Cardio", "Flexibility", "Balance"];
 const MAX_MODEL_MB = 30;
@@ -162,16 +163,12 @@ export default function ExerciseEditor({
             <label className="label" htmlFor="ex-category">
               Category
             </label>
-            <select
+            <Select
               id="ex-category"
-              className="input"
               value={form.category}
-              onChange={(e) => set("category")(e.target.value)}
-            >
-              {CATEGORIES.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
+              onChange={set("category")}
+              options={CATEGORIES.map((c) => ({ value: c, label: c }))}
+            />
           </div>
           <div>
             <label className="label" htmlFor="ex-muscle">

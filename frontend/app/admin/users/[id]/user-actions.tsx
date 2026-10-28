@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import { ModalShell } from "@/components/ModalShell";
 import { appToast } from "@/lib/toast";
+import { Select } from "@/components/ui/select";
 
 type Role = "user" | "trainer" | "admin";
 
@@ -425,16 +426,19 @@ function RoleDialog({
         </h3>
         <div className="space-y-4">
           <div>
-            <label className="label">New role</label>
-            <select
+            <label htmlFor="new-role" className="label">
+              New role
+            </label>
+            <Select
+              id="new-role"
               value={role}
-              onChange={(e) => setRole(e.target.value as Role)}
-              className="input"
-            >
-              <option value="user">User</option>
-              <option value="trainer">Trainer</option>
-              <option value="admin">Admin</option>
-            </select>
+              onChange={(next) => setRole(next as Role)}
+              options={[
+                { value: "user", label: "User" },
+                { value: "trainer", label: "Trainer" },
+                { value: "admin", label: "Admin" },
+              ]}
+            />
           </div>
           <div className="flex gap-2">
             <button

@@ -15,6 +15,7 @@ import {
 } from "@/lib/api/prices";
 import { formatPriceDate } from "@/lib/prices/format";
 import { appToast, getErrorMessage } from "@/lib/toast";
+import { Select } from "@/components/ui/select";
 
 type SourceForm = {
   name: string;
@@ -101,35 +102,27 @@ function SourceFields({
           <label htmlFor={`${id}-kind`} className="label">
             Kind
           </label>
-          <select
+          <Select
             id={`${id}-kind`}
-            className="input w-full"
             value={form.kind}
-            onChange={(event) => set("kind", event.target.value)}
-          >
-            {SOURCE_KINDS.map((kind) => (
-              <option key={kind} value={kind}>
-                {kind}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => set("kind", next)}
+            options={SOURCE_KINDS.map((kind) => ({ value: kind, label: kind }))}
+          />
         </div>
         <div>
           <label htmlFor={`${id}-region`} className="label">
             Region
           </label>
-          <select
+          <Select
             id={`${id}-region`}
-            className="input w-full"
+            searchable
             value={form.regionCode}
-            onChange={(event) => set("regionCode", event.target.value)}
-          >
-            {regions.map((region) => (
-              <option key={region.code} value={region.code}>
-                {region.code}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => set("regionCode", next)}
+            options={regions.map((region) => ({
+              value: region.code,
+              label: region.code,
+            }))}
+          />
         </div>
       </div>
       <div>

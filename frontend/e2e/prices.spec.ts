@@ -57,7 +57,7 @@ test("a person sees a food's price and reports a wrong one", async ({
 
   await dialog.getByLabel("Price (ETB)").fill("200");
   await expect(dialog.getByLabel("Quantity")).toHaveValue("500");
-  await expect(dialog.getByLabel("Unit")).toHaveValue("g");
+  await expect(dialog.getByLabel("Unit")).toHaveText("g");
   await dialog.getByLabel("Note (optional)").fill("Shola market");
   await dialog.getByRole("button", { name: "Send report" }).click();
   await expect(
@@ -175,19 +175,34 @@ test("switching region changes the currency shown", async ({
 
   await page.goto("/profile/settings");
   const zone = page.getByLabel("Time zone");
-  await expect(zone).toHaveValue("UTC");
+  await expect(zone).toHaveText(/^UTC/);
   // The browser's own list arrives after hydration, with each zone's offset.
-  await expect(
-    zone.getByRole("option", { name: "Africa/Addis Ababa (GMT+3)" }),
-  ).toHaveCount(1);
-  const select = page.getByLabel("Price region");
-  await expect(select).toHaveValue("ET-AA");
-  await expect(select.getByRole("option")).toHaveText([
-    "Addis Ababa (ETB)",
-    "Dire Dawa (ETB)",
-    "Nairobi (KES)",
+  // The long list filters as you type, and Escape leaves it unchanged.
+  await zone.click();
+  const zones = page.getByRole("listbox");
+  await page.getByRole("combobox", { name: "Search time zone" }).fill("addis");
+  await expect(zones.getByRole("option")).toHaveText([
+    /^Africa\/Addis Ababa\s*GMT\+3$/,
   ]);
-  await select.selectOption("KE-NBO");
+  await expect(
+    page.getByRole("status").filter({ hasText: /^1 of \d+$/ }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(zones).toHaveCount(0);
+  await expect(zone).toBeFocused();
+  await expect(zone).toHaveText(/^UTC/);
+
+  const select = page.getByLabel("Price region");
+  await expect(select).toHaveText(/^Addis Ababa\s*ETB$/);
+  await select.click();
+  await expect(page.getByRole("listbox").getByRole("option")).toHaveText([
+    /^Addis Ababa\s*ETB$/,
+    /^Dire Dawa\s*ETB$/,
+    /^Nairobi\s*KES$/,
+  ]);
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
   await expect(
     page.getByText("Prices now come from Nairobi, in KES"),
   ).toBeVisible();
@@ -227,7 +242,7 @@ test("an administrator maps a queued alias", async ({ page, context }) => {
   await form.getByRole("searchbox", { name: "Food" }).fill("oats");
   await form.getByRole("button", { name: "Add Rolled oats" }).click();
   await expect(form.getByLabel("Quantity")).toHaveValue("500");
-  await expect(form.getByLabel("Unit")).toHaveValue("g");
+  await expect(form.getByLabel("Unit")).toHaveText("g");
   await form.getByRole("button", { name: "Save" }).click();
   await expect(
     queue.getByRole("listitem", { name: "Quaker oats 500g" }),

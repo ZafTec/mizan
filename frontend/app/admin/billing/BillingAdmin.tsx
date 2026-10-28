@@ -15,6 +15,7 @@ import {
   type AdminBillingDiscount,
   type AdminBillingPlan,
 } from "@/lib/billing";
+import { Select } from "@/components/ui/select";
 
 /** "2.99" -> 299. Empty or unparseable input is NaN, which the API rejects with a message. */
 function toCents(dollars: string): number {
@@ -431,16 +432,14 @@ function CreatePlan({
           />
         </Field>
         <Field label="Billed">
-          <select
-            className="input w-full"
+          <Select
             value={interval}
-            onChange={(e) =>
-              setIntervalValue(e.target.value as "month" | "year")
-            }
-          >
-            <option value="month">Monthly</option>
-            <option value="year">Yearly</option>
-          </select>
+            onChange={(next) => setIntervalValue(next as "month" | "year")}
+            options={[
+              { value: "month", label: "Monthly" },
+              { value: "year", label: "Yearly" },
+            ]}
+          />
         </Field>
         <Field label="Price (USD)">
           <input
@@ -562,14 +561,14 @@ function CreateDiscount({
           />
         </Field>
         <Field label="Type">
-          <select
-            className="input w-full"
+          <Select
             value={type}
-            onChange={(e) => setType(e.target.value as "percentage" | "flat")}
-          >
-            <option value="percentage">Percentage off</option>
-            <option value="flat">Amount off (USD)</option>
-          </select>
+            onChange={(next) => setType(next as "percentage" | "flat")}
+            options={[
+              { value: "percentage", label: "Percentage off" },
+              { value: "flat", label: "Amount off (USD)" },
+            ]}
+          />
         </Field>
         <Field label={type === "percentage" ? "Percent" : "Amount (USD)"}>
           <input

@@ -8,6 +8,7 @@ import {
   type HouseholdSummary,
 } from "@/data/household";
 import { appToast } from "@/lib/toast";
+import { Select } from "@/components/ui/select";
 
 export function HouseholdSwitcherForm({
   households,
@@ -27,8 +28,8 @@ export function HouseholdSwitcherForm({
     );
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value === "" ? null : e.target.value;
+  const handleChange = (next: string) => {
+    const value = next === "" ? null : next;
     startTransition(async () => {
       const result = await setActiveHousehold(value);
       if (result.success) {
@@ -43,20 +44,17 @@ export function HouseholdSwitcherForm({
   return (
     <label className="inline-flex items-center gap-3 text-sm">
       <span className="sr-only">Active household</span>
-      <select
-        className="input h-10 min-w-[220px]"
+      <Select
+        className="w-auto min-w-[220px]"
         value={activeId ?? ""}
         onChange={handleChange}
         disabled={pending}
         aria-label="Active household"
-      >
-        <option value="">No active household</option>
-        {households.map((h) => (
-          <option key={h.id} value={h.id}>
-            {h.name}
-          </option>
-        ))}
-      </select>
+        options={[
+          { value: "", label: "No active household" },
+          ...households.map((h) => ({ value: h.id, label: h.name })),
+        ]}
+      />
     </label>
   );
 }

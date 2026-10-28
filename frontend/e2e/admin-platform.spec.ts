@@ -1,4 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { choose } from "./select";
 import { readFile } from "node:fs/promises";
 import { GREEN_GATE_ID, SAM_ID } from "./fixture-admin-ops";
 
@@ -166,7 +167,7 @@ test("an administrator caps one user's daily requests and sees where each limit 
   await form.getByRole("button", { name: "Save override" }).click();
   await expect(form.getByRole("alert")).toContainText("Set at least one cap.");
 
-  await form.getByLabel("Line").selectOption("Personal");
+  await choose(form.getByLabel("Line"), "Personal");
   await form.getByLabel("Requests a day").fill("3");
   await form.getByLabel("Note (optional)").fill("Support ticket 41");
   await form.getByRole("button", { name: "Save override" }).click();
@@ -212,7 +213,7 @@ test("an administrator reads usage by plan and downloads it as CSV", async ({
     page.getByRole("cell", { name: "Blue door", exact: true }),
   ).toBeVisible();
 
-  await page.getByLabel("Group by").selectOption("plan");
+  await choose(page.getByLabel("Group by"), "Plan");
   await page.getByRole("button", { name: "Show" }).click();
   await expect(page).toHaveURL(/groupBy=plan/);
   await expect(page.getByRole("cell", { name: "Pro monthly" })).toBeVisible();

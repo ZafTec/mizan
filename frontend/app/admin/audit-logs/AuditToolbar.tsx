@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import { withParamsResettingPage } from "@/components/ui/data-table";
 import { resolvePublicApiOrigin } from "@/lib/api-base";
+import { Select } from "@/components/ui/select";
 
 /**
  * The audit log needs more than the shared toolbar offers: two date bounds and
@@ -66,33 +67,27 @@ export default function AuditToolbar({
           />
         </form>
 
-        <select
+        <Select
           value={params.get("action") ?? ""}
-          onChange={(e) => set({ action: e.target.value || null })}
+          onChange={(next) => set({ action: next || null })}
           aria-label="Action"
-          className="input !w-auto !rounded-2xl !py-2 text-sm"
-        >
-          <option value="">Any action</option>
-          {actions.map((a) => (
-            <option key={a} value={a}>
-              {a}
-            </option>
-          ))}
-        </select>
+          className="w-auto text-sm"
+          options={[
+            { value: "", label: "Any action" },
+            ...actions.map((a) => ({ value: a, label: a })),
+          ]}
+        />
 
-        <select
+        <Select
           value={params.get("entityType") ?? ""}
-          onChange={(e) => set({ entityType: e.target.value || null })}
+          onChange={(next) => set({ entityType: next || null })}
           aria-label="Entity type"
-          className="input !w-auto !rounded-2xl !py-2 text-sm"
-        >
-          <option value="">Any entity</option>
-          {entityTypes.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
+          className="w-auto text-sm"
+          options={[
+            { value: "", label: "Any entity" },
+            ...entityTypes.map((t) => ({ value: t, label: t })),
+          ]}
+        />
 
         <a
           href={`${resolvePublicApiOrigin()}/api/AuditLogs/export?${exportQuery}`}

@@ -12,6 +12,7 @@ import {
   type RuntimeSettings,
 } from "@/lib/api/admin-settings";
 import { appToast, getErrorMessage } from "@/lib/toast";
+import { Select } from "@/components/ui/select";
 
 const SOURCE: Record<string, { label: string; tone: PillTone }> = {
   database: { label: "Set here", tone: "info" },
@@ -197,20 +198,21 @@ function SettingRow({
                 : setting.label}
             </label>
             {setting.type === "enum" || setting.type === "bool" ? (
-              <select
-                {...control}
+              <Select
+                id={control.id}
+                value={control.value}
+                aria-invalid={control["aria-invalid"]}
+                aria-describedby={control["aria-describedby"]}
                 autoFocus
-                onChange={(event) => setDraft(event.target.value)}
-              >
-                {(setting.type === "bool"
+                onChange={setDraft}
+                options={(setting.type === "bool"
                   ? ["", "true", "false"]
                   : ["", ...setting.allowedValues]
-                ).map((option) => (
-                  <option key={option} value={option}>
-                    {option === "" ? "(empty)" : option}
-                  </option>
-                ))}
-              </select>
+                ).map((option) => ({
+                  value: option,
+                  label: option === "" ? "(empty)" : option,
+                }))}
+              />
             ) : setting.format === "json" ? (
               <textarea
                 {...control}

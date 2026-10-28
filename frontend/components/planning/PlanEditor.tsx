@@ -37,6 +37,7 @@ import FoodPicker from "@/components/logging/FoodPicker";
 import type { PickerItem } from "@/components/logging/logging";
 import RulesFields from "./RulesFields";
 import { dayLabel } from "./PlanDetail";
+import { Select } from "@/components/ui/select";
 
 type EntryDraft = {
   dayIndex: number;
@@ -96,6 +97,12 @@ function toRequest(
   };
 }
 
+const dayOptions = (plan: MealPlanDetail) =>
+  plan.days.map((day) => ({
+    value: String(day.dayIndex),
+    label: dayLabel(day),
+  }));
+
 function EntryForm({
   plan,
   initial,
@@ -152,35 +159,26 @@ function EntryForm({
           <label htmlFor={`${id}-day`} className="label">
             Day
           </label>
-          <select
+          <Select
             id={`${id}-day`}
-            className="input w-full"
-            value={draft.dayIndex}
-            onChange={(event) => set("dayIndex", Number(event.target.value))}
-          >
-            {plan.days.map((day) => (
-              <option key={day.dayIndex} value={day.dayIndex}>
-                {dayLabel(day)}
-              </option>
-            ))}
-          </select>
+            value={String(draft.dayIndex)}
+            onChange={(next) => set("dayIndex", Number(next))}
+            options={dayOptions(plan)}
+          />
         </div>
         <div>
           <label htmlFor={`${id}-slot`} className="label">
             Meal
           </label>
-          <select
+          <Select
             id={`${id}-slot`}
-            className="input w-full"
             value={draft.slot}
-            onChange={(event) => set("slot", event.target.value)}
-          >
-            {SLOTS.map((slot) => (
-              <option key={slot} value={slot}>
-                {slotLabel(slot)}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => set("slot", next)}
+            options={SLOTS.map((slot) => ({
+              value: slot,
+              label: slotLabel(slot),
+            }))}
+          />
         </div>
       </div>
       <div
@@ -283,19 +281,18 @@ function EntryForm({
             <label htmlFor={`${id}-session`} className="label">
               Cooking session
             </label>
-            <select
+            <Select
               id={`${id}-session`}
-              className="input w-full"
               value={draft.prepSessionId}
-              onChange={(event) => set("prepSessionId", event.target.value)}
-            >
-              <option value="">None</option>
-              {plan.prepSessions.map((session) => (
-                <option key={session.id} value={session.id}>
-                  {session.title}
-                </option>
-              ))}
-            </select>
+              onChange={(next) => set("prepSessionId", next)}
+              options={[
+                { value: "", label: "None" },
+                ...plan.prepSessions.map((session) => ({
+                  value: session.id,
+                  label: session.title,
+                })),
+              ]}
+            />
           </div>
         )}
       </div>
@@ -386,20 +383,12 @@ function SessionForm({
           <label htmlFor={`${id}-day`} className="label">
             Day
           </label>
-          <select
+          <Select
             id={`${id}-day`}
-            className="input w-full"
-            value={value.dayIndex}
-            onChange={(event) =>
-              setValue({ ...value, dayIndex: Number(event.target.value) })
-            }
-          >
-            {plan.days.map((day) => (
-              <option key={day.dayIndex} value={day.dayIndex}>
-                {dayLabel(day)}
-              </option>
-            ))}
-          </select>
+            value={String(value.dayIndex)}
+            onChange={(next) => setValue({ ...value, dayIndex: Number(next) })}
+            options={dayOptions(plan)}
+          />
         </div>
       </div>
       <div>

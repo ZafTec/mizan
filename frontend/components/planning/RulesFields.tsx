@@ -9,6 +9,7 @@ import {
   type RulesFormErrors,
   type RulesFormValues,
 } from "@/lib/planning/rules";
+import { Select } from "@/components/ui/select";
 
 /**
  * The rules a plan is held to, as one form section. Used on a new plan and
@@ -48,18 +49,15 @@ export default function RulesFields({
         <label htmlFor={field("macroMode")} className="label">
           Macro mode
         </label>
-        <select
+        <Select
           id={field("macroMode")}
-          className="input w-full"
           value={values.macroMode}
-          onChange={(event) => set("macroMode", event.target.value)}
-        >
-          {MACRO_MODES.map((mode) => (
-            <option key={mode} value={mode}>
-              {MACRO_MODE_LABELS[mode]}
-            </option>
-          ))}
-        </select>
+          onChange={(next) => set("macroMode", next)}
+          options={MACRO_MODES.map((mode) => ({
+            value: mode,
+            label: MACRO_MODE_LABELS[mode],
+          }))}
+        />
         <p className="mt-1 text-xs log-muted">
           {values.macroMode === "Keto"
             ? "Carbs are capped at 30 g a day unless you set a cap."
@@ -183,18 +181,15 @@ export default function RulesFields({
         <label htmlFor={field("prepStyle")} className="label">
           Cooking
         </label>
-        <select
+        <Select
           id={field("prepStyle")}
-          className="input w-full"
           value={values.prepStyle}
-          onChange={(event) => set("prepStyle", event.target.value)}
-        >
-          {PREP_STYLES.map((style) => (
-            <option key={style} value={style}>
-              {style === "Daily" ? "Cook every day" : "Cook in batches"}
-            </option>
-          ))}
-        </select>
+          onChange={(next) => set("prepStyle", next)}
+          options={PREP_STYLES.map((style) => ({
+            value: style,
+            label: style === "Daily" ? "Cook every day" : "Cook in batches",
+          }))}
+        />
         {values.prepStyle === "Batch" && (
           <div className="mt-3">
             <p className="label">Cooking days</p>

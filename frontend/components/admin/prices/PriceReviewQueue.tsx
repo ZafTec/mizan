@@ -12,6 +12,7 @@ import {
 } from "@/lib/prices/schema";
 import type { FoodChoice } from "@/lib/planning/rules";
 import { appToast, getErrorMessage } from "@/lib/toast";
+import { Select } from "@/components/ui/select";
 
 function MapForm({
   alias,
@@ -96,19 +97,15 @@ function MapForm({
           <label htmlFor={`${id}-unit`} className="label">
             Unit
           </label>
-          <select
+          <Select
             id={`${id}-unit`}
-            className="input w-full"
             value={unit}
-            onChange={(event) => setUnit(event.target.value)}
-          >
-            <option value="">None</option>
-            {PRICE_UNITS.map((value) => (
-              <option key={value} value={value}>
-                {value}
-              </option>
-            ))}
-          </select>
+            onChange={setUnit}
+            options={[
+              { value: "", label: "None" },
+              ...PRICE_UNITS.map((value) => ({ value, label: value })),
+            ]}
+          />
         </div>
       </div>
       <div className="flex gap-2">

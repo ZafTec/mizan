@@ -18,6 +18,7 @@ import {
 } from "@/lib/prices/schema";
 import type { FoodChoice } from "@/lib/planning/rules";
 import { getErrorMessage } from "@/lib/toast";
+import { Select } from "@/components/ui/select";
 
 type Errors = Partial<Record<keyof ManualPriceForm, string>>;
 
@@ -187,18 +188,12 @@ export default function ManualPrices({ regions }: { regions: PriceRegion[] }) {
             <label htmlFor={`${id}-unit`} className="label">
               Unit
             </label>
-            <select
+            <Select
               id={`${id}-unit`}
-              className="input w-full"
               value={form.unit}
-              onChange={(event) => set("unit", event.target.value)}
-            >
-              {PRICE_UNITS.map((value) => (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              ))}
-            </select>
+              onChange={(next) => set("unit", next)}
+              options={PRICE_UNITS.map((value) => ({ value, label: value }))}
+            />
           </div>
           <div className="col-span-3">
             {message("price")}
@@ -211,35 +206,31 @@ export default function ManualPrices({ regions }: { regions: PriceRegion[] }) {
             <label htmlFor={`${id}-confidence`} className="label">
               Confidence
             </label>
-            <select
+            <Select
               id={`${id}-confidence`}
-              className="input w-full"
               value={form.confidence}
-              onChange={(event) => set("confidence", event.target.value)}
-            >
-              {MANUAL_CONFIDENCES.map((value) => (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              ))}
-            </select>
+              onChange={(next) => set("confidence", next)}
+              options={MANUAL_CONFIDENCES.map((value) => ({
+                value,
+                label: value,
+              }))}
+            />
           </div>
           <div>
             <label htmlFor={`${id}-region`} className="label">
               Region
             </label>
-            <select
+            <Select
               id={`${id}-region`}
-              className="input w-full"
+              searchable
               value={form.regionCode}
-              onChange={(event) => set("regionCode", event.target.value)}
-            >
-              {regions.map((region) => (
-                <option key={region.code} value={region.code}>
-                  {region.name} ({region.currency})
-                </option>
-              ))}
-            </select>
+              onChange={(next) => set("regionCode", next)}
+              options={regions.map((region) => ({
+                value: region.code,
+                label: region.name,
+                hint: region.currency,
+              }))}
+            />
             {message("regionCode")}
           </div>
         </div>

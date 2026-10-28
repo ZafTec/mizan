@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
+import { Select } from "@/components/ui/select";
 
 const CATEGORIES = ["Strength", "Cardio", "Flexibility", "Balance"] as const;
 
@@ -57,18 +58,14 @@ export default function SearchExercises({
       </label>
       <label className="shrink-0">
         <span className="sr-only">Type</span>
-        <select
+        <Select
           value={category}
-          onChange={(event) => setCategory(event.target.value)}
-          className="input min-h-11"
-        >
-          <option value="">Any type</option>
-          {CATEGORIES.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-        </select>
+          onChange={setCategory}
+          options={[
+            { value: "", label: "Any type" },
+            ...CATEGORIES.map((name) => ({ value: name, label: name })),
+          ]}
+        />
       </label>
     </div>
   );

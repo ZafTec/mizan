@@ -172,6 +172,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-hair: var(--hair);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -225,6 +226,8 @@
      tints a row that needs attention without adding a second coloured object.
      (Main.dc.html, rule 04.) */
   --danger-wash: oklch(97.77% 0.009 45);
+  /* The keyboard-active row in a list: one step off the raised surface. */
+  --hair: var(--color-charcoal-blue-100);
 }
 
 html {
@@ -266,6 +269,7 @@ html {
   --sidebar-ring: var(--color-verdigris-400);
 
   --danger-wash: oklch(22.71% 0.013 26);
+  --hair: oklch(25.5% 0.009 82);
 }
 
 @layer base {

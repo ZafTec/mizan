@@ -1,4 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { choose } from "./select";
 import { ADMIN_EMAIL, SMTP_TEST_JOB_ID } from "./fixture-admin-settings";
 
 const apiURL = process.env.PLAYWRIGHT_API_URL ?? "http://localhost:5100";
@@ -150,10 +151,18 @@ test("the page works from the keyboard on a narrow screen", async ({
 
   const security = row(page, "Smtp.Security");
   await security.getByRole("button", { name: "Edit Security" }).click();
-  await security
-    .getByLabel("Security", { exact: true })
-    .selectOption("StartTls");
-  // A select keeps Enter for itself; Tab reaches Save.
+  // The dropdown takes focus and drives by keyboard: Enter opens it, typing
+  // jumps to the first match, and Enter picks it.
+  const securityValue = security.getByLabel("Security", { exact: true });
+  await expect(securityValue).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("listbox")).toBeVisible();
+  await page.keyboard.type("st");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("listbox")).toHaveCount(0);
+  await expect(securityValue).toHaveText("StartTls");
+  await expect(securityValue).toBeFocused();
+  // The dropdown keeps Enter for itself; Tab reaches Save.
   await page.keyboard.press("Tab");
   await expect(security.getByRole("button", { name: "Save" })).toBeFocused();
   await page.keyboard.press("Enter");

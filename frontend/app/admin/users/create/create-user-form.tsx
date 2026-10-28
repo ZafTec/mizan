@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createAdminUser } from "@/lib/api/admin-users";
 import { useRouter } from "next/navigation";
+import { Select } from "@/components/ui/select";
 
 export function CreateUserForm() {
   const router = useRouter();
@@ -97,23 +98,23 @@ export function CreateUserForm() {
         <label htmlFor="role" className="label mb-2">
           Role <span className="text-red-500">*</span>
         </label>
-        <select
+        <Select
           id="role"
           required
           value={formData.role}
-          onChange={(e) =>
+          onChange={(next) =>
             setFormData({
               ...formData,
-              role: e.target.value as "user" | "admin" | "trainer",
+              role: next as "user" | "admin" | "trainer",
             })
           }
-          className="input"
           disabled={isLoading}
-        >
-          <option value="user">User</option>
-          <option value="trainer">Trainer</option>
-          <option value="admin">Admin</option>
-        </select>
+          options={[
+            { value: "user", label: "User" },
+            { value: "trainer", label: "Trainer" },
+            { value: "admin", label: "Admin" },
+          ]}
+        />
         <p className="mt-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
           Select the role for this user. Admins have full system access.
         </p>

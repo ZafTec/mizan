@@ -15,6 +15,7 @@ import {
   type PriceReportForm,
 } from "@/lib/prices/schema";
 import { getErrorMessage } from "@/lib/toast";
+import { Select } from "@/components/ui/select";
 
 type Errors = Partial<Record<keyof PriceReportForm, string>>;
 
@@ -169,18 +170,15 @@ export default function ReportPriceDialog({
                 <label htmlFor={`${id}-unit`} className="label">
                   Unit
                 </label>
-                <select
+                <Select
                   {...field("unit")}
-                  className="input w-full"
                   value={form.unit}
-                  onChange={(event) => change("unit", event.target.value)}
-                >
-                  {PRICE_UNITS.map((value) => (
-                    <option key={value} value={value}>
-                      {value}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(next) => change("unit", next)}
+                  options={PRICE_UNITS.map((value) => ({
+                    value,
+                    label: value,
+                  }))}
+                />
                 {error("unit")}
               </div>
             </div>

@@ -16,6 +16,7 @@ import type { DailyNutritionSummary } from "@/data/meal";
 import type { BodyMeasurement } from "@/data/bodyMeasurement";
 import type { LogWorkout } from "@/data/log";
 import { LogEntryButton } from "@/components/logging/LogEntryButton";
+import { Select } from "@/components/ui/select";
 
 const axis = { fill: "var(--muted-foreground)", fontSize: 11 };
 const dateTick = (date: string) =>
@@ -283,18 +284,15 @@ export default function ProgressCharts({
                 <label className="label" htmlFor="trend-exercise">
                   Exercise
                 </label>
-                <select
+                <Select
                   id="trend-exercise"
-                  className="input"
                   value={selected.id}
-                  onChange={(event) => setExerciseId(event.target.value)}
-                >
-                  {exercises.map((exercise) => (
-                    <option key={exercise.id} value={exercise.id}>
-                      {exercise.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setExerciseId}
+                  options={exercises.map((exercise) => ({
+                    value: exercise.id,
+                    label: exercise.name,
+                  }))}
+                />
               </div>
               <div className="chart-legend">
                 <span>

@@ -14,6 +14,7 @@ import { EMPTY_FORM_STATE } from "@/helper/FormErrorHandler";
 import { FieldError } from "@/components/FieldError";
 import { GamificationToaster } from "@/components/gamification/GamificationToaster";
 import Macros from "@/types/macro";
+import { Select } from "@/components/ui/select";
 
 interface AddMealFromRecipeProps {
   recipeId: string;
@@ -116,18 +117,15 @@ export default function AddMealFromRecipe({
             <label htmlFor="mealType" className="label">
               Meal Type
             </label>
-            <select
+            <Select
               id="mealType"
               name="mealType"
-              className="input"
               defaultValue={defaultMealTypeForHour(now.getHours())}
-            >
-              {MEAL_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {formatMealType(t)}
-                </option>
-              ))}
-            </select>
+              options={MEAL_TYPES.map((t) => ({
+                value: t,
+                label: formatMealType(t),
+              }))}
+            />
             <FieldError formState={formState} name="mealType" />
           </div>
           <div>

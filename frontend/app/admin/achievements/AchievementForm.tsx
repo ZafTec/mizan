@@ -6,6 +6,7 @@ import Image from "next/image";
 import { clientApi } from "@/lib/api.client";
 import { useImageUpload } from "@/components/ImageUpload";
 import { appToast } from "@/lib/toast";
+import { Select } from "@/components/ui/select";
 
 /**
  * The criteria vocabulary, mirrored from Domain/Achievements/CriteriaTypes.
@@ -206,17 +207,11 @@ export default function AchievementForm({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Category">
-            <select
+            <Select
               value={draft.category}
-              onChange={(e) => set("category", e.target.value)}
-              className="input w-full"
-            >
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+              onChange={(next) => set("category", next)}
+              options={CATEGORIES.map((c) => ({ value: c, label: c }))}
+            />
           </Field>
 
           <Field label="Points" helper="Counts toward the user's level.">
@@ -245,17 +240,11 @@ export default function AchievementForm({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Measure">
-            <select
+            <Select
               value={draft.criteriaType}
-              onChange={(e) => set("criteriaType", e.target.value)}
-              className="input w-full"
-            >
-              {CRITERIA.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
+              onChange={(next) => set("criteriaType", next)}
+              options={CRITERIA}
+            />
           </Field>
 
           <Field label="Threshold">

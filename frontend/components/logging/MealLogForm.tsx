@@ -35,6 +35,7 @@ import {
   type MealSelection,
   type PickerItem,
 } from "./logging";
+import { Select } from "@/components/ui/select";
 
 type ManualItem = {
   key: string;
@@ -362,18 +363,15 @@ export default function MealLogForm({
                 >
                   Meal
                 </label>
-                <select
+                <Select
                   id={`${id}-type`}
                   value={mealType}
-                  onChange={(event) => setMealType(event.target.value)}
-                  className="input min-h-11 w-full"
-                >
-                  {MEAL_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {formatMealType(type)}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setMealType}
+                  options={MEAL_TYPES.map((type) => ({
+                    value: type,
+                    label: formatMealType(type),
+                  }))}
+                />
               </div>
             </fieldset>
             {totalCount > 0 && (

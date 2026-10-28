@@ -4,6 +4,7 @@ import { useMemo, useState, useSyncExternalStore } from "react";
 import { browserTimeZone } from "@/lib/auth-client";
 import { clientApi } from "@/lib/api.client";
 import { appToast } from "@/lib/toast";
+import { Select } from "@/components/ui/select";
 
 function zones(): string[] {
   try {
@@ -108,19 +109,18 @@ export default function TimeZoneField({ current }: { current: string | null }) {
       >
         Time zone
       </label>
-      <select
+      <Select
         id="time-zone"
+        searchable
         value={value}
         disabled={saving}
-        onChange={(e) => save(e.target.value)}
-        className="input w-full"
-      >
-        {options.map(({ zone, offset }) => (
-          <option key={zone} value={zone}>
-            {zone.replace(/_/g, " ")} {offset && `(${offset})`}
-          </option>
-        ))}
-      </select>
+        onChange={save}
+        options={options.map(({ zone, offset }) => ({
+          value: zone,
+          label: zone.replace(/_/g, " "),
+          hint: offset || undefined,
+        }))}
+      />
       <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
         Decides when your day ends. Streaks reset and daily totals roll over at
         midnight here.

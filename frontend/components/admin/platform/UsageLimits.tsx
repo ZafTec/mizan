@@ -16,6 +16,7 @@ import {
   type UsageScope,
 } from "@/lib/api/admin-platform";
 import { appToast, getErrorMessage } from "@/lib/toast";
+import { Select } from "@/components/ui/select";
 
 const LINE_LABEL: Record<string, string> = {
   Personal: "Personal",
@@ -446,19 +447,18 @@ function OverrideEditor({
           <label htmlFor={`${id}-line`} className="label">
             Line
           </label>
-          <select
+          <Select
             id={`${id}-line`}
-            className="input w-full"
             value={form.line}
-            onChange={(event) => setForm({ ...form, line: event.target.value })}
-          >
-            <option value="all">All lines</option>
-            {USAGE_LINES.map((line) => (
-              <option key={line} value={line}>
-                {lineLabel(line)}
-              </option>
-            ))}
-          </select>
+            onChange={(line) => setForm({ ...form, line })}
+            options={[
+              { value: "all", label: "All lines" },
+              ...USAGE_LINES.map((line) => ({
+                value: line,
+                label: lineLabel(line),
+              })),
+            ]}
+          />
         </div>
         {FIELDS.map((field) => (
           <div key={field.key}>

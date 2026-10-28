@@ -7,6 +7,7 @@ import {
   type UsageFilters,
 } from "@/lib/api/admin-platform";
 import { getPlatformUsageServer } from "@/lib/api/admin-platform.server";
+import { Select } from "@/components/ui/select";
 
 export const dynamic = "force-dynamic";
 
@@ -124,18 +125,15 @@ export default async function AdminUsagePage({
           <label htmlFor="usage-group" className="label">
             Group by
           </label>
-          <select
+          <Select
             id="usage-group"
             name="groupBy"
-            className="input"
             defaultValue={usage.groupBy}
-          >
-            {USAGE_GROUPS.map((group) => (
-              <option key={group} value={group}>
-                {GROUP_LABEL[group]}
-              </option>
-            ))}
-          </select>
+            options={USAGE_GROUPS.map((group) => ({
+              value: group,
+              label: GROUP_LABEL[group],
+            }))}
+          />
         </div>
         {filters.householdId && (
           <input type="hidden" name="householdId" value={filters.householdId} />

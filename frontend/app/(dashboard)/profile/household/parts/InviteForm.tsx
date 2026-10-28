@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { inviteToHousehold } from "@/data/household";
 import { appToast } from "@/lib/toast";
+import { Select } from "@/components/ui/select";
 
 export function InviteForm({ householdId }: { householdId: string }) {
   const router = useRouter();
@@ -43,16 +44,17 @@ export function InviteForm({ householdId }: { householdId: string }) {
         aria-label="Invitee email"
         disabled={pending}
       />
-      <select
-        className="input h-10 sm:w-40"
+      <Select
+        className="sm:w-40"
         value={role}
-        onChange={(e) => setRole(e.target.value as "admin" | "member")}
+        onChange={(next) => setRole(next as "admin" | "member")}
         aria-label="Role"
         disabled={pending}
-      >
-        <option value="member">Member</option>
-        <option value="admin">Admin</option>
-      </select>
+        options={[
+          { value: "member", label: "Member" },
+          { value: "admin", label: "Admin" },
+        ]}
+      />
       <button
         type="submit"
         className="btn-primary h-10"

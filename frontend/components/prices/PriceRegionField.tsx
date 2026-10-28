@@ -8,6 +8,7 @@ import {
   type PriceRegion,
 } from "@/lib/api/prices";
 import { appToast } from "@/lib/toast";
+import { Select } from "@/components/ui/select";
 
 /**
  * Which region's prices cost the person's plans and lists. The currency
@@ -63,23 +64,19 @@ export default function PriceRegionField() {
       <label htmlFor="price-region" className="label">
         Price region
       </label>
-      <select
+      <Select
         id="price-region"
+        searchable
         value={value}
         disabled={saving || regions === null}
-        onChange={(event) => save(event.target.value)}
-        className="input w-full"
-      >
-        {regions === null ? (
-          <option value="">Loading regions</option>
-        ) : (
-          regions.map((region) => (
-            <option key={region.code} value={region.code}>
-              {region.name} ({region.currency})
-            </option>
-          ))
-        )}
-      </select>
+        onChange={save}
+        placeholder="Loading regions"
+        options={(regions ?? []).map((region) => ({
+          value: region.code,
+          label: region.name,
+          hint: region.currency,
+        }))}
+      />
       <p className="text-xs log-muted">
         Plans and shopping lists are costed with this region&apos;s prices.
       </p>
