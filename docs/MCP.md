@@ -100,7 +100,13 @@ The selected meal must contain at least two items. If the API requests missing w
 
 `generate_meal_plan` (scope `planning:write`) drafts a plan through `POST /api/MealPlans/generate`: one draft per budget in `budgetCeilings`, each saved as Draft with its violations and cost table; `dailyBudget` caps each day's cost in every draft. It spends the planning allowance, one plan a day on Free. Read drafts with `list_meal_plans(status: "Draft")` and `get_meal_plan`; the person accepts one in the app.
 
-AI tools consume the caller's applicable AI quota and enforce consent. Trainer AI calls cannot access axes the client withheld. See [AI](AI.md). `upload_image` and `analyze_food_image` accept base64 image bytes, capped at 4 MB decoded.
+AI tools consume the caller's applicable AI quota and enforce consent. Trainer AI calls cannot access axes the client withheld. See [AI](AI.md).
+
+### Images
+
+`upload_image` and `analyze_food_image` take exactly one of `imageUrl` or `imageBase64`, capped at 4 MB either way. A client model that has a photo cannot hand over the attachment's bytes; it has to write base64 out as output tokens, which is slow, breaks on one wrong character, and tempts it to shrink the photo until the estimate is useless. So the tools prefer `imageUrl`, and their descriptions tell the model never to shrink or re-encode the photo.
+
+With `imageUrl`, the MCP service passes the address to the API (`POST /api/Nutrition/ai/analyze-image-url`, `POST /api/Uploads/image-url`, body `ImageUrlRequest`), and the API downloads it through `IRemoteImageFetcher`. The address is caller-controlled, so the fetcher refuses anything but `https` on the default port without credentials, refuses hosts given as private, loopback or link-local addresses before connecting, connects only to addresses it checked after DNS resolution (the guard OAuth client metadata uses), never follows a redirect, stops at 4 MB or 10 seconds, and lets the bytes, not the `Content-Type`, decide that it is a JPEG, PNG, WebP or GIF. Nothing reaches the AI provider until the image passed. A presigned two-step upload (`imageId`) and a file input in the food-photo widget are not built yet.
 
 ## Claude plugin
 

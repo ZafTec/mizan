@@ -73,6 +73,7 @@ A planning request is one meal plan draft for one budget ceiling, so Free gets o
 | `GET /api/Ai/onboarding/tools` | Setup allowlist |
 | `POST /api/Ai/clients/{clientId}/ask` | Trainer question under intersected grants |
 | `POST /api/Nutrition/ai/analyze-image` | Food-photo proposal |
+| `POST /api/Nutrition/ai/analyze-image-url` | The same, for a photo at a public https address the API downloads ([MCP](MCP.md#images)) |
 | `POST /api/MealPlans/generate` | Meal plan drafts, one per budget ceiling |
 
 Structured responses must pass their declared schema before use.

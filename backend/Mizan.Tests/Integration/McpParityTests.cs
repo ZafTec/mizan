@@ -251,6 +251,43 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         result.Should().Contain("Internal server error");
     }
 
+    /// <summary>
+    /// The address is passed on, not the bytes: the API downloads the photo and analyzes it, and upload_image
+    /// gets as far as the store the same way.
+    /// </summary>
+    [Fact]
+    public async Task APhotoByAddress_IsAnalyzedAndStored_WithoutItsBytesInTheCall()
+    {
+        await _api.ResetDatabaseAsync();
+        _api.Ai.Reset();
+        var userId = await AuthenticateAsync();
+        await _api.GrantProAsync(userId);
+        var url = $"https://images.example.com/{Guid.NewGuid():N}.png";
+        _api.RemoteImages.Serve(url, OnePixelPng);
+        _api.Ai.Reply("""
+            {"foods":[{"name":"Shiro","portionGrams":200,"calories":300,"protein":14,"carbs":30,"fat":12}],
+             "totalCalories":300,"confidence":0.8,"note":null}
+            """);
+
+        var analysis = await CallAsync("analyze_food_image", new { imageUrl = url });
+        analysis.Should().Contain("Shiro");
+
+        var stored = await CallAsync("upload_image", new { imageUrl = url, folder = "recipes" });
+        stored.Should().NotContain("not a JPEG").And.Contain("Internal server error", "there is no object store in a test run");
+        _api.RemoteImages.Requested.Count(r => r == url).Should().Be(2);
+    }
+
+    [Fact]
+    public async Task AnImageToolTakesExactlyOneOfAnAddressOrBytes()
+    {
+        await _api.ResetDatabaseAsync();
+        await AuthenticateAsync();
+
+        (await CallAsync("upload_image", new { })).Should().Contain("imageUrl (preferred) or imageBase64");
+        (await CallAsync("analyze_food_image", new { imageUrl = "https://images.example.com/a.png", imageBase64 = Convert.ToBase64String(OnePixelPng) }))
+            .Should().Contain("not both");
+    }
+
     [Fact]
     public async Task UploadRejectsAnUnknownFolder()
     {
@@ -383,7 +420,7 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
     private static readonly byte[] OnePixelPng = Convert.FromBase64String(
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==");
 
-    private async Task AuthenticateAsync(bool admin = false)
+    private async Task<Guid> AuthenticateAsync(bool admin = false)
     {
         var id = Guid.NewGuid();
         var email = $"parity-{id:N}@example.com";
@@ -393,6 +430,7 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
 
         _mcp.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        return id;
     }
 
     private async Task<List<string>> ToolNamesAsync()

@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Mizan.Contracts.Media;
 using Mizan.Mcp.Server.Services;
 using ModelContextProtocol.Extensions.Apps;
 using ModelContextProtocol.Server;
@@ -8,11 +9,11 @@ namespace Mizan.Mcp.Server.Tools;
 /// <summary>
 /// Images, in and out.
 ///
-/// This server runs server-side, so a file path would mean nothing here -
-/// callers hand over base64. That puts a practical ceiling well below the
-/// API's own limit, since the encoded string has to fit in a tool call, so
-/// both tools say so rather than letting a 6 MB photo fail somewhere less
-/// obvious.
+/// This server runs server-side, so a file path would mean nothing here. A
+/// caller passes a public https address, which the API downloads, or base64.
+/// Base64 has to be written out by the client's model, which is slow and
+/// tempts it to shrink the photo, so both tools prefer the address. The
+/// ceiling is 4 MB either way, below the API's own limit.
 /// </summary>
 [McpServerToolType]
 public sealed class UploadTools
@@ -31,19 +32,26 @@ public sealed class UploadTools
     [McpServerTool(Name = "upload_image")]
     [Description(
         "Stores an image and returns its key and URL, for use as a recipe photo "
-        + "or avatar. imageBase64 is the raw file bytes, base64-encoded, up to "
-        + "about 4 MB decoded. folder is recipes or avatars.")]
+        + "or avatar. Give exactly one of imageUrl or imageBase64. " + ImageArguments
+        + " folder is recipes or avatars.")]
     public Task<string> UploadImage(
-        string imageBase64,
+        [Description(ImageUrlArgument)] string? imageUrl = null,
+        [Description(ImageBase64Argument)] string? imageBase64 = null,
         string fileName = "upload.jpg",
         [Description("recipes or avatars")] string folder = "recipes",
         CancellationToken ct = default)
     {
-        var bytes = Decode(imageBase64);
+        var path = Folder(folder);
+        if (OneOf(imageUrl, imageBase64) is { } url)
+        {
+            return _api.PostAsync($"/api/Uploads/image-url?folder={path}", new ImageUrlRequest(url), ct);
+        }
+
+        var bytes = Decode(imageBase64!);
         var contentType = DetectOrThrow(bytes);
 
         return _api.PostFileAsync(
-            $"/api/Uploads/image?folder={Folder(folder)}",
+            $"/api/Uploads/image?folder={path}",
             "file",
             bytes,
             fileName,
@@ -56,14 +64,21 @@ public sealed class UploadTools
     [Description(
         "Estimates what is in a photo of a meal and its macros. Pro only, and "
         + "it costs against your assistant allowance. Returns an estimate to "
-        + "confirm - it does not log anything. imageBase64 is the raw file "
-        + "bytes, base64-encoded, up to about 4 MB decoded.")]
+        + "confirm - it does not log anything. Give exactly one of imageUrl or "
+        + "imageBase64. " + ImageArguments + " A small or blurred photo gives a "
+        + "poor estimate.")]
     public Task<string> AnalyzeFoodImage(
-        string imageBase64,
+        [Description(ImageUrlArgument)] string? imageUrl = null,
+        [Description(ImageBase64Argument)] string? imageBase64 = null,
         string fileName = "meal.jpg",
         CancellationToken ct = default)
     {
-        var bytes = Decode(imageBase64);
+        if (OneOf(imageUrl, imageBase64) is { } url)
+        {
+            return _api.PostAsync("/api/Nutrition/ai/analyze-image-url", new ImageUrlRequest(url), ct);
+        }
+
+        var bytes = Decode(imageBase64!);
         var contentType = DetectOrThrow(bytes);
 
         if (contentType == "image/gif")
@@ -72,6 +87,28 @@ public sealed class UploadTools
         }
 
         return _api.PostFileAsync("/api/Nutrition/ai/analyze-image", "image", bytes, fileName, contentType, ct);
+    }
+
+    private const string ImageArguments =
+        "Prefer imageUrl whenever the photo has a public https address: Mizan "
+        + "downloads it (up to 4 MB), so you never write the bytes out. Use "
+        + "imageBase64 only when there is no address. Send the original file "
+        + "either way: never shrink, crop or re-encode the photo.";
+
+    private const string ImageUrlArgument =
+        "A public https address of the original image (JPEG, PNG, WebP or GIF, up to 4 MB). Preferred.";
+
+    private const string ImageBase64Argument =
+        "The original file's bytes, base64-encoded, up to about 4 MB decoded. Only when there is no imageUrl.";
+
+    /// <summary>The URL when one was given; otherwise base64 must be. Both, or neither, is a mistake worth naming.</summary>
+    private static string? OneOf(string? imageUrl, string? imageBase64)
+    {
+        var hasUrl = !string.IsNullOrWhiteSpace(imageUrl);
+        var hasBase64 = !string.IsNullOrWhiteSpace(imageBase64);
+        if (hasUrl && hasBase64) throw new ArgumentException("Give imageUrl or imageBase64, not both.");
+        if (!hasUrl && !hasBase64) throw new ArgumentException("Give the image as imageUrl (preferred) or imageBase64.");
+        return hasUrl ? imageUrl!.Trim() : null;
     }
 
     private static byte[] Decode(string base64)

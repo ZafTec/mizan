@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Mizan.Application.Commands;
 using Mizan.Application.Interfaces;
 using Mizan.Application.Queries;
+using Mizan.Contracts.Media;
 using Mizan.Contracts.Nutrition;
 using Mizan.Domain.Media;
 using Mizan.Application.Features;
@@ -20,6 +21,7 @@ public class NutritionController : ControllerBase
     private readonly INutritionAiService _aiService;
     private readonly ICurrentUserService _currentUser;
     private readonly IStorageService _storage;
+    private readonly IRemoteImageFetcher _images;
     private readonly ILogger<NutritionController> _logger;
 
     public NutritionController(
@@ -27,12 +29,14 @@ public class NutritionController : ControllerBase
         INutritionAiService aiService,
         ICurrentUserService currentUser,
         IStorageService storage,
+        IRemoteImageFetcher images,
         ILogger<NutritionController> logger)
     {
         _mediator = mediator;
         _aiService = aiService;
         _currentUser = currentUser;
         _storage = storage;
+        _images = images;
         _logger = logger;
     }
 
@@ -88,13 +92,40 @@ public class NutritionController : ControllerBase
             return BadRequest(new { errorCode = "unsupported_image", error = "Image must be JPEG, PNG or WebP" });
         }
 
-        var result = await _aiService.AnalyzeFoodImageAsync(
-            _currentUser.UserId.Value, imageBytes, contentType);
+        return Ok(await AnalyzeAsync(_currentUser.UserId.Value, imageBytes, contentType));
+    }
+
+    /// <summary>
+    /// The same analysis for a photo at a public https address, which the API downloads (at most 4 MB, no
+    /// redirects). An MCP client passes the address of a photo it holds instead of writing out its bytes.
+    /// </summary>
+    [HttpPost("ai/analyze-image-url")]
+    [Authorize(Policy = "RequirePro")]
+    [RequiresFeature(FeatureFlags.AiAssistant)]
+    public async Task<ActionResult<FoodAnalysisResult>> AnalyzeFoodImageUrl([FromBody] ImageUrlRequest request, CancellationToken cancellationToken)
+    {
+        if (!_currentUser.UserId.HasValue)
+        {
+            return Unauthorized();
+        }
+
+        var image = await _images.FetchAsync(request.ImageUrl, cancellationToken);
+        if (image.ContentType == "image/gif")
+        {
+            return BadRequest(new { errorCode = "unsupported_image", error = "Image must be JPEG, PNG or WebP" });
+        }
+
+        return Ok(await AnalyzeAsync(_currentUser.UserId.Value, image.Bytes, image.ContentType));
+    }
+
+    private async Task<FoodAnalysisResult> AnalyzeAsync(Guid userId, byte[] imageBytes, string contentType)
+    {
+        var result = await _aiService.AnalyzeFoodImageAsync(userId, imageBytes, contentType);
 
         // Stored after the analysis, not before: a photo the model could not
         // read is not worth keeping, and this way a storage outage costs the
         // picture rather than the whole request.
-        return Ok(result with { ImageUrl = await StoreAsync(imageBytes, contentType) });
+        return result with { ImageUrl = await StoreAsync(imageBytes, contentType) };
     }
 
     /// <summary>A sentence becomes a proposal, the way a photo does. Nothing is logged until the person confirms it.</summary>

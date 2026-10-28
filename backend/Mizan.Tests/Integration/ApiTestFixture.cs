@@ -258,6 +258,11 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             services.RemoveAll<IOAuthClientMetadataFetcher>();
             services.AddSingleton<IOAuthClientMetadataFetcher>(OAuthMetadata);
 
+            // Images named by address are served from here. The real fetcher still validates the address and
+            // reads the answer; only the connection is replaced.
+            services.AddHttpClient(Mizan.Infrastructure.Media.RemoteImageFetcher.HttpClientName)
+                .ConfigurePrimaryHttpMessageHandler(() => RemoteImages);
+
             // Nor may a test push reach Firebase. The fake records what would have been sent.
             services.RemoveAll<IPushSender>();
             services.AddSingleton<IPushSender>(Push);
@@ -373,6 +378,8 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     public RecordingTelegramBot TelegramBot { get; } = new();
 
     public FakeOAuthMetadataFetcher OAuthMetadata { get; } = new();
+
+    public FakeImageHost RemoteImages { get; } = new();
     public const string PaddleWebhookSecret = "test-paddle-webhook-secret";
 
     /// <summary>
@@ -1041,6 +1048,34 @@ public sealed class CommandCounterScope : IDisposable
     public void Dispose() => _counter.Enabled = false;
 }
 
+
+/// <summary>The web, as far as image addresses go: serves what a test registered, and 404 for anything else.</summary>
+public sealed class FakeImageHost : HttpMessageHandler
+{
+    private readonly Dictionary<string, Func<HttpResponseMessage>> _answers = new();
+    private readonly List<string> _requested = [];
+
+    public IReadOnlyList<string> Requested
+    {
+        get { lock (_requested) return _requested.ToList(); }
+    }
+
+    public void Serve(string url, byte[] body) =>
+        _answers[url] = () => new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new ByteArrayContent(body) };
+
+    public void Redirect(string url, string to) =>
+        _answers[url] = () => new HttpResponseMessage(System.Net.HttpStatusCode.Found) { Headers = { Location = new Uri(to) } };
+
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        var url = request.RequestUri!.ToString();
+        lock (_requested) _requested.Add(url);
+        return Task.FromResult(_answers.TryGetValue(url, out var answer) ? answer() : new HttpResponseMessage(System.Net.HttpStatusCode.NotFound));
+    }
+
+    // The client factory disposes handlers it rotates out; this one outlives them.
+    protected override void Dispose(bool disposing) { }
+}
 
 /// <summary>Serves client metadata documents a test registered, and fails for any other URL.</summary>
 public sealed class FakeOAuthMetadataFetcher : IOAuthClientMetadataFetcher

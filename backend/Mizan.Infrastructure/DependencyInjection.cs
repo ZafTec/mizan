@@ -12,6 +12,7 @@ using Mizan.Infrastructure.Ai;
 using Mizan.Infrastructure.Data;
 using Mizan.Infrastructure.Email;
 using Mizan.Infrastructure.Identity;
+using Mizan.Infrastructure.Media;
 using Mizan.Infrastructure.Outbox;
 using Mizan.Infrastructure.Push;
 using Mizan.Infrastructure.Services;
@@ -108,6 +109,17 @@ public static class DependencyInjection
                 ConnectCallback = OAuthClientMetadataFetcher.GuardedConnectAsync,
             });
         services.AddScoped<IOAuthClientMetadataFetcher, OAuthClientMetadataFetcher>();
+
+        // Images a client names by address instead of sending (docs/MCP.md#images), guarded the same way.
+        services.AddHttpClient(RemoteImageFetcher.HttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+            {
+                AllowAutoRedirect = false,
+                ConnectTimeout = TimeSpan.FromSeconds(4),
+                UseProxy = false,
+                ConnectCallback = OAuthClientMetadataFetcher.GuardedConnectAsync,
+            });
+        services.AddScoped<IRemoteImageFetcher, RemoteImageFetcher>();
         services.AddScoped<IUserCacheInvalidator, UserCacheInvalidator>();
         services.AddScoped<IEmailSender, SmtpEmailSender>();
 

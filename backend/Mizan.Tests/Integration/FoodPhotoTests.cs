@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Mizan.Application.Ai;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Media;
 using Mizan.Contracts.Nutrition;
 using Mizan.Infrastructure.Data;
 using Xunit;
@@ -124,6 +125,80 @@ public class FoodPhotoTests
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         _fixture.Ai.Calls.Count.Should().Be(before);
+    }
+
+    /// <summary>
+    /// A client that holds the photo at an address passes the address, and the API downloads it, so the bytes
+    /// never pass through the client's model (docs/MCP.md#images).
+    /// </summary>
+    [Fact]
+    public async Task APhotoAtAPublicAddress_IsDownloadedAndAnalyzedLikeAnUploadedOne()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, userId) = await ProUserAsync();
+        _fixture.Ai.Reply(GoodAnalysis);
+        const string url = "https://images.example.com/plate.jpg";
+        _fixture.RemoteImages.Serve(url, Jpeg);
+
+        var response = await client.PostAsJsonAsync("/api/Nutrition/ai/analyze-image-url", new ImageUrlRequest(url));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        var result = await response.Content.ReadFromJsonAsync<FoodAnalysisResult>();
+        result!.Foods.Should().ContainSingle().Which.Name.Should().Be("Grilled chicken breast");
+        _fixture.RemoteImages.Requested.Should().Contain(url);
+        (await DiaryCountAsync(userId)).Should().Be(0);
+    }
+
+    [Theory]
+    [InlineData("http://images.example.com/plate.jpg")]
+    [InlineData("https://images.example.com:8443/plate.jpg")]
+    [InlineData("https://user:secret@images.example.com/plate.jpg")]
+    [InlineData("https://localhost/plate.jpg")]
+    [InlineData("https://127.0.0.1/plate.jpg")]
+    [InlineData("https://10.0.0.5/plate.jpg")]
+    [InlineData("https://192.168.1.20/plate.jpg")]
+    [InlineData("https://169.254.169.254/latest/meta-data/")]
+    [InlineData("https://[::1]/plate.jpg")]
+    [InlineData("https://[fd00::1]/plate.jpg")]
+    [InlineData("file:///etc/passwd")]
+    [InlineData("not a url")]
+    public async Task AnAddressThatIsNotPublicHttps_IsRefusedBeforeAnythingIsDownloaded(string url)
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, _) = await ProUserAsync();
+        var requested = _fixture.RemoteImages.Requested.Count;
+
+        var response = await client.PostAsJsonAsync("/api/Nutrition/ai/analyze-image-url", new ImageUrlRequest(url));
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().Contain("imageUrl must");
+        _fixture.RemoteImages.Requested.Count.Should().Be(requested);
+        _fixture.Ai.Calls.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("pdf", "does not serve a JPEG")]
+    [InlineData("redirect", "redirects elsewhere")]
+    [InlineData("missing", "answered 404")]
+    [InlineData("huge", "larger than 4 MB")]
+    public async Task WhatIsAtTheAddressMustBeAnImageOfAtMost4Mb_OrNothingIsSpent(string kind, string message)
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, _) = await ProUserAsync();
+        var url = $"https://images.example.com/{kind}-{Guid.NewGuid():N}";
+        switch (kind)
+        {
+            case "pdf": _fixture.RemoteImages.Serve(url, [0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x37]); break;
+            case "redirect": _fixture.RemoteImages.Redirect(url, "https://10.0.0.5/plate.jpg"); break;
+            case "huge": _fixture.RemoteImages.Serve(url, [.. Jpeg, .. new byte[4 * 1024 * 1024]]); break;
+        }
+
+        var response = await client.PostAsJsonAsync("/api/Nutrition/ai/analyze-image-url", new ImageUrlRequest(url));
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().Contain(message);
+        _fixture.RemoteImages.Requested.Should().NotContain("https://10.0.0.5/plate.jpg", "a redirect is never followed");
+        _fixture.Ai.Calls.Should().BeEmpty();
     }
 
     [Fact]
