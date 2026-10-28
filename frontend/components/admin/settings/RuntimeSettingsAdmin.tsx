@@ -69,7 +69,6 @@ export default function RuntimeSettingsAdmin({
           </header>
           {group.notice && (
             <p
-              role="status"
               data-testid={`settings-notice-${group.id}`}
               className="mb-3 rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground"
             >
