@@ -70,9 +70,11 @@ test.describe("the pages under More read like the daily log", () => {
 
   test("Profile is the account, not a second More", async ({ page }) => {
     await page.goto("/profile");
-    await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
-    await expect(page.getByText("Time zone", { exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Settings/ })).toBeVisible();
+    await expect(page.getByTestId("profile-page")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Edit profile" })).toBeVisible();
+    await expect(page.getByText("Streak", { exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: /^Settings/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Signed-in devices/ })).toBeVisible();
     await expect(
       page.getByRole("link", { name: /Connected apps/ }),
     ).toBeVisible();
