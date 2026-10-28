@@ -37,6 +37,8 @@ builder.Services.AddScoped<MiniAppSessionEndpoint>();
 builder.Services.AddScoped<NotifyEndpoint>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddHostedService<LongPollWorker>();
+builder.Services.AddSingleton<WebhookState>();
+builder.Services.AddHostedService<WebhookRegistrar>();
 
 var app = builder.Build();
 
@@ -67,12 +69,8 @@ else
             // point Telegram at a dead end.
             Log.Error("TelegramBot:UseWebhook is true but WebhookSecret is empty; not registering a webhook");
         }
-        else
-        {
-            var webhookUrl = $"{options.PublicUrl.TrimEnd('/')}/telegram/webhook";
-            await telegram.SetWebhookAsync(webhookUrl, options.WebhookSecret, CancellationToken.None);
-            Log.Information("Telegram webhook registered at {Url}", webhookUrl);
-        }
+        // Otherwise WebhookRegistrar registers it in the background and retries until Telegram
+        // accepts it; /health reports how that stands.
     }
     else
     {
@@ -82,11 +80,12 @@ else
     await telegram.SetCommandsAsync(CancellationToken.None);
 }
 
-app.MapGet("/health", () => Results.Ok(new
+app.MapGet("/health", (WebhookState webhook) => Results.Ok(new
 {
     status = "healthy",
     configured = options.IsConfigured,
     mode = options.UseWebhook ? "webhook" : "long-poll",
+    webhook = new { state = webhook.Current.State, lastError = webhook.Current.LastError, attempts = webhook.Current.Attempts },
 }));
 
 /// The Mini App's sign-in. Public by nature - the page in Telegram's WebView

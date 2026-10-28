@@ -121,14 +121,38 @@ public sealed class TelegramClient
     public Task ClearKeyboardAsync(long chatId, long messageId, CancellationToken ct = default) =>
         PostAsync("editMessageReplyMarkup", new { chat_id = chatId, message_id = messageId }, ct);
 
-    /// <summary>Tells Telegram where to POST updates. Idempotent - safe to call on every startup.</summary>
-    public Task SetWebhookAsync(string url, string secretToken, CancellationToken ct = default) =>
-        PostAsync("setWebhook", new
+    /// <summary>
+    /// Tells Telegram where to POST updates. Idempotent - safe to call on every startup. Checked,
+    /// unlike the other calls: a webhook Telegram refused leaves the bot deaf, so the caller needs
+    /// Telegram's own reason (<c>description</c>) to log and retry on.
+    /// </summary>
+    public Task<TelegramCallResult> SetWebhookAsync(string url, string secretToken, CancellationToken ct = default) =>
+        CheckedPostAsync("setWebhook", new
         {
             url,
             secret_token = secretToken,
             allowed_updates = new[] { "message", "callback_query" },
         }, ct);
+
+    /// <summary>
+    /// What Telegram says about the registered webhook: its URL and the last delivery error, if
+    /// any. Null when Telegram could not be asked.
+    /// </summary>
+    public async Task<WebhookInfo?> GetWebhookInfoAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync($"{_base}/getWebhookInfo", new { }, Json, ct);
+            if (!response.IsSuccessStatusCode) return null;
+            var body = await response.Content.ReadFromJsonAsync<Response<WebhookInfo>>(Json, ct);
+            return body is { Ok: true } ? body.Result : null;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Telegram getWebhookInfo failed");
+            return null;
+        }
+    }
 
     /// <summary>
     /// Telegram refuses <c>getUpdates</c> with a 409 while a webhook is registered,
@@ -166,6 +190,32 @@ public sealed class TelegramClient
         return bytes.Length > maxBytes ? null : bytes;
     }
 
+    /// <summary>
+    /// A call whose outcome matters: success only when Telegram answers <c>ok: true</c>, whatever the
+    /// HTTP status, and Telegram's <c>description</c> otherwise. Never throws for a failure.
+    /// </summary>
+    private async Task<TelegramCallResult> CheckedPostAsync(string method, object payload, CancellationToken ct)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync($"{_base}/{method}", payload, Json, ct);
+            Response<JsonElement>? body = null;
+            try { body = await response.Content.ReadFromJsonAsync<Response<JsonElement>>(Json, ct); }
+            catch (JsonException) { }
+
+            if (response.IsSuccessStatusCode && body is { Ok: true }) return TelegramCallResult.Success;
+
+            var description = body?.Description is { Length: > 0 } text ? text : $"HTTP {(int)response.StatusCode}";
+            _logger.LogWarning("Telegram {Method} returned {Status}: {Description}", method, (int)response.StatusCode, description);
+            return new TelegramCallResult(false, description);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Telegram {Method} failed", method);
+            return new TelegramCallResult(false, ex.Message);
+        }
+    }
+
     private async Task PostAsync(string method, object payload, CancellationToken ct)
     {
         try
@@ -188,5 +238,20 @@ public sealed class TelegramClient
     {
         [JsonPropertyName("ok")] public bool Ok { get; init; }
         [JsonPropertyName("result")] public T? Result { get; init; }
+        [JsonPropertyName("description")] public string? Description { get; init; }
     }
+}
+
+/// <summary>A checked Bot API call: whether Telegram said <c>ok</c>, and its reason when it did not.</summary>
+public sealed record TelegramCallResult(bool Ok, string? Description)
+{
+    public static TelegramCallResult Success { get; } = new(true, null);
+}
+
+/// <summary>The part of <c>getWebhookInfo</c> the bot reads.</summary>
+public sealed record WebhookInfo
+{
+    [JsonPropertyName("url")] public string Url { get; init; } = string.Empty;
+    [JsonPropertyName("pending_update_count")] public int PendingUpdateCount { get; init; }
+    [JsonPropertyName("last_error_message")] public string? LastErrorMessage { get; init; }
 }

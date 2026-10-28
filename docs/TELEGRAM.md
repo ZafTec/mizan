@@ -78,9 +78,9 @@ For production webhooks:
 - Make `PUBLIC_APP_URL` publicly reachable over HTTPS.
 - Route `/telegram/webhook` and `/telegram/miniapp/session` to the Telegram container on the app's public host. See [request boundaries](ARCHITECTURE.md#request-boundaries).
 
-Startup requests registration of `{PublicUrl}/telegram/webhook` and disables polling. A missing webhook secret prevents registration. Verify Telegram's `getWebhookInfo` after setup; the service health check alone does not prove successful registration. Requests must present the matching `X-Telegram-Bot-Api-Secret-Token`; comparison is constant-time and invalid requests receive 404. Updates are acknowledged immediately and processed in the background. Redeployment requests webhook registration again.
+`WebhookRegistrar`, a background service, registers `{PublicUrl}/telegram/webhook` and polling stays off. Startup does not wait for it. Registration counts only when Telegram answers `ok: true`; a refusal (an unresolvable new hostname, a `secret_token` outside `A-Z a-z 0-9 _ -`, an untrusted certificate, a port other than 443, 80, 88 or 8443) is logged with Telegram's `description` and retried after 5 s, doubling to 5 min, until Telegram accepts it. Success is logged once, after which the bot compares `getWebhookInfo`'s URL with its own and logs Telegram's `last_error_message` if it reports delivery errors. A missing webhook secret prevents registration and reports `failed`. Requests must present the matching `X-Telegram-Bot-Api-Secret-Token`; comparison is constant-time and invalid requests receive 404. Updates are acknowledged immediately and processed in the background. Redeployment requests webhook registration again.
 
-`GET /health` on the service returns `{ status, configured, mode }`, with mode `webhook` or `long-poll`.
+`GET /health` on the service returns `{ status, configured, mode, webhook }`, with mode `webhook` or `long-poll` and `webhook` as `{ state, lastError, attempts }`: `disabled` in long-poll mode, then `pending`, `registered`, or `failed` with Telegram's last reason. A deaf bot shows as `failed` there while the service stays healthy.
 
 ## Conversation and photos
 
