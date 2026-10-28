@@ -1289,11 +1289,10 @@ html.dark .ring-track {
 .assistant-launcher {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
   min-height: 40px;
   padding: 0 14px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-md);
   font-size: 13px;
   font-weight: 500;
   color: var(--foreground);
@@ -1489,15 +1488,7 @@ summary {
     padding: 0 18px;
   }
   .assistant-launcher {
-    padding: 0 11px;
-  }
-  .assistant-launcher-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
+    padding: 0 12px;
   }
   .account-name {
     display: none;

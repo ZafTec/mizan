@@ -14,7 +14,6 @@ import {
   type RefObject,
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Sparkles } from "lucide-react";
 import AiChat from "@/components/ai/AiChat";
 import { cn } from "@/lib/utils";
 
@@ -163,8 +162,7 @@ export function AssistantLauncher() {
       aria-controls={ASSISTANT_PANEL_ID}
       className="assistant-launcher"
     >
-      <Sparkles aria-hidden="true" size={16} strokeWidth={1.8} />
-      <span className="assistant-launcher-label">Ask Mizan</span>
+      Ask Mizan
     </button>
   );
 }
