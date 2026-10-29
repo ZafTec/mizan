@@ -319,7 +319,10 @@ export default function AppShell({
                   <button
                     onClick={logout}
                     disabled={signingOut}
-                    className={cn(ACCOUNT_LINK, "mt-1 border-t text-destructive")}
+                    className={cn(
+                      ACCOUNT_LINK,
+                      "mt-1 border-t text-destructive hover:bg-danger-wash hover:text-destructive",
+                    )}
                   >
                     <LogOut size={16} />
                     {signingOut ? "Signing out…" : "Sign out"}

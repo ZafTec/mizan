@@ -59,7 +59,7 @@ export default async function ExercisesPage({
             {filtered && (
               <Link
                 href="/exercises"
-                className="text-link mt-3"
+                className="text-link mt-3 text-sm"
               >
                 Clear the search
               </Link>

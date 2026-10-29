@@ -127,7 +127,7 @@ export default function TimeZoneField({ current }: { current: string | null }) {
           <button
             type="button"
             onClick={() => save(detected)}
-            className="text-link text-left"
+            className="text-link text-left text-sm"
           >
             This device says {detected.replace(/_/g, " ")}. Use that instead
           </button>

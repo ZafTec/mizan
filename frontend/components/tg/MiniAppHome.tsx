@@ -238,7 +238,7 @@ export default function MiniAppHome() {
 
       <button
         type="button"
-        className="text-link self-start"
+        className="text-link self-start text-sm"
         onClick={() => openExternal(`${window.location.origin}/today`)}
       >
         Open in browser

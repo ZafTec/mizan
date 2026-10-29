@@ -258,7 +258,7 @@ export default function ExerciseEditor({
               {form.imageUrl && (
                 <button
                   type="button"
-                  className="btn-ghost btn-sm"
+                  className="btn-ghost-destructive btn-sm"
                   disabled={busy}
                   onClick={() => set("imageUrl")("")}
                 >
@@ -305,7 +305,7 @@ export default function ExerciseEditor({
             {modelUrl && (
               <button
                 type="button"
-                className="btn-ghost btn-sm"
+                className="btn-ghost-destructive btn-sm"
                 disabled={busy}
                 onClick={() => {
                   setModelUrl(null);

@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { Icon } from "@/components/ui/icon";
 import { adminRemoveHouseholdMember } from "@/data/admin/household";
 import type { AdminHouseholdDetail } from "@/lib/api/admin-ops";
 import { appToast } from "@/lib/toast";
@@ -65,9 +64,8 @@ export default function AdminMemberRow({
         type="button"
         onClick={handleRemove}
         disabled={pending}
-        className="btn-ghost h-8"
+        className="btn-ghost-destructive h-8"
       >
-        <Icon name="logout" size={14} aria-hidden="true" />
         Remove
       </button>
     </li>

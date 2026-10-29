@@ -45,7 +45,7 @@ export default function EndRelationshipButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="whitespace-nowrap text-xs text-red-600 hover:underline dark:text-red-400"
+        className="whitespace-nowrap text-xs text-destructive hover:underline"
       >
         End
       </button>

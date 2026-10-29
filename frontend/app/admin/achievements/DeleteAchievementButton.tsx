@@ -41,7 +41,7 @@ export default function DeleteAchievementButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-xs text-red-600 hover:underline dark:text-red-400"
+        className="btn-ghost-destructive btn-sm"
       >
         Delete
       </button>

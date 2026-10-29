@@ -343,7 +343,7 @@ export default function PlanDetail({
               )}
               <button
                 type="button"
-                className="btn-ghost btn-sm min-h-9"
+                className="btn-ghost-destructive btn-sm min-h-9"
                 disabled={busy !== null}
                 onClick={() => setConfirmDelete(true)}
               >
@@ -365,7 +365,7 @@ export default function PlanDetail({
             <TabsPrimitive.Trigger
               key={day.dayIndex}
               value={String(day.dayIndex)}
-              className="flex min-h-11 shrink-0 items-center gap-1 whitespace-nowrap border-b-2 border-transparent px-3 pb-3 text-sm text-muted-foreground data-[state=active]:border-foreground data-[state=active]:font-semibold"
+              className="flex min-h-11 shrink-0 items-center gap-1 whitespace-nowrap border-b-2 border-transparent px-3 pb-3 text-sm text-muted-foreground data-[state=active]:border-foreground data-[state=active]:font-semibold data-[state=active]:text-foreground"
               aria-label={`${dayLabel(day)}${day.date === today ? ", today" : ""}`}
             >
               {dayLabel(day)}

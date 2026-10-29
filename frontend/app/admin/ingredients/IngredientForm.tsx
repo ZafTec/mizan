@@ -125,13 +125,13 @@ export default function IngredientForm({
               id="calories"
               name="calories"
               defaultValue={initialData?.caloriesPer100g}
-              className="input border-orange-100 focus:border-orange-500 focus:ring-orange-200"
+              className="input"
               placeholder="0"
               required
             />
           </div>
           <div>
-            <label htmlFor="protein" className="label">
+            <label htmlFor="protein" className="label text-chart-1">
               Protein (g)
             </label>
             <input
@@ -139,14 +139,14 @@ export default function IngredientForm({
               id="protein"
               name="protein"
               defaultValue={initialData?.proteinPer100g}
-              className="input border-red-100 focus:border-red-500 focus:ring-red-200"
+              className="input"
               step="0.1"
               placeholder="0"
               required
             />
           </div>
           <div>
-            <label htmlFor="carbs" className="label">
+            <label htmlFor="carbs" className="label text-chart-2">
               Carbs (g)
             </label>
             <input
@@ -154,14 +154,14 @@ export default function IngredientForm({
               id="carbs"
               name="carbs"
               defaultValue={initialData?.carbsPer100g}
-              className="input border-amber-100 focus:border-amber-500 focus:ring-amber-200"
+              className="input"
               step="0.1"
               placeholder="0"
               required
             />
           </div>
           <div>
-            <label htmlFor="fat" className="label">
+            <label htmlFor="fat" className="label text-chart-3">
               Fat (g)
             </label>
             <input
@@ -169,7 +169,7 @@ export default function IngredientForm({
               id="fat"
               name="fat"
               defaultValue={initialData?.fatPer100g}
-              className="input border-yellow-100 focus:border-yellow-500 focus:ring-yellow-200"
+              className="input"
               step="0.1"
               placeholder="0"
               required
@@ -184,7 +184,7 @@ export default function IngredientForm({
               id="fiber"
               name="fiber"
               defaultValue={initialData?.fiberPer100g}
-              className="input border-emerald-100 focus:border-emerald-500 focus:ring-emerald-200"
+              className="input"
               step="0.1"
               placeholder="0"
             />

@@ -700,7 +700,7 @@ export default function PlanEditor({
           <h2 id="entries-title">Entries</h2>
           <button
             type="button"
-            className="text-link"
+            className="text-link text-sm"
             onClick={() => setEditing({ kind: "new" })}
           >
             Add entry
@@ -792,7 +792,7 @@ export default function PlanEditor({
                     </button>
                     <button
                       type="button"
-                      className="btn-ghost btn-sm min-h-9"
+                      className="btn-ghost-destructive btn-sm min-h-9"
                       aria-label={`Remove ${entryTitle(entry)}`}
                       onClick={() => removeEntry(entry)}
                     >
@@ -811,7 +811,7 @@ export default function PlanEditor({
           <h2 id="sessions-title">Cooking sessions</h2>
           <button
             type="button"
-            className="text-link"
+            className="text-link text-sm"
             onClick={() => setSessionEditing({ kind: "new" })}
           >
             Add session
@@ -876,7 +876,7 @@ export default function PlanEditor({
                 </button>
                 <button
                   type="button"
-                  className="btn-ghost btn-sm min-h-9"
+                  className="btn-ghost-destructive btn-sm min-h-9"
                   aria-label={`Remove ${session.title}`}
                   onClick={() => removeSession(session)}
                 >

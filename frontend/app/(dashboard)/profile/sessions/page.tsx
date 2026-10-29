@@ -160,7 +160,7 @@ export default function ProfileSessionsPage() {
             <button
               onClick={() => setConfirmRevokeAll(true)}
               disabled={revoking === "all"}
-              className="rounded-xl border border-red-200 px-4 py-2 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-500/30 dark:text-red-300 dark:hover:bg-red-500/10"
+              className="btn-secondary-destructive"
             >
               {revoking === "all" ? "Revoking..." : "Revoke All Other Sessions"}
             </button>
@@ -224,7 +224,7 @@ export default function ProfileSessionsPage() {
                     <button
                       onClick={() => setSessionToRevoke(session.id)}
                       disabled={revoking === session.id}
-                      className="shrink-0 rounded-xl border border-red-200 px-4 py-2 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-500/30 dark:text-red-300 dark:hover:bg-red-500/10"
+                      className="btn-secondary-destructive btn-sm shrink-0"
                     >
                       {revoking === session.id ? "Revoking..." : "Revoke"}
                     </button>

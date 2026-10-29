@@ -138,7 +138,7 @@ export default function TemplateManager({
                 </Link>
                 <button
                   type="button"
-                  className="btn-ghost btn-sm min-h-11"
+                  className="btn-ghost-destructive btn-sm min-h-11"
                   aria-label={`Delete ${template.name ?? "template"}`}
                   onClick={() => setDeleting(template)}
                 >
@@ -275,7 +275,7 @@ export default function TemplateManager({
             </button>
             <button
               type="button"
-              className="btn-primary min-h-11"
+              className="btn-danger min-h-11"
               disabled={removing}
               onClick={remove}
             >

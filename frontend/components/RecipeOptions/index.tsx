@@ -139,7 +139,7 @@ export default function RecipeOptions({
                 </Link>
                 <button
                   onClick={confirmDelete}
-                  className="block w-full text-left px-4 py-2 text-red-700 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-charcoal-blue-800"
+                  className="block w-full text-left px-4 py-2 text-destructive hover:bg-danger-wash"
                 >
                   Delete
                 </button>

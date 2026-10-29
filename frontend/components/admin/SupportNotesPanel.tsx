@@ -222,7 +222,7 @@ export default function SupportNotesPanel({
                     </button>
                     <button
                       type="button"
-                      className="text-xs text-burnt-peach-700 hover:underline dark:text-burnt-peach-400"
+                      className="text-xs text-destructive hover:underline"
                       disabled={busy}
                       onClick={() => remove(note)}
                     >

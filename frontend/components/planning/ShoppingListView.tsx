@@ -427,7 +427,7 @@ export default function ShoppingListView({
                 </button>
                 <button
                   type="button"
-                  className="btn-ghost btn-sm min-h-9"
+                  className="btn-ghost-destructive btn-sm min-h-9"
                   onClick={() => setConfirmDelete(true)}
                 >
                   Delete list
@@ -506,7 +506,7 @@ export default function ShoppingListView({
                         </button>
                         <button
                           type="button"
-                          className="btn-ghost btn-sm min-h-9"
+                          className="btn-ghost-destructive btn-sm min-h-9"
                           aria-label={`Delete ${item.itemName}`}
                           onClick={() => remove(item)}
                         >

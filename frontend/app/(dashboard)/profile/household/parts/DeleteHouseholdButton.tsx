@@ -91,7 +91,7 @@ export function DeleteHouseholdButton({
       <DialogTrigger asChild>
         <button
           type="button"
-          className="btn-ghost h-9"
+          className="btn-ghost-destructive h-9"
         >
           Delete
         </button>

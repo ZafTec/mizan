@@ -475,7 +475,7 @@ export default function MealLogForm({
                               current.filter((item) => item.key !== entry.key),
                             )
                           }
-                          className="flex h-11 w-11 shrink-0 items-center justify-center text-charcoal-blue-700 hover:text-burnt-peach-700 dark:text-charcoal-blue-300"
+                          className="icon-button-destructive"
                         >
                           <Trash2
                             aria-hidden="true"
@@ -549,7 +549,7 @@ export default function MealLogForm({
                               current.filter((item) => item.key !== entry.key),
                             )
                           }
-                          className="flex h-11 w-11 shrink-0 items-center justify-center text-charcoal-blue-700 hover:text-burnt-peach-700 dark:text-charcoal-blue-300"
+                          className="icon-button-destructive"
                         >
                           <Trash2
                             aria-hidden="true"
@@ -583,7 +583,7 @@ export default function MealLogForm({
                             current.filter((item) => item.key !== entry.key),
                           )
                         }
-                        className="flex h-11 w-11 shrink-0 items-center justify-center text-charcoal-blue-700 hover:text-burnt-peach-700 dark:text-charcoal-blue-300"
+                        className="icon-button-destructive"
                       >
                         <Trash2
                           aria-hidden="true"

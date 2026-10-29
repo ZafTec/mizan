@@ -679,7 +679,7 @@ function DataSection() {
           <button
             type="button"
             onClick={() => setConfirming(true)}
-            className="btn-ghost min-h-11"
+            className="btn-ghost-destructive min-h-11"
           >
             Delete account
           </button>
@@ -709,7 +709,7 @@ function DataSection() {
             <button
               type="submit"
               disabled={deleting || typed !== DELETE_CONFIRMATION_TEXT}
-              className="btn-primary min-h-11"
+              className="btn-danger min-h-11"
             >
               {deleting ? "Deleting…" : "Delete permanently"}
             </button>

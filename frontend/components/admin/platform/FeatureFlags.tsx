@@ -220,7 +220,7 @@ function Overrides({ flag }: { flag: FeatureFlag }) {
               />
               <button
                 type="button"
-                className="btn-ghost btn-sm min-h-11"
+                className="btn-ghost-destructive btn-sm min-h-11"
                 aria-label={`Remove the override for ${override.householdName}`}
                 disabled={busy !== null}
                 onClick={() => clear(override)}

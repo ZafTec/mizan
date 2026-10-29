@@ -66,7 +66,7 @@ export default async function UsageThisMonth({
       )}
       <Link
         href={`/admin/usage?${usageQuery(filters)}`}
-        className="text-link mt-3"
+        className="text-link mt-3 text-sm"
       >
         See usage in detail
       </Link>

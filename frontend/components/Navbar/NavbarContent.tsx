@@ -323,9 +323,8 @@ export default function NavbarContent({ user }: NavbarContentProps) {
                         closeAllMenus();
                         setShowLogoutModal(true);
                       }}
-                      className="group flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                      className="flex w-full items-center gap-3 rounded-[3px] px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-danger-wash"
                     >
-                      <span className="flex h-5 w-5 items-center justify-center text-red-500 dark:text-red-400"></span>
                       <span>Sign out</span>
                     </button>
                   </div>
@@ -409,7 +408,7 @@ export default function NavbarContent({ user }: NavbarContentProps) {
                         closeAllMenus();
                         setShowLogoutModal(true);
                       }}
-                      className="btn-ghost"
+                      className="btn-ghost-destructive"
                     >
                       Sign out
                     </button>

@@ -425,7 +425,7 @@ function OverrideEditor({
               </button>
               <button
                 type="button"
-                className="btn-ghost btn-sm min-h-11"
+                className="btn-ghost-destructive btn-sm min-h-11"
                 aria-label={`Remove the ${lineLabel(override.line)} override`}
                 disabled={busy}
                 onClick={() => remove(override)}

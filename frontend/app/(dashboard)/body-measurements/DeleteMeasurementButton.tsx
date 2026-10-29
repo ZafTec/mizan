@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api.client";
 import {
@@ -38,10 +39,11 @@ export default function DeleteMeasurementButton({ id }: { id: string }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button
-          className="text-charcoal-blue-400 dark:text-charcoal-blue-500 hover:text-red-500 transition-colors disabled:opacity-50"
-          title="Delete measurement"
+          type="button"
+          className="icon-button-destructive"
+          aria-label="Delete measurement"
         >
-          <i className="ri-delete-bin-line" />
+          <Trash2 size={15} aria-hidden="true" />
         </button>
       </DialogTrigger>
       <DialogContent>
@@ -65,14 +67,7 @@ export default function DeleteMeasurementButton({ id }: { id: string }) {
             onClick={handleDelete}
             disabled={isDeleting}
           >
-            {isDeleting ? (
-              <>
-                <i className="ri-loader-4-line animate-spin mr-2" />
-                Deleting...
-              </>
-            ) : (
-              "Delete"
-            )}
+            {isDeleting ? "Deleting…" : "Delete"}
           </Button>
         </DialogFooter>
       </DialogContent>

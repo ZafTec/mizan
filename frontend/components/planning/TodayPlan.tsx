@@ -18,7 +18,7 @@ export default async function TodayPlan({ date }: { date: string }) {
     <section aria-labelledby="plan-title" className="mb-10">
       <header className="log-section-header">
         <h2 id="plan-title">Today&apos;s plan</h2>
-        <Link href={`/meal-plan/${view.planId}`} className="text-link">
+        <Link href={`/meal-plan/${view.planId}`} className="text-link text-sm">
           {view.planName || "Open plan"}
         </Link>
       </header>

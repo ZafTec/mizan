@@ -67,31 +67,10 @@ export default function ConfirmationModal({
         className="animate-modal-in card my-auto w-full max-w-md p-6 "
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start gap-4 mb-4">
-          <div
-            className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
-              isDanger
-                ? "bg-red-100 dark:bg-red-900/30"
-                : "bg-brand-100 dark:bg-brand-900/30"
-            }`}
-          >
-            <i
-              className={`text-2xl ${
-                isDanger
-                  ? "ri-error-warning-line text-red-600 dark:text-red-400"
-                  : "ri-question-line text-brand-600 dark:text-brand-400"
-              }`}
-            />
-          </div>
-          <div className="flex-1">
-            <h2 id={titleId} className="text-xl font-bold text-charcoal-blue-900 dark:text-charcoal-blue-100 mb-1">
-              {title}
-            </h2>
-            <p className="text-charcoal-blue-600 dark:text-charcoal-blue-400">
-              {message}
-            </p>
-          </div>
-        </div>
+        <h2 id={titleId} className="mb-1 text-xl font-semibold">
+          {title}
+        </h2>
+        <p className="text-muted-foreground">{message}</p>
 
         <div className="flex gap-3 justify-end mt-6">
           <button
@@ -104,23 +83,9 @@ export default function ConfirmationModal({
           <button
             onClick={onConfirm}
             disabled={isLoading}
-            className={`btn-primary    ${
-              isDanger ? "!bg-red-600 hover:!bg-red-700" : ""
-            }`}
+            className={isDanger ? "btn-danger" : "btn-primary"}
           >
-            {isLoading ? (
-              <>
-                <i className="ri-loader-4-line animate-spin" />
-                {isDanger ? "Deleting..." : "Processing..."}
-              </>
-            ) : (
-              <>
-                <i
-                  className={isDanger ? "ri-delete-bin-line" : "ri-check-line"}
-                />
-                {confirmText}
-              </>
-            )}
+            {isLoading ? "Working…" : confirmText}
           </button>
         </div>
       </div>

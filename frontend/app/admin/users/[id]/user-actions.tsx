@@ -234,7 +234,7 @@ export function UserActions({ user }: { user: User }) {
         type="button"
         onClick={() => setShowRevokeSessionsConfirm(true)}
         disabled={isLoading}
-        className="btn-secondary w-full"
+        className="btn-secondary-destructive w-full"
       >
         Revoke all sessions
       </button>

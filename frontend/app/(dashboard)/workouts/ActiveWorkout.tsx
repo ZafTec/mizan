@@ -165,7 +165,7 @@ export default function ActiveWorkout({
                 </button>
               )}
               <button
-                className="btn-ghost btn-sm"
+                className="btn-ghost-destructive btn-sm"
                 onClick={() =>
                   dispatch({
                     type: "remove-exercise",
@@ -276,7 +276,7 @@ export default function ActiveWorkout({
                 </button>
                 {exercise.sets.length > 1 && (
                   <button
-                    className="btn-ghost btn-sm"
+                    className="btn-ghost-destructive btn-sm"
                     onClick={() =>
                       dispatch({
                         type: "remove-set",

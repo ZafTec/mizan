@@ -204,7 +204,7 @@ function ConnectionRow({
         )}
         <button
           type="button"
-          className="btn-secondary"
+          className="btn-secondary-destructive"
           onClick={onDisconnect}
         >
           Disconnect

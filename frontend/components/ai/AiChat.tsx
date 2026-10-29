@@ -872,7 +872,7 @@ function ConversationList({
                       type="button"
                       onClick={() => onDelete(thread)}
                       aria-label={`Delete ${thread.title}`}
-                      className="min-h-11 shrink-0 px-2 text-xs text-muted-foreground hover:text-destructive"
+                      className="min-h-11 shrink-0 px-2 text-xs text-destructive transition-colors hover:bg-danger-wash"
                     >
                       Delete
                     </button>

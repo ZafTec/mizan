@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Trash2 } from "lucide-react";
 import Loading from "@/components/Loading";
 import { appToast } from "@/lib/toast";
 import { getAllIngredient } from "@/data/ingredient";
@@ -405,10 +406,10 @@ export default function EditRecipeForm({ recipe }: EditRecipeFormProps) {
                   <button
                     type="button"
                     onClick={() => handleRemoveIngredient(index)}
-                    className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 flex items-center justify-center transition-colors shrink-0"
+                    className="icon-button-destructive"
                     aria-label="Remove ingredient"
                   >
-                    <i className="ri-delete-bin-line" />
+                    <Trash2 size={15} aria-hidden="true" />
                   </button>
                 </div>
               </div>

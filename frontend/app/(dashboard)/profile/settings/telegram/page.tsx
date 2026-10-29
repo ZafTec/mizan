@@ -332,7 +332,7 @@ function Connected({
         <button
           type="button"
           onClick={onDisconnect}
-          className="btn-ghost btn-sm"
+          className="btn-ghost-destructive btn-sm"
         >
           Disconnect
         </button>

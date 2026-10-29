@@ -236,7 +236,7 @@ export default function ProfilePage() {
         type="button"
         onClick={logout}
         disabled={signingOut}
-        className="text-link self-start"
+        className="text-link self-start text-sm"
       >
         {signingOut ? "Signing out…" : "Sign out"}
       </button>

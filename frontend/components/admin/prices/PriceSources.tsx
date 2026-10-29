@@ -384,7 +384,7 @@ export default function PriceSources({
                     </button>
                     <button
                       type="button"
-                      className="btn-ghost btn-sm min-h-9"
+                      className="btn-ghost-destructive btn-sm min-h-9"
                       aria-label={`Delete ${source.name}`}
                       onClick={() => setDeleting(source)}
                     >

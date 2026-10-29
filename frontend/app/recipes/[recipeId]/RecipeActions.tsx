@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Bookmark, Share2, Trash2 } from "lucide-react";
+import { Bookmark, Share2 } from "lucide-react";
 import { clientApi } from "@/lib/api.client";
 import { appToast, getErrorMessage } from "@/lib/toast";
 import {
@@ -145,10 +145,10 @@ export default function RecipeActions({
       {isOwner && (
         <div className="mt-8 pt-5 border-t">
           <button
-            className="text-link text-destructive!"
+            type="button"
+            className="btn-ghost-destructive btn-sm -ml-3.5"
             onClick={() => setDeleting(true)}
           >
-            <Trash2 size={15} />
             Delete recipe
           </button>
         </div>

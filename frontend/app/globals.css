@@ -377,6 +377,15 @@ html {
 @utility btn-ghost {
   @apply btn border border-transparent bg-transparent text-charcoal-blue-700 hover:border-charcoal-blue-300 hover:text-charcoal-blue-900 focus:ring-charcoal-blue-400 dark:text-charcoal-blue-300 dark:hover:border-charcoal-blue-700 dark:hover:text-charcoal-blue-50;
 }
+/* Destructive actions say so in the destructive colour: a quiet row or
+   inline action, an outlined one beside other outlined controls, and the
+   filled btn-danger for the confirmation that does it. */
+@utility btn-ghost-destructive {
+  @apply btn border border-transparent bg-transparent text-destructive hover:border-destructive/40 hover:bg-danger-wash focus:ring-destructive/40;
+}
+@utility btn-secondary-destructive {
+  @apply btn border border-destructive/50 bg-transparent text-destructive hover:border-destructive hover:bg-danger-wash focus:ring-destructive/40;
+}
 @utility btn-sm {
   @apply px-3.5 py-2 text-xs compact:px-4 compact:py-2;
 }
@@ -408,6 +417,10 @@ html {
 
 @utility icon-button {
   @apply inline-flex size-11 shrink-0 items-center justify-center rounded-[3px] text-muted-foreground disabled:cursor-not-allowed disabled:opacity-35 not-disabled:hover:bg-muted not-disabled:hover:text-foreground;
+}
+/* The bin on a row: quiet until pointed at, then the destructive colour. */
+@utility icon-button-destructive {
+  @apply inline-flex size-11 shrink-0 items-center justify-center rounded-[3px] text-muted-foreground transition-[background-color,color] duration-160 ease-out disabled:cursor-not-allowed disabled:opacity-35 not-disabled:hover:bg-danger-wash not-disabled:hover:text-destructive;
 }
 
 /* A switch keeps its pill: the shape is what says "this slides". */
