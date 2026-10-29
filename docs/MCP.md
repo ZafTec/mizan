@@ -55,6 +55,8 @@ Planning tools follow [PLANNING](PLANNING.md). `planning:read` covers `list_meal
 
 Notification tools: `notifications:read` covers `list_notifications`, `get_unread_notification_count` and `get_notification_preferences` (each kind's channels, quiet hours, and whether Telegram is linked); `notifications:write` adds `mark_notification_read`, `mark_all_notifications_read` and `update_notification_preferences`, which changes only the kinds and channels it names and sets or clears quiet hours ([notifications](ARCHITECTURE.md#notifications)).
 
+Notification campaign tools ([admin](ADMIN.md#notification-campaigns)) need `admin`: `admin_list_notification_campaigns`, `admin_get_notification_campaign`, `admin_preview_audience`, `admin_create_notification_campaign`, `admin_send_test_notification`, `admin_activate_notification_campaign` (takes the confirmed audience count; a changed audience is refused), `admin_pause_campaign`, `admin_resume_campaign`, `admin_cancel_campaign`. They call `/api/admin/notification-campaigns`.
+
 Reminder tools ([reminders](ARCHITECTURE.md#reminders)) use the same scopes: `list_reminders` needs `notifications:read`; `create_reminder`, `update_reminder` and `delete_reminder` need `notifications:write`. They call `/api/Reminders`, which holds the kinds, the hourly floor and the plan's cap.
 
 **Resources**: `mizan://profile`, `mizan://goals/current`, `mizan://nutrition/today`, `mizan://streak`, `mizan://meal-plans/today`, and templates for `diary/{date}`, `recipes/{id}`, `workouts/{id}`, `meal-plans/{id}`, `shopping-lists/{id}`. Each needs the scope of the matching tool.
