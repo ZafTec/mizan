@@ -204,16 +204,8 @@ export default function OnboardingAgent() {
 
         {pending && (
           <Bubble fromUser={false}>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-verdigris-500" />
-              <span
-                className="h-2 w-2 animate-pulse rounded-full bg-verdigris-500"
-                style={{ animationDelay: "120ms" }}
-              />
-              <span
-                className="h-2 w-2 animate-pulse rounded-full bg-verdigris-500"
-                style={{ animationDelay: "240ms" }}
-              />
+            <span role="status" className="text-muted-foreground">
+              Writing…
             </span>
           </Bubble>
         )}

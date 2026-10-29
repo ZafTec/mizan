@@ -2,7 +2,6 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Bookmark, Share2 } from "lucide-react";
 import { clientApi } from "@/lib/api.client";
 import { appToast, getErrorMessage } from "@/lib/toast";
 import {
@@ -75,7 +74,6 @@ export default function RecipeActions({
             }
           }}
         >
-          <Bookmark size={16} fill={pinned ? "currentColor" : "none"} />
           {pinned ? "Pinned" : "Pin recipe"}
         </button>
         <button
@@ -89,7 +87,6 @@ export default function RecipeActions({
             }
           }}
         >
-          <Share2 size={16} />
           Copy link
         </button>
         {isOwner && (

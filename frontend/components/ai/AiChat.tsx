@@ -675,18 +675,9 @@ export default function AiChat({
             {pending && (
               <div
                 role="status"
-                className="flex items-center gap-2 text-sm text-muted-foreground transition-opacity duration-200 ease-out starting:opacity-0"
+                className="text-sm text-muted-foreground transition-opacity duration-200 ease-out starting:opacity-0"
               >
-                <span className="flex gap-1" aria-hidden="true">
-                  {[0, 1, 2].map((dot) => (
-                    <span
-                      key={dot}
-                      className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-600 motion-reduce:animate-none"
-                      style={{ animationDelay: `${dot * 120}ms` }}
-                    />
-                  ))}
-                </span>
-                The assistant is writing
+                The assistant is writing…
               </div>
             )}
 
