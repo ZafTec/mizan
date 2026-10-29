@@ -7,6 +7,9 @@ namespace Mizan.Domain.Notifications;
 /// </summary>
 public static class QuietHours
 {
+    /// <summary>The channels that make a sound and so wait out quiet hours: Telegram, push and email.</summary>
+    public const NotificationChannels Held = NotificationChannels.Telegram | NotificationChannels.Push | NotificationChannels.Email;
+
     public static bool IsQuiet(TimeOnly start, TimeOnly end, TimeOnly now) =>
         start != end && (start < end ? now >= start && now < end : now >= start || now < end);
 
@@ -23,4 +26,8 @@ public static class QuietHours
         var endDay = clock >= to ? today.AddDays(1) : today;
         return NotificationOccurrences.Instant(endDay, to, zone);
     }
+
+    /// <summary>When a notice on <paramref name="channel"/> may go out: the in-app list at once, the held channels at <see cref="Release"/>.</summary>
+    public static DateTimeOffset ReleaseFor(NotificationChannels channel, DateTimeOffset now, TimeZoneInfo zone, TimeOnly? start, TimeOnly? end) =>
+        (Held & channel) == channel && channel != NotificationChannels.None ? Release(now, zone, start, end) : now;
 }

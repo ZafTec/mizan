@@ -23,14 +23,15 @@ public sealed class EmailQueue : IEmailQueue
         Guid? toUserId = null,
         string? dedupeKey = null,
         Guid? createdByUserId = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        DateTime? notBefore = null)
     {
         var id = Guid.CreateVersion7();
-        var jobId = await _outbox.EnqueueAsync(
-            OutboxJobTypes.Email,
-            new EmailJobPayload(message.To, message.Subject, message.Html, message.Text, id),
-            dedupeKey,
-            cancellationToken);
+        var payload = new EmailJobPayload(message.To, message.Subject, message.Html, message.Text, id);
+        // A message held back (quiet hours) waits in the outbox until notBefore; it is logged as queued meanwhile.
+        var jobId = notBefore is { } runAfter
+            ? await _outbox.ScheduleAsync(OutboxJobTypes.Email, payload, runAfter, dedupeKey ?? $"email:{id}", cancellationToken)
+            : await _outbox.EnqueueAsync(OutboxJobTypes.Email, payload, dedupeKey, cancellationToken);
 
         // The outbox hands back the first job when the key was seen before.
         // That job already has its log row, unless it predates the log.

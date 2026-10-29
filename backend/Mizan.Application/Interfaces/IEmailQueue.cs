@@ -12,7 +12,8 @@ public interface IEmailQueue
     /// <summary>
     /// Stages the email and returns its log id. <paramref name="kind"/> is one
     /// of <c>EmailKinds</c>. With <paramref name="dedupeKey"/>, queueing the same
-    /// key again stages nothing and returns the first message's id.
+    /// key again stages nothing and returns the first message's id. With
+    /// <paramref name="notBefore"/> (UTC) the message waits in the outbox until then.
     /// </summary>
     Task<Guid> QueueAsync(
         OutgoingEmail message,
@@ -20,5 +21,6 @@ public interface IEmailQueue
         Guid? toUserId = null,
         string? dedupeKey = null,
         Guid? createdByUserId = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        DateTime? notBefore = null);
 }

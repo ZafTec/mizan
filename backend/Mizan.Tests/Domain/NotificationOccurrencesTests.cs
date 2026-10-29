@@ -75,6 +75,19 @@ public class QuietHoursTests
             .Should().Be(DateTimeOffset.Parse(expected));
     }
 
+    [Theory]
+    // During quiet hours (23:00 local, ending 07:00 = 04:00 UTC): the channels that make a sound wait, in-app does not.
+    [InlineData(NotificationChannels.Email, "2026-11-03T04:00:00Z")]
+    [InlineData(NotificationChannels.Telegram, "2026-11-03T04:00:00Z")]
+    [InlineData(NotificationChannels.Push, "2026-11-03T04:00:00Z")]
+    [InlineData(NotificationChannels.InApp, "2026-11-02T20:00:00Z")]
+    public void EachChannel_WaitsOrNot(NotificationChannels channel, string expected)
+    {
+        var now = DateTimeOffset.Parse("2026-11-02T20:00:00Z");
+        QuietHours.ReleaseFor(channel, now, TimeZoneInfo.FindSystemTimeZoneById("Africa/Addis_Ababa"), new TimeOnly(22, 0), new TimeOnly(7, 0))
+            .Should().Be(DateTimeOffset.Parse(expected));
+    }
+
     [Fact]
     public void WithoutQuietHours_NothingWaits()
     {

@@ -96,16 +96,18 @@ public sealed class NotificationWriter : INotificationWriter
             stored = id;
         }
 
-        // Quiet hours hold the channels that make a sound. The in-app row is there when the person looks.
-        var release = send.Test
+        // Quiet hours hold the channels that make a sound (QuietHours.Held). The in-app row is there when the person looks.
+        var zone = StreakClock.Zone(user.TimeZoneId);
+        DateTime ReleaseFor(NotificationChannels channel) => send.Test
             ? now.UtcDateTime
-            : QuietHours.Release(now, StreakClock.Zone(user.TimeZoneId), user.QuietHoursStart, user.QuietHoursEnd).UtcDateTime;
+            : QuietHours.ReleaseFor(channel, now, zone, user.QuietHoursStart, user.QuietHoursEnd).UtcDateTime;
 
         if (channels.HasFlag(NotificationChannels.Push)
             && await _push.IsConfiguredAsync(cancellationToken)
             && await _context.DeviceTokens.AnyAsync(d => d.UserId == send.UserId, cancellationToken))
         {
             var push = new PushJob(send.UserId, id, message.Title, message.Body, send.LinkUrl);
+            var release = ReleaseFor(NotificationChannels.Push);
             if (release > now.UtcDateTime)
                 await _outbox.ScheduleAsync(OutboxJobTypes.Push, push, release, $"push:{key}", cancellationToken);
             else
@@ -115,6 +117,7 @@ public sealed class NotificationWriter : INotificationWriter
         // Opt-in only. The messenger still checks that a chat is linked and the account is Pro.
         if (channels.HasFlag(NotificationChannels.Telegram) && user.NotifyByTelegram)
         {
+            var release = ReleaseFor(NotificationChannels.Telegram);
             await _telegram.QueueAsync(
                 send.UserId,
                 TelegramCards.For(message with { Actions = actions, Facts = facts }, send.LinkUrl, send.ReminderId),
@@ -125,6 +128,7 @@ public sealed class NotificationWriter : INotificationWriter
 
         if (channels.HasFlag(NotificationChannels.Email) && user.EmailVerified && !string.IsNullOrWhiteSpace(user.Email))
         {
+            var release = ReleaseFor(NotificationChannels.Email);
             var links = actions.Select(a => (a.Label, Url: _urls.Asset(a.Path)))
                 .Concat(actions.Count == 0 && send.LinkUrl is { Length: > 0 } link ? [("Open", _urls.Asset(link))] : [])
                 .Where(l => l.Url is { Length: > 0 })
@@ -141,7 +145,8 @@ public sealed class NotificationWriter : INotificationWriter
                 EmailKinds.Notification,
                 toUserId: send.UserId,
                 dedupeKey: $"email:notification:{key}",
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken,
+                notBefore: release > now.UtcDateTime ? release : null);
         }
 
         return stored;

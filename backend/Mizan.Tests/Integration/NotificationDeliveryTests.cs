@@ -184,6 +184,52 @@ public class NotificationDeliveryTests
         _fixture.TelegramBot.Sent.Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task AnEmailRaisedDuringQuietHours_WaitsUntilTheyEnd_WhileTheAppShowsItAtOnce()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var world = new PlanningWorld(_fixture);
+        var (userId, client) = await LinkedPersonAsync(world, "sleeper", 2005);
+        var set = await client.PutAsJsonAsync("/api/Notifications/preferences", new UpdateNotificationPreferencesRequest(
+            [new NotificationKindPreferenceUpdate(NotificationKinds.Achievements, Email: true)], "22:00", "07:00"));
+        set.StatusCode.Should().Be(HttpStatusCode.OK, await set.Content.ReadAsStringAsync());
+
+        // 23:00 UTC, the person's clock: inside 22:00 to 07:00.
+        _fixture.Clock.Set(new DateTimeOffset(2026, 11, 2, 23, 0, 0, TimeSpan.Zero));
+        try
+        {
+            using (var scope = _fixture.Services.CreateScope())
+            {
+                var writer = scope.ServiceProvider.GetRequiredService<Mizan.Application.Interfaces.INotificationWriter>();
+                await writer.SendAsync(new Mizan.Application.Interfaces.NotificationSend(
+                    userId, "achievement_unlocked", new NotificationMessage(NotificationKinds.Achievements, "Achievement unlocked: Night owl")));
+                await scope.ServiceProvider.GetRequiredService<MizanDbContext>().SaveChangesAsync();
+            }
+
+            var release = new DateTime(2026, 11, 3, 7, 0, 0, DateTimeKind.Utc);
+            var (email, telegram) = await world.DbAsync(async db => (
+                await db.OutboxJobs.AsNoTracking().SingleAsync(j => j.Type == OutboxJobTypes.Email),
+                await db.OutboxJobs.AsNoTracking().SingleAsync(j => j.Type == OutboxJobTypes.TelegramMessage)));
+            email.RunAfter.Should().Be(release, "email waits for quiet hours like Telegram");
+            telegram.RunAfter.Should().Be(release);
+            (await client.GetFromJsonAsync<NotificationListResult>("/api/Notifications"))!.Items
+                .Should().ContainSingle(n => n.Title == "Achievement unlocked: Night owl");
+
+            await _fixture.DrainOutboxAsync();
+            (await world.DbAsync(db => db.EmailMessages.AsNoTracking().SingleAsync(m => m.ToUserId == userId))).Status
+                .Should().Be(EmailMessageStatus.Queued, "nothing is sent before the quiet hours end");
+
+            _fixture.Clock.Set(new DateTimeOffset(release));
+            await RunDueAsync(OutboxJobTypes.Email);
+            (await world.DbAsync(db => db.EmailMessages.AsNoTracking().SingleAsync(m => m.ToUserId == userId))).Status
+                .Should().Be(EmailMessageStatus.Sent);
+        }
+        finally
+        {
+            _fixture.Clock.Reset();
+        }
+    }
+
     /// <summary>A Pro person with a linked chat who turned Telegram notifications on.</summary>
     private async Task<(Guid Id, HttpClient Client)> LinkedPersonAsync(PlanningWorld world, string label, long telegramUserId)
     {
