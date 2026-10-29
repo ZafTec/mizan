@@ -130,7 +130,7 @@ public sealed class ReminderBook
     {
         if (schedule is null) throw new DomainValidationException("Say when: a schedule with repeat and time.");
         var result = ReminderRules.Trigger(
-            new ReminderTiming(schedule.Repeat, schedule.Time, schedule.Days, schedule.Date, schedule.EveryMinutes, schedule.EveryHours, schedule.EveryDays),
+            new ReminderTiming(schedule.Repeat, schedule.Time, schedule.Days, schedule.Date, schedule.EveryMinutes, schedule.EveryHours, schedule.EveryDays, schedule.DayOfMonth, schedule.Week),
             zone,
             now);
         return result.Trigger ?? throw new DomainValidationException(result.Error!);
@@ -191,7 +191,9 @@ public sealed class ReminderBook
             details.MealType,
             action?.Label ?? "Open Mizan",
             action?.Path ?? schedule.Message.LinkUrl ?? "/today",
-            schedule.CreatedAt);
+            schedule.CreatedAt,
+            trigger.Kind == NotificationTriggerKind.Monthly ? trigger.MonthDay : null,
+            trigger is { Kind: NotificationTriggerKind.Monthly, MonthWeek: { } week } ? ReminderRules.WeekName(week) : null);
     }
 
     /// <summary>An instant on the person's clock, as every surface shows it: "Mon 2 Nov at 07:00".</summary>

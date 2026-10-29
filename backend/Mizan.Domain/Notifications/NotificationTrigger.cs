@@ -23,6 +23,13 @@ public enum NotificationTriggerKind
     /// across daylight saving; a shorter interval counts real minutes.
     /// </summary>
     Interval = 4,
+
+    /// <summary>
+    /// Once a month at <see cref="NotificationTrigger.LocalTime"/> on the recipient's clock: on day
+    /// <see cref="NotificationTrigger.MonthDay"/> (a day past the month's end is its last day), or on the
+    /// <see cref="NotificationTrigger.MonthWeek"/>th of the weekday in <see cref="NotificationTrigger.Days"/>.
+    /// </summary>
+    Monthly = 5,
 }
 
 /// <summary>When a schedule fires. Stored as JSON on the schedule; only the fields its kind uses are set.</summary>
@@ -48,6 +55,15 @@ public class NotificationTrigger
     /// <summary>Interval: minutes between firings.</summary>
     public int IntervalMinutes { get; set; }
 
+    /// <summary>Monthly on a date: the day, 1 to 31. A month shorter than that fires on its last day.</summary>
+    public int? MonthDay { get; set; }
+
+    /// <summary>Monthly on a weekday: which one of the month, 1 to 4, or <see cref="LastWeek"/> for the last.</summary>
+    public int? MonthWeek { get; set; }
+
+    /// <summary>The <see cref="MonthWeek"/> that means the month's last such weekday.</summary>
+    public const int LastWeek = 5;
+
     public static NotificationTrigger Once(DateTime atUtc) => new() { Kind = NotificationTriggerKind.Once, At = DateTime.SpecifyKind(atUtc, DateTimeKind.Utc) };
 
     public static NotificationTrigger Daily(TimeOnly localTime) => new() { Kind = NotificationTriggerKind.Daily, LocalTime = localTime };
@@ -61,6 +77,14 @@ public class NotificationTrigger
     /// <summary>Every <paramref name="minutes"/> from <paramref name="firstUtc"/>; <paramref name="localTime"/> is the first firing's time on the recipient's clock.</summary>
     public static NotificationTrigger Every(DateTime firstUtc, int minutes, TimeOnly? localTime = null) =>
         new() { Kind = NotificationTriggerKind.Interval, At = DateTime.SpecifyKind(firstUtc, DateTimeKind.Utc), IntervalMinutes = minutes, LocalTime = localTime };
+
+    /// <summary>Monthly on day <paramref name="day"/> (1 to 31) at <paramref name="localTime"/>.</summary>
+    public static NotificationTrigger MonthlyOnDay(TimeOnly localTime, int day) =>
+        new() { Kind = NotificationTriggerKind.Monthly, LocalTime = localTime, MonthDay = day };
+
+    /// <summary>Monthly on the <paramref name="week"/>th <paramref name="day"/> (1 to 4, or <see cref="LastWeek"/>) at <paramref name="localTime"/>.</summary>
+    public static NotificationTrigger MonthlyOnWeekday(TimeOnly localTime, int week, DayOfWeek day) =>
+        new() { Kind = NotificationTriggerKind.Monthly, LocalTime = localTime, MonthWeek = week, Days = DaysMask([day]) };
 
     public static int DaysMask(IEnumerable<DayOfWeek> days) => days.Aggregate(0, (mask, day) => mask | (1 << (int)day));
 
@@ -126,9 +150,45 @@ public static class NotificationOccurrences
                 var next = start.AddMinutes(elapsed * trigger.IntervalMinutes);
                 return next > after ? next : next.AddMinutes(trigger.IntervalMinutes);
 
+            case NotificationTriggerKind.Monthly:
+                {
+                    if (trigger.LocalTime is not { } clockTime) return null;
+                    var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(after, zone).DateTime);
+                    // A month early, for the same reason as above; fourteen months always holds the next one.
+                    var month = new DateOnly(today.Year, today.Month, 1).AddMonths(-1);
+                    for (var i = 0; i < 14; i++, month = month.AddMonths(1))
+                    {
+                        if (DayInMonth(trigger, month.Year, month.Month) is not { } day) return null;
+                        var candidate = Instant(day, clockTime, zone);
+                        if (candidate > after) return candidate;
+                    }
+                    return null;
+                }
+
             default:
                 return null;
         }
+    }
+
+    /// <summary>The day a monthly trigger falls on in a month, or null when the trigger names no day.</summary>
+    public static DateOnly? DayInMonth(NotificationTrigger trigger, int year, int month)
+    {
+        var length = DateTime.DaysInMonth(year, month);
+        if (trigger.MonthDay is { } date and >= 1 and <= 31)
+            return new DateOnly(year, month, Math.Min(date, length));
+
+        if (trigger.MonthWeek is not ({ } week and >= 1 and <= NotificationTrigger.LastWeek)) return null;
+        var weekday = Enumerable.Range(0, 7).Select(d => (DayOfWeek)d).Where(trigger.Includes).Cast<DayOfWeek?>().FirstOrDefault();
+        if (weekday is not { } wanted) return null;
+
+        if (week == NotificationTrigger.LastWeek)
+        {
+            var last = new DateOnly(year, month, length);
+            return last.AddDays(-(((int)last.DayOfWeek - (int)wanted + 7) % 7));
+        }
+
+        var first = new DateOnly(year, month, 1);
+        return first.AddDays(((int)wanted - (int)first.DayOfWeek + 7) % 7 + 7 * (week - 1));
     }
 
     private const int MinutesPerDay = 24 * 60;

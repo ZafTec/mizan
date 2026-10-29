@@ -75,6 +75,41 @@ public class ReminderStoryTests
     }
 
     [Fact]
+    public async Task AMonthlyReminder_OnTheFirstSundayOrTheLastDay_FiresOnThatDayOfTheMonth()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var world = new PlanningWorld(_fixture);
+        var (userId, client) = await world.PersonAsync("monthly");
+        await world.DbAsync(db => db.Users.Where(u => u.Id == userId).ExecuteUpdateAsync(u => u.SetProperty(x => x.TimeZoneId, "Africa/Addis_Ababa")));
+
+        // Monday 2 November 2026, 12:00 in Addis Ababa: November's first Sunday has passed.
+        _fixture.Clock.Set(new DateTimeOffset(2026, 11, 2, 9, 0, 0, TimeSpan.Zero));
+        try
+        {
+            var firstSunday = await CreateAsync(client, new CreateReminderRequest(
+                "measurement", Schedule: new ReminderSchedule("monthly", "08:00", ["sun"], Week: "first"), Channels: ["inApp"]));
+            firstSunday.Summary.Should().Be("First Sunday of the month at 08:00");
+            firstSunday.NextRunAt.Should().Be(new DateTime(2026, 12, 6, 5, 0, 0, DateTimeKind.Utc));
+            firstSunday.NextRunText.Should().Be("Sun 6 Dec at 08:00");
+            (firstSunday.Repeat, firstSunday.Week, firstSunday.DayOfMonth).Should().Be(("monthly", "first", (int?)null));
+
+            var lastDay = await CreateAsync(client, new CreateReminderRequest(
+                "custom", "Pay rent", Schedule: new ReminderSchedule("monthly", "08:00", DayOfMonth: 31), Channels: ["inApp"]));
+            lastDay.Summary.Should().Be("The last day of the month at 08:00");
+            lastDay.NextRunAt.Should().Be(new DateTime(2026, 11, 30, 5, 0, 0, DateTimeKind.Utc));
+        }
+        finally
+        {
+            _fixture.Clock.Reset();
+        }
+
+        var twoDays = await client.PostAsJsonAsync("/api/Reminders", new CreateReminderRequest(
+            "custom", "Water plants", Schedule: new ReminderSchedule("monthly", "08:00", ["sat", "sun"], Week: "first")));
+        twoDays.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await twoDays.Content.ReadAsStringAsync()).Should().Contain("Choose one weekday");
+    }
+
+    [Fact]
     public async Task PressingSnoozeInTelegram_QueuesTheReminderAgainThirtyMinutesLater()
     {
         await _fixture.ResetDatabaseAsync();

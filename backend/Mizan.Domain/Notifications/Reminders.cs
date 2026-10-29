@@ -50,9 +50,11 @@ public static class ReminderKinds
 }
 
 /// <summary>How a person asked a reminder to repeat, before it becomes a trigger. Strings, as every surface sends them.</summary>
-/// <param name="Repeat"><c>once</c>, <c>daily</c>, <c>days</c> (chosen weekdays) or <c>every</c> (an interval).</param>
+/// <param name="Repeat"><c>once</c>, <c>daily</c>, <c>days</c> (chosen weekdays), <c>every</c> (an interval) or <c>monthly</c>.</param>
 /// <param name="Time"><c>HH:mm</c> on the person's clock.</param>
-/// <param name="Days"><c>mon</c> to <c>sun</c>, for <c>days</c>.</param>
+/// <param name="Days"><c>mon</c> to <c>sun</c>, for <c>days</c>; for <c>monthly</c> with a <paramref name="Week"/>, the one weekday.</param>
+/// <param name="DayOfMonth">Monthly on a date: 1 to 31. A shorter month fires on its last day, so 31 is the last day of every month.</param>
+/// <param name="Week">Monthly on a weekday: <c>first</c>, <c>second</c>, <c>third</c>, <c>fourth</c> or <c>last</c>.</param>
 /// <param name="Date"><c>yyyy-MM-dd</c>: the day of a <c>once</c>, or the first day of an <c>every</c>.</param>
 public sealed record ReminderTiming(
     string? Repeat,
@@ -61,7 +63,9 @@ public sealed record ReminderTiming(
     string? Date = null,
     int? EveryMinutes = null,
     int? EveryHours = null,
-    int? EveryDays = null);
+    int? EveryDays = null,
+    int? DayOfMonth = null,
+    string? Week = null);
 
 /// <summary>A trigger, or why the request cannot be one.</summary>
 public sealed record ReminderTriggerResult(NotificationTrigger? Trigger, string? Error)
@@ -108,6 +112,18 @@ public static class ReminderRules
 
     public static bool TryParseTime(string? value, out TimeOnly time) =>
         TimeOnly.TryParseExact(value?.Trim(), ["HH:mm", "H:mm"], CultureInfo.InvariantCulture, DateTimeStyles.None, out time);
+
+    private static readonly string[] WeekNames = ["first", "second", "third", "fourth", "last"];
+
+    /// <summary>The <see cref="NotificationTrigger.MonthWeek"/> a week name stands for: first is 1, last is <see cref="NotificationTrigger.LastWeek"/>.</summary>
+    public static bool TryParseWeek(string? value, out int week)
+    {
+        var index = Array.IndexOf(WeekNames, value?.Trim().ToLowerInvariant());
+        week = index + 1;
+        return index >= 0;
+    }
+
+    public static string WeekName(int week) => week is >= 1 and <= NotificationTrigger.LastWeek ? WeekNames[week - 1] : "";
 
     public static string FormatTime(TimeOnly time) => time.ToString("HH:mm", CultureInfo.InvariantCulture);
 
@@ -189,8 +205,26 @@ public static class ReminderRules
                     return new(trigger, null);
                 }
 
+            case "monthly":
+                {
+                    if (time is not { } at) return ReminderTriggerResult.Fail("A monthly reminder needs a time.");
+                    var hasWeek = !string.IsNullOrWhiteSpace(timing.Week);
+                    if ((timing.DayOfMonth is not null) == hasWeek)
+                        return ReminderTriggerResult.Fail("Say which day of the month: a date such as the 15th, or a weekday such as the first Sunday.");
+                    if (timing.DayOfMonth is { } monthDay)
+                    {
+                        if (monthDay is < 1 or > 31) return ReminderTriggerResult.Fail("The day of the month is 1 to 31; 31 is the last day of every month.");
+                        return new(NotificationTrigger.MonthlyOnDay(at, monthDay), null);
+                    }
+
+                    if (!TryParseWeek(timing.Week, out var week)) return ReminderTriggerResult.Fail("The week is first, second, third, fourth or last.");
+                    if (timing.Days is not [var name]) return ReminderTriggerResult.Fail("Choose one weekday, such as sun, for a monthly reminder.");
+                    if (!TryParseDay(name, out var weekday)) return ReminderTriggerResult.Fail($"\"{name}\" is not a day. Use mon, tue, wed, thu, fri, sat or sun.");
+                    return new(NotificationTrigger.MonthlyOnWeekday(at, week, weekday), null);
+                }
+
             default:
-                return ReminderTriggerResult.Fail("Repeat is once, daily, days or every.");
+                return ReminderTriggerResult.Fail("Repeat is once, daily, days, every or monthly.");
         }
     }
 
@@ -239,6 +273,8 @@ public static class ReminderRules
                 }
                 if (minutes % 60 == 0) return minutes == 60 ? "Every hour" : $"Every {minutes / 60} hours";
                 return $"Every {minutes} minutes";
+            case NotificationTriggerKind.Monthly:
+                return DescribeMonthly(trigger) + at;
             default:
                 return "When the event happens";
         }
@@ -246,7 +282,7 @@ public static class ReminderRules
 
     /// <summary>The trigger's days as the names every surface sends back: <c>mon</c> to <c>sun</c>, Monday first.</summary>
     public static IReadOnlyList<string> DayNamesOf(NotificationTrigger trigger) =>
-        trigger.Kind == NotificationTriggerKind.Weekdays
+        trigger.Kind == NotificationTriggerKind.Weekdays || trigger is { Kind: NotificationTriggerKind.Monthly, MonthWeek: not null }
             ? MondayFirst.Where(trigger.Includes).Select(DayName).ToList()
             : [];
 
@@ -257,11 +293,30 @@ public static class ReminderRules
         NotificationTriggerKind.Daily => "daily",
         NotificationTriggerKind.Weekdays => "days",
         NotificationTriggerKind.Interval => "every",
+        NotificationTriggerKind.Monthly => "monthly",
         _ => "event",
     };
 
     private static readonly DayOfWeek[] MondayFirst =
         [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday];
+
+    /// <summary>"First Sunday of the month", "The 15th of each month", "The last day of the month".</summary>
+    private static string DescribeMonthly(NotificationTrigger trigger)
+    {
+        if (trigger.MonthDay is { } day)
+            return day >= 31 ? "The last day of the month" : $"The {Ordinal(day)} of each month";
+
+        var weekday = MondayFirst.FirstOrDefault(trigger.Includes);
+        var week = WeekName(trigger.MonthWeek ?? 0);
+        var name = CultureInfo.InvariantCulture.DateTimeFormat.GetDayName(weekday);
+        return $"{char.ToUpperInvariant(week[0])}{week[1..]} {name} of the month";
+    }
+
+    private static string Ordinal(int n) => (n % 100) switch
+    {
+        11 or 12 or 13 => $"{n}th",
+        _ => (n % 10) switch { 1 => $"{n}st", 2 => $"{n}nd", 3 => $"{n}rd", _ => $"{n}th" },
+    };
 
     private static string DescribeDays(int mask)
     {

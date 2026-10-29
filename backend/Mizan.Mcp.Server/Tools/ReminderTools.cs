@@ -10,8 +10,9 @@ namespace Mizan.Mcp.Server.Tools;
 public sealed class ReminderTools
 {
     private const string ScheduleHelp =
-        "When it fires, on the person's clock: { repeat: once|daily|days|every, time: HH:mm, days: [mon..sun] for days, "
-        + "date: yyyy-MM-dd for once or the first day of every, everyHours | everyDays | everyMinutes (at least 60) for every }.";
+        "When it fires, on the person's clock: { repeat: once|daily|days|every|monthly, time: HH:mm, days: [mon..sun] for days, "
+        + "date: yyyy-MM-dd for once or the first day of every, everyHours | everyDays | everyMinutes (at least 60) for every, "
+        + "dayOfMonth: 1-31 (31 is the last day) or week: first|second|third|fourth|last with one day in days, for monthly }.";
 
     private readonly IBackendApiClient _api;
     public ReminderTools(IBackendApiClient api) => _api = api;
@@ -21,7 +22,7 @@ public sealed class ReminderTools
     public Task<string> List(CancellationToken ct = default) => _api.GetAsync("/api/Reminders", ct);
 
     [McpServerTool(Name = "create_reminder")]
-    [Description("Set a reminder. Kinds: workout, measurement, pre_cook, meal_log, custom. A custom reminder needs a title. A pre_cook reminder takes its day from a meal plan's prep session (mealPlanId, prepSessionId) and needs no schedule. Reminders repeat at most once an hour, quiet hours still apply, and the plan caps how many are on.")]
+    [Description(ReminderToolGuidance.CreateReminder + " Reminders repeat at most once an hour, quiet hours still apply, and the plan caps how many are on.")]
     public Task<string> Create(
         [Description("workout, measurement, pre_cook, meal_log or custom.")] string kind,
         [Description(ScheduleHelp)] ReminderSchedule? schedule = null,

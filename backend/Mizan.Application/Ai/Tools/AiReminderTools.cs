@@ -19,8 +19,7 @@ public static class AiReminderTools
     [
         new AiToolDefinition(
             "create_reminder",
-            "Set a reminder for the user. Times are on the user's own clock. A pre_cook reminder takes its day from a "
-            + "meal plan's prep session and needs mealPlanId and prepSessionId instead of a repeat. A custom reminder needs a title.",
+            ReminderToolGuidance.CreateReminder,
             """
             {
               "type": "object",
@@ -29,9 +28,11 @@ public static class AiReminderTools
                 "kind": { "type": "string", "enum": ["workout", "measurement", "pre_cook", "meal_log", "custom"] },
                 "title": { "type": "string" },
                 "note": { "type": "string" },
-                "repeat": { "type": "string", "enum": ["once", "daily", "days", "every"], "description": "days needs days; every needs exactly one of everyHours or everyDays (every other day is every with everyDays 2). Every repeat except everyHours needs a time." },
+                "repeat": { "type": "string", "enum": ["once", "daily", "days", "every", "monthly"], "description": "days needs days; every needs exactly one of everyHours or everyDays (every other day is every with everyDays 2); monthly needs dayOfMonth, or week with exactly one day. Every repeat except everyHours needs a time." },
                 "time": { "type": "string", "description": "HH:mm, e.g. 07:00" },
-                "days": { "type": "array", "items": { "type": "string", "enum": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] } },
+                "days": { "type": "array", "items": { "type": "string", "enum": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] }, "description": "The weekdays of a days repeat, or the one weekday of a monthly repeat with week" },
+                "dayOfMonth": { "type": "integer", "minimum": 1, "maximum": 31, "description": "monthly on a date; 31 is the last day of every month" },
+                "week": { "type": "string", "enum": ["first", "second", "third", "fourth", "last"], "description": "monthly on a weekday: which one of the month" },
                 "date": { "type": "string", "description": "YYYY-MM-DD: the day of a once, or the first day of an every" },
                 "everyHours": { "type": "integer", "minimum": 1 },
                 "everyDays": { "type": "integer", "minimum": 1 },
@@ -71,7 +72,9 @@ public static class AiReminderTools
             AiToolArgs.OptionalString(args, "date"),
             null,
             AiToolArgs.OptionalInt(args, "everyHours"),
-            AiToolArgs.OptionalInt(args, "everyDays"));
+            AiToolArgs.OptionalInt(args, "everyDays"),
+            AiToolArgs.OptionalInt(args, "dayOfMonth"),
+            AiToolArgs.OptionalString(args, "week"));
         return new CreateReminderRequest(
             kind,
             AiToolArgs.OptionalString(args, "title"),
