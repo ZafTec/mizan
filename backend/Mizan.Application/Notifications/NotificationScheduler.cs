@@ -20,6 +20,9 @@ public interface INotificationEventSource
 
     /// <summary>Stages the schedule's occurrences due before <paramref name="horizon"/>. Returns how many it found. The caller saves.</summary>
     Task<int> StageAsync(NotificationSchedule schedule, DateTimeOffset now, DateTimeOffset horizon, CancellationToken cancellationToken);
+
+    /// <summary>Whether the event still puts the person's occurrence at <paramref name="occurrence"/>, asked when a staged delivery is sent.</summary>
+    Task<bool> HoldsAsync(NotificationSchedule schedule, Guid userId, DateTime occurrence, CancellationToken cancellationToken) => Task.FromResult(true);
 }
 
 /// <summary>A queued delivery of one occurrence of a timed schedule to one person on one channel.</summary>
@@ -47,14 +50,36 @@ public sealed class NotificationScheduler
     private readonly IMizanDbContext _context;
     private readonly IOutbox _outbox;
     private readonly IEnumerable<INotificationEventSource> _sources;
+    private readonly CampaignAudiences _audiences;
+    private readonly CampaignStager _stager;
     private readonly TimeProvider _time;
 
-    public NotificationScheduler(IMizanDbContext context, IOutbox outbox, IEnumerable<INotificationEventSource> sources, TimeProvider time)
+    public NotificationScheduler(
+        IMizanDbContext context,
+        IOutbox outbox,
+        IEnumerable<INotificationEventSource> sources,
+        CampaignAudiences audiences,
+        CampaignStager stager,
+        TimeProvider time)
     {
         _context = context;
         _outbox = outbox;
         _sources = sources;
+        _audiences = audiences;
+        _stager = stager;
         _time = time;
+    }
+
+    /// <summary>
+    /// Stages one schedule's occurrences that are due now, without waiting for the next scan: how a
+    /// campaign sent now goes out at once. The caller saves.
+    /// </summary>
+    public Task<int> StageDueAsync(NotificationSchedule schedule, CancellationToken cancellationToken)
+    {
+        var now = _time.GetUtcNow();
+        return schedule.NextRunAt is { } next && next <= (now + Lookahead).UtcDateTime
+            ? StageTimedAsync(schedule, now, now + Lookahead, cancellationToken)
+            : Task.FromResult(0);
     }
 
     /// <summary>One scan of every enabled schedule. Returns how many occurrences it found.</summary>
@@ -98,6 +123,7 @@ public sealed class NotificationScheduler
 
     private async Task<int> StageTimedAsync(NotificationSchedule schedule, DateTimeOffset now, DateTimeOffset horizon, CancellationToken cancellationToken)
     {
+        if (schedule.Campaign is not null) return await StageCampaignAsync(schedule, now, horizon, cancellationToken);
         var recipients = await RecipientsAsync(schedule, cancellationToken);
         var zoneId = recipients.Count == 1 ? recipients[0].TimeZoneId : null;
         var zone = StreakClock.Zone(zoneId);
@@ -121,6 +147,33 @@ public sealed class NotificationScheduler
                             cancellationToken);
                     }
                 }
+                schedule.LastRunAt = occurrence.UtcDateTime;
+                staged++;
+            }
+            at = NotificationOccurrences.Next(schedule.Trigger, zone, occurrence);
+        }
+
+        schedule.NextRunAt = at?.UtcDateTime;
+        schedule.UpdatedAt = now.UtcDateTime;
+        return staged;
+    }
+
+    /// <summary>
+    /// A timed campaign's occurrences: the audience is resolved once per scan, when the occurrence is
+    /// near, so people who signed up or opted in since it was started are included.
+    /// </summary>
+    private async Task<int> StageCampaignAsync(NotificationSchedule schedule, DateTimeOffset now, DateTimeOffset horizon, CancellationToken cancellationToken)
+    {
+        var zone = StreakClock.Zone(schedule.Campaign!.TimeZoneId);
+        CampaignAudience? audience = null;
+        var staged = 0;
+        var at = (DateTimeOffset?)new DateTimeOffset(DateTime.SpecifyKind(schedule.NextRunAt!.Value, DateTimeKind.Utc));
+        while (at is { } occurrence && occurrence <= horizon)
+        {
+            if (occurrence >= now - Grace)
+            {
+                audience ??= await _audiences.ResolveAsync(schedule.Audience, schedule.Message.Kind, schedule.Channels, null, cancellationToken);
+                await _stager.StageAsync(schedule, occurrence, audience.Recipients, cancellationToken);
                 schedule.LastRunAt = occurrence.UtcDateTime;
                 staged++;
             }
@@ -255,11 +308,22 @@ public sealed class NotificationDeliveries
 {
     private readonly IMizanDbContext _context;
     private readonly INotificationWriter _writer;
+    private readonly CampaignAudiences _audiences;
+    private readonly IEnumerable<INotificationEventSource> _sources;
+    private readonly IAppUrls _urls;
 
-    public NotificationDeliveries(IMizanDbContext context, INotificationWriter writer)
+    public NotificationDeliveries(
+        IMizanDbContext context,
+        INotificationWriter writer,
+        CampaignAudiences audiences,
+        IEnumerable<INotificationEventSource> sources,
+        IAppUrls urls)
     {
         _context = context;
         _writer = writer;
+        _audiences = audiences;
+        _sources = sources;
+        _urls = urls;
     }
 
     public async Task<bool> SendAsync(NotificationDeliveryJob job, CancellationToken cancellationToken)
@@ -279,6 +343,21 @@ public sealed class NotificationDeliveries
             template.ImageUrl,
             (template.Actions ?? []).Select(a => new NotificationAction(a.Label, a.Path)).ToList(),
             (template.Facts ?? []).Select(f => new NotificationFact(f.Label, f.Value)).ToList());
+
+        if (schedule.Campaign is not null)
+        {
+            // Asked again when it goes out: a person who opted out, changed plan or came back since
+            // the scan is left out, and an event that moved is not the one this was staged for.
+            if (schedule.Campaign.Status != CampaignStatus.Active) return false;
+            var audience = await _audiences.ResolveAsync(schedule.Audience, template.Kind, channel, [job.UserId], cancellationToken);
+            if (audience.Recipients.Count == 0) return false;
+            if (schedule.Trigger.Kind == NotificationTriggerKind.EventOffset
+                && _sources.FirstOrDefault(s => s.Event == schedule.Trigger.Event) is { } source
+                && !await source.HoldsAsync(schedule, job.UserId, job.Occurrence, cancellationToken))
+                return false;
+            message = CampaignMessages.Personalise(message, audience.Recipients[0].Name, _urls.Home());
+        }
+
         var occurrence = new DateTimeOffset(DateTime.SpecifyKind(job.Occurrence, DateTimeKind.Utc));
         await _writer.SendAsync(
             new NotificationSend(job.UserId, template.Type, message, template.LinkUrl)
@@ -286,6 +365,7 @@ public sealed class NotificationDeliveries
                 Channels = channel,
                 DeliveryKey = NotificationScheduler.DeliveryKey(job.ScheduleId, occurrence, job.UserId, job.Channel),
                 ReminderId = schedule.Reminder is null ? null : schedule.Id,
+                ScheduleId = schedule.Campaign is null ? null : schedule.Id,
             },
             cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);

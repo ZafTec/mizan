@@ -18,9 +18,15 @@ public enum NotificationAudienceKind
 
     /// <summary>
     /// Whoever the trigger's event happens to. Only an event trigger can use it, because only the
-    /// event says who; segments for timed campaigns are added beside it.
+    /// event says who.
     /// </summary>
     EventSubjects = 1,
+
+    /// <summary>
+    /// Everyone who passes the filters (docs/ADMIN.md#notification-campaigns). On an event trigger the
+    /// filters narrow the people the event happens to; on a timed one they are the audience.
+    /// </summary>
+    Segment = 2,
 }
 
 /// <summary>Who a schedule reaches. Stored as JSON so later audience kinds add fields, not tables.</summary>
@@ -28,6 +34,27 @@ public class NotificationAudience
 {
     public NotificationAudienceKind Kind { get; set; }
     public Guid? UserId { get; set; }
+
+    /// <summary>Segment: <c>free</c>, <c>pro</c>, <c>lifetime</c> (<see cref="CampaignPlans"/>); empty is every plan.</summary>
+    public List<string> Plans { get; set; } = [];
+
+    /// <summary>Segment: signed up on or after this instant (UTC).</summary>
+    public DateTime? SignedUpFrom { get; set; }
+
+    /// <summary>Segment: signed up before this instant (UTC).</summary>
+    public DateTime? SignedUpBefore { get; set; }
+
+    /// <summary>Segment: nothing logged and no visit for at least this many days.</summary>
+    public int? InactiveDays { get; set; }
+
+    /// <summary>Segment: true for people with a linked Telegram chat, false for people without; null for both.</summary>
+    public bool? TelegramLinked { get; set; }
+
+    /// <summary>Segment: true for members of a household, false for people in none; null for both.</summary>
+    public bool? HasHousehold { get; set; }
+
+    /// <summary>Segment: IANA time zones; empty is every zone. A person who never set one is in <c>UTC</c>.</summary>
+    public List<string> TimeZones { get; set; } = [];
 
     public static NotificationAudience Person(Guid userId) => new() { Kind = NotificationAudienceKind.User, UserId = userId };
 
@@ -69,6 +96,30 @@ public class ReminderDetails
 }
 
 /// <summary>
+/// What makes a platform schedule an administrator's campaign or lifecycle message
+/// (docs/ADMIN.md#notification-campaigns). Stored as JSON beside the trigger; null on every other schedule.
+/// <see cref="NotificationSchedule.Enabled"/> is true exactly while <see cref="Status"/> is active.
+/// </summary>
+public class NotificationCampaign
+{
+    public string Name { get; set; } = string.Empty;
+    public CampaignPurpose Purpose { get; set; }
+    public CampaignStatus Status { get; set; }
+
+    /// <summary>The zone a recurring campaign's local time is read in; null is UTC.</summary>
+    public string? TimeZoneId { get; set; }
+
+    public Guid? CreatedByUserId { get; set; }
+
+    /// <summary>The audience count the administrator confirmed when they started it.</summary>
+    public int? ConfirmedAudience { get; set; }
+
+    public DateTime? ActivatedAt { get; set; }
+    public DateTime? PausedAt { get; set; }
+    public DateTime? CancelledAt { get; set; }
+}
+
+/// <summary>
 /// The one kind of schedule every timed notice uses (docs/ARCHITECTURE.md#notifications): who owns
 /// it, who it reaches, what it says, on which channels and when. The scheduler stages one outbox
 /// job per occurrence, recipient and channel, keyed so a second scan or a retry adds nothing.
@@ -100,6 +151,9 @@ public class NotificationSchedule
 
     /// <summary>Set on a person's own reminder; null on every other schedule.</summary>
     public ReminderDetails? Reminder { get; set; }
+
+    /// <summary>Set on an administrator's campaign or lifecycle message; null on every other schedule.</summary>
+    public NotificationCampaign? Campaign { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

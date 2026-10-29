@@ -30,6 +30,12 @@ public static class DependencyInjection
         services.AddScoped<Planning.PlanTargetsReader>();
         services.AddScoped<Planning.EveningReminders>();
         services.AddScoped<Notifications.INotificationEventSource>(sp => sp.GetRequiredService<Planning.EveningReminders>());
+        services.AddScoped<Notifications.CampaignAudiences>();
+        services.AddScoped<Notifications.CampaignStager>();
+        services.AddScoped<Notifications.CampaignReports>();
+        services.AddScoped<Notifications.INotificationEventSource, Notifications.SignUpEvents>();
+        services.AddScoped<Notifications.INotificationEventSource, Notifications.InactivityEvents>();
+        services.AddScoped<Notifications.INotificationEventSource, Notifications.ProEndEvents>();
         services.AddScoped<Notifications.NotificationScheduler>();
         services.AddScoped<Notifications.NotificationSchedules>();
         services.AddScoped<Notifications.NotificationDeliveries>();

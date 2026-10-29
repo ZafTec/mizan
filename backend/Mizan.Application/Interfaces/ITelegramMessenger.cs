@@ -18,4 +18,7 @@ public interface ITelegramMessenger
     /// Telegram link, or the account is not Pro (the bot is a Pro feature).
     /// </summary>
     Task QueueAsync(Guid userId, TelegramOutgoing message, string dedupeKey, DateTime? runAfter = null, CancellationToken cancellationToken = default);
+
+    /// <summary>Whether the bot service is configured, so a caller can say why nothing was queued.</summary>
+    Task<bool> IsConfiguredAsync(CancellationToken cancellationToken = default);
 }

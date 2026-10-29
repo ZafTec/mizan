@@ -27,6 +27,9 @@ public class Notification
     public DateTime CreatedAt { get; set; }
     public DateTime? ReadAt { get; set; }
 
+    /// <summary>The campaign that sent it, so its report can count the rows read; null for every other notice.</summary>
+    public Guid? ScheduleId { get; set; }
+
     public virtual User User { get; set; } = null!;
 }
 

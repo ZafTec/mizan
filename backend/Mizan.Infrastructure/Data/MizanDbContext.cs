@@ -1162,6 +1162,8 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
             entity.Property(e => e.ReadAt).HasColumnName("read_at");
             entity.Property(e => e.Kind).HasColumnName("kind").HasMaxLength(30);
             entity.Property(e => e.ImageUrl).HasColumnName("image_url").HasMaxLength(1000);
+            entity.Property(e => e.ScheduleId).HasColumnName("schedule_id");
+            entity.HasIndex(e => new { e.ScheduleId, e.ReadAt }).HasFilter("schedule_id IS NOT NULL");
             entity.OwnsMany(e => e.Actions, actions => actions.ToJson("actions"));
             entity.OwnsMany(e => e.Facts, facts => facts.ToJson("facts"));
             entity.HasIndex(e => new { e.UserId, e.ReadAt, e.CreatedAt });
@@ -1206,6 +1208,7 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
                 message.OwnsMany(m => m.Facts);
             });
             entity.OwnsOne(e => e.Trigger, trigger => trigger.ToJson("trigger"));
+            entity.OwnsOne(e => e.Campaign, campaign => campaign.ToJson("campaign"));
             entity.HasIndex(e => e.Key).IsUnique().HasFilter("key IS NOT NULL");
             entity.HasIndex(e => new { e.Enabled, e.NextRunAt });
             entity.HasIndex(e => e.OwnerUserId);

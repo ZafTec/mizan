@@ -26,6 +26,7 @@ public sealed class NotificationWriter : INotificationWriter
     private readonly ITelegramMessenger _telegram;
     private readonly IEmailQueue _emails;
     private readonly IAppUrls _urls;
+    private readonly INotificationOptOutTokens _optOut;
     private readonly TimeProvider _time;
 
     public NotificationWriter(
@@ -35,8 +36,10 @@ public sealed class NotificationWriter : INotificationWriter
         ITelegramMessenger telegram,
         IEmailQueue emails,
         IAppUrls urls,
+        INotificationOptOutTokens optOut,
         TimeProvider time)
     {
+        _optOut = optOut;
         _context = context;
         _outbox = outbox;
         _push = push;
@@ -63,7 +66,7 @@ public sealed class NotificationWriter : INotificationWriter
         var row = _context.NotificationPreferences.Local.FirstOrDefault(p => p.UserId == send.UserId && p.Kind == kind)
             ?? await _context.NotificationPreferences.AsNoTracking()
                 .FirstOrDefaultAsync(p => p.UserId == send.UserId && p.Kind == kind, cancellationToken);
-        var channels = send.Channels & NotificationPreferenceRules.Allowed(kind, row);
+        var channels = send.Test ? send.Channels : send.Channels & NotificationPreferenceRules.Allowed(kind, row);
         if (channels == NotificationChannels.None) return null;
 
         var now = _time.GetUtcNow();
@@ -88,12 +91,15 @@ public sealed class NotificationWriter : INotificationWriter
                 Actions = actions.Select(a => new NotificationActionItem { Label = a.Label, Path = a.Path }).ToList(),
                 Facts = facts.Select(f => new NotificationFactItem { Label = f.Label, Value = f.Value }).ToList(),
                 CreatedAt = now.UtcDateTime,
+                ScheduleId = send.ScheduleId,
             });
             stored = id;
         }
 
         // Quiet hours hold the channels that make a sound. The in-app row is there when the person looks.
-        var release = QuietHours.Release(now, StreakClock.Zone(user.TimeZoneId), user.QuietHoursStart, user.QuietHoursEnd).UtcDateTime;
+        var release = send.Test
+            ? now.UtcDateTime
+            : QuietHours.Release(now, StreakClock.Zone(user.TimeZoneId), user.QuietHoursStart, user.QuietHoursEnd).UtcDateTime;
 
         if (channels.HasFlag(NotificationChannels.Push)
             && await _push.IsConfiguredAsync(cancellationToken)
@@ -124,7 +130,14 @@ public sealed class NotificationWriter : INotificationWriter
                 .Where(l => l.Url is { Length: > 0 })
                 .Select(l => (l.Label, l.Url!));
             await _emails.QueueAsync(
-                MailTemplates.Notification(user.Email, user.Name, message.Title, message.Body, facts.Select(f => (f.Label, f.Value)), links),
+                MailTemplates.Notification(
+                    user.Email,
+                    user.Name,
+                    message.Title,
+                    message.Body,
+                    facts.Select(f => (f.Label, f.Value)),
+                    links,
+                    kind == NotificationKinds.Marketing ? _urls.MarketingOptOut(_optOut.Create(send.UserId)) : null),
                 EmailKinds.Notification,
                 toUserId: send.UserId,
                 dedupeKey: $"email:notification:{key}",

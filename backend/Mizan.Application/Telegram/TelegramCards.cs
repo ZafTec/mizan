@@ -1,6 +1,7 @@
 using Mizan.Application.Interfaces;
 using Mizan.Contracts.Notifications;
 using Mizan.Contracts.Telegram;
+using Mizan.Domain.Notifications;
 
 namespace Mizan.Application.Telegram;
 
@@ -10,7 +11,8 @@ namespace Mizan.Application.Telegram;
 /// renders. Each action becomes a button; a notice without actions gets one <b>Open</b> button for
 /// its link. A button's Mini App page comes from <see cref="MiniAppPaths"/>; a link the Mini App has
 /// no page for keeps its web path, which the bot opens in the browser. A reminder also gets
-/// <b>Done</b>, <b>Snooze 30 min</b> and <b>Skip today</b>, which the bot answers itself.
+/// <b>Done</b>, <b>Snooze 30 min</b> and <b>Skip today</b>, and news and offers get <b>Turn off news and offers</b>,
+/// which the bot answers itself.
 /// </summary>
 public static class TelegramCards
 {
@@ -36,6 +38,8 @@ public static class TelegramCards
                 message.ImageUrl,
                 buttons,
                 message.Facts ?? [],
-                reminderId is { } id ? TelegramReminderCallbacks.For(id) : null));
+                reminderId is { } id ? TelegramReminderCallbacks.For(id)
+                : message.Kind == NotificationKinds.Marketing ? TelegramMarketingCallbacks.For()
+                : null));
     }
 }

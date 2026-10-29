@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Mizan.Application.Commands;
 using Mizan.Application.Notifications;
 using Mizan.Application.Queries;
@@ -39,4 +40,14 @@ public sealed class NotificationsController : ControllerBase
     [HttpPut("preferences")]
     public async Task<ActionResult<NotificationPreferencesDto>> UpdatePreferences([FromBody] UpdateNotificationPreferencesRequest request)
         => Ok(await _mediator.Send(new UpdateNotificationPreferencesCommand(request.Kinds, request.QuietHoursStart, request.QuietHoursEnd, request.ClearQuietHours)));
+
+    /// <summary>
+    /// The one-tap opt-out in a marketing email: turns news and offers off on every channel for the
+    /// person the token names, with no sign-in (docs/ADMIN.md#notification-campaigns).
+    /// </summary>
+    [HttpPost("opt-out")]
+    [AllowAnonymous]
+    [EnableRateLimiting("AuthCredentials")]
+    public async Task<ActionResult<MarketingOptOutDto>> OptOut([FromBody] MarketingOptOutRequest request)
+        => Ok(await _mediator.Send(new OptOutOfMarketingCommand(request.Token)));
 }

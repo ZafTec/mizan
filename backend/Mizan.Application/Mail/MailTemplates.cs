@@ -14,7 +14,15 @@ public static class MailTemplates
         Build(to, subject, Greeting(name), body, "You receive this because you have a Mizan account.");
 
     /// <summary>A notification by email: the body, its facts one per line, then its links as absolute URLs.</summary>
-    public static OutgoingEmail Notification(string to, string? name, string title, string? body, IEnumerable<(string Label, string Value)> facts, IEnumerable<(string Label, string Url)> links)
+    /// <summary>A notification as an email. A marketing message carries <paramref name="optOutUrl"/>, which turns news and offers off in one tap.</summary>
+    public static OutgoingEmail Notification(
+        string to,
+        string? name,
+        string title,
+        string? body,
+        IEnumerable<(string Label, string Value)> facts,
+        IEnumerable<(string Label, string Url)> links,
+        string? optOutUrl = null)
     {
         var lines = new List<string>();
         if (!string.IsNullOrWhiteSpace(body)) lines.Add(body.Trim());
@@ -23,8 +31,14 @@ public static class MailTemplates
         var linkLines = links.Select(l => $"{l.Label}: {l.Url}").ToList();
         if (linkLines.Count > 0) lines.Add(string.Join('\n', linkLines));
         if (lines.Count == 0) lines.Add(title);
-        return Build(to, title, Greeting(name), string.Join("\n\n", lines), "Choose which notifications reach you by email in Mizan, Settings, Notifications.");
+        return Build(to, title, Greeting(name), string.Join("\n\n", lines), NotificationFooter(optOutUrl));
     }
+
+    /// <summary>The line under a notification email: where to choose, and for marketing the one-tap opt-out link.</summary>
+    public static string NotificationFooter(string? optOutUrl) =>
+        optOutUrl is { Length: > 0 }
+            ? $"You get news and offers because you turned them on. Turn them off: {optOutUrl}"
+            : "Choose which notifications reach you by email in Mizan, Settings, Notifications.";
 
     public static OutgoingEmail ContactReceived(
         string to, string fromName, string fromEmail, string subject, string message, string adminLink)

@@ -117,6 +117,12 @@ public static class McpToolScopes
             "admin_clear_feature_flag_override", "admin_list_usage_limits", "admin_set_usage_limit",
             "admin_clear_usage_limit", "admin_get_platform_usage");
 
+        // Notification campaigns and lifecycle messages (docs/ADMIN.md#notification-campaigns).
+        Add(McpScopes.Admin,
+            "admin_list_notification_campaigns", "admin_get_notification_campaign", "admin_preview_audience",
+            "admin_create_notification_campaign", "admin_send_test_notification", "admin_activate_notification_campaign",
+            "admin_pause_campaign", "admin_resume_campaign", "admin_cancel_campaign");
+
         return map;
     }
 }

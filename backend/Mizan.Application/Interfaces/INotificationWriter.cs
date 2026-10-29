@@ -16,6 +16,16 @@ public sealed record NotificationSend(Guid UserId, string Type, NotificationMess
 
     /// <summary>A reminder's id, when this is one: Telegram then carries Done, Snooze and Skip today buttons for it.</summary>
     public Guid? ReminderId { get; init; }
+
+    /// <summary>The campaign that sends it, kept on the in-app row so the campaign's report can count it and whether it was read.</summary>
+    public Guid? ScheduleId { get; init; }
+
+    /// <summary>
+    /// An administrator's test send to themselves: their choices for the kind and their quiet hours are
+    /// set aside so they see the message now. Each channel's own conditions (a linked chat, a verified
+    /// address, a registered phone) still apply.
+    /// </summary>
+    public bool Test { get; init; }
 }
 
 /// <summary>

@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Mizan.Infrastructure.Migrations
 {
     [DbContext(typeof(MizanDbContext))]
-    [Migration("20261029080530_NotificationMessagesAndSchedules")]
+    [Migration("20261029093404_NotificationMessagesAndSchedules")]
     partial class NotificationMessagesAndSchedules
     {
         /// <inheritdoc />
@@ -2682,6 +2682,10 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("read_at");
 
+                    b.Property<Guid?>("ScheduleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("schedule_id");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -2699,6 +2703,9 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ScheduleId", "ReadAt")
+                        .HasFilter("schedule_id IS NOT NULL");
 
                     b.HasIndex("UserId", "ReadAt", "CreatedAt");
 
@@ -5839,7 +5846,23 @@ namespace Mizan.Infrastructure.Migrations
                             b1.Property<Guid>("NotificationScheduleId")
                                 .ValueGeneratedOnAdd();
 
+                            b1.Property<bool?>("HasHousehold");
+
+                            b1.Property<int?>("InactiveDays");
+
                             b1.Property<int>("Kind");
+
+                            b1.PrimitiveCollection<string>("Plans")
+                                .IsRequired();
+
+                            b1.Property<DateTime?>("SignedUpBefore");
+
+                            b1.Property<DateTime?>("SignedUpFrom");
+
+                            b1.Property<bool?>("TelegramLinked");
+
+                            b1.PrimitiveCollection<string>("TimeZones")
+                                .IsRequired();
 
                             b1.Property<Guid?>("UserId");
 
@@ -5849,6 +5872,42 @@ namespace Mizan.Infrastructure.Migrations
 
                             b1
                                 .ToJson("audience")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("NotificationScheduleId");
+                        });
+
+                    b.OwnsOne("Mizan.Domain.Entities.NotificationCampaign", "Campaign", b1 =>
+                        {
+                            b1.Property<Guid>("NotificationScheduleId")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<DateTime?>("ActivatedAt");
+
+                            b1.Property<DateTime?>("CancelledAt");
+
+                            b1.Property<int?>("ConfirmedAudience");
+
+                            b1.Property<Guid?>("CreatedByUserId");
+
+                            b1.Property<string>("Name")
+                                .IsRequired();
+
+                            b1.Property<DateTime?>("PausedAt");
+
+                            b1.Property<int>("Purpose");
+
+                            b1.Property<int>("Status");
+
+                            b1.Property<string>("TimeZoneId");
+
+                            b1.HasKey("NotificationScheduleId");
+
+                            b1.ToTable("notification_schedules");
+
+                            b1
+                                .ToJson("campaign")
                                 .HasColumnType("jsonb");
 
                             b1.WithOwner()
@@ -5998,6 +6057,8 @@ namespace Mizan.Infrastructure.Migrations
 
                     b.Navigation("Audience")
                         .IsRequired();
+
+                    b.Navigation("Campaign");
 
                     b.Navigation("Message")
                         .IsRequired();

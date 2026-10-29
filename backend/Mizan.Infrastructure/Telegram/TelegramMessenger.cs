@@ -12,6 +12,8 @@ public sealed class TelegramMessenger : ITelegramMessenger
     private readonly IEntitlementService _entitlements;
     private readonly ITelegramBotNotifier _bot;
 
+    public Task<bool> IsConfiguredAsync(CancellationToken cancellationToken = default) => _bot.IsConfiguredAsync(cancellationToken);
+
     public TelegramMessenger(IMizanDbContext context, IOutbox outbox, IEntitlementService entitlements, ITelegramBotNotifier bot)
     {
         _context = context;

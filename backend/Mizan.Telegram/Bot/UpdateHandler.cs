@@ -462,6 +462,23 @@ public sealed class UpdateHandler
         return (string.Join('\n', lines), InlineKeyboardMarkup.Column(buttons.ToArray()));
     }
 
+    private async Task OptOutOfMarketingAsync(long chatId, ResolvedUser user, CancellationToken ct)
+    {
+        var result = await _api.SendForResultAsync<NotificationPreferencesDto>(
+            user.UserId,
+            HttpMethod.Put,
+            "api/Notifications/preferences",
+            new UpdateNotificationPreferencesRequest([new NotificationKindPreferenceUpdate("marketing", false, false, false, false)]),
+            ct);
+
+        await _telegram.SendMessageAsync(
+            chatId,
+            result.Ok
+                ? "News and offers are off, here, in the app, on your phone and by email. Turn them back on in Settings, Notifications."
+                : Escape(ExplainFailure(result)),
+            ct: ct);
+    }
+
     private async Task SetNotificationsAsync(long chatId, ResolvedUser user, bool on, CancellationToken ct)
     {
         var result = await _api.SendForResultAsync<object>(
@@ -516,13 +533,20 @@ public sealed class UpdateHandler
             return;
         }
 
+        var data = callback.Data ?? string.Empty;
+
+        // Opting out of news and offers works on any plan: nobody needs Pro to stop marketing.
+        if (data == TelegramMarketingCallbacks.OptOut)
+        {
+            await OptOutOfMarketingAsync(chatId, user, ct);
+            return;
+        }
+
         if (!user.IsPro)
         {
             await SendUpgradePromptAsync(chatId, ct);
             return;
         }
-
-        var data = callback.Data ?? string.Empty;
 
         if (data == "discard")
         {

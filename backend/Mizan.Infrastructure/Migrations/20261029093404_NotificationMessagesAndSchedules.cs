@@ -49,6 +49,12 @@ namespace Mizan.Infrastructure.Migrations
                 maxLength: 30,
                 nullable: true);
 
+            migrationBuilder.AddColumn<Guid>(
+                name: "schedule_id",
+                table: "notifications",
+                type: "uuid",
+                nullable: true);
+
             migrationBuilder.AddColumn<string>(
                 name: "card_image_url",
                 table: "achievements",
@@ -95,6 +101,7 @@ namespace Mizan.Infrastructure.Migrations
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
                     updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
                     audience = table.Column<string>(type: "jsonb", nullable: false),
+                    campaign = table.Column<string>(type: "jsonb", nullable: true),
                     message = table.Column<string>(type: "jsonb", nullable: false),
                     reminder = table.Column<string>(type: "jsonb", nullable: true),
                     trigger = table.Column<string>(type: "jsonb", nullable: false)
@@ -251,6 +258,12 @@ namespace Mizan.Infrastructure.Migrations
                 value: null);
 
             migrationBuilder.CreateIndex(
+                name: "IX_notifications_schedule_id_read_at",
+                table: "notifications",
+                columns: new[] { "schedule_id", "read_at" },
+                filter: "schedule_id IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_notification_schedules_enabled_next_run_at",
                 table: "notification_schedules",
                 columns: new[] { "enabled", "next_run_at" });
@@ -277,6 +290,10 @@ namespace Mizan.Infrastructure.Migrations
             migrationBuilder.DropTable(
                 name: "notification_schedules");
 
+            migrationBuilder.DropIndex(
+                name: "IX_notifications_schedule_id_read_at",
+                table: "notifications");
+
             migrationBuilder.DropColumn(
                 name: "quiet_hours_end",
                 table: "users");
@@ -299,6 +316,10 @@ namespace Mizan.Infrastructure.Migrations
 
             migrationBuilder.DropColumn(
                 name: "kind",
+                table: "notifications");
+
+            migrationBuilder.DropColumn(
+                name: "schedule_id",
                 table: "notifications");
 
             migrationBuilder.DropColumn(

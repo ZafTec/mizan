@@ -73,6 +73,10 @@ public partial class AppUrls : IAppUrls
         return SafePath().IsMatch(url) ? new Uri(_base, url).AbsoluteUri : url;
     }
 
+    public string Home() => _base.AbsoluteUri;
+
+    public string MarketingOptOut(string token) => Build("notifications/opt-out", token);
+
     private string Build(string path, string token) =>
         new UriBuilder(new Uri(_base, path)) { Query = $"token={Uri.EscapeDataString(token)}" }.Uri.ToString();
 }

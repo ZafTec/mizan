@@ -96,6 +96,18 @@ public static class TelegramReminderCallbacks
 }
 
 /// <summary>
+/// The button on news and offers (docs/TELEGRAM.md#notifications-in-telegram): <c>nm:off</c> turns
+/// marketing off on every channel in one tap. The API writes it and the bot answers it.
+/// </summary>
+public static class TelegramMarketingCallbacks
+{
+    public const string OptOut = "nm:off";
+    public const string Label = "Turn off news and offers";
+
+    public static IReadOnlyList<TelegramCallbackButton> For() => [new(Label, OptOut)];
+}
+
+/// <summary>
 /// One button. A Mini App page (<see cref="MiniAppPages"/>) opens inside Telegram when the Mini App is
 /// HTTPS; otherwise the web path opens the app in the browser when the public address is HTTPS.
 /// </summary>

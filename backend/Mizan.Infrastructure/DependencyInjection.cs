@@ -101,6 +101,7 @@ public static class DependencyInjection
         services.AddSingleton<ITelegramSettings, TelegramSettings>();
         services.AddSingleton<IPasswordHasher, PasswordHasherAdapter>();
         services.AddSingleton<IAppUrls, AppUrls>();
+        services.AddSingleton<INotificationOptOutTokens, NotificationOptOutTokens>();
         services.AddScoped<ISessionService, SessionService>();
 
         // OAuth authorization server for MCP clients and our own apps (docs/MCP.md#connect-with-oauth).

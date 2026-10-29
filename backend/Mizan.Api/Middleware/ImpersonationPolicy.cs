@@ -70,6 +70,7 @@ public static class ImpersonationPolicy
         [typeof(AdminBillingController)] = new("/api/admin/billing", ImpersonationAccess.Blocked),
         [typeof(AdminContactController)] = new("/api/admin/contact", ImpersonationAccess.Blocked),
         [typeof(AdminFeatureFlagsController)] = new("/api/admin/feature-flags", ImpersonationAccess.Blocked),
+        [typeof(AdminNotificationCampaignsController)] = new("/api/admin/notification-campaigns", ImpersonationAccess.Blocked),
         [typeof(AdminUsageController)] = new("/api/admin/usage", ImpersonationAccess.Blocked),
         [typeof(AdminUsageLimitsController)] = new("/api/admin/usage-limits", ImpersonationAccess.Blocked),
         [typeof(AdminJobsController)] = new("/api/Admin/Jobs", ImpersonationAccess.Blocked),

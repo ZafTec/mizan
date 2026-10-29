@@ -217,6 +217,7 @@ builder.Services.AddMcpServer(options =>
 .WithTools<ReminderTools>()
 .WithTools<AdminTools>()
 .WithTools<AdminPlatformTools>()
+.WithTools<AdminNotificationTools>()
 .WithTools<AchievementTools>()
 .WithTools<ProfileTools>()
 .WithTools<HouseholdTools>()
