@@ -42,6 +42,10 @@ The user detail page shows a suspension with its reason and end. **Suspend accou
 
 Both detail pages carry support notes: notes administrators leave for each other about a user or a household (`GET /api/admin/support-notes?subjectType=User|Household&subjectId=`, `POST`, `PUT /{id}`, `DELETE /{id}`). Only administrators can read or write them, any administrator may edit or delete one, and every write is audited. MCP: `admin_list_support_notes`, `admin_add_support_note`.
 
+## Notification schedules
+
+Scheduled notifications live in `notification_schedules` ([architecture](ARCHITECTURE.md#notifications)). The only one today is the built-in `evening-reminder`, created by the scheduler's first scan; setting its `enabled` to false stops every evening reminder, including those already queued. Each delivery is a `notification-delivery` job on `/admin/jobs`. There is no admin page or API for schedules yet. Achievements without an icon get a drawn card picture in Telegram only when storage is configured and `Storage.PublicBaseUrl` is HTTPS; otherwise their cards are sent as text.
+
 ## Runtime settings
 
 `/admin/settings` holds every setting that is not needed before the API can reach its database, and a change applies without a redeploy. `RuntimeSettingDefinitions` (Domain) lists each key with its type, rules, built-in default, page section and whether it is a secret; the API, the page, the MCP tools and `IRuntimeOptions<T>` all read that one catalog. A key is the options path with dots: `Smtp.Host` fills `SmtpOptions.Host`.
