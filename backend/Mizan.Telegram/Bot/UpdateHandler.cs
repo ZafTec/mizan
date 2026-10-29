@@ -236,18 +236,20 @@ public sealed class UpdateHandler
 
     /// <summary>
     /// Same threads as the website, so a conversation started here continues in
-    /// the browser. The most recent thread is the one it lands in; a new user
-    /// gets a new one.
+    /// the browser. The API says which thread is current (none after a quiet gap,
+    /// so the message starts a new one) and whether a step such as a /remind
+    /// question is waiting; that step goes with the words as app context
+    /// (docs/AI.md#app-context).
     /// </summary>
     private async Task OnChatAsync(long chatId, ResolvedUser user, string text, CancellationToken ct)
     {
         await _telegram.SendTypingAsync(chatId, ct);
 
-        var threads = await _api.GetAsAsync<List<AiChatThreadDto>>(user.UserId, "api/Ai/threads?take=1", ct);
-        var threadId = threads is { Count: > 0 } ? threads[0].Id : (Guid?)null;
+        var conversation = await _api.GetAsAsync<AiConversationDto>(user.UserId, "api/Ai/conversation", ct);
 
         var result = await _api.SendForResultAsync<AiChatTurnDto>(
-            user.UserId, HttpMethod.Post, "api/Ai/chat", new { threadId, message = text }, ct);
+            user.UserId, HttpMethod.Post, "api/Ai/chat",
+            new AiChatRequest(conversation?.ThreadId, text, conversation?.PendingContext), ct);
 
         if (result is { Ok: true, Value: { Reply.Content: { Length: > 0 } reply } turn })
         {

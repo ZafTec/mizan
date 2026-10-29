@@ -37,7 +37,10 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
         {"date":"2026-10-22","totalCalories":1860,"totalProtein":120,"totalCarbs":200,"totalFat":60,
          "targetCalories":2000,"targetProtein":150,"targetCarbs":null,"targetFat":null,"mealBreakdown":[]}
         """;
-    public string ThreadsJson { get; set; } = "[]";
+    /// <summary>The API's current conversation; null is the answer after a quiet gap or for a new user.</summary>
+    public Guid? CurrentThreadId { get; set; }
+    /// <summary>App context the API holds for the next message, set and cleared the way the API would.</summary>
+    public string? PendingContext { get; set; }
     public string ChatReply { get; set; } = "Hello.";
     public string PerformedJson { get; set; } = "[]";
     public string ConsentRequiredJson { get; set; } = "[]";
@@ -102,10 +105,18 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
     public DateTimeOffset Now { get; set; } = SignedInitData.Now;
     public string EnvironmentName { get; set; } = "Production";
 
+    private string ConversationJson() => JsonSerializer.Serialize(new
+    {
+        threadId = CurrentThreadId,
+        pendingContext = PendingContext,
+        pendingUntil = PendingContext is null ? (DateTime?)null : new DateTime(2026, 10, 22, 10, 15, 0, DateTimeKind.Utc),
+    });
+
     // ---- what the bot asked for ----
 
     public List<JsonElement> MealsPosted { get; } = [];
     public List<JsonElement> ChatPosted { get; } = [];
+    public List<JsonElement> ContextPosted { get; } = [];
     public List<JsonElement> LinkPosted { get; } = [];
     public List<string> PlanDaysRequested { get; } = [];
     public List<(string Url, JsonElement Body)> PlanLogsPosted { get; } = [];
@@ -377,10 +388,21 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
                 {"foods":[{"name":"{{FoodName}}","portionGrams":300,"calories":600,"protein":30,"carbs":60,"fat":20}],
                  "totalCalories":600,"confidence":0.8,"note":null}
                 """);
-        if (url.Contains("api/Ai/threads")) return Json(ThreadsJson);
+        if (url.EndsWith("api/Ai/conversation/context"))
+        {
+            var note = JsonDocument.Parse(body).RootElement.Clone();
+            ContextPosted.Add(note);
+            PendingContext = note.TryGetProperty("holdMinutes", out var hold) && hold.ValueKind == JsonValueKind.Number && hold.GetInt32() > 0
+                ? note.GetProperty("note").GetString()
+                : null;
+            return Json(ConversationJson());
+        }
+        if (url.EndsWith("api/Ai/conversation")) return Json(ConversationJson());
         if (url.Contains("api/Ai/chat"))
         {
-            ChatPosted.Add(JsonDocument.Parse(body).RootElement.Clone());
+            var chat = JsonDocument.Parse(body).RootElement.Clone();
+            ChatPosted.Add(chat);
+            if (chat.TryGetProperty("clientContext", out var context) && context.ValueKind == JsonValueKind.String) PendingContext = null;
             var reply = JsonSerializer.Serialize(ChatReply);
             return Json($$"""
                 {"threadId":"22222222-2222-4222-8222-222222222222","title":"Chat",

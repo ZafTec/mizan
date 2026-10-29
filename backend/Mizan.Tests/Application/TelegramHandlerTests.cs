@@ -27,9 +27,9 @@ public class TelegramHandlerTests
     }
 
     [Fact]
-    public async Task FreeText_ContinuesTheNewestThread_AndSendsTheReplyAsHtml()
+    public async Task FreeText_ContinuesTheCurrentConversation_AndSendsTheReplyAsHtml()
     {
-        _world.ThreadsJson = """[{"id":"44444444-4444-4444-8444-444444444444","title":"Earlier","updatedAt":"2026-10-21T00:00:00Z"}]""";
+        _world.CurrentThreadId = Guid.Parse("44444444-4444-4444-8444-444444444444");
         _world.ChatReply = "You are at **120 g** protein.";
 
         await _world.Handler().HandleAsync(Text("how is my protein?"), CancellationToken.None);
@@ -42,7 +42,7 @@ public class TelegramHandlerTests
     }
 
     [Fact]
-    public async Task FreeText_WithNoThreadYet_StartsOne()
+    public async Task FreeText_AfterAQuietGap_StartsANewConversation()
     {
         await _world.Handler().HandleAsync(Text("hello"), CancellationToken.None);
 

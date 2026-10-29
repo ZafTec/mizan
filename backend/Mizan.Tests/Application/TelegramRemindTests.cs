@@ -41,10 +41,47 @@ public class TelegramRemindTests
     }
 
     [Fact]
+    public async Task ButtonsAlone_SetTheReminder_AndTellTheAssistantConversationEachStep()
+    {
+        await _world.Handler().HandleAsync(Text("/remind"), CancellationToken.None);
+        await _world.Handler().HandleAsync(Press("rm:k:meal_log"), CancellationToken.None);
+        await _world.Handler().HandleAsync(Press("rm:d:meal_log:wk"), CancellationToken.None);
+        await _world.Handler().HandleAsync(Press("rm:t:meal_log:wk:1200"), CancellationToken.None);
+
+        _world.ReminderCalls.Should().ContainSingle(c => c.Method == "POST");
+        _world.ChatPosted.Should().BeEmpty();
+        var notes = _world.ContextPosted.Select(n => (Note: n.GetProperty("note").GetString()!, Hold: n.GetProperty("holdMinutes").GetInt32())).ToList();
+        notes.Should().HaveCount(3);
+        notes[0].Note.Should().Contain("Log a meal (kind meal_log)").And.Contain("\"Which days?\"");
+        notes[1].Note.Should().Contain("days: Weekdays").And.Contain("\"What time?\"");
+        notes.Take(2).Should().OnlyContain(n => n.Hold == 15);
+        notes[2].Should().Match<(string Note, int Hold)>(n => n.Hold == 0 && n.Note.Contains("finished"));
+        _world.PendingContext.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task WordsTypedWhileAStepWaits_GoToTheAssistantWithThatStep_AndOnlyOnce()
+    {
+        await _world.Handler().HandleAsync(Text("/remind"), CancellationToken.None);
+        await _world.Handler().HandleAsync(Press("rm:k:meal_log"), CancellationToken.None);
+
+        await _world.Handler().HandleAsync(Text("once a week"), CancellationToken.None);
+        await _world.Handler().HandleAsync(Text("thanks"), CancellationToken.None);
+
+        _world.ReminderCalls.Should().BeEmpty();
+        _world.ChatPosted.Should().HaveCount(2);
+        _world.ChatPosted[0].GetProperty("message").GetString().Should().Be("once a week");
+        _world.ChatPosted[0].GetProperty("clientContext").GetString().Should()
+            .Contain("Log a meal (kind meal_log)").And.Contain("\"Which days?\"");
+        _world.ChatPosted[1].GetProperty("clientContext").ValueKind.Should().Be(System.Text.Json.JsonValueKind.Null);
+    }
+
+    [Fact]
     public async Task RemindWithWords_CarriesTheWordsInTheMessage_AndPostsACustomReminder()
     {
         await _world.Handler().HandleAsync(Text("/remind drink water"), CancellationToken.None);
         _world.LastText.Should().StartWith("Remind you to: <b>drink water</b>");
+        _world.ContextPosted.Should().ContainSingle().Which.GetProperty("note").GetString().Should().Contain("titled \"drink water\"");
 
         // Telegram hands back the message as plain text with the button that was pressed.
         await _world.Handler().HandleAsync(Press("rm:d:custom:daily", "Remind you to: drink water\nWhich days?"), CancellationToken.None);

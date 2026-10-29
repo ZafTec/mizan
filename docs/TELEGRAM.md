@@ -58,7 +58,7 @@ The message is a card (`TelegramCards`, Application; `NotificationCards`, bot): 
 
 ## Reminders
 
-The bot sets and answers [reminders](ARCHITECTURE.md#reminders) through `/api/Reminders` and decides nothing itself (`RemindHandler`). `/remind` offers **Workout**, **Measurements** and **Log a meal** (`rm:k:{kind}`); `/remind <words>` makes a custom reminder whose words ride on the message's first line ("Remind you to: …") and are read back when a button is pressed. Then **Every day**, **Weekdays**, **Weekends** or **Every other day** (`rm:d:{kind}:{daily|wk|we|2d}`) and a time (`rm:t:{kind}:{days}:{HHmm}`), which sends `POST /api/Reminders` and replies with the API's summary and first time. `/reminders` lists each with **Stop** (`ra:stop:{id}`), which turns it off with `PUT /api/Reminders/{id}`.
+The bot sets and answers [reminders](ARCHITECTURE.md#reminders) through `/api/Reminders` and decides nothing itself (`RemindHandler`). `/remind` offers **Workout**, **Measurements** and **Log a meal** (`rm:k:{kind}`); `/remind <words>` makes a custom reminder whose words ride on the message's first line ("Remind you to: …") and are read back when a button is pressed. Then **Every day**, **Weekdays**, **Weekends** or **Every other day** (`rm:d:{kind}:{daily|wk|we|2d}`) and a time (`rm:t:{kind}:{days}:{HHmm}`), which sends `POST /api/Reminders` and replies with the API's summary and first time. Each step is reported to the assistant conversation as [app context](AI.md#app-context): what was chosen and the question now asked, held 15 minutes, and a closing note when the reminder is made or refused. Words typed instead of a button go to the assistant with that step, so "once a week" is read as the answer to "Which days?" for a meal reminder. The buttons work without the assistant. `/reminders` lists each with **Stop** (`ra:stop:{id}`), which turns it off with `PUT /api/Reminders/{id}`.
 
 A reminder's card ends with a row of **Done**, **Snooze 30 min** and **Skip today** (`TelegramReminderCallbacks`: `ra:done|snooze|skip:{id}`). Each calls `POST /api/Reminders/{id}/done|snooze|skip` and the bot replies with the API's sentence, such as "Snoozed. I will remind you again at 08:47."
 
@@ -96,7 +96,7 @@ For production webhooks:
 
 ## Conversation and photos
 
-Chat replays the last ten turns and a rolling summary stored on the shared thread. Summary refresh happens after a saved reply; a failed refresh preserves the previous summary without failing the turn. The reply ends with one line per performed action (`✓` or `✗` with the error), so a request to create a list shows that it happened.
+Free text goes to the conversation `GET /api/Ai/conversation` names, with any waiting app context; after a quiet gap that is a new thread. Chat replays the last ten turns and a rolling summary stored on the shared thread. Summary refresh happens after a saved reply; a failed refresh preserves the previous summary without failing the turn. The reply ends with one line per performed action (`✓` or `✗` with the error), so a request to create a list shows that it happened.
 
 The bot reads and writes the records in `Mizan.Contracts` (`LogMealRequest`, `DailyNutritionTotals`, `FoodAnalysisResult`, `AiChatTurnDto`) and formats `/today` with `Mizan.Domain.Nutrition.NutritionText`, the same wording the assistant's tools and context use.
 

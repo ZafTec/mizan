@@ -1,3 +1,4 @@
+using Mizan.Contracts.Ai;
 using Mizan.Contracts.Notifications;
 using Mizan.Contracts.Telegram;
 using Mizan.Telegram.Backend;
@@ -10,6 +11,8 @@ namespace Mizan.Telegram.Bot;
 /// lists them with a Stop button each. A reminder's own card carries Done, Snooze 30 min and Skip today,
 /// which call the reminder's endpoints. The bot keeps no state and decides nothing: each button carries
 /// its choices, a custom reminder's words ride in the message text, and every rule is the API's.
+/// Each step is also reported to the person's assistant conversation as app context
+/// (docs/AI.md#app-context), so words typed instead of a button are read against the open question.
 /// </summary>
 public sealed class RemindHandler
 {
@@ -39,6 +42,9 @@ public sealed class RemindHandler
 
     private static readonly string[] Times = ["07:00", "08:00", "12:00", "18:00", "20:00", "21:00"];
 
+    /// <summary>How long a step waits for typed words to count as its answer.</summary>
+    public const int StepHoldMinutes = 15;
+
     private readonly TelegramClient _telegram;
     private readonly MizanApiClient _api;
     private readonly Func<ApiResult<object>, string> _explain;
@@ -58,6 +64,7 @@ public sealed class RemindHandler
         if (argument.Length > 0)
         {
             await _telegram.SendMessageAsync(chatId, $"{CustomLead}<b>{Escape(argument)}</b>\nWhich days?", DaysKeyboard("custom"), ct);
+            await ReportAsync(user, Step(KindChoice("custom", argument), "Which days?", DayPresets.Select(d => d.Label)), StepHoldMinutes, ct);
             return;
         }
 
@@ -110,6 +117,7 @@ public sealed class RemindHandler
         {
             case ["k", var kind]:
                 await _telegram.SendMessageAsync(chatId, "Which days?", DaysKeyboard(kind), ct);
+                await ReportAsync(user, Step(KindChoice(kind, title), "Which days?", DayPresets.Select(d => d.Label)), StepHoldMinutes, ct);
                 return;
 
             case ["d", var kind, var days] when kind != "custom" || title is not null:
@@ -118,6 +126,7 @@ public sealed class RemindHandler
                     (title is null ? "" : $"{CustomLead}<b>{Escape(title)}</b>\n") + "What time?",
                     TimesKeyboard(kind, days),
                     ct);
+                await ReportAsync(user, Step($"{KindChoice(kind, title)}; days: {DaysChoice(days)}", "What time?", Times), StepHoldMinutes, ct);
                 return;
 
             case ["t", var kind, var days, var hhmm] when (kind != "custom" || title is not null) && Schedule(days, hhmm) is { } schedule:
@@ -135,9 +144,13 @@ public sealed class RemindHandler
         var result = await _api.SendForResultAsync<ReminderDto>(user.UserId, HttpMethod.Post, "api/Reminders", request, ct);
         if (result is not { Ok: true, Value: { } reminder })
         {
-            await _telegram.SendMessageAsync(chatId, Escape(_explain(Untyped(result))), ct: ct);
+            var reason = _explain(Untyped(result));
+            await _telegram.SendMessageAsync(chatId, Escape(reason), ct: ct);
+            await ReportAsync(user, $"The /remind buttons ended without a reminder: {reason}", 0, ct);
             return;
         }
+
+        await ReportAsync(user, $"The /remind buttons created the reminder \"{reminder.Title}\": {reminder.Summary}. That flow is finished.", 0, ct);
 
         var first = reminder.NextRunText is { } next ? $" First one {Escape(next)}." : "";
         await _telegram.SendMessageAsync(
@@ -169,6 +182,36 @@ public sealed class RemindHandler
             result is { Ok: true, Value: { } done } ? Escape(done.Message) : Escape(_explain(Untyped(result))),
             ct: ct);
     }
+
+    /// <summary>
+    /// Tells the assistant conversation where the flow stands (<c>POST /api/Ai/conversation/context</c>).
+    /// A fact, not an instruction: what the person chose and what the chat is now asking. Best effort,
+    /// since a person without the assistant still gets every button.
+    /// </summary>
+    private async Task ReportAsync(ResolvedUser user, string note, int holdMinutes, CancellationToken ct)
+    {
+        try
+        {
+            await _api.SendForResultAsync<AiConversationDto>(
+                user.UserId, HttpMethod.Post, "api/Ai/conversation/context", new AiContextNoteRequest(note, holdMinutes), ct);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or System.Text.Json.JsonException || (ex is TaskCanceledException && !ct.IsCancellationRequested))
+        {
+            // The reminder flow does not depend on the assistant.
+        }
+    }
+
+    internal static string Step(string chosen, string question, IEnumerable<string> offered) =>
+        $"The person is setting up a reminder with the /remind buttons. Chosen so far: {chosen}. "
+        + $"The chat is now asking \"{question}\" with buttons: {string.Join(", ", offered)}.";
+
+    private static string KindChoice(string kind, string? title) =>
+        kind == "custom"
+            ? $"a custom reminder (kind custom) titled \"{title}\""
+            : $"{Kinds.FirstOrDefault(k => k.Kind == kind).Label ?? kind} (kind {kind})";
+
+    private static string DaysChoice(string days) =>
+        DayPresets.FirstOrDefault(d => d.Key == days).Label ?? days;
 
     private static InlineKeyboardMarkup DaysKeyboard(string kind) =>
         InlineKeyboardMarkup.Column(DayPresets.Select(d => InlineKeyboardButton.Callback(d.Label, $"{Prefix}d:{kind}:{d.Key}")).ToArray());
