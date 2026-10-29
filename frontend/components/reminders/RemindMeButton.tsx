@@ -67,8 +67,9 @@ export function RemindMeButton({
           <DialogHeader>
             <DialogTitle>{heading}</DialogTitle>
             <DialogDescription>
-              Reminders come on the channels you chose for them in Settings, and
-              wait out your quiet hours.
+              Choose where it goes. Each channel also follows your
+              notification choices for reminders, and waits out your quiet
+              hours.
             </DialogDescription>
           </DialogHeader>
           {open && (

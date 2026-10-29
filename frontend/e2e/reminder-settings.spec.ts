@@ -61,6 +61,7 @@ test("a person adds a weekday workout reminder in Settings, turns it off and del
     {
       kind: "workout",
       title: null,
+      channels: ["inApp", "telegram", "push", "email"],
       schedule: {
         repeat: "days",
         time: "07:00",
@@ -89,7 +90,70 @@ test("Remind me on the measurements page sets a measurement reminder", async ({
     {
       kind: "measurement",
       title: null,
+      channels: ["inApp", "telegram", "push", "email"],
       schedule: { repeat: "daily", time: "07:00" },
     },
   ]);
+});
+
+test("a person chooses where a reminder goes, in Settings and from Remind me", async ({
+  context,
+  page,
+}) => {
+  await signIn(context);
+  await page.goto("/profile/settings#reminders");
+  const section = page.getByRole("region", { name: "Reminders", exact: true });
+  await section.getByRole("button", { name: "Add a reminder" }).click();
+
+  const sendTo = section.getByRole("group", { name: "Send it to" });
+  const email = sendTo.getByRole("switch", { name: /^Email/ });
+  await expect(email).toHaveAttribute("aria-checked", "true");
+  await email.click();
+  await expect(email).toHaveAttribute("aria-checked", "false");
+  // The keyboard flips a channel too.
+  const push = sendTo.getByRole("switch", { name: /^Push/ });
+  await push.focus();
+  await page.keyboard.press("Space");
+  await expect(push).toHaveAttribute("aria-checked", "false");
+  await section.getByRole("button", { name: "Set reminder" }).click();
+  await expect(
+    section.getByRole("switch", { name: /Time for your workout/ }),
+  ).toBeVisible();
+
+  await page.goto("/body-measurements");
+  await page.getByRole("button", { name: "Remind me" }).click();
+  const dialog = page.getByRole("dialog", { name: "Remind me to measure" });
+  await dialog
+    .getByRole("group", { name: "Send it to" })
+    .getByRole("switch", { name: /^Telegram/ })
+    .click();
+  await dialog.getByRole("button", { name: "Set reminder" }).click();
+  await expect(dialog).toBeHidden();
+
+  const writes = reminderWrites(await state(context));
+  expect(writes.map((w) => w.body.channels)).toEqual([
+    ["inApp", "telegram"],
+    ["inApp", "push", "email"],
+  ]);
+});
+
+test("on a phone, the channel switches fit the Remind me dialog", async ({
+  context,
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await signIn(context);
+  await page.goto("/body-measurements");
+  await page.getByRole("button", { name: "Remind me" }).click();
+  const dialog = page.getByRole("dialog", { name: "Remind me to measure" });
+  const email = dialog.getByRole("switch", { name: /^Email/ });
+  await email.scrollIntoViewIfNeeded();
+  const box = await email.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.x + box!.width).toBeLessThanOrEqual(360);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBeTruthy();
 });

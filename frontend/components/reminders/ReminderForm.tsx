@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import Input from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { ToggleRow } from "@/components/ui/toggle-row";
 import type { CreateReminder, ReminderSchedule } from "@/lib/api/reminders";
 
 /** What the person can pick. The API words the summary and refuses what its rules do not allow. */
@@ -23,6 +24,32 @@ const REPEAT_OPTIONS = [
 ] as const;
 
 type Repeat = (typeof REPEAT_OPTIONS)[number]["value"];
+
+/** The channels a reminder can go out on, by the API's names. Each still follows the person's choices for reminders. */
+const CHANNEL_OPTIONS = [
+  {
+    value: "inApp",
+    label: "In the app",
+    description: "In your notifications list.",
+  },
+  {
+    value: "telegram",
+    label: "Telegram",
+    description: "A message from the bot, once Telegram is linked.",
+  },
+  {
+    value: "push",
+    label: "Push",
+    description: "On a phone with the app installed.",
+  },
+  {
+    value: "email",
+    label: "Email",
+    description: "To your address, when email is on for reminders.",
+  },
+] as const;
+
+type Channel = (typeof CHANNEL_OPTIONS)[number]["value"];
 
 const TIMES = Array.from({ length: 48 }, (_, index) => {
   const value = `${String(Math.floor(index / 2)).padStart(2, "0")}:${index % 2 ? "30" : "00"}`;
@@ -94,6 +121,9 @@ export function ReminderForm({
   const [hours, setHours] = useState("2");
   const [prepTime, setPrepTime] = useState(base.prepTime ?? "18:00");
   const [lead, setLead] = useState(String(base.leadMinutes ?? 60));
+  const [channels, setChannels] = useState<string[]>(
+    base.channels ?? CHANNEL_OPTIONS.map((option) => option.value),
+  );
   const preCook = kind === "pre_cook";
 
   function submit(event: React.FormEvent) {
@@ -102,6 +132,9 @@ export function ReminderForm({
       ...base,
       kind,
       title: title.trim() || null,
+      channels: CHANNEL_OPTIONS.map((option) => option.value).filter(
+        (value: Channel) => channels.includes(value),
+      ),
       ...(preCook
         ? { prepTime, leadMinutes: Number(lead), schedule: undefined }
         : { schedule: schedule(repeat, time, date, hours) }),
@@ -232,6 +265,24 @@ export function ReminderForm({
           )}
         </div>
       )}
+      <fieldset className="border-b border-border">
+        <legend className="mb-1.5 text-sm font-medium">Send it to</legend>
+        {CHANNEL_OPTIONS.map((option) => (
+          <ToggleRow
+            key={option.value}
+            label={option.label}
+            description={option.description}
+            checked={channels.includes(option.value)}
+            onChange={(on) =>
+              setChannels((current) =>
+                on
+                  ? [...current, option.value]
+                  : current.filter((value) => value !== option.value),
+              )
+            }
+          />
+        ))}
+      </fieldset>
       <div className="flex flex-wrap justify-end gap-2 pt-1">
         {onCancel && (
           <Button type="button" variant="ghost" onClick={onCancel}>
