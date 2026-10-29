@@ -50,7 +50,8 @@ public static class EnvironmentSettingsImport
         ["Telegram.UseWebhook"] = ["TelegramBot:UseWebhook", "TELEGRAM_USE_WEBHOOK"],
         ["Telegram.WebhookSecret"] = ["TelegramBot:WebhookSecret", "TELEGRAM_WEBHOOK_SECRET"],
         ["Telegram.MiniAppUrl"] = ["TelegramBot:MiniAppUrl", "TELEGRAM_MINIAPP_URL"],
-        ["Paddle.Environment"] = ["PADDLE_ENVIRONMENT"],
+        ["Paddle.Environment"] = ["PADDLE_ENVIRONMENT", "NEXT_PUBLIC_PADDLE_ENV"],
+        ["Paddle.ClientToken"] = ["NEXT_PUBLIC_PADDLE_CLIENT_TOKEN"],
         ["Paddle.ApiKey"] = ["PADDLE_API_KEY"],
         ["Paddle.WebhookSecret"] = ["PADDLE_WEBHOOK_SECRET"],
         ["Paddle.GraceDays"] = ["PADDLE_GRACE_DAYS"],
@@ -58,6 +59,10 @@ public static class EnvironmentSettingsImport
         ["Prices.UserAgent"] = ["PRICES_USER_AGENT"],
         ["Prices.RequestDelayMs"] = ["PRICES_REQUEST_DELAY_MS"],
         ["Prices.MaxProductsPerRun"] = ["PRICES_MAX_PRODUCTS_PER_RUN"],
+        ["Authentication.Google.ClientId"] = ["GOOGLE_CLIENT_ID"],
+        ["Authentication.Google.ClientSecret"] = ["GOOGLE_CLIENT_SECRET"],
+        ["Authentication.GitHub.ClientId"] = ["GITHUB_CLIENT_ID"],
+        ["Authentication.GitHub.ClientSecret"] = ["GITHUB_CLIENT_SECRET"],
     };
 
     /// <summary>Old keys that held a TimeSpan where the new key holds a whole number.</summary>

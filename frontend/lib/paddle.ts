@@ -8,31 +8,47 @@ import {
   type CheckoutOpenOptions,
 } from "@paddle/paddle-js";
 import { clientApi } from "@/lib/api.client";
+import type { components } from "@/types/api.generated";
 
-const TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
-const ENVIRONMENT =
-  (process.env.NEXT_PUBLIC_PADDLE_ENV as Environments) ?? "sandbox";
+type CheckoutSettings = components["schemas"]["CheckoutSettingsDto"];
 
+// The client-side token and environment are runtime settings the API serves
+// (GET /api/Subscriptions/checkout-settings), read when checkout first opens.
 // Single cached Paddle instance. The eventCallback passed on first init wins,
 // so callers that need checkout events (the billing page) should init first.
 let paddlePromise: Promise<Paddle | undefined> | null = null;
 
-export function isPaddleConfigured(): boolean {
-  return Boolean(TOKEN);
+async function loadPaddle(
+  eventCallback?: (event: PaddleEventData) => void,
+): Promise<Paddle | undefined> {
+  const settings = await clientApi<CheckoutSettings>(
+    "/api/Subscriptions/checkout-settings",
+  );
+  if (!settings.clientToken) {
+    return undefined;
+  }
+  return initializePaddle({
+    token: settings.clientToken,
+    environment: settings.environment as Environments,
+    eventCallback,
+  });
 }
 
 export function getPaddle(
   eventCallback?: (event: PaddleEventData) => void,
 ): Promise<Paddle | undefined> {
-  if (!TOKEN) {
-    return Promise.resolve(undefined);
-  }
   if (!paddlePromise) {
-    paddlePromise = initializePaddle({
-      token: TOKEN,
-      environment: ENVIRONMENT,
-      eventCallback,
-    });
+    paddlePromise = loadPaddle(eventCallback).then(
+      (paddle) => {
+        // Not configured yet: ask again next time rather than remembering "off".
+        if (!paddle) paddlePromise = null;
+        return paddle;
+      },
+      (error: unknown) => {
+        paddlePromise = null;
+        throw error;
+      },
+    );
   }
   return paddlePromise;
 }

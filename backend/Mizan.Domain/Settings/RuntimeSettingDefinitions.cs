@@ -49,6 +49,7 @@ public static class RuntimeSettingGroups
     public const string Push = "push";
     public const string Billing = "billing";
     public const string Prices = "prices";
+    public const string SignIn = "sign-in";
     public const string OAuth = "oauth";
     public const string Outbox = "outbox";
 
@@ -66,6 +67,7 @@ public static class RuntimeSettingGroups
         new(Push, "Push", [new(["Push.FcmProjectId", "Push.FcmServiceAccountJson"], "Push is not configured. Phones get no notifications.")]),
         new(Billing, "Billing", [new(["Paddle.ApiKey", "Paddle.WebhookSecret"], "Billing is not configured. Upgrades are not offered.")]),
         new(Prices, "Price crawler", []),
+        new(SignIn, "Sign-in", []),
         new(OAuth, "Connected apps", []),
         new(Outbox, "Background jobs", []),
     ];
@@ -331,12 +333,18 @@ public static class RuntimeSettingDefinitions
             new("Paddle.Environment", RuntimeSettingGroups.Billing, "Paddle environment", "sandbox or production. Change it together with the key and webhook secret.", RuntimeSettingType.Enum) { AllowedValues = ["sandbox", "production"], Default = "sandbox" },
             new("Paddle.ApiKey", RuntimeSettingGroups.Billing, "Paddle API key", "Stored encrypted and never shown again.", RuntimeSettingType.String, IsSecret: true),
             new("Paddle.WebhookSecret", RuntimeSettingGroups.Billing, "Webhook secret", "From the Paddle notification destination. Stored encrypted and never shown again.", RuntimeSettingType.String, IsSecret: true),
+            new("Paddle.ClientToken", RuntimeSettingGroups.Billing, "Client-side token", "The Paddle client-side token the browser opens checkout with. It is public by design. Empty hides checkout.", RuntimeSettingType.String) { AllowEmpty = true, MaxLength = 200 },
             new("Paddle.GraceDays", RuntimeSettingGroups.Billing, "Grace days", "How long a past-due subscription keeps Pro.", RuntimeSettingType.Int) { Max = 60, Default = "3" },
             new("Paddle.LifetimePriceId", RuntimeSettingGroups.Billing, "Lifetime price id", "The one-time price that grants a lifetime plan. Empty when there is none.", RuntimeSettingType.String) { AllowEmpty = true, MaxLength = 100, Default = "pri_01kwa2qt2c0q0ntgp0ntrn3tbt" },
 
             new("Prices.UserAgent", RuntimeSettingGroups.Prices, "User agent", "Sent with every request to a shop and matched against its robots.txt.", RuntimeSettingType.String) { MaxLength = 300, Default = "MizanPriceBot/1.0 (+https://mizan.zaftech.co; prices@zaftech.co)" },
             new("Prices.RequestDelayMs", RuntimeSettingGroups.Prices, "Delay between requests (ms)", "The least gap between two requests to one shop. A larger robots.txt Crawl-delay wins.", RuntimeSettingType.Int) { Max = 60_000, Default = "1000" },
             new("Prices.MaxProductsPerRun", RuntimeSettingGroups.Prices, "Products per run", "Product pages one run may read.", RuntimeSettingType.Int) { Min = 1, Max = 100_000, Default = "500" },
+
+            new("Authentication.Google.ClientId", RuntimeSettingGroups.SignIn, "Google client id", "From the Google Cloud OAuth client. Empty turns Google sign-in off.", RuntimeSettingType.String) { AllowEmpty = true, MaxLength = 300 },
+            new("Authentication.Google.ClientSecret", RuntimeSettingGroups.SignIn, "Google client secret", "The OAuth client's secret. Stored encrypted and never shown again.", RuntimeSettingType.String, IsSecret: true) { MaxLength = 300 },
+            new("Authentication.GitHub.ClientId", RuntimeSettingGroups.SignIn, "GitHub client id", "From the GitHub OAuth app. Empty turns GitHub sign-in off.", RuntimeSettingType.String) { AllowEmpty = true, MaxLength = 300 },
+            new("Authentication.GitHub.ClientSecret", RuntimeSettingGroups.SignIn, "GitHub client secret", "The OAuth app's secret. Stored encrypted and never shown again.", RuntimeSettingType.String, IsSecret: true) { MaxLength = 300 },
 
             new("OAuth.AccessTokenMinutes", RuntimeSettingGroups.OAuth, "Access token minutes", "How long an access token issued to a connected app works.", RuntimeSettingType.Int) { Min = 1, Max = 1440, Default = "60" },
             new("OAuth.RefreshTokenDays", RuntimeSettingGroups.OAuth, "Refresh token days", "How long a connected app stays signed in without use.", RuntimeSettingType.Int) { Min = 1, Max = 365, Default = "30" },

@@ -19,13 +19,15 @@ public class AuthController : ControllerBase
     private readonly ISessionService _sessions;
     private readonly SessionCookie _cookie;
     private readonly IAppUrls _urls;
+    private readonly ExternalSignInSettings _externalSignIn;
 
-    public AuthController(IMediator mediator, ISessionService sessions, SessionCookie cookie, IAppUrls urls)
+    public AuthController(IMediator mediator, ISessionService sessions, SessionCookie cookie, IAppUrls urls, ExternalSignInSettings externalSignIn)
     {
         _mediator = mediator;
         _sessions = sessions;
         _cookie = cookie;
         _urls = urls;
+        _externalSignIn = externalSignIn;
     }
 
     [HttpPost("register")]
@@ -181,10 +183,17 @@ public class AuthController : ControllerBase
     /// </summary>
     [HttpGet("external/{provider}")]
     [AllowAnonymous]
-    public IActionResult ExternalLogin(string provider, [FromQuery] string? returnUrl)
+    public async Task<IActionResult> ExternalLogin(string provider, [FromQuery] string? returnUrl)
     {
         var scheme = ExternalProviders.Resolve(provider)
             ?? throw new DomainValidationException($"Unknown sign-in provider '{provider}'.");
+
+        // An administrator turns a provider on in Admin > Settings > Sign-in; until then it is off.
+        var settings = await _externalSignIn.RefreshAsync(HttpContext.RequestAborted);
+        if (ExternalSignInSettings.For(settings, provider) is not { IsConfigured: true })
+        {
+            return Redirect(_urls.SafeReturnUrl("/login?error=external_unavailable"));
+        }
 
         var properties = new AuthenticationProperties
         {

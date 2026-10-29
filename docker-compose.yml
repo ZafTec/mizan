@@ -112,8 +112,6 @@ services:
       # External services
       # Public origin of the object store, for next/image's host allowlist.
       - NEXT_PUBLIC_MEDIA_URL=${STORAGE_PUBLIC_BASE_URL:-}
-      - NEXT_PUBLIC_PADDLE_ENV=${NEXT_PUBLIC_PADDLE_ENV:-sandbox}
-      - NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=${NEXT_PUBLIC_PADDLE_CLIENT_TOKEN:-}
       # OpenTelemetry (optional, no-op if endpoints not set)
       - OTLP_ENDPOINT_URL=${OTLP_ENDPOINT_URL:-}
       - LOKI_OTLP_ENDPOINT=${LOKI_OTLP_ENDPOINT:-}
@@ -157,10 +155,6 @@ services:
       # once, see docs/ADMIN.md#moving-settings-out-of-the-environment.
       - App__PublicUrl=${PUBLIC_APP_URL:-http://localhost:3000}
       - App__CookieDomain=${COOKIE_DOMAIN:-}
-      - Authentication__Google__ClientId=${GOOGLE_CLIENT_ID:-}
-      - Authentication__Google__ClientSecret=${GOOGLE_CLIENT_SECRET:-}
-      - Authentication__GitHub__ClientId=${GITHUB_CLIENT_ID:-}
-      - Authentication__GitHub__ClientSecret=${GITHUB_CLIENT_SECRET:-}
       - Cors__Origins__0=http://frontend:3000
       - Cors__Origins__1=http://localhost:3000
       - Cors__Origins__2=${PUBLIC_APP_URL:-http://localhost:3000}
@@ -193,7 +187,6 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5001
-      - ConnectionStrings__PostgreSQL=Host=postgres;Database=mizan;Username=mizan;Password=${DB_PASSWORD:?DB_PASSWORD is required}
       # Backend API connection (internal network)
       - BACKEND_API_URL=http://backend:8080
       # The web app, for the billing link in limit and upgrade messages

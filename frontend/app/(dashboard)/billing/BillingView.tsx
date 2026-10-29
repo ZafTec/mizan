@@ -8,7 +8,6 @@ import {
   openCheckout,
   getBillingPortal,
   getPaddle,
-  isPaddleConfigured,
 } from "@/lib/paddle";
 import {
   cadence,
@@ -66,21 +65,20 @@ export default function BillingView({ plans }: { plans: BillingPlan[] }) {
         appToast.error("Please sign in first");
         return;
       }
-      if (!isPaddleConfigured()) {
-        appToast.error("Billing is not configured yet");
-        return;
-      }
-
       // The first call registers the checkout event handler; Paddle keeps
       // the handler from its first initialisation.
-      await getPaddle((event) => {
+      const paddle = await getPaddle((event) => {
         const name = String(event?.name ?? "");
         if (name === "checkout.completed") {
           setAwaitingActivation(true);
         } else if (name === "checkout.closed") {
           setCheckingOut(null);
         }
-      });
+      }).catch(() => undefined);
+      if (!paddle) {
+        appToast.error("Billing is not configured yet");
+        return;
+      }
       setCheckingOut(plan.id);
       const opened = await openCheckout({
         priceId: plan.paddlePriceId,

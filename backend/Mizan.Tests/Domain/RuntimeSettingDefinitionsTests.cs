@@ -90,13 +90,14 @@ public class RuntimeSettingDefinitionsTests
         {
             groups.Should().Contain(definition.Group, definition.Key);
             definition.ConfigurationPath.Should().Be(definition.Key.Replace('.', ':'));
-            new[] { "Smtp", "Ai", "Storage", "Telegram", "Push", "Paddle", "Prices", "OAuth", "Outbox" }.Should().Contain(definition.Section, definition.Key);
+            new[] { "Smtp", "Ai", "Storage", "Telegram", "Push", "Paddle", "Prices", "OAuth", "Authentication", "Outbox" }.Should().Contain(definition.Section, definition.Key);
         }
 
         RuntimeSettingDefinitions.All.Select(d => d.Key).Should().OnlyHaveUniqueItems();
         RuntimeSettingDefinitions.All.Where(d => d.IsSecret).Select(d => d.Key).Should().BeEquivalentTo(
             ["Smtp.Password", "Ai.ApiKey", "Storage.SecretAccessKey", "Telegram.BotToken", "Telegram.WebhookSecret",
-             "Push.FcmServiceAccountJson", "Paddle.ApiKey", "Paddle.WebhookSecret"]);
+             "Push.FcmServiceAccountJson", "Paddle.ApiKey", "Paddle.WebhookSecret", "Authentication.Google.ClientSecret",
+             "Authentication.GitHub.ClientSecret"]);
     }
 
     [Fact]

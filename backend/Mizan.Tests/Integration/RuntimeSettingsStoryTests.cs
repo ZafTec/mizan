@@ -179,6 +179,59 @@ public class RuntimeSettingsStoryTests
         return await bot.SendAsync(request);
     }
 
+    [Fact]
+    public async Task AnAdministratorTurnsOnGoogleSignIn_AndTheNextSignInUsesIt_WithoutARestart()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var admin = await AdminAsync();
+        using var browser = _fixture.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+        // Off: the sign-in button goes back to the login page, and the provider's callback is not served.
+        var off = await browser.GetAsync("/api/Auth/external/google");
+        off.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        off.Headers.Location!.ToString().Should().EndWith("/login?error=external_unavailable");
+        (await browser.GetAsync("/api/auth/callback/google?code=x&state=y")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        await PutAsync(admin, "Authentication.Google.ClientId", "first-client.apps.googleusercontent.com");
+        await PutAsync(admin, "Authentication.Google.ClientSecret", "first-secret");
+
+        var on = await browser.GetAsync("/api/Auth/external/google");
+        on.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        on.Headers.Location!.GetLeftPart(UriPartial.Path).Should().Be("https://accounts.google.com/o/oauth2/v2/auth");
+        on.Headers.Location.Query.Should().Contain("client_id=first-client.apps.googleusercontent.com");
+
+        // A new client id applies to the next sign-in.
+        await PutAsync(admin, "Authentication.Google.ClientId", "second-client.apps.googleusercontent.com");
+        (await browser.GetAsync("/api/Auth/external/google")).Headers.Location!.Query
+            .Should().Contain("client_id=second-client.apps.googleusercontent.com");
+
+        // GitHub stays off until it has its own id and secret.
+        (await browser.GetAsync("/api/Auth/external/github")).Headers.Location!.ToString()
+            .Should().EndWith("/login?error=external_unavailable");
+
+        var listing = await admin.GetFromJsonAsync<JsonElement>("/api/admin/settings");
+        listing.GetRawText().Should().NotContain("first-secret");
+    }
+
+    [Fact]
+    public async Task AnAdministratorSetsThePaddleClientToken_AndTheBillingPageOpensCheckoutWithIt()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var admin = await AdminAsync();
+        using var visitor = _fixture.CreateClient();
+
+        var before = await visitor.GetFromJsonAsync<JsonElement>("/api/Subscriptions/checkout-settings");
+        before.GetProperty("clientToken").ValueKind.Should().Be(JsonValueKind.Null);
+        before.GetProperty("environment").GetString().Should().Be("sandbox");
+
+        await PutAsync(admin, "Paddle.ClientToken", "test_client_token");
+        await PutAsync(admin, "Paddle.Environment", "production");
+
+        var after = await visitor.GetFromJsonAsync<JsonElement>("/api/Subscriptions/checkout-settings");
+        after.GetProperty("clientToken").GetString().Should().Be("test_client_token");
+        after.GetProperty("environment").GetString().Should().Be("production");
+    }
+
     private async Task<HttpClient> AdminAsync(WebApplicationFactory<Program>? factory = null)
     {
         var id = Guid.NewGuid();

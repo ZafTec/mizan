@@ -31,6 +31,7 @@ public class RuntimeSettingDefaultsTests
         { "OAuth", typeof(AuthorizationServerOptions) },
         { "Outbox", typeof(OutboxOptions) },
         { "Prices", typeof(PriceCrawlOptions) },
+        { "Authentication", typeof(ExternalSignInOptions) },
     };
 
     [Theory]

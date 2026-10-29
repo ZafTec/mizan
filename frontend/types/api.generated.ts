@@ -10621,6 +10621,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Subscriptions/checkout-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CheckoutSettingsDto"];
+                        "application/json": components["schemas"]["CheckoutSettingsDto"];
+                        "text/json": components["schemas"]["CheckoutSettingsDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Subscriptions/me": {
         parameters: {
             query?: never;
@@ -13194,6 +13231,10 @@ export interface components {
             content: string;
             /** Format: date-time */
             sentAt: string;
+        };
+        CheckoutSettingsDto: {
+            clientToken?: string | null;
+            environment: string;
         };
         ClearCheckedResult: {
             /** Format: int32 */

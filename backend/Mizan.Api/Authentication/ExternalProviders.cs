@@ -21,6 +21,9 @@ public static class ExternalProviders
     public const string CookieScheme = "External";
     public const string CallbackPath = "/api/Auth/external/callback";
 
+    /// <summary>Where each provider returns: <c>/api/auth/callback/google</c>, as registered with it.</summary>
+    public const string ProviderCallbackPrefix = "/api/auth/callback";
+
     /// <summary>Key under which the validated return path rides in the OAuth state.</summary>
     public const string ReturnUrlKey = "mizan.returnUrl";
 
@@ -55,13 +58,7 @@ public static class ExternalProviders
             throw new InvalidOperationException("App:PublicUrl must be the HTTP(S) origin of the web app.");
         }
 
-        var callbackPath = configuration[$"Authentication:{provider}:CallbackPath"]
-            ?? $"/api/auth/callback/{provider}";
-        if (!callbackPath.StartsWith('/') || callbackPath.StartsWith("//", StringComparison.Ordinal)
-            || callbackPath.Any(c => !(char.IsAsciiLetterOrDigit(c) || c is '/' or '-' or '_')))
-        {
-            throw new InvalidOperationException($"Authentication:{provider}:CallbackPath must be an absolute URL path.");
-        }
+        var callbackPath = $"{ProviderCallbackPrefix}/{provider}";
 
         options.SignInScheme = CookieScheme;
         options.CallbackPath = callbackPath;

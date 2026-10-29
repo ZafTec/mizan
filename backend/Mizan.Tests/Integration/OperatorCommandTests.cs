@@ -98,6 +98,10 @@ public class OperatorCommandTests
             ["Smtp:Host"] = "smtp.example.test",
             ["SMTP_PORT"] = "2525",
             ["TelegramBot:MiniAppMaxAge"] = "00:10:00",
+            ["GOOGLE_CLIENT_ID"] = "google-client.apps.googleusercontent.com",
+            ["GOOGLE_CLIENT_SECRET"] = "google-secret-from-env",
+            ["Authentication:GitHub:ClientId"] = "github-client",
+            ["NEXT_PUBLIC_PADDLE_CLIENT_TOKEN"] = "test_paddle_token",
             // Already set in the admin area by the fixture, so the environment does not win.
             ["Telegram:BotUsername"] = "env_bot",
             ["Ai:Free:DailyRequests"] = "not-a-number",
@@ -117,6 +121,10 @@ public class OperatorCommandTests
         (await settings.GetAsync("Telegram.MiniAppMaxAgeSeconds")).Should().Be("600");
         (await settings.GetAsync("Telegram.BotUsername")).Should().Be("mizan_test_bot");
         (await settings.GetAsync("Ai.Free.DailyRequests")).Should().Be("3");
+        (await settings.GetAsync("Authentication.Google.ClientId")).Should().Be("google-client.apps.googleusercontent.com");
+        (await settings.GetAsync("Authentication.GitHub.ClientId")).Should().Be("github-client");
+        (await settings.GetAsync("Paddle.ClientToken")).Should().Be("test_paddle_token");
+        output.ToString().Should().NotContain("google-secret-from-env").And.Contain("imported  Authentication.Google.ClientSecret (encrypted)");
 
         var row = await scope.ServiceProvider.GetRequiredService<MizanDbContext>().SystemSettings.AsNoTracking()
             .SingleAsync(s => s.Key == "Storage.SecretAccessKey");

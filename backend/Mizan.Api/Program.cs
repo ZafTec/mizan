@@ -126,40 +126,21 @@ authBuilder.AddCookie(ExternalProviders.CookieScheme, options =>
     options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
 });
 
-var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
-var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+// Both providers are always registered; their client ids and secrets are runtime settings that
+// ExternalSignInSettings applies to the next sign-in without a restart. A provider without them is off.
+authBuilder.AddGoogle(options => ExternalProviders.Configure(options, builder.Configuration, "google"));
+authBuilder.AddGitHub(options =>
 {
-    authBuilder.AddGoogle(options =>
-    {
-        options.ClientId = googleClientId;
-        options.ClientSecret = googleClientSecret;
-        ExternalProviders.Configure(options, builder.Configuration, "google");
-    });
-}
-else
-{
-    Log.Information("Google sign-in is not configured");
-}
-
-var githubClientId = builder.Configuration["Authentication:GitHub:ClientId"];
-var githubClientSecret = builder.Configuration["Authentication:GitHub:ClientSecret"];
-if (!string.IsNullOrWhiteSpace(githubClientId) && !string.IsNullOrWhiteSpace(githubClientSecret))
-{
-    authBuilder.AddGitHub(options =>
-    {
-        options.ClientId = githubClientId;
-        options.ClientSecret = githubClientSecret;
-        ExternalProviders.Configure(options, builder.Configuration, "github");
-        // GitHub hides the address unless asked, and we cannot create an
-        // account without one.
-        options.Scope.Add("user:email");
-    });
-}
-else
-{
-    Log.Information("GitHub sign-in is not configured");
-}
+    ExternalProviders.Configure(options, builder.Configuration, "github");
+    // GitHub hides the address unless asked, and we cannot create an
+    // account without one.
+    options.Scope.Add("user:email");
+});
+builder.Services.AddSingleton<ExternalSignInSettings>();
+builder.Services.AddOptions<Microsoft.AspNetCore.Authentication.Google.GoogleOptions>(Microsoft.AspNetCore.Authentication.Google.GoogleDefaults.AuthenticationScheme)
+    .Configure<ExternalSignInSettings>((options, settings) => settings.Apply(options, s => s.Google));
+builder.Services.AddOptions<AspNet.Security.OAuth.GitHub.GitHubAuthenticationOptions>(AspNet.Security.OAuth.GitHub.GitHubAuthenticationDefaults.AuthenticationScheme)
+    .Configure<ExternalSignInSettings>((options, settings) => settings.Apply(options, s => s.GitHub));
 
 var mcpServiceApiKey = builder.Configuration["Mcp:ServiceApiKey"]
     ?? throw new InvalidOperationException("Mcp:ServiceApiKey is not configured");
@@ -634,6 +615,8 @@ app.UseStatusCodePages(async context =>
     await response.WriteAsJsonAsync(new { errorCode = code, error = message });
 });
 
+// Before authentication: the provider callbacks are handled inside it.
+app.UseMiddleware<ExternalSignInRefreshMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<ImpersonationGuardMiddleware>();

@@ -143,7 +143,7 @@ Paddle is the merchant of record and the authority on billing state; Mizan mirro
 
 ### Paddle in production
 
-- Backend, in **Admin → Settings → Billing**: `Paddle.Environment=production`, `Paddle.ApiKey` (products, prices, discounts, subscriptions and transactions read/write, customer portal sessions), and `Paddle.WebhookSecret` from the live notification destination. Frontend build: `NEXT_PUBLIC_PADDLE_ENV=production` and the live client token.
+- Backend, in **Admin → Settings → Billing**: `Paddle.Environment=production`, `Paddle.ApiKey` (products, prices, discounts, subscriptions and transactions read/write, customer portal sessions), and `Paddle.WebhookSecret` from the live notification destination, and `Paddle.ClientToken`, the live client-side token the browser opens checkout with (served by `GET /api/Subscriptions/checkout-settings`).
 - Cloudflare: a WAF custom rule with action **Skip** for `http.request.uri.path eq "/api/webhooks/paddle"` and `ip.src in {34.232.58.13 34.195.105.136 34.237.3.244 35.155.119.135 52.11.166.252 34.212.5.7}` (Paddle's live webhook addresses, listed in its "respond to webhooks" guide), skipping managed rules, Bot Fight Mode, and rate limiting. Keep it scoped to those IPs; the signature check still rejects anything unsigned.
 - After deploying, open `/admin/billing`, run **Import from Paddle**, then set what is on sale.
 

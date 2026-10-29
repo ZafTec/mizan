@@ -105,3 +105,6 @@ public static class BillingPricing
             ? (int)Math.Round(amountCents * (100m - discount.Amount) / 100m, MidpointRounding.AwayFromZero)
             : Math.Max(0, amountCents - (int)discount.Amount);
 }
+
+/// <summary>Paddle.js settings. A null token means checkout is not offered.</summary>
+public record CheckoutSettingsDto(string? ClientToken, string Environment);

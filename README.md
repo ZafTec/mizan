@@ -48,28 +48,22 @@ docker compose down
 
 ## Environment
 
-Each service reads only what it needs before it can reach its database or the API. Everything else is a runtime setting stored by the API; `ConfigurationAllowlistTests` fails when code binds another options section from configuration.
+The environment holds only what a process needs before it can read the database, or to find and prove itself to another service. Everything else, including Google and GitHub sign-in and the Paddle client token, is a runtime setting stored by the API ([runtime settings](docs/ADMIN.md#runtime-settings)); `ConfigurationAllowlistTests` fails when code binds another options section from configuration.
 
 | Variable | Service | Why it stays in the environment |
 | --- | --- | --- |
-| `ConnectionStrings__PostgreSQL` | backend, MCP | The settings live in this database. |
-| `ConnectionStrings__Redis` | backend | Caching and the settings-changed signal; read before the settings. |
+| `ConnectionStrings__PostgreSQL` | backend | The settings live in this database. |
+| `ConnectionStrings__Redis`, `Prices__Redis` | backend, prices | Caching, the settings-changed signal and the crawl lock; read before the settings. |
 | `DataProtection__KeysPath` | backend | Where the key ring that decrypts stored secrets lives. Empty keeps it in the database. |
-| `App__PublicUrl`, `Mcp__PublicUrl`, `Mcp__AuthorizationServer` | backend, MCP | Links, cookies, the OAuth issuer and the MCP resource; fixed per deployment. |
-| `App__CookieDomain` | backend | Session cookie scope; fixed per deployment. Usually empty. |
-| `Cors__Origins__*` | backend | Built into the CORS policy at startup. |
-| `ReverseProxy__KnownProxy` | backend | Whose forwarded headers to believe, needed for the very first request. |
 | `Mcp__ServiceApiKey`, `Mcp__AdminServiceApiKey` | backend, MCP, Telegram, prices | How the other services prove themselves to the API before they can read settings. |
-| `Prices__WorkerUrl`, `TelegramBot__ApiUrl`, `Prices__ApiUrl`, `API_URL`, `BACKEND_API_URL`, `TELEGRAM_BOT_URL` | all | Addresses on the internal network. |
-| `TelegramBot__PublicUrl`, `TelegramBot__TrustedProxies` | Telegram | The webhook address and the forwarded-headers middleware, set before the bot reads its settings. |
-| `Prices__Redis` | prices | The per-source crawl lock. |
-| `Outbox__Enabled` | backend | Whether this instance runs background jobs at all; differs per instance. |
-| `Authentication__Google__*`, `Authentication__GitHub__*` | backend | External sign-in schemes are registered once at startup. |
-| `OpenApi__Enabled`, `OTLP_ENDPOINT_URL`, `LOKI_OTLP_ENDPOINT` | backend | Startup wiring for Swagger and telemetry. |
-| `ASPNETCORE_*` | .NET services | Environment name and listen address. |
-| `NEXT_PUBLIC_*`, `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` | frontend | Baked into the build, or needed by Next.js itself. |
+| `App__PublicUrl`, `App__CookieDomain`, `Mcp__PublicUrl`, `Mcp__AuthorizationServer`, `TelegramBot__PublicUrl` | backend, MCP, Telegram | The public origin: cookies, the OAuth issuer, the MCP resource and the webhook address, fixed per deployment. |
+| `Cors__Origins__*`, `ReverseProxy__KnownProxy`, `TelegramBot__TrustedProxies` | backend, Telegram | Built into the CORS and forwarded-headers middleware at startup. |
+| `API_URL`, `BACKEND_API_URL`, `TELEGRAM_BOT_URL`, `TelegramBot__ApiUrl`, `Prices__ApiUrl`, `Prices__WorkerUrl` | all | Addresses on the internal network. |
+| `Outbox__Enabled`, `Mcp__Stateless` | backend, MCP | Per-instance topology: whether this instance runs background jobs, and whether MCP keeps sessions. |
+| `OpenApi__Enabled`, `OTLP_ENDPOINT_URL`, `LOKI_OTLP_ENDPOINT`, `ASPNETCORE_*` | .NET services | Startup wiring: Swagger, telemetry, environment name and listen address. |
+| `NEXT_PUBLIC_*`, `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` | frontend | Baked into the build (public URLs, the image host allowlist, analytics), or needed by Next.js itself. |
 
-`Smtp__*`, `Ai__*`, `Storage__*`, `Push__*`, `Paddle__*`, `OAuth__*`, `Telegram__*`, `TelegramBot__BotToken`, `TelegramBot__UseWebhook`, `TelegramBot__WebhookSecret`, `TelegramBot__MiniAppUrl` and the crawler's `Prices__UserAgent`, `Prices__RequestDelayMs` and `Prices__MaxProductsPerRun` are no longer read. Operator commands, each run once against the deployment's database:
+`Smtp__*`, `Ai__*`, `Storage__*`, `Push__*`, `Paddle__*`, `OAuth__*`, `Telegram__*`, `Authentication__Google__*`, `Authentication__GitHub__*` (`GOOGLE_*`, `GITHUB_*`), the frontend build's `NEXT_PUBLIC_PADDLE_ENV` and `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `TelegramBot__BotToken`, `TelegramBot__UseWebhook`, `TelegramBot__WebhookSecret`, `TelegramBot__MiniAppUrl` and the crawler's `Prices__UserAgent`, `Prices__RequestDelayMs` and `Prices__MaxProductsPerRun` are no longer read. Operator commands, each run once against the deployment's database:
 
 | Command | What it does |
 | --- | --- |

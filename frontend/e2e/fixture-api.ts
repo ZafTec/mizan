@@ -921,6 +921,8 @@ const server = Bun.serve({
     // Public, like the real endpoint: the landing page reads it signed out.
     if (method === "GET" && path === "/api/Subscriptions/plans")
       return json(plans);
+    if (method === "GET" && path === "/api/Subscriptions/checkout-settings")
+      return json({ clientToken: null, environment: "sandbox" });
     const token = request.headers
       .get("cookie")
       ?.match(/(?:^|;\s*)mizan_session=([^;]+)/)?.[1];

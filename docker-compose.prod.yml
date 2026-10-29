@@ -28,10 +28,6 @@ x-backend-environment: &backend-environment
   DataProtection__KeysPath: ${DATA_PROTECTION_KEYS_PATH:-}
   # Serve /swagger/v1/swagger.json so the web and Android clients can generate types. Off by default.
   OpenApi__Enabled: ${OPENAPI_ENABLED:-false}
-  Authentication__Google__ClientId: ${GOOGLE_CLIENT_ID:-}
-  Authentication__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
-  Authentication__GitHub__ClientId: ${GITHUB_CLIENT_ID:-}
-  Authentication__GitHub__ClientSecret: ${GITHUB_CLIENT_SECRET:-}
 
 services:
   mizan-db-backup:
@@ -153,7 +149,6 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       BACKEND_API_URL: http://mizan-backend:8080
-      ConnectionStrings__PostgreSQL: ${ConnectionStrings__PostgreSQL:?ConnectionStrings__PostgreSQL is required}
       Mcp__ServiceApiKey: ${Mcp__ServiceApiKey:?Mcp__ServiceApiKey is required}
       Mcp__AdminServiceApiKey: ${Mcp__AdminServiceApiKey:?Mcp__AdminServiceApiKey is required}
       Mcp__Stateless: ${Mcp__Stateless:-true}

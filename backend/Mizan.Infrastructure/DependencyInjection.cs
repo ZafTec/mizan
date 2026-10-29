@@ -74,6 +74,7 @@ public static class DependencyInjection
         AddRuntimeOptions<PaddleOptions>(services, PaddleOptions.SectionName);
         AddRuntimeOptions<StorageOptions>(services, StorageOptions.SectionName);
         AddRuntimeOptions<AuthorizationServerOptions>(services, AuthorizationServerOptions.SectionName);
+        AddRuntimeOptions<ExternalSignInOptions>(services, ExternalSignInOptions.SectionName);
         AddRuntimeOptions<OutboxOptions>(services, OutboxOptions.SectionName);
         AddRuntimeOptions<PriceCrawlOptions>(services, PriceCrawlOptions.SectionName);
         services.AddSingleton<IServiceSettings, ServiceSettings>();
