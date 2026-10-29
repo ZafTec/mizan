@@ -245,52 +245,52 @@ public sealed class CreateReminderCommandHandler : IRequestHandler<CreateReminde
         switch (kind)
         {
             case ReminderKinds.PreCook:
-            {
-                if (request.MealPlanId is not { } planId || request.PrepSessionId is not { } sessionId)
-                    throw new DomainValidationException("A pre-cook reminder needs the plan and its prep session.");
-                var plan = await _plans.LoadReadableAsync(planId, cancellationToken);
-                var session = plan.PrepSessions.FirstOrDefault(s => s.Id == sessionId)
-                    ?? throw new EntityNotFoundException("Prep session not found in that plan.");
-                var prepTime = ParseTime(request.PrepTime) ?? ReminderRules.DefaultPrepTime;
-                var lead = request.LeadMinutes ?? ReminderRules.DefaultLeadMinutes;
-                trigger = ReminderBook.PreCookTrigger(plan, session, prepTime, lead, zone, now);
-                planDay = plan.StartDate!.Value.AddDays(session.DayIndex);
-                details.MealPlanId = plan.Id;
-                details.PrepSessionId = session.Id;
-                details.PrepTime = prepTime;
-                details.LeadMinutes = lead;
-                title ??= ReminderKinds.DefaultTitle(kind, session.Title);
-                break;
-            }
+                {
+                    if (request.MealPlanId is not { } planId || request.PrepSessionId is not { } sessionId)
+                        throw new DomainValidationException("A pre-cook reminder needs the plan and its prep session.");
+                    var plan = await _plans.LoadReadableAsync(planId, cancellationToken);
+                    var session = plan.PrepSessions.FirstOrDefault(s => s.Id == sessionId)
+                        ?? throw new EntityNotFoundException("Prep session not found in that plan.");
+                    var prepTime = ParseTime(request.PrepTime) ?? ReminderRules.DefaultPrepTime;
+                    var lead = request.LeadMinutes ?? ReminderRules.DefaultLeadMinutes;
+                    trigger = ReminderBook.PreCookTrigger(plan, session, prepTime, lead, zone, now);
+                    planDay = plan.StartDate!.Value.AddDays(session.DayIndex);
+                    details.MealPlanId = plan.Id;
+                    details.PrepSessionId = session.Id;
+                    details.PrepTime = prepTime;
+                    details.LeadMinutes = lead;
+                    title ??= ReminderKinds.DefaultTitle(kind, session.Title);
+                    break;
+                }
 
             case ReminderKinds.Workout:
-            {
-                trigger = ReminderBook.Trigger(request.Schedule, zone, now);
-                string? templateName = null;
-                if (request.WorkoutTemplateId is { } templateId)
                 {
-                    templateName = await _context.WorkoutTemplates.AsNoTracking()
-                        .Where(t => t.Id == templateId && (t.UserId == userId || t.IsBuiltIn))
-                        .Select(t => t.Name)
-                        .FirstOrDefaultAsync(cancellationToken)
-                        ?? throw new EntityNotFoundException("Workout template not found.");
-                    details.WorkoutTemplateId = templateId;
+                    trigger = ReminderBook.Trigger(request.Schedule, zone, now);
+                    string? templateName = null;
+                    if (request.WorkoutTemplateId is { } templateId)
+                    {
+                        templateName = await _context.WorkoutTemplates.AsNoTracking()
+                            .Where(t => t.Id == templateId && (t.UserId == userId || t.IsBuiltIn))
+                            .Select(t => t.Name)
+                            .FirstOrDefaultAsync(cancellationToken)
+                            ?? throw new EntityNotFoundException("Workout template not found.");
+                        details.WorkoutTemplateId = templateId;
+                    }
+                    title ??= ReminderKinds.DefaultTitle(kind, templateName);
+                    break;
                 }
-                title ??= ReminderKinds.DefaultTitle(kind, templateName);
-                break;
-            }
 
             case ReminderKinds.MealLog:
-            {
-                trigger = ReminderBook.Trigger(request.Schedule, zone, now);
-                if (!string.IsNullOrWhiteSpace(request.MealType))
                 {
-                    if (!MealTypes.IsValid(request.MealType)) throw new DomainValidationException($"\"{request.MealType}\" is not a meal. Use BREAKFAST, LUNCH, DINNER or SNACK.");
-                    details.MealType = request.MealType.Trim().ToUpperInvariant();
+                    trigger = ReminderBook.Trigger(request.Schedule, zone, now);
+                    if (!string.IsNullOrWhiteSpace(request.MealType))
+                    {
+                        if (!MealTypes.IsValid(request.MealType)) throw new DomainValidationException($"\"{request.MealType}\" is not a meal. Use BREAKFAST, LUNCH, DINNER or SNACK.");
+                        details.MealType = request.MealType.Trim().ToUpperInvariant();
+                    }
+                    title ??= ReminderKinds.DefaultTitle(kind, details.MealType);
+                    break;
                 }
-                title ??= ReminderKinds.DefaultTitle(kind, details.MealType);
-                break;
-            }
 
             case ReminderKinds.Custom:
                 trigger = ReminderBook.Trigger(request.Schedule, zone, now);

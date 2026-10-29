@@ -48,7 +48,10 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
     /// <summary>Whether each kind comes to Telegram; a PUT to <c>api/Notifications/preferences</c> changes it the way the API would.</summary>
     public Dictionary<string, bool> TelegramKinds { get; } = new()
     {
-        ["achievements"] = true, ["reminders"] = true, ["planning"] = true, ["marketing"] = false,
+        ["achievements"] = true,
+        ["reminders"] = true,
+        ["planning"] = true,
+        ["marketing"] = false,
     };
 
     public List<JsonElement> PreferencePuts { get; } = [];

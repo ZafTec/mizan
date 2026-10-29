@@ -160,8 +160,14 @@ public class ReminderStoryTests
         // The person turns writes on, as the consent page does.
         (await client.PutAsJsonAsync("/api/Ai/consent", new
         {
-            enabled = true, shareNutrition = true, shareTraining = true, shareBody = true,
-            allowWrites = true, writeNutrition = true, writeTraining = true, writeBody = true,
+            enabled = true,
+            shareNutrition = true,
+            shareTraining = true,
+            shareBody = true,
+            allowWrites = true,
+            writeNutrition = true,
+            writeTraining = true,
+            writeBody = true,
         })).StatusCode.Should().Be(HttpStatusCode.OK);
         _fixture.Ai.CallTools(("create_reminder", weekdays));
         _fixture.Ai.Reply("Done.");

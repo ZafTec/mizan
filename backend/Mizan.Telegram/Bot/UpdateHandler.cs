@@ -357,12 +357,12 @@ public sealed class UpdateHandler
         }
 
         // The words are the domain's; only the bold is ours.
-        var text = new StringBuilder().AppendLine("<b>Today</b>");
+        var text = new StringBuilder().Line("<b>Today</b>");
         foreach (var amount in NutritionText.Daily(
             day.TotalCalories, day.TotalProtein, day.TotalCarbs, day.TotalFat,
             day.TargetCalories, day.TargetProtein, day.TargetCarbs, day.TargetFat))
         {
-            text.AppendLine(NutritionText.Describe(amount, actual => $"<b>{actual}</b>"));
+            text.Line(NutritionText.Describe(amount, actual => $"<b>{actual}</b>"));
         }
 
         await _telegram.SendMessageAsync(chatId, text.ToString(), ct: ct);
@@ -930,53 +930,53 @@ public sealed class UpdateHandler
         {
             text.Append(" · ").Append(day.LoggedCount).Append(" of ").Append(day.EntryCount).Append(" logged");
         }
-        text.AppendLine();
+        text.Line();
 
         foreach (var slot in day.Slots.Where(s => s.Entries.Count > 0))
         {
-            text.AppendLine().Append("<b>").Append(Escape(SlotLabel(slot.Slot))).AppendLine("</b>");
+            text.Line().Append("<b>").Append(Escape(SlotLabel(slot.Slot))).Line("</b>");
             foreach (var entry in slot.Entries)
             {
-                text.AppendLine(EntryLine(entry));
+                text.Line(EntryLine(entry));
             }
         }
 
         if (day.EntryCount == 0)
         {
-            text.AppendLine().AppendLine("Nothing is planned for this day.");
+            text.Line().Line("Nothing is planned for this day.");
         }
 
         // The words are the domain's; only the bold is ours. The plan's effective
         // targets are shown, because that is what the plan is held to.
-        text.AppendLine();
+        text.Line();
         var targets = view.EffectiveTargets;
         foreach (var amount in NutritionText.Daily(
             day.Totals.Calories, day.Totals.ProteinGrams, day.Totals.CarbsGrams, day.Totals.FatGrams,
             targets.Calories.Value, targets.Protein.Value, targets.MaxCarbs.Value, targets.Fat.Value))
         {
-            text.AppendLine(NutritionText.Describe(amount, actual => $"<b>{actual}</b>"));
+            text.Line(NutritionText.Describe(amount, actual => $"<b>{actual}</b>"));
         }
 
         if (PlanCostText.Day(view) is { } cost)
         {
-            text.AppendLine(Escape(cost));
+            text.Line(Escape(cost));
         }
 
         if (day.Violations.Count > 0)
         {
-            text.AppendLine();
+            text.Line();
             foreach (var violation in day.Violations)
             {
-                text.Append("⚠ ").AppendLine(Escape(violation.Message));
+                text.Append("⚠ ").Line(Escape(violation.Message));
             }
         }
 
         if (view.Rules is { EatingWindowStart: { } start, EatingWindowEnd: { } end })
         {
-            text.AppendLine().Append("Eating window ")
+            text.Line().Append("Eating window ")
                 .Append(start.ToString("HH:mm", CultureInfo.InvariantCulture))
                 .Append('–')
-                .AppendLine(end.ToString("HH:mm", CultureInfo.InvariantCulture));
+                .Line(end.ToString("HH:mm", CultureInfo.InvariantCulture));
         }
 
         return text.ToString();
@@ -1145,11 +1145,11 @@ public sealed class UpdateHandler
     internal static string ShoppingCard(ShoppingListDetailDto list, int page)
     {
         var (shown, _, left, _) = ShopPage(list, page);
-        var text = new StringBuilder("<b>").Append(Escape(list.Name ?? "Shopping list")).AppendLine("</b>");
+        var text = new StringBuilder("<b>").Append(Escape(list.Name ?? "Shopping list")).Line("</b>");
 
         if (shown.Count == 0)
         {
-            text.AppendLine().AppendLine("Everything is ticked off.");
+            text.Line().Line("Everything is ticked off.");
         }
 
         string? session = null;
@@ -1157,25 +1157,25 @@ public sealed class UpdateHandler
         {
             if (item.PrepSessionTitle is { Length: > 0 } title && title != session)
             {
-                text.AppendLine().Append("<b>").Append(Escape(title)).AppendLine("</b>");
+                text.Line().Append("<b>").Append(Escape(title)).Line("</b>");
             }
             else if (session is not null && item.PrepSessionTitle is null or "")
             {
-                text.AppendLine();
+                text.Line();
             }
             else if (session is null && text.Length > 0 && shown[0] == item)
             {
-                text.AppendLine();
+                text.Line();
             }
 
             session = item.PrepSessionTitle is { Length: > 0 } ? item.PrepSessionTitle : null;
-            text.Append("• ").Append(ItemLine(item)).AppendLine(Escape(PlanCostText.Item(item, list.Currency)));
+            text.Append("• ").Append(ItemLine(item)).Line(Escape(PlanCostText.Item(item, list.Currency)));
         }
 
-        text.AppendLine().Append(left).Append(" left of ").Append(list.TotalItems);
+        text.Line().Append(left).Append(" left of ").Append(list.TotalItems);
         if (PlanCostText.List(list) is { } total)
         {
-            text.AppendLine().Append(Escape(total));
+            text.Line().Append(Escape(total));
         }
         return text.ToString();
     }
@@ -1269,12 +1269,12 @@ public sealed class UpdateHandler
 
         foreach (var food in analysis.Foods)
         {
-            text.AppendLine(
+            text.Line(
                 $"• {Escape(food.Name)} — {food.PortionGrams:0}g, {food.Calories:0} kcal");
         }
 
-        text.AppendLine();
-        text.AppendLine(
+        text.Line();
+        text.Line(
             $"<b>{analysis.TotalCalories:0} kcal</b> · "
             + $"P {analysis.Foods.Sum(f => f.Protein):0}g · "
             + $"C {analysis.Foods.Sum(f => f.Carbs):0}g · "
@@ -1282,7 +1282,7 @@ public sealed class UpdateHandler
 
         if (analysis.Note is { Length: > 0 })
         {
-            text.AppendLine().Append("<i>").Append(Escape(analysis.Note)).Append("</i>");
+            text.Line().Append("<i>").Append(Escape(analysis.Note)).Append("</i>");
         }
 
         return text.ToString();

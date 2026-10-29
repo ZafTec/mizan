@@ -183,7 +183,7 @@ window.onToolResult = (result) => {
   if (result.isError) { say("err", textOf(result) || "Could not load the plan."); return; }
   const data = dataOf(result);
   const normalized = data && !Array.isArray(data) ? normalize(data) : null;
-  if (!normalized) { say("muted", "No plan."); return; }
+  if (!normalized) { say("muted", "No active plan covers that date."); return; }
   render(normalized);
 };
 document.getElementById("shop").addEventListener("click", shop);

@@ -135,12 +135,12 @@ public static class ReminderRules
         switch (repeat)
         {
             case "once":
-            {
-                if (time is not { } at) return ReminderTriggerResult.Fail("A one-off reminder needs a time.");
-                var instant = NotificationOccurrences.Instant(date ?? today, at, zone);
-                if (instant <= now) return ReminderTriggerResult.Fail("That time has already passed.");
-                return new(NotificationTrigger.Once(instant.UtcDateTime), null);
-            }
+                {
+                    if (time is not { } at) return ReminderTriggerResult.Fail("A one-off reminder needs a time.");
+                    var instant = NotificationOccurrences.Instant(date ?? today, at, zone);
+                    if (instant <= now) return ReminderTriggerResult.Fail("That time has already passed.");
+                    return new(NotificationTrigger.Once(instant.UtcDateTime), null);
+                }
 
             case "daily":
                 if (time is not { } daily) return ReminderTriggerResult.Fail("A daily reminder needs a time.");
@@ -148,46 +148,46 @@ public static class ReminderRules
 
             case "days":
             case "weekdays":
-            {
-                if (time is not { } at) return ReminderTriggerResult.Fail("A reminder on chosen days needs a time.");
-                var days = new List<DayOfWeek>();
-                foreach (var name in timing.Days ?? [])
                 {
-                    if (!TryParseDay(name, out var day)) return ReminderTriggerResult.Fail($"\"{name}\" is not a day. Use mon, tue, wed, thu, fri, sat or sun.");
-                    days.Add(day);
+                    if (time is not { } at) return ReminderTriggerResult.Fail("A reminder on chosen days needs a time.");
+                    var days = new List<DayOfWeek>();
+                    foreach (var name in timing.Days ?? [])
+                    {
+                        if (!TryParseDay(name, out var day)) return ReminderTriggerResult.Fail($"\"{name}\" is not a day. Use mon, tue, wed, thu, fri, sat or sun.");
+                        days.Add(day);
+                    }
+                    if (days.Count == 0) return ReminderTriggerResult.Fail("Choose at least one day.");
+                    return new(NotificationTrigger.OnDays(at, [.. days.Distinct()]), null);
                 }
-                if (days.Count == 0) return ReminderTriggerResult.Fail("Choose at least one day.");
-                return new(NotificationTrigger.OnDays(at, [.. days.Distinct()]), null);
-            }
 
             case "every":
-            {
-                var given = new[] { timing.EveryMinutes, timing.EveryHours, timing.EveryDays }.Count(v => v is not null);
-                if (given != 1) return ReminderTriggerResult.Fail("Say how often with one of everyMinutes, everyHours or everyDays.");
-                var minutes = timing.EveryMinutes
-                    ?? (timing.EveryHours is { } hours ? (long)hours * 60 : (long)timing.EveryDays!.Value * 24 * 60);
-                if (minutes < MinIntervalMinutes) return ReminderTriggerResult.Fail(TooOften);
-                if (minutes > MaxIntervalDays * 24L * 60) return ReminderTriggerResult.Fail($"A reminder repeats at least once every {MaxIntervalDays} days.");
-
-                DateTimeOffset first;
-                if (minutes % (24 * 60) == 0)
                 {
-                    if (time is not { } at) return ReminderTriggerResult.Fail("A reminder every few days needs a time.");
-                    first = NotificationOccurrences.Instant(date ?? today, at, zone);
-                }
-                else
-                {
-                    first = time is { } at
-                        ? NotificationOccurrences.Instant(date ?? today, at, zone)
-                        : TruncateToMinute(now).AddMinutes(minutes);
-                }
+                    var given = new[] { timing.EveryMinutes, timing.EveryHours, timing.EveryDays }.Count(v => v is not null);
+                    if (given != 1) return ReminderTriggerResult.Fail("Say how often with one of everyMinutes, everyHours or everyDays.");
+                    var minutes = timing.EveryMinutes
+                        ?? (timing.EveryHours is { } hours ? (long)hours * 60 : (long)timing.EveryDays!.Value * 24 * 60);
+                    if (minutes < MinIntervalMinutes) return ReminderTriggerResult.Fail(TooOften);
+                    if (minutes > MaxIntervalDays * 24L * 60) return ReminderTriggerResult.Fail($"A reminder repeats at least once every {MaxIntervalDays} days.");
 
-                var trigger = NotificationTrigger.Every(first.UtcDateTime, (int)minutes, time);
-                // The first firing may be past already (07:00 when it is noon): start from the next one.
-                if (first <= now && NotificationOccurrences.Next(trigger, zone, now) is { } next)
-                    trigger = NotificationTrigger.Every(next.UtcDateTime, (int)minutes, time);
-                return new(trigger, null);
-            }
+                    DateTimeOffset first;
+                    if (minutes % (24 * 60) == 0)
+                    {
+                        if (time is not { } at) return ReminderTriggerResult.Fail("A reminder every few days needs a time.");
+                        first = NotificationOccurrences.Instant(date ?? today, at, zone);
+                    }
+                    else
+                    {
+                        first = time is { } at
+                            ? NotificationOccurrences.Instant(date ?? today, at, zone)
+                            : TruncateToMinute(now).AddMinutes(minutes);
+                    }
+
+                    var trigger = NotificationTrigger.Every(first.UtcDateTime, (int)minutes, time);
+                    // The first firing may be past already (07:00 when it is noon): start from the next one.
+                    if (first <= now && NotificationOccurrences.Next(trigger, zone, now) is { } next)
+                        trigger = NotificationTrigger.Every(next.UtcDateTime, (int)minutes, time);
+                    return new(trigger, null);
+                }
 
             default:
                 return ReminderTriggerResult.Fail("Repeat is once, daily, days or every.");

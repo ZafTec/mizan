@@ -38,8 +38,14 @@ public class NotificationDeliveryTests
         {
             db.Achievements.Add(new Achievement
             {
-                Id = Guid.NewGuid(), Name = "Card badge", Description = "Log a meal", Category = "nutrition",
-                CriteriaType = "meals_logged", Threshold = 1, Points = 15, IconUrl = "/badges/128/achievement-first-meal.png",
+                Id = Guid.NewGuid(),
+                Name = "Card badge",
+                Description = "Log a meal",
+                Category = "nutrition",
+                CriteriaType = "meals_logged",
+                Threshold = 1,
+                Points = 15,
+                IconUrl = "/badges/128/achievement-first-meal.png",
             });
             return db.SaveChangesAsync();
         });
