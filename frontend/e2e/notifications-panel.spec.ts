@@ -189,3 +189,33 @@ test("on a phone the notifications are a sheet that holds focus", async ({
   await expect(sheet).toBeHidden();
   await expect(bell(page)).toBeFocused();
 });
+
+test("a notification shows its badge, facts and actions, and an action opens its page", async ({
+  context,
+  page,
+}) => {
+  const result = await context.request.post(`${apiURL}/__fixture/session`, {
+    data: { card: true, aiPlanning: { consented: true } },
+  });
+  expect(result.ok()).toBeTruthy();
+  await page.goto("/today");
+  await bell(page).click();
+
+  const panel = page.getByRole("complementary", { name: "Notifications" });
+  const card = panel.getByRole("listitem").filter({
+    hasText: "Achievement unlocked: First Meal",
+  });
+  await expect(card.locator("img")).toHaveAttribute(
+    "src",
+    "/badges/128/achievement-gold-badge.png",
+  );
+  await expect(card).toContainText("Points +10");
+  await expect(card).toContainText("Category Nutrition");
+  await expect(card.getByRole("button", { name: "Log a meal" })).toBeVisible();
+
+  await card.getByRole("button", { name: "See achievements" }).click();
+  await expect(page).toHaveURL(/\/achievements$/);
+  expect(
+    writesTo(await state(context), /^\/api\/Notifications\/[^/]+\/read$/),
+  ).toHaveLength(1);
+});

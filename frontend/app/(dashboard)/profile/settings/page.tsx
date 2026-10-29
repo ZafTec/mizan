@@ -9,6 +9,7 @@ import Loading from "@/components/Loading";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import { useImageUpload } from "@/components/ImageUpload";
 import { AiSettings } from "@/components/ai/AiSettings";
+import { NotificationSettings } from "@/components/notifications/NotificationSettings";
 import { ToggleRow } from "@/components/ui/toggle-row";
 import {
   changePassword,
@@ -32,6 +33,7 @@ const SECTIONS = [
   { id: "account", title: "Account" },
   { id: "day", title: "Your day and prices" },
   { id: "assistant", title: "Assistant" },
+  { id: "notifications", title: "Notifications" },
   { id: "apps", title: "Connected apps" },
   { id: "appearance", title: "Appearance" },
   { id: "security", title: "Sign-in and security" },
@@ -115,6 +117,7 @@ export default function ProfileSettingsPage() {
           >
             <AiSettings />
           </Section>
+          <NotificationsSection />
           <AppsSection />
           <AppearanceSection />
           <SecuritySection />
@@ -415,6 +418,20 @@ const THEMES = [
   { value: "dark", label: "Dark" },
   { value: "system", label: "Device" },
 ] as const;
+
+function NotificationsSection() {
+  const status = useSaveStatus();
+  return (
+    <Section
+      id="notifications"
+      title="Notifications"
+      aside={<SavedNote text={status.text} />}
+      lead="Choose what reaches each channel. News and offers stay off until you turn them on."
+    >
+      <NotificationSettings status={status} />
+    </Section>
+  );
+}
 
 function AppearanceSection() {
   const { settings, persistSettings } = useTheme();

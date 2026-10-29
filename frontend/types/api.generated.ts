@@ -7776,6 +7776,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Notifications/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["NotificationPreferencesDto"];
+                        "application/json": components["schemas"]["NotificationPreferencesDto"];
+                        "text/json": components["schemas"]["NotificationPreferencesDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateNotificationPreferencesRequest"];
+                    "text/json": components["schemas"]["UpdateNotificationPreferencesRequest"];
+                    "application/*+json": components["schemas"]["UpdateNotificationPreferencesRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["NotificationPreferencesDto"];
+                        "application/json": components["schemas"]["NotificationPreferencesDto"];
+                        "text/json": components["schemas"]["NotificationPreferencesDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Nutrition/log": {
         parameters: {
             query?: never;
@@ -13866,6 +13930,10 @@ export interface components {
             restSecondsFailure?: number | null;
             sets: components["schemas"]["PlannedSetDto"][];
         };
+        NotificationAction: {
+            label: string;
+            path: string;
+        };
         NotificationDto: {
             /** Format: uuid */
             id: string;
@@ -13877,6 +13945,30 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             readAt?: string | null;
+            kind: string;
+            imageUrl?: string | null;
+            actions: components["schemas"]["NotificationAction"][];
+            facts: components["schemas"]["NotificationFact"][];
+        };
+        NotificationFact: {
+            label: string;
+            value: string;
+        };
+        NotificationKindPreferenceDto: {
+            kind: string;
+            label: string;
+            description: string;
+            inApp: boolean;
+            telegram: boolean;
+            push: boolean;
+            email: boolean;
+        };
+        NotificationKindPreferenceUpdate: {
+            kind: string;
+            inApp?: boolean | null;
+            telegram?: boolean | null;
+            push?: boolean | null;
+            email?: boolean | null;
         };
         NotificationListResult: {
             items: components["schemas"]["NotificationDto"][];
@@ -13888,6 +13980,14 @@ export interface components {
             page: number;
             /** Format: int32 */
             pageSize: number;
+        };
+        NotificationPreferencesDto: {
+            kinds: components["schemas"]["NotificationKindPreferenceDto"][];
+            quietHoursStart?: string | null;
+            quietHoursEnd?: string | null;
+            timeZoneId: string;
+            telegramLinked: boolean;
+            telegramEnabled: boolean;
         };
         NutritionPer100g: {
             /** Format: double */
@@ -15330,6 +15430,12 @@ export interface components {
             /** Format: int32 */
             durationDays: number;
             rules?: components["schemas"]["PlanRulesDto"];
+        };
+        UpdateNotificationPreferencesRequest: {
+            kinds?: components["schemas"]["NotificationKindPreferenceUpdate"][] | null;
+            quietHoursStart?: string | null;
+            quietHoursEnd?: string | null;
+            clearQuietHours?: boolean | null;
         };
         UpdatePriceAliasRequest: {
             /** Format: uuid */

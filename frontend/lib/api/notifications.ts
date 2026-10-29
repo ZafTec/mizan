@@ -28,3 +28,22 @@ export const markAllNotificationsRead = () =>
     method: "POST",
     headers: retrySafe(),
   });
+
+export type NotificationPreferences = Schemas["NotificationPreferencesDto"];
+export type NotificationKindPreference =
+  Schemas["NotificationKindPreferenceDto"];
+export type NotificationPreferencesUpdate =
+  Schemas["UpdateNotificationPreferencesRequest"];
+
+/** Which kinds reach which channel, and the quiet hours. */
+export const getNotificationPreferences = () =>
+  clientApi<NotificationPreferences>("/api/Notifications/preferences");
+
+export const updateNotificationPreferences = (
+  body: NotificationPreferencesUpdate,
+) =>
+  clientApi<NotificationPreferences>("/api/Notifications/preferences", {
+    method: "PUT",
+    headers: retrySafe(),
+    body,
+  });

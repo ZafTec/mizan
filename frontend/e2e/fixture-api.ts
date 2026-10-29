@@ -210,6 +210,7 @@ type FixtureState = {
   draft: { payload: string; updatedAt: string } | null;
   empty: boolean;
   notifications: FixtureNotification[];
+  notificationPreferences: FixtureNotificationPreferences;
   failures: string[];
   writeFailures: Record<string, number>;
   unhandled: string[];
@@ -227,6 +228,55 @@ type FixtureState = {
   telegram: TelegramState;
 };
 type FixtureNotification = components["schemas"]["NotificationDto"];
+type FixtureNotificationPreferences =
+  components["schemas"]["NotificationPreferencesDto"];
+
+/** The kinds GET /api/Notifications/preferences lists, with the API's defaults: news and offers off. */
+function initialNotificationPreferences(
+  telegram?: Pick<TelegramState, "linked" | "notifyByTelegram">,
+): FixtureNotificationPreferences {
+  const kinds: [string, string, string][] = [
+    [
+      "achievements",
+      "Achievements and streaks",
+      "Badges you earn and streak milestones.",
+    ],
+    [
+      "reminders",
+      "Reminders",
+      "The evening reminder before your eating window closes.",
+    ],
+    [
+      "planning",
+      "Meal plans",
+      "Plans drafted for you, and answers to plans you sent.",
+    ],
+    [
+      "marketing",
+      "News and offers",
+      "Product news and offers from Mizan. Off until you turn it on.",
+    ],
+  ];
+  return {
+    kinds: kinds.map(([kind, label, description]) => {
+      const on = kind !== "marketing";
+      return {
+        kind,
+        label,
+        description,
+        inApp: on,
+        telegram: on,
+        push: on,
+        email: false,
+      };
+    }),
+    quietHoursStart: null,
+    quietHoursEnd: null,
+    timeZoneId: "Africa/Addis_Ababa",
+    telegramLinked: Boolean(telegram?.linked),
+    telegramEnabled: Boolean(telegram?.notifyByTelegram),
+  };
+}
 type FixtureThread = {
   id: string;
   title: string;
@@ -367,6 +417,7 @@ function initialState(empty = false): FixtureState {
     userId: user.id,
     empty,
     notifications: [],
+    notificationPreferences: initialNotificationPreferences(),
     draft: null,
     household: null,
     failures: [],
@@ -695,6 +746,8 @@ const server = Bun.serve({
         telegram?: TelegramOptions;
         /** A recipe logged at dinner today, as two ingredient rows in one group. */
         recipeGroup?: boolean;
+        /** An achievement notification as the writer stores it: badge, facts and two actions. */
+        card?: boolean;
       };
       const token = crypto.randomUUID();
       const state = initialState(options.empty);
@@ -709,6 +762,9 @@ const server = Bun.serve({
             linkUrl: null,
             createdAt: `${today}T0${Math.min(index, 7) + 1}:00:00Z`,
             readAt: null,
+            kind: "achievements",
+            actions: [],
+            facts: [],
           })).reverse(),
           {
             id: "f4100000-0000-4000-8000-000000000000",
@@ -718,6 +774,9 @@ const server = Bun.serve({
             linkUrl: null,
             createdAt: `${today}T00:30:00Z`,
             readAt: `${today}T00:45:00Z`,
+            kind: "household",
+            actions: [],
+            facts: [],
           },
         ];
       // What CreatePriceReportCommand writes for every administrator.
@@ -731,8 +790,31 @@ const server = Bun.serve({
             linkUrl: "/admin/prices#reports",
             createdAt: `${today}T08:30:00Z`,
             readAt: null,
+            kind: "account",
+            actions: [],
+            facts: [],
           },
         ];
+      if (options.card)
+        state.notifications.unshift({
+          id: "f4200000-0000-4000-8000-000000000001",
+          type: "achievement",
+          kind: "achievements",
+          title: "Achievement unlocked: First Meal",
+          body: "Log your first meal",
+          linkUrl: "/achievements",
+          imageUrl: "/badges/128/achievement-gold-badge.png",
+          createdAt: `${today}T09:00:00Z`,
+          readAt: null,
+          actions: [
+            { label: "See achievements", path: "/achievements" },
+            { label: "Log a meal", path: "/log" },
+          ],
+          facts: [
+            { label: "Points", value: "+10" },
+            { label: "Category", value: "Nutrition" },
+          ],
+        });
       state.failures = options.failures ?? [];
       state.writeFailures = options.writeFailures ?? {};
       state.userId = options.userId ?? user.id;
@@ -745,6 +827,9 @@ const server = Bun.serve({
       state.prices = initialPrices(today, options.prices);
       state.aiPlanning = initialAiPlanning(options.aiPlanning);
       state.telegram = initialTelegram(options.telegram);
+      state.notificationPreferences = initialNotificationPreferences(
+        state.telegram,
+      );
       if (options.recipeGroup)
         state.meals.push(
           ...[
@@ -1337,6 +1422,35 @@ const server = Bun.serve({
       return json({
         unreadCount: state.notifications.filter((item) => !item.readAt).length,
       });
+    if (path === "/api/Notifications/preferences" && method === "GET")
+      return json(state.notificationPreferences);
+    if (path === "/api/Notifications/preferences" && method === "PUT") {
+      const body =
+        (await request.json()) as components["schemas"]["UpdateNotificationPreferencesRequest"];
+      const current = state.notificationPreferences;
+      for (const change of body.kinds ?? []) {
+        const kind = current.kinds.find((item) => item.kind === change.kind);
+        if (!kind)
+          return json({ errorCode: "validation", error: "Unknown kind" }, 400);
+        kind.inApp = change.inApp ?? kind.inApp;
+        kind.telegram = change.telegram ?? kind.telegram;
+        kind.push = change.push ?? kind.push;
+        kind.email = change.email ?? kind.email;
+      }
+      if (body.clearQuietHours) {
+        current.quietHoursStart = null;
+        current.quietHoursEnd = null;
+      } else if (body.quietHoursStart && body.quietHoursEnd) {
+        current.quietHoursStart = body.quietHoursStart;
+        current.quietHoursEnd = body.quietHoursEnd;
+      }
+      state.writes.push({
+        path,
+        body: body as Record<string, unknown>,
+        key: request.headers.get("Idempotency-Key") ?? undefined,
+      });
+      return json(current);
+    }
     if (path === "/api/Notifications" && method === "GET")
       return json({
         ...page(state.notifications, url),

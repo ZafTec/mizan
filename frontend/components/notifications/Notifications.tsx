@@ -188,7 +188,8 @@ function NotificationsInbox({ phone, focusToken, close }: SidePanelContent) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only a change in the count reloads
   }, [unread]);
 
-  async function open(item: Notification) {
+  /** Opens the notification's link, or one of its actions' paths. */
+  async function open(item: Notification, path = item.linkUrl) {
     try {
       if (!item.readAt) {
         await markNotificationRead(item.id);
@@ -201,10 +202,10 @@ function NotificationsInbox({ phone, focusToken, close }: SidePanelContent) {
         );
         setUnread((count) => Math.max(0, count - 1));
       }
-      if (item.linkUrl) {
+      if (path) {
         // The sheet covers the page it would open, so it steps aside; a docked panel stays.
         if (phone) close();
-        router.push(item.linkUrl);
+        router.push(path);
       }
     } catch (error) {
       appToast.error(error, "Could not open notification");
@@ -293,12 +294,12 @@ function NotificationsInbox({ phone, focusToken, close }: SidePanelContent) {
           <ul aria-labelledby="notifications-title">
             {items.map((item, index) => (
               <ViewTransition key={item.id} {...rowMotion}>
-                <li>
+                <li className="border-b border-border">
                   <button
                     type="button"
                     data-autofocus={index === 0 ? "" : undefined}
                     onClick={() => open(item)}
-                    className="flex min-h-14 w-full items-start gap-3 border-b border-border px-4 py-3 text-left transition-colors duration-160 ease-out hover:bg-muted"
+                    className="flex min-h-14 w-full items-start gap-3 px-4 py-3 text-left transition-colors duration-160 ease-out hover:bg-muted"
                   >
                     <span
                       aria-hidden="true"
@@ -307,6 +308,18 @@ function NotificationsInbox({ phone, focusToken, close }: SidePanelContent) {
                         item.readAt && "opacity-0",
                       )}
                     />
+                    {item.imageUrl && (
+                      // A badge from the app or the media host: a plain image, not an optimised one.
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={item.imageUrl}
+                        alt=""
+                        width={40}
+                        height={40}
+                        loading="lazy"
+                        className="size-10 shrink-0 rounded-md object-cover"
+                      />
+                    )}
                     <span className="min-w-0 flex-1">
                       <span
                         className={cn(
@@ -324,6 +337,18 @@ function NotificationsInbox({ phone, focusToken, close }: SidePanelContent) {
                           {item.body}
                         </span>
                       )}
+                      {item.facts.length > 0 && (
+                        <span className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                          {item.facts.map((fact) => (
+                            <span key={fact.label}>
+                              {fact.label}{" "}
+                              <span className="font-medium text-foreground tabular-nums">
+                                {fact.value}
+                              </span>
+                            </span>
+                          ))}
+                        </span>
+                      )}
                       {/* The browser's zone differs from the server's; the first paint is corrected on the client. */}
                       <time
                         dateTime={item.createdAt}
@@ -336,7 +361,7 @@ function NotificationsInbox({ phone, focusToken, close }: SidePanelContent) {
                         )}
                       </time>
                     </span>
-                    {item.linkUrl && (
+                    {item.linkUrl && item.actions.length === 0 && (
                       <ChevronRight
                         aria-hidden="true"
                         size={17}
@@ -345,6 +370,21 @@ function NotificationsInbox({ phone, focusToken, close }: SidePanelContent) {
                       />
                     )}
                   </button>
+                  {item.actions.length > 0 && (
+                    // Beside the row rather than inside it: a button cannot hold buttons.
+                    <div className="-mt-1 flex flex-wrap gap-2 pr-4 pb-3 pl-9">
+                      {item.actions.map((action) => (
+                        <button
+                          key={action.path}
+                          type="button"
+                          onClick={() => open(item, action.path)}
+                          className="inline-flex min-h-9 items-center rounded-md border border-border px-3 text-sm font-medium transition-[background-color,scale] duration-160 ease-out hover:bg-muted active:scale-[0.985]"
+                        >
+                          {action.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </li>
               </ViewTransition>
             ))}
