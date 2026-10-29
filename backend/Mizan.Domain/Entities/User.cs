@@ -38,6 +38,13 @@ public class User
     /// unlinking turns it off again (docs/TELEGRAM.md#notifications-in-telegram).
     /// </summary>
     public bool NotifyByTelegram { get; set; }
+
+    /// <summary>
+    /// Quiet hours on the person's own clock: Telegram, push and email wait until they end. Both null,
+    /// or equal, means none (docs/ARCHITECTURE.md#notifications).
+    /// </summary>
+    public TimeOnly? QuietHoursStart { get; set; }
+    public TimeOnly? QuietHoursEnd { get; set; }
     public string Role { get; set; } = "user";
     public bool Banned { get; set; } = false;
     public string? BanReason { get; set; }
