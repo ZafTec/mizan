@@ -111,7 +111,7 @@ public sealed class NotificationWriter : INotificationWriter
         {
             await _telegram.QueueAsync(
                 send.UserId,
-                TelegramCards.For(message with { Actions = actions, Facts = facts }, send.LinkUrl),
+                TelegramCards.For(message with { Actions = actions, Facts = facts }, send.LinkUrl, send.ReminderId),
                 $"telegram:notification:{key}",
                 release > now.UtcDateTime ? release : null,
                 cancellationToken);

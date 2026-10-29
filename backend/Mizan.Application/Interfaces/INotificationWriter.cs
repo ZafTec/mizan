@@ -13,6 +13,9 @@ public sealed record NotificationSend(Guid UserId, string Type, NotificationMess
 {
     public NotificationChannels Channels { get; init; } = NotificationChannels.All;
     public string? DeliveryKey { get; init; }
+
+    /// <summary>A reminder's id, when this is one: Telegram then carries Done, Snooze and Skip today buttons for it.</summary>
+    public Guid? ReminderId { get; init; }
 }
 
 /// <summary>

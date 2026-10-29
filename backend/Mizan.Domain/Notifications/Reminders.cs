@@ -1,5 +1,4 @@
 using System.Globalization;
-using Mizan.Domain.Ai;
 
 namespace Mizan.Domain.Notifications;
 
@@ -19,14 +18,6 @@ public static class ReminderKinds
     public static IReadOnlyList<string> All { get; } = [Workout, Measurement, PreCook, MealLog, Custom];
 
     public static bool IsKnown(string? kind) => kind is not null && All.Contains(kind);
-
-    /// <summary>The axis an assistant's consent is checked against: a workout reminder is training, a measurement body, the rest food.</summary>
-    public static DataAxis Axis(string? kind) => kind switch
-    {
-        Workout => DataAxis.Training,
-        Measurement => DataAxis.Body,
-        _ => DataAxis.Nutrition,
-    };
 
     public static string Label(string kind) => kind switch
     {

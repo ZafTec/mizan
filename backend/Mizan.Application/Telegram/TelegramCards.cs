@@ -9,11 +9,12 @@ namespace Mizan.Application.Telegram;
 /// (title, then body) every message keeps, the Mini App page of its link, and the card the bot
 /// renders. Each action becomes a button; a notice without actions gets one <b>Open</b> button for
 /// its link. A button's Mini App page comes from <see cref="MiniAppPaths"/>; a link the Mini App has
-/// no page for keeps its web path, which the bot opens in the browser.
+/// no page for keeps its web path, which the bot opens in the browser. A reminder also gets
+/// <b>Done</b>, <b>Snooze 30 min</b> and <b>Skip today</b>, which the bot answers itself.
 /// </summary>
 public static class TelegramCards
 {
-    public static TelegramOutgoing For(NotificationMessage message, string? linkUrl)
+    public static TelegramOutgoing For(NotificationMessage message, string? linkUrl, Guid? reminderId = null)
     {
         var text = message.Body is { Length: > 0 } body ? $"{message.Title}\n{body}" : message.Title;
         var openPath = MiniAppPaths.ForLink(linkUrl);
@@ -29,6 +30,12 @@ public static class TelegramCards
         return new TelegramOutgoing(
             text,
             openPath,
-            new TelegramNotifyCard(message.Title, message.Body, message.ImageUrl, buttons, message.Facts ?? []));
+            new TelegramNotifyCard(
+                message.Title,
+                message.Body,
+                message.ImageUrl,
+                buttons,
+                message.Facts ?? [],
+                reminderId is { } id ? TelegramReminderCallbacks.For(id) : null));
     }
 }

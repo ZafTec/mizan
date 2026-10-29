@@ -69,7 +69,8 @@ public sealed class NotificationScheduler
         var timed = await _context.NotificationSchedules
             .Where(s => s.Enabled && s.NextRunAt != null && s.NextRunAt <= horizon.UtcDateTime)
             .ToListAsync(cancellationToken);
-        var events = (await _context.NotificationSchedules.Where(s => s.Enabled && s.NextRunAt == null).ToListAsync(cancellationToken))
+        // A finished reminder also has no next run; only schedules without one can be event triggers.
+        var events = (await _context.NotificationSchedules.Where(s => s.Enabled && s.NextRunAt == null && s.Reminder == null).ToListAsync(cancellationToken))
             .Where(s => s.Trigger.Kind == NotificationTriggerKind.EventOffset)
             .ToList();
 
@@ -185,7 +186,7 @@ public sealed class NotificationScheduler
 }
 
 /// <summary>
-/// Creates schedules: the way an administrator's campaign or a person's own reminder (later) is stored.
+/// Creates schedules: the way an administrator's campaign or a person's own reminder is stored.
 /// The first occurrence is worked out here, in the recipient's time zone, so the scheduler only reads
 /// <see cref="NotificationSchedule.NextRunAt"/>.
 /// </summary>
@@ -209,7 +210,8 @@ public sealed class NotificationSchedules
         string? linkUrl,
         NotificationTrigger trigger,
         NotificationChannels channels = NotificationChannels.All,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        ReminderDetails? reminder = null)
     {
         if (!NotificationKinds.IsKnown(message.Kind))
             throw new Exceptions.DomainValidationException($"\"{message.Kind}\" is not a notification kind.");
@@ -221,19 +223,10 @@ public sealed class NotificationSchedules
             Owner = owner,
             OwnerUserId = owner == NotificationScheduleOwner.User ? userId : null,
             Audience = NotificationAudience.Person(userId),
-            Message = new NotificationTemplate
-            {
-                Type = type,
-                Kind = message.Kind,
-                Title = message.Title,
-                Body = message.Body,
-                ImageUrl = message.ImageUrl,
-                LinkUrl = linkUrl,
-                Actions = (message.Actions ?? []).Take(NotificationMessage.MaxActions).Select(a => new NotificationActionItem { Label = a.Label, Path = a.Path }).ToList(),
-                Facts = (message.Facts ?? []).Select(f => new NotificationFactItem { Label = f.Label, Value = f.Value }).ToList(),
-            },
+            Message = Template(type, message, linkUrl),
             Channels = channels,
             Trigger = trigger,
+            Reminder = reminder,
             Enabled = true,
             NextRunAt = NotificationOccurrences.Next(trigger, StreakClock.Zone(zoneId), now)?.UtcDateTime,
             CreatedAt = now.UtcDateTime,
@@ -242,6 +235,19 @@ public sealed class NotificationSchedules
         _context.NotificationSchedules.Add(schedule);
         return schedule;
     }
+
+    /// <summary>The template a schedule sends, from a message and its link.</summary>
+    public static NotificationTemplate Template(string type, NotificationMessage message, string? linkUrl) => new()
+    {
+        Type = type,
+        Kind = message.Kind,
+        Title = message.Title,
+        Body = message.Body,
+        ImageUrl = message.ImageUrl,
+        LinkUrl = linkUrl,
+        Actions = (message.Actions ?? []).Take(NotificationMessage.MaxActions).Select(a => new NotificationActionItem { Label = a.Label, Path = a.Path }).ToList(),
+        Facts = (message.Facts ?? []).Select(f => new NotificationFactItem { Label = f.Label, Value = f.Value }).ToList(),
+    };
 }
 
 /// <summary>Sends one queued delivery of a timed schedule, if the schedule is still enabled.</summary>
@@ -260,6 +266,8 @@ public sealed class NotificationDeliveries
     {
         var schedule = await _context.NotificationSchedules.AsNoTracking().FirstOrDefaultAsync(s => s.Id == job.ScheduleId, cancellationToken);
         if (schedule is not { Enabled: true }) return false;
+        // Skipped or done for today, a snooze included.
+        if (schedule.SkipUntil is { } skip && job.Occurrence < skip) return false;
         var channel = NotificationKinds.Each.FirstOrDefault(c => NotificationKinds.Name(c) == job.Channel);
         if (channel == NotificationChannels.None) return false;
 
@@ -277,6 +285,7 @@ public sealed class NotificationDeliveries
             {
                 Channels = channel,
                 DeliveryKey = NotificationScheduler.DeliveryKey(job.ScheduleId, occurrence, job.UserId, job.Channel),
+                ReminderId = schedule.Reminder is null ? null : schedule.Id,
             },
             cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);

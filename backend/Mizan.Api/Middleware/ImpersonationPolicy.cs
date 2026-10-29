@@ -38,6 +38,7 @@ public static class ImpersonationPolicy
         [typeof(MealPlansController)] = new("/api/MealPlans", ImpersonationAccess.Allowed),
         [typeof(MealsController)] = new("/api/Meals", ImpersonationAccess.Allowed),
         [typeof(NotificationsController)] = new("/api/Notifications", ImpersonationAccess.Allowed),
+        [typeof(RemindersController)] = new("/api/Reminders", ImpersonationAccess.Allowed),
         [typeof(NutritionController)] = new("/api/Nutrition", ImpersonationAccess.Allowed),
         [typeof(PricesController)] = new("/api/Prices", ImpersonationAccess.Allowed),
         [typeof(ProfileController)] = new("/api/Profile", ImpersonationAccess.Allowed),

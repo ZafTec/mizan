@@ -49,12 +49,51 @@ public record TelegramNotifyRequest(long TelegramUserId, string Text, string? Op
 /// photo caption when there is an image, with one inline button per action.
 /// </summary>
 /// <param name="ImageUrl">A public HTTPS image Telegram fetches itself; when it cannot, the bot sends the text alone.</param>
+/// <param name="Callbacks">Buttons the bot answers itself, such as a reminder's <b>Done</b>, <b>Snooze 30 min</b> and <b>Skip today</b>; in one row under the others.</param>
 public record TelegramNotifyCard(
     string Title,
     string? Body,
     string? ImageUrl,
     IReadOnlyList<TelegramNotifyButton> Buttons,
-    IReadOnlyList<Notifications.NotificationFact> Facts);
+    IReadOnlyList<Notifications.NotificationFact> Facts,
+    IReadOnlyList<TelegramCallbackButton>? Callbacks = null);
+
+/// <summary>A button whose press comes back to the bot as <see cref="Data"/> (at most 64 bytes).</summary>
+public record TelegramCallbackButton(string Label, string Data);
+
+/// <summary>
+/// The buttons on a reminder's message (docs/TELEGRAM.md#reminders): <c>ra:done:{id}</c>,
+/// <c>ra:snooze:{id}</c> and <c>ra:skip:{id}</c>, with the reminder's id in 32 hex digits so each fits
+/// Telegram's 64 bytes. The API writes them and the bot reads them back.
+/// </summary>
+public static class TelegramReminderCallbacks
+{
+    public const string Prefix = "ra:";
+    public const string Done = "done";
+    public const string Snooze = "snooze";
+    public const string Skip = "skip";
+    public const string Stop = "stop";
+
+    public static string Data(string action, Guid reminderId) => $"{Prefix}{action}:{reminderId:N}";
+
+    public static IReadOnlyList<TelegramCallbackButton> For(Guid reminderId) =>
+    [
+        new("Done", Data(Done, reminderId)),
+        new("Snooze 30 min", Data(Snooze, reminderId)),
+        new("Skip today", Data(Skip, reminderId)),
+    ];
+
+    public static bool TryParse(string? data, out string action, out Guid reminderId)
+    {
+        action = string.Empty;
+        reminderId = Guid.Empty;
+        if (data is null || !data.StartsWith(Prefix, StringComparison.Ordinal)) return false;
+        var parts = data.Split(':');
+        if (parts is not [_, var verb, var id] || verb is not (Done or Snooze or Skip or Stop) || !Guid.TryParseExact(id, "N", out reminderId)) return false;
+        action = verb;
+        return true;
+    }
+}
 
 /// <summary>
 /// One button. A Mini App page (<see cref="MiniAppPages"/>) opens inside Telegram when the Mini App is

@@ -405,6 +405,7 @@ public static class AiToolCatalogue
             DataAxis.Nutrition, AiToolAccess.Write),
 
         .. AiPlanningTools.All,
+        .. AiReminderTools.All,
     ];
 
     public static AiToolDefinition? Find(string name) =>
