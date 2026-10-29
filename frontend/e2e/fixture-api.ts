@@ -209,7 +209,6 @@ type FixtureState = {
   recipes: Record<string, unknown>[];
   draft: { payload: string; updatedAt: string } | null;
   empty: boolean;
-  unread: number;
   notifications: FixtureNotification[];
   failures: string[];
   writeFailures: Record<string, number>;
@@ -367,7 +366,6 @@ function initialState(empty = false): FixtureState {
     ],
     userId: user.id,
     empty,
-    unread: 0,
     notifications: [],
     draft: null,
     household: null,
@@ -700,7 +698,28 @@ const server = Bun.serve({
       };
       const token = crypto.randomUUID();
       const state = initialState(options.empty);
-      state.unread = options.unread ?? 0;
+      // `unread` seeds that many unread notifications above one already read, newest first.
+      if (options.unread)
+        state.notifications = [
+          ...Array.from({ length: options.unread }, (_, index) => ({
+            id: `f4100000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
+            type: "achievement",
+            title: `Achievement ${index + 1} unlocked`,
+            body: null,
+            linkUrl: null,
+            createdAt: `${today}T0${Math.min(index, 7) + 1}:00:00Z`,
+            readAt: null,
+          })).reverse(),
+          {
+            id: "f4100000-0000-4000-8000-000000000000",
+            type: "household_invite",
+            title: "You joined the Abebe household",
+            body: null,
+            linkUrl: null,
+            createdAt: `${today}T00:30:00Z`,
+            readAt: `${today}T00:45:00Z`,
+          },
+        ];
       // What CreatePriceReportCommand writes for every administrator.
       if ((options.role ?? "user") === "admin")
         state.notifications = [
@@ -1315,7 +1334,9 @@ const server = Bun.serve({
       return json({ restored: true });
     }
     if (path === "/api/Notifications/unread-count")
-      return json({ unreadCount: state.unread });
+      return json({
+        unreadCount: state.notifications.filter((item) => !item.readAt).length,
+      });
     if (path === "/api/Notifications" && method === "GET")
       return json({
         ...page(state.notifications, url),
@@ -1331,6 +1352,12 @@ const server = Bun.serve({
       if (!found)
         return json({ errorCode: "not_found", error: "Not found" }, 404);
       found.readAt ??= new Date().toISOString();
+      state.writes.push({ path, body: {} });
+      return json(null, 204);
+    }
+    if (path === "/api/Notifications/read-all" && method === "POST") {
+      const now = new Date().toISOString();
+      for (const item of state.notifications) item.readAt ??= now;
       state.writes.push({ path, body: {} });
       return json(null, 204);
     }

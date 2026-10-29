@@ -23,7 +23,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { NotificationBell } from "@/components/NotificationBell";
+import {
+  NotificationBell,
+  NotificationsPanel,
+  NotificationsProvider,
+} from "@/components/notifications/Notifications";
+import { SidePanelProvider } from "@/components/panels/SidePanel";
 import { GamificationToaster } from "@/components/gamification/GamificationToaster";
 import { LOG_FEEDBACK_EVENT } from "@/lib/log-feedback";
 import type { GamificationFeedback } from "@/types/gamification";
@@ -157,7 +162,7 @@ export default function AppShell({
   }
 
   return (
-    <AssistantProvider userId={user.id}>
+    <ShellPanels userId={user.id}>
       <div
         className={cn(
           "shell-fullbleed group/shell flex h-dvh bg-background text-foreground",
@@ -233,7 +238,9 @@ export default function AppShell({
           </nav>
           <div className={cn("mt-auto", collapsed ? "p-4" : "p-5")}>
             {!collapsed && (
-              <p className="text-xs text-muted-foreground">Meals. Lifts. Measurements.</p>
+              <p className="text-xs text-muted-foreground">
+                Meals. Lifts. Measurements.
+              </p>
             )}
             <Link
               href="/profile"
@@ -341,7 +348,7 @@ export default function AppShell({
           {/* The bottom bar belongs to the page, so a docked panel keeps it off its composer. */}
           <nav
             aria-label="Primary mobile"
-            className="hidden max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-30 max-lg:flex max-lg:items-stretch max-lg:border-t max-lg:border-border max-lg:bg-background max-lg:px-2.5 max-lg:pt-1.5 max-lg:pb-[calc(8px+env(safe-area-inset-bottom,0px))] md:max-lg:group-has-[>#assistant-panel:not([hidden])]/shell:end-[420px]"
+            className="hidden max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-30 max-lg:flex max-lg:items-stretch max-lg:border-t max-lg:border-border max-lg:bg-background max-lg:px-2.5 max-lg:pt-1.5 max-lg:pb-[calc(8px+env(safe-area-inset-bottom,0px))] md:max-lg:group-has-[>[data-side-panel]:not([hidden])]/shell:end-[420px]"
           >
             {SPINE.slice(0, 2).map((item) => (
               <NavigationLink key={item.href} item={item} mobile />
@@ -362,6 +369,7 @@ export default function AppShell({
           </nav>
         </div>
         <AssistantPanel />
+        <NotificationsPanel />
         <GamificationToaster {...feedback} />
         <LogSheet
           open={logOpen || legacyMeal}
@@ -372,6 +380,23 @@ export default function AppShell({
           initialRecipe={logOptions.recipe}
         />
       </div>
-    </AssistantProvider>
+    </ShellPanels>
+  );
+}
+
+/** The side panels' host, then each panel's own state: one panel is open at a time. */
+function ShellPanels({
+  userId,
+  children,
+}: {
+  userId: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <SidePanelProvider userId={userId}>
+      <AssistantProvider userId={userId}>
+        <NotificationsProvider>{children}</NotificationsProvider>
+      </AssistantProvider>
+    </SidePanelProvider>
   );
 }

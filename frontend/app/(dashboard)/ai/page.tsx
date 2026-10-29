@@ -13,7 +13,7 @@ export default async function AiPage({
 }) {
   const { thread } = await searchParams;
   const id = Array.isArray(thread) ? thread[0] : thread;
-  const query = new URLSearchParams({ assistant: "open" });
+  const query = new URLSearchParams({ panel: "assistant" });
   if (id) query.set("thread", id);
   redirect(`/today?${query}`);
 }

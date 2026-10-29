@@ -21,8 +21,11 @@ vi.mock("@/lib/auth-client", () => ({
   useSession: () => ({ data: { user } }),
 }));
 vi.mock("@/lib/api.client", () => ({ clientApi: vi.fn() }));
-vi.mock("@/components/NotificationBell", () => ({
+vi.mock("@/components/notifications/Notifications", () => ({
+  NotificationsProvider: ({ children }: { children: React.ReactNode }) =>
+    children,
   NotificationBell: () => null,
+  NotificationsPanel: () => null,
 }));
 vi.mock("@/components/gamification/GamificationToaster", () => ({
   GamificationToaster: () => null,
