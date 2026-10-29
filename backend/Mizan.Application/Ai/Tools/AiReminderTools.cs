@@ -29,7 +29,7 @@ public static class AiReminderTools
                 "kind": { "type": "string", "enum": ["workout", "measurement", "pre_cook", "meal_log", "custom"] },
                 "title": { "type": "string" },
                 "note": { "type": "string" },
-                "repeat": { "type": "string", "enum": ["once", "daily", "days", "every"] },
+                "repeat": { "type": "string", "enum": ["once", "daily", "days", "every"], "description": "days needs days; every needs exactly one of everyHours or everyDays (every other day is every with everyDays 2). Every repeat except everyHours needs a time." },
                 "time": { "type": "string", "description": "HH:mm, e.g. 07:00" },
                 "days": { "type": "array", "items": { "type": "string", "enum": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] } },
                 "date": { "type": "string", "description": "YYYY-MM-DD: the day of a once, or the first day of an every" },

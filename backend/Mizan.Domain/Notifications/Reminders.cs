@@ -163,7 +163,7 @@ public static class ReminderRules
             case "every":
                 {
                     var given = new[] { timing.EveryMinutes, timing.EveryHours, timing.EveryDays }.Count(v => v is not null);
-                    if (given != 1) return ReminderTriggerResult.Fail("Say how often with one of everyMinutes, everyHours or everyDays.");
+                    if (given != 1) return ReminderTriggerResult.Fail("Say how often it repeats, such as every 3 hours or every 2 days.");
                     var minutes = timing.EveryMinutes
                         ?? (timing.EveryHours is { } hours ? (long)hours * 60 : (long)timing.EveryDays!.Value * 24 * 60);
                     if (minutes < MinIntervalMinutes) return ReminderTriggerResult.Fail(TooOften);

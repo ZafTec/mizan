@@ -23,7 +23,8 @@ public class TelegramRemindTests
         _world.LastKeyboard().Should().Equal(("Workout", "rm:k:workout"), ("Measurements", "rm:k:measurement"), ("Log a meal", "rm:k:meal_log"));
 
         await _world.Handler().HandleAsync(Press("rm:k:workout"), CancellationToken.None);
-        _world.LastKeyboard().Should().Equal(("Every day", "rm:d:workout:daily"), ("Weekdays", "rm:d:workout:wk"), ("Weekends", "rm:d:workout:we"));
+        _world.LastKeyboard().Should().Equal(
+            ("Every day", "rm:d:workout:daily"), ("Weekdays", "rm:d:workout:wk"), ("Weekends", "rm:d:workout:we"), ("Every other day", "rm:d:workout:2d"));
 
         await _world.Handler().HandleAsync(Press("rm:d:workout:wk"), CancellationToken.None);
         _world.LastKeyboard().Select(b => b.Data).Should().Contain("rm:t:workout:wk:0700")
@@ -53,6 +54,26 @@ public class TelegramRemindTests
         body.GetProperty("kind").GetString().Should().Be("custom");
         body.GetProperty("title").GetString().Should().Be("drink water");
         body.GetProperty("schedule").GetProperty("repeat").GetString().Should().Be("daily");
+    }
+
+    [Fact]
+    public async Task EveryOtherDay_PostsATwoDayInterval_AtTheChosenTime()
+    {
+        await _world.Handler().HandleAsync(Press("rm:t:measurement:2d:0800"), CancellationToken.None);
+
+        var schedule = _world.ReminderCalls.Should().ContainSingle().Subject.Body.GetProperty("schedule");
+        schedule.GetProperty("repeat").GetString().Should().Be("every");
+        schedule.GetProperty("everyDays").GetInt32().Should().Be(2);
+        schedule.GetProperty("time").GetString().Should().Be("08:00");
+    }
+
+    [Fact]
+    public void AFailedAssistantAction_ShowsItsReasonOnce_WithoutAnEmptyLabel()
+    {
+        var failed = new Mizan.Contracts.Ai.AiToolInvocation("create_reminder", "", false, "Say how often it repeats.");
+
+        telegram::Mizan.Telegram.Bot.UpdateHandler.PerformedLines([failed, failed])
+            .Should().Be("\n\n✗ Say how often it repeats.");
     }
 
     [Theory]

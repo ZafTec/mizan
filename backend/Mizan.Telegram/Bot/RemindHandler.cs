@@ -34,6 +34,7 @@ public sealed class RemindHandler
         ("daily", "Every day"),
         ("wk", "Weekdays"),
         ("we", "Weekends"),
+        ("2d", "Every other day"),
     ];
 
     private static readonly string[] Times = ["07:00", "08:00", "12:00", "18:00", "20:00", "21:00"];
@@ -189,6 +190,7 @@ public sealed class RemindHandler
             "daily" => new ReminderSchedule("daily", time),
             "wk" => new ReminderSchedule("days", time, ["mon", "tue", "wed", "thu", "fri"]),
             "we" => new ReminderSchedule("days", time, ["sat", "sun"]),
+            "2d" => new ReminderSchedule("every", time, EveryDays: 2),
             _ => null,
         };
     }

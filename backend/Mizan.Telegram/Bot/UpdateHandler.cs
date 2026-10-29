@@ -272,17 +272,18 @@ public sealed class UpdateHandler
     {
         if (performed is not { Count: > 0 }) return string.Empty;
 
-        var text = new StringBuilder("\n");
-        foreach (var action in performed)
-        {
-            text.Append('\n').Append(action.Succeeded ? "✓ " : "✗ ").Append(Escape(action.Summary));
-            if (!action.Succeeded && action.Error is { Length: > 0 } error)
+        // A failed call has no summary, only its reason, and a model that
+        // retries the same call would otherwise print the same line twice.
+        var lines = performed
+            .Select(action =>
             {
-                text.Append(": ").Append(Escape(error));
-            }
-        }
+                var parts = new[] { action.Summary, action.Succeeded ? null : action.Error }
+                    .Where(part => !string.IsNullOrWhiteSpace(part));
+                return (action.Succeeded ? "✓ " : "✗ ") + Escape(string.Join(": ", parts));
+            })
+            .Distinct();
 
-        return text.ToString();
+        return "\n\n" + string.Join('\n', lines);
     }
 
     /// <summary>
