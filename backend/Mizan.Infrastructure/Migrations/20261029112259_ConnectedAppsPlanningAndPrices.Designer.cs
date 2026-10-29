@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Mizan.Infrastructure.Migrations
 {
     [DbContext(typeof(MizanDbContext))]
-    [Migration("20261029093404_NotificationMessagesAndSchedules")]
-    partial class NotificationMessagesAndSchedules
+    [Migration("20261029112259_ConnectedAppsPlanningAndPrices")]
+    partial class ConnectedAppsPlanningAndPrices
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
