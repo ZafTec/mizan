@@ -65,6 +65,8 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
     public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
     public DbSet<Streak> Streaks => Set<Streak>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
+    public DbSet<NotificationSchedule> NotificationSchedules => Set<NotificationSchedule>();
 
     // Social
     public DbSet<SocialProfile> SocialProfiles => Set<SocialProfile>();
@@ -250,6 +252,8 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
             entity.Property(e => e.CompactMode).HasColumnName("compact_mode");
             entity.Property(e => e.ReduceAnimations).HasColumnName("reduce_animations");
             entity.Property(e => e.NotifyByTelegram).HasColumnName("notify_by_telegram");
+            entity.Property(e => e.QuietHoursStart).HasColumnName("quiet_hours_start");
+            entity.Property(e => e.QuietHoursEnd).HasColumnName("quiet_hours_end");
             entity.Property(e => e.Role).HasColumnName("role");
             entity.Property(e => e.Banned).HasColumnName("banned");
             entity.Property(e => e.BanReason).HasColumnName("ban_reason");
@@ -1108,6 +1112,7 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
             entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.IconUrl).HasColumnName("icon_url");
+            entity.Property(e => e.CardImageUrl).HasColumnName("card_image_url").HasMaxLength(1000);
             entity.Property(e => e.Points).HasColumnName("points").HasDefaultValue(0);
             entity.Property(e => e.Category).HasColumnName("category").HasMaxLength(50);
             entity.Property(e => e.CriteriaType).HasColumnName("criteria_type").HasMaxLength(50);
@@ -1155,8 +1160,54 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
             entity.Property(e => e.LinkUrl).HasColumnName("link_url").HasMaxLength(500);
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
             entity.Property(e => e.ReadAt).HasColumnName("read_at");
+            entity.Property(e => e.Kind).HasColumnName("kind").HasMaxLength(30);
+            entity.Property(e => e.ImageUrl).HasColumnName("image_url").HasMaxLength(1000);
+            entity.OwnsMany(e => e.Actions, actions => actions.ToJson("actions"));
+            entity.OwnsMany(e => e.Facts, facts => facts.ToJson("facts"));
             entity.HasIndex(e => new { e.UserId, e.ReadAt, e.CreatedAt });
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<NotificationPreference>(entity =>
+        {
+            entity.ToTable("notification_preferences");
+            entity.HasKey(e => new { e.UserId, e.Kind });
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Kind).HasColumnName("kind").HasMaxLength(30);
+            entity.Property(e => e.InApp).HasColumnName("in_app");
+            entity.Property(e => e.Telegram).HasColumnName("telegram");
+            entity.Property(e => e.Push).HasColumnName("push");
+            entity.Property(e => e.Email).HasColumnName("email");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<NotificationSchedule>(entity =>
+        {
+            entity.ToTable("notification_schedules");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.Key).HasColumnName("key").HasMaxLength(100);
+            entity.Property(e => e.Owner).HasColumnName("owner").HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.OwnerUserId).HasColumnName("owner_user_id");
+            entity.Property(e => e.Channels).HasColumnName("channels");
+            entity.Property(e => e.Enabled).HasColumnName("enabled");
+            entity.Property(e => e.NextRunAt).HasColumnName("next_run_at");
+            entity.Property(e => e.LastRunAt).HasColumnName("last_run_at");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.OwnsOne(e => e.Audience, audience => audience.ToJson("audience"));
+            entity.OwnsOne(e => e.Message, message =>
+            {
+                message.ToJson("message");
+                message.OwnsMany(m => m.Actions);
+                message.OwnsMany(m => m.Facts);
+            });
+            entity.OwnsOne(e => e.Trigger, trigger => trigger.ToJson("trigger"));
+            entity.HasIndex(e => e.Key).IsUnique().HasFilter("key IS NOT NULL");
+            entity.HasIndex(e => new { e.Enabled, e.NextRunAt });
+            entity.HasIndex(e => e.OwnerUserId);
+            entity.HasOne(e => e.OwnerUser).WithMany().HasForeignKey(e => e.OwnerUserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<SocialProfile>(entity =>

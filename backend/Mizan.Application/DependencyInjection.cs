@@ -29,6 +29,10 @@ public static class DependencyInjection
         services.AddScoped<Planning.PlanReadModel>();
         services.AddScoped<Planning.PlanTargetsReader>();
         services.AddScoped<Planning.EveningReminders>();
+        services.AddScoped<Notifications.INotificationEventSource>(sp => sp.GetRequiredService<Planning.EveningReminders>());
+        services.AddScoped<Notifications.NotificationScheduler>();
+        services.AddScoped<Notifications.NotificationSchedules>();
+        services.AddScoped<Notifications.NotificationDeliveries>();
         services.AddScoped<Planning.PlanCostTable>();
         services.AddScoped<Planning.MealPlanContextBuilder>();
         services.AddScoped<Planning.ShoppingListAccess>();

@@ -7,7 +7,8 @@ using Mizan.Infrastructure.Telegram;
 
 namespace Mizan.Infrastructure.Outbox;
 
-public sealed record TelegramMessageJob(Guid UserId, string Text, string? OpenPath);
+/// <summary>A queued Telegram message. <see cref="Card"/> is absent on jobs queued before cards existed; the bot then sends the text.</summary>
+public sealed record TelegramMessageJob(Guid UserId, string Text, string? OpenPath, TelegramNotifyCard? Card = null);
 
 /// <summary>
 /// Hands one message to the bot service for the user's linked chat. The link is
@@ -44,7 +45,7 @@ public sealed class TelegramMessageJobHandler : IOutboxHandler
             .FirstOrDefaultAsync(cancellationToken);
         if (telegramUserId is not { } chat) return;
 
-        switch (await _bot.SendAsync(new TelegramNotifyRequest(chat, job.Text, job.OpenPath), cancellationToken))
+        switch (await _bot.SendAsync(new TelegramNotifyRequest(chat, job.Text, job.OpenPath, job.Card), cancellationToken))
         {
             case TelegramNotifyOutcome.Sent:
                 return;

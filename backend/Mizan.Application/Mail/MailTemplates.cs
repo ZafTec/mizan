@@ -13,6 +13,19 @@ public static class MailTemplates
     public static OutgoingEmail Announcement(string to, string? name, string subject, string body) =>
         Build(to, subject, Greeting(name), body, "You receive this because you have a Mizan account.");
 
+    /// <summary>A notification by email: the body, its facts one per line, then its links as absolute URLs.</summary>
+    public static OutgoingEmail Notification(string to, string? name, string title, string? body, IEnumerable<(string Label, string Value)> facts, IEnumerable<(string Label, string Url)> links)
+    {
+        var lines = new List<string>();
+        if (!string.IsNullOrWhiteSpace(body)) lines.Add(body.Trim());
+        var factLines = facts.Select(f => $"{f.Label}: {f.Value}").ToList();
+        if (factLines.Count > 0) lines.Add(string.Join('\n', factLines));
+        var linkLines = links.Select(l => $"{l.Label}: {l.Url}").ToList();
+        if (linkLines.Count > 0) lines.Add(string.Join('\n', linkLines));
+        if (lines.Count == 0) lines.Add(title);
+        return Build(to, title, Greeting(name), string.Join("\n\n", lines), "Choose which notifications reach you by email in Mizan, Settings, Notifications.");
+    }
+
     public static OutgoingEmail ContactReceived(
         string to, string fromName, string fromEmail, string subject, string message, string adminLink)
     {

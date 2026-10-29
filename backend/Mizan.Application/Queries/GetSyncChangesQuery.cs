@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using MediatR;
+using Mizan.Contracts.Notifications;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
@@ -127,8 +128,7 @@ public sealed class GetSyncChangesQueryHandler : IRequestHandler<GetSyncChangesQ
             BodyMeasurements = measurements.Items.Select(m => new BodyMeasurementDto(
                 m.Id, m.MeasurementDate.ToDateTime(TimeOnly.MinValue), m.WeightKg, m.BodyFatPercentage, m.MuscleMassKg, m.WaistCm,
                 m.HipsCm, m.ChestCm, m.LeftArmCm, m.RightArmCm, m.LeftThighCm, m.RightThighCm, m.Notes)).ToList(),
-            Notifications = notifications.Items.Select(n => new NotificationDto(
-                n.Id, n.Type, n.Title, n.Body, n.LinkUrl, n.CreatedAt, n.ReadAt)).ToList(),
+            Notifications = notifications.Items.Select(NotificationViews.ToDto).ToList(),
             Deleted = deleted.Items.Select(d => new SyncDeletionDto(d.EntityType, d.EntityId, d.DeletedAt)).ToList(),
         };
     }

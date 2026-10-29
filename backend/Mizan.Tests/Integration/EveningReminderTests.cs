@@ -202,7 +202,7 @@ public class EveningReminderTests
     }
 
     private Task ScanAsync() =>
-        _fixture.Services.GetServices<IHostedService>().OfType<EveningReminderScheduler>().Single().RunOnceAsync(CancellationToken.None);
+        _fixture.Services.GetServices<IHostedService>().OfType<NotificationSchedulerService>().Single().RunOnceAsync(CancellationToken.None);
 
     /// <summary>
     /// The test clock has reached the reminders' time, but the database's has not, and the

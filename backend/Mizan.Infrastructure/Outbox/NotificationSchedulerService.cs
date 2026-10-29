@@ -2,26 +2,26 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
-using Mizan.Application.Planning;
+using Mizan.Application.Notifications;
 
 namespace Mizan.Infrastructure.Outbox;
 
 /// <summary>
-/// Every <see cref="Interval"/>, schedules each person's next evening reminder
-/// into the outbox. The outbox keys a job by person, day and time, so a scan
-/// that finds the same reminder again adds nothing; the scan only has to be
-/// frequent enough to notice a plan or window that changed today. Off with the
-/// dispatcher (<c>Outbox:Enabled=false</c>), which is how tests drive it.
+/// Every <see cref="Interval"/>, runs <see cref="NotificationScheduler"/>: each enabled schedule's
+/// occurrences within its lookahead go into the outbox, among them each person's next evening
+/// reminder. Every job is keyed by its occurrence, so a scan that finds the same one again adds
+/// nothing; the scan only has to be frequent enough to notice a plan or window that changed today.
+/// Off with the dispatcher (<c>Outbox:Enabled=false</c>), which is how tests drive it.
 /// </summary>
-public sealed class EveningReminderScheduler : BackgroundService
+public sealed class NotificationSchedulerService : BackgroundService
 {
     public static readonly TimeSpan Interval = TimeSpan.FromMinutes(15);
 
     private readonly IServiceScopeFactory _scopes;
     private readonly bool _enabled;
-    private readonly ILogger<EveningReminderScheduler> _logger;
+    private readonly ILogger<NotificationSchedulerService> _logger;
 
-    public EveningReminderScheduler(IServiceScopeFactory scopes, IConfiguration configuration, ILogger<EveningReminderScheduler> logger)
+    public NotificationSchedulerService(IServiceScopeFactory scopes, IConfiguration configuration, ILogger<NotificationSchedulerService> logger)
     {
         _scopes = scopes;
         _enabled = OutboxOptions.IsEnabled(configuration);
@@ -46,8 +46,8 @@ public sealed class EveningReminderScheduler : BackgroundService
             }
             catch (Exception ex)
             {
-                // A failed scan is retried on the next tick; the reminders it missed are still ahead of it.
-                _logger.LogError(ex, "Scheduling evening reminders failed");
+                // A failed scan is retried on the next tick; what it missed is still within the lookahead.
+                _logger.LogError(ex, "Scheduling notifications failed");
             }
         }
         while (await timer.WaitForNextTickAsync(stoppingToken));
@@ -57,6 +57,6 @@ public sealed class EveningReminderScheduler : BackgroundService
     public async Task<int> RunOnceAsync(CancellationToken cancellationToken)
     {
         using var scope = _scopes.CreateScope();
-        return await scope.ServiceProvider.GetRequiredService<EveningReminders>().ScheduleAsync(cancellationToken);
+        return await scope.ServiceProvider.GetRequiredService<NotificationScheduler>().RunAsync(cancellationToken);
     }
 }

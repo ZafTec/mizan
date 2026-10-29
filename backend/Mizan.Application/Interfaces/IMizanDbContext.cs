@@ -50,6 +50,8 @@ public interface IMizanDbContext
     DbSet<UserAchievement> UserAchievements { get; }
     DbSet<Streak> Streaks { get; }
     DbSet<Notification> Notifications { get; }
+    DbSet<NotificationPreference> NotificationPreferences { get; }
+    DbSet<NotificationSchedule> NotificationSchedules { get; }
     DbSet<SocialProfile> SocialProfiles { get; }
     DbSet<Follow> Follows { get; }
     DbSet<FeedItem> FeedItems { get; }

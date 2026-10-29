@@ -1,3 +1,4 @@
+using Mizan.Application.Notifications;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Achievements;
@@ -13,6 +14,7 @@ public class AchievementEvaluator : IAchievementEvaluator
     private readonly IAchievementCatalogue _catalogue;
     private readonly IAppUrls _urls;
     private readonly INotificationWriter? _notifications;
+    private readonly IAchievementCards? _cards;
 
     public AchievementEvaluator(
         IMizanDbContext context,
@@ -20,7 +22,8 @@ public class AchievementEvaluator : IAchievementEvaluator
         IUserStatsProvider stats,
         IAchievementCatalogue catalogue,
         IAppUrls urls,
-        INotificationWriter? notifications = null)
+        INotificationWriter? notifications = null,
+        IAchievementCards? cards = null)
     {
         _context = context;
         _currentUser = currentUser;
@@ -28,6 +31,7 @@ public class AchievementEvaluator : IAchievementEvaluator
         _catalogue = catalogue;
         _urls = urls;
         _notifications = notifications;
+        _cards = cards;
     }
 
     public async Task<IReadOnlyList<UnlockedAchievement>> EvaluateAsync(
@@ -122,7 +126,10 @@ public class AchievementEvaluator : IAchievementEvaluator
         {
             foreach (var achievement in unlocks)
             {
-                await _notifications.AddAsync(userId, "achievement_unlocked", $"Achievement unlocked: {achievement.Name}", achievement.Description, "/achievements", cancellationToken);
+                var image = _cards is null ? null : await _cards.ImageUrlAsync(achievement, cancellationToken);
+                await _notifications.SendAsync(
+                    new NotificationSend(userId, "achievement_unlocked", NotificationMessages.Achievement(achievement, image), NotificationMessages.AchievementsPath),
+                    cancellationToken);
             }
         }
 

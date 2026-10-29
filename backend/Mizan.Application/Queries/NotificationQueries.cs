@@ -2,11 +2,22 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Notifications;
+using Mizan.Domain.Entities;
+using Mizan.Domain.Notifications;
 
 namespace Mizan.Application.Queries;
 
-public record NotificationDto(Guid Id, string Type, string Title, string? Body, string? LinkUrl, DateTime CreatedAt, DateTime? ReadAt);
-public record NotificationListResult(IReadOnlyList<NotificationDto> Items, int UnreadCount, int TotalCount, int Page, int PageSize);
+/// <summary>A stored notification as the list, the sync feed and MCP show it.</summary>
+public static class NotificationViews
+{
+    public static NotificationDto ToDto(Notification n) => new(
+        n.Id, n.Type, n.Title, n.Body, n.LinkUrl, n.CreatedAt, n.ReadAt,
+        n.Kind ?? NotificationKinds.ForType(n.Type),
+        n.ImageUrl,
+        (n.Actions ?? []).Select(a => new NotificationAction(a.Label, a.Path)).ToList(),
+        (n.Facts ?? []).Select(f => new NotificationFact(f.Label, f.Value)).ToList());
+}
 
 public record GetNotificationsQuery(int Page = 1, int PageSize = 20) : IRequest<NotificationListResult>;
 public sealed class GetNotificationsQueryHandler : IRequestHandler<GetNotificationsQuery, NotificationListResult>
@@ -24,8 +35,8 @@ public sealed class GetNotificationsQueryHandler : IRequestHandler<GetNotificati
         var total = await query.CountAsync(ct);
         var unread = await query.CountAsync(n => n.ReadAt == null, ct);
         var items = await query.OrderByDescending(n => n.CreatedAt).Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(n => new NotificationDto(n.Id, n.Type, n.Title, n.Body, n.LinkUrl, n.CreatedAt, n.ReadAt)).ToListAsync(ct);
-        return new NotificationListResult(items, unread, total, page, pageSize);
+            .AsNoTracking().ToListAsync(ct);
+        return new NotificationListResult(items.Select(NotificationViews.ToDto).ToList(), unread, total, page, pageSize);
     }
 }
 

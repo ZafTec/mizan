@@ -1,3 +1,4 @@
+using Mizan.Application.Notifications;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -88,12 +89,8 @@ public static class CoachDrafts
         context.MealPlans.Add(plan);
 
         var coachName = await context.Users.AsNoTracking().Where(u => u.Id == trainerId).Select(u => u.Name).FirstOrDefaultAsync(cancellationToken);
-        await notifications.AddAsync(
-            clientId,
-            "meal_plan_drafted",
-            $"{coachName ?? "Your coach"} drafted a meal plan for you",
-            string.IsNullOrWhiteSpace(plan.Name) ? "Open it to accept or decline." : $"\"{plan.Name}\" is waiting for you to accept or decline.",
-            $"/meal-plan/{plan.Id}",
+        await notifications.SendAsync(
+            new NotificationSend(clientId, "meal_plan_drafted", NotificationMessages.PlanDrafted(coachName ?? "Your coach", plan), $"/meal-plan/{plan.Id}"),
             cancellationToken);
 
         await context.SaveChangesAsync(cancellationToken);

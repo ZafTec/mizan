@@ -53,6 +53,11 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
+                    b.Property<string>("CardImageUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("card_image_url");
+
                     b.Property<string>("Category")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
@@ -2655,6 +2660,16 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("NOW()");
 
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("image_url");
+
+                    b.Property<string>("Kind")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("kind");
+
                     b.Property<string>("LinkUrl")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
@@ -2685,6 +2700,108 @@ namespace Mizan.Infrastructure.Migrations
                     b.HasIndex("UserId", "ReadAt", "CreatedAt");
 
                     b.ToTable("notifications", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.NotificationPreference", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("Kind")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("kind");
+
+                    b.Property<bool>("Email")
+                        .HasColumnType("boolean")
+                        .HasColumnName("email");
+
+                    b.Property<bool>("InApp")
+                        .HasColumnType("boolean")
+                        .HasColumnName("in_app");
+
+                    b.Property<bool>("Push")
+                        .HasColumnType("boolean")
+                        .HasColumnName("push");
+
+                    b.Property<bool>("Telegram")
+                        .HasColumnType("boolean")
+                        .HasColumnName("telegram");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("UserId", "Kind");
+
+                    b.ToTable("notification_preferences", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.NotificationSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<int>("Channels")
+                        .HasColumnType("integer")
+                        .HasColumnName("channels");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("enabled");
+
+                    b.Property<string>("Key")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("key");
+
+                    b.Property<DateTime?>("LastRunAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_run_at");
+
+                    b.Property<DateTime?>("NextRunAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_run_at");
+
+                    b.Property<string>("Owner")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("owner");
+
+                    b.Property<Guid?>("OwnerUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_user_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique()
+                        .HasFilter("key IS NOT NULL");
+
+                    b.HasIndex("OwnerUserId");
+
+                    b.HasIndex("Enabled", "NextRunAt");
+
+                    b.ToTable("notification_schedules", (string)null);
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.OAuthAuthorizationRequest", b =>
@@ -4354,6 +4471,14 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("character varying(16)")
                         .HasColumnName("price_region_code");
 
+                    b.Property<TimeOnly?>("QuietHoursEnd")
+                        .HasColumnType("time without time zone")
+                        .HasColumnName("quiet_hours_end");
+
+                    b.Property<TimeOnly?>("QuietHoursStart")
+                        .HasColumnType("time without time zone")
+                        .HasColumnName("quiet_hours_start");
+
                     b.Property<bool>("ReduceAnimations")
                         .HasColumnType("boolean")
                         .HasColumnName("reduce_animations");
@@ -5627,7 +5752,219 @@ namespace Mizan.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.OwnsMany("Mizan.Domain.Entities.NotificationActionItem", "Actions", b1 =>
+                        {
+                            b1.Property<Guid>("NotificationId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<string>("Label")
+                                .IsRequired();
+
+                            b1.Property<string>("Path")
+                                .IsRequired();
+
+                            b1.HasKey("NotificationId", "__synthesizedOrdinal");
+
+                            b1.ToTable("notifications");
+
+                            b1
+                                .ToJson("actions")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("NotificationId");
+                        });
+
+                    b.OwnsMany("Mizan.Domain.Entities.NotificationFactItem", "Facts", b1 =>
+                        {
+                            b1.Property<Guid>("NotificationId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<string>("Label")
+                                .IsRequired();
+
+                            b1.Property<string>("Value")
+                                .IsRequired();
+
+                            b1.HasKey("NotificationId", "__synthesizedOrdinal");
+
+                            b1.ToTable("notifications");
+
+                            b1
+                                .ToJson("facts")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("NotificationId");
+                        });
+
+                    b.Navigation("Actions");
+
+                    b.Navigation("Facts");
+
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.NotificationPreference", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.NotificationSchedule", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", "OwnerUser")
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.OwnsOne("Mizan.Domain.Entities.NotificationAudience", "Audience", b1 =>
+                        {
+                            b1.Property<Guid>("NotificationScheduleId")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<int>("Kind");
+
+                            b1.Property<Guid?>("UserId");
+
+                            b1.HasKey("NotificationScheduleId");
+
+                            b1.ToTable("notification_schedules");
+
+                            b1
+                                .ToJson("audience")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("NotificationScheduleId");
+                        });
+
+                    b.OwnsOne("Mizan.Domain.Entities.NotificationTemplate", "Message", b1 =>
+                        {
+                            b1.Property<Guid>("NotificationScheduleId")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<string>("Body");
+
+                            b1.Property<string>("ImageUrl");
+
+                            b1.Property<string>("Kind")
+                                .IsRequired();
+
+                            b1.Property<string>("LinkUrl");
+
+                            b1.Property<string>("Title")
+                                .IsRequired();
+
+                            b1.Property<string>("Type")
+                                .IsRequired();
+
+                            b1.HasKey("NotificationScheduleId");
+
+                            b1.ToTable("notification_schedules");
+
+                            b1
+                                .ToJson("message")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("NotificationScheduleId");
+
+                            b1.OwnsMany("Mizan.Domain.Entities.NotificationActionItem", "Actions", b2 =>
+                                {
+                                    b2.Property<Guid>("NotificationTemplateNotificationScheduleId");
+
+                                    b2.Property<int>("__synthesizedOrdinal")
+                                        .ValueGeneratedOnAdd();
+
+                                    b2.Property<string>("Label")
+                                        .IsRequired();
+
+                                    b2.Property<string>("Path")
+                                        .IsRequired();
+
+                                    b2.HasKey("NotificationTemplateNotificationScheduleId", "__synthesizedOrdinal");
+
+                                    b2.ToTable("notification_schedules");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("NotificationTemplateNotificationScheduleId");
+                                });
+
+                            b1.OwnsMany("Mizan.Domain.Entities.NotificationFactItem", "Facts", b2 =>
+                                {
+                                    b2.Property<Guid>("NotificationTemplateNotificationScheduleId");
+
+                                    b2.Property<int>("__synthesizedOrdinal")
+                                        .ValueGeneratedOnAdd();
+
+                                    b2.Property<string>("Label")
+                                        .IsRequired();
+
+                                    b2.Property<string>("Value")
+                                        .IsRequired();
+
+                                    b2.HasKey("NotificationTemplateNotificationScheduleId", "__synthesizedOrdinal");
+
+                                    b2.ToTable("notification_schedules");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("NotificationTemplateNotificationScheduleId");
+                                });
+
+                            b1.Navigation("Actions");
+
+                            b1.Navigation("Facts");
+                        });
+
+                    b.OwnsOne("Mizan.Domain.Notifications.NotificationTrigger", "Trigger", b1 =>
+                        {
+                            b1.Property<Guid>("NotificationScheduleId")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<DateTime?>("At");
+
+                            b1.Property<int>("Days");
+
+                            b1.Property<string>("Event");
+
+                            b1.Property<int>("Kind");
+
+                            b1.Property<TimeOnly?>("LocalTime");
+
+                            b1.Property<int>("OffsetMinutes");
+
+                            b1.HasKey("NotificationScheduleId");
+
+                            b1.ToTable("notification_schedules");
+
+                            b1
+                                .ToJson("trigger")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("NotificationScheduleId");
+                        });
+
+                    b.Navigation("Audience")
+                        .IsRequired();
+
+                    b.Navigation("Message")
+                        .IsRequired();
+
+                    b.Navigation("OwnerUser");
+
+                    b.Navigation("Trigger")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.OAuthAuthorizationRequest", b =>

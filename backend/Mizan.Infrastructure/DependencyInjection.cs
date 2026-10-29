@@ -91,6 +91,7 @@ public static class DependencyInjection
         services.AddScoped<INutritionAiService, NutritionAiService>();
         services.AddScoped<IStreakService, StreakService>();
         services.AddScoped<IAchievementEvaluator, AchievementEvaluator>();
+        services.AddScoped<IAchievementCards, AchievementCards>();
         services.AddScoped<INotificationWriter, NotificationWriter>();
 
         // Identity - the backend owns auth end to end since v2 (docs/ARCHITECTURE.md#identity).
@@ -156,6 +157,7 @@ public static class DependencyInjection
         services.AddScoped<IOutboxHandler, PushJobHandler>();
         services.AddScoped<IOutboxHandler, EveningReminderJobHandler>();
         services.AddScoped<IOutboxHandler, TelegramMessageJobHandler>();
+        services.AddScoped<IOutboxHandler, NotificationDeliveryJobHandler>();
 
         // Messages to a linked Telegram chat go through the bot service, which alone holds the
         // token (docs/TELEGRAM.md#evening-reminder). Off until Telegram.BotServiceUrl is set.
@@ -171,7 +173,7 @@ public static class DependencyInjection
         services.AddHttpClient(SystemProbes.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(3));
         services.AddScoped<ISystemProbes, SystemProbes>();
         services.AddHostedService<OutboxDispatcher>();
-        services.AddHostedService<EveningReminderScheduler>();
+        services.AddHostedService<NotificationSchedulerService>();
 
         // Billing
         services.AddScoped<IEntitlementService, EntitlementService>();

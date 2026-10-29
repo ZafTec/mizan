@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
+using Mizan.Application.Notifications;
 using Mizan.Domain.Entities;
 using Mizan.Domain.Planning;
 using Mizan.Domain.Streaks;
@@ -14,13 +15,15 @@ public sealed record EveningReminderJob(Guid UserId, Guid PlanId, DateOnly Day, 
 /// (docs/PLANNING.md#telegram). Everyone who follows the plan is reminded: its
 /// owner and, for a household plan, each member, each in their own time zone and
 /// with their own diary, unless their own personal plan is the one they follow
-/// that day. A scan schedules each person's next reminder as an outbox job keyed
-/// by person, day and time, so scanning again adds nothing and a moved window
-/// gets a job of its own. When the job runs, the reminder is checked again
-/// against the plans as they are now and sent as an in-app notification, which
-/// carries it to push and, when the person has opted in, to Telegram.
+/// that day. It is the event source of the built-in "evening-reminder" schedule
+/// (docs/ARCHITECTURE.md#notifications): each scheduler scan stages each person's
+/// next reminder as an outbox job keyed by person, day and time, so scanning again
+/// adds nothing and a moved window gets a job of its own. When the job runs, the
+/// reminder is checked again against the plans as they are now and sent through
+/// the notification writer, to each channel the person allows for reminders.
+/// Turning the schedule off stops reminders already queued.
 /// </summary>
-public sealed class EveningReminders
+public sealed class EveningReminders : INotificationEventSource
 {
     public const string NotificationType = "evening_reminder";
     public const string NotificationTitle = "Eating window";
@@ -39,20 +42,21 @@ public sealed class EveningReminders
         _time = time;
     }
 
+    public string Event => NotificationScheduler.EatingWindowEndEvent;
+
     /// <summary>
-    /// Queues the reminder of everyone following an active plan that has an eating window whose
+    /// Stages the reminder of everyone following an active plan that has an eating window whose
     /// next reminder falls within <see cref="EveningReminderSchedule.Lookahead"/>. Returns how many
-    /// were found; one already queued is found again and not duplicated.
+    /// were found; one already queued is found again and not duplicated. The caller saves.
     /// </summary>
-    public async Task<int> ScheduleAsync(CancellationToken cancellationToken)
+    public async Task<int> StageAsync(NotificationSchedule schedule, DateTimeOffset now, DateTimeOffset horizon, CancellationToken cancellationToken)
     {
-        var now = _time.GetUtcNow();
-        var horizon = DateOnly.FromDateTime(now.UtcDateTime).AddDays(2);
+        var lastDay = DateOnly.FromDateTime(now.UtcDateTime).AddDays(2);
 
         // Every active plan, with a window or without: a plan without one still decides
         // that its follower is not reminded about another plan's window that day.
         var plans = await ActivePlans()
-            .Where(p => p.StartDate <= horizon)
+            .Where(p => p.StartDate <= lastDay)
             .Select(Window)
             .ToListAsync(cancellationToken);
         if (!plans.Any(p => p.WindowEnd is not null)) return 0;
@@ -80,7 +84,7 @@ public sealed class EveningReminders
         {
             var zone = StreakClock.Zone(zones.GetValueOrDefault(userId));
             if (EveningReminderSchedule.NextFor(Ordered(followers[userId], userId), zone, now, lastSent.GetValueOrDefault(userId)) is not { } next) continue;
-            if (next.Due.At > now + EveningReminderSchedule.Lookahead) continue;
+            if (next.Due.At > horizon) continue;
 
             var at = next.Due.At.UtcDateTime;
             await _outbox.ScheduleAsync(
@@ -92,7 +96,6 @@ public sealed class EveningReminders
             staged++;
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
         return staged;
     }
 
@@ -103,6 +106,9 @@ public sealed class EveningReminders
     /// </summary>
     public async Task<bool> SendAsync(EveningReminderJob job, CancellationToken cancellationToken)
     {
+        if (!await _context.NotificationSchedules.AsNoTracking().AnyAsync(s => s.Key == NotificationScheduler.EveningReminderKey && s.Enabled, cancellationToken))
+            return false;
+
         var now = _time.GetUtcNow();
         var households = await _context.HouseholdMembers.AsNoTracking()
             .Where(m => m.UserId == job.UserId)
@@ -126,7 +132,10 @@ public sealed class EveningReminders
         var text = EveningReminderText.Build(plan.WindowEnd!.Value, calories, plan.TargetCalories);
 
         // The day is named so a reminder sent the evening before opens the right day.
-        await _notifications.AddAsync(job.UserId, NotificationType, NotificationTitle, text, $"/meal-plan/{plan.PlanId}?day={job.Day:yyyy-MM-dd}", cancellationToken);
+        var link = $"/meal-plan/{plan.PlanId}?day={job.Day:yyyy-MM-dd}";
+        await _notifications.SendAsync(
+            new NotificationSend(job.UserId, NotificationType, NotificationMessages.EveningReminder(NotificationTitle, text, plan.WindowEnd.Value, calories, plan.TargetCalories, link), link),
+            cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
         return true;
     }

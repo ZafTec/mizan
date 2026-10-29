@@ -53,4 +53,5 @@ public static class EmailKinds
     public const string ContactReceived = "contact.received";
     public const string ContactReply = "contact.reply";
     public const string SettingsTest = "settings.test";
+    public const string Notification = "notification";
 }

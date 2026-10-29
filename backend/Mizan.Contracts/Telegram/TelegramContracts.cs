@@ -32,11 +32,34 @@ public record MiniAppSessionResponse(string Token, DateTime ExpiresAt);
 
 /// <summary>
 /// Body of <c>POST /internal/notify</c> on the bot service, sent by the API's
-/// outbox with the shared service key: a plain-text line for one linked chat,
-/// and optionally a Mini App path for an <b>Open</b> button. The bot escapes the
-/// text and leaves the button out when the Mini App is not HTTPS.
+/// outbox with the shared service key. <see cref="Text"/> is the plain-text
+/// form every sender fills; <see cref="Card"/>, when present, is the structured
+/// notification the bot renders instead (docs/TELEGRAM.md#notifications-in-telegram).
+/// Without a card the bot escapes the text and adds an <b>Open</b> button for
+/// <see cref="OpenPath"/> when the Mini App is HTTPS.
 /// </summary>
 /// <param name="TelegramUserId">The linked Telegram user; in a private chat it is also the chat id.</param>
 /// <param name="Text">Plain text, not HTML.</param>
 /// <param name="OpenPath">A path under the Mini App base, such as <c>plan?planId=...&amp;day=...</c>.</param>
-public record TelegramNotifyRequest(long TelegramUserId, string Text, string? OpenPath = null);
+/// <param name="Card">The structured message, or null for a plain line.</param>
+public record TelegramNotifyRequest(long TelegramUserId, string Text, string? OpenPath = null, TelegramNotifyCard? Card = null);
+
+/// <summary>
+/// A notification as the bot renders it: a bold title, the body and the facts as short lines, as a
+/// photo caption when there is an image, with one inline button per action.
+/// </summary>
+/// <param name="ImageUrl">A public HTTPS image Telegram fetches itself; when it cannot, the bot sends the text alone.</param>
+public record TelegramNotifyCard(
+    string Title,
+    string? Body,
+    string? ImageUrl,
+    IReadOnlyList<TelegramNotifyButton> Buttons,
+    IReadOnlyList<Notifications.NotificationFact> Facts);
+
+/// <summary>
+/// One button. A Mini App page (<see cref="MiniAppPages"/>) opens inside Telegram when the Mini App is
+/// HTTPS; otherwise the web path opens the app in the browser when the public address is HTTPS.
+/// </summary>
+/// <param name="MiniAppPath">A path under the Mini App base, or null when the Mini App has no such page.</param>
+/// <param name="WebPath">The app path, such as <c>/achievements</c>.</param>
+public record TelegramNotifyButton(string Label, string? MiniAppPath, string WebPath);

@@ -83,7 +83,7 @@ public class TelegramForAdminsTests
         foreach (var request in asked)
         {
             (await NotifyAsync(telegram, request, ServiceKey)).Should().Be(StatusCodes.Status204NoContent);
-            telegram.LastText(request.TelegramUserId).Should().StartWith("Test User drafted a meal plan for you");
+            telegram.LastText(request.TelegramUserId).Should().StartWith("<b>Test User drafted a meal plan for you</b>");
         }
     }
 
