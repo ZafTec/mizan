@@ -1194,8 +1194,10 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
             entity.Property(e => e.Enabled).HasColumnName("enabled");
             entity.Property(e => e.NextRunAt).HasColumnName("next_run_at");
             entity.Property(e => e.LastRunAt).HasColumnName("last_run_at");
+            entity.Property(e => e.SkipUntil).HasColumnName("skip_until");
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
+            entity.OwnsOne(e => e.Reminder, reminder => reminder.ToJson("reminder"));
             entity.OwnsOne(e => e.Audience, audience => audience.ToJson("audience"));
             entity.OwnsOne(e => e.Message, message =>
             {

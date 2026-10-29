@@ -48,6 +48,27 @@ public class NotificationTemplate
 }
 
 /// <summary>
+/// What makes a person's schedule a reminder (docs/ARCHITECTURE.md#reminders): its kind and what it
+/// is tied to. Stored as JSON beside the trigger; null on every other schedule.
+/// </summary>
+public class ReminderDetails
+{
+    /// <summary>One of <see cref="ReminderKinds"/>.</summary>
+    public string Kind { get; set; } = ReminderKinds.Custom;
+
+    public Guid? WorkoutTemplateId { get; set; }
+    public Guid? MealPlanId { get; set; }
+    public Guid? PrepSessionId { get; set; }
+
+    /// <summary>Pre-cook: when the prep starts on the person's clock, and how long before it to remind.</summary>
+    public TimeOnly? PrepTime { get; set; }
+    public int? LeadMinutes { get; set; }
+
+    /// <summary>Meal log: the meal it is for, such as <c>BREAKFAST</c>.</summary>
+    public string? MealType { get; set; }
+}
+
+/// <summary>
 /// The one kind of schedule every timed notice uses (docs/ARCHITECTURE.md#notifications): who owns
 /// it, who it reaches, what it says, on which channels and when. The scheduler stages one outbox
 /// job per occurrence, recipient and channel, keyed so a second scan or a retry adds nothing.
@@ -73,6 +94,13 @@ public class NotificationSchedule
     public bool Enabled { get; set; } = true;
     public DateTime? NextRunAt { get; set; }
     public DateTime? LastRunAt { get; set; }
+
+    /// <summary>Deliveries of occurrences before this instant are dropped: a reminder skipped or done for today.</summary>
+    public DateTime? SkipUntil { get; set; }
+
+    /// <summary>Set on a person's own reminder; null on every other schedule.</summary>
+    public ReminderDetails? Reminder { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

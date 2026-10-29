@@ -37,7 +37,7 @@ public static class NotificationKinds
     public static IReadOnlyList<NotificationKindInfo> All { get; } =
     [
         new(Achievements, "Achievements and streaks", "Badges you earn and streak milestones.", Product),
-        new(Reminders, "Reminders", "The evening reminder before your eating window closes.", Product),
+        new(Reminders, "Reminders", "Reminders you set, and the evening reminder before your eating window closes.", Product),
         new(Planning, "Meal plans", "Plans drafted for you, and answers to plans you sent.", Product),
         new(Coaching, "Coaching", "Requests and changes from coaches and clients.", Product),
         new(Household, "Household", "Invitations and answers from your household.", Product),
@@ -57,7 +57,7 @@ public static class NotificationKinds
     public static string ForType(string? type) => type switch
     {
         "achievement_unlocked" or "streak_milestone" => Achievements,
-        "evening_reminder" => Reminders,
+        "evening_reminder" or "reminder" => Reminders,
         "meal_plan_drafted" or "meal_plan_accepted" or "meal_plan_declined" or "shopping_list_ready" => Planning,
         "trainer_request" or "trainer_request_response" or "trainer_relationship_ended" => Coaching,
         "household_invite" or "household_invite_response" => Household,

@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Mizan.Infrastructure.Migrations
 {
     [DbContext(typeof(MizanDbContext))]
-    [Migration("20261029072003_NotificationMessagesAndSchedules")]
+    [Migration("20261029080530_NotificationMessagesAndSchedules")]
     partial class NotificationMessagesAndSchedules
     {
         /// <inheritdoc />
@@ -2787,6 +2787,10 @@ namespace Mizan.Infrastructure.Migrations
                     b.Property<Guid?>("OwnerUserId")
                         .HasColumnType("uuid")
                         .HasColumnName("owner_user_id");
+
+                    b.Property<DateTime?>("SkipUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("skip_until");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
@@ -5929,6 +5933,38 @@ namespace Mizan.Infrastructure.Migrations
                             b1.Navigation("Facts");
                         });
 
+                    b.OwnsOne("Mizan.Domain.Entities.ReminderDetails", "Reminder", b1 =>
+                        {
+                            b1.Property<Guid>("NotificationScheduleId")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<string>("Kind")
+                                .IsRequired();
+
+                            b1.Property<int?>("LeadMinutes");
+
+                            b1.Property<Guid?>("MealPlanId");
+
+                            b1.Property<string>("MealType");
+
+                            b1.Property<Guid?>("PrepSessionId");
+
+                            b1.Property<TimeOnly?>("PrepTime");
+
+                            b1.Property<Guid?>("WorkoutTemplateId");
+
+                            b1.HasKey("NotificationScheduleId");
+
+                            b1.ToTable("notification_schedules");
+
+                            b1
+                                .ToJson("reminder")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("NotificationScheduleId");
+                        });
+
                     b.OwnsOne("Mizan.Domain.Notifications.NotificationTrigger", "Trigger", b1 =>
                         {
                             b1.Property<Guid>("NotificationScheduleId")
@@ -5939,6 +5975,8 @@ namespace Mizan.Infrastructure.Migrations
                             b1.Property<int>("Days");
 
                             b1.Property<string>("Event");
+
+                            b1.Property<int>("IntervalMinutes");
 
                             b1.Property<int>("Kind");
 
@@ -5965,6 +6003,8 @@ namespace Mizan.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("OwnerUser");
+
+                    b.Navigation("Reminder");
 
                     b.Navigation("Trigger")
                         .IsRequired();

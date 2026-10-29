@@ -16,6 +16,13 @@ public enum NotificationTriggerKind
     /// eating window closing; the event's source says who it happens to and when.
     /// </summary>
     EventOffset = 3,
+
+    /// <summary>
+    /// Every <see cref="NotificationTrigger.IntervalMinutes"/> from <see cref="NotificationTrigger.At"/>, the first
+    /// firing. A whole number of days keeps the recipient's wall-clock time (<see cref="NotificationTrigger.LocalTime"/>)
+    /// across daylight saving; a shorter interval counts real minutes.
+    /// </summary>
+    Interval = 4,
 }
 
 /// <summary>When a schedule fires. Stored as JSON on the schedule; only the fields its kind uses are set.</summary>
@@ -38,6 +45,9 @@ public class NotificationTrigger
     /// <summary>EventOffset: minutes after the event; negative is before it.</summary>
     public int OffsetMinutes { get; set; }
 
+    /// <summary>Interval: minutes between firings.</summary>
+    public int IntervalMinutes { get; set; }
+
     public static NotificationTrigger Once(DateTime atUtc) => new() { Kind = NotificationTriggerKind.Once, At = DateTime.SpecifyKind(atUtc, DateTimeKind.Utc) };
 
     public static NotificationTrigger Daily(TimeOnly localTime) => new() { Kind = NotificationTriggerKind.Daily, LocalTime = localTime };
@@ -47,6 +57,10 @@ public class NotificationTrigger
 
     public static NotificationTrigger AfterEvent(string name, int offsetMinutes) =>
         new() { Kind = NotificationTriggerKind.EventOffset, Event = name, OffsetMinutes = offsetMinutes };
+
+    /// <summary>Every <paramref name="minutes"/> from <paramref name="firstUtc"/>; <paramref name="localTime"/> is the first firing's time on the recipient's clock.</summary>
+    public static NotificationTrigger Every(DateTime firstUtc, int minutes, TimeOnly? localTime = null) =>
+        new() { Kind = NotificationTriggerKind.Interval, At = DateTime.SpecifyKind(firstUtc, DateTimeKind.Utc), IntervalMinutes = minutes, LocalTime = localTime };
 
     public static int DaysMask(IEnumerable<DayOfWeek> days) => days.Aggregate(0, (mask, day) => mask | (1 << (int)day));
 
@@ -86,10 +100,38 @@ public static class NotificationOccurrences
                 }
                 return null;
 
+            case NotificationTriggerKind.Interval:
+                if (trigger.At is not { } first || trigger.IntervalMinutes <= 0) return null;
+                var start = new DateTimeOffset(DateTime.SpecifyKind(first, DateTimeKind.Utc));
+                if (start > after) return start;
+
+                if (trigger.IntervalMinutes % MinutesPerDay == 0)
+                {
+                    // Whole days step along the recipient's calendar, so 08:00 stays 08:00.
+                    var everyDays = trigger.IntervalMinutes / MinutesPerDay;
+                    var startLocal = TimeZoneInfo.ConvertTime(start, zone);
+                    var startDay = DateOnly.FromDateTime(startLocal.DateTime);
+                    var clock = trigger.LocalTime ?? TimeOnly.FromDateTime(startLocal.DateTime);
+                    var afterDay = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(after, zone).DateTime);
+                    var steps = Math.Max(0, (afterDay.DayNumber - startDay.DayNumber) / everyDays - 1);
+                    for (var i = 0; i < 4; i++, steps++)
+                    {
+                        var candidate = Instant(startDay.AddDays(steps * everyDays), clock, zone);
+                        if (candidate > after) return candidate;
+                    }
+                    return null;
+                }
+
+                var elapsed = (long)Math.Floor((after - start).TotalMinutes / trigger.IntervalMinutes) + 1;
+                var next = start.AddMinutes(elapsed * trigger.IntervalMinutes);
+                return next > after ? next : next.AddMinutes(trigger.IntervalMinutes);
+
             default:
                 return null;
         }
     }
+
+    private const int MinutesPerDay = 24 * 60;
 
     /// <summary>The instant a wall-clock time on a local day happens in a zone, with the gap and overlap rules above.</summary>
     public static DateTimeOffset Instant(DateOnly day, TimeOnly time, TimeZoneInfo zone)

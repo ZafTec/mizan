@@ -91,10 +91,12 @@ namespace Mizan.Infrastructure.Migrations
                     enabled = table.Column<bool>(type: "boolean", nullable: false),
                     next_run_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     last_run_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    skip_until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
                     updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
                     audience = table.Column<string>(type: "jsonb", nullable: false),
                     message = table.Column<string>(type: "jsonb", nullable: false),
+                    reminder = table.Column<string>(type: "jsonb", nullable: true),
                     trigger = table.Column<string>(type: "jsonb", nullable: false)
                 },
                 constraints: table =>
