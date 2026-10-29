@@ -25,6 +25,7 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
   unreadNotificationCount,
+  updateNotificationPreferences,
   type Notification,
 } from "@/lib/api/notifications";
 import { rowMotion } from "@/components/motion/list";
@@ -187,6 +188,29 @@ function NotificationsInbox({ phone, focusToken, close }: SidePanelContent) {
     if (items && unread !== listUnread) void load(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only a change in the count reloads
   }, [unread]);
+
+  /** The opt-out every news and offers notice carries: marketing off on every channel. */
+  const stopMarketing = async () => {
+    try {
+      await updateNotificationPreferences({
+        kinds: [
+          {
+            kind: "marketing",
+            inApp: false,
+            telegram: false,
+            push: false,
+            email: false,
+          },
+        ],
+      });
+      appToast.success("News and offers are off");
+    } catch (error) {
+      appToast.error(
+        error,
+        "Could not turn them off. Try Settings, Notifications.",
+      );
+    }
+  };
 
   /** Opens the notification's link, or one of its actions' paths. */
   async function open(item: Notification, path = item.linkUrl) {
@@ -383,6 +407,17 @@ function NotificationsInbox({ phone, focusToken, close }: SidePanelContent) {
                           {action.label}
                         </button>
                       ))}
+                    </div>
+                  )}
+                  {item.kind === "marketing" && (
+                    <div className="-mt-1 pr-4 pb-3 pl-9">
+                      <button
+                        type="button"
+                        onClick={() => void stopMarketing()}
+                        className="inline-flex min-h-9 items-center text-sm text-muted-foreground underline-offset-2 hover:underline"
+                      >
+                        Turn off news and offers
+                      </button>
                     </div>
                   )}
                 </li>

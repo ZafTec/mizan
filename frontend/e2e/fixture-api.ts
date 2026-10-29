@@ -25,6 +25,7 @@ import {
 } from "./fixture-users";
 import { handleAdminOps, isAdminOps } from "./fixture-admin-ops";
 import { handleAdminFlags } from "./fixture-admin-flags";
+import { handleAdminNotifications } from "./fixture-admin-notifications";
 import {
   handleAiPlanning,
   initialAiPlanning,
@@ -965,6 +966,14 @@ const server = Bun.serve({
       json,
     );
     if (flagged) return flagged;
+    const campaigns = await handleAdminNotifications(
+      request,
+      url,
+      token!,
+      state.role,
+      json,
+    );
+    if (campaigns) return campaigns;
     const assisted = await handleAiPlanning(
       request,
       url,

@@ -1569,6 +1569,425 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/notification-campaigns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["NotificationCampaignDto"][];
+                        "application/json": components["schemas"]["NotificationCampaignDto"][];
+                        "text/json": components["schemas"]["NotificationCampaignDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SaveNotificationCampaignRequest"];
+                    "text/json": components["schemas"]["SaveNotificationCampaignRequest"];
+                    "application/*+json": components["schemas"]["SaveNotificationCampaignRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["NotificationCampaignDto"];
+                        "application/json": components["schemas"]["NotificationCampaignDto"];
+                        "text/json": components["schemas"]["NotificationCampaignDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/notification-campaigns/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["NotificationCampaignDto"];
+                        "application/json": components["schemas"]["NotificationCampaignDto"];
+                        "text/json": components["schemas"]["NotificationCampaignDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SaveNotificationCampaignRequest"];
+                    "text/json": components["schemas"]["SaveNotificationCampaignRequest"];
+                    "application/*+json": components["schemas"]["SaveNotificationCampaignRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["NotificationCampaignDto"];
+                        "application/json": components["schemas"]["NotificationCampaignDto"];
+                        "text/json": components["schemas"]["NotificationCampaignDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/notification-campaigns/audience": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CampaignAudienceRequest"];
+                    "text/json": components["schemas"]["CampaignAudienceRequest"];
+                    "application/*+json": components["schemas"]["CampaignAudienceRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CampaignAudiencePreviewDto"];
+                        "application/json": components["schemas"]["CampaignAudiencePreviewDto"];
+                        "text/json": components["schemas"]["CampaignAudiencePreviewDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/notification-campaigns/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CampaignPreviewRequest"];
+                    "text/json": components["schemas"]["CampaignPreviewRequest"];
+                    "application/*+json": components["schemas"]["CampaignPreviewRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CampaignPreviewDto"];
+                        "application/json": components["schemas"]["CampaignPreviewDto"];
+                        "text/json": components["schemas"]["CampaignPreviewDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/notification-campaigns/{id}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CampaignTestResultDto"];
+                        "application/json": components["schemas"]["CampaignTestResultDto"];
+                        "text/json": components["schemas"]["CampaignTestResultDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/notification-campaigns/{id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ActivateNotificationCampaignRequest"];
+                    "text/json": components["schemas"]["ActivateNotificationCampaignRequest"];
+                    "application/*+json": components["schemas"]["ActivateNotificationCampaignRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["NotificationCampaignDto"];
+                        "application/json": components["schemas"]["NotificationCampaignDto"];
+                        "text/json": components["schemas"]["NotificationCampaignDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/notification-campaigns/{id}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["NotificationCampaignDto"];
+                        "application/json": components["schemas"]["NotificationCampaignDto"];
+                        "text/json": components["schemas"]["NotificationCampaignDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/notification-campaigns/{id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["NotificationCampaignDto"];
+                        "application/json": components["schemas"]["NotificationCampaignDto"];
+                        "text/json": components["schemas"]["NotificationCampaignDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/notification-campaigns/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["NotificationCampaignDto"];
+                        "application/json": components["schemas"]["NotificationCampaignDto"];
+                        "text/json": components["schemas"]["NotificationCampaignDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/prices/regions": {
         parameters: {
             query?: never;
@@ -7840,6 +8259,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Notifications/opt-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["MarketingOptOutRequest"];
+                    "text/json": components["schemas"]["MarketingOptOutRequest"];
+                    "application/*+json": components["schemas"]["MarketingOptOutRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MarketingOptOutDto"];
+                        "application/json": components["schemas"]["MarketingOptOutDto"];
+                        "text/json": components["schemas"]["MarketingOptOutDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Nutrition/log": {
         parameters: {
             query?: never;
@@ -11942,6 +12404,10 @@ export interface components {
             /** Format: date-time */
             earnedAt?: string | null;
         };
+        ActivateNotificationCampaignRequest: {
+            /** Format: int32 */
+            audienceCount: number;
+        };
         AddShoppingListItemRequest: {
             itemName: string;
             /** Format: double */
@@ -12601,6 +13067,104 @@ export interface components {
             pageSize: number;
             /** Format: int32 */
             readonly totalPages: number;
+        };
+        CampaignAudienceFilter: {
+            plans?: string[] | null;
+            signedUpFrom?: string | null;
+            signedUpTo?: string | null;
+            /** Format: int32 */
+            inactiveDays?: number | null;
+            telegramLinked?: boolean | null;
+            hasHousehold?: boolean | null;
+            timeZones?: string[] | null;
+        };
+        CampaignAudiencePreviewDto: {
+            label: string;
+            /** Format: int32 */
+            matched: number;
+            /** Format: int32 */
+            reachable: number;
+            channels: components["schemas"]["CampaignChannelCount"][];
+        };
+        CampaignAudienceRequest: {
+            purpose: string;
+            audience?: components["schemas"]["CampaignAudienceFilter"];
+            channels?: string[] | null;
+        };
+        CampaignChannelCount: {
+            channel: string;
+            /** Format: int32 */
+            reachable: number;
+        };
+        CampaignChannelPreview: {
+            channel: string;
+            title: string;
+            body?: string | null;
+            imageUrl?: string | null;
+            buttons: string[];
+            footer?: string | null;
+        };
+        CampaignChannelReport: {
+            channel: string;
+            /** Format: int32 */
+            queued: number;
+            /** Format: int32 */
+            sent: number;
+            /** Format: int32 */
+            failed: number;
+            /** Format: int32 */
+            skipped: number;
+            /** Format: int32 */
+            opened?: number | null;
+        };
+        CampaignContent: {
+            title: string;
+            body?: string | null;
+            imageUrl?: string | null;
+            linkPath?: string | null;
+            actions?: components["schemas"]["NotificationAction"][] | null;
+        };
+        CampaignPreviewDto: {
+            channels: components["schemas"]["CampaignChannelPreview"][];
+            warnings: string[];
+        };
+        CampaignPreviewRequest: {
+            purpose: string;
+            message: components["schemas"]["CampaignContent"];
+            channels?: string[] | null;
+        };
+        CampaignReportTotals: {
+            /** Format: int32 */
+            queued: number;
+            /** Format: int32 */
+            sent: number;
+            /** Format: int32 */
+            failed: number;
+            /** Format: int32 */
+            skipped: number;
+            /** Format: int32 */
+            opened: number;
+        };
+        CampaignSkippedChannel: {
+            channel: string;
+            reason: string;
+        };
+        CampaignTestResultDto: {
+            queued: string[];
+            skipped: components["schemas"]["CampaignSkippedChannel"][];
+        };
+        CampaignTiming: {
+            send: string;
+            date?: string | null;
+            time?: string | null;
+            days?: string[] | null;
+            /** Format: int32 */
+            everyDays?: number | null;
+            /** Format: int32 */
+            everyHours?: number | null;
+            event?: string | null;
+            /** Format: int32 */
+            eventDays?: number | null;
         };
         CategoryBreakdown: {
             category: string;
@@ -13871,6 +14435,13 @@ export interface components {
             failed: number;
             kinds: string[];
         };
+        MarketingOptOutDto: {
+            kind: string;
+            label: string;
+        };
+        MarketingOptOutRequest: {
+            token: string;
+        };
         McpConnectionDto: {
             /** Format: uuid */
             id: string;
@@ -14201,6 +14772,37 @@ export interface components {
         NotificationAction: {
             label: string;
             path: string;
+        };
+        NotificationCampaignDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            purpose: string;
+            kind: string;
+            status: string;
+            phase: string;
+            message: components["schemas"]["CampaignContent"];
+            channels: string[];
+            audience: components["schemas"]["CampaignAudienceFilter"];
+            audienceLabel: string;
+            timing: components["schemas"]["CampaignTiming"];
+            summary: string;
+            timeZoneId: string;
+            /** Format: date-time */
+            nextRunAt?: string | null;
+            /** Format: date-time */
+            lastRunAt?: string | null;
+            /** Format: int32 */
+            confirmedAudience?: number | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: date-time */
+            activatedAt?: string | null;
+            createdByName?: string | null;
+            totals: components["schemas"]["CampaignReportTotals"];
+            report: components["schemas"]["CampaignChannelReport"][];
         };
         NotificationDto: {
             /** Format: uuid */
@@ -15091,6 +15693,15 @@ export interface components {
         };
         RuntimeSettingsDto: {
             groups: components["schemas"]["RuntimeSettingGroupDto"][];
+        };
+        SaveNotificationCampaignRequest: {
+            name: string;
+            purpose: string;
+            message: components["schemas"]["CampaignContent"];
+            timing: components["schemas"]["CampaignTiming"];
+            audience?: components["schemas"]["CampaignAudienceFilter"];
+            channels?: string[] | null;
+            timeZoneId?: string | null;
         };
         SavePriceSourceRequest: {
             name: string;
