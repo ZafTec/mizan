@@ -214,6 +214,8 @@ public sealed class TelegramClient
                 new { command = "shop", description = "Your shopping list, ten items at a time" },
                 new { command = "planme", description = "Draft a week of meals, e.g. /planme high protein, cheap" },
                 new { command = "notifications", description = "Get the app's notifications here, and choose which kinds" },
+                new { command = "remind", description = "Set a reminder" },
+                new { command = "reminders", description = "Your reminders, and stop one" },
                 new { command = "help", description = "What this bot can do" },
                 new { command = "unlink", description = "Disconnect this chat from your account" },
             },

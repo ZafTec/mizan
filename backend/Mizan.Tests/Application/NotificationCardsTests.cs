@@ -110,6 +110,23 @@ public class NotificationCardsTests
         rendered.Keyboard!.InlineKeyboard.Single().Single().WebApp!.Url.Should().Be("https://mizan.test/tg/plan");
     }
 
+    [Fact]
+    public void AReminderCard_EndsWithItsDoneSnoozeAndSkipButtonsInOneRow()
+    {
+        var id = Guid.Parse("77777777-7777-4777-8777-777777777777");
+        var card = Card("Time for your workout", null, buttons: [new TelegramNotifyButton("Start a workout", null, "/workouts")]) with
+        {
+            Callbacks = TelegramReminderCallbacks.For(id),
+        };
+
+        var rows = NotificationCards.Render(new TelegramNotifyRequest(1, "Time for your workout", null, card), Https).Keyboard!.InlineKeyboard;
+
+        rows.Should().HaveCount(2);
+        rows[0].Single().Url.Should().Be("https://mizan.test/workouts");
+        rows[1].Select(b => (b.Text, b.CallbackData)).Should().Equal(
+            ("Done", $"ra:done:{id:N}"), ("Snooze 30 min", $"ra:snooze:{id:N}"), ("Skip today", $"ra:skip:{id:N}"));
+    }
+
     private static TelegramNotifyCard Card(
         string title,
         string? body,

@@ -112,6 +112,14 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
     public List<JsonElement> SessionsPosted { get; } = [];
     public List<JsonElement> ProfilePuts { get; } = [];
 
+    /// <summary>Every call the bot made under api/Reminders: method, path after the host, body (default when none).</summary>
+    public List<(string Method, string Path, JsonElement Body)> ReminderCalls { get; } = [];
+
+    /// <summary>What api/Reminders answers: the list for a GET, one reminder for a POST or PUT, an action result for done, snooze and skip.</summary>
+    public string RemindersJson { get; set; } = """{"items":[],"activeCount":0,"activeLimit":30,"isPro":true}""";
+    public string ReminderJson { get; set; } = """{"id":"77777777-7777-4777-8777-777777777777","title":"Drink water","summary":"Weekdays at 07:00","nextRunText":"Mon 2 Nov at 07:00","enabled":true}""";
+    public string ReminderActionJson { get; set; } = """{"reminder":{"id":"77777777-7777-4777-8777-777777777777","title":"Drink water"},"message":"Snoozed. I will remind you again at 08:47.","snoozedUntil":"2026-11-02T08:47:00Z"}""";
+
     /// <summary>Every Telegram Bot API call, by method name, with its JSON body.</summary>
     public List<(string Method, JsonElement Body)> TelegramCalls { get; } = [];
 
@@ -263,7 +271,7 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
         },
     };
 
-    public static Update Press(string data) => new()
+    public static Update Press(string data, string? messageText = null) => new()
     {
         UpdateId = 2,
         CallbackQuery = new CallbackQuery
@@ -271,7 +279,7 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
             Id = "cb",
             From = new TelegramUser { Id = 42 },
             Data = data,
-            Message = new Message { MessageId = 11, Chat = new Chat { Id = 99, Type = "private" } },
+            Message = new Message { MessageId = 11, Chat = new Chat { Id = 99, Type = "private" }, Text = messageText },
         },
     };
 
@@ -376,6 +384,13 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
                  "reply":{"id":"33333333-3333-4333-8333-333333333333","fromUser":false,"content":{{reply}},"createdAt":"2026-10-22T10:00:00Z"},
                  "performed":{{PerformedJson}},"consentRequired":{{ConsentRequiredJson}}}
                 """);
+        }
+        if (url.Contains("api/Reminders"))
+        {
+            var path = url[url.IndexOf("api/Reminders", StringComparison.Ordinal)..];
+            ReminderCalls.Add((request.Method.Method, path, body.Length == 0 ? default : JsonDocument.Parse(body).RootElement.Clone()));
+            if (request.Method == HttpMethod.Get) return Json(RemindersJson);
+            return path.EndsWith("/done") || path.EndsWith("/snooze") || path.EndsWith("/skip") ? Json(ReminderActionJson) : Json(ReminderJson);
         }
         if (url.Contains("api/MealPlans/generate"))
         {

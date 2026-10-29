@@ -12,6 +12,7 @@ public sealed record RenderedNotification(string Html, string? PhotoUrl, InlineK
 /// a body too long for the cap is shortened, never the title or facts. Each button opens its Mini App
 /// page when it has one and the Mini App is served over https, else its web page when that is https;
 /// a button that can do neither is left out, because Telegram refuses the whole message over it.
+/// A reminder's card adds a last row of buttons the bot answers itself (Done, Snooze, Skip today).
 /// A request without a card (queued before cards existed) is its text with one <b>Open</b> button.
 /// </summary>
 public static class NotificationCards
@@ -47,7 +48,11 @@ public static class NotificationCards
             .Select(b => Button(b, options))
             .OfType<InlineKeyboardButton>()
             .ToArray();
-        return new RenderedNotification(Fit(html, limit), photo, buttons.Length == 0 ? null : InlineKeyboardMarkup.Column(buttons));
+        var rows = buttons.Select(b => (IReadOnlyList<InlineKeyboardButton>)[b]).ToList();
+        // A reminder's Done, Snooze and Skip today answer here in the chat, side by side under the links.
+        if (card.Callbacks is { Count: > 0 } callbacks)
+            rows.Add(callbacks.Select(c => InlineKeyboardButton.Callback(c.Label, c.Data)).ToList());
+        return new RenderedNotification(Fit(html, limit), photo, rows.Count == 0 ? null : new InlineKeyboardMarkup { InlineKeyboard = rows });
     }
 
     private static InlineKeyboardButton? Button(TelegramNotifyButton button, TelegramBotOptions options)

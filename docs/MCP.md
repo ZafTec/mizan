@@ -55,6 +55,8 @@ Planning tools follow [PLANNING](PLANNING.md). `planning:read` covers `list_meal
 
 Notification tools: `notifications:read` covers `list_notifications`, `get_unread_notification_count` and `get_notification_preferences` (each kind's channels, quiet hours, and whether Telegram is linked); `notifications:write` adds `mark_notification_read`, `mark_all_notifications_read` and `update_notification_preferences`, which changes only the kinds and channels it names and sets or clears quiet hours ([notifications](ARCHITECTURE.md#notifications)).
 
+Reminder tools ([reminders](ARCHITECTURE.md#reminders)) use the same scopes: `list_reminders` needs `notifications:read`; `create_reminder`, `update_reminder` and `delete_reminder` need `notifications:write`. They call `/api/Reminders`, which holds the kinds, the hourly floor and the plan's cap.
+
 **Resources**: `mizan://profile`, `mizan://goals/current`, `mizan://nutrition/today`, `mizan://streak`, `mizan://meal-plans/today`, and templates for `diary/{date}`, `recipes/{id}`, `workouts/{id}`, `meal-plans/{id}`, `shopping-lists/{id}`. Each needs the scope of the matching tool.
 
 **Prompts**: `log_my_day`, `plan_my_week`, `grocery_run`, `weekly_review`, `workout_planner`, `macro_rescue`, `recipe_from_leftovers`, `trainer_checkin`. `plan_my_week` builds the plan with `create_meal_plan` and `add_plan_entry`, passing the goal and stated limits as rules, and reads the violations back from `get_meal_plan`; `grocery_run` calls `generate_shopping_list` and reads the result with `get_shopping_list`. Neither asks the model to add up nutrition or amounts.

@@ -32,6 +32,7 @@ public sealed class UpdateHandler
     private readonly TelegramBotOptions _options;
     private readonly ILogger<UpdateHandler> _logger;
     private readonly PlanMeHandler _planMe;
+    private readonly RemindHandler _remind;
 
     public UpdateHandler(
         TelegramClient telegram,
@@ -44,6 +45,7 @@ public sealed class UpdateHandler
         _options = options.Value;
         _logger = logger;
         _planMe = new PlanMeHandler(telegram, api, options.Value);
+        _remind = new RemindHandler(telegram, api, ExplainFailure);
     }
 
     public async Task HandleAsync(Update update, CancellationToken ct)
@@ -200,6 +202,14 @@ public sealed class UpdateHandler
 
             case "/notifications":
                 await OnNotificationsAsync(chatId, user, argument, ct);
+                return;
+
+            case RemindHandler.Command:
+                await _remind.HandleCommandAsync(chatId, user, argument, ct);
+                return;
+
+            case RemindHandler.ListCommand:
+                await _remind.HandleListAsync(chatId, user, ct);
                 return;
 
             case "/unlink":
@@ -591,6 +601,12 @@ public sealed class UpdateHandler
         if (data.StartsWith("nk:", StringComparison.Ordinal) && data.Split(':') is [_, var kind, "on" or "off"] parts)
         {
             await SetKindAsync(chatId, user, kind, parts[2] == "on", ct);
+            return;
+        }
+
+        if (RemindHandler.IsCallback(data))
+        {
+            await _remind.HandleCallbackAsync(chatId, user, data, callback.Message.Text ?? callback.Message.Caption, ct);
             return;
         }
 
@@ -1220,6 +1236,7 @@ public sealed class UpdateHandler
         + "<b>/shop</b> - your shopping list, tick items off as you go\n"
         + "<b>/planme high protein, cheap</b> - draft a week of meals to confirm\n"
         + "<b>/notifications</b> - get the app's notifications here too (<b>on</b> or <b>off</b>), and choose which kinds\n"
+        + "<b>/remind</b> - set a reminder (<b>/remind drink water</b> for your own words); <b>/reminders</b> lists them\n"
         + "<b>/unlink</b> - disconnect this chat";
 
     private static string AnalysisCard(FoodAnalysisResult analysis)

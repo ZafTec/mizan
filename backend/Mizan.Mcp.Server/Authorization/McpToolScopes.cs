@@ -70,8 +70,8 @@ public static class McpToolScopes
         Add(McpScopes.ProfileWrite, "update_my_profile", "set_ai_consent");
 
         // Notifications
-        Add(McpScopes.NotificationsRead, "list_notifications", "get_unread_notification_count", "get_notification_preferences");
-        Add(McpScopes.NotificationsWrite, "mark_notification_read", "mark_all_notifications_read", "update_notification_preferences");
+        Add(McpScopes.NotificationsRead, "list_notifications", "get_unread_notification_count", "get_notification_preferences", "list_reminders");
+        Add(McpScopes.NotificationsWrite, "mark_notification_read", "mark_all_notifications_read", "update_notification_preferences", "create_reminder", "update_reminder", "delete_reminder");
 
         // Social
         Add(McpScopes.SocialRead, "get_social_profile", "list_social_follows", "get_social_feed");

@@ -214,6 +214,7 @@ builder.Services.AddMcpServer(options =>
 .WithTools<ExerciseTools>()
 .WithTools<SocialTools>()
 .WithTools<NotificationTools>()
+.WithTools<ReminderTools>()
 .WithTools<AdminTools>()
 .WithTools<AdminPlatformTools>()
 .WithTools<AchievementTools>()
