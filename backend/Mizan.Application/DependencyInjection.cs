@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<Notifications.CampaignAudiences>();
         services.AddScoped<Notifications.CampaignStager>();
         services.AddScoped<Notifications.CampaignReports>();
+        services.AddScoped<Notifications.GoalReachedNotifications>();
         services.AddScoped<Notifications.INotificationEventSource, Notifications.SignUpEvents>();
         services.AddScoped<Notifications.INotificationEventSource, Notifications.InactivityEvents>();
         services.AddScoped<Notifications.INotificationEventSource, Notifications.ProEndEvents>();

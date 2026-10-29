@@ -230,6 +230,70 @@ public class NotificationDeliveryTests
         }
     }
 
+    [Fact]
+    public async Task AMeasurementThatReachesTheTargetWeight_SendsOneGoalCard_AndReachingItAgainSendsNothing()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var world = new PlanningWorld(_fixture);
+        var (_, client) = await LinkedPersonAsync(world, "goal", 2010);
+        (await client.PostAsJsonAsync("/api/Goals", new { goalType = "weight_loss", targetWeight = 72m, weightUnit = "kg" })).EnsureSuccessStatusCode();
+        var today = DateTime.UtcNow.Date;
+
+        // Heading down from 75 kg: 72.5 is not there yet, 71.8 is.
+        await LogWeightAsync(client, today.AddDays(-3), 75m);
+        await LogWeightAsync(client, today.AddDays(-2), 72.5m);
+        await _fixture.DrainOutboxAsync();
+        _fixture.TelegramBot.Sent.Should().NotContain(s => s.Card != null && s.Card.Title == "You reached your target weight");
+        await LogWeightAsync(client, today.AddDays(-1), 71.8m);
+
+        // Back above the target and down again: the goal's target was already reported.
+        await LogWeightAsync(client, today, 72.4m);
+        await LogWeightAsync(client, today, 71.6m);
+        await _fixture.DrainOutboxAsync();
+
+        var sent = _fixture.TelegramBot.Sent.Where(s => s.Card?.Title == "You reached your target weight").Should().ContainSingle().Subject;
+        sent.TelegramUserId.Should().Be(2010);
+        sent.Card!.Facts.Should().Equal(new NotificationFact("Target", "72 kg"), new NotificationFact("Logged", "71.8 kg"));
+        sent.Card.Buttons.Should().ContainSingle().Which.Should().Be(new Mizan.Contracts.Telegram.TelegramNotifyButton("Open goal", null, "/goal"));
+
+        var list = await client.GetFromJsonAsync<NotificationListResult>("/api/Notifications");
+        var row = list!.Items.Should().ContainSingle(n => n.Type == "goal_reached").Subject;
+        row.Kind.Should().Be(NotificationKinds.Achievements);
+        row.Body.Should().Be("You logged 71.8 kg, which meets your target weight of 72 kg.");
+        row.Actions.Should().ContainSingle().Which.Path.Should().Be("/goal");
+    }
+
+    [Fact]
+    public async Task APersonWhoTurnedAchievementsOffInTelegram_SeesAReachedGoalOnlyInTheApp_AndOnce()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var world = new PlanningWorld(_fixture);
+        var (_, client) = await LinkedPersonAsync(world, "goal-quiet", 2011);
+        var off = await client.PutAsJsonAsync("/api/Notifications/preferences", new UpdateNotificationPreferencesRequest(
+            [new NotificationKindPreferenceUpdate(NotificationKinds.Achievements, Telegram: false)]));
+        off.StatusCode.Should().Be(HttpStatusCode.OK, await off.Content.ReadAsStringAsync());
+        (await client.PostAsJsonAsync("/api/Goals", new { goalType = "muscle_gain", targetWeight = 176m, weightUnit = "lb" })).EnsureSuccessStatusCode();
+        var today = DateTime.UtcNow.Date;
+
+        // 176 lb is 79.83 kg. Heading up from 78 kg.
+        await LogWeightAsync(client, today.AddDays(-2), 78m);
+        await LogWeightAsync(client, today.AddDays(-1), 80m);
+        await LogWeightAsync(client, today, 79m);
+        await LogWeightAsync(client, today, 80.2m);
+        await _fixture.DrainOutboxAsync();
+
+        _fixture.TelegramBot.Sent.Should().NotContain(s => s.TelegramUserId == 2011);
+        var list = await client.GetFromJsonAsync<NotificationListResult>("/api/Notifications");
+        var row = list!.Items.Should().ContainSingle(n => n.Type == "goal_reached").Subject;
+        row.Facts.Should().Equal(new NotificationFact("Target", "176 lb"), new NotificationFact("Logged", "176.4 lb"));
+    }
+
+    private static async Task LogWeightAsync(HttpClient client, DateTime date, decimal weightKg)
+    {
+        var logged = await client.PostAsJsonAsync("/api/BodyMeasurements", new { date, weightKg });
+        logged.StatusCode.Should().Be(HttpStatusCode.OK, await logged.Content.ReadAsStringAsync());
+    }
+
     /// <summary>A Pro person with a linked chat who turned Telegram notifications on.</summary>
     private async Task<(Guid Id, HttpClient Client)> LinkedPersonAsync(PlanningWorld world, string label, long telegramUserId)
     {

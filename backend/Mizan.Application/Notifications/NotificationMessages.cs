@@ -1,6 +1,7 @@
 using System.Globalization;
 using Mizan.Contracts.Notifications;
 using Mizan.Domain.Entities;
+using Mizan.Domain.Goals;
 using Mizan.Domain.Notifications;
 
 namespace Mizan.Application.Notifications;
@@ -26,6 +27,25 @@ public static class NotificationMessages
             imageUrl,
             [new NotificationAction("See achievements", AchievementsPath)],
             facts);
+    }
+
+    public const string GoalPath = "/goal";
+
+    /// <summary>A body target of the person's goal reached by a measurement, with the target and the logged value.</summary>
+    public static NotificationMessage GoalReached(GoalMetric metric, string target, string logged)
+    {
+        var (title, what) = metric switch
+        {
+            GoalMetric.Weight => ("You reached your target weight", "target weight"),
+            GoalMetric.BodyFat => ("You reached your body fat target", "body fat target"),
+            _ => ("You reached your muscle mass target", "muscle mass target"),
+        };
+        return new NotificationMessage(
+            NotificationKinds.Achievements,
+            title,
+            $"You logged {logged}, which meets your {what} of {target}.",
+            Actions: [new NotificationAction("Open goal", GoalPath)],
+            Facts: [new NotificationFact("Target", target), new NotificationFact("Logged", logged)]);
     }
 
     public static NotificationMessage StreakMilestone(int days, string streakType, string? imageUrl) =>

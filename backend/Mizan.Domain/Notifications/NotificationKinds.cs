@@ -36,7 +36,7 @@ public static class NotificationKinds
 
     public static IReadOnlyList<NotificationKindInfo> All { get; } =
     [
-        new(Achievements, "Achievements and streaks", "Badges you earn and streak milestones.", Product),
+        new(Achievements, "Achievements and streaks", "Badges you earn, streak milestones and goal targets you reach.", Product),
         new(Reminders, "Reminders", "Reminders you set, and the evening reminder before your eating window closes.", Product),
         new(Planning, "Meal plans", "Plans drafted for you, and answers to plans you sent.", Product),
         new(Coaching, "Coaching", "Requests and changes from coaches and clients.", Product),
@@ -56,7 +56,7 @@ public static class NotificationKinds
     /// <summary>The kind a notification type belongs to. A type nobody listed is an account notice.</summary>
     public static string ForType(string? type) => type switch
     {
-        "achievement_unlocked" or "streak_milestone" => Achievements,
+        "achievement_unlocked" or "streak_milestone" or "goal_reached" => Achievements,
         "evening_reminder" or "reminder" => Reminders,
         "meal_plan_drafted" or "meal_plan_accepted" or "meal_plan_declined" or "shopping_list_ready" => Planning,
         "trainer_request" or "trainer_request_response" or "trainer_relationship_ended" => Coaching,

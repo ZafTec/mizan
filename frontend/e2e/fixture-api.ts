@@ -284,7 +284,7 @@ function initialNotificationPreferences(
     [
       "achievements",
       "Achievements and streaks",
-      "Badges you earn and streak milestones.",
+      "Badges you earn, streak milestones and goal targets you reach.",
     ],
     [
       "reminders",

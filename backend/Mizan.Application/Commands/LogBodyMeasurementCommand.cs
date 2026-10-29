@@ -1,6 +1,7 @@
 using MediatR;
 using FluentValidation;
 using Mizan.Application.Interfaces;
+using Mizan.Application.Notifications;
 using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Commands;
@@ -54,11 +55,13 @@ public class LogBodyMeasurementCommandHandler : IRequestHandler<LogBodyMeasureme
 {
     private readonly IMizanDbContext _context;
     private readonly IAchievementEvaluator _achievements;
+    private readonly GoalReachedNotifications _goals;
 
-    public LogBodyMeasurementCommandHandler(IMizanDbContext context, IAchievementEvaluator achievements)
+    public LogBodyMeasurementCommandHandler(IMizanDbContext context, IAchievementEvaluator achievements, GoalReachedNotifications goals)
     {
         _context = context;
         _achievements = achievements;
+        _goals = goals;
     }
 
     public async Task<LogBodyMeasurementResult> Handle(LogBodyMeasurementCommand request, CancellationToken cancellationToken)
@@ -86,6 +89,7 @@ public class LogBodyMeasurementCommandHandler : IRequestHandler<LogBodyMeasureme
         await _context.SaveChangesAsync(cancellationToken);
 
         var unlocked = await _achievements.EvaluateAsync(cancellationToken, ["body_measurements_logged"]);
+        await _goals.NotifyAsync(measurement, cancellationToken);
 
         return new LogBodyMeasurementResult
         {
