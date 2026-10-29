@@ -5,8 +5,10 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Mizan.Contracts.Notifications;
 using Mizan.Contracts.Planning;
 using Mizan.Domain.Entities;
+using Mizan.Domain.Notifications;
 using Mizan.Infrastructure.Data;
 using Mizan.Infrastructure.Outbox;
 using Xunit;
@@ -199,6 +201,69 @@ public class EveningReminderTests
         telegram.TelegramUserId.Should().Be(777);
         telegram.OpenPath.Should().Be($"plan?planId={householdPlan:D}&day={tokyoToday:yyyy-MM-dd}");
         (await ReminderJobsAsync()).Should().Be(3);
+    }
+
+    [Fact]
+    public async Task APersonWhoTurnedTheAppOffForReminders_IsStillRemindedOnlyOnceADay_WhenTheWindowMoves()
+    {
+        await _fixture.ResetDatabaseAsync();
+        _fixture.Push.Reset();
+        var world = new PlanningWorld(_fixture);
+        var today = Mizan.Domain.Streaks.StreakClock.Today("Africa/Addis_Ababa", DateTimeOffset.UtcNow);
+        DateTimeOffset At(int hour, int minute) => new(today.ToDateTime(new TimeOnly(hour, minute)), AddisOffset);
+        var (userId, client) = await world.PersonAsync("telegram-only");
+        await _fixture.GrantProAsync(userId);
+        await world.DbAsync(async db =>
+        {
+            var user = await db.Users.SingleAsync(u => u.Id == userId);
+            user.TimeZoneId = "Africa/Addis_Ababa";
+            user.NotifyByTelegram = true;
+            db.TelegramLinks.Add(new TelegramLink { Id = Guid.NewGuid(), UserId = userId, TelegramUserId = 4343, LinkedAt = DateTime.UtcNow });
+            return await db.SaveChangesAsync();
+        });
+        var off = await client.PutAsJsonAsync("/api/Notifications/preferences", new UpdateNotificationPreferencesRequest(
+            [new NotificationKindPreferenceUpdate(NotificationKinds.Reminders, InApp: false)]));
+        off.StatusCode.Should().Be(HttpStatusCode.OK, await off.Content.ReadAsStringAsync());
+
+        var rules = new PlanRulesDto { TargetCalories = 1800, EatingWindowStart = new TimeOnly(8, 0), EatingWindowEnd = new TimeOnly(20, 0) };
+        var planId = await PlanningWorld.CreatePlanAsync(client, new CreateMealPlanRequest
+        {
+            Name = "Window week",
+            StartDate = today.AddDays(-1),
+            DurationDays = 7,
+            Rules = rules,
+        });
+
+        try
+        {
+            _fixture.Clock.Set(At(19, 30));
+            await ScanAsync();
+            await RunDueJobsAsync();
+
+            // The window moves to 21:00 after the reminder went out. The next scan finds today's
+            // reminder on Telegram although the app holds no row for it, and queues no second one.
+            var moved = await client.PutAsJsonAsync($"/api/MealPlans/{planId}", new UpdateMealPlanRequest
+            {
+                Name = "Window week",
+                StartDate = today.AddDays(-1),
+                DurationDays = 7,
+                Rules = rules with { EatingWindowEnd = new TimeOnly(21, 0) },
+            });
+            moved.IsSuccessStatusCode.Should().BeTrue(await moved.Content.ReadAsStringAsync());
+            _fixture.Clock.Set(At(20, 30));
+            await ScanAsync();
+            await RunDueJobsAsync();
+        }
+        finally
+        {
+            _fixture.Clock.Reset();
+        }
+
+        _fixture.TelegramBot.Sent.Where(m => m.TelegramUserId == 4343).Should().ContainSingle()
+            .Which.Text.Should().StartWith("Eating window\nYour window closes at 20:00.");
+        var notifications = await client.GetFromJsonAsync<JsonElement>("/api/Notifications");
+        notifications.GetProperty("items").EnumerateArray().Should().BeEmpty();
+        (await ReminderJobsAsync()).Should().Be(1);
     }
 
     private Task ScanAsync() =>

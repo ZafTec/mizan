@@ -133,8 +133,12 @@ public sealed class EveningReminders : INotificationEventSource
 
         // The day is named so a reminder sent the evening before opens the right day.
         var link = $"/meal-plan/{plan.PlanId}?day={job.Day:yyyy-MM-dd}";
+        var sentOn = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(now, StreakClock.Zone(zoneId)).DateTime);
         await _notifications.SendAsync(
-            new NotificationSend(job.UserId, NotificationType, NotificationMessages.EveningReminder(NotificationTitle, text, plan.WindowEnd.Value, calories, plan.TargetCalories, link), link),
+            new NotificationSend(job.UserId, NotificationType, NotificationMessages.EveningReminder(NotificationTitle, text, plan.WindowEnd.Value, calories, plan.TargetCalories, link), link)
+            {
+                DeliveryKey = DeliveryKey(job.UserId, sentOn),
+            },
             cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
         return true;
@@ -177,13 +181,51 @@ public sealed class EveningReminders : INotificationEventSource
             .ToList();
 
     /// <summary>When each person was last reminded, from the notifications themselves: the once-a-day rule needs no column of its own.</summary>
-    private async Task<Dictionary<Guid, DateTimeOffset?>> LastSentAsync(List<Guid> userIds, CancellationToken cancellationToken) =>
-        (await _context.Notifications.AsNoTracking()
+    /// <summary>
+    /// The key of one person's reminder on one local calendar day. Every channel's job carries it,
+    /// so a second reminder that day is a no-op on each channel, and it is how
+    /// <see cref="LastSentAsync"/> finds a reminder that went only to Telegram, push or email.
+    /// </summary>
+    private static string DeliveryKey(Guid userId, DateOnly sentOn) => $"{DeliveryKeyPrefix}{userId:N}:{sentOn:yyyyMMdd}";
+
+    private const string DeliveryKeyPrefix = "evening-reminder-sent:";
+
+    /// <summary>
+    /// When each person was last reminded, from the in-app rows and from the channel jobs the
+    /// writer queued, so a person who turned the app off for reminders is still reminded once a day.
+    /// Only the calendar day of the last reminder matters, so older channel jobs are not read.
+    /// </summary>
+    private async Task<Dictionary<Guid, DateTimeOffset?>> LastSentAsync(List<Guid> userIds, CancellationToken cancellationToken)
+    {
+        var inApp = await _context.Notifications.AsNoTracking()
             .Where(n => n.Type == NotificationType && userIds.Contains(n.UserId))
             .GroupBy(n => n.UserId)
             .Select(g => new { UserId = g.Key, At = g.Max(n => n.CreatedAt) })
-            .ToListAsync(cancellationToken))
-        .ToDictionary(x => x.UserId, x => (DateTimeOffset?)new DateTimeOffset(DateTime.SpecifyKind(x.At, DateTimeKind.Utc)));
+            .ToListAsync(cancellationToken);
+
+        var since = _time.GetUtcNow().UtcDateTime.AddDays(-2);
+        var channels = await _context.OutboxJobs.AsNoTracking()
+            .Where(j => j.Type != OutboxJobTypes.EveningReminder && j.CreatedAt >= since && j.DedupeKey!.Contains(DeliveryKeyPrefix))
+            .Select(j => new { j.DedupeKey, j.CreatedAt })
+            .ToListAsync(cancellationToken);
+
+        var wanted = userIds.ToHashSet();
+        var sent = channels
+            .Select(j => (UserId: UserOf(j.DedupeKey!), j.CreatedAt))
+            .Where(j => j.UserId is { } id && wanted.Contains(id))
+            .Select(j => (UserId: j.UserId!.Value, j.CreatedAt))
+            .Concat(inApp.Select(n => (n.UserId, CreatedAt: n.At)));
+
+        return sent
+            .GroupBy(x => x.UserId)
+            .ToDictionary(g => g.Key, g => (DateTimeOffset?)new DateTimeOffset(DateTime.SpecifyKind(g.Max(x => x.CreatedAt), DateTimeKind.Utc)));
+
+        static Guid? UserOf(string key)
+        {
+            var start = key.IndexOf(DeliveryKeyPrefix, StringComparison.Ordinal) + DeliveryKeyPrefix.Length;
+            return key.Length >= start + 32 && Guid.TryParseExact(key.AsSpan(start, 32), "N", out var id) ? id : null;
+        }
+    }
 
     private sealed record PlanWindow(
         Guid Id, Guid? UserId, Guid? HouseholdId, DateOnly? StartDate, int DurationDays, TimeOnly? WindowEnd, decimal? TargetCalories, DateTime UpdatedAt);
