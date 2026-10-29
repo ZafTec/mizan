@@ -12,6 +12,8 @@ import {
 import { dateInTimeZone, isLogDate } from "@/lib/log-date";
 import { getErrorMessage } from "@/lib/toast";
 import PlanDetail from "@/components/planning/PlanDetail";
+import { preload, preloaded, remember } from "@/lib/tg/preload";
+import { useBackButton } from "@/lib/tg/useBackButton";
 
 type Loaded =
   | {
@@ -60,6 +62,12 @@ async function load(planId?: string, day?: string): Promise<Loaded> {
   }
 }
 
+const key = (planId?: string, day?: string) =>
+  `plan:${planId ?? ""}:${day ?? ""}`;
+
+/** Starts loading today's plan, as the home page's "Today's plan" row opens it. */
+export const preloadMiniAppPlan = () => preload(key(), () => load());
+
 /** The plan's day in the Mini App: /tg/plan?planId=&day=, or today's plan without them. */
 export default function MiniAppPlan({
   planId,
@@ -68,11 +76,15 @@ export default function MiniAppPlan({
   planId?: string;
   day?: string;
 }) {
-  const [loaded, setLoaded] = useState<Loaded | null>(null);
+  useBackButton();
+  const [loaded, setLoaded] = useState<Loaded | null>(() =>
+    preloaded<Loaded>(key(planId, day)),
+  );
 
   useEffect(() => {
     let cancelled = false;
     void load(planId, day).then((next) => {
+      remember(key(planId, day), next);
       if (!cancelled) setLoaded(next);
     });
     return () => {

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { clientApi } from "@/lib/api.client";
+import { changeList } from "@/components/motion/changeList";
 import {
   Dialog,
   DialogContent,
@@ -77,7 +78,8 @@ export default function DeleteLogEntry({
               try {
                 await deleteEntry[kind](id);
                 setOpen(false);
-                router.refresh();
+                // The row fades out and the rows below it move up.
+                changeList(() => router.refresh());
               } catch {
                 setError("Could not delete this entry. Please try again.");
               } finally {

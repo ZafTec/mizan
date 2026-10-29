@@ -14,6 +14,16 @@ export interface TelegramWebApp {
   close?(): void;
   /** The bar at the bottom of the WebView. Older clients may not have it. */
   MainButton?: TelegramMainButtonApi;
+  /** The back arrow in Telegram's header. Older clients may not have it. */
+  BackButton?: TelegramBackButtonApi;
+}
+
+/** Telegram's `WebApp.BackButton`. */
+export interface TelegramBackButtonApi {
+  show(): unknown;
+  hide(): unknown;
+  onClick(handler: () => void): unknown;
+  offClick(handler: () => void): unknown;
 }
 
 /** Telegram's `WebApp.MainButton`, as much of it as the Mini App uses. */

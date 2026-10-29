@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState, ViewTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -20,6 +20,9 @@ import { confidenceLabel, formatMoney, itemCount } from "@/lib/prices/format";
 import { appToast, getErrorMessage } from "@/lib/toast";
 import { useMainButton } from "@/lib/tg/useMainButton";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
+import { SharedTitle } from "@/components/motion/DirectionalTransition";
+import { rowMotion } from "@/components/motion/list";
+import { changeList } from "@/components/motion/changeList";
 
 type Group = { key: string; title: string; items: ShoppingListItem[] };
 
@@ -181,9 +184,13 @@ export default function ShoppingListView({
   const left = list.items.filter((item) => !item.isChecked).length;
   const checked = list.items.length - left;
 
+  // Added, removed and cleared items arrive and leave as a list change.
   const reload = async () => {
-    setList(await getShoppingList(list.id));
-    router.refresh();
+    const next = await getShoppingList(list.id);
+    changeList(() => {
+      setList(next);
+      router.refresh();
+    });
   };
 
   const toggle = async (item: ShoppingListItem) => {
@@ -353,7 +360,9 @@ export default function ShoppingListView({
             </button>
           </form>
         ) : (
-          <h1 className="mt-1">{title}</h1>
+          <SharedTitle name={`list-title-${list.id}`}>
+            <h1 className="mt-1">{title}</h1>
+          </SharedTitle>
         )}
         <p className="text-muted-foreground mt-2">
           {list.mealPlanName && list.mealPlanId ? (
@@ -450,73 +459,75 @@ export default function ShoppingListView({
               </span>
             </header>
             <ul>
-              {group.items.map((item) =>
-                editingId === item.id ? (
-                  <li key={item.id}>
-                    <ItemForm
-                      title={`Edit ${item.itemName}`}
-                      initial={itemForm(item)}
-                      onSubmit={(value) => edit(item, value)}
-                      onCancel={() => setEditingId(null)}
-                    />
-                  </li>
-                ) : (
-                  <li key={item.id} className="ledger-row">
-                    <input
-                      type="checkbox"
-                      id={`${id}-${item.id}`}
-                      checked={item.isChecked}
-                      disabled={!list.canEdit}
-                      onChange={() => void toggle(item)}
-                      className="h-5 w-5 shrink-0 accent-brand-700"
-                    />
-                    <label
-                      htmlFor={`${id}-${item.id}`}
-                      className={`min-w-0 flex-1 cursor-pointer ${item.isChecked ? "text-muted-foreground line-through" : ""}`}
-                    >
-                      {item.itemName}
-                      {item.needsReview && (
-                        <span className="ml-2 text-xs font-medium text-destructive">
-                          Check
-                        </span>
-                      )}
-                    </label>
-                    <span
-                      className={`tabular-nums whitespace-nowrap text-right text-sm ${item.isChecked ? "text-muted-foreground" : ""}`}
-                    >
-                      {formatAmount(item)}
-                      {item.cost != null && (
-                        <span
-                          className="block text-xs text-muted-foreground"
-                          data-testid="item-cost"
-                        >
-                          {formatMoney(item.cost, list.currency)}
-                        </span>
-                      )}
-                    </span>
-                    {list.canEdit && (
-                      <span className="flex shrink-0 gap-1 print:hidden">
-                        <button
-                          type="button"
-                          className="btn-ghost btn-sm min-h-9"
-                          aria-label={`Edit ${item.itemName}`}
-                          onClick={() => setEditingId(item.id)}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-ghost-destructive btn-sm min-h-9"
-                          aria-label={`Delete ${item.itemName}`}
-                          onClick={() => remove(item)}
-                        >
-                          Delete
-                        </button>
+              {group.items.map((item) => (
+                <ViewTransition key={item.id} {...rowMotion}>
+                  {editingId === item.id ? (
+                    <li>
+                      <ItemForm
+                        title={`Edit ${item.itemName}`}
+                        initial={itemForm(item)}
+                        onSubmit={(value) => edit(item, value)}
+                        onCancel={() => setEditingId(null)}
+                      />
+                    </li>
+                  ) : (
+                    <li className="ledger-row">
+                      <input
+                        type="checkbox"
+                        id={`${id}-${item.id}`}
+                        checked={item.isChecked}
+                        disabled={!list.canEdit}
+                        onChange={() => void toggle(item)}
+                        className="h-5 w-5 shrink-0 accent-brand-700"
+                      />
+                      <label
+                        htmlFor={`${id}-${item.id}`}
+                        className={`min-w-0 flex-1 cursor-pointer transition-colors duration-160 ease-out ${item.isChecked ? "text-muted-foreground line-through" : ""}`}
+                      >
+                        {item.itemName}
+                        {item.needsReview && (
+                          <span className="ml-2 text-xs font-medium text-destructive">
+                            Check
+                          </span>
+                        )}
+                      </label>
+                      <span
+                        className={`tabular-nums whitespace-nowrap text-right text-sm transition-colors duration-160 ease-out ${item.isChecked ? "text-muted-foreground" : ""}`}
+                      >
+                        {formatAmount(item)}
+                        {item.cost != null && (
+                          <span
+                            className="block text-xs text-muted-foreground"
+                            data-testid="item-cost"
+                          >
+                            {formatMoney(item.cost, list.currency)}
+                          </span>
+                        )}
                       </span>
-                    )}
-                  </li>
-                ),
-              )}
+                      {list.canEdit && (
+                        <span className="flex shrink-0 gap-1 print:hidden">
+                          <button
+                            type="button"
+                            className="btn-ghost btn-sm min-h-9"
+                            aria-label={`Edit ${item.itemName}`}
+                            onClick={() => setEditingId(item.id)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-ghost-destructive btn-sm min-h-9"
+                            aria-label={`Delete ${item.itemName}`}
+                            onClick={() => remove(item)}
+                          >
+                            Delete
+                          </button>
+                        </span>
+                      )}
+                    </li>
+                  )}
+                </ViewTransition>
+              ))}
             </ul>
           </section>
         ))

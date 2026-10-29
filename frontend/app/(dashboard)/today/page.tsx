@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, ViewTransition } from "react";
+import { rowMotion } from "@/components/motion/list";
 import { Plus, ArrowRight } from "lucide-react";
 import { getUserServer } from "@/helper/session";
 import {
@@ -53,36 +54,43 @@ function MealEntries({
 }) {
   const seen = new Set<string>();
   return entries.map((entry) => {
-    if (!entry.groupId) return <MealRow key={entry.id} entry={entry} />;
+    if (!entry.groupId)
+      return (
+        <ViewTransition key={entry.id} {...rowMotion}>
+          <MealRow entry={entry} />
+        </ViewTransition>
+      );
     if (seen.has(entry.groupId)) return null;
     seen.add(entry.groupId);
     const group = entries.filter((item) => item.groupId === entry.groupId);
     return (
-      <details className="border-b border-border" key={entry.groupId}>
-        <summary className="flex cursor-pointer items-center justify-between gap-4 px-3 py-4 text-[14px]">
-          <span className="min-w-0 break-words font-medium">
-            {entry.groupName || "Recipe"}
-            <span className="block text-xs font-normal text-muted-foreground mt-1">
-              {group.length} ingredients · Show details
+      <ViewTransition key={entry.groupId} {...rowMotion}>
+        <details className="border-b border-border">
+          <summary className="flex cursor-pointer items-center justify-between gap-4 px-3 py-4 text-[14px]">
+            <span className="min-w-0 break-words font-medium">
+              {entry.groupName || "Recipe"}
+              <span className="block text-xs font-normal text-muted-foreground mt-1">
+                {group.length} ingredients · Show details
+              </span>
             </span>
-          </span>
-          <span
-            className="tabular-nums text-sm whitespace-nowrap"
-            data-testid="recipe-group-calories"
-          >
-            {Math.round(
-              groups.find((g) => g.groupId === entry.groupId)?.totals
-                .calories ?? 0,
-            )}{" "}
-            <span className="text-xs text-muted-foreground">kcal</span>
-          </span>
-        </summary>
-        <div className="pl-4">
-          {group.map((item) => (
-            <MealRow key={item.id} entry={item} />
-          ))}
-        </div>
-      </details>
+            <span
+              className="tabular-nums text-sm whitespace-nowrap"
+              data-testid="recipe-group-calories"
+            >
+              {Math.round(
+                groups.find((g) => g.groupId === entry.groupId)?.totals
+                  .calories ?? 0,
+              )}{" "}
+              <span className="text-xs text-muted-foreground">kcal</span>
+            </span>
+          </summary>
+          <div className="pl-4">
+            {group.map((item) => (
+              <MealRow key={item.id} entry={item} />
+            ))}
+          </div>
+        </details>
+      </ViewTransition>
     );
   });
 }
@@ -291,44 +299,48 @@ export default async function TodayPage({
             </header>
             {workouts.length ? (
               workouts.map((workout) => (
-                <div key={workout.id} className="py-4 border-b">
-                  <div className="flex justify-between gap-3">
-                    <h3 className="font-medium">{workout.name || "Workout"}</h3>
-                    <DeleteLogEntry
-                      kind="Workouts"
-                      id={workout.id}
-                      name={workout.name || "workout"}
-                    />
+                <ViewTransition key={workout.id} {...rowMotion}>
+                  <div className="py-4 border-b">
+                    <div className="flex justify-between gap-3">
+                      <h3 className="font-medium">
+                        {workout.name || "Workout"}
+                      </h3>
+                      <DeleteLogEntry
+                        kind="Workouts"
+                        id={workout.id}
+                        name={workout.name || "workout"}
+                      />
+                    </div>
+                    <p className="text-muted-foreground text-sm mt-1">
+                      {workout.exercises.length} exercise
+                      {workout.exercises.length === 1 ? "" : "s"}
+                      {workout.durationMinutes
+                        ? ` · ${workout.durationMinutes} min`
+                        : ""}
+                    </p>
+                    <details className="mt-3 text-sm">
+                      <summary className="text-link">View sets</summary>
+                      <ul className="mt-2 space-y-2">
+                        {workout.exercises.map((exercise) => (
+                          <li key={exercise.id}>
+                            <span className="font-medium">
+                              {exercise.exerciseName}
+                            </span>
+                            <p className="text-muted-foreground text-xs mt-1">
+                              {exercise.sets
+                                .filter((set) => set.completed)
+                                .map(
+                                  (set) =>
+                                    `${set.reps ?? "–"} reps${set.weightKg != null ? ` × ${set.weightKg} kg` : ""}`,
+                                )
+                                .join(" · ") || "No completed sets"}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
                   </div>
-                  <p className="text-muted-foreground text-sm mt-1">
-                    {workout.exercises.length} exercise
-                    {workout.exercises.length === 1 ? "" : "s"}
-                    {workout.durationMinutes
-                      ? ` · ${workout.durationMinutes} min`
-                      : ""}
-                  </p>
-                  <details className="mt-3 text-sm">
-                    <summary className="text-link">View sets</summary>
-                    <ul className="mt-2 space-y-2">
-                      {workout.exercises.map((exercise) => (
-                        <li key={exercise.id}>
-                          <span className="font-medium">
-                            {exercise.exerciseName}
-                          </span>
-                          <p className="text-muted-foreground text-xs mt-1">
-                            {exercise.sets
-                              .filter((set) => set.completed)
-                              .map(
-                                (set) =>
-                                  `${set.reps ?? "–"} reps${set.weightKg != null ? ` × ${set.weightKg} kg` : ""}`,
-                              )
-                              .join(" · ") || "No completed sets"}
-                          </p>
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
-                </div>
+                </ViewTransition>
               ))
             ) : (
               <div className="py-5">
@@ -351,45 +363,49 @@ export default async function TodayPage({
             </header>
             {measurements.length ? (
               measurements.map((measurement) => (
-                <div key={measurement.id} className="py-4 border-b">
-                  <div className="flex justify-between gap-2">
-                    <div>
-                      {measurement.weightKg != null && (
-                        <p className="tabular-nums text-2xl font-medium">
-                          {measurement.weightKg}{" "}
-                          <span className="text-sm font-normal text-muted-foreground">
-                            kg
-                          </span>
-                        </p>
-                      )}
-                      {measurement.bodyFatPercentage != null && (
-                        <p className="text-sm mt-1">
-                          {measurement.bodyFatPercentage}% body fat
-                        </p>
-                      )}
-                      {measurement.waistCm != null && (
-                        <p className="text-sm mt-1">
-                          {measurement.waistCm} cm waist
-                        </p>
-                      )}
-                      {measurement.weightKg == null &&
-                        measurement.bodyFatPercentage == null &&
-                        measurement.waistCm == null && (
-                          <p className="text-sm">Body measurements recorded</p>
+                <ViewTransition key={measurement.id} {...rowMotion}>
+                  <div className="py-4 border-b">
+                    <div className="flex justify-between gap-2">
+                      <div>
+                        {measurement.weightKg != null && (
+                          <p className="tabular-nums text-2xl font-medium">
+                            {measurement.weightKg}{" "}
+                            <span className="text-sm font-normal text-muted-foreground">
+                              kg
+                            </span>
+                          </p>
                         )}
+                        {measurement.bodyFatPercentage != null && (
+                          <p className="text-sm mt-1">
+                            {measurement.bodyFatPercentage}% body fat
+                          </p>
+                        )}
+                        {measurement.waistCm != null && (
+                          <p className="text-sm mt-1">
+                            {measurement.waistCm} cm waist
+                          </p>
+                        )}
+                        {measurement.weightKg == null &&
+                          measurement.bodyFatPercentage == null &&
+                          measurement.waistCm == null && (
+                            <p className="text-sm">
+                              Body measurements recorded
+                            </p>
+                          )}
+                      </div>
+                      <DeleteLogEntry
+                        kind="BodyMeasurements"
+                        id={measurement.id}
+                        name="measurement"
+                      />
                     </div>
-                    <DeleteLogEntry
-                      kind="BodyMeasurements"
-                      id={measurement.id}
-                      name="measurement"
-                    />
+                    {measurement.notes && (
+                      <p className="text-sm text-muted-foreground mt-2 break-words">
+                        {measurement.notes}
+                      </p>
+                    )}
                   </div>
-                  {measurement.notes && (
-                    <p className="text-sm text-muted-foreground mt-2 break-words">
-                      {measurement.notes}
-                    </p>
-                  )}
-                </div>
+                </ViewTransition>
               ))
             ) : (
               <p className="text-muted-foreground text-sm py-5">

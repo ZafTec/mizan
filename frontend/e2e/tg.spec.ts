@@ -29,7 +29,7 @@ type MainButtonState = {
 
 /**
  * What Telegram's WebView provides: window.Telegram.WebApp with the signed
- * initData and the main button. The real script is answered with nothing, so
+ * initData, the main button and the back arrow. The real script is answered with nothing, so
  * no test reaches telegram.org; `__telegram` records what the page asked of
  * Telegram and presses the main button the way Telegram would.
  */
@@ -78,11 +78,31 @@ async function openTelegram(
           MainButton
         ),
       };
+      const backHandlers = new Set<() => void>();
+      const backButton = { visible: false };
+      const BackButton = {
+        show: () => ((backButton.visible = true), BackButton),
+        hide: () => ((backButton.visible = false), BackButton),
+        onClick: (handler: () => void) => (
+          backHandlers.add(handler),
+          BackButton
+        ),
+        offClick: (handler: () => void) => (
+          backHandlers.delete(handler),
+          BackButton
+        ),
+      };
       Object.assign(window, {
         __telegram: {
           calls,
           opened,
           mainButton,
+          backButton,
+          pressBackButton: () => {
+            if (!backButton.visible) return false;
+            backHandlers.forEach((handler) => handler());
+            return true;
+          },
           // Telegram calls the handlers only for a visible, active button.
           pressMainButton: () => {
             if (!mainButton.visible || !mainButton.active) return false;
@@ -99,6 +119,7 @@ async function openTelegram(
             expand: () => calls.push("expand"),
             openLink: (url: string) => opened.push(url),
             MainButton,
+            BackButton,
           },
         },
       });
@@ -438,14 +459,12 @@ test("a person opens the Mini App home and sees today, the next planned meal and
   );
   const next = home.getByRole("region", { name: "Next on your plan" });
   await expect(next).toBeVisible();
-  await expect(home.getByRole("link", { name: /Today's plan/ })).toHaveAttribute(
-    "href",
-    "/tg/plan",
-  );
-  await expect(home.getByRole("link", { name: /Shopping list/ })).toHaveAttribute(
-    "href",
-    "/tg/shopping-list",
-  );
+  await expect(
+    home.getByRole("link", { name: /Today's plan/ }),
+  ).toHaveAttribute("href", "/tg/plan");
+  await expect(
+    home.getByRole("link", { name: /Shopping list/ }),
+  ).toHaveAttribute("href", "/tg/shopping-list");
   await expect(home.getByRole("link", { name: /Shopping list/ })).toContainText(
     /\d+ items? · \d+ ticked/,
   );
@@ -463,7 +482,9 @@ test("a person opens the Mini App home and sees today, the next planned meal and
 
   // Log the next planned meal from the home.
   await next.getByRole("button", { name: /^Log / }).click();
-  await expect(home.getByRole("status").filter({ hasText: "logged." })).toBeVisible();
+  await expect(
+    home.getByRole("status").filter({ hasText: "logged." }),
+  ).toBeVisible();
   const s = await state(context, opening);
   expect(
     s.writes.filter((write) => /\/entries\/[^/]+\/log$/.test(write.path)),
@@ -476,7 +497,31 @@ test("a person opens the Mini App home and sees today, the next planned meal and
   await pressMainButton(page);
   await page.waitForURL(/\/tg\/log$/);
   await expect(page.getByRole("heading", { name: "Log a meal" })).toBeVisible();
-  expect((await mainButton(page)).visible).toBe(false);
+  // The page renders at once now that the session is settled; the home hides the button as it goes.
+  await expect.poll(async () => (await mainButton(page)).visible).toBe(false);
+
+  // Telegram's back arrow leads home, and is gone there.
+  expect(
+    await page.evaluate(() =>
+      (
+        window as unknown as { __telegram: { pressBackButton(): boolean } }
+      ).__telegram.pressBackButton(),
+    ),
+  ).toBe(true);
+  await page.waitForURL(/\/tg$/);
+  await expect(page.getByTestId("tg-home")).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (
+            window as unknown as {
+              __telegram: { backButton: { visible: boolean } };
+            }
+          ).__telegram.backButton.visible,
+      ),
+    )
+    .toBe(false);
   expect((await state(context, opening)).unhandled).toEqual([]);
 });
 

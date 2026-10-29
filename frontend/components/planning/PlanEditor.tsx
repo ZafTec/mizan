@@ -1,6 +1,8 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useState, ViewTransition } from "react";
+import { rowMotion } from "@/components/motion/list";
+import { changeList } from "@/components/motion/changeList";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -475,9 +477,13 @@ export default function PlanEditor({
   const planName = plan.name || (isTemplate ? "Template" : "Meal plan");
   const backLink = back ?? { href: `/meal-plan/${plan.id}`, label: planName };
 
+  // Added and removed entries and sessions arrive and leave as a list change.
   const reload = async () => {
-    setPlan(await getMealPlan(plan.id));
-    router.refresh();
+    const next = await getMealPlan(plan.id);
+    changeList(() => {
+      setPlan(next);
+      router.refresh();
+    });
   };
 
   const saveTemplate = async () => {
@@ -752,55 +758,58 @@ export default function PlanEditor({
               <h3>{slotLabel(slot.slot)}</h3>
             </div>
             <ul>
-              {slot.entries.map((entry) =>
-                editing?.kind === "entry" && editing.entry.id === entry.id ? (
-                  <li key={entry.id}>
-                    <EntryForm
-                      plan={plan}
-                      date={dayDate}
-                      title={`Edit ${entryTitle(entry)}`}
-                      initial={draftFrom(entry)}
-                      onSubmit={submitEntry}
-                      onCancel={() => setEditing(null)}
-                    />
-                  </li>
-                ) : (
-                  <li key={entry.id} className="ledger-row">
-                    <span className="min-w-0 flex-1">
-                      <span className="block font-medium break-words">
-                        {entryTitle(entry)}
+              {slot.entries.map((entry) => (
+                <ViewTransition key={entry.id} {...rowMotion}>
+                  {editing?.kind === "entry" &&
+                  editing.entry.id === entry.id ? (
+                    <li>
+                      <EntryForm
+                        plan={plan}
+                        date={dayDate}
+                        title={`Edit ${entryTitle(entry)}`}
+                        initial={draftFrom(entry)}
+                        onSubmit={submitEntry}
+                        onCancel={() => setEditing(null)}
+                      />
+                    </li>
+                  ) : (
+                    <li className="ledger-row">
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-medium break-words">
+                          {entryTitle(entry)}
+                        </span>
+                        <span className="mt-0.5 block text-xs text-muted-foreground">
+                          {[
+                            entryQuantity(entry),
+                            entry.nutrition
+                              ? `${Math.round(entry.nutrition.calories)} kcal`
+                              : null,
+                            entry.notes,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
                       </span>
-                      <span className="mt-0.5 block text-xs text-muted-foreground">
-                        {[
-                          entryQuantity(entry),
-                          entry.nutrition
-                            ? `${Math.round(entry.nutrition.calories)} kcal`
-                            : null,
-                          entry.notes,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </span>
-                    </span>
-                    <button
-                      type="button"
-                      className="btn-ghost btn-sm min-h-9"
-                      aria-label={`Edit ${entryTitle(entry)}`}
-                      onClick={() => setEditing({ kind: "entry", entry })}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-ghost-destructive btn-sm min-h-9"
-                      aria-label={`Remove ${entryTitle(entry)}`}
-                      onClick={() => removeEntry(entry)}
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ),
-              )}
+                      <button
+                        type="button"
+                        className="btn-ghost btn-sm min-h-9"
+                        aria-label={`Edit ${entryTitle(entry)}`}
+                        onClick={() => setEditing({ kind: "entry", entry })}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-ghost-destructive btn-sm min-h-9"
+                        aria-label={`Remove ${entryTitle(entry)}`}
+                        onClick={() => removeEntry(entry)}
+                      >
+                        Remove
+                      </button>
+                    </li>
+                  )}
+                </ViewTransition>
+              ))}
             </ul>
           </div>
         ))}

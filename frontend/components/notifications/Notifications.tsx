@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
   type ReactNode,
+  ViewTransition,
 } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronRight, X } from "lucide-react";
@@ -26,6 +27,8 @@ import {
   unreadNotificationCount,
   type Notification,
 } from "@/lib/api/notifications";
+import { rowMotion } from "@/components/motion/list";
+import { changeList } from "@/components/motion/changeList";
 import { appToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
@@ -102,13 +105,13 @@ export function NotificationBell() {
       aria-label={
         unread > 0 ? `Notifications, ${unread} unread` : "Notifications"
       }
-      className="relative inline-flex size-10 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-[background-color,color] duration-160 ease-out hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground"
+      className="relative inline-flex size-10 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-[background-color,color,scale] duration-160 ease-out hover:bg-muted hover:text-foreground active:scale-[0.985] aria-expanded:bg-muted aria-expanded:text-foreground"
     >
       <Icon name="bell" size={18} aria-hidden="true" />
       {unread > 0 && (
         <span
           aria-hidden="true"
-          className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-burnt-peach-700 px-1 text-[10px] font-bold text-white tabular-nums dark:bg-burnt-peach-400 dark:text-charcoal-blue-950"
+          className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-burnt-peach-700 px-1 text-[10px] font-bold text-white tabular-nums transition-[opacity,scale] duration-160 ease-out starting:scale-90 starting:opacity-0 dark:bg-burnt-peach-400 dark:text-charcoal-blue-950"
         >
           {unread > 9 ? "9+" : unread}
         </span>
@@ -144,16 +147,24 @@ function NotificationsInbox({ phone, focusToken, close }: SidePanelContent) {
   const root = useRef<HTMLDivElement>(null);
   const listUnread = items?.filter((item) => !item.readAt).length ?? 0;
 
-  const load = useCallback(async () => {
-    try {
-      const result = await listNotifications();
-      setItems(result.items);
-      setUnread(result.unreadCount);
-      setFailed(false);
-    } catch {
-      setFailed(true);
-    }
-  }, [setUnread]);
+  /** `arriving`: the list is already showing, so what is new fades in and the rest moves down. */
+  const load = useCallback(
+    async (arriving = false) => {
+      try {
+        const result = await listNotifications();
+        const apply = () => {
+          setItems(result.items);
+          setUnread(result.unreadCount);
+        };
+        if (arriving) changeList(apply);
+        else apply();
+        setFailed(false);
+      } catch {
+        setFailed(true);
+      }
+    },
+    [setUnread],
+  );
 
   // Each opening reloads the list, then puts focus on the first notification, or the close button.
   const focusPending = useRef(false);
@@ -173,7 +184,7 @@ function NotificationsInbox({ phone, focusToken, close }: SidePanelContent) {
 
   // The bell's count moved while the panel was open: something arrived or was read elsewhere.
   useEffect(() => {
-    if (items && unread !== listUnread) void load();
+    if (items && unread !== listUnread) void load(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only a change in the count reloads
   }, [unread]);
 
@@ -266,7 +277,11 @@ function NotificationsInbox({ phone, focusToken, close }: SidePanelContent) {
         {failed && items === null ? (
           <p className="px-4 py-6 text-sm text-muted-foreground">
             Notifications could not be loaded.{" "}
-            <button type="button" className="text-link text-sm" onClick={load}>
+            <button
+              type="button"
+              className="text-link text-sm"
+              onClick={() => void load()}
+            >
               Try again
             </button>
           </p>
@@ -277,56 +292,61 @@ function NotificationsInbox({ phone, focusToken, close }: SidePanelContent) {
         ) : (
           <ul aria-labelledby="notifications-title">
             {items.map((item, index) => (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  data-autofocus={index === 0 ? "" : undefined}
-                  onClick={() => open(item)}
-                  className="flex min-h-14 w-full items-start gap-3 border-b border-border px-4 py-3 text-left transition-colors duration-160 ease-out hover:bg-muted"
-                >
-                  <span
-                    aria-hidden="true"
-                    className={cn(
-                      "mt-1.5 size-2 shrink-0 rounded-full bg-chart-1 transition-opacity duration-200 ease-out",
-                      item.readAt && "opacity-0",
-                    )}
-                  />
-                  <span className="min-w-0 flex-1">
+              <ViewTransition key={item.id} {...rowMotion}>
+                <li>
+                  <button
+                    type="button"
+                    data-autofocus={index === 0 ? "" : undefined}
+                    onClick={() => open(item)}
+                    className="flex min-h-14 w-full items-start gap-3 border-b border-border px-4 py-3 text-left transition-colors duration-160 ease-out hover:bg-muted"
+                  >
                     <span
-                      className={cn(
-                        "block text-sm",
-                        !item.readAt && "font-semibold",
-                      )}
-                    >
-                      {item.title}
-                      {!item.readAt && (
-                        <span className="sr-only"> (unread)</span>
-                      )}
-                    </span>
-                    {item.body && (
-                      <span className="mt-0.5 block text-sm text-muted-foreground">
-                        {item.body}
-                      </span>
-                    )}
-                    {/* The browser's zone differs from the server's; the first paint is corrected on the client. */}
-                    <time
-                      dateTime={item.createdAt}
-                      suppressHydrationWarning
-                      className="mt-1 block text-xs text-muted-foreground tabular-nums"
-                    >
-                      {new Date(item.createdAt).toLocaleString(undefined, TIME)}
-                    </time>
-                  </span>
-                  {item.linkUrl && (
-                    <ChevronRight
                       aria-hidden="true"
-                      size={17}
-                      strokeWidth={1.7}
-                      className="mt-0.5 shrink-0 text-muted-foreground"
+                      className={cn(
+                        "mt-1.5 size-2 shrink-0 rounded-full bg-chart-1 transition-opacity duration-200 ease-out",
+                        item.readAt && "opacity-0",
+                      )}
                     />
-                  )}
-                </button>
-              </li>
+                    <span className="min-w-0 flex-1">
+                      <span
+                        className={cn(
+                          "block text-sm",
+                          !item.readAt && "font-semibold",
+                        )}
+                      >
+                        {item.title}
+                        {!item.readAt && (
+                          <span className="sr-only"> (unread)</span>
+                        )}
+                      </span>
+                      {item.body && (
+                        <span className="mt-0.5 block text-sm text-muted-foreground">
+                          {item.body}
+                        </span>
+                      )}
+                      {/* The browser's zone differs from the server's; the first paint is corrected on the client. */}
+                      <time
+                        dateTime={item.createdAt}
+                        suppressHydrationWarning
+                        className="mt-1 block text-xs text-muted-foreground tabular-nums"
+                      >
+                        {new Date(item.createdAt).toLocaleString(
+                          undefined,
+                          TIME,
+                        )}
+                      </time>
+                    </span>
+                    {item.linkUrl && (
+                      <ChevronRight
+                        aria-hidden="true"
+                        size={17}
+                        strokeWidth={1.7}
+                        className="mt-0.5 shrink-0 text-muted-foreground"
+                      />
+                    )}
+                  </button>
+                </li>
+              </ViewTransition>
             ))}
           </ul>
         )}

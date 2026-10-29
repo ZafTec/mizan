@@ -4,10 +4,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getSession } from "@/lib/auth-client";
 import MealLogForm from "@/components/logging/MealLogForm";
-import { NAV_BACK } from "@/components/motion/DirectionalTransition";
+import {
+  NAV_BACK,
+  SharedTitle,
+} from "@/components/motion/DirectionalTransition";
+import { useBackButton } from "@/lib/tg/useBackButton";
 
 /** The meal form in the Mini App; saving says so and leads back to /tg. */
 export default function MiniAppLog() {
+  useBackButton();
   const [timeZone, setTimeZone] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
   const [, setBusy] = useState(false);
@@ -28,7 +33,9 @@ export default function MiniAppLog() {
         >
           Today
         </Link>
-        <h1 className="text-2xl font-semibold">Log a meal</h1>
+        <SharedTitle name="tg-log-title">
+          <h1 className="text-2xl font-semibold">Log a meal</h1>
+        </SharedTitle>
       </header>
       {saved ? (
         <section className="space-y-4">

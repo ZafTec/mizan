@@ -1,7 +1,9 @@
 ﻿import Link from "next/link";
 import DirectionalTransition, {
   NAV_FORWARD,
+  SharedTitle,
 } from "@/components/motion/DirectionalTransition";
+import IntentLink from "@/components/motion/IntentLink";
 import { ArrowRight, Search } from "lucide-react";
 import { getUserOptionalServer } from "@/helper/session";
 import { serverApi } from "@/lib/api.server";
@@ -93,26 +95,28 @@ export default async function RecipesPage({
                 className="flex items-center gap-6 border-b border-border px-1 py-6"
                 key={recipe.id}
               >
-                <Link
+                <IntentLink
                   href={`/recipes/${recipe.id}`}
                   transitionTypes={NAV_FORWARD}
                   className="min-w-0 flex-1"
                 >
-                  <h2 className="text-base!">{recipe.title}</h2>
+                  <SharedTitle name={`recipe-title-${recipe.id}`}>
+                    <h2 className="text-base!">{recipe.title}</h2>
+                  </SharedTitle>
                   <p className="text-muted-foreground text-sm mt-2">
                     {recipe.nutrition?.caloriesPerServing != null
                       ? `${Math.round(recipe.nutrition.caloriesPerServing)} kcal · ${Math.round(recipe.nutrition.proteinGrams ?? 0)} g protein per serving`
                       : "View ingredients and nutrition"}
                   </p>
-                </Link>
-                <Link
+                </IntentLink>
+                <IntentLink
                   href={`/recipes/${recipe.id}`}
                   transitionTypes={NAV_FORWARD}
                   className="icon-button"
                   aria-label={`View ${recipe.title}`}
                 >
                   <ArrowRight size={17} />
-                </Link>
+                </IntentLink>
               </article>
             ))}
           </div>

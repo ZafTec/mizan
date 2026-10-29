@@ -603,16 +603,36 @@ html {
 
 /*
  * View transitions (React <ViewTransition>, see DESIGN.md "Motion").
+ * The root is never snapshotted: the shell, the side panels and anything
+ * without a boundary stay live and clickable while a boundary animates.
  * nav-forward and nav-back slide page content a short way in the direction
- * of travel; row-exit fades a list row that left, and the rows below it
- * move up with the default group morph. Clicks pass through to the new page.
+ * of travel; text-morph carries a title from a list row to its page;
+ * row-enter and row-exit fade a list row that arrived or left while the rows
+ * around it move with the default group morph; skeleton-exit fades a loading
+ * skeleton under the content that replaced it; view-in and view-out swap
+ * two views inside a panel.
  */
 ::view-transition {
   pointer-events: none;
 }
+::view-transition-old(root) {
+  display: none;
+}
+::view-transition-new(root) {
+  animation: none;
+}
 ::view-transition-group(*) {
   animation-duration: var(--duration-medium);
   animation-timing-function: var(--ease-out);
+}
+/* The new title is drawn at full resolution while its box moves and resizes. */
+::view-transition-old(.text-morph) {
+  display: none;
+}
+::view-transition-new(.text-morph) {
+  animation: none;
+  object-fit: none;
+  object-position: left top;
 }
 ::view-transition-old(.nav-forward),
 ::view-transition-old(.nav-back) {
@@ -634,8 +654,28 @@ html {
 ::view-transition-old(.nav-back) {
   --vt-offset: 24px;
 }
-::view-transition-old(.row-exit) {
+::view-transition-old(.row-exit),
+::view-transition-old(.skeleton-exit) {
   animation: 150ms var(--ease-out) both fade-out;
+}
+::view-transition-new(.row-enter) {
+  animation: 180ms var(--ease-out) 60ms both fade-in;
+}
+::view-transition-old(.view-out) {
+  animation: 120ms var(--ease-out) both fade-out;
+}
+::view-transition-new(.view-in) {
+  animation:
+    180ms var(--ease-out) 60ms both fade-in,
+    var(--duration-medium) var(--ease-out) both vt-rise;
+}
+@keyframes vt-rise {
+  from {
+    translate: 0 6px;
+  }
+  to {
+    translate: 0 0;
+  }
 }
 @keyframes vt-slide-in {
   from {

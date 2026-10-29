@@ -34,7 +34,10 @@ import { useMainButton } from "@/lib/tg/useMainButton";
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import DraftActions from "./DraftActions";
 import LogPlanEntryButton from "./LogPlanEntryButton";
-import { NAV_BACK } from "@/components/motion/DirectionalTransition";
+import {
+  NAV_BACK,
+  SharedTitle,
+} from "@/components/motion/DirectionalTransition";
 
 const SLOT_ORDER = ["BREAKFAST", "LUNCH", "DINNER", "SNACK"];
 
@@ -312,7 +315,9 @@ export default function PlanDetail({
             </Link>
           </p>
         )}
-        <h1 className="mt-1">{name}</h1>
+        <SharedTitle name={`plan-title-${plan.id}`}>
+          <h1 className="mt-1">{name}</h1>
+        </SharedTitle>
         <p className="text-muted-foreground mt-2" data-testid="plan-facts">
           {facts.join(" · ")}
         </p>

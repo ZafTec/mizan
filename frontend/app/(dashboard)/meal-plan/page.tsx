@@ -1,7 +1,9 @@
 import Link from "next/link";
 import DirectionalTransition, {
   NAV_FORWARD,
+  SharedTitle,
 } from "@/components/motion/DirectionalTransition";
+import IntentLink from "@/components/motion/IntentLink";
 import { ChevronRight } from "lucide-react";
 import { getUserServer } from "@/helper/session";
 import { dateInTimeZone, shiftDate } from "@/lib/log-date";
@@ -56,13 +58,15 @@ function PlanRow({
   ].filter(Boolean);
   return (
     <li className="ledger-row">
-      <Link
+      <IntentLink
         href={`/meal-plan/${plan.id}`}
         transitionTypes={NAV_FORWARD}
         className="flex min-w-0 flex-1 items-center gap-3"
       >
         <span className="min-w-0 flex-1">
-          <span className="block font-medium">{name}</span>
+          <SharedTitle name={`plan-title-${plan.id}`}>
+            <span className="block font-medium">{name}</span>
+          </SharedTitle>
           <span className="mt-0.5 block text-sm text-muted-foreground">
             {notes.join(" · ")}
           </span>
@@ -81,7 +85,7 @@ function PlanRow({
             className="text-muted-foreground"
           />
         )}
-      </Link>
+      </IntentLink>
       {children}
     </li>
   );

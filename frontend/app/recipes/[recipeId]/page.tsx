@@ -2,6 +2,7 @@
 import Link from "next/link";
 import DirectionalTransition, {
   NAV_BACK,
+  SharedTitle,
 } from "@/components/motion/DirectionalTransition";
 import { notFound } from "next/navigation";
 import { Plus } from "lucide-react";
@@ -53,7 +54,9 @@ export default async function RecipePage({
         </Link>
         <header className="log-page-header">
           <div className="min-w-0">
-            <h1 className="break-words">{recipe.title}</h1>
+            <SharedTitle name={`recipe-title-${recipe.id}`}>
+              <h1 className="break-words">{recipe.title}</h1>
+            </SharedTitle>
             <p className="text-muted-foreground mt-2">
               {recipe.servings} {recipe.servings === 1 ? "serving" : "servings"}
               {recipe.prepTimeMinutes

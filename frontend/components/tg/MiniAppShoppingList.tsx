@@ -10,6 +10,8 @@ import {
 } from "@/lib/api/shoppingLists";
 import { getErrorMessage } from "@/lib/toast";
 import ShoppingListView from "@/components/planning/ShoppingListView";
+import { preload, preloaded, remember } from "@/lib/tg/preload";
+import { useBackButton } from "@/lib/tg/useBackButton";
 
 type Loaded =
   | { kind: "list"; list: ShoppingListDetail }
@@ -45,13 +47,22 @@ async function load(listId?: string): Promise<Loaded> {
   }
 }
 
+const key = (listId?: string) => `list:${listId ?? ""}`;
+
+/** Starts loading the newest list, as the home page's "Shopping list" row opens it. */
+export const preloadMiniAppList = () => preload(key(), () => load());
+
 /** A shopping list in the Mini App: /tg/shopping-list?listId=, or the newest one. */
 export default function MiniAppShoppingList({ listId }: { listId?: string }) {
-  const [loaded, setLoaded] = useState<Loaded | null>(null);
+  useBackButton();
+  const [loaded, setLoaded] = useState<Loaded | null>(() =>
+    preloaded<Loaded>(key(listId)),
+  );
 
   useEffect(() => {
     let cancelled = false;
     void load(listId).then((next) => {
+      remember(key(listId), next);
       if (!cancelled) setLoaded(next);
     });
     return () => {
@@ -79,5 +90,12 @@ export default function MiniAppShoppingList({ listId }: { listId?: string }) {
         )}
       </section>
     );
-  return <ShoppingListView list={loaded.list} embedded />;
+  // The view keeps its own copy of the list; a newer copy than the preloaded one replaces it.
+  return (
+    <ShoppingListView
+      key={`${loaded.list.id}:${loaded.list.updatedAt}:${loaded.list.checkedItems}:${loaded.list.totalItems}`}
+      list={loaded.list}
+      embedded
+    />
+  );
 }

@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import {
+  addTransitionType,
+  startTransition as startViewChange,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -12,6 +14,7 @@ import {
   type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
+  ViewTransition,
 } from "react";
 import { useRouter } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -85,6 +88,14 @@ export const NO_ACCESS_LINE =
   "I can't see your log yet. Allow access to get answers about your data.";
 
 const MAX_ROWS = 6;
+
+/** The conversation and the list of conversations replace each other with a short fade. */
+const PANEL_VIEW = "panel-view";
+const viewMotion = {
+  enter: { [PANEL_VIEW]: "view-in", default: "none" },
+  exit: { [PANEL_VIEW]: "view-out", default: "none" },
+  default: "none",
+} as const;
 const NOT_NOW_KEY = "mizan.assistant.permission-later";
 
 function timeLabel(iso: string) {
@@ -306,8 +317,16 @@ export default function AiChat({
     requestAnimationFrame(() => textarea.current?.focus());
   }, [focusRequest, pending, view]);
 
+  // The conversation and the list of conversations swap places inside the panel.
+  function switchView(next: "chat" | "history") {
+    startViewChange(() => {
+      addTransitionType(PANEL_VIEW);
+      setView(next);
+    });
+  }
+
   function showChat() {
-    setView("chat");
+    switchView("chat");
     setFocusRequest((count) => count + 1);
   }
 
@@ -531,7 +550,7 @@ export default function AiChat({
           <button
             ref={historyButton}
             type="button"
-            onClick={() => setView("history")}
+            onClick={() => switchView("history")}
             aria-pressed={false}
             aria-label="Past conversations"
             title="Past conversations"
@@ -567,14 +586,16 @@ export default function AiChat({
       {!consentChecked ? (
         <div className="flex-1" />
       ) : view === "history" ? (
-        <ConversationList
-          threads={threads}
-          activeId={threadId}
-          search={search}
-          onSearch={setSearch}
-          onOpen={openThread}
-          onDelete={setDeleting}
-        />
+        <ViewTransition key="history" {...viewMotion}>
+          <ConversationList
+            threads={threads}
+            activeId={threadId}
+            search={search}
+            onSearch={setSearch}
+            onOpen={openThread}
+            onDelete={setDeleting}
+          />
+        </ViewTransition>
       ) : asking && consent ? (
         <AiPermissionGate
           consent={consent}
@@ -582,7 +603,7 @@ export default function AiChat({
           onNotNow={chooseNotNow}
         />
       ) : (
-        <>
+        <ViewTransition key="chat" {...viewMotion}>
           <div
             ref={transcript}
             role="log"
@@ -771,7 +792,7 @@ export default function AiChat({
               </p>
             )}
           </form>
-        </>
+        </ViewTransition>
       )}
 
       <Lightbox image={lightbox} onClose={() => setLightbox(null)} />
@@ -824,7 +845,7 @@ function ConversationList({
   return (
     <section
       aria-label="Conversations"
-      className="flex min-h-0 flex-1 animate-overlay-in flex-col"
+      className="flex min-h-0 flex-1 flex-col"
     >
       <div className="px-4 pb-2 pt-3">
         <label htmlFor="assistant-search" className="sr-only">
@@ -911,9 +932,7 @@ function PermissionNeeded({
       aria-label="Permission needed"
       className="w-full max-w-[92%] space-y-2 rounded-md border border-border bg-muted/40 px-3.5 py-3 text-sm transition-opacity duration-200 ease-out starting:opacity-0"
     >
-      <p className="font-medium">
-        {allowed ? "Allowed" : words.title}
-      </p>
+      <p className="font-medium">{allowed ? "Allowed" : words.title}</p>
       <p className="text-muted-foreground">
         {allowed
           ? "Send the question again and it can do it now."

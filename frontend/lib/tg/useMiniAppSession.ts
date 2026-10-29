@@ -9,14 +9,23 @@ export const MiniAppScriptContext = createContext(false);
 
 // One exchange per opening of the Mini App. Strict mode's second effect and a
 // client-side move between /tg pages reuse it instead of signing in again.
-let current: { initData: string; result: Promise<MiniAppSession> } | null =
-  null;
+let current: {
+  initData: string;
+  result: Promise<MiniAppSession>;
+  settled?: MiniAppSession;
+} | null = null;
 
 export function startMiniAppSession(): Promise<MiniAppSession> {
   const initData = telegramWebApp()?.initData ?? "";
   if (!initData) return Promise.resolve({ status: "not_in_telegram" });
-  if (current?.initData !== initData)
-    current = { initData, result: exchangeMiniAppSession(initData) };
+  if (current?.initData !== initData) {
+    const next: NonNullable<typeof current> = {
+      initData,
+      result: exchangeMiniAppSession(initData),
+    };
+    void next.result.then((session) => (next.settled = session));
+    current = next;
+  }
   return current.result;
 }
 
@@ -31,7 +40,10 @@ export function resetMiniAppSession() {
  */
 export function useMiniAppSession(): MiniAppSession | null {
   const scriptReady = useContext(MiniAppScriptContext);
-  const [session, setSession] = useState<MiniAppSession | null>(null);
+  // A move between /tg pages finds the exchange settled and renders the page at once.
+  const [session, setSession] = useState<MiniAppSession | null>(
+    () => current?.settled ?? null,
+  );
 
   useEffect(() => {
     if (!scriptReady) return;

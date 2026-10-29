@@ -18,7 +18,12 @@ import { dateInTimeZone } from "@/lib/log-date";
 import { formatMealType } from "@/lib/utils/mealType";
 import { getErrorMessage } from "@/lib/toast";
 import { useMainButton } from "@/lib/tg/useMainButton";
-import { NAV_FORWARD } from "@/components/motion/DirectionalTransition";
+import {
+  NAV_FORWARD,
+  SharedTitle,
+} from "@/components/motion/DirectionalTransition";
+import { preloadMiniAppPlan } from "./MiniAppPlan";
+import { preloadMiniAppList } from "./MiniAppShoppingList";
 import { openExternal } from "@/lib/tg/webApp";
 import type { components } from "@/types/api.generated";
 
@@ -91,7 +96,11 @@ export default function MiniAppHome() {
 
   const refresh = useCallback(async () => {
     try {
-      setHome(await load());
+      const next = await load();
+      setHome(next);
+      // The pages these rows open render at once, so their titles travel from the row.
+      if (next.plan) void preloadMiniAppPlan();
+      if (next.list) void preloadMiniAppList();
     } catch (error) {
       setFailure(getErrorMessage(error, "Could not load today."));
     }
@@ -207,7 +216,10 @@ export default function MiniAppHome() {
         </section>
       )}
       {logged && (
-        <p role="status" className="-mt-3 text-sm">
+        <p
+          role="status"
+          className="-mt-3 text-sm transition-opacity duration-200 ease-out starting:opacity-0"
+        >
           {logged}
         </p>
       )}
@@ -217,12 +229,14 @@ export default function MiniAppHome() {
           <Action
             href="/tg/log"
             title="Log a meal"
+            shared="tg-log-title"
             detail="Search, or write what you ate"
           />
           {home.plan && (
             <Action
               href="/tg/plan"
               title="Today's plan"
+              shared={`plan-title-${home.plan.planId}`}
               detail={`${home.plan.day.loggedCount} of ${home.plan.day.entryCount} logged`}
             />
           )}
@@ -230,6 +244,7 @@ export default function MiniAppHome() {
             <Action
               href="/tg/shopping-list"
               title="Shopping list"
+              shared={`list-title-${home.list.id}`}
               detail={`${home.list.totalItems} item${home.list.totalItems === 1 ? "" : "s"} · ${home.list.checkedItems} ticked`}
             />
           )}
@@ -250,10 +265,13 @@ export default function MiniAppHome() {
 function Action({
   href,
   title,
+  shared,
   detail,
 }: {
   href: string;
   title: string;
+  /** The name the opened page's title carries, so the row's title travels into it. */
+  shared: string;
   detail: string;
 }) {
   return (
@@ -264,7 +282,9 @@ function Action({
         className="ledger-row transition-colors hover:bg-muted"
       >
         <span className="min-w-0 flex-1">
-          <span className="block text-[15px] font-medium">{title}</span>
+          <SharedTitle name={shared}>
+            <span className="block text-[15px] font-medium">{title}</span>
+          </SharedTitle>
           <span className="mt-0.5 block text-[13px] text-muted-foreground">
             {detail}
           </span>
