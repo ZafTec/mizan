@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { RemindMeButton } from "@/components/reminders/RemindMeButton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
@@ -500,6 +501,17 @@ export default function PlanDetail({
                   {session.entryCount}{" "}
                   {session.entryCount === 1 ? "entry" : "entries"}
                 </span>
+                {session.date && (
+                  <RemindMeButton
+                    heading={`Remind me before: ${session.title}`}
+                    base={{
+                      kind: "pre_cook",
+                      mealPlanId: plan.id,
+                      prepSessionId: session.id,
+                    }}
+                    className="shrink-0"
+                  />
+                )}
               </li>
             ))}
           </ul>

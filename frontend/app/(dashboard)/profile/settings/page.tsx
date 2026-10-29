@@ -10,6 +10,7 @@ import ConfirmationModal from "@/components/ConfirmationModal";
 import { useImageUpload } from "@/components/ImageUpload";
 import { AiSettings } from "@/components/ai/AiSettings";
 import { NotificationSettings } from "@/components/notifications/NotificationSettings";
+import { ReminderSettings } from "@/components/reminders/ReminderSettings";
 import { ToggleRow } from "@/components/ui/toggle-row";
 import {
   changePassword,
@@ -34,6 +35,7 @@ const SECTIONS = [
   { id: "day", title: "Your day and prices" },
   { id: "assistant", title: "Assistant" },
   { id: "notifications", title: "Notifications" },
+  { id: "reminders", title: "Reminders" },
   { id: "apps", title: "Connected apps" },
   { id: "appearance", title: "Appearance" },
   { id: "security", title: "Sign-in and security" },
@@ -118,6 +120,7 @@ export default function ProfileSettingsPage() {
             <AiSettings />
           </Section>
           <NotificationsSection />
+          <RemindersSection />
           <AppsSection />
           <AppearanceSection />
           <SecuritySection />
@@ -429,6 +432,20 @@ function NotificationsSection() {
       lead="Choose what reaches each channel. News and offers stay off until you turn them on."
     >
       <NotificationSettings status={status} />
+    </Section>
+  );
+}
+
+function RemindersSection() {
+  const status = useSaveStatus();
+  return (
+    <Section
+      id="reminders"
+      title="Reminders"
+      aside={<SavedNote text={status.text} />}
+      lead="Your own reminders to train, measure, prep or log. They follow your choices for reminders above."
+    >
+      <ReminderSettings status={status} />
     </Section>
   );
 }

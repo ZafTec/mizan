@@ -8854,6 +8854,257 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Reminders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ReminderListResult"];
+                        "application/json": components["schemas"]["ReminderListResult"];
+                        "text/json": components["schemas"]["ReminderListResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateReminderRequest"];
+                    "text/json": components["schemas"]["CreateReminderRequest"];
+                    "application/*+json": components["schemas"]["CreateReminderRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ReminderDto"];
+                        "application/json": components["schemas"]["ReminderDto"];
+                        "text/json": components["schemas"]["ReminderDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Reminders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateReminderRequest"];
+                    "text/json": components["schemas"]["UpdateReminderRequest"];
+                    "application/*+json": components["schemas"]["UpdateReminderRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ReminderDto"];
+                        "application/json": components["schemas"]["ReminderDto"];
+                        "text/json": components["schemas"]["ReminderDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Reminders/{id}/snooze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SnoozeReminderRequest"];
+                    "text/json": components["schemas"]["SnoozeReminderRequest"];
+                    "application/*+json": components["schemas"]["SnoozeReminderRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ReminderActionResult"];
+                        "application/json": components["schemas"]["ReminderActionResult"];
+                        "text/json": components["schemas"]["ReminderActionResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Reminders/{id}/skip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ReminderActionResult"];
+                        "application/json": components["schemas"]["ReminderActionResult"];
+                        "text/json": components["schemas"]["ReminderActionResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Reminders/{id}/done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ReminderActionResult"];
+                        "application/json": components["schemas"]["ReminderActionResult"];
+                        "text/json": components["schemas"]["ReminderActionResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ShoppingLists": {
         parameters: {
             query?: never;
@@ -12700,6 +12951,23 @@ export interface components {
             amount?: number | null;
             unit?: string | null;
         };
+        CreateReminderRequest: {
+            kind: string;
+            title?: string | null;
+            note?: string | null;
+            schedule?: components["schemas"]["ReminderSchedule"];
+            channels?: string[] | null;
+            /** Format: uuid */
+            workoutTemplateId?: string | null;
+            /** Format: uuid */
+            mealPlanId?: string | null;
+            /** Format: uuid */
+            prepSessionId?: string | null;
+            prepTime?: string | null;
+            /** Format: int32 */
+            leadMinutes?: number | null;
+            mealType?: string | null;
+        };
         CreateShoppingListRequest: {
             name: string;
             /** Format: uuid */
@@ -14673,6 +14941,69 @@ export interface components {
             platform: string;
             deviceName?: string | null;
         };
+        ReminderActionResult: {
+            reminder: components["schemas"]["ReminderDto"];
+            message: string;
+            /** Format: date-time */
+            snoozedUntil?: string | null;
+        };
+        ReminderDto: {
+            /** Format: uuid */
+            id: string;
+            kind: string;
+            kindLabel: string;
+            title: string;
+            note?: string | null;
+            repeat: string;
+            time?: string | null;
+            days: string[];
+            date?: string | null;
+            /** Format: int32 */
+            everyMinutes?: number | null;
+            summary: string;
+            channels: string[];
+            enabled: boolean;
+            active: boolean;
+            /** Format: date-time */
+            nextRunAt?: string | null;
+            nextRunText?: string | null;
+            /** Format: date-time */
+            skipUntil?: string | null;
+            /** Format: uuid */
+            workoutTemplateId?: string | null;
+            /** Format: uuid */
+            mealPlanId?: string | null;
+            /** Format: uuid */
+            prepSessionId?: string | null;
+            prepTime?: string | null;
+            /** Format: int32 */
+            leadMinutes?: number | null;
+            mealType?: string | null;
+            actionLabel: string;
+            actionPath: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        ReminderListResult: {
+            items: components["schemas"]["ReminderDto"][];
+            /** Format: int32 */
+            activeCount: number;
+            /** Format: int32 */
+            activeLimit: number;
+            isPro: boolean;
+        };
+        ReminderSchedule: {
+            repeat: string;
+            time?: string | null;
+            days?: string[] | null;
+            date?: string | null;
+            /** Format: int32 */
+            everyMinutes?: number | null;
+            /** Format: int32 */
+            everyHours?: number | null;
+            /** Format: int32 */
+            everyDays?: number | null;
+        };
         RemoveHouseholdMemberResult: {
             success: boolean;
             message?: string | null;
@@ -15001,6 +15332,10 @@ export interface components {
             /** Format: uuid */
             jobId: string;
             to: string;
+        };
+        SnoozeReminderRequest: {
+            /** Format: int32 */
+            minutes?: number | null;
         };
         SocialAnalyticsDto: {
             /** Format: int32 */
@@ -15469,6 +15804,16 @@ export interface components {
         UpdateRecipeResult: {
             success: boolean;
             message?: string | null;
+        };
+        UpdateReminderRequest: {
+            title?: string | null;
+            note?: string | null;
+            schedule?: components["schemas"]["ReminderSchedule"];
+            channels?: string[] | null;
+            enabled?: boolean | null;
+            prepTime?: string | null;
+            /** Format: int32 */
+            leadMinutes?: number | null;
         };
         UpdateShoppingListItemRequest: {
             itemName?: string | null;

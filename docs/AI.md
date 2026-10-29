@@ -90,6 +90,10 @@ On the web the assistant is a side panel in the app shell (`components/ai/Assist
 
 Chat has six planning tools, each an existing command on `DataAxis.Planning`: `generate_meal_plan`, `get_plan_day` (the active plan's day, or a named plan's, drafts included), `add_plan_entry`, `update_plan_entry`, `remove_plan_entry`, and `generate_shopping_list`. Update and remove refuse a plan that is not a draft. The tool result the model reads is plain text with the ids it needs for the next call.
 
+### Reminder tools
+
+`create_reminder` and `list_reminders` (`AiReminderTools`) build the same commands as `/api/Reminders` ([reminders](ARCHITECTURE.md#reminders)), so the kinds, the hourly floor and the plan's cap hold without anything in a prompt. They sit on `DataAxis.Planning`: creating needs the nutrition write switch, and a refusal is the usual `ai_consent_required` for `nutrition`/`write`. Changing or deleting a reminder stays with the person, in Settings, MCP or the bot.
+
 `AiChatTurnDto.cards` carries what the person sees: `{ type, data }` with `type` one of `plan_preview`, `day_plan`, `cost_table`, `shopping_list`, and `data` exactly that type's record in `Mizan.Contracts/Ai/AiCards.cs` (`PlanPreviewCardData`, `DayPlanCardData`, `CostTableCardData`, `ShoppingListCardData`, all in the OpenAPI document). Cards are built by code from the commands' results and checked by `AiCardValidator`: an unknown type, a missing or unknown member, or a null the record does not allow is dropped. Nothing the model writes becomes a card, and no surface renders model-written markup. The web renders each type with one component under `frontend/components/ai/cards/`, linking to the plan or list it names, and leaves out a type it does not know. A malformed provider result is an error, not something to recover by scraping prose. Photo proposals show quantities and nutrition for confirmation before logging.
 
 ## Prompt administration

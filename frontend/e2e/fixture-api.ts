@@ -211,6 +211,7 @@ type FixtureState = {
   empty: boolean;
   notifications: FixtureNotification[];
   notificationPreferences: FixtureNotificationPreferences;
+  reminders: FixtureReminder[];
   failures: string[];
   writeFailures: Record<string, number>;
   unhandled: string[];
@@ -228,6 +229,49 @@ type FixtureState = {
   telegram: TelegramState;
 };
 type FixtureNotification = components["schemas"]["NotificationDto"];
+type FixtureReminder = components["schemas"]["ReminderDto"];
+
+/** A reminder as the API would answer for a request, with the API's wording fixed for the fixture. */
+function fixtureReminder(
+  body: components["schemas"]["CreateReminderRequest"],
+): FixtureReminder {
+  const schedule = body.schedule;
+  const summary =
+    body.kind === "pre_cook"
+      ? `Once, before the prep at ${body.prepTime ?? "18:00"}`
+      : schedule?.repeat === "days" && schedule.days?.length === 5
+        ? `Weekdays at ${schedule.time}`
+        : schedule?.repeat === "every"
+          ? "Every 2 hours"
+          : `Every day at ${schedule?.time ?? "07:00"}`;
+  const titles: Record<string, string> = {
+    workout: "Time for your workout",
+    measurement: "Time to take your measurements",
+    meal_log: "Log your meal",
+    pre_cook: "Time to start the prep",
+  };
+  return {
+    id: crypto.randomUUID(),
+    kind: body.kind,
+    kindLabel: body.kind,
+    title: body.title || titles[body.kind] || "Reminder",
+    repeat: schedule?.repeat ?? "once",
+    time: schedule?.time ?? null,
+    days: schedule?.days ?? [],
+    summary,
+    channels: ["inApp", "telegram", "push", "email"],
+    enabled: true,
+    active: true,
+    nextRunAt: "2026-11-02T04:00:00Z",
+    nextRunText: "Mon 2 Nov at 07:00",
+    workoutTemplateId: body.workoutTemplateId ?? null,
+    mealPlanId: body.mealPlanId ?? null,
+    prepSessionId: body.prepSessionId ?? null,
+    actionLabel: "Open Mizan",
+    actionPath: "/today",
+    createdAt: new Date().toISOString(),
+  };
+}
 type FixtureNotificationPreferences =
   components["schemas"]["NotificationPreferencesDto"];
 
@@ -244,7 +288,7 @@ function initialNotificationPreferences(
     [
       "reminders",
       "Reminders",
-      "The evening reminder before your eating window closes.",
+      "Reminders you set, and the evening reminder before your eating window closes.",
     ],
     [
       "planning",
@@ -418,6 +462,7 @@ function initialState(empty = false): FixtureState {
     empty,
     notifications: [],
     notificationPreferences: initialNotificationPreferences(),
+    reminders: [],
     draft: null,
     household: null,
     failures: [],
@@ -1422,6 +1467,52 @@ const server = Bun.serve({
       return json({
         unreadCount: state.notifications.filter((item) => !item.readAt).length,
       });
+    if (path === "/api/Reminders" && method === "GET") {
+      const active = state.reminders.filter((r) => r.enabled).length;
+      return json({
+        items: state.reminders,
+        activeCount: active,
+        activeLimit: state.pro ? 30 : 3,
+        isPro: state.pro,
+      });
+    }
+    if (path === "/api/Reminders" && method === "POST") {
+      const body =
+        (await request.json()) as components["schemas"]["CreateReminderRequest"];
+      state.writes.push({
+        path,
+        body: body as Record<string, unknown>,
+        key: request.headers.get("Idempotency-Key") ?? undefined,
+      });
+      const reminder = fixtureReminder(body);
+      state.reminders.push(reminder);
+      return json(reminder);
+    }
+    const reminderPath = /^\/api\/Reminders\/([0-9a-f-]+)$/.exec(path);
+    if (reminderPath && (method === "PUT" || method === "DELETE")) {
+      const reminder = state.reminders.find((r) => r.id === reminderPath[1]);
+      if (!reminder)
+        return json(
+          { errorCode: "not_found", error: "Reminder not found." },
+          404,
+        );
+      const body =
+        method === "PUT"
+          ? ((await request.json()) as components["schemas"]["UpdateReminderRequest"])
+          : {};
+      state.writes.push({
+        path,
+        body: { method, ...body },
+        key: request.headers.get("Idempotency-Key") ?? undefined,
+      });
+      if (method === "DELETE") {
+        state.reminders = state.reminders.filter((r) => r !== reminder);
+        return json(null, 204);
+      }
+      if ("enabled" in body && typeof body.enabled === "boolean")
+        reminder.enabled = reminder.active = body.enabled;
+      return json(reminder);
+    }
     if (path === "/api/Notifications/preferences" && method === "GET")
       return json(state.notificationPreferences);
     if (path === "/api/Notifications/preferences" && method === "PUT") {

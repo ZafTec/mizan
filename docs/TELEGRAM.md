@@ -22,6 +22,8 @@ The bot is a Pro feature. Issuing a link code answers 402 for a Free account. A 
 | `/shop` | The newest shopping list: up to ten unticked items grouped by prep session, with amounts and a "needs review" marker, "N left of M" at the end. One toggle button per item, **More** and **Back** to page, and **Open** to `{MiniAppUrl}/shopping-list?listId=...`. No list points at `/meal-plan`. |
 | `/planme high protein, cheap` | Drafts a week from tomorrow with the assistant and replies with its summary, weekly cost and violations, and **Confirm** / **Discard** |
 | `/notifications`, `/notifications on\|off`, `/notifications <kind> on\|off` | Says whether notifications come to this chat, with a **Turn on** or **Turn off** button (`nt:on`, `nt:off`) and one button per kind (`nk:{kind}:on\|off`), or sets either. See [notifications in Telegram](#notifications-in-telegram). |
+| `/remind`, `/remind drink water` | Sets a reminder with buttons for what, which days and what time. See [reminders](#reminders). |
+| `/reminders` | Lists your reminders with a **Stop** button each |
 | `/unlink` | Disconnects this chat |
 | `/help` | Lists commands |
 | A photo | Proposes nutrition with **Log it**, **Split**, and **Discard** actions |
@@ -53,6 +55,12 @@ A person can receive their Mizan notifications in the linked chat as well as in 
 Each kind can also be turned off for Telegram alone ([notifications](ARCHITECTURE.md#notifications)), from the bot's per-kind buttons or the Settings page. `NotificationWriter` queues a `telegram-message` outbox job keyed `telegram:notification:{key}` when the switch is on and the kind allows Telegram, held until quiet hours end. The messenger still sends nothing unless the bot service is configured, the chat is linked and the account is Pro.
 
 The message is a card (`TelegramCards`, Application; `NotificationCards`, bot): the title in bold, the body, then each fact as `Label: <b>value</b>`, in HTML with everything escaped. With an HTTPS image it is sent with `sendPhoto` and the text as caption (1,024 characters; text alone has 4,096, and the body is shortened to fit); if Telegram refuses the photo, the bot sends the text. Each action becomes an inline button: a page the Mini App has (`MiniAppPaths`, Application) opens there, any other page opens on the web, and neither is sent over plain HTTP. Achievements carry their badge, or a drawn card when the achievement has no icon.
+
+## Reminders
+
+The bot sets and answers [reminders](ARCHITECTURE.md#reminders) through `/api/Reminders` and decides nothing itself (`RemindHandler`). `/remind` offers **Workout**, **Measurements** and **Log a meal** (`rm:k:{kind}`); `/remind <words>` makes a custom reminder whose words ride on the message's first line ("Remind you to: …") and are read back when a button is pressed. Then **Every day**, **Weekdays** or **Weekends** (`rm:d:{kind}:{daily|wk|we}`) and a time (`rm:t:{kind}:{days}:{HHmm}`), which sends `POST /api/Reminders` and replies with the API's summary and first time. `/reminders` lists each with **Stop** (`ra:stop:{id}`), which turns it off with `PUT /api/Reminders/{id}`.
+
+A reminder's card ends with a row of **Done**, **Snooze 30 min** and **Skip today** (`TelegramReminderCallbacks`: `ra:done|snooze|skip:{id}`). Each calls `POST /api/Reminders/{id}/done|snooze|skip` and the bot replies with the API's sentence, such as "Snoozed. I will remind you again at 08:47."
 
 ## Evening reminder
 

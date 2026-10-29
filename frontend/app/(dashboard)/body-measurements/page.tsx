@@ -3,6 +3,7 @@ import { getCurrentGoal, getGoalHistory } from "@/data/goal";
 import { getUserServer } from "@/helper/session";
 import { LogEntryButton } from "@/components/logging/LogEntryButton";
 import DeleteMeasurementButton from "./DeleteMeasurementButton";
+import { RemindMeButton } from "@/components/reminders/RemindMeButton";
 import MeasurementChart from "./MeasurementChart";
 import {
   DataTable,
@@ -214,7 +215,15 @@ export default async function BodyMeasurementsPage({
     <div className="log-page space-y-8" data-testid="body-measurements-page">
       <header className="log-page-header block!">
         <h1>Body</h1>
-        <p className="text-muted-foreground mt-2">Weight and measurements over time.</p>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-muted-foreground">
+            Weight and measurements over time.
+          </p>
+          <RemindMeButton
+            heading="Remind me to measure"
+            base={{ kind: "measurement" }}
+          />
+        </div>
       </header>
 
       {all.length > 0 && (
@@ -232,7 +241,9 @@ export default async function BodyMeasurementsPage({
                 )}
               </p>
               {fact.note && (
-                <p className="mt-1 text-xs text-muted-foreground">{fact.note}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {fact.note}
+                </p>
               )}
             </div>
           ))}

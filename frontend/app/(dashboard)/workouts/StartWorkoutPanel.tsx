@@ -1,5 +1,6 @@
-﻿"use client";
+"use client";
 
+import { RemindMeButton } from "@/components/reminders/RemindMeButton";
 import type { WorkoutSummaryDto, WorkoutTemplateDto } from "@/types/workout";
 
 const START_ROW =
@@ -30,10 +31,7 @@ export default function StartWorkoutPanel({
           </span>
         </button>
         {lastWorkout && (
-          <button
-            className={START_ROW}
-            onClick={() => onRepeat(lastWorkout)}
-          >
+          <button className={START_ROW} onClick={() => onRepeat(lastWorkout)}>
             <span className="flex-1">
               <span className="block font-semibold">Repeat last workout</span>
               <span className="block text-sm text-muted-foreground mt-1">
@@ -48,20 +46,29 @@ export default function StartWorkoutPanel({
         {templates.length ? (
           <div className="border-t divide-y">
             {templates.map((template) => (
-              <button
+              <div
                 key={template.id}
-                className={START_ROW}
-                onClick={() => onTemplate(template.id)}
+                className="flex items-center gap-2 pr-4 hover:bg-muted"
               >
-                <span className="flex-1">
-                  <span className="block font-medium">{template.name}</span>
-                  {template.programName && (
-                    <span className="text-sm text-muted-foreground mt-1">
-                      {template.programName}
-                    </span>
-                  )}
-                </span>
-              </button>
+                <button
+                  className={`${START_ROW} hover:bg-transparent`}
+                  onClick={() => onTemplate(template.id)}
+                >
+                  <span className="flex-1">
+                    <span className="block font-medium">{template.name}</span>
+                    {template.programName && (
+                      <span className="text-sm text-muted-foreground mt-1">
+                        {template.programName}
+                      </span>
+                    )}
+                  </span>
+                </button>
+                <RemindMeButton
+                  heading={`Remind me to train: ${template.name}`}
+                  base={{ kind: "workout", workoutTemplateId: template.id }}
+                  className="shrink-0"
+                />
+              </div>
             ))}
           </div>
         ) : (
