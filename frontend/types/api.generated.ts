@@ -3735,9 +3735,9 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["SendAiChatMessageCommand"];
-                    "text/json": components["schemas"]["SendAiChatMessageCommand"];
-                    "application/*+json": components["schemas"]["SendAiChatMessageCommand"];
+                    "application/json": components["schemas"]["AiChatRequest"];
+                    "text/json": components["schemas"]["AiChatRequest"];
+                    "application/*+json": components["schemas"]["AiChatRequest"];
                 };
             };
             responses: {
@@ -3750,6 +3750,86 @@ export interface paths {
                         "text/plain": components["schemas"]["AiChatTurnDto"];
                         "application/json": components["schemas"]["AiChatTurnDto"];
                         "text/json": components["schemas"]["AiChatTurnDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Ai/conversation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiConversationDto"];
+                        "application/json": components["schemas"]["AiConversationDto"];
+                        "text/json": components["schemas"]["AiConversationDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Ai/conversation/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AiContextNoteRequest"];
+                    "text/json": components["schemas"]["AiContextNoteRequest"];
+                    "application/*+json": components["schemas"]["AiContextNoteRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AiConversationDto"];
+                        "application/json": components["schemas"]["AiConversationDto"];
+                        "text/json": components["schemas"]["AiConversationDto"];
                     };
                 };
             };
@@ -12734,6 +12814,12 @@ export interface components {
             createdAt: string;
             imageUrl?: string | null;
         };
+        AiChatRequest: {
+            /** Format: uuid */
+            threadId?: string | null;
+            message: string;
+            clientContext?: string | null;
+        };
         AiChatThreadDetailDto: {
             /** Format: uuid */
             id: string;
@@ -12776,6 +12862,18 @@ export interface components {
             axis: string;
             access: string;
         };
+        AiContextNoteRequest: {
+            note: string;
+            /** Format: int32 */
+            holdMinutes?: number | null;
+        };
+        AiConversationDto: {
+            /** Format: uuid */
+            threadId?: string | null;
+            pendingContext?: string | null;
+            /** Format: date-time */
+            pendingUntil?: string | null;
+        };
         AiEvalCaseDto: {
             /** Format: uuid */
             id: string;
@@ -12817,11 +12915,6 @@ export interface components {
             costMicros: number;
             /** Format: int32 */
             latencyMs: number;
-        };
-        AiImageRef: {
-            /** Format: byte */
-            bytes: string;
-            contentType: string;
         };
         AiOnboardingTurnDto: {
             /** Format: uuid */
@@ -15626,6 +15719,9 @@ export interface components {
             actionPath: string;
             /** Format: date-time */
             createdAt: string;
+            /** Format: int32 */
+            dayOfMonth?: number | null;
+            week?: string | null;
         };
         ReminderListResult: {
             items: components["schemas"]["ReminderDto"][];
@@ -15646,6 +15742,9 @@ export interface components {
             everyHours?: number | null;
             /** Format: int32 */
             everyDays?: number | null;
+            /** Format: int32 */
+            dayOfMonth?: number | null;
+            week?: string | null;
         };
         RemoveHouseholdMemberResult: {
             success: boolean;
@@ -15789,13 +15888,6 @@ export interface components {
             /** Format: int32 */
             alreadyPriced: number;
             missing: string[];
-        };
-        SendAiChatMessageCommand: {
-            /** Format: uuid */
-            threadId?: string | null;
-            message: string;
-            image?: components["schemas"]["AiImageRef"];
-            imageUrl?: string | null;
         };
         SendAiOnboardingMessageCommand: {
             /** Format: uuid */

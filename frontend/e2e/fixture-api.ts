@@ -244,7 +244,9 @@ function fixtureReminder(
         ? `Weekdays at ${schedule.time}`
         : schedule?.repeat === "every"
           ? "Every 2 hours"
-          : `Every day at ${schedule?.time ?? "07:00"}`;
+          : schedule?.repeat === "monthly"
+            ? `First Sunday of the month at ${schedule.time}`
+            : `Every day at ${schedule?.time ?? "07:00"}`;
   const titles: Record<string, string> = {
     workout: "Time for your workout",
     measurement: "Time to take your measurements",
@@ -268,6 +270,8 @@ function fixtureReminder(
     workoutTemplateId: body.workoutTemplateId ?? null,
     mealPlanId: body.mealPlanId ?? null,
     prepSessionId: body.prepSessionId ?? null,
+    dayOfMonth: schedule?.dayOfMonth ?? null,
+    week: schedule?.week ?? null,
     actionLabel: "Open Mizan",
     actionPath: "/today",
     createdAt: new Date().toISOString(),

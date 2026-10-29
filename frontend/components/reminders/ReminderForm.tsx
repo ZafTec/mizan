@@ -19,6 +19,7 @@ const REPEAT_OPTIONS = [
   { value: "daily", label: "Every day" },
   { value: "weekdays", label: "Weekdays" },
   { value: "weekends", label: "Weekends" },
+  { value: "monthly", label: "Once a month" },
   { value: "once", label: "Once" },
   { value: "hours", label: "Every few hours" },
 ] as const;
@@ -61,6 +62,43 @@ const HOURS = ["1", "2", "3", "4", "6", "8", "12"].map((value) => ({
   label: value === "1" ? "Every hour" : `Every ${value} hours`,
 }));
 
+const ORDINALS = ["first", "second", "third", "fourth", "last"] as const;
+const WEEKDAYS = [
+  ["sun", "Sunday"],
+  ["mon", "Monday"],
+  ["tue", "Tuesday"],
+  ["wed", "Wednesday"],
+  ["thu", "Thursday"],
+  ["fri", "Friday"],
+  ["sat", "Saturday"],
+] as const;
+const DATE_SUFFIX: Record<string, string> = {
+  "1": "st",
+  "2": "nd",
+  "3": "rd",
+  "21": "st",
+  "22": "nd",
+  "23": "rd",
+};
+
+/** Which day of the month: a date (31 is the API's last day) or a weekday in a week, as "date:15" or "first:sun". */
+const MONTH_DAYS = [
+  ...ORDINALS.flatMap((week) =>
+    WEEKDAYS.map(([day, name]) => ({
+      value: `${week}:${day}`,
+      label: `The ${week} ${name}`,
+    })),
+  ),
+  ...Array.from({ length: 30 }, (_, index) => {
+    const date = String(index + 1);
+    return {
+      value: `date:${date}`,
+      label: `The ${date}${DATE_SUFFIX[date] ?? "th"}`,
+    };
+  }),
+  { value: "date:31", label: "The last day" },
+];
+
 const LEADS = [
   { value: "30", label: "30 minutes before" },
   { value: "60", label: "1 hour before" },
@@ -74,8 +112,15 @@ function schedule(
   time: string,
   date: string,
   hours: string,
+  monthDay: string,
 ): ReminderSchedule {
   switch (repeat) {
+    case "monthly": {
+      const [week, day] = monthDay.split(":");
+      return week === "date"
+        ? { repeat: "monthly", time, dayOfMonth: Number(day) }
+        : { repeat: "monthly", time, week, days: [day] };
+    }
     case "weekdays":
       return {
         repeat: "days",
@@ -119,6 +164,7 @@ export function ReminderForm({
   const [time, setTime] = useState("07:00");
   const [date, setDate] = useState("");
   const [hours, setHours] = useState("2");
+  const [monthDay, setMonthDay] = useState("first:sun");
   const [prepTime, setPrepTime] = useState(base.prepTime ?? "18:00");
   const [lead, setLead] = useState(String(base.leadMinutes ?? 60));
   const [channels, setChannels] = useState<string[]>(
@@ -137,7 +183,7 @@ export function ReminderForm({
       ),
       ...(preCook
         ? { prepTime, leadMinutes: Number(lead), schedule: undefined }
-        : { schedule: schedule(repeat, time, date, hours) }),
+        : { schedule: schedule(repeat, time, date, hours, monthDay) }),
     });
   }
 
@@ -250,6 +296,22 @@ export function ReminderForm({
                 onChange={setTime}
                 options={TIMES}
                 searchable={false}
+              />
+            </div>
+          )}
+          {repeat === "monthly" && (
+            <div>
+              <label
+                htmlFor="reminder-month-day"
+                className="mb-1.5 block text-sm font-medium"
+              >
+                On
+              </label>
+              <Select
+                id="reminder-month-day"
+                value={monthDay}
+                onChange={setMonthDay}
+                options={MONTH_DAYS}
               />
             </div>
           )}

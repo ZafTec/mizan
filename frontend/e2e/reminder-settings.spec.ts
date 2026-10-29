@@ -74,6 +74,44 @@ test("a person adds a weekday workout reminder in Settings, turns it off and del
   expect(writes.every((w) => w.key)).toBeTruthy();
 });
 
+test("a person sets a reminder for the first Sunday of every month", async ({
+  context,
+  page,
+}) => {
+  await signIn(context);
+  await page.goto("/profile/settings#reminders");
+  const section = page.getByRole("region", { name: "Reminders", exact: true });
+
+  await section.getByRole("button", { name: "Add a reminder" }).click();
+  await section.getByRole("combobox", { name: "How often" }).click();
+  await page.getByRole("option", { name: "Once a month" }).click();
+  await expect(section.getByRole("combobox", { name: "On" })).toContainText(
+    "The first Sunday",
+  );
+  await section.getByRole("combobox", { name: "At" }).click();
+  await page.getByRole("option", { name: "08:00", exact: true }).click();
+  await section.getByRole("button", { name: "Set reminder" }).click();
+
+  await expect(
+    section.getByRole("switch", { name: /Time for your workout/ }),
+  ).toContainText("First Sunday of the month at 08:00.");
+
+  const writes = reminderWrites(await state(context));
+  expect(writes.map((w) => w.body)).toEqual([
+    {
+      kind: "workout",
+      title: null,
+      channels: ["inApp", "telegram", "push", "email"],
+      schedule: {
+        repeat: "monthly",
+        time: "08:00",
+        week: "first",
+        days: ["sun"],
+      },
+    },
+  ]);
+});
+
 test("Remind me on the measurements page sets a measurement reminder", async ({
   context,
   page,
