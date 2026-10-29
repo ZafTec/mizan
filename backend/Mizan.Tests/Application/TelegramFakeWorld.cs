@@ -45,6 +45,14 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
     /// <summary>The profile's <c>notifyByTelegram</c>; a PUT to <c>api/Users/me</c> changes it the way the API would.</summary>
     public bool NotifyByTelegram { get; set; }
 
+    /// <summary>Whether each kind comes to Telegram; a PUT to <c>api/Notifications/preferences</c> changes it the way the API would.</summary>
+    public Dictionary<string, bool> TelegramKinds { get; } = new()
+    {
+        ["achievements"] = true, ["reminders"] = true, ["planning"] = true, ["marketing"] = false,
+    };
+
+    public List<JsonElement> PreferencePuts { get; } = [];
+
     /// <summary>Plays the API with a feature flag off for the user's household: every write as the user is refused.</summary>
     public bool FeatureOff { get; set; }
 
@@ -314,6 +322,29 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
                 ? Json($$"""{"userId":"{{User}}","name":"Tester"}""")
                 : Json($$"""{"errorCode":"invalid_code","error":"{{LinkProblem}}"}""", HttpStatusCode.BadRequest);
         }
+        if (url.EndsWith("api/Notifications/preferences"))
+        {
+            if (request.Method == HttpMethod.Put)
+            {
+                var put = JsonDocument.Parse(body).RootElement.Clone();
+                PreferencePuts.Add(put);
+                foreach (var change in put.GetProperty("kinds").EnumerateArray())
+                {
+                    var kind = change.GetProperty("kind").GetString()!;
+                    if (!TelegramKinds.ContainsKey(kind))
+                        return Json($$"""{"errorCode":"validation_failed","error":"\"{{kind}}\" is not a notification kind."}""", HttpStatusCode.BadRequest);
+                    if (change.TryGetProperty("telegram", out var telegram) && telegram.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                        TelegramKinds[kind] = telegram.GetBoolean();
+                }
+            }
+            var kinds = string.Join(',', TelegramKinds.Select(k =>
+                $$"""{"kind":"{{k.Key}}","label":"{{char.ToUpperInvariant(k.Key[0]) + k.Key[1..]}}","description":"","inApp":true,"telegram":{{k.Value.ToString().ToLowerInvariant()}},"push":true,"email":false}"""));
+            return Json($$"""
+                {"kinds":[{{kinds}}],"quietHoursStart":null,"quietHoursEnd":null,"timeZoneId":"Africa/Addis_Ababa",
+                 "telegramLinked":true,"telegramEnabled":{{NotifyByTelegram.ToString().ToLowerInvariant()}}}
+                """);
+        }
+
         if (url.EndsWith("api/Users/me"))
         {
             if (request.Method == HttpMethod.Put)

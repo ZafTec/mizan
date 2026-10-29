@@ -14,19 +14,45 @@ public class TelegramNotificationsTests
     private readonly TelegramFakeWorld _world = new();
 
     [Fact]
-    public async Task Notifications_SaysWhetherTheyComeHere_WithOneButtonToFlipIt()
+    public async Task Notifications_SaysWhetherTheyComeHere_AndWhichKinds_WithAButtonForEach()
     {
         await _world.Handler().HandleAsync(Text("/notifications"), CancellationToken.None);
 
-        _world.LastText.Should().Be("Notifications are <b>off</b>: they stay in the app.");
-        _world.LastKeyboard().Should().Equal(("Turn on", "nt:on"));
+        _world.LastText.Should().StartWith("Notifications are <b>off</b> in this chat: they stay in the app.");
+        _world.LastText.Should().Contain("Achievements: <b>on</b>").And.Contain("Marketing: <b>off</b>");
+        _world.LastKeyboard().Should().Equal(
+            ("Turn on in this chat", "nt:on"),
+            ("Achievements: turn off", "nk:achievements:off"),
+            ("Reminders: turn off", "nk:reminders:off"),
+            ("Planning: turn off", "nk:planning:off"),
+            ("Marketing: turn on", "nk:marketing:on"));
         _world.ProfilePuts.Should().BeEmpty();
 
         _world.NotifyByTelegram = true;
         await _world.Handler().HandleAsync(Text("/notifications"), CancellationToken.None);
 
         _world.LastText.Should().StartWith("Notifications are <b>on</b>");
-        _world.LastKeyboard().Should().Equal(("Turn off", "nt:off"));
+        _world.LastKeyboard().First().Should().Be(("Turn off in this chat", "nt:off"));
+    }
+
+    [Fact]
+    public async Task AKindsButton_AndTheKindByName_TurnTelegramOffAndOnForThatKindOnly()
+    {
+        _world.NotifyByTelegram = true;
+
+        await _world.Handler().HandleAsync(Press("nk:planning:off"), CancellationToken.None);
+
+        _world.PreferencePuts.Should().ContainSingle().Which.GetProperty("kinds")[0].GetProperty("telegram").GetBoolean().Should().BeFalse();
+        _world.TelegramKinds["planning"].Should().BeFalse();
+        _world.TelegramKinds["achievements"].Should().BeTrue();
+        _world.LastText.Should().StartWith("Planning no longer come here.").And.Contain("Planning: <b>off</b>");
+        _world.LastKeyboard().Should().Contain(("Planning: turn on", "nk:planning:on"));
+        _world.ProfilePuts.Should().BeEmpty();
+
+        await _world.Handler().HandleAsync(Text("/notifications planning on"), CancellationToken.None);
+
+        _world.TelegramKinds["planning"].Should().BeTrue();
+        _world.LastText.Should().StartWith("Planning now come here.");
     }
 
     [Fact]
@@ -46,12 +72,13 @@ public class TelegramNotificationsTests
     }
 
     [Fact]
-    public async Task NotificationsWithAnythingElse_ExplainsTheTwoWords_AndChangesNothing()
+    public async Task NotificationsWithAnythingElse_ExplainsTheWords_AndChangesNothing()
     {
         await _world.Handler().HandleAsync(Text("/notifications loud"), CancellationToken.None);
 
-        _world.LastText.Should().Be("Send <code>/notifications on</code> or <code>/notifications off</code>.");
+        _world.LastText.Should().StartWith("Send <code>/notifications on</code> or <code>/notifications off</code> for this chat, or a kind and on or off");
         _world.ProfilePuts.Should().BeEmpty();
+        _world.PreferencePuts.Should().BeEmpty();
     }
 
     [Fact]

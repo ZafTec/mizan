@@ -85,8 +85,12 @@ public sealed record InlineKeyboardButton
     [JsonPropertyName("text")] public string Text { get; init; } = string.Empty;
     [JsonPropertyName("callback_data")] public string? CallbackData { get; init; }
     [JsonPropertyName("web_app")] public WebAppInfo? WebApp { get; init; }
+    [JsonPropertyName("url")] public string? Url { get; init; }
 
     public static InlineKeyboardButton Callback(string text, string data) => new() { Text = text, CallbackData = data };
+
+    /// <summary>A button that opens a page in the browser rather than the Mini App.</summary>
+    public static InlineKeyboardButton OpenUrl(string text, string url) => new() { Text = text, Url = url };
 
     public static InlineKeyboardButton OpenWebApp(string text, string url) => new() { Text = text, WebApp = new WebAppInfo { Url = url } };
 }

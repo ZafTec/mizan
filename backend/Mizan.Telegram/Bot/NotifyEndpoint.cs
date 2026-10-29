@@ -8,8 +8,10 @@ using Mizan.Contracts.Telegram;
 namespace Mizan.Telegram.Bot;
 
 /// <summary>
-/// <c>POST /internal/notify</c>: the API's outbox asks the bot to send a line to
-/// a linked chat, such as the evening reminder. Internal only: the reverse proxy
+/// <c>POST /internal/notify</c>: the API's outbox asks the bot to send a
+/// notification to a linked chat, rendered by <see cref="NotificationCards"/>: a
+/// picture with a caption when it has one, falling back to a text message when
+/// Telegram cannot take the picture. Internal only: the reverse proxy
 /// routes the webhook and the Mini App session here, not this, and the request
 /// must carry the shared service key, compared in constant time. The API never
 /// holds the bot token, which is why it asks rather than sends.
@@ -55,11 +57,21 @@ public sealed class NotifyEndpoint
             return;
         }
 
-        object? keyboard = body.OpenPath is { Length: > 0 } path && _options.MiniAppButtonUrl(path) is { } url
-            ? InlineKeyboardMarkup.Column(InlineKeyboardButton.OpenWebApp("Open", url))
-            : null;
+        var rendered = NotificationCards.Render(body, _options);
+        if (rendered.PhotoUrl is { } photo)
+        {
+            if (await _telegram.TrySendPhotoAsync(body.TelegramUserId, photo, rendered.Html, rendered.Keyboard, ct))
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.NoContent;
+                return;
+            }
 
-        if (await _telegram.TrySendMessageAsync(body.TelegramUserId, Escape(body.Text), keyboard, ct))
+            // A picture Telegram could not fetch must not cost the person the notification.
+            _logger.LogWarning("Telegram did not take a notification's picture; sending it as text");
+            rendered = NotificationCards.Render(body, _options, asPhoto: false);
+        }
+
+        if (await _telegram.TrySendMessageAsync(body.TelegramUserId, rendered.Html, rendered.Keyboard, ct))
         {
             context.Response.StatusCode = (int)HttpStatusCode.NoContent;
             return;
@@ -68,9 +80,6 @@ public sealed class NotifyEndpoint
         _logger.LogWarning("Telegram did not take a notification for a linked chat");
         await WriteAsync(context, HttpStatusCode.BadGateway, new { errorCode = "telegram_unavailable", error = "Telegram did not take the message." }, ct);
     }
-
-    private static string Escape(string value) =>
-        value.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
 
     private static Task WriteAsync<T>(HttpContext context, HttpStatusCode status, T body, CancellationToken ct)
     {

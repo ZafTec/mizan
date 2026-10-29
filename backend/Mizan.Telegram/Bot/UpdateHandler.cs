@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Mizan.Contracts.Ai;
 using Mizan.Contracts.Meals;
 using Mizan.Contracts.Measurements;
+using Mizan.Contracts.Notifications;
 using Mizan.Contracts.Nutrition;
 using Mizan.Contracts.Planning;
 using Mizan.Contracts.Telegram;
@@ -380,45 +381,75 @@ public sealed class UpdateHandler
     // ---- Notifications ----------------------------------------------------
 
     /// <summary>
-    /// Whether the app's notifications also come to this chat. Bare, it says
-    /// which and offers one button to flip it; <c>on</c> and <c>off</c> set it.
-    /// Both read and write <c>/api/Users/me</c>, the switch the settings page
-    /// uses, so the API decides and the bot only reports.
+    /// Whether the app's notifications come to this chat, and which kinds. Bare, it lists each kind
+    /// with a button that turns Telegram on or off for it, under the switch for the whole chat;
+    /// <c>on</c> and <c>off</c> set that switch, and <c>&lt;kind&gt; on|off</c> one kind. The switch is
+    /// <c>/api/Users/me</c> and the kinds are <c>/api/Notifications/preferences</c>, the same the
+    /// settings page uses, so the API decides and the bot only reports.
     /// </summary>
     private async Task OnNotificationsAsync(long chatId, ResolvedUser user, string argument, CancellationToken ct)
     {
-        switch (argument.ToLowerInvariant())
+        var words = argument.ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        switch (words)
         {
-            case "on":
+            case ["on"]:
                 await SetNotificationsAsync(chatId, user, on: true, ct);
                 return;
-            case "off":
+            case ["off"]:
                 await SetNotificationsAsync(chatId, user, on: false, ct);
                 return;
-            case "":
+            case [var kind, "on" or "off"]:
+                await SetKindAsync(chatId, user, kind, words[1] == "on", ct);
+                return;
+            case []:
                 break;
             default:
                 await _telegram.SendMessageAsync(
-                    chatId, "Send <code>/notifications on</code> or <code>/notifications off</code>.", ct: ct);
+                    chatId,
+                    "Send <code>/notifications on</code> or <code>/notifications off</code> for this chat, or a kind and on or off, such as <code>/notifications achievements off</code>.",
+                    ct: ct);
                 return;
         }
 
-        var me = await _api.SendForResultAsync<UserDto>(user.UserId, HttpMethod.Get, "api/Users/me", null, ct);
-        if (me is not { Ok: true, Value: { } profile })
+        await ShowNotificationsAsync(chatId, user, ct);
+    }
+
+    private async Task ShowNotificationsAsync(long chatId, ResolvedUser user, CancellationToken ct)
+    {
+        var prefs = await _api.SendForResultAsync<NotificationPreferencesDto>(user.UserId, HttpMethod.Get, "api/Notifications/preferences", null, ct);
+        if (prefs is not { Ok: true, Value: { } settings })
         {
-            await _telegram.SendMessageAsync(chatId, Escape(ExplainFailure(me)), ct: ct);
+            await _telegram.SendMessageAsync(chatId, Escape(ExplainFailure(prefs)), ct: ct);
             return;
         }
 
-        await _telegram.SendMessageAsync(
-            chatId,
-            profile.NotifyByTelegram
-                ? "Notifications are <b>on</b>: what the app notifies you about comes to this chat too."
-                : "Notifications are <b>off</b>: they stay in the app.",
-            InlineKeyboardMarkup.Column(profile.NotifyByTelegram
-                ? InlineKeyboardButton.Callback("Turn off", "nt:off")
-                : InlineKeyboardButton.Callback("Turn on", "nt:on")),
-            ct);
+        var (text, keyboard) = NotificationSettingsCard(settings);
+        await _telegram.SendMessageAsync(chatId, text, keyboard, ct);
+    }
+
+    /// <summary>The settings as a message: the chat-wide switch, then each kind and whether it comes here.</summary>
+    internal static (string Text, InlineKeyboardMarkup Keyboard) NotificationSettingsCard(NotificationPreferencesDto settings)
+    {
+        var lines = new List<string>
+        {
+            settings.TelegramEnabled
+                ? "Notifications are <b>on</b> in this chat. Choose which kinds come here:"
+                : "Notifications are <b>off</b> in this chat: they stay in the app. Turn them on, then choose which kinds come here.",
+            "",
+        };
+        lines.AddRange(settings.Kinds.Select(k => $"{Escape(k.Label)}: <b>{(k.Telegram ? "on" : "off")}</b>"));
+
+        var buttons = new List<InlineKeyboardButton>
+        {
+            settings.TelegramEnabled
+                ? InlineKeyboardButton.Callback("Turn off in this chat", "nt:off")
+                : InlineKeyboardButton.Callback("Turn on in this chat", "nt:on"),
+        };
+        buttons.AddRange(settings.Kinds.Select(k => InlineKeyboardButton.Callback(
+            k.Telegram ? $"{k.Label}: turn off" : $"{k.Label}: turn on",
+            $"nk:{k.Kind}:{(k.Telegram ? "off" : "on")}")));
+
+        return (string.Join('\n', lines), InlineKeyboardMarkup.Column(buttons.ToArray()));
     }
 
     private async Task SetNotificationsAsync(long chatId, ResolvedUser user, bool on, CancellationToken ct)
@@ -429,9 +460,32 @@ public sealed class UpdateHandler
         await _telegram.SendMessageAsync(
             chatId,
             !result.Ok ? Escape(ExplainFailure(result))
-            : on ? "Notifications are on. You will get them here as well as in the app. <b>/notifications off</b> stops them."
+            : on ? "Notifications are on. You will get them here as well as in the app. <b>/notifications</b> chooses which kinds; <b>/notifications off</b> stops them."
             : "Notifications are off. They stay in the app. <b>/notifications on</b> brings them back.",
             ct: ct);
+    }
+
+    private async Task SetKindAsync(long chatId, ResolvedUser user, string kind, bool on, CancellationToken ct)
+    {
+        var result = await _api.SendForResultAsync<NotificationPreferencesDto>(
+            user.UserId,
+            HttpMethod.Put,
+            "api/Notifications/preferences",
+            new UpdateNotificationPreferencesRequest([new NotificationKindPreferenceUpdate(kind, Telegram: on)]),
+            ct);
+        if (result is not { Ok: true, Value: { } settings })
+        {
+            await _telegram.SendMessageAsync(chatId, Escape(ExplainFailure(result)), ct: ct);
+            return;
+        }
+
+        var label = settings.Kinds.FirstOrDefault(k => k.Kind == kind)?.Label ?? kind;
+        var (text, keyboard) = NotificationSettingsCard(settings);
+        await _telegram.SendMessageAsync(
+            chatId,
+            $"{Escape(label)} {(on ? "now come here" : "no longer come here")}.\n\n{text}",
+            keyboard,
+            ct);
     }
 
     // ---- Inline keyboards -------------------------------------------------
@@ -531,6 +585,12 @@ public sealed class UpdateHandler
         if (data is "nt:on" or "nt:off")
         {
             await SetNotificationsAsync(chatId, user, on: data == "nt:on", ct);
+            return;
+        }
+
+        if (data.StartsWith("nk:", StringComparison.Ordinal) && data.Split(':') is [_, var kind, "on" or "off"] parts)
+        {
+            await SetKindAsync(chatId, user, kind, parts[2] == "on", ct);
             return;
         }
 
@@ -1159,7 +1219,7 @@ public sealed class UpdateHandler
         + "<b>/plan</b> - today's meal plan, with a Log button per entry (<b>/plan tomorrow</b> works too)\n"
         + "<b>/shop</b> - your shopping list, tick items off as you go\n"
         + "<b>/planme high protein, cheap</b> - draft a week of meals to confirm\n"
-        + "<b>/notifications</b> - get the app's notifications here too (<b>on</b> or <b>off</b>)\n"
+        + "<b>/notifications</b> - get the app's notifications here too (<b>on</b> or <b>off</b>), and choose which kinds\n"
         + "<b>/unlink</b> - disconnect this chat";
 
     private static string AnalysisCard(FoodAnalysisResult analysis)

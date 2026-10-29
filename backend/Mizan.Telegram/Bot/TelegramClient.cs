@@ -74,6 +74,35 @@ public sealed class TelegramClient
         return await TrySendAsync(chatId, StripTags(text), parseMode: null, replyMarkup, ct);
     }
 
+    /// <summary>
+    /// A picture with an HTML caption. Telegram fetches the picture itself, so it must be a public
+    /// https URL. Says whether Telegram took it; the caller falls back to a text message.
+    /// </summary>
+    public async Task<bool> TrySendPhotoAsync(
+        long chatId, string photoUrl, string caption, object? replyMarkup = null, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync($"{_base}/sendPhoto", new
+            {
+                chat_id = chatId,
+                photo = photoUrl,
+                caption,
+                parse_mode = "HTML",
+                reply_markup = replyMarkup,
+            }, Json, ct);
+
+            if (response.IsSuccessStatusCode) return true;
+            _logger.LogWarning("Telegram sendPhoto returned {Status}", (int)response.StatusCode);
+            return false;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Telegram sendPhoto failed");
+            return false;
+        }
+    }
+
     private async Task<bool> TrySendAsync(
         long chatId, string text, string? parseMode, object? replyMarkup, CancellationToken ct)
     {
@@ -184,7 +213,7 @@ public sealed class TelegramClient
                 new { command = "plan", description = "Today's meal plan, or /plan tomorrow" },
                 new { command = "shop", description = "Your shopping list, ten items at a time" },
                 new { command = "planme", description = "Draft a week of meals, e.g. /planme high protein, cheap" },
-                new { command = "notifications", description = "Get the app's notifications here too, /notifications on or off" },
+                new { command = "notifications", description = "Get the app's notifications here, and choose which kinds" },
                 new { command = "help", description = "What this bot can do" },
                 new { command = "unlink", description = "Disconnect this chat from your account" },
             },
