@@ -49,5 +49,34 @@ public static class AiErrorCodes
     public const string ConsentRequired = "ai_consent_required";
 }
 
+/// <summary>Body of <c>POST /api/Ai/chat</c>.</summary>
+/// <param name="ThreadId">The conversation to continue; null starts a new one.</param>
+/// <param name="Message">What the person typed.</param>
+/// <param name="ClientContext">
+/// Optional facts from the app the person is using at this moment, in plain words: a form they are
+/// part way through, what it has asked and what was chosen (docs/AI.md#app-context). Kept in the
+/// thread, so later turns see it too. Up to 1,000 characters.
+/// </param>
+public record AiChatRequest(Guid? ThreadId, string Message, string? ClientContext = null);
+
+/// <summary>
+/// The conversation a client continues, from <c>GET /api/Ai/conversation</c>: the newest thread unless
+/// it has been quiet longer than the configured gap (then <see cref="ThreadId"/> is null and the next
+/// message starts a new one), and any app context still waiting for the person's next message, which
+/// outlives the gap so a fresh thread starts with it.
+/// </summary>
+public record AiConversationDto(Guid? ThreadId, string? PendingContext, DateTime? PendingUntil);
+
+/// <summary>
+/// Body of <c>POST /api/Ai/conversation/context</c>: a fact the client reports into the person's current
+/// conversation without asking the model anything.
+/// </summary>
+/// <param name="Note">The fact, in plain words, up to 1,000 characters.</param>
+/// <param name="HoldMinutes">
+/// 1 to 60: the note waits for the person's next message for this long (a step that asked a question).
+/// 0 or null: nothing is waiting any more (the step finished).
+/// </param>
+public record AiContextNoteRequest(string Note, int? HoldMinutes = null);
+
 /// <summary>One row of GET /api/Ai/threads, newest first.</summary>
 public record AiChatThreadDto(Guid Id, string Title, DateTime UpdatedAt);

@@ -365,6 +365,15 @@ namespace Mizan.Infrastructure.Migrations
                         .HasDefaultValue(0)
                         .HasColumnName("kind");
 
+                    b.Property<string>("PendingContext")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("pending_context");
+
+                    b.Property<DateTime?>("PendingContextUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("pending_context_until");
+
                     b.Property<int>("SummarisedThrough")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
@@ -6037,6 +6046,10 @@ namespace Mizan.Infrastructure.Migrations
                             b1.Property<int>("Kind");
 
                             b1.Property<TimeOnly?>("LocalTime");
+
+                            b1.Property<int?>("MonthDay");
+
+                            b1.Property<int?>("MonthWeek");
 
                             b1.Property<int>("OffsetMinutes");
 

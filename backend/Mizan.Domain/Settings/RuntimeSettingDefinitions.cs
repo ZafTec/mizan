@@ -288,6 +288,7 @@ public static class RuntimeSettingDefinitions
             new("Ai.SupportsTemperature", provider, "Send temperature", "False for models that reject a temperature.", RuntimeSettingType.Bool) { Default = "true" },
             new("Ai.ReasoningEffort", provider, "Reasoning effort", "Empty for providers that do not accept the field.", RuntimeSettingType.Enum) { AllowedValues = ["none", "minimal", "low", "medium", "high"], AllowEmpty = true },
             new("Ai.PromptCostPerMillionMicros", provider, "Prompt price", "Millionths of a currency unit per million prompt tokens. The cost ceiling relies on it.", RuntimeSettingType.Int) { Max = Unlimited, Default = "150000" },
+            new("Ai.ConversationGapHours", provider, "Conversation gap (hours)", "A chat app such as Telegram continues the newest conversation unless it has been quiet this long; then it starts a new one.", RuntimeSettingType.Int) { Min = 1, Max = 168, Default = "3" },
             new("Ai.CompletionCostPerMillionMicros", provider, "Completion price", "Millionths of a currency unit per million completion tokens.", RuntimeSettingType.Int) { Max = Unlimited, Default = "600000" },
 
             new("Ai.GlobalDailyTokens", limits, "Global tokens per day", "Every line together stops here each UTC day.", RuntimeSettingType.Int) { Max = Unlimited, Default = "5000000" },

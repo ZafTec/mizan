@@ -22,7 +22,9 @@ public record SendAiChatMessageCommand(
     /// <summary>An attached photo, already read and type-checked by the controller.</summary>
     AiImageRef? Image = null,
     /// <summary>Where that photo was stored, so the transcript can show it again.</summary>
-    string? ImageUrl = null) : IRequest<AiChatTurnDto>;
+    string? ImageUrl = null,
+    /// <summary>Facts from the person's app at this moment (<see cref="AiChatRequest.ClientContext"/>), kept in the thread.</summary>
+    string? ClientContext = null) : IRequest<AiChatTurnDto>;
 
 public class SendAiChatMessageCommandValidator : AbstractValidator<SendAiChatMessageCommand>
 {
@@ -32,6 +34,7 @@ public class SendAiChatMessageCommandValidator : AbstractValidator<SendAiChatMes
         // empty when one is attached.
         RuleFor(c => c.Message).NotEmpty().When(c => c.Image is null);
         RuleFor(c => c.Message).MaximumLength(4000);
+        RuleFor(c => c.ClientContext).MaximumLength(AiConversations.MaxNoteLength);
     }
 }
 
@@ -47,13 +50,15 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
     private readonly IMizanDbContext _context;
     private readonly ICurrentUserService _currentUser;
     private readonly INutritionAiService _ai;
+    private readonly AiConversations _conversations;
 
     public SendAiChatMessageCommandHandler(
-        IMizanDbContext context, ICurrentUserService currentUser, INutritionAiService ai)
+        IMizanDbContext context, ICurrentUserService currentUser, INutritionAiService ai, AiConversations conversations)
     {
         _context = context;
         _currentUser = currentUser;
         _ai = ai;
+        _conversations = conversations;
     }
 
     public async Task<AiChatTurnDto> Handle(
@@ -63,14 +68,21 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
         var message = request.Message.Trim();
 
         var thread = await ResolveThreadAsync(userId, request.ThreadId, message, cancellationToken);
-        var history = await HistoryAsync(thread.Id, cancellationToken);
+        var history = (await HistoryAsync(thread.Id, cancellationToken)).ToList();
+
+        // App context rides just before the message it explains. The same fact twice in a row is
+        // stored once: a client resends what is still waiting with every message.
+        var clientContext = string.IsNullOrWhiteSpace(request.ClientContext) ? null : request.ClientContext.Trim();
+        var storeContext = clientContext is not null
+            && await _conversations.LastNoteAsync(thread.Id, cancellationToken) != clientContext;
+        if (storeContext) history.Add(new AiChatHistoryTurn(false, clientContext!, IsContext: true));
 
         // The provider call happens before either message is written: a call
         // that fails on quota or an outage must not leave a half turn behind.
         var turn = await _ai.GetNutritionAdviceAsync(
             userId, message, history, cancellationToken, thread.Summary, request.Image);
 
-        var now = DateTime.UtcNow;
+        var now = _conversations.Now;
         var reply = new AiChatMessage
         {
             Id = Guid.CreateVersion7(),
@@ -90,9 +102,17 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
             ImageUrl = request.ImageUrl,
             CreatedAt = now,
         };
+        if (storeContext) _conversations.AddNote(thread, clientContext!, now.AddMilliseconds(-1));
         _context.AiChatMessages.Add(stored);
         _context.AiChatMessages.Add(reply);
         thread.UpdatedAt = now;
+        // The waiting context has had its answer; it stays in the thread as a note.
+        if (clientContext is not null)
+        {
+            thread.PendingContext = null;
+            thread.PendingContextUntil = null;
+        }
+        if (thread.Title == AddAiContextNoteCommandHandler.UntitledThread) thread.Title = Title(message);
 
         await _context.SaveChangesAsync(cancellationToken);
         await RefreshSummaryAsync(userId, thread, cancellationToken);
@@ -138,7 +158,7 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
         var summary = await _ai.SummariseAsync(
             userId,
             thread.Summary,
-            pending.Select(m => new AiChatHistoryTurn(m.Role == AiChatRole.User, m.Content)).ToList(),
+            pending.Select(m => new AiChatHistoryTurn(m.Role == AiChatRole.User, m.Content, m.Role == AiChatRole.Context)).ToList(),
             cancellationToken);
 
         if (string.IsNullOrWhiteSpace(summary)) return;
@@ -163,8 +183,8 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
             Id = Guid.CreateVersion7(),
             UserId = userId,
             Title = Title(firstMessage),
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
+            CreatedAt = _conversations.Now,
+            UpdatedAt = _conversations.Now,
         };
 
         _context.AiChatThreads.Add(thread);
@@ -183,7 +203,7 @@ public class SendAiChatMessageCommandHandler : IRequestHandler<SendAiChatMessage
 
         return recent
             .OrderBy(m => m.CreatedAt)
-            .Select(m => new AiChatHistoryTurn(m.Role == AiChatRole.User, m.Content))
+            .Select(m => new AiChatHistoryTurn(m.Role == AiChatRole.User, m.Content, m.Role == AiChatRole.Context))
             .ToList();
     }
 

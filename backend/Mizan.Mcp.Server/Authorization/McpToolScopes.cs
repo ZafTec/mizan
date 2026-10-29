@@ -88,7 +88,7 @@ public static class McpToolScopes
 
         // The assistant. Each call spends the user's daily AI allowance.
         Add(McpScopes.AiUse, "ask_ai", "suggest_meals", "analyze_food_image", "get_ai_usage", "list_ai_threads",
-            "get_ai_thread", "delete_ai_thread");
+            "get_ai_thread", "delete_ai_thread", "get_ai_conversation");
 
         // Administration. Every admin tool needs the admin scope, which only an administrator can grant.
         Add(McpScopes.Admin,

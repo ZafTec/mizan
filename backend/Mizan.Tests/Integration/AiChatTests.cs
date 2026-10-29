@@ -229,6 +229,70 @@ public class AiChatTests
             new AiConsentRequirement(AiErrorCodes.ConsentRequired, "nutrition", "write"));
     }
 
+    /// <summary>
+    /// A client reports where the person is (docs/AI.md#app-context): the fact waits for their next
+    /// message, goes to the model with it, and stays in the thread for later turns, while the person's
+    /// own view of the thread shows only what was said.
+    /// </summary>
+    [Fact]
+    public async Task AppContextAClientReports_ReachesTheModelWithTheNextMessage_AndStaysForLaterTurns()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, _) = await UserAsync();
+        const string step = "The person is setting up a reminder. Chosen so far: Log a meal (kind meal_log). The chat is now asking \"Which days?\".";
+
+        var noted = await client.PostAsJsonAsync("/api/Ai/conversation/context", new AiContextNoteRequest(step, 15));
+        noted.EnsureSuccessStatusCode();
+        var waiting = await client.GetFromJsonAsync<AiConversationDto>("/api/Ai/conversation");
+        waiting!.PendingContext.Should().Be(step);
+        waiting.ThreadId.Should().NotBeNull();
+
+        _fixture.Ai.Reply("Which day of the week?");
+        var response = await client.PostAsJsonAsync("/api/Ai/chat", new AiChatRequest(waiting.ThreadId, "once a week", waiting.PendingContext));
+        response.EnsureSuccessStatusCode();
+        var turn = (await response.Content.ReadFromJsonAsync<AiChatTurnDto>())!;
+
+        turn.ThreadId.Should().Be(waiting.ThreadId!.Value);
+        turn.Title.Should().Be("once a week");
+        ContextSent().Should().ContainSingle().Which.Should().EndWith(step);
+        (await client.GetFromJsonAsync<AiConversationDto>("/api/Ai/conversation"))!.PendingContext.Should().BeNull();
+
+        _fixture.Ai.Reply("Set for Sundays.");
+        await SendAsync(client, turn.ThreadId, "sunday");
+        ContextSent().Should().ContainSingle().Which.Should().EndWith(step);
+
+        var thread = await client.GetFromJsonAsync<AiChatThreadDetailDto>($"/api/Ai/threads/{turn.ThreadId}");
+        thread!.Messages.Select(m => m.Content).Should().Equal("once a week", "Which day of the week?", "sunday", "Set for Sundays.");
+    }
+
+    [Fact]
+    public async Task AfterAQuietGap_TheNextMessageStartsANewConversation_AndWaitingContextGoesWithIt()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, _) = await UserAsync();
+        var start = DateTimeOffset.UtcNow;
+        _fixture.Clock.Set(start);
+        var earlier = await SendAsync(client, null, "How much protein today?");
+        (await client.GetFromJsonAsync<AiConversationDto>("/api/Ai/conversation"))!.ThreadId.Should().Be(earlier.ThreadId);
+
+        _fixture.Clock.Set(start.AddHours(4));
+        (await client.GetFromJsonAsync<AiConversationDto>("/api/Ai/conversation"))!.ThreadId.Should().BeNull();
+
+        (await client.PostAsJsonAsync("/api/Ai/conversation/context", new AiContextNoteRequest("Asking: What time?", 15))).EnsureSuccessStatusCode();
+        var current = await client.GetFromJsonAsync<AiConversationDto>("/api/Ai/conversation");
+        current!.ThreadId.Should().NotBeNull().And.NotBe(earlier.ThreadId);
+        current.PendingContext.Should().Be("Asking: What time?");
+
+        _fixture.Clock.Set(start.AddHours(4).AddMinutes(20));
+        (await client.GetFromJsonAsync<AiConversationDto>("/api/Ai/conversation"))!.PendingContext.Should().BeNull();
+    }
+
+    private List<string> ContextSent() =>
+        _fixture.Ai.LastCall.Messages
+            .Where(m => m.Role == AiRole.System && m.Content.StartsWith("App context", StringComparison.Ordinal))
+            .Select(m => m.Content)
+            .ToList();
+
     private async Task<(HttpClient Client, Guid UserId)> UserAsync()
     {
         _fixture.Ai.Reset();

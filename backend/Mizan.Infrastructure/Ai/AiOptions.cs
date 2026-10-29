@@ -33,6 +33,9 @@ public class AiOptions
     /// </summary>
     public string? ReasoningEffort { get; set; }
 
+    /// <summary>How long the current conversation may be quiet before a chat app starts a new one (docs/AI.md#app-context).</summary>
+    public int ConversationGapHours { get; set; } = 3;
+
     /// <summary>Per-day allowances by tier. Free gets enough to see the value.</summary>
     public AiTierLimits Free { get; set; } = new() { DailyRequests = 5, DailyTokens = 20_000 };
 

@@ -68,7 +68,7 @@ public class GetAiChatThreadQueryHandler : IRequestHandler<GetAiChatThreadQuery,
             ?? throw new EntityNotFoundException("Chat thread", request.Id);
 
         var messages = await _context.AiChatMessages.AsNoTracking()
-            .Where(m => m.ThreadId == thread.Id)
+            .Where(m => m.ThreadId == thread.Id && m.Role != AiChatRole.Context)
             .OrderBy(m => m.CreatedAt)
             .Select(m => new AiChatMessageDto(m.Id, m.Role == AiChatRole.User, m.Content, m.CreatedAt, m.ImageUrl))
             .ToListAsync(cancellationToken);

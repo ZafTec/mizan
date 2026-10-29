@@ -289,6 +289,19 @@ namespace Mizan.Infrastructure.Migrations
                 nullable: true);
 
             migrationBuilder.AddColumn<string>(
+                name: "pending_context",
+                table: "ai_chat_threads",
+                type: "character varying(1000)",
+                maxLength: 1000,
+                nullable: true);
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "pending_context_until",
+                table: "ai_chat_threads",
+                type: "timestamp with time zone",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
                 name: "card_image_url",
                 table: "achievements",
                 type: "character varying(1000)",
@@ -1719,6 +1732,14 @@ namespace Mizan.Infrastructure.Migrations
             migrationBuilder.DropColumn(
                 name: "impersonator_id",
                 table: "audit_logs");
+
+            migrationBuilder.DropColumn(
+                name: "pending_context",
+                table: "ai_chat_threads");
+
+            migrationBuilder.DropColumn(
+                name: "pending_context_until",
+                table: "ai_chat_threads");
 
             migrationBuilder.DropColumn(
                 name: "card_image_url",

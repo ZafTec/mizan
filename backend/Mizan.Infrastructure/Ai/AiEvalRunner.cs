@@ -1,7 +1,9 @@
 using System.Diagnostics;
+using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Mizan.Application.Ai;
+using Mizan.Application.Ai.Tools;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
@@ -16,6 +18,11 @@ namespace Mizan.Infrastructure.Ai;
 /// Every case is a real provider call, reserved and settled like any other, so
 /// the cost of proving a prompt shows up in the same ledger as the cost of
 /// using one.
+///
+/// A chat case is offered the chat's tools with the same descriptions the chat
+/// offers, and nothing is run: a tool the model asks for is written into the
+/// output as <c>[tool call] name {arguments}</c>, so a case can assert what the
+/// assistant would have done against the tool contract.
 /// </summary>
 public class AiEvalRunner : IAiEvalRunner
 {
@@ -120,7 +127,7 @@ public class AiEvalRunner : IAiEvalRunner
         try
         {
             response = await _provider.CompleteAsync(
-                new AiCompletionRequest { Messages = messages, Temperature = 0.2 }, cancellationToken);
+                new AiCompletionRequest { Messages = messages, Temperature = 0.2, Tools = ToolsFor(version.Prompt!.Key) }, cancellationToken);
             usage = response.Usage;
             model = response.Model;
             callOutcome = AiCallOutcome.Succeeded;
@@ -141,7 +148,7 @@ public class AiEvalRunner : IAiEvalRunner
 
         var verdict = response is null
             ? new EvalVerdict(false, false, errorReason)
-            : EvalAssertions.Evaluate(evalCase.Assertions, response.Content);
+            : EvalAssertions.Evaluate(evalCase.Assertions, Transcript(response));
 
         return new AiEvalRun
         {
@@ -152,7 +159,7 @@ public class AiEvalRunner : IAiEvalRunner
                 ? AiEvalOutcome.Errored
                 : verdict.Passed ? AiEvalOutcome.Passed : AiEvalOutcome.Failed,
             SchemaValid = verdict.SchemaValid,
-            Output = response?.Content,
+            Output = response is null ? null : Transcript(response),
             FailureReason = verdict.Reason,
             PromptTokens = usage.PromptTokens,
             CompletionTokens = usage.CompletionTokens,
@@ -160,6 +167,31 @@ public class AiEvalRunner : IAiEvalRunner
             LatencyMs = (int)stopwatch.ElapsedMilliseconds,
             CreatedAt = DateTime.UtcNow,
         };
+    }
+
+    private static IReadOnlyList<AiToolSpec> ToolsFor(string key) =>
+        key == AiPromptKeys.Chat
+            ? AiToolCatalogue.Chat.Select(tool => new AiToolSpec(tool.Name, tool.Description, tool.ParametersSchema)).ToList()
+            : [];
+
+    /// <summary>The reply, then each tool the model asked for with its arguments as compact JSON.</summary>
+    internal static string Transcript(AiCompletionResponse response)
+    {
+        if (response.ToolCalls.Count == 0) return response.Content;
+        var calls = response.ToolCalls.Select(call => $"[tool call] {call.Name} {Compact(call.Arguments)}");
+        return string.Join('\n', new[] { response.Content }.Where(c => !string.IsNullOrWhiteSpace(c)).Concat(calls));
+    }
+
+    private static string Compact(string arguments)
+    {
+        try
+        {
+            return JsonNode.Parse(arguments)?.ToJsonString() ?? arguments;
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return arguments;
+        }
     }
 
     /// <summary>

@@ -119,7 +119,8 @@ public record MealSuggestion
 }
 
 /// <summary>An earlier turn, replayed into the next call.</summary>
-public record AiChatHistoryTurn(bool FromUser, string Content);
+/// <summary>One earlier message. <paramref name="IsContext"/> marks a fact the person's app reported, not anyone's words.</summary>
+public record AiChatHistoryTurn(bool FromUser, string Content, bool IsContext = false);
 
 /// <summary>
 /// The reply plus which published version produced it, so a bad answer is

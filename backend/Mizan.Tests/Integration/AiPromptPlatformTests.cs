@@ -213,6 +213,40 @@ public class AiPromptPlatformTests
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
+    /// <summary>
+    /// A chat case is offered the chat's own tools, described as the chat describes them, and is judged
+    /// on the call the model asks for: a weekly schedule for a monthly request fails its case.
+    /// </summary>
+    [Fact]
+    public async Task AChatEvalSeesTheChatsTools_AndIsJudgedOnTheToolCallItWouldMake()
+    {
+        await _fixture.ResetDatabaseAsync();
+        _fixture.Ai.Reset();
+        using var client = await AdminAsync();
+        var draft = await CreateDraftAsync(client, "Be concise.");
+
+        int caseCount;
+        using (var scope = _fixture.Services.CreateScope())
+            caseCount = await scope.ServiceProvider.GetRequiredService<MizanDbContext>().AiEvalCases.CountAsync(c => c.PromptKey == AiPromptKeys.Chat);
+        for (var i = 0; i < caseCount; i++)
+            _fixture.Ai.CallTools(("create_reminder", """{ "kind": "measurement", "schedule": { "repeat": "days", "time": "08:00", "days": ["sun"] } }"""));
+
+        (await client.PostAsync($"/api/Admin/Ai/Prompts/versions/{draft.Id}/evals", null)).EnsureSuccessStatusCode();
+        await _fixture.DrainOutboxAsync();
+
+        _fixture.Ai.Calls.Should().HaveCount(caseCount).And.OnlyContain(call =>
+            call.Tools.Any(t => t.Name == "create_reminder" && t.Description == Mizan.Contracts.Notifications.ReminderToolGuidance.CreateReminder));
+
+        using var read = _fixture.Services.CreateScope();
+        var db = read.ServiceProvider.GetRequiredService<MizanDbContext>();
+        var monthly = await db.AiEvalRuns.AsNoTracking()
+            .Where(r => r.VersionId == draft.Id)
+            .Join(db.AiEvalCases, r => r.CaseId, c => c.Id, (r, c) => new { c.Name, r.Outcome, r.Output })
+            .SingleAsync(r => r.Name == "A monthly Sunday reminder is never weekly");
+        monthly.Outcome.Should().Be(AiEvalOutcome.Failed);
+        monthly.Output.Should().Be("""[tool call] create_reminder {"kind":"measurement","schedule":{"repeat":"days","time":"08:00","days":["sun"]}}""");
+    }
+
     private async Task<HttpClient> AdminAsync()
     {
         var id = Guid.NewGuid();

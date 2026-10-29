@@ -72,6 +72,7 @@ A planning request is one meal plan draft for one budget ceiling, so Free gets o
 | `POST /api/Ai/chat` | Shared persistent chat |
 | `POST /api/Ai/chat/image` | Image in a chat turn |
 | `GET /api/Ai/threads`, `/threads/{id}` | Conversation history |
+| `GET /api/Ai/conversation`, `POST /api/Ai/conversation/context` | The current conversation and app context ([app context](#app-context)) |
 | `POST /api/Ai/suggestions` | Structured meal suggestions |
 | `GET/POST /api/Ai/onboarding` | Setup conversation and state |
 | `GET /api/Ai/onboarding/tools` | Setup allowlist |
@@ -90,15 +91,25 @@ On the web the assistant is a side panel in the app shell (`components/ai/Assist
 
 Chat has six planning tools, each an existing command on `DataAxis.Planning`: `generate_meal_plan`, `get_plan_day` (the active plan's day, or a named plan's, drafts included), `add_plan_entry`, `update_plan_entry`, `remove_plan_entry`, and `generate_shopping_list`. Update and remove refuse a plan that is not a draft. The tool result the model reads is plain text with the ids it needs for the next call.
 
+### App context
+
+A client can tell the conversation where the person is without saying it for them. `POST /api/Ai/conversation/context` (`AiContextNoteRequest`: `note`, optional `holdMinutes` up to 60) stores a fact such as "the /remind buttons chose Log a meal and now ask Which days?" as a context message in the current thread, with no model call. A positive hold keeps it waiting: `GET /api/Ai/conversation` (`AiConversationDto`) returns the current thread and the waiting note, and the client sends that note as `clientContext` on `POST /api/Ai/chat` (`AiChatRequest`) with the person's words. A chat turn with context clears the wait; the note stays in the thread and is replayed with later turns. A thread's history (`GET /api/Ai/threads/{id}`) shows only what was said.
+
+The provider adapter (`NutritionAiService`) is the one place a note becomes model input: a system message that marks it as facts the app reported, not the person's words. Nothing else knows it is for a model, so an external agent reads and sends the same fields through MCP (`get_ai_conversation`, `ask_ai` with `clientContext`).
+
+The current conversation is the newest chat thread unless it has been quiet longer than `Ai.ConversationGapHours` (3 by default, a runtime setting); then `threadId` is null and the next message or note opens a new thread. A note still waiting outlives the gap and goes with the first message of the new thread.
+
 ### Reminder tools
 
-`create_reminder` and `list_reminders` (`AiReminderTools`) build the same commands as `/api/Reminders` ([reminders](ARCHITECTURE.md#reminders)), so the kinds, the hourly floor and the plan's cap hold without anything in a prompt. They sit on `DataAxis.Planning`: creating needs the nutrition write switch, and a refusal is the usual `ai_consent_required` for `nutrition`/`write`. Changing or deleting a reminder stays with the person, in Settings, MCP or the bot.
+`create_reminder` and `list_reminders` (`AiReminderTools`) build the same commands as `/api/Reminders` ([reminders](ARCHITECTURE.md#reminders)), so the kinds, the hourly floor and the plan's cap hold without anything in a prompt. How to call it is in the tool's description, `ReminderToolGuidance.CreateReminder` in `Mizan.Contracts`, which MCP `create_reminder` uses too: use only this request and app context, ask one question when the kind, days, time or count is missing or contradictory, never substitute another repeat, and keep the schedule out of the title. They sit on `DataAxis.Planning`: creating needs the nutrition write switch, and a refusal is the usual `ai_consent_required` for `nutrition`/`write`. Changing or deleting a reminder stays with the person, in Settings, MCP or the bot.
 
 `AiChatTurnDto.cards` carries what the person sees: `{ type, data }` with `type` one of `plan_preview`, `day_plan`, `cost_table`, `shopping_list`, and `data` exactly that type's record in `Mizan.Contracts/Ai/AiCards.cs` (`PlanPreviewCardData`, `DayPlanCardData`, `CostTableCardData`, `ShoppingListCardData`, all in the OpenAPI document). Cards are built by code from the commands' results and checked by `AiCardValidator`: an unknown type, a missing or unknown member, or a null the record does not allow is dropped. Nothing the model writes becomes a card, and no surface renders model-written markup. The web renders each type with one component under `frontend/components/ai/cards/`, linking to the plan or list it names, and leaves out a type it does not know. A malformed provider result is an error, not something to recover by scraping prose. Photo proposals show quantities and nutrition for confirmation before logging.
 
 ## Prompt administration
 
 The administrator console at `/admin/ai` manages the prompts listed in `AiPromptKeys`, `meal.plan` among them, with draft versions, synthetic evaluation cases, comparison, publishing, and rollback. A published version remains selected until another eligible version is published. The publish gate requires the current draft's evaluation evidence; editing a draft invalidates older passing evidence.
+
+A `chat.system` case is offered the chat's tools with their real descriptions, and nothing is run: each call the model asks for is written into the output as `[tool call] name {compact JSON}`, so a case asserts behaviour against the tool contract, such as asking instead of calling `create_reminder` for "once a week" in a meal reminder flow, or never `"repeat":"days"` for a monthly request.
 
 Editable instructions control tone and task guidance. Code-owned constraints control data access, write tools, output validation, and quota. The console displays these constraints read-only. Evaluations run synthetic cases, consume the evaluation allowance and global ceiling, and execute through the durable outbox. Administrator access does not make arbitrary users' private data available for prompt testing.
 

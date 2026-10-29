@@ -68,14 +68,25 @@ public sealed class AiTools
         + "Omit threadId to start a new one. Costs against your daily allowance "
         + "and answers only from the axes you have consented to share. "
         + "consentRequired lists any permission a tool call was refused for; tell the person where to allow it.")]
-    public async Task<CallToolResult> Ask(string message, string? threadId = null, CancellationToken ct = default)
+    public async Task<CallToolResult> Ask(
+        string message,
+        string? threadId = null,
+        [Description("Optional facts about what the person is doing in your app right now, such as a form part way through: what it asked and what was chosen. Kept in the thread.")] string? clientContext = null,
+        CancellationToken ct = default)
     {
         var json = await _api.PostAsync(
             "/api/Ai/chat",
-            new { threadId = ToolArguments.ParseOptionalId(threadId, "threadId"), message },
+            new AiChatRequest(ToolArguments.ParseOptionalId(threadId, "threadId"), message, clientContext),
             ct);
         return AskResult(json, _links);
     }
+
+    [McpServerTool(Name = "get_ai_conversation", ReadOnly = true, Idempotent = true)]
+    [Description(
+        "The person's current assistant conversation: threadId is null when it has been quiet long enough that the next message "
+        + "starts a new one. pendingContext is what an app the person is using (such as the Telegram bot's /remind) last reported "
+        + "and is waiting on, for example a reminder being set and the question it asked. Use it to finish that task with the person.")]
+    public Task<string> GetConversation(CancellationToken ct = default) => _api.GetAsync("/api/Ai/conversation", ct);
 
     /// <summary>
     /// The turn as JSON text and as <c>structuredContent</c>, and, when a tool call was refused for

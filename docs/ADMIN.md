@@ -68,7 +68,7 @@ Scheduled notifications live in `notification_schedules` ([architecture](ARCHITE
 | Section | Keys |
 | --- | --- |
 | Email | `Smtp.Host`, `Port`, `Security`, `Username`, `Password`, `FromAddress`, `FromName`, `LocalDomain` |
-| AI provider | `Ai.BaseUrl`, `ApiKey`, `Model`, `MaxOutputTokens`, `TimeoutSeconds`, `SupportsTemperature`, `ReasoningEffort`, prompt and completion prices |
+| AI provider | `Ai.BaseUrl`, `ApiKey`, `Model`, `MaxOutputTokens`, `TimeoutSeconds`, `SupportsTemperature`, `ReasoningEffort`, prompt and completion prices, `ConversationGapHours` |
 | AI limits | `Ai.GlobalDailyTokens`, `Ai.GlobalDailyCostMicros`, and `DailyRequests` and `DailyTokens` for `Free`, `Pro`, `PlanningFree`, `PlanningPro`, `Onboarding`, `Trainer`, `Eval` |
 | Storage | `Storage.ServiceUrl`, `Region`, `AccessKeyId`, `SecretAccessKey`, `Bucket`, `ForcePathStyle`, `PublicBaseUrl`, `PresignedUrlMinutes`, `MaxUploadBytes`, `MaxModelBytes` |
 | Telegram | `Telegram.BotToken`, `BotUsername`, `UseWebhook`, `WebhookSecret`, `MiniAppUrl`, `MiniAppMaxAgeSeconds`, `MiniAppSessionHours`, `BotServiceUrl` |

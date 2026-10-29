@@ -90,7 +90,7 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
             // AI consent and usage
             "get_ai_consent", "set_ai_consent", "get_ai_usage",
             // Chat threads
-            "ask_ai", "list_ai_threads", "get_ai_thread", "delete_ai_thread",
+            "ask_ai", "list_ai_threads", "get_ai_thread", "delete_ai_thread", "get_ai_conversation",
             // Uploads
             "upload_image", "analyze_food_image",
             // Prompt console
@@ -185,6 +185,7 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         await AuthenticateAsync();
 
         (await CallAsync("list_ai_threads", new { take = 5 })).Should().NotBeNullOrWhiteSpace();
+        (await CallAsync("get_ai_conversation", new { })).Should().Contain("threadId");
 
         var missing = await CallAsync("get_ai_thread", new { id = Guid.NewGuid().ToString() });
         missing.Should().Contain("Not found");

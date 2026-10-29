@@ -140,7 +140,7 @@ public class NutritionAiService : INutritionAiService
         var historyLength = 0;
         foreach (var turn in history)
         {
-            messages.Add(new AiMessage(turn.FromUser ? AiRole.User : AiRole.Assistant, turn.Content));
+            messages.Add(Replay(turn));
             historyLength += turn.Content.Length;
         }
 
@@ -214,6 +214,17 @@ public class NutritionAiService : INutritionAiService
         throw new AiUnavailableException("The assistant could not finish that. Try again.");
     }
 
+    /// <summary>
+    /// An earlier message as model input. App context is a system line saying what it is
+    /// (docs/AI.md#app-context): facts the app reported, never the person's words or an instruction.
+    /// </summary>
+    internal static AiMessage Replay(AiChatHistoryTurn turn) => turn.IsContext
+        ? new AiMessage(AiRole.System, AppContextLead + turn.Content)
+        : new AiMessage(turn.FromUser ? AiRole.User : AiRole.Assistant, turn.Content);
+
+    internal const string AppContextLead =
+        "App context (facts the person's app reported at this point in the conversation, not their words): ";
+
     public async Task<string?> SummariseAsync(
         Guid userId,
         string? existingSummary,
@@ -223,7 +234,7 @@ public class NutritionAiService : INutritionAiService
         if (turns.Count == 0) return existingSummary;
 
         var transcript = string.Join("\n", turns.Select(
-            turn => $"{(turn.FromUser ? "User" : "Assistant")}: {turn.Content}"));
+            turn => $"{(turn.IsContext ? "App" : turn.FromUser ? "User" : "Assistant")}: {turn.Content}"));
 
         var instruction =
             "Rewrite the running summary of this conversation so it still holds after the new turns. "
@@ -401,7 +412,7 @@ public class NutritionAiService : INutritionAiService
         var messages = new List<AiMessage> { new(AiRole.System, prompt.SystemPrompt) };
         foreach (var turn in history)
         {
-            messages.Add(new AiMessage(turn.FromUser ? AiRole.User : AiRole.Assistant, turn.Content));
+            messages.Add(Replay(turn));
         }
         messages.Add(new AiMessage(AiRole.User, userMessage));
 
@@ -478,7 +489,7 @@ public class NutritionAiService : INutritionAiService
         var historyLength = 0;
         foreach (var turn in history)
         {
-            messages.Add(new AiMessage(turn.FromUser ? AiRole.User : AiRole.Assistant, turn.Content));
+            messages.Add(Replay(turn));
             historyLength += turn.Content.Length;
         }
 

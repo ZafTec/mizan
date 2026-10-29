@@ -90,6 +90,7 @@ public static class DependencyInjection
         services.AddScoped<IUserStatsProvider, UserStatsProvider>();
         services.AddScoped<IAchievementCatalogue, AchievementCatalogue>();
         services.AddScoped<INutritionAiService, NutritionAiService>();
+        services.AddScoped<Mizan.Application.Ai.IAiConversationSettings, AiConversationSettings>();
         services.AddScoped<IStreakService, StreakService>();
         services.AddScoped<IAchievementEvaluator, AchievementEvaluator>();
         services.AddScoped<IAchievementCards, AchievementCards>();

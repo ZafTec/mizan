@@ -62,8 +62,25 @@ public class AiController : ControllerBase
     /// (docs/AI.md).
     /// </summary>
     [HttpPost("chat")]
-    public async Task<ActionResult<AiChatTurnDto>> Chat([FromBody] SendAiChatMessageCommand command)
-        => Ok(await _mediator.Send(command));
+    public async Task<ActionResult<AiChatTurnDto>> Chat([FromBody] AiChatRequest request)
+        => Ok(await _mediator.Send(new SendAiChatMessageCommand(
+            request.ThreadId, request.Message ?? string.Empty, ClientContext: request.ClientContext)));
+
+    /// <summary>
+    /// The conversation a chat app continues, and any app context waiting for the person's next
+    /// message (docs/AI.md#app-context). Reads only; no model call.
+    /// </summary>
+    [HttpGet("conversation")]
+    public async Task<ActionResult<AiConversationDto>> Conversation()
+        => Ok(await _mediator.Send(new GetAiConversationQuery()));
+
+    /// <summary>
+    /// Reports a fact into the current conversation, such as a step of a guided form, without asking
+    /// the model anything, so no allowance is spent.
+    /// </summary>
+    [HttpPost("conversation/context")]
+    public async Task<ActionResult<AiConversationDto>> AddContext([FromBody] AiContextNoteRequest request)
+        => Ok(await _mediator.Send(new AddAiContextNoteCommand(request.Note ?? string.Empty, request.HoldMinutes)));
 
     /// <summary>
     /// A turn with a photo attached. Separate from the JSON endpoint because

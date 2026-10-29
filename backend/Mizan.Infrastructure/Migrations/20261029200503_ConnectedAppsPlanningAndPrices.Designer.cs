@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Mizan.Infrastructure.Migrations
 {
     [DbContext(typeof(MizanDbContext))]
-    [Migration("20261029112259_ConnectedAppsPlanningAndPrices")]
+    [Migration("20261029200503_ConnectedAppsPlanningAndPrices")]
     partial class ConnectedAppsPlanningAndPrices
     {
         /// <inheritdoc />
@@ -367,6 +367,15 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasDefaultValue(0)
                         .HasColumnName("kind");
+
+                    b.Property<string>("PendingContext")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("pending_context");
+
+                    b.Property<DateTime?>("PendingContextUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("pending_context_until");
 
                     b.Property<int>("SummarisedThrough")
                         .ValueGeneratedOnAdd()
@@ -6040,6 +6049,10 @@ namespace Mizan.Infrastructure.Migrations
                             b1.Property<int>("Kind");
 
                             b1.Property<TimeOnly?>("LocalTime");
+
+                            b1.Property<int?>("MonthDay");
+
+                            b1.Property<int?>("MonthWeek");
 
                             b1.Property<int>("OffsetMinutes");
 

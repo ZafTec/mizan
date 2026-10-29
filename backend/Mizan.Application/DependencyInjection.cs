@@ -41,6 +41,7 @@ public static class DependencyInjection
         services.AddScoped<Notifications.NotificationSchedules>();
         services.AddScoped<Notifications.NotificationDeliveries>();
         services.AddScoped<Notifications.ReminderBook>();
+        services.AddScoped<Ai.AiConversations>();
         services.AddScoped<Planning.PlanCostTable>();
         services.AddScoped<Planning.MealPlanContextBuilder>();
         services.AddScoped<Planning.ShoppingListAccess>();

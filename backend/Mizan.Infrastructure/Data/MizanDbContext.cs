@@ -1455,6 +1455,8 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
             entity.Property(e => e.Kind).HasColumnName("kind").HasConversion<int>().HasDefaultValue(AiChatThreadKind.Chat);
             entity.Property(e => e.Summary).HasColumnName("summary");
             entity.Property(e => e.SummarisedThrough).HasColumnName("summarised_through").HasDefaultValue(0);
+            entity.Property(e => e.PendingContext).HasColumnName("pending_context").HasMaxLength(1000);
+            entity.Property(e => e.PendingContextUntil).HasColumnName("pending_context_until");
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()");
             entity.HasIndex(e => new { e.UserId, e.UpdatedAt });
