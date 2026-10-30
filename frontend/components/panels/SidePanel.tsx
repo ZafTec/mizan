@@ -22,8 +22,10 @@ import { cn } from "@/lib/utils";
  * one closes the other. The shell holds the host, so a panel stays put across client navigation,
  * and the open panel is remembered per person in this browser.
  *
- * Wide screens dock the panel at 420px on the right and leave the page usable. Below 768px it is
- * a full-height sheet that holds focus until it is closed.
+ * From 1280px the panel docks at 420px on the right and leaves the page usable. Between 768px
+ * and 1280px the page could not keep its layout beside it, so the panel is a drawer over the
+ * page from the right. Below 768px it is a full-height sheet from the bottom. Drawer and sheet
+ * both hold focus until they are closed.
  *
  * A panel opens from the address too: `?panel=assistant` or `?panel=notifications` is consumed
  * once, which is how `/ai` and `/notifications` keep working as links.
@@ -34,6 +36,8 @@ const PANELS: readonly PanelName[] = ["assistant", "notifications"];
 /** Parameters that belong to a deep link and are cleared with it (`thread` names a conversation). */
 const DEEP_LINK_PARAMS = ["panel", "thread"];
 const PHONE = "(max-width: 767px)";
+/** Below this the page keeps too little room beside a docked panel (issue #131). */
+const NARROW = "(max-width: 1279px)";
 
 interface SidePanelState {
   active: PanelName | null;
@@ -74,18 +78,25 @@ function remembered(userId: string): PanelName | null {
   }
 }
 
-function subscribePhone(changed: () => void) {
-  const query = window.matchMedia?.(PHONE);
-  query?.addEventListener("change", changed);
-  return () => query?.removeEventListener("change", changed);
+function useMedia(media: string) {
+  return useSyncExternalStore(
+    (changed) => {
+      const query = window.matchMedia?.(media);
+      query?.addEventListener("change", changed);
+      return () => query?.removeEventListener("change", changed);
+    },
+    () => window.matchMedia?.(media).matches ?? false,
+    () => false,
+  );
 }
 
 export function usePhone() {
-  return useSyncExternalStore(
-    subscribePhone,
-    () => window.matchMedia?.(PHONE).matches ?? false,
-    () => false,
-  );
+  return useMedia(PHONE);
+}
+
+/** True when an open panel covers the page (a drawer or a sheet) instead of docking beside it. */
+export function useCoveringPanel() {
+  return useMedia(NARROW);
 }
 
 export function SidePanelProvider({
@@ -109,9 +120,9 @@ export function SidePanelProvider({
 
   useEffect(() => {
     const saved = remembered(userId);
-    // A sheet that covers the screen is not reopened by a reload; a docked panel is.
+    // A panel that covers the page is not reopened by a reload; a docked panel is.
     // eslint-disable-next-line react-hooks/set-state-in-effect -- browser storage is read after hydration
-    if (saved && !window.matchMedia?.(PHONE).matches) setActive(saved);
+    if (saved && !window.matchMedia?.(NARROW).matches) setActive(saved);
     setRestored(true);
   }, [userId]);
 
@@ -167,7 +178,10 @@ const FOCUSABLE =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export interface SidePanelContent {
+  /** A sheet from the bottom of a phone. */
   phone: boolean;
+  /** The panel covers the page (a drawer or a sheet), so opening a page should close it. */
+  covers: boolean;
   /** Counts each opening, so the content can put focus in itself once it is ready. */
   focusToken: number;
   close: () => void;
@@ -191,6 +205,8 @@ export function SidePanel({
   const { active, close, launcher } = useSidePanel();
   const open = active === name;
   const phone = usePhone();
+  const covers = useCoveringPanel();
+  const drawer = covers && !phone;
   const panel = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(open);
   const [opened, setOpened] = useState(open ? 1 : 0);
@@ -211,11 +227,11 @@ export function SidePanel({
     wasOpen.current = open;
   }, [open, active, launcher, name]);
 
-  // The phone sheet is modal: what is behind it cannot be reached until it closes.
+  // A drawer or a sheet is modal: what is behind it cannot be reached until it closes.
   useEffect(() => {
     const root = panel.current;
     const shell = root?.parentElement;
-    if (!open || !phone || !shell) return;
+    if (!open || !covers || !shell) return;
     const behind = Array.from(shell.children).filter(
       (child): child is HTMLElement =>
         child !== root && child instanceof HTMLElement && !child.inert,
@@ -224,18 +240,18 @@ export function SidePanel({
     return () => {
       for (const element of behind) element.inert = false;
     };
-  }, [open, phone]);
+  }, [open, covers]);
 
   // A sheet whose focused control just went away (a list row it replaced) still closes on Escape.
   useEffect(() => {
-    if (!open || !phone) return;
+    if (!open || !covers) return;
     function escape(event: globalThis.KeyboardEvent) {
       if (event.key === "Escape" && document.activeElement === document.body)
         close();
     }
     document.addEventListener("keydown", escape);
     return () => document.removeEventListener("keydown", escape);
-  }, [open, phone, close]);
+  }, [open, covers, close]);
 
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     // A photo or a confirmation opened from the panel is portaled out of it, but its keys still
@@ -246,7 +262,7 @@ export function SidePanel({
       close();
       return;
     }
-    if (event.key !== "Tab" || !phone) return;
+    if (event.key !== "Tab" || !covers) return;
     const items = Array.from(
       panel.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [],
     ).filter((item) => item.offsetParent !== null);
@@ -264,7 +280,7 @@ export function SidePanel({
 
   return (
     <>
-      {open && phone && (
+      {open && covers && (
         <div
           aria-hidden="true"
           className="fixed inset-0 z-[59] animate-overlay-in bg-charcoal-blue-950/45"
@@ -277,22 +293,25 @@ export function SidePanel({
         data-side-panel={name}
         tabIndex={-1}
         hidden={!open}
-        role={phone ? "dialog" : "complementary"}
-        aria-modal={phone ? true : undefined}
+        role={covers ? "dialog" : "complementary"}
+        aria-modal={covers ? true : undefined}
         aria-label={label}
         onKeyDown={onKeyDown}
         className={cn(
           "flex h-full min-w-0 flex-[0_0_420px] flex-col border-l border-border bg-background focus:outline-none [&[hidden]]:hidden",
           // Docked, it fades in a few pixels from the edge it sits on and
           // closes at once, so the page never waits on an empty column.
-          !phone &&
+          !covers &&
             "transition-[opacity,translate] duration-200 ease-out starting:translate-x-3 starting:opacity-0",
+          // Between a phone and a wide screen it is a drawer over the page, in from the right.
+          drawer &&
+            "fixed inset-y-0 right-0 z-60 h-dvh w-[420px] max-w-full shadow-xl transition-[translate,display] transition-discrete duration-280 ease-(--ease-drawer) starting:translate-x-full [&[hidden]]:translate-x-full [&[hidden]]:duration-200 [&[hidden]]:ease-out",
           // On a phone it is a sheet: up from the bottom, and back down.
           phone &&
             "fixed inset-0 z-60 h-dvh border-l-0 transition-[translate,display] transition-discrete duration-280 ease-(--ease-drawer) starting:translate-y-full [&[hidden]]:translate-y-full [&[hidden]]:duration-200 [&[hidden]]:ease-out",
         )}
       >
-        {mounted && children({ phone, focusToken: opened, close })}
+        {mounted && children({ phone, covers, focusToken: opened, close })}
       </div>
     </>
   );

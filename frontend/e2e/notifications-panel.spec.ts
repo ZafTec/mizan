@@ -190,6 +190,39 @@ test("on a phone the notifications are a sheet that holds focus", async ({
   await expect(bell(page)).toBeFocused();
 });
 
+test("on a tablet the notifications are a drawer over the page, which keeps its width", async ({
+  context,
+  page,
+}) => {
+  await page.setViewportSize({ width: 775, height: 900 });
+  await signIn(context, 1);
+  await page.goto("/today");
+  const main = page.locator("#app-content");
+  const before = (await main.boundingBox())?.width;
+  const ask = page.getByRole("button", { name: "Ask Mizan" });
+  expect((await ask.boundingBox())?.height).toBeLessThanOrEqual(44);
+
+  await bell(page).click();
+  const drawer = page.getByRole("dialog", { name: "Notifications" });
+  await expect(drawer).toBeVisible();
+  await expect(
+    drawer.getByRole("button", { name: /Achievement 1/ }),
+  ).toBeFocused();
+  const box = await drawer.boundingBox();
+  expect(box?.width).toBe(420);
+  expect((box?.x ?? 0) + (box?.width ?? 0)).toBe(775);
+  expect((await main.boundingBox())?.width).toBe(before);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+
+  await page.keyboard.press("Escape");
+  await expect(drawer).toBeHidden();
+  await expect(bell(page)).toBeFocused();
+});
+
 test("a notification shows its badge, facts and actions, and an action opens its page", async ({
   context,
   page,

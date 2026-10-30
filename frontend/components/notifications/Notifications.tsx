@@ -140,7 +140,7 @@ const TIME = {
   minute: "2-digit",
 } as const;
 
-function NotificationsInbox({ phone, focusToken, close }: SidePanelContent) {
+function NotificationsInbox({ phone, covers, focusToken, close }: SidePanelContent) {
   const router = useRouter();
   const { unread, setUnread } = useNotifications();
   const [items, setItems] = useState<Notification[] | null>(null);
@@ -227,8 +227,8 @@ function NotificationsInbox({ phone, focusToken, close }: SidePanelContent) {
         setUnread((count) => Math.max(0, count - 1));
       }
       if (path) {
-        // The sheet covers the page it would open, so it steps aside; a docked panel stays.
-        if (phone) close();
+        // A drawer or sheet covers the page it would open, so it steps aside; a docked panel stays.
+        if (covers) close();
         router.push(path);
       }
     } catch (error) {

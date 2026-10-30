@@ -132,7 +132,7 @@ export function AssistantLauncher() {
       onClick={toggle}
       aria-expanded={open}
       aria-controls={ASSISTANT_PANEL_ID}
-      className="inline-flex min-h-10 items-center rounded-md border border-border px-3.5 text-[13px] font-medium text-foreground transition-[background-color,scale] duration-160 ease-out hover:bg-muted active:scale-[0.985] aria-expanded:bg-muted max-sm:px-3"
+      className="inline-flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-md border border-border px-3.5 text-[13px] font-medium text-foreground transition-[background-color,scale] duration-160 ease-out hover:bg-muted active:scale-[0.985] aria-expanded:bg-muted max-sm:px-3"
     >
       Ask Mizan
     </button>
