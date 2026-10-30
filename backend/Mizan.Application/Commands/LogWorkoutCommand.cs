@@ -181,15 +181,15 @@ public class LogWorkoutCommandHandler : IRequestHandler<LogWorkoutCommand, LogWo
             _context.Workouts.Add(workout);
             if (request.BodyweightKg.HasValue)
             {
-                _context.BodyMeasurements.Add(new BodyMeasurement
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = _currentUser.UserId.Value,
-                    MeasurementDate = request.WorkoutDate,
-                    WeightKg = request.BodyweightKg,
-                    Notes = "Workout bodyweight",
-                    CreatedAt = DateTime.UtcNow
-                });
+                // The day's weight, not a second row beside the one log_day or the form wrote.
+                await BodyMeasurementRecorder.RecordAsync(
+                    _context,
+                    _currentUser.UserId.Value,
+                    request.WorkoutDate,
+                    new Mizan.Domain.Body.BodyMeasurementValues(WeightKg: request.BodyweightKg),
+                    notes: null,
+                    ct,
+                    noteForNewDay: "Workout bodyweight");
             }
             await _context.SaveChangesAsync(ct);
 
