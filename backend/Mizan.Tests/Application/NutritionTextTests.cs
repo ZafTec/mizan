@@ -38,4 +38,25 @@ public class NutritionTextTests
 
         text.Should().Be("Calories: 1860 / 2000 kcal (93%), Protein: 120 / 150 g (80%), Carbs: 200 g, Fat: 60 g");
     }
+
+    [Theory]
+    [InlineData("1350", "110", "80", "50", "Left: 650 kcal, 48 g protein, 120 g carbs, 20 g fat")]
+    [InlineData("2100", "158", "200", "78", "Left: 0 kcal (100 kcal over), 0 g protein, 0 g carbs, 0 g fat (8 g over)")]
+    [InlineData("0", "0", "0", "0", "Left: 2000 kcal, 158 g protein, 200 g carbs, 70 g fat")]
+    public void Remaining_IsWhatIsLeftOfEachTarget(string calories, string protein, string carbs, string fat, string expected)
+    {
+        var amounts = NutritionText.Daily(
+            decimal.Parse(calories), decimal.Parse(protein), decimal.Parse(carbs), decimal.Parse(fat),
+            2000m, 158m, 200m, 70m);
+
+        NutritionText.Remaining(amounts).Should().Be(expected);
+    }
+
+    [Fact]
+    public void Remaining_LeavesOutAnAmountWithoutATarget_AndIsEmptyWithNoTargets()
+    {
+        NutritionText.Remaining(NutritionText.Daily(500m, 30m, 50m, 20m, 2000m, null, 0m, null))
+            .Should().Be("Left: 1500 kcal");
+        NutritionText.Remaining(NutritionText.Daily(500m, 30m, 50m, 20m)).Should().BeEmpty();
+    }
 }

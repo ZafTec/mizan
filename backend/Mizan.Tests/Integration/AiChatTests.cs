@@ -287,6 +287,30 @@ public class AiChatTests
         (await client.GetFromJsonAsync<AiConversationDto>("/api/Ai/conversation"))!.PendingContext.Should().BeNull();
     }
 
+    [Fact]
+    public async Task MealSuggestionsAreGivenEveryTargetOfTheGoalAndWhatIsLeftToday()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, userId) = await UserAsync();
+        await _fixture.GrantAiConsentAsync(userId, read: true, write: false);
+        (await client.PostAsJsonAsync("/api/Goals", new
+        {
+            GoalType = "general", TargetCalories = 2000, TargetProteinGrams = 150m, TargetCarbsGrams = 220m, TargetFatGrams = 60m,
+        })).StatusCode.Should().Be(HttpStatusCode.Created);
+        var food = await _fixture.SeedFoodAsync("Suggestion rice", 100m, 10m, 20m, 5m);
+        (await client.PostAsJsonAsync("/api/Nutrition/log", new
+        {
+            FoodId = food.Id, EntryDate = DateOnly.FromDateTime(DateTime.UtcNow), MealType = "lunch", Servings = 2m,
+        })).EnsureSuccessStatusCode();
+        _fixture.Ai.Reply("""{"suggestions":[],"note":null}""");
+
+        (await client.PostAsync("/api/Ai/suggestions", null)).EnsureSuccessStatusCode();
+
+        var context = string.Join("\n", _fixture.Ai.LastCall.Messages.Where(m => m.Role == AiRole.System).Select(m => m.Content));
+        context.Should().Contain("Targets per day: 2000 kcal, 150 g protein, 220 g carbs, 60 g fat.");
+        context.Should().Contain("Today: Left: 1800 kcal, 130 g protein, 180 g carbs, 50 g fat.");
+    }
+
     private List<string> ContextSent() =>
         _fixture.Ai.LastCall.Messages
             .Where(m => m.Role == AiRole.System && m.Content.StartsWith("App context", StringComparison.Ordinal))
