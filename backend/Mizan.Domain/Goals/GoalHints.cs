@@ -1,4 +1,4 @@
-namespace Mizan.Application.Services;
+namespace Mizan.Domain.Goals;
 
 /// <summary>
 /// Pure functions for checking goal reasonableness using nutrition science guidelines.
@@ -17,6 +17,7 @@ public static class GoalHints
     public const decimal MaxProteinPercent = 0.40m;
     public const decimal MaxCarbsPercent = 0.70m;
     public const decimal MinFatPercent = 0.15m;
+    public const decimal MaxFatPercent = 0.45m;
 
     public static IReadOnlyList<string> CheckGoalSanity(
         string? goalType,
@@ -94,32 +95,42 @@ public static class GoalHints
             }
         }
 
-        if (targetProteinGrams.HasValue && targetCarbsGrams.HasValue && targetFatGrams.HasValue
-            && targetCalories.HasValue && targetCalories.Value > 0)
+        // Each macro is held to its own share of the calories, whichever others are set: a ceiling for
+        // every macro, and a floor for fat only once all three are set (an unset fat target is not low).
+        if (targetCalories is > 0)
         {
-            var proteinPercent = (targetProteinGrams.Value * ProteinKcalPerGram) / targetCalories.Value;
-            var carbsPercent = (targetCarbsGrams.Value * CarbsKcalPerGram) / targetCalories.Value;
-            var fatPercent = (targetFatGrams.Value * FatKcalPerGram) / targetCalories.Value;
-
-            if (proteinPercent > MaxProteinPercent)
+            var calories = (decimal)targetCalories.Value;
+            if (targetProteinGrams.HasValue && targetProteinGrams.Value * ProteinKcalPerGram / calories is var proteinPercent
+                && proteinPercent > MaxProteinPercent)
             {
                 hints.Add(
                     $"Protein is {proteinPercent:P0} of your calories, above the recommended 40% upper limit. " +
                     "Most guidelines suggest keeping protein under 35%. This may be intentional if following a specific protocol.");
             }
 
-            if (carbsPercent > MaxCarbsPercent)
+            if (targetCarbsGrams.HasValue && targetCarbsGrams.Value * CarbsKcalPerGram / calories is var carbsPercent
+                && carbsPercent > MaxCarbsPercent)
             {
                 hints.Add(
                     $"Carbs are {carbsPercent:P0} of your calories, above the 70% threshold. " +
                     "Most guidelines recommend 45–65%. Consider if this aligns with your dietary plan.");
             }
 
-            if (fatPercent < MinFatPercent)
+            if (targetFatGrams.HasValue)
             {
-                hints.Add(
-                    $"Fat is {fatPercent:P0} of your calories, below the recommended 15% minimum. " +
-                    "Very low fat intake may affect hormone production and fat-soluble vitamin absorption.");
+                var fatPercent = targetFatGrams.Value * FatKcalPerGram / calories;
+                if (fatPercent > MaxFatPercent)
+                {
+                    hints.Add(
+                        $"Fat is {fatPercent:P0} of your calories, above the 45% threshold. " +
+                        "Most guidelines recommend 20–35%. This may be intentional on a very low-carb diet.");
+                }
+                else if (fatPercent < MinFatPercent && targetProteinGrams.HasValue && targetCarbsGrams.HasValue)
+                {
+                    hints.Add(
+                        $"Fat is {fatPercent:P0} of your calories, below the recommended 15% minimum. " +
+                        "Very low fat intake may affect hormone production and fat-soluble vitamin absorption.");
+                }
             }
         }
 

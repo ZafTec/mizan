@@ -23,7 +23,7 @@ Use `get_nutrition_range` with a longer `days` (up to 90). Weight changes day to
 
 ## Goals
 
-- `create_goal` replaces the active goal. Confirm the type (weight_loss, muscle_gain, maintenance or custom), the targets and any target date before you call it.
+- `create_goal` replaces the active goal. Confirm the type (weight_loss, muscle_gain, maintenance or general), the targets and any target date before you call it.
 - `record_goal_progress` adds a check-in, for example a weight.
 - `get_goal_progress` and `get_goal_history` show how it went over time.
 

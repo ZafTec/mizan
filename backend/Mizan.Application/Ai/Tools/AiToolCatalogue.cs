@@ -1,3 +1,4 @@
+using Mizan.Domain.Goals;
 using System.Text.Json;
 using Mizan.Application.Commands;
 using Mizan.Application.Queries;
@@ -48,12 +49,12 @@ public static class AiToolCatalogue
         new AiToolDefinition(
             "set_targets",
             "Record the user's nutrition goal and daily targets. Use once the user has told you what they are aiming for.",
-            """
+            $$"""
             {
               "type": "object",
               "additionalProperties": false,
               "properties": {
-                "goalType": { "type": "string", "enum": ["weight_loss", "muscle_gain", "maintenance", "general"] },
+                "goalType": { "type": "string", "enum": {{GoalTypes.Json}} },
                 "targetCalories": { "type": "number" },
                 "targetProteinGrams": { "type": "number" },
                 "targetCarbsGrams": { "type": "number" },
@@ -310,29 +311,40 @@ public static class AiToolCatalogue
 
         new AiToolDefinition(
             "search_recipes",
-            "Look up the user's own recipes, and their household's, by name, with nutrition per serving. "
-            + "Search here before search_foods when they name a dish they cook; log one with log_meal and its recipeId.",
+            "The user's saved recipes: their own, their household's and the public ones they favourited, with nutrition per serving. "
+            + "Leave query out to list them all, favourites and the most recently logged first, a page at a time; "
+            + "give a query to find one by name. Search here before search_foods when they name a dish they cook; log one with log_meal and its recipeId.",
             """
             {
               "type": "object",
               "additionalProperties": false,
-              "properties": { "query": { "type": "string" } },
-              "required": ["query"]
+              "properties": {
+                "query": { "type": "string", "description": "Part of the recipe's name or description. Leave out to list every saved recipe." },
+                "page": { "type": "integer", "minimum": 1, "description": "Page of 20, from 1" }
+              },
+              "required": []
             }
             """,
             (args, _) => new GetRecipesQuery
             {
-                SearchTerm = AiToolArgs.RequiredString(args, "query"),
+                SearchTerm = AiToolArgs.OptionalString(args, "query"),
                 IncludePublic = false,
-                PageSize = 10,
+                IncludeFavorites = true,
+                Page = Math.Max(1, AiToolArgs.OptionalInt(args, "page") ?? 1),
+                PageSize = 20,
             },
             result => result is Common.PagedResult<RecipeDto> recipes && recipes.Items.Count > 0
                 ? string.Join("\n", recipes.Items.Select(r =>
-                    $"{r.Id} — {r.Title} ({r.Servings} servings)"
+                    $"{r.Id} — {r.Title} ({r.Servings} servings{(r.IsFavorited ? ", favourite" : "")})"
                     + (r.Nutrition is { CaloriesPerServing: { } kcal } n
                         ? $" - per serving {kcal:0} kcal, P{n.ProteinGrams:0.#} C{n.CarbsGrams:0.#} F{n.FatGrams:0.#}"
                         : " - no nutrition yet")))
-                : "None of their recipes matched that.",
+                    + (recipes.Page < recipes.TotalPages
+                        ? $"\nPage {recipes.Page} of {recipes.TotalPages} ({recipes.TotalCount} recipes); ask for page {recipes.Page + 1} for more."
+                        : string.Empty)
+                : result is Common.PagedResult<RecipeDto> { TotalCount: > 0 }
+                    ? "No more recipes on that page."
+                    : "None of their saved recipes matched that.",
             DataAxis.Planning, AiToolAccess.Read),
 
         new AiToolDefinition(

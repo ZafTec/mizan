@@ -317,6 +317,38 @@ public class AiChatTests
         diary.Should().ContainSingle().Which.Calories.Should().Be(232m);
     }
 
+    /// <summary>
+    /// M-02: asked which of their saved recipes would close the gap, the assistant called
+    /// search_recipes with no query and was refused. With no query it now gets every saved recipe:
+    /// the person's own and the public ones they favourited, favourites first, with macros per serving.
+    /// </summary>
+    [Fact]
+    public async Task TheAssistantListsThePersonsSavedRecipes_WithoutAQuery()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, userId) = await UserAsync();
+        await _fixture.GrantAiConsentAsync(userId, read: true, write: false);
+        var world = new PlanningWorld(_fixture);
+        var lentils = await world.FoodAsync("Red lentils", 116, 9, 20, 0.4m);
+        var misir = await world.RecipeAsync(userId, "Misir wot", 2, false, (lentils, 400m, "g", null));
+        var (other, _) = await world.PersonAsync("other");
+        var shiro = await world.RecipeAsync(other, "Shiro", 2, true, (lentils, 200m, "g", null));
+        var stranger = await world.RecipeAsync(other, "Stranger stew", 2, true, (lentils, 200m, "g", null));
+        (await client.PostAsync($"/api/Recipes/{shiro.Id}/favorite", null)).IsSuccessStatusCode.Should().BeTrue();
+
+        _fixture.Ai.CallTools(("search_recipes", "{}"));
+        _fixture.Ai.Reply("Your misir wot closes most of the gap.");
+
+        var turn = await SendAsync(client, null, "Which of my own saved recipes would best close my gap today?");
+
+        turn.Performed.Should().ContainSingle().Which.Succeeded.Should().BeTrue();
+        var listed = _fixture.Ai.LastCall.Messages.First(m => m.Role == AiRole.Tool).Content;
+        listed.Should().Contain("Shiro (2 servings, favourite) - per serving 116 kcal")
+            .And.Contain($"{misir.Id}").And.Contain("per serving 232 kcal, P18 C40 F0.8")
+            .And.NotContain(stranger.Title);
+        listed.IndexOf("Shiro", StringComparison.Ordinal).Should().BeLessThan(listed.IndexOf("Misir wot", StringComparison.Ordinal));
+    }
+
     [Fact]
     public async Task MealSuggestionsAreGivenEveryTargetOfTheGoalAndWhatIsLeftToday()
     {
@@ -339,6 +371,42 @@ public class AiChatTests
         var context = string.Join("\n", _fixture.Ai.LastCall.Messages.Where(m => m.Role == AiRole.System).Select(m => m.Content));
         context.Should().Contain("Targets per day: 2000 kcal, 150 g protein, 220 g carbs, 60 g fat.");
         context.Should().Contain("Today: Left: 1800 kcal, 130 g protein, 180 g carbs, 50 g fat.");
+    }
+
+    /// <summary>
+    /// M-06: suggestions named meals the person could not make from what Mizan knows. They are now
+    /// given the person's recipes and the foods priced in their region, as a plan is.
+    /// </summary>
+    [Fact]
+    public async Task MealSuggestionsAreGivenThePersonsRecipesAndTheFoodsPricedInTheirRegion()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, userId) = await UserAsync();
+        await _fixture.GrantAiConsentAsync(userId, read: true, write: false);
+        var world = new PlanningWorld(_fixture);
+        var lentils = await world.FoodAsync("Red lentils", 116, 9, 20, 0.4m);
+        await world.RecipeAsync(userId, "Misir wot", 2, false, (lentils, 400m, "g", null));
+        var teff = await world.FoodAsync("Teff flour", 367, 13, 73, 2.4m);
+        await world.FoodAsync("Unpriced quinoa", 368, 14, 64, 6);
+        await world.DbAsync(async db =>
+        {
+            db.FoodPrices.Add(new FoodPrice
+            {
+                Id = Guid.NewGuid(), FoodId = teff.Id, RegionCode = Mizan.Domain.Pricing.PriceRegionDefaults.Code,
+                Price = 120, Quantity = 1, Unit = Mizan.Domain.Pricing.PriceUnits.Kilogram,
+                Confidence = Mizan.Domain.Pricing.PriceConfidence.Observed, ObservedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow,
+            });
+            await db.SaveChangesAsync();
+            return 0;
+        });
+        _fixture.Ai.Reply("""{"suggestions":[],"note":null}""");
+
+        (await client.PostAsync("/api/Ai/suggestions", null)).EnsureSuccessStatusCode();
+
+        var context = string.Join('\n', _fixture.Ai.LastCall.Messages.Where(m => m.Role == AiRole.System).Select(m => m.Content));
+        context.Should().Contain("Misir wot | 2 | 232 kcal")
+            .And.Contain("Teff flour | 367 kcal").And.Contain("| 120")
+            .And.NotContain("Unpriced quinoa");
     }
 
     private List<string> ContextSent() =>

@@ -4,9 +4,11 @@ using Mizan.Application.Ai;
 using Mizan.Application.Ai.Tools;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
+using Mizan.Application.Planning;
 using Mizan.Contracts.Ai;
 using Mizan.Contracts.Nutrition;
 using Mizan.Domain.Entities;
+using Mizan.Domain.Planning;
 
 namespace Mizan.Infrastructure.AI;
 
@@ -92,14 +94,17 @@ public class NutritionAiService : INutritionAiService
     private readonly IAiPromptResolver _prompts;
     private readonly IAiToolRunner _tools;
     private readonly ILogger<NutritionAiService> _logger;
+    private readonly MealPlanContextBuilder _choices;
 
     public NutritionAiService(
         IAiMeteredClient metered,
         IAiContextBuilder contextBuilder,
         IAiPromptResolver prompts,
         IAiToolRunner tools,
-        ILogger<NutritionAiService> logger)
+        ILogger<NutritionAiService> logger,
+        MealPlanContextBuilder choices)
     {
+        _choices = choices;
         _metered = metered;
         _contextBuilder = contextBuilder;
         _prompts = prompts;
@@ -367,6 +372,13 @@ public class NutritionAiService : INutritionAiService
         {
             messages.Add(new AiMessage(AiRole.System, context.Summary));
         }
+        // What the person can actually make: their recipes and the foods priced in their region,
+        // read through the same consent as a plan (docs/AI.md#meal-suggestions).
+        var choices = await _choices.BuildAsync(userId, new PlanRules(), null, cancellationToken, includeGoal: false);
+        if (choices.Text.Length > 0)
+        {
+            messages.Add(new AiMessage(AiRole.System, "What the person can make from:\n" + choices.Text));
+        }
         messages.Add(new AiMessage(AiRole.User, "Propose meals for the rest of today."));
 
         var response = await CallAsync(
@@ -379,7 +391,7 @@ public class NutritionAiService : INutritionAiService
                 ResponseSchema = new AiJsonSchema("meal_suggestions_v1", SuggestionSchemaV1),
                 Temperature = 0.4,
             },
-            EstimateTokens(context.Summary.Length),
+            EstimateTokens(context.Summary.Length + choices.Text.Length),
             prompt.VersionId,
             cancellationToken);
 

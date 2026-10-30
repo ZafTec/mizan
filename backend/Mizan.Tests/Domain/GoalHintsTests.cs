@@ -1,8 +1,8 @@
 using FluentAssertions;
-using Mizan.Application.Services;
+using Mizan.Domain.Goals;
 using Xunit;
 
-namespace Mizan.Tests.Application;
+namespace Mizan.Tests.GoalRules;
 
 public class GoalHintsTests
 {
@@ -250,5 +250,26 @@ public class GoalHintsTests
         hints.Should().ContainSingle();
         hints[0].Should().Contain("700");
         hints[0].Should().Contain("800");
+    }
+
+    // Each macro's share of the calories, with the others left out: protein and carbs over their
+    // ceilings warn, and fat now does too, so the rule is the same for every macro.
+    [Theory]
+    [InlineData(2000, 600d, null, null, "Protein")]   // 120%
+    [InlineData(2000, null, 600d, null, "Carbs")]     // 120%
+    [InlineData(2000, null, null, 200d, "Fat")]       // 90%
+    [InlineData(2000, null, null, 110d, "Fat")]       // 49.5%
+    [InlineData(2000, 175d, null, null, null)]        // 35%
+    [InlineData(2000, null, 300d, null, null)]        // 60%
+    [InlineData(2000, null, null, 70d, null)]         // 31.5%
+    [InlineData(2000, null, null, 20d, null)]         // 9%, but a floor needs all three macros set
+    public void EachMacro_IsHeldToItsShareOfCalories(int calories, double? protein, double? carbs, double? fat, string? warned)
+    {
+        var hints = GoalHints.CheckGoalSanity(
+            "general", calories, (decimal?)protein, (decimal?)carbs, (decimal?)fat, targetDate: null);
+
+        var shares = hints.Where(h => h.Contains("of your calories")).ToList();
+        if (warned is null) shares.Should().BeEmpty();
+        else shares.Should().ContainSingle().Which.Should().StartWith(warned);
     }
 }

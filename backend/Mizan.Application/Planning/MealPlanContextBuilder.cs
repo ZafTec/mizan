@@ -48,7 +48,9 @@ public sealed class MealPlanContextBuilder
         _prices = prices;
     }
 
-    public async Task<MealPlanContext> BuildAsync(Guid userId, PlanRules rules, string? preference, CancellationToken cancellationToken)
+    /// <param name="includeGoal">False when the caller already states the goal, as meal suggestions do.</param>
+    public async Task<MealPlanContext> BuildAsync(
+        Guid userId, PlanRules rules, string? preference, CancellationToken cancellationToken, bool includeGoal = true)
     {
         var axes = await _policy.ReadableAxesAsync(userId, userId, AccessPurpose.AiContext, cancellationToken);
         var region = await _prices.RegionForAsync(userId, cancellationToken);
@@ -64,7 +66,7 @@ public sealed class MealPlanContextBuilder
                 .OrderByDescending(g => g.UpdatedAt)
                 .Select(g => new { g.TargetCalories, g.TargetProteinGrams, g.TargetCarbsGrams, g.TargetFatGrams })
                 .FirstOrDefaultAsync(cancellationToken);
-            if (goal is not null)
+            if (goal is not null && includeGoal)
             {
                 goalTargets = new GoalTargets(goal.TargetCalories, goal.TargetProteinGrams, goal.TargetCarbsGrams, goal.TargetFatGrams);
                 text.Append("## Goal\n").Append(CultureInfo.InvariantCulture,

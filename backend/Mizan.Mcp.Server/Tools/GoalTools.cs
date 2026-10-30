@@ -13,10 +13,13 @@ public sealed class GoalTools
     public GoalTools(IBackendApiClient api) => _api = api;
 
     [McpServerTool(Name = "get_current_goal", ReadOnly = true, Idempotent = true)]
-    [Description("Get the user's current nutrition/fitness goal including target calories and macros.")]
+    [Description("Get the user's current nutrition/fitness goal including target calories and macros. With no active goal, returns {\"goal\":null} and says so.")]
     public async Task<string> GetCurrentGoal(CancellationToken ct = default)
     {
-        return await _api.GetAsync("/api/Goals", ct);
+        var goal = await _api.GetAsync("/api/Goals", ct);
+        return string.IsNullOrWhiteSpace(goal) || goal.Trim() == "null"
+            ? System.Text.Json.JsonSerializer.Serialize(new { goal = (object?)null, message = "No active goal. Set one with create_goal." })
+            : goal;
     }
 
     [McpServerTool(Name = "get_goal_history", ReadOnly = true, Idempotent = true)]
@@ -29,7 +32,7 @@ public sealed class GoalTools
     [McpServerTool(Name = "create_goal")]
     [Description("Set a new nutrition/fitness goal. This replaces the active goal; the old one stays in the history. Every target is optional.")]
     public async Task<string> CreateGoal(
-        [Description("Goal type: weight_loss, muscle_gain, maintenance or general")] string? goalType = null,
+        [Description("Goal type: " + Mizan.Domain.Goals.GoalTypes.Described)] string? goalType = null,
         [Description("Target daily calories")] int? targetCalories = null,
         [Description("Target protein grams a day")] decimal? targetProteinGrams = null,
         [Description("Target carbs grams a day")] decimal? targetCarbsGrams = null,
@@ -46,7 +49,8 @@ public sealed class GoalTools
     }
 
     [McpServerTool(Name = "record_goal_progress")]
-    [Description("Record a day's check-in against the active goal. Calories and macros come from that day's diary unless you pass them; "
+    [Description("Record a day's check-in against the active goal. A goal keeps one check-in a day: recording the same day again replaces it. "
+        + "Calories and macros come from that day's diary unless you pass them; "
         + "a weight left out comes from that day's body measurement. A weight needs body write permission as well. "
         + "Returns what was stored.")]
     public async Task<string> RecordProgress(

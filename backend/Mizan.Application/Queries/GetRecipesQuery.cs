@@ -12,6 +12,9 @@ public record GetRecipesQuery : IRequest<PagedResult<RecipeDto>>, IPagedQuery, I
     public string? SearchTerm { get; init; }
     public bool IncludePublic { get; init; } = true;
     public bool FavoritesOnly { get; init; } = false;
+
+    /// <summary>Adds the public recipes the viewer favourited to their own, without the rest of the public ones.</summary>
+    public bool IncludeFavorites { get; init; } = false;
     public decimal? MinProteinCalorieRatio { get; init; }
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;
@@ -88,7 +91,7 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
         // viewer's id has to be part of the key for the same reason
         // SearchFoodsQuery keys on it.
         var viewerId = _currentUser.UserId?.ToString() ?? "anon";
-        var cacheKey = $"recipes:search:{viewerId}:{GrantContext.KeyFor(_currentUser.Grant)}:{request.SearchTerm?.ToLower() ?? ""}:{request.IncludePublic}:{request.FavoritesOnly}:{request.MinProteinCalorieRatio}:{request.Page}:{request.PageSize}:{request.SortBy ?? ""}:{request.SortOrder ?? ""}";
+        var cacheKey = $"recipes:search:{viewerId}:{GrantContext.KeyFor(_currentUser.Grant)}:{request.SearchTerm?.ToLower() ?? ""}:{request.IncludePublic}:{request.IncludeFavorites}:{request.FavoritesOnly}:{request.MinProteinCalorieRatio}:{request.Page}:{request.PageSize}:{request.SortBy ?? ""}:{request.SortOrder ?? ""}";
 
         return await _cache.GetOrCreateAsync(
             cacheKey,
@@ -122,7 +125,9 @@ public class GetRecipesQueryHandler : IRequestHandler<GetRecipesQuery, PagedResu
                 query = query.Where(r =>
                     (r.UserId == _currentUser.UserId
                         && (!restrict || r.HouseholdId == null || accessible.Contains(r.HouseholdId.Value))) ||
-                    (request.IncludePublic && r.IsPublic));
+                    (request.IncludePublic && r.IsPublic) ||
+                    (request.IncludeFavorites && r.IsPublic
+                        && _context.FavoriteRecipes.Any(f => f.RecipeId == r.Id && f.UserId == _currentUser.UserId)));
             }
         }
         else
