@@ -33,6 +33,7 @@ public sealed class UpdateHandler
     private readonly ILogger<UpdateHandler> _logger;
     private readonly PlanMeHandler _planMe;
     private readonly RemindHandler _remind;
+    private readonly ChatContext _context;
 
     public UpdateHandler(
         TelegramClient telegram,
@@ -44,8 +45,9 @@ public sealed class UpdateHandler
         _api = api;
         _options = options.Value;
         _logger = logger;
-        _planMe = new PlanMeHandler(telegram, api, options.Value);
-        _remind = new RemindHandler(telegram, api, ExplainFailure);
+        _context = new ChatContext(api);
+        _planMe = new PlanMeHandler(telegram, api, _context, options.Value);
+        _remind = new RemindHandler(telegram, api, _context, ExplainFailure);
     }
 
     public async Task HandleAsync(Update update, CancellationToken ct)
@@ -193,7 +195,7 @@ public sealed class UpdateHandler
                 return;
 
             case "/shop":
-                await OnShopAsync(chatId, user, page: 0, ct);
+                await OnShopAsync(chatId, user, page: 0, "The /shop command", ct);
                 return;
 
             case PlanMeHandler.Command:
@@ -369,6 +371,7 @@ public sealed class UpdateHandler
         }
 
         await _telegram.SendMessageAsync(chatId, text.ToString(), ct: ct);
+        await _context.ReportAsync(user, ChatContext.Showed("The /today command", text.ToString()), ct);
     }
 
     private async Task OnWeightAsync(long chatId, ResolvedUser user, string argument, CancellationToken ct)
@@ -385,10 +388,12 @@ public sealed class UpdateHandler
             new LogMeasurementRequest(null, kg, null, null, null, null, null, null, null, null, null, null),
             ct);
 
-        await _telegram.SendMessageAsync(
-            chatId,
-            result.Ok ? $"Logged {kg:0.#} kg." : Escape(ExplainFailure(result)),
-            ct: ct);
+        var reply = result.Ok ? $"Logged {kg.ToString("0.#", CultureInfo.InvariantCulture)} kg." : ExplainFailure(result);
+        await _telegram.SendMessageAsync(chatId, Escape(reply), ct: ct);
+        await _context.ReportAsync(
+            user,
+            result.Ok ? $"The /weight command logged a body weight of {kg.ToString("0.#", CultureInfo.InvariantCulture)} kg for today." : $"The /weight command was refused: {reply}",
+            ct);
     }
 
     // ---- Notifications ----------------------------------------------------
@@ -474,12 +479,16 @@ public sealed class UpdateHandler
             new UpdateNotificationPreferencesRequest([new NotificationKindPreferenceUpdate("marketing", false, false, false, false)]),
             ct);
 
-        await _telegram.SendMessageAsync(
-            chatId,
+        var reply = result.Ok
+            ? "News and offers are off, here, in the app, on your phone and by email. Turn them back on in Settings, Notifications."
+            : ExplainFailure(result);
+        await _telegram.SendMessageAsync(chatId, Escape(reply), ct: ct);
+        await _context.ReportAsync(
+            user,
             result.Ok
-                ? "News and offers are off, here, in the app, on your phone and by email. Turn them back on in Settings, Notifications."
-                : Escape(ExplainFailure(result)),
-            ct: ct);
+                ? "The person pressed the opt-out button on a Telegram message: news and offers are now off on every channel."
+                : $"The person pressed the news and offers opt-out button in Telegram and it was refused: {reply}",
+            ct);
     }
 
     private async Task SetNotificationsAsync(long chatId, ResolvedUser user, bool on, CancellationToken ct)
@@ -487,12 +496,16 @@ public sealed class UpdateHandler
         var result = await _api.SendForResultAsync<object>(
             user.UserId, HttpMethod.Put, "api/Users/me", new UpdateUserRequest(null, null, NotifyByTelegram: on), ct);
 
-        await _telegram.SendMessageAsync(
-            chatId,
-            !result.Ok ? Escape(ExplainFailure(result))
+        var reply = !result.Ok ? Escape(ExplainFailure(result))
             : on ? "Notifications are on. You will get them here as well as in the app. <b>/notifications</b> chooses which kinds; <b>/notifications off</b> stops them."
-            : "Notifications are off. They stay in the app. <b>/notifications on</b> brings them back.",
-            ct: ct);
+            : "Notifications are off. They stay in the app. <b>/notifications on</b> brings them back.";
+        await _telegram.SendMessageAsync(chatId, reply, ct: ct);
+        await _context.ReportAsync(
+            user,
+            result.Ok
+                ? $"In Telegram the person turned notifications in this chat {(on ? "on" : "off")}."
+                : $"In Telegram the person tried to turn notifications in this chat {(on ? "on" : "off")} and it was refused: {ChatContext.Plain(reply)}",
+            ct);
     }
 
     private async Task SetKindAsync(long chatId, ResolvedUser user, string kind, bool on, CancellationToken ct)
@@ -505,7 +518,9 @@ public sealed class UpdateHandler
             ct);
         if (result is not { Ok: true, Value: { } settings })
         {
-            await _telegram.SendMessageAsync(chatId, Escape(ExplainFailure(result)), ct: ct);
+            var reason = ExplainFailure(result);
+            await _telegram.SendMessageAsync(chatId, Escape(reason), ct: ct);
+            await _context.ReportAsync(user, $"In Telegram the person tried to turn Telegram notifications for \"{kind}\" {(on ? "on" : "off")} and it was refused: {reason}", ct);
             return;
         }
 
@@ -516,6 +531,7 @@ public sealed class UpdateHandler
             $"{Escape(label)} {(on ? "now come here" : "no longer come here")}.\n\n{text}",
             keyboard,
             ct);
+        await _context.ReportAsync(user, $"In Telegram the person turned Telegram notifications for {label} {(on ? "on" : "off")}.", ct);
     }
 
     // ---- Inline keyboards -------------------------------------------------
@@ -554,6 +570,7 @@ public sealed class UpdateHandler
         if (data == "discard")
         {
             await _telegram.SendMessageAsync(chatId, "Discarded. Nothing was logged.", ct: ct);
+            await _context.ReportAsync(user, "The person pressed Discard on a meal photo estimate in Telegram: nothing was logged.", ct);
             return;
         }
 
@@ -597,7 +614,7 @@ public sealed class UpdateHandler
                 return;
             }
 
-            await SendPlanDayAsync(chatId, user, day, prefix: null, ct);
+            await SendPlanDayAsync(chatId, user, day, prefix: null, "Pressing Tomorrow on the Telegram plan card", ct);
             return;
         }
 
@@ -615,7 +632,7 @@ public sealed class UpdateHandler
                 return;
             }
 
-            await OnShopAsync(chatId, user, page, ct);
+            await OnShopAsync(chatId, user, page, "Paging the Telegram shopping card", ct);
             return;
         }
 
@@ -662,10 +679,14 @@ public sealed class UpdateHandler
         var result = await _api.SendForResultAsync<object>(
             user.UserId, HttpMethod.Post, "api/Meals", request, ct);
 
-        await _telegram.SendMessageAsync(
-            chatId,
-            result.Ok ? $"Logged {Escape(request.Name)}." : Escape(ExplainFailure(result)),
-            ct: ct);
+        var reply = result.Ok ? $"Logged {request.Name}." : ExplainFailure(result);
+        await _telegram.SendMessageAsync(chatId, Escape(reply), ct: ct);
+        await _context.ReportAsync(
+            user,
+            result.Ok
+                ? $"The person pressed Log it on a meal photo estimate in Telegram: logged {request.Name}, {request.Calories?.ToString("0", CultureInfo.InvariantCulture)} kcal, as a snack."
+                : $"The person pressed Log it on a meal photo estimate in Telegram and it was refused: {reply}",
+            ct);
     }
 
     /// <summary>
@@ -738,12 +759,14 @@ public sealed class UpdateHandler
         var result = await _api.SendForResultAsync<object>(
             user.UserId, HttpMethod.Post, "api/Meals", whole with { SharedBetween = people }, ct);
 
-        await _telegram.SendMessageAsync(
-            chatId,
+        var reply = result.Ok ? $"Logged your 1/{people} share of {whole.Name}." : ExplainFailure(result);
+        await _telegram.SendMessageAsync(chatId, Escape(reply), ct: ct);
+        await _context.ReportAsync(
+            user,
             result.Ok
-                ? $"Logged your 1/{people} share of {Escape(whole.Name)}."
-                : Escape(ExplainFailure(result)),
-            ct: ct);
+                ? $"The person split a meal photo estimate in Telegram between {people} people: logged their 1/{people} share of {whole.Name}."
+                : $"The person split a meal photo estimate in Telegram and it was refused: {reply}",
+            ct);
     }
 
     /// <summary>The longest prefix of the text that fits in the given number of UTF-8 bytes, never cutting a character.</summary>
@@ -822,36 +845,39 @@ public sealed class UpdateHandler
             date = parsed;
         }
 
-        await SendPlanDayAsync(chatId, user, date, prefix: null, ct);
+        await SendPlanDayAsync(chatId, user, date, prefix: null, "The /plan command", ct);
     }
 
     private async Task SendPlanDayAsync(
-        long chatId, ResolvedUser user, DateOnly? date, string? prefix, CancellationToken ct)
+        long chatId, ResolvedUser user, DateOnly? date, string? prefix, string source, CancellationToken ct)
     {
         var result = await GetPlanDayAsync(user, date, ct);
 
         if (result.Status == HttpStatusCode.NotFound)
         {
-            await _telegram.SendMessageAsync(
-                chatId,
-                (prefix ?? string.Empty)
+            var none = (prefix ?? string.Empty)
                 + $"No active plan covers {(date is { } d ? Escape(DayLabel(d)) : "today")}. "
-                + $"Set one up at {_options.PublicUrl.TrimEnd('/')}/meal-plan.",
-                ct: ct);
+                + $"Set one up at {_options.PublicUrl.TrimEnd('/')}/meal-plan.";
+            await _telegram.SendMessageAsync(chatId, none, ct: ct);
+            await _context.ReportAsync(user, ChatContext.Showed(source, none), ct);
             return;
         }
 
         if (!result.Ok || result.Value is null)
         {
-            await _telegram.SendMessageAsync(chatId, (prefix ?? string.Empty) + Escape(ExplainFailure(result)), ct: ct);
+            var failed = (prefix ?? string.Empty) + Escape(ExplainFailure(result));
+            await _telegram.SendMessageAsync(chatId, failed, ct: ct);
+            await _context.ReportAsync(user, ChatContext.Showed(source, failed), ct);
             return;
         }
 
+        var card = (prefix ?? string.Empty) + PlanDayCard(result.Value);
         await _telegram.SendMessageAsync(
             chatId,
-            (prefix ?? string.Empty) + PlanDayCard(result.Value),
+            card,
             PlanDayKeyboard(result.Value, MiniAppLink($"{MiniAppPages.Plan}?planId={result.Value.PlanId:D}&day={result.Value.Date:yyyy-MM-dd}")),
             ct);
+        await _context.ReportAsync(user, ChatContext.Showed(source, card), ct);
     }
 
     private Task<ApiResult<PlanDayViewDto>> GetPlanDayAsync(ResolvedUser user, DateOnly? date, CancellationToken ct) =>
@@ -913,7 +939,7 @@ public sealed class UpdateHandler
             return;
         }
 
-        await SendPlanDayAsync(chatId, user, view.Date, $"Logged {Escape(EntryName(entry))}.\n\n", ct);
+        await SendPlanDayAsync(chatId, user, view.Date, $"Logged {Escape(EntryName(entry))}.\n\n", "Pressing Log on the Telegram plan card", ct);
     }
 
     private static (PlanDayViewDto View, PlanEntryDto Entry)? FindEntry(PlanDayViewDto? view, Guid entryId)
@@ -1051,20 +1077,21 @@ public sealed class UpdateHandler
     internal const int ShopPageSize = 10;
 
     /// <summary>/shop and the More button: the newest list, one page of what is still to buy.</summary>
-    private async Task OnShopAsync(long chatId, ResolvedUser user, int page, CancellationToken ct)
+    private async Task OnShopAsync(long chatId, ResolvedUser user, int page, string source, CancellationToken ct)
     {
         var list = await NewestShoppingListAsync(user, ct);
 
         if (list is null)
         {
-            await _telegram.SendMessageAsync(
-                chatId,
-                $"You have no shopping list yet. Make one from your plan at {_options.PublicUrl.TrimEnd('/')}/meal-plan.",
-                ct: ct);
+            var none = $"You have no shopping list yet. Make one from your plan at {_options.PublicUrl.TrimEnd('/')}/meal-plan.";
+            await _telegram.SendMessageAsync(chatId, none, ct: ct);
+            await _context.ReportAsync(user, ChatContext.Showed(source, none), ct);
             return;
         }
 
-        await _telegram.SendMessageAsync(chatId, ShoppingCard(list, page), ShoppingKeyboard(list, page, ShoppingListLink(list)), ct);
+        var card = ShoppingCard(list, page);
+        await _telegram.SendMessageAsync(chatId, card, ShoppingKeyboard(list, page, ShoppingListLink(list)), ct);
+        await _context.ReportAsync(user, ChatContext.Showed(source, card), ct);
     }
 
     /// <summary>
@@ -1108,7 +1135,9 @@ public sealed class UpdateHandler
         }
 
         var page = index / ShopPageSize;
-        await _telegram.SendMessageAsync(chatId, ShoppingCard(updated, page), ShoppingKeyboard(updated, page, ShoppingListLink(updated)), ct);
+        var card = ShoppingCard(updated, page);
+        await _telegram.SendMessageAsync(chatId, card, ShoppingKeyboard(updated, page, ShoppingListLink(updated)), ct);
+        await _context.ReportAsync(user, ChatContext.Showed($"Ticking off {list.Items.First(i => i.Id == itemId).ItemName} on the Telegram shopping card", card), ct);
     }
 
     /// <summary>The most recently changed list, in full. Null when there is none.</summary>

@@ -102,6 +102,10 @@ The bot reads and writes the records in `Mizan.Contracts` (`LogMealRequest`, `Da
 
 `/planme` sends the words as the preference to `POST /api/MealPlans/generate` and spends the planning allowance. **Confirm** (`pm:ok:{planId}`) accepts the draft and **Discard** (`pm:no:{planId}`) declines it; the handler is `Bot/PlanMeHandler.cs`.
 
+### App context
+
+Every command result and button is reported to the assistant conversation as [app context](AI.md#app-context) through `Bot/ChatContext.cs`, so a message typed next is read against what the chat just showed. A note is a fact: the card in plain words (`/today`, `/plan` and its Log and Tomorrow buttons, `/shop` and its ticks and pages, `/reminders`), or what was pressed and what the API answered (`/weight`, the photo card's Log it, Split and Discard, `/planme` Confirm and Discard, the notification switches, the news opt-out, and a reminder card's Done, Snooze, Skip today and Stop). Only a step whose buttons ask a question holds its note, for 15 minutes: the `/remind` steps and a `/planme` draft. Everything else posts with no hold, which ends any earlier wait. The bot decides nothing from a note, and a failed or refused post (the assistant turned off, say) changes nothing in the chat.
+
 Photo analysis uses `/api/Nutrition/ai/analyze-image` and stores the image under `meals/` in object storage. A storage failure loses the retained picture but does not discard the analysis. See [AI](AI.md) for consent and metering.
 
 ## Verify

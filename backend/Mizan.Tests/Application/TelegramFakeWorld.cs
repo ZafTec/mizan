@@ -41,6 +41,9 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
     public Guid? CurrentThreadId { get; set; }
     /// <summary>App context the API holds for the next message, set and cleared the way the API would.</summary>
     public string? PendingContext { get; set; }
+    /// <summary>Set to make the app context route fail, as it does when the assistant is turned off.</summary>
+    public HttpStatusCode ContextStatus { get; set; } = HttpStatusCode.OK;
+    public List<JsonElement> MeasurementsPosted { get; } = [];
     public string ChatReply { get; set; } = "Hello.";
     public string PerformedJson { get; set; } = "[]";
     public string ConsentRequiredJson { get; set; } = "[]";
@@ -388,10 +391,17 @@ internal sealed class TelegramFakeWorld : HttpMessageHandler
                 {"foods":[{"name":"{{FoodName}}","portionGrams":300,"calories":600,"protein":30,"carbs":60,"fat":20}],
                  "totalCalories":600,"confidence":0.8,"note":null}
                 """);
+        if (url.EndsWith("api/BodyMeasurements"))
+        {
+            MeasurementsPosted.Add(JsonDocument.Parse(body).RootElement.Clone());
+            return Json("{}", HttpStatusCode.Created);
+        }
         if (url.EndsWith("api/Ai/conversation/context"))
         {
             var note = JsonDocument.Parse(body).RootElement.Clone();
             ContextPosted.Add(note);
+            if (ContextStatus != HttpStatusCode.OK)
+                return Json("""{"errorCode":"feature_disabled","error":"The assistant is turned off."}""", ContextStatus);
             PendingContext = note.TryGetProperty("holdMinutes", out var hold) && hold.ValueKind == JsonValueKind.Number && hold.GetInt32() > 0
                 ? note.GetProperty("note").GetString()
                 : null;

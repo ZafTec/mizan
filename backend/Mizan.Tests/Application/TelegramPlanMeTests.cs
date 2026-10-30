@@ -91,4 +91,26 @@ public class TelegramPlanMeTests
         _world.PlansGenerated.Should().BeEmpty();
         _world.LastText.Should().Contain("/planme high protein");
     }
+
+    [Fact]
+    public async Task A_draft_waits_for_the_persons_answer_in_the_assistant_conversation_and_Confirm_closes_the_flow()
+    {
+        await _world.Handler().HandleAsync(Text("/planme high protein, cheap"), CancellationToken.None);
+
+        var asked = _world.ContextPosted.Should().ContainSingle().Subject;
+        asked.GetProperty("holdMinutes").GetInt32().Should().Be(ChatContext.QuestionHoldMinutes);
+        asked.GetProperty("note").GetString().Should()
+            .Contain("drafted a meal plan for \"high protein, cheap\"")
+            .And.Contain("High protein week (draft)")
+            .And.Contain("Shiro & injera")
+            .And.EndWith("with buttons: Confirm, Discard.");
+        _world.PendingContext.Should().NotBeNull();
+
+        await _world.Handler().HandleAsync(Press($"pm:ok:{PlanId}"), CancellationToken.None);
+
+        var closed = _world.ContextPosted[^1];
+        closed.GetProperty("holdMinutes").GetInt32().Should().Be(0);
+        closed.GetProperty("note").GetString().Should().Be($"The person pressed Confirm on the /planme draft {PlanId}: it is now their active meal plan. That flow is finished.");
+        _world.PendingContext.Should().BeNull();
+    }
 }

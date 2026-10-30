@@ -1,4 +1,3 @@
-using Mizan.Contracts.Ai;
 using Mizan.Contracts.Notifications;
 using Mizan.Contracts.Telegram;
 using Mizan.Telegram.Backend;
@@ -43,17 +42,19 @@ public sealed class RemindHandler
     private static readonly string[] Times = ["07:00", "08:00", "12:00", "18:00", "20:00", "21:00"];
 
     /// <summary>How long a step waits for typed words to count as its answer.</summary>
-    public const int StepHoldMinutes = 15;
+    public const int StepHoldMinutes = ChatContext.QuestionHoldMinutes;
 
     private readonly TelegramClient _telegram;
     private readonly MizanApiClient _api;
     private readonly Func<ApiResult<object>, string> _explain;
+    private readonly ChatContext _context;
 
-    public RemindHandler(TelegramClient telegram, MizanApiClient api, Func<ApiResult<object>, string> explain)
+    public RemindHandler(TelegramClient telegram, MizanApiClient api, ChatContext context, Func<ApiResult<object>, string> explain)
     {
         _telegram = telegram;
         _api = api;
         _explain = explain;
+        _context = context;
     }
 
     public static bool IsCallback(string data) =>
@@ -64,7 +65,7 @@ public sealed class RemindHandler
         if (argument.Length > 0)
         {
             await _telegram.SendMessageAsync(chatId, $"{CustomLead}<b>{Escape(argument)}</b>\nWhich days?", DaysKeyboard("custom"), ct);
-            await ReportAsync(user, Step(KindChoice("custom", argument), "Which days?", DayPresets.Select(d => d.Label)), StepHoldMinutes, ct);
+            await _context.AskedAsync(user, Step(KindChoice("custom", argument), "Which days?", DayPresets.Select(d => d.Label)), ct);
             return;
         }
 
@@ -86,6 +87,7 @@ public sealed class RemindHandler
 
         var (text, keyboard) = ListCard(list);
         await _telegram.SendMessageAsync(chatId, text, keyboard, ct);
+        await _context.ReportAsync(user, ChatContext.Showed("The /reminders command", text), ct);
     }
 
     /// <summary>Each reminder on a line with the API's summary and next time; Stop buttons for those on.</summary>
@@ -117,7 +119,7 @@ public sealed class RemindHandler
         {
             case ["k", var kind]:
                 await _telegram.SendMessageAsync(chatId, "Which days?", DaysKeyboard(kind), ct);
-                await ReportAsync(user, Step(KindChoice(kind, title), "Which days?", DayPresets.Select(d => d.Label)), StepHoldMinutes, ct);
+                await _context.AskedAsync(user, Step(KindChoice(kind, title), "Which days?", DayPresets.Select(d => d.Label)), ct);
                 return;
 
             case ["d", var kind, var days] when kind != "custom" || title is not null:
@@ -126,7 +128,7 @@ public sealed class RemindHandler
                     (title is null ? "" : $"{CustomLead}<b>{Escape(title)}</b>\n") + "What time?",
                     TimesKeyboard(kind, days),
                     ct);
-                await ReportAsync(user, Step($"{KindChoice(kind, title)}; days: {DaysChoice(days)}", "What time?", Times), StepHoldMinutes, ct);
+                await _context.AskedAsync(user, Step($"{KindChoice(kind, title)}; days: {DaysChoice(days)}", "What time?", Times), ct);
                 return;
 
             case ["t", var kind, var days, var hhmm] when (kind != "custom" || title is not null) && Schedule(days, hhmm) is { } schedule:
@@ -146,11 +148,11 @@ public sealed class RemindHandler
         {
             var reason = _explain(Untyped(result));
             await _telegram.SendMessageAsync(chatId, Escape(reason), ct: ct);
-            await ReportAsync(user, $"The /remind buttons ended without a reminder: {reason}", 0, ct);
+            await _context.ReportAsync(user, $"The /remind buttons ended without a reminder: {reason}", ct);
             return;
         }
 
-        await ReportAsync(user, $"The /remind buttons created the reminder \"{reminder.Title}\": {reminder.Summary}. That flow is finished.", 0, ct);
+        await _context.ReportAsync(user, $"The /remind buttons created the reminder \"{reminder.Title}\": {reminder.Summary}. That flow is finished.", ct);
 
         var first = reminder.NextRunText is { } next ? $" First one {Escape(next)}." : "";
         await _telegram.SendMessageAsync(
@@ -161,15 +163,20 @@ public sealed class RemindHandler
 
     private async Task ActAsync(long chatId, ResolvedUser user, string action, Guid id, CancellationToken ct)
     {
+        var button = ButtonLabel(action);
         if (action == TelegramReminderCallbacks.Stop)
         {
             var stopped = await _api.SendForResultAsync<ReminderDto>(user.UserId, HttpMethod.Put, $"api/Reminders/{id}", new UpdateReminderRequest(Enabled: false), ct);
-            await _telegram.SendMessageAsync(
-                chatId,
-                stopped is { Ok: true, Value: { } off }
-                    ? $"Stopped <b>{Escape(off.Title)}</b>. Turn it back on in Settings, Reminders."
-                    : Escape(_explain(Untyped(stopped))),
-                ct: ct);
+            if (stopped is { Ok: true, Value: { } off })
+            {
+                await _telegram.SendMessageAsync(chatId, $"Stopped <b>{Escape(off.Title)}</b>. Turn it back on in Settings, Reminders.", ct: ct);
+                await _context.ReportAsync(user, $"The person pressed {button} on the reminder \"{off.Title}\" in Telegram: it is now off.", ct);
+                return;
+            }
+
+            var refused = _explain(Untyped(stopped));
+            await _telegram.SendMessageAsync(chatId, Escape(refused), ct: ct);
+            await _context.ReportAsync(user, $"The person pressed {button} on a reminder in Telegram and it was refused: {refused}", ct);
             return;
         }
 
@@ -177,29 +184,26 @@ public sealed class RemindHandler
         var result = action == TelegramReminderCallbacks.Snooze
             ? await _api.SendForResultAsync<ReminderActionResult>(user.UserId, HttpMethod.Post, path, new SnoozeReminderRequest(), ct)
             : await _api.SendForResultAsync<ReminderActionResult>(user.UserId, HttpMethod.Post, path, null, ct);
-        await _telegram.SendMessageAsync(
-            chatId,
-            result is { Ok: true, Value: { } done } ? Escape(done.Message) : Escape(_explain(Untyped(result))),
-            ct: ct);
+        if (result is { Ok: true, Value: { } done })
+        {
+            await _telegram.SendMessageAsync(chatId, Escape(done.Message), ct: ct);
+            await _context.ReportAsync(user, $"The person pressed {button} on the reminder \"{done.Reminder.Title}\" in Telegram. The app answered: {done.Message}", ct);
+            return;
+        }
+
+        var reason = _explain(Untyped(result));
+        await _telegram.SendMessageAsync(chatId, Escape(reason), ct: ct);
+        await _context.ReportAsync(user, $"The person pressed {button} on a reminder in Telegram and it was refused: {reason}", ct);
     }
 
-    /// <summary>
-    /// Tells the assistant conversation where the flow stands (<c>POST /api/Ai/conversation/context</c>).
-    /// A fact, not an instruction: what the person chose and what the chat is now asking. Best effort,
-    /// since a person without the assistant still gets every button.
-    /// </summary>
-    private async Task ReportAsync(ResolvedUser user, string note, int holdMinutes, CancellationToken ct)
+    private static string ButtonLabel(string action) => action switch
     {
-        try
-        {
-            await _api.SendForResultAsync<AiConversationDto>(
-                user.UserId, HttpMethod.Post, "api/Ai/conversation/context", new AiContextNoteRequest(note, holdMinutes), ct);
-        }
-        catch (Exception ex) when (ex is HttpRequestException or System.Text.Json.JsonException || (ex is TaskCanceledException && !ct.IsCancellationRequested))
-        {
-            // The reminder flow does not depend on the assistant.
-        }
-    }
+        TelegramReminderCallbacks.Done => "Done",
+        TelegramReminderCallbacks.Snooze => "Snooze",
+        TelegramReminderCallbacks.Skip => "Skip today",
+        TelegramReminderCallbacks.Stop => "Stop",
+        _ => action,
+    };
 
     internal static string Step(string chosen, string question, IEnumerable<string> offered) =>
         $"The person is setting up a reminder with the /remind buttons. Chosen so far: {chosen}. "
