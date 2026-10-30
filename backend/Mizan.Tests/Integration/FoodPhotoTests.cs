@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Mizan.Application.Ai;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Ai;
 using Mizan.Contracts.Media;
 using Mizan.Contracts.Nutrition;
 using Mizan.Domain.Entities;
@@ -270,6 +271,46 @@ public class FoodPhotoTests
         while (await dispatcher.RunOnceAsync(CancellationToken.None)) { }
         store.Keys.Should().BeEmpty();
         (await mine.DeleteAsync(Delete(second))).StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    /// <summary>
+    /// A photo sent with a chat turn was kept for good. It is on the analysis photo's 30-day clock,
+    /// and its owner deletes it the same way.
+    /// </summary>
+    [Fact]
+    public async Task AChatPhoto_IsRemovedThirtyDaysOn_AndItsOwnerCanDeleteItSooner()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var store = new MemoryStorage();
+        await using var api = _fixture.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+        {
+            services.RemoveAll<IStorageService>();
+            services.AddSingleton<IStorageService>(store);
+        }));
+        var (owner, _) = await ProUserAsync();
+        using var client = api.CreateClient();
+        client.DefaultRequestHeaders.Add("Cookie", owner.DefaultRequestHeaders.GetValues("Cookie"));
+
+        _fixture.Ai.Reply("Looks like a salad.");
+        using var content = new MultipartFormDataContent();
+        var file = new ByteArrayContent(Jpeg);
+        file.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+        content.Add(file, "image", "plate.jpg");
+        var turn = await client.PostAsync("/api/Ai/chat/image", content);
+        turn.StatusCode.Should().Be(HttpStatusCode.OK, await turn.Content.ReadAsStringAsync());
+        var imageUrl = (await turn.Content.ReadFromJsonAsync<AiChatTurnDto>())!.Message.ImageUrl;
+        imageUrl.Should().NotBeNull();
+        store.Keys.Should().ContainSingle();
+
+        using (var scope = _fixture.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+            var pending = await db.OutboxJobs.SingleAsync(j => j.Type == OutboxJobTypes.AnalysisPhotoExpiry && j.Status == OutboxJobStatus.Pending);
+            pending.RunAfter.Should().BeCloseTo(DateTime.UtcNow.AddDays(30), TimeSpan.FromMinutes(5));
+        }
+
+        (await client.DeleteAsync(Delete(imageUrl!))).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        store.Keys.Should().BeEmpty();
     }
 
     private static string Delete(string imageUrl) => $"/api/Nutrition/ai/photo?imageUrl={Uri.EscapeDataString(imageUrl)}";

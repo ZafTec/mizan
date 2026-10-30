@@ -12,7 +12,7 @@ namespace Mizan.Application.Ai;
 public sealed record AnalysisPhotoExpiry(string Key, Guid UserId);
 
 /// <summary>
-/// Photos sent for a food analysis (web, Telegram, MCP). Each is stored with a removal scheduled
+/// Photos sent for a food analysis (web, Telegram, MCP) or with an assistant chat turn. Each is stored with a removal scheduled
 /// in the outbox <see cref="RetentionDays"/> days later, so a photo nothing else keeps does not
 /// stay for good; the person can delete it sooner (<see cref="DeleteAnalysisPhotoCommand"/>). The
 /// scheduled job is also the record of whose photo it is (docs/AI.md#logging-a-meal-from-words-or-a-photo).
@@ -37,14 +37,18 @@ public sealed class AnalysisPhotos
 
     public static string DedupeKey(string key) => $"analysis-photo:{key}";
 
-    /// <summary>Stores the photo and schedules its removal; null when storage fails, which costs the picture, not the analysis.</summary>
-    public async Task<string?> StoreAsync(Guid userId, byte[] bytes, string contentType, string extension, CancellationToken cancellationToken)
+    /// <summary>
+    /// Stores the photo and schedules its removal; null when storage fails, which costs the picture, not the
+    /// analysis or the chat turn. <paramref name="name"/> starts the stored file's name.
+    /// </summary>
+    public async Task<string?> StoreAsync(
+        Guid userId, byte[] bytes, string contentType, string extension, CancellationToken cancellationToken, string name = "meal")
     {
         try
         {
             await using var stream = new MemoryStream(bytes);
             var stored = await _storage.UploadAsync(
-                new StorageUpload(StorageFolder.Meals, $"meal{extension}", contentType, stream, bytes.Length), cancellationToken);
+                new StorageUpload(StorageFolder.Meals, $"{name}{extension}", contentType, stream, bytes.Length), cancellationToken);
             await _outbox.ScheduleAsync(OutboxJobTypes.AnalysisPhotoExpiry, new AnalysisPhotoExpiry(stored.Key, userId),
                 DateTime.UtcNow.AddDays(RetentionDays), DedupeKey(stored.Key), cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
@@ -72,7 +76,7 @@ public sealed class AnalysisPhotos
 }
 
 /// <summary>
-/// Deletes a photo the person sent for a food analysis, before its scheduled removal. Someone
+/// Deletes a photo the person sent for a food analysis or a chat turn, before its scheduled removal. Someone
 /// else's photo, or one already removed, is not found.
 /// </summary>
 public sealed record DeleteAnalysisPhotoCommand(string ImageUrl) : IRequest;

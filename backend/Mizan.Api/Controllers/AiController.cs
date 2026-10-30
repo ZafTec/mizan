@@ -27,21 +27,18 @@ public class AiController : ControllerBase
     private readonly IMediator _mediator;
     private readonly INutritionAiService _ai;
     private readonly ICurrentUserService _currentUser;
-    private readonly IStorageService _storage;
-    private readonly ILogger<AiController> _logger;
+    private readonly AnalysisPhotos _photos;
 
     public AiController(
         IMediator mediator,
         INutritionAiService ai,
         ICurrentUserService currentUser,
-        IStorageService storage,
-        ILogger<AiController> logger)
+        AnalysisPhotos photos)
     {
         _mediator = mediator;
         _ai = ai;
         _currentUser = currentUser;
-        _storage = storage;
-        _logger = logger;
+        _photos = photos;
     }
 
     [HttpGet("consent")]
@@ -119,27 +116,12 @@ public class AiController : ControllerBase
             throw new DomainValidationException("That file is not a JPEG, PNG or WebP image.");
         }
 
-        string? storedUrl = null;
-        try
-        {
-            await using var content = new MemoryStream(bytes);
-            var stored = await _storage.UploadAsync(
-                new StorageUpload(
-                    StorageFolder.Meals,
-                    $"chat{ImageFormat.Extension(contentType)}",
-                    contentType,
-                    content,
-                    bytes.Length),
-                cancellationToken);
-
-            storedUrl = stored.Url;
-        }
-        catch (Exception ex)
-        {
-            // Answering about the photo matters more than keeping it. The turn
-            // goes ahead without a stored copy rather than failing outright.
-            _logger.LogWarning(ex, "Could not store a chat photo");
-        }
+        // Kept with the turn, on the same 30-day clock as an analysis photo, and deletable by its owner
+        // the same way (docs/AI.md#logging-a-meal-from-words-or-a-photo). A storage failure answers the
+        // photo without keeping it.
+        var userId = _currentUser.UserId ?? throw new UnauthorizedAccessException();
+        var storedUrl = await _photos.StoreAsync(
+            userId, bytes, contentType, ImageFormat.Extension(contentType), cancellationToken, name: "chat");
 
         return Ok(await _mediator.Send(
             new SendAiChatMessageCommand(
