@@ -91,7 +91,7 @@ public class MealPlanGenerationTests
         // Each ceiling was its own structured call on the planning line, and the model was shown prices, not asked for them.
         _fixture.Ai.Calls.Should().HaveCount(4);
         _fixture.Ai.Calls.Should().OnlyContain(c => c.ResponseSchema!.Name == "meal_plan_v1");
-        _fixture.Ai.Calls[0].Messages.Should().Contain(m => m.Content.Contains("Eggs | 143 kcal") && m.Content.Contains("| 200"));
+        _fixture.Ai.Calls[0].Messages.Should().Contain(m => m.Content.Contains("Eggs | 143 kcal") && m.Content.Contains("| 20\n"));
         // The repair repeats the conversation, then the draft, then the checks' own findings.
         _fixture.Ai.Calls[1].Messages[^2].Role.Should().Be(AiRole.Assistant);
         _fixture.Ai.Calls[1].Messages[^1].Content.Should().StartWith("The plan was checked").And.Contain("Day 0").And.Contain("protein");
@@ -376,6 +376,58 @@ public class MealPlanGenerationTests
         ledger.Should().HaveCount(2).And.OnlyContain(l => l.Outcome != AiCallOutcome.Pending);
         ledger.Count(l => l.Outcome == AiCallOutcome.Succeeded).Should().Be(1);
     }
+
+    /// <summary>
+    /// M-01: a draft missed its budget and calories while the model's note said it met them. Code
+    /// now scales a day over its calories, repairs with the day totals and running cost up to twice,
+    /// and saves the draft with what it still does not meet, in its own words.
+    /// </summary>
+    [Fact]
+    public async Task ADraftOverItsCaloriesAndBudget_IsScaledAndRepaired_AndSavedWithWhatItDoesNotMeet()
+    {
+        var (_, client) = await StartAsync(pro: true);
+        var eggs = await _world.FoodAsync("Eggs", 143, 12.6m, 0.7m, 9.5m);
+        await PriceAsync(eggs, 200);
+        // 858 kcal a day: even halved it is over 300 kcal, so the first draft is not scaled.
+        _fixture.Ai.Reply(EggsOnly(600, 600, note: "Within budget and on target."));
+        // Day 0 is scaled to 210 g (300 kcal); the week still costs ETB 287.00.
+        _fixture.Ai.Reply(EggsOnly(400, 200, note: "Within budget and on target."));
+        // The same again does not improve the draft, so the repairs end.
+        _fixture.Ai.Reply(EggsOnly(400, 200, note: "Within budget and on target."));
+
+        var response = await client.PostAsJsonAsync("/api/MealPlans/generate", Request() with
+        {
+            Rules = new PlanRulesDto { TargetCalories = 300 },
+            BudgetCeilings = [100],
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        var draft = (await response.Content.ReadFromJsonAsync<GenerateMealPlanResult>())!.Drafts.Single();
+        draft.Plan.Status.Should().Be("Draft");
+        Entries(draft.Plan).Select(e => e.Grams).Should().Equal(210m, 200m);
+        draft.Unmet.Should().Equal("Budget not met: ETB 287.00 a week against ETB 100.00.");
+        draft.Note.Should().Be("1 rule is not met; the draft is saved for review. Portions on day 1 were scaled to the calorie target.");
+
+        _fixture.Ai.Calls.Should().HaveCount(3);
+        _fixture.Ai.Calls[0].Messages.Should().Contain(m => m.Content.Contains("price per 100 g in ETB") && m.Content.Contains("Eggs | 143 kcal") && m.Content.Contains("| 20\n"));
+        _fixture.Ai.Calls[2].Messages[^1].Content.Should()
+            .Contain("calorie target on these days: 0.")
+            .And.Contain("Day 0: 300 kcal").And.Contain("running total ETB 42.00")
+            .And.Contain("Day 1: 286 kcal").And.Contain("running total ETB 82.00")
+            .And.Contain("A week of this plan costs ETB 287.00 against a budget of ETB 100.00.");
+        var ledger = await LedgerAsync();
+        ledger.Should().HaveCount(3).And.OnlyContain(l => l.Outcome == AiCallOutcome.Succeeded);
+    }
+
+    private static IEnumerable<PlanEntryDto> Entries(MealPlanDetailDto plan) =>
+        plan.Days.OrderBy(d => d.DayIndex).SelectMany(d => d.Slots.SelectMany(s => s.Entries));
+
+    private static string EggsOnly(int day0, int day1, string note) => $$"""
+        {"name":"Eggs","note":"{{note}}","prepSessions":[],"days":[
+          {"dayIndex":0,"entries":[{"slot":"BREAKFAST","kind":"food","foodName":"Eggs","recipeId":null,"grams":{{day0}},"servings":null,"note":null,"prepSessionIndex":null}]},
+          {"dayIndex":1,"entries":[{"slot":"BREAKFAST","kind":"food","foodName":"Eggs","recipeId":null,"grams":{{day1}},"servings":null,"note":null,"prepSessionIndex":null}]}
+        ]}
+        """;
 
     private static string EggsThen(string secondDay) => $$"""
         {"name":"Week","note":null,"prepSessions":[],"days":[

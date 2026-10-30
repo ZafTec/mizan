@@ -86,6 +86,13 @@ test("a person drafts a week with the assistant and keeps it", async ({
     "Drafted by the assistant",
   );
   await expect(preview).toContainText("Yogurt and oats");
+  // What the draft does not meet is code's verdict, shown as the API words it.
+  await expect(preview).toContainText(
+    "1 rule is not met; the draft is saved for review.",
+  );
+  await expect(
+    preview.getByRole("region", { name: "Not met" }),
+  ).toContainText("Day 2: 95 g protein is under the 120 g target.");
   await expect(
     preview.getByRole("region", { name: "To review" }),
   ).toContainText("Shiro wat with injera");

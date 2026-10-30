@@ -9245,6 +9245,7 @@ export interface paths {
                     SearchTerm?: string;
                     IncludePublic?: boolean;
                     FavoritesOnly?: boolean;
+                    IncludeFavorites?: boolean;
                     MinProteinCalorieRatio?: number;
                     Page?: number;
                     PageSize?: number;
@@ -13682,6 +13683,9 @@ export interface components {
         CreateFoodDiaryEntryResult: {
             /** Format: uuid */
             id: string;
+            /** Format: uuid */
+            groupId?: string | null;
+            entryIds: string[];
             success: boolean;
             message?: string | null;
             warnings: string[];
@@ -14299,6 +14303,7 @@ export interface components {
             violations: components["schemas"]["PlanViolationDto"][];
             cost: components["schemas"]["PlanCostDto"];
             unresolved: components["schemas"]["UnresolvedPlanLineDto"][];
+            unmet: string[];
             note?: string | null;
         };
         GetAchievementAnalyticsResult: {
@@ -15737,6 +15742,9 @@ export interface components {
         };
         RecognizedFood: {
             name: string;
+            /** Format: uuid */
+            foodId?: string | null;
+            source: string;
             /** Format: double */
             portionGrams: number;
             /** Format: double */

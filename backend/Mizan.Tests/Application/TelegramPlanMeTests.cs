@@ -25,7 +25,8 @@ public class TelegramPlanMeTests
               "cost":{"regionCode":"ET-AA","currency":"ETB","total":1240,"weeklyTotal":1240,"weeklyBudget":1500,"pricedItems":9,"totalItems":11,
                       "coverage":0.82,"lowestConfidence":"Observed","items":[]},
               "unresolved":[{"dayIndex":4,"slot":"SNACK","text":"Kolo","reason":"Not found in the food catalogue."}],
-              "note":"Cheap staples."}],
+              "unmet":["Day 3: 95 g protein is under the 120 g target."],
+              "note":"1 rule is not met; the draft is saved for review."}],
              "skipped":[]}
             """,
     };
@@ -43,7 +44,7 @@ public class TelegramPlanMeTests
         _world.LastText.Should().StartWith("<b>High protein week</b> (draft)")
             .And.Contain("About <b>ETB 1,240.00</b> a week (budget ETB 1,500.00), 9 of 11 items priced")
             .And.Contain("Day 1: Eggs, Shiro &amp; injera")
-            .And.Contain("95 g protein is under the 120 g target.")
+            .And.Contain("<b>Not met</b>\n• Day 3: 95 g protein is under the 120 g target.")
             .And.Contain("1 line(s) to review");
         _world.LastKeyboard().Should().Equal(("Confirm", $"pm:ok:{PlanId}"), ("Discard", $"pm:no:{PlanId}"));
         _world.LastKeyboard().Should().OnlyContain(b => System.Text.Encoding.UTF8.GetByteCount(b.Data) <= 64);

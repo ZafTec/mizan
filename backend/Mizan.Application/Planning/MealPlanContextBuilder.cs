@@ -109,13 +109,13 @@ public sealed class MealPlanContextBuilder
 
         if (foods.Count > 0)
         {
-            text.Append(CultureInfo.InvariantCulture, $"## Catalogue foods (name | per 100 g | price per kg in {currency})\n");
+            text.Append(CultureInfo.InvariantCulture, $"## Catalogue foods (name | per 100 g | price per 100 g in {currency})\n");
             foreach (var food in foods)
             {
                 text.Append(CultureInfo.InvariantCulture,
                     $"{Clean(food.Name)} | {food.CaloriesPer100g:0} kcal, P {food.ProteinPer100g:0.#} g, C {food.CarbsPer100g:0.#} g, F {food.FatPer100g:0.#} g | ");
                 text.Append(quotes.TryGetValue(food.Id, out var quote)
-                    ? string.Create(CultureInfo.InvariantCulture, $"{quote.PricePerGram * 1000m:0.##}")
+                    ? string.Create(CultureInfo.InvariantCulture, $"{quote.PricePerGram * 100m:0.##}")
                     : "no price");
                 text.Append('\n');
             }

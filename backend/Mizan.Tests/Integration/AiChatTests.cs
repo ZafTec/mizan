@@ -405,7 +405,7 @@ public class AiChatTests
 
         var context = string.Join('\n', _fixture.Ai.LastCall.Messages.Where(m => m.Role == AiRole.System).Select(m => m.Content));
         context.Should().Contain("Misir wot | 2 | 232 kcal")
-            .And.Contain("Teff flour | 367 kcal").And.Contain("| 120")
+            .And.Contain("Teff flour | 367 kcal").And.Contain("367 kcal, P 13 g, C 73 g, F 2.4 g | 12")
             .And.NotContain("Unpriced quinoa");
     }
 

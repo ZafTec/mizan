@@ -12,7 +12,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 /**
  * One draft the assistant made, as the generate call answered it: the days
- * and what is in them, what breaks the rules, the lines it could not turn
+ * and what is in them, what code found it does not meet, the lines it could not turn
  * into a food, and the cost table. The draft is already saved; **Keep** opens
  * it, **Discard** declines it.
  */
@@ -61,19 +61,15 @@ export default function DraftPreview({
         ))}
       </div>
 
-      {draft.violations.length > 0 && (
-        <section aria-label="Rule breaks">
+      {draft.unmet.length > 0 && (
+        <section aria-label="Not met">
           <header className="log-section-header">
-            <h3>Rule breaks</h3>
+            <h3>Not met</h3>
           </header>
           <ul>
-            {draft.violations.map((violation, index) => (
-              <li
-                key={`${violation.rule}-${index}`}
-                className="ledger-row min-h-0! text-sm"
-              >
-                <span className="min-w-0 flex-1">{violation.message}</span>
-                <span className="text-xs text-muted-foreground">{violation.rule}</span>
+            {draft.unmet.map((line) => (
+              <li key={line} className="ledger-row min-h-0! text-sm">
+                <span className="min-w-0 flex-1">{line}</span>
               </li>
             ))}
           </ul>

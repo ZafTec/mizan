@@ -155,10 +155,11 @@ public sealed class PlanMeHandler
         }
         if (plan.Days.Count > 3) text.Append("…\n");
 
-        if (draft.Violations.Count > 0)
+        if (draft.Unmet.Count > 0)
         {
-            text.Append("\n<b>Breaks a rule</b>\n");
-            foreach (var violation in draft.Violations.Take(5)) text.Append("• ").Append(Escape(violation.Message)).Append('\n');
+            text.Append("\n<b>Not met</b>\n");
+            foreach (var unmet in draft.Unmet.Take(5)) text.Append("• ").Append(Escape(unmet)).Append('\n');
+            if (draft.Unmet.Count > 5) text.Append(CultureInfo.InvariantCulture, $"and {draft.Unmet.Count - 5} more\n");
         }
         if (draft.Unresolved.Count > 0)
             text.Append(CultureInfo.InvariantCulture, $"\n{draft.Unresolved.Count} line(s) to review in the app.\n");

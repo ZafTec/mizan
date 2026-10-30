@@ -72,7 +72,10 @@ public record GeneratedPlanDto
     public PlanCostDto Cost { get; init; } = new("", "", 0, 0, null, 0, 0, 0, null, []);
     public List<UnresolvedPlanLineDto> Unresolved { get; init; } = [];
 
-    /// <summary>The model's one-line note on the draft, shown as plain text.</summary>
+    /// <summary>Each rule the draft does not meet, with the amount and the target, for example "Budget not met: ETB 3,529.00 a week against ETB 1,500.00." Written by code.</summary>
+    public List<string> Unmet { get; init; } = [];
+
+    /// <summary>Code's one-line verdict on the draft: whether it meets its rules and what code changed. Never the model's words.</summary>
     public string? Note { get; init; }
 }
 

@@ -163,33 +163,36 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
         };
 
         var characters = prompt.SystemPrompt.Length + context.Text.Length + ask.Length;
-        var first = await AttemptAsync(request, rulesDto, ceiling, several, context, prompt, userId, completion, characters, cancellationToken);
-        var attempt = first;
+        var calorieTarget = MacroTargets.Resolve(baseRules, context.Goal).Calories.Value;
+        var attempt = await ScaleAsync(
+            await AttemptAsync(request, rulesDto, ceiling, several, context, prompt, userId, completion, characters, cancellationToken),
+            request, rulesDto, ceiling, several, calorieTarget, userId, cancellationToken);
 
-        // One repair: the problems code found go back to the model once, as facts. The second call is
-        // metered on its own, so its reservation is settled whether it succeeds or fails.
-        if (first.Problems.Count > 0)
+        // Up to two repairs: what code found and the day totals go back to the model as facts. Each
+        // call is metered on its own, so its reservation is settled whether it succeeds or fails. A
+        // repair that does not improve the draft ends the repairs; the better draft is kept.
+        var conversation = completion.Messages.ToList();
+        for (var round = 0; round < MaxRepairs && attempt.Problems.Count > 0; round++)
         {
-            var repair = completion with
-            {
-                Messages =
-                [
-                    .. completion.Messages,
-                    new AiMessage(AiRole.Assistant, first.Content),
-                    new AiMessage(AiRole.User, RepairAsk(first.Problems)),
-                ],
-            };
+            conversation.Add(new AiMessage(AiRole.Assistant, attempt.Content));
+            conversation.Add(new AiMessage(AiRole.User, RepairAsk(attempt, rulesDto.Currency ?? context.Currency)));
+            characters += attempt.Content.Length + conversation[^1].Content.Length;
+            DraftAttempt next;
             try
             {
-                var second = await AttemptAsync(request, rulesDto, ceiling, several, context, prompt, userId, repair,
-                    characters + first.Content.Length, cancellationToken);
-                if (second.IsBetterThan(first)) attempt = second;
+                next = await ScaleAsync(
+                    await AttemptAsync(request, rulesDto, ceiling, several, context, prompt, userId,
+                        completion with { Messages = conversation.ToList() }, characters, cancellationToken),
+                    request, rulesDto, ceiling, several, calorieTarget, userId, cancellationToken);
             }
             catch (Exception ex) when (ex is AiQuotaExceededException or AiUnavailableException)
             {
-                // The first draft stands when it can; with empty days it is refused below.
-                _logger.LogInformation(ex, "The repair of a generated plan did not complete; keeping the first draft");
+                // The draft so far stands when it can; with empty days it is refused below.
+                _logger.LogInformation(ex, "A repair of a generated plan did not complete; keeping the draft so far");
+                break;
             }
+            if (!next.IsBetterThan(attempt)) break;
+            attempt = next;
         }
 
         // A day without a food or recipe is held to nothing, so the draft is refused, not saved.
@@ -201,7 +204,7 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
                 DraftFoodCoverage.Message(attempt.EmptyDays, request.DurationDays, attempt.Missing), attempt.Missing, attempt.EmptyDays);
         }
 
-        var draft = attempt.Draft;
+        // A draft that still breaks a rule is saved all the same, flagged with what it does not meet.
         var read = attempt.Read;
         var response = attempt.Response;
         var plan = attempt.Plan!;
@@ -222,6 +225,9 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
 
         var cost = await _costing.CostAsync(plan, userId, cancellationToken);
         var detail = await _readModel.BuildAsync(plan, userId, canEdit: true, cancellationToken);
+        // The note is the checks' verdict, not the model's: a model's "within budget" is not evidence.
+        var summary = DraftSummary.Describe(
+            attempt.Violations, detail.WeeklyCost, ceiling, rulesDto.Currency ?? detail.Currency, read.Unresolved.Count, attempt.ScaledDays);
 
         return new GeneratedPlanDto
         {
@@ -230,9 +236,12 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
             Violations = detail.Violations,
             Cost = cost,
             Unresolved = read.Unresolved,
-            Note = string.IsNullOrWhiteSpace(draft.Note) ? null : Cut(draft.Note.Trim(), 300),
+            Unmet = summary.Unmet.ToList(),
+            Note = summary.Note,
         };
     }
+
+    private const int MaxRepairs = 2;
 
     /// <summary>
     /// One metered call and what code makes of it: the draft read against the catalogue, the days left
@@ -258,14 +267,30 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
         var draft = Parse(response.Content);
         var foods = await ResolveFoodsAsync(userId, draft, context, cancellationToken);
         var read = MealPlanDraftReader.Read(draft, request.DurationDays, context.Recipes, foods);
+        return await EvaluateAsync(request, rulesDto, ceiling, several, response, draft, read, [], userId, cancellationToken);
+    }
+
+    /// <summary>The draft as a plan, checked: its empty days, or its violations and the problems to repair.</summary>
+    private async Task<DraftAttempt> EvaluateAsync(
+        GenerateMealPlanCommand request,
+        PlanRulesDto rulesDto,
+        decimal? ceiling,
+        bool several,
+        AiCompletionResponse response,
+        MealPlanDraftV1 draft,
+        MealPlanDraftReader.Result read,
+        IReadOnlyList<int> scaledDays,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
         var emptyDays = DraftFoodCoverage.EmptyDays(
             read.Entries.Select(e => (e.DayIndex, PlanRulesMapping.ParseEnum(e.Kind, PlanEntryKind.Text))), request.DurationDays);
         var missing = read.Unresolved.Select(u => u.Text).Distinct(StringComparer.OrdinalIgnoreCase).Take(20).ToList();
 
         if (emptyDays.Count > 0)
         {
-            return new DraftAttempt(response, draft, read, emptyDays, missing, null, [],
-                [DraftFoodCoverage.Message(emptyDays, request.DurationDays, missing)]);
+            return new DraftAttempt(response, draft, read, emptyDays, missing, null, null, [],
+                [DraftFoodCoverage.Message(emptyDays, request.DurationDays, missing)], scaledDays);
         }
 
         var plan = await PlanFactory.BuildAsync(
@@ -284,7 +309,9 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
             authoredBy: null,
             PlanStatus.Draft,
             cancellationToken);
-        var violations = await _readModel.ViolationsAsync(plan, userId, cancellationToken);
+        // The unsaved plan read as the plan page reads it: day totals, costs and the checks.
+        var detail = await _readModel.BuildAsync(plan, userId, canEdit: true, cancellationToken);
+        var violations = detail.Violations.Select(v => new PlanViolation(v.DayIndex, v.Slot, v.Rule, v.Message)).ToList();
         var problems = violations
             .Select(v => v.DayIndex is { } day
                 ? string.Create(CultureInfo.InvariantCulture, $"Day {day}{(v.Slot is null ? "" : $" {v.Slot}")}: {v.Message}")
@@ -294,14 +321,71 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
             .Distinct()
             .Take(30)
             .ToList();
-        return new DraftAttempt(response, draft, read, emptyDays, missing, plan, violations, problems);
+        return new DraftAttempt(response, draft, read, emptyDays, missing, plan, detail, violations, problems, scaledDays);
     }
 
-    /// <summary>The problems in words, for the repair call. They are the checks' own messages; nothing is judged here.</summary>
-    private static string RepairAsk(IReadOnlyList<string> problems)
+    /// <summary>
+    /// The deterministic repair: each day over its calorie target has its portions scaled down to it
+    /// (<see cref="PortionScaling"/>). The scaled draft is kept only when it is better.
+    /// </summary>
+    private async Task<DraftAttempt> ScaleAsync(
+        DraftAttempt attempt,
+        GenerateMealPlanCommand request,
+        PlanRulesDto rulesDto,
+        decimal? ceiling,
+        bool several,
+        decimal? calorieTarget,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        if (attempt.Detail is null || !attempt.Violations.Any(v => v.Rule == PlanRuleNames.CaloriesOver)) return attempt;
+
+        var factors = attempt.Detail.Days.ToDictionary(d => d.DayIndex, d => PortionScaling.DayFactor(d.Totals.Calories, calorieTarget));
+        var scaledDays = factors.Where(f => f.Value != 1m).Select(f => f.Key).ToList();
+        if (scaledDays.Count == 0) return attempt;
+
+        var entries = attempt.Read.Entries.Select(e => factors.GetValueOrDefault(e.DayIndex, 1m) is var factor && factor != 1m
+            ? e with
+            {
+                Grams = e.Grams is { } grams ? PortionScaling.Grams(grams, factor) : null,
+                Servings = e.Servings is { } servings ? PortionScaling.Servings(servings, factor) : null,
+            }
+            : e).ToList();
+        var scaled = await EvaluateAsync(request, rulesDto, ceiling, several, attempt.Response, attempt.Draft,
+            attempt.Read with { Entries = entries }, scaledDays, userId, cancellationToken);
+        return scaled.IsBetterThan(attempt) ? scaled : attempt;
+    }
+
+    /// <summary>
+    /// The problems and the day totals in words, for a repair call. They are the checks' own messages and
+    /// code's own sums; nothing is judged here. Days are counted from 0, as in the plan's dayIndex.
+    /// </summary>
+    private static string RepairAsk(DraftAttempt attempt, string currency)
     {
         var text = new StringBuilder("The plan was checked and these problems were found:\n");
-        foreach (var problem in problems) text.Append("- ").Append(problem).Append('\n');
+        foreach (var problem in attempt.Problems) text.Append("- ").Append(problem).Append('\n');
+        if (attempt.ScaledDays.Count > 0)
+            text.Append("Code scaled the portions down to the calorie target on these days: ").Append(string.Join(", ", attempt.ScaledDays.Order()))
+                .Append(". The totals below are after scaling.\n");
+        if (attempt.Detail is { } detail)
+        {
+            text.Append("Totals by day:\n");
+            var running = 0m;
+            foreach (var day in detail.Days)
+            {
+                running += day.Cost ?? 0m;
+                text.Append(CultureInfo.InvariantCulture,
+                    $"- Day {day.DayIndex}: {day.Totals.Calories:0} kcal, P {day.Totals.ProteinGrams:0} g, C {day.Totals.CarbsGrams:0} g, F {day.Totals.FatGrams:0} g, ");
+                text.Append(day.Cost is { } cost
+                    ? $"cost {Money.Format(cost, detail.Currency)}, running total {Money.Format(running, detail.Currency)}\n"
+                    : "cost unknown\n");
+            }
+            if (detail.WeeklyCost is { } weekly)
+            {
+                text.Append($"A week of this plan costs {Money.Format(weekly, detail.Currency)}");
+                text.Append(detail.Rules.WeeklyBudget is { } budget ? $" against a budget of {Money.Format(budget, detail.Rules.Currency ?? currency)}.\n" : ".\n");
+            }
+        }
         text.Append("Return the whole corrected plan in the same format. Keep what already meets the rules.");
         return text.ToString();
     }
@@ -313,8 +397,10 @@ public class GenerateMealPlanCommandHandler : IRequestHandler<GenerateMealPlanCo
         IReadOnlyList<int> EmptyDays,
         IReadOnlyList<string> Missing,
         MealPlan? Plan,
+        MealPlanDetailDto? Detail,
         IReadOnlyList<PlanViolation> Violations,
-        IReadOnlyList<string> Problems)
+        IReadOnlyList<string> Problems,
+        IReadOnlyList<int> ScaledDays)
     {
         public string Content => Response.Content;
 

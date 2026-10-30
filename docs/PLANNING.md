@@ -212,12 +212,16 @@ Where the implementation settled details the design left open:
 
 `GenerateMealPlanCommand` is one metered command, refused with `403 feature_disabled` on every surface when the `planning.generate` flag is off for the person's household ([administration](ADMIN.md#feature-flags)). Inputs: rules, `DurationDays`, `StartDate`, a free-text preference, and an optional list of budget ceilings. Steps:
 
-1. Build the context through `IDataAccessPolicy`. It holds the goal, the recipes of the user, the catalogue foods that match the allow list or the preference text, and the price book.
+1. Build the context through `IDataAccessPolicy`. It holds the goal, the recipes of the user, the catalogue foods that match the allow list or the preference text, and the price book, as a price per 100 g next to the nutrition per 100 g.
 2. Call the provider with the `meal_plan_v1` schema. The schema has days, entries, and prep sessions. An entry has slot, kind, food name or recipe id, grams or servings, and note.
 3. Resolve food names to catalogue foods by exact name, then by search. An unresolved name becomes a text entry marked for review.
 4. Refuse a draft with a day that has no food or recipe entry (`DraftFoodCoverage`): `422 plan_needs_foods` names the empty days and the missing foods, and nothing is saved. With no recipes and no usable foods at all, this refusal comes before the call.
 5. Run `PlanRuleCheck` and `PlanCostCalculator`.
-6. Save the plan as `Draft`. Return the plan, the violations, and the cost table. One draft per budget ceiling.
+6. Repair in code first: a day over its calorie target has every portion scaled down to it (`PortionScaling`, never below half, grams to 5 g, servings to a quarter). The scaled draft is kept when it has fewer problems.
+7. Repair with the model up to twice. Each repair is its own metered call on the planning line, reserved and settled through `IAiQuotaService` whether it succeeds or fails. It repeats the conversation and adds the checks' findings and code's totals by day (calories, macros, cost and a running cost total, and the week's cost against the budget). A repair that does not improve the draft ends the repairs; the better draft is kept, and a refused or failed repair keeps the draft so far.
+8. Save the plan as `Draft`, even when it still breaks a rule. Return the plan, the violations, the cost table, `unmet` and `note`. One draft per budget ceiling.
+
+`unmet` and `note` come from `DraftSummary` in Domain, never from the model: each rule the draft does not meet is one line with the amount and the target (`Budget not met: ETB 3,529.00 a week against ETB 1,500.00.`, `Day 3: 2600 kcal is over the 2000 kcal target.`), and the note counts them and names the days code scaled. The web draft shows them under **Not met**, Telegram `/planme` under **Not met**, and the chat tool result reads them back to the model.
 
 The person confirms a draft to make it `Active`. Chat turns edit a draft through the entry commands. The model never writes nutrition or prices into the plan. Code computes both.
 
@@ -231,7 +235,7 @@ New chat tools, all through existing commands: `generate_meal_plan`, `get_plan_d
 
 | Route or surface | What it does |
 | --- | --- |
-| `POST /api/MealPlans/generate` | `GenerateMealPlanCommand` with `GenerateMealPlanRequest` (`Mizan.Contracts/Planning/PlanGenerationContracts.cs`). Answers `GenerateMealPlanResult`: `drafts` (each the plan detail, `budgetCeiling`, `violations`, `cost`, `unresolved`, `note`) and `skipped`. 429 `ai_quota_exceeded` when the planning line is spent, 503 `ai_unavailable` when the provider fails or breaks the schema. |
+| `POST /api/MealPlans/generate` | `GenerateMealPlanCommand` with `GenerateMealPlanRequest` (`Mizan.Contracts/Planning/PlanGenerationContracts.cs`). Answers `GenerateMealPlanResult`: `drafts` (each the plan detail, `budgetCeiling`, `violations`, `cost`, `unresolved`, `unmet`, `note`) and `skipped`. 429 `ai_quota_exceeded` when the planning line is spent, 503 `ai_unavailable` when the provider fails or breaks the schema. |
 | `POST /api/MealPlans/{id}/accept`, `/decline` | Also decide a generated draft: accept makes it active and archives the owner's other active plan; decline archives it. |
 | `GET /api/MealPlans/day?planId=&date=` | The day of a named plan, drafts included; the date defaults to its first day. `404 no_plan_day` outside it. |
 | `GET /api/MealPlans`, `/{id}` | Plans carry `generatedFrom` (prompt key and version, model, budget ceiling, currency) when the assistant drafted them. |

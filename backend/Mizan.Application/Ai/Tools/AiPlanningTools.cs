@@ -221,8 +221,10 @@ public static class AiPlanningTools
                     .Append(string.Join("; ", entries.Select(Entry)))
                     .Append('\n');
             }
-            foreach (var violation in draft.Violations)
-                text.Append("Violation: ").Append(violation.Message).Append('\n');
+            // Code's verdict, not the model's: what the draft does not meet, with amounts and targets.
+            text.Append("Checked: ").Append(draft.Note).Append('\n');
+            foreach (var unmet in draft.Unmet)
+                text.Append("Not met (days counted from 1): ").Append(unmet).Append('\n');
             foreach (var line in draft.Unresolved)
                 text.Append(CultureInfo.InvariantCulture, $"To review, day {line.DayIndex} {line.Slot}: {line.Text} ({line.Reason})\n");
         }

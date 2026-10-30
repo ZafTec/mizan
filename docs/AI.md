@@ -6,7 +6,7 @@ Mizan's assistant, food-photo analysis, onboarding, trainer questions, and promp
 
 `POST /api/Nutrition/ai/analyze-text` turns a sentence ("two eggs, toast with butter") into the same structured proposal as `analyze-image`: foods with portion grams and macros, a confidence, and a note naming any portions the model assumed. Both are Pro features, share the `food_analysis` prompt and the `FoodAnalysis` quota line, and write nothing. A description is limited to 600 characters, and a reply that does not match the declared schema is a failed call. A ```json fence or a sentence around the one JSON object is dropped before it is read (`StructuredReply`); nothing else is scraped from prose.
 
-Each recognized food also carries `per100g`, derived from its portion. The logging sheet leads with this. The proposal lands in the meal as editable rows (name and grams), and only what the person confirms is saved, one `POST /api/Meals` per food with `amountGrams` and `per100g` under an `Idempotency-Key` minted when the row was proposed: the server computes the stored totals (rounded to two decimals, like a catalogue food), ignores any client totals sent alongside, and treats a retry as a replay. The MCP photo app sends the same figures through `log_meal_manual`. Free accounts see an inline upgrade note at the moment they try, and food search and recipes stay free.
+A food the model names that the catalogue knows (the person's own foods and the shared catalogue, by `FoodNameMatch` without loose contained-word matches) comes back with its `foodId`, the catalogue name and the catalogue's nutrition for the portion, and `source: "catalogue"`; anything else is the model's estimate, `source: "estimate"` (`FoodAnalysisCatalogue`). The total is added up again when anything matched. Each recognized food also carries `per100g`, derived from its portion. The logging sheet leads with this. The proposal lands in the meal as editable rows (name and grams), and only what the person confirms is saved, one `POST /api/Meals` per food with `amountGrams` and `per100g` under an `Idempotency-Key` minted when the row was proposed: the server computes the stored totals (rounded to two decimals, like a catalogue food), ignores any client totals sent alongside, and treats a retry as a replay. The MCP photo app sends the same figures through `log_meal_manual`. Free accounts see an inline upgrade note at the moment they try, and food search and recipes stay free.
 
 ## Drafting a meal plan
 
@@ -73,7 +73,7 @@ A planning request is one meal plan draft for one budget ceiling, so Free gets o
 | `POST /api/Ai/chat/image` | Image in a chat turn |
 | `GET /api/Ai/threads`, `/threads/{id}` | Conversation history |
 | `GET /api/Ai/conversation`, `POST /api/Ai/conversation/context` | The current conversation and app context ([app context](#app-context)) |
-| `POST /api/Ai/suggestions` | Structured meal suggestions |
+| `POST /api/Ai/suggestions` | Structured meal suggestions. Besides the goal and today's totals, the model is given the person's recipes and the foods priced in their region, as a plan is (`MealPlanContextBuilder`, the same consent) |
 | `GET/POST /api/Ai/onboarding` | Setup conversation and state |
 | `GET /api/Ai/onboarding/tools` | Setup allowlist |
 | `POST /api/Ai/clients/{clientId}/ask` | Trainer question under intersected grants |
@@ -89,7 +89,7 @@ On the web the assistant is a side panel in the app shell (`components/ai/Assist
 
 ### Planning tools and typed cards
 
-Chat has six planning tools, each an existing command on `DataAxis.Planning`: `generate_meal_plan`, `get_plan_day` (the active plan's day, or a named plan's, drafts included), `add_plan_entry`, `update_plan_entry`, `remove_plan_entry`, and `generate_shopping_list`. Update and remove refuse a plan that is not a draft. The tool result the model reads is plain text with the ids it needs for the next call. `search_recipes` (also on `DataAxis.Planning`, read) finds the person's own and household recipes by name with nutrition per serving, and `log_meal` takes its `recipeId` and servings, so a dish the person cooks is logged with the recipe's own nutrition instead of an estimate.
+Chat has six planning tools, each an existing command on `DataAxis.Planning`: `generate_meal_plan`, `get_plan_day` (the active plan's day, or a named plan's, drafts included), `add_plan_entry`, `update_plan_entry`, `remove_plan_entry`, and `generate_shopping_list`. Update and remove refuse a plan that is not a draft. The tool result the model reads is plain text with the ids it needs for the next call. `search_recipes` (also on `DataAxis.Planning`, read) finds the person's own, household and favourited public recipes with nutrition per serving; without a query it lists them all, favourites and the most recently logged first, 20 to a page, and `log_meal` takes its `recipeId` and servings, so a dish the person cooks is logged with the recipe's own nutrition instead of an estimate.
 
 ### App context
 

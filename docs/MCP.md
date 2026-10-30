@@ -43,7 +43,7 @@ location ~ ^/\.well-known/(oauth-authorization-server|openid-configuration)/api$
 
 The MCP layer holds each tool to a scope (`McpToolScopes`; a test fails if a tool has none). A client sees only the tools, resources, and prompts its grant covers, and a direct call outside it is refused naming the missing permission. The API enforces household and data-axis limits itself, so a bug in the MCP layer cannot widen a user's choice.
 
-Personal read endpoints are gated by scope only. Household-owned records are filtered by membership and by the grant's households.
+Personal read endpoints are gated by scope only. Household-owned records are filtered by membership and by the grant's households. Household writes are refused when the grant cannot see the household: creating one needs household access set to all households, and inviting, removing, leaving, deleting, switching or answering an invitation needs the household inside the grant. The refusal names the permission and where to change it (`HouseholdAccess.EnsureGrantCovers`).
 
 The free plan allows 15 successful tool calls and resource reads per month. Prompts, skills, and app pages do not count; failures do not count.
 
@@ -107,6 +107,15 @@ get_food_diary(date: "2026-09-07")
 ```
 
 `servings` is a count of the food's declared serving size, not grams. Read the search result and convert the amount eaten before sending it. `log_meal` takes a recipe ID and recipe servings. Use `log_meal_manual` only when entering known nutrition without a catalogue item.
+
+Results that report on a write or a read say what they found:
+
+- `log_meal` returns the `groupId` and every row's id in `entryIds`. `log_day` reports `includesWeight` when a workout or measurement carried a weight.
+- `get_current_goal` returns `{"goal": null, "message": ...}` without an active goal, and `get_workout_draft` returns `{"draft": null, "message": ...}` without a draft.
+- `update_workout` takes the id from its argument; the body need not repeat it. `save_workout_draft` refuses a payload that is not `exercises` with an `exerciseId` and `sets` each.
+- `record_goal_progress` keeps one check-in a day; the same day again replaces it.
+- `generate_meal_plan` returns each draft with `unmet` (each rule it does not meet, with the amount and the target) and a `note` written by code, never by the model (see [Planning](PLANNING.md#ai-planning)).
+- Training progression is per template: `get_next_workout_session` starts from the last workout logged with that template, and before one exists from each exercise's `targetWeightKg`. Workouts without the template and personal records do not set it.
 
 `log_day` accepts one date, optional `mealsJson`, optional `exercisesJson`, and optional `weightKg`. The JSON arguments contain arrays; workout exercises contain individual sets. It uses the existing write endpoints and returns a receipt identifying completed, failed, and remaining items. It is not an atomic database transaction. Retry only remaining entries; inspect an unconfirmed write before retrying it.
 

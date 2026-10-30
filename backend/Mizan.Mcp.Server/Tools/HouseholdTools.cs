@@ -28,7 +28,7 @@ public sealed class HouseholdTools
     }
 
     [McpServerTool(Name = "create_household")]
-    [Description("Create a new household for sharing shopping lists and meal plans.")]
+    [Description("Create a new household for sharing shopping lists and meal plans. Needs household access set to all households on this connection, because a connection limited to chosen households could not see the new one.")]
     public async Task<string> CreateHousehold(
         [Description("Household name")] string name,
         CancellationToken ct = default)
