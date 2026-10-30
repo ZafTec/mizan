@@ -3,8 +3,11 @@
 import { useId, useState } from "react";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -109,105 +112,115 @@ export default function ReportPriceDialog({
           Report a wrong price
         </button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto">
-        <DialogTitle>Report a wrong price</DialogTitle>
-        <DialogDescription>
-          What {foodName} costs where you shop. An administrator compares it
-          with the price shown.
-        </DialogDescription>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Report a wrong price</DialogTitle>
+          <DialogDescription>
+            What {foodName} costs where you shop. An administrator compares it
+            with the price shown.
+          </DialogDescription>
+        </DialogHeader>
         {sent ? (
-          <div className="space-y-4">
-            <p role="status">Thanks, an administrator will check it.</p>
-            <button
-              type="button"
-              className="btn-primary min-h-11"
-              onClick={() => setOpen(false)}
-            >
-              Close
-            </button>
-          </div>
+          <>
+            <DialogBody>
+              <p role="status">Thanks, an administrator will check it.</p>
+            </DialogBody>
+            <DialogFooter>
+              <button
+                type="button"
+                className="btn-primary min-h-11"
+                onClick={() => setOpen(false)}
+              >
+                Close
+              </button>
+            </DialogFooter>
+          </>
         ) : (
           <form
             onSubmit={submit}
             noValidate
             aria-label="Price report"
-            className="space-y-4"
+            className="flex min-h-0 flex-1 flex-col gap-4"
           >
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              <div className="col-span-2 sm:col-span-1">
-                <label htmlFor={`${id}-price`} className="label">
-                  Price ({currency})
-                </label>
-                <input
-                  {...field("price")}
-                  type="number"
-                  inputMode="decimal"
-                  min={0}
-                  step="any"
-                  className="input tabular-nums w-full"
-                  value={form.price}
-                  onChange={(event) => change("price", event.target.value)}
-                />
-                {error("price")}
+            <DialogBody className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <div className="col-span-2 sm:col-span-1">
+                  <label htmlFor={`${id}-price`} className="label">
+                    Price ({currency})
+                  </label>
+                  <input
+                    {...field("price")}
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    step="any"
+                    className="input tabular-nums w-full"
+                    value={form.price}
+                    onChange={(event) => change("price", event.target.value)}
+                  />
+                  {error("price")}
+                </div>
+                <div>
+                  <label htmlFor={`${id}-quantity`} className="label">
+                    Quantity
+                  </label>
+                  <input
+                    {...field("quantity")}
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    step="any"
+                    className="input tabular-nums w-full"
+                    value={form.quantity}
+                    onChange={(event) => change("quantity", event.target.value)}
+                  />
+                  {error("quantity")}
+                </div>
+                <div>
+                  <label htmlFor={`${id}-unit`} className="label">
+                    Unit
+                  </label>
+                  <Select
+                    {...field("unit")}
+                    value={form.unit}
+                    onChange={(next) => change("unit", next)}
+                    options={PRICE_UNITS.map((value) => ({
+                      value,
+                      label: value,
+                    }))}
+                  />
+                  {error("unit")}
+                </div>
               </div>
               <div>
-                <label htmlFor={`${id}-quantity`} className="label">
-                  Quantity
+                <label htmlFor={`${id}-note`} className="label">
+                  Note (optional)
                 </label>
-                <input
-                  {...field("quantity")}
-                  type="number"
-                  inputMode="decimal"
-                  min={0}
-                  step="any"
-                  className="input tabular-nums w-full"
-                  value={form.quantity}
-                  onChange={(event) => change("quantity", event.target.value)}
+                <textarea
+                  {...field("note")}
+                  rows={3}
+                  className="input w-full"
+                  value={form.note}
+                  onChange={(event) => change("note", event.target.value)}
+                  placeholder="Where you bought it"
                 />
-                {error("quantity")}
+                {error("note")}
               </div>
-              <div>
-                <label htmlFor={`${id}-unit`} className="label">
-                  Unit
-                </label>
-                <Select
-                  {...field("unit")}
-                  value={form.unit}
-                  onChange={(next) => change("unit", next)}
-                  options={PRICE_UNITS.map((value) => ({
-                    value,
-                    label: value,
-                  }))}
-                />
-                {error("unit")}
-              </div>
-            </div>
-            <div>
-              <label htmlFor={`${id}-note`} className="label">
-                Note (optional)
-              </label>
-              <textarea
-                {...field("note")}
-                rows={3}
-                className="input w-full"
-                value={form.note}
-                onChange={(event) => change("note", event.target.value)}
-                placeholder="Where you bought it"
-              />
-              {error("note")}
-            </div>
-            {failure && (
-              <p role="alert" className="text-sm text-destructive">
-                {failure}
-              </p>
-            )}
-            <button
-              type="submit"
-              className="btn-primary min-h-11 w-full sm:w-auto"
-              disabled={busy}
-            >
-              Send report
-            </button>
+              {failure && (
+                <p role="alert" className="text-sm text-destructive">
+                  {failure}
+                </p>
+              )}
+            </DialogBody>
+            <DialogFooter>
+              <button
+                type="submit"
+                className="btn-primary min-h-11 w-full sm:w-auto"
+                disabled={busy}
+              >
+                Send report
+              </button>
+            </DialogFooter>
           </form>
         )}
       </DialogContent>

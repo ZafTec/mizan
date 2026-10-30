@@ -134,16 +134,35 @@ export default function ExerciseEditor({
       open={open}
       onClose={busy ? () => {} : onClose}
       closeOnOverlayClick={!busy}
+      size="lg"
+      title={creating ? "New exercise" : "Edit exercise"}
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="btn-ghost"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="exercise-editor"
+            disabled={busy || !form.name.trim()}
+            className="btn-primary"
+          >
+            {saving ? "Saving…" : creating ? "Create exercise" : "Save"}
+          </button>
+        </>
+      }
     >
       <form
+        id="exercise-editor"
         onSubmit={submit}
-        className="card max-h-[90dvh] w-full space-y-4 overflow-y-auto p-5"
+        className="space-y-4"
         aria-label={creating ? "New exercise" : `Edit ${exercise.name}`}
       >
-        <h3 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-          {creating ? "New exercise" : "Edit exercise"}
-        </h3>
-
         <div>
           <label className="label" htmlFor="ex-name">
             Name
@@ -334,24 +353,6 @@ export default function ExerciseEditor({
             {error}
           </p>
         )}
-
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={busy}
-            className="btn-ghost flex-1"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={busy || !form.name.trim()}
-            className="btn-primary flex-1"
-          >
-            {saving ? "Saving…" : creating ? "Create exercise" : "Save"}
-          </button>
-        </div>
       </form>
     </ModalShell>
   );

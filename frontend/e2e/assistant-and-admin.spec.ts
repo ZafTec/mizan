@@ -295,7 +295,11 @@ test.describe("administrators", () => {
       buffer: Buffer.from([0x67, 0x6c, 0x54, 0x46, 2, 0, 0, 0, 12, 0, 0, 0]),
     });
     await expect(form.getByTestId("model-state")).toHaveText("row.glb");
-    await form.getByRole("button", { name: "Save" }).click();
+    // The actions sit in the dialog's footer, outside the scrolling form.
+    await page
+      .getByRole("dialog", { name: "Edit exercise" })
+      .getByRole("button", { name: "Save" })
+      .click();
 
     await expect(form).toBeHidden();
     const s = await state(context);
@@ -320,12 +324,13 @@ test.describe("administrators", () => {
 
     await page.getByRole("button", { name: "New exercise" }).click();
     const form = page.getByRole("form", { name: "New exercise" });
-    await expect(
-      form.getByRole("button", { name: "Create exercise" }),
-    ).toBeDisabled();
+    const create = page
+      .getByRole("dialog", { name: "New exercise" })
+      .getByRole("button", { name: "Create exercise" });
+    await expect(create).toBeDisabled();
     await form.getByLabel("Name").fill("Goblet squat");
     await form.getByLabel("Muscle group").fill("Legs");
-    await form.getByRole("button", { name: "Create exercise" }).click();
+    await create.click();
 
     await expect(form).toBeHidden();
     const s = await state(context);

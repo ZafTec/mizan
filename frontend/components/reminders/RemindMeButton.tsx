@@ -63,7 +63,7 @@ export function RemindMeButton({
         {label}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-xl">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>{heading}</DialogTitle>
             <DialogDescription>
@@ -78,6 +78,7 @@ export function RemindMeButton({
               busy={busy}
               onSubmit={submit}
               onCancel={() => setOpen(false)}
+              inDialog
             />
           )}
         </DialogContent>

@@ -7,8 +7,11 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
+  type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
+import { Icon } from "@/components/ui/icon";
+import { cn } from "@/lib/utils";
 
 const FOCUSABLE = [
   "a[href]",
@@ -26,20 +29,33 @@ function focusables(root: HTMLElement): HTMLElement[] {
   );
 }
 
+const SIZES = {
+  sm: "max-w-sm",
+  md: "max-w-md",
+  lg: "max-w-lg",
+  xl: "max-w-2xl",
+} as const;
+
+export type ModalSize = keyof typeof SIZES;
+
 /**
- * Viewport-pinned modal dialog. Fixes the "modal is centered on the page
- * instead of the screen" bug by:
- *   - Rendering to document.body via React portal (escapes any ancestor with
- *     backdrop-filter / transform / filter, which would otherwise become the
- *     containing block for `position: fixed`).
- *   - Locking body scroll while open.
- *   - Closing on Escape + overlay click.
+ * Viewport-pinned modal dialog, rendered into document.body so no ancestor's
+ * transform or backdrop-filter becomes the containing block for its
+ * `position: fixed`. It locks body scroll and closes on Escape and on an
+ * overlay click.
+ *
+ * Given a `title`, it draws the whole dialog: a header with the title and a
+ * close button, the children as the body, and `footer` for the actions. The
+ * panel is never taller than the visible viewport (dvh, so the phone's
+ * browser chrome is excluded); the header and footer stay put and only the
+ * body scrolls. Without a `title`, the children are the whole panel and the
+ * panel itself scrolls.
  *
  * It is a modal dialog for assistive technology and the keyboard: focus moves
- * inside when it opens (unless a child already took it with autoFocus), Tab
- * and Shift+Tab cycle within it, and focus returns to where it was when it
- * closes. It is named by `label`, by the element `labelledBy` points at, or
- * by its first heading.
+ * inside when it opens (to `initialFocus`, or a child that took it with
+ * autoFocus, or the first control in the body, then the footer), Tab and
+ * Shift+Tab cycle within it, and focus returns to where it was when it
+ * closes.
  *
  * Use this everywhere instead of hand-rolled `fixed inset-0 z-50` wrappers.
  */
@@ -50,6 +66,15 @@ export function ModalShell({
   closeOnOverlayClick = true,
   label,
   labelledBy,
+  title,
+  description,
+  footer,
+  size = "md",
+  role = "dialog",
+  initialFocus,
+  className,
+  bodyClassName,
+  showClose = true,
 }: {
   open: boolean;
   onClose: () => void;
@@ -57,9 +82,23 @@ export function ModalShell({
   closeOnOverlayClick?: boolean;
   label?: string;
   labelledBy?: string;
+  title?: ReactNode;
+  description?: ReactNode;
+  footer?: ReactNode;
+  size?: ModalSize;
+  role?: "dialog" | "alertdialog";
+  initialFocus?: RefObject<HTMLElement | null>;
+  className?: string;
+  bodyClassName?: string;
+  /** The header's close button. A confirmation has Cancel instead. */
+  showClose?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
   const panel = useRef<HTMLDivElement>(null);
+  const body = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  const descriptionId = useId();
   const fallbackHeadingId = useId();
   const [headingId, setHeadingId] = useState<string | undefined>(undefined);
   // Where focus was when the dialog opened, read while rendering the open:
@@ -75,6 +114,8 @@ export function ModalShell({
           : null,
       );
   }
+
+  const structured = title !== undefined;
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- mount detection for SSR-safe portal
@@ -108,21 +149,37 @@ export function ModalShell({
         ? document.activeElement
         : null);
     if (node) {
-      if (!label && !labelledBy) {
+      if (!label && !labelledBy && !structured) {
         const heading = node.querySelector<HTMLElement>("h1, h2, h3, h4");
         if (heading) {
           if (!heading.id) heading.id = fallbackHeadingId;
           setHeadingId(heading.id);
         }
       }
-      if (!node.contains(document.activeElement))
-        (focusables(node)[0] ?? node).focus();
+      if (!node.contains(document.activeElement)) {
+        const target =
+          initialFocus?.current ??
+          (body.current && focusables(body.current)[0]) ??
+          (footerRef.current && focusables(footerRef.current)[0]) ??
+          focusables(node)[0] ??
+          node;
+        target.focus();
+      }
     }
     return () => {
       if (previous?.isConnected) previous.focus();
     };
     // restoreTo changes only in the render that opens the dialog.
-  }, [open, mounted, label, labelledBy, fallbackHeadingId, restoreTo]);
+  }, [
+    open,
+    mounted,
+    label,
+    labelledBy,
+    structured,
+    fallbackHeadingId,
+    restoreTo,
+    initialFocus,
+  ]);
 
   function trapTab(event: ReactKeyboardEvent<HTMLDivElement>) {
     if (event.key !== "Tab" || !panel.current) return;
@@ -148,21 +205,80 @@ export function ModalShell({
 
   return createPortal(
     <div
-      className="animate-overlay-in fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm"
+      className="animate-overlay-in fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
       onClick={closeOnOverlayClick ? onClose : undefined}
     >
       <div
         ref={panel}
-        role="dialog"
+        role={role}
         aria-modal="true"
         aria-label={label}
-        aria-labelledby={label ? undefined : (labelledBy ?? headingId)}
+        aria-labelledby={
+          label ? undefined : (labelledBy ?? (structured ? titleId : headingId))
+        }
+        aria-describedby={structured && description ? descriptionId : undefined}
         tabIndex={-1}
-        className="animate-modal-in my-auto w-full max-w-md outline-none"
+        className={cn(
+          "animate-modal-in flex max-h-[calc(100dvh-2rem)] w-full flex-col outline-none",
+          SIZES[size],
+          structured ? "card" : "overflow-y-auto overscroll-contain",
+          className,
+        )}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={trapTab}
       >
-        {children}
+        {structured ? (
+          <>
+            <div className="flex shrink-0 items-start justify-between gap-4 border-b border-charcoal-blue-200 py-4 pr-3 pl-5 dark:border-charcoal-blue-700">
+              <div className="min-w-0 space-y-1 pt-1">
+                <h2
+                  id={titleId}
+                  className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50"
+                >
+                  {title}
+                </h2>
+                {description && (
+                  <div
+                    id={descriptionId}
+                    className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400"
+                  >
+                    {description}
+                  </div>
+                )}
+              </div>
+              {showClose && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Close"
+                  className="btn-ghost shrink-0 p-2"
+                >
+                  <Icon name="x" size={16} />
+                </button>
+              )}
+            </div>
+            <div
+              ref={body}
+              data-modal-body=""
+              className={cn(
+                "min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4",
+                bodyClassName,
+              )}
+            >
+              {children}
+            </div>
+            {footer && (
+              <div
+                ref={footerRef}
+                className="flex shrink-0 flex-col-reverse gap-2 border-t border-charcoal-blue-200 px-5 py-3 sm:flex-row sm:justify-end dark:border-charcoal-blue-700"
+              >
+                {footer}
+              </div>
+            )}
+          </>
+        ) : (
+          children
+        )}
       </div>
     </div>,
     document.body,

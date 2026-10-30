@@ -35,7 +35,9 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "animate-dialog-in data-[state=closed]:animate-dialog-out fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg gap-4 border bg-background p-6 sm:rounded-xl",
+        // A bounded column: the header and footer keep their place and only a
+        // DialogBody scrolls, so the actions never leave the screen.
+        "animate-dialog-in data-[state=closed]:animate-dialog-out fixed left-[50%] top-[50%] z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg flex-col gap-4 overflow-hidden border bg-background p-6 sm:rounded-xl",
         className,
       )}
       {...props}
@@ -56,7 +58,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col space-y-1.5 text-center sm:text-left",
+      "flex shrink-0 flex-col space-y-1.5 pr-6 text-left",
       className,
     )}
     {...props}
@@ -70,13 +72,29 @@ const DialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      "flex shrink-0 flex-col-reverse gap-2 sm:flex-row sm:justify-end",
       className,
     )}
     {...props}
   />
 );
 DialogFooter.displayName = "DialogFooter";
+
+/** The part of a dialog that scrolls when it is taller than the screen. */
+const DialogBody = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    data-modal-body=""
+    className={cn(
+      "-mx-6 min-h-0 flex-1 overflow-y-auto overscroll-contain px-6",
+      className,
+    )}
+    {...props}
+  />
+);
+DialogBody.displayName = "DialogBody";
 
 const DialogTitle = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Title>,
@@ -113,6 +131,7 @@ export {
   DialogClose,
   DialogContent,
   DialogHeader,
+  DialogBody,
   DialogFooter,
   DialogTitle,
   DialogDescription,

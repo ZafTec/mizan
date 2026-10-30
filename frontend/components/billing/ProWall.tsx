@@ -62,33 +62,25 @@ export function ProWallDialog({
   plan = "pro",
 }: ProWallConfig & { open: boolean; onClose: () => void }) {
   return (
-    <ModalShell open={open} onClose={onClose}>
-      <div className="rounded-2xl border border-charcoal-blue-200 bg-white p-6 dark:border-white/10 dark:bg-charcoal-blue-950 sm:p-8">
-        <span className="inline-flex items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300 h-12 w-12">
-          <Icon name="lock" size={20} />
-        </span>
-        <h2 className="mt-4 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-          {title}
-        </h2>
-        <p className="mt-1.5 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">
-          {message}
-        </p>
-        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="btn-ghost !rounded-2xl"
-          >
+    <ModalShell
+      open={open}
+      onClose={onClose}
+      size="sm"
+      title={title}
+      footer={
+        <>
+          <button type="button" onClick={onClose} className="btn-ghost">
             Not now
           </button>
-          <Link
-            href={`/billing?checkout=${plan}`}
-            className="btn-primary !rounded-2xl"
-          >
+          <Link href={`/billing?checkout=${plan}`} className="btn-primary">
             See Pro
           </Link>
-        </div>
-      </div>
+        </>
+      }
+    >
+      <p className="text-sm text-charcoal-blue-600 dark:text-charcoal-blue-400">
+        {message}
+      </p>
     </ModalShell>
   );
 }

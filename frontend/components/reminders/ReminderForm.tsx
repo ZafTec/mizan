@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { DialogBody, DialogFooter } from "@/components/ui/dialog";
 import Input from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { ToggleRow } from "@/components/ui/toggle-row";
@@ -149,6 +150,7 @@ export function ReminderForm({
   busy,
   onSubmit,
   onCancel,
+  inDialog = false,
 }: {
   /** What the place it was opened from already knows: the kind and what it is tied to. */
   base: CreateReminder;
@@ -157,6 +159,8 @@ export function ReminderForm({
   busy?: boolean;
   onSubmit: (request: CreateReminder) => void;
   onCancel?: () => void;
+  /** Inside a dialog the fields scroll and the actions stay in its footer. */
+  inDialog?: boolean;
 }) {
   const [kind, setKind] = useState(base.kind);
   const [title, setTitle] = useState(base.title ?? "");
@@ -188,164 +192,170 @@ export function ReminderForm({
   }
 
   return (
-    <form onSubmit={submit} className="space-y-4" data-testid="reminder-form">
-      {chooseKind && (
-        <div>
-          <label
-            htmlFor="reminder-kind"
-            className="mb-1.5 block text-sm font-medium"
-          >
-            Remind me about
-          </label>
-          <Select
-            id="reminder-kind"
-            value={kind}
-            onChange={setKind}
-            options={KIND_OPTIONS}
-            searchable={false}
-          />
-        </div>
-      )}
-      <Input
-        id="reminder-title"
-        label={
-          kind === "custom" ? "What to remind you about" : "Title (optional)"
-        }
-        value={title}
-        maxLength={120}
-        required={kind === "custom"}
-        onChange={(event) => setTitle(event.target.value)}
-      />
-      {preCook ? (
-        <div className="grid gap-4 sm:grid-cols-2">
+    <form
+      onSubmit={submit}
+      className={inDialog ? "flex min-h-0 flex-1 flex-col gap-4" : "space-y-4"}
+      data-testid="reminder-form"
+    >
+      <Fields inDialog={inDialog}>
+        {chooseKind && (
           <div>
             <label
-              htmlFor="reminder-prep-time"
+              htmlFor="reminder-kind"
               className="mb-1.5 block text-sm font-medium"
             >
-              Prep starts at
+              Remind me about
             </label>
             <Select
-              id="reminder-prep-time"
-              value={prepTime}
-              onChange={setPrepTime}
-              options={TIMES}
+              id="reminder-kind"
+              value={kind}
+              onChange={setKind}
+              options={KIND_OPTIONS}
               searchable={false}
             />
           </div>
-          <div>
-            <label
-              htmlFor="reminder-lead"
-              className="mb-1.5 block text-sm font-medium"
-            >
-              Remind me
-            </label>
-            <Select
-              id="reminder-lead"
-              value={lead}
-              onChange={setLead}
-              options={LEADS}
-              searchable={false}
-            />
-          </div>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label
-              htmlFor="reminder-repeat"
-              className="mb-1.5 block text-sm font-medium"
-            >
-              How often
-            </label>
-            <Select
-              id="reminder-repeat"
-              value={repeat}
-              onChange={(next) => setRepeat(next as Repeat)}
-              options={REPEAT_OPTIONS}
-              searchable={false}
-            />
-          </div>
-          {repeat === "hours" ? (
+        )}
+        <Input
+          id="reminder-title"
+          label={
+            kind === "custom" ? "What to remind you about" : "Title (optional)"
+          }
+          value={title}
+          maxLength={120}
+          required={kind === "custom"}
+          onChange={(event) => setTitle(event.target.value)}
+        />
+        {preCook ? (
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label
-                htmlFor="reminder-hours"
+                htmlFor="reminder-prep-time"
                 className="mb-1.5 block text-sm font-medium"
               >
-                Interval
+                Prep starts at
               </label>
               <Select
-                id="reminder-hours"
-                value={hours}
-                onChange={setHours}
-                options={HOURS}
-                searchable={false}
-              />
-            </div>
-          ) : (
-            <div>
-              <label
-                htmlFor="reminder-time"
-                className="mb-1.5 block text-sm font-medium"
-              >
-                At
-              </label>
-              <Select
-                id="reminder-time"
-                value={time}
-                onChange={setTime}
+                id="reminder-prep-time"
+                value={prepTime}
+                onChange={setPrepTime}
                 options={TIMES}
                 searchable={false}
               />
             </div>
-          )}
-          {repeat === "monthly" && (
             <div>
               <label
-                htmlFor="reminder-month-day"
+                htmlFor="reminder-lead"
                 className="mb-1.5 block text-sm font-medium"
               >
-                On
+                Remind me
               </label>
               <Select
-                id="reminder-month-day"
-                value={monthDay}
-                onChange={setMonthDay}
-                options={MONTH_DAYS}
+                id="reminder-lead"
+                value={lead}
+                onChange={setLead}
+                options={LEADS}
+                searchable={false}
               />
             </div>
-          )}
-          {repeat === "once" && (
-            <Input
-              id="reminder-date"
-              label="On"
-              type="date"
-              value={date}
-              required
-              onChange={(event) => setDate(event.target.value)}
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="reminder-repeat"
+                className="mb-1.5 block text-sm font-medium"
+              >
+                How often
+              </label>
+              <Select
+                id="reminder-repeat"
+                value={repeat}
+                onChange={(next) => setRepeat(next as Repeat)}
+                options={REPEAT_OPTIONS}
+                searchable={false}
+              />
+            </div>
+            {repeat === "hours" ? (
+              <div>
+                <label
+                  htmlFor="reminder-hours"
+                  className="mb-1.5 block text-sm font-medium"
+                >
+                  Interval
+                </label>
+                <Select
+                  id="reminder-hours"
+                  value={hours}
+                  onChange={setHours}
+                  options={HOURS}
+                  searchable={false}
+                />
+              </div>
+            ) : (
+              <div>
+                <label
+                  htmlFor="reminder-time"
+                  className="mb-1.5 block text-sm font-medium"
+                >
+                  At
+                </label>
+                <Select
+                  id="reminder-time"
+                  value={time}
+                  onChange={setTime}
+                  options={TIMES}
+                  searchable={false}
+                />
+              </div>
+            )}
+            {repeat === "monthly" && (
+              <div>
+                <label
+                  htmlFor="reminder-month-day"
+                  className="mb-1.5 block text-sm font-medium"
+                >
+                  On
+                </label>
+                <Select
+                  id="reminder-month-day"
+                  value={monthDay}
+                  onChange={setMonthDay}
+                  options={MONTH_DAYS}
+                />
+              </div>
+            )}
+            {repeat === "once" && (
+              <Input
+                id="reminder-date"
+                label="On"
+                type="date"
+                value={date}
+                required
+                onChange={(event) => setDate(event.target.value)}
+              />
+            )}
+          </div>
+        )}
+        <fieldset className="border-b border-border">
+          <legend className="mb-1.5 text-sm font-medium">Send it to</legend>
+          {CHANNEL_OPTIONS.map((option) => (
+            <ToggleRow
+              key={option.value}
+              label={option.label}
+              description={option.description}
+              checked={channels.includes(option.value)}
+              onChange={(on) =>
+                setChannels((current) =>
+                  on
+                    ? [...current, option.value]
+                    : current.filter((value) => value !== option.value),
+                )
+              }
             />
-          )}
-        </div>
-      )}
-      <fieldset className="border-b border-border">
-        <legend className="mb-1.5 text-sm font-medium">Send it to</legend>
-        {CHANNEL_OPTIONS.map((option) => (
-          <ToggleRow
-            key={option.value}
-            label={option.label}
-            description={option.description}
-            checked={channels.includes(option.value)}
-            onChange={(on) =>
-              setChannels((current) =>
-                on
-                  ? [...current, option.value]
-                  : current.filter((value) => value !== option.value),
-              )
-            }
-          />
-        ))}
-      </fieldset>
-      <div className="flex flex-wrap justify-end gap-2 pt-1">
+          ))}
+        </fieldset>
+      </Fields>
+      <Actions inDialog={inDialog}>
         {onCancel && (
           <Button type="button" variant="ghost" onClick={onCancel}>
             Cancel
@@ -354,7 +364,35 @@ export function ReminderForm({
         <Button type="submit" disabled={busy}>
           {busy ? "Saving…" : submitLabel}
         </Button>
-      </div>
+      </Actions>
     </form>
+  );
+}
+
+function Fields({
+  inDialog,
+  children,
+}: {
+  inDialog: boolean;
+  children: React.ReactNode;
+}) {
+  return inDialog ? (
+    <DialogBody className="space-y-4">{children}</DialogBody>
+  ) : (
+    <>{children}</>
+  );
+}
+
+function Actions({
+  inDialog,
+  children,
+}: {
+  inDialog: boolean;
+  children: React.ReactNode;
+}) {
+  return inDialog ? (
+    <DialogFooter>{children}</DialogFooter>
+  ) : (
+    <div className="flex flex-wrap justify-end gap-2 pt-1">{children}</div>
   );
 }

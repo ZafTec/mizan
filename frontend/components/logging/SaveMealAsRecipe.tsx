@@ -114,7 +114,7 @@ export function SaveMealAsRecipe({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[100] bg-charcoal-blue-950/45" />
         <Dialog.Content
-          className="fixed inset-x-0 bottom-0 z-[101] max-h-[92dvh] overflow-y-auto rounded-t-md border border-border bg-background p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] text-foreground sm:left-1/2 sm:right-auto sm:top-1/2 sm:bottom-auto sm:w-[calc(100%-2rem)] sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-md sm:p-6"
+          className="fixed inset-x-0 bottom-0 z-[101] flex max-h-[92dvh] flex-col overflow-hidden rounded-t-md border border-border bg-background p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] text-foreground sm:left-1/2 sm:right-auto sm:top-1/2 sm:bottom-auto sm:w-[calc(100%-2rem)] sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-md sm:p-6"
           onEscapeKeyDown={(event) => {
             if (busy) event.preventDefault();
           }}
@@ -122,7 +122,7 @@ export function SaveMealAsRecipe({
             if (busy) event.preventDefault();
           }}
         >
-          <div className="mb-5 flex items-start justify-between gap-4">
+          <div className="mb-5 flex shrink-0 items-start justify-between gap-4">
             <div>
               <Dialog.Title className="text-xl font-semibold tracking-tight">
                 Save as recipe
@@ -140,67 +140,72 @@ export function SaveMealAsRecipe({
               <X aria-hidden="true" size={18} strokeWidth={1.7} />
             </Dialog.Close>
           </div>
-          <form onSubmit={submit} className="space-y-4">
-            <fieldset disabled={busy} className="space-y-4">
-              <div className="space-y-1.5">
-                <label
-                  htmlFor={`${id}-title`}
-                  className="block text-sm font-medium"
-                >
-                  Recipe name
-                </label>
-                <input
-                  id={`${id}-title`}
-                  name="title"
-                  required
-                  maxLength={200}
-                  placeholder="e.g. My usual breakfast"
-                  autoComplete="off"
-                  className="input min-h-11 w-full"
-                />
-              </div>
-              {weights.map((item) => (
-                <div key={`${item.kind}:${item.id}`} className="space-y-1.5">
+          <form
+            onSubmit={submit}
+            className="flex min-h-0 flex-1 flex-col gap-4"
+          >
+            <div className="-mx-5 min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 sm:-mx-6 sm:px-6">
+              <fieldset disabled={busy} className="space-y-4">
+                <div className="space-y-1.5">
                   <label
-                    htmlFor={`${id}-${item.id}`}
+                    htmlFor={`${id}-title`}
                     className="block text-sm font-medium"
                   >
-                    {item.name} (g)
+                    Recipe name
                   </label>
-                  <p
-                    id={`${id}-${item.id}-hint`}
-                    className="text-xs leading-relaxed text-charcoal-blue-700 dark:text-charcoal-blue-300"
-                  >
-                    {item.kind === "recipe"
-                      ? "Finished weight of the entire recipe, before dividing into servings."
-                      : "Weight of the amount you logged in this meal."}
-                  </p>
                   <input
-                    id={`${id}-${item.id}`}
-                    name={`weight-${item.id}`}
-                    aria-describedby={`${id}-${item.id}-hint`}
-                    type="number"
-                    inputMode="decimal"
+                    id={`${id}-title`}
+                    name="title"
                     required
-                    min="0.01"
-                    step="any"
+                    maxLength={200}
+                    placeholder="e.g. My usual breakfast"
+                    autoComplete="off"
                     className="input min-h-11 w-full"
                   />
                 </div>
-              ))}
-            </fieldset>
-            {error && (
-              <p
-                role="alert"
-                className="text-sm text-burnt-peach-700 dark:text-burnt-peach-300"
-              >
-                {error}
-              </p>
-            )}
+                {weights.map((item) => (
+                  <div key={`${item.kind}:${item.id}`} className="space-y-1.5">
+                    <label
+                      htmlFor={`${id}-${item.id}`}
+                      className="block text-sm font-medium"
+                    >
+                      {item.name} (g)
+                    </label>
+                    <p
+                      id={`${id}-${item.id}-hint`}
+                      className="text-xs leading-relaxed text-charcoal-blue-700 dark:text-charcoal-blue-300"
+                    >
+                      {item.kind === "recipe"
+                        ? "Finished weight of the entire recipe, before dividing into servings."
+                        : "Weight of the amount you logged in this meal."}
+                    </p>
+                    <input
+                      id={`${id}-${item.id}`}
+                      name={`weight-${item.id}`}
+                      aria-describedby={`${id}-${item.id}-hint`}
+                      type="number"
+                      inputMode="decimal"
+                      required
+                      min="0.01"
+                      step="any"
+                      className="input min-h-11 w-full"
+                    />
+                  </div>
+                ))}
+              </fieldset>
+              {error && (
+                <p
+                  role="alert"
+                  className="text-sm text-burnt-peach-700 dark:text-burnt-peach-300"
+                >
+                  {error}
+                </p>
+              )}
+            </div>
             <button
               type="submit"
               disabled={busy}
-              className="btn-primary min-h-11 w-full"
+              className="btn-primary min-h-11 w-full shrink-0"
             >
               {busy ? "Saving…" : "Save recipe"}
             </button>

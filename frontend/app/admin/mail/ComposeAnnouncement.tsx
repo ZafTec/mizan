@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -125,7 +127,7 @@ export default function ComposeAnnouncement() {
           if (!next) reset();
         }}
       >
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>
               {preview ? "Send this announcement?" : "Compose announcement"}
@@ -138,32 +140,35 @@ export default function ComposeAnnouncement() {
           </DialogHeader>
 
           {preview ? (
-            <div className="space-y-4">
-              <p
-                role="status"
-                className="border border-charcoal-blue-200 p-3 text-sm dark:border-charcoal-blue-700"
-              >
-                <span className="font-medium">“{subject.trim()}”</span> goes to{" "}
-                <strong className="tabular-nums">
-                  {preview.recipientCount}{" "}
-                  {preview.recipientCount === 1 ? "recipient" : "recipients"}
-                </strong>{" "}
-                ({preview.label}).
-              </p>
-              {preview.recipientCount === 0 && (
-                <p className="text-sm text-burnt-peach-700 dark:text-burnt-peach-400">
-                  Nobody in that audience can receive email.
-                </p>
-              )}
-              {errors.form && (
+            <>
+              <DialogBody className="space-y-4">
                 <p
-                  role="alert"
-                  className="text-sm text-burnt-peach-700 dark:text-burnt-peach-400"
+                  role="status"
+                  className="border border-charcoal-blue-200 p-3 text-sm dark:border-charcoal-blue-700"
                 >
-                  {errors.form}
+                  <span className="font-medium">“{subject.trim()}”</span> goes
+                  to{" "}
+                  <strong className="tabular-nums">
+                    {preview.recipientCount}{" "}
+                    {preview.recipientCount === 1 ? "recipient" : "recipients"}
+                  </strong>{" "}
+                  ({preview.label}).
                 </p>
-              )}
-              <div className="flex flex-wrap justify-end gap-2">
+                {preview.recipientCount === 0 && (
+                  <p className="text-sm text-burnt-peach-700 dark:text-burnt-peach-400">
+                    Nobody in that audience can receive email.
+                  </p>
+                )}
+                {errors.form && (
+                  <p
+                    role="alert"
+                    className="text-sm text-burnt-peach-700 dark:text-burnt-peach-400"
+                  >
+                    {errors.form}
+                  </p>
+                )}
+              </DialogBody>
+              <DialogFooter>
                 <button
                   type="button"
                   className="btn-ghost"
@@ -184,110 +189,112 @@ export default function ComposeAnnouncement() {
                 >
                   {busy ? "Sending…" : `Send to ${preview.recipientCount}`}
                 </button>
-              </div>
-            </div>
+              </DialogFooter>
+            </>
           ) : (
             <form
-              className="space-y-4"
+              className="flex min-h-0 flex-1 flex-col gap-4"
               noValidate
               onSubmit={(e) => {
                 e.preventDefault();
                 void review();
               }}
             >
-              <div>
-                <label className="label" htmlFor="announcement-subject">
-                  Subject
-                </label>
-                <input
-                  id="announcement-subject"
-                  className={`input ${errors.subject ? "input-error" : ""}`}
-                  value={subject}
-                  maxLength={200}
-                  onChange={(e) => setSubject(e.target.value)}
-                  aria-invalid={Boolean(errors.subject)}
-                  aria-describedby={
-                    errors.subject ? "announcement-subject-error" : undefined
-                  }
-                />
-                {errors.subject && (
-                  <p
-                    id="announcement-subject-error"
-                    className="mt-1 text-sm text-burnt-peach-700 dark:text-burnt-peach-400"
-                  >
-                    {errors.subject}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="label" htmlFor="announcement-body">
-                  Message
-                </label>
-                <textarea
-                  id="announcement-body"
-                  rows={6}
-                  className={`input ${errors.body ? "input-error" : ""}`}
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  aria-invalid={Boolean(errors.body)}
-                  aria-describedby={
-                    errors.body ? "announcement-body-error" : undefined
-                  }
-                />
-                {errors.body && (
-                  <p
-                    id="announcement-body-error"
-                    className="mt-1 text-sm text-burnt-peach-700 dark:text-burnt-peach-400"
-                  >
-                    {errors.body}
-                  </p>
-                )}
-              </div>
-              <fieldset>
-                <legend className="label">Audience</legend>
-                <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
-                  {AUDIENCES.map((option) => (
-                    <label
-                      key={option.kind}
-                      className="flex min-h-10 items-center gap-2 text-sm"
+              <DialogBody className="space-y-4">
+                <div>
+                  <label className="label" htmlFor="announcement-subject">
+                    Subject
+                  </label>
+                  <input
+                    id="announcement-subject"
+                    className={`input ${errors.subject ? "input-error" : ""}`}
+                    value={subject}
+                    maxLength={200}
+                    onChange={(e) => setSubject(e.target.value)}
+                    aria-invalid={Boolean(errors.subject)}
+                    aria-describedby={
+                      errors.subject ? "announcement-subject-error" : undefined
+                    }
+                  />
+                  {errors.subject && (
+                    <p
+                      id="announcement-subject-error"
+                      className="mt-1 text-sm text-burnt-peach-700 dark:text-burnt-peach-400"
                     >
-                      <input
-                        type="radio"
-                        name="audience"
-                        value={option.kind}
-                        checked={kind === option.kind}
-                        onChange={() => {
-                          setKind(option.kind);
-                          setTarget(null);
-                        }}
-                      />
-                      {option.label}
-                    </label>
-                  ))}
+                      {errors.subject}
+                    </p>
+                  )}
                 </div>
-              </fieldset>
-              {(kind === "household" || kind === "user") && (
-                <TargetPicker
-                  key={kind}
-                  kind={kind}
-                  value={target}
-                  onChange={setTarget}
-                  error={errors.targetId}
-                />
-              )}
-              {errors.form && (
-                <p
-                  role="alert"
-                  className="text-sm text-burnt-peach-700 dark:text-burnt-peach-400"
-                >
-                  {errors.form}
-                </p>
-              )}
-              <div className="flex justify-end">
+                <div>
+                  <label className="label" htmlFor="announcement-body">
+                    Message
+                  </label>
+                  <textarea
+                    id="announcement-body"
+                    rows={6}
+                    className={`input ${errors.body ? "input-error" : ""}`}
+                    value={body}
+                    onChange={(e) => setBody(e.target.value)}
+                    aria-invalid={Boolean(errors.body)}
+                    aria-describedby={
+                      errors.body ? "announcement-body-error" : undefined
+                    }
+                  />
+                  {errors.body && (
+                    <p
+                      id="announcement-body-error"
+                      className="mt-1 text-sm text-burnt-peach-700 dark:text-burnt-peach-400"
+                    >
+                      {errors.body}
+                    </p>
+                  )}
+                </div>
+                <fieldset>
+                  <legend className="label">Audience</legend>
+                  <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+                    {AUDIENCES.map((option) => (
+                      <label
+                        key={option.kind}
+                        className="flex min-h-10 items-center gap-2 text-sm"
+                      >
+                        <input
+                          type="radio"
+                          name="audience"
+                          value={option.kind}
+                          checked={kind === option.kind}
+                          onChange={() => {
+                            setKind(option.kind);
+                            setTarget(null);
+                          }}
+                        />
+                        {option.label}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                {(kind === "household" || kind === "user") && (
+                  <TargetPicker
+                    key={kind}
+                    kind={kind}
+                    value={target}
+                    onChange={setTarget}
+                    error={errors.targetId}
+                  />
+                )}
+                {errors.form && (
+                  <p
+                    role="alert"
+                    className="text-sm text-burnt-peach-700 dark:text-burnt-peach-400"
+                  >
+                    {errors.form}
+                  </p>
+                )}
+              </DialogBody>
+              <DialogFooter>
                 <button type="submit" className="btn-primary" disabled={busy}>
                   {busy ? "Counting…" : "Review"}
                 </button>
-              </div>
+              </DialogFooter>
             </form>
           )}
         </DialogContent>

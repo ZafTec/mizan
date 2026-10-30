@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogBody,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -71,7 +72,7 @@ export function EditAccessDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Edit access for {connection.clientName}</DialogTitle>
           <DialogDescription>
@@ -80,27 +81,29 @@ export function EditAccessDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <PermissionPicker
-          groups={groups}
-          levels={levels}
-          onChange={setLevels}
-          ceiling={held}
-        />
-
-        {currentMode !== "none" && (
-          <HouseholdPicker
-            households={households}
-            mode={mode}
-            selected={selected}
-            onChange={(nextMode, ids) => {
-              setMode(nextMode);
-              setSelected(ids);
-            }}
-            ceilingMode={currentMode}
+        <DialogBody className="space-y-4">
+          <PermissionPicker
+            groups={groups}
+            levels={levels}
+            onChange={setLevels}
+            ceiling={held}
           />
-        )}
 
-        <DialogFooter className="flex justify-end gap-2">
+          {currentMode !== "none" && (
+            <HouseholdPicker
+              households={households}
+              mode={mode}
+              selected={selected}
+              onChange={(nextMode, ids) => {
+                setMode(nextMode);
+                setSelected(ids);
+              }}
+              ceilingMode={currentMode}
+            />
+          )}
+        </DialogBody>
+
+        <DialogFooter>
           <button type="button" className="btn-secondary" onClick={onClose}>
             Cancel
           </button>

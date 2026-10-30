@@ -29,15 +29,15 @@ export default function AuditDetails({ details }: { details: string }) {
         Details
       </button>
 
-      <ModalShell open={open} onClose={() => setOpen(false)}>
-        <div className="card w-full max-w-2xl space-y-3 p-5">
-          <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-            Audit entry
-          </h2>
-          <pre className="max-h-[60vh] overflow-auto whitespace-pre-wrap rounded-2xl bg-charcoal-blue-50 p-4 font-mono text-xs leading-relaxed text-charcoal-blue-800 dark:bg-charcoal-blue-950 dark:text-charcoal-blue-200">
-            {pretty}
-          </pre>
-        </div>
+      <ModalShell
+        open={open}
+        onClose={() => setOpen(false)}
+        size="xl"
+        title="Audit entry"
+      >
+        <pre className="whitespace-pre-wrap break-words bg-charcoal-blue-50 p-4 font-mono text-xs leading-relaxed text-charcoal-blue-800 dark:bg-charcoal-blue-950 dark:text-charcoal-blue-200">
+          {pretty}
+        </pre>
       </ModalShell>
     </>
   );

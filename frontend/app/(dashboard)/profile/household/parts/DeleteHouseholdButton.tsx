@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -112,6 +113,7 @@ export function DeleteHouseholdButton({
           </DialogDescription>
         </DialogHeader>
 
+        <DialogBody className="space-y-4">
         {preview && !blocked && hasPlans && (
           <div className="space-y-2 text-sm text-foreground">
             <p>These shared plans are deleted with the household:</p>
@@ -159,8 +161,9 @@ export function DeleteHouseholdButton({
             {notice}
           </p>
         )}
+        </DialogBody>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter>
           <button
             type="button"
             onClick={() => setOpen(false)}

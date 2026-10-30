@@ -79,7 +79,7 @@ function OpenLogSheet({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[100] animate-overlay-in bg-charcoal-blue-950/45 data-[state=closed]:animate-overlay-out" />
         <Dialog.Content
-          className={`fixed inset-x-0 bottom-0 z-[101] animate-sheet-in data-[state=closed]:animate-sheet-out sm:animate-modal-in sm:data-[state=closed]:animate-modal-out max-h-[92dvh] overscroll-contain rounded-t-md border border-border bg-background px-5 pt-5 text-foreground sm:left-1/2 sm:right-auto sm:top-1/2 sm:bottom-auto sm:w-[calc(100%-2rem)] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-md sm:px-6 sm:pt-6 ${kind === "meal" ? "flex h-[92dvh] flex-col overflow-hidden sm:h-auto" : "overflow-y-auto pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:pb-6"}`}
+          className={`fixed inset-x-0 bottom-0 z-[101] animate-sheet-in data-[state=closed]:animate-sheet-out sm:animate-modal-in sm:data-[state=closed]:animate-modal-out max-h-[92dvh] overscroll-contain rounded-t-md border border-border bg-background px-5 pt-5 text-foreground sm:left-1/2 sm:right-auto sm:top-1/2 sm:bottom-auto sm:w-[calc(100%-2rem)] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-md sm:px-6 sm:pt-6 flex flex-col overflow-hidden ${kind === "meal" ? "h-[92dvh] sm:h-auto" : ""}`}
           onOpenAutoFocus={(event) => {
             returnFocusRef.current =
               document.activeElement instanceof HTMLElement
@@ -132,51 +132,89 @@ function OpenLogSheet({
               {description}
             </Dialog.Description>
           </header>
-          {kind === null && (
-            <div className="divide-y divide-border border-y border-border">
-              {(
-                [
-                  {
-                    kind: "meal",
-                    title: "Meal",
-                    detail: "Describe it, snap it, or search",
-                    icon: Utensils,
-                  },
-                  {
-                    kind: "workout",
-                    title: "Workout",
-                    detail: "Exercises, sets, and reps",
-                    icon: Dumbbell,
-                  },
-                  {
-                    kind: "measurement",
-                    title: "Measurement",
-                    detail: "Weight and body measurements",
-                    icon: Ruler,
-                  },
-                ] as const
-              ).map((item) => (
-                <button
-                  key={item.kind}
-                  type="button"
-                  onClick={() => setKind(item.kind)}
-                  className="flex min-h-[88px] w-full items-center gap-4 px-1 py-4 text-left transition-colors hover:bg-muted"
-                >
-                  <item.icon
-                    aria-hidden="true"
-                    size={23}
-                    strokeWidth={1.7}
-                    className="shrink-0 text-brand-700 dark:text-brand-300"
-                  />
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-semibold">{item.title}</span>
-                    <span className="mt-1 block text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300">
-                      {item.detail}
-                    </span>
-                  </span>
-                  <ArrowRight aria-hidden="true" size={17} strokeWidth={1.7} />
-                </button>
-              ))}
+          {kind !== "meal" && (
+            // The header stays put; what is below it scrolls.
+            <div className="-mx-5 min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:-mx-6 sm:px-6 sm:pb-6">
+              {kind === null && (
+                <div className="divide-y divide-border border-y border-border">
+                  {(
+                    [
+                      {
+                        kind: "meal",
+                        title: "Meal",
+                        detail: "Describe it, snap it, or search",
+                        icon: Utensils,
+                      },
+                      {
+                        kind: "workout",
+                        title: "Workout",
+                        detail: "Exercises, sets, and reps",
+                        icon: Dumbbell,
+                      },
+                      {
+                        kind: "measurement",
+                        title: "Measurement",
+                        detail: "Weight and body measurements",
+                        icon: Ruler,
+                      },
+                    ] as const
+                  ).map((item) => (
+                    <button
+                      key={item.kind}
+                      type="button"
+                      onClick={() => setKind(item.kind)}
+                      className="flex min-h-[88px] w-full items-center gap-4 px-1 py-4 text-left transition-colors hover:bg-muted"
+                    >
+                      <item.icon
+                        aria-hidden="true"
+                        size={23}
+                        strokeWidth={1.7}
+                        className="shrink-0 text-brand-700 dark:text-brand-300"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-semibold">
+                          {item.title}
+                        </span>
+                        <span className="mt-1 block text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300">
+                          {item.detail}
+                        </span>
+                      </span>
+                      <ArrowRight
+                        aria-hidden="true"
+                        size={17}
+                        strokeWidth={1.7}
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+              {kind === "measurement" && (
+                <MeasurementLogForm
+                  initialDate={initialDate}
+                  timeZone={timeZone}
+                  onSaved={saved}
+                  onBusyChange={setBusy}
+                />
+              )}
+              {kind === "workout" && (
+                <div className="space-y-5">
+                  <p className="text-sm leading-relaxed text-charcoal-blue-700 dark:text-charcoal-blue-300">
+                    Your workout has its own space so you can record sets as you
+                    train. An active session is saved as you go.
+                  </p>
+                  <Link
+                    href={
+                      initialDate
+                        ? `/workout/active?date=${encodeURIComponent(initialDate)}`
+                        : "/workout/active"
+                    }
+                    onClick={onClose}
+                    className="btn-primary min-h-11 w-full"
+                  >
+                    Open workout
+                  </Link>
+                </div>
+              )}
             </div>
           )}
           {kind === "meal" && (
@@ -188,33 +226,6 @@ function OpenLogSheet({
               onSaved={saved}
               onBusyChange={setBusy}
             />
-          )}
-          {kind === "measurement" && (
-            <MeasurementLogForm
-              initialDate={initialDate}
-              timeZone={timeZone}
-              onSaved={saved}
-              onBusyChange={setBusy}
-            />
-          )}
-          {kind === "workout" && (
-            <div className="space-y-5">
-              <p className="text-sm leading-relaxed text-charcoal-blue-700 dark:text-charcoal-blue-300">
-                Your workout has its own space so you can record sets as you
-                train. An active session is saved as you go.
-              </p>
-              <Link
-                href={
-                  initialDate
-                    ? `/workout/active?date=${encodeURIComponent(initialDate)}`
-                    : "/workout/active"
-                }
-                onClick={onClose}
-                className="btn-primary min-h-11 w-full"
-              >
-                Open workout
-              </Link>
-            </div>
           )}
         </Dialog.Content>
       </Dialog.Portal>

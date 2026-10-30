@@ -7,8 +7,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -216,7 +218,7 @@ export function TrainerPendingRequests() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <DialogBody className="space-y-4 py-1">
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="canViewNutrition"
@@ -274,9 +276,9 @@ export function TrainerPendingRequests() {
               />
               <Label htmlFor="canMessage">Message Client</Label>
             </div>
-          </div>
+          </DialogBody>
 
-          <div className="flex justify-end space-x-2">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => {
@@ -292,7 +294,7 @@ export function TrainerPendingRequests() {
             >
               Confirm & Accept
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
