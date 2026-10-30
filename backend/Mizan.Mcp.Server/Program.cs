@@ -514,6 +514,17 @@ foreach (var path in new[]
 {
     app.MapGet(path, ProtectedResource).AllowAnonymous();
 }
+// The Claude plugin for this deployment: its connector points at this server (docs/MCP.md#claude-plugin).
+// Public, like the skills it carries; nginx already routes /mcp/* here.
+var plugin = new PluginPackage(publicUrl);
+app.MapGet($"{resourcePath}/plugin.zip", (HttpContext context) =>
+{
+    context.Response.Headers.ETag = plugin.ETag;
+    context.Response.Headers.CacheControl = "public, max-age=3600";
+    if (context.Request.Headers.IfNoneMatch.Contains(plugin.ETag)) return Results.StatusCode(StatusCodes.Status304NotModified);
+    return Results.File(plugin.Bytes, "application/zip", PluginPackage.FileName);
+}).AllowAnonymous();
+
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "mizan-mcp", version = "2.0.0" }));
 app.MapPrometheusScrapingEndpoint();
 

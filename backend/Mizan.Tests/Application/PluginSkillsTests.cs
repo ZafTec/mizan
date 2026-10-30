@@ -25,6 +25,26 @@ public class PluginSkillsTests
     }
 
     [Fact]
+    public void ThePluginFolderCarriesTheManifestReadmeAndLicenceTheServerZips()
+    {
+        var root = RepositoryRoot();
+        var source = Path.Combine(root, "backend", "Mizan.Mcp.Server", "Plugin");
+        var plugin = Path.Combine(root, "plugin");
+
+        foreach (var (served, copy) in new[]
+                 {
+                     ("plugin.json", Path.Combine(".claude-plugin", "plugin.json")),
+                     ("README.md", "README.md"),
+                     ("LICENSE", "LICENSE"),
+                 })
+        {
+            File.ReadAllText(Path.Combine(plugin, copy)).ReplaceLineEndings("\n")
+                .Should().Be(File.ReadAllText(Path.Combine(source, served)).ReplaceLineEndings("\n"),
+                    $"plugin/{copy} differs; run scripts/sync-plugin-skills.sh");
+        }
+    }
+
+    [Fact]
     public void TheManifestAndConnectorPointAtTheRealServer()
     {
         var plugin = Path.Combine(RepositoryRoot(), "plugin");

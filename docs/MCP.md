@@ -116,16 +116,11 @@ With `imageUrl`, the MCP service passes the address to the API (`POST /api/Nutri
 
 ## Claude plugin
 
-[`plugin/`](../plugin) packages the connector and the skills for Claude: `.claude-plugin/plugin.json`, `.mcp.json` pointing at `https://mizan.zaftech.co/mcp`, `skills/`, a README, and a license. It holds no credential. `plugin/skills` is a copy of the server's skills; a test fails if they differ, and `scripts/sync-plugin-skills.sh` copies them again.
+[`plugin/`](../plugin) packages the connector and the skills for Claude. Its `.mcp.json` points at `https://mizan.zaftech.co/mcp`, and it holds no credential. `plugin/skills` is a copy of the server's skills; a test fails if they differ, and `scripts/sync-plugin-skills.sh` copies them again. The [plugin guide](../plugin/README.md) covers installing it in Claude Code, claude.ai and Claude Desktop, pointing it at another server, updating and validating it.
 
-Test it before submitting:
+Each deployment serves the plugin as a zip at `GET /mcp/plugin.zip`, with `.mcp.json` pointing at that deployment's own `/mcp`.
 
-```bash
-claude plugin validate ./plugin
-claude --plugin-dir ./plugin
-```
-
-On claude.ai, zip the `plugin` folder and add it under **Customize → Plugins → Add → Upload plugin**, then connect Mizan from its **Connectors** tab. Submit from the developer portal at `claude.ai/directory/manage`. Before submitting, confirm the license holder in `plugin/LICENSE`, publish a privacy policy, and prepare a test account; if the directory asks for a callback allowlist, give it the redirect URIs of the clients you expect.
+Run `claude plugin validate --strict ./plugin` before submitting. Submit from the developer portal at `claude.ai/directory/manage`. Before submitting, confirm the license holder in `plugin/LICENSE`, publish a privacy policy, and prepare a test account; if the directory asks for a callback allowlist, give it the redirect URIs of the clients you expect.
 
 ## Operate and verify
 
