@@ -55,6 +55,27 @@ public sealed class AdminNotificationTools
         CancellationToken ct = default) =>
         _api.PostAsync(Base, new SaveNotificationCampaignRequest(name, purpose, message, timing, audience, channels, timeZoneId), ct);
 
+    [McpServerTool(Name = "admin_update_notification_campaign", Idempotent = true)]
+    [Description("Admin only. Changes a draft or paused campaign; send every field as for admin_create_notification_campaign. An active campaign is paused first.")]
+    public Task<string> Update(
+        string campaignId,
+        string name,
+        string purpose,
+        CampaignContent message,
+        CampaignTiming timing,
+        CampaignAudienceFilter? audience = null,
+        IReadOnlyList<string>? channels = null,
+        string? timeZoneId = null,
+        CancellationToken ct = default) =>
+        _api.PutAsync($"{Base}/{ToolArguments.ParseId(campaignId, "campaignId")}",
+            new SaveNotificationCampaignRequest(name, purpose, message, timing, audience, channels, timeZoneId), ct);
+
+    [McpServerTool(Name = "admin_preview_campaign_message", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. How a campaign message reads on each channel, with your own name in the placeholders, before it is saved or sent.")]
+    public Task<string> PreviewMessage(
+        string purpose, CampaignContent message, IReadOnlyList<string>? channels = null, CancellationToken ct = default) =>
+        _api.PostAsync($"{Base}/preview", new CampaignPreviewRequest(purpose, message, channels), ct);
+
     [McpServerTool(Name = "admin_send_test_notification")]
     [Description("Admin only. Sends the campaign to you alone, now, on each of its channels, with your name in the placeholders. It names any channel you cannot receive on and why.")]
     public Task<string> SendTest(string campaignId, CancellationToken ct = default) =>

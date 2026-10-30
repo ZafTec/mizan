@@ -101,4 +101,9 @@ public sealed class HouseholdTools
     {
         return await _api.DeleteAsync($"/api/Households/{householdId}/members/{userId}", ct);
     }
+
+    [McpServerTool(Name = "list_household_invitations", ReadOnly = true, Idempotent = true)]
+    [Description("The invitations a household has sent, with each one's status. Not found when the person may not manage the household's members.")]
+    public Task<string> ListInvitations([Description("Household UUID")] string householdId, CancellationToken ct = default) =>
+        _api.GetAsync($"/api/Households/{ToolArguments.ParseId(householdId, nameof(householdId))}/invitations", ct);
 }

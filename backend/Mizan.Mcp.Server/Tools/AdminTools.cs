@@ -335,6 +335,64 @@ public sealed class AdminTools
             new CreateSupportNoteRequest(subjectType, ToolArguments.ParseId(subjectId, "subjectId"), body),
             ct);
 
+    [McpServerTool(Name = "admin_update_support_note", Idempotent = true)]
+    [Description("Admin only. Rewrites a support note.")]
+    public Task<string> UpdateSupportNote([Description("Support note UUID")] string id, string body, CancellationToken ct = default) =>
+        _api.PutAsync($"/api/admin/support-notes/{ToolArguments.ParseId(id, "id")}", new UpdateSupportNoteRequest(body), ct);
+
+    [McpServerTool(Name = "admin_delete_support_note", Destructive = true)]
+    [Description("Admin only. Deletes a support note.")]
+    public Task<string> DeleteSupportNote([Description("Support note UUID")] string id, CancellationToken ct = default) =>
+        _api.DeleteAsync($"/api/admin/support-notes/{ToolArguments.ParseId(id, "id")}", ct);
+
+    // ---- Overview, one session, one message ---------------------------------
+
+    [McpServerTool(Name = "admin_get_overview", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. The figures on the admin console's front page.")]
+    public Task<string> Overview(CancellationToken ct = default) => _api.GetAsync("/api/admin/overview", ct);
+
+    [McpServerTool(Name = "admin_revoke_session", Destructive = true)]
+    [Description("Admin only. Ends one sign-in from admin_list_sessions. admin_revoke_user_sessions ends all of an account's.")]
+    public Task<string> RevokeSession([Description("Session UUID")] string sessionId, CancellationToken ct = default) =>
+        _api.DeleteAsync($"/api/admin/sessions/{ToolArguments.ParseId(sessionId, "sessionId")}", ct);
+
+    [McpServerTool(Name = "admin_get_contact", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. One contact form message.")]
+    public Task<string> GetContact([Description("Contact message UUID")] string id, CancellationToken ct = default) =>
+        _api.GetAsync($"/api/admin/contact/{ToolArguments.ParseId(id, "id")}", ct);
+
+    [McpServerTool(Name = "admin_get_mail", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. One outgoing email and its delivery status.")]
+    public Task<string> GetMail([Description("Email message UUID")] string id, CancellationToken ct = default) =>
+        _api.GetAsync($"/api/admin/mail/{ToolArguments.ParseId(id, "id")}", ct);
+
+    [McpServerTool(Name = "admin_get_mail_stats", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. Outgoing email counts by status.")]
+    public Task<string> MailStats(CancellationToken ct = default) => _api.GetAsync("/api/admin/mail/stats", ct);
+
+    // ---- Households -------------------------------------------------------
+
+    [McpServerTool(Name = "admin_list_households", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. Every household, searchable by name.")]
+    public Task<string> ListHouseholds(string? search = null, int page = 1, int pageSize = 20, CancellationToken ct = default) =>
+        _api.GetAsync($"/api/Households/admin/all?page={page}&pageSize={pageSize}" + (string.IsNullOrWhiteSpace(search) ? "" : $"&search={Uri.EscapeDataString(search)}"), ct);
+
+    [McpServerTool(Name = "admin_get_household", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. One household and its members.")]
+    public Task<string> GetHousehold([Description("Household UUID")] string id, CancellationToken ct = default) =>
+        _api.GetAsync($"/api/Households/admin/{ToolArguments.ParseId(id, "id")}", ct);
+
+    [McpServerTool(Name = "admin_remove_household_member", Destructive = true)]
+    [Description("Admin only. Removes a member from a household.")]
+    public Task<string> RemoveHouseholdMember(
+        [Description("Household UUID")] string id, [Description("Member's user UUID")] string userId, CancellationToken ct = default) =>
+        _api.DeleteAsync($"/api/Households/admin/{ToolArguments.ParseId(id, "id")}/members/{ToolArguments.ParseId(userId, "userId")}", ct);
+
+    [McpServerTool(Name = "admin_delete_household", Destructive = true)]
+    [Description("Admin only. Deletes a household. Permanent: confirm with the administrator first.")]
+    public Task<string> DeleteHousehold([Description("Household UUID")] string id, CancellationToken ct = default) =>
+        _api.DeleteAsync($"/api/Households/admin/{ToolArguments.ParseId(id, "id")}", ct);
+
     // ---- Prompt console ---------------------------------------------------
 
     [McpServerTool(Name = "admin_list_ai_prompts", ReadOnly = true, Idempotent = true)]

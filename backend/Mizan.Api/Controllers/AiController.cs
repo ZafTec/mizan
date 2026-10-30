@@ -6,6 +6,7 @@ using Mizan.Application.Ai.Tools;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Contracts.Ai;
+using Mizan.Contracts.Coaching;
 using Mizan.Domain.Media;
 
 namespace Mizan.Api.Controllers;
@@ -221,4 +222,3 @@ public class AiController : ControllerBase
 
 public record AiToolSummary(string Name, string Description);
 
-public record AskClientRequest(Guid? ThreadId, string Message);

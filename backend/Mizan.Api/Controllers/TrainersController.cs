@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mizan.Application.Commands;
+using Mizan.Contracts.Coaching;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 using Mizan.Application.Planning;
@@ -200,11 +201,3 @@ public record SendTrainerRequestRequest(
     bool CanMessage = true
 );
 public record RespondRequest(Guid RelationshipId, bool Accept);
-public record UpdateGrantsRequest(
-    bool? CanViewNutrition = null,
-    bool? CanViewWorkouts = null,
-    bool? CanViewMeasurements = null,
-    bool? CanMessage = null,
-    bool End = false,
-    bool? CanPlanMeals = null
-);

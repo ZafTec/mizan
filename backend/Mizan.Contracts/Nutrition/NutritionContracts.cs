@@ -63,3 +63,6 @@ public record RecognizedFood
         }
         : null;
 }
+
+/// <summary>A meal described in words for the assistant to estimate (POST api/Nutrition/ai/analyze-text).</summary>
+public record AnalyzeFoodTextRequest(string? Description);

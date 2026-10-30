@@ -31,6 +31,11 @@ public sealed class AdminPlatformTools
     public Task<string> SetFeatureFlag(string key, bool enabled, CancellationToken ct = default) =>
         _api.PutAsync($"/api/admin/feature-flags/{Uri.EscapeDataString(key)}", new SetFeatureFlagRequest(enabled), ct);
 
+    [McpServerTool(Name = "admin_list_feature_flag_overrides", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. The households that override one feature flag, and whether each has it on or off.")]
+    public Task<string> ListFeatureFlagOverrides(string key, CancellationToken ct = default) =>
+        _api.GetAsync($"/api/admin/feature-flags/{Uri.EscapeDataString(key)}/overrides", ct);
+
     [McpServerTool(Name = "admin_set_feature_flag_override", Destructive = true, Idempotent = true)]
     [Description("Admin only. Turns a flag on or off for one household, whatever the default says.")]
     public Task<string> SetFeatureFlagOverride(string key, string householdId, bool enabled, CancellationToken ct = default) =>
@@ -47,6 +52,11 @@ public sealed class AdminPlatformTools
             ct);
 
     // ---- Usage limits -----------------------------------------------------
+
+    [McpServerTool(Name = "admin_get_usage_limit", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. The AI allowance in force for one plan, household or user, and where each value comes from. scope is Plan, Household or User.")]
+    public Task<string> GetUsageLimit(string scope, [Description("The plan, household or user UUID")] string subjectId, CancellationToken ct = default) =>
+        _api.GetAsync($"/api/admin/usage-limits/{Uri.EscapeDataString(scope)}/{ToolArguments.ParseId(subjectId, "subjectId")}", ct);
 
     [McpServerTool(Name = "admin_list_usage_limits", ReadOnly = true, Idempotent = true)]
     [Description(

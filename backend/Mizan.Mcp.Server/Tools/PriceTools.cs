@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Mizan.Contracts.Prices;
 using Mizan.Mcp.Server.Services;
 using ModelContextProtocol.Server;
 
@@ -143,4 +144,47 @@ public sealed class PriceTools
         };
         return _api.PostAsync($"/api/admin/prices/reports/{ToolArguments.ParseId(reportId, "reportId")}/{verb}", new { note }, ct);
     }
+
+    [McpServerTool(Name = "list_price_regions", ReadOnly = true, Idempotent = true)]
+    [Description("The markets Mizan has prices for, with each one's code and currency. The person's region is in get_my_profile.")]
+    public Task<string> ListRegions(CancellationToken ct = default) => _api.GetAsync("/api/Prices/regions", ct);
+
+    [McpServerTool(Name = "admin_list_price_regions", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. Every price region, the disabled ones included.")]
+    public Task<string> AdminListRegions(CancellationToken ct = default) => _api.GetAsync("/api/admin/prices/regions", ct);
+
+    [McpServerTool(Name = "admin_create_price_region")]
+    [Description("Admin only. Adds a price region: a code such as ET-AA, a name and an ISO currency such as ETB.")]
+    public Task<string> AdminCreateRegion(string code, string name, string currency, bool enabled = true, CancellationToken ct = default) =>
+        _api.PostAsync("/api/admin/prices/regions", new CreatePriceRegionRequest(code, name, currency, enabled), ct);
+
+    [McpServerTool(Name = "admin_update_price_region", Idempotent = true)]
+    [Description("Admin only. Renames a price region, changes its currency, or turns it off and on. Send every field.")]
+    public Task<string> AdminUpdateRegion(string code, string name, string currency, bool enabled, CancellationToken ct = default) =>
+        _api.PutAsync($"/api/admin/prices/regions/{Uri.EscapeDataString(code)}", new UpdatePriceRegionRequest(name, currency, enabled), ct);
+
+    [McpServerTool(Name = "admin_create_price_source")]
+    [Description("Admin only. Adds a price source. kind is Manual, Scraper or Report; a Scraper names its scraperKey and may have a cron schedule.")]
+    public Task<string> AdminCreateSource(
+        string name, string kind, [Description("Region code such as ET-AA")] string regionCode,
+        string? url = null, string? scraperKey = null, string? schedule = null, bool enabled = true, CancellationToken ct = default) =>
+        _api.PostAsync("/api/admin/prices/sources", new SavePriceSourceRequest(name, kind, regionCode, url, scraperKey, schedule, enabled), ct);
+
+    [McpServerTool(Name = "admin_update_price_source", Idempotent = true)]
+    [Description("Admin only. Changes a price source. Send every field, as admin_list_price_sources shows them.")]
+    public Task<string> AdminUpdateSource(
+        [Description("Price source UUID")] string sourceId, string name, string kind, string regionCode,
+        string? url = null, string? scraperKey = null, string? schedule = null, bool enabled = true, CancellationToken ct = default) =>
+        _api.PutAsync($"/api/admin/prices/sources/{ToolArguments.ParseId(sourceId, nameof(sourceId))}",
+            new SavePriceSourceRequest(name, kind, regionCode, url, scraperKey, schedule, enabled), ct);
+
+    [McpServerTool(Name = "admin_delete_price_source", Destructive = true)]
+    [Description("Admin only. Deletes a price source. Confirm first; admin_update_price_source with enabled false stops it without deleting it.")]
+    public Task<string> AdminDeleteSource([Description("Price source UUID")] string sourceId, CancellationToken ct = default) =>
+        _api.DeleteAsync($"/api/admin/prices/sources/{ToolArguments.ParseId(sourceId, nameof(sourceId))}", ct);
+
+    [McpServerTool(Name = "admin_seed_staple_prices", Idempotent = true)]
+    [Description("Admin only. Prices the starter staples in Addis Ababa (run admin_import_starter_foods first). Safe to repeat.")]
+    public Task<string> AdminSeedStaples(CancellationToken ct = default) =>
+        _api.PostAsync("/api/admin/prices/seed-staples", null, ct);
 }

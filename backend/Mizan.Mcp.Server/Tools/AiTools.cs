@@ -140,6 +140,29 @@ public sealed class AiTools
     public Task<string> DeleteThread(string id, CancellationToken ct = default) =>
         _api.DeleteAsync($"/api/Ai/threads/{ToolArguments.ParseId(id, "id")}", ct);
 
+    // ---- Coaching and text estimates --------------------------------------
+
+    [McpServerTool(Name = "ask_ai_about_client")]
+    [Description(
+        "For coaches: ask the Mizan assistant about one client. It reads only what the client shared with you, "
+        + "never writes to their log, and the call is billed to your daily AI allowance. Pass threadId to continue.")]
+    public Task<string> AskAboutClient(
+        [Description("Client's user UUID")] string clientId,
+        [Description("The question")] string message,
+        [Description("A thread UUID from an earlier answer, to continue it")] string? threadId = null,
+        CancellationToken ct = default) =>
+        _api.PostAsync($"/api/Ai/clients/{ToolArguments.ParseId(clientId, nameof(clientId))}/ask",
+            new Mizan.Contracts.Coaching.AskClientRequest(ToolArguments.ParseOptionalId(threadId, nameof(threadId)), message), ct);
+
+    [McpServerTool(Name = "analyze_food_text")]
+    [Description(
+        "Estimates the foods and macros of a meal described in words (\"two eggs and a slice of toast\"). Pro only. "
+        + "Nothing is logged: show the estimate, then log it with log_food or log_meal_manual. Not read-only: it costs an allowance.")]
+    public Task<string> AnalyzeFoodText(
+        [Description("What was eaten, up to 600 characters")] string description,
+        CancellationToken ct = default) =>
+        _api.PostAsync("/api/Nutrition/ai/analyze-text", new Mizan.Contracts.Nutrition.AnalyzeFoodTextRequest(description), ct);
+
     // ---- Suggestions ------------------------------------------------------
 
     [McpServerTool(Name = "suggest_meals")]

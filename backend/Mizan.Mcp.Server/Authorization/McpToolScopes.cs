@@ -27,7 +27,7 @@ public static class McpToolScopes
         // Food, nutrition and goals
         Add(McpScopes.NutritionRead, "search_foods", "get_food", "get_food_diary", "get_daily_nutrition",
             "get_nutrition_range", "get_nutrition_summary", "get_current_goal", "get_goal_history", "get_goal_progress",
-            "get_food_price");
+            "get_food_price", "list_price_regions");
         Add(McpScopes.NutritionWrite, "create_food", "update_food", "delete_food", "log_day", "log_food", "log_meal",
             "log_meal_manual", "delete_meal", "delete_meal_group", "create_goal", "record_goal_progress", "delete_goal", "delete_goal_progress", "report_food_price");
 
@@ -59,7 +59,7 @@ public static class McpToolScopes
             "update_shopping_list_item", "delete_shopping_list_item", "toggle_shopping_list_item", "clear_checked_items");
 
         // Households
-        Add(McpScopes.HouseholdsRead, "list_my_households", "get_household");
+        Add(McpScopes.HouseholdsRead, "list_my_households", "get_household", "list_household_invitations");
         Add(McpScopes.HouseholdsWrite, "create_household", "switch_household", "invite_to_household",
             "accept_household_invitation", "decline_household_invitation", "revoke_household_invitation",
             "leave_household", "remove_household_member");
@@ -71,7 +71,8 @@ public static class McpToolScopes
 
         // Notifications
         Add(McpScopes.NotificationsRead, "list_notifications", "get_unread_notification_count", "get_notification_preferences", "list_reminders");
-        Add(McpScopes.NotificationsWrite, "mark_notification_read", "mark_all_notifications_read", "update_notification_preferences", "create_reminder", "update_reminder", "delete_reminder");
+        Add(McpScopes.NotificationsWrite, "mark_notification_read", "mark_all_notifications_read", "update_notification_preferences", "create_reminder", "update_reminder", "delete_reminder",
+            "complete_reminder", "snooze_reminder", "skip_reminder");
 
         // Social
         Add(McpScopes.SocialRead, "get_social_profile", "list_social_follows", "get_social_feed");
@@ -82,13 +83,14 @@ public static class McpToolScopes
 
         // Coaching
         Add(McpScopes.TrainerRead, "list_available_trainers", "get_my_trainer", "get_my_trainer_requests",
-            "list_trainer_clients", "list_trainer_pending_requests", "get_client_nutrition");
+            "list_trainer_clients", "list_trainer_pending_requests", "get_client_nutrition", "get_client_workouts", "get_coach_chat");
         Add(McpScopes.TrainerWrite, "send_trainer_request", "respond_to_trainer_request", "create_plan_for_client",
-            "apply_template_for_client", "create_template", "update_template", "delete_template");
+            "apply_template_for_client", "create_template", "update_template", "delete_template",
+            "set_trainer_permissions", "send_coach_message");
 
         // The assistant. Each call spends the user's daily AI allowance.
         Add(McpScopes.AiUse, "ask_ai", "suggest_meals", "analyze_food_image", "get_ai_usage", "list_ai_threads",
-            "get_ai_thread", "delete_ai_thread", "get_ai_conversation");
+            "get_ai_thread", "delete_ai_thread", "get_ai_conversation", "ask_ai_about_client", "analyze_food_text");
 
         // Administration. Every admin tool needs the admin scope, which only an administrator can grant.
         Add(McpScopes.Admin,
@@ -109,19 +111,25 @@ public static class McpToolScopes
             "admin_list_settings", "admin_set_setting", "admin_clear_setting", "admin_test_smtp",
             "admin_list_mail", "admin_retry_mail", "admin_send_announcement", "admin_list_contact",
             "admin_reply_contact", "admin_mark_contact_handled", "admin_get_system_health",
-            "admin_list_support_notes", "admin_add_support_note");
+            "admin_list_support_notes", "admin_add_support_note",
+            "admin_update_support_note", "admin_delete_support_note", "admin_get_overview", "admin_revoke_session",
+            "admin_get_contact", "admin_get_mail", "admin_get_mail_stats", "admin_list_households", "admin_get_household",
+            "admin_remove_household_member", "admin_delete_household", "admin_list_price_regions", "admin_create_price_region",
+            "admin_update_price_region", "admin_create_price_source", "admin_update_price_source", "admin_delete_price_source",
+            "admin_seed_staple_prices");
 
         // Feature flags, allowance overrides and platform usage (docs/ADMIN.md).
         Add(McpScopes.Admin,
             "admin_list_feature_flags", "admin_set_feature_flag", "admin_set_feature_flag_override",
-            "admin_clear_feature_flag_override", "admin_list_usage_limits", "admin_set_usage_limit",
+            "admin_clear_feature_flag_override", "admin_list_feature_flag_overrides", "admin_get_usage_limit", "admin_list_usage_limits", "admin_set_usage_limit",
             "admin_clear_usage_limit", "admin_get_platform_usage");
 
         // Notification campaigns and lifecycle messages (docs/ADMIN.md#notification-campaigns).
         Add(McpScopes.Admin,
             "admin_list_notification_campaigns", "admin_get_notification_campaign", "admin_preview_audience",
             "admin_create_notification_campaign", "admin_send_test_notification", "admin_activate_notification_campaign",
-            "admin_pause_campaign", "admin_resume_campaign", "admin_cancel_campaign");
+            "admin_pause_campaign", "admin_resume_campaign", "admin_cancel_campaign",
+            "admin_update_notification_campaign", "admin_preview_campaign_message");
 
         return map;
     }

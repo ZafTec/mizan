@@ -5860,6 +5860,76 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Goals/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Goals/progress/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -8094,6 +8164,45 @@ export interface paths {
             };
         };
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Meals/groups/{groupId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    groupId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DeleteDiaryGroupResult"];
+                        "application/json": components["schemas"]["DeleteDiaryGroupResult"];
+                        "text/json": components["schemas"]["DeleteDiaryGroupResult"];
+                    };
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -13798,6 +13907,11 @@ export interface components {
             success: boolean;
             message?: string | null;
         };
+        DeleteDiaryGroupResult: {
+            /** Format: int32 */
+            deleted: number;
+            groupName?: string | null;
+        };
         DeleteFoodResult: {
             success: boolean;
             message?: string | null;
@@ -15636,14 +15750,14 @@ export interface components {
             per100g?: components["schemas"]["NutritionPer100g"];
         };
         RecordGoalProgressCommand: {
-            /** Format: int32 */
-            actualCalories: number;
             /** Format: double */
-            actualProteinGrams: number;
+            actualCalories?: number | null;
             /** Format: double */
-            actualCarbsGrams: number;
+            actualProteinGrams?: number | null;
             /** Format: double */
-            actualFatGrams: number;
+            actualCarbsGrams?: number | null;
+            /** Format: double */
+            actualFatGrams?: number | null;
             /** Format: double */
             actualWeight?: number | null;
             /** Format: date */
@@ -15655,6 +15769,7 @@ export interface components {
             message?: string | null;
             /** Format: uuid */
             id?: string | null;
+            entry?: components["schemas"]["GoalProgressEntryDto"];
         };
         RegisterBody: {
             client_name?: string | null;

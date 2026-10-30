@@ -118,6 +118,41 @@ public class McpParityTests : IClassFixture<WebApplicationFactory<McpServer::Pro
         (await ToolNamesAsync()).Should().NotContain(name => name.StartsWith("admin_"));
     }
 
+    // ---- Reminder buttons -------------------------------------------------
+
+    [Fact]
+    public async Task A_person_snoozes_skips_and_completes_a_reminder_through_a_connected_app_as_its_buttons_do()
+    {
+        await _api.ResetDatabaseAsync();
+        var userId = await AuthenticateAsync();
+        var web = _api.CreateAuthenticatedClient(userId, $"parity-{userId:N}@example.com");
+        var created = await web.PostAsJsonAsync("/api/Reminders", new Mizan.Contracts.Notifications.CreateReminderRequest(
+            "measurement", Schedule: new Mizan.Contracts.Notifications.ReminderSchedule("daily", "08:00"), Channels: ["inApp"]));
+        created.EnsureSuccessStatusCode();
+        var id = (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetString();
+
+        var snoozed = JsonDocument.Parse(await CallAsync("snooze_reminder", new { id, minutes = 45 })).RootElement;
+        snoozed.GetProperty("snoozedUntil").ValueKind.Should().Be(JsonValueKind.String);
+
+        JsonDocument.Parse(await CallAsync("skip_reminder", new { id })).RootElement.GetProperty("reminder").GetProperty("id").GetString().Should().Be(id);
+        JsonDocument.Parse(await CallAsync("complete_reminder", new { id })).RootElement.GetProperty("message").GetString().Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task An_administrator_reads_the_console_overview_households_and_price_regions_through_a_connected_app()
+    {
+        await _api.ResetDatabaseAsync();
+        await AuthenticateAsync(admin: true);
+
+        JsonDocument.Parse(await CallAsync("admin_get_overview", new { })).RootElement.ValueKind.Should().Be(JsonValueKind.Object);
+        JsonDocument.Parse(await CallAsync("admin_list_households", new { })).RootElement.GetProperty("items").ValueKind.Should().Be(JsonValueKind.Array);
+        JsonDocument.Parse(await CallAsync("admin_list_price_regions", new { })).RootElement.ValueKind.Should().Be(JsonValueKind.Array);
+        JsonDocument.Parse(await CallAsync("admin_get_mail_stats", new { })).RootElement.ValueKind.Should().Be(JsonValueKind.Object);
+
+        await AuthenticateAsync();
+        (await CallAsync("admin_get_overview", new { })).Should().NotStartWith("{", "a plain user's app is not given admin tools");
+    }
+
     // ---- Planning ---------------------------------------------------------
 
     [Fact]

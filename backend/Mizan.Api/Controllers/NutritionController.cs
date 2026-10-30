@@ -155,7 +155,6 @@ public class NutritionController : ControllerBase
 
     public const int MaxDescriptionLength = 600;
 
-    public record AnalyzeFoodTextRequest(string? Description);
 
     private async Task<string?> StoreAsync(byte[] bytes, string contentType)
     {

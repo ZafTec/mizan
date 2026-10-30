@@ -61,4 +61,22 @@ public sealed class ReminderTools
     [Description("Delete a reminder. Confirm with the person first; turning it off (update_reminder with enabled false) keeps it.")]
     public Task<string> Delete(string id, CancellationToken ct = default) =>
         _api.DeleteAsync($"/api/Reminders/{ToolArguments.ParseId(id, nameof(id))}", ct);
+
+    [McpServerTool(Name = "complete_reminder")]
+    [Description("Mark a reminder done, as its Done button does: the rest of today's deliveries are dropped, and a one-off reminder is finished.")]
+    public Task<string> Done(string id, CancellationToken ct = default) =>
+        _api.PostAsync($"/api/Reminders/{ToolArguments.ParseId(id, nameof(id))}/done", null, ct);
+
+    [McpServerTool(Name = "snooze_reminder")]
+    [Description("Snooze a reminder, as its Snooze button does. The answer says when it fires again.")]
+    public Task<string> Snooze(
+        string id,
+        [Description("Minutes to wait; 30 when left out.")] int? minutes = null,
+        CancellationToken ct = default) =>
+        _api.PostAsync($"/api/Reminders/{ToolArguments.ParseId(id, nameof(id))}/snooze", new SnoozeReminderRequest(minutes), ct);
+
+    [McpServerTool(Name = "skip_reminder")]
+    [Description("Skip a reminder for today, as its Skip button does: the rest of today's deliveries, a snooze included, are dropped. It stays on for later days.")]
+    public Task<string> Skip(string id, CancellationToken ct = default) =>
+        _api.PostAsync($"/api/Reminders/{ToolArguments.ParseId(id, nameof(id))}/skip", null, ct);
 }
