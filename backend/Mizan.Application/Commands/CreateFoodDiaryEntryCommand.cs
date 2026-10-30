@@ -18,7 +18,14 @@ public record CreateFoodDiaryEntryCommand : LogMealRequest, IRequest<CreateFoodD
 
 public record CreateFoodDiaryEntryResult
 {
+    /// <summary>The first row written; a recipe writes one row per ingredient (see <see cref="EntryIds"/>).</summary>
     public Guid Id { get; init; }
+
+    /// <summary>The group a recipe's rows share, for deleting or editing them together. Null for a single food.</summary>
+    public Guid? GroupId { get; init; }
+
+    /// <summary>Every row written, in order.</summary>
+    public IReadOnlyList<Guid> EntryIds { get; init; } = [];
     public bool Success { get; init; }
     public string? Message { get; init; }
     public IReadOnlyList<string> Warnings { get; init; } = [];
@@ -223,6 +230,8 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
         return new CreateFoodDiaryEntryResult
         {
             Id = entries[0].Id,
+            GroupId = entries[0].GroupId,
+            EntryIds = entries.Select(e => e.Id).ToList(),
             Success = true,
             Message = "Entry logged successfully",
             Warnings = warnings,

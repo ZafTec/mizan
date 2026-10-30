@@ -87,7 +87,7 @@ public sealed class MealTools
                     write.Kind,
                     write.MealIndex,
                     response = JsonSerializer.Deserialize<JsonElement>(response),
-                    includesWeight = write.Kind == "workout" && weightKg.HasValue
+                    includesWeight = write.Kind is "workout" or "measurement" && weightKg.HasValue
                 });
             }
             catch (Exception error) when (error is not OperationCanceledException)
@@ -215,7 +215,7 @@ public sealed class MealTools
     }
 
     [McpServerTool(Name = "log_meal")]
-    [Description("Log a recipe to the food diary. Use search_recipes or get_recipe first to get a recipeId.")]
+    [Description("Log a recipe to the food diary. Use search_recipes or get_recipe first to get a recipeId. A recipe is logged as one row per ingredient: the result has groupId (for delete_meal_group) and every row id in entryIds.")]
     public async Task<string> LogMeal(
         [Description("Recipe UUID from search_recipes")] string recipeId,
         [Description("Date in YYYY-MM-DD format")] string date,

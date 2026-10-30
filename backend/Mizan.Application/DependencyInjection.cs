@@ -44,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<Ai.AiConversations>();
         services.AddScoped<Planning.PlanCostTable>();
         services.AddScoped<Planning.MealPlanContextBuilder>();
+        services.AddScoped<Services.FoodAnalysisCatalogue>();
         services.AddScoped<Planning.ShoppingListAccess>();
         services.AddScoped<Prices.PriceBookReader>();
         services.AddScoped<Prices.PriceAliasSuggester>();

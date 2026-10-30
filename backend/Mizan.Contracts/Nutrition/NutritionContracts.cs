@@ -40,7 +40,16 @@ public record FoodAnalysisResult
 
 public record RecognizedFood
 {
+    public const string EstimateSource = "estimate";
+    public const string FromCatalogueSource = "catalogue";
+
     public string Name { get; init; } = string.Empty;
+
+    /// <summary>The catalogue food this is, when one matches by name; its nutrition is then the catalogue's.</summary>
+    public Guid? FoodId { get; init; }
+
+    /// <summary>"catalogue" when the numbers are the matched food's per 100 g at this portion, else "estimate".</summary>
+    public string Source { get; init; } = EstimateSource;
     public decimal PortionGrams { get; init; }
     public decimal Calories { get; init; }
     public decimal Protein { get; init; }

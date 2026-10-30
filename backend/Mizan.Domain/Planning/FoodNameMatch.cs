@@ -18,7 +18,11 @@ public static class FoodNameMatch
         string.Join(' ', (value ?? string.Empty).ToLowerInvariant()
             .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
 
-    public static T? Pick<T>(string written, IEnumerable<T> candidates, Func<T, string> name) where T : class
+    /// <param name="allowContained">
+    /// False drops the last tier: a candidate the written name merely contains ("grilled chicken
+    /// breast" finding "Chicken") is not picked. Nutrition copied from a food needs the closer match.
+    /// </param>
+    public static T? Pick<T>(string written, IEnumerable<T> candidates, Func<T, string> name, bool allowContained = true) where T : class
     {
         var wanted = Words(written);
         if (wanted.Length == 0) return null;
@@ -36,7 +40,7 @@ public static class FoodNameMatch
             int score;
             if (have.SequenceEqual(wanted)) score = 0;
             else if (Contains(have, wanted)) score = 10_000 + (haveLength - wantedLength);
-            else if (haveLength >= MinimumContainedLength && Contains(wanted, have)) score = 20_000 + (wantedLength - haveLength);
+            else if (allowContained && haveLength >= MinimumContainedLength && Contains(wanted, have)) score = 20_000 + (wantedLength - haveLength);
             else continue;
 
             var joined = string.Join(' ', have);

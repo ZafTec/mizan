@@ -61,6 +61,30 @@ public class FoodTextTests
         toast.GetProperty("fatGrams").GetDecimal().Should().Be(15m);
     }
 
+    /// <summary>M-11: a food the catalogue knows comes back as that food, with the catalogue's numbers.</summary>
+    [Fact]
+    public async Task AFoodTheCatalogueKnows_ComesBackWithItsIdAndTheCataloguesNutrition()
+    {
+        var (client, _) = await ProUserAsync();
+        var injera = await _fixture.SeedFoodAsync("Injera", 166, 4.5m, 34, 1.1m);
+        _fixture.Ai.Reply("""
+            {"foods":[
+               {"name":"injera","portionGrams":200,"calories":320,"protein":7,"carbs":70,"fat":2},
+               {"name":"Spiced unicorn stew","portionGrams":100,"calories":150,"protein":10,"carbs":5,"fat":9}],
+             "totalCalories":470,"confidence":0.6}
+            """);
+
+        var result = await (await Post(client, "two pieces of injera with stew")).Content.ReadFromJsonAsync<FoodAnalysisResult>();
+
+        var bread = result!.Foods[0];
+        (bread.FoodId, bread.Name, bread.Source).Should().Be((injera.Id, "Injera", "catalogue"));
+        (bread.Calories, bread.Protein, bread.Carbs, bread.Fat).Should().Be((332m, 9m, 68m, 2.2m));
+        bread.Per100g!.ProteinGrams.Should().Be(4.5m);
+        var stew = result.Foods[1];
+        (stew.FoodId, stew.Source, stew.Protein).Should().Be(((Guid?)null, "estimate", 10m));
+        result.TotalCalories.Should().Be(482);
+    }
+
     [Fact]
     public async Task TheModelIsToldItIsReadingWords_AndSeesTheDescription()
     {

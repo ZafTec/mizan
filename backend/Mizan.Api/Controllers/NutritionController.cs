@@ -23,6 +23,7 @@ public class NutritionController : ControllerBase
     private readonly IStorageService _storage;
     private readonly IRemoteImageFetcher _images;
     private readonly ILogger<NutritionController> _logger;
+    private readonly Mizan.Application.Services.FoodAnalysisCatalogue _catalogue;
 
     public NutritionController(
         IMediator mediator,
@@ -30,8 +31,10 @@ public class NutritionController : ControllerBase
         ICurrentUserService currentUser,
         IStorageService storage,
         IRemoteImageFetcher images,
-        ILogger<NutritionController> logger)
+        ILogger<NutritionController> logger,
+        Mizan.Application.Services.FoodAnalysisCatalogue catalogue)
     {
+        _catalogue = catalogue;
         _mediator = mediator;
         _aiService = aiService;
         _currentUser = currentUser;
@@ -120,7 +123,7 @@ public class NutritionController : ControllerBase
 
     private async Task<FoodAnalysisResult> AnalyzeAsync(Guid userId, byte[] imageBytes, string contentType)
     {
-        var result = await _aiService.AnalyzeFoodImageAsync(userId, imageBytes, contentType);
+        var result = await _catalogue.MatchAsync(userId, await _aiService.AnalyzeFoodImageAsync(userId, imageBytes, contentType), HttpContext.RequestAborted);
 
         // Stored after the analysis, not before: a photo the model could not
         // read is not worth keeping, and this way a storage outage costs the
@@ -150,7 +153,8 @@ public class NutritionController : ControllerBase
             return Unauthorized();
         }
 
-        return Ok(await _aiService.AnalyzeFoodTextAsync(_currentUser.UserId.Value, description));
+        var userId = _currentUser.UserId.Value;
+        return Ok(await _catalogue.MatchAsync(userId, await _aiService.AnalyzeFoodTextAsync(userId, description), HttpContext.RequestAborted));
     }
 
     public const int MaxDescriptionLength = 600;
