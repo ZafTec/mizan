@@ -202,7 +202,7 @@ builder.Services.AddAuthorization(options =>
         .RequireRole("admin"));
 
     options.AddPolicy("RequireTrainer", policy => policy
-        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, OAuthBearerAuthenticationSchemeOptions.DefaultScheme)
+        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, OAuthBearerAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser()
         .RequireRole("trainer"));
 

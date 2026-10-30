@@ -370,7 +370,7 @@ public sealed class MealPlanTools
     // ---- coaching --------------------------------------------------------
 
     [McpServerTool(Name = "create_plan_for_client", Idempotent = false)]
-    [Description("Coach only. Draft a meal plan for a client who allowed meal planning. The plan is the client's, waits as a draft until they accept or decline it, and the client is notified. Takes the same arguments as create_meal_plan, except a household. " + RulesHelp + " " + EntriesHelp)]
+    [Description("For a coach whose client allowed meal planning. Draft a meal plan for that client. The plan is the client's, waits as a draft until they accept or decline it, and the client is notified. Takes the same arguments as create_meal_plan, except a household. " + RulesHelp + " " + EntriesHelp)]
     public async Task<string> CreatePlanForClient(
         [Description("Client's user UUID")] string clientId,
         [Description("Plan name")] string name,
@@ -387,7 +387,7 @@ public sealed class MealPlanTools
     }
 
     [McpServerTool(Name = "apply_template_for_client", Idempotent = false)]
-    [Description("Coach only. Draft a client's meal plan from a template (one of your own or a global one, see list_templates), starting on a date. " +
+    [Description("For a coach whose client allowed meal planning. Draft the client's meal plan from a template (one of your own or a global one, see list_templates), starting on a date. " +
         "The copy is the client's draft, as with create_plan_for_client: it needs the client to have allowed meal planning, and the client is notified.")]
     public async Task<string> ApplyTemplateForClient(
         [Description("Client's user UUID")] string clientId,
@@ -406,7 +406,7 @@ public sealed class MealPlanTools
     }
 
     [McpServerTool(Name = "create_template", Idempotent = false)]
-    [Description("Coach only. Keep a meal plan template of your own, to draft client plans from with apply_template_for_client. Only you see it. " + RulesHelp + " " + EntriesHelp)]
+    [Description("For coaches and administrators. Keep a meal plan template of your own, to draft client plans from with apply_template_for_client. Only you see it; a global template is admin_create_template. " + RulesHelp + " " + EntriesHelp)]
     public async Task<string> CreateTemplate(
         [Description("Template name")] string name,
         [Description("How many days the template covers (default 7)")] int durationDays = 7,
@@ -419,7 +419,7 @@ public sealed class MealPlanTools
             TemplateBody(name, durationDays, description, global: false, rulesJson, entriesJson, prepSessionsJson), ct);
 
     [McpServerTool(Name = "update_template", Idempotent = true)]
-    [Description("Coach only. Change one of your own templates: name, description, duration or rules. Its entries are changed with the entry tools, passing the template id as mealPlanId. " + RulesHelp)]
+    [Description("For coaches and administrators. Change one of your own templates: name, description, duration or rules. Its entries are changed with the entry tools, passing the template id as mealPlanId. " + RulesHelp)]
     public async Task<string> UpdateTemplate(
         [Description("Template UUID")] string id,
         [Description("Template name")] string name,
@@ -431,7 +431,7 @@ public sealed class MealPlanTools
             UpdateTemplateBody(name, durationDays, description, rulesJson), ct);
 
     [McpServerTool(Name = "delete_template", Destructive = true)]
-    [Description("Coach only. Delete one of your own templates. Plans already drafted from it are not affected. This is permanent.")]
+    [Description("For coaches and administrators. Delete one of your own templates. Plans already drafted from it are not affected. This is permanent.")]
     public async Task<string> DeleteTemplate(
         [Description("Template UUID")] string id,
         CancellationToken ct = default)

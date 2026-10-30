@@ -546,6 +546,32 @@ public class McpIntegrationTests : IClassFixture<WebApplicationFactory<McpServer
 
     #endregion
 
+    #region Trainer tools
+
+    [Fact]
+    public async Task A_coach_lists_their_clients_through_a_connected_app_and_a_person_without_the_trainer_role_cannot()
+    {
+        var coachId = Guid.NewGuid();
+        await _apiFixture.SeedUserAsync(coachId, "mcp-coach@example.com", emailVerified: true, role: "trainer");
+        var coach = await _apiFixture.CreateMcpAccessAsync(coachId, ["trainer:read"]);
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", coach.Token);
+
+        var listed = await (await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "list_trainer_clients", null)))
+            .Content.ReadFromJsonAsync<JsonRpcResponse>();
+        listed!.Error.Should().BeNull();
+        ExtractToolResultText(listed).Should().NotContain("do not have access", "the trainer endpoints accept the MCP service credential");
+
+        var personId = Guid.NewGuid();
+        await _apiFixture.SeedUserAsync(personId, "mcp-not-coach@example.com", emailVerified: true);
+        var person = await _apiFixture.CreateMcpAccessAsync(personId, ["trainer:read"]);
+        _mcpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", person.Token);
+        var refused = await (await _mcpClient.PostMcpAsync(CreateJsonRpcCallRequest("tools/call", "list_trainer_clients", null)))
+            .Content.ReadFromJsonAsync<JsonRpcResponse>();
+        (ExtractErrorMessage(refused) ?? ExtractToolResultText(refused)).Should().Be("You do not have access to this.");
+    }
+
+    #endregion
+
     #region get_shopping_list Tool Tests
 
     [Fact]

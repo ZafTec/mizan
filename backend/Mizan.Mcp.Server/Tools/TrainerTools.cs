@@ -50,7 +50,7 @@ public sealed class TrainerTools
     // -- Trainer-only tools (backend enforces RequireTrainer policy) --
 
     [McpServerTool(Name = "respond_to_trainer_request")]
-    [Description("Respond to a client's trainer request (accept or reject). Requires trainer role.")]
+    [Description("Respond to a client's trainer request (accept or reject). For coaches (the trainer role).")]
     public async Task<string> RespondToRequest(
         [Description("Relationship UUID")] string relationshipId,
         [Description("Accept or reject the request")] bool accept,
@@ -72,7 +72,7 @@ public sealed class TrainerTools
     }
 
     [McpServerTool(Name = "list_trainer_clients", ReadOnly = true, Idempotent = true)]
-    [Description("List the trainer's clients. Requires trainer role.")]
+    [Description("List the trainer's clients. For coaches (the trainer role).")]
     public async Task<string> ListClients(
         [Description("Page number (default 1)")] int page = 1,
         [Description("Results per page (default 20)")] int pageSize = 20,
@@ -82,7 +82,7 @@ public sealed class TrainerTools
     }
 
     [McpServerTool(Name = "list_trainer_pending_requests", ReadOnly = true, Idempotent = true)]
-    [Description("List pending client requests for the trainer. Requires trainer role.")]
+    [Description("List pending client requests for the trainer. For coaches (the trainer role).")]
     public async Task<string> ListPendingRequests(
         [Description("Page number (default 1)")] int page = 1,
         [Description("Results per page (default 20)")] int pageSize = 20,
@@ -92,7 +92,7 @@ public sealed class TrainerTools
     }
 
     [McpServerTool(Name = "get_client_nutrition", ReadOnly = true, Idempotent = true)]
-    [Description("View a client's nutrition data for a specific date. Requires trainer role and permission.")]
+    [Description("View a client's nutrition data for a specific date. For coaches (the trainer role); the client must have shared their nutrition.")]
     public async Task<string> GetClientNutrition(
         [Description("Client's user UUID")] string clientId,
         [Description("Date in ISO format (optional, defaults to today)")] string? date = null,
