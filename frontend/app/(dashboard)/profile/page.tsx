@@ -1,302 +1,258 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSession } from "@/lib/auth-client";
-import Loading from "@/components/Loading";
-import { Icon, type IconName } from "@/components/ui/icon";
-import { getProfileObservations, type ProfileObservations } from "@/lib/api/profile";
+import { ChevronRight } from "lucide-react";
+import { listSessions, useSession } from "@/lib/auth-client";
+import { SignOutDialog } from "@/components/SignOutDialog";
+import {
+  getProfileObservations,
+  type ProfileObservations,
+} from "@/lib/api/profile";
+import { useSubscription } from "@/lib/hooks/useSubscription";
 
-type QuickLink = {
-	href: string;
-	title: string;
-	description: string;
-	icon: IconName;
-};
+const monthYear = (value: string) =>
+  new Date(value).toLocaleDateString(undefined, {
+    month: "long",
+    year: "numeric",
+  });
 
+const plural = (count: number, one: string) =>
+  `${count} ${one}${count === 1 ? "" : "s"}`;
+
+/**
+ * Who you are to Mizan (design board Profile.dc.html): the name, how long you
+ * have been here, three facts the API keeps, and where the account is managed.
+ * Features live in More; settings live on their own page.
+ */
 export default function ProfilePage() {
-	const { data: session, isPending } = useSession();
-	const [observations, setObservations] = useState<ProfileObservations | null>(null);
-	const [loadingObservations, setLoadingObservations] = useState(true);
+  const { data: session, isPending } = useSession();
+  const { subscription } = useSubscription();
+  const [facts, setFacts] = useState<ProfileObservations | null>(null);
+  const [sessionCount, setSessionCount] = useState<number | null>(null);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
 
-	useEffect(() => {
-		if (!session?.user) {
-			return;
-		}
+  useEffect(() => {
+    if (!session?.user) return;
+    let cancelled = false;
+    getProfileObservations()
+      .then((result) => {
+        if (!cancelled) setFacts(result);
+      })
+      .catch(() => {
+        /* The name and the links still render; the facts show a dash. */
+      });
+    listSessions()
+      .then((sessions) => {
+        if (!cancelled)
+          setSessionCount(
+            sessions.filter((item) => new Date(item.expiresAt) > new Date())
+              .length,
+          );
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user]);
 
-		let cancelled = false;
+  if (isPending) {
+    return (
+      <div className="mx-auto max-w-[900px]" aria-busy="true">
+        <h1 className="sr-only">Profile</h1>
+        <div className="h-24 border-b border-foreground" />
+      </div>
+    );
+  }
+  if (!session?.user) return null;
 
-		(async () => {
-			try {
-				const result = await getProfileObservations();
-				if (!cancelled) {
-					setObservations(result);
-				}
-			} catch (error) {
-				console.error("Failed to load profile observations:", error);
-			} finally {
-				if (!cancelled) {
-					setLoadingObservations(false);
-				}
-			}
-		})();
+  const user = session.user;
+  const plan = subscription
+    ? `${subscription.plan}${subscription.isLifetime ? ", lifetime" : ""}`
+    : null;
+  const role =
+    user.role === "admin"
+      ? "Administrator"
+      : user.role === "trainer"
+        ? "Trainer"
+        : null;
+  const since = [
+    facts ? `Member since ${monthYear(facts.joinedAt)}` : null,
+    plan,
+    role,
+  ].filter(Boolean);
 
-		return () => {
-			cancelled = true;
-		};
-	}, [session?.user]);
+  const manage = [
+    {
+      href: "/profile/settings",
+      title: "Settings",
+      detail: "Account, your day and prices, assistant, appearance",
+    },
+    {
+      href: "/profile/household",
+      title: "Household",
+      detail: "Share plans and shopping lists",
+    },
+    {
+      href: "/profile/mcp",
+      title: "Connected apps",
+      detail: "Telegram, Claude and other assistants",
+    },
+    {
+      href: "/billing",
+      title: "Subscription",
+      detail: plan ?? "Your plan and invoices",
+    },
+    {
+      href: "/profile/sessions",
+      title: "Signed-in devices",
+      detail:
+        sessionCount === null
+          ? "Where you are signed in"
+          : `${plural(sessionCount, "active session")}`,
+    },
+  ];
 
-	const quickLinks = useMemo<QuickLink[]>(() => {
-		const links: QuickLink[] = [
-			// {
-			// 	href: "/profile/settings",
-			// 	title: "Settings center",
-			// 	description: "Account, appearance, export, sessions, and delete flow.",
-			// 	icon: "sparkles",
-			// },
-			{
-				href: "/goal",
-				title: "Nutrition goals",
-				description: "Set and update your daily macro targets.",
-				icon: "chartLine",
-			},
-			{
-				href: "/meals",
-				title: "Food diary",
-				description: "View your logged meals and daily totals.",
-				icon: "flame",
-			},
-			{
-				href: "/workouts",
-				title: "Workouts",
-				description: "Log sessions and browse exercises.",
-				icon: "rocket",
-			},
-			{
-				href: "/body-measurements",
-				title: "Measurements",
-				description: "Track your body composition over time.",
-				icon: "trendingUp",
-			},
-			{
-				href: "/achievements",
-				title: "Achievements",
-				description: "Your streaks, badges, and milestones.",
-				icon: "circleCheck",
-			},
-		];
 
-		if (session?.user) {
-			links.push({
-				href: "/profile/mcp",
-				title: "MCP tools",
-				description: "Developer tokens and usage.",
-				icon: "bot",
-			});
-		}
+  return (
+    <div
+      className="mx-auto flex max-w-[900px] flex-col gap-8"
+      data-testid="profile-page"
+    >
+      <header className="flex flex-wrap items-center gap-5 border-b border-foreground pb-6">
+        {user.image ? (
+          <span className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-full">
+            <Image
+              src={user.image}
+              alt=""
+              fill
+              sizes="72px"
+              className="object-cover"
+            />
+          </span>
+        ) : (
+          <span
+            aria-hidden="true"
+            className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-hair text-[28px] font-semibold"
+          >
+            {(user.name || user.email || "?").charAt(0).toUpperCase()}
+          </span>
+        )}
+        <div className="flex min-w-0 flex-[1_1_240px] flex-col gap-1.5">
+          <p className="text-xs font-semibold tracking-[0.14em] uppercase text-muted-foreground">
+            Profile
+          </p>
+          <h1 className="truncate text-[30px] leading-tight font-semibold tracking-tight sm:text-[34px]">
+            {user.name || user.email}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {since.length > 0 ? since.join(" · ") : user.email}
+          </p>
+        </div>
+        <Link href="/profile/settings#account" className="btn-secondary min-h-11">
+          Edit profile
+        </Link>
+      </header>
 
-		return links;
-	}, [session?.user]);
+      <section
+        aria-label="Your progress"
+        className="grid grid-cols-1 border-b border-border sm:grid-cols-3"
+      >
+        <Fact label="Streak" first>
+          <span className="tabular-nums text-[30px] leading-none">
+            {facts ? plural(facts.streakCount, "day") : "—"}
+          </span>
+          <span className="text-[13px] text-muted-foreground">Log today to keep it</span>
+        </Fact>
+        <Fact label="Goal">
+          <span className="text-lg leading-snug">
+            {facts?.goalSummary || "—"}
+          </span>
+          <Link href="/progress" className="text-link">
+            See progress
+          </Link>
+        </Fact>
+        <Fact label="Achievements">
+          <span className="tabular-nums text-[30px] leading-none">
+            {facts ? facts.achievementCount : "—"}
+          </span>
+          <Link href="/achievements" className="text-link">
+            All achievements
+          </Link>
+        </Fact>
+      </section>
 
-	if (isPending) {
-		return (
-			<div className="flex min-h-[60vh] items-center justify-center">
-				<Loading />
-			</div>
-		);
-	}
+      <section aria-labelledby="manage-title">
+        <h2
+          id="manage-title"
+          className="mb-1.5 text-xs font-semibold tracking-[0.14em] uppercase text-muted-foreground"
+        >
+          Manage
+        </h2>
+        <ul>
+          {manage.map((link) => (
+            <li key={link.href}>
+              <Link
+                href={link.href}
+                className="ledger-row transition-colors hover:bg-hair"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[15px] font-medium">
+                    {link.title}
+                  </span>
+                  <span className="mt-0.5 block text-[13px] text-muted-foreground">
+                    {link.detail}
+                  </span>
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  size={18}
+                  strokeWidth={1.6}
+                  className="text-muted-foreground"
+                />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-	if (!session?.user) {
-		return (
-			<div className="flex min-h-[60vh] items-center justify-center">
-				<p className="text-charcoal-blue-500">Not authenticated</p>
-			</div>
-		);
-	}
-
-	const user = session.user;
-	const isTrainer = user.role === "trainer" || user.role === "admin";
-	const showRoleCard = Boolean(user.role && user.role !== "user");
-
-	return (
-		<div className="mx-auto max-w-6xl space-y-6" data-testid="profile-page">
-			<section className="surface-panel p-6 sm:p-8">
-				<div className="flex items-start gap-4 sm:gap-5">
-					<div className="flex items-start gap-4 sm:gap-5">
-						<ProfileAvatar image={user.image} email={user.email} name={user.name} />
-						<div>
-							<p className="eyebrow mb-3">
-								<Icon name="user" size={14} aria-hidden="true" />
-								Profile hub
-							</p>
-							<h1 className="text-3xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-								{user.name || user.email}
-							</h1>
-							<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{user.email}</p>
-						</div>
-					</div>
-				</div>
-
-				<div className={`mt-6 grid gap-3 sm:grid-cols-2 ${showRoleCard ? "xl:grid-cols-4" : "xl:grid-cols-3"}`}>
-					{showRoleCard ? (
-						<StatCard
-							label="Role"
-							value={user.role || "user"}
-							helper={isTrainer ? "Trainer access" : "Standard access"}
-						/>
-					) : null}
-					<StatCard
-						label="Joined"
-						value={loadingObservations || !observations ? "--" : formatDate(observations.joinedAt)}
-						helper="Account age"
-					/>
-					<StatCard
-						label="Current streak"
-						value={loadingObservations || !observations ? "--" : `${observations.streakCount} days`}
-						helper={loadingObservations || !observations ? "Loading..." : `Longest ${observations.longestStreak} days`}
-					/>
-					<StatCard
-						label="Active goal"
-						value={loadingObservations || !observations ? "--" : observations.goalSummary}
-						helper="Saved nutrition targets"
-					/>
-				</div>
-			</section>
-
-			<div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-				<section className="card p-6 sm:p-7">
-					<div className="flex items-center justify-between gap-4">
-						<div>
-							<h2 className="text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Account hub</h2>
-						</div>
-						<Link href="/profile/settings" className="btn-secondary btn-sm">
-							Open settings
-							<Icon name="arrowRight" size={16} aria-hidden="true" />
-						</Link>
-					</div>
-
-					<div className="mt-6 grid gap-3 sm:grid-cols-2">
-						{quickLinks.map((link) => (
-							<Link
-								key={link.href}
-								href={link.href}
-								className="group rounded-3xl border border-charcoal-blue-200 bg-white p-4 transition-colors hover:border-charcoal-blue-300 dark:border-white/10 dark:bg-charcoal-blue-950 dark:hover:border-white/20"
-							>
-								<div className="flex items-start gap-3">
-									<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
-										<Icon name={link.icon} size={18} aria-hidden="true" />
-									</span>
-									<div className="min-w-0">
-										<div className="flex items-center justify-between gap-3">
-											<p className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">{link.title}</p>
-											<Icon name="arrowRight" size={16} aria-hidden="true" className="text-charcoal-blue-400 group-hover:text-charcoal-blue-900 dark:group-hover:text-white" />
-										</div>
-										<p className="mt-1 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{link.description}</p>
-									</div>
-								</div>
-							</Link>
-						))}
-					</div>
-				</section>
-
-				<section className="space-y-6">
-					<div className="card p-6">
-						<div className="flex items-start gap-3">
-							<span className="icon-chip h-11 w-11 text-brand-600 dark:text-brand-300">
-								<Icon name="activity" size={18} aria-hidden="true" />
-							</span>
-						<div>
-							<h2 className="text-xl font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">Current read</h2>
-						</div>
-						</div>
-
-						{loadingObservations || !observations ? (
-							<div className="mt-6 flex min-h-48 items-center justify-center">
-								<Loading />
-							</div>
-						) : (
-							<div className="mt-6 space-y-3">
-								<InsightRow label="Meal logging cadence" value={`${observations.mealLoggingDays}/14 tracked days`} helper={`Average ${observations.averageCalories} kcal on logged days`} />
-								<InsightRow label="Achievements" value={`${observations.achievementCount} earned`} helper={`${observations.totalAchievementPoints} total points`} />
-								<InsightRow label="MCP usage" value={`${observations.mcpCalls} calls`} helper={`${observations.mcpSuccessRate}% success rate`} />
-							</div>
-						)}
-					</div>
-
-				</section>
-			</div>
-		</div>
-	);
+      <button
+        type="button"
+        onClick={() => setConfirmSignOut(true)}
+        className="text-link self-start text-sm"
+      >
+        Sign out
+      </button>
+      <SignOutDialog
+        open={confirmSignOut}
+        onClose={() => setConfirmSignOut(false)}
+      />
+    </div>
+  );
 }
 
-function ProfileAvatar({
-	image,
-	email,
-	name,
+function Fact({
+  label,
+  first,
+  children,
 }: {
-	image?: string | null;
-	email?: string | null;
-	name?: string | null;
+  label: string;
+  first?: boolean;
+  children: React.ReactNode;
 }) {
-	if (image) {
-		return (
-			<div className="relative h-20 w-20 overflow-hidden rounded-2xl ring-1 ring-brand-500/20 sm:h-24 sm:w-24">
-				<Image src={image} alt={name || email || "User"} fill sizes="(max-width: 640px) 80px, 96px" className="object-cover" />
-			</div>
-		);
-	}
-
-	return (
-		<div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-600 text-2xl font-semibold text-white ring-1 ring-brand-500/20 dark:bg-brand-500 sm:h-24 sm:w-24">
-			{(email || "U").charAt(0).toUpperCase()}
-		</div>
-	);
-}
-
-function StatCard({
-	label,
-	value,
-	helper,
-}: {
-	label: string;
-	value: string;
-	helper: string;
-}) {
-	return (
-		<div className="rounded-3xl border border-charcoal-blue-200 bg-white p-4 dark:border-white/10 dark:bg-charcoal-blue-900">
-			<p className="text-xs font-semibold uppercase tracking-[0.14em] text-charcoal-blue-500 dark:text-charcoal-blue-400">{label}</p>
-			<p className="mt-3 text-lg font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">{value}</p>
-			<p className="mt-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{helper}</p>
-		</div>
-	);
-}
-
-function InsightRow({
-	label,
-	value,
-	helper,
-}: {
-	label: string;
-	value: string;
-	helper: string;
-}) {
-	return (
-		<div className="rounded-3xl border border-charcoal-blue-200 bg-charcoal-blue-50/90 p-4 dark:border-white/10 dark:bg-charcoal-blue-900/70">
-			<div className="flex items-center justify-between gap-3">
-				<p className="font-medium text-charcoal-blue-900 dark:text-charcoal-blue-50">{label}</p>
-				<p className="text-sm font-medium text-brand-700 dark:text-brand-300">{value}</p>
-			</div>
-			<p className="mt-2 text-sm text-charcoal-blue-500 dark:text-charcoal-blue-400">{helper}</p>
-		</div>
-	);
-}
-
-function formatDate(value?: string | null) {
-	if (!value) return "--";
-	return new Date(value).toLocaleDateString(undefined, {
-		year: "numeric",
-		month: "short",
-		day: "numeric",
-	});
+  return (
+    <div
+      className={
+        first
+          ? "flex flex-col gap-1.5 pt-1 pr-5 pb-5"
+          : "flex flex-col gap-1.5 border-t border-border py-5 sm:border-t-0 sm:border-l sm:pt-1 sm:pr-5 sm:pl-5"
+      }
+    >
+      <span className="text-[10px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">
+        {label}
+      </span>
+      {children}
+    </div>
+  );
 }

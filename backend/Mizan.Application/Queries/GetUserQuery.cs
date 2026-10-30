@@ -1,28 +1,12 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Users;
 using Mizan.Domain.Entities;
 
 namespace Mizan.Application.Queries;
 
 public record GetUserQuery(Guid UserId) : IRequest<UserDto?>;
-
-public record UserDto(
-    Guid Id,
-    string Email,
-    string? Name,
-    string? Image,
-    DateTime CreatedAt,
-    UserGoalSummaryDto? CurrentGoal,
-    int StreakCount
-);
-
-public record UserGoalSummaryDto(
-    decimal? TargetCalories,
-    decimal? TargetProteinGrams,
-    decimal? TargetCarbsGrams,
-    decimal? TargetFatGrams
-);
 
 public class GetUserQueryHandler : IRequestHandler<GetUserQuery, UserDto?>
 {
@@ -78,7 +62,9 @@ public class GetUserQueryHandler : IRequestHandler<GetUserQuery, UserDto?>
                 currentGoal.TargetCarbsGrams,
                 currentGoal.TargetFatGrams
             ) : null,
-            currentStreak
+            currentStreak,
+            user.PriceRegionCode ?? Domain.Pricing.PriceRegionDefaults.Code,
+            user.NotifyByTelegram
         );
     }
 }

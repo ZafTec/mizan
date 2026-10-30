@@ -38,6 +38,48 @@ public sealed class WorkoutSocialIntegrationTests
         error!.ErrorCode.Should().Be("validation_failed");
     }
 
+    /// <summary>
+    /// A workout a week late is saved and leaves the streak alone. A date years away, almost
+    /// always a typo, is refused with the date named, on a new workout and on a change.
+    /// </summary>
+    [Fact]
+    public async Task AWorkoutAWeekLateIsSaved_AndADateYearsAwayIsRefusedWithTheDate()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (userId, email) = await SeedUserAsync("dated-workout");
+        var exerciseId = await SeedExerciseAsync(userId);
+        using var client = _fixture.CreateAuthenticatedClient(userId, email);
+        object Workout(object date, Guid? id = null) => new
+        {
+            id,
+            name = "Legs",
+            workoutDate = date,
+            exercises = new[] { new { exerciseId, sets = new[] { new { reps = 5, weightKg = 60m, completed = true } } } },
+        };
+
+        var late = await client.PostAsJsonAsync("/api/Workouts", Workout(DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-7)));
+        late.IsSuccessStatusCode.Should().BeTrue(await late.Content.ReadAsStringAsync());
+        var lateId = (await late.Content.ReadFromJsonAsync<IdResponse>())!.Id;
+
+        foreach (var (request, date) in new[]
+        {
+            (client.PostAsJsonAsync("/api/Workouts", Workout("2500-01-01")), "2500-01-01"),
+            (client.PutAsJsonAsync($"/api/Workouts/{lateId}", Workout("1900-01-01", lateId)), "1900-01-01"),
+        })
+        {
+            var refused = await request;
+            refused.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            var problem = await refused.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+            problem.GetProperty("errorCode").GetString().Should().Be("validation_failed");
+            problem.GetProperty("error").GetString().Should().StartWith("A workout can be logged").And.Contain(date);
+        }
+
+        using var scope = _fixture.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+        (await db.Workouts.CountAsync(w => w.UserId == userId)).Should().Be(1);
+        (await db.Streaks.AnyAsync(s => s.UserId == userId)).Should().BeFalse("a week-old workout does not start a streak");
+    }
+
     [Fact]
     public async Task MarkNotificationRead_ReturnsNotFoundForUnknownNotification()
     {

@@ -1,0 +1,456 @@
+extern alias McpServer;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Reflection;
+using System.Text;
+using System.Text.Json;
+using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using McpServer::Mizan.Mcp.Server.Authorization;
+using McpServer::Mizan.Mcp.Server.Services;
+using Mizan.Contracts.Mcp;
+using Mizan.Contracts.Planning;
+using ModelContextProtocol.Server;
+using Moq;
+using Xunit;
+
+namespace Mizan.Tests.Integration;
+
+/// <summary>
+/// The MCP endpoint as a client meets it: a 401 that says where to sign in, tools
+/// limited to what the grant covers, and the same behavior for clients that
+/// still send initialize and for those that do not.
+/// </summary>
+public class McpOAuthTransportTests : IClassFixture<WebApplicationFactory<McpServer::Program>>
+{
+    private const string PublicUrl = "https://mizan.example/mcp";
+    private readonly WebApplicationFactory<McpServer::Program> _factory;
+    private readonly Mock<IBackendApiClient> _backend = new();
+    private readonly Guid _user = Guid.NewGuid();
+    private readonly Guid _grant = Guid.NewGuid();
+
+    public McpOAuthTransportTests(WebApplicationFactory<McpServer::Program> factory)
+    {
+        _factory = factory.WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting("Mcp:ServiceApiKey", "test-api-key");
+            builder.UseSetting("Mcp:AdminServiceApiKey", "test-admin-api-key");
+            builder.UseSetting("Mcp:PublicUrl", PublicUrl);
+            builder.UseSetting("Mcp:AuthorizationServer", "https://mizan.example/api");
+            builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["MizanApiUrl"] = "http://localhost:5000",
+                ["ServiceApiKey"] = "test-api-key",
+            }));
+            builder.ConfigureTestServices(services =>
+            {
+                services.RemoveAll<IBackendApiClient>();
+                services.AddSingleton(_backend.Object);
+            });
+        });
+    }
+
+    // ---- sign-in discovery ----
+
+    [Fact]
+    public async Task WithoutAToken_TheAnswerIs401_AndSaysWhereToSignIn()
+    {
+        using var client = _factory.CreateClient();
+
+        var response = await RawAsync(client, "tools/list");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        var challenge = response.Headers.WwwAuthenticate.Single();
+        challenge.Scheme.Should().Be("Bearer");
+        challenge.Parameter.Should().Contain("resource_metadata=").And.Contain("/mcp/.well-known/oauth-protected-resource");
+    }
+
+    [Theory]
+    [InlineData("/mcp/.well-known/oauth-protected-resource")]
+    [InlineData("/.well-known/oauth-protected-resource/mcp")]
+    [InlineData("/.well-known/oauth-protected-resource")]
+    public async Task TheResourceMetadata_NamesTheResourceAndTheAuthorizationServer_WhereverAClientLooks(string path)
+    {
+        using var client = _factory.CreateClient();
+
+        var response = await client.GetAsync(path);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var doc = await response.Content.ReadFromJsonAsync<JsonElement>();
+        doc.GetProperty("resource").GetString().Should().Be(PublicUrl);
+        doc.GetProperty("authorization_servers").EnumerateArray().Select(e => e.GetString())
+            .Should().BeEquivalentTo(new[] { "https://mizan.example/api" });
+        doc.GetProperty("scopes_supported").EnumerateArray().Select(e => e.GetString())
+            .Should().Contain("nutrition:read").And.NotContain("admin");
+    }
+
+    [Fact]
+    public async Task AnInvalidToken_IsRefusedWith401()
+    {
+        _backend.Setup(b => b.IntrospectAsync("bad", It.IsAny<CancellationToken>())).ReturnsAsync(TokenIntrospection.Inactive);
+        using var client = ClientWith("bad");
+
+        (await RawAsync(client, "tools/list")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task WhenTheApiCannotBeReached_TheAnswerIs503WithRetryAfter_NotAReAuthChallenge()
+    {
+        // Null is what the backend client returns for an unreachable or failing API (see BackendApiClientIntrospectionTests).
+        _backend.Setup(b => b.IntrospectAsync("t", It.IsAny<CancellationToken>())).ReturnsAsync((TokenIntrospection?)null);
+        using var client = ClientWith("t");
+
+        var first = await RawAsync(client, "tools/list");
+        var second = await RawAsync(client, "tools/list");
+
+        first.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable, "the token was never judged, so the client must not throw it away");
+        first.Headers.RetryAfter.Should().NotBeNull();
+        first.Headers.RetryAfter!.Delta.Should().BeGreaterThan(TimeSpan.Zero);
+        first.Headers.WwwAuthenticate.Should().BeEmpty("a sign-in challenge would restart OAuth for an outage");
+        second.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+        _backend.Verify(b => b.IntrospectAsync("t", It.IsAny<CancellationToken>()), Times.Exactly(2),
+            "an outage is not remembered as a rejected token; the next request asks again");
+    }
+
+    // ---- what a grant can see and call ----
+
+    [Fact]
+    public async Task ToolsList_ShowsOnlyWhatTheGrantCovers()
+    {
+        using var client = Authorized("t", "nutrition:read");
+
+        var names = await ToolNamesAsync(client);
+
+        names.Should().Contain(new[] { "search_foods", "get_food_diary" });
+        names.Should().NotContain(new[] { "log_food", "delete_meal", "get_workout", "ask_ai", "admin_list_users" });
+        names.Select(n => McpToolScopes.All[n]).Should().OnlyContain(scope => scope.StartsWith("nutrition:"));
+    }
+
+    [Fact]
+    public async Task WriteIncludesRead_AndAdminToolsNeedTheAdminScope()
+    {
+        using var writer = Authorized("w", "nutrition:write");
+        var written = await ToolNamesAsync(writer);
+        written.Should().Contain(new[] { "log_food", "search_foods" });
+        written.Should().NotContain("admin_list_users");
+
+        using var admin = Authorized("a", "nutrition:read", "admin");
+        (await ToolNamesAsync(admin)).Should().Contain("admin_list_users");
+    }
+
+    [Fact]
+    public async Task FullScope_ListsEveryToolExceptAdminOnes()
+    {
+        using var client = Authorized("f", McpScopes.Full);
+
+        var names = await ToolNamesAsync(client);
+
+        names.Should().NotContain(n => n.StartsWith("admin_"));
+        names.Count.Should().Be(McpToolScopes.All.Count(kv => kv.Value != McpScopes.Admin));
+    }
+
+    [Fact]
+    public async Task EveryRegisteredTool_HasAScope_AndEveryScopeIsReal()
+    {
+        using var client = Authorized("all", McpScopes.Full, McpScopes.Admin);
+
+        var listed = await ToolNamesAsync(client);
+
+        listed.Should().BeEquivalentTo(McpToolScopes.All.Keys,
+            "a tool with no scope on record is invisible and uncallable, and a scope on record for no tool is stale");
+        McpToolScopes.All.Values.Should().OnlyContain(scope => McpScopes.All.Contains(scope));
+
+        // The list above hides a tool that has no scope, so the source is checked too: every [McpServerTool] in the server has a row.
+        var registered = typeof(McpToolScopes).Assembly.GetTypes()
+            .SelectMany(type => type.GetMethods())
+            .Select(method => method.GetCustomAttribute<McpServerToolAttribute>()?.Name)
+            .Where(name => name is not null)
+            .ToList();
+        registered.Should().BeEquivalentTo(McpToolScopes.All.Keys, "a tool missing from McpToolScopes would ship invisible instead of open, but it would still ship broken");
+    }
+
+    [Fact]
+    public async Task EveryListedTool_HasATitle_AndIsMarkedClosedWorld()
+    {
+        using var client = Authorized("f", McpScopes.Full);
+
+        var tools = (await ListAsync(client)).GetProperty("result").GetProperty("tools").EnumerateArray().ToList();
+
+        tools.Select(t => t.TryGetProperty("title", out var title) ? title.GetString() ?? "" : "").Should().OnlyContain(title => title.Length > 0);
+        tools.Should().OnlyContain(t => t.GetProperty("annotations").GetProperty("openWorldHint").GetBoolean() == false);
+    }
+
+    [Fact]
+    public async Task ACallOutsideTheGrant_IsRefusedWithTheExactPermission_AndNeverReachesTheApi()
+    {
+        using var client = Authorized("t", "nutrition:read");
+
+        var result = await CallAsync(client, "log_food", new { foodId = Guid.NewGuid(), date = "2026-10-01", mealType = "LUNCH", servings = 1 });
+
+        result.GetProperty("isError").GetBoolean().Should().BeTrue();
+        var text = result.GetProperty("content")[0].GetProperty("text").GetString()!;
+        text.Should().Contain("nutrition:write").And.Contain("Connected apps");
+        _backend.Verify(b => b.PostAsync(It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _backend.Verify(b => b.LogUsageAsync(_grant, _user, "tool", "log_food", false, It.IsAny<string?>(), It.IsAny<int>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AnAdminToolCall_WithoutTheAdminScope_IsRefused()
+    {
+        using var client = Authorized("t", McpScopes.Full);
+
+        var result = await CallAsync(client, "admin_list_users", new { });
+
+        result.GetProperty("isError").GetBoolean().Should().BeTrue();
+        result.GetProperty("content")[0].GetProperty("text").GetString().Should().Contain("administrator");
+        _backend.Verify(b => b.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task PlanningTools_AreHiddenWithoutPlanningRead_AndWritesNeedPlanningWrite()
+    {
+        using var stranger = Authorized("s", "nutrition:read");
+        (await ToolNamesAsync(stranger)).Should().NotContain(n => McpToolScopes.All[n].StartsWith("planning:"));
+
+        using var reader = Authorized("r", "planning:read");
+        var read = await ToolNamesAsync(reader);
+        read.Should().Contain(new[] { "list_meal_plans", "get_meal_plan", "get_plan_day", "list_templates", "list_shopping_lists", "get_shopping_list" });
+        read.Should().NotContain(new[] { "create_meal_plan", "add_plan_entry", "log_plan_entry", "generate_shopping_list", "toggle_shopping_list_item", "create_plan_for_client", "admin_create_template" });
+
+        var refused = await CallAsync(reader, "add_plan_entry", new { mealPlanId = Guid.NewGuid(), dayIndex = 0, slot = "DINNER", kind = "Text", text = "soup" });
+        refused.GetProperty("isError").GetBoolean().Should().BeTrue();
+        refused.GetProperty("content")[0].GetProperty("text").GetString().Should().Contain("planning:write");
+        _backend.Verify(b => b.PostAsync(It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<CancellationToken>()), Times.Never);
+
+        using var writer = Authorized("w", "planning:write");
+        var written = await ToolNamesAsync(writer);
+        written.Should().Contain(new[] { "get_meal_plan", "create_meal_plan", "add_plan_entry", "remove_plan_entry", "log_plan_entry", "generate_shopping_list", "apply_template", "clear_checked_items" });
+        written.Should().NotContain(new[] { "create_plan_for_client", "apply_template_for_client", "create_template", "admin_create_template", "admin_update_template", "admin_delete_template" },
+            "a coach's draft needs the trainer scope and global templates the admin scope");
+    }
+
+    [Fact]
+    public async Task TheCoachsDraftAndTemplateTools_NeedTheTrainerScope_AndGlobalTemplatesTheAdminScope()
+    {
+        using var planner = Authorized("p", "planning:write");
+        var draft = await CallAsync(planner, "create_plan_for_client", new { clientId = Guid.NewGuid(), name = "Week", startDate = "2026-10-12" });
+        draft.GetProperty("isError").GetBoolean().Should().BeTrue();
+        draft.GetProperty("content")[0].GetProperty("text").GetString().Should().Contain("trainer:write");
+
+        var template = await CallAsync(planner, "admin_create_template", new { name = "Keto week" });
+        template.GetProperty("isError").GetBoolean().Should().BeTrue();
+        template.GetProperty("content")[0].GetProperty("text").GetString().Should().Contain("administrator");
+        _backend.Verify(b => b.PostAsync(It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<CancellationToken>()), Times.Never);
+
+        using var coach = Authorized("c", "trainer:write");
+        (await ToolNamesAsync(coach)).Should().Contain(new[] { "create_plan_for_client", "apply_template_for_client", "create_template", "update_template", "delete_template" })
+            .And.NotContain("create_meal_plan");
+
+        // A coach's template and a draft from it go to the same routes the web uses.
+        var clientId = Guid.NewGuid();
+        var templateId = Guid.NewGuid();
+        _backend.Setup(b => b.PostAsync(It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<CancellationToken>())).ReturnsAsync("""{"id":"x"}""");
+        var kept = await CallAsync(coach, "create_template", new { name = "Cut" });
+        (kept.TryGetProperty("isError", out var failed) && failed.GetBoolean()).Should().BeFalse();
+        _backend.Verify(b => b.PostAsync("/api/MealPlans/templates",
+            It.Is<object?>(o => IsKeptTemplate(o, "Cut")), It.IsAny<CancellationToken>()), Times.Once);
+        await CallAsync(coach, "apply_template_for_client", new { clientId, templateId, startDate = "2026-11-02" });
+        _backend.Verify(b => b.PostAsync($"/api/Trainers/clients/{clientId}/meal-plans/from-template",
+            It.Is<object?>(o => IsDraftFrom(o, templateId, new DateOnly(2026, 11, 2))),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        using var admin = Authorized("a", "planning:read", "admin");
+        (await ToolNamesAsync(admin)).Should().Contain(new[] { "admin_create_template", "admin_update_template", "admin_delete_template" });
+    }
+
+    private static bool IsKeptTemplate(object? body, string name) => body is CreateTemplateRequest { Global: false } r && r.Name == name;
+
+    private static bool IsDraftFrom(object? body, Guid templateId, DateOnly startDate) =>
+        body is ApplyTemplateForClientRequest r && r.TemplateId == templateId && r.StartDate == startDate;
+
+    [Fact]
+    public async Task GetPlanDay_TurnsNoActivePlanIntoPlainText_NotAnError()
+    {
+        _backend.Setup(b => b.GetAsync(It.Is<string>(s => s.StartsWith("/api/MealPlans/day")), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new BackendApiException(HttpStatusCode.NotFound, "no_active_plan", "Not found: No active plan covers that date."));
+        using var client = Authorized("t", "planning:read");
+
+        var result = await CallAsync(client, "get_plan_day", new { date = "2026-10-12" });
+
+        (result.TryGetProperty("isError", out var error) && error.GetBoolean()).Should().BeFalse();
+        result.GetProperty("content")[0].GetProperty("text").GetString().Should().Contain("No active plan covers that date");
+    }
+
+    [Fact]
+    public async Task AnAllowedCall_ReachesTheApi_AndIsLoggedAgainstTheConnection()
+    {
+        _backend.Setup(b => b.GetAsync(It.Is<string>(s => s.Contains("/api/Foods/search")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("""{"items":[{"name":"Chicken"}]}""");
+        using var client = Authorized("t", "nutrition:read");
+
+        var result = await CallAsync(client, "search_foods", new { search = "chicken" });
+
+        (result.TryGetProperty("isError", out var error) && error.GetBoolean()).Should().BeFalse();
+        _backend.Verify(b => b.LogUsageAsync(_grant, _user, "tool", "search_foods", true, null, It.IsAny<int>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task TheFreePlanLimit_StillStopsCalls()
+    {
+        _backend.Setup(b => b.IntrospectAsync("t", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Introspection(new[] { McpScopes.Full }, limit: 15, used: 15));
+        using var client = ClientWith("t");
+
+        var result = await CallAsync(client, "search_foods", new { search = "x" });
+
+        var text = result.GetProperty("content")[0].GetProperty("text").GetString()!;
+        text.Should().StartWith("[MONTHLY LIMIT REACHED]").And.Contain("15");
+        // No App:PublicUrl here, so the web app is Mcp:PublicUrl without its /mcp, never a hard-coded host.
+        text.Should().Contain("https://mizan.example/billing").And.NotContain("zaftech");
+    }
+
+    // ---- caching of the introspection ----
+
+    [Fact]
+    public async Task AnUnlimitedToken_IsIntrospectedOnce_ButALimitedOneEveryTime()
+    {
+        _backend.Setup(b => b.IntrospectAsync("free", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Introspection(new[] { "nutrition:read" }, limit: 15, used: 0));
+        _backend.Setup(b => b.IntrospectAsync("pro", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Introspection(new[] { "nutrition:read" }));
+
+        foreach (var token in new[] { "free", "pro" })
+        {
+            using var client = ClientWith(token);
+            await ToolNamesAsync(client);
+            await ToolNamesAsync(client);
+        }
+
+        _backend.Verify(b => b.IntrospectAsync("pro", It.IsAny<CancellationToken>()), Times.Once);
+        _backend.Verify(b => b.IntrospectAsync("free", It.IsAny<CancellationToken>()), Times.AtLeast(2));
+    }
+
+    // ---- protocol styles ----
+
+    [Fact]
+    public async Task InitializeClients_GetNoSession_AndTheServerInstructions()
+    {
+        using var client = Authorized("t", "nutrition:read");
+
+        using var request = Build("""{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"legacy","version":"1"}}}""");
+        var response = await client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Headers.Contains("Mcp-Session-Id").Should().BeFalse("the server is stateless");
+        var body = await ReadJsonRpcAsync(response);
+        body.GetProperty("result").GetProperty("instructions").GetString()
+            .Should().Contain("servings").And.Contain("log_day");
+    }
+
+    [Fact]
+    public async Task StatelessClients_CanCallWithoutAnyHandshake()
+    {
+        using var client = Authorized("t", "nutrition:read");
+
+        // The 2026-07-28 revision: every request carries what the server needs to know.
+        using var request = Build("""
+            {"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{
+              "io.modelcontextprotocol/protocolVersion":"2026-07-28",
+              "io.modelcontextprotocol/clientCapabilities":{},
+              "io.modelcontextprotocol/clientInfo":{"name":"stateless","version":"1"}}}}
+            """);
+        request.Headers.TryAddWithoutValidation("MCP-Protocol-Version", "2026-07-28");
+        request.Headers.TryAddWithoutValidation("Mcp-Method", "tools/list");
+        var response = await client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await ReadJsonRpcAsync(response);
+        body.GetProperty("result").GetProperty("tools").EnumerateArray().Select(t => t.GetProperty("name").GetString())
+            .Should().Contain("search_foods").And.NotContain("log_food");
+    }
+
+    // ---- helpers ----
+
+    private TokenIntrospection Introspection(string[] scopes, int? limit = null, int used = 0) => new()
+    {
+        Active = true,
+        UserId = _user,
+        GrantId = _grant,
+        ClientRowId = Guid.NewGuid(),
+        ClientName = "Test",
+        Scopes = scopes,
+        HouseholdMode = "all",
+        Role = "user",
+        Plan = limit is null ? "pro" : "free",
+        MonthlyLimit = limit,
+        UsedThisMonth = used,
+    };
+
+    private HttpClient ClientWith(string token)
+    {
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        return client;
+    }
+
+    private HttpClient Authorized(string token, params string[] scopes)
+    {
+        _backend.Setup(b => b.IntrospectAsync(token, It.IsAny<CancellationToken>())).ReturnsAsync(Introspection(scopes));
+        return ClientWith(token);
+    }
+
+    private static HttpRequestMessage Build(string json)
+    {
+        var message = new HttpRequestMessage(HttpMethod.Post, "/mcp") { Content = new StringContent(json, Encoding.UTF8, "application/json") };
+        message.Headers.Accept.ParseAdd("application/json");
+        message.Headers.Accept.ParseAdd("text/event-stream");
+        return message;
+    }
+
+    private static Task<HttpResponseMessage> RawAsync(HttpClient client, string method)
+    {
+        var request = Build($$"""{"jsonrpc":"2.0","id":1,"method":"{{method}}"}""");
+        return client.SendAsync(request);
+    }
+
+    private static async Task<JsonElement> ReadJsonRpcAsync(HttpResponseMessage response)
+    {
+        var text = await response.Content.ReadAsStringAsync();
+        if (response.Content.Headers.ContentType?.MediaType == "text/event-stream")
+        {
+            text = text.Split('\n').First(l => l.StartsWith("data:") && l.Contains('{'))["data:".Length..].Trim();
+        }
+
+        return JsonDocument.Parse(text).RootElement.Clone();
+    }
+
+    private static async Task<JsonElement> ListAsync(HttpClient client)
+    {
+        var response = await client.PostMcpAsync(new { jsonrpc = "2.0", id = 2, method = "tools/list" });
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        return JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.Clone();
+    }
+
+    private static async Task<List<string>> ToolNamesAsync(HttpClient client) =>
+        (await ListAsync(client)).GetProperty("result").GetProperty("tools").EnumerateArray()
+            .Select(t => t.GetProperty("name").GetString()!).ToList();
+
+    private static async Task<JsonElement> CallAsync(HttpClient client, string tool, object arguments)
+    {
+        var response = await client.PostMcpAsync(new
+        {
+            jsonrpc = "2.0",
+            id = 3,
+            method = "tools/call",
+            @params = new { name = tool, arguments },
+        });
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        return JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("result").Clone();
+    }
+}

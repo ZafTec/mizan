@@ -2,8 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { clientApi } from "@/lib/api.client";
+import { useImageUpload } from "@/components/ImageUpload";
 import { appToast } from "@/lib/toast";
+import { Select } from "@/components/ui/select";
 
 /**
  * The criteria vocabulary, mirrored from Domain/Achievements/CriteriaTypes.
@@ -12,224 +15,304 @@ import { appToast } from "@/lib/toast";
  * achievement that silently never unlocks, and nobody notices for months.
  */
 const CRITERIA = [
-	{ value: "meals_logged", label: "Meals logged" },
-	{ value: "recipes_created", label: "Recipes created" },
-	{ value: "workouts_logged", label: "Workouts logged" },
-	{ value: "body_measurements_logged", label: "Measurements logged" },
-	{ value: "goal_progress_logged", label: "Goal progress logged" },
-	{ value: "streak_nutrition", label: "Nutrition streak (days)" },
-	{ value: "streak_workout", label: "Workout streak (days)" },
-	{ value: "points_total", label: "Total points" },
-	{ value: "total_volume_kg", label: "Lifetime volume (kg)" },
-	{ value: "template_completed_count", label: "Template workouts" },
-	{ value: "followers_count", label: "Followers" },
-	{ value: "workouts_shared", label: "Workouts shared" },
-	{ value: "reactions_given", label: "Reactions given" },
-	{ value: "comments_made", label: "Comments made" },
-	{ value: "pr_count", label: "Personal records" },
+  { value: "meals_logged", label: "Meals logged" },
+  { value: "recipes_created", label: "Recipes created" },
+  { value: "workouts_logged", label: "Workouts logged" },
+  { value: "body_measurements_logged", label: "Measurements logged" },
+  { value: "goal_progress_logged", label: "Goal progress logged" },
+  { value: "streak_nutrition", label: "Nutrition streak (days)" },
+  { value: "streak_workout", label: "Workout streak (days)" },
+  { value: "points_total", label: "Total points" },
+  { value: "total_volume_kg", label: "Lifetime volume (kg)" },
+  { value: "template_completed_count", label: "Template workouts" },
+  { value: "followers_count", label: "Followers" },
+  { value: "workouts_shared", label: "Workouts shared" },
+  { value: "reactions_given", label: "Reactions given" },
+  { value: "comments_made", label: "Comments made" },
+  { value: "pr_count", label: "Personal records" },
 ] as const;
 
-const CATEGORIES = ["nutrition", "training", "body", "social", "milestone"] as const;
+const CATEGORIES = [
+  "nutrition",
+  "training",
+  "body",
+  "social",
+  "milestone",
+] as const;
 
 export interface AchievementDraft {
-	id?: string;
-	name: string;
-	description: string;
-	iconUrl: string;
-	points: number;
-	category: string;
-	criteriaType: string;
-	threshold: number;
+  id?: string;
+  name: string;
+  description: string;
+  iconUrl: string;
+  points: number;
+  category: string;
+  criteriaType: string;
+  threshold: number;
 }
 
 export const EMPTY_DRAFT: AchievementDraft = {
-	name: "",
-	description: "",
-	iconUrl: "",
-	points: 25,
-	category: "nutrition",
-	criteriaType: "meals_logged",
-	threshold: 10,
+  name: "",
+  description: "",
+  iconUrl: "",
+  points: 25,
+  category: "nutrition",
+  criteriaType: "meals_logged",
+  threshold: 10,
 };
 
-export default function AchievementForm({ initial }: { initial: AchievementDraft }) {
-	const router = useRouter();
-	const [draft, setDraft] = useState(initial);
-	const [pending, startTransition] = useTransition();
+export default function AchievementForm({
+  initial,
+}: {
+  initial: AchievementDraft;
+}) {
+  const router = useRouter();
+  const [draft, setDraft] = useState(initial);
+  const [pending, startTransition] = useTransition();
 
-	const editing = Boolean(initial.id);
+  const editing = Boolean(initial.id);
+  const badge = useImageUpload({
+    folder: "achievements",
+    onUploaded: (url) => setDraft((current) => ({ ...current, iconUrl: url })),
+  });
 
-	function set<K extends keyof AchievementDraft>(key: K, value: AchievementDraft[K]) {
-		setDraft((d) => ({ ...d, [key]: value }));
-	}
+  function set<K extends keyof AchievementDraft>(
+    key: K,
+    value: AchievementDraft[K],
+  ) {
+    setDraft((d) => ({ ...d, [key]: value }));
+  }
 
-	function save() {
-		if (!draft.name.trim()) {
-			appToast.error(new Error("A name is required"), "A name is required");
-			return;
-		}
+  function save() {
+    if (!draft.name.trim()) {
+      appToast.error(new Error("A name is required"), "A name is required");
+      return;
+    }
 
-		startTransition(async () => {
-			try {
-				const body = {
-					...(editing ? { id: initial.id } : {}),
-					name: draft.name.trim(),
-					description: draft.description.trim() || null,
-					iconUrl: draft.iconUrl.trim() || null,
-					points: draft.points,
-					category: draft.category,
-					criteriaType: draft.criteriaType,
-					threshold: draft.threshold,
-				};
+    startTransition(async () => {
+      try {
+        const body = {
+          ...(editing ? { id: initial.id } : {}),
+          name: draft.name.trim(),
+          description: draft.description.trim() || null,
+          iconUrl: draft.iconUrl.trim() || null,
+          points: draft.points,
+          category: draft.category,
+          criteriaType: draft.criteriaType,
+          threshold: draft.threshold,
+        };
 
-				if (editing) {
-					await clientApi(`/api/Achievements/${initial.id}`, { method: "PUT", body });
-				} else {
-					await clientApi("/api/Achievements", { method: "POST", body });
-				}
+        if (editing) {
+          await clientApi(`/api/Achievements/${initial.id}`, {
+            method: "PUT",
+            body,
+          });
+        } else {
+          await clientApi("/api/Achievements", { method: "POST", body });
+        }
 
-				appToast.success(editing ? "Achievement updated" : "Achievement created");
-				router.push("/admin/achievements");
-				router.refresh();
-			} catch (error) {
-				appToast.error(error, "Could not save the achievement");
-			}
-		});
-	}
+        appToast.success(
+          editing ? "Achievement updated" : "Achievement created",
+        );
+        router.push("/admin/achievements");
+        router.refresh();
+      } catch (error) {
+        appToast.error(error, "Could not save the achievement");
+      }
+    });
+  }
 
-	const criteriaLabel = CRITERIA.find((c) => c.value === draft.criteriaType)?.label ?? "";
+  const criteriaLabel =
+    CRITERIA.find((c) => c.value === draft.criteriaType)?.label ?? "";
 
-	return (
-		<div className="space-y-6">
-			<section className="card space-y-4 p-6">
-				<Field label="Name">
-					<input
-						value={draft.name}
-						onChange={(e) => set("name", e.target.value)}
-						maxLength={120}
-						className="input w-full"
-						placeholder="Consistency"
-					/>
-				</Field>
+  return (
+    <div className="space-y-6">
+      <section className="card space-y-4 p-6">
+        <Field label="Name">
+          <input
+            value={draft.name}
+            onChange={(e) => set("name", e.target.value)}
+            maxLength={120}
+            className="input w-full"
+            placeholder="Consistency"
+          />
+        </Field>
 
-				<Field label="Description" helper="Shown under the badge.">
-					<textarea
-						value={draft.description}
-						onChange={(e) => set("description", e.target.value)}
-						rows={2}
-						maxLength={500}
-						className="input w-full"
-						placeholder="Log a meal every day for a week."
-					/>
-				</Field>
+        <Field label="Description" helper="Shown under the badge.">
+          <textarea
+            value={draft.description}
+            onChange={(e) => set("description", e.target.value)}
+            rows={2}
+            maxLength={500}
+            className="input w-full"
+            placeholder="Log a meal every day for a week."
+          />
+        </Field>
 
-				<div className="grid gap-4 sm:grid-cols-2">
-					<Field label="Category">
-						<select
-							value={draft.category}
-							onChange={(e) => set("category", e.target.value)}
-							className="input w-full"
-						>
-							{CATEGORIES.map((c) => (
-								<option key={c} value={c}>
-									{c}
-								</option>
-							))}
-						</select>
-					</Field>
+        <Field
+          label="Badge"
+          helper="Shown at 28px beside the name. Rendered badges follow design/achievement-assets.md."
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            {draft.iconUrl ? (
+              <Image
+                src={draft.iconUrl}
+                alt=""
+                width={56}
+                height={56}
+                unoptimized
+                className="h-14 w-14 rounded-sm border border-border object-contain"
+              />
+            ) : (
+              <span
+                aria-hidden="true"
+                className="flex h-14 w-14 items-center justify-center rounded-sm border border-dashed border-border text-xs text-muted-foreground"
+              >
+                28px
+              </span>
+            )}
+            <button
+              type="button"
+              className="btn-secondary btn-sm"
+              onClick={badge.open}
+              disabled={pending || badge.uploading}
+            >
+              {badge.uploading
+                ? "Uploading…"
+                : draft.iconUrl
+                  ? "Replace badge"
+                  : "Upload badge"}
+            </button>
+            {draft.iconUrl && (
+              <button
+                type="button"
+                className="text-link"
+                onClick={() => set("iconUrl", "")}
+                disabled={pending}
+              >
+                Remove
+              </button>
+            )}
+            {badge.input}
+          </div>
+          <input
+            type="url"
+            value={draft.iconUrl}
+            onChange={(e) => set("iconUrl", e.target.value)}
+            className="input mt-3 w-full"
+            placeholder="https://… or upload a file"
+            aria-label="Badge address"
+          />
+        </Field>
 
-					<Field label="Points" helper="Counts toward the user's level.">
-						<input
-							type="number"
-							min={0}
-							max={10000}
-							value={draft.points}
-							onChange={(e) => set("points", Number(e.target.value) || 0)}
-							className="input w-full tabular-nums"
-						/>
-					</Field>
-				</div>
-			</section>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Category">
+            <Select
+              value={draft.category}
+              onChange={(next) => set("category", next)}
+              options={CATEGORIES.map((c) => ({ value: c, label: c }))}
+            />
+          </Field>
 
-			<section className="card space-y-4 p-6">
-				<div>
-					<h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
-						Unlock condition
-					</h2>
-					<p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-						Evaluated after every relevant log. Streaks use the live count, so a
-						lapsed streak cannot unlock one.
-					</p>
-				</div>
+          <Field label="Points" helper="Counts toward the user's level.">
+            <input
+              type="number"
+              min={0}
+              max={10000}
+              value={draft.points}
+              onChange={(e) => set("points", Number(e.target.value) || 0)}
+              className="input w-full tabular-nums"
+            />
+          </Field>
+        </div>
+      </section>
 
-				<div className="grid gap-4 sm:grid-cols-2">
-					<Field label="Measure">
-						<select
-							value={draft.criteriaType}
-							onChange={(e) => set("criteriaType", e.target.value)}
-							className="input w-full"
-						>
-							{CRITERIA.map((c) => (
-								<option key={c.value} value={c.value}>
-									{c.label}
-								</option>
-							))}
-						</select>
-					</Field>
+      <section className="card space-y-4 p-6">
+        <div>
+          <h2 className="text-base font-semibold text-charcoal-blue-900 dark:text-charcoal-blue-50">
+            Unlock condition
+          </h2>
+          <p className="text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+            Evaluated after every relevant log. Streaks use the live count, so a
+            lapsed streak cannot unlock one.
+          </p>
+        </div>
 
-					<Field label="Threshold">
-						<input
-							type="number"
-							min={1}
-							value={draft.threshold}
-							onChange={(e) => set("threshold", Number(e.target.value) || 1)}
-							className="input w-full tabular-nums"
-						/>
-					</Field>
-				</div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Measure">
+            <Select
+              value={draft.criteriaType}
+              onChange={(next) => set("criteriaType", next)}
+              options={CRITERIA}
+            />
+          </Field>
 
-				<p className="rounded-2xl bg-charcoal-blue-50 px-3 py-2 text-sm text-charcoal-blue-600 dark:bg-white/[0.03] dark:text-charcoal-blue-300">
-					Unlocks at <strong>{criteriaLabel.toLowerCase()} ≥ {draft.threshold}</strong>.
-				</p>
-			</section>
+          <Field label="Threshold">
+            <input
+              type="number"
+              min={1}
+              value={draft.threshold}
+              onChange={(e) => set("threshold", Number(e.target.value) || 1)}
+              className="input w-full tabular-nums"
+            />
+          </Field>
+        </div>
 
-			<div className="flex gap-2">
-				<button
-					type="button"
-					onClick={() => router.push("/admin/achievements")}
-					disabled={pending}
-					className="btn-ghost"
-				>
-					Cancel
-				</button>
-				<button type="button" onClick={save} disabled={pending} className="btn-primary">
-					{pending ? "Saving…" : editing ? "Save changes" : "Create achievement"}
-				</button>
-			</div>
-		</div>
-	);
+        <p className="rounded-2xl bg-charcoal-blue-50 px-3 py-2 text-sm text-charcoal-blue-600 dark:bg-white/[0.03] dark:text-charcoal-blue-300">
+          Unlocks at{" "}
+          <strong>
+            {criteriaLabel.toLowerCase()} ≥ {draft.threshold}
+          </strong>
+          .
+        </p>
+      </section>
+
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => router.push("/admin/achievements")}
+          disabled={pending}
+          className="btn-ghost"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={save}
+          disabled={pending}
+          className="btn-primary"
+        >
+          {pending
+            ? "Saving…"
+            : editing
+              ? "Save changes"
+              : "Create achievement"}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function Field({
-	label,
-	helper,
-	children,
+  label,
+  helper,
+  children,
 }: {
-	label: string;
-	helper?: string;
-	children: React.ReactNode;
+  label: string;
+  helper?: string;
+  children: React.ReactNode;
 }) {
-	return (
-		<label className="block space-y-1.5">
-			<span className="text-sm font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
-				{label}
-			</span>
-			{children}
-			{helper && (
-				<span className="block text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
-					{helper}
-				</span>
-			)}
-		</label>
-	);
+  return (
+    <label className="block space-y-1.5">
+      <span className="text-sm font-medium text-charcoal-blue-900 dark:text-charcoal-blue-100">
+        {label}
+      </span>
+      {children}
+      {helper && (
+        <span className="block text-xs text-charcoal-blue-500 dark:text-charcoal-blue-400">
+          {helper}
+        </span>
+      )}
+    </label>
+  );
 }

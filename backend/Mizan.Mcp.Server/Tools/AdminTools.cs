@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Text.Json;
+using Mizan.Contracts.Admin;
 using Mizan.Mcp.Server.Services;
 using ModelContextProtocol.Server;
 
@@ -223,6 +224,175 @@ public sealed class AdminTools
     public Task<string> DeleteJob(string id, CancellationToken ct = default) =>
         _api.DeleteAsync($"/api/Admin/Jobs/{ToolArguments.ParseId(id, "id")}", ct);
 
+    // ---- Mail, contact, health and support notes ------------------------
+
+    [McpServerTool(Name = "admin_list_mail", ReadOnly = true, Idempotent = true)]
+    [Description(
+        "Admin only. The email log: every email the system queued, newest first, with its status "
+        + "(Queued, Sent or Failed), attempts and last error. The body is never stored. kind is a dotted "
+        + "name such as auth.verify, admin.announcement or contact.reply; search matches the recipient; "
+        + "from/to are inclusive YYYY-MM-DD bounds.")]
+    public Task<string> ListMail(
+        [Description("Queued, Sent or Failed")] string? status = null,
+        string? kind = null,
+        string? search = null,
+        [Description("Inclusive lower bound, YYYY-MM-DD")] string? from = null,
+        [Description("Inclusive upper bound, YYYY-MM-DD")] string? to = null,
+        int page = 1,
+        int pageSize = 20,
+        CancellationToken ct = default)
+    {
+        var query = new QueryString()
+            .Add("status", status)
+            .Add("kind", kind)
+            .Add("search", search)
+            .Add("from", ToolArguments.ParseOptionalDate(from, "from")?.ToString("yyyy-MM-dd"))
+            .Add("to", ToolArguments.ParseOptionalDate(to, "to")?.ToString("yyyy-MM-dd"))
+            .Add("page", page)
+            .Add("pageSize", pageSize);
+
+        return _api.GetAsync($"/api/admin/mail{query}", ct);
+    }
+
+    [McpServerTool(Name = "admin_retry_mail")]
+    [Description(
+        "Admin only. Queues an email that did not go out once more. Refused for one that was sent, "
+        + "one already queued, and one whose job was deleted with its body.")]
+    public Task<string> RetryMail(string id, CancellationToken ct = default) =>
+        _api.PostAsync($"/api/admin/mail/{ToolArguments.ParseId(id, "id")}/retry", null, ct);
+
+    [McpServerTool(Name = "admin_send_announcement", Destructive = true)]
+    [Description(
+        "Admin only. Emails an announcement, one message per recipient. audience is all, pro, free, "
+        + "household:{id} or user:{id}; unconfirmed addresses and suspended accounts are left out. "
+        + "Pass the same announcementId to retry without sending anyone a second copy. An announcement "
+        + "to all is limited to one an hour. Returns how many were queued.")]
+    public Task<string> SendAnnouncement(
+        string subject,
+        [Description("Plain text. Blank lines separate paragraphs.")] string body,
+        string audience,
+        string? announcementId = null,
+        CancellationToken ct = default) =>
+        _api.PostAsync(
+            "/api/admin/mail/announcements",
+            new SendAnnouncementRequest(subject, body, audience, ToolArguments.ParseOptionalId(announcementId, "announcementId")),
+            ct);
+
+    [McpServerTool(Name = "admin_list_contact", ReadOnly = true, Idempotent = true)]
+    [Description(
+        "Admin only. Messages sent through the public contact form, newest first. status is New or "
+        + "Handled; search matches name, address, subject or message.")]
+    public Task<string> ListContact(
+        [Description("New or Handled")] string? status = null,
+        string? search = null,
+        int page = 1,
+        int pageSize = 20,
+        CancellationToken ct = default)
+    {
+        var query = new QueryString()
+            .Add("status", status)
+            .Add("search", search)
+            .Add("page", page)
+            .Add("pageSize", pageSize);
+
+        return _api.GetAsync($"/api/admin/contact{query}", ct);
+    }
+
+    [McpServerTool(Name = "admin_reply_contact", Destructive = true)]
+    [Description(
+        "Admin only. Emails a reply to the person who sent a contact message, from the site's sender "
+        + "address, and marks the message handled. One reply per message.")]
+    public Task<string> ReplyContact(string id, [Description("Plain text")] string body, CancellationToken ct = default) =>
+        _api.PostAsync($"/api/admin/contact/{ToolArguments.ParseId(id, "id")}/reply", new ContactReplyRequest(body), ct);
+
+    [McpServerTool(Name = "admin_mark_contact_handled")]
+    [Description("Admin only. Marks a contact message handled without replying.")]
+    public Task<string> MarkContactHandled(string id, CancellationToken ct = default) =>
+        _api.PostAsync($"/api/admin/contact/{ToolArguments.ParseId(id, "id")}/handled", null, ct);
+
+    [McpServerTool(Name = "admin_get_system_health", ReadOnly = true, Idempotent = true)]
+    [Description(
+        "Admin only. One line per service: database, redis, outbox, email, ai, telegram, push, prices "
+        + "and storage, each ok, degraded, down or notConfigured with a detail line. notConfigured means "
+        + "there is nothing set up to measure. Cached for 30 seconds.")]
+    public Task<string> SystemHealth(CancellationToken ct = default) =>
+        _api.GetAsync("/api/admin/overview/health", ct);
+
+    [McpServerTool(Name = "admin_list_support_notes", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. Administrators' notes on a user or a household, newest first. subjectType is User or Household.")]
+    public Task<string> ListSupportNotes(
+        [Description("User or Household")] string subjectType, string subjectId, CancellationToken ct = default) =>
+        _api.GetAsync(
+            $"/api/admin/support-notes{new QueryString().Add("subjectType", subjectType).Add("subjectId", ToolArguments.ParseId(subjectId, "subjectId").ToString())}",
+            ct);
+
+    [McpServerTool(Name = "admin_add_support_note")]
+    [Description("Admin only. Adds a note on a user or a household for other administrators. Never shown to the subject.")]
+    public Task<string> AddSupportNote(
+        [Description("User or Household")] string subjectType, string subjectId, string body, CancellationToken ct = default) =>
+        _api.PostAsync(
+            "/api/admin/support-notes",
+            new CreateSupportNoteRequest(subjectType, ToolArguments.ParseId(subjectId, "subjectId"), body),
+            ct);
+
+    [McpServerTool(Name = "admin_update_support_note", Idempotent = true)]
+    [Description("Admin only. Rewrites a support note.")]
+    public Task<string> UpdateSupportNote([Description("Support note UUID")] string id, string body, CancellationToken ct = default) =>
+        _api.PutAsync($"/api/admin/support-notes/{ToolArguments.ParseId(id, "id")}", new UpdateSupportNoteRequest(body), ct);
+
+    [McpServerTool(Name = "admin_delete_support_note", Destructive = true)]
+    [Description("Admin only. Deletes a support note.")]
+    public Task<string> DeleteSupportNote([Description("Support note UUID")] string id, CancellationToken ct = default) =>
+        _api.DeleteAsync($"/api/admin/support-notes/{ToolArguments.ParseId(id, "id")}", ct);
+
+    // ---- Overview, one session, one message ---------------------------------
+
+    [McpServerTool(Name = "admin_get_overview", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. The figures on the admin console's front page.")]
+    public Task<string> Overview(CancellationToken ct = default) => _api.GetAsync("/api/admin/overview", ct);
+
+    [McpServerTool(Name = "admin_revoke_session", Destructive = true)]
+    [Description("Admin only. Ends one sign-in from admin_list_sessions. admin_revoke_user_sessions ends all of an account's.")]
+    public Task<string> RevokeSession([Description("Session UUID")] string sessionId, CancellationToken ct = default) =>
+        _api.DeleteAsync($"/api/admin/sessions/{ToolArguments.ParseId(sessionId, "sessionId")}", ct);
+
+    [McpServerTool(Name = "admin_get_contact", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. One contact form message.")]
+    public Task<string> GetContact([Description("Contact message UUID")] string id, CancellationToken ct = default) =>
+        _api.GetAsync($"/api/admin/contact/{ToolArguments.ParseId(id, "id")}", ct);
+
+    [McpServerTool(Name = "admin_get_mail", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. One outgoing email and its delivery status.")]
+    public Task<string> GetMail([Description("Email message UUID")] string id, CancellationToken ct = default) =>
+        _api.GetAsync($"/api/admin/mail/{ToolArguments.ParseId(id, "id")}", ct);
+
+    [McpServerTool(Name = "admin_get_mail_stats", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. Outgoing email counts by status.")]
+    public Task<string> MailStats(CancellationToken ct = default) => _api.GetAsync("/api/admin/mail/stats", ct);
+
+    // ---- Households -------------------------------------------------------
+
+    [McpServerTool(Name = "admin_list_households", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. Every household, searchable by name.")]
+    public Task<string> ListHouseholds(string? search = null, int page = 1, int pageSize = 20, CancellationToken ct = default) =>
+        _api.GetAsync($"/api/Households/admin/all?page={page}&pageSize={pageSize}" + (string.IsNullOrWhiteSpace(search) ? "" : $"&search={Uri.EscapeDataString(search)}"), ct);
+
+    [McpServerTool(Name = "admin_get_household", ReadOnly = true, Idempotent = true)]
+    [Description("Admin only. One household and its members.")]
+    public Task<string> GetHousehold([Description("Household UUID")] string id, CancellationToken ct = default) =>
+        _api.GetAsync($"/api/Households/admin/{ToolArguments.ParseId(id, "id")}", ct);
+
+    [McpServerTool(Name = "admin_remove_household_member", Destructive = true)]
+    [Description("Admin only. Removes a member from a household.")]
+    public Task<string> RemoveHouseholdMember(
+        [Description("Household UUID")] string id, [Description("Member's user UUID")] string userId, CancellationToken ct = default) =>
+        _api.DeleteAsync($"/api/Households/admin/{ToolArguments.ParseId(id, "id")}/members/{ToolArguments.ParseId(userId, "userId")}", ct);
+
+    [McpServerTool(Name = "admin_delete_household", Destructive = true)]
+    [Description("Admin only. Deletes a household. Permanent: confirm with the administrator first.")]
+    public Task<string> DeleteHousehold([Description("Household UUID")] string id, CancellationToken ct = default) =>
+        _api.DeleteAsync($"/api/Households/admin/{ToolArguments.ParseId(id, "id")}", ct);
+
     // ---- Prompt console ---------------------------------------------------
 
     [McpServerTool(Name = "admin_list_ai_prompts", ReadOnly = true, Idempotent = true)]
@@ -292,10 +462,43 @@ public sealed class AdminTools
     public Task<string> PublishVersion(string id, CancellationToken ct = default) =>
         _api.PostAsync($"/api/Admin/Ai/Prompts/versions/{ToolArguments.ParseId(id, "id")}/publish", null, ct);
 
+    // ---- Runtime settings -------------------------------------------------
+
+    [McpServerTool(Name = "admin_list_settings", ReadOnly = true, Idempotent = true)]
+    [Description(
+        "Admin only. The runtime settings (SMTP, AI provider and limits, Telegram bot service, push, "
+        + "Paddle) with each current value and its source: database, configuration or unset. A secret "
+        + "shows only hasValue, never its value.")]
+    public Task<string> ListSettings(CancellationToken ct = default) =>
+        _api.GetAsync("/api/admin/settings", ct);
+
+    [McpServerTool(Name = "admin_set_setting", Destructive = true)]
+    [Description(
+        "Admin only. Sets one runtime setting, such as Smtp.Host or Ai.Free.DailyRequests, overriding "
+        + "configuration from the next use. The value is checked against the catalog (port range, URL "
+        + "shape and so on). Booleans are true or false.")]
+    public Task<string> SetSetting(
+        [Description("A key from admin_list_settings, such as Smtp.Port")] string key,
+        string value,
+        CancellationToken ct = default) =>
+        _api.PutAsync($"/api/admin/settings/{Uri.EscapeDataString(key)}", new SetRuntimeSettingRequest(value), ct);
+
+    [McpServerTool(Name = "admin_clear_setting", Destructive = true)]
+    [Description("Admin only. Removes a runtime setting's database value so configuration applies again.")]
+    public Task<string> ClearSetting(string key, CancellationToken ct = default) =>
+        _api.DeleteAsync($"/api/admin/settings/{Uri.EscapeDataString(key)}", ct);
+
+    [McpServerTool(Name = "admin_test_smtp")]
+    [Description(
+        "Admin only. Queues a test email to your own address with the SMTP settings as they stand, "
+        + "and returns the outbox job id; admin_list_jobs shows whether it was delivered.")]
+    public Task<string> TestSmtp(CancellationToken ct = default) =>
+        _api.PostAsync("/api/admin/settings/smtp/test", null, ct);
+
     [McpServerTool(Name = "admin_get_global_ai_usage", ReadOnly = true, Idempotent = true)]
     [Description(
         "Admin only. Today's provider spend against the global ceilings, by feature. "
-        + "This is the number to look at before anyone raises Ai__GlobalDailyTokens.")]
+        + "This is the number to look at before anyone raises the Ai.GlobalDailyTokens setting.")]
     public Task<string> GlobalAiUsage(CancellationToken ct = default) =>
         _api.GetAsync("/api/Ai/usage/global", ct);
 }

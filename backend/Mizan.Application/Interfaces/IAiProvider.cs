@@ -56,6 +56,9 @@ public record AiCompletionRequest
 
 public record AiJsonSchema(string Name, string Schema);
 
+/// <summary>Whether the provider can be called, and with which model.</summary>
+public record AiProviderStatus(bool IsConfigured, string Model);
+
 public record AiTokenUsage(int PromptTokens, int CompletionTokens)
 {
     public static AiTokenUsage None { get; } = new(0, 0);
@@ -76,11 +79,11 @@ public record AiCompletionResponse(string Content, AiTokenUsage Usage, string Mo
 /// </summary>
 public interface IAiProvider
 {
-    /// <summary>The configured model id, for the ledger.</summary>
-    string Model { get; }
-
-    /// <summary>False when no endpoint is configured; callers refuse cleanly rather than throwing.</summary>
-    bool IsConfigured { get; }
+    /// <summary>
+    /// Whether an endpoint is configured, and the model id for the ledger, as the settings stand now.
+    /// Unconfigured, callers refuse cleanly rather than throwing.
+    /// </summary>
+    Task<AiProviderStatus> GetStatusAsync(CancellationToken cancellationToken = default);
 
     Task<AiCompletionResponse> CompleteAsync(AiCompletionRequest request, CancellationToken cancellationToken = default);
 }

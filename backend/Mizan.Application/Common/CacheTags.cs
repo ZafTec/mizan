@@ -21,6 +21,22 @@ public static class CacheTags
     /// <summary>The plans and deals on sale. Public and viewer-independent; cleared by every admin catalogue write.</summary>
     public const string BillingPlans = "billing-plans";
 
+    /// <summary>
+    /// Every read that shows a price or a cost: plans, plan days and shopping
+    /// lists. Global, like <see cref="Foods"/>: any stored price, accepted
+    /// report or region change by an administrator clears them all.
+    /// </summary>
+    public const string Prices = "prices";
+
+    /// <summary>The user's reads priced in their region. Cleared when they switch region.</summary>
+    public static string PriceRegion(Guid userId) => $"price-region:{userId}";
+
+    /// <summary>Stored flag defaults and household overrides. Global and small; cleared by every flag write.</summary>
+    public const string FeatureFlags = "feature-flags";
+
+    /// <summary>Every allowance override, read on each reservation. Cleared by every override write.</summary>
+    public const string UsageLimits = "usage-limits";
+
     public static string UserStatus(Guid userId) => $"user:{userId}";
     public static string Entitlement(Guid userId) => $"entitlement:{userId}";
 
@@ -30,8 +46,25 @@ public static class CacheTags
     /// </summary>
     public static string Nutrition(Guid userId) => $"nutrition:{userId}";
 
-    /// <summary>The signed-in user's own meal plan listing (never a household member's - the list query only ever shows plans that user owns).</summary>
+    /// <summary>
+    /// A user's meal plan listing: the plans they own and the drafts they
+    /// authored. A household member's listing also carries
+    /// <see cref="HouseholdPlans"/> for each household they can see, so a write
+    /// to a shared plan clears every member's list.
+    /// </summary>
     public static string MealPlansList(Guid userId) => $"mealplans-list:{userId}";
+
+    /// <summary>Every listing that shows a household's plans. Cleared by any write to a plan filed under it.</summary>
+    public static string HouseholdPlans(Guid householdId) => $"household-plans:{householdId}";
+
+    /// <summary>The user's shopping list listing, like <see cref="MealPlansList"/>.</summary>
+    public static string ShoppingLists(Guid userId) => $"shopping-lists:{userId}";
+
+    /// <summary>Every listing that shows a household's shopping lists.</summary>
+    public static string HouseholdShoppingLists(Guid householdId) => $"household-shopping-lists:{householdId}";
+
+    /// <summary>One shopping list's detail, under every viewer's key. Cleared by any write to the list or its items.</summary>
+    public static string ShoppingList(Guid listId) => $"shopping-list:{listId}";
 
     /// <summary>
     /// One meal plan's detail, however many people have it cached. A shared

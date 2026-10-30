@@ -1,0 +1,119 @@
+using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Mizan.Application.Interfaces;
+using Mizan.Infrastructure.Data;
+using Mizan.Infrastructure.Email;
+using Mizan.Infrastructure.Identity;
+using Mizan.Infrastructure.Storage;
+using StackExchange.Redis;
+
+namespace Mizan.Infrastructure.Services;
+
+/// <summary>
+/// Real round trips for the system health page, each with a short timeout so
+/// one dead service cannot hold the page. Errors are reduced to their type: a
+/// connection string or an address has no place on an admin screen.
+/// </summary>
+public sealed class SystemProbes : ISystemProbes
+{
+    public const string HttpClientName = "system-probes";
+    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(3);
+
+    private readonly MizanDbContext _db;
+    private readonly IServiceProvider _services;
+    private readonly IConfiguration _configuration;
+    private readonly IHttpClientFactory _http;
+    private readonly IRuntimeOptions<SmtpOptions> _smtp;
+    private readonly IRuntimeOptions<TelegramOptions> _telegram;
+    private readonly IRuntimeOptions<StorageOptions> _storage;
+    private readonly IAiProvider _ai;
+    private readonly IPushSender _push;
+    private readonly IPricesWorkerClient _prices;
+
+    public SystemProbes(
+        MizanDbContext db,
+        IServiceProvider services,
+        IConfiguration configuration,
+        IHttpClientFactory http,
+        IRuntimeOptions<SmtpOptions> smtp,
+        IRuntimeOptions<TelegramOptions> telegram,
+        IRuntimeOptions<StorageOptions> storage,
+        IAiProvider ai,
+        IPushSender push,
+        IPricesWorkerClient prices)
+    {
+        _db = db;
+        _services = services;
+        _configuration = configuration;
+        _http = http;
+        _smtp = smtp;
+        _telegram = telegram;
+        _storage = storage;
+        _ai = ai;
+        _push = push;
+        _prices = prices;
+    }
+
+    public async Task<bool> SmtpConfiguredAsync(CancellationToken cancellationToken) =>
+        !string.IsNullOrWhiteSpace((await _smtp.GetAsync(cancellationToken)).Host);
+    public async Task<bool> AiConfiguredAsync(CancellationToken cancellationToken) =>
+        (await _ai.GetStatusAsync(cancellationToken)).IsConfigured;
+    public Task<bool> PushConfiguredAsync(CancellationToken cancellationToken) => _push.IsConfiguredAsync(cancellationToken);
+    public bool PricesWorkerConfigured => _prices.IsConfigured;
+    public async Task<bool> StorageConfiguredAsync(CancellationToken cancellationToken) =>
+        !string.IsNullOrWhiteSpace((await _storage.GetAsync(cancellationToken)).ServiceUrl);
+
+    public Task<ProbeResult> DatabaseAsync(CancellationToken cancellationToken) =>
+        TimeAsync(async ct => await _db.Database.ExecuteSqlRawAsync("SELECT 1", ct), cancellationToken);
+
+    public Task<ProbeResult> RedisAsync(CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(_configuration.GetConnectionString("Redis")))
+            return Task.FromResult(new ProbeResult(false, null, null));
+
+        return TimeAsync(async _ =>
+        {
+            var redis = _services.GetService<IConnectionMultiplexer>()
+                ?? throw new InvalidOperationException("Redis is configured but no connection is registered.");
+            await redis.GetDatabase().PingAsync();
+        }, cancellationToken);
+    }
+
+    public async Task<ProbeResult> TelegramBotAsync(CancellationToken cancellationToken)
+    {
+        var url = (await _telegram.GetAsync(cancellationToken)).BotServiceUrl;
+        if (string.IsNullOrWhiteSpace(url)) return new ProbeResult(false, null, null);
+
+        return await TimeAsync(async ct =>
+        {
+            var client = _http.CreateClient(HttpClientName);
+            using var response = await client.GetAsync(new Uri(new Uri(url.TrimEnd('/') + "/"), "health"), ct);
+            if (!response.IsSuccessStatusCode)
+                throw new HttpRequestException($"The bot service answered {(int)response.StatusCode}.");
+        }, cancellationToken);
+    }
+
+    private static async Task<ProbeResult> TimeAsync(Func<CancellationToken, Task> probe, CancellationToken cancellationToken)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(Timeout);
+        var watch = Stopwatch.StartNew();
+        try
+        {
+            await probe(timeout.Token).WaitAsync(timeout.Token);
+            return new ProbeResult(true, watch.Elapsed, null);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return new ProbeResult(true, null, $"No answer within {Timeout.TotalSeconds:0} seconds.");
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return new ProbeResult(true, null, ex is HttpRequestException { Message: var m } && m.StartsWith("The bot service answered", StringComparison.Ordinal)
+                ? m
+                : $"Failed: {ex.GetType().Name}.");
+        }
+    }
+}

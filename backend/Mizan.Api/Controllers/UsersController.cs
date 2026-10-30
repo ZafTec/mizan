@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Mizan.Application.Commands;
 using Mizan.Application.Interfaces;
 using Mizan.Application.Queries;
+using Mizan.Contracts.Users;
 using System.Security.Claims;
 
 namespace Mizan.Api.Controllers;
@@ -39,8 +40,10 @@ public class UsersController : ControllerBase
         return Ok(result);
     }
 
-
-
+    /// <summary>
+    /// Updates the caller's profile and preferences. Turning <c>notifyByTelegram</c> on answers 400
+    /// when no Telegram chat is linked.
+    /// </summary>
     [HttpPut("me")]
     public async Task<IActionResult> UpdateMe([FromBody] UpdateUserRequest request)
     {
@@ -55,7 +58,9 @@ public class UsersController : ControllerBase
             request.Image,
             request.ThemePreference,
             request.CompactMode,
-            request.ReduceAnimations);
+            request.ReduceAnimations,
+            PriceRegionCode: request.PriceRegionCode,
+            NotifyByTelegram: request.NotifyByTelegram);
         var success = await _mediator.Send(command);
 
         if (!success)
@@ -66,11 +71,3 @@ public class UsersController : ControllerBase
         return NoContent();
     }
 }
-
-public record UpdateUserRequest(
-    string? Name,
-    string? Image,
-    string? ThemePreference = null,
-    bool? CompactMode = null,
-    bool? ReduceAnimations = null);
-

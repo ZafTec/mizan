@@ -104,7 +104,10 @@ public class RetainedRecipeNutritionTests(ApiTestFixture fixture)
         // Changing the serving count means the per-serving value no longer fits.
         (await client.PutAsJsonAsync($"/api/Recipes/{current}", new
         {
-            id = current, title = "Papaya Chicken", servings = 3, isPublic = false,
+            id = current,
+            title = "Papaya Chicken",
+            servings = 3,
+            isPublic = false,
             ingredients = detail.Ingredients.Select(i => new { foodId = i.FoodId, ingredientText = i.IngredientText, amount = i.Amount, unit = i.Unit })
         })).EnsureSuccessStatusCode();
 
@@ -130,7 +133,12 @@ public class RetainedRecipeNutritionTests(ApiTestFixture fixture)
         var now = DateTime.UtcNow;
         var recipe = new Recipe
         {
-            Id = Guid.NewGuid(), UserId = userId, Title = title, Servings = 2, CreatedAt = now, UpdatedAt = now,
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Title = title,
+            Servings = 2,
+            CreatedAt = now,
+            UpdatedAt = now,
             Ingredients =
             {
                 new RecipeIngredient { Id = Guid.NewGuid(), FoodId = chickenId, IngredientText = "400g chicken", Amount = 400, Unit = "g", SortOrder = 0 },

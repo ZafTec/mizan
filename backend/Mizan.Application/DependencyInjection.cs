@@ -15,12 +15,48 @@ public static class DependencyInjection
         {
             cfg.RegisterServicesFromAssembly(assembly);
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(FeatureGateBehavior<,>));
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(AuditBehavior<,>));
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         });
 
         services.AddValidatorsFromAssembly(assembly);
         services.AddScoped<Commands.SubscriberBilling>();
+        services.AddScoped<OAuth.OAuthClientResolver>();
+        services.AddScoped<Interfaces.IHouseholdAccess, Services.HouseholdAccess>();
+        services.AddScoped<Planning.PlanAccess>();
+        services.AddScoped<Planning.PlanEntryBuilder>();
+        services.AddScoped<Planning.PlanReadModel>();
+        services.AddScoped<Planning.PlanTargetsReader>();
+        services.AddScoped<Planning.EveningReminders>();
+        services.AddScoped<Notifications.INotificationEventSource>(sp => sp.GetRequiredService<Planning.EveningReminders>());
+        services.AddScoped<Notifications.CampaignAudiences>();
+        services.AddScoped<Notifications.CampaignStager>();
+        services.AddScoped<Notifications.CampaignReports>();
+        services.AddScoped<Notifications.GoalReachedNotifications>();
+        services.AddScoped<Notifications.INotificationEventSource, Notifications.SignUpEvents>();
+        services.AddScoped<Notifications.INotificationEventSource, Notifications.InactivityEvents>();
+        services.AddScoped<Notifications.INotificationEventSource, Notifications.ProEndEvents>();
+        services.AddScoped<Notifications.NotificationScheduler>();
+        services.AddScoped<Notifications.NotificationSchedules>();
+        services.AddScoped<Notifications.NotificationDeliveries>();
+        services.AddScoped<Notifications.ReminderBook>();
+        services.AddScoped<Ai.AiConversations>();
+        services.AddScoped<Planning.PlanCostTable>();
+        services.AddScoped<Planning.MealPlanContextBuilder>();
+        services.AddScoped<Services.FoodAnalysisCatalogue>();
+        services.AddScoped<Ai.AnalysisPhotos>();
+        services.AddScoped<Planning.ShoppingListAccess>();
+        services.AddScoped<Prices.PriceBookReader>();
+        services.AddScoped<Prices.PriceAliasSuggester>();
+        services.AddScoped<Interfaces.IEmailQueue, Mail.EmailQueue>();
+        services.AddScoped<Mail.AnnouncementRecipients>();
+        services.AddScoped<Features.ActiveHousehold>();
+        services.AddScoped<Interfaces.IFeatureFlags, Features.FeatureFlagService>();
+        services.AddScoped<Features.FeatureGate>();
+        services.AddScoped<Usage.UsageLimitService>();
+        services.AddScoped<Interfaces.IUsageLimits>(sp => sp.GetRequiredService<Usage.UsageLimitService>());
+        services.AddScoped<Usage.UsageLimitSubjects>();
 
         return services;
     }

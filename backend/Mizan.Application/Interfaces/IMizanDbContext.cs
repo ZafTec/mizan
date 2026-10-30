@@ -24,9 +24,15 @@ public interface IMizanDbContext
     DbSet<AuditLog> AuditLogs { get; }
     DbSet<FoodDiaryEntry> FoodDiaryEntries { get; }
     DbSet<MealPlan> MealPlans { get; }
-    DbSet<MealPlanRecipe> MealPlanRecipes { get; }
+    DbSet<PlanEntry> PlanEntries { get; }
+    DbSet<PrepSession> PrepSessions { get; }
     DbSet<ShoppingList> ShoppingLists { get; }
     DbSet<ShoppingListItem> ShoppingListItems { get; }
+    DbSet<PriceRegion> PriceRegions { get; }
+    DbSet<PriceSource> PriceSources { get; }
+    DbSet<PriceSourceAlias> PriceSourceAliases { get; }
+    DbSet<FoodPrice> FoodPrices { get; }
+    DbSet<PriceReport> PriceReports { get; }
     DbSet<UserGoal> UserGoals { get; }
     DbSet<GoalProgress> GoalProgress { get; }
     DbSet<Exercise> Exercises { get; }
@@ -44,6 +50,8 @@ public interface IMizanDbContext
     DbSet<UserAchievement> UserAchievements { get; }
     DbSet<Streak> Streaks { get; }
     DbSet<Notification> Notifications { get; }
+    DbSet<NotificationPreference> NotificationPreferences { get; }
+    DbSet<NotificationSchedule> NotificationSchedules { get; }
     DbSet<SocialProfile> SocialProfiles { get; }
     DbSet<Follow> Follows { get; }
     DbSet<FeedItem> FeedItems { get; }
@@ -60,8 +68,21 @@ public interface IMizanDbContext
     DbSet<AiPromptVersion> AiPromptVersions { get; }
     DbSet<AiEvalCase> AiEvalCases { get; }
     DbSet<AiEvalRun> AiEvalRuns { get; }
-    DbSet<McpToken> McpTokens { get; }
     DbSet<McpUsageLog> McpUsageLogs { get; }
+    DbSet<OAuthClient> OAuthClients { get; }
+    DbSet<OAuthGrant> OAuthGrants { get; }
+    DbSet<OAuthAuthorizationRequest> OAuthAuthorizationRequests { get; }
+    DbSet<OAuthToken> OAuthTokens { get; }
+    DbSet<McpTask> McpTasks { get; }
+    DbSet<IdempotencyKey> IdempotencyKeys { get; }
+    DbSet<DeletedRecord> DeletedRecords { get; }
+    DbSet<DeviceToken> DeviceTokens { get; }
+
+    // Administration: the email log, the contact inbox and support notes
+    DbSet<EmailMessage> EmailMessages { get; }
+    DbSet<Announcement> Announcements { get; }
+    DbSet<ContactSubmission> ContactSubmissions { get; }
+    DbSet<SupportNote> SupportNotes { get; }
 
     // Billing
     DbSet<Subscription> Subscriptions { get; }
@@ -69,6 +90,11 @@ public interface IMizanDbContext
     DbSet<RecipeNutritionSnapshot> RecipeNutritionSnapshots { get; }
     DbSet<BillingPlan> BillingPlans { get; }
     DbSet<BillingDiscount> BillingDiscounts { get; }
+
+    // Platform administration
+    DbSet<FeatureFlag> FeatureFlags { get; }
+    DbSet<FeatureFlagOverride> FeatureFlagOverrides { get; }
+    DbSet<UsageLimitOverride> UsageLimitOverrides { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<T> ExecuteInTransactionAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken = default);

@@ -8,6 +8,7 @@ import type {
   WorkoutDraftAction,
 } from "@/lib/workouts/draft";
 import ExercisePicker from "./ExercisePicker";
+import { Select } from "@/components/ui/select";
 
 export default function ActiveWorkout({
   draft,
@@ -164,7 +165,7 @@ export default function ActiveWorkout({
                 </button>
               )}
               <button
-                className="btn-ghost btn-sm text-red-600"
+                className="btn-ghost-destructive btn-sm"
                 onClick={() =>
                   dispatch({
                     type: "remove-exercise",
@@ -179,20 +180,21 @@ export default function ActiveWorkout({
               <div className="flex justify-end">
                 <label className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
                   Apply weight to
-                  <select
-                    className="rounded-xl border border-charcoal-blue-200 bg-white px-2 py-1 text-charcoal-blue-800 dark:border-white/10 dark:bg-charcoal-blue-950 dark:text-charcoal-blue-100"
+                  <Select
+                    className="w-auto text-sm font-normal"
                     value={weightScopes[exercise.uid] ?? "uncompleted"}
-                    onChange={(event) =>
+                    onChange={(next) =>
                       setWeightScopes((current) => ({
                         ...current,
-                        [exercise.uid]: event.target.value as WeightScope,
+                        [exercise.uid]: next as WeightScope,
                       }))
                     }
-                  >
-                    <option value="set">This set</option>
-                    <option value="uncompleted">Uncompleted sets</option>
-                    <option value="all">All sets</option>
-                  </select>
+                    options={[
+                      { value: "set", label: "This set" },
+                      { value: "uncompleted", label: "Uncompleted sets" },
+                      { value: "all", label: "All sets" },
+                    ]}
+                  />
                 </label>
               </div>
               <div className="grid grid-cols-[2rem_1fr_1fr_2.75rem] gap-2 px-2 text-xs font-semibold text-muted-foreground">
@@ -249,7 +251,7 @@ export default function ActiveWorkout({
                   />
                   <button
                     aria-label={`Cycle set ${index + 1}`}
-                    className={`press-feedback flex h-11 w-11 items-center justify-center rounded-2xl ${set.completedAt ? "bg-brand-600 text-white" : "bg-charcoal-blue-100 text-muted-foreground dark:bg-charcoal-blue-900"}`}
+                    className={`transition-transform duration-120 ease-out active:scale-[0.985] flex h-11 w-11 items-center justify-center rounded-2xl ${set.completedAt ? "bg-brand-600 text-white" : "bg-charcoal-blue-100 text-muted-foreground dark:bg-charcoal-blue-900"}`}
                     onClick={() =>
                       dispatch({
                         type: "cycle-reps",
@@ -274,7 +276,7 @@ export default function ActiveWorkout({
                 </button>
                 {exercise.sets.length > 1 && (
                   <button
-                    className="btn-ghost btn-sm"
+                    className="btn-ghost-destructive btn-sm"
                     onClick={() =>
                       dispatch({
                         type: "remove-set",

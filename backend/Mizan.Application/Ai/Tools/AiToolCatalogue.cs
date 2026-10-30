@@ -1,8 +1,10 @@
+using Mizan.Domain.Goals;
 using System.Text.Json;
 using Mizan.Application.Commands;
 using Mizan.Application.Queries;
 using Mizan.Domain.Ai;
 using Mizan.Domain.Constants;
+using Mizan.Domain.Nutrition;
 
 namespace Mizan.Application.Ai.Tools;
 
@@ -20,8 +22,11 @@ namespace Mizan.Application.Ai.Tools;
 ///    any other field that says whose record this is. Ownership comes from
 ///    <see cref="AiToolContext"/>, which comes from the session. A model that
 ///    writes someone else's id into its arguments changes nothing.
-/// 3. Nothing destructive is here, ever. Every tool creates or records; none
-///    deletes, and none overwrites something the user cannot see afterwards.
+/// 3. Nothing destructive is here. Every tool creates or records; none deletes
+///    a record, and none overwrites something the user cannot see afterwards.
+///    The one exception is a draft meal plan: its entries may be changed and
+///    removed, because the person reviews the draft before accepting it, and
+///    the commands refuse the same change on a plan that is no longer a draft.
 ///
 /// Shared with <c>Mizan.Mcp.Server</c> in spirit and in shape: MCP proved the
 /// tool-to-command pattern and this is the same one, so the two do not drift
@@ -44,12 +49,12 @@ public static class AiToolCatalogue
         new AiToolDefinition(
             "set_targets",
             "Record the user's nutrition goal and daily targets. Use once the user has told you what they are aiming for.",
-            """
+            $$"""
             {
               "type": "object",
               "additionalProperties": false,
               "properties": {
-                "goalType": { "type": "string", "enum": ["weight_loss", "muscle_gain", "maintenance", "general"] },
+                "goalType": { "type": "string", "enum": {{GoalTypes.Json}} },
                 "targetCalories": { "type": "number" },
                 "targetProteinGrams": { "type": "number" },
                 "targetCarbsGrams": { "type": "number" },
@@ -110,12 +115,15 @@ public static class AiToolCatalogue
 
         new AiToolDefinition(
             "log_meal",
-            "Record something the user says they ate, with the macros they gave you or your best estimate.",
+            "Record something the user says they ate. For one of their recipes (search_recipes), pass recipeId and servings "
+            + "and leave the macros out: the recipe's own nutrition is used. Otherwise pass a name with the macros they gave you or your best estimate.",
             """
             {
               "type": "object",
               "additionalProperties": false,
               "properties": {
+                "recipeId": { "type": "string", "description": "A recipe id from search_recipes" },
+                "servings": { "type": "number", "description": "Recipe servings eaten, defaults to 1" },
                 "name": { "type": "string" },
                 "mealType": { "type": "string", "enum": ["BREAKFAST", "LUNCH", "DINNER", "SNACK", "DRINK"] },
                 "calories": { "type": "number" },
@@ -124,16 +132,17 @@ public static class AiToolCatalogue
                 "fatGrams": { "type": "number" },
                 "date": { "type": "string", "description": "YYYY-MM-DD, defaults to today" }
               },
-              "required": ["name", "calories"]
+              "required": []
             }
             """,
             (args, _) => new CreateFoodDiaryEntryCommand
             {
-                Name = AiToolArgs.RequiredString(args, "name"),
+                RecipeId = AiToolArgs.OptionalGuid(args, "recipeId"),
+                Name = AiToolArgs.OptionalString(args, "name"),
                 MealType = MealTypes.Normalize(AiToolArgs.OptionalString(args, "mealType")),
                 EntryDate = AiToolArgs.OptionalDate(args, "date"),
-                Servings = 1,
-                Calories = AiToolArgs.RequiredDecimal(args, "calories"),
+                Servings = AiToolArgs.OptionalDecimal(args, "servings") ?? 1,
+                Calories = AiToolArgs.OptionalDecimal(args, "calories"),
                 ProteinGrams = AiToolArgs.OptionalDecimal(args, "proteinGrams"),
                 CarbsGrams = AiToolArgs.OptionalDecimal(args, "carbsGrams"),
                 FatGrams = AiToolArgs.OptionalDecimal(args, "fatGrams"),
@@ -158,7 +167,7 @@ public static class AiToolCatalogue
 
         new AiToolDefinition(
             "create_meal_plan",
-            "Create an empty meal plan over a date range. Recipes are added later, by the user.",
+            "Create an empty meal plan starting on a date and running for a number of days (default 7). Entries are added later, by the user.",
             """
             {
               "type": "object",
@@ -166,23 +175,22 @@ public static class AiToolCatalogue
               "properties": {
                 "name": { "type": "string" },
                 "startDate": { "type": "string", "description": "YYYY-MM-DD" },
-                "endDate": { "type": "string", "description": "YYYY-MM-DD" }
+                "durationDays": { "type": "integer", "minimum": 1, "maximum": 31 }
               },
-              "required": ["startDate", "endDate"]
+              "required": ["startDate"]
             }
             """,
-            (args, _) => new CreateMealPlanCommand
+            (args, _) => new Planning.CreateMealPlanCommand
             {
                 Name = AiToolArgs.OptionalString(args, "name"),
                 StartDate = AiToolArgs.OptionalDate(args, "startDate")
                     ?? throw new Exceptions.DomainValidationException("'startDate' is required."),
-                EndDate = AiToolArgs.OptionalDate(args, "endDate")
-                    ?? throw new Exceptions.DomainValidationException("'endDate' is required."),
+                DurationDays = AiToolArgs.OptionalInt(args, "durationDays") ?? 7,
                 // Never from the model: a household id it guessed would be an
                 // attempt to write into someone else's household.
                 HouseholdId = null,
             },
-            result => result is CreateMealPlanResult plan && !string.IsNullOrWhiteSpace(plan.Name)
+            result => result is Mizan.Contracts.Planning.MealPlanCreatedResult plan && !string.IsNullOrWhiteSpace(plan.Name)
                 ? $"Created the plan \"{plan.Name}\"."
                 : "Created your meal plan.",
             DataAxis.Nutrition, AiToolAccess.Write),
@@ -296,9 +304,70 @@ public static class AiToolCatalogue
             },
             result => result is Common.PagedResult<FoodDto> foods && foods.Items.Count > 0
                 ? string.Join("\n", foods.Items.Select(f =>
-                    $"{f.Name} (per 100g) - {f.CaloriesPer100g} kcal, "
+                    $"{f.Id} — {f.Name} (per 100g) - {f.CaloriesPer100g} kcal, "
                     + $"P{f.ProteinPer100g} C{f.CarbsPer100g} F{f.FatPer100g}"))
                 : "No foods matched that.",
+            DataAxis.Nutrition, AiToolAccess.Read),
+
+        new AiToolDefinition(
+            "search_recipes",
+            "The user's saved recipes: their own, their household's and the public ones they favourited, with nutrition per serving. "
+            + "Leave query out to list them all, favourites and the most recently logged first, a page at a time; "
+            + "give a query to find one by name. Search here before search_foods when they name a dish they cook; log one with log_meal and its recipeId.",
+            """
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "query": { "type": "string", "description": "Part of the recipe's name or description. Leave out to list every saved recipe." },
+                "page": { "type": "integer", "minimum": 1, "description": "Page of 20, from 1" }
+              },
+              "required": []
+            }
+            """,
+            (args, _) => new GetRecipesQuery
+            {
+                SearchTerm = AiToolArgs.OptionalString(args, "query"),
+                IncludePublic = false,
+                IncludeFavorites = true,
+                Page = Math.Max(1, AiToolArgs.OptionalInt(args, "page") ?? 1),
+                PageSize = 20,
+            },
+            result => result is Common.PagedResult<RecipeDto> recipes && recipes.Items.Count > 0
+                ? string.Join("\n", recipes.Items.Select(r =>
+                    $"{r.Id} — {r.Title} ({r.Servings} servings{(r.IsFavorited ? ", favourite" : "")})"
+                    + (r.Nutrition is { CaloriesPerServing: { } kcal } n
+                        ? $" - per serving {kcal:0} kcal, P{n.ProteinGrams:0.#} C{n.CarbsGrams:0.#} F{n.FatGrams:0.#}"
+                        : " - no nutrition yet")))
+                    + (recipes.Page < recipes.TotalPages
+                        ? $"\nPage {recipes.Page} of {recipes.TotalPages} ({recipes.TotalCount} recipes); ask for page {recipes.Page + 1} for more."
+                        : string.Empty)
+                : result is Common.PagedResult<RecipeDto> { TotalCount: > 0 }
+                    ? "No more recipes on that page."
+                    : "None of their saved recipes matched that.",
+            DataAxis.Planning, AiToolAccess.Read),
+
+        new AiToolDefinition(
+            "rank_recipes_for_today",
+            "The user's saved recipes ranked, best first, by how well one serving fits what is left of today's targets, "
+            + "with what each would leave. Use it when they ask which recipe fits the rest of their day, and report the ranking as given.",
+            """
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "date": { "type": "string", "description": "YYYY-MM-DD, defaults to today" },
+                "count": { "type": "integer", "minimum": 1, "maximum": 20, "description": "How many recipes, default 5" }
+              },
+              "required": []
+            }
+            """,
+            (args, _) => new RankRecipesForDayQuery
+            {
+                Date = AiToolArgs.OptionalDate(args, "date"),
+                Count = AiToolArgs.OptionalInt(args, "count") ?? 5,
+            },
+            result => result is Contracts.Nutrition.RecipeFitResult fit ? RecipeFitText(fit) : "No ranking.",
             DataAxis.Nutrition, AiToolAccess.Read),
 
         new AiToolDefinition(
@@ -317,16 +386,16 @@ public static class AiToolCatalogue
                 Date = AiToolArgs.OptionalDate(args, "date") ?? DateOnly.FromDateTime(DateTime.UtcNow),
             },
             result => result is DailyNutritionResult day
-                ? $"{day.Date:yyyy-MM-dd}: {day.TotalCalories} kcal "
-                  + $"(target {day.TargetCalories?.ToString() ?? "none"}), "
-                  + $"P{day.TotalProtein} C{day.TotalCarbs} F{day.TotalFat}"
+                ? $"{day.Date:yyyy-MM-dd}: " + NutritionText.Summary(NutritionText.Daily(
+                    day.TotalCalories, day.TotalProtein, day.TotalCarbs, day.TotalFat,
+                    day.TargetCalories, day.TargetProtein, day.TargetCarbs, day.TargetFat))
                 : "No totals for that day.",
             DataAxis.Nutrition, AiToolAccess.Read),
 
         new AiToolDefinition(
             "record_goal_progress",
-            "Record a day's nutrition actuals against the user's goal, for the progress chart. "
-            + "Weight is not recorded here - use log_measurement for that.",
+            "Record a day's check-in against the user's goal, for the progress chart. Leave the actuals out to take "
+            + "them from that day's diary. Weight is not recorded here - use log_measurement for that.",
             """
             {
               "type": "object",
@@ -339,15 +408,15 @@ public static class AiToolCatalogue
                 "date": { "type": "string", "description": "YYYY-MM-DD, defaults to today" },
                 "notes": { "type": "string" }
               },
-              "required": ["actualCalories"]
+              "required": []
             }
             """,
             (args, _) => new RecordGoalProgressCommand
             {
-                ActualCalories = AiToolArgs.OptionalInt(args, "actualCalories") ?? 0,
-                ActualProteinGrams = AiToolArgs.OptionalDecimal(args, "actualProteinGrams") ?? 0,
-                ActualCarbsGrams = AiToolArgs.OptionalDecimal(args, "actualCarbsGrams") ?? 0,
-                ActualFatGrams = AiToolArgs.OptionalDecimal(args, "actualFatGrams") ?? 0,
+                ActualCalories = AiToolArgs.OptionalInt(args, "actualCalories"),
+                ActualProteinGrams = AiToolArgs.OptionalDecimal(args, "actualProteinGrams"),
+                ActualCarbsGrams = AiToolArgs.OptionalDecimal(args, "actualCarbsGrams"),
+                ActualFatGrams = AiToolArgs.OptionalDecimal(args, "actualFatGrams"),
                 // Deliberately not taken from the arguments. This tool is gated
                 // on nutrition consent, and a weight is body data: accepting it
                 // here would let a nutrition-only grant write the body axis.
@@ -369,8 +438,8 @@ public static class AiToolCatalogue
               "required": ["name"]
             }
             """,
-            (args, ctx) => new CreateShoppingListCommand(
-                AiToolArgs.RequiredString(args, "name"), ctx.UserId, null),
+            (args, _) => new Planning.CreateShoppingListCommand(
+                AiToolArgs.RequiredString(args, "name"), null),
             _ => "Created that shopping list.",
             DataAxis.Nutrition, AiToolAccess.Write),
 
@@ -391,16 +460,42 @@ public static class AiToolCatalogue
               "required": ["shoppingListId", "itemName"]
             }
             """,
-            (args, _) => new AddShoppingListItemCommand(
+            (args, _) => new Planning.AddShoppingListItemCommand(
                 AiToolArgs.RequiredGuid(args, "shoppingListId"),
-                AiToolArgs.RequiredString(args, "itemName"),
-                AiToolArgs.OptionalDecimal(args, "amount"),
-                AiToolArgs.OptionalString(args, "unit"),
-                AiToolArgs.OptionalString(args, "category")),
+                new Mizan.Contracts.Planning.AddShoppingListItemRequest(
+                    AiToolArgs.RequiredString(args, "itemName"),
+                    AiToolArgs.OptionalDecimal(args, "amount"),
+                    AiToolArgs.OptionalString(args, "unit"),
+                    AiToolArgs.OptionalString(args, "category"))),
             _ => "Added that to the list.",
             DataAxis.Nutrition, AiToolAccess.Write),
+
+        .. AiPlanningTools.All,
+        .. AiReminderTools.All,
     ];
 
     public static AiToolDefinition? Find(string name) =>
         Chat.FirstOrDefault(tool => tool.Name == name);
+
+    /// <summary>The ranking in words: what is left, then each recipe with one serving and what it would leave.</summary>
+    private static string RecipeFitText(Contracts.Nutrition.RecipeFitResult fit)
+    {
+        static string Amounts(decimal? kcal, decimal? protein, decimal? carbs, decimal? fat) => string.Join(", ", new[]
+        {
+            kcal is { } k ? $"{k:0} kcal" : null,
+            protein is { } p ? $"P {p:0.#} g" : null,
+            carbs is { } c ? $"C {c:0.#} g" : null,
+            fat is { } f ? $"F {f:0.#} g" : null,
+        }.Where(x => x is not null));
+
+        if (fit.Recipes.Count == 0) return fit.Note ?? "Nothing to rank.";
+        var lines = new List<string>
+        {
+            $"{fit.Date:yyyy-MM-dd} left: {Amounts(fit.CaloriesLeft, fit.ProteinLeft, fit.CarbsLeft, fit.FatLeft)}. Ranked best first by Mizan:",
+        };
+        lines.AddRange(fit.Recipes.Select(r =>
+            $"{r.Rank}. {r.RecipeId} — {r.Title}: one serving {r.Calories:0} kcal, P{r.Protein:0.#} C{r.Carbs:0.#} F{r.Fat:0.#}; "
+            + $"leaves {Amounts(r.CaloriesLeftAfter, r.ProteinLeftAfter, r.CarbsLeftAfter, r.FatLeftAfter)}"));
+        return string.Join("\n", lines);
+    }
 }

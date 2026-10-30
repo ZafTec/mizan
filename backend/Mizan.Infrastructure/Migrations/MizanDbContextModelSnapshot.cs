@@ -18,10 +18,32 @@ namespace Mizan.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.11")
+                .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FriendlyName")
+                        .HasColumnType("text")
+                        .HasColumnName("friendly_name");
+
+                    b.Property<string>("Xml")
+                        .HasColumnType("text")
+                        .HasColumnName("xml");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("data_protection_keys", (string)null);
+                });
 
             modelBuilder.Entity("Mizan.Domain.Entities.Achievement", b =>
                 {
@@ -30,6 +52,11 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("CardImageUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("card_image_url");
 
                     b.Property<string>("Category")
                         .HasMaxLength(50)
@@ -337,6 +364,15 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasDefaultValue(0)
                         .HasColumnName("kind");
+
+                    b.Property<string>("PendingContext")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("pending_context");
+
+                    b.Property<DateTime?>("PendingContextUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("pending_context_until");
 
                     b.Property<int>("SummarisedThrough")
                         .ValueGeneratedOnAdd()
@@ -657,6 +693,46 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("ai_usage_logs", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.Announcement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Audience")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("audience");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_user_id");
+
+                    b.Property<int>("RecipientCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("recipient_count");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("subject");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Audience", "CreatedAt");
+
+                    b.ToTable("announcements", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.AuditLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -686,6 +762,10 @@ namespace Mizan.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("entity_type");
+
+                    b.Property<Guid?>("ImpersonatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("impersonator_id");
 
                     b.Property<string>("IpAddress")
                         .HasMaxLength(45)
@@ -943,6 +1023,12 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("numeric(6,2)")
                         .HasColumnName("right_thigh_cm");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
@@ -959,7 +1045,7 @@ namespace Mizan.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "UpdatedAt");
 
                     b.ToTable("body_measurements", (string)null);
                 });
@@ -1043,6 +1129,80 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("chat_messages", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.ContactSubmission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("email");
+
+                    b.Property<DateTime?>("HandledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("handled_at");
+
+                    b.Property<Guid?>("HandledByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("handled_by_user_id");
+
+                    b.Property<string>("IpHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("ip_hash");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(5000)
+                        .HasColumnType("character varying(5000)")
+                        .HasColumnName("message");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid?>("ReplyEmailMessageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reply_email_message_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)")
+                        .HasColumnName("subject");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IpHash", "CreatedAt");
+
+                    b.HasIndex("Status", "CreatedAt");
+
+                    b.ToTable("contact_submissions", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.ContentReport", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1103,6 +1263,169 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("content_reports", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.DeletedRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("DeletedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("entity_id");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("entity_type");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "DeletedAt");
+
+                    b.ToTable("deleted_records", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.DeviceToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("DeviceName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("device_name");
+
+                    b.Property<DateTime>("LastSeenAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_seen_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("Platform")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("platform");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("token");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("device_tokens", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.EmailMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("Attempts")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("attempts");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_user_id");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("last_error");
+
+                    b.Property<Guid?>("OutboxJobId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("outbox_job_id");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sent_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("subject");
+
+                    b.Property<string>("ToAddress")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("to_address");
+
+                    b.Property<Guid?>("ToUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("to_user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("OutboxJobId");
+
+                    b.HasIndex("ToUserId");
+
+                    b.HasIndex("Kind", "CreatedAt");
+
+                    b.HasIndex("Status", "CreatedAt");
+
+                    b.ToTable("email_messages", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.Exercise", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1151,6 +1474,11 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false)
                         .HasColumnName("is_custom");
+
+                    b.Property<string>("ModelUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("model_url");
 
                     b.Property<string>("MuscleGroup")
                         .HasMaxLength(100)
@@ -1300,6 +1628,80 @@ namespace Mizan.Infrastructure.Migrations
                     b.HasIndex("RecipeId");
 
                     b.ToTable("favorite_recipes", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.FeatureFlag", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("key");
+
+                    b.Property<bool>("DefaultEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("default_enabled");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("description");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by_user_id");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("feature_flags", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.FeatureFlagOverride", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("enabled");
+
+                    b.Property<string>("FlagKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("flag_key");
+
+                    b.Property<Guid>("HouseholdId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("household_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by_user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HouseholdId");
+
+                    b.HasIndex("FlagKey", "HouseholdId")
+                        .IsUnique();
+
+                    b.ToTable("feature_flag_overrides", (string)null);
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.FeedComment", b =>
@@ -1668,6 +2070,10 @@ namespace Mizan.Infrastructure.Migrations
                         .HasDefaultValue("")
                         .HasColumnName("name");
 
+                    b.Property<Guid?>("PlanEntryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("plan_entry_id");
+
                     b.Property<decimal?>("ProteinCalorieRatio")
                         .HasPrecision(8, 2)
                         .HasColumnType("numeric(8,2)")
@@ -1689,6 +2095,12 @@ namespace Mizan.Infrastructure.Migrations
                         .HasDefaultValue(1m)
                         .HasColumnName("servings");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
@@ -1697,11 +2109,92 @@ namespace Mizan.Infrastructure.Migrations
 
                     b.HasIndex("FoodId");
 
+                    b.HasIndex("PlanEntryId");
+
                     b.HasIndex("RecipeId");
 
                     b.HasIndex("UserId", "EntryDate");
 
+                    b.HasIndex("UserId", "UpdatedAt");
+
                     b.ToTable("food_diary_entries", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.FoodPrice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("Confidence")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("confidence");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid>("FoodId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("food_id");
+
+                    b.Property<DateTime>("ObservedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("observed_at");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("price");
+
+                    b.Property<decimal>("Quantity")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(10, 3)
+                        .HasColumnType("numeric(10,3)")
+                        .HasDefaultValue(1m)
+                        .HasColumnName("quantity");
+
+                    b.Property<string>("RegionCode")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("region_code");
+
+                    b.Property<Guid?>("ReportedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reported_by_user_id");
+
+                    b.Property<Guid?>("SourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_id");
+
+                    b.Property<string>("SourceUrl")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("source_url");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("unit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RegionCode");
+
+                    b.HasIndex("SourceId");
+
+                    b.HasIndex("FoodId", "RegionCode", "ObservedAt")
+                        .HasDatabaseName("ix_food_prices_food_region_observed");
+
+                    b.ToTable("food_prices", (string)null);
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.GoalProgress", b =>
@@ -1904,13 +2397,25 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("household_members", (string)null);
                 });
 
-            modelBuilder.Entity("Mizan.Domain.Entities.McpToken", b =>
+            modelBuilder.Entity("Mizan.Domain.Entities.IdempotencyKey", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("Key")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("key");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<string>("ContentType")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("content_type");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -1918,31 +2423,74 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("NOW()");
 
-                    b.Property<DateTime?>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("expires_at");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("is_active");
-
-                    b.Property<DateTime?>("LastUsedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_used_at");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("name");
-
-                    b.Property<string>("TokenHash")
+                    b.Property<string>("RequestHash")
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
-                        .HasColumnName("token_hash");
+                        .HasColumnName("request_hash");
+
+                    b.Property<byte[]>("ResponseBody")
+                        .HasColumnType("bytea")
+                        .HasColumnName("response_body");
+
+                    b.Property<int?>("StatusCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("status_code");
+
+                    b.HasKey("UserId", "Key");
+
+                    b.ToTable("idempotency_keys", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.McpTask", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("ErrorJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("error_json");
+
+                    b.Property<Guid?>("GrantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("grant_id");
+
+                    b.Property<int>("PollIntervalMs")
+                        .HasColumnType("integer")
+                        .HasColumnName("poll_interval_ms");
+
+                    b.Property<string>("ResultJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("result_json");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("StatusMessage")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("status_message");
+
+                    b.Property<int>("TtlSeconds")
+                        .HasColumnType("integer")
+                        .HasColumnName("ttl_seconds");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
@@ -1950,12 +2498,9 @@ namespace Mizan.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TokenHash")
-                        .IsUnique();
+                    b.HasIndex("UserId", "CreatedAt");
 
-                    b.HasIndex("UserId", "IsActive");
-
-                    b.ToTable("mcp_tokens", (string)null);
+                    b.ToTable("mcp_tasks", (string)null);
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.McpUsageLog", b =>
@@ -1975,9 +2520,17 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("execution_time_ms");
 
-                    b.Property<Guid>("McpTokenId")
+                    b.Property<Guid?>("GrantId")
                         .HasColumnType("uuid")
-                        .HasColumnName("mcp_token_id");
+                        .HasColumnName("grant_id");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("tool")
+                        .HasColumnName("kind");
 
                     b.Property<string>("Parameters")
                         .HasColumnType("jsonb")
@@ -2005,7 +2558,7 @@ namespace Mizan.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("McpTokenId");
+                    b.HasIndex("GrantId");
 
                     b.HasIndex("ToolName");
 
@@ -2022,28 +2575,55 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
+                    b.Property<Guid?>("AuthoredByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("authored_by_user_id");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("NOW()");
 
-                    b.Property<DateOnly>("EndDate")
-                        .HasColumnType("date")
-                        .HasColumnName("end_date");
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<int>("DurationDays")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(7)
+                        .HasColumnName("duration_days");
 
                     b.Property<Guid?>("HouseholdId")
                         .HasColumnType("uuid")
                         .HasColumnName("household_id");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Personal")
+                        .HasColumnName("kind");
 
                     b.Property<string>("Name")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("name");
 
-                    b.Property<DateOnly>("StartDate")
+                    b.Property<DateOnly?>("StartDate")
                         .HasColumnType("date")
                         .HasColumnName("start_date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Active")
+                        .HasColumnName("status");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
@@ -2051,59 +2631,23 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnName("updated_at")
                         .HasDefaultValueSql("NOW()");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid?>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AuthoredByUserId");
+
                     b.HasIndex("HouseholdId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("Kind", "UserId")
+                        .HasDatabaseName("ix_meal_plans_kind_user");
+
+                    b.HasIndex("UserId", "Status", "StartDate")
+                        .HasDatabaseName("ix_meal_plans_user_status_start");
 
                     b.ToTable("meal_plans", (string)null);
-                });
-
-            modelBuilder.Entity("Mizan.Domain.Entities.MealPlanRecipe", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date")
-                        .HasColumnName("date");
-
-                    b.Property<Guid>("MealPlanId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("meal_plan_id");
-
-                    b.Property<string>("MealType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("meal_type");
-
-                    b.Property<Guid>("RecipeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("recipe_id");
-
-                    b.Property<decimal>("Servings")
-                        .ValueGeneratedOnAdd()
-                        .HasPrecision(6, 2)
-                        .HasColumnType("numeric(6,2)")
-                        .HasDefaultValue(1m)
-                        .HasColumnName("servings");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MealPlanId");
-
-                    b.HasIndex("RecipeId");
-
-                    b.ToTable("meal_plan_recipes", (string)null);
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.Notification", b =>
@@ -2125,6 +2669,16 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("NOW()");
 
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("image_url");
+
+                    b.Property<string>("Kind")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("kind");
+
                     b.Property<string>("LinkUrl")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
@@ -2133,6 +2687,10 @@ namespace Mizan.Infrastructure.Migrations
                     b.Property<DateTime?>("ReadAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("read_at");
+
+                    b.Property<Guid?>("ScheduleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("schedule_id");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -2152,9 +2710,400 @@ namespace Mizan.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ScheduleId", "ReadAt")
+                        .HasFilter("schedule_id IS NOT NULL");
+
                     b.HasIndex("UserId", "ReadAt", "CreatedAt");
 
                     b.ToTable("notifications", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.NotificationPreference", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("Kind")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("kind");
+
+                    b.Property<bool>("Email")
+                        .HasColumnType("boolean")
+                        .HasColumnName("email");
+
+                    b.Property<bool>("InApp")
+                        .HasColumnType("boolean")
+                        .HasColumnName("in_app");
+
+                    b.Property<bool>("Push")
+                        .HasColumnType("boolean")
+                        .HasColumnName("push");
+
+                    b.Property<bool>("Telegram")
+                        .HasColumnType("boolean")
+                        .HasColumnName("telegram");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("UserId", "Kind");
+
+                    b.ToTable("notification_preferences", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.NotificationSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<int>("Channels")
+                        .HasColumnType("integer")
+                        .HasColumnName("channels");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("enabled");
+
+                    b.Property<string>("Key")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("key");
+
+                    b.Property<DateTime?>("LastRunAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_run_at");
+
+                    b.Property<DateTime?>("NextRunAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_run_at");
+
+                    b.Property<string>("Owner")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("owner");
+
+                    b.Property<Guid?>("OwnerUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_user_id");
+
+                    b.Property<DateTime?>("SkipUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("skip_until");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique()
+                        .HasFilter("key IS NOT NULL");
+
+                    b.HasIndex("OwnerUserId");
+
+                    b.HasIndex("Enabled", "NextRunAt");
+
+                    b.ToTable("notification_schedules", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.OAuthAuthorizationRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("Audience")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("audience");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("client_id");
+
+                    b.Property<string>("CodeChallenge")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("code_challenge");
+
+                    b.Property<string>("CodeHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("code_hash");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid?>("GrantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("grant_id");
+
+                    b.Property<string>("RedirectUri")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("redirect_uri");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("request_hash");
+
+                    b.PrimitiveCollection<List<string>>("RequestedScopes")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("requested_scopes");
+
+                    b.Property<string>("State")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("state");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("CodeHash")
+                        .IsUnique()
+                        .HasFilter("code_hash IS NOT NULL");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("RequestHash")
+                        .IsUnique();
+
+                    b.ToTable("oauth_authorization_requests", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.OAuthClient", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("ClientId")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("client_id");
+
+                    b.Property<string>("ClientUri")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("client_uri");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("LogoUri")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("logo_uri");
+
+                    b.Property<DateTime?>("MetadataFetchedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("metadata_fetched_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.PrimitiveCollection<List<string>>("RedirectUris")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("redirect_uris");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("source");
+
+                    b.Property<string>("VerifiedHost")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("verified_host");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId")
+                        .IsUnique();
+
+                    b.ToTable("oauth_clients", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.OAuthGrant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("client_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.PrimitiveCollection<List<Guid>>("HouseholdIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]")
+                        .HasColumnName("household_ids");
+
+                    b.Property<string>("HouseholdMode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("household_mode");
+
+                    b.Property<DateTime?>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_used_at");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.PrimitiveCollection<List<string>>("Scopes")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("scopes");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("UserId", "ClientId")
+                        .IsUnique()
+                        .HasFilter("revoked_at IS NULL");
+
+                    b.ToTable("oauth_grants", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.OAuthToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("Audience")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("audience");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("FamilyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("family_id");
+
+                    b.Property<Guid>("GrantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("grant_id");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("kind");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("token_hash");
+
+                    b.Property<DateTime?>("UsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("used_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FamilyId");
+
+                    b.HasIndex("GrantId");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.ToTable("oauth_tokens", (string)null);
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.OutboxJob", b =>
@@ -2261,6 +3210,427 @@ namespace Mizan.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("paddle_webhook_events", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.PlanEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<int>("DayIndex")
+                        .HasColumnType("integer")
+                        .HasColumnName("day_index");
+
+                    b.Property<Guid?>("FoodId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("food_id");
+
+                    b.Property<decimal?>("Grams")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("grams");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<Guid>("MealPlanId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("meal_plan_id");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("notes");
+
+                    b.Property<Guid?>("PrepSessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("prep_session_id");
+
+                    b.Property<Guid?>("RecipeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recipe_id");
+
+                    b.Property<decimal?>("Servings")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)")
+                        .HasColumnName("servings");
+
+                    b.Property<string>("Slot")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("slot");
+
+                    b.Property<int>("SortOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("sort_order");
+
+                    b.Property<string>("Text")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FoodId");
+
+                    b.HasIndex("PrepSessionId");
+
+                    b.HasIndex("RecipeId");
+
+                    b.HasIndex("MealPlanId", "DayIndex")
+                        .HasDatabaseName("ix_plan_entries_plan_day");
+
+                    b.ToTable("plan_entries", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.PrepSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<int>("DayIndex")
+                        .HasColumnType("integer")
+                        .HasColumnName("day_index");
+
+                    b.Property<Guid>("MealPlanId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("meal_plan_id");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("notes");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MealPlanId")
+                        .HasDatabaseName("ix_prep_sessions_meal_plan");
+
+                    b.ToTable("prep_sessions", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.PriceRegion", b =>
+                {
+                    b.Property<string>("Code")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasColumnName("currency");
+
+                    b.Property<bool>("Enabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("enabled");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Code");
+
+                    b.ToTable("price_regions", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Code = "ET-AA",
+                            CreatedAt = new DateTime(2026, 10, 22, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Currency = "ETB",
+                            Enabled = true,
+                            Name = "Addis Ababa"
+                        });
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.PriceReport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid>("FoodId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("food_id");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("note");
+
+                    b.Property<decimal>("Quantity")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(10, 3)
+                        .HasColumnType("numeric(10,3)")
+                        .HasDefaultValue(1m)
+                        .HasColumnName("quantity");
+
+                    b.Property<string>("RegionCode")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("region_code");
+
+                    b.Property<string>("ResolutionNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("resolution_note");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("resolved_at");
+
+                    b.Property<Guid?>("ResolvedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resolved_by_user_id");
+
+                    b.Property<decimal?>("ShownPricePerGram")
+                        .HasPrecision(14, 6)
+                        .HasColumnType("numeric(14,6)")
+                        .HasColumnName("shown_price_per_gram");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<decimal>("SuggestedPrice")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("suggested_price");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("unit");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FoodId");
+
+                    b.HasIndex("RegionCode");
+
+                    b.HasIndex("ResolvedByUserId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("Status", "CreatedAt")
+                        .HasDatabaseName("ix_price_reports_status_created");
+
+                    b.ToTable("price_reports", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.PriceSource", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<bool>("Enabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("enabled");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("last_error");
+
+                    b.Property<int>("LastObservations")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("last_observations");
+
+                    b.Property<DateTime?>("LastRunAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_run_at");
+
+                    b.Property<string>("LastStatus")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("last_status");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("RegionCode")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("region_code");
+
+                    b.Property<string>("Schedule")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("schedule");
+
+                    b.Property<string>("ScraperKey")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("scraper_key");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("Url")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("url");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RegionCode", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("ux_price_sources_region_name");
+
+                    b.ToTable("price_sources", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.PriceSourceAlias", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid?>("FoodId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("food_id");
+
+                    b.Property<bool>("Ignored")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("ignored");
+
+                    b.Property<DateTime?>("LastSeenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_seen_at");
+
+                    b.Property<decimal?>("LastSeenPrice")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("last_seen_price");
+
+                    b.Property<string>("LastSeenUrl")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("last_seen_url");
+
+                    b.Property<string>("ProductKey")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("product_key");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("product_name");
+
+                    b.Property<decimal?>("Quantity")
+                        .HasPrecision(10, 3)
+                        .HasColumnType("numeric(10,3)")
+                        .HasColumnName("quantity");
+
+                    b.Property<Guid>("SourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_id");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("unit");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FoodId")
+                        .HasDatabaseName("ix_price_source_aliases_food");
+
+                    b.HasIndex("SourceId", "ProductName")
+                        .IsUnique()
+                        .HasDatabaseName("ux_price_source_aliases_source_product");
+
+                    b.ToTable("price_source_aliases", (string)null);
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.Recipe", b =>
@@ -2472,9 +3842,17 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("NOW()");
 
+                    b.Property<DateTime?>("GeneratedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("generated_at");
+
                     b.Property<Guid?>("HouseholdId")
                         .HasColumnType("uuid")
                         .HasColumnName("household_id");
+
+                    b.Property<Guid?>("MealPlanId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("meal_plan_id");
 
                     b.Property<string>("Name")
                         .HasMaxLength(255)
@@ -2495,7 +3873,10 @@ namespace Mizan.Infrastructure.Migrations
 
                     b.HasIndex("HouseholdId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("MealPlanId");
+
+                    b.HasIndex("UserId", "UpdatedAt")
+                        .HasDatabaseName("ix_shopping_lists_user_updated");
 
                     b.ToTable("shopping_lists", (string)null);
                 });
@@ -2522,6 +3903,11 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("food_id");
 
+                    b.Property<decimal?>("Grams")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("grams");
+
                     b.Property<bool>("IsChecked")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -2534,9 +3920,25 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("item_name");
 
+                    b.Property<bool>("NeedsReview")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("needs_review");
+
+                    b.Property<Guid?>("PrepSessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("prep_session_id");
+
                     b.Property<Guid>("ShoppingListId")
                         .HasColumnType("uuid")
                         .HasColumnName("shopping_list_id");
+
+                    b.Property<int>("SortOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("sort_order");
 
                     b.Property<string>("Unit")
                         .HasMaxLength(50)
@@ -2547,7 +3949,8 @@ namespace Mizan.Infrastructure.Migrations
 
                     b.HasIndex("FoodId");
 
-                    b.HasIndex("ShoppingListId");
+                    b.HasIndex("ShoppingListId")
+                        .HasDatabaseName("ix_shopping_list_items_list");
 
                     b.ToTable("shopping_list_items", (string)null);
                 });
@@ -2754,6 +4157,83 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("subscriptions", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.SupportNote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AuthorUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_user_id");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("body");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid>("SubjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("subject_id");
+
+                    b.Property<string>("SubjectType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("subject_type");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubjectType", "SubjectId", "CreatedAt");
+
+                    b.ToTable("support_notes", (string)null);
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.SystemSetting", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("key");
+
+                    b.Property<bool>("IsSecret")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_secret");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by_user_id");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("value");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.ToTable("system_settings", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.TelegramLink", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2816,6 +4296,12 @@ namespace Mizan.Infrastructure.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("can_message");
 
+                    b.Property<bool>("CanPlanMeals")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("can_plan_meals");
+
                     b.Property<bool>("CanViewMeasurements")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -2874,6 +4360,68 @@ namespace Mizan.Infrastructure.Migrations
                     b.ToTable("trainer_client_relationships", (string)null);
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.UsageLimitOverride", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<long?>("DailyCostMicros")
+                        .HasColumnType("bigint")
+                        .HasColumnName("daily_cost_micros");
+
+                    b.Property<int?>("DailyRequests")
+                        .HasColumnType("integer")
+                        .HasColumnName("daily_requests");
+
+                    b.Property<long?>("DailyTokens")
+                        .HasColumnType("bigint")
+                        .HasColumnName("daily_tokens");
+
+                    b.Property<string>("Line")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("line");
+
+                    b.Property<long?>("MonthlyCostMicros")
+                        .HasColumnType("bigint")
+                        .HasColumnName("monthly_cost_micros");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("note");
+
+                    b.Property<int>("Scope")
+                        .HasColumnType("integer")
+                        .HasColumnName("scope");
+
+                    b.Property<Guid>("SubjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("subject_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by_user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Scope", "SubjectId", "Line")
+                        .IsUnique();
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("Scope", "SubjectId", "Line"), false);
+
+                    b.ToTable("usage_limit_overrides", (string)null);
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2930,9 +4478,26 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name");
 
+                    b.Property<bool>("NotifyByTelegram")
+                        .HasColumnType("boolean")
+                        .HasColumnName("notify_by_telegram");
+
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text")
                         .HasColumnName("password_hash");
+
+                    b.Property<string>("PriceRegionCode")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("price_region_code");
+
+                    b.Property<TimeOnly?>("QuietHoursEnd")
+                        .HasColumnType("time without time zone")
+                        .HasColumnName("quiet_hours_end");
+
+                    b.Property<TimeOnly?>("QuietHoursStart")
+                        .HasColumnType("time without time zone")
+                        .HasColumnName("quiet_hours_start");
 
                     b.Property<bool>("ReduceAnimations")
                         .HasColumnType("boolean")
@@ -3241,6 +4806,10 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("expires_at");
 
+                    b.Property<Guid?>("ImpersonatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("impersonator_id");
+
                     b.Property<string>("IpAddress")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
@@ -3268,6 +4837,8 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ImpersonatorId");
 
                     b.HasIndex("TokenHash")
                         .IsUnique();
@@ -3371,6 +4942,12 @@ namespace Mizan.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("template_id");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
@@ -3383,7 +4960,7 @@ namespace Mizan.Infrastructure.Migrations
 
                     b.HasIndex("TemplateId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "UpdatedAt");
 
                     b.ToTable("workouts", (string)null);
                 });
@@ -3726,6 +5303,26 @@ namespace Mizan.Infrastructure.Migrations
                     b.Navigation("Sender");
                 });
 
+            modelBuilder.Entity("Mizan.Domain.Entities.DeletedRecord", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.DeviceToken", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Mizan.Domain.Entities.Exercise", b =>
                 {
                     b.HasOne("Mizan.Domain.Entities.User", "CreatedByUser")
@@ -3775,6 +5372,17 @@ namespace Mizan.Infrastructure.Migrations
                     b.Navigation("Recipe");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.FeatureFlagOverride", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.Household", "Household")
+                        .WithMany()
+                        .HasForeignKey("HouseholdId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Household");
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.FeedComment", b =>
@@ -3890,6 +5498,11 @@ namespace Mizan.Infrastructure.Migrations
                         .HasForeignKey("FoodId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Mizan.Domain.Entities.PlanEntry", "PlanEntry")
+                        .WithMany()
+                        .HasForeignKey("PlanEntryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Mizan.Domain.Entities.Recipe", "Recipe")
                         .WithMany("DiaryEntries")
                         .HasForeignKey("RecipeId")
@@ -3903,9 +5516,37 @@ namespace Mizan.Infrastructure.Migrations
 
                     b.Navigation("Food");
 
+                    b.Navigation("PlanEntry");
+
                     b.Navigation("Recipe");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.FoodPrice", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.Food", "Food")
+                        .WithMany()
+                        .HasForeignKey("FoodId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Mizan.Domain.Entities.PriceRegion", "Region")
+                        .WithMany()
+                        .HasForeignKey("RegionCode")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Mizan.Domain.Entities.PriceSource", "Source")
+                        .WithMany("Prices")
+                        .HasForeignKey("SourceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Food");
+
+                    b.Navigation("Region");
+
+                    b.Navigation("Source");
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.GoalProgress", b =>
@@ -3973,7 +5614,18 @@ namespace Mizan.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Mizan.Domain.Entities.McpToken", b =>
+            modelBuilder.Entity("Mizan.Domain.Entities.IdempotencyKey", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.McpTask", b =>
                 {
                     b.HasOne("Mizan.Domain.Entities.User", "User")
                         .WithMany()
@@ -3986,11 +5638,10 @@ namespace Mizan.Infrastructure.Migrations
 
             modelBuilder.Entity("Mizan.Domain.Entities.McpUsageLog", b =>
                 {
-                    b.HasOne("Mizan.Domain.Entities.McpToken", "McpToken")
+                    b.HasOne("Mizan.Domain.Entities.OAuthGrant", "Grant")
                         .WithMany()
-                        .HasForeignKey("McpTokenId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("GrantId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Mizan.Domain.Entities.User", "User")
                         .WithMany()
@@ -3998,13 +5649,18 @@ namespace Mizan.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("McpToken");
+                    b.Navigation("Grant");
 
                     b.Navigation("User");
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.MealPlan", b =>
                 {
+                    b.HasOne("Mizan.Domain.Entities.User", "AuthoredBy")
+                        .WithMany()
+                        .HasForeignKey("AuthoredByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Mizan.Domain.Entities.Household", "Household")
                         .WithMany()
                         .HasForeignKey("HouseholdId")
@@ -4013,31 +5669,99 @@ namespace Mizan.Infrastructure.Migrations
                     b.HasOne("Mizan.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.OwnsOne("Mizan.Domain.Planning.PlanGeneration", "GeneratedFrom", b1 =>
+                        {
+                            b1.Property<Guid>("MealPlanId")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<decimal?>("BudgetCeiling");
+
+                            b1.Property<string>("Currency");
+
+                            b1.Property<DateTime>("GeneratedAt");
+
+                            b1.Property<string>("Model")
+                                .IsRequired();
+
+                            b1.Property<string>("PromptKey")
+                                .IsRequired();
+
+                            b1.Property<int?>("PromptVersion");
+
+                            b1.Property<Guid?>("PromptVersionId");
+
+                            b1.HasKey("MealPlanId");
+
+                            b1.ToTable("meal_plans");
+
+                            b1
+                                .ToJson("generated_from")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("MealPlanId");
+                        });
+
+                    b.OwnsOne("Mizan.Domain.Planning.PlanRules", "Rules", b1 =>
+                        {
+                            b1.Property<Guid>("MealPlanId")
+                                .ValueGeneratedOnAdd();
+
+                            b1.PrimitiveCollection<string>("AllowedFoodIds")
+                                .IsRequired();
+
+                            b1.PrimitiveCollection<string>("BatchDays")
+                                .IsRequired();
+
+                            b1.Property<string>("Currency");
+
+                            b1.Property<decimal?>("DailyBudget");
+
+                            b1.Property<TimeOnly?>("EatingWindowEnd");
+
+                            b1.Property<TimeOnly?>("EatingWindowStart");
+
+                            b1.PrimitiveCollection<string>("ForbiddenFoodIds")
+                                .IsRequired();
+
+                            b1.Property<int>("MacroMode");
+
+                            b1.Property<decimal?>("MaxCarbs");
+
+                            b1.Property<int>("PrepStyle");
+
+                            b1.Property<decimal?>("TargetCalories");
+
+                            b1.Property<decimal?>("TargetFat");
+
+                            b1.Property<decimal?>("TargetProtein");
+
+                            b1.Property<decimal?>("WeeklyBudget");
+
+                            b1.HasKey("MealPlanId");
+
+                            b1.ToTable("meal_plans");
+
+                            b1
+                                .ToJson("rules")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("MealPlanId");
+                        });
+
+                    b.Navigation("AuthoredBy");
+
+                    b.Navigation("GeneratedFrom");
 
                     b.Navigation("Household");
 
+                    b.Navigation("Rules")
+                        .IsRequired();
+
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Mizan.Domain.Entities.MealPlanRecipe", b =>
-                {
-                    b.HasOne("Mizan.Domain.Entities.MealPlan", "MealPlan")
-                        .WithMany("MealPlanRecipes")
-                        .HasForeignKey("MealPlanId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Mizan.Domain.Entities.Recipe", "Recipe")
-                        .WithMany("MealPlanRecipes")
-                        .HasForeignKey("RecipeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("MealPlan");
-
-                    b.Navigation("Recipe");
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.Notification", b =>
@@ -4048,7 +5772,460 @@ namespace Mizan.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.OwnsMany("Mizan.Domain.Entities.NotificationActionItem", "Actions", b1 =>
+                        {
+                            b1.Property<Guid>("NotificationId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<string>("Label")
+                                .IsRequired();
+
+                            b1.Property<string>("Path")
+                                .IsRequired();
+
+                            b1.HasKey("NotificationId", "__synthesizedOrdinal");
+
+                            b1.ToTable("notifications");
+
+                            b1
+                                .ToJson("actions")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("NotificationId");
+                        });
+
+                    b.OwnsMany("Mizan.Domain.Entities.NotificationFactItem", "Facts", b1 =>
+                        {
+                            b1.Property<Guid>("NotificationId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<string>("Label")
+                                .IsRequired();
+
+                            b1.Property<string>("Value")
+                                .IsRequired();
+
+                            b1.HasKey("NotificationId", "__synthesizedOrdinal");
+
+                            b1.ToTable("notifications");
+
+                            b1
+                                .ToJson("facts")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("NotificationId");
+                        });
+
+                    b.Navigation("Actions");
+
+                    b.Navigation("Facts");
+
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.NotificationPreference", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.NotificationSchedule", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", "OwnerUser")
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.OwnsOne("Mizan.Domain.Entities.NotificationAudience", "Audience", b1 =>
+                        {
+                            b1.Property<Guid>("NotificationScheduleId")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<bool?>("HasHousehold");
+
+                            b1.Property<int?>("InactiveDays");
+
+                            b1.Property<int>("Kind");
+
+                            b1.PrimitiveCollection<string>("Plans")
+                                .IsRequired();
+
+                            b1.Property<DateTime?>("SignedUpBefore");
+
+                            b1.Property<DateTime?>("SignedUpFrom");
+
+                            b1.Property<bool?>("TelegramLinked");
+
+                            b1.PrimitiveCollection<string>("TimeZones")
+                                .IsRequired();
+
+                            b1.Property<Guid?>("UserId");
+
+                            b1.HasKey("NotificationScheduleId");
+
+                            b1.ToTable("notification_schedules");
+
+                            b1
+                                .ToJson("audience")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("NotificationScheduleId");
+                        });
+
+                    b.OwnsOne("Mizan.Domain.Entities.NotificationCampaign", "Campaign", b1 =>
+                        {
+                            b1.Property<Guid>("NotificationScheduleId")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<DateTime?>("ActivatedAt");
+
+                            b1.Property<DateTime?>("CancelledAt");
+
+                            b1.Property<int?>("ConfirmedAudience");
+
+                            b1.Property<Guid?>("CreatedByUserId");
+
+                            b1.Property<string>("Name")
+                                .IsRequired();
+
+                            b1.Property<DateTime?>("PausedAt");
+
+                            b1.Property<int>("Purpose");
+
+                            b1.Property<int>("Status");
+
+                            b1.Property<string>("TimeZoneId");
+
+                            b1.HasKey("NotificationScheduleId");
+
+                            b1.ToTable("notification_schedules");
+
+                            b1
+                                .ToJson("campaign")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("NotificationScheduleId");
+                        });
+
+                    b.OwnsOne("Mizan.Domain.Entities.NotificationTemplate", "Message", b1 =>
+                        {
+                            b1.Property<Guid>("NotificationScheduleId")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<string>("Body");
+
+                            b1.Property<string>("ImageUrl");
+
+                            b1.Property<string>("Kind")
+                                .IsRequired();
+
+                            b1.Property<string>("LinkUrl");
+
+                            b1.Property<string>("Title")
+                                .IsRequired();
+
+                            b1.Property<string>("Type")
+                                .IsRequired();
+
+                            b1.HasKey("NotificationScheduleId");
+
+                            b1.ToTable("notification_schedules");
+
+                            b1
+                                .ToJson("message")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("NotificationScheduleId");
+
+                            b1.OwnsMany("Mizan.Domain.Entities.NotificationActionItem", "Actions", b2 =>
+                                {
+                                    b2.Property<Guid>("NotificationTemplateNotificationScheduleId");
+
+                                    b2.Property<int>("__synthesizedOrdinal")
+                                        .ValueGeneratedOnAdd();
+
+                                    b2.Property<string>("Label")
+                                        .IsRequired();
+
+                                    b2.Property<string>("Path")
+                                        .IsRequired();
+
+                                    b2.HasKey("NotificationTemplateNotificationScheduleId", "__synthesizedOrdinal");
+
+                                    b2.ToTable("notification_schedules");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("NotificationTemplateNotificationScheduleId");
+                                });
+
+                            b1.OwnsMany("Mizan.Domain.Entities.NotificationFactItem", "Facts", b2 =>
+                                {
+                                    b2.Property<Guid>("NotificationTemplateNotificationScheduleId");
+
+                                    b2.Property<int>("__synthesizedOrdinal")
+                                        .ValueGeneratedOnAdd();
+
+                                    b2.Property<string>("Label")
+                                        .IsRequired();
+
+                                    b2.Property<string>("Value")
+                                        .IsRequired();
+
+                                    b2.HasKey("NotificationTemplateNotificationScheduleId", "__synthesizedOrdinal");
+
+                                    b2.ToTable("notification_schedules");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("NotificationTemplateNotificationScheduleId");
+                                });
+
+                            b1.Navigation("Actions");
+
+                            b1.Navigation("Facts");
+                        });
+
+                    b.OwnsOne("Mizan.Domain.Entities.ReminderDetails", "Reminder", b1 =>
+                        {
+                            b1.Property<Guid>("NotificationScheduleId")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<string>("Kind")
+                                .IsRequired();
+
+                            b1.Property<int?>("LeadMinutes");
+
+                            b1.Property<Guid?>("MealPlanId");
+
+                            b1.Property<string>("MealType");
+
+                            b1.Property<Guid?>("PrepSessionId");
+
+                            b1.Property<TimeOnly?>("PrepTime");
+
+                            b1.Property<Guid?>("WorkoutTemplateId");
+
+                            b1.HasKey("NotificationScheduleId");
+
+                            b1.ToTable("notification_schedules");
+
+                            b1
+                                .ToJson("reminder")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("NotificationScheduleId");
+                        });
+
+                    b.OwnsOne("Mizan.Domain.Notifications.NotificationTrigger", "Trigger", b1 =>
+                        {
+                            b1.Property<Guid>("NotificationScheduleId")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<DateTime?>("At");
+
+                            b1.Property<int>("Days");
+
+                            b1.Property<string>("Event");
+
+                            b1.Property<int>("IntervalMinutes");
+
+                            b1.Property<int>("Kind");
+
+                            b1.Property<TimeOnly?>("LocalTime");
+
+                            b1.Property<int?>("MonthDay");
+
+                            b1.Property<int?>("MonthWeek");
+
+                            b1.Property<int>("OffsetMinutes");
+
+                            b1.HasKey("NotificationScheduleId");
+
+                            b1.ToTable("notification_schedules");
+
+                            b1
+                                .ToJson("trigger")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("NotificationScheduleId");
+                        });
+
+                    b.Navigation("Audience")
+                        .IsRequired();
+
+                    b.Navigation("Campaign");
+
+                    b.Navigation("Message")
+                        .IsRequired();
+
+                    b.Navigation("OwnerUser");
+
+                    b.Navigation("Reminder");
+
+                    b.Navigation("Trigger")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.OAuthAuthorizationRequest", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.OAuthClient", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Client");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.OAuthGrant", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.OAuthClient", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Client");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.OAuthToken", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.OAuthGrant", "Grant")
+                        .WithMany()
+                        .HasForeignKey("GrantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Grant");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.PlanEntry", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.Food", "Food")
+                        .WithMany()
+                        .HasForeignKey("FoodId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mizan.Domain.Entities.MealPlan", "MealPlan")
+                        .WithMany("Entries")
+                        .HasForeignKey("MealPlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Mizan.Domain.Entities.PrepSession", "PrepSession")
+                        .WithMany("Entries")
+                        .HasForeignKey("PrepSessionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Mizan.Domain.Entities.Recipe", "Recipe")
+                        .WithMany("PlanEntries")
+                        .HasForeignKey("RecipeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Food");
+
+                    b.Navigation("MealPlan");
+
+                    b.Navigation("PrepSession");
+
+                    b.Navigation("Recipe");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.PrepSession", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.MealPlan", "MealPlan")
+                        .WithMany("PrepSessions")
+                        .HasForeignKey("MealPlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MealPlan");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.PriceReport", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.Food", "Food")
+                        .WithMany()
+                        .HasForeignKey("FoodId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Mizan.Domain.Entities.PriceRegion", "Region")
+                        .WithMany()
+                        .HasForeignKey("RegionCode")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Mizan.Domain.Entities.User", "ResolvedBy")
+                        .WithMany()
+                        .HasForeignKey("ResolvedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Mizan.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Food");
+
+                    b.Navigation("Region");
+
+                    b.Navigation("ResolvedBy");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.PriceSource", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.PriceRegion", "Region")
+                        .WithMany("Sources")
+                        .HasForeignKey("RegionCode")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Region");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.PriceSourceAlias", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.Food", "Food")
+                        .WithMany()
+                        .HasForeignKey("FoodId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Mizan.Domain.Entities.PriceSource", "Source")
+                        .WithMany("Aliases")
+                        .HasForeignKey("SourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Food");
+
+                    b.Navigation("Source");
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.Recipe", b =>
@@ -4102,6 +6279,11 @@ namespace Mizan.Infrastructure.Migrations
                         .HasForeignKey("HouseholdId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Mizan.Domain.Entities.MealPlan", "MealPlan")
+                        .WithMany()
+                        .HasForeignKey("MealPlanId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Mizan.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -4109,6 +6291,8 @@ namespace Mizan.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Household");
+
+                    b.Navigation("MealPlan");
 
                     b.Navigation("User");
                 });
@@ -4162,6 +6346,14 @@ namespace Mizan.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.SystemSetting", b =>
+                {
+                    b.HasOne("Mizan.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.TelegramLink", b =>
@@ -4413,7 +6605,26 @@ namespace Mizan.Infrastructure.Migrations
 
             modelBuilder.Entity("Mizan.Domain.Entities.MealPlan", b =>
                 {
-                    b.Navigation("MealPlanRecipes");
+                    b.Navigation("Entries");
+
+                    b.Navigation("PrepSessions");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.PrepSession", b =>
+                {
+                    b.Navigation("Entries");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.PriceRegion", b =>
+                {
+                    b.Navigation("Sources");
+                });
+
+            modelBuilder.Entity("Mizan.Domain.Entities.PriceSource", b =>
+                {
+                    b.Navigation("Aliases");
+
+                    b.Navigation("Prices");
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.Recipe", b =>
@@ -4422,7 +6633,7 @@ namespace Mizan.Infrastructure.Migrations
 
                     b.Navigation("Ingredients");
 
-                    b.Navigation("MealPlanRecipes");
+                    b.Navigation("PlanEntries");
                 });
 
             modelBuilder.Entity("Mizan.Domain.Entities.ShoppingList", b =>

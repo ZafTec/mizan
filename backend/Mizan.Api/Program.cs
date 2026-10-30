@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -57,19 +58,36 @@ builder.Host.UseSerilog();
 
 Log.Information("Starting Mizan API - Environment: {Environment}", environment);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+    {
+        options.Filters.Add<ErrorShapeFilter>();
+        options.Filters.Add<FeatureGateFilter>();
+    })
+    // A body that cannot be read (bad JSON, a string where a number belongs) answers in the same shape as every
+    // other error, so a client has one thing to parse (docs/ARCHITECTURE.md#errors).
+    .ConfigureApiBehaviorOptions(options =>
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(entry => entry.Value?.Errors.Count > 0)
+                .ToDictionary(
+                    entry => entry.Key,
+                    entry => entry.Value!.Errors.Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? "The value is not valid." : e.ErrorMessage).ToArray());
+            var first = errors.Values.SelectMany(v => v).FirstOrDefault() ?? "The request is not valid.";
+            return new BadRequestObjectResult(new { errorCode = "invalid_request", error = first, errors });
+        });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "Mizan API", Version = "v1" });
     c.SupportNonNullableReferenceTypes();
     c.NonNullableReferenceTypesAsRequired();
+    c.DocumentFilter<Mizan.Api.OpenApi.AiCardSchemasFilter>();
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Type = SecuritySchemeType.Http,
         Scheme = "bearer",
-        BearerFormat = "JWT",
-        Description = "JWT Authorization header using the Bearer scheme."
+        Description = "An OAuth access token from /api/oauth/token, issued for the API audience (native apps). Browsers use the session cookie instead."
     });
     c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
@@ -108,40 +126,21 @@ authBuilder.AddCookie(ExternalProviders.CookieScheme, options =>
     options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
 });
 
-var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
-var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+// Both providers are always registered; their client ids and secrets are runtime settings that
+// ExternalSignInSettings applies to the next sign-in without a restart. A provider without them is off.
+authBuilder.AddGoogle(options => ExternalProviders.Configure(options, builder.Configuration, "google"));
+authBuilder.AddGitHub(options =>
 {
-    authBuilder.AddGoogle(options =>
-    {
-        options.ClientId = googleClientId;
-        options.ClientSecret = googleClientSecret;
-        ExternalProviders.Configure(options, builder.Configuration, "google");
-    });
-}
-else
-{
-    Log.Information("Google sign-in is not configured");
-}
-
-var githubClientId = builder.Configuration["Authentication:GitHub:ClientId"];
-var githubClientSecret = builder.Configuration["Authentication:GitHub:ClientSecret"];
-if (!string.IsNullOrWhiteSpace(githubClientId) && !string.IsNullOrWhiteSpace(githubClientSecret))
-{
-    authBuilder.AddGitHub(options =>
-    {
-        options.ClientId = githubClientId;
-        options.ClientSecret = githubClientSecret;
-        ExternalProviders.Configure(options, builder.Configuration, "github");
-        // GitHub hides the address unless asked, and we cannot create an
-        // account without one.
-        options.Scope.Add("user:email");
-    });
-}
-else
-{
-    Log.Information("GitHub sign-in is not configured");
-}
+    ExternalProviders.Configure(options, builder.Configuration, "github");
+    // GitHub hides the address unless asked, and we cannot create an
+    // account without one.
+    options.Scope.Add("user:email");
+});
+builder.Services.AddSingleton<ExternalSignInSettings>();
+builder.Services.AddOptions<Microsoft.AspNetCore.Authentication.Google.GoogleOptions>(Microsoft.AspNetCore.Authentication.Google.GoogleDefaults.AuthenticationScheme)
+    .Configure<ExternalSignInSettings>((options, settings) => settings.Apply(options, s => s.Google));
+builder.Services.AddOptions<AspNet.Security.OAuth.GitHub.GitHubAuthenticationOptions>(AspNet.Security.OAuth.GitHub.GitHubAuthenticationDefaults.AuthenticationScheme)
+    .Configure<ExternalSignInSettings>((options, settings) => settings.Apply(options, s => s.GitHub));
 
 var mcpServiceApiKey = builder.Configuration["Mcp:ServiceApiKey"]
     ?? throw new InvalidOperationException("Mcp:ServiceApiKey is not configured");
@@ -151,6 +150,11 @@ if (string.Equals(mcpServiceApiKey, mcpAdminServiceApiKey, StringComparison.Ordi
 {
     throw new InvalidOperationException("MCP service and admin API keys must be different");
 }
+
+// The native app's credential: an OAuth access token issued for the API.
+authBuilder.AddScheme<OAuthBearerAuthenticationSchemeOptions, OAuthBearerAuthenticationHandler>(
+    OAuthBearerAuthenticationSchemeOptions.DefaultScheme,
+    _ => { });
 
 authBuilder.AddScheme<ApiKeyAuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
     ApiKeyAuthenticationSchemeOptions.DefaultScheme,
@@ -163,7 +167,7 @@ authBuilder.AddScheme<ApiKeyAuthenticationSchemeOptions, ApiKeyAuthenticationHan
 builder.Services.AddAuthorization(options =>
 {
     options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
-        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme)
+        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, OAuthBearerAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser()
         .Build();
 
@@ -171,26 +175,39 @@ builder.Services.AddAuthorization(options =>
         .AddAuthenticationSchemes(ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser());
 
+    // The prices worker: the service key acting for nobody. A session cookie, a
+    // bearer token, or a service call impersonating a user never qualifies.
+    options.AddPolicy("PricesWorker", policy => policy
+        .AddAuthenticationSchemes(ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .RequireAuthenticatedUser()
+        .RequireClaim("type", "service"));
+
+    // The bot service and the prices worker reading their runtime settings: the same rule.
+    options.AddPolicy("InternalService", policy => policy
+        .AddAuthenticationSchemes(ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .RequireAuthenticatedUser()
+        .RequireClaim("type", "service"));
+
     options.AddPolicy("UserOrMcp", policy => policy
-        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, OAuthBearerAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser());
 
     options.AddPolicy("OptionalUserOrMcp", policy => policy
-        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, OAuthBearerAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAssertion(_ => true));
 
     options.AddPolicy("RequireAdmin", policy => policy
-        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, OAuthBearerAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser()
         .RequireRole("admin"));
 
     options.AddPolicy("RequireTrainer", policy => policy
-        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme)
+        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, OAuthBearerAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser()
         .RequireRole("trainer"));
 
     options.AddPolicy("RequirePro", policy => policy
-        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
+        .AddAuthenticationSchemes(SessionCookieAuthenticationSchemeOptions.DefaultScheme, OAuthBearerAuthenticationSchemeOptions.DefaultScheme, ApiKeyAuthenticationSchemeOptions.DefaultScheme)
         .RequireAuthenticatedUser()
         .AddRequirements(new Mizan.Api.Authorization.ProRequirement()));
 });
@@ -201,18 +218,6 @@ builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationM
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.AddPolicy("McpTokenValidation", context =>
-    {
-        var configuration = context.RequestServices.GetRequiredService<IConfiguration>();
-        return RateLimitPartition.GetFixedWindowLimiter(
-            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = configuration.GetValue("RateLimits:McpTokenValidation:PermitLimit", 10),
-                Window = TimeSpan.FromMinutes(configuration.GetValue("RateLimits:McpTokenValidation:WindowMinutes", 1)),
-                QueueLimit = 0
-            });
-    });
     // Credential endpoints, per IP. The BetterAuth rate limiter went with it.
     options.AddPolicy("AuthCredentials", context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
@@ -232,6 +237,25 @@ builder.Services.AddRateLimiter(options =>
             PermitLimit = context.RequestServices.GetRequiredService<IConfiguration>()
                 .GetValue("RateLimits:AuthEmail:PermitLimit", 3),
             Window = TimeSpan.FromMinutes(5),
+            QueueLimit = 0
+        }));
+    // The OAuth endpoints are public by design, so they are limited per IP.
+    options.AddPolicy("OAuth", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = context.RequestServices.GetRequiredService<IConfiguration>()
+                .GetValue("RateLimits:OAuth:PermitLimit", 120),
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+    options.AddPolicy("OAuthRegister", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = context.RequestServices.GetRequiredService<IConfiguration>()
+                .GetValue("RateLimits:OAuthRegister:PermitLimit", 20),
+            Window = TimeSpan.FromHours(1),
             QueueLimit = 0
         }));
     options.AddPolicy("AnonymousSocial", context => RateLimitPartition.GetFixedWindowLimiter(
@@ -302,8 +326,17 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(origins)
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowCredentials()
+            // The usage export names its file; a cross-origin page reads the name from here.
+            .WithExposedHeaders("Content-Disposition");
     });
+    // Token, register, revoke and discovery are called by software and by
+    // browser-based clients from any origin. They carry no cookie, so allowing
+    // every origin exposes nothing that a bearer of the right secret could not do.
+    options.AddPolicy(Mizan.Api.Controllers.OAuthController.PublicCorsPolicy, policy => policy
+        .AllowAnyOrigin()
+        .WithHeaders("Content-Type", "Authorization", "MCP-Protocol-Version")
+        .WithMethods("GET", "POST", "OPTIONS"));
 });
 
 builder.Services.AddHealthChecks()
@@ -367,9 +400,16 @@ if (!string.IsNullOrWhiteSpace(lokiEndpoint))
 var app = builder.Build();
 app.UseForwardedHeaders();
 
-if (app.Environment.IsDevelopment())
+// The OpenAPI document is how the web client and the Android app generate their types. It is served
+// in development, and in production only when OpenApi:Enabled is set, so the surface of a live
+// service is not published by accident. The interactive page is for development alone.
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("OpenApi:Enabled"))
 {
     app.UseSwagger();
+}
+
+if (app.Environment.IsDevelopment())
+{
     app.UseSwaggerUI();
 }
 
@@ -409,6 +449,7 @@ app.UseExceptionHandler(errorApp =>
             await context.Response.WriteAsJsonAsync(new
             {
                 errorCode = "validation_failed",
+                error = validationEx.Errors.FirstOrDefault()?.ErrorMessage ?? "The request is not valid.",
                 errors = validationEx.Errors.Select(e => new { e.PropertyName, e.ErrorMessage })
             });
         }
@@ -425,6 +466,7 @@ app.UseExceptionHandler(errorApp =>
                 errorCode = "ai_quota_exceeded",
                 error = quotaEx.Message,
                 scope = quotaEx.Scope.ToString().ToLowerInvariant(),
+                cap = System.Text.Json.JsonNamingPolicy.SnakeCaseLower.ConvertName(quotaEx.Cap.ToString()),
                 resetsAt = quotaEx.ResetsAt,
             });
         }
@@ -433,6 +475,12 @@ app.UseExceptionHandler(errorApp =>
             Log.Warning(exception, "AI provider unavailable for {Path}", context.Request.Path);
             context.Response.StatusCode = 503;
             await context.Response.WriteAsJsonAsync(new { errorCode = "ai_unavailable", error = aiUnavailableEx.Message });
+        }
+        else if (exception is RateLimitedException rateLimitedEx)
+        {
+            context.Response.StatusCode = 429;
+            context.Response.Headers.RetryAfter = ((int)Math.Max(1, rateLimitedEx.RetryAfter.TotalSeconds)).ToString();
+            await context.Response.WriteAsJsonAsync(new { errorCode = "rate_limited", error = rateLimitedEx.Message });
         }
         else if (exception is InvalidCredentialsException)
         {
@@ -456,6 +504,23 @@ app.UseExceptionHandler(errorApp =>
             context.Response.StatusCode = 400;
             await context.Response.WriteAsJsonAsync(new { errorCode = "promotion_weights_required", error = weightsEx.Message, items = weightsEx.Items });
         }
+        else if (exception is PlanNeedsFoodsException needsFoodsEx)
+        {
+            context.Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
+            await context.Response.WriteAsJsonAsync(new Mizan.Contracts.Planning.PlanNeedsFoodsError(
+                PlanNeedsFoodsException.Code, needsFoodsEx.Message, [.. needsFoodsEx.MissingFoods], [.. needsFoodsEx.EmptyDays]));
+        }
+        else if (exception is ConflictException conflictEx)
+        {
+            context.Response.StatusCode = 409;
+            await context.Response.WriteAsJsonAsync(new { errorCode = "conflict", error = conflictEx.Message });
+        }
+        else if (exception is UpstreamUnavailableException upstreamEx)
+        {
+            Log.Warning("Upstream service failed for {Path}: {Message}", context.Request.Path, upstreamEx.Message);
+            context.Response.StatusCode = StatusCodes.Status502BadGateway;
+            await context.Response.WriteAsJsonAsync(new { errorCode = "upstream_unavailable", error = upstreamEx.Message });
+        }
         else if (exception is DomainValidationException domainValidationEx)
         {
             Log.Warning("Domain validation failed for {Path}: {Message}",
@@ -471,6 +536,13 @@ app.UseExceptionHandler(errorApp =>
 
             context.Response.StatusCode = 404;
             await context.Response.WriteAsJsonAsync(new { errorCode = "not_found", error = notFoundEx.Message });
+        }
+        else if (exception is FeatureDisabledException featureEx)
+        {
+            // Switched off for the caller's household (docs/ADMIN.md#feature-flags). Every surface shows
+            // the message as it is, so none of them needs to know which flag or why.
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await context.Response.WriteAsJsonAsync(new { errorCode = "feature_disabled", error = featureEx.Message, feature = featureEx.FeatureKey });
         }
         else if (exception is UpgradeRequiredException upgradeEx)
         {
@@ -526,8 +598,29 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
+// Failures the framework produces without a body (not signed in, not allowed, no such address) get the same
+// shape as the ones our own code produces, so a client never meets an empty error.
+app.UseStatusCodePages(async context =>
+{
+    var response = context.HttpContext.Response;
+    var (code, message) = response.StatusCode switch
+    {
+        StatusCodes.Status401Unauthorized => ("unauthorized", "Unauthorized"),
+        StatusCodes.Status403Forbidden => ("forbidden", "You do not have access to this."),
+        StatusCodes.Status404NotFound => ("not_found", "Not found"),
+        StatusCodes.Status405MethodNotAllowed => ("method_not_allowed", "That method is not allowed here."),
+        StatusCodes.Status415UnsupportedMediaType => ("unsupported_media_type", "Send the body as JSON."),
+        _ => ("error", "The request failed."),
+    };
+    await response.WriteAsJsonAsync(new { errorCode = code, error = message });
+});
+
+// Before authentication: the provider callbacks are handled inside it.
+app.UseMiddleware<ExternalSignInRefreshMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<ImpersonationGuardMiddleware>();
+app.UseMiddleware<IdempotencyMiddleware>();
 
 app.MapControllers();
 app.MapHub<ChatHub>("/hubs/chat");
@@ -540,6 +633,12 @@ app.MapPrometheusScrapingEndpoint();
 if (args.Contains("--migrate"))
 {
     Environment.Exit(await DatabaseMigrations.ApplyAsync(app.Services));
+}
+
+// `--create-admin <email>` and `--import-env-settings` run once against a migrated database and exit.
+if (AdminCommandLine.Handles(args))
+{
+    Environment.Exit(await AdminCommandLine.RunAsync(app.Services, args));
 }
 
 if (app.Environment.IsDevelopment())

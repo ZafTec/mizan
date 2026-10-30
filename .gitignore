@@ -93,3 +93,9 @@ dump.rdb
 # re-seed from those rather than committing the output.
 design/*.html
 !design/*.dc.html
+
+# Raw Blender badge renders. The packaged PNGs live in frontend/public/badges;
+# the review sheets and manifest beside them are the committed deliverables.
+design/achievement-badges/deliverables/achievement-*.png
+design/achievement-badges/deliverables/level-*.png
+design/achievement-badges/deliverables/128/

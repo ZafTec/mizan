@@ -19,6 +19,8 @@ using Mizan.Infrastructure.Data;
 using Mizan.Infrastructure.Billing;
 using Mizan.Infrastructure.Data.Seed;
 using Mizan.Infrastructure.Outbox;
+using Mizan.Infrastructure.Telegram;
+using Mizan.Contracts.Telegram;
 using Testcontainers.PostgreSql;
 using Xunit;
 
@@ -31,6 +33,13 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         // ai_eval_cases is deliberately absent: the synthetic suite is seeded
         // by the migration and the publish gate has nothing to check without it.
         "ai_eval_runs",
+        "email_messages",
+        "announcements",
+        "contact_submissions",
+        "support_notes",
+        "feature_flag_overrides",
+        "feature_flags",
+        "usage_limit_overrides",
         "billing_discounts",
         "billing_plans",
         "recipe_nutrition_snapshots",
@@ -41,10 +50,25 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         "chat_messages",
         "chat_conversations",
         "trainer_client_relationships",
+        "oauth_tokens",
+        "oauth_authorization_requests",
+        "oauth_grants",
+        "oauth_clients",
         "mcp_usage_logs",
-        "mcp_tokens",
         "goal_progress",
         "user_goals",
+        "price_reports",
+        "food_prices",
+        "price_source_aliases",
+        "price_sources",
+        // Put back below: the migration seeds the default region.
+        "price_regions",
+        "shopping_list_items",
+        "shopping_lists",
+        "plan_entries",
+        "prep_sessions",
+        "meal_plans",
+        "notifications",
         "food_diary_entries",
         "favorite_recipes",
         "recipe_ingredients",
@@ -55,6 +79,8 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         "subscriptions",
         "audit_logs",
         "outbox_jobs",
+        // Runtime settings an admin test set; data_protection_keys stays, like a real key ring.
+        "system_settings",
         "user_activity_counters",
 
         // The seeded catalogs. They are truncated deliberately and then put
@@ -132,6 +158,9 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
     }
 
 
+    /// <summary>The API's service registrations as Program made them, before the test replacements.</summary>
+    public IReadOnlyList<ServiceDescriptor> Registrations { get; private set; } = [];
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
@@ -150,30 +179,14 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
                 ["ConnectionStrings:Redis"] = _redisConnectionString,
                 ["Mcp:ServiceApiKey"] = "test-api-key",
                 ["Mcp:AdminServiceApiKey"] = "test-admin-api-key",
-                ["RateLimits:McpTokenValidation:PermitLimit"] = "10000",
                 ["RateLimits:AuthCredentials:PermitLimit"] = "10000",
                 ["RateLimits:AuthEmail:PermitLimit"] = "10000",
-                // Small AI ceilings so quota tests exercise the limits in a
-                // handful of calls instead of hundreds.
-                ["Ai:Free:DailyRequests"] = "3",
-                ["Ai:Free:DailyTokens"] = "1000",
-                ["Ai:Pro:DailyRequests"] = "10",
-                ["Ai:Pro:DailyTokens"] = "5000",
-                // Its own line, so a setup conversation's several calls do not
-                // land against the tiny free allowance above.
-                ["Ai:Onboarding:DailyRequests"] = "20",
-                ["Ai:Onboarding:DailyTokens"] = "20000",
-                ["Ai:GlobalDailyTokens"] = "4000",
-                ["Ai:GlobalDailyCostMicros"] = "1000000000",
                 // The dispatcher's own loop is off in tests. A background timer
                 // would make every assertion about queued work a race; the
                 // tests drive it themselves through DrainOutboxAsync.
                 ["Outbox:Enabled"] = "false",
-                // A bot name, so the link endpoints are live. The API never
-                // calls Telegram, so nothing here reaches the network.
-                ["Telegram:BotUsername"] = "mizan_test_bot",
-                // Webhook tests sign their own payloads with this.
-                ["Paddle:WebhookSecret"] = PaddleWebhookSecret
+                ["RateLimits:OAuth:PermitLimit"] = "100000",
+                ["RateLimits:OAuthRegister:PermitLimit"] = "100000"
             };
 
             config.AddInMemoryCollection(settings);
@@ -181,6 +194,9 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
 
         builder.ConfigureTestServices(services =>
         {
+            // As the API registered them, before this fixture replaces any (ConfigurationAllowlistTests).
+            Registrations = services.ToList();
+
             // Remove existing DbContext registration
             var dbDescriptor = services.SingleOrDefault(
                 d => d.ServiceType == typeof(DbContextOptions<MizanDbContext>));
@@ -220,9 +236,39 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             services.RemoveAll<IAiProvider>();
             services.AddSingleton<IAiProvider>(Ai);
 
+            // Metadata clients are described by a document on the open internet.
+            // Tests describe them here instead.
+            services.RemoveAll<IOAuthClientMetadataFetcher>();
+            services.AddSingleton<IOAuthClientMetadataFetcher>(OAuthMetadata);
+
+            // Images named by address are served from here. The real fetcher still validates the address and
+            // reads the answer; only the connection is replaced.
+            services.AddHttpClient(Mizan.Infrastructure.Media.RemoteImageFetcher.HttpClientName)
+                .ConfigurePrimaryHttpMessageHandler(() => RemoteImages);
+
+            // Nor may a test push reach Firebase. The fake records what would have been sent.
+            services.RemoveAll<IPushSender>();
+            services.AddSingleton<IPushSender>(Push);
+
             // Nothing in a test run may reach Paddle either.
             services.RemoveAll<IPaddleApiClient>();
             services.AddSingleton<IPaddleApiClient>(Paddle);
+
+            // Run now reaches the prices worker over HTTP; a test decides whether one is configured.
+            services.RemoveAll<IPricesWorkerClient>();
+            services.AddSingleton<IPricesWorkerClient>(PricesWorker);
+
+            // Scheduled work reads the time from here, so a test can stand at 19:30 in someone's zone.
+            services.RemoveAll<TimeProvider>();
+            services.AddSingleton<TimeProvider>(Clock);
+
+            // The API reaches Telegram only through the bot service; the fake records what it was asked to send.
+            services.RemoveAll<ITelegramBotNotifier>();
+            services.AddSingleton<ITelegramBotNotifier>(TelegramBot);
+
+            // A controller the impersonation policy does not know about, so a test can show that a
+            // new route is closed to an administrator viewing the site as a user until it is classified.
+            services.AddControllers().AddApplicationPart(typeof(UnclassifiedTestController).Assembly);
 
             // Configure minimal logging for tests
             services.AddLogging(logging =>
@@ -246,6 +292,34 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         }
 
         await EnsureDatabaseAsync();
+        await ClearCacheAsync();
+    }
+
+    /// <summary>
+    /// The cache outlives a test run when Redis does. Read models such as the
+    /// achievements list are cached under tags, so a table this suite truncates
+    /// would otherwise come back from the previous run and break foreign keys.
+    /// </summary>
+    private async Task ClearCacheAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_redisConnectionString)) return;
+
+        var options = StackExchange.Redis.ConfigurationOptions.Parse(_redisConnectionString);
+        options.AllowAdmin = true;
+        options.AbortOnConnectFail = false;
+        options.ConnectTimeout = 2000;
+        try
+        {
+            using var redis = await StackExchange.Redis.ConnectionMultiplexer.ConnectAsync(options);
+            foreach (var endpoint in redis.GetEndPoints())
+                await redis.GetServer(endpoint).FlushDatabaseAsync();
+        }
+        catch (StackExchange.Redis.RedisException ex)
+        {
+            // Without Redis the application falls back to its in-process cache, so the
+            // suite still runs; say so once instead of failing every test from here.
+            Console.WriteLine($"[ApiTestFixture] Redis cache not flushed: {ex.Message}");
+        }
     }
 
     public new async Task DisposeAsync()
@@ -274,9 +348,21 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
 
     public RecordingEmailSender Email { get; } = new();
 
+    public RecordingPushSender Push { get; } = new();
+
     public ScriptedAiProvider Ai { get; } = new();
 
     public FakePaddleApiClient Paddle { get; } = new();
+
+    public FakePricesWorker PricesWorker { get; } = new();
+
+    public SettableClock Clock { get; } = new();
+
+    public RecordingTelegramBot TelegramBot { get; } = new();
+
+    public FakeOAuthMetadataFetcher OAuthMetadata { get; } = new();
+
+    public FakeImageHost RemoteImages { get; } = new();
     public const string PaddleWebhookSecret = "test-paddle-webhook-secret";
 
     /// <summary>
@@ -320,7 +406,6 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             db.ChatConversations.RemoveRange(db.ChatConversations);
             db.TrainerClientRelationships.RemoveRange(db.TrainerClientRelationships);
             db.McpUsageLogs.RemoveRange(db.McpUsageLogs);
-            db.McpTokens.RemoveRange(db.McpTokens);
             db.GoalProgress.RemoveRange(db.GoalProgress);
             db.UserGoals.RemoveRange(db.UserGoals);
             db.FoodDiaryEntries.RemoveRange(db.FoodDiaryEntries);
@@ -347,7 +432,53 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
             // previous one truncated or added. The seed is ON CONFLICT DO
             // NOTHING, so this is safe to run repeatedly.
             await db.Database.ExecuteSqlRawAsync(CatalogSeed.Sql);
+            await db.Database.ExecuteSqlRawAsync(
+                "INSERT INTO price_regions (code, name, currency, enabled, created_at) VALUES ('ET-AA', 'Addis Ababa', 'ETB', true, NOW()) ON CONFLICT DO NOTHING;");
 #pragma warning restore EF1002
+        }
+
+        // The settings cache would otherwise keep a value from the table just truncated.
+        Services.GetRequiredService<Mizan.Infrastructure.Settings.RuntimeSettingsCache>().Invalidate();
+        // A bot a previous test wired to the settings signal is gone by now.
+        TelegramBot.OnSettingsChanged = null;
+        await SeedRuntimeSettingsAsync(scope.ServiceProvider);
+        PricesWorker.Reset();
+        Clock.Reset();
+        TelegramBot.Reset();
+        await ClearCacheAsync();
+        // Redis is flushed above, but each node also keeps an in-process copy. Flags and allowance
+        // overrides are global reads, so a value cached by the test before must not reach this one.
+        await scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Caching.Hybrid.HybridCache>().RemoveByTagAsync("*");
+    }
+
+    /// <summary>
+    /// The runtime settings every test starts from, as an administrator would set them in the admin area.
+    /// None of them come from configuration any more (docs/ADMIN.md#runtime-settings).
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, string> BaselineSettings = new Dictionary<string, string>
+    {
+        // Small AI ceilings so quota tests exercise the limits in a handful of calls instead of hundreds.
+        ["Ai.Free.DailyRequests"] = "3",
+        ["Ai.Free.DailyTokens"] = "1000",
+        ["Ai.Pro.DailyRequests"] = "10",
+        ["Ai.Pro.DailyTokens"] = "5000",
+        // Its own line, so a setup conversation's several calls do not land against the tiny free allowance above.
+        ["Ai.Onboarding.DailyRequests"] = "20",
+        ["Ai.Onboarding.DailyTokens"] = "20000",
+        ["Ai.GlobalDailyTokens"] = "4000",
+        ["Ai.GlobalDailyCostMicros"] = "1000000000",
+        // A bot name, so the link endpoints are live. The API never calls Telegram, so nothing here reaches the network.
+        ["Telegram.BotUsername"] = "mizan_test_bot",
+        // Webhook tests sign their own payloads with this.
+        ["Paddle.WebhookSecret"] = PaddleWebhookSecret,
+    };
+
+    private static async Task SeedRuntimeSettingsAsync(IServiceProvider services)
+    {
+        var settings = services.GetRequiredService<IRuntimeSettings>();
+        foreach (var (key, value) in BaselineSettings)
+        {
+            await settings.SetAsync(key, value, null);
         }
     }
 
@@ -566,7 +697,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         return food;
     }
 
-    public async Task<McpUsageLog> SeedMcpUsageLogAsync(Guid tokenId, Guid userId, string toolName, bool success, int executionTimeMs)
+    public async Task<McpUsageLog> SeedMcpUsageLogAsync(Guid grantId, Guid userId, string toolName, bool success, int executionTimeMs)
     {
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
@@ -574,7 +705,7 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         var log = new McpUsageLog
         {
             Id = Guid.NewGuid(),
-            McpTokenId = tokenId,
+            GrantId = grantId,
             UserId = userId,
             ToolName = toolName,
             Parameters = "{}",
@@ -586,6 +717,48 @@ public sealed class ApiTestFixture : WebApplicationFactory<Program>, IAsyncLifet
         db.McpUsageLogs.Add(log);
         await db.SaveChangesAsync();
         return log;
+    }
+
+    public sealed record McpAccess(string Token, Guid GrantId);
+
+    /// <summary>
+    /// An OAuth access token for the MCP server, minted directly. The flow itself is
+    /// covered in OAuthFlowTests; tests that exercise tools only need a valid token.
+    /// Scopes default to everything the user may hold.
+    /// </summary>
+    public async Task<McpAccess> CreateMcpAccessAsync(Guid userId, string[]? scopes = null, string householdMode = "all", Guid[]? households = null, string audience = "mcp")
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MizanDbContext>();
+        var settings = scope.ServiceProvider.GetRequiredService<IOAuthSettings>();
+        var isAdmin = await db.Users.Where(u => u.Id == userId).Select(u => u.Role == "admin").SingleAsync();
+
+        var now = DateTime.UtcNow;
+        var client = new OAuthClient
+        {
+            Id = Guid.NewGuid(),
+            ClientId = "mzc_" + SecureToken.Generate()[..16],
+            Name = "Test Assistant",
+            RedirectUris = ["http://localhost:1/cb"],
+            Source = audience == "api" ? OAuthClient.SourceFirstParty : OAuthClient.SourceDynamic,
+            CreatedAt = now,
+        };
+        var grant = new OAuthGrant
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            ClientId = client.Id,
+            Scopes = Mizan.Contracts.Mcp.McpScopes.Normalize(scopes ?? Mizan.Contracts.Mcp.McpScopes.All.ToArray(), isAdmin),
+            HouseholdMode = householdMode,
+            HouseholdIds = (households ?? []).ToList(),
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        db.OAuthClients.Add(client);
+        db.OAuthGrants.Add(grant);
+        var issued = Mizan.Application.OAuth.OAuthTokens.Issue(db, await settings.GetLifetimesAsync(), grant.Id, Guid.NewGuid(), audience, now);
+        await db.SaveChangesAsync();
+        return new McpAccess(issued.AccessToken, grant.Id);
     }
 
     public async Task<List<McpUsageLog>> GetMcpUsageLogsByUserId(Guid userId)
@@ -653,6 +826,9 @@ public sealed class ScriptedAiProvider : IAiProvider
 
     public bool IsConfigured { get; set; } = true;
 
+    public Task<AiProviderStatus> GetStatusAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult(new AiProviderStatus(IsConfigured, Model));
+
     public IReadOnlyList<AiCompletionRequest> Calls
     {
         get { lock (_calls) return _calls.ToList(); }
@@ -700,6 +876,12 @@ public sealed class ScriptedAiProvider : IAiProvider
         lock (_calls) _scripted.Enqueue(_ => throw new AiUnavailableException(message));
     }
 
+    /// <summary>The next call is refused the way the real client reports a non-success status.</summary>
+    public void Reject(int status, string providerMessage, string? param = null)
+    {
+        lock (_calls) _scripted.Enqueue(_ => throw new AiProviderRejectedException(status, "invalid_request_error", null, param, providerMessage));
+    }
+
     public Task<AiCompletionResponse> CompleteAsync(
         AiCompletionRequest request, CancellationToken cancellationToken = default)
     {
@@ -743,21 +925,42 @@ public sealed class ScriptedAiProvider : IAiProvider
 /// </summary>
 public sealed class RecordingEmailSender : IEmailSender
 {
-    private readonly List<EmailMessage> _sent = new();
+    private readonly List<OutgoingEmail> _sent = new();
 
-    public IReadOnlyList<EmailMessage> Sent
+    public IReadOnlyList<OutgoingEmail> Sent
     {
         get { lock (_sent) return _sent.ToList(); }
     }
 
+    private string? _failure;
+
     public void Clear()
     {
-        lock (_sent) _sent.Clear();
+        lock (_sent)
+        {
+            _sent.Clear();
+            _failure = null;
+        }
     }
 
-    public Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
+    /// <summary>Every send throws this until <see cref="Clear"/> or <see cref="Recover"/>, the way a refusing server would.</summary>
+    public void FailWith(string message)
     {
-        lock (_sent) _sent.Add(message);
+        lock (_sent) _failure = message;
+    }
+
+    public void Recover()
+    {
+        lock (_sent) _failure = null;
+    }
+
+    public Task SendAsync(OutgoingEmail message, CancellationToken cancellationToken = default)
+    {
+        lock (_sent)
+        {
+            if (_failure is not null) throw new InvalidOperationException(_failure);
+            _sent.Add(message);
+        }
         return Task.CompletedTask;
     }
 
@@ -772,6 +975,90 @@ public sealed class RecordingEmailSender : IEmailSender
         var match = System.Text.RegularExpressions.Regex.Match(
             message.Text, pathSegment + @"\?token=([A-Za-z0-9_\-%]+)");
         return match.Success ? Uri.UnescapeDataString(match.Groups[1].Value) : null;
+    }
+}
+
+/// <summary>The real time until a test sets one; <see cref="Reset"/> goes back to the real time.</summary>
+public sealed class SettableClock : TimeProvider
+{
+    private DateTimeOffset? _now;
+
+    public void Set(DateTimeOffset now) => _now = now;
+
+    public void Reset() => _now = null;
+
+    public override DateTimeOffset GetUtcNow() => _now ?? TimeProvider.System.GetUtcNow();
+}
+
+/// <summary>Captures what the API asks the bot service to send to Telegram.</summary>
+public sealed class RecordingTelegramBot : ITelegramBotNotifier
+{
+    private readonly List<TelegramNotifyRequest> _sent = new();
+
+    public bool IsConfigured { get; set; } = true;
+
+    public Task<bool> IsConfiguredAsync(CancellationToken cancellationToken = default) => Task.FromResult(IsConfigured);
+
+    public IReadOnlyList<TelegramNotifyRequest> Sent
+    {
+        get { lock (_sent) return _sent.ToList(); }
+    }
+
+    public void Reset()
+    {
+        lock (_sent) _sent.Clear();
+        IsConfigured = true;
+        SettingsChanges = 0;
+        OnSettingsChanged = null;
+    }
+
+    public Task<TelegramNotifyOutcome> SendAsync(TelegramNotifyRequest request, CancellationToken cancellationToken)
+    {
+        lock (_sent) _sent.Add(request);
+        return Task.FromResult(TelegramNotifyOutcome.Sent);
+    }
+
+    /// <summary>How many times the API signalled a Telegram settings change.</summary>
+    public int SettingsChanges { get; private set; }
+
+    /// <summary>What the signal reaches, such as a bot service a test runs; nothing when null.</summary>
+    public Func<CancellationToken, Task>? OnSettingsChanged { get; set; }
+
+    public async Task SettingsChangedAsync(CancellationToken cancellationToken = default)
+    {
+        SettingsChanges++;
+        if (OnSettingsChanged is { } changed) await changed(cancellationToken);
+    }
+}
+
+/// <summary>Captures pushes instead of sending them. A test decides how each token answers.</summary>
+public sealed class RecordingPushSender : IPushSender
+{
+    private readonly List<PushMessage> _sent = new();
+    private readonly Dictionary<string, PushOutcome> _answers = new();
+
+    public bool IsConfigured { get; set; } = true;
+
+    public Task<bool> IsConfiguredAsync(CancellationToken cancellationToken = default) => Task.FromResult(IsConfigured);
+
+    public IReadOnlyList<PushMessage> Sent
+    {
+        get { lock (_sent) return _sent.ToList(); }
+    }
+
+    public void Reset()
+    {
+        lock (_sent) _sent.Clear();
+        _answers.Clear();
+        IsConfigured = true;
+    }
+
+    public void Answer(string token, PushOutcome outcome) => _answers[token] = outcome;
+
+    public Task<PushOutcome> SendAsync(PushMessage message, CancellationToken cancellationToken)
+    {
+        lock (_sent) _sent.Add(message);
+        return Task.FromResult(_answers.GetValueOrDefault(message.Token, PushOutcome.Sent));
     }
 }
 
@@ -790,4 +1077,51 @@ public sealed class CommandCounterScope : IDisposable
     public int Count => _counter.Count;
 
     public void Dispose() => _counter.Enabled = false;
+}
+
+
+/// <summary>The web, as far as image addresses go: serves what a test registered, and 404 for anything else.</summary>
+public sealed class FakeImageHost : HttpMessageHandler
+{
+    private readonly Dictionary<string, Func<HttpResponseMessage>> _answers = new();
+    private readonly List<string> _requested = [];
+
+    public IReadOnlyList<string> Requested
+    {
+        get { lock (_requested) return _requested.ToList(); }
+    }
+
+    public void Serve(string url, byte[] body) =>
+        _answers[url] = () => new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new ByteArrayContent(body) };
+
+    public void Redirect(string url, string to) =>
+        _answers[url] = () => new HttpResponseMessage(System.Net.HttpStatusCode.Found) { Headers = { Location = new Uri(to) } };
+
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        var url = request.RequestUri!.ToString();
+        lock (_requested) _requested.Add(url);
+        return Task.FromResult(_answers.TryGetValue(url, out var answer) ? answer() : new HttpResponseMessage(System.Net.HttpStatusCode.NotFound));
+    }
+
+    // The client factory disposes handlers it rotates out; this one outlives them.
+    protected override void Dispose(bool disposing) { }
+}
+
+/// <summary>Serves client metadata documents a test registered, and fails for any other URL.</summary>
+public sealed class FakeOAuthMetadataFetcher : IOAuthClientMetadataFetcher
+{
+    private readonly Dictionary<string, OAuthClientMetadata> _documents = new();
+
+    public int Fetches { get; private set; }
+
+    public void Serve(OAuthClientMetadata metadata) => _documents[metadata.ClientId] = metadata;
+
+    public Task<OAuthClientMetadata> FetchAsync(string clientIdUrl, CancellationToken cancellationToken)
+    {
+        Fetches++;
+        return _documents.TryGetValue(clientIdUrl, out var metadata)
+            ? Task.FromResult(metadata)
+            : throw new Mizan.Application.OAuth.OAuthException("invalid_client", "The client metadata document could not be loaded.");
+    }
 }

@@ -1,8 +1,9 @@
 using System.Diagnostics;
+using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Mizan.Application.Ai;
+using Mizan.Application.Ai.Tools;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
@@ -17,6 +18,11 @@ namespace Mizan.Infrastructure.Ai;
 /// Every case is a real provider call, reserved and settled like any other, so
 /// the cost of proving a prompt shows up in the same ledger as the cost of
 /// using one.
+///
+/// A chat case is offered the chat's tools with the same descriptions the chat
+/// offers, and nothing is run: a tool the model asks for is written into the
+/// output as <c>[tool call] name {arguments}</c>, so a case can assert what the
+/// assistant would have done against the tool contract.
 /// </summary>
 public class AiEvalRunner : IAiEvalRunner
 {
@@ -24,7 +30,7 @@ public class AiEvalRunner : IAiEvalRunner
     private readonly IAiProvider _provider;
     private readonly IAiQuotaService _quota;
     private readonly IAiPromptResolver _prompts;
-    private readonly AiOptions _options;
+    private readonly IRuntimeOptions<AiOptions> _settings;
     private readonly ILogger<AiEvalRunner> _logger;
 
     public AiEvalRunner(
@@ -32,23 +38,23 @@ public class AiEvalRunner : IAiEvalRunner
         IAiProvider provider,
         IAiQuotaService quota,
         IAiPromptResolver prompts,
-        IOptions<AiOptions> options,
+        IRuntimeOptions<AiOptions> settings,
         ILogger<AiEvalRunner> logger)
     {
         _context = context;
         _provider = provider;
         _quota = quota;
         _prompts = prompts;
-        _options = options.Value;
+        _settings = settings;
         _logger = logger;
     }
 
     public async Task<EvalSummary> RunAsync(
         Guid versionId, Guid adminUserId, CancellationToken cancellationToken = default)
     {
-        if (!_provider.IsConfigured)
+        if (!(await _provider.GetStatusAsync(cancellationToken)).IsConfigured)
         {
-            throw new AiUnavailableException("The assistant is not configured on this server.");
+            throw new AiUnavailableException("The assistant is not configured on this server.", "not_configured");
         }
 
         var version = await _context.AiPromptVersions
@@ -112,7 +118,8 @@ public class AiEvalRunner : IAiEvalRunner
 
         var stopwatch = Stopwatch.StartNew();
         var usage = AiTokenUsage.None;
-        var model = _provider.Model;
+        var options = await _settings.GetAsync(cancellationToken);
+        var model = (await _provider.GetStatusAsync(cancellationToken)).Model;
         var callOutcome = AiCallOutcome.ProviderError;
         AiCompletionResponse? response = null;
         string? errorReason = null;
@@ -120,7 +127,7 @@ public class AiEvalRunner : IAiEvalRunner
         try
         {
             response = await _provider.CompleteAsync(
-                new AiCompletionRequest { Messages = messages, Temperature = 0.2 }, cancellationToken);
+                new AiCompletionRequest { Messages = messages, Temperature = 0.2, Tools = ToolsFor(version.Prompt!.Key) }, cancellationToken);
             usage = response.Usage;
             model = response.Model;
             callOutcome = AiCallOutcome.Succeeded;
@@ -141,7 +148,7 @@ public class AiEvalRunner : IAiEvalRunner
 
         var verdict = response is null
             ? new EvalVerdict(false, false, errorReason)
-            : EvalAssertions.Evaluate(evalCase.Assertions, response.Content);
+            : EvalAssertions.Evaluate(evalCase.Assertions, Transcript(response));
 
         return new AiEvalRun
         {
@@ -152,21 +159,46 @@ public class AiEvalRunner : IAiEvalRunner
                 ? AiEvalOutcome.Errored
                 : verdict.Passed ? AiEvalOutcome.Passed : AiEvalOutcome.Failed,
             SchemaValid = verdict.SchemaValid,
-            Output = response?.Content,
+            Output = response is null ? null : Transcript(response),
             FailureReason = verdict.Reason,
             PromptTokens = usage.PromptTokens,
             CompletionTokens = usage.CompletionTokens,
-            CostMicros = CostOf(usage),
+            CostMicros = CostOf(options, usage),
             LatencyMs = (int)stopwatch.ElapsedMilliseconds,
             CreatedAt = DateTime.UtcNow,
         };
+    }
+
+    private static IReadOnlyList<AiToolSpec> ToolsFor(string key) =>
+        key == AiPromptKeys.Chat
+            ? AiToolCatalogue.Chat.Select(tool => new AiToolSpec(tool.Name, tool.Description, tool.ParametersSchema)).ToList()
+            : [];
+
+    /// <summary>The reply, then each tool the model asked for with its arguments as compact JSON.</summary>
+    internal static string Transcript(AiCompletionResponse response)
+    {
+        if (response.ToolCalls.Count == 0) return response.Content;
+        var calls = response.ToolCalls.Select(call => $"[tool call] {call.Name} {Compact(call.Arguments)}");
+        return string.Join('\n', new[] { response.Content }.Where(c => !string.IsNullOrWhiteSpace(c)).Concat(calls));
+    }
+
+    private static string Compact(string arguments)
+    {
+        try
+        {
+            return JsonNode.Parse(arguments)?.ToJsonString() ?? arguments;
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return arguments;
+        }
     }
 
     /// <summary>
     /// The ledger holds the same number; this copy is here so the eval matrix
     /// can show a cost delta between two versions without joining to it.
     /// </summary>
-    private long CostOf(AiTokenUsage usage) =>
-        (usage.PromptTokens * _options.PromptCostPerMillionMicros / 1_000_000)
-        + (usage.CompletionTokens * _options.CompletionCostPerMillionMicros / 1_000_000);
+    private static long CostOf(AiOptions options, AiTokenUsage usage) =>
+        (usage.PromptTokens * options.PromptCostPerMillionMicros / 1_000_000)
+        + (usage.CompletionTokens * options.CompletionCostPerMillionMicros / 1_000_000);
 }

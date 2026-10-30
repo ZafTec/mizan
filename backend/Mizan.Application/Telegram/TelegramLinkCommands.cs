@@ -43,7 +43,8 @@ public class IssueTelegramLinkCodeCommandHandler
     {
         var userId = _currentUser.UserId ?? throw new UnauthorizedAccessException();
 
-        if (!_settings.IsConfigured)
+        var telegram = await _settings.GetAsync(cancellationToken);
+        if (!telegram.IsConfigured)
         {
             throw new DomainValidationException("Telegram is not set up on this server.");
         }
@@ -60,7 +61,7 @@ public class IssueTelegramLinkCodeCommandHandler
 
         return new TelegramLinkCodeDto(
             code,
-            $"https://t.me/{_settings.BotUsername}?start={code}",
+            $"https://t.me/{telegram.BotUsername}?start={code}",
             DateTime.UtcNow.Add(Lifetime));
     }
 }
@@ -74,7 +75,10 @@ public class IssueTelegramLinkCodeCommandHandler
 /// signed-in browser session.
 /// </summary>
 public record ConsumeTelegramLinkCommand(string Code, long TelegramUserId, string? TelegramUsername)
-    : IRequest<TelegramLinkResult>;
+    : IRequest<TelegramLinkResult>, IRedactedAudit
+{
+    object IRedactedAudit.AuditDetails => new { TelegramUserId, TelegramUsername };
+}
 
 public record TelegramLinkResult(Guid UserId, string? Name);
 
@@ -94,6 +98,14 @@ public class ConsumeTelegramLinkCommandHandler
         // Both sides are unique, so re-linking has to replace rather than
         // insert: a user who reinstalls Telegram gets a new id, and a phone
         // handed to someone else must not stay pointed at the old account.
+        // The account that loses the chat is unlinked, so its notifications
+        // stop going to Telegram too.
+        await TelegramNotifications.TurnOffAsync(
+            _context,
+            _context.TelegramLinks
+                .Where(l => l.TelegramUserId == request.TelegramUserId && l.UserId != token.UserId)
+                .Select(l => l.UserId),
+            cancellationToken);
         await _context.TelegramLinks
             .Where(l => l.UserId == token.UserId || l.TelegramUserId == request.TelegramUserId)
             .ExecuteDeleteAsync(cancellationToken);
@@ -156,6 +168,18 @@ public class UnlinkTelegramCommandHandler : IRequestHandler<UnlinkTelegramComman
             query = query.Where(l => l.UserId == userId);
         }
 
+        // Off first: a failure between the two leaves notifications off with
+        // the chat still linked, never on with no chat to send to.
+        await TelegramNotifications.TurnOffAsync(_context, query.Select(l => l.UserId), cancellationToken);
         return await query.ExecuteDeleteAsync(cancellationToken) > 0;
     }
+}
+
+/// <summary>Unlinking a chat turns its account's Telegram notifications off (docs/TELEGRAM.md#notifications-in-telegram).</summary>
+internal static class TelegramNotifications
+{
+    public static Task TurnOffAsync(IMizanDbContext context, IQueryable<Guid> userIds, CancellationToken cancellationToken) =>
+        context.Users
+            .Where(u => u.NotifyByTelegram && userIds.Contains(u.Id))
+            .ExecuteUpdateAsync(s => s.SetProperty(u => u.NotifyByTelegram, false), cancellationToken);
 }

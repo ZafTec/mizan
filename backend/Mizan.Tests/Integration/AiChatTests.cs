@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Mizan.Application.Ai;
 using Mizan.Application.Interfaces;
+using Mizan.Contracts.Ai;
 using Mizan.Domain.Entities;
 using Mizan.Infrastructure.Data;
 using Xunit;
@@ -37,6 +38,10 @@ public class AiChatTests
         turn.Title.Should().Be("How much protein have I logged today?");
         turn.Reply.Content.Should().Be("About 96 g so far.");
         turn.Reply.FromUser.Should().BeFalse();
+        // The stored question comes back too, so a client can swap its optimistic line for the record.
+        turn.Message.FromUser.Should().BeTrue();
+        turn.Message.Content.Should().Be("How much protein have I logged today?");
+        turn.Message.ImageUrl.Should().BeNull();
     }
 
     [Fact]
@@ -200,6 +205,260 @@ public class AiChatTests
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         _fixture.Ai.Calls.Count.Should().Be(before);
     }
+
+    /// <summary>
+    /// #119: a plan write while writes are off is a typed refusal naming the switch, not a failed
+    /// turn. Planning has no switch of its own, so the refusal names nutrition.
+    /// </summary>
+    [Fact]
+    public async Task AWriteWithoutWriteConsentIsRefusedNamingTheAxis()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, userId) = await UserAsync();
+        await _fixture.GrantAiConsentAsync(userId, read: true, write: false);
+        _fixture.Ai.CallTools((
+            "add_plan_entry",
+            $$"""{"planId":"{{Guid.NewGuid()}}","dayIndex":0,"slot":"Breakfast","kind":"text","text":"Eggs"}"""));
+        _fixture.Ai.Reply("Adding to your plan is switched off.");
+
+        var turn = await SendAsync(client, null, "Add eggs to tomorrow's breakfast");
+
+        turn.Reply.Content.Should().Be("Adding to your plan is switched off.");
+        turn.Performed.Should().ContainSingle().Which.Succeeded.Should().BeFalse();
+        turn.ConsentRequired.Should().Equal(
+            new AiConsentRequirement(AiErrorCodes.ConsentRequired, "nutrition", "write"));
+    }
+
+    /// <summary>
+    /// A client reports where the person is (docs/AI.md#app-context): the fact waits for their next
+    /// message, goes to the model with it, and stays in the thread for later turns, while the person's
+    /// own view of the thread shows only what was said.
+    /// </summary>
+    [Fact]
+    public async Task AppContextAClientReports_ReachesTheModelWithTheNextMessage_AndStaysForLaterTurns()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, _) = await UserAsync();
+        const string step = "The person is setting up a reminder. Chosen so far: Log a meal (kind meal_log). The chat is now asking \"Which days?\".";
+
+        var noted = await client.PostAsJsonAsync("/api/Ai/conversation/context", new AiContextNoteRequest(step, 15));
+        noted.EnsureSuccessStatusCode();
+        var waiting = await client.GetFromJsonAsync<AiConversationDto>("/api/Ai/conversation");
+        waiting!.PendingContext.Should().Be(step);
+        waiting.ThreadId.Should().NotBeNull();
+
+        _fixture.Ai.Reply("Which day of the week?");
+        var response = await client.PostAsJsonAsync("/api/Ai/chat", new AiChatRequest(waiting.ThreadId, "once a week", waiting.PendingContext));
+        response.EnsureSuccessStatusCode();
+        var turn = (await response.Content.ReadFromJsonAsync<AiChatTurnDto>())!;
+
+        turn.ThreadId.Should().Be(waiting.ThreadId!.Value);
+        turn.Title.Should().Be("once a week");
+        ContextSent().Should().ContainSingle().Which.Should().EndWith(step);
+        (await client.GetFromJsonAsync<AiConversationDto>("/api/Ai/conversation"))!.PendingContext.Should().BeNull();
+
+        _fixture.Ai.Reply("Set for Sundays.");
+        await SendAsync(client, turn.ThreadId, "sunday");
+        ContextSent().Should().ContainSingle().Which.Should().EndWith(step);
+
+        var thread = await client.GetFromJsonAsync<AiChatThreadDetailDto>($"/api/Ai/threads/{turn.ThreadId}");
+        thread!.Messages.Select(m => m.Content).Should().Equal("once a week", "Which day of the week?", "sunday", "Set for Sundays.");
+    }
+
+    [Fact]
+    public async Task AfterAQuietGap_TheNextMessageStartsANewConversation_AndWaitingContextGoesWithIt()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, _) = await UserAsync();
+        var start = DateTimeOffset.UtcNow;
+        _fixture.Clock.Set(start);
+        var earlier = await SendAsync(client, null, "How much protein today?");
+        (await client.GetFromJsonAsync<AiConversationDto>("/api/Ai/conversation"))!.ThreadId.Should().Be(earlier.ThreadId);
+
+        _fixture.Clock.Set(start.AddHours(4));
+        (await client.GetFromJsonAsync<AiConversationDto>("/api/Ai/conversation"))!.ThreadId.Should().BeNull();
+
+        (await client.PostAsJsonAsync("/api/Ai/conversation/context", new AiContextNoteRequest("Asking: What time?", 15))).EnsureSuccessStatusCode();
+        var current = await client.GetFromJsonAsync<AiConversationDto>("/api/Ai/conversation");
+        current!.ThreadId.Should().NotBeNull().And.NotBe(earlier.ThreadId);
+        current.PendingContext.Should().Be("Asking: What time?");
+
+        _fixture.Clock.Set(start.AddHours(4).AddMinutes(20));
+        (await client.GetFromJsonAsync<AiConversationDto>("/api/Ai/conversation"))!.PendingContext.Should().BeNull();
+    }
+
+    /// <summary>
+    /// The live finding: the assistant looked the person's own dish up in the food catalogue, found
+    /// nothing and logged an estimate. It now finds the recipe and logs it with the recipe's nutrition.
+    /// </summary>
+    [Fact]
+    public async Task TheAssistantFindsThePersonsRecipe_AndLogsItWithTheRecipesOwnNutrition()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, userId) = await UserAsync();
+        await _fixture.GrantAiConsentAsync(userId, read: true, write: true);
+        var world = new PlanningWorld(_fixture);
+        var lentils = await world.FoodAsync("Red lentils", 116, 9, 20, 0.4m);
+        var stew = await world.RecipeAsync(userId, "Mesir wot", 2, false, (lentils, 400m, "g", null));
+        // Someone else's public recipe is not one of the person's.
+        var (other, _) = await world.PersonAsync("other");
+        await world.RecipeAsync(other, "Mesir wot deluxe", 2, true, (lentils, 400m, "g", null));
+
+        _fixture.Ai.CallTools(("search_recipes", """{"query":"mesir"}"""));
+        _fixture.Ai.CallTools(("log_meal", $$"""{"recipeId":"{{stew.Id}}","servings":1,"mealType":"LUNCH"}"""));
+        _fixture.Ai.Reply("Logged a serving of your mesir wot.");
+
+        var turn = await SendAsync(client, null, "I had a bowl of my mesir wot for lunch");
+
+        turn.Performed.Should().HaveCount(2).And.OnlyContain(p => p.Succeeded);
+        var lookup = _fixture.Ai.LastCall.Messages.First(m => m.Role == AiRole.Tool).Content;
+        lookup.Should().Contain(stew.Id.ToString()).And.Contain("232 kcal").And.NotContain("deluxe");
+        var diary = await _fixture.GetFoodDiaryEntriesByUserId(userId);
+        diary.Should().ContainSingle().Which.Calories.Should().Be(232m);
+    }
+
+    /// <summary>
+    /// M-02: asked which of their saved recipes would close the gap, the assistant called
+    /// search_recipes with no query and was refused. With no query it now gets every saved recipe:
+    /// the person's own and the public ones they favourited, favourites first, with macros per serving.
+    /// </summary>
+    [Fact]
+    public async Task TheAssistantListsThePersonsSavedRecipes_WithoutAQuery()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, userId) = await UserAsync();
+        await _fixture.GrantAiConsentAsync(userId, read: true, write: false);
+        var world = new PlanningWorld(_fixture);
+        var lentils = await world.FoodAsync("Red lentils", 116, 9, 20, 0.4m);
+        var misir = await world.RecipeAsync(userId, "Misir wot", 2, false, (lentils, 400m, "g", null));
+        var (other, _) = await world.PersonAsync("other");
+        var shiro = await world.RecipeAsync(other, "Shiro", 2, true, (lentils, 200m, "g", null));
+        var stranger = await world.RecipeAsync(other, "Stranger stew", 2, true, (lentils, 200m, "g", null));
+        (await client.PostAsync($"/api/Recipes/{shiro.Id}/favorite", null)).IsSuccessStatusCode.Should().BeTrue();
+
+        _fixture.Ai.CallTools(("search_recipes", "{}"));
+        _fixture.Ai.Reply("Your misir wot closes most of the gap.");
+
+        var turn = await SendAsync(client, null, "Which of my own saved recipes would best close my gap today?");
+
+        turn.Performed.Should().ContainSingle().Which.Succeeded.Should().BeTrue();
+        var listed = _fixture.Ai.LastCall.Messages.First(m => m.Role == AiRole.Tool).Content;
+        listed.Should().Contain("Shiro (2 servings, favourite) - per serving 116 kcal")
+            .And.Contain($"{misir.Id}").And.Contain("per serving 232 kcal, P18 C40 F0.8")
+            .And.NotContain(stranger.Title);
+        listed.IndexOf("Shiro", StringComparison.Ordinal).Should().BeLessThan(listed.IndexOf("Misir wot", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// N-02: asked which recipe fits the carbs left today, the assistant picked one far over the
+    /// protein left. Mizan now ranks the saved recipes by how well a serving fits what is left
+    /// (RecipeFit), and the assistant reads that ranking from a tool, as MCP and the API return it.
+    /// </summary>
+    [Fact]
+    public async Task TheAssistantReportsMizansRankingOfTheRecipesThatFitWhatIsLeftToday()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, userId) = await UserAsync();
+        await _fixture.GrantAiConsentAsync(userId, read: true, write: false);
+        var world = new PlanningWorld(_fixture);
+        (await client.PostAsJsonAsync("/api/Goals", new
+        {
+            GoalType = "general", TargetCalories = 2000, TargetProteinGrams = 150m, TargetCarbsGrams = 250m, TargetFatGrams = 70m,
+        })).StatusCode.Should().Be(HttpStatusCode.Created);
+        // So far: 1500 kcal, 140 g protein, 100 g carbs, 50 g fat. The carbs are the gap.
+        var soFar = await _fixture.SeedFoodAsync("Day so far", 1500m, 140m, 100m, 50m);
+        (await client.PostAsJsonAsync("/api/Nutrition/log", new
+        {
+            FoodId = soFar.Id, EntryDate = DateOnly.FromDateTime(DateTime.UtcNow), MealType = "lunch", AmountGrams = 100m,
+        })).EnsureSuccessStatusCode();
+        async Task<Mizan.Domain.Entities.Recipe> OneServing(string title, decimal kcal, decimal protein, decimal carbs, decimal fat) =>
+            await world.RecipeAsync(userId, title, 1, false, (await _fixture.SeedFoodAsync(title + " base", kcal, protein, carbs, fat), 100m, "g", null));
+        var chicken = await OneServing("Chicken plate", 450m, 60m, 5m, 10m);
+        var rice = await OneServing("Rice and lentils", 480m, 15m, 90m, 8m);
+        var cake = await OneServing("Butter cake", 600m, 6m, 70m, 35m);
+
+        var fit = await client.GetFromJsonAsync<Mizan.Contracts.Nutrition.RecipeFitResult>("/api/Recipes/fit");
+        fit!.Recipes.Select(r => r.RecipeId).Should().Equal(rice.Id, cake.Id, chicken.Id);
+        (fit.CaloriesLeft, fit.ProteinLeft, fit.CarbsLeft, fit.FatLeft).Should().Be((500m, 10m, 150m, 20m));
+        (fit.Recipes[0].CarbsLeftAfter, fit.Recipes[0].ProteinLeftAfter).Should().Be((60m, -5m));
+
+        _fixture.Ai.CallTools(("rank_recipes_for_today", "{}"));
+        _fixture.Ai.Reply("Rice and lentils fits best.");
+
+        var turn = await SendAsync(client, null, "Which of my recipes fits the carbs I have left today?");
+
+        turn.Performed.Should().ContainSingle().Which.Succeeded.Should().BeTrue();
+        var ranking = _fixture.Ai.LastCall.Messages.First(m => m.Role == AiRole.Tool).Content;
+        ranking.Should().Contain("left: 500 kcal, P 10 g, C 150 g, F 20 g")
+            .And.Contain($"1. {rice.Id} — Rice and lentils: one serving 480 kcal, P15 C90 F8; leaves 20 kcal, P -5 g, C 60 g, F 12 g")
+            .And.Contain($"3. {chicken.Id} — Chicken plate");
+    }
+
+    [Fact]
+    public async Task MealSuggestionsAreGivenEveryTargetOfTheGoalAndWhatIsLeftToday()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, userId) = await UserAsync();
+        await _fixture.GrantAiConsentAsync(userId, read: true, write: false);
+        (await client.PostAsJsonAsync("/api/Goals", new
+        {
+            GoalType = "general", TargetCalories = 2000, TargetProteinGrams = 150m, TargetCarbsGrams = 220m, TargetFatGrams = 60m,
+        })).StatusCode.Should().Be(HttpStatusCode.Created);
+        var food = await _fixture.SeedFoodAsync("Suggestion rice", 100m, 10m, 20m, 5m);
+        (await client.PostAsJsonAsync("/api/Nutrition/log", new
+        {
+            FoodId = food.Id, EntryDate = DateOnly.FromDateTime(DateTime.UtcNow), MealType = "lunch", Servings = 2m,
+        })).EnsureSuccessStatusCode();
+        _fixture.Ai.Reply("""{"suggestions":[],"note":null}""");
+
+        (await client.PostAsync("/api/Ai/suggestions", null)).EnsureSuccessStatusCode();
+
+        var context = string.Join("\n", _fixture.Ai.LastCall.Messages.Where(m => m.Role == AiRole.System).Select(m => m.Content));
+        context.Should().Contain("Targets per day: 2000 kcal, 150 g protein, 220 g carbs, 60 g fat.");
+        context.Should().Contain("Today: Left: 1800 kcal, 130 g protein, 180 g carbs, 50 g fat.");
+    }
+
+    /// <summary>
+    /// M-06: suggestions named meals the person could not make from what Mizan knows. They are now
+    /// given the person's recipes and the foods priced in their region, as a plan is.
+    /// </summary>
+    [Fact]
+    public async Task MealSuggestionsAreGivenThePersonsRecipesAndTheFoodsPricedInTheirRegion()
+    {
+        await _fixture.ResetDatabaseAsync();
+        var (client, userId) = await UserAsync();
+        await _fixture.GrantAiConsentAsync(userId, read: true, write: false);
+        var world = new PlanningWorld(_fixture);
+        var lentils = await world.FoodAsync("Red lentils", 116, 9, 20, 0.4m);
+        await world.RecipeAsync(userId, "Misir wot", 2, false, (lentils, 400m, "g", null));
+        var teff = await world.FoodAsync("Teff flour", 367, 13, 73, 2.4m);
+        await world.FoodAsync("Unpriced quinoa", 368, 14, 64, 6);
+        await world.DbAsync(async db =>
+        {
+            db.FoodPrices.Add(new FoodPrice
+            {
+                Id = Guid.NewGuid(), FoodId = teff.Id, RegionCode = Mizan.Domain.Pricing.PriceRegionDefaults.Code,
+                Price = 120, Quantity = 1, Unit = Mizan.Domain.Pricing.PriceUnits.Kilogram,
+                Confidence = Mizan.Domain.Pricing.PriceConfidence.Observed, ObservedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow,
+            });
+            await db.SaveChangesAsync();
+            return 0;
+        });
+        _fixture.Ai.Reply("""{"suggestions":[],"note":null}""");
+
+        (await client.PostAsync("/api/Ai/suggestions", null)).EnsureSuccessStatusCode();
+
+        var context = string.Join('\n', _fixture.Ai.LastCall.Messages.Where(m => m.Role == AiRole.System).Select(m => m.Content));
+        context.Should().Contain("Misir wot | 2 | 232 kcal")
+            .And.Contain("Teff flour | 367 kcal").And.Contain("367 kcal, P 13 g, C 73 g, F 2.4 g | 12")
+            .And.NotContain("Unpriced quinoa");
+    }
+
+    private List<string> ContextSent() =>
+        _fixture.Ai.LastCall.Messages
+            .Where(m => m.Role == AiRole.System && m.Content.StartsWith("App context", StringComparison.Ordinal))
+            .Select(m => m.Content)
+            .ToList();
 
     private async Task<(HttpClient Client, Guid UserId)> UserAsync()
     {

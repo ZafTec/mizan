@@ -1,10 +1,10 @@
+import DirectionalTransition from "@/components/motion/DirectionalTransition";
+import { DetailSkeleton } from "@/components/ui/skeletons";
 
-import Loading from "@/components/Loading";
-
-export default function LoadingPage() {
-	return (
-		<div className="flex justify-center items-center h-screen">
-			<Loading />
-		</div>
-	)
+export default function Loading() {
+  return (
+    <DirectionalTransition fallback>
+      <DetailSkeleton />
+    </DirectionalTransition>
+  );
 }

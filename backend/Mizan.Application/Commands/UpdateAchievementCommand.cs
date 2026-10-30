@@ -68,6 +68,7 @@ public class UpdateAchievementCommandHandler : IRequestHandler<UpdateAchievement
             .FirstOrDefaultAsync(a => a.Id == request.Id, cancellationToken)
             ?? throw new EntityNotFoundException("Achievement", request.Id);
 
+        if (achievement.Name != request.Name.Trim()) achievement.CardImageUrl = null; // The card shows the initials.
         achievement.Name = request.Name.Trim();
         achievement.Description = request.Description?.Trim();
         achievement.IconUrl = request.IconUrl?.Trim();

@@ -54,14 +54,17 @@ export default function MeasurementLogForm({
     onBusyChange(true);
     setError("");
     try {
-      const feedback = await clientApi<GamificationFeedback>("/api/BodyMeasurements", {
-        method: "POST",
-        body: {
-          date: data.get("date"),
-          ...values,
-          notes: String(data.get("notes") ?? "").trim() || null,
+      const feedback = await clientApi<GamificationFeedback>(
+        "/api/BodyMeasurements",
+        {
+          method: "POST",
+          body: {
+            date: data.get("date"),
+            ...values,
+            notes: String(data.get("notes") ?? "").trim() || null,
+          },
         },
-      });
+      );
       publishLogFeedback(feedback);
       onSaved("Measurement logged");
     } catch (cause) {
@@ -170,7 +173,7 @@ export default function MeasurementLogForm({
       <button
         type="submit"
         disabled={busy}
-        className="btn-primary min-h-11 w-full disabled:opacity-50"
+        className="btn-primary min-h-11 w-full"
       >
         {busy ? "Saving…" : "Log measurement"}
       </button>

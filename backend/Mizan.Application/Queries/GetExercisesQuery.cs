@@ -41,6 +41,7 @@ public record ExerciseDto
     public string? Equipment { get; init; }
     public string? VideoUrl { get; init; }
     public string? ImageUrl { get; init; }
+    public string? ModelUrl { get; init; }
     public bool IsCustom { get; init; }
     public bool IsApproved { get; init; }
     public bool IsOwner { get; init; }
@@ -118,6 +119,7 @@ public class GetExercisesQueryHandler : IRequestHandler<GetExercisesQuery, GetEx
                 Equipment = e.Equipment,
                 VideoUrl = e.VideoUrl,
                 ImageUrl = e.ImageUrl,
+                ModelUrl = e.ModelUrl,
                 IsCustom = e.IsCustom,
                 IsApproved = e.IsApproved,
                 IsOwner = _currentUser.UserId.HasValue && e.CreatedByUserId == _currentUser.UserId

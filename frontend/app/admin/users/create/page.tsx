@@ -27,14 +27,14 @@ export default async function CreateUserPage() {
         </div>
         <Link
           href="/admin/users"
-          className="btn-ghost !rounded-2xl !py-2 text-sm"
+          className="btn-ghost !rounded-2xl !py-2"
         >
           ← Back to Users
         </Link>
       </header>
 
       <div className="max-w-2xl">
-        <div className="glass-panel p-6">
+        <div className="card overflow-visible p-6">
           <CreateUserForm />
         </div>
       </div>

@@ -10,6 +10,9 @@ public class Exercise
     public string? Equipment { get; set; }
     public string? VideoUrl { get; set; }
     public string? ImageUrl { get; set; }
+
+    /// <summary>A rigged 3D figure (glTF binary) the app plays for this exercise. Set by an administrator.</summary>
+    public string? ModelUrl { get; set; }
     public bool IsCustom { get; set; }
     public bool IsApproved { get; set; } = true;
     public Guid? CreatedByUserId { get; set; }

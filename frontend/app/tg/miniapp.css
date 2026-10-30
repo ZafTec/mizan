@@ -1,0 +1,62 @@
+/*
+ * The Telegram Mini App frame (components/tg/MiniAppShell.tsx).
+ *
+ * The root layout's navigation and footer are hidden, the way the AppShell's
+ * .shell-fullbleed hides them. telegram-web-app.js sets --tg-theme-* on <html>;
+ * each one that exists replaces the matching app token, and the app's own
+ * light or dark value stays wherever Telegram sends none. The token is copied
+ * to a --tg-app-* name on <html> first, so the fallback is not a cycle.
+ */
+html:has(.tg-shell) {
+  --tg-app-background: var(--background);
+  --tg-app-foreground: var(--foreground);
+  --tg-app-card: var(--card);
+  --tg-app-muted: var(--muted);
+  --tg-app-muted-foreground: var(--muted-foreground);
+  --tg-app-primary: var(--primary);
+  --tg-app-primary-foreground: var(--primary-foreground);
+  --tg-app-destructive: var(--destructive);
+  --tg-app-border: var(--border);
+  --tg-app-ring: var(--ring);
+}
+
+body:has(.tg-shell) {
+  --background: var(--tg-theme-bg-color, var(--tg-app-background));
+  --foreground: var(--tg-theme-text-color, var(--tg-app-foreground));
+  --card: var(--tg-theme-section-bg-color, var(--tg-app-card));
+  --card-foreground: var(--tg-theme-text-color, var(--tg-app-foreground));
+  --popover: var(--tg-theme-section-bg-color, var(--tg-app-card));
+  --popover-foreground: var(--tg-theme-text-color, var(--tg-app-foreground));
+  --muted: var(--tg-theme-secondary-bg-color, var(--tg-app-muted));
+  --secondary: var(--tg-theme-secondary-bg-color, var(--tg-app-muted));
+  --accent: var(--tg-theme-secondary-bg-color, var(--tg-app-muted));
+  --muted-foreground: var(
+    --tg-theme-hint-color,
+    var(--tg-app-muted-foreground)
+  );
+  --primary: var(--tg-theme-button-color, var(--tg-app-primary));
+  --primary-foreground: var(
+    --tg-theme-button-text-color,
+    var(--tg-app-primary-foreground)
+  );
+  --destructive: var(
+    --tg-theme-destructive-text-color,
+    var(--tg-app-destructive)
+  );
+  --border: var(--tg-theme-section-separator-color, var(--tg-app-border));
+  --ring: var(--tg-theme-link-color, var(--tg-app-ring));
+  min-height: 100dvh;
+}
+
+body:has(.tg-shell) > nav,
+body:has(.tg-shell) > footer {
+  display: none !important;
+}
+
+body:has(.tg-shell) > main,
+body:has(.tg-shell) > main > div {
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: none !important;
+}
+

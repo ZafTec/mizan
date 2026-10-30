@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using Mizan.Contracts.Measurements;
+using Mizan.Contracts.Telegram;
 
 namespace Mizan.Telegram.Backend;
 
@@ -29,6 +30,35 @@ public sealed class MizanApiClient
         _logger = logger;
         _serviceKey = options.Value.ServiceApiKey ?? string.Empty;
         _http.BaseAddress = new Uri(options.Value.ApiUrl.TrimEnd('/') + "/");
+    }
+
+    // ---- Settings ---------------------------------------------------------
+
+    /// <summary>
+    /// The bot's runtime settings (docs/TELEGRAM.md#configure-and-run), or null when the API cannot be
+    /// reached or refuses the key. Never logged: the answer holds the bot token and the webhook secret.
+    /// </summary>
+    public async Task<TelegramBotSettings?> GetBotSettingsAsync(CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(_serviceKey)) return null;
+
+        try
+        {
+            using var request = Service(HttpMethod.Get, "api/internal/settings/telegram-bot");
+            using var response = await _http.SendAsync(request, ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Reading the bot settings returned {Status}", (int)response.StatusCode);
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<TelegramBotSettings>(Json, ct);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException || (ex is TaskCanceledException && !ct.IsCancellationRequested))
+        {
+            _logger.LogWarning("Reading the bot settings failed: {Error}", ex.Message);
+            return null;
+        }
     }
 
     // ---- Linking ----------------------------------------------------------
@@ -74,6 +104,23 @@ public sealed class MizanApiClient
         using var request = Service(HttpMethod.Delete, $"api/Telegram/resolve/{telegramUserId}");
         using var response = await _http.SendAsync(request, ct);
         return response.IsSuccessStatusCode;
+    }
+
+    // ---- The Mini App -----------------------------------------------------
+
+    /// <summary>
+    /// A session for a Telegram user whose <c>initData</c> this service has
+    /// verified. The service key is the whole credential: the API trusts that
+    /// the signature was checked before it was asked.
+    /// </summary>
+    public async Task<ApiResult<TelegramMiniAppSessionResponse>> CreateMiniAppSessionAsync(
+        TelegramMiniAppSessionRequest body, CancellationToken ct)
+    {
+        using var request = Service(HttpMethod.Post, "api/Telegram/sessions");
+        request.Content = JsonContent.Create(body, options: Json);
+
+        using var response = await _http.SendAsync(request, ct);
+        return await ReadAsync<TelegramMiniAppSessionResponse>(response, ct);
     }
 
     // ---- Acting as the linked user ----------------------------------------
@@ -181,6 +228,8 @@ public sealed class MizanApiClient
     {
         var request = Service(method, path);
         request.Headers.Add("X-Impersonate-User", userId.ToString());
+        // Holds the bot's writes to the telegram.bot feature flag; the API decides and answers with the message to show.
+        request.Headers.Add(TelegramSurface.Header, TelegramSurface.Value);
         return request;
     }
 }

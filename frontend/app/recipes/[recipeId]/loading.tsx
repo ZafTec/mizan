@@ -1,5 +1,10 @@
+import DirectionalTransition from "@/components/motion/DirectionalTransition";
 import { DetailSkeleton } from "@/components/ui/skeletons";
 
 export default function Loading() {
-  return <DetailSkeleton />;
+  return (
+    <DirectionalTransition fallback>
+      <DetailSkeleton />
+    </DirectionalTransition>
+  );
 }

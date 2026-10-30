@@ -1,12 +1,18 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Mizan.Application.Commands;
 using Mizan.Application.Common;
-using Mizan.Application.Queries;
+using Mizan.Application.Planning;
+using Mizan.Contracts.Planning;
 
 namespace Mizan.Api.Controllers;
 
+/// <summary>
+/// Plans, templates and the entries and cook sessions inside them. Routes map
+/// one to one onto commands; the rules live in Application and Domain
+/// (docs/PLANNING.md). The templates routes are declared before the `{id}`
+/// routes so "templates" is never read as an id.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Policy = "UserOrMcp")]
@@ -14,113 +20,179 @@ public class MealPlansController : ControllerBase
 {
     private readonly IMediator _mediator;
 
-    public MealPlansController(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
+    public MealPlansController(IMediator mediator) => _mediator = mediator;
 
     [HttpGet]
-    public async Task<ActionResult<PagedResult<MealPlanDto>>> GetMealPlans([FromQuery] GetMealPlansQuery query)
+    public async Task<ActionResult<PagedResult<MealPlanSummaryDto>>> GetMealPlans([FromQuery] GetMealPlansQuery query)
+        => Ok(await _mediator.Send(query));
+
+    /// <summary>
+    /// The viewer's active plan for a date (today by default), or 404 when none covers it. With
+    /// <c>planId</c>, that plan's day instead, drafts included; the date defaults to its first day.
+    /// </summary>
+    [HttpGet("day")]
+    public async Task<ActionResult<PlanDayViewDto>> GetPlanDay([FromQuery] DateOnly? date, [FromQuery] Guid? planId)
     {
-        var result = await _mediator.Send(query);
+        var result = await _mediator.Send(new GetPlanDayQuery(date, planId));
+        if (result is null)
+            return NotFound(planId is null
+                ? new { errorCode = "no_active_plan", error = "No active plan covers that date." }
+                : new { errorCode = "no_plan_day", error = "That plan has no such day." });
         return Ok(result);
+    }
+
+    /// <summary>
+    /// The assistant drafts a plan: one draft per budget ceiling, each saved as Draft with its
+    /// violations and cost. Metered on the planning allowance line; 429 when it is spent.
+    /// </summary>
+    [HttpPost("generate")]
+    [ProducesResponseType(typeof(GenerateMealPlanResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PlanNeedsFoodsError), StatusCodes.Status422UnprocessableEntity)]
+    public async Task<ActionResult<GenerateMealPlanResult>> Generate([FromBody] GenerateMealPlanCommand command)
+        => Ok(await _mediator.Send(command));
+
+    /// <summary>
+    /// The targets a macro mode gives the signed-in person, with any values already typed:
+    /// a typed value wins, Keto caps carbs, HighProtein derives protein from calories.
+    /// </summary>
+    [HttpGet("rules/defaults")]
+    public async Task<ActionResult<PlanTargetsDto>> GetRuleDefaults([FromQuery] GetPlanTargetsQuery query)
+        => Ok(await _mediator.Send(query));
+
+    [HttpGet("templates")]
+    public async Task<ActionResult<List<TemplateDto>>> GetTemplates()
+        => Ok(await _mediator.Send(new GetTemplatesQuery()));
+
+    [HttpPost("templates")]
+    public async Task<ActionResult<MealPlanCreatedResult>> CreateTemplate([FromBody] CreateTemplateCommand command)
+    {
+        var result = await _mediator.Send(command);
+        return CreatedAtAction(nameof(GetMealPlanById), new { id = result.Id }, result);
+    }
+
+    [HttpPut("templates/{id:guid}")]
+    public async Task<IActionResult> UpdateTemplate(Guid id, [FromBody] UpdateTemplateRequest request)
+    {
+        await _mediator.Send(new UpdateTemplateCommand(id, request));
+        return NoContent();
+    }
+
+    [HttpDelete("templates/{id:guid}")]
+    public async Task<IActionResult> DeleteTemplate(Guid id)
+    {
+        await _mediator.Send(new DeleteTemplateCommand(id));
+        return NoContent();
+    }
+
+    [HttpPost("templates/{id:guid}/apply")]
+    public async Task<ActionResult<MealPlanCreatedResult>> ApplyTemplate(Guid id, [FromBody] ApplyTemplateRequest request)
+    {
+        var result = await _mediator.Send(new ApplyTemplateCommand(id, request.StartDate, request.HouseholdId, request.Name));
+        return CreatedAtAction(nameof(GetMealPlanById), new { id = result.Id }, result);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<MealPlanDetailDto>> GetMealPlanById(Guid id)
     {
         var result = await _mediator.Send(new GetMealPlanByIdQuery(id));
-        if (result == null)
-            return NotFound();
+        if (result is null) return NotFound();
         return Ok(result);
     }
 
     [HttpPost]
-    public async Task<ActionResult<CreateMealPlanResult>> CreateMealPlan([FromBody] CreateMealPlanCommand command)
+    public async Task<ActionResult<MealPlanCreatedResult>> CreateMealPlan([FromBody] CreateMealPlanCommand command)
     {
         var result = await _mediator.Send(command);
         return CreatedAtAction(nameof(GetMealPlanById), new { id = result.Id }, result);
     }
 
-    [HttpPost("{id:guid}/recipes")]
-    public async Task<ActionResult<AddRecipeToMealPlanResult>> AddRecipeToMealPlan(
-        Guid id,
-        [FromBody] AddRecipeToMealPlanRequest request)
-    {
-        var command = new AddRecipeToMealPlanCommand
-        {
-            MealPlanId = id,
-            RecipeId = request.RecipeId,
-            Date = request.Date,
-            MealType = request.MealType,
-            Servings = request.Servings
-        };
-        var result = await _mediator.Send(command);
-        return Ok(result);
-    }
-
     [HttpPut("{id:guid}")]
-    public async Task<ActionResult<UpdateMealPlanResult>> UpdateMealPlan(
-        Guid id,
-        [FromBody] UpdateMealPlanRequest request)
+    public async Task<IActionResult> UpdateMealPlan(Guid id, [FromBody] UpdateMealPlanRequest request)
     {
-        var command = new UpdateMealPlanCommand(id, request.Name, request.StartDate, request.EndDate);
-        var result = await _mediator.Send(command);
-        if (!result.Success)
-            return BadRequest(result);
-        return Ok(result);
+        await _mediator.Send(new UpdateMealPlanCommand(id, request));
+        return NoContent();
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<ActionResult<DeleteMealPlanResult>> DeleteMealPlan(Guid id)
+    public async Task<IActionResult> DeleteMealPlan(Guid id)
     {
-        var result = await _mediator.Send(new DeleteMealPlanCommand(id));
-        if (!result.Success)
-            return NotFound(result);
-        return Ok(result);
+        await _mediator.Send(new DeleteMealPlanCommand(id));
+        return NoContent();
     }
 
-    [HttpDelete("{id:guid}/recipes/{recipeId:guid}")]
-    public async Task<ActionResult<RemoveRecipeFromMealPlanResult>> RemoveRecipeFromMealPlan(Guid id, Guid recipeId)
+    [HttpPost("{id:guid}/status")]
+    public async Task<IActionResult> SetStatus(Guid id, [FromBody] SetMealPlanStatusRequest request)
     {
-        var result = await _mediator.Send(new RemoveRecipeFromMealPlanCommand(id, recipeId));
-        if (!result.Success)
-            return BadRequest(result);
-        return Ok(result);
+        await _mediator.Send(new SetMealPlanStatusCommand(id, request.Status));
+        return NoContent();
     }
 
-    [HttpPut("{id:guid}/recipes/{recipeId:guid}")]
-    public async Task<ActionResult<UpdateMealPlanRecipeResult>> UpdateMealPlanRecipe(
-        Guid id,
-        Guid recipeId,
-        [FromBody] UpdateMealPlanRecipeRequest request)
+    [HttpPost("{id:guid}/accept")]
+    public async Task<IActionResult> Accept(Guid id)
     {
-        var command = new UpdateMealPlanRecipeCommand(id, recipeId, request.Date, request.MealType, request.Servings);
-        var result = await _mediator.Send(command);
-        if (!result.Success)
-            return BadRequest(result);
-        return Ok(result);
+        await _mediator.Send(new AcceptPlanCommand(id));
+        return NoContent();
     }
-}
 
-public record UpdateMealPlanRequest
-{
-    public string Name { get; init; } = "";
-    public DateOnly StartDate { get; init; }
-    public DateOnly EndDate { get; init; }
-}
+    [HttpPost("{id:guid}/decline")]
+    public async Task<IActionResult> Decline(Guid id)
+    {
+        await _mediator.Send(new DeclinePlanCommand(id));
+        return NoContent();
+    }
 
-public record AddRecipeToMealPlanRequest
-{
-    public Guid RecipeId { get; init; }
-    public DateOnly Date { get; init; }
-    public string MealType { get; init; } = "dinner";
-    public decimal Servings { get; init; } = 1;
-}
+    [HttpPost("{id:guid}/entries")]
+    public async Task<ActionResult<PlanEntryCreatedResult>> AddEntry(Guid id, [FromBody] PlanEntryRequest request)
+    {
+        var result = await _mediator.Send(new AddPlanEntryCommand(id, request));
+        return CreatedAtAction(nameof(GetMealPlanById), new { id }, result);
+    }
 
-public record UpdateMealPlanRecipeRequest
-{
-    public DateOnly Date { get; init; }
-    public string MealType { get; init; } = "dinner";
-    public decimal Servings { get; init; } = 1;
+    [HttpPut("{id:guid}/entries/{entryId:guid}")]
+    public async Task<IActionResult> UpdateEntry(Guid id, Guid entryId, [FromBody] PlanEntryRequest request)
+    {
+        await _mediator.Send(new UpdatePlanEntryCommand(id, entryId, request));
+        return NoContent();
+    }
+
+    [HttpDelete("{id:guid}/entries/{entryId:guid}")]
+    public async Task<IActionResult> RemoveEntry(Guid id, Guid entryId)
+    {
+        await _mediator.Send(new RemovePlanEntryCommand(id, entryId));
+        return NoContent();
+    }
+
+    /// <summary>Writes the entry to the diary on its date and slot unless the body says otherwise.</summary>
+    [HttpPost("{id:guid}/entries/{entryId:guid}/log")]
+    public async Task<ActionResult<LogPlanEntryResult>> LogEntry(Guid id, Guid entryId, [FromBody] LogPlanEntryRequest? request)
+        => Ok(await _mediator.Send(new LogPlanEntryCommand(id, entryId, request?.Date, request?.MealType)));
+
+    [HttpPost("{id:guid}/prep-sessions")]
+    public async Task<ActionResult<PrepSessionCreatedResult>> AddPrepSession(Guid id, [FromBody] PrepSessionRequest request)
+    {
+        var result = await _mediator.Send(new AddPrepSessionCommand(id, request));
+        return CreatedAtAction(nameof(GetMealPlanById), new { id }, result);
+    }
+
+    [HttpPut("{id:guid}/prep-sessions/{sessionId:guid}")]
+    public async Task<IActionResult> UpdatePrepSession(Guid id, Guid sessionId, [FromBody] PrepSessionRequest request)
+    {
+        await _mediator.Send(new UpdatePrepSessionCommand(id, sessionId, request));
+        return NoContent();
+    }
+
+    [HttpDelete("{id:guid}/prep-sessions/{sessionId:guid}")]
+    public async Task<IActionResult> RemovePrepSession(Guid id, Guid sessionId)
+    {
+        await _mediator.Send(new RemovePrepSessionCommand(id, sessionId));
+        return NoContent();
+    }
+
+    /// <summary>Aggregates the plan into a shopping list: a new one, or the items of an existing one replaced.</summary>
+    [HttpPost("{id:guid}/shopping-list")]
+    public async Task<ActionResult<GenerateShoppingListResult>> GenerateShoppingList(Guid id, [FromBody] GenerateShoppingListRequest? request)
+    {
+        var result = await _mediator.Send(new GenerateShoppingListCommand(id, request?.Name, request?.ReplaceListId));
+        return Created($"/api/ShoppingLists/{result.ListId}", result);
+    }
 }

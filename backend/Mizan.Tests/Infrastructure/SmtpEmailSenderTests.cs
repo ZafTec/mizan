@@ -16,7 +16,7 @@ namespace Mizan.Tests.Infrastructure;
 
 public class SmtpEmailSenderTests
 {
-    private static readonly EmailMessage Message = new(
+    private static readonly OutgoingEmail Message = new(
         "recipient@example.test", "Synthetic SMTP message", "<p>Synthetic message</p>", "Synthetic message");
 
     [Theory]
@@ -212,7 +212,7 @@ public class SmtpEmailSenderTests
     };
 
     private static SmtpEmailSender CreateSender(SmtpOptions options, string environment = "Production") => new(
-        Options.Create(options),
+        new FixedRuntimeOptions<SmtpOptions>(options),
         Mock.Of<IHostEnvironment>(value => value.EnvironmentName == environment),
         NullLogger<SmtpEmailSender>.Instance);
 }

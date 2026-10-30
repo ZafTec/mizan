@@ -13,6 +13,7 @@ type Capture = {
   empty?: boolean;
   dialog?: "meal" | "measurement";
   workout?: boolean;
+  admin?: boolean;
 };
 const captures: Capture[] = matrix
   ? [
@@ -42,6 +43,11 @@ const captures: Capture[] = matrix
         name: "recipe-mobile",
         mobile: true,
       },
+      { route: "/body-measurements", name: "body-mobile", mobile: true },
+      { route: "/meal-plan", name: "meal-plans-mobile", mobile: true },
+      { route: "/exercises", name: "exercises-mobile", mobile: true },
+      { route: "/achievements", name: "achievements-mobile", mobile: true },
+      { route: "/profile", name: "profile-mobile", mobile: true },
       { route: "/today", name: "meal-desktop", dialog: "meal" },
       { route: "/today", name: "meal-mobile", mobile: true, dialog: "meal" },
       {
@@ -65,6 +71,7 @@ const captures: Capture[] = matrix
         mobile: process.argv.includes("--mobile"),
         dark: process.argv.includes("--dark"),
         empty: process.argv.includes("--empty"),
+        admin: process.argv.includes("--admin"),
       },
     ];
 const browser = await chromium.launch();
@@ -86,7 +93,10 @@ for (const capture of captures) {
     timezoneId: "UTC",
   });
   await context.request.post(`${apiURL}/__fixture/session`, {
-    data: { empty: capture.empty },
+    data: {
+      empty: capture.empty,
+      role: capture.admin ? "admin" : undefined,
+    },
   });
   const page = await context.newPage();
   const errors: string[] = [];
@@ -113,6 +123,10 @@ for (const capture of captures) {
       .click();
     await expect(page.getByRole("dialog")).toBeVisible();
     if (capture.dialog === "meal") {
+      await page
+        .getByRole("button", { name: "Search foods", exact: true })
+        .click();
+      await page.getByRole("searchbox").first().fill("Greek");
       await page
         .getByRole("button", { name: "Add Greek yogurt", exact: true })
         .click();

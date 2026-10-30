@@ -19,13 +19,15 @@ public class AuthController : ControllerBase
     private readonly ISessionService _sessions;
     private readonly SessionCookie _cookie;
     private readonly IAppUrls _urls;
+    private readonly ExternalSignInSettings _externalSignIn;
 
-    public AuthController(IMediator mediator, ISessionService sessions, SessionCookie cookie, IAppUrls urls)
+    public AuthController(IMediator mediator, ISessionService sessions, SessionCookie cookie, IAppUrls urls, ExternalSignInSettings externalSignIn)
     {
         _mediator = mediator;
         _sessions = sessions;
         _cookie = cookie;
         _urls = urls;
+        _externalSignIn = externalSignIn;
     }
 
     [HttpPost("register")]
@@ -59,7 +61,37 @@ public class AuthController : ControllerBase
         }
 
         _cookie.Clear(Response);
+        _cookie.ClearAdmin(Response);
         return NoContent();
+    }
+
+    /// <summary>
+    /// Ends an administrator's view of the site as a user and puts their own session back. If their own session has
+    /// since expired they are signed out and sent to sign in again.
+    /// </summary>
+    [HttpPost("impersonation/stop")]
+    [AllowAnonymous]
+    public async Task<ActionResult<object>> StopImpersonation()
+    {
+        Request.Cookies.TryGetValue(SessionCookie.Name, out var current);
+        var impersonator = string.IsNullOrEmpty(current)
+            ? null
+            : await _mediator.Send(new StopImpersonationCommand(current));
+        if (impersonator is null) throw new ForbiddenAccessException("This is not an administrator's view of the site.");
+
+        // The administrator's own session comes back only if it is still good and still theirs.
+        Request.Cookies.TryGetValue(SessionCookie.AdminName, out var adminToken);
+        var admin = string.IsNullOrEmpty(adminToken) ? null : await _sessions.ResolveIdentityAsync(adminToken);
+        _cookie.ClearAdmin(Response);
+
+        if (admin is { ImpersonatorId: null } && admin.UserId == impersonator)
+        {
+            _cookie.Write(Response, adminToken!, DateTimeOffset.UtcNow.Add(SessionService.Lifetime));
+            return Ok(new { restored = true });
+        }
+
+        _cookie.Clear(Response);
+        return Ok(new { restored = false });
     }
 
     [HttpGet("me")]
@@ -151,10 +183,17 @@ public class AuthController : ControllerBase
     /// </summary>
     [HttpGet("external/{provider}")]
     [AllowAnonymous]
-    public IActionResult ExternalLogin(string provider, [FromQuery] string? returnUrl)
+    public async Task<IActionResult> ExternalLogin(string provider, [FromQuery] string? returnUrl)
     {
         var scheme = ExternalProviders.Resolve(provider)
             ?? throw new DomainValidationException($"Unknown sign-in provider '{provider}'.");
+
+        // An administrator turns a provider on in Admin > Settings > Sign-in; until then it is off.
+        var settings = await _externalSignIn.RefreshAsync(HttpContext.RequestAborted);
+        if (ExternalSignInSettings.For(settings, provider) is not { IsConfigured: true })
+        {
+            return Redirect(_urls.SafeReturnUrl("/login?error=external_unavailable"));
+        }
 
         var properties = new AuthenticationProperties
         {

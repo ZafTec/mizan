@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using Mizan.Mcp.Server.Services;
+using ModelContextProtocol.Extensions.Apps;
 using ModelContextProtocol.Server;
 
 namespace Mizan.Mcp.Server.Tools;
@@ -11,6 +12,7 @@ public sealed class NutritionTools
     public NutritionTools(IBackendApiClient api) => _api = api;
 
     [McpServerTool(Name = "get_nutrition_summary", ReadOnly = true, Idempotent = true)]
+    [McpAppUi(ResourceUri = Mizan.Mcp.Server.Apps.MizanApps.NutritionDay)]
     [Description("Get daily nutrition totals plus goal progress for a date.")]
     public async Task<string> GetNutritionSummary([Description("Date in YYYY-MM-DD format (defaults to today)")] string? date = null, CancellationToken ct = default)
     {

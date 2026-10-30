@@ -45,16 +45,20 @@ public class DeleteRecipeCommandHandler : IRequestHandler<DeleteRecipeCommand, D
             return new DeleteRecipeResult { Success = false, Message = "Recipe not found" };
         }
 
-        var user = await _context.Users.FindAsync(new object[] { _currentUser.UserId.Value }, cancellationToken);
-        var isAdmin = user?.Role == "admin";
+        // The role the request carries, not the account row: a service acting for an administrator
+        // without the admin key acts as an ordinary user (docs/ARCHITECTURE.md).
+        var isAdmin = _currentUser.IsInRole("admin");
 
         if (recipe.UserId != _currentUser.UserId && !isAdmin)
         {
             return new DeleteRecipeResult { Success = false, Message = "You do not have permission to delete this recipe" };
         }
 
-        var mealPlanUsage = await _context.MealPlanRecipes
-            .CountAsync(mpr => mpr.RecipeId == request.Id, cancellationToken);
+        var mealPlanUsage = await _context.PlanEntries
+            .Where(e => e.RecipeId == request.Id)
+            .Select(e => e.MealPlanId)
+            .Distinct()
+            .CountAsync(cancellationToken);
 
         if (mealPlanUsage > 0)
         {

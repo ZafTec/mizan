@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
-using Microsoft.Extensions.Options;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
 
@@ -21,13 +20,13 @@ public class EntitlementService : IEntitlementService
 
     private readonly IMizanDbContext _context;
     private readonly HybridCache _cache;
-    private readonly PaddleOptions _options;
+    private readonly IRuntimeOptions<PaddleOptions> _settings;
 
-    public EntitlementService(IMizanDbContext context, HybridCache cache, IOptions<PaddleOptions> options)
+    public EntitlementService(IMizanDbContext context, HybridCache cache, IRuntimeOptions<PaddleOptions> settings)
     {
         _context = context;
         _cache = cache;
-        _options = options.Value;
+        _settings = settings;
     }
 
     public async Task<Entitlement> GetAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -64,17 +63,36 @@ public class EntitlementService : IEntitlementService
             return new Entitlement("lifetime", true, null);
         }
 
-        var now = DateTime.UtcNow;
-        var isPro = sub.Status switch
-        {
-            "active" or "trialing" => true,
-            "past_due" => sub.CurrentPeriodEnd is not null && now < sub.CurrentPeriodEnd.Value.AddDays(_options.GraceDays),
-            "canceled" => sub.CurrentPeriodEnd is not null && now < sub.CurrentPeriodEnd.Value,
-            _ => false
-        };
+        var graceDays = (await _settings.GetAsync(cancellationToken)).GraceDays;
+        var isPro = IsPro(sub.Status, sub.CurrentPeriodEnd, DateTime.UtcNow, graceDays);
 
         return isPro
             ? new Entitlement("pro", true, sub.CurrentPeriodEnd)
             : Entitlement.Free;
     }
+
+    public async Task<IReadOnlySet<Guid>> GetProUserIdsAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken = default)
+    {
+        if (userIds.Count == 0) return new HashSet<Guid>();
+
+        var subscriptions = await _context.Subscriptions.AsNoTracking()
+            .Where(s => userIds.Contains(s.UserId))
+            .Select(s => new { s.UserId, s.Status, s.IsLifetime, s.CurrentPeriodEnd })
+            .ToListAsync(cancellationToken);
+
+        var now = DateTime.UtcNow;
+        var graceDays = (await _settings.GetAsync(cancellationToken)).GraceDays;
+        return subscriptions
+            .Where(s => s.IsLifetime || IsPro(s.Status, s.CurrentPeriodEnd, now, graceDays))
+            .Select(s => s.UserId)
+            .ToHashSet();
+    }
+
+    private static bool IsPro(string status, DateTime? currentPeriodEnd, DateTime now, int graceDays) => status switch
+    {
+        "active" or "trialing" => true,
+        "past_due" => currentPeriodEnd is not null && now < currentPeriodEnd.Value.AddDays(graceDays),
+        "canceled" => currentPeriodEnd is not null && now < currentPeriodEnd.Value,
+        _ => false
+    };
 }

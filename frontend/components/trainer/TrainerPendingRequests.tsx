@@ -6,267 +6,297 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { appToast } from "@/lib/toast";
-import type { TrainerPendingRequestDto, TrainerPendingRequestPagedResultDto } from "@/types/api-contracts";
+import type {
+  TrainerPendingRequestDto,
+  TrainerPendingRequestPagedResultDto,
+} from "@/types/api-contracts";
 import { getPagedItems } from "@/types/api-contracts";
 
 interface PermissionSettings {
-	canViewNutrition: boolean;
-	canViewWorkouts: boolean;
-	canViewMeasurements: boolean;
-	canMessage: boolean;
+  canViewNutrition: boolean;
+  canViewWorkouts: boolean;
+  canViewMeasurements: boolean;
+  canMessage: boolean;
 }
 
 export function TrainerPendingRequests() {
-	const [requests, setRequests] = useState<TrainerPendingRequestDto[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [processingId, setProcessingId] = useState<string | null>(null);
-	const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
-	const [selectedRequest, setSelectedRequest] = useState<TrainerPendingRequestDto | null>(
-		null
-	);
-	const [permissions, setPermissions] = useState<PermissionSettings>({
-		canViewNutrition: true,
-		canViewWorkouts: true,
-		canViewMeasurements: false,
-		canMessage: true,
-	});
-	async function fetchRequests() {
-		try {
-			const data = await clientApi<TrainerPendingRequestPagedResultDto>(
-				"/api/Trainers/requests"
-			);
-			setRequests(getPagedItems(data));
-		} catch (error) {
-			console.error("Failed to fetch pending requests:", error);
-			appToast.error(error, "Failed to load pending requests");
-		} finally {
-			setLoading(false);
-		}
-	}
+  const [requests, setRequests] = useState<TrainerPendingRequestDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
+  const [selectedRequest, setSelectedRequest] =
+    useState<TrainerPendingRequestDto | null>(null);
+  const [permissions, setPermissions] = useState<PermissionSettings>({
+    canViewNutrition: true,
+    canViewWorkouts: true,
+    canViewMeasurements: false,
+    canMessage: true,
+  });
+  async function fetchRequests() {
+    try {
+      const data = await clientApi<TrainerPendingRequestPagedResultDto>(
+        "/api/Trainers/requests",
+      );
+      setRequests(getPagedItems(data));
+    } catch (error) {
+      console.error("Failed to fetch pending requests:", error);
+      appToast.error(error, "Failed to load pending requests");
+    } finally {
+      setLoading(false);
+    }
+  }
 
-	useEffect(() => {
-		fetchRequests();
-	}, []);
+  useEffect(() => {
+    fetchRequests();
+  }, []);
 
-	function handleAcceptClick(request: TrainerPendingRequestDto) {
-		setSelectedRequest(request);
-		setShowPermissionsDialog(true);
-	}
+  function handleAcceptClick(request: TrainerPendingRequestDto) {
+    setSelectedRequest(request);
+    setShowPermissionsDialog(true);
+  }
 
-	async function handleAcceptConfirm() {
-		if (!selectedRequest?.relationshipId) return;
+  async function handleAcceptConfirm() {
+    if (!selectedRequest?.relationshipId) return;
 
-		setProcessingId(selectedRequest.relationshipId);
-		try {
-			await clientApi("/api/Trainers/respond", {
-				method: "POST",
-				body: {
-					relationshipId: selectedRequest.relationshipId,
-					accept: true,
-					...permissions,
-				},
-			});
+    setProcessingId(selectedRequest.relationshipId);
+    try {
+      await clientApi("/api/Trainers/respond", {
+        method: "POST",
+        body: {
+          relationshipId: selectedRequest.relationshipId,
+          accept: true,
+          ...permissions,
+        },
+      });
 
-			appToast.success("Request Accepted", `${selectedRequest.clientName || selectedRequest.clientEmail} is now your client`);
+      appToast.success(
+        "Request Accepted",
+        `${selectedRequest.clientName || selectedRequest.clientEmail} is now your client`,
+      );
 
-			setRequests((prev) => prev.filter((r) => r.relationshipId !== selectedRequest.relationshipId));
-			setShowPermissionsDialog(false);
-			setSelectedRequest(null);
-		} catch (error) {
-			console.error("Failed to accept request:", error);
-			appToast.error(error, "Failed to accept request");
-		} finally {
-			setProcessingId(null);
-		}
-	}
+      setRequests((prev) =>
+        prev.filter((r) => r.relationshipId !== selectedRequest.relationshipId),
+      );
+      setShowPermissionsDialog(false);
+      setSelectedRequest(null);
+    } catch (error) {
+      console.error("Failed to accept request:", error);
+      appToast.error(error, "Failed to accept request");
+    } finally {
+      setProcessingId(null);
+    }
+  }
 
-	async function handleDecline(relationshipId: string) {
-		setProcessingId(relationshipId);
-		try {
-			await clientApi("/api/Trainers/respond", {
-				method: "POST",
-				body: {
-					relationshipId,
-					accept: false,
-				},
-			});
+  async function handleDecline(relationshipId: string) {
+    setProcessingId(relationshipId);
+    try {
+      await clientApi("/api/Trainers/respond", {
+        method: "POST",
+        body: {
+          relationshipId,
+          accept: false,
+        },
+      });
 
-			appToast.success("Request Declined", "The request has been declined");
+      appToast.success("Request Declined", "The request has been declined");
 
-			setRequests((prev) => prev.filter((r) => r.relationshipId !== relationshipId));
-		} catch (error) {
-			console.error("Failed to decline request:", error);
-			appToast.error(error, "Failed to decline request");
-		} finally {
-			setProcessingId(null);
-		}
-	}
+      setRequests((prev) =>
+        prev.filter((r) => r.relationshipId !== relationshipId),
+      );
+    } catch (error) {
+      console.error("Failed to decline request:", error);
+      appToast.error(error, "Failed to decline request");
+    } finally {
+      setProcessingId(null);
+    }
+  }
 
-	if (loading) {
-		return (
-			<div className="space-y-4">
-				{[1, 2].map((i) => (
-					<div key={i} className="animate-pulse flex items-center space-x-4">
-						<div className="w-12 h-12 bg-gray-200 dark:bg-charcoal-blue-700 rounded-2xl"></div>
-						<div className="flex-1">
-							<div className="h-4 bg-gray-200 dark:bg-charcoal-blue-700 rounded w-1/3 mb-2"></div>
-							<div className="h-3 bg-gray-200 dark:bg-charcoal-blue-700 rounded w-1/4"></div>
-						</div>
-					</div>
-				))}
-			</div>
-		);
-	}
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2].map((i) => (
+          <div key={i} className="animate-pulse flex items-center space-x-4">
+            <div className="w-12 h-12 bg-gray-200 dark:bg-charcoal-blue-700 rounded-2xl"></div>
+            <div className="flex-1">
+              <div className="h-4 bg-gray-200 dark:bg-charcoal-blue-700 rounded w-1/3 mb-2"></div>
+              <div className="h-3 bg-gray-200 dark:bg-charcoal-blue-700 rounded w-1/4"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
-	if (requests.length === 0) {
-		return (
-			<p className="text-center text-gray-500 dark:text-gray-400 py-8">
-				No pending requests
-			</p>
-		);
-	}
+  if (requests.length === 0) {
+    return (
+      <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+        No pending requests
+      </p>
+    );
+  }
 
-	return (
-		<>
-			<div className="space-y-4">
-				{requests.map((request) => (
-					<div
-						key={request.relationshipId || request.clientId || "pending-request"}
-						className="flex items-center justify-between p-4 bg-gray-50 dark:bg-charcoal-blue-900 rounded-lg"
-					>
-						<div className="flex items-center space-x-3">
-							<div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-2xl flex items-center justify-center">
-								<span className="text-yellow-700 dark:text-yellow-300 font-semibold text-lg">
-									{request.clientName?.[0] || request.clientEmail?.[0] || "?"}
-								</span>
-							</div>
-							<div>
-								<p className="font-medium">
-									{request.clientName || request.clientEmail || "Unknown Client"}
-								</p>
-								<p className="text-sm text-gray-500 dark:text-gray-400">
-									Requested {request.requestedAt ? new Date(request.requestedAt).toLocaleDateString() : "Unknown date"}
-								</p>
-							</div>
-						</div>
+  return (
+    <>
+      <div className="space-y-4">
+        {requests.map((request) => (
+          <div
+            key={
+              request.relationshipId || request.clientId || "pending-request"
+            }
+            className="flex items-center justify-between p-4 bg-gray-50 dark:bg-charcoal-blue-900 rounded-lg"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-2xl flex items-center justify-center">
+                <span className="text-yellow-700 dark:text-yellow-300 font-semibold text-lg">
+                  {request.clientName?.[0] || request.clientEmail?.[0] || "?"}
+                </span>
+              </div>
+              <div>
+                <p className="font-medium">
+                  {request.clientName ||
+                    request.clientEmail ||
+                    "Unknown Client"}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Requested{" "}
+                  {request.requestedAt
+                    ? new Date(request.requestedAt).toLocaleDateString()
+                    : "Unknown date"}
+                </p>
+              </div>
+            </div>
 
-						<div className="flex items-center space-x-2">
-							<Button
-								size="sm"
-								variant="outline"
-								onClick={() => request.relationshipId && handleDecline(request.relationshipId)}
-								disabled={processingId === request.relationshipId || !request.relationshipId}
-							>
-								Decline
-							</Button>
-							<Button
-								size="sm"
-								onClick={() => handleAcceptClick(request)}
-								disabled={processingId === request.relationshipId || !request.relationshipId}
-							>
-								Accept
-							</Button>
-						</div>
-					</div>
-				))}
-			</div>
+            <div className="flex items-center space-x-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  request.relationshipId &&
+                  handleDecline(request.relationshipId)
+                }
+                disabled={
+                  processingId === request.relationshipId ||
+                  !request.relationshipId
+                }
+              >
+                Decline
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => handleAcceptClick(request)}
+                disabled={
+                  processingId === request.relationshipId ||
+                  !request.relationshipId
+                }
+              >
+                Accept
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
 
-			<Dialog open={showPermissionsDialog} onOpenChange={setShowPermissionsDialog}>
-				<DialogContent>
-					<DialogHeader>
-						<DialogTitle>Set Client Permissions</DialogTitle>
-						<DialogDescription>
-							Choose what data you can access for{" "}
-							{selectedRequest?.clientName || selectedRequest?.clientEmail}
-						</DialogDescription>
-					</DialogHeader>
+      <Dialog
+        open={showPermissionsDialog}
+        onOpenChange={setShowPermissionsDialog}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Set Client Permissions</DialogTitle>
+            <DialogDescription>
+              Choose what data you can access for{" "}
+              {selectedRequest?.clientName || selectedRequest?.clientEmail}
+            </DialogDescription>
+          </DialogHeader>
 
-					<div className="space-y-4 py-4">
-						<div className="flex items-center space-x-2">
-							<Checkbox
-								id="canViewNutrition"
-								checked={permissions.canViewNutrition}
-								onCheckedChange={(checked) =>
-									setPermissions((prev) => ({
-										...prev,
-										canViewNutrition: checked as boolean,
-									}))
-								}
-							/>
-							<Label htmlFor="canViewNutrition">View Nutrition Data</Label>
-						</div>
+          <DialogBody className="space-y-4 py-1">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="canViewNutrition"
+                checked={permissions.canViewNutrition}
+                onCheckedChange={(checked) =>
+                  setPermissions((prev) => ({
+                    ...prev,
+                    canViewNutrition: checked as boolean,
+                  }))
+                }
+              />
+              <Label htmlFor="canViewNutrition">View Nutrition Data</Label>
+            </div>
 
-						<div className="flex items-center space-x-2">
-							<Checkbox
-								id="canViewWorkouts"
-								checked={permissions.canViewWorkouts}
-								onCheckedChange={(checked) =>
-									setPermissions((prev) => ({
-										...prev,
-										canViewWorkouts: checked as boolean,
-									}))
-								}
-							/>
-							<Label htmlFor="canViewWorkouts">View Workout Data</Label>
-						</div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="canViewWorkouts"
+                checked={permissions.canViewWorkouts}
+                onCheckedChange={(checked) =>
+                  setPermissions((prev) => ({
+                    ...prev,
+                    canViewWorkouts: checked as boolean,
+                  }))
+                }
+              />
+              <Label htmlFor="canViewWorkouts">View Workout Data</Label>
+            </div>
 
-						<div className="flex items-center space-x-2">
-							<Checkbox
-								id="canViewMeasurements"
-								checked={permissions.canViewMeasurements}
-								onCheckedChange={(checked) =>
-									setPermissions((prev) => ({
-										...prev,
-										canViewMeasurements: checked as boolean,
-									}))
-								}
-							/>
-							<Label htmlFor="canViewMeasurements">
-								View Body Measurements
-							</Label>
-						</div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="canViewMeasurements"
+                checked={permissions.canViewMeasurements}
+                onCheckedChange={(checked) =>
+                  setPermissions((prev) => ({
+                    ...prev,
+                    canViewMeasurements: checked as boolean,
+                  }))
+                }
+              />
+              <Label htmlFor="canViewMeasurements">
+                View Body Measurements
+              </Label>
+            </div>
 
-						<div className="flex items-center space-x-2">
-							<Checkbox
-								id="canMessage"
-								checked={permissions.canMessage}
-								onCheckedChange={(checked) =>
-									setPermissions((prev) => ({
-										...prev,
-										canMessage: checked as boolean,
-									}))
-								}
-							/>
-							<Label htmlFor="canMessage">Message Client</Label>
-						</div>
-					</div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="canMessage"
+                checked={permissions.canMessage}
+                onCheckedChange={(checked) =>
+                  setPermissions((prev) => ({
+                    ...prev,
+                    canMessage: checked as boolean,
+                  }))
+                }
+              />
+              <Label htmlFor="canMessage">Message Client</Label>
+            </div>
+          </DialogBody>
 
-					<div className="flex justify-end space-x-2">
-						<Button
-							variant="outline"
-							onClick={() => {
-								setShowPermissionsDialog(false);
-								setSelectedRequest(null);
-							}}
-						>
-							Cancel
-						</Button>
-						<Button
-							onClick={handleAcceptConfirm}
-							disabled={processingId === selectedRequest?.relationshipId}
-						>
-							Confirm & Accept
-						</Button>
-					</div>
-				</DialogContent>
-			</Dialog>
-		</>
-	);
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowPermissionsDialog(false);
+                setSelectedRequest(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAcceptConfirm}
+              disabled={processingId === selectedRequest?.relationshipId}
+            >
+              Confirm & Accept
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }

@@ -37,7 +37,7 @@ public class PromoteMealToRecipeTests
         var currentUser = new FakeCurrentUser { UserId = UserId };
         var cache = new ServiceCollection().AddHybridCache().Services
             .BuildServiceProvider().GetRequiredService<HybridCache>();
-        return (db, new PromoteMealToRecipeCommandHandler(db, currentUser, cache));
+        return (db, new PromoteMealToRecipeCommandHandler(db, new Mizan.Application.Services.HouseholdAccess(db, currentUser), currentUser, cache));
     }
 
     private static FoodDiaryEntry Entry(string name, Guid? foodId = null, string mealType = "dinner", int minute = 0)
@@ -159,7 +159,11 @@ public class PromoteMealToRecipeTests
         db.Foods.Add(ingredientFood);
         db.Recipes.Add(new Recipe
         {
-            Id = fromRecipe.RecipeId.Value, UserId = UserId, Title = "Stew", Servings = 2, YieldGrams = 400,
+            Id = fromRecipe.RecipeId.Value,
+            UserId = UserId,
+            Title = "Stew",
+            Servings = 2,
+            YieldGrams = 400,
             Ingredients = { new RecipeIngredient { Id = Guid.NewGuid(), FoodId = ingredientFood.Id, IngredientText = "Beans", Amount = 200, Unit = "g" } }
         });
         await db.SaveChangesAsync();

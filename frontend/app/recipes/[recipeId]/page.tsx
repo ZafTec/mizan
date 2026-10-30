@@ -1,7 +1,11 @@
 ﻿import Image from "next/image";
 import Link from "next/link";
+import DirectionalTransition, {
+  NAV_BACK,
+  SharedTitle,
+} from "@/components/motion/DirectionalTransition";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { getRecipeById } from "@/data/recipe";
 import { getUserOptionalServer } from "@/helper/session";
 import { LogEntryButton } from "@/components/logging/LogEntryButton";
@@ -39,98 +43,107 @@ export default async function RecipePage({
     { name: "Fat", value: recipe.nutrition?.fatGrams, unit: "g" },
   ];
   return (
-    <div className="log-page max-w-4xl!">
-      <Link href="/recipes" className="text-link mb-6">
-        <ArrowLeft size={15} />
-        Recipes
-      </Link>
-      <header className="log-page-header">
-        <div className="min-w-0">
-          <h1 className="break-words">{recipe.title}</h1>
-          <p className="log-muted mt-2">
-            {recipe.servings} {recipe.servings === 1 ? "serving" : "servings"}
-            {recipe.prepTimeMinutes
-              ? ` · ${recipe.prepTimeMinutes} min prep`
-              : ""}
-            {recipe.cookTimeMinutes
-              ? ` · ${recipe.cookTimeMinutes} min cook`
-              : ""}
-          </p>
-        </div>
-        {user && (
-          <LogEntryButton
-            kind="meal"
-            recipe={recipe}
-            className="btn-primary shrink-0"
-          >
-            <Plus size={16} />
-            Log this recipe
-          </LogEntryButton>
-        )}
-      </header>
-      {recipe.description && (
-        <p className="log-muted leading-relaxed mb-6 max-w-prose">
-          {recipe.description}
-        </p>
-      )}
-      {recipe.imageUrl && (
-        <div className="relative w-full h-64 sm:h-80 mb-8">
-          <Image
-            src={recipe.imageUrl}
-            alt={recipe.title}
-            fill
-            sizes="(max-width: 768px) 100vw, 896px"
-            className="object-cover rounded-sm"
-          />
-        </div>
-      )}
-      <p className="text-sm log-muted mb-3">Nutrition per serving</p>
-      <div className="nutrition-strip">
-        {macros.map((macro) => (
-          <div key={macro.name}>
-            <p className="text-sm log-muted">{macro.name}</p>
-            <p className="nutrition-value num mb-0!">
-              {macro.value != null ? Math.round(macro.value) : "—"}{" "}
-              <span className="text-sm font-normal log-muted">
-                {macro.unit}
-              </span>
+    <DirectionalTransition>
+      <div className="log-page max-w-4xl!">
+        <Link
+          href="/recipes"
+          transitionTypes={NAV_BACK}
+          className="text-link mb-6"
+        >
+          Recipes
+        </Link>
+        <header className="log-page-header">
+          <div className="min-w-0">
+            <SharedTitle name={`recipe-title-${recipe.id}`}>
+              <h1 className="break-words">{recipe.title}</h1>
+            </SharedTitle>
+            <p className="text-muted-foreground mt-2">
+              {recipe.servings} {recipe.servings === 1 ? "serving" : "servings"}
+              {recipe.prepTimeMinutes
+                ? ` · ${recipe.prepTimeMinutes} min prep`
+                : ""}
+              {recipe.cookTimeMinutes
+                ? ` · ${recipe.cookTimeMinutes} min cook`
+                : ""}
             </p>
           </div>
-        ))}
-      </div>
-      <NutritionNotes recipe={recipe} />
-      {user && (
-        <div className="sm:hidden mb-6">
-          <LogEntryButton
-            kind="meal"
-            recipe={recipe}
-            className="btn-primary w-full"
-          >
-            Log this recipe
-          </LogEntryButton>
-        </div>
-      )}
-      <RecipeIngredients recipe={recipe} />
-      {recipe.instructions && (
-        <section className="mt-8">
-          <h2 className="mb-4">Instructions</h2>
-          <p className="whitespace-pre-line leading-relaxed text-sm log-muted max-w-prose">
-            {recipe.instructions}
+          {user && (
+            <LogEntryButton
+              kind="meal"
+              recipe={recipe}
+              className="btn-primary shrink-0"
+            >
+              <Plus size={16} />
+              Log this recipe
+            </LogEntryButton>
+          )}
+        </header>
+        {recipe.description && (
+          <p className="text-muted-foreground leading-relaxed mb-6 max-w-prose">
+            {recipe.description}
           </p>
-        </section>
-      )}
-      {user ? (
-        <RecipeActions
-          recipeId={recipeId}
-          isOwner={recipe.isOwner}
-          isFavorited={recipe.isFavorited}
-        />
-      ) : (
-        <Link href="/login" className="btn-primary mt-8">
-          Sign in to log this recipe
-        </Link>
-      )}
-    </div>
+        )}
+        {recipe.imageUrl && (
+          <div className="relative w-full h-64 sm:h-80 mb-8">
+            <Image
+              src={recipe.imageUrl}
+              alt={recipe.title}
+              fill
+              sizes="(max-width: 768px) 100vw, 896px"
+              className="object-cover rounded-sm"
+            />
+          </div>
+        )}
+        <p className="text-sm text-muted-foreground mb-3">
+          Nutrition per serving
+        </p>
+        <div className="nutrition-strip">
+          {macros.map((macro) => (
+            <div key={macro.name}>
+              <p className="text-sm text-muted-foreground">{macro.name}</p>
+              <p className="nutrition-value tabular-nums mb-0!">
+                {macro.value != null ? Math.round(macro.value) : "—"}{" "}
+                <span className="text-sm font-normal text-muted-foreground">
+                  {macro.unit}
+                </span>
+              </p>
+            </div>
+          ))}
+        </div>
+        <NutritionNotes recipe={recipe} />
+        {user && (
+          <div className="sm:hidden mb-6">
+            <LogEntryButton
+              kind="meal"
+              recipe={recipe}
+              className="btn-primary w-full"
+            >
+              Log this recipe
+            </LogEntryButton>
+          </div>
+        )}
+        <RecipeIngredients recipe={recipe} />
+        {recipe.instructions && (
+          <section className="mt-8">
+            <h2 className="mb-4">Instructions</h2>
+            <p className="whitespace-pre-line leading-relaxed text-sm text-muted-foreground max-w-prose">
+              {recipe.instructions}
+            </p>
+          </section>
+        )}
+        {user ? (
+          <RecipeActions
+            recipeId={recipeId}
+            isOwner={recipe.isOwner}
+            isFavorited={recipe.isFavorited}
+          />
+        ) : (
+          <Link href="/login" className="btn-primary mt-8">
+            Sign in to log this recipe
+          </Link>
+        )}
+      </div>
+    </DirectionalTransition>
   );
 }
 
@@ -152,7 +165,10 @@ function NutritionNotes({
   // Kept from the recipe's import: say so, and what would let it be calculated.
   if (recipe.nutrition && recipe.nutritionSource === "retained")
     return (
-      <p className="text-sm log-muted -mt-2 mb-6 max-w-prose" role="note">
+      <p
+        className="text-sm text-muted-foreground -mt-2 mb-6 max-w-prose"
+        role="note"
+      >
         Nutrition from the original recipe, not calculated from these
         ingredients. Link a food and a weight in grams for{" "}
         {unresolved.join("; ")} to calculate it instead.
@@ -160,14 +176,20 @@ function NutritionNotes({
     );
   if (!recipe.nutrition && unresolved.length > 0)
     return (
-      <p className="text-sm log-muted -mt-2 mb-6 max-w-prose" role="note">
+      <p
+        className="text-sm text-muted-foreground -mt-2 mb-6 max-w-prose"
+        role="note"
+      >
         Nutrition is not available. These ingredients need a linked food and a
         weight in grams: {unresolved.join("; ")}.
       </p>
     );
   if (recipe.nutrition && unmeasured.length > 0)
     return (
-      <p className="text-sm log-muted -mt-2 mb-6 max-w-prose" role="note">
+      <p
+        className="text-sm text-muted-foreground -mt-2 mb-6 max-w-prose"
+        role="note"
+      >
         Does not include unmeasured items: {unmeasured.join("; ")}.
       </p>
     );

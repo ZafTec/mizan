@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meal plan</title>
+<style>
+:root { color-scheme: light dark; --ink: oklch(21% .007 78); --paper: oklch(98.5% .004 91); --card: #fff; --muted: oklch(43.65% .012 82); --rule: oklch(90.4% .013 87); --teal: oklch(49.3% .076 187); --warn: oklch(49.5% .142 31); --fill: oklch(93.5% .013 87); }
+:root[data-theme="dark"], :root:not([data-theme="light"]) { }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ink: oklch(95.5% .007 89); --paper: oklch(17.2% .005 80); --card: oklch(21% .006 80); --muted: oklch(76.5% .021 88); --rule: oklch(30% .012 84); --teal: oklch(77.2% .097 186); --warn: oklch(71.3% .13 30); --fill: oklch(26% .01 84); } }
+:root[data-theme="dark"] { --ink: oklch(95.5% .007 89); --paper: oklch(17.2% .005 80); --card: oklch(21% .006 80); --muted: oklch(76.5% .021 88); --rule: oklch(30% .012 84); --teal: oklch(77.2% .097 186); --warn: oklch(71.3% .13 30); --fill: oklch(26% .01 84); }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 16px; background: var(--paper); color: var(--ink); font: 14px/20px system-ui, -apple-system, "Segoe UI", sans-serif; }
+h1 { margin: 0 0 4px; font-size: 18px; line-height: 24px; font-weight: 600; letter-spacing: -.01em; }
+h2 { margin: 12px 0 4px; font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+h2:first-child { margin-top: 0; }
+.sub { margin: 0 0 12px; color: var(--muted); }
+.card { background: var(--card); border: 1px solid var(--rule); border-radius: 3px; padding: 12px 14px; }
+.row { display: flex; align-items: center; gap: 12px; }
+.grow { flex: 1; min-width: 0; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.tabs button { padding: 6px 10px; min-height: 32px; }
+.entry { display: flex; align-items: flex-start; gap: 12px; padding: 8px 0; border-top: 1px solid var(--rule); }
+.entry:first-of-type { border-top: 0; }
+.entry .name { font-weight: 500; }
+.entry .detail { color: var(--muted); font-size: 13px; }
+.totals { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--rule); }
+.totals span { font-variant-numeric: tabular-nums; }
+ul { margin: 4px 0 0; padding-left: 18px; }
+li { margin: 2px 0; }
+button { font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--rule); border-radius: 3px; padding: 8px 12px; cursor: pointer; min-height: 36px; }
+button.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); font-weight: 600; }
+button:disabled { opacity: .5; cursor: default; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+input, select { font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--rule); border-radius: 3px; padding: 6px 8px; min-height: 36px; }
+.num { font-variant-numeric: tabular-nums; }
+.err { color: var(--warn); }
+.warn { color: var(--warn); }
+.muted { color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<h1 id="title">Meal plan</h1>
+<p class="sub" id="summary">Waiting for data…</p>
+<div id="days" class="tabs" hidden></div>
+<div id="day" class="card" hidden></div>
+<div id="extra" class="card" style="margin-top:12px" hidden></div>
+<div class="row" style="margin-top:12px">
+  <button id="shop" type="button" class="primary" hidden>Shopping list</button>
+</div>
+<p id="message" class="muted" role="status"></p>
+<script><!-- mizan:bridge --></script>
+<script>
+let plan = null; let selected = 0;
+const grams = (n) => `${Math.round((Number(n) || 0) * 10) / 10} g`;
+const slotName = (slot) => { const s = String(slot || "").toLowerCase(); return s.charAt(0).toUpperCase() + s.slice(1); };
+const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const dayLabel = (day) => { if (!day.date) return `Day ${day.dayIndex + 1}`; const d = new Date(day.date + "T12:00:00Z"); return `${weekdays[d.getUTCDay()]} ${d.getUTCDate()}`; };
+const entryName = (entry) => entry.recipeTitle || entry.foodName || entry.text || (entry.kind === "Recipe" ? "Recipe" : entry.kind === "Food" ? "Food" : "Entry");
+const entryDetail = (entry) => {
+  const parts = [];
+  if (entry.kind === "Recipe" && entry.servings !== null && entry.servings !== undefined) parts.push(`${Number(entry.servings)} serving${Number(entry.servings) === 1 ? "" : "s"}`);
+  if (entry.kind === "Food" && entry.grams !== null && entry.grams !== undefined) parts.push(grams(entry.grams));
+  if (entry.notes) parts.push(entry.notes);
+  return parts.join(" · ");
+};
+const nutritionLine = (n) => n ? `${num(n.calories)} kcal · P ${num(n.proteinGrams)} · C ${num(n.carbsGrams)} · F ${num(n.fatGrams)}` : "No nutrition for this line";
+const say = (kind, text) => { const m = document.getElementById("message"); m.className = kind; m.textContent = text; };
+
+function normalize(data) {
+  if (Array.isArray(data.days)) return { id: data.id, name: data.name, status: data.status, startDate: data.startDate, endDate: data.endDate, days: data.days, prepSessions: data.prepSessions || [], violations: data.violations || [], single: false };
+  if (data.day) return { id: data.planId, name: data.planName, days: [data.day], prepSessions: [], violations: [], single: true };
+  return null;
+}
+
+function violations(list) {
+  return el("ul", { class: "warn", "aria-label": "Rule violations" }, list.map((v) => el("li", {}, v.slot ? `${slotName(v.slot)}: ${v.message}` : v.message)));
+}
+
+function entryRow(entry) {
+  const button = el("button", { type: "button", "aria-label": `${entry.logged ? "Logged" : "Log"} ${entryName(entry)}`, disabled: entry.logged, onclick: () => log(entry) }, entry.logged ? "Logged" : "Log");
+  return el("div", { class: "entry" },
+    el("div", { class: "grow" },
+      el("div", { class: "name" }, entryName(entry)),
+      entryDetail(entry) ? el("div", { class: "detail" }, entryDetail(entry)) : null,
+      el("div", { class: entry.nutrition ? "detail num" : "detail muted" }, nutritionLine(entry.nutrition))),
+    button);
+}
+
+function renderDay() {
+  const day = plan.days[selected];
+  const host = document.getElementById("day");
+  const slots = (day.slots || []).filter((slot) => (slot.entries || []).length > 0);
+  const t = day.totals || {};
+  host.replaceChildren(
+    ...(slots.length === 0 ? [el("p", { class: "muted", style: "margin:0" }, "Nothing planned for this day.")] : slots.flatMap((slot) => [el("h2", {}, slotName(slot.slot)), ...slot.entries.map(entryRow)])),
+    el("div", { class: "totals" },
+      el("span", {}, el("strong", { class: "num" }, num(t.calories)), " kcal"),
+      el("span", { class: "muted" }, `P ${num(t.proteinGrams)} g`),
+      el("span", { class: "muted" }, `C ${num(t.carbsGrams)} g`),
+      el("span", { class: "muted" }, `F ${num(t.fatGrams)} g`),
+      day.unresolvedCount ? el("span", { class: "muted" }, `${day.unresolvedCount} line${day.unresolvedCount === 1 ? "" : "s"} without nutrition`) : null),
+    (day.violations || []).length ? violations(day.violations) : null);
+  host.hidden = false;
+  tabs();
+}
+
+function tabs() {
+  const host = document.getElementById("days");
+  host.hidden = plan.single || plan.days.length < 2;
+  if (host.hidden) { host.replaceChildren(); return; }
+  host.replaceChildren(...plan.days.map((day, index) =>
+    el("button", { type: "button", "aria-pressed": String(index === selected), class: index === selected ? "primary" : "", onclick: () => { selected = index; renderDay(); } },
+      dayLabel(day), day.loggedCount ? el("span", { class: "muted", style: "margin-left:6px;font-size:12px" }, `${day.loggedCount}/${day.entryCount}`) : null)));
+}
+
+function renderExtra() {
+  const host = document.getElementById("extra");
+  const kids = [];
+  if (plan.prepSessions.length) {
+    kids.push(el("h2", {}, "Prep sessions"), el("ul", {}, plan.prepSessions.map((s) => {
+      const day = plan.days.find((d) => d.dayIndex === s.dayIndex);
+      return el("li", {}, el("strong", {}, s.title), ` · ${day ? dayLabel(day) : `Day ${s.dayIndex + 1}`} · ${s.entryCount} entr${s.entryCount === 1 ? "y" : "ies"}`, s.notes ? el("span", { class: "muted" }, ` · ${s.notes}`) : null);
+    })));
+  }
+  const planLevel = plan.violations.filter((v) => v.dayIndex === null || v.dayIndex === undefined);
+  if (planLevel.length) kids.push(el("h2", {}, "Rules"), violations(planLevel));
+  host.replaceChildren(...kids);
+  host.hidden = kids.length === 0;
+}
+
+function renderSummary() {
+  const logged = plan.days.reduce((sum, d) => sum + (d.loggedCount || 0), 0), total = plan.days.reduce((sum, d) => sum + (d.entryCount || 0), 0);
+  document.getElementById("summary").textContent = plan.single
+    ? `${plan.days[0].date || ""}${logged ? ` · ${logged} of ${total} logged` : ""}`
+    : [plan.startDate && plan.endDate ? `${plan.startDate} to ${plan.endDate}` : `${plan.days.length} days`, plan.status, `${logged} of ${total} logged`].filter(Boolean).join(" · ");
+}
+
+function render(data) {
+  plan = data;
+  selected = 0;
+  const today = new Date().toISOString().slice(0, 10);
+  const todayIndex = plan.days.findIndex((d) => d.date === today);
+  if (todayIndex >= 0) selected = todayIndex;
+  document.getElementById("title").textContent = plan.name || "Meal plan";
+  renderSummary();
+  renderDay();
+  renderExtra();
+  document.getElementById("shop").hidden = !plan.id;
+  say("muted", "");
+}
+
+async function log(entry) {
+  say("muted", `Logging ${entryName(entry)}…`);
+  try {
+    const result = await callTool("log_plan_entry", { mealPlanId: plan.id, entryId: entry.id });
+    if (result.isError) throw new Error(textOf(result) || "Could not log that entry");
+    entry.logged = true;
+    const day = plan.days[selected];
+    day.loggedCount = (day.loggedCount || 0) + 1;
+    renderDay();
+    renderSummary();
+    const data = dataOf(result);
+    say("muted", `Logged ${entryName(entry)}${data && data.date ? ` on ${data.date}` : ""}.`);
+  } catch (error) { say("err", error.message); }
+}
+
+async function shop() {
+  const button = document.getElementById("shop");
+  button.disabled = true;
+  say("muted", "Building the shopping list…");
+  try {
+    const result = await callTool("generate_shopping_list", { mealPlanId: plan.id });
+    if (result.isError) throw new Error(textOf(result) || "Could not build the list");
+    const data = dataOf(result) || {};
+    say("muted", typeof data.itemCount !== "number" ? "Shopping list ready." : `Shopping list ready: ${data.itemCount} item${data.itemCount === 1 ? "" : "s"}${data.needsReviewCount ? `, ${data.needsReviewCount} to check` : ""}.`);
+  } catch (error) { say("err", error.message); }
+  finally { button.disabled = false; }
+}
+
+window.onToolResult = (result) => {
+  if (result.isError) { say("err", textOf(result) || "Could not load the plan."); return; }
+  const data = dataOf(result);
+  const normalized = data && !Array.isArray(data) ? normalize(data) : null;
+  if (!normalized) { say("muted", "No active plan covers that date."); return; }
+  render(normalized);
+};
+document.getElementById("shop").addEventListener("click", shop);
+connect("Mizan meal plan");
+
+</script>
+</body>
+</html>

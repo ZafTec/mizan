@@ -8,6 +8,8 @@ using Mizan.Application.Interfaces;
 using Mizan.Application.Services;
 using Mizan.Domain.Constants;
 using Mizan.Domain.Entities;
+using Mizan.Domain.Nutrition;
+using Mizan.Domain.Planning;
 using Mizan.Contracts.Meals;
 
 namespace Mizan.Application.Commands;
@@ -16,7 +18,14 @@ public record CreateFoodDiaryEntryCommand : LogMealRequest, IRequest<CreateFoodD
 
 public record CreateFoodDiaryEntryResult
 {
+    /// <summary>The first row written; a recipe writes one row per ingredient (see <see cref="EntryIds"/>).</summary>
     public Guid Id { get; init; }
+
+    /// <summary>The group a recipe's rows share, for deleting or editing them together. Null for a single food.</summary>
+    public Guid? GroupId { get; init; }
+
+    /// <summary>Every row written, in order.</summary>
+    public IReadOnlyList<Guid> EntryIds { get; init; } = [];
     public bool Success { get; init; }
     public string? Message { get; init; }
     public IReadOnlyList<string> Warnings { get; init; } = [];
@@ -45,10 +54,30 @@ public class CreateFoodDiaryEntryCommandValidator : AbstractValidator<CreateFood
         RuleFor(x => x.CarbsGrams).GreaterThanOrEqualTo(0).When(x => x.CarbsGrams.HasValue);
         RuleFor(x => x.FatGrams).GreaterThanOrEqualTo(0).When(x => x.FatGrams.HasValue);
         RuleFor(x => x.FiberGrams).GreaterThanOrEqualTo(0).When(x => x.FiberGrams.HasValue);
+        When(x => x.Per100g is not null, () =>
+        {
+            RuleFor(x => x.AmountGrams).NotNull().WithMessage("Per100g needs amountGrams to scale to");
+            RuleFor(x => x.Per100g!.Calories).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.Per100g!.ProteinGrams).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.Per100g!.CarbsGrams).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.Per100g!.FatGrams).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.Per100g!.FiberGrams).GreaterThanOrEqualTo(0).When(x => x.Per100g!.FiberGrams.HasValue);
+        });
+        RuleFor(x => x.EntryDate)
+            .Must(date => DiaryDates.Problem(date!.Value, DateOnly.FromDateTime(DateTime.UtcNow)) is null)
+            .When(x => x.EntryDate.HasValue)
+            .WithMessage(x => DiaryDates.Problem(x.EntryDate!.Value, DateOnly.FromDateTime(DateTime.UtcNow)) ?? string.Empty);
         RuleFor(x => x.LoggedAt)
             .LessThanOrEqualTo(_ => DateTime.UtcNow.AddMinutes(5))
             .When(x => x.LoggedAt.HasValue)
             .WithMessage("LoggedAt cannot be in the future");
+        RuleFor(x => x.SharedBetween)
+            .InclusiveBetween(MealShare.MinPeople, MealShare.MaxPeople)
+            .When(x => x.SharedBetween.HasValue);
+        RuleFor(x => x.SharedBetween)
+            .Null()
+            .When(x => x.RecipeId.HasValue)
+            .WithMessage("A recipe is split by lowering servings, not sharedBetween");
     }
 }
 
@@ -101,6 +130,20 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
         string name = request.Name;
         decimal? calories = request.Calories, protein = request.ProteinGrams,
             carbs = request.CarbsGrams, fat = request.FatGrams, fiber = request.FiberGrams;
+        if (request.Per100g is { } per100g && request.AmountGrams is { } grams)
+        {
+            // The server owns the arithmetic: the same rounding the food path
+            // uses, from the per-100 g figures and the grams the person
+            // confirmed. Totals a client sent alongside are not trusted.
+            // MealScale is also what the meal form's preview shows.
+            var scaled = MealScale.ForGrams(
+                new EntryNutrition(per100g.Calories, per100g.ProteinGrams, per100g.CarbsGrams, per100g.FatGrams, per100g.FiberGrams ?? 0), grams);
+            calories = scaled.Calories;
+            protein = scaled.ProteinGrams;
+            carbs = scaled.CarbsGrams;
+            fat = scaled.FatGrams;
+            fiber = per100g.FiberGrams.HasValue ? scaled.FiberGrams : null;
+        }
         if (request.FoodId.HasValue)
         {
             food = await _context.Foods.FirstOrDefaultAsync(
@@ -130,6 +173,21 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
             if (string.IsNullOrWhiteSpace(name)) name = recipe.Title;
         }
 
+        var amountGrams = food != null ? food.ServingSize * request.Servings : request.AmountGrams;
+
+        // A shared meal arrives whole and is logged as one person's share. The
+        // rule lives in the domain, not in whichever client asked (docs/TELEGRAM.md).
+        if (request.SharedBetween is { } people)
+        {
+            calories = MealShare.OfCalories(calories, people);
+            protein = MealShare.OfGrams(protein, people);
+            carbs = MealShare.OfGrams(carbs, people);
+            fat = MealShare.OfGrams(fat, people);
+            fiber = MealShare.OfGrams(fiber, people);
+            amountGrams = MealShare.OfGrams(amountGrams, people);
+            name = MealShare.Name(name, people);
+        }
+
         var entry = new FoodDiaryEntry
         {
             Id = Guid.NewGuid(),
@@ -139,7 +197,7 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
             EntryDate = entryDate.Value,
             MealType = MealTypes.Normalize(request.MealType),
             Servings = request.Servings,
-            AmountGrams = food != null ? food.ServingSize * request.Servings : request.AmountGrams,
+            AmountGrams = amountGrams,
             Calories = calories,
             ProteinGrams = protein,
             CarbsGrams = carbs,
@@ -163,15 +221,17 @@ public class CreateFoodDiaryEntryCommandHandler : IRequestHandler<CreateFoodDiar
         var unlocked = await _achievements.EvaluateAsync(cancellationToken, ["meals_logged", "streak_nutrition"]);
 
         var warnings = NutritionHints.CheckConsistency(
-            request.Calories,
-            request.ProteinGrams,
-            request.CarbsGrams,
-            request.FatGrams,
-            request.FiberGrams);
+            request.Per100g is null ? request.Calories : calories,
+            request.Per100g is null ? request.ProteinGrams : protein,
+            request.Per100g is null ? request.CarbsGrams : carbs,
+            request.Per100g is null ? request.FatGrams : fat,
+            request.Per100g is null ? request.FiberGrams : fiber);
 
         return new CreateFoodDiaryEntryResult
         {
             Id = entries[0].Id,
+            GroupId = entries[0].GroupId,
+            EntryIds = entries.Select(e => e.Id).ToList(),
             Success = true,
             Message = "Entry logged successfully",
             Warnings = warnings,

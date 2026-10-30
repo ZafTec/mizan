@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Mizan.Application.Interfaces;
 using Mizan.Infrastructure.Ai;
@@ -181,6 +182,72 @@ public class OpenAiCompatibleProviderTests
         handler.Body.TryGetProperty("response_format", out _).Should().BeFalse();
     }
 
+    [Fact]
+    public async Task AProviderRefusalIsLoggedWithItsMessage_AndNotReturnedToTheCaller()
+    {
+        const string refusal = """
+            {"error":{"type":"invalid_request_error","code":"unsupported_value","param":"temperature",
+              "message":"Unsupported value for temperature with key test-azure-key. Echo: Describe the meal."}}
+            """;
+        using var handler = new RecordingHandler((HttpStatusCode.BadRequest, refusal));
+        var logger = new RecordingLogger();
+        var provider = Provider(AzureOptions("none"), handler, logger);
+
+        var call = () => provider.CompleteAsync(new AiCompletionRequest { Messages = [new(AiRole.User, "Describe the meal.")] });
+
+        var thrown = (await call.Should().ThrowAsync<Mizan.Application.Exceptions.AiProviderRejectedException>()).Which;
+        thrown.Message.Should().Be(Mizan.Application.Exceptions.AiProviderRejectedException.MisconfiguredMessage);
+        thrown.Reason.Should().Be("http_400");
+        thrown.IsConfigurationError.Should().BeTrue();
+        thrown.ProviderParam.Should().Be("temperature");
+        thrown.ProviderMessage.Should().Contain("Unsupported value for temperature").And.NotContain("test-azure-key");
+        var line = logger.Lines.Should().ContainSingle().Which;
+        line.Level.Should().Be(LogLevel.Warning);
+        line.Text.Should().Contain("400").And.Contain("invalid_request_error").And.Contain("Unsupported value for temperature")
+            .And.NotContain("test-azure-key");
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.TooManyRequests, "The assistant returned an error (429). Try again shortly.", false)]
+    [InlineData(HttpStatusCode.BadGateway, "The assistant returned an error (502). Try again shortly.", false)]
+    [InlineData(HttpStatusCode.Unauthorized, "The assistant is misconfigured. An administrator has been told.", true)]
+    public async Task OnlyARefusalThatRetryingCannotFix_SaysTheAssistantIsMisconfigured(HttpStatusCode status, string message, bool configuration)
+    {
+        using var handler = new RecordingHandler((status, "not json"));
+        var provider = Provider(AzureOptions("none"), handler);
+
+        var call = () => provider.CompleteAsync(new AiCompletionRequest { Messages = [new(AiRole.User, "Hello.")] });
+
+        var thrown = (await call.Should().ThrowAsync<Mizan.Application.Exceptions.AiProviderRejectedException>()).Which;
+        thrown.Message.Should().Be(message);
+        thrown.IsConfigurationError.Should().Be(configuration);
+        thrown.ProviderMessage.Should().BeNull("a body that is not an error object may quote the request");
+    }
+
+    [Fact]
+    public async Task AToolRequestRefusedForItsReasoning_IsSentAgainWithReasoningOff_AndLaterOnesStartThere()
+    {
+        const string refusal = """
+            {"error":{"code":"BadRequest","message":"Function tools with reasoning_effort are not supported for gpt-6-luna in /v1/chat/completions. To use function tools, use /v1/responses or set reasoning_effort to 'none'."}}
+            """;
+        using var handler = new RecordingHandler((HttpStatusCode.BadRequest, refusal), (HttpStatusCode.OK, TextResponse), (HttpStatusCode.OK, TextResponse));
+        var provider = Provider(AzureOptions(""), handler);
+        var request = new AiCompletionRequest
+        {
+            Messages = [new(AiRole.User, "Plan my week.")],
+            Tools = [new("ping", "Answers pong.", """{"type":"object","properties":{},"additionalProperties":false}""")],
+        };
+
+        var response = await provider.CompleteAsync(request);
+        await provider.CompleteAsync(request);
+
+        response.Content.Should().Be("A recorded meal.");
+        handler.Bodies.Should().HaveCount(3);
+        handler.Bodies[0].TryGetProperty("reasoning_effort", out _).Should().BeFalse();
+        handler.Bodies[1].GetProperty("reasoning_effort").GetString().Should().Be("none");
+        handler.Bodies[2].GetProperty("reasoning_effort").GetString().Should().Be("none", "the endpoint is remembered");
+    }
+
     private static AiOptions AzureOptions(string reasoningEffort) => new()
     {
         BaseUrl = "https://mizan-test.openai.azure.com/openai/v1",
@@ -190,21 +257,34 @@ public class OpenAiCompatibleProviderTests
         SupportsTemperature = false,
     };
 
-    private static OpenAiCompatibleProvider Provider(AiOptions options, RecordingHandler handler)
+    private static OpenAiCompatibleProvider Provider(AiOptions options, RecordingHandler handler, RecordingLogger? logger = null)
     {
         var clients = new Mock<IHttpClientFactory>();
         clients.Setup(factory => factory.CreateClient(OpenAiCompatibleProvider.HttpClientName))
             .Returns(() => new HttpClient(handler, disposeHandler: false));
-        return new OpenAiCompatibleProvider(Options.Create(options), clients.Object);
+        return new OpenAiCompatibleProvider(new FixedRuntimeOptions<AiOptions>(options), clients.Object, logger ?? new RecordingLogger());
     }
 
-    private sealed class RecordingHandler(string response) : HttpMessageHandler
+    /// <summary>Answers each request with the next scripted status and body; the last one repeats.</summary>
+    private sealed class RecordingHandler : HttpMessageHandler
     {
+        private readonly Queue<(HttpStatusCode Status, string Body)> _responses;
+        private (HttpStatusCode Status, string Body) _last;
+
+        public RecordingHandler(string response) : this((HttpStatusCode.OK, response)) { }
+
+        public RecordingHandler(params (HttpStatusCode Status, string Body)[] responses)
+        {
+            _responses = new Queue<(HttpStatusCode, string)>(responses);
+            _last = responses[^1];
+        }
+
         public HttpMethod? Method { get; private set; }
         public Uri? RequestUri { get; private set; }
         public string? Authorization { get; private set; }
         public string? ApiKey { get; private set; }
         public JsonElement Body { get; private set; }
+        public List<JsonElement> Bodies { get; } = [];
 
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)
@@ -215,10 +295,24 @@ public class OpenAiCompatibleProviderTests
             ApiKey = request.Headers.GetValues("api-key").Single();
             using var document = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
             Body = document.RootElement.Clone();
-            return new HttpResponseMessage(HttpStatusCode.OK)
+            Bodies.Add(Body);
+            var (status, body) = _responses.Count > 0 ? _responses.Dequeue() : _last;
+            return new HttpResponseMessage(status)
             {
-                Content = new StringContent(response, Encoding.UTF8, "application/json"),
+                Content = new StringContent(body, Encoding.UTF8, "application/json"),
             };
         }
+    }
+
+    private sealed class RecordingLogger : ILogger<OpenAiCompatibleProvider>
+    {
+        public List<(LogLevel Level, string Text)> Lines { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+            => Lines.Add((logLevel, formatter(state, exception)));
     }
 }

@@ -4,15 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Dumbbell,
-  Ruler,
-  Utensils,
-  X,
-} from "lucide-react";
-import FoodPhotoSheet from "@/components/ai/FoodPhotoSheet";
+import { ArrowRight, Dumbbell, Ruler, Utensils, X } from "lucide-react";
 import MealLogForm from "@/components/logging/MealLogForm";
 import MeasurementLogForm from "@/components/logging/MeasurementLogForm";
 import { type LogKind } from "@/components/logging/LogEntryButton";
@@ -46,9 +38,7 @@ function OpenLogSheet({
   const router = useRouter();
   const { data: session } = useSession();
   const timeZone = session?.user.timeZoneId || "UTC";
-  const [kind, setKind] = useState<LogKind | "photo" | null>(
-    initialKind ?? null,
-  );
+  const [kind, setKind] = useState<LogKind | null>(initialKind ?? null);
   const [busy, setBusy] = useState(false);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -59,19 +49,15 @@ function OpenLogSheet({
         ? "Log a measurement"
         : kind === "workout"
           ? "Log a workout"
-          : kind === "photo"
-            ? "Log from a photo"
-            : "What would you like to log?";
+          : "What would you like to log?";
   const description =
     kind === "meal"
-      ? "Find a food or recipe, adjust the amount, and add it to your day."
+      ? "Say what you ate, show it, or search. You check everything before it is saved."
       : kind === "measurement"
         ? "A quick check-in. Add only the measurements you took."
         : kind === "workout"
           ? "Start a session or pick up where you left off."
-          : kind === "photo"
-            ? "Review the food and portions before saving."
-            : "A meal, a training session, or a body measurement.";
+          : "A meal, a training session, or a body measurement.";
 
   useEffect(() => {
     titleRef.current?.focus();
@@ -91,9 +77,9 @@ function OpenLogSheet({
       }}
     >
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-[100] bg-charcoal-blue-950/45" />
+        <Dialog.Overlay className="fixed inset-0 z-[100] animate-overlay-in bg-charcoal-blue-950/45 data-[state=closed]:animate-overlay-out" />
         <Dialog.Content
-          className={`fixed inset-x-0 bottom-0 z-[101] max-h-[92dvh] overscroll-contain rounded-t-md border border-border bg-background px-5 pt-5 text-foreground sm:left-1/2 sm:right-auto sm:top-1/2 sm:bottom-auto sm:w-[calc(100%-2rem)] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-md sm:px-6 sm:pt-6 ${kind === "meal" ? "flex h-[92dvh] flex-col overflow-hidden sm:h-auto" : "overflow-y-auto pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:pb-6"}`}
+          className={`fixed inset-x-0 bottom-0 z-[101] animate-sheet-in data-[state=closed]:animate-sheet-out sm:animate-modal-in sm:data-[state=closed]:animate-modal-out max-h-[92dvh] overscroll-contain rounded-t-md border border-border bg-background px-5 pt-5 text-foreground sm:left-1/2 sm:right-auto sm:top-1/2 sm:bottom-auto sm:w-[calc(100%-2rem)] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-md sm:px-6 sm:pt-6 flex flex-col overflow-hidden ${kind === "meal" ? "h-[92dvh] sm:h-auto" : ""}`}
           onOpenAutoFocus={(event) => {
             returnFocusRef.current =
               document.activeElement instanceof HTMLElement
@@ -122,7 +108,6 @@ function OpenLogSheet({
                   disabled={busy}
                   className="flex min-h-11 items-center gap-2 text-sm text-charcoal-blue-700 disabled:opacity-50 dark:text-charcoal-blue-300"
                 >
-                  <ArrowLeft aria-hidden="true" size={16} strokeWidth={1.7} />
                   All entries
                 </button>
               ) : (
@@ -147,51 +132,89 @@ function OpenLogSheet({
               {description}
             </Dialog.Description>
           </header>
-          {kind === null && (
-            <div className="divide-y divide-border border-y border-border">
-              {(
-                [
-                  {
-                    kind: "meal",
-                    title: "Meal",
-                    detail: "Foods, recipes, and quick entries",
-                    icon: Utensils,
-                  },
-                  {
-                    kind: "workout",
-                    title: "Workout",
-                    detail: "Exercises, sets, and reps",
-                    icon: Dumbbell,
-                  },
-                  {
-                    kind: "measurement",
-                    title: "Measurement",
-                    detail: "Weight and body measurements",
-                    icon: Ruler,
-                  },
-                ] as const
-              ).map((item) => (
-                <button
-                  key={item.kind}
-                  type="button"
-                  onClick={() => setKind(item.kind)}
-                  className="flex min-h-[88px] w-full items-center gap-4 px-1 py-4 text-left transition-colors hover:bg-muted"
-                >
-                  <item.icon
-                    aria-hidden="true"
-                    size={23}
-                    strokeWidth={1.7}
-                    className="shrink-0 text-brand-700 dark:text-brand-300"
-                  />
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-semibold">{item.title}</span>
-                    <span className="mt-1 block text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300">
-                      {item.detail}
-                    </span>
-                  </span>
-                  <ArrowRight aria-hidden="true" size={17} strokeWidth={1.7} />
-                </button>
-              ))}
+          {kind !== "meal" && (
+            // The header stays put; what is below it scrolls.
+            <div className="-mx-5 min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:-mx-6 sm:px-6 sm:pb-6">
+              {kind === null && (
+                <div className="divide-y divide-border border-y border-border">
+                  {(
+                    [
+                      {
+                        kind: "meal",
+                        title: "Meal",
+                        detail: "Describe it, snap it, or search",
+                        icon: Utensils,
+                      },
+                      {
+                        kind: "workout",
+                        title: "Workout",
+                        detail: "Exercises, sets, and reps",
+                        icon: Dumbbell,
+                      },
+                      {
+                        kind: "measurement",
+                        title: "Measurement",
+                        detail: "Weight and body measurements",
+                        icon: Ruler,
+                      },
+                    ] as const
+                  ).map((item) => (
+                    <button
+                      key={item.kind}
+                      type="button"
+                      onClick={() => setKind(item.kind)}
+                      className="flex min-h-[88px] w-full items-center gap-4 px-1 py-4 text-left transition-colors hover:bg-muted"
+                    >
+                      <item.icon
+                        aria-hidden="true"
+                        size={23}
+                        strokeWidth={1.7}
+                        className="shrink-0 text-brand-700 dark:text-brand-300"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-semibold">
+                          {item.title}
+                        </span>
+                        <span className="mt-1 block text-sm text-charcoal-blue-700 dark:text-charcoal-blue-300">
+                          {item.detail}
+                        </span>
+                      </span>
+                      <ArrowRight
+                        aria-hidden="true"
+                        size={17}
+                        strokeWidth={1.7}
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+              {kind === "measurement" && (
+                <MeasurementLogForm
+                  initialDate={initialDate}
+                  timeZone={timeZone}
+                  onSaved={saved}
+                  onBusyChange={setBusy}
+                />
+              )}
+              {kind === "workout" && (
+                <div className="space-y-5">
+                  <p className="text-sm leading-relaxed text-charcoal-blue-700 dark:text-charcoal-blue-300">
+                    Your workout has its own space so you can record sets as you
+                    train. An active session is saved as you go.
+                  </p>
+                  <Link
+                    href={
+                      initialDate
+                        ? `/workout/active?date=${encodeURIComponent(initialDate)}`
+                        : "/workout/active"
+                    }
+                    onClick={onClose}
+                    className="btn-primary min-h-11 w-full"
+                  >
+                    Open workout
+                  </Link>
+                </div>
+              )}
             </div>
           )}
           {kind === "meal" && (
@@ -202,46 +225,6 @@ function OpenLogSheet({
               timeZone={timeZone}
               onSaved={saved}
               onBusyChange={setBusy}
-              onUsePhoto={() => setKind("photo")}
-            />
-          )}
-          {kind === "measurement" && (
-            <MeasurementLogForm
-              initialDate={initialDate}
-              timeZone={timeZone}
-              onSaved={saved}
-              onBusyChange={setBusy}
-            />
-          )}
-          {kind === "workout" && (
-            <div className="space-y-5">
-              <p className="text-sm leading-relaxed text-charcoal-blue-700 dark:text-charcoal-blue-300">
-                Your workout has its own space so you can record sets as you
-                train. An active session is saved as you go.
-              </p>
-              <Link
-                href={
-                  initialDate
-                    ? `/workout/active?date=${encodeURIComponent(initialDate)}`
-                    : "/workout/active"
-                }
-                onClick={onClose}
-                className="btn-primary min-h-11 w-full"
-              >
-                Open workout
-                <ArrowRight aria-hidden="true" size={17} strokeWidth={1.7} />
-              </Link>
-            </div>
-          )}
-          {kind === "photo" && (
-            <FoodPhotoSheet
-              initialDate={initialDate}
-              initialMealType={initialMealType}
-              onBusyChange={setBusy}
-              onLogged={() => {
-                router.refresh();
-                onClose();
-              }}
             />
           )}
         </Dialog.Content>

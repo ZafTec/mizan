@@ -1,0 +1,86 @@
+namespace Mizan.Contracts.Admin;
+
+/// <summary>Where a setting's current value comes from.</summary>
+public static class RuntimeSettingSources
+{
+    /// <summary>An administrator set it in the admin area.</summary>
+    public const string Database = "database";
+
+    /// <summary>Nothing is stored, so the built-in default applies.</summary>
+    public const string Default = "default";
+
+    /// <summary>Nothing sets it.</summary>
+    public const string Unset = "unset";
+}
+
+/// <summary>
+/// One runtime setting as GET /api/admin/settings returns it. A secret never carries
+/// <see cref="Value"/>; <see cref="HasValue"/> says whether one is set.
+/// </summary>
+public record RuntimeSettingDto
+{
+    /// <summary>The dotted key, such as <c>Smtp.Host</c>.</summary>
+    public string Key { get; init; } = string.Empty;
+
+    public string Group { get; init; } = string.Empty;
+    public string Label { get; init; } = string.Empty;
+    public string Description { get; init; } = string.Empty;
+
+    /// <summary>string, int, bool or enum.</summary>
+    public string Type { get; init; } = "string";
+
+    /// <summary>text, host, url, email, json or token.</summary>
+    public string Format { get; init; } = "text";
+
+    public bool IsSecret { get; init; }
+    public bool AllowEmpty { get; init; }
+    public IReadOnlyList<string> AllowedValues { get; init; } = [];
+    public long? Min { get; init; }
+    public long? Max { get; init; }
+
+    /// <summary>The current value. Always null for a secret.</summary>
+    public string? Value { get; init; }
+
+    public bool HasValue { get; init; }
+
+    /// <summary>database, default or unset (<see cref="RuntimeSettingSources"/>).</summary>
+    public string Source { get; init; } = RuntimeSettingSources.Unset;
+
+    /// <summary>When the database value was set. Null when the value is the default.</summary>
+    public DateTime? UpdatedAt { get; init; }
+
+    public Guid? UpdatedByUserId { get; init; }
+}
+
+/// <summary>
+/// One section of the settings page. <see cref="Notice"/> says what is off while the section's
+/// required settings have no value, such as "Email is not configured", and is null otherwise.
+/// </summary>
+public record RuntimeSettingGroupDto(string Id, string Title, IReadOnlyList<RuntimeSettingDto> Settings, string? Notice = null);
+
+/// <summary>Every runtime setting, in the sections of the admin settings page.</summary>
+public record RuntimeSettingsDto(IReadOnlyList<RuntimeSettingGroupDto> Groups);
+
+/// <summary>Body of PUT /api/admin/settings/{key}. Booleans are true or false; numbers are whole numbers.</summary>
+public record SetRuntimeSettingRequest(string Value);
+
+/// <summary>What POST /api/admin/settings/smtp/test queued: the outbox job and the address it goes to.</summary>
+public record SmtpTestResult(Guid JobId, string To);
+
+/// <summary>
+/// What POST /api/admin/settings/ai/test found: a plain reply first, then, when that worked, one
+/// request with a trivial tool, because the chat sends tools and some configurations refuse them
+/// (docs/AI.md#provider-errors). <see cref="ErrorClass"/> names the failure (not_configured,
+/// quota_exceeded, timeout, unreachable, http_400 and so on). <see cref="ProviderMessage"/> is the
+/// provider's own reason, cut short and with secrets removed, or null.
+/// </summary>
+public record AiProviderTestResult(
+    bool Reachable,
+    string? ErrorClass,
+    string? Model,
+    int LatencyMs,
+    string? ProviderMessage = null,
+    AiProviderCheckResult? ToolCall = null);
+
+/// <summary>One check of the provider test. <c>Passed</c> false carries the error class and the provider's reason.</summary>
+public record AiProviderCheckResult(bool Passed, string? ErrorClass, string? ProviderMessage, int LatencyMs);

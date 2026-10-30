@@ -2,9 +2,12 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mizan.Application.Commands;
+using Mizan.Contracts.Coaching;
 using Mizan.Application.Common;
 using Mizan.Application.Interfaces;
+using Mizan.Application.Planning;
 using Mizan.Application.Queries;
+using Mizan.Contracts.Planning;
 
 namespace Mizan.Api.Controllers;
 
@@ -72,7 +75,8 @@ public class TrainersController : ControllerBase
             request.CanViewWorkouts,
             request.CanViewMeasurements,
             request.CanMessage,
-            request.End));
+            request.End,
+            request.CanPlanMeals));
 
         _logger.LogInformation(
             "Client {ClientId} updated grants on relationship {RelationshipId} (end: {End})",
@@ -156,6 +160,33 @@ public class TrainersController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// A coach drafts a plan for a client who granted <c>canPlanMeals</c>. The
+    /// plan is the client's, waits as a draft, and the client is notified.
+    /// </summary>
+    [HttpPost("clients/{clientId:guid}/meal-plans")]
+    [Authorize(Policy = "RequireTrainer")]
+    public async Task<ActionResult<MealPlanCreatedResult>> CreatePlanForClient(Guid clientId, [FromBody] CreateMealPlanRequest request)
+    {
+        var result = await _mediator.Send(new CreatePlanForClientCommand(clientId, request));
+        _logger.LogInformation("Trainer {TrainerId} drafted plan {PlanId} for client {ClientId}", _currentUser.UserId, result.Id, clientId);
+        return Created($"/api/MealPlans/{result.Id}", result);
+    }
+
+    /// <summary>
+    /// A coach drafts a client's plan from a template (their own or a global one).
+    /// The copy is the client's draft, as with a plan written by hand.
+    /// </summary>
+    [HttpPost("clients/{clientId:guid}/meal-plans/from-template")]
+    [Authorize(Policy = "RequireTrainer")]
+    public async Task<ActionResult<MealPlanCreatedResult>> ApplyTemplateForClient(Guid clientId, [FromBody] ApplyTemplateForClientRequest request)
+    {
+        var result = await _mediator.Send(new ApplyTemplateForClientCommand(clientId, request.TemplateId, request.StartDate, request.Name));
+        _logger.LogInformation("Trainer {TrainerId} drafted plan {PlanId} for client {ClientId} from template {TemplateId}",
+            _currentUser.UserId, result.Id, clientId, request.TemplateId);
+        return Created($"/api/MealPlans/{result.Id}", result);
+    }
+
     [HttpGet("clients/{clientId:guid}/workouts")]
     [Authorize(Policy = "RequireTrainer")]
     public async Task<ActionResult<PagedResult<WorkoutSummaryDto>>> GetClientWorkouts(Guid clientId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
@@ -170,10 +201,3 @@ public record SendTrainerRequestRequest(
     bool CanMessage = true
 );
 public record RespondRequest(Guid RelationshipId, bool Accept);
-public record UpdateGrantsRequest(
-    bool? CanViewNutrition = null,
-    bool? CanViewWorkouts = null,
-    bool? CanViewMeasurements = null,
-    bool? CanMessage = null,
-    bool End = false
-);

@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Entities;
 using Mizan.Infrastructure.Data;
@@ -25,22 +25,28 @@ namespace Mizan.Infrastructure.Outbox;
 public class OutboxDispatcher : BackgroundService
 {
     private readonly IServiceScopeFactory _scopes;
-    private readonly OutboxOptions _options;
+    private readonly IRuntimeOptions<OutboxOptions> _settings;
+    private readonly bool _enabled;
     private readonly ILogger<OutboxDispatcher> _logger;
+
+    // Read again at the start of every pass, so a change in the admin area applies to the next one.
+    private OutboxOptions _options = new();
 
     public OutboxDispatcher(
         IServiceScopeFactory scopes,
-        IOptions<OutboxOptions> options,
+        IRuntimeOptions<OutboxOptions> settings,
+        IConfiguration configuration,
         ILogger<OutboxDispatcher> logger)
     {
         _scopes = scopes;
-        _options = options.Value;
+        _settings = settings;
+        _enabled = OutboxOptions.IsEnabled(configuration);
         _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (!_options.Enabled)
+        if (!_enabled)
         {
             _logger.LogInformation("Outbox dispatcher disabled by configuration");
             return;
@@ -76,6 +82,7 @@ public class OutboxDispatcher : BackgroundService
     /// <summary>One pass. Public so a test can drive it without a timer.</summary>
     public async Task<bool> RunOnceAsync(CancellationToken cancellationToken)
     {
+        _options = await _settings.GetAsync(cancellationToken);
         using var scope = _scopes.CreateScope();
         var handlers = scope.ServiceProvider.GetServices<IOutboxHandler>().ToDictionary(h => h.Type);
 
@@ -180,6 +187,7 @@ public class OutboxDispatcher : BackgroundService
             job.CompletedAt = DateTime.UtcNow;
 
             LogFailure(LogLevel.Error, job, ex, "failed permanently");
+            await NotifyDeadLetteredAsync(handler, job);
         }
         catch (Exception ex)
         {
@@ -197,9 +205,27 @@ public class OutboxDispatcher : BackgroundService
                 exhausted
                     ? $"failed on attempt {job.Attempts}; dead-lettered"
                     : $"failed on attempt {job.Attempts}");
+            if (exhausted) await NotifyDeadLetteredAsync(handler, job);
         }
 
         await db.SaveChangesAsync(CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Lets the handler record that its job gave up, for example the email log
+    /// marking a message Failed. A failure here must not lose the job's own
+    /// state, so it is logged and the save goes ahead.
+    /// </summary>
+    private async Task NotifyDeadLetteredAsync(IOutboxHandler handler, OutboxJob job)
+    {
+        try
+        {
+            await handler.OnDeadLetteredAsync(job.Payload, job.LastError, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Outbox job {JobId} ({Type}) dead-letter hook failed: {Exception}", job.Id, job.Type, ex.GetType().Name);
+        }
     }
 
     /// <summary>

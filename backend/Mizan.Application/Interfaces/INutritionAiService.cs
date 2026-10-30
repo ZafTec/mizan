@@ -1,3 +1,7 @@
+using Mizan.Contracts.Ai;
+using Mizan.Contracts.Meals;
+using Mizan.Contracts.Nutrition;
+
 namespace Mizan.Application.Interfaces;
 
 /// <summary>
@@ -35,6 +39,15 @@ public interface INutritionAiService
         Guid userId,
         byte[] imageBytes,
         string contentType,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// The same proposal as a photo gives, from a sentence: "two eggs, toast and a coffee". A proposal and nothing more;
+    /// the person confirms it before anything is logged.
+    /// </summary>
+    Task<FoodAnalysisResult> AnalyzeFoodTextAsync(
+        Guid userId,
+        string description,
         CancellationToken cancellationToken = default);
 
     Task<MealSuggestionResult> SuggestMealsAsync(Guid userId, CancellationToken cancellationToken = default);
@@ -77,7 +90,7 @@ public record TrainerAnswer(
 public record OnboardingTurn(
     string Content,
     Guid? PromptVersionId,
-    IReadOnlyList<Ai.Tools.AiToolInvocation> Performed);
+    IReadOnlyList<AiToolInvocation> Performed);
 
 /// <summary>
 /// Proposals, not records. There is deliberately no recipe id here: the model
@@ -106,7 +119,8 @@ public record MealSuggestion
 }
 
 /// <summary>An earlier turn, replayed into the next call.</summary>
-public record AiChatHistoryTurn(bool FromUser, string Content);
+/// <summary>One earlier message. <paramref name="IsContext"/> marks a fact the person's app reported, not anyone's words.</summary>
+public record AiChatHistoryTurn(bool FromUser, string Content, bool IsContext = false);
 
 /// <summary>
 /// The reply plus which published version produced it, so a bad answer is
@@ -115,34 +129,9 @@ public record AiChatHistoryTurn(bool FromUser, string Content);
 public record AiChatTurn(
     string Content,
     Guid? PromptVersionId,
-    IReadOnlyList<Ai.Tools.AiToolInvocation> Performed);
+    IReadOnlyList<AiToolInvocation> Performed,
+    IReadOnlyList<AiCardDto> Cards,
+    IReadOnlyList<AiConsentRequirement> ConsentRequired);
 
 /// <summary>An image already read into memory, on its way to the model.</summary>
 public record AiImageRef(byte[] Bytes, string ContentType);
-
-public record FoodAnalysisResult
-{
-    public List<RecognizedFood> Foods { get; init; } = new();
-    public decimal TotalCalories { get; init; }
-    public decimal Confidence { get; init; }
-
-    /// <summary>Caveats from the model. Never the payload - the numbers are.</summary>
-    public string? Note { get; init; }
-
-    /// <summary>
-    /// Where the photo was stored, if storage is configured. The model's
-    /// numbers are a guess at a portion size; keeping the picture is what lets
-    /// someone check the guess later instead of taking it on trust.
-    /// </summary>
-    public string? ImageUrl { get; init; }
-}
-
-public record RecognizedFood
-{
-    public string Name { get; init; } = string.Empty;
-    public decimal PortionGrams { get; init; }
-    public decimal Calories { get; init; }
-    public decimal Protein { get; init; }
-    public decimal Carbs { get; init; }
-    public decimal Fat { get; init; }
-}

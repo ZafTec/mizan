@@ -26,6 +26,15 @@ public class RecipesController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// The person's saved recipes, best first, by how well one serving fits what is left of the
+    /// day's targets (docs/AI.md#recipes-that-fit). The day defaults to today in their zone.
+    /// </summary>
+    [HttpGet("fit")]
+    [Authorize(Policy = "UserOrMcp")]
+    public async Task<ActionResult<Mizan.Contracts.Nutrition.RecipeFitResult>> GetRecipesThatFit([FromQuery] DateOnly? date, [FromQuery] int count = 5) =>
+        Ok(await _mediator.Send(new RankRecipesForDayQuery { Date = date, Count = count }));
+
     [HttpGet("{id:guid}")]
     [Authorize(Policy = "OptionalUserOrMcp")]
     public async Task<ActionResult<RecipeDetailDto>> GetRecipeById(Guid id)
@@ -51,7 +60,7 @@ public class RecipesController : ControllerBase
     public async Task<ActionResult<UpdateRecipeResult>> UpdateRecipe(Guid id, [FromBody] UpdateRecipeCommand command)
     {
         if (id != command.Id)
-            return BadRequest("ID mismatch");
+            return BadRequest(new { errorCode = "id_mismatch", error = "Route and body IDs must match" });
 
         var result = await _mediator.Send(command);
         if (!result.Success)

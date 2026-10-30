@@ -22,7 +22,7 @@ export default async function MorePage() {
     <div className="log-page">
       <header className="log-page-header block!">
         <h1>More</h1>
-        <p className="log-muted mt-2">Everything beyond your daily log.</p>
+        <p className="text-muted-foreground mt-2">Everything beyond your daily log.</p>
       </header>
 
       <MoreDirectory groups={groups} />

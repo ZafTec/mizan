@@ -1,5 +1,8 @@
 using System.ComponentModel;
+using System.Text.Json;
+using Mizan.Contracts.Ai;
 using Mizan.Mcp.Server.Services;
+using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 
 namespace Mizan.Mcp.Server.Tools;
@@ -18,8 +21,13 @@ namespace Mizan.Mcp.Server.Tools;
 public sealed class AiTools
 {
     private readonly IBackendApiClient _api;
+    private readonly McpLinks _links;
 
-    public AiTools(IBackendApiClient api) => _api = api;
+    public AiTools(IBackendApiClient api, McpLinks links)
+    {
+        _api = api;
+        _links = links;
+    }
 
     // ---- Consent ----------------------------------------------------------
 
@@ -58,12 +66,64 @@ public sealed class AiTools
     [Description(
         "One turn with the assistant, on the same threads the website uses. "
         + "Omit threadId to start a new one. Costs against your daily allowance "
-        + "and answers only from the axes you have consented to share.")]
-    public Task<string> Ask(string message, string? threadId = null, CancellationToken ct = default) =>
-        _api.PostAsync(
+        + "and answers only from the axes you have consented to share. "
+        + "consentRequired lists any permission a tool call was refused for; tell the person where to allow it.")]
+    public async Task<CallToolResult> Ask(
+        string message,
+        string? threadId = null,
+        [Description("Optional facts about what the person is doing in your app right now, such as a form part way through: what it asked and what was chosen. Kept in the thread.")] string? clientContext = null,
+        CancellationToken ct = default)
+    {
+        var json = await _api.PostAsync(
             "/api/Ai/chat",
-            new { threadId = ToolArguments.ParseOptionalId(threadId, "threadId"), message },
+            new AiChatRequest(ToolArguments.ParseOptionalId(threadId, "threadId"), message, clientContext),
             ct);
+        return AskResult(json, _links);
+    }
+
+    [McpServerTool(Name = "get_ai_conversation", ReadOnly = true, Idempotent = true)]
+    [Description(
+        "The person's current assistant conversation: threadId is null when it has been quiet long enough that the next message "
+        + "starts a new one. pendingContext is what an app the person is using (such as the Telegram bot's /remind) last reported "
+        + "and is waiting on, for example a reminder being set and the question it asked. Use it to finish that task with the person.")]
+    public Task<string> GetConversation(CancellationToken ct = default) => _api.GetAsync("/api/Ai/conversation", ct);
+
+    /// <summary>
+    /// The turn as JSON text and as <c>structuredContent</c>, and, when a tool call was refused for
+    /// consent, one line naming the switch and where to turn it on. The API decides the refusal;
+    /// this only words it.
+    /// </summary>
+    internal static CallToolResult AskResult(string json, McpLinks links)
+    {
+        var result = new CallToolResult { Content = [new TextContentBlock { Text = json }] };
+
+        JsonElement turn;
+        try { turn = JsonSerializer.Deserialize<JsonElement>(json); }
+        catch (JsonException) { return result; }
+        if (turn.ValueKind != JsonValueKind.Object) return result;
+        result.StructuredContent = turn;
+
+        if (!turn.TryGetProperty("consentRequired", out var refused) || refused.ValueKind != JsonValueKind.Array)
+            return result;
+        var required = refused.Deserialize<List<AiConsentRequirement>>(JsonSerializerOptions.Web) ?? [];
+        if (required.Count == 0) return result;
+
+        var wanted = string.Join(" and ", required.Select(r =>
+            $"{(r.Access == "write" ? "record" : "see")} {AxisWords(r.Axis)}"));
+        result.Content.Add(new TextContentBlock
+        {
+            Text = $"[{AiErrorCodes.ConsentRequired}] The assistant needs permission to {wanted}. "
+                + $"The person can allow it in Mizan under Settings, Assistant: {links.AppUrl}/profile/settings#assistant",
+        });
+        return result;
+    }
+
+    private static string AxisWords(string axis) => axis switch
+    {
+        "training" => "their workouts",
+        "body" => "their body measurements",
+        _ => "their meals and meal plans",
+    };
 
     [McpServerTool(Name = "list_ai_threads", ReadOnly = true, Idempotent = true)]
     [Description("Your assistant conversations, most recent first.")]
@@ -79,6 +139,31 @@ public sealed class AiTools
     [Description("Deletes a conversation and its messages. Not recoverable.")]
     public Task<string> DeleteThread(string id, CancellationToken ct = default) =>
         _api.DeleteAsync($"/api/Ai/threads/{ToolArguments.ParseId(id, "id")}", ct);
+
+    // ---- Coaching and text estimates --------------------------------------
+
+    [McpServerTool(Name = "ask_ai_about_client")]
+    [Description(
+        "For coaches: ask the Mizan assistant about one client. It reads only what the client shared with you, "
+        + "never writes to their log, and the call is billed to your daily AI allowance. Pass threadId to continue.")]
+    public Task<string> AskAboutClient(
+        [Description("Client's user UUID")] string clientId,
+        [Description("The question")] string message,
+        [Description("A thread UUID from an earlier answer, to continue it")] string? threadId = null,
+        CancellationToken ct = default) =>
+        _api.PostAsync($"/api/Ai/clients/{ToolArguments.ParseId(clientId, nameof(clientId))}/ask",
+            new Mizan.Contracts.Coaching.AskClientRequest(ToolArguments.ParseOptionalId(threadId, nameof(threadId)), message), ct);
+
+    [McpServerTool(Name = "analyze_food_text")]
+    [Description(
+        "Estimates the foods and macros of a meal described in words (\"two eggs and a slice of toast\"). Pro only. "
+        + "Each food says what it is: source \"recipe\" with recipeId and servings for one of the person's own recipes "
+        + "(log it with log_meal), \"catalogue\" with foodId (log it with log_food), or \"estimate\" (log_meal_manual). "
+        + "Nothing is logged: show the estimate first. Not read-only: it costs an allowance.")]
+    public Task<string> AnalyzeFoodText(
+        [Description("What was eaten, up to 600 characters")] string description,
+        CancellationToken ct = default) =>
+        _api.PostAsync("/api/Nutrition/ai/analyze-text", new Mizan.Contracts.Nutrition.AnalyzeFoodTextRequest(description), ct);
 
     // ---- Suggestions ------------------------------------------------------
 

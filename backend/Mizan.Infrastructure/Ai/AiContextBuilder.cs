@@ -3,6 +3,8 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Mizan.Application.Interfaces;
 using Mizan.Domain.Ai;
+using Mizan.Domain.Nutrition;
+using Mizan.Domain.Streaks;
 
 namespace Mizan.Infrastructure.Ai;
 
@@ -75,21 +77,40 @@ public class AiContextBuilder : IAiContextBuilder
                 Date = g.Key,
                 Calories = g.Sum(e => (decimal?)e.Calories) ?? 0m,
                 Protein = g.Sum(e => (decimal?)e.ProteinGrams) ?? 0m,
+                Carbs = g.Sum(e => (decimal?)e.CarbsGrams) ?? 0m,
+                Fat = g.Sum(e => (decimal?)e.FatGrams) ?? 0m,
             })
             .OrderByDescending(d => d.Date)
             .ToListAsync(cancellationToken);
 
         var goal = await _context.UserGoals.AsNoTracking()
             .Where(g => g.UserId == userId && g.IsActive)
-            .Select(g => new { g.TargetCalories, g.TargetProteinGrams })
+            .Select(g => new { g.TargetCalories, g.TargetProteinGrams, g.TargetCarbsGrams, g.TargetFatGrams })
             .FirstOrDefaultAsync(cancellationToken);
+        var zone = await _context.Users.AsNoTracking().Where(u => u.Id == userId).Select(u => u.TimeZoneId).FirstOrDefaultAsync(cancellationToken);
+        var today = StreakClock.Today(zone, DateTimeOffset.UtcNow);
+
+        IReadOnlyList<NutrientAmount> Amounts(decimal calories, decimal protein, decimal carbs, decimal fat) => NutritionText.Daily(
+            calories, protein, carbs, fat,
+            goal?.TargetCalories, goal?.TargetProteinGrams, goal?.TargetCarbsGrams, goal?.TargetFatGrams);
 
         var text = new StringBuilder("## Nutrition (last 7 days)\n");
+        text.Append(CultureInfo.InvariantCulture, $"Today is {today:yyyy-MM-dd}.\n");
         if (goal is not null)
         {
-            text.Append(CultureInfo.InvariantCulture,
-                $"Targets: {goal.TargetCalories} kcal, {goal.TargetProteinGrams} g protein per day.\n");
+            var targets = Amounts(0, 0, 0, 0).Where(a => a.Target is > 0)
+                .Select(a => $"{Math.Round(a.Target!.Value, 0).ToString("0", CultureInfo.InvariantCulture)} {(a.Unit == "kcal" ? "kcal" : $"g {a.Label.ToLowerInvariant()}")}");
+            text.Append("Targets per day: ").Append(string.Join(", ", targets)).Append(".\n");
         }
+        else
+        {
+            text.Append("No goal is set.\n");
+        }
+
+        var eatenToday = days.FirstOrDefault(d => d.Date == today);
+        var remaining = NutritionText.Remaining(Amounts(
+            eatenToday?.Calories ?? 0, eatenToday?.Protein ?? 0, eatenToday?.Carbs ?? 0, eatenToday?.Fat ?? 0));
+        if (remaining.Length > 0) text.Append("Today: ").Append(remaining).Append(".\n");
 
         if (days.Count == 0)
         {
@@ -99,8 +120,9 @@ public class AiContextBuilder : IAiContextBuilder
 
         foreach (var day in days)
         {
-            text.Append(CultureInfo.InvariantCulture,
-                $"{day.Date:yyyy-MM-dd}: {Math.Round(day.Calories)} kcal, {Math.Round(day.Protein)} g protein\n");
+            text.Append(CultureInfo.InvariantCulture, $"{day.Date:yyyy-MM-dd}: ")
+                .Append(NutritionText.Summary(Amounts(day.Calories, day.Protein, day.Carbs, day.Fat)))
+                .Append('\n');
         }
 
         return text.ToString();

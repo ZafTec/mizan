@@ -38,24 +38,29 @@ export function WorkoutHistory({
             0,
           );
         return (
-          <details key={workout.id} className="card group">
-            <summary className="flex cursor-pointer list-none items-center gap-4 p-5">
-              <span className="icon-chip h-11 w-11">
-                <WorkoutIcon id="wi-barbell" />
-              </span>
+          <details key={workout.id} className="group border-b border-border">
+            <summary className="flex min-h-14 cursor-pointer list-none items-center gap-4 py-3">
               <span className="min-w-0 flex-1">
                 <strong className="block truncate">
                   {workout.name || "Workout"}
                 </strong>
-                <span className="text-sm text-charcoal-blue-500">
+                <span className="tabular-nums text-sm text-muted-foreground">
                   {new Date(
                     `${workout.workoutDate}T00:00:00`,
-                  ).toLocaleDateString()}{" "}
-                  · {workout.exercises.length} exercises · {sets} sets
+                  ).toLocaleDateString(undefined, {
+                    day: "numeric",
+                    month: "short",
+                  })}{" "}
+                  · {workout.exercises.length}{" "}
+                  {workout.exercises.length === 1 ? "exercise" : "exercises"} ·{" "}
+                  {sets} sets
                 </span>
               </span>
-              <span className="hidden text-sm font-semibold text-brand-700 sm:block">
-                {Math.round(volume).toLocaleString()} kg
+              <span className="tabular-nums hidden text-sm sm:block">
+                <span className="font-semibold">
+                  {Math.round(volume).toLocaleString()}
+                </span>{" "}
+                <span className="text-muted-foreground">kg</span>
               </span>
               <button
                 className="btn-ghost btn-sm"
@@ -67,31 +72,23 @@ export function WorkoutHistory({
                 Repeat
               </button>
             </summary>
-            <div className="space-y-3 border-t border-charcoal-blue-200 p-5 dark:border-white/10">
+            <ul className="border-t border-border pb-3 pl-1">
               {workout.exercises.map((exercise) => (
-                <div
+                <li
                   key={exercise.id}
-                  className="rounded-2xl bg-charcoal-blue-50 p-3 dark:bg-charcoal-blue-900/60"
+                  className="flex items-baseline justify-between gap-4 py-2 text-sm"
                 >
-                  <div className="flex items-center justify-between">
-                    <strong className="text-sm">{exercise.exerciseName}</strong>
-                    <span className="text-xs text-charcoal-blue-500">
-                      {exercise.category}
-                    </span>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {exercise.sets.map((set) => (
-                      <span
-                        key={set.setNumber}
-                        className="rounded-xl border border-charcoal-blue-200 bg-white px-2 py-1 text-xs dark:border-white/10 dark:bg-charcoal-blue-950"
-                      >
-                        {set.weightKg ?? 0} kg × {set.reps ?? 0}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+                  <span className="font-medium">{exercise.exerciseName}</span>
+                  <span className="tabular-nums text-right text-muted-foreground">
+                    {exercise.sets
+                      .map(
+                        (set) => `${set.weightKg ?? 0} kg × ${set.reps ?? 0}`,
+                      )
+                      .join(" · ")}
+                  </span>
+                </li>
               ))}
-            </div>
+            </ul>
           </details>
         );
       })}
@@ -109,9 +106,9 @@ export function TemplateList({
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {templates.map((template) => (
-        <article key={template.id} className="card-hover p-5">
+        <article key={template.id} className="card hover:border-charcoal-blue-400 dark:hover:border-charcoal-blue-600 p-5">
           <div className="flex items-start justify-between">
-            <span className="icon-chip h-11 w-11 text-brand-700">
+            <span className="inline-flex items-center justify-center text-charcoal-blue-700 dark:text-charcoal-blue-300 h-11 w-11">
               <WorkoutIcon id="wi-template" />
             </span>
             {template.isBuiltIn && (
@@ -194,7 +191,7 @@ export function WorkoutStats({ stats }: { stats: WorkoutStatsDto }) {
         </div>
       )}
       <div className="card p-6">
-        <h2 className="section-title">Weekly muscle coverage</h2>
+        <h2 className="text-2xl font-medium tracking-tight text-charcoal-blue-900 dark:text-charcoal-blue-50">Weekly muscle coverage</h2>
         <div className="mt-5 space-y-3">
           {stats.perMuscleGroup.map((group) => (
             <div key={group.muscleGroup}>

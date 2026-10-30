@@ -13,11 +13,27 @@ public class Outbox : IOutbox
 
     public Outbox(IMizanDbContext context) => _context = context;
 
-    public async Task<Guid> EnqueueAsync<T>(
+    public Task<Guid> EnqueueAsync<T>(
         string type,
         T payload,
         string? dedupeKey = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        StageAsync(type, payload, DateTime.UtcNow, dedupeKey, cancellationToken);
+
+    public Task<Guid> ScheduleAsync<T>(
+        string type,
+        T payload,
+        DateTime runAfter,
+        string dedupeKey,
+        CancellationToken cancellationToken = default) =>
+        StageAsync(type, payload, DateTime.SpecifyKind(runAfter, DateTimeKind.Utc), dedupeKey, cancellationToken);
+
+    private async Task<Guid> StageAsync<T>(
+        string type,
+        T payload,
+        DateTime runAfter,
+        string? dedupeKey,
+        CancellationToken cancellationToken)
     {
         if (dedupeKey is not null)
         {
@@ -38,7 +54,7 @@ public class Outbox : IOutbox
             Type = type,
             Payload = JsonSerializer.Serialize(payload, Json),
             Status = OutboxJobStatus.Pending,
-            RunAfter = DateTime.UtcNow,
+            RunAfter = runAfter,
             DedupeKey = dedupeKey,
             CreatedAt = DateTime.UtcNow,
         };

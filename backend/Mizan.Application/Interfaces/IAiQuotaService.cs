@@ -9,6 +9,17 @@ public enum AiQuotaScope
     Global = 1,
 }
 
+/// <summary>Which of the caller's caps refused a call. The refusal names it (docs/AI.md#metering).</summary>
+public enum AiQuotaCap
+{
+    /// <summary>Unspecified: the allowance as a whole.</summary>
+    Allowance = 0,
+    DailyRequests = 1,
+    DailyTokens = 2,
+    DailyCost = 3,
+    MonthlyCost = 4,
+}
+
 /// <summary>
 /// A reservation taken before a call and settled after it. Holding one is what
 /// makes a crashed call still count: <see cref="IAiQuotaService.SettleAsync"/>
@@ -54,4 +65,8 @@ public interface IAiQuotaService
         CancellationToken cancellationToken = default);
 
     Task<AiQuotaSnapshot> GetUserSnapshotAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    /// <summary>The same snapshot for one allowance line, such as the planning line.</summary>
+    Task<AiQuotaSnapshot> GetUserSnapshotAsync(
+        Guid userId, Ai.AiQuotaLine line, CancellationToken cancellationToken = default);
 }

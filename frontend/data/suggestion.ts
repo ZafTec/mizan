@@ -6,18 +6,18 @@ import { logger } from "@/lib/logger";
 const suggestionLogger = logger.createModuleLogger("suggestion-data");
 
 export interface SuggestedRecipe {
-	title: string;
-	description: string;
-	calories: number;
-	protein: number;
-	carbs: number;
-	fat: number;
-	reason: string;
+  title: string;
+  description: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  reason: string;
 }
 
 interface MealSuggestionResult {
-	suggestions: SuggestedRecipe[];
-	note?: string | null;
+  suggestions: SuggestedRecipe[];
+  note?: string | null;
 }
 
 /**
@@ -30,19 +30,22 @@ interface MealSuggestionResult {
  * and this returns nothing rather than something plausible.
  */
 export async function getTodaySuggestions(): Promise<SuggestedRecipe[]> {
-	try {
-		const result = await serverApi<MealSuggestionResult>("/api/Ai/suggestions", {
-			method: "POST",
-		});
-		return result.suggestions ?? [];
-	} catch (error) {
-		// A quota ceiling or an unconfigured assistant is an empty list, not a
-		// broken page - the rest of the dashboard does not depend on this.
-		suggestionLogger.warn("No suggestions available", { error });
-		return [];
-	}
+  try {
+    const result = await serverApi<MealSuggestionResult>(
+      "/api/Ai/suggestions",
+      {
+        method: "POST",
+      },
+    );
+    return result.suggestions ?? [];
+  } catch (error) {
+    // A quota ceiling or an unconfigured assistant is an empty list, not a
+    // broken page - the rest of the dashboard does not depend on this.
+    suggestionLogger.warn("No suggestions available", { error });
+    return [];
+  }
 }
 
 export async function regenerateSuggestions(): Promise<SuggestedRecipe[]> {
-	return getTodaySuggestions();
+  return getTodaySuggestions();
 }
