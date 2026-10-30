@@ -176,7 +176,7 @@ public class PlanningTests
     }
 
     [Fact]
-    public async Task GeneratingTheShoppingList_AggregatesIngredientsAcrossRecipes_AndFlagsUnconvertibleLines()
+    public async Task GeneratingTheShoppingList_MergesEachItemAcrossRecipesAndPrepSessions_AndFlagsUnconvertibleLines()
     {
         await _fixture.ResetDatabaseAsync();
         var (me, client) = await _world.PersonAsync("shopper");
@@ -205,23 +205,23 @@ public class PlanningTests
         var generated = await client.PostAsJsonAsync($"/api/MealPlans/{planId}/shopping-list", new GenerateShoppingListRequest());
         generated.StatusCode.Should().Be(HttpStatusCode.Created, await generated.Content.ReadAsStringAsync());
         var result = (await generated.Content.ReadFromJsonAsync<GenerateShoppingListResult>())!;
-        result.ItemCount.Should().Be(5);
+        result.ItemCount.Should().Be(4);
         result.NeedsReviewCount.Should().Be(3);
 
         var list = await ListAsync(client, result.ListId);
         list.MealPlanId.Should().Be(planId);
         list.GeneratedAt.Should().NotBeNull();
         list.Name.Should().Be("Week shopping list");
-        list.Items.Should().HaveCount(5);
+        list.Items.Should().HaveCount(4);
 
         var sessionItems = list.Items.Where(i => i.PrepSessionTitle == "Sunday batch").ToList();
-        sessionItems.Should().HaveCount(2, "the batch session's onion and coriander come first, grouped");
-        sessionItems.Single(i => i.FoodId == onion.Id).Grams.Should().Be(500 + 150, "half the stew's kilo plus three salads' 50 g");
-        sessionItems.Single(i => i.FoodId == null).Should().Match<ShoppingListItemDto>(i => i.ItemName == "fresh coriander" && i.Amount == 3 && i.Unit == "bunch" && i.NeedsReview);
-        list.Items.Take(2).Should().BeEquivalentTo(sessionItems, "session lines are listed before the rest");
+        sessionItems.Should().ContainSingle("only the coriander is bought for the batch session alone")
+            .Which.Should().Match<ShoppingListItemDto>(i => i.FoodId == null && i.ItemName == "fresh coriander" && i.Amount == 3 && i.Unit == "bunch" && i.NeedsReview);
+        list.Items.First().Should().BeEquivalentTo(sessionItems[0], "session lines are listed before the rest");
 
         var loose = list.Items.Where(i => i.PrepSessionId == null).ToList();
-        loose.Single(i => i.FoodId == onion.Id).Grams.Should().Be(100, "the food entry on its own day is its own line");
+        loose.Single(i => i.FoodId == onion.Id).Grams.Should().Be(500 + 150 + 100,
+            "half the stew's kilo, three salads' 50 g and the day's 100 g are one onion line, not one per session");
         loose.Single(i => i.FoodId == flour.Id).Should().Match<ShoppingListItemDto>(i => i.Grams == null && i.Amount == 6 && i.Unit == "cups" && i.NeedsReview);
         loose.Single(i => i.ItemName == "Injera from the shop").NeedsReview.Should().BeTrue();
         list.Items.Should().NotContain(i => i.ItemName.Contains("salt"));
@@ -231,7 +231,7 @@ public class PlanningTests
         again.StatusCode.Should().Be(HttpStatusCode.Created);
         var replaced = await ListAsync(client, result.ListId);
         replaced.Name.Should().Be("Shop");
-        replaced.Items.Should().HaveCount(5);
+        replaced.Items.Should().HaveCount(4);
 
         // The list is then an ordinary list: edit, toggle, clear, delete.
         var flourItem = replaced.Items.Single(i => i.FoodId == flour.Id);
@@ -241,7 +241,7 @@ public class PlanningTests
             .StatusCode.Should().Be(HttpStatusCode.NoContent);
         var cleared = await client.PostAsync($"/api/ShoppingLists/{result.ListId}/clear-checked", null);
         (await cleared.Content.ReadFromJsonAsync<ClearCheckedResult>())!.Removed.Should().Be(1);
-        (await ListAsync(client, result.ListId)).Items.Should().HaveCount(4);
+        (await ListAsync(client, result.ListId)).Items.Should().HaveCount(3);
         (await client.DeleteAsync($"/api/ShoppingLists/{result.ListId}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
         (await client.GetAsync($"/api/ShoppingLists/{result.ListId}")).StatusCode.Should().Be(HttpStatusCode.NotFound);
     }

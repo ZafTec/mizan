@@ -71,7 +71,7 @@ The goal is the plan owner's active goal, read through `IDataAccessPolicy` on th
 
 ### Prep session
 
-`PrepSession` has `MealPlanId`, `DayIndex`, `Title`, `Notes`. Entries reference it. The shopping list groups by session when sessions exist. A session can also become a preparation (`Recipe.IsPreparation`) when the person logs the cooked batch.
+`PrepSession` has `MealPlanId`, `DayIndex`, `Title`, `Notes`. Entries reference it. A shopping item used only by one session is listed under that session; an item that several sessions use is one line for the plan. A session can also become a preparation (`Recipe.IsPreparation`) when the person logs the cooked batch.
 
 ### Shopping list
 
@@ -81,8 +81,8 @@ The goal is the plan owner's active goal, read through `IDataAccessPolicy` on th
 
 1. For each recipe entry, scale each ingredient line by `Servings / Recipe.Servings`.
 2. Convert each line to grams with the existing unit converter when a food is linked.
-3. Group by `FoodId`, or by normalized text when no food is linked. Sum the grams.
-4. A line that cannot convert keeps its amount and unit as text and is marked `NeedsReview`.
+3. Group by `FoodId`, or by normalized text when no food is linked, across the whole plan; prep sessions do not split an item. A text line named like a food on the list joins that food. Sum the grams.
+4. A line that cannot convert keeps its amount and unit as text and is marked `NeedsReview`. Such amounts are added when their units agree: spellings of one unit (`tbsp`, `tablespoons`) and volumes (`tsp`, `tbsp`, `cup`, `ml`, `l`) convert to the first unit written. Units that cannot be compared keep the first amount.
 5. A text entry becomes one item marked `NeedsReview`.
 
 Lists have full CRUD: create, rename, delete, add item, update item, delete item, toggle, clear checked. Household members with `CanEditShoppingList` may write to a household list.

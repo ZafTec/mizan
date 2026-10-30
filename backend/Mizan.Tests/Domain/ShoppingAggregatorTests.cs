@@ -85,10 +85,11 @@ public class ShoppingAggregatorTests
     }
 
     [Fact]
-    public void Lines_AreGroupedByPrepSession_SessionsFirst()
+    public void AnItemUsedInSeveralPrepSessions_IsOneLineForThePlan()
     {
         var rice = Food("Rice");
-        var stew = Recipe("Stew", 1, Line(rice, 100, "g"));
+        var berbere = Food("Berbere");
+        var stew = Recipe("Stew", 1, Line(rice, 100, "g"), Line(berbere, 10, "g"));
         var sunday = Guid.NewGuid();
         var wednesday = Guid.NewGuid();
 
@@ -99,13 +100,72 @@ public class ShoppingAggregatorTests
                 RecipeEntry(stew, 1, day: 3, session: wednesday),
                 FoodEntry(rice, 50, day: 5),
             ],
-            Recipes(stew), Foods(rice));
+            Recipes(stew), Foods(rice, berbere));
 
-        items.Should().HaveCount(3);
-        items.Where(i => i.PrepSessionId == sunday).Should().ContainSingle().Which.Grams.Should().Be(200);
-        items.Where(i => i.PrepSessionId == wednesday).Should().ContainSingle().Which.Grams.Should().Be(100);
-        items.Last().PrepSessionId.Should().BeNull("lines without a session come after the sessions");
-        items.Last().Grams.Should().Be(50);
+        items.Select(i => (i.Name, i.Grams, i.PrepSessionId, i.Sources)).Should().BeEquivalentTo(
+            [("Berbere", (decimal?)30m, (Guid?)null, 3), ("Rice", (decimal?)350m, (Guid?)null, 4)]);
+    }
+
+    [Fact]
+    public void AnItemUsedOnlyInOnePrepSession_KeepsThatSession_AndIsListedFirst()
+    {
+        var rice = Food("Rice");
+        var coriander = Food("Coriander");
+        var stew = Recipe("Stew", 1, Line(rice, 100, "g"), Line(coriander, 5, "g"));
+        var sunday = Guid.NewGuid();
+
+        var items = ShoppingAggregator.Aggregate(
+            [RecipeEntry(stew, 1, day: 0, session: sunday), RecipeEntry(stew, 1, day: 1, session: sunday), FoodEntry(rice, 50, day: 5)],
+            Recipes(stew), Foods(rice, coriander));
+
+        items.Select(i => (i.Name, i.PrepSessionId)).Should().Equal(("Coriander", (Guid?)sunday), ("Rice", (Guid?)null));
+    }
+
+    [Fact]
+    public void ATypedLineNamedLikeAFoodOnTheList_JoinsThatFood()
+    {
+        var berbere = Food("Berbere");
+        var stew = Recipe("Stew", 1, Line(berbere, 20, "g"));
+        var shiro = Recipe("Shiro", 1, Line(null, 1, "tbsp", "berbere"));
+
+        var items = ShoppingAggregator.Aggregate([RecipeEntry(stew, 1), RecipeEntry(shiro, 2)], Recipes(stew, shiro), Foods(berbere));
+
+        items.Should().ContainSingle().Which.Should().BeEquivalentTo(
+            new ShoppingDraftItem(berbere.Id, "Berbere", 20, 2, "tbsp", true, null, 2),
+            "the weighed part and the spoonful cannot be added, so both are shown for review");
+    }
+
+    [Theory]
+    [InlineData(2, "tbsp", 1, "tablespoon", 3, "tbsp")]
+    [InlineData(1, "cup", 4, "tbsp", 1.25, "cup")]
+    [InlineData(1, "tbsp", 3, "tsp", 2, "tbsp")]
+    [InlineData(2, "piece", 3, "pcs", 5, "piece")]
+    [InlineData(2, "cloves", 1, "clove", 3, "cloves")]
+    [InlineData(500, "ml", 1, "l", 1500, "ml")]
+    public void LooseAmountsInUnitsThatAgree_AreAdded(double first, string? firstUnit, double second, string? secondUnit, double total, string? unit)
+    {
+        var tomato = Food("Tomato");
+        var a = Recipe("A", 1, Line(tomato, (decimal)first, firstUnit));
+        var b = Recipe("B", 1, Line(tomato, (decimal)second, secondUnit));
+
+        var items = ShoppingAggregator.Aggregate([RecipeEntry(a, 1), RecipeEntry(b, 1)], Recipes(a, b), Foods(tomato));
+
+        items.Should().ContainSingle();
+        (items[0].Amount, items[0].Unit).Should().Be(((decimal)total, unit));
+    }
+
+    [Theory]
+    [InlineData(1, "tbsp", "tbsp", 1.0)]
+    [InlineData(1, "Tablespoons", "tbsp", 1.0)]
+    [InlineData(3, "tsp", "tbsp", 1.0)]
+    [InlineData(8, "tbsp", "cup", 0.5)]
+    [InlineData(1.2, "l", "cup", 5.0)]
+    [InlineData(2, "pcs", "piece", 2.0)]
+    [InlineData(1, "handful", "cup", null)]
+    [InlineData(1, "bunch", "piece", null)]
+    public void ConvertLoose_ConvertsSpellingsAndVolumes_AndNothingElse(double amount, string? from, string? to, double? expected)
+    {
+        ShoppingAggregator.ConvertLoose((decimal)amount, from, to).Should().Be(expected is null ? null : (decimal)expected);
     }
 
     [Fact]
