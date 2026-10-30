@@ -202,7 +202,7 @@ public static class AiPlanningTools
         draft.Violations);
 
     /// <summary>What the model reads back: each draft with its ids, entries, cost and problems, in plain lines.</summary>
-    private static string DescribeGenerated(GenerateMealPlanResult result)
+    internal static string DescribeGenerated(GenerateMealPlanResult result)
     {
         var text = new StringBuilder();
         foreach (var draft in result.Drafts)
@@ -234,7 +234,7 @@ public static class AiPlanningTools
         return text.ToString();
     }
 
-    private static string DescribeDay(PlanDayViewDto view)
+    internal static string DescribeDay(PlanDayViewDto view)
     {
         var day = view.Day;
         var text = new StringBuilder();
@@ -248,7 +248,7 @@ public static class AiPlanningTools
         return text.ToString();
     }
 
-    private static string Entry(PlanEntryDto entry)
+    internal static string Entry(PlanEntryDto entry)
     {
         var what = entry.Kind switch
         {

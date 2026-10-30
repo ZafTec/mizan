@@ -1,12 +1,11 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Mizan.Application.Ai;
 using Mizan.Application.Commands;
-using Mizan.Application.Interfaces;
 using Mizan.Application.Queries;
 using Mizan.Contracts.Media;
 using Mizan.Contracts.Nutrition;
-using Mizan.Domain.Media;
 using Mizan.Application.Features;
 using Mizan.Domain.Features;
 
@@ -18,26 +17,10 @@ namespace Mizan.Api.Controllers;
 public class NutritionController : ControllerBase
 {
     private readonly IMediator _mediator;
-    private readonly INutritionAiService _aiService;
-    private readonly ICurrentUserService _currentUser;
-    private readonly Mizan.Application.Ai.AnalysisPhotos _photos;
-    private readonly IRemoteImageFetcher _images;
-    private readonly Mizan.Application.Services.FoodAnalysisCatalogue _catalogue;
 
-    public NutritionController(
-        IMediator mediator,
-        INutritionAiService aiService,
-        ICurrentUserService currentUser,
-        Mizan.Application.Ai.AnalysisPhotos photos,
-        IRemoteImageFetcher images,
-        Mizan.Application.Services.FoodAnalysisCatalogue catalogue)
+    public NutritionController(IMediator mediator)
     {
-        _catalogue = catalogue;
         _mediator = mediator;
-        _aiService = aiService;
-        _currentUser = currentUser;
-        _photos = photos;
-        _images = images;
     }
 
     [HttpPost("log")]
@@ -65,34 +48,9 @@ public class NutritionController : ControllerBase
     [RequestSizeLimit(10_000_000)]
     public async Task<ActionResult<FoodAnalysisResult>> AnalyzeFoodImage(IFormFile image)
     {
-        if (image.Length == 0)
-        {
-            return BadRequest(new { errorCode = "no_image", error = "No image provided" });
-        }
-
-        if (image.Length > 8_000_000)
-        {
-            return BadRequest(new { errorCode = "image_too_large", error = "Image must be 8 MB or smaller" });
-        }
-
-        if (!_currentUser.UserId.HasValue)
-        {
-            return Unauthorized();
-        }
-
         using var memoryStream = new MemoryStream();
         await image.CopyToAsync(memoryStream);
-        var imageBytes = memoryStream.ToArray();
-
-        // The bytes decide, not the Content-Type header - same rule the upload
-        // endpoint applies (docs/ARCHITECTURE.md#storage-caching-and-jobs).
-        var contentType = ImageFormat.Detect(imageBytes.AsSpan(0, Math.Min(ImageFormat.HeaderBytes, imageBytes.Length)));
-        if (contentType is null or "image/gif")
-        {
-            return BadRequest(new { errorCode = "unsupported_image", error = "Image must be JPEG, PNG or WebP" });
-        }
-
-        return Ok(await AnalyzeAsync(_currentUser.UserId.Value, imageBytes, contentType));
+        return await EstimateAsync(new EstimateFoodFromPhotoCommand(Image: memoryStream.ToArray()));
     }
 
     /// <summary>
@@ -102,33 +60,20 @@ public class NutritionController : ControllerBase
     [HttpPost("ai/analyze-image-url")]
     [Authorize(Policy = "RequirePro")]
     [RequiresFeature(FeatureFlags.AiAssistant)]
-    public async Task<ActionResult<FoodAnalysisResult>> AnalyzeFoodImageUrl([FromBody] ImageUrlRequest request, CancellationToken cancellationToken)
+    public Task<ActionResult<FoodAnalysisResult>> AnalyzeFoodImageUrl([FromBody] ImageUrlRequest request) =>
+        EstimateAsync(new EstimateFoodFromPhotoCommand(ImageUrl: request.ImageUrl ?? string.Empty));
+
+    /// <summary>An estimate's refused input is a 400 with its own error code, as it always was.</summary>
+    private async Task<ActionResult<FoodAnalysisResult>> EstimateAsync(IRequest<FoodAnalysisResult> command)
     {
-        if (!_currentUser.UserId.HasValue)
+        try
         {
-            return Unauthorized();
+            return Ok(await _mediator.Send(command, HttpContext.RequestAborted));
         }
-
-        var image = await _images.FetchAsync(request.ImageUrl, cancellationToken);
-        if (image.ContentType == "image/gif")
+        catch (FoodEstimateInputException ex)
         {
-            return BadRequest(new { errorCode = "unsupported_image", error = "Image must be JPEG, PNG or WebP" });
+            return BadRequest(new { errorCode = ex.ErrorCode, error = ex.Message });
         }
-
-        return Ok(await AnalyzeAsync(_currentUser.UserId.Value, image.Bytes, image.ContentType));
-    }
-
-    private async Task<FoodAnalysisResult> AnalyzeAsync(Guid userId, byte[] imageBytes, string contentType)
-    {
-        var result = await _catalogue.MatchAsync(userId, await _aiService.AnalyzeFoodImageAsync(userId, imageBytes, contentType), HttpContext.RequestAborted);
-
-        // Stored after the analysis, not before: a photo the model could not
-        // read is not worth keeping, and this way a storage outage costs the
-        // picture rather than the whole request.
-        return result with
-        {
-            ImageUrl = await _photos.StoreAsync(userId, imageBytes, contentType, ImageFormat.Extension(contentType), HttpContext.RequestAborted),
-        };
     }
 
     /// <summary>
@@ -146,27 +91,8 @@ public class NutritionController : ControllerBase
     [HttpPost("ai/analyze-text")]
     [Authorize(Policy = "RequirePro")]
     [RequiresFeature(FeatureFlags.AiAssistant)]
-    public async Task<ActionResult<FoodAnalysisResult>> AnalyzeFoodText([FromBody] AnalyzeFoodTextRequest request)
-    {
-        var description = request.Description?.Trim() ?? string.Empty;
-        if (description.Length == 0)
-        {
-            return BadRequest(new { errorCode = "no_description", error = "Describe what you ate." });
-        }
+    public Task<ActionResult<FoodAnalysisResult>> AnalyzeFoodText([FromBody] AnalyzeFoodTextRequest request) =>
+        EstimateAsync(new EstimateFoodFromTextCommand(request.Description));
 
-        if (description.Length > MaxDescriptionLength)
-        {
-            return BadRequest(new { errorCode = "description_too_long", error = $"Keep the description to {MaxDescriptionLength} characters or fewer." });
-        }
-
-        if (!_currentUser.UserId.HasValue)
-        {
-            return Unauthorized();
-        }
-
-        var userId = _currentUser.UserId.Value;
-        return Ok(await _catalogue.MatchAsync(userId, await _aiService.AnalyzeFoodTextAsync(userId, description), HttpContext.RequestAborted));
-    }
-
-    public const int MaxDescriptionLength = 600;
+    public const int MaxDescriptionLength = EstimateFoodFromTextCommand.MaxDescriptionLength;
 }

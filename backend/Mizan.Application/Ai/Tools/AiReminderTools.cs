@@ -94,7 +94,7 @@ public static class AiReminderTools
             ? value.EnumerateArray().Where(v => v.ValueKind == JsonValueKind.String).Select(v => v.GetString()!).ToList()
             : null;
 
-    private static string Describe(ReminderListResult list)
+    public static string Describe(ReminderListResult list)
     {
         if (list.Items.Count == 0) return "The user has no reminders.";
         var text = new StringBuilder($"{list.ActiveCount} of {list.ActiveLimit} reminders on.\n");

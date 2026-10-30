@@ -590,6 +590,34 @@ namespace Mizan.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "pending_tool_actions",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    grant_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    tool = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    mode = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    arguments_json = table.Column<string>(type: "text", nullable: false),
+                    arguments_hash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    facts_hash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    token_hash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    expires_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    used_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_pending_tool_actions", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_pending_tool_actions_users_user_id",
+                        column: x => x.user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "prep_sessions",
                 columns: table => new
                 {
@@ -1340,6 +1368,17 @@ namespace Mizan.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_pending_tool_actions_token_hash",
+                table: "pending_tool_actions",
+                column: "token_hash",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_pending_tool_actions_user_id_created_at",
+                table: "pending_tool_actions",
+                columns: new[] { "user_id", "created_at" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_plan_entries_food_id",
                 table: "plan_entries",
                 column: "food_id");
@@ -1523,6 +1562,9 @@ namespace Mizan.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "oauth_tokens");
+
+            migrationBuilder.DropTable(
+                name: "pending_tool_actions");
 
             migrationBuilder.DropTable(
                 name: "plan_entries");

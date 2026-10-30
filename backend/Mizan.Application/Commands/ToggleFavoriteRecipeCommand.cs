@@ -11,6 +11,9 @@ namespace Mizan.Application.Commands;
 public record ToggleFavoriteRecipeCommand : IRequest<ToggleFavoriteRecipeResult>
 {
     public Guid RecipeId { get; init; }
+
+    /// <summary>The state wanted, when the caller says so: a recipe already in that state is left as it is. Null toggles.</summary>
+    public bool? Favorite { get; init; }
 }
 
 public record ToggleFavoriteRecipeResult
@@ -43,6 +46,15 @@ public class ToggleFavoriteRecipeCommandHandler : IRequestHandler<ToggleFavorite
 
         var existingFavorite = await _context.FavoriteRecipes
             .FirstOrDefaultAsync(f => f.UserId == userId && f.RecipeId == request.RecipeId, cancellationToken);
+
+        if (request.Favorite is { } wanted && (existingFavorite != null) == wanted)
+        {
+            return new ToggleFavoriteRecipeResult
+            {
+                IsFavorited = wanted,
+                Message = wanted ? "Already a favorite" : "Not a favorite"
+            };
+        }
 
         bool isFavorited;
         if (existingFavorite != null)

@@ -44,6 +44,7 @@ public static class ImpersonationPolicy
         [typeof(ProfileController)] = new("/api/Profile", ImpersonationAccess.Allowed),
         [typeof(RecipesController)] = new("/api/Recipes", ImpersonationAccess.Allowed),
         [typeof(ShoppingListsController)] = new("/api/ShoppingLists", ImpersonationAccess.Allowed),
+        [typeof(ToolsController)] = new("/api/tools", ImpersonationAccess.Allowed),
         [typeof(SocialController)] = new("/api/Social", ImpersonationAccess.Allowed),
         [typeof(SyncController)] = new("/api/Sync", ImpersonationAccess.Allowed),
         [typeof(TrainersController)] = new("/api/Trainers", ImpersonationAccess.Allowed),

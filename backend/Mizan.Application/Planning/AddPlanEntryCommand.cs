@@ -6,8 +6,11 @@ using Mizan.Contracts.Planning;
 
 namespace Mizan.Application.Planning;
 
-/// <summary>Adds one entry to a plan or template.</summary>
-public record AddPlanEntryCommand(Guid PlanId, PlanEntryRequest Entry) : IRequest<PlanEntryCreatedResult>;
+/// <summary>
+/// Adds one entry to a plan or template. <c>DraftOnly</c> refuses a plan that is not a draft, as on
+/// <see cref="RemovePlanEntryCommand"/>.
+/// </summary>
+public record AddPlanEntryCommand(Guid PlanId, PlanEntryRequest Entry, bool DraftOnly = false) : IRequest<PlanEntryCreatedResult>;
 
 public class AddPlanEntryCommandValidator : AbstractValidator<AddPlanEntryCommand>
 {
@@ -36,6 +39,7 @@ public class AddPlanEntryCommandHandler : IRequestHandler<AddPlanEntryCommand, P
     public async Task<PlanEntryCreatedResult> Handle(AddPlanEntryCommand request, CancellationToken cancellationToken)
     {
         var plan = await _access.LoadEditableAsync(request.PlanId, cancellationToken);
+        PlanAccess.EnsureDraftWhenAsked(plan, request.DraftOnly);
         var entry = (await _entries.BuildAsync(plan, [request.Entry], null, cancellationToken)).Single();
         // Through the set, not the navigation: an entity found by change
         // detection with its key already set is taken for an existing row.

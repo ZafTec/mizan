@@ -478,7 +478,7 @@ public static class AiToolCatalogue
         Chat.FirstOrDefault(tool => tool.Name == name);
 
     /// <summary>The ranking in words: what is left, then each recipe with one serving and what it would leave.</summary>
-    private static string RecipeFitText(Contracts.Nutrition.RecipeFitResult fit)
+    internal static string RecipeFitText(Contracts.Nutrition.RecipeFitResult fit)
     {
         static string Amounts(decimal? kcal, decimal? protein, decimal? carbs, decimal? fat) => string.Join(", ", new[]
         {

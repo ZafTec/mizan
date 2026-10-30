@@ -22,6 +22,7 @@ public static class DependencyInjection
 
         services.AddValidatorsFromAssembly(assembly);
         services.AddScoped<Commands.SubscriberBilling>();
+        services.AddScoped<Tools.ITaskToolRunner, Tools.TaskToolRunner>();
         services.AddScoped<OAuth.OAuthClientResolver>();
         services.AddScoped<Interfaces.IHouseholdAccess, Services.HouseholdAccess>();
         services.AddScoped<Planning.PlanAccess>();

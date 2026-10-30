@@ -140,8 +140,7 @@ public class AiController : ControllerBase
     [HttpPost("suggestions")]
     public async Task<ActionResult<MealSuggestionResult>> Suggestions()
     {
-        var userId = _currentUser.UserId ?? throw new UnauthorizedAccessException();
-        return Ok(await _ai.SuggestMealsAsync(userId));
+        return Ok(await _mediator.Send(new SuggestMealsCommand()));
     }
 
     /// <summary>

@@ -95,6 +95,7 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
     public DbSet<OAuthAuthorizationRequest> OAuthAuthorizationRequests => Set<OAuthAuthorizationRequest>();
     public DbSet<OAuthToken> OAuthTokens => Set<OAuthToken>();
     public DbSet<McpTask> McpTasks => Set<McpTask>();
+    public DbSet<PendingToolAction> PendingToolActions => Set<PendingToolAction>();
     public DbSet<IdempotencyKey> IdempotencyKeys => Set<IdempotencyKey>();
     public DbSet<DeletedRecord> DeletedRecords => Set<DeletedRecord>();
     public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
@@ -1604,6 +1605,27 @@ public class MizanDbContext : DbContext, IMizanDbContext, IDataProtectionKeyCont
             entity.HasIndex(e => e.FamilyId);
             entity.HasIndex(e => e.GrantId);
             entity.HasOne(e => e.Grant).WithMany().HasForeignKey(e => e.GrantId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PendingToolAction>(entity =>
+        {
+            entity.ToTable("pending_tool_actions");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.UserId).HasColumnName("user_id").IsRequired();
+            entity.Property(e => e.GrantId).HasColumnName("grant_id");
+            entity.Property(e => e.Tool).HasColumnName("tool").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Mode).HasColumnName("mode").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.ArgumentsJson).HasColumnName("arguments_json").HasColumnType("text").IsRequired();
+            entity.Property(e => e.ArgumentsHash).HasColumnName("arguments_hash").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.FactsHash).HasColumnName("facts_hash").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.TokenHash).HasColumnName("token_hash").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at").IsRequired();
+            entity.Property(e => e.UsedAt).HasColumnName("used_at");
+            entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity.HasIndex(e => new { e.UserId, e.CreatedAt });
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<McpTask>(entity =>

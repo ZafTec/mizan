@@ -1,5 +1,7 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Mizan.Application.Commands;
 using Mizan.Application.Exceptions;
 using Mizan.Application.Interfaces;
 using Mizan.Contracts.Media;
@@ -20,12 +22,12 @@ public class UploadsController : ControllerBase
     private const long MaxModelRequestBytes = 32 * 1024 * 1024;
 
     private readonly IStorageService _storage;
-    private readonly IRemoteImageFetcher _images;
+    private readonly IMediator _mediator;
 
-    public UploadsController(IStorageService storage, IRemoteImageFetcher images)
+    public UploadsController(IStorageService storage, IMediator mediator)
     {
         _storage = storage;
-        _images = images;
+        _mediator = mediator;
     }
 
     [HttpPost("image")]
@@ -35,26 +37,15 @@ public class UploadsController : ControllerBase
         [FromQuery] StorageFolder folder = StorageFolder.Recipes,
         CancellationToken cancellationToken = default)
     {
-        if (file is null || file.Length == 0)
+        byte[]? bytes = null;
+        if (file is { Length: > 0 })
         {
-            throw new DomainValidationException("No file was uploaded.");
+            using var buffer = new MemoryStream();
+            await file.CopyToAsync(buffer, cancellationToken);
+            bytes = buffer.ToArray();
         }
 
-        EnsureOpen(folder);
-
-        await using var content = file.OpenReadStream();
-
-        var header = new byte[ImageFormat.HeaderBytes];
-        var read = await content.ReadAtLeastAsync(header, header.Length, throwOnEndOfStream: false, cancellationToken);
-        var contentType = ImageFormat.Detect(header.AsSpan(0, read))
-            ?? throw new DomainValidationException("That file is not a JPEG, PNG, WebP or GIF image.");
-
-        content.Position = 0;
-
-        var stored = await _storage.UploadAsync(
-            new StorageUpload(folder, file.FileName, contentType, content, file.Length),
-            cancellationToken);
-
+        var stored = await _mediator.Send(new UploadImageCommand(folder, file?.FileName, bytes ?? []), cancellationToken);
         return Ok(new UploadedImageDto(stored.Key, stored.Url));
     }
 
@@ -68,25 +59,8 @@ public class UploadsController : ControllerBase
         [FromQuery] StorageFolder folder = StorageFolder.Recipes,
         CancellationToken cancellationToken = default)
     {
-        EnsureOpen(folder);
-
-        var image = await _images.FetchAsync(request.ImageUrl, cancellationToken);
-        await using var content = new MemoryStream(image.Bytes);
-        var stored = await _storage.UploadAsync(
-            new StorageUpload(folder, $"upload{ImageFormat.Extension(image.ContentType)}", image.ContentType, content, image.Bytes.Length),
-            cancellationToken);
-
+        var stored = await _mediator.Send(new UploadImageCommand(folder, ImageUrl: request.ImageUrl), cancellationToken);
         return Ok(new UploadedImageDto(stored.Key, stored.Url));
-    }
-
-    /// <summary>Only an administrator curates exercise media and achievement badges, and models have their own door.</summary>
-    private void EnsureOpen(StorageFolder folder)
-    {
-        var curated = folder is StorageFolder.Exercises or StorageFolder.Achievements;
-        if (folder == StorageFolder.Models || (curated && !User.IsInRole("admin")))
-        {
-            throw new DomainValidationException("That folder is not open to uploads.");
-        }
     }
 
     /// <summary>A rigged 3D figure for the app, authored in Blender and exported as .glb. Administrator only.</summary>
